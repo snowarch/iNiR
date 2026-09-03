@@ -67,6 +67,8 @@ Singleton {
     property int activeContextMenuCount: 0
     property var activeContextMenu: null
     property bool clipboardOpen: false
+    // True only while iNiR asks Niri for internal window-preview frames.
+    property bool windowPreviewCaptureActive: false
     property bool settingsOverlayOpen: false
     property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page
     property int settingsOverlayCurrentPage: -1 // Published by whichever overlay chrome is loaded
@@ -101,6 +103,14 @@ Singleton {
     }
 
     property bool regionSelectorOpen: false
+    property bool japaneseLookupOpen: false
+    property bool japaneseLookupExpanded: false
+    property var japaneseLookupResult: ({})
+    property string japaneseLookupScreen: ""
+    property real japaneseLookupX: 0
+    property real japaneseLookupY: 0
+    property real japaneseLookupWidth: 0
+    property real japaneseLookupHeight: 0
     property var regionSelectorAction: 0
     property var regionSelectorMode: 0
     // Explicit screenshot callers must remain deterministic. The dedicated

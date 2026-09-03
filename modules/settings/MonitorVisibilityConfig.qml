@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -11,6 +12,23 @@ ContentPage {
     settingsPageName: Translation.tr("Monitors")
 
     property string activeSection: "outputs"
+
+    readonly property string niriConfigScript: Quickshell.shellPath("scripts/niri-config.py")
+    property bool monitorLayoutBusy: false
+    property string monitorLayoutError: ""
+    property string monitorLayoutInfo: ""
+    property string monitorLayoutWarning: ""
+    property string draggingLayoutOutput: ""
+    property var monitorLayoutSnapshot: ({})
+    property var monitorLayoutViewportBounds: ({})
+    property bool monitorLayoutPreserveViewport: false
+    property bool monitorLayoutAwaitingReload: false
+    property int monitorLayoutReloadAttempts: 0
+    property string pendingLayoutOutput: ""
+    property int pendingLayoutNewX: 0
+    property int pendingLayoutNewY: 0
+
+    signal monitorPositionFinished(string outputName, bool success)
 
     SettingsTaskNavigator {
         icon: "settings_input_component"
@@ -55,6 +73,9 @@ ContentPage {
             { key: "battery", title: Translation.tr("Battery"), icon: "battery_full", defaultOn: false },
             { key: "notes", title: Translation.tr("Notes"), icon: "sticky_note_2", defaultOn: false },
             { key: "calendarUpcoming", title: Translation.tr("Upcoming Events"), icon: "event", defaultOn: false },
+            { key: "monthCalendar", title: Translation.tr("Month Calendar"), icon: "calendar_month", defaultOn: false },
+            { key: "todo", title: Translation.tr("Todo"), icon: "checklist", defaultOn: false },
+            { key: "timers", title: Translation.tr("Timers"), icon: "timer", defaultOn: false },
             { key: "uptime", title: Translation.tr("System uptime"), icon: "avg_pace", defaultOn: false },
             { key: "worldClock", title: Translation.tr("World clock"), icon: "public", defaultOn: false },
             { key: "userCard", title: Translation.tr("User card"), icon: "account_circle", defaultOn: false },
@@ -122,6 +143,324 @@ ContentPage {
             return Translation.tr("Resolution unknown")
         return width + "×" + height
     }
+
+    function niriOutputNames(): var {
+        const source = Object.keys(monitorLayoutSnapshot).length > 0
+            ? monitorLayoutSnapshot : (NiriService.outputs ?? ({}))
+        return Object.keys(source).filter(name => {
+            const entry = source[name]
+            return entry?.logical !== undefined || entry?.width !== undefined
+        })
+            .sort((a, b) => {
+                const ao = niriLogicalRect(a)
+                const bo = niriLogicalRect(b)
+                if (ao.x !== bo.x) return ao.x - bo.x
+                if (ao.y !== bo.y) return ao.y - bo.y
+                return a.localeCompare(b)
+            })
+    }
+
+    function liveNiriOutputNames(): var {
+        const outputs = NiriService.outputs ?? ({})
+        return Object.keys(outputs).filter(name => outputs[name]?.logical).sort()
+    }
+
+    function boundsForLayout(layout: var): var {
+        const names = Object.keys(layout ?? ({}))
+        if (names.length === 0)
+            return { minX: 0, minY: 0, width: 1920, height: 1080 }
+
+        let minX = Infinity
+        let minY = Infinity
+        let maxX = -Infinity
+        let maxY = -Infinity
+        for (const name of names) {
+            const rect = layout[name]
+            minX = Math.min(minX, Number(rect.x ?? 0))
+            minY = Math.min(minY, Number(rect.y ?? 0))
+            maxX = Math.max(maxX, Number(rect.x ?? 0) + Number(rect.width ?? 1))
+            maxY = Math.max(maxY, Number(rect.y ?? 0) + Number(rect.height ?? 1))
+        }
+        return {
+            minX: minX,
+            minY: minY,
+            width: Math.max(1, maxX - minX),
+            height: Math.max(1, maxY - minY)
+        }
+    }
+
+    function syncMonitorLayoutSnapshot(force: bool): void {
+        if (!force && (draggingLayoutOutput.length > 0 || monitorLayoutBusy))
+            return
+
+        const outputs = NiriService.outputs ?? ({})
+        const snapshot = {}
+        for (const name of Object.keys(outputs)) {
+            const logical = outputs[name]?.logical
+            if (!logical)
+                continue
+            snapshot[name] = {
+                x: Number(logical.x ?? 0),
+                y: Number(logical.y ?? 0),
+                width: Math.max(1, Number(logical.width ?? 1920)),
+                height: Math.max(1, Number(logical.height ?? 1080))
+            }
+        }
+        monitorLayoutSnapshot = snapshot
+        if (!monitorLayoutPreserveViewport || !monitorLayoutViewportBounds?.width)
+            monitorLayoutViewportBounds = boundsForLayout(snapshot)
+        monitorLayoutPreserveViewport = false
+    }
+
+    function pendingMonitorPositionIsLive(): bool {
+        if (!pendingLayoutOutput.length)
+            return false
+        const logical = NiriService.outputs?.[pendingLayoutOutput]?.logical
+        if (!logical)
+            return false
+        return Math.round(Number(logical.x ?? 0)) === pendingLayoutNewX
+            && Math.round(Number(logical.y ?? 0)) === pendingLayoutNewY
+    }
+
+    function niriLogicalRect(outputName: string): var {
+        const staged = monitorLayoutSnapshot?.[outputName]
+        if (staged)
+            return staged
+        const logical = NiriService.outputs?.[outputName]?.logical
+        if (!logical)
+            return { x: 0, y: 0, width: 1920, height: 1080 }
+        return {
+            x: Number(logical.x ?? 0),
+            y: Number(logical.y ?? 0),
+            width: Math.max(1, Number(logical.width ?? 1920)),
+            height: Math.max(1, Number(logical.height ?? 1080))
+        }
+    }
+
+    function monitorLayoutBounds(): var {
+        if (monitorLayoutViewportBounds?.width > 0)
+            return monitorLayoutViewportBounds
+        const names = niriOutputNames()
+        if (names.length === 0)
+            return { minX: 0, minY: 0, width: 1920, height: 1080 }
+
+        let minX = Infinity
+        let minY = Infinity
+        let maxX = -Infinity
+        let maxY = -Infinity
+        for (const name of names) {
+            const rect = niriLogicalRect(name)
+            minX = Math.min(minX, rect.x)
+            minY = Math.min(minY, rect.y)
+            maxX = Math.max(maxX, rect.x + rect.width)
+            maxY = Math.max(maxY, rect.y + rect.height)
+        }
+        return {
+            minX: minX,
+            minY: minY,
+            width: Math.max(1, maxX - minX),
+            height: Math.max(1, maxY - minY)
+        }
+    }
+
+    function monitorPositionOverlaps(outputName: string, x: real, y: real, width: real, height: real): bool {
+        for (const name of niriOutputNames()) {
+            if (name === outputName)
+                continue
+            const other = niriLogicalRect(name)
+            if (!(x + width <= other.x || x >= other.x + other.width
+                    || y + height <= other.y || y >= other.y + other.height))
+                return true
+        }
+        return false
+    }
+
+    function placementCandidates(outputName: string, x: real, y: real, width: real, height: real): var {
+        const result = []
+        for (const name of niriOutputNames()) {
+            if (name === outputName)
+                continue
+            const other = niriLogicalRect(name)
+            const minEdgeY = other.y - height + 1
+            const maxEdgeY = other.y + other.height - 1
+            const minEdgeX = other.x - width + 1
+            const maxEdgeX = other.x + other.width - 1
+            const freeEdgeY = Math.max(minEdgeY, Math.min(maxEdgeY, y))
+            const freeEdgeX = Math.max(minEdgeX, Math.min(maxEdgeX, x))
+            const alignY = [
+                freeEdgeY,
+                other.y,
+                other.y + other.height - height,
+                Math.round(other.y + (other.height - height) / 2)
+            ]
+            const alignX = [
+                freeEdgeX,
+                other.x,
+                other.x + other.width - width,
+                Math.round(other.x + (other.width - width) / 2)
+            ]
+
+            for (const y of alignY) {
+                result.push(Qt.point(other.x - width, y))
+                result.push(Qt.point(other.x + other.width, y))
+            }
+            for (const x of alignX) {
+                result.push(Qt.point(x, other.y - height))
+                result.push(Qt.point(x, other.y + other.height))
+            }
+        }
+        return result
+    }
+
+    function nearestValidPlacement(outputName: string, x: real, y: real, width: real, height: real, threshold: real, force: bool): point {
+        let best = Qt.point(x, y)
+        let bestDistance = force ? Infinity : threshold
+        for (const candidate of placementCandidates(outputName, x, y, width, height)) {
+            if (monitorPositionOverlaps(outputName, candidate.x, candidate.y, width, height))
+                continue
+            const distance = Math.hypot(candidate.x - x, candidate.y - y)
+            if (distance < bestDistance) {
+                bestDistance = distance
+                best = candidate
+            }
+        }
+        return best
+    }
+
+    function monitorTouchesLayout(outputName: string, x: real, y: real, width: real, height: real): bool {
+        const right = x + width
+        const bottom = y + height
+        for (const name of niriOutputNames()) {
+            if (name === outputName)
+                continue
+            const other = niriLogicalRect(name)
+            const otherRight = other.x + other.width
+            const otherBottom = other.y + other.height
+            const verticalOverlap = Math.min(bottom, otherBottom) - Math.max(y, other.y)
+            const horizontalOverlap = Math.min(right, otherRight) - Math.max(x, other.x)
+            if ((right === other.x || x === otherRight) && verticalOverlap > 0)
+                return true
+            if ((bottom === other.y || y === otherBottom) && horizontalOverlap > 0)
+                return true
+        }
+        return false
+    }
+
+    function commitMonitorPosition(outputName: string, x: int, y: int, oldX: int, oldY: int): void {
+        if (monitorLayoutBusy || !CompositorService.isNiri || !outputName.length)
+            return
+        if (x === oldX && y === oldY) {
+            monitorPositionFinished(outputName, true)
+            return
+        }
+
+        const stagedNames = niriOutputNames().slice().sort()
+        const liveNames = liveNiriOutputNames()
+        if (stagedNames.length !== liveNames.length
+                || stagedNames.some((name, index) => name !== liveNames[index])) {
+            monitorLayoutError = Translation.tr("The connected displays changed while you were arranging them. The layout was refreshed; drag again to apply a position.")
+            syncMonitorLayoutSnapshot(true)
+            monitorPositionFinished(outputName, false)
+            return
+        }
+
+        monitorLayoutBusy = true
+        monitorLayoutPreserveViewport = true
+        monitorLayoutError = ""
+        monitorLayoutWarning = monitorTouchesLayout(outputName, x, y,
+            niriLogicalRect(outputName).width, niriLogicalRect(outputName).height)
+            ? ""
+            : Translation.tr("This output has a gap from the others. Niri allows it, but the pointer cannot cross that gap directly.")
+        monitorLayoutInfo = Translation.tr("Saving monitor layout…")
+        pendingLayoutOutput = outputName
+        pendingLayoutNewX = x
+        pendingLayoutNewY = y
+
+        const layout = {}
+        for (const name of niriOutputNames()) {
+            const rect = niriLogicalRect(name)
+            layout[name] = {
+                x: name === outputName ? x : Math.round(rect.x),
+                y: name === outputName ? y : Math.round(rect.y)
+            }
+        }
+        monitorLayoutPersist.command = ["python3", niriConfigScript, "persist-layout", JSON.stringify(layout)]
+        monitorLayoutPersist.running = true
+    }
+
+    function finishMonitorPositionTransaction(success: bool): void {
+        const outputName = pendingLayoutOutput
+        pendingLayoutOutput = ""
+        monitorLayoutAwaitingReload = false
+        monitorLayoutBusy = false
+        if (!success)
+            monitorLayoutPreserveViewport = false
+        syncMonitorLayoutSnapshot(true)
+        monitorPositionFinished(outputName, success)
+    }
+
+    Process {
+        id: monitorLayoutPersist
+        stdout: StdioCollector { id: monitorLayoutPersistOut }
+        stderr: StdioCollector { id: monitorLayoutPersistErr }
+        onExited: exitCode => {
+            if (exitCode === 0) {
+                root.monitorLayoutError = ""
+                root.monitorLayoutInfo = Translation.tr("Applying monitor layout…")
+                root.monitorLayoutAwaitingReload = true
+                root.monitorLayoutReloadAttempts = 0
+                NiriService.fetchOutputs()
+                monitorLayoutRefresh.restart()
+                return
+            }
+
+            root.monitorLayoutError = (monitorLayoutPersistErr.text || monitorLayoutPersistOut.text || Translation.tr("Could not save the monitor layout.")).trim()
+            root.monitorLayoutInfo = ""
+            root.finishMonitorPositionTransaction(false)
+        }
+    }
+
+    Timer {
+        id: monitorLayoutRefresh
+        interval: 350
+        repeat: false
+        onTriggered: {
+            if (!root.monitorLayoutAwaitingReload)
+                return
+            if (root.pendingMonitorPositionIsLive()) {
+                root.monitorLayoutInfo = Translation.tr("Monitor layout saved.")
+                root.finishMonitorPositionTransaction(true)
+                return
+            }
+
+            root.monitorLayoutReloadAttempts++
+            if (root.monitorLayoutReloadAttempts < 6) {
+                root.monitorLayoutInfo = Translation.tr("Saved layout is waiting for Niri to refresh…")
+                NiriService.fetchOutputs()
+                monitorLayoutRefresh.restart()
+                return
+            }
+
+            root.monitorLayoutError = Translation.tr("The layout was saved, but Niri did not report the new position in time. The editor was resynced with the compositor.")
+            root.monitorLayoutInfo = ""
+            root.finishMonitorPositionTransaction(false)
+        }
+    }
+
+    Connections {
+        target: NiriService
+        function onOutputsChanged(): void {
+            if (root.monitorLayoutAwaitingReload && root.pendingMonitorPositionIsLive()) {
+                root.monitorLayoutInfo = Translation.tr("Monitor layout saved.")
+                root.finishMonitorPositionTransaction(true)
+                return
+            }
+            if (root.draggingLayoutOutput.length === 0 && !root.monitorLayoutBusy)
+                Qt.callLater(() => root.syncMonitorLayoutSnapshot(false))
+        }
+    }
+
+    Component.onCompleted: Qt.callLater(() => root.syncMonitorLayoutSnapshot(false))
 
     function desktopWidgetOutputNames(): var {
         const names = connectedScreenNames().slice()
@@ -321,6 +660,300 @@ ContentPage {
                 materialIcon: "low_priority"
                 mainText: Translation.tr("Make primary")
                 onClicked: if (screenName.length > 0) Config.setNestedValue("display.primaryMonitor", screenName)
+            }
+        }
+    }
+
+    component MonitorLayoutRect: Rectangle {
+        id: monitorRect
+        required property string outputName
+        required property real canvasScale
+        required property point canvasOffset
+
+        readonly property var logical: root.niriLogicalRect(outputName)
+        readonly property real logicalWidth: Math.max(1, Number(logical.width ?? 1920))
+        readonly property real logicalHeight: Math.max(1, Number(logical.height ?? 1080))
+        readonly property bool primary: outputName === root.primaryScreenName()
+        property bool dragging: false
+        property bool awaitingCommit: false
+        property bool validPosition: true
+        property point originalLogical: Qt.point(0, 0)
+        property point rawLogical: Qt.point(0, 0)
+        property point snappedLogical: Qt.point(0, 0)
+        property real dragOriginCanvasX: 0
+        property real dragOriginCanvasY: 0
+        property real heldX: 0
+        property real heldY: 0
+        readonly property real baseCanvasX: Number(logical.x ?? 0) * canvasScale + canvasOffset.x
+        readonly property real baseCanvasY: Number(logical.y ?? 0) * canvasScale + canvasOffset.y
+        readonly property real snappedCanvasX: snappedLogical.x * canvasScale + canvasOffset.x
+        readonly property real snappedCanvasY: snappedLogical.y * canvasScale + canvasOffset.y
+        readonly property bool snapPreviewVisible: dragging && validPosition
+            && (Math.abs(snappedLogical.x - rawLogical.x) > 0.5 || Math.abs(snappedLogical.y - rawLogical.y) > 0.5)
+
+        x: (dragging || awaitingCommit) ? heldX : baseCanvasX
+        y: (dragging || awaitingCommit) ? heldY : baseCanvasY
+        width: Math.max(1, logicalWidth * canvasScale)
+        height: Math.max(1, logicalHeight * canvasScale)
+        radius: Appearance.rounding.normal
+        z: dragging ? 20 : 1
+        scale: dragging ? 1.025 : 1
+        opacity: root.draggingLayoutOutput.length > 0 && root.draggingLayoutOutput !== outputName ? 0.72 : 1
+        color: !validPosition
+            ? Appearance.colors.colErrorContainer
+            : dragging
+                ? Appearance.colors.colPrimaryContainer
+                : monitorHover.hovered
+                    ? Appearance.colors.colLayer1Hover
+                : primary
+                    ? Appearance.colors.colSecondaryContainer
+                    : Appearance.colors.colLayer1
+        border.width: dragging || awaitingCommit ? 2 : 1
+        border.color: !validPosition
+            ? Appearance.colors.colError
+            : dragging || awaitingCommit || primary
+                ? Appearance.colors.colPrimary
+                : SettingsMaterialPreset.groupBorderColor
+
+        Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+        Behavior on border.color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+        Behavior on scale {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+        }
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: 100 }
+        }
+
+        StyledRectangularShadow {
+            target: monitorRect.dragging ? monitorRect : null
+            visible: monitorRect.dragging
+            z: -1
+        }
+
+        Rectangle {
+            visible: monitorRect.snapPreviewVisible
+            x: monitorRect.snappedCanvasX - monitorRect.x
+            y: monitorRect.snappedCanvasY - monitorRect.y
+            width: monitorRect.width
+            height: monitorRect.height
+            radius: monitorRect.radius
+            color: Appearance.colors.colPrimaryContainer
+            border.width: 2
+            border.color: Appearance.colors.colPrimary
+            opacity: 0.78
+            z: -2
+        }
+
+        Rectangle {
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.topMargin: Appearance.sizes.spacingSmall / 2
+            visible: monitorRect.width >= 100
+            implicitWidth: dragHandleRow.implicitWidth + Appearance.sizes.spacingSmall * 2
+            implicitHeight: dragHandleRow.implicitHeight + 2
+            radius: Appearance.rounding.full
+            color: monitorRect.dragging
+                ? Appearance.colors.colPrimaryContainer
+                : "transparent"
+            opacity: monitorRect.dragging ? 0.74 : 1
+
+            RowLayout {
+                id: dragHandleRow
+                anchors.centerIn: parent
+                spacing: 2
+
+                MaterialSymbol {
+                    text: "drag_indicator"
+                    iconSize: Appearance.font.pixelSize.smallest
+                    color: monitorRect.dragging ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                }
+            }
+        }
+
+        Connections {
+            target: root
+            function onMonitorPositionFinished(name, success): void {
+                if (name !== monitorRect.outputName)
+                    return
+                monitorRect.awaitingCommit = false
+                monitorRect.validPosition = true
+                if (!success) {
+                    monitorRect.heldX = monitorRect.baseCanvasX
+                    monitorRect.heldY = monitorRect.baseCanvasY
+                }
+            }
+        }
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            width: Math.max(0, parent.width - Appearance.sizes.spacingMedium * 2)
+            spacing: 1
+
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: Appearance.sizes.spacingSmall / 2
+
+                MaterialSymbol {
+                    text: primary ? "star" : "monitor"
+                    iconSize: Appearance.font.pixelSize.normal
+                    color: !monitorRect.validPosition
+                        ? Appearance.colors.colOnErrorContainer
+                        : primary ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colPrimary
+                }
+
+                StyledText {
+                    text: monitorRect.outputName
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.weight: Font.Medium
+                    color: !monitorRect.validPosition
+                        ? Appearance.colors.colOnErrorContainer
+                        : primary ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
+                    elide: Text.ElideMiddle
+                    Layout.maximumWidth: Math.max(24, monitorRect.width - 42)
+                }
+            }
+
+            StyledText {
+                Layout.alignment: Qt.AlignHCenter
+                visible: monitorRect.height >= 62
+                text: Math.round(monitorRect.logicalWidth) + "×" + Math.round(monitorRect.logicalHeight)
+                font.pixelSize: Appearance.font.pixelSize.smallest
+                color: !monitorRect.validPosition
+                    ? Appearance.colors.colOnErrorContainer
+                    : primary ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colSubtext
+            }
+
+            Rectangle {
+                Layout.alignment: Qt.AlignHCenter
+                visible: monitorRect.dragging && monitorRect.width >= 116 && monitorRect.height >= 82
+                implicitWidth: positionLabel.implicitWidth + Appearance.sizes.spacingMedium
+                implicitHeight: positionLabel.implicitHeight + Appearance.sizes.spacingSmall / 2
+                radius: Appearance.rounding.full
+                color: monitorRect.validPosition
+                    ? Appearance.colors.colPrimaryContainer
+                    : Appearance.colors.colErrorContainer
+
+                StyledText {
+                    id: positionLabel
+                    anchors.centerIn: parent
+                    text: monitorRect.validPosition
+                        ? Math.round(monitorRect.snappedLogical.x) + ", " + Math.round(monitorRect.snappedLogical.y)
+                        : Translation.tr("Invalid placement")
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.weight: Font.Medium
+                    color: monitorRect.validPosition ? Appearance.colors.colPrimary : Appearance.colors.colOnErrorContainer
+                }
+            }
+        }
+
+        HoverHandler {
+            id: monitorHover
+            enabled: !root.monitorLayoutBusy && root.niriOutputNames().length > 1
+            cursorShape: monitorDrag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+        }
+
+        DragHandler {
+            id: monitorDrag
+            target: null
+            enabled: !root.monitorLayoutBusy && root.niriOutputNames().length > 1
+            acceptedButtons: Qt.LeftButton
+            grabPermissions: PointerHandler.CanTakeOverFromAnything
+
+            onActiveChanged: {
+                if (active) {
+                    monitorRect.dragging = true
+                    root.draggingLayoutOutput = monitorRect.outputName
+                    monitorRect.awaitingCommit = false
+                    monitorRect.originalLogical = Qt.point(Number(monitorRect.logical.x ?? 0), Number(monitorRect.logical.y ?? 0))
+                    monitorRect.rawLogical = monitorRect.originalLogical
+                    monitorRect.snappedLogical = monitorRect.originalLogical
+                    monitorRect.dragOriginCanvasX = monitorRect.baseCanvasX
+                    monitorRect.dragOriginCanvasY = monitorRect.baseCanvasY
+                    monitorRect.heldX = monitorRect.dragOriginCanvasX
+                    monitorRect.heldY = monitorRect.dragOriginCanvasY
+                    monitorRect.validPosition = true
+                    root.monitorLayoutError = ""
+                    root.monitorLayoutInfo = ""
+                    root.monitorLayoutWarning = ""
+                    return
+                }
+
+                if (!monitorRect.dragging)
+                    return
+
+                const rawX = monitorRect.rawLogical.x
+                const rawY = monitorRect.rawLogical.y
+                let finalPosition = monitorRect.snappedLogical
+                const finalIsValid = !root.monitorPositionOverlaps(
+                        monitorRect.outputName, finalPosition.x, finalPosition.y,
+                        monitorRect.logicalWidth, monitorRect.logicalHeight)
+
+                if (!finalIsValid) {
+                    finalPosition = root.nearestValidPlacement(
+                        monitorRect.outputName, rawX, rawY,
+                        monitorRect.logicalWidth, monitorRect.logicalHeight,
+                        Infinity, true)
+                }
+
+                const validFinal = !root.monitorPositionOverlaps(
+                        monitorRect.outputName, finalPosition.x, finalPosition.y,
+                        monitorRect.logicalWidth, monitorRect.logicalHeight)
+
+                monitorRect.dragging = false
+                root.draggingLayoutOutput = ""
+                if (!validFinal) {
+                    monitorRect.awaitingCommit = false
+                    monitorRect.heldX = monitorRect.baseCanvasX
+                    monitorRect.heldY = monitorRect.baseCanvasY
+                    monitorRect.validPosition = true
+                    root.monitorLayoutError = Translation.tr("Monitors cannot overlap. Move this display beside or away from the others.")
+                    return
+                }
+
+                const newX = Math.round(finalPosition.x)
+                const newY = Math.round(finalPosition.y)
+                monitorRect.snappedLogical = Qt.point(newX, newY)
+                monitorRect.heldX = newX * monitorRect.canvasScale + monitorRect.canvasOffset.x
+                monitorRect.heldY = newY * monitorRect.canvasScale + monitorRect.canvasOffset.y
+                monitorRect.awaitingCommit = newX !== monitorRect.originalLogical.x || newY !== monitorRect.originalLogical.y
+                root.commitMonitorPosition(monitorRect.outputName, newX, newY,
+                    monitorRect.originalLogical.x, monitorRect.originalLogical.y)
+            }
+
+            onTranslationChanged: {
+                if (!active || monitorRect.canvasScale <= 0)
+                    return
+
+                const margin = Appearance.sizes.spacingSmall
+                const maxX = Math.max(margin, monitorRect.parent.width - monitorRect.width - margin)
+                const maxY = Math.max(margin, monitorRect.parent.height - monitorRect.height - margin)
+                monitorRect.heldX = Math.max(margin, Math.min(maxX, monitorRect.dragOriginCanvasX + translation.x))
+                monitorRect.heldY = Math.max(margin, Math.min(maxY, monitorRect.dragOriginCanvasY + translation.y))
+
+                const rawX = Math.round((monitorRect.heldX - monitorRect.canvasOffset.x) / monitorRect.canvasScale)
+                const rawY = Math.round((monitorRect.heldY - monitorRect.canvasOffset.y) / monitorRect.canvasScale)
+                monitorRect.rawLogical = Qt.point(rawX, rawY)
+
+                const snapThreshold = Math.max(96, 22 / monitorRect.canvasScale)
+                const candidate = root.nearestValidPlacement(
+                    monitorRect.outputName, rawX, rawY,
+                    monitorRect.logicalWidth, monitorRect.logicalHeight,
+                    snapThreshold, false)
+                monitorRect.snappedLogical = candidate
+                monitorRect.validPosition = !root.monitorPositionOverlaps(
+                    monitorRect.outputName, candidate.x, candidate.y,
+                    monitorRect.logicalWidth, monitorRect.logicalHeight)
+            }
+
+            onCanceled: {
+                monitorRect.dragging = false
+                root.draggingLayoutOutput = ""
+                monitorRect.awaitingCommit = false
+                monitorRect.validPosition = true
+                monitorRect.heldX = monitorRect.baseCanvasX
+                monitorRect.heldY = monitorRect.baseCanvasY
             }
         }
     }
@@ -566,6 +1199,170 @@ ContentPage {
 
     SettingsCardSection {
         settingsTaskSection: "outputs"
+        visible: root.activeSection === "outputs" && CompositorService.isNiri
+        expanded: true
+        icon: "screen_rotation_alt"
+        title: Translation.tr("Monitor arrangement")
+
+        SettingsGroup {
+            NoticeBox {
+                Layout.fillWidth: true
+                materialIcon: "drag_pan"
+                text: root.niriOutputNames().length > 1
+                    ? Translation.tr("Drag displays to match your desk. Nearby edges and alignments snap automatically. Gaps are allowed, but Niri's pointer only crosses directly adjacent outputs.")
+                    : Translation.tr("Connect another display to arrange monitor positions.")
+            }
+
+            Rectangle {
+                id: monitorLayoutCanvas
+                Layout.fillWidth: true
+                implicitHeight: 292
+                radius: Appearance.rounding.normal
+                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                    : Appearance.colors.colLayer1
+                border.width: 1
+                border.color: SettingsMaterialPreset.groupBorderColor
+                clip: true
+
+                readonly property var layoutBounds: root.monitorLayoutBounds()
+                readonly property real worldPaddingX: Math.max(240, layoutBounds.width * 0.12)
+                readonly property real worldPaddingY: Math.max(180, layoutBounds.height * 0.28)
+                readonly property var bounds: ({
+                    minX: layoutBounds.minX - worldPaddingX,
+                    minY: layoutBounds.minY - worldPaddingY,
+                    width: layoutBounds.width + worldPaddingX * 2,
+                    height: layoutBounds.height + worldPaddingY * 2
+                })
+                readonly property real innerPadding: Appearance.sizes.spacingLarge
+                readonly property real fitScale: {
+                    const usableWidth = Math.max(1, width - innerPadding * 2)
+                    const usableHeight = Math.max(1, height - innerPadding * 2)
+                    return Math.min(usableWidth / Math.max(1, bounds.width), usableHeight / Math.max(1, bounds.height))
+                }
+                readonly property real canvasScale: Math.max(0.025, fitScale)
+                readonly property point canvasOffset: Qt.point(
+                    (width - bounds.width * canvasScale) / 2 - bounds.minX * canvasScale,
+                    (height - bounds.height * canvasScale) / 2 - bounds.minY * canvasScale)
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.width: 0
+
+                    Repeater {
+                        model: 5
+                        Rectangle {
+                            required property int index
+                            x: (index + 1) * parent.width / 6
+                            width: 1
+                            height: parent.height
+                            color: Appearance.colors.colOutlineVariant
+                            opacity: 0.08
+                        }
+                    }
+
+                    Repeater {
+                        model: 3
+                        Rectangle {
+                            required property int index
+                            y: (index + 1) * parent.height / 4
+                            height: 1
+                            width: parent.width
+                            color: Appearance.colors.colOutlineVariant
+                            opacity: 0.08
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: root.niriOutputNames()
+
+                    MonitorLayoutRect {
+                        required property var modelData
+                        outputName: String(modelData)
+                        canvasScale: monitorLayoutCanvas.canvasScale
+                        canvasOffset: monitorLayoutCanvas.canvasOffset
+                    }
+                }
+
+                RippleButton {
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.margins: Appearance.sizes.spacingSmall
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    buttonRadius: Appearance.rounding.full
+                    colBackground: Appearance.colors.colLayer1
+                    colBackgroundHover: Appearance.colors.colLayer1Hover
+                    colRipple: Appearance.colors.colLayer1Active
+                    onClicked: root.monitorLayoutViewportBounds = root.boundsForLayout(root.monitorLayoutSnapshot)
+
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "fit_screen"
+                        iconSize: Appearance.font.pixelSize.normal
+                        color: Appearance.colors.colOnLayer1
+                    }
+                    StyledToolTip { text: Translation.tr("Recenter monitor layout") }
+                }
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.bottom: parent.bottom
+                    anchors.margins: Appearance.sizes.spacingSmall
+                    visible: root.monitorLayoutBusy
+                    implicitWidth: busyRow.implicitWidth + Appearance.sizes.spacingMedium * 2
+                    implicitHeight: busyRow.implicitHeight + Appearance.sizes.spacingSmall
+                    radius: Appearance.rounding.full
+                    color: Appearance.colors.colPrimaryContainer
+
+                    RowLayout {
+                        id: busyRow
+                        anchors.centerIn: parent
+                        spacing: Appearance.sizes.spacingSmall / 2
+
+                        MaterialSymbol {
+                            text: "sync"
+                            iconSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colOnPrimaryContainer
+                        }
+
+                        StyledText {
+                            text: root.monitorLayoutInfo
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: Font.Medium
+                            color: Appearance.colors.colOnPrimaryContainer
+                        }
+                    }
+                }
+            }
+
+            SettingsNote {
+                visible: root.monitorLayoutError.length > 0
+                warning: true
+                icon: "error"
+                text: root.monitorLayoutError
+            }
+
+            SettingsNote {
+                visible: root.monitorLayoutWarning.length > 0
+                warning: true
+                icon: "link_off"
+                text: root.monitorLayoutWarning
+            }
+
+            SettingsNote {
+                visible: !root.monitorLayoutBusy && root.monitorLayoutError.length === 0 && root.monitorLayoutInfo.length > 0
+                icon: "check_circle"
+                text: root.monitorLayoutInfo
+            }
+        }
+    }
+
+    SettingsCardSection {
+        settingsTaskSection: "outputs"
         visible: root.activeSection === "outputs"
         expanded: true
         icon: "settings_input_component"
@@ -575,7 +1372,7 @@ ContentPage {
             NoticeBox {
                 Layout.fillWidth: true
                 materialIcon: "info"
-                text: Translation.tr("This page controls where iNiR shell surfaces appear. It does not change monitor resolution, scale, rotation, or physical output layout.")
+                text: Translation.tr("Primary monitor controls iNiR's fallback output. Resolution, scale, rotation and advanced display options remain available in Compositor settings.")
             }
 
             ContentSubsection {

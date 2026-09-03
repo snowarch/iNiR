@@ -42,6 +42,7 @@ Singleton {
     property bool _pendingNeedsThemeFile: false
     property string _pendingSourceBasename: ""  // Track source for smart naming
 
+    readonly property string _gowallBin: "gowall"
     readonly property string _runtimeDir: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/gowall`)
     readonly property string _customThemePath: FileUtils.trimFileProtocol(`${_runtimeDir}/custom-theme.json`)
     readonly property string _outputDir: FileUtils.trimFileProtocol(`${Directories.pictures}/Wallpapers/Gowall`)
@@ -103,7 +104,7 @@ Singleton {
         if (!_guardReady(src)) return
         if (themeName.length === 0) return
         const fmt = _ext(format)
-        _runOperation(["/usr/bin/gowall", "convert", src, "--theme", themeName, "--output", _previewPathFor(fmt), "--format", fmt], fmt, "", false, _basenameWithoutExt(src))
+        _runOperation([root._gowallBin, "convert", src, "--theme", themeName, "--output", _previewPathFor(fmt), "--format", fmt], fmt, "", false, _basenameWithoutExt(src))
     }
 
     // convert --theme <json> (custom palette)
@@ -115,7 +116,7 @@ Singleton {
         const label = (themeName ?? "").length > 0 ? themeName : "custom"
         const json = JSON.stringify({ name: label, colors: palette }, null, 2)
         const fmt = _ext(format)
-        _runOperation(["/usr/bin/gowall", "convert", src, "--theme", _customThemePath, "--output", _previewPathFor(fmt), "--format", fmt], fmt, json, true, _basenameWithoutExt(src))
+        _runOperation([root._gowallBin, "convert", src, "--theme", _customThemePath, "--output", _previewPathFor(fmt), "--format", fmt], fmt, json, true, _basenameWithoutExt(src))
     }
 
     function convertCurrentTheme(sourcePath: string, format: string): void {
@@ -125,7 +126,7 @@ Singleton {
         if (palette.length === 0) { error = "Current iNiR theme palette is unavailable"; return }
         const json = JSON.stringify({ name: "inir-current", colors: palette }, null, 2)
         const fmt = _ext(format)
-        _runOperation(["/usr/bin/gowall", "convert", src, "--theme", _customThemePath, "--output", _previewPathFor(fmt), "--format", fmt], fmt, json, true, _basenameWithoutExt(src))
+        _runOperation([root._gowallBin, "convert", src, "--theme", _customThemePath, "--output", _previewPathFor(fmt), "--format", fmt], fmt, json, true, _basenameWithoutExt(src))
     }
 
     // effects grayscale / flip / mirror
@@ -133,7 +134,7 @@ Singleton {
         const src = _norm(sourcePath)
         if (!_guardReady(src)) return
         const fmt = _ext(format)
-        _runOperation(["/usr/bin/gowall", "effects", effectName, src, "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src))
+        _runOperation([root._gowallBin, "effects", effectName, src, "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src))
     }
 
     // effects br --factor <f>
@@ -141,7 +142,7 @@ Singleton {
         const src = _norm(sourcePath)
         if (!_guardReady(src)) return
         const fmt = _ext(format)
-        _runOperation(["/usr/bin/gowall", "effects", "br", src, "--factor", String(factor), "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src))
+        _runOperation([root._gowallBin, "effects", "br", src, "--factor", String(factor), "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src))
     }
 
     // invert
@@ -149,7 +150,7 @@ Singleton {
         const src = _norm(sourcePath)
         if (!_guardReady(src)) return
         const fmt = _ext(format)
-        _runOperation(["/usr/bin/gowall", "invert", src, "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src))
+        _runOperation([root._gowallBin, "invert", src, "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src))
     }
 
     // pixelate --scale <s>
@@ -157,7 +158,7 @@ Singleton {
         const src = _norm(sourcePath)
         if (!_guardReady(src)) return
         const fmt = _ext(format)
-        _runOperation(["/usr/bin/gowall", "pixelate", src, "--scale", String(scale), "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src))
+        _runOperation([root._gowallBin, "pixelate", src, "--scale", String(scale), "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src))
     }
 
     // extract -c <n>
@@ -165,7 +166,7 @@ Singleton {
         const src = _norm(sourcePath)
         if (!_guardReady(src)) return
         extractedColors = []
-        extractProc.command = ["/usr/bin/gowall", "extract", src, "-c", String(numColors)]
+        extractProc.command = [root._gowallBin, "extract", src, "-c", String(numColors)]
         extractProc.running = true
     }
 
@@ -174,7 +175,7 @@ Singleton {
         const src = _norm(sourcePath)
         if (!_guardReady(src)) return
         const fmt = _ext(format)
-        _runOperation(["/usr/bin/gowall", "draw", "border", src,
+        _runOperation([root._gowallBin, "draw", "border", src,
             "--color", borderColor, "--borderThickness", String(thickness),
             "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src))
     }
@@ -184,7 +185,7 @@ Singleton {
         const src = _norm(sourcePath)
         if (!_guardReady(src)) return
         const fmt = _ext(format)
-        _runOperation(["/usr/bin/gowall", "draw", "grid", src,
+        _runOperation([root._gowallBin, "draw", "grid", src,
             "--color", gridColor, "--size", String(gridSize), "--thickness", String(thickness),
             "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src))
     }
@@ -194,7 +195,7 @@ Singleton {
         const src = _norm(sourcePath)
         if (!_guardReady(src)) return
         const outPath = `${previewFile}-compressed.${_extFromPath(src)}`
-        const cmd = ["/usr/bin/gowall", "compress", src, "--quality", String(quality), "--output", outPath]
+        const cmd = [root._gowallBin, "compress", src, "--quality", String(quality), "--output", outPath]
         if (method.length > 0)
             cmd.push("--method", method)
         compressProc._outputPath = outPath
@@ -208,7 +209,7 @@ Singleton {
         const src = _norm(sourcePath)
         if (!_guardReady(src)) return
         const fmt = _ext(format)
-        _runOperation(["/usr/bin/gowall", "bg", src,
+        _runOperation([root._gowallBin, "bg", src,
             "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src))
     }
 
@@ -217,7 +218,7 @@ Singleton {
         const src = _norm(sourcePath)
         if (!_guardReady(src)) return
         const fmt = _ext(format)
-        _runOperation(["/usr/bin/gowall", "convert", src,
+        _runOperation([root._gowallBin, "convert", src,
             "--replace", `${fromColor},${toColor}`,
             "--output", _previewPathFor(fmt), "--format", fmt], fmt, "", false, _basenameWithoutExt(src))
     }
@@ -227,7 +228,7 @@ Singleton {
         const src = _norm(sourcePath)
         if (!_guardReady(src)) return
         const fmt = _ext(format)
-        _runOperation(["/usr/bin/gowall", "upscale", src,
+        _runOperation([root._gowallBin, "upscale", src,
             "--scale", String(scale), "--model", model,
             "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src) + "-upscaled")
     }
@@ -374,7 +375,7 @@ Singleton {
 
     Process {
         id: listThemesProc
-        command: ["/usr/bin/gowall", "list"]
+        command: [root._gowallBin, "list"]
         stdout: SplitParser {
             onRead: data => {
                 const theme = data.trim()
@@ -455,7 +456,7 @@ Singleton {
     Process {
         id: extractProc
         environment: root._gowallEnv
-        command: ["/usr/bin/gowall", "extract", "/dev/null"]
+        command: [root._gowallBin, "extract", "/dev/null"]
         stdout: SplitParser {
             onRead: data => {
                 const line = data.trim()

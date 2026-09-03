@@ -18,6 +18,10 @@ DashCard {
 
     // Host (DashboardContent) opens the shared events dialog; null = new event.
     signal requestEventsDialog(var event)
+    signal requestExpand()
+    headerActionIcon: "open_in_full"
+    headerActionTooltip: Translation.tr("Open full agenda")
+    onHeaderAction: requestExpand()
 
     readonly property int lookaheadDays: 14
     readonly property int maxRows: 8

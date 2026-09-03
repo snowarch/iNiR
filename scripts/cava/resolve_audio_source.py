@@ -8,6 +8,7 @@ monitor when nothing better exists.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -67,6 +68,7 @@ PREFERRED_PLAYBACK_TOKENS = (
     "youtube-music",
     "youtube_music",
     "ytmusic",
+    "ncspot",
 )
 
 DESKTOP_ENTRY_BINARIES: dict[str, tuple[str, ...]] = {
@@ -90,6 +92,7 @@ DESKTOP_ENTRY_BINARIES: dict[str, tuple[str, ...]] = {
     "youtube-music": ("youtube-music", "youtube_music", "ytmusic", "mpv"),
     "youtube_music": ("youtube-music", "youtube_music", "ytmusic", "mpv"),
     "ytmusic": ("youtube-music", "youtube_music", "ytmusic", "mpv"),
+    "ncspot": ("ncspot",),
     "com.github.th_ch.youtube_music": ("youtube-music", "youtube_music", "ytmusic"),
 }
 
@@ -230,6 +233,36 @@ def _hint_binaries(desktop_entry: str) -> set[str]:
     return hints
 
 
+def _normalize_identity(value: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", value.lower())
+
+
+def _allowed_hints(allowed_apps: list[str]) -> tuple[set[str], set[str]]:
+    tokens: set[str] = set()
+    aliases: set[str] = set()
+    for app in allowed_apps:
+        normalized = _normalize_identity(app)
+        if normalized:
+            tokens.add(normalized)
+        aliases.update(_hint_binaries(app))
+    return tokens, aliases
+
+
+def _matches_allowed(stream: SinkInput, allowed_apps: list[str]) -> bool:
+    if not allowed_apps:
+        return True
+
+    tokens, aliases = _allowed_hints(allowed_apps)
+    identity = " ".join((
+        stream.node_name, stream.media_name, stream.app_name,
+        stream.app_id, stream.binary,
+    )).lower()
+    normalized_identity = _normalize_identity(identity)
+    if any(token in normalized_identity for token in tokens):
+        return True
+    return any(alias and alias in identity for alias in aliases)
+
+
 def _is_excluded(stream: SinkInput) -> bool:
     if any(token in stream.app_name for token in EXCLUDED_APP_NAMES):
         return True
@@ -242,11 +275,13 @@ def _is_excluded(stream: SinkInput) -> bool:
     return False
 
 
-def _score_stream(stream: SinkInput, hint_binaries: set[str]) -> int:
+def _score_stream(stream: SinkInput, hint_binaries: set[str], allowed_apps: list[str]) -> int:
     if _is_excluded(stream):
         return -10_000
     if stream.corked:
         return -5_000
+    if not _matches_allowed(stream, allowed_apps):
+        return -10_000
 
     score = 180
     if stream.media_role == "music":
@@ -290,18 +325,24 @@ def _default_sink_monitor() -> str:
     return "auto"
 
 
-def resolve_source(desktop_entry: str = "") -> str:
+def resolve_source(desktop_entry: str = "", allowed_apps: list[str] | None = None) -> str:
+    allowed_apps = allowed_apps or []
     server_info = _run(["pactl", "info"])
     if not server_info:
-        return "auto"
+        return "" if allowed_apps else "auto"
     is_pipewire = "pipewire" in server_info.lower()
 
     clients = _parse_clients(_run(["pactl", "list", "clients"]))
     streams = _parse_sink_inputs(_run(["pactl", "list", "sink-inputs"]), clients)
-    hint_binaries = _hint_binaries(desktop_entry)
+    # An explicit allowlist is the source authority. Without one, preserve the
+    # existing active-MPRIS-player preference.
+    if allowed_apps:
+        _, hint_binaries = _allowed_hints(allowed_apps)
+    else:
+        hint_binaries = _hint_binaries(desktop_entry)
 
     ranked = sorted(
-        ((_score_stream(stream, hint_binaries), stream) for stream in streams),
+        ((_score_stream(stream, hint_binaries, allowed_apps), stream) for stream in streams),
         key=lambda item: (item[0], item[1].index),
         reverse=True,
     )
@@ -313,7 +354,7 @@ def resolve_source(desktop_entry: str = "") -> str:
             return stream.node_name
 
     # VoIP/system streams only — don't fall back to the full sink mix (Discord voices, etc.)
-    if streams:
+    if streams or allowed_apps:
         return ""
 
     return _default_sink_monitor()
@@ -322,8 +363,19 @@ def resolve_source(desktop_entry: str = "") -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--desktop-entry", default="")
+    parser.add_argument("--allowed-apps-json", default="[]")
     args = parser.parse_args()
-    print(resolve_source(args.desktop_entry))
+    try:
+        parsed = json.loads(args.allowed_apps_json)
+        allowed_apps = [str(value).strip() for value in parsed if str(value).strip()] \
+            if isinstance(parsed, list) else []
+    except (json.JSONDecodeError, TypeError):
+        allowed_apps = []
+
+    source = resolve_source(args.desktop_entry, allowed_apps)
+    if allowed_apps and not source:
+        raise SystemExit(3)
+    print(source)
 
 
 if __name__ == "__main__":

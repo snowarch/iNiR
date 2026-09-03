@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.30.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -273,6 +273,7 @@ Ver [CONTRIBUTING.md](../../CONTRIBUTING.md) para setup de desarrollo, patrones 
 ## Créditos
 
 - [**end-4**](https://github.com/end-4/dots-hyprland) — illogical-impulse original para Hyprland
+- [**pctrade/end4-pC**](https://github.com/pctrade/end4-pC) — un fork que, de vez en cuando, tiene una idea realmente buena
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — el framework que hace posible este shell
 - [**Niri**](https://github.com/YaLTeR/niri) — el compositor Wayland de tiling scrollable
 

@@ -23,7 +23,7 @@ Scope {
     readonly property int intervalMinutes: Config.options?.mascot?.companion?.intervalMinutes ?? 25
     readonly property int spriteSize: Config.options?.mascot?.companion?.size ?? 150
     readonly property string placement: Config.options?.mascot?.companion?.placement ?? "peek"
-    readonly property int visibleSeconds: Config.options?.mascot?.companion?.visibleSeconds ?? 8
+    readonly property int visibleSeconds: Config.options?.mascot?.companion?.visibleSeconds ?? 5
     readonly property int slideMs: Config.options?.mascot?.companion?.slideMs ?? 400
     // Per-peek entrance profile, re-rolled on every show so arrivals stop
     // feeling metronomic: sometimes she zips out, sometimes she creeps in
@@ -622,7 +622,12 @@ Scope {
             if (usePool.length === 0) { root._showReaction(mpose, "right", "media"); return }
             const truncatedTitle = title.length > 40 ? title.substring(0, 37) + "..." : title
             let text = Translation.tr(root._pickFrom(usePool))
-            text = artist.length > 0 ? text.arg(truncatedTitle).arg(artist) : text.arg(truncatedTitle)
+            // QString::arg replaces the lowest-numbered placeholder first, so a
+            // line containing only %2 consumes the title and then warns when the
+            // artist is applied. Preserve the manifest's positional contract.
+            text = text.replace(/%1/g, truncatedTitle)
+            if (artist.length > 0)
+                text = text.replace(/%2/g, artist)
             root._reactWithLine(mpose, "right", "media", text)
         }
     }

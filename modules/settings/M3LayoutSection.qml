@@ -13,6 +13,7 @@ ContentSubsection {
     property var layout: []
     property var availableWidgets: []
     property var getWidgetName: (id) => id
+    property var getWidgetDescription: (id) => ""
     property var onUpdate: (list) => {}
 
     title: sectionTitle
@@ -54,6 +55,14 @@ ContentSubsection {
                             const next = root.layout.slice()
                             next.splice(index, 1)
                             root.onUpdate(next)
+                        }
+
+                        StyledToolTip {
+                            text: {
+                                const detail = root.getWidgetDescription(selectedChip.modelData)
+                                const action = Translation.tr("Drag to reorder. Click to remove.")
+                                return detail.length > 0 ? `${detail}\n${action}` : action
+                            }
                         }
 
                         DragHandler {
@@ -166,6 +175,9 @@ ContentSubsection {
                             root.onUpdate(next)
                             if (modelData.id !== "visualizer" && modelData.id !== "divisor")
                                 chooser.open = false
+                        }
+                        StyledToolTip {
+                            text: modelData.description ?? Translation.tr("Add to this section")
                         }
                     }
                 }

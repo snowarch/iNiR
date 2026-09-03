@@ -29,6 +29,15 @@ fi
 MIGRATIONS_STATE_FILE="${_inir_config_dir}/migrations.json"
 MIGRATIONS_BACKUP_DIR="${_inir_config_dir}/backups"
 
+# Session-impact notices live only for the current setup process. A migration can
+# opt in when its change cannot be fully realized by restarting Quickshell alone.
+SESSION_IMPACT_NOTICE_IDS=()
+SESSION_IMPACT_NOTICE_TITLES=()
+SESSION_IMPACT_NOTICE_REFERENCES=()
+SESSION_IMPACT_NOTICE_REASONS=()
+SESSION_IMPACT_NOTICE_EFFECTS=()
+SESSION_IMPACT_NOTICE_ACTIONS=()
+
 # Historical migrations whose side effects are no longer part of the product.
 # Keep their files for upgrade history, but never execute them again.
 RETIRED_MIGRATIONS=(
@@ -255,11 +264,43 @@ load_migration() {
     MIGRATION_DESCRIPTION=""
     MIGRATION_TARGET_FILE=""
     MIGRATION_REQUIRED=false
+    MIGRATION_SESSION_IMPACT=false
+    MIGRATION_SESSION_REFERENCE=""
+    MIGRATION_SESSION_REASON=""
+    MIGRATION_SESSION_EFFECT=""
+    MIGRATION_SESSION_ACTION=""
     
     # Unset previous functions
     unset -f migration_check migration_preview migration_diff migration_apply 2>/dev/null
     
     source "$migration_file"
+}
+
+record_migration_session_impact() {
+    [[ "${MIGRATION_SESSION_IMPACT:-false}" == "true" ]] || return 0
+
+    SESSION_IMPACT_NOTICE_IDS+=("${MIGRATION_ID}")
+    SESSION_IMPACT_NOTICE_TITLES+=("${MIGRATION_TITLE:-$MIGRATION_ID}")
+    SESSION_IMPACT_NOTICE_REFERENCES+=("${MIGRATION_SESSION_REFERENCE:-$MIGRATION_ID}")
+    SESSION_IMPACT_NOTICE_REASONS+=("${MIGRATION_SESSION_REASON:-A session-owned component changed.}")
+    SESSION_IMPACT_NOTICE_EFFECTS+=("${MIGRATION_SESSION_EFFECT:-The current login session may still hold the previous state.}")
+    SESSION_IMPACT_NOTICE_ACTIONS+=("${MIGRATION_SESSION_ACTION:-Log out and back in, or reboot.}")
+}
+
+show_session_impact_notices() {
+    [[ ${#SESSION_IMPACT_NOTICE_IDS[@]} -gt 0 ]] || return 0
+
+    echo ""
+    tui_title "Session restart recommended"
+    local i
+    for ((i = 0; i < ${#SESSION_IMPACT_NOTICE_IDS[@]}; i++)); do
+        tui_warn "${SESSION_IMPACT_NOTICE_TITLES[$i]}"
+        tui_info "Change: ${SESSION_IMPACT_NOTICE_REFERENCES[$i]}"
+        tui_info "Why: ${SESSION_IMPACT_NOTICE_REASONS[$i]}"
+        tui_info "Until then: ${SESSION_IMPACT_NOTICE_EFFECTS[$i]}"
+        tui_info "Recommended: ${SESSION_IMPACT_NOTICE_ACTIONS[$i]}"
+        [[ $i -lt $((${#SESSION_IMPACT_NOTICE_IDS[@]} - 1)) ]] && echo ""
+    done
 }
 
 apply_migration() {
@@ -301,6 +342,7 @@ apply_migration() {
     if type migration_apply &>/dev/null; then
         if migration_apply; then
             mark_migration_applied "$migration_id"
+            record_migration_session_impact
             tui_check_ok "Applied: $MIGRATION_TITLE"
             return 0
         else

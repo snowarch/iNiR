@@ -5,10 +5,56 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.30.0] - 2026-09-03
+
+This release brings the **wallpaper transition pipeline** to a stable base, expands **desktop tools** and **media controls**, and closes a long list of setup, runtime and Settings issues across ii and Waffle xd
+
+2.30.0 is not meant to be the final shape of any of this. It is the base I am choosing to build on for the next stage of iNiR. There will be bugs, regressions and things that need to be reworked as development continues, but this release is where I am starting that next stage.
+
+### Added
+
+- **Multilingual OCR** now includes Japanese and Chinese modes, Japanese dictionary lookup, optional Anki export and downloadable study resources.
+- **Desktop widgets** now include calendar, pixel clock, timer and to-do tools with persistent state and matching Settings controls.
+- **Wallpaper shader transitions** add a larger internal transition set, random shader selection and shared controls in ii and Waffle.
+- **Organic audio rendering** is now available in the Visualizer and Media Player with configurable response, range, glow, idle motion and presentation controls.
+- **Dashboard and sidebar organizers** can open expanded calendar, agenda and to-do views.
+- **Niri monitor arrangement** is available directly from Monitor Settings and persists the output layout.
+- **App-level filters** can exclude applications from notifications and visualizer audio sources.
+
+### Changed
+
+- **Orbit** navigation, workspace motion, shelf density and preview refresh were refined, with bounded preview memory and cleaner presentation lifetimes.
+- **Wallpaper ownership** is now explicit. Internal shader transitions stay inside the QML renderer while AWWW remains synchronized underneath, removing the visible handoff between renderers.
+- **Wallpaper preview, apply and cancel** now share one state machine, coalesce rapid navigation and avoid repainting an already presented preview.
+- **Wallpaper fill and backdrop rendering** keep the final crop and quality more consistently across low resolution and mixed aspect ratio images.
+- **Visualizer and Media Player** now share the same Cava normalization, palette and Organic rendering path while keeping independent quick controls.
+- **Setup and Doctor** use more distro-appropriate dependency paths on Arch, Fedora and Debian, with repository-first providers and cleaner fallbacks. Nix packaging and runtime tool resolution were updated too.
+- **Niri launcher integration** is portable across repo-link and login sessions, and the generated IPC registry matches the current command surface.
+- **Session startup** now gives Niri ownership of compositor environment state, waits for the real runtime and handles suspend locking more safely.
+- **Settings** now opens in Advanced mode by default and app filtering is available consistently in ii and Waffle.
+- **Mascot defaults** and optional pack guidance were aligned so fresh installs stay opt-in and existing configurations are not rewritten unexpectedly.
+- **YT Music** runtime authentication and dependency handling were hardened across supported distributions.
+- **M3 dock and bar layout** behavior was refined so context menus, workspace placement and module ordering remain usable under tight width and custom ordering.
+- **Organizer expansion controls** now live in the calendar, events and to-do widget headers instead of changing the sidebar navigation rail.
+- **Release and Arch package metadata** are aligned on version 2.30.0, and obsolete allocator tuning was removed from the runtime.
 
 ### Fixed
-- **Mascot sprites on NixOS**: `packages.<system>.inir-with-mascot` now provides a ready-to-use iNiR package with the optional mascot art pack, without requiring users to assemble a `symlinkJoin` themselves.
+
+- **Wallpaper shader previews** no longer flash the currently applied wallpaper between frames, and rapid preview changes no longer expose AWWW underneath the transition.
+- **Wallpaper transition geometry** no longer shows provisional resize, recenter or crop states before the final image geometry is ready.
+- **Preview and screenshot capture** no longer replace the user clipboard or pollute cliphist, while normal Niri screenshot notifications keep their icon.
+- **Fedora and Debian dependency repair** no longer treats Arch package names, command IDs or Flatpak IDs as native packages, and Fedora prefers packaged AWWW providers before source builds.
+- **SDDM setup** no longer overrides the distro greeter backend or input method.
+- **Nix installs** now resolve preview tools from the service environment and keep Niri and optional mascot packaging consistent.
+- **Overview desktop app drag** works again and Dashboard layout no longer regresses while moving items.
+- **Visualizer wave and bars controls** keep their sensitivity, smoothing, color and bar settings after the Organic work.
+- **Pixel Clock, setup output and Niri night light** behavior was cleaned up without changing user configuration.
+- **Taskbar application state** no longer enters a recursive binding loop.
+- **Bar auto-hide, tray interactions and constrained layouts** are more stable, and workspace modules can move through the full supported ordering range.
+- **Material text fields and system widgets** render more cleanly, CPU and GPU temperatures are separated, stale notification image handles fall back safely, and idle Custom Image shape tooltips stay hidden.
+- **Crosshair chrome and masked user services** now handle their edge cases without clipping outside the rounded frame or breaking setup/runtime repair.
+- **Repo-link installs** keep launcher and service files synchronized with the live checkout instead of leaving stale runtime copies.
+- **Managed Python dependency documentation** now matches the runtime sources used by the project.
 
 ## [2.29.3] - 2026-08-25
 

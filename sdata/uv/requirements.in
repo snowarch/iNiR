@@ -15,6 +15,12 @@ opencv-contrib-python
 # System monitoring
 psutil
 
+# YT Music browsing / account API
+ytmusicapi>=1.12.0
+# Current playback runtime plus the local Chromium cookie loader. The shell
+# selects this managed executable before an older distro copy.
+yt-dlp[default,secretstorage]
+
 # CLI tools
 click
 loguru
@@ -22,3 +28,6 @@ tqdm
 
 # KDE/Qt theming (for wallpaper-based colors)
 kde-material-you-colors
+
+# Pear Desktop / YouTube Music live theme injection via CDP
+websockets>=13.0

@@ -90,8 +90,9 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 ### OCR
 
-- **Requires tesseract**: OCR won't work without `tesseract` and language data packages installed.
-- **English only by default**: Install `tesseract-data-<lang>` for other languages.
+- **Requires Tesseract**: OCR needs `tesseract` plus at least one language model.
+- **Language-aware**: the installer provides English, Spanish, Russian, Japanese, Simplified Chinese, and Traditional Chinese models, including vertical Japanese/Chinese variants. Tools > Snipping selects one model (or a deliberate combination) instead of running every installed model at once, which keeps recognition accuracy predictable.
+- **Auto mode follows the session locale** and falls back to an installed model if that locale's model is unavailable.
 
 ### Screen Recording
 

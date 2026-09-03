@@ -30,15 +30,17 @@ in
     systemd.user.services.inir = lib.mkIf cfg.service.enable {
       Unit = {
         Description = "iNiR shell";
-        PartOf = [ "graphical-session.target" ];
-        After = [ "graphical-session.target" ];
-        Requisite = [ "graphical-session.target" ];
+        PartOf = [ "niri.service" ];
+        Requisite = [ "niri.service" ];
+        After = [ "niri.service" ];
+        Before = [ "xdg-desktop-autostart.target" ];
         StartLimitIntervalSec = 30;
         StartLimitBurst = 3;
       };
 
       Service = {
-        Type = "simple";
+        Type = "dbus";
+        BusName = "org.kde.StatusNotifierWatcher";
         Environment = lib.mapAttrsToList (name: value: "${name}=${value}") env;
         ExecStart = "${lib.getExe finalPackage} run --session";
         ExecStopPost = "-${lib.getExe finalPackage} cleanup-orphans";

@@ -13,6 +13,7 @@ Item {
     
     // Signal to open external EventsDialog
     signal openEventsDialog(var editEvent)
+    signal requestExpand()
     
     property int fabSize: 48
     property int fabMargins: 14
@@ -141,6 +142,22 @@ Item {
                     font.family: Appearance.font.family.numbers
                     color: root.colBadgeText
                 }
+            }
+
+            RippleButton {
+                implicitWidth: 32
+                implicitHeight: 32
+                buttonRadius: Appearance.rounding.full
+                colBackground: "transparent"
+                colBackgroundHover: Appearance.colors.colLayer2Hover
+                onClicked: root.requestExpand()
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "open_in_full"
+                    iconSize: 17
+                    color: root.colPrimary
+                }
+                StyledToolTip { text: Translation.tr("Open full events view") }
             }
         }
         

@@ -335,6 +335,7 @@ Singleton {
         
         _log("[WindowPreviewService] Capturing", idsToCapture.length, "windows")
         capturing = true
+        GlobalStates.windowPreviewCaptureActive = true
         initialCapturesDone = true
         Cliphist.suppressRefresh = true
         
@@ -362,6 +363,7 @@ Singleton {
         
         _log("[WindowPreviewService] Force capturing all", windows.length, "windows")
         capturing = true
+        GlobalStates.windowPreviewCaptureActive = true
         Cliphist.suppressRefresh = true
         
         const ids = windows.map(w => w.id)
@@ -385,6 +387,7 @@ Singleton {
         
         onExited: (exitCode, exitStatus) => {
             root.capturing = false
+            GlobalStates.windowPreviewCaptureActive = false
             root._lastCaptureEndTime = Date.now()
 
             if (exitCode !== 0) {

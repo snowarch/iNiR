@@ -16,7 +16,7 @@ TextArea {
     Material.background: Appearance.regaliaEverywhere ? "transparent" : Appearance.colors.colLayer1
     Material.foreground: Appearance.regaliaEverywhere ? Appearance.regalia.onColor : Appearance.colors.colOnSurface
     Material.containerStyle: Material.Filled
-    renderType: Text.NativeRendering
+    renderType: Text.QtRendering
 
     // Integración con buscador global de Settings
     property bool enableSettingsSearch: true
@@ -128,7 +128,7 @@ TextArea {
     font {
         family: Appearance.font.family.main
         pixelSize: Appearance?.font.pixelSize.normal ?? 16
-        hintingPreference: Font.PreferFullHinting
+        hintingPreference: Font.PreferNoHinting
         variableAxes: Appearance.font.variableAxes.main
     }
     wrapMode: TextEdit.Wrap

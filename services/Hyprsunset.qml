@@ -101,10 +101,15 @@ Singleton {
 
     function _doEnable() {
         if (CompositorService.isNiri) {
-            // wlsunset: -T high temp (day), -t low temp (night)
-            // Force "always night" mode: sunset at 00:00, sunrise at 23:59
-            // Must use execDetached so wlsunset keeps running after Process ends
-            Quickshell.execDetached(["/usr/bin/wlsunset", "-T", "6500", "-t", root.colorTemperature.toString(), "-s", "00:00", "-S", "23:59"]);
+            // Keep night light outside inir.service's cgroup. It must survive
+            // shell reloads without being reported as a leaked child process.
+            // A transient user unit also gives us a precise lifecycle owner.
+            Quickshell.execDetached([
+                "/usr/bin/systemd-run", "--user", "--collect",
+                "--unit=inir-wlsunset.service",
+                "/usr/bin/wlsunset", "-T", "6500", "-t",
+                root.colorTemperature.toString(), "-s", "00:00", "-S", "23:59"
+            ]);
         } else {
             hyprsunsetStartProc.running = true;
         }
@@ -167,7 +172,11 @@ Singleton {
     // === Niri processes (wlsunset) ===
     Process {
         id: wlsunsetKillProc
-        command: ["/usr/bin/pkill", "-x", "wlsunset"]
+        // Stop the owned transient service. pkill is retained only to clean up
+        // pre-2.30 legacy instances that were spawned directly by Quickshell.
+        command: ["/usr/bin/bash", "-c",
+            "/usr/bin/systemctl --user stop inir-wlsunset.service >/dev/null 2>&1 || true; "
+            + "/usr/bin/pkill -x wlsunset >/dev/null 2>&1 || true"]
         onExited: {
             // If we're enabling, start wlsunset after kill completes
             if (root.active) {
@@ -176,13 +185,12 @@ Singleton {
         }
     }
 
-    // wlsunsetStartProc removed - using Quickshell.execDetached instead
-    // because Process terminates the child when it's destroyed/restarted
-
     Process {
         id: niriFetchProc
         running: CompositorService.isNiri
-        command: ["/usr/bin/pidof", "wlsunset"]
+        command: ["/usr/bin/bash", "-c",
+            "/usr/bin/systemctl --user is-active --quiet inir-wlsunset.service "
+            + "|| /usr/bin/pidof wlsunset >/dev/null"]
         onExited: (exitCode, exitStatus) => {
             root.active = (exitCode === 0);
         }

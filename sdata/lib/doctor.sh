@@ -40,12 +40,6 @@ doctor_detect_compositor_service() {
         printf 'niri.service'
         return 0
     fi
-
-    if systemctl --user cat 'wayland-wm@Hyprland.service' &>/dev/null; then
-        printf 'wayland-wm@Hyprland.service'
-        return 0
-    fi
-
     return 1
 }
 
@@ -84,7 +78,6 @@ check_dependencies() {
         "playerctl:playerctl"
         "notify-send:libnotify"
         "flock:util-linux"
-        "go:go"
         "wlsunset:wlsunset"
         "easyeffects:EasyEffects"
         "uv:uv"
@@ -101,7 +94,6 @@ check_dependencies() {
         "blueman-manager:Blueman"
         "gowall:gowall"
         "kwriteconfig6:KConfig"
-        "checkupdates:pacman-contrib"
         "ddcutil:ddcutil"
         "missioncenter:mission-center"
         "nm-connection-editor:nm-connection-editor"
@@ -113,6 +105,13 @@ check_dependencies() {
         "trans:translate-shell"
     )
 
+    # Arch's update service uses checkupdates from pacman-contrib. Other
+    # distros have their own package managers, so treating it as a universal
+    # runtime dependency creates a permanently-failing Doctor result.
+    if [[ "${OS_GROUP_ID:-unknown}" == "arch" ]]; then
+        cmds+=("checkupdates:pacman-contrib")
+    fi
+
     # Check required commands
     for item in "${cmds[@]}"; do
         local cmd="${item%%:*}"
@@ -120,6 +119,41 @@ check_dependencies() {
         if ! command -v "$cmd" &>/dev/null; then
             missing+=("$name")
             missing_cmds+=("$cmd")
+        fi
+    done
+
+    # Tesseract itself can be installed while the language data iNiR exposes in
+    # Settings is absent. Treat those models as first-class dependencies so an
+    # existing install can be repaired instead of failing every OCR attempt.
+    local tesseract_langs=""
+    if command -v tesseract &>/dev/null; then
+        tesseract_langs="$(tesseract --list-langs 2>/dev/null | tail -n +2)"
+        local inir_tessdata="${XDG_DATA_HOME:-$HOME/.local/share}/inir/tessdata"
+        if [[ -d "$inir_tessdata" ]]; then
+            local cached_model
+            for cached_model in "$inir_tessdata"/*.traineddata; do
+                [[ -e "$cached_model" ]] || continue
+                tesseract_langs+=$'\n'"$(basename "$cached_model" .traineddata)"
+            done
+        fi
+    fi
+    local ocr_models=(
+        "eng:ocr-eng:OCR English data"
+        "spa:ocr-spa:OCR Spanish data"
+        "rus:ocr-rus:OCR Russian data"
+        "jpn:ocr-jpn:OCR Japanese data"
+        "jpn_vert:ocr-jpn-vert:OCR Japanese vertical data"
+        "chi_sim:ocr-chi-sim:OCR Simplified Chinese data"
+        "chi_sim_vert:ocr-chi-sim-vert:OCR Simplified Chinese vertical data"
+        "chi_tra:ocr-chi-tra:OCR Traditional Chinese data"
+        "chi_tra_vert:ocr-chi-tra-vert:OCR Traditional Chinese vertical data"
+    )
+    local ocr_spec ocr_lang ocr_id ocr_name
+    for ocr_spec in "${ocr_models[@]}"; do
+        IFS=: read -r ocr_lang ocr_id ocr_name <<<"$ocr_spec"
+        if ! grep -Fxq "$ocr_lang" <<<"$tesseract_langs"; then
+            missing+=("$ocr_name")
+            missing_cmds+=("$ocr_id")
         fi
     done
     
@@ -473,6 +507,9 @@ check_python_packages() {
         while IFS= read -r line || [[ -n "$line" ]]; do
             [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
             local pkg="${line%%[<>=]*}"
+            # PEP 508 extras describe dependencies of the same distribution;
+            # `uv pip list` reports `yt-dlp`, never `yt-dlp[secretstorage]`.
+            pkg="${pkg%%[*}"
             pkg=$(echo "$pkg" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
             echo "$installed" | grep -q "^${pkg}$" || ((missing++)) || true
         done < "$req"
@@ -485,6 +522,16 @@ check_python_packages() {
         fi
     else
         doctor_fail "uv not installed, cannot check Python packages"
+    fi
+
+    local deno_bin
+    deno_bin="$(command -v deno 2>/dev/null || true)"
+    if ytmusic-deno-compatible "$deno_bin"; then
+        doctor_pass "YT Music JS runtime OK"
+    elif ensure-ytmusic-js-runtime; then
+        doctor_fix "Installed current Deno runtime for YT Music"
+    else
+        doctor_fail "YT Music JS runtime unavailable"
     fi
 }
 
@@ -599,7 +646,7 @@ check_fonts() {
         for font in "${missing_critical[@]}" "${missing_important[@]}"; do
             case "$font" in
                 "Material Symbols Rounded")
-                    _try_install_font_package "ttf-material-symbols-variable-git" "Material Symbols Rounded" && ((fixed++)) || true ;;
+                    _try_install_font_package "ttf-material-symbols-variable" "Material Symbols Rounded" && ((fixed++)) || true ;;
                 "JetBrainsMono Nerd Font")
                     _try_install_font_package "ttf-jetbrains-mono-nerd" "JetBrainsMono Nerd Font" && ((fixed++)) || true ;;
                 "Roboto Flex")

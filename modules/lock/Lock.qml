@@ -308,12 +308,29 @@ Scope {
             lockActivateDelay.restart();
         }
 
+        function prepareSleep(): string {
+            if (CompositorService.isHyprland && (Config.options?.lock?.useHyprlock ?? false)) {
+                Quickshell.execDetached(["/usr/bin/bash", "-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"]);
+                return "external";
+            }
+
+            // before-sleep must not return while the interactive debounce is still
+            // pending. The launcher waits for lock.secure before swayidle releases
+            // logind's delay inhibitor.
+            lockActivateDelay.stop();
+            if (!GlobalStates.screenLocked)
+                GlobalStates.screenLocked = true;
+            return lock.secure ? "secure" : "locking";
+        }
+
         function deactivate(): void {
             lockActivateDelay.stop();
             GlobalStates.screenLocked = false;
         }
 
         function status(): string {
+            if (lock.secure)
+                return "secure";
             if (GlobalStates.screenLocked)
                 return "locked";
             if (root._lockActivating)

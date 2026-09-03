@@ -341,7 +341,8 @@ ContentPage {
     }
 
     readonly property var m3Widgets: [
-        { id: "leftSidebarButton", name: Translation.tr("Left Sidebar Button"), icon: "left_panel_open" },
+        { id: "leftSidebarButton", name: Translation.tr("Left Sidebar Button"), icon: "left_panel_open",
+            description: Translation.tr("Opens the sidebar assigned to the left edge.") },
         { id: "workspaces", name: Translation.tr("Workspaces"), icon: "steppers" },
         { id: "weatherBar", name: Translation.tr("Weather"), icon: "flare" },
         { id: "media", name: Translation.tr("Media"), icon: "music_note" },
@@ -359,11 +360,16 @@ ContentPage {
         { id: "visualizer", name: Translation.tr("Visualizer"), icon: "graphic_eq" },
         { id: "hyprlandXkbIndicator", name: Translation.tr("Keyboard Layout"), icon: "keyboard" },
         { id: "divisor", name: Translation.tr("Divider"), icon: "horizontal_distribute" },
-        { id: "notificationUnreadCount", name: Translation.tr("Unread Notifications"), icon: "notifications" }
+        { id: "notificationUnreadCount", name: Translation.tr("Unread Notifications"), icon: "notifications",
+            description: Translation.tr("Shows unread notifications and opens the right sidebar when clicked.") }
     ]
 
     function m3WidgetName(id): string {
         return root.m3Widgets.find(widget => widget.id === id)?.name ?? id
+    }
+
+    function m3WidgetDescription(id): string {
+        return root.m3Widgets.find(widget => widget.id === id)?.description ?? ""
     }
 
     function m3WidgetHint(id): string {
@@ -615,6 +621,7 @@ ContentPage {
                     layout: Config.options?.bar?.m3?.layouts?.leftLayout ?? []
                     availableWidgets: root.availableM3Widgets()
                     getWidgetName: root.m3WidgetName
+                    getWidgetDescription: root.m3WidgetDescription
                     onUpdate: list => root.updateM3CustomLayout("left", list)
                 }
 
@@ -623,6 +630,7 @@ ContentPage {
                     layout: Config.options?.bar?.m3?.layouts?.middleLayout ?? []
                     availableWidgets: root.availableM3Widgets()
                     getWidgetName: root.m3WidgetName
+                    getWidgetDescription: root.m3WidgetDescription
                     onUpdate: list => root.updateM3CustomLayout("middle", list)
                 }
 
@@ -631,7 +639,13 @@ ContentPage {
                     layout: Config.options?.bar?.m3?.layouts?.rightLayout ?? []
                     availableWidgets: root.availableM3Widgets()
                     getWidgetName: root.m3WidgetName
+                    getWidgetDescription: root.m3WidgetDescription
                     onUpdate: list => root.updateM3CustomLayout("right", list)
+                }
+
+                SettingsNote {
+                    icon: "drag_indicator"
+                    text: Translation.tr("Drag widgets within Left, Center or Right to reorder them. Use + to add a widget; click a widget chip to remove it.")
                 }
 
                 SettingsNote {

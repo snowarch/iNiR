@@ -38,6 +38,53 @@ Appearance tokens update --> Every UI component re-renders
 
 The whole pipeline takes 2-3 seconds. The shell updates immediately when colors.json changes. External apps update within a few seconds as their configs are rewritten.
 
+## Internal shader transition invariants
+
+Wallpaper transitions have two possible visual owners. Native AWWW transition
+types are rendered by AWWW. Internal shader types (`magic`, `Doom`, `Peel`,
+`shaderRandom`, and the other QSB effects) are rendered by
+`WallpaperCrossfader` inside the shell.
+
+For internal shaders, the QML background must remain the visible static-wallpaper
+owner for the entire lifetime of that transition mode. Do not hand the desktop
+back and forth between AWWW and QML for each change. AWWW stays synchronized
+underneath as backend state/fallback, but it must not become briefly visible
+between the outgoing image and the shader. The regression signature for a broken
+handoff is:
+
+```
+preview/outgoing -> currently applied AWWW wallpaper for a few frames
+                 -> preview/outgoing -> shader -> incoming
+```
+
+The shader also must not start from `Image.Ready` or a fixed millisecond delay
+alone. `Image.Ready`, `Qt.callLater()` and wall-clock timers do not guarantee that
+the corresponding `ShaderEffectSource` texture has participated in a presented
+scene-graph frame. `WallpaperCrossfader` primes the outgoing/incoming shader
+textures first and waits for real frame swaps before `performSwitch()` gives the
+shader visual ownership.
+
+One easy-to-miss QML detail is part of this contract: `Image.source` is a QML
+`url` value, while the crossfader's pending paths are strings. Two values can
+print the exact same filesystem path while strict `===` comparison still returns
+false. Source identity checks in the crossfader therefore normalize the QML url
+with `String(image.source)` before comparing it to pending/displayed paths. If
+that normalization is removed, a valid Ready image can be rejected and the
+priming state machine can stall or expose an intermediate frame.
+
+When changing `Wallpapers.qml`, `AwwwBackend.qml`, the background owners, or
+other session-long wallpaper services, validate from a cold shell load:
+
+```bash
+inir restart
+inir logs
+```
+
+Then reproduce the change through the same picker/IPC path a user uses. Hot
+reload is useful while editing, but it is not sufficient evidence for singleton
+or long-lived background state because Quickshell may preserve state across a
+reload.
+
 ## Supported formats
 
 **Images**: jpg, jpeg, png, webp, avif, gif, bmp, tiff, jxl

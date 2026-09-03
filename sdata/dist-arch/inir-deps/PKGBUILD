@@ -6,7 +6,7 @@
 # Safe to remove with: sudo pacman -R inir-deps
 
 pkgname=inir-deps
-pkgver=2.29.2
+pkgver=2.30.0
 pkgrel=1
 pkgdesc='iNiR desktop shell - dependency tracker (meta-package)'
 url='https://github.com/snowarch/inir'
@@ -102,14 +102,21 @@ depends=(
   playerctl
   libdbusmenu-gtk3
   pavucontrol
+  cava
+  easyeffects
   mpv
   mpv-mpris
   yt-dlp
-  python-ytmusicapi
+  yt-dlp-ejs
+  deno
   socat
 
   #--- Theming ---
   noto-fonts-emoji
+  ttf-material-symbols-variable
+  ttf-jetbrains-mono-nerd
+  adw-gtk-theme
+  capitaine-cursors
   ttf-dejavu
   ttf-liberation
   ttf-roboto
@@ -138,13 +145,29 @@ depends=(
   fprintd
   blueman
   kconfig
+  hyprpicker
+  python-evdev
+  python-pillow
+  translate-shell
 
   #--- Media / image processing ---
   imagemagick
   ffmpeg
+  awww
+  songrec
+  mission-center
   tesseract
   tesseract-data-eng
+  tesseract-data-spa
+  tesseract-data-rus
+  tesseract-data-jpn
+  tesseract-data-jpn_vert
+  tesseract-data-chi_sim
+  tesseract-data-chi_sim_vert
+  tesseract-data-chi_tra
+  tesseract-data-chi_tra_vert
   libqalculate
+  uv
 
   #--- Login manager ---
   sddm
@@ -153,31 +176,17 @@ depends=(
 # AUR / optional packages — listed here so pacman knows about them
 # but won't block install if missing.
 optdepends=(
-  'cava: audio visualizer for bar'
-  'easyeffects: audio effects panel'
-  'songrec: song recognition'
-  'translate-shell: translation widget'
-  'hyprpicker: color picker'
-  'python-evdev: input device access'
-  'python-pillow: image processing in scripts'
   'darkly-bin: Material You Qt style'
   'kde-cli-tools: Dolphin Open With dialog (QT_QPA_PLATFORMTHEME=kde)'
-  'ttf-material-symbols-variable-git: Material icons (critical for UI)'
-  'ttf-jetbrains-mono-nerd: terminal/code font'
   'ttf-roboto-flex: default UI font'
   'ttf-twemoji: emoji font'
   'otf-space-grotesk: display font'
   'ttf-readex-pro: Arabic font support'
   'ttf-rubik-vf: alternate UI font'
   'ttf-oxanium: display font'
-  'adw-gtk-theme: GTK theme for Material colors'
   'millennium-bin: Steam theming via Millennium (requires steam)'
-  'capitaine-cursors: cursor theme'
   'whitesur-icon-theme: macOS-style icons'
   'qt6-avif-image-plugin: AVIF wallpaper support'
-  'uv: Python package manager for color pipeline'
-  'awww: wallpaper daemon'
-  'tesseract-data-spa: Spanish OCR'
 )
 
 # Empty package — no files, only dependency tracking

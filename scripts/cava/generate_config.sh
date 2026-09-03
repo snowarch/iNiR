@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Generate cava config for internal widget usage (CavaProcess.qml)
-# Usage: generate_config.sh <output_file> [framerate] [sensitivity] [bars] [stereo] [desktop_entry]
+# Usage: generate_config.sh <output_file> [framerate] [sensitivity] [bars] [stereo] [desktop_entry] [allowed_apps_json]
 #
 # All parameters after output_file are optional and fall back to sane defaults.
 # Supports both PipeWire and PulseAudio systems.
 
 case "$1" in
     -h|--help)
-        echo "Usage: generate_config.sh <output_file> [framerate] [sensitivity] [bars] [stereo] [desktop_entry]"
+        echo "Usage: generate_config.sh <output_file> [framerate] [sensitivity] [bars] [stereo] [desktop_entry] [allowed_apps_json]"
         exit 0
         ;;
 esac
@@ -18,6 +18,7 @@ SENSITIVITY="${3:-100}"
 BARS="${4:-50}"
 STEREO="${5:-false}"
 DESKTOP_ENTRY="${6:-}"
+ALLOWED_APPS_JSON="${7:-[]}"
 
 # Detect audio backend (pipewire or pulseaudio)
 get_audio_method() {
@@ -44,7 +45,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RESOLVER="$SCRIPT_DIR/resolve_audio_source.py"
 RESOLVED=""
 if [[ -f "$RESOLVER" ]]; then
-  RESOLVED=$(python3 "$RESOLVER" --desktop-entry "$DESKTOP_ENTRY" 2>/dev/null || true)
+  RESOLVED=$(python3 "$RESOLVER" --desktop-entry "$DESKTOP_ENTRY" --allowed-apps-json "$ALLOWED_APPS_JSON" 2>/dev/null)
+  RESOLVE_STATUS=$?
+  # Exit 3 means an explicit allowlist currently has no matching live stream.
+  # Propagate that state to CavaService instead of silently capturing the full
+  # default sink, which would defeat the user's source filter.
+  if [[ $RESOLVE_STATUS -eq 3 ]]; then
+    exit 3
+  fi
+elif [[ "$ALLOWED_APPS_JSON" != "[]" ]]; then
+  # Never defeat an explicit allowlist just because the resolver is missing.
+  exit 3
 fi
 if [[ -n "$RESOLVED" ]]; then
   MONITOR="$RESOLVED"

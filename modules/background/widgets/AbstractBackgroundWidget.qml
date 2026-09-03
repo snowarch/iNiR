@@ -542,6 +542,15 @@ AbstractWidget {
     readonly property int _editScreenMargin: 8
     readonly property int _editToolbarGap: 12
     readonly property int _editPopoverGap: 6
+    readonly property real quickControlsAvailableWidth: Math.max(0,
+        root._safeRight - root._safeLeft - 2 * root._editScreenMargin)
+    readonly property real quickControlsAvailableHeight: Math.max(0,
+        root._safeBottom - root._safeTop - editToolbar.height
+            - root._editPopoverGap)
+    readonly property bool quickControlsDense:
+        root.quickControlsAvailableHeight < 760
+    readonly property bool quickControlsWide: root.quickControlsDense
+        && root.quickControlsAvailableWidth >= 480
     function _resolveEditControlsGeometry(widgetX: real, widgetY: real, popoverVisible: bool): var {
         const leftBound = root._safeLeft + root._editScreenMargin
         const topBound = root._safeTop + root._editScreenMargin
@@ -557,25 +566,60 @@ AbstractWidget {
             bottomBound - safeY - root.height - root._editToolbarGap)
         const fitsAbove = spaceAbove >= stackHeight
         const fitsBelow = spaceBelow >= stackHeight
-        const below = fitsAbove ? false : fitsBelow ? true : spaceBelow > spaceAbove
+        const spaceLeft = Math.max(0,
+            safeX - leftBound - root._editToolbarGap)
+        const spaceRight = Math.max(0,
+            rightBound - safeX - root.width - root._editToolbarGap)
+        const fitsLeft = popoverVisible
+            && spaceLeft >= editPopoverPanel.width
+        const fitsRight = popoverVisible
+            && spaceRight >= editPopoverPanel.width
+        const useSide = !fitsAbove && !fitsBelow && (fitsLeft || fitsRight)
+        const side = useSide
+            ? (fitsLeft && fitsRight
+                ? (spaceRight >= spaceLeft ? "right" : "left")
+                : fitsRight ? "right" : "left")
+            : (fitsAbove ? "above" : fitsBelow ? "below"
+                : spaceBelow > spaceAbove ? "below" : "above")
+        const below = side === "below"
         const toolbarMaxX = Math.max(leftBound, rightBound - editToolbar.width)
         const toolbarX = Math.max(leftBound, Math.min(toolbarMaxX,
             safeX + (root.width - editToolbar.width) / 2))
-        const preferredStackY = below
-            ? safeY + root.height + root._editToolbarGap
-            : safeY - root._editToolbarGap - stackHeight
-        const stackMaxY = Math.max(topBound, bottomBound - stackHeight)
-        const stackY = Math.max(topBound, Math.min(stackMaxY, preferredStackY))
-        const toolbarY = below
-            ? stackY
-            : stackY + (popoverVisible ? popoverHeight + root._editPopoverGap : 0)
-        const popoverMaxX = Math.max(leftBound,
-            rightBound - editPopoverPanel.width)
-        const popoverX = Math.max(leftBound, Math.min(popoverMaxX,
-            toolbarX + (editToolbar.width - editPopoverPanel.width) / 2))
-        const popoverY = below
-            ? toolbarY + editToolbar.height + root._editPopoverGap
-            : stackY
+        let toolbarY
+        let popoverX
+        let popoverY
+        if (useSide) {
+            const toolbarAbove = safeY - root._editToolbarGap
+                - editToolbar.height >= topBound
+            toolbarY = toolbarAbove
+                ? safeY - root._editToolbarGap - editToolbar.height
+                : Math.min(bottomBound - editToolbar.height,
+                    safeY + root.height + root._editToolbarGap)
+            popoverX = side === "left"
+                ? safeX - root._editToolbarGap - editPopoverPanel.width
+                : safeX + root.width + root._editToolbarGap
+            popoverY = Math.max(topBound, Math.min(
+                bottomBound - editPopoverPanel.height,
+                safeY + (root.height - editPopoverPanel.height) / 2))
+        } else {
+            const preferredStackY = below
+                ? safeY + root.height + root._editToolbarGap
+                : safeY - root._editToolbarGap - stackHeight
+            const stackMaxY = Math.max(topBound, bottomBound - stackHeight)
+            const stackY = Math.max(topBound,
+                Math.min(stackMaxY, preferredStackY))
+            toolbarY = below
+                ? stackY
+                : stackY + (popoverVisible
+                    ? popoverHeight + root._editPopoverGap : 0)
+            const popoverMaxX = Math.max(leftBound,
+                rightBound - editPopoverPanel.width)
+            popoverX = Math.max(leftBound, Math.min(popoverMaxX,
+                toolbarX + (editToolbar.width - editPopoverPanel.width) / 2))
+            popoverY = below
+                ? toolbarY + editToolbar.height + root._editPopoverGap
+                : stackY
+        }
         const toolbarInBounds = toolbarX >= leftBound && toolbarY >= topBound
             && toolbarX + editToolbar.width <= rightBound
             && toolbarY + editToolbar.height <= bottomBound
@@ -586,6 +630,7 @@ AbstractWidget {
             widgetX: safeX,
             widgetY: safeY,
             below: below,
+            side: side,
             toolbarX: toolbarX,
             toolbarY: toolbarY,
             popoverX: popoverX,
@@ -676,6 +721,7 @@ AbstractWidget {
             requested: { x: Math.round(requestedX), y: Math.round(requestedY) },
             position: { x: Math.round(geometry.widgetX), y: Math.round(geometry.widgetY) },
             below: geometry.below,
+            side: geometry.side,
             toolbar: { x: Math.round(geometry.toolbarX), y: Math.round(geometry.toolbarY), width: Math.round(editToolbar.width), height: Math.round(editToolbar.height) },
             popover: { visible: editPopoverPanel.open, x: Math.round(geometry.popoverX), y: Math.round(geometry.popoverY), width: Math.round(editPopoverPanel.width), height: Math.round(editPopoverPanel.height) },
             inBounds: geometry.inBounds
@@ -1150,7 +1196,7 @@ AbstractWidget {
             opacity: open ? 1 : 0
             x: root._editControlsGeometry.popoverX - root._editControlsGeometry.toolbarX
             y: root._editControlsGeometry.popoverY - root._editControlsGeometry.toolbarY
-            width: Math.min(root.scaledScreenWidth - 2 * root._editScreenMargin,
+            width: Math.min(root.quickControlsAvailableWidth,
                 popoverLoader.item ? popoverLoader.item.implicitWidth + 16 : 200)
             height: popoverLoader.item ? popoverLoader.item.implicitHeight + 16 : 0
 
@@ -1178,7 +1224,6 @@ AbstractWidget {
                     easing.bezierCurve: Appearance.animationCurves.standardDecel
                 }
             }
-
             MouseArea {
                 anchors.fill: parent
                 z: -1
@@ -1588,8 +1633,9 @@ AbstractWidget {
     property Component _autoPopoverComponent: _manifestKeyList.length > 0 ? _autoPopoverRef : null
     readonly property Component _widgetSpecificPopover: root.editPopoverContent
         ?? (root._manifestKeyList.length > 0 ? root._autoPopoverComponent : null)
-    readonly property Component _effectivePopover: root.semanticPaletteControls
-        ? root._semanticPalettePopover : root._widgetSpecificPopover
+    readonly property Component _effectivePopover:
+        root._widgetSpecificPopover !== null || root.semanticPaletteControls
+            ? root._semanticPalettePopover : null
 
     Component {
         id: _autoPopoverRef
@@ -1601,18 +1647,20 @@ AbstractWidget {
     }
 
     property Component _semanticPalettePopover: Component {
-        ColumnLayout {
+        WidgetQuickControlsLayout {
             id: semanticQuickRoot
-            spacing: 8
+            availableWidth: root.quickControlsAvailableWidth - 16
+            availableHeight: root.quickControlsAvailableHeight - 16
+            regularWidth: Math.max(244,
+                specificQuickLoader.item?.implicitWidth ?? 0)
 
             Loader {
                 id: specificQuickLoader
                 active: root._widgetSpecificPopover !== null
                 visible: active
                 sourceComponent: root._widgetSpecificPopover
-                Layout.preferredWidth: item?.implicitWidth ?? 0
+                Layout.fillWidth: true
                 Layout.preferredHeight: item?.implicitHeight ?? 0
-                Layout.alignment: Qt.AlignHCenter
             }
 
             Rectangle {
@@ -1626,7 +1674,6 @@ AbstractWidget {
                 id: paletteQuickSection
                 visible: root.semanticPaletteQuickControls
                 Layout.fillWidth: true
-                Layout.preferredWidth: Math.max(244, specificQuickLoader.item?.implicitWidth ?? 0)
                 spacing: 6
 
                 RowLayout {
@@ -1655,7 +1702,7 @@ AbstractWidget {
 
                 GridLayout {
                     Layout.fillWidth: true
-                    columns: 2
+                    columns: semanticQuickRoot.metricColumns
                     columnSpacing: 5
                     rowSpacing: 5
 

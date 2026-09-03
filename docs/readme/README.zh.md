@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.30.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -273,6 +273,7 @@ inir repair                     # doctor + 重启 + 过滤日志检查
 ## 致谢
 
 - [**end-4**](https://github.com/end-4/dots-hyprland) — 原始的 illogical-impulse（Hyprland 版）
+- [**pctrade/end4-pC**](https://github.com/pctrade/end4-pC) — 一个偶尔真能冒出好点子的分支
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — 驱动此 Shell 的框架
 - [**Niri**](https://github.com/YaLTeR/niri) — 滚动平铺式 Wayland 合成器
 

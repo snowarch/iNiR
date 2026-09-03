@@ -43,6 +43,19 @@ WSettingsPage {
 
         property var poseOptions: [{ displayName: Translation.tr("Auto (rotate pool)"), value: "" }]
 
+        Image {
+            id: packProbe
+            visible: false
+            source: Quickshell.shellPath("assets/images/mascot/inir-mascot-edge-peek.png")
+            asynchronous: true
+        }
+
+        WSettingsInfoBar {
+            visible: packProbe.status === Image.Error
+            severity: WSettingsInfoBar.Severity.Info
+            message: Translation.tr("Kira is an optional download. Run `inir setup extras` and choose Install mascot pack. The controls below become available after the download finishes.")
+        }
+
         FileView {
             path: Quickshell.shellPath("assets/images/mascot/manifest.json")
             watchChanges: true
@@ -113,7 +126,7 @@ WSettingsPage {
             from: 3
             to: 60
             stepSize: 1
-            value: Config.options?.mascot?.companion?.visibleSeconds ?? 8
+            value: Config.options?.mascot?.companion?.visibleSeconds ?? 5
             onValueChanged: Config.setNestedValue("mascot.companion.visibleSeconds", value)
         }
 

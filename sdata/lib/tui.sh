@@ -179,6 +179,12 @@ _bold() {
     fi
 }
 
+_tui_expand_newlines() {
+    local text="${1:-}"
+    text="${text//\\n/$'\n'}"
+    printf '%s' "$text"
+}
+
 _repeat_char() {
     local char="$1" count="$2" result="" i
     for ((i=0; i<count; i++)); do result+="$char"; done
@@ -995,7 +1001,8 @@ tui_task_finalize() {
 # Alert — icon + color, no border
 ###############################################################################
 tui_alert() {
-    local variant="${1:-info}" title="$2" message="${3:-}"
+    local variant="${1:-info}" title="$2" message
+    message="$(_tui_expand_newlines "${3:-}")"
     local icon color_name
     case "$variant" in
         success) icon="$ICON_CHECK"; color_name="success" ;;

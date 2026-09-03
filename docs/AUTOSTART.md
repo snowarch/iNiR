@@ -12,7 +12,7 @@ The service connects to your compositor via a wants link:
 ~/.config/systemd/user/niri.service.wants/inir.service
 ```
 
-When niri starts, systemd starts iNiR. When niri stops, iNiR stops. Manage the link with:
+When Niri starts, `inir.service` waits for the `Type=notify` compositor service to report ready, so it inherits Niri's authoritative `DISPLAY`, `WAYLAND_DISPLAY` and `NIRI_SOCKET`. When Niri stops, iNiR stops. Manage the link with:
 
 ```bash
 inir service enable     # create wants link
@@ -31,7 +31,7 @@ There are two layers of autostart in a typical iNiR setup:
 These are defined in `~/.config/niri/config.d/50-startup.kdl` and managed by the compositor:
 
 - `wl-paste --type text --watch cliphist store` (clipboard text history)
-- `wl-paste --type image --watch cliphist store` (clipboard image history)
+- `wl-paste --type image --watch ~/.config/quickshell/inir/scripts/clipboard-image-store.sh` (clipboard image history; internal preview frames are filtered)
 - `polkit-mate-authentication-agent-1` (GUI sudo prompts)
 - `kbuildsycoca6` (KDE desktop entry cache)
 

@@ -413,6 +413,7 @@ Item {
         readonly property string desktopEntryId: String(appBtn.entry?.id ?? "")
             .replace(/\.desktop$/i, "")
         property bool suppressClick: false
+        property bool nativeApplicationDragActive: false
         signal activated()
         implicitWidth: 110
         implicitHeight: 98
@@ -429,15 +430,19 @@ Item {
                 appDragReset.restart()
         }
         cancelAction: () => {
-            appBtn.suppressClick = false
-            appDragReset.stop()
+            if (!appBtn.nativeApplicationDragActive) {
+                appBtn.suppressClick = false
+                appDragReset.stop()
+            }
         }
         onPointerDragActiveChanged: {
-            root.applicationDragActive = appBtn.pointerDragActive
-            if (appBtn.pointerDragActive)
+            if (appBtn.pointerDragActive && appBtn.desktopEntryId.length > 0) {
+                appBtn.nativeApplicationDragActive = true
+                root.applicationDragActive = true
                 appBtn.suppressClick = true
-            else if (appBtn.suppressClick)
+            } else if (!appBtn.nativeApplicationDragActive && appBtn.suppressClick) {
                 appDragReset.restart()
+            }
         }
         onClicked: {
             if (appBtn.suppressClick) {
@@ -517,10 +522,11 @@ Item {
                 String(appBtn.entry?.icon ?? ""), "application-x-executable")
             Drag.imageSourceSize: Qt.size(52, 52)
             Drag.hotSpot: Qt.point(26, 26)
-            Drag.active: appBtn.pointerDragActive && appBtn.desktopEntryId.length > 0
+            Drag.active: appBtn.nativeApplicationDragActive && appBtn.desktopEntryId.length > 0
             Drag.onDragFinished: dropAction => {
                 appDragProxy.x = 0
                 appDragProxy.y = 0
+                appBtn.nativeApplicationDragActive = false
                 root.applicationDragActive = false
                 if (dropAction === Qt.CopyAction)
                     GlobalStates.closeOverview()

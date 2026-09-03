@@ -32,6 +32,9 @@ Item {
         { key: "battery", icon: "battery_full", label: "Battery", defaultEnabled: false },
         { key: "notes", icon: "sticky_note_2", label: "Notes", defaultEnabled: false },
         { key: "calendarUpcoming", icon: "event", label: "Upcoming Events", defaultEnabled: false },
+        { key: "monthCalendar", icon: "calendar_month", label: "Month Calendar", defaultEnabled: false },
+        { key: "todo", icon: "checklist", label: "Todo", defaultEnabled: false },
+        { key: "timers", icon: "timer", label: "Timers", defaultEnabled: false },
         { key: "uptime", icon: "avg_pace", label: "System uptime", defaultEnabled: false },
         { key: "newsTicker", icon: "newspaper", label: "News Ticker", defaultEnabled: false },
         { key: "mascot", icon: "pets", label: "Mascot", defaultEnabled: false },
@@ -790,7 +793,7 @@ Item {
                 || (card.widgetKey === "weather"
                     && Config.getNestedValue(card._cfgPrefix + ".style", "pill") === "card")
                 || ["imageConverter", "visualizer", "systemMonitor", "battery", "notes",
-                    "calendarUpcoming", "uptime", "newsTicker", "mascot",
+                    "calendarUpcoming", "monthCalendar", "todo", "uptime", "newsTicker", "mascot",
                     "japaneseTypography", "worldClock", "userCard"].indexOf(card.widgetKey) !== -1
             ))
         readonly property bool _expanded: card._enabled && _expandToggle

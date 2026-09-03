@@ -569,6 +569,7 @@ ShellRoot {
     // handler per target (region, tiling, wallpaperSelector, coverflowSelector).
     // One owner here is valid whichever family is loaded.
     LazyLoader { active: Config.ready; source: "modules/regionSelector/RegionSelectorRouter.qml" }
+    LazyLoader { active: Config.ready; source: "modules/japaneseLookup/JapaneseLookup.qml" }
     LazyLoader { active: Config.ready; source: "modules/tilingOverlay/TilingOverlayRouter.qml" }
     LazyLoader { active: Config.ready; source: "modules/wallpaperSelector/WallpaperSelectorRouter.qml" }
 

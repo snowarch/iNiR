@@ -29,7 +29,24 @@ PopupWindow {
 
     ///////////////////// Functions ////////////////////
 
+    property var pendingPreviewIds: []
+
+    Timer {
+        id: previewRefreshTimer
+        // The popup can render an existing cached frame immediately. Delay the
+        // invasive Niri screenshot-window refresh until the hover is clearly
+        // intentional, so a normal dock click never races the user's next paste.
+        interval: 260
+        repeat: false
+        onTriggered: {
+            if (!root.visible || root.pendingPreviewIds.length === 0) return
+            WindowPreviewService.captureForTaskView(root.pendingPreviewIds, 60000)
+        }
+    }
+
     function close(): void {
+        previewRefreshTimer.stop()
+        root.pendingPreviewIds = []
         marginBehavior.enabled = false
         root.visible = false
     }
@@ -48,8 +65,13 @@ PopupWindow {
         root.appEntry = appEntry
         root.anchorItem = button
         root.anchor.updateAnchor()
-        WindowPreviewService.captureForTaskView()
+        const windows = button?.toplevels ?? appEntry?.toplevels ?? []
+        root.pendingPreviewIds = windows
+            .map(toplevel => Number(toplevel?.niriWindowId ?? 0))
+            .filter(id => Number.isFinite(id) && id > 0)
         root.open()
+        if (root.pendingPreviewIds.length > 0)
+            previewRefreshTimer.restart()
     }
 
     ///////////////////// Model ////////////////////

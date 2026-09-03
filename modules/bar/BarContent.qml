@@ -91,8 +91,77 @@ Item { // Bar content region
     }
     readonly property bool taskbarEnabled: Config.options?.bar?.modules?.taskbar ?? false
 
-    property real useShortenedForm: (Appearance.sizes.barHellaShortenScreenWidthThreshold >= screen?.width) ? 2 : (Appearance.sizes.barShortenScreenWidthThreshold >= screen?.width) ? 1 : 0
+    function _moduleBudget(id, level) {
+        if (level >= 1 && (id === "activeWindow" || id === "tray" || id === "utilButtons")) return 0
+        if (level >= 2 && (id === "media" || id === "battery")) return 0
+        const scale = Appearance.fontSizeScale
+        const widths = {
+            "leftSidebarButton": 44, "rightSidebarButton": 44,
+            "activeWindow": 260, "resources": 185, "media": 190,
+            "workspaces": 115, "clock": 135, "utilButtons": 150,
+            "battery": 80, "tray": 180, "timer": 44,
+            "shellUpdate": 44, "weather": 125,
+            "spacer": Math.max(24, root._spacerMinimumWidth),
+        }
+        return (widths[id] ?? 64) * scale
+    }
+    function _zoneBudget(ids, level) {
+        let total = 0
+        for (let i = 0; i < ids.length; ++i)
+            total += root._moduleBudget(ids[i], level)
+        return total
+    }
+    function _layoutBudget(level) {
+        const left = root._zoneBudget(root._leftIds, level) + root._zoneBudget(root._centerLeftIds, level)
+        const right = root._zoneBudget(root._rightIds, level) + root._zoneBudget(root._centerRightIds, level)
+        const center = root._zoneBudget(root._centerIds, level)
+        return center + Math.max(left, right) * 2 + root.hostGap * 4
+    }
+    readonly property real regularLayoutBudget: Math.max(
+        Appearance.sizes.barShortenScreenWidthThreshold, root._layoutBudget(0))
+    readonly property real compactLayoutBudget: Math.max(
+        Appearance.sizes.barHellaShortenScreenWidthThreshold, root._layoutBudget(1))
+    property real useShortenedForm: {
+        const width = screen?.width ?? 1920
+        if (width < root.compactLayoutBudget) return 2
+        if (width < root.regularLayoutBudget) return 1
+        return 0
+    }
     readonly property int baseCenterSideModuleWidth: (useShortenedForm == 2) ? Appearance.sizes.barCenterSideModuleWidthHellaShortened : (useShortenedForm == 1) ? Appearance.sizes.barCenterSideModuleWidthShortened : Appearance.sizes.barCenterSideModuleWidth
+    // Five independently content-sized zones can exceed the physical output even
+    // when every individual module is valid. Once their symmetric natural demand
+    // no longer fits, compress each host by the same factor instead of letting
+    // neighbouring hosts paint through each other. The normal case stays fully
+    // natural-sized; clipping is only the final safety net for impossible layouts.
+    readonly property real hostGap: root.isIslands ? 8 : 4
+    readonly property real leftEdgeDemand: Math.max(0, leftSectionRowLayout.implicitWidth)
+        + (root.isIslands
+            ? root.islandOuterInset + root.islandPad * 2
+            : Appearance.rounding.screenRounding * 2)
+    readonly property real rightEdgeDemand: Math.max(0, rightSectionRowLayout.implicitWidth)
+        + (root.isIslands
+            ? root.islandOuterInset + root.islandPad * 2
+            : Appearance.rounding.screenRounding * 2)
+    readonly property real leftCenterDemand: leftCenterGroup.empty ? 0 : leftCenterGroup.contentWidth
+    readonly property real rightCenterDemand: rightCenterGroupPill.empty ? 0 : rightCenterGroupPill.contentWidth
+    readonly property real centerDemand: middleCenterGroup.empty ? 0 : middleCenterGroup.contentWidth
+    readonly property real leftSideDemand: root.leftEdgeDemand + root.leftCenterDemand
+        + ((root.leftEdgeDemand > 0 && root.leftCenterDemand > 0) ? root.hostGap : 0)
+    readonly property real rightSideDemand: root.rightEdgeDemand + root.rightCenterDemand
+        + ((root.rightEdgeDemand > 0 && root.rightCenterDemand > 0) ? root.hostGap : 0)
+    readonly property real symmetricSideDemand: Math.max(root.leftSideDemand, root.rightSideDemand)
+    readonly property real centerBoundaryGap: (root.centerDemand > 0 && root.symmetricSideDemand > 0)
+        ? root.hostGap : 0
+    readonly property real naturalHostDemand: root.centerDemand
+        + root.symmetricSideDemand * 2 + root.centerBoundaryGap * 2
+    readonly property real hostScale: root.naturalHostDemand > 0 && root.width > 0
+        ? Math.min(1, root.width / root.naturalHostDemand) : 1
+    readonly property bool layoutCompressionActive: root.hostScale < 0.999
+    readonly property real compressedLeftEdgeWidth: root.leftEdgeDemand * root.hostScale
+    readonly property real compressedRightEdgeWidth: root.rightEdgeDemand * root.hostScale
+    readonly property real compressedLeftCenterWidth: root.leftCenterDemand * root.hostScale
+    readonly property real compressedRightCenterWidth: root.rightCenterDemand * root.hostScale
+    readonly property real compressedCenterWidth: root.centerDemand * root.hostScale
     // Max width a side pill may take before it would collide with an edge
     // section. Pure outer geometry (screen width, edge sections, workspaces) so
     // there is no binding loop with the pills' own content width. A pill takes
@@ -385,8 +454,9 @@ Item { // Bar content region
 
     // ═══ Modular layout engine ══════════════════════════════════════════
     // Five zones map 1:1 to the bar's real structure. Pills size to their
-    // natural content; workspaces stays screen-centered; side pills grow
-    // outward and clamp so they never collide with the edge sections.
+    // natural content; the `center` zone stays screen-centered regardless of
+    // which modules it contains; side pills grow outward and clamp so they
+    // never collide with the edge sections.
     // Visibility still comes from Config.options.bar.modules.*; the arrays only
     // define order/zone. Falls back to the classic layout until migrated.
     readonly property bool _layoutMigrated: Config.options?.bar?.layout?.migrated === true
@@ -990,9 +1060,12 @@ Item { // Bar content region
         }
         // Extend up to the left pill's inner edge but keep at least the natural
         // content width so the sidebar button / active window are never clipped.
-        width: Math.max(implicitWidth, middleSection.leftPillX)
+        width: root.layoutCompressionActive
+            ? root.compressedLeftEdgeWidth
+            : Math.max(implicitWidth, middleSection.leftPillX)
         implicitWidth: leftSectionRowLayout.implicitWidth
         implicitHeight: Appearance.sizes.baseBarHeight
+        clip: root.layoutCompressionActive
 
         onScrollDown: root.performScrollAction(root.leftAction, false)
         onScrollUp: root.performScrollAction(root.leftAction, true)
@@ -1022,7 +1095,9 @@ Item { // Bar content region
             visible: root.isIslands && leftSectionRowLayout.implicitWidth > 1
             anchors.verticalCenter: parent.verticalCenter
             x: leftSectionRowLayout.anchors.leftMargin - root.islandPad
-            width: leftSectionRowLayout.implicitWidth + root.islandPad * 2
+            width: root.layoutCompressionActive
+                ? Math.max(0, parent.width - x)
+                : leftSectionRowLayout.implicitWidth + root.islandPad * 2
             height: Appearance.sizes.baseBarHeight - root.islandInset * 2
         }
 
@@ -1034,12 +1109,13 @@ Item { // Bar content region
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.left: parent.left
-            anchors.right: root.isIslands ? undefined : parent.right
+            anchors.right: root.isIslands && !root.layoutCompressionActive ? undefined : parent.right
             anchors.leftMargin: root.isIslands
                 ? root.islandOuterInset + root.islandPad
                 : Appearance.rounding.screenRounding
             anchors.rightMargin: Appearance.rounding.screenRounding
             spacing: 10
+            clip: root.layoutCompressionActive
 
             Repeater {
                 model: root._leftIds
@@ -1048,9 +1124,9 @@ Item { // Bar content region
         }
     }
 
-    Item { // Middle section — workspaces stays screen-centered; the side pills
-           // size to their natural content and grow outward from it, clamped so
-           // they never collide with the edge sections.
+    Item { // Middle section — the center zone stays screen-centered; the side
+           // pills size to their natural content and grow outward from it,
+           // clamped so they never collide with the edge sections.
         id: middleSection
         anchors {
             top: parent.top
@@ -1090,6 +1166,9 @@ Item { // Bar content region
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
             padding: 4
+            implicitWidth: empty ? 0 : (root.layoutCompressionActive
+                ? root.compressedCenterWidth : contentWidth)
+            clipContent: root.layoutCompressionActive
             // Collapse the pivot pill background when workspaces (its only
             // default content) is hidden — leaves a tiny centred gap instead of
             // a ghost pill. Width stays minimal so side pills still flank it.
@@ -1144,14 +1223,16 @@ Item { // Bar content region
             spectrumDomain: root
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: (Config.options?.bar.borderless ?? false) ? leftSeparator.left : middleCenterGroup.left
-            anchors.rightMargin: root.isIslands ? 8 : 4
+            anchors.rightMargin: (root.isIslands ? 8 : 4) * root.hostScale
             // Collapse to nothing when this zone has no visible modules;
             // otherwise take the symmetric target width. Modules elide/clip.
             visible: !empty
             // Islands: each capsule hugs its own content (no symmetric mirroring,
             // which would leave dead space in the lighter side). Classic keeps the
             // mirrored width so the two side pills stay visually balanced.
-            implicitWidth: empty ? 0 : (root.isIslands ? Math.min(contentWidth, root.centerSideMaxWidth) : root._pillWidth(contentWidth))
+            implicitWidth: empty ? 0 : (root.layoutCompressionActive
+                ? root.compressedLeftCenterWidth
+                : (root.isIslands ? Math.min(contentWidth, root.centerSideMaxWidth) : root._pillWidth(contentWidth)))
             clipContent: true
 
             Repeater {
@@ -1182,7 +1263,7 @@ Item { // Bar content region
             id: rightCenterGroup
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: (Config.options?.bar.borderless ?? false) ? rightSeparator.right : middleCenterGroup.right
-            anchors.leftMargin: root.isIslands ? 8 : 4
+            anchors.leftMargin: (root.isIslands ? 8 : 4) * root.hostScale
             visible: !rightCenterGroupPill.empty
             implicitWidth: rightCenterGroupPill.empty ? 0 : rightCenterGroupPill.width
             implicitHeight: rightCenterGroupPill.height
@@ -1222,7 +1303,9 @@ Item { // Bar content region
                 // Islands: each capsule hugs its own content (no symmetric mirroring,
                 // which would leave dead space in the lighter side). Classic keeps the
                 // mirrored width so the two side pills stay visually balanced.
-                implicitWidth: empty ? 0 : (root.isIslands ? Math.min(contentWidth, root.centerSideMaxWidth) : root._pillWidth(contentWidth))
+                implicitWidth: empty ? 0 : (root.layoutCompressionActive
+                    ? root.compressedRightCenterWidth
+                    : (root.isIslands ? Math.min(contentWidth, root.centerSideMaxWidth) : root._pillWidth(contentWidth)))
                 clipContent: true
 
                 Repeater {
@@ -1298,9 +1381,12 @@ Item { // Bar content region
             bottom: parent.bottom
             right: parent.right
         }
-        width: Math.max(implicitWidth, root.width - middleSection.rightPillEndX)
+        width: root.layoutCompressionActive
+            ? root.compressedRightEdgeWidth
+            : Math.max(implicitWidth, root.width - middleSection.rightPillEndX)
         implicitWidth: rightSectionRowLayout.implicitWidth
         implicitHeight: Appearance.sizes.baseBarHeight
+        clip: root.layoutCompressionActive
 
         onScrollDown: root.performScrollAction(root.rightAction, false)
         onScrollUp: root.performScrollAction(root.rightAction, true)
@@ -1331,8 +1417,11 @@ Item { // Bar content region
             id: rightEdgeIsland
             visible: root.isIslands && rightSectionRowLayout.implicitWidth > 1
             anchors.verticalCenter: parent.verticalCenter
-            x: parent.width - rightSectionRowLayout.anchors.rightMargin - rightSectionRowLayout.implicitWidth - root.islandPad
-            width: rightSectionRowLayout.implicitWidth + root.islandPad * 2
+            x: root.layoutCompressionActive ? 0
+                : parent.width - rightSectionRowLayout.anchors.rightMargin - rightSectionRowLayout.implicitWidth - root.islandPad
+            width: root.layoutCompressionActive
+                ? Math.max(0, parent.width - root.islandOuterInset)
+                : rightSectionRowLayout.implicitWidth + root.islandPad * 2
             height: Appearance.sizes.baseBarHeight - root.islandInset * 2
         }
 
@@ -1343,13 +1432,14 @@ Item { // Bar content region
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.right: parent.right
-            anchors.left: root.isIslands ? undefined : parent.left
+            anchors.left: root.isIslands && !root.layoutCompressionActive ? undefined : parent.left
             anchors.leftMargin: Appearance.rounding.screenRounding
             anchors.rightMargin: root.isIslands
                 ? root.islandOuterInset + root.islandPad
                 : Appearance.rounding.screenRounding
             spacing: 5
             layoutDirection: Qt.RightToLeft
+            clip: root.layoutCompressionActive
 
             Repeater {
                 model: root._rightIds

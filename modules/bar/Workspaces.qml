@@ -408,7 +408,6 @@ Item {
         rowSpacing: 0
         columnSpacing: 0
         columns: root.vertical ? 1 : root.renderedWorkspaceCount
-        rows: root.vertical ? root.renderedWorkspaceCount : 1
 
         Repeater {
             model: root.renderedWorkspaceCount
@@ -507,7 +506,6 @@ Item {
         visible: !root.columnMode
 
         columns: root.vertical ? 1 : root.renderedWorkspaceCount
-        rows: root.vertical ? root.renderedWorkspaceCount : 1
         columnSpacing: 0
         rowSpacing: 0
 

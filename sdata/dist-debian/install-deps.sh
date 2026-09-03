@@ -16,6 +16,7 @@ IS_UBUNTU=false
 IS_DEBIAN=false
 UBUNTU_VERSION=""
 DEBIAN_VERSION=""
+DEBIAN_CODENAME=""
 
 # Also detect Ubuntu derivatives (PikaOS, Pop!_OS, Linux Mint, etc.)
 DISTRO_ID=$(grep "^ID=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
@@ -32,6 +33,7 @@ if grep -qi "ubuntu" /etc/os-release 2>/dev/null || [[ "$DISTRO_ID_LIKE" == *"ub
 elif [[ -f /etc/debian_version ]] || [[ "$DISTRO_ID_LIKE" == *"debian"* ]]; then
   IS_DEBIAN=true
   DEBIAN_VERSION=$(cat /etc/debian_version 2>/dev/null || echo "unknown")
+  DEBIAN_CODENAME=$(grep "^VERSION_CODENAME=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
   tui_info "Detected ${DISTRO_NAME:-Debian} (Debian-based)"
 fi
 
@@ -48,69 +50,117 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   installflags=""
   $ask || installflags="-y"
 
-  # Map command IDs (from doctor) to Debian/Ubuntu package names.
+  # Doctor reports command IDs, never package names. Keep this explicit so an
+  # unknown command can never leak into apt as if it were a Debian package.
   declare -A cmd_to_pkg=(
-    [qs]="quickshell"
-    [niri]="niri"
-    [nmcli]="network-manager"
-    [wpctl]="wireplumber"
-    [jq]="jq"
-    [rsync]="rsync"
-    [curl]="curl"
-    [git]="git"
-    [python3]="python3"
-    [wlsunset]="wlsunset"
-    [dunstify]="dunst"
-    [fish]="fish"
-    [magick]="imagemagick"
-    [swaylock]="swaylock"
-    [swayidle]="swayidle"
-    [grim]="grim"
-    [mpv]="mpv"
-    [cliphist]="cliphist"
-    [wl-copy]="wl-clipboard"
-    [wl-paste]="wl-clipboard"
-    [fuzzel]="fuzzel"
-    [gum]="gum"
-    [hyprpicker]="hyprpicker"
-    [xwayland-satellite]="xwayland-satellite"
-    [missioncenter]="io.missioncenter.MissionCenter"
+    [qs]="quickshell" [niri]="niri" [nmcli]="network-manager" [wpctl]="wireplumber"
+    [jq]="jq" [rsync]="rsync" [curl]="curl" [git]="git" [python3]="python3"
+    [fish]="fish" [magick]="imagemagick" [grim]="grim" [cliphist]="cliphist"
+    [wl-copy]="wl-clipboard" [wl-paste]="wl-clipboard" [fuzzel]="fuzzel"
+    [hyprpicker]="hyprpicker" [playerctl]="playerctl" [notify-send]="libnotify-bin"
+    [flock]="util-linux" [wlsunset]="wlsunset" [easyeffects]="easyeffects"
+    [uv]="uv" [cava]="cava" [qalc]="qalc" [yt-dlp]="yt-dlp" [socat]="socat"
+    [brightnessctl]="brightnessctl" [slurp]="slurp" [wf-recorder]="wf-recorder"
+    [ffmpeg]="ffmpeg" [swappy]="swappy" [tesseract]="tesseract-ocr"
+    [blueman-manager]="blueman" [kwriteconfig6]="libkf6config-bin" [ddcutil]="ddcutil"
+    [nm-connection-editor]="network-manager-gnome" [xdg-settings]="xdg-utils" [mpv]="mpv"
+    [swaylock]="swaylock" [swayidle]="swayidle" [trans]="translate-shell"
+    [ocr-eng]="tesseract-ocr-eng" [ocr-spa]="tesseract-ocr-spa" [ocr-rus]="tesseract-ocr-rus"
+    [ocr-jpn]="tesseract-ocr-jpn" [ocr-jpn-vert]="tesseract-ocr-jpn-vert"
+    [ocr-chi-sim]="tesseract-ocr-chi-sim" [ocr-chi-sim-vert]="tesseract-ocr-chi-sim-vert"
+    [ocr-chi-tra]="tesseract-ocr-chi-tra" [ocr-chi-tra-vert]="tesseract-ocr-chi-tra-vert"
   )
 
   _deb_miss_cmds=()
   _deb_requested_pkgs=()
   _deb_installable_pkgs=()
+  _deb_special_cmds=()
+  _deb_unresolved=()
   read -r -a _deb_miss_cmds <<<"$ONLY_MISSING_DEPS"
 
   for cmd in "${_deb_miss_cmds[@]}"; do
-    _deb_pkg="${cmd_to_pkg[$cmd]:-$cmd}"
-    [[ " ${_deb_requested_pkgs[*]} " == *" ${_deb_pkg} "* ]] || _deb_requested_pkgs+=("$_deb_pkg")
+    case "$cmd" in
+      awww|awww-daemon|gowall|missioncenter|songrec|xwayland-satellite)
+        [[ " ${_deb_special_cmds[*]} " == *" ${cmd} "* ]] || _deb_special_cmds+=("$cmd")
+        ;;
+      checkupdates|go)
+        # Legacy/Arch-only or build-only Doctor output.
+        ;;
+      *)
+        _deb_pkg="${cmd_to_pkg[$cmd]:-}"
+        if [[ -z "$_deb_pkg" ]]; then
+          log_warning "No Debian repair mapping for Doctor command: $cmd"
+          _deb_unresolved+=("$cmd")
+        elif apt-cache show "$_deb_pkg" &>/dev/null 2>&1; then
+          [[ " ${_deb_requested_pkgs[*]} " == *" ${_deb_pkg} "* ]] || _deb_requested_pkgs+=("$_deb_pkg")
+        else
+          log_warning "Debian package unavailable for $cmd: $_deb_pkg"
+          _deb_unresolved+=("$cmd")
+        fi
+        ;;
+    esac
   done
 
-  for pkg in "${_deb_requested_pkgs[@]}"; do
-    if apt-cache show "$pkg" &>/dev/null 2>&1; then
-      _deb_installable_pkgs+=("$pkg")
-    else
-      log_warning "Package not available in current repos: $pkg"
-    fi
-  done
-
-  if [[ ${#_deb_installable_pkgs[@]} -gt 0 ]]; then
+  if [[ ${#_deb_requested_pkgs[@]} -gt 0 ]]; then
     case ${SKIP_SYSUPDATE:-false} in
       true) log_info "Skipping system update" ;;
       *) v sudo apt update ;;
     esac
+    sudo apt install $installflags "${_deb_requested_pkgs[@]}" || return 1
+  fi
 
-    if ! sudo apt install $installflags "${_deb_installable_pkgs[@]}" 2>/dev/null; then
-      log_warning "Batch install failed, trying individually..."
-      for pkg in "${_deb_installable_pkgs[@]}"; do
-        sudo apt install $installflags "$pkg" 2>/dev/null || \
-          log_warning "Could not install $pkg"
-      done
+  # Providers which are not native apt packages. Mission Center intentionally
+  # uses Flatpak on Debian; expose a host wrapper because iNiR's launcher and
+  # Doctor work with executable commands, not desktop-file-only Flatpak apps.
+  if [[ " ${_deb_special_cmds[*]} " == *" missioncenter " ]] && ! command -v missioncenter &>/dev/null; then
+    sudo apt install $installflags flatpak >/dev/null 2>&1 || true
+    if command -v flatpak &>/dev/null; then
+      flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo >/dev/null 2>&1 || true
+      if flatpak install -y --user flathub io.missioncenter.MissionCenter >/dev/null 2>&1; then
+        _mc_wrapper="$(mktemp /tmp/inir-missioncenter.XXXXXX)"
+        printf '%s\n' '#!/bin/sh' 'exec flatpak run io.missioncenter.MissionCenter "$@"' > "$_mc_wrapper"
+        sudo install -m 0755 "$_mc_wrapper" /usr/local/bin/missioncenter
+        rm -f "$_mc_wrapper"
+      fi
     fi
   fi
 
+  if [[ " ${_deb_special_cmds[*]} " == *" gowall " ]] && ! command -v gowall &>/dev/null; then
+    sudo apt install $installflags golang-go >/dev/null 2>&1 || true
+    if command -v go &>/dev/null; then
+      _gowall_build="$(mktemp -d /tmp/inir-gowall.XXXXXX)"
+      if git clone --depth 1 https://github.com/Achno/gowall.git "$_gowall_build/src" >/dev/null 2>&1 \
+          && (cd "$_gowall_build/src" && go build -o "$_gowall_build/gowall" . >/dev/null 2>&1); then
+        sudo install -m 0755 "$_gowall_build/gowall" /usr/local/bin/gowall
+      fi
+      rm -rf "$_gowall_build"
+    fi
+  fi
+
+  # The remaining special providers already have mature paths later in the full
+  # Debian installer (repository/PPA first, then source). Re-enter once with the
+  # missing-only flag cleared; package checks make already-satisfied work cheap.
+  _deb_need_full_provider=false
+  for cmd in "${_deb_special_cmds[@]}"; do
+    case "$cmd" in awww|awww-daemon|songrec|xwayland-satellite) _deb_need_full_provider=true ;; esac
+  done
   unset ONLY_MISSING_DEPS
+  if $_deb_need_full_provider; then
+    SKIP_SYSUPDATE=true
+    source "${REPO_ROOT}/sdata/dist-debian/install-deps.sh"
+  fi
+
+  for cmd in "${_deb_special_cmds[@]}"; do
+    case "$cmd" in
+      awww|awww-daemon) command -v awww &>/dev/null && command -v awww-daemon &>/dev/null || _deb_unresolved+=("awww") ;;
+      *) command -v "$cmd" &>/dev/null || _deb_unresolved+=("$cmd") ;;
+    esac
+  done
+
+  if [[ ${#_deb_unresolved[@]} -gt 0 ]]; then
+    log_error "Could not repair Debian dependencies: $(printf '%s ' "${_deb_unresolved[@]}")"
+    return 1
+  fi
   return 0
 fi
 
@@ -284,6 +334,119 @@ apt_pkg_available() {
   return 1
 }
 
+quickshell_installed_compatible() {
+  local version=""
+  command -v qs &>/dev/null || return 1
+  version="$(qs --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+  [[ -n "$version" ]] && dpkg --compare-versions "$version" ge "0.3.0"
+}
+
+apt_quickshell_compatible() {
+  local candidate=""
+  apt_pkg_available quickshell || return 1
+  candidate="$(apt-cache policy quickshell 2>/dev/null | awk '/Candidate:/ {print $2; exit}')"
+  [[ -n "$candidate" && "$candidate" != "(none)" ]] || return 1
+  dpkg --compare-versions "$candidate" ge "0.3.0"
+}
+
+get_debian_primary_mirror() {
+  local codename="${DEBIAN_CODENAME:-}"
+  local mirror=""
+
+  [[ -n "$codename" ]] || return 1
+
+  mirror=$(sed -nE "s|^[[:space:]]*deb[[:space:]]+(\\[[^]]+\\][[:space:]]+)?([^[:space:]]+)[[:space:]]+${codename}([[:space:]].*)?$|\\2|p" \
+    /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null \
+    | grep -vi '/security' | head -1)
+
+  if [[ -z "$mirror" ]]; then
+    mirror=$(awk -v suite="$codename" '
+      BEGIN { RS=""; FS="\n" }
+      {
+        uris=""; suites=""
+        for (i=1; i<=NF; i++) {
+          if ($i ~ /^[[:space:]]*URIs:/) { uris=$i; sub(/^[^:]*:[[:space:]]*/, "", uris) }
+          if ($i ~ /^[[:space:]]*Suites:/) { suites=$i; sub(/^[^:]*:[[:space:]]*/, "", suites) }
+        }
+        if (suites ~ "(^|[[:space:]])" suite "([[:space:]]|$)" && uris !~ /security/) {
+          split(uris, u, /[[:space:]]+/); print u[1]; exit
+        }
+      }
+    ' /etc/apt/sources.list.d/*.sources 2>/dev/null)
+  fi
+
+  [[ -n "$mirror" ]] || mirror="http://deb.debian.org/debian"
+  printf '%s\n' "$mirror"
+}
+
+ensure_debian_component() {
+  local component="$1"
+
+  if ! $IS_DEBIAN || [[ -z "$DEBIAN_CODENAME" ]]; then
+    return 0
+  fi
+  if apt_component_enabled "$component"; then
+    return 0
+  fi
+
+  local mirror
+  mirror="$(get_debian_primary_mirror)" || return 1
+  log_info "Enabling Debian '${component}' component using ${mirror}..."
+  printf 'deb %s %s %s\n' "$mirror" "$DEBIAN_CODENAME" "$component" \
+    | sudo tee "/etc/apt/sources.list.d/inir-${DEBIAN_CODENAME}-${component}.list" >/dev/null || return 1
+
+  if ! v sudo apt update; then
+    log_warning "Could not refresh Debian '${component}' component"
+    return 1
+  fi
+  APT_PKG_AVAILABLE_CACHE=()
+  read_apt_components
+}
+
+ensure_debian_backports() {
+  # Prefer the user's existing Debian mirror so installations in region-limited
+  # networks do not get forced onto a new host just to obtain backports.
+  if ! $IS_DEBIAN || [[ -z "$DEBIAN_CODENAME" ]]; then
+    return 0
+  fi
+
+  local suite="${DEBIAN_CODENAME}-backports"
+
+  if grep -RqsE "(^|[[:space:]])${suite}([[:space:]]|$)" \
+      /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null; then
+    return 0
+  fi
+
+  local mirror
+  mirror="$(get_debian_primary_mirror)" || return 1
+
+  log_info "Enabling Debian ${suite} using ${mirror}..."
+  printf 'deb %s %s main\n' "$mirror" "$suite" \
+    | sudo tee "/etc/apt/sources.list.d/inir-${suite}.list" >/dev/null || return 1
+  if ! v sudo apt update; then
+    log_warning "Could not refresh ${suite}; source-build fallbacks remain available"
+    return 1
+  fi
+
+  # Availability checks performed before the repo was enabled must be retried.
+  APT_PKG_AVAILABLE_CACHE=()
+}
+
+ensure_rust_toolchain() {
+  [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
+  command -v cargo &>/dev/null && return 0
+
+  log_info "Rust is required for this source fallback — installing via rustup..."
+  if curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; then
+    source "$HOME/.cargo/env"
+    command -v cargo &>/dev/null
+    return $?
+  fi
+
+  log_warning "Could not install Rust toolchain"
+  return 1
+}
+
 filter_available_packages() {
   local pkg_array_name="$1"
   local -n pkgs="$pkg_array_name"
@@ -304,6 +467,20 @@ filter_available_packages() {
 read_apt_components
 if $IS_UBUNTU; then
   ensure_ubuntu_component "universe"
+fi
+if $IS_DEBIAN; then
+  # translate-shell is distributed in Debian contrib. Enable the component on
+  # the same mirror the user already trusts instead of adding a third-party
+  # repository or silently leaving the translation feature unavailable.
+  ensure_debian_component "contrib" || true
+fi
+
+# Quickshell and Hyprpicker are prebuilt in Debian 13 backports. Enable that
+# official suite only when stable repositories do not already provide them.
+if $IS_DEBIAN && [[ "$DEBIAN_CODENAME" == "trixie" ]]; then
+  if ! apt_quickshell_compatible || ! apt_pkg_available hyprpicker; then
+    ensure_debian_backports || true
+  fi
 fi
 log_repo_context
 
@@ -334,10 +511,6 @@ DEBIAN_CORE_PKGS=(
   xdg-desktop-portal
   xdg-desktop-portal-gtk
   xdg-desktop-portal-gnome
-  
-  # Polkit
-  policykit-1
-  policykit-1-gnome
   
   # Network
   network-manager
@@ -375,6 +548,32 @@ DEBIAN_CORE_PKGS=(
   adwaita-icon-theme
   papirus-icon-theme
 )
+
+# Prefer distro packages whenever the currently enabled suite provides them.
+# This covers Debian 13 backports and newer Debian/Ubuntu derivatives while
+# leaving the existing source/release fallbacks intact elsewhere.
+for pkg in quickshell niri xwayland-satellite awww starship eza uv; do
+  if [[ "$pkg" == "quickshell" ]] && ! apt_quickshell_compatible; then
+    continue
+  fi
+  if apt_pkg_available "$pkg"; then
+    DEBIAN_CORE_PKGS+=("$pkg")
+  fi
+done
+
+# Polkit package names changed in Debian 13. Keep Bookworm/Ubuntu compatibility
+# while ensuring Trixie receives both the daemon/tools and a graphical agent.
+if apt_pkg_available policykit-1; then
+  DEBIAN_CORE_PKGS+=(policykit-1)
+else
+  apt_pkg_available polkitd && DEBIAN_CORE_PKGS+=(polkitd)
+  apt_pkg_available pkexec && DEBIAN_CORE_PKGS+=(pkexec)
+fi
+if apt_pkg_available policykit-1-gnome; then
+  DEBIAN_CORE_PKGS+=(policykit-1-gnome)
+elif apt_pkg_available polkit-kde-agent-1; then
+  DEBIAN_CORE_PKGS+=(polkit-kde-agent-1)
+fi
 
 # Qt6 packages - ONLY dev packages, runtime libs are auto-installed as dependencies
 # This avoids conflicts with t64 transition packages (libqt6core6t64 vs libqt6core6)
@@ -417,7 +616,6 @@ DEBIAN_AUDIO_PKGS=(
   easyeffects
   mpv
   yt-dlp
-  python3-ytmusicapi
   socat
 )
 
@@ -443,7 +641,18 @@ DEBIAN_TOOLKIT_PKGS=(
   tesseract-ocr
   tesseract-ocr-eng
   tesseract-ocr-spa
+  tesseract-ocr-rus
+  tesseract-ocr-jpn
+  tesseract-ocr-jpn-vert
+  tesseract-ocr-chi-sim
+  tesseract-ocr-chi-sim-vert
+  tesseract-ocr-chi-tra
+  tesseract-ocr-chi-tra-vert
 )
+
+if apt_pkg_available hyprpicker; then
+  DEBIAN_TOOLKIT_PKGS+=(hyprpicker)
+fi
 
 # Screen capture packages
 DEBIAN_SCREENCAPTURE_PKGS=(
@@ -452,6 +661,16 @@ DEBIAN_SCREENCAPTURE_PKGS=(
   wf-recorder
   imagemagick
   ffmpeg
+  tesseract-ocr
+  tesseract-ocr-eng
+  tesseract-ocr-spa
+  tesseract-ocr-rus
+  tesseract-ocr-jpn
+  tesseract-ocr-jpn-vert
+  tesseract-ocr-chi-sim
+  tesseract-ocr-chi-sim-vert
+  tesseract-ocr-chi-tra
+  tesseract-ocr-chi-tra-vert
 )
 
 # Check if swappy is available (only in trixie/sid, not bookworm)
@@ -494,6 +713,10 @@ fi
 # Check if cava is available in repos
 if apt_pkg_available cava; then
   DEBIAN_AUDIO_PKGS+=(cava)
+fi
+
+if apt_pkg_available songrec; then
+  DEBIAN_AUDIO_PKGS+=(songrec)
 fi
 
 # Check if qalculate-qt is available (preferred over qalculate)
@@ -677,6 +900,7 @@ if ! command -v songrec &>/dev/null; then
     log_info "Trying songrec PPA for Ubuntu..."
     if sudo add-apt-repository -y ppa:marin-m/songrec 2>/dev/null; then
       sudo apt update
+      APT_PKG_AVAILABLE_CACHE=()
       if sudo apt install $installflags songrec 2>/dev/null; then
         log_success "songrec installed from PPA"
         SONGREC_INSTALLED=true
@@ -698,17 +922,59 @@ if ! command -v songrec &>/dev/null; then
     )
     sudo apt install $installflags "${SONGREC_DEPS[@]}" 2>/dev/null || true
     
-    # Ensure Rust is available
-    if command -v cargo &>/dev/null; then
-      if cargo install songrec 2>/dev/null; then
+    # Rust is only needed when the repository/PPA paths above were unavailable.
+    if ensure_rust_toolchain; then
+      SONGREC_ROOT="$(mktemp -d /tmp/inir-songrec.XXXXXX)"
+      if cargo install --root "$SONGREC_ROOT" songrec 2>/dev/null \
+          && [[ -x "$SONGREC_ROOT/bin/songrec" ]]; then
+        sudo install -m 0755 "$SONGREC_ROOT/bin/songrec" /usr/local/bin/songrec
         log_success "songrec installed via Cargo"
         SONGREC_INSTALLED=true
       else
         log_warning "songrec build failed"
       fi
+      rm -rf "$SONGREC_ROOT"
     else
-      log_warning "Cargo not available, skipping songrec"
+      log_warning "Cargo not available, skipping songrec source fallback"
     fi
+  fi
+fi
+
+# Mission Center - Debian/Ubuntu provider. Flathub is the cross-distro
+# package source already documented by iNiR; add a host command wrapper so the
+# launcher and Doctor can treat it like every other configured application.
+if ! command -v missioncenter &>/dev/null; then
+  log_info "Installing Mission Center from Flathub..."
+  sudo apt install $installflags flatpak >/dev/null 2>&1 || true
+  if command -v flatpak &>/dev/null; then
+    flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo >/dev/null 2>&1 || true
+    if flatpak install -y --user flathub io.missioncenter.MissionCenter >/dev/null 2>&1; then
+      _mc_wrapper="$(mktemp /tmp/inir-missioncenter.XXXXXX)"
+      printf '%s\n' '#!/bin/sh' 'exec flatpak run io.missioncenter.MissionCenter "$@"' > "$_mc_wrapper"
+      sudo install -m 0755 "$_mc_wrapper" /usr/local/bin/missioncenter
+      rm -f "$_mc_wrapper"
+      log_success "Mission Center installed"
+    else
+      log_warning "Mission Center Flatpak installation failed"
+    fi
+  fi
+fi
+
+# Gowall - no stable Debian package is assumed. Build the tiny Go CLI only when
+# the exposed wallpaper editor needs its command and it is not already present.
+if ${INSTALL_TOOLKIT:-true} && ! command -v gowall &>/dev/null; then
+  log_info "Installing gowall wallpaper editor..."
+  sudo apt install $installflags golang-go >/dev/null 2>&1 || true
+  if command -v go &>/dev/null; then
+    _gowall_build="$(mktemp -d /tmp/inir-gowall.XXXXXX)"
+    if git clone --depth 1 https://github.com/Achno/gowall.git "$_gowall_build/src" >/dev/null 2>&1 \
+        && (cd "$_gowall_build/src" && go build -o "$_gowall_build/gowall" . >/dev/null 2>&1); then
+      sudo install -m 0755 "$_gowall_build/gowall" /usr/local/bin/gowall
+      log_success "gowall installed"
+    else
+      log_warning "gowall source build failed"
+    fi
+    rm -rf "$_gowall_build"
   fi
 fi
 
@@ -797,20 +1063,6 @@ if ${INSTALL_SCREENCAPTURE:-true}; then
 fi
 
 #####################################################################################
-# Install Rust toolchain (needed for niri, quickshell, xwayland-satellite)
-#####################################################################################
-tui_info "Setting up Rust toolchain..."
-
-# Ensure cargo is in PATH (may have been installed in previous run)
-[[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
-
-if ! command -v cargo &>/dev/null; then
-  log_info "Installing Rust via rustup..."
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-  source "$HOME/.cargo/env"
-fi
-
-#####################################################################################
 # Install uv (Python package manager) - from official installer
 #####################################################################################
 tui_info "Installing uv (Python package manager)..."
@@ -828,6 +1080,15 @@ if ! command -v uv &>/dev/null; then
   export PATH="$HOME/.local/bin:$PATH"
 fi
 
+# Debian 13 carries both tools directly. Older Debian/Ubuntu releases retain
+# the project's upstream installers instead of silently missing shell helpers.
+if ! command -v starship &>/dev/null; then
+  install-starship
+fi
+if ! command -v eza &>/dev/null; then
+  install-eza
+fi
+
 #####################################################################################
 # Install Niri (PPA for Ubuntu 25.10+, compile for others)
 #####################################################################################
@@ -843,6 +1104,7 @@ if ! command -v niri &>/dev/null; then
           log_warning "PPA failed, falling back to source compilation"
         }
         sudo apt update
+        APT_PKG_AVAILABLE_CACHE=()
       else
         log_warning "add-apt-repository unavailable, skipping PPA"
       fi
@@ -864,6 +1126,10 @@ if ! command -v niri &>/dev/null; then
   # If still not installed, compile from source
   if ! command -v niri &>/dev/null; then
     log_info "Niri not in repos — compiling from source..."
+    if ! ensure_rust_toolchain; then
+      log_error "Niri source fallback requires Rust"
+      return 1
+    fi
   
     log_info "Installing Niri build dependencies..."
     
@@ -890,8 +1156,7 @@ if ! command -v niri &>/dev/null; then
       log_warning "libdisplay-info-dev not in repos, trying backports..."
       # Try to enable backports for bookworm
       if $IS_DEBIAN && [[ "$DEBIAN_VERSION" == 12* ]]; then
-        echo "deb http://deb.debian.org/debian bookworm-backports main" | sudo tee /etc/apt/sources.list.d/backports.list
-        sudo apt update
+        ensure_debian_backports || true
         sudo apt install -t bookworm-backports libdisplay-info-dev 2>/dev/null || true
       fi
     fi
@@ -944,6 +1209,9 @@ if ! command -v xwayland-satellite &>/dev/null; then
   if command -v xwayland-satellite &>/dev/null; then
     true
   else
+  if ! ensure_rust_toolchain; then
+    log_warning "xwayland-satellite source fallback requires Rust"
+  else
   
   # Install xwayland-satellite build dependencies
   sudo apt install $installflags \
@@ -967,6 +1235,7 @@ if ! command -v xwayland-satellite &>/dev/null; then
     rm -rf "$XWSAT_BUILD_DIR"
   fi
   fi
+  fi
 fi
 
 #####################################################################################
@@ -974,6 +1243,10 @@ fi
 #####################################################################################
 if ! command -v awww &>/dev/null; then
   log_info "Installing awww (wallpaper daemon)..."
+
+  if ! ensure_rust_toolchain; then
+    log_warning "awww source fallback requires Rust"
+  else
 
   # awww needs libxkbcommon and lz4
   sudo apt install $installflags libxkbcommon-dev liblz4-dev 2>/dev/null || true
@@ -991,6 +1264,7 @@ if ! command -v awww &>/dev/null; then
     rm -rf "$AWWW_BUILD_DIR"
   else
     log_warning "Failed to clone awww repository"
+  fi
   fi
 fi
 
@@ -1072,18 +1346,19 @@ if ! command -v hyprpicker &>/dev/null; then
 fi
 
 #####################################################################################
-# Install Quickshell (must compile - no prebuilt binaries)
+# Install Quickshell (0.3+ required for Quickshell.Networking and other APIs)
 #####################################################################################
 tui_info "Installing Quickshell..."
 
-if ! command -v qs &>/dev/null; then
-  # Try distro repositories first (intentional: prefer stable quickshell package)
-  if apt_pkg_available quickshell; then
+if ! quickshell_installed_compatible; then
+  # Try a compatible distro/backports/PPA package first. Do not accept an older
+  # quickshell merely because a binary named `qs` happens to be installed.
+  if apt_quickshell_compatible; then
     sudo apt install $installflags quickshell 2>/dev/null || true
   fi
 
-  if ! command -v qs &>/dev/null; then
-    log_info "Quickshell not in repos — compiling from source..."
+  if ! quickshell_installed_compatible; then
+    log_info "Quickshell 0.3+ not in repos — compiling the current stable release from source..."
   
   log_info "Installing Quickshell build dependencies..."
   
@@ -1153,7 +1428,7 @@ if ! command -v qs &>/dev/null; then
   QUICKSHELL_BUILD_DIR="/tmp/quickshell-build-$$"
   
   log_info "Cloning Quickshell..."
-  if git clone --recursive https://github.com/quickshell-mirror/quickshell.git "$QUICKSHELL_BUILD_DIR"; then
+  if git clone --depth 1 --branch v0.3.1 --recursive https://github.com/quickshell-mirror/quickshell.git "$QUICKSHELL_BUILD_DIR"; then
     log_info "Building Quickshell (this may take a while)..."
     cd "$QUICKSHELL_BUILD_DIR"
     if cmake -B build -G Ninja \
@@ -1387,12 +1662,6 @@ if [[ ! -d "$CURSOR_DIR/capitaine-cursors-light" ]]; then
 fi
 
 #####################################################################################
-# Python environment setup
-#####################################################################################
-showfun install-python-packages
-v install-python-packages
-
-#####################################################################################
 # Post-install summary
 #####################################################################################
 echo ""
@@ -1406,15 +1675,18 @@ if [[ ${#MISSING_REPO_PKGS[@]} -gt 0 ]]; then
   printf '  - %s\n' $(printf "%s\n" "${MISSING_REPO_PKGS[@]}" | awk 'NF{print $1}' | sort -u)
   echo ""
 fi
-log_info "Installed from GitHub releases (no compilation):"
+log_info "Repository-first packages:"
+echo "  - Debian 13: quickshell/hyprpicker from trixie-backports; starship/eza from stable"
+echo "  - Ubuntu/derivatives: configured distro repositories are preferred whenever available"
+echo ""
+log_info "Fallback downloads/builds when repositories do not provide a dependency:"
 echo "  - gum, cliphist, darkly, songrec (PPA/Cargo)"
 echo "  - twemoji-color-font, adw-gtk3 theme"
 echo "  - Material Symbols fonts, JetBrains Mono Nerd Font"
 echo "  - WhiteSur, MacTahoe icon themes"
 echo "  - Bibata, Capitaine cursor themes"
 echo ""
-log_info "Compiled from source:"
-echo "  - niri, quickshell, xwayland-satellite, hyprpicker, cava, swappy"
+echo "  - source fallback remains for niri, quickshell, xwayland-satellite, hyprpicker, cava, swappy, awww"
 echo ""
 
 # Verify critical commands

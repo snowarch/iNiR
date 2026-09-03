@@ -16,7 +16,7 @@ TextField {
     Material.background: Appearance.regaliaEverywhere ? "transparent" : Appearance.colors.colLayer1
     Material.foreground: Appearance.regaliaEverywhere ? Appearance.regalia.onColor : Appearance.colors.colOnSurface
     Material.containerStyle: Appearance.regaliaEverywhere ? Material.Filled : Material.Outlined
-    renderType: Text.NativeRendering
+    renderType: Text.QtRendering
 
     // Settings search integration
     property bool enableSettingsSearch: true
@@ -131,7 +131,7 @@ TextField {
     font {
         family: Appearance.font.family.main
         pixelSize: Appearance?.font.pixelSize.normal ?? 16
-        hintingPreference: Font.PreferFullHinting
+        hintingPreference: Font.PreferNoHinting
         variableAxes: Appearance.font.variableAxes.main
     }
     wrapMode: TextEdit.Wrap

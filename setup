@@ -87,6 +87,8 @@ run_migrate() {
     else
         tui_success "No pending migrations"
     fi
+
+    show_session_impact_notices
 }
 trap cleanup INT
 trap 'type _tui_kill_spinner &>/dev/null && _tui_kill_spinner 2>/dev/null || true; rm -rf /tmp/buildyay /tmp/buildparu 2>/dev/null' EXIT TERM
@@ -195,10 +197,20 @@ sync_launcher_from_repo() {
 
     mkdir -p "$XDG_BIN_HOME"
 
-    local source_real target_real
+    local source_real target_real install_mode
     source_real="$(readlink -f "$launcher_source" 2>/dev/null || printf '%s' "$launcher_source")"
     target_real="$(readlink -f "$launcher_target" 2>/dev/null || true)"
-    if [[ -z "$target_real" || "$source_real" != "$target_real" ]]; then
+    install_mode="$(get_installed_install_mode 2>/dev/null || true)"
+    if [[ -z "$install_mode" || "$install_mode" == "unknown" ]]; then
+        install_mode="$(get_install_mode 2>/dev/null || true)"
+    fi
+
+    if [[ "$install_mode" == "repo-link" ]]; then
+        if [[ ! -L "$launcher_target" || "$source_real" != "$target_real" ]]; then
+            rm -f "$launcher_target"
+            ln -s "$launcher_source" "$launcher_target"
+        fi
+    elif [[ -z "$target_real" || "$source_real" != "$target_real" ]]; then
         if [[ ! -f "$launcher_target" ]] || ! cmp -s "$launcher_source" "$launcher_target" 2>/dev/null; then
             cp -f "$launcher_source" "$launcher_target"
         fi
@@ -215,36 +227,64 @@ sync_user_inir_service_from_repo_if_present() {
     local service_target_dir="${XDG_CONFIG_HOME}/systemd/user"
     local service_target="${service_target_dir}/inir.service"
     local launcher_target="${XDG_BIN_HOME}/inir"
-    local tmp_file
+    local tmp_file install_mode
     local changed=false
 
     [[ -f "$service_asset" ]] || return 1
     inir_user_service_is_masked && return 2
-    [[ -f "$service_target" ]] || return 1
 
     mkdir -p "$service_target_dir"
     mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}"
-    tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.$$"
+    local service_dropin_dir="${service_target_dir}/inir.service.d"
+    local service_override="${service_dropin_dir}/override.conf"
+    install_mode="$(get_installed_install_mode 2>/dev/null || true)"
+    if [[ -z "$install_mode" || "$install_mode" == "unknown" ]]; then
+        install_mode="$(get_install_mode 2>/dev/null || true)"
+    fi
 
+    if [[ "$install_mode" == "repo-link" ]]; then
+        local service_asset_real service_target_real override_tmp
+        service_asset_real="$(readlink -f "$service_asset" 2>/dev/null || printf '%s' "$service_asset")"
+        service_target_real="$(readlink -f "$service_target" 2>/dev/null || true)"
+        if [[ ! -L "$service_target" || "$service_asset_real" != "$service_target_real" ]]; then
+            rm -f "$service_target"
+            ln -s "$service_asset" "$service_target"
+            changed=true
+        fi
+
+        mkdir -p "$service_dropin_dir"
+        override_tmp="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.override.$$"
+        cat > "$override_tmp" <<EOF
+# Managed locally: iNiR repo-link launcher override
+[Service]
+ExecStart=
+ExecStart=${launcher_target} run --session
+ExecStopPost=
+ExecStopPost=-${launcher_target} cleanup-orphans
+EOF
+        if [[ ! -f "$service_override" ]] || ! cmp -s "$override_tmp" "$service_override"; then
+            cp -f "$override_tmp" "$service_override"
+            changed=true
+        fi
+        rm -f "$override_tmp"
+
+        # The symlink target can change after git pull without changing the link.
+        # Reload every repo-link sync so systemd sees the current checkout unit.
+        command -v systemctl >/dev/null 2>&1 && systemctl --user daemon-reload >/dev/null 2>&1 || true
+        return 0
+    fi
+
+    tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.$$"
     sed -e "s|^ExecStart=.*|ExecStart=${launcher_target//&/\\&} run --session|" \
         -e "s|^ExecStopPost=-.*|ExecStopPost=-${launcher_target//&/\\&} cleanup-orphans|" \
         "$service_asset" > "$tmp_file"
 
-    if [[ -L "$service_target" ]]; then
-        # A repo-link unit points at the portable template, whose /usr/bin/inir
-        # path is wrong for developer installs.  A drop-in fixes it only after
-        # the first setup/doctor run, so a fresh login can hit 203/EXEC before
-        # that override exists.  Materialize the rendered unit instead.
+    if [[ -L "$service_target" ]] || [[ ! -f "$service_target" ]] || ! cmp -s "$tmp_file" "$service_target"; then
         rm -f "$service_target"
         cp -f "$tmp_file" "$service_target"
         changed=true
-    elif ! cmp -s "$tmp_file" "$service_target"; then
-        changed=true
-        cp -f "$tmp_file" "$service_target"
     fi
 
-    local service_dropin_dir="${service_target_dir}/inir.service.d"
-    local service_override="${service_dropin_dir}/override.conf"
     if [[ -f "$service_override" ]] && grep -q '^# Managed locally:' "$service_override"; then
         rm -f "$service_override"
         rmdir "$service_dropin_dir" 2>/dev/null || true
@@ -275,13 +315,11 @@ ensure_user_inir_service_enabled() {
         return 1
     fi
 
-    # Detect the compositor service — never fall back to graphical-session.target
-    # because that target is active in KDE/GNOME/etc.
+    # iNiR is Niri-only. Never fall back to graphical-session.target or another
+    # compositor service: Niri owns the session environment and lifecycle.
     local target=""
     if systemctl --user cat niri.service &>/dev/null; then
         target="niri.service"
-    elif systemctl --user cat 'wayland-wm@Hyprland.service' &>/dev/null; then
-        target="wayland-wm@Hyprland.service"
     fi
 
     if [[ -z "$target" ]]; then
@@ -475,8 +513,8 @@ show_setup_context_card() {
 show_help() {
     echo ""
     tui_hero_card "iNiR setup" \
-        "Install, sync, repair, inspect, and unfuck the shell without guessing which entrypoint owns what." \
-        "Use inir for daily runtime control. Use ./setup when you want the maintenance brain."
+        "Install, update, repair and inspect the shell without guessing which component owns what." \
+        "Use inir for everyday control. Use ./setup for installation, recovery and maintenance."
 
     tui_key_value "Usage:" "./setup [command] [options]"
     show_setup_context_card "Setup Overview"
@@ -1648,6 +1686,57 @@ run_logs() {
 }
 
 ###############################################################################
+# Install completion — useful next steps without making first-run feel like a log dump
+###############################################################################
+show_install_completion() {
+    local version distro package_manager host gpu ram compositor
+    version="$(get_repo_version)"
+    distro="${DETECTED_DISTRO:-${OS_PRETTY_NAME:-Linux}}"
+    package_manager="${DETECTED_PACKAGE_MANAGER:-$(get_package_manager 2>/dev/null || echo unknown)}"
+    host="${DETECTED_PORTABLE:-desktop}"
+    [[ "${DETECTED_VIRT:-none}" != "none" ]] && host+=" / ${DETECTED_VIRT} VM"
+    gpu="${DETECTED_GPU:-unknown}"
+    ram="${DETECTED_RAM_GIB:-?} GiB"
+    compositor="${DETECTED_DE:-${XDG_CURRENT_DESKTOP:-not detected}}"
+
+    tui_alert "success" "iNiR is ready" \
+        "Version ${version} is installed. You can start the shell now or begin with a clean Niri login."
+
+    tui_summary_card "This install" \
+        "Distro:${distro}" \
+        "Packages:${package_manager}" \
+        "Host:${host}" \
+        "GPU:${gpu}" \
+        "RAM:${ram}" \
+        "Session:${compositor}"
+
+    tui_section_start "Good next moves"
+    if [[ -n "${NIRI_SOCKET:-}" ]]; then
+        tui_list_item "Start/reload now: inir restart"
+    else
+        tui_list_item "Log out, choose Niri in your login screen, then sign back in"
+    fi
+    tui_list_item "Open Settings: inir settings"
+    tui_list_item "Check health: inir doctor"
+    tui_list_item "See exactly what is installed: inir status"
+    tui_section_end
+
+    tui_dim "If an experiment goes sideways later: ./setup rollback"
+}
+
+show_update_completion() {
+    local version="$1" commit="$2"
+    tui_alert "success" "Update applied" \
+        "iNiR ${version} (${commit}) is synced. The shell restart was requested when the session allowed it."
+
+    tui_section_start "If something looks off"
+    tui_list_item "Verify the result: inir status"
+    tui_list_item "Run diagnostics: inir doctor"
+    tui_list_item "Undo this update: ./setup rollback"
+    tui_section_end
+}
+
+###############################################################################
 # Install
 ###############################################################################
 run_install() {
@@ -1795,7 +1884,7 @@ run_install() {
     tui_task_finalize
 
     echo ""
-    tui_alert "success" "Installation complete" "Version $(get_repo_version) is ready.\nRun 'inir run' to start the shell, or log out and back in."
+    show_install_completion
 }
 
 ###############################################################################
@@ -2496,10 +2585,7 @@ run_update() {
 
     local launcher_target="${XDG_BIN_HOME}/inir"
     if [[ -f "${REPO_ROOT}/scripts/inir" ]]; then
-        mkdir -p "$XDG_BIN_HOME"
-        cp -f "${REPO_ROOT}/scripts/inir" "$launcher_target"
-        chmod +x "$launcher_target"
-        ensure_launcher_path_in_shells "$XDG_BIN_HOME"
+        sync_launcher_from_repo >/dev/null || tui_warn "Could not refresh the inir launcher"
         if ! command -v inir &>/dev/null && [[ ":$PATH:" != *":${XDG_BIN_HOME}:"* ]]; then
             tui_warn "Launcher installed to ${launcher_target}, but ${XDG_BIN_HOME} is not in PATH for this shell"
         fi
@@ -2744,27 +2830,11 @@ run_update() {
     #     fi
     # fi
 
-    # Update Python venv packages
-    _step_phase_header 6 "Python packages"
-    local venv_dir="${XDG_STATE_HOME}/quickshell/.venv"
-    local req_file="${REPO_ROOT}/sdata/uv/requirements.txt"
-
-    if [[ -f "$req_file" ]] && command -v uv &>/dev/null; then
-        if [[ ! -d "$venv_dir/bin" ]]; then
-            tui_info "Creating Python venv..."
-            uv venv --prompt ii-venv "$venv_dir" -p 3.12 2>/dev/null || uv venv --prompt ii-venv "$venv_dir" 2>/dev/null
-        fi
-
-        if [[ -d "$venv_dir/bin" ]]; then
-            tui_info "Updating Python packages..."
-            source "$venv_dir/bin/activate"
-            uv pip install -q -r "$req_file" 2>/dev/null
-            deactivate
-            tui_success "Python packages updated"
-        fi
-    else
-        tui_success "Python packages (skipped - uv not available)"
-    fi
+    # Keep update semantics identical to fresh install: the managed Python venv
+    # owns ytmusicapi, and Deno is repaired as part of the YT playback runtime.
+    _step_phase_header 6 "Python / YT runtime"
+    install-python-packages
+    ensure-ytmusic-js-runtime
 
     # Signal success to the shell UI before restart
     echo "success" > "$_update_status_file" 2>/dev/null || true
@@ -2796,8 +2866,10 @@ run_update() {
         tui_info "Or run: inir restart"
     fi
 
+    show_session_impact_notices
+
     echo ""
-    tui_alert "success" "Update complete" "Version $repo_ver ($repo_commit) synced.\nRun './setup rollback' if something breaks."
+    show_update_completion "$repo_ver" "$repo_commit"
 }
 
 ###############################################################################

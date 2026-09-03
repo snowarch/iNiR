@@ -9,7 +9,8 @@ structure are always preserved.
 Commands:
   outputs              JSON array of outputs with modes/capabilities
   apply-output NAME    Apply temporary output changes via niri msg
-  persist-output NAME  Write output config to KDL config.d/15-outputs.kdl
+  persist-output NAME  Write one output config to KDL config.d/15-outputs.kdl
+  persist-layout JSON  Persist all connected output positions atomically
   get-input            Read current input config from KDL
   get-hot-corners      Read effective Niri overview hot corners
   get-layout           Read current layout config from KDL
@@ -377,6 +378,67 @@ def cmd_persist_output(args):
 
         if existing.strip():
             result = existing.rstrip() + "\n\n" + new_block + "\n"
+        else:
+            result = new_block + "\n"
+
+    return _write_validated(outputs_file, result)
+
+
+def cmd_persist_layout(args):
+    """Persist a complete connected-output layout in one validated write.
+
+    The Settings drag surface sends every connected output position, not only the
+    monitor that moved. Niri re-runs automatic placement whenever the output
+    configuration changes, so a durable multi-monitor layout must make every
+    connected position explicit together.
+    """
+    if len(args) != 1:
+        print(json.dumps({"error": "Usage: persist-layout <json-object>"}))
+        return 1
+
+    try:
+        layout = json.loads(args[0])
+    except Exception as e:
+        print(json.dumps({"error": f"Invalid layout JSON: {e}"}))
+        return 1
+
+    if not isinstance(layout, dict) or not layout:
+        print(json.dumps({"error": "Layout must be a non-empty object."}))
+        return 1
+
+    normalized = {}
+    for output_name, position in layout.items():
+        if not isinstance(output_name, str) or not output_name:
+            print(json.dumps({"error": "Every output must have a non-empty name."}))
+            return 1
+        if not isinstance(position, dict) or "x" not in position or "y" not in position:
+            print(json.dumps({"error": f"Missing x/y position for {output_name}."}))
+            return 1
+        try:
+            x = int(position["x"])
+            y = int(position["y"])
+        except (TypeError, ValueError):
+            print(json.dumps({"error": f"Invalid x/y position for {output_name}."}))
+            return 1
+        normalized[output_name] = (x, y)
+
+    outputs_file = resolve_niri_section_file("config.d/15-outputs.kdl")
+    outputs_file.parent.mkdir(parents=True, exist_ok=True)
+    result = outputs_file.read_text() if outputs_file.exists() else ""
+
+    for output_name, (x, y) in normalized.items():
+        bounds = _find_output_block_bounds(result, output_name)
+        if bounds:
+            _, inner_start, inner_end, _ = bounds
+            block_content = _set_in_block(
+                result[inner_start:inner_end], "position", f"x={x} y={y}"
+            )
+            result = result[:inner_start] + block_content + result[inner_end:]
+            continue
+
+        new_block = f'output "{output_name}" {{\n    position x={x} y={y}\n}}'
+        if result.strip():
+            result = result.rstrip() + "\n\n" + new_block + "\n"
         else:
             result = new_block + "\n"
 
@@ -826,6 +888,32 @@ def _iter_output_blocks(content):
             i += 1
         if depth == 0:
             yield match.group(1), content[inner_start:i - 1]
+
+
+def _find_output_block_bounds(content, output_name):
+    """Return (block_start, inner_start, inner_end, block_end) for a top-level output.
+
+    Unlike the legacy regex-only output writer this keeps nested per-output blocks
+    (hot-corners, layout, etc.) intact while changing the outer position.
+    """
+    pattern = re.compile(
+        rf'(?m)^[ \t]*output\s+"{re.escape(output_name)}"\s*\{{'
+    )
+    for match in pattern.finditer(content):
+        if _brace_depth_before(content, match.start()) != 0:
+            continue
+        inner_start = match.end()
+        depth = 1
+        i = inner_start
+        while i < len(content) and depth > 0:
+            if content[i] == "{":
+                depth += 1
+            elif content[i] == "}":
+                depth -= 1
+            i += 1
+        if depth == 0:
+            return match.start(), inner_start, i - 1, i
+    return None
 
 
 def _parse_hot_corner_block(block):
@@ -2957,7 +3045,7 @@ def main():
         print(
             json.dumps(
                 {
-                    "error": "No command. Use: outputs, apply-output, persist-output, get-input, get-hot-corners, get-layout, get-animations, get-window-rules, list-cursor-themes, sync-cursor, validate, detect-customizations, set, get-binds, set-bind, remove-bind"
+                    "error": "No command. Use: outputs, apply-output, persist-output, persist-layout, get-input, get-hot-corners, get-layout, get-animations, get-window-rules, list-cursor-themes, sync-cursor, validate, detect-customizations, set, get-binds, set-bind, remove-bind"
                 }
             )
         )
@@ -2970,6 +3058,7 @@ def main():
         "outputs": lambda: cmd_outputs(),
         "apply-output": lambda: cmd_apply_output(args),
         "persist-output": lambda: cmd_persist_output(args),
+        "persist-layout": lambda: cmd_persist_layout(args),
         "get-input": lambda: cmd_get_input(),
         "get-hot-corners": lambda: cmd_get_hot_corners(),
         "get-layout": lambda: cmd_get_layout(),

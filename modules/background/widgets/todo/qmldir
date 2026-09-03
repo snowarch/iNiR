@@ -1,0 +1,2 @@
+module qs.modules.background.widgets.todo
+TodoWidget 1.0 TodoWidget.qml

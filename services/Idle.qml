@@ -94,7 +94,7 @@ Singleton {
         }
 
         if (lockBeforeSleep) {
-            cmd.push("before-sleep", `'${StringUtils.shellSingleQuoteEscape(root.launcherPath)}' lock activate`)
+            cmd.push("before-sleep", `'${StringUtils.shellSingleQuoteEscape(root.launcherPath)}' lock prepareSleep`)
         }
 
         // Re-focus the lock surface and broadcast a shell-wide resume event.

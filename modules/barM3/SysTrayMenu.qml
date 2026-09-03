@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -16,6 +17,7 @@ PopupWindow {
     property string trayItemId: ""
     property real popupBackgroundMargin: 0
     property bool opened: false
+    property bool registeredContextMenu: false
 
     signal menuClosed
     signal menuOpened(qsWindow: var) // Correct type is QsWindow, but QML does not like that
@@ -46,6 +48,10 @@ PopupWindow {
     function open() {
         root.opened = true;
         root.visible = true;
+        if (!root.registeredContextMenu) {
+            GlobalStates.activeContextMenuCount++;
+            root.registeredContextMenu = true;
+        }
         root.menuOpened(root);
     }
 
@@ -53,9 +59,18 @@ PopupWindow {
         if (!root.opened)
             return;
         root.opened = false;
+        if (root.registeredContextMenu) {
+            GlobalStates.activeContextMenuCount = Math.max(0, GlobalStates.activeContextMenuCount - 1);
+            root.registeredContextMenu = false;
+        }
         while (stackView.depth > 1)
             stackView.pop();
         root.menuClosed();
+    }
+
+    Component.onDestruction: {
+        if (root.registeredContextMenu)
+            GlobalStates.activeContextMenuCount = Math.max(0, GlobalStates.activeContextMenuCount - 1);
     }
 
     function close() {

@@ -66,7 +66,8 @@ Item {
             : Appearance.inirEverywhere ? playerBase.inirLayer1
             : ColorUtils.mix(root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0,
                 root.accent, 0.94)
-        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0
+        border.width: root.vizType === "organic" && root.vizPosition !== "none"
+            ? 0 : (Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0)
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
         clip: true
 
@@ -204,30 +205,12 @@ Item {
                             }
                         }
 
-                        WaveVisualizer {
+                            MediaVisualizerOverlay {
                             anchors.fill: parent
-                            visible: root.vizType === "wave" && root.vizPosition !== "none"
-                            live: playerBase.effectiveIsPlaying
-                            points: root.visualizerPoints
-                            maxVisualizerValue: 1000
-                            smoothing: 2
-                            color: ColorUtils.transparentize(root.accent, 0.35)
-                        }
-
-                        CavaVisualizer {
-                            anchors.fill: parent
-                            visible: root.vizType === "bars" && root.vizPosition !== "none"
-                            live: playerBase.effectiveIsPlaying
-                            points: root.visualizerPoints
-                            maxVisualizerValue: 1000
-                            smoothing: 2
-                            barCount: 28
-                            barSpacing: 2
-                            barRadius: 2
-                            barMinHeight: 1
-                            colorLow: ColorUtils.transparentize(root.accent, 0.55)
-                            colorMed: ColorUtils.transparentize(root.accent, 0.25)
-                            colorHigh: root.accent
+                            edgeHeight: 42
+                                            visualizerPoints: root.visualizerPoints
+                            active: playerBase.effectiveIsPlaying
+                            playerColor: root.themeSourceColor
                         }
 
                         StyledText {

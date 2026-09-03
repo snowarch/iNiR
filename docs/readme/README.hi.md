@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.30.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -273,6 +273,7 @@ inir repair                     # doctor + रीस्टार्ट + फ़�
 ## श्रेय
 
 - [**end-4**](https://github.com/end-4/dots-hyprland) — Hyprland के लिए मूल illogical-impulse
+- [**pctrade/end4-pC**](https://github.com/pctrade/end4-pC) — एक फ़ोर्क जिसे कभी-कभी सच में अच्छा आइडिया सूझ जाता है
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — इस शेल को चलाने वाला फ़्रेमवर्क
 - [**Niri**](https://github.com/YaLTeR/niri) — स्क्रॉलिंग टाइलिंग Wayland कंपोज़िटर
 

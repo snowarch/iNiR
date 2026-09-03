@@ -67,8 +67,24 @@ Variants {
                 false,
                 enableAnimatedBlur
             )
+        readonly property bool internalShaderTransitionRequested:
+            (Config.options?.background?.transition?.enable ?? true)
+            && Looks.transition.enabled
+            && AwwwBackend.isInternalShaderTransitionType(
+                Config.options?.background?.transition?.type ?? "crossfade")
+            && !panelRoot.wallpaperIsGif
+            && !panelRoot.wallpaperIsVideo
+        // Shader transitions are owned by the in-shell crossfader. Keep QML as
+        // the visible static-wallpaper owner while that mode is selected so the
+        // compositor never has to hand the desktop between AWWW and QML during
+        // a transition.
         readonly property bool externalMainWallpaperActive: panelRoot.externalMainWallpaperEligible
+            && !panelRoot.internalShaderTransitionRequested
         readonly property bool showInternalStaticWallpaper: !externalMainWallpaperActive
+        readonly property bool internalShaderPreviewActive: panelRoot.internalShaderTransitionRequested
+            && Wallpapers.internalPreviewActive
+            && (!Wallpapers.internalPreviewMonitor
+                || Wallpapers.internalPreviewMonitor === panelRoot._monitorName)
 
         // Mirror of Background.qml: the family LazyLoader can retain this tree
         // after a switch, and without this both families kept a video decoding.
@@ -223,13 +239,19 @@ Variants {
                     !panelRoot.wallpaperIsGif
                     && !panelRoot.wallpaperIsVideo
                     && (panelRoot.showInternalStaticWallpaper
-                        || wallpaperContainer.localBlurNeedsStaticTexture)
+                        || wallpaperContainer.localBlurNeedsStaticTexture
+                        || panelRoot.internalShaderTransitionRequested)
 
                 WallpaperCrossfader {
                     id: wallpaper
+                    readonly property bool shaderOverlayHeld: panelRoot.internalShaderTransitionRequested
+                        && (wallpaper.shaderTransitionBusy
+                            || panelRoot.internalShaderPreviewActive
+                            || AwwwBackend.shaderHandoffPending)
                     anchors.fill: parent
                     fillMode: Image.PreserveAspectCrop
-                    enableTransitions: !AwwwBackend.active
+                    enableTransitions: (!AwwwBackend.active
+                            || panelRoot.internalShaderTransitionRequested)
                         && (Config.options?.background?.transition?.enable ?? true)
                     transitionType: Config.options?.background?.transition?.type ?? "crossfade"
                     transitionDirection: Config.options?.background?.transition?.direction ?? "right"
@@ -237,13 +259,11 @@ Variants {
                     source: wallpaperContainer.needsStaticTexture
                         ? panelRoot.wallpaperUrl : ""
                     visible: !panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo && ready
-                    opacity: panelRoot.showInternalStaticWallpaper ? 1 : 0
+                    opacity: panelRoot.showInternalStaticWallpaper
+                        || wallpaper.shaderOverlayHeld ? 1 : 0
                     layer.enabled: wallpaperContainer.needsStaticTexture
                         && !panelRoot.showInternalStaticWallpaper
-                    sourceSize {
-                        width: panelRoot.screen.width
-                        height: panelRoot.screen.height
-                    }
+                        && !wallpaper.shaderOverlayHeld
                 }
 
                 AnimatedImage {

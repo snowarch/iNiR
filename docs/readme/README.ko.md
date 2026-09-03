@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.30.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -273,6 +273,7 @@ inir repair                     # doctor + 재시작 + 필터링된 로그 확�
 ## 크레딧
 
 - [**end-4**](https://github.com/end-4/dots-hyprland) — Hyprland용 오리지널 illogical-impulse
+- [**pctrade/end4-pC**](https://github.com/pctrade/end4-pC) — 가끔은 정말 좋은 아이디어를 내는 포크
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — 이 셸을 구동하는 프레임워크
 - [**Niri**](https://github.com/YaLTeR/niri) — 스크롤링 타일링 Wayland 컴포지터
 

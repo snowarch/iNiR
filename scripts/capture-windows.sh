@@ -38,7 +38,13 @@ for arg in "$@"; do
 done
 
 state_dir="$(mktemp -d -t inir-window-previews.XXXXXX)"
-trap 'rm -rf -- "$state_dir"' EXIT
+preview_marker="${XDG_RUNTIME_DIR:-/tmp}/inir-window-preview-capture-${UID:-$(id -u)}"
+
+cleanup_exit() {
+  rm -f -- "$preview_marker" 2>/dev/null || true
+  rm -rf -- "$state_dir"
+}
+trap cleanup_exit EXIT INT TERM
 
 select_clipboard_mime() {
   local mime_list preferred
@@ -95,6 +101,14 @@ restore_clipboard_file() {
   "$wl_copy_bin" --type "$mime" <"$file"
 }
 
+restore_saved_clipboard() {
+  if [[ -n "${saved_clip_mime:-}" && -s "${saved_clip_file:-/dev/null}" ]]; then
+    restore_clipboard_file "$saved_clip_mime" "$saved_clip_file" 2>/dev/null || true
+  else
+    "$wl_copy_bin" --clear 2>/dev/null || true
+  fi
+}
+
 # Niri always puts screenshot-window output in the clipboard even when --path
 # is supplied. Save one pasteable representation synchronously before starting
 # any capture. Arbitrary MIME fallback covers browser/custom selections too.
@@ -140,6 +154,12 @@ if [[ -n "$first_entry" ]]; then
   fi
 fi
 
+# Mark the batch before Niri changes the clipboard. The image watcher routes
+# through clipboard-image-store.sh, which consumes these internal frames instead
+# of forwarding them to cliphist. The marker contains our PID so a stale file
+# after an unclean shutdown cannot disable image history permanently.
+printf '%s\n' "${BASHPID:-$$}" >"$preview_marker"
+
 # niri screenshot-window always publishes to the global clipboard, even with
 # --path. Serializing captures avoids multiple compositor actions racing that
 # single selection and smooths the GPU/CPU burst. WindowPreviewService now
@@ -158,7 +178,12 @@ for id in "${windows_to_capture[@]}"; do
   tmp="$preview_dir/.window-$id.part.png"
   {
     if "$niri_bin" msg action screenshot-window --id "$id" --path "$tmp" >/dev/null; then
-      # The action and clipboard ownership can settle after the IPC reply.
+      # Niri publishes screenshot-window to the global clipboard even with
+      # --path. Restore the user's pre-capture selection immediately, before
+      # another preview capture or an app switch can expose the PNG to paste.
+      # The final guarded restore below remains as a second safety net.
+      restore_saved_clipboard
+      # The output file can settle shortly after the IPC reply.
       for _ready_try in {1..40}; do
         [[ -s "$tmp" ]] && break
         sleep 0.05
@@ -229,11 +254,7 @@ if "$wl_paste_bin" -l 2>/dev/null | "$grep_bin" -Fqx "image/png"; then
   fi
 fi
 if [[ -n "$current_clip_hash" ]] && hash_matches_preview "$current_clip_hash"; then
-  if [[ -n "$saved_clip_mime" && -s "$saved_clip_file" ]]; then
-    restore_clipboard_file "$saved_clip_mime" "$saved_clip_file" 2>/dev/null || true
-  else
-    "$wl_copy_bin" --clear 2>/dev/null || true
-  fi
+  restore_saved_clipboard
 fi
 
 missing=0

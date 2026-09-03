@@ -23,11 +23,14 @@ MaterialShape { // App icon
     readonly property string imageValue: String(image ?? "")
     readonly property bool imageIsIconHint: imageValue.startsWith("image://icon/")
     readonly property string hintedIcon: imageIsIconHint ? imageValue.substring(13) : ""
-    readonly property string effectiveAppIcon: appIcon != "" ? String(appIcon) : hintedIcon
+    readonly property string appIconValue: String(appIcon ?? "").trim()
+    readonly property bool appIconIsFileUrl: appIconValue.startsWith("file://")
+    readonly property string effectiveAppIcon: appIconValue.length > 0 ? appIconValue : hintedIcon
     readonly property string defaultMaterialSymbol: NotificationUtils.findSuitableMaterialSymbol("")
     readonly property string guessedMaterialSymbol: NotificationUtils.findSuitableMaterialSymbol(String(summary ?? ""))
-    readonly property bool preferMaterialSymbol: appIcon == "" && imageIsIconHint
-        && guessedMaterialSymbol !== defaultMaterialSymbol
+    readonly property bool preferMaterialSymbol: guessedMaterialSymbol !== defaultMaterialSymbol
+        && ((appIconValue.length === 0 && imageIsIconHint)
+            || (appIconIsFileUrl && String(summary ?? "").toLowerCase().includes("screenshot")))
     readonly property bool hasVisualImage: imageValue.length > 0 && !imageIsIconHint
 
     implicitSize: 38 * scale
@@ -121,13 +124,13 @@ MaterialShape { // App icon
             }
             Loader {
                 id: notifImageAppIconLoader
-                active: root.appIcon != ""
+                active: root.appIconValue.length > 0
                 anchors.bottom: parent.bottom
                 anchors.right: parent.right
                 sourceComponent: IconImage {
                     implicitSize: root.smallAppIconSize
                     asynchronous: true
-                    source: Quickshell.iconPath(root.appIcon, "image-missing")
+                    source: Quickshell.iconPath(root.appIconValue, "image-missing")
                 }
             }
         }

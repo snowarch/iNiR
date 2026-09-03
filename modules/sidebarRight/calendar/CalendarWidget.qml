@@ -16,6 +16,7 @@ Item {
     // Emitted to open the events dialog. An event object means edit it, a Date
     // means a new event prefilled to that day.
     signal openEventsDialog(var editEvent)
+    signal requestExpand()
 
     // Two states: "month" (grid + upcoming) and "day" (day detail)
     property string viewState: "month"
@@ -278,6 +279,12 @@ Item {
                             icon: "chevron_right"
                             tooltipText: Translation.tr("Next month")
                             onClicked: monthShift++
+                        }
+
+                        CalNavButton {
+                            icon: "open_in_full"
+                            tooltipText: Translation.tr("Open full calendar")
+                            onClicked: root.requestExpand()
                         }
                     }
                 }

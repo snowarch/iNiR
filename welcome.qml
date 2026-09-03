@@ -1081,20 +1081,6 @@ Scope {
                                     ? Appearance.colors.colOnPrimaryContainer
                                     : Appearance.colors.colOnSurface
                             }
-                            Rectangle {
-                                visible: !easyCard.selected
-                                implicitWidth: easyRecommendedLabel.implicitWidth + 12
-                                implicitHeight: easyRecommendedLabel.implicitHeight + 4
-                                radius: height / 2
-                                color: Appearance.colors.colPrimaryContainer
-                                StyledText {
-                                    id: easyRecommendedLabel
-                                    anchors.centerIn: parent
-                                    text: Translation.tr("Recommended")
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: Appearance.colors.colOnPrimaryContainer
-                                }
-                            }
                             MaterialSymbol {
                                 visible: easyCard.selected
                                 text: "check_circle"
@@ -1168,6 +1154,23 @@ Scope {
                                 color: advancedCard.selected
                                     ? Appearance.colors.colOnPrimaryContainer
                                     : Appearance.colors.colOnSurface
+                            }
+                            Rectangle {
+                                implicitWidth: advancedDefaultLabel.implicitWidth + 12
+                                implicitHeight: advancedDefaultLabel.implicitHeight + 4
+                                radius: height / 2
+                                color: advancedCard.selected
+                                    ? Appearance.colors.colPrimary
+                                    : Appearance.colors.colPrimaryContainer
+                                StyledText {
+                                    id: advancedDefaultLabel
+                                    anchors.centerIn: parent
+                                    text: Translation.tr("Default")
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    color: advancedCard.selected
+                                        ? Appearance.colors.colOnPrimary
+                                        : Appearance.colors.colOnPrimaryContainer
+                                }
                             }
                             MaterialSymbol {
                                 visible: advancedCard.selected

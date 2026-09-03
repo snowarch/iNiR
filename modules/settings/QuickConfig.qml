@@ -10,6 +10,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.barM3
 
 ContentPage {
     id: root
@@ -18,11 +19,109 @@ ContentPage {
     readonly property bool isOverlayPage: GlobalStates.settingsOverlayOpen ?? false
     property string activeSection: "wallpaper"
     property string captureFolderTarget: "recordings"
+    property bool showManualNotificationFilter: false
+    property bool showManualVisualizerFilter: false
     readonly property string effectiveRecordingPath: {
         const configured = String(Config.getNestedValue("screenRecord.savePath", ""))
         return configured.length > 0 ? configured : Directories.videosPath
     }
     readonly property string effectiveScreenshotPath: Directories.screenshotsPath
+
+    function _normalizedAppKey(value): string {
+        return String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "")
+    }
+
+    function _uniqueApps(values): var {
+        const out = []
+        const seen = ({})
+        for (const raw of values ?? []) {
+            const value = String(raw ?? "").trim()
+            const key = root._normalizedAppKey(value)
+            if (!key || seen[key]) continue
+            seen[key] = true
+            out.push(value)
+        }
+        return out
+    }
+
+    function _containsApp(values, candidate): bool {
+        const key = root._normalizedAppKey(candidate)
+        return key.length > 0 && (values ?? []).some(value => root._normalizedAppKey(value) === key)
+    }
+
+    function _setAppMembership(path, values, candidate, enabled): void {
+        const clean = String(candidate ?? "").trim()
+        if (!clean) return
+        let next = root._uniqueApps(values)
+        const key = root._normalizedAppKey(clean)
+        next = next.filter(value => root._normalizedAppKey(value) !== key)
+        if (enabled) next.push(clean)
+        Config.setNestedValue(path, next)
+    }
+
+    function _notificationIcon(appName): string {
+        const groups = Notifications.groupsByAppName ?? ({})
+        const group = groups[appName] ?? []
+        const icon = String(group[0]?.appIcon ?? "")
+        if (icon.length > 0) return icon
+        const entry = AppSearch.lookupDesktopEntry(appName)
+        return String(entry?.icon ?? AppSearch.guessIcon(appName) ?? "")
+    }
+
+    readonly property var notificationFilterCandidates: {
+        const blocked = Config.options?.notifications?.blockedApps ?? []
+        const names = root._uniqueApps([...(Notifications.appNameList ?? []), ...blocked])
+        return names.map(name => ({
+            key: name,
+            label: name,
+            icon: root._notificationIcon(name),
+            selected: root._containsApp(blocked, name),
+            detected: (Notifications.appNameList ?? []).some(value => root._normalizedAppKey(value) === root._normalizedAppKey(name))
+        }))
+    }
+
+    function _visualizerStreamKey(node): string {
+        const props = node?.properties ?? {}
+        return String(props["application.process.binary"]
+            || props["application.id"]
+            || props["application.name"]
+            || node?.name || "").trim()
+    }
+
+    readonly property var visualizerFilterCandidates: {
+        const selected = Config.options?.appearance?.cava?.allowedApps ?? []
+        const out = []
+        const seen = ({})
+        for (const node of MprisController.mixerAppNodes ?? []) {
+            const key = root._visualizerStreamKey(node)
+            const normalized = root._normalizedAppKey(key)
+            if (!normalized || seen[normalized]) continue
+            seen[normalized] = true
+            out.push({
+                key: key,
+                label: MprisController.streamDisplayName(node) || key,
+                icon: MprisController.streamIconName(node),
+                selected: root._containsApp(selected, key),
+                active: MprisController.streamIsActive(node),
+                detected: true
+            })
+        }
+        for (const value of selected) {
+            const normalized = root._normalizedAppKey(value)
+            if (!normalized || seen[normalized]) continue
+            seen[normalized] = true
+            const entry = AppSearch.lookupDesktopEntry(value)
+            out.push({
+                key: value,
+                label: entry?.name ?? value,
+                icon: entry?.icon ?? AppSearch.guessIcon(value),
+                selected: true,
+                active: false,
+                detected: false
+            })
+        }
+        return out
+    }
 
     function openCaptureFolderDialog(target: string): void {
         root.captureFolderTarget = target
@@ -42,6 +141,7 @@ ContentPage {
             { displayName: Translation.tr("Bar & screen"), icon: "screenshot_monitor", value: "screen" },
             { displayName: Translation.tr("Game mode"), icon: "sports_esports", value: "game" },
             { displayName: Translation.tr("Capture"), icon: "photo_camera", value: "capture" },
+            { displayName: Translation.tr("Filters"), icon: "filter_alt", value: "filters" },
             { displayName: Translation.tr("Actions"), icon: "bolt", value: "actions" }
         ]
     }
@@ -1715,16 +1815,6 @@ ContentPage {
                         ]
                     }
 
-                    SettingsSwitch {
-                        visible: Config.options?.background?.backdrop?.hideWallpaper ?? false
-                        buttonIcon: "fit_screen"
-                        text: Translation.tr("Show entire backdrop")
-                        checked: (Config.options?.background?.backdrop?.fillMode ?? "fill") === "fit"
-                        onCheckedChanged: Config.setNestedValue("background.backdrop.fillMode", checked ? "fit" : "fill")
-                        StyledToolTip {
-                            text: Translation.tr("Fit the full backdrop inside the screen instead of cropping it. Bars may appear when the image aspect ratio differs from the display.")
-                        }
-                    }
                 }
             }
         }
@@ -1894,6 +1984,464 @@ ContentPage {
                         materialIcon: "drive_file_move"
                         mainText: Translation.tr("Change folder")
                         onClicked: root.openCaptureFolderDialog("screenshots")
+                    }
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        settingsTaskSection: "filters"
+        visible: root.activeSection === "filters"
+        expanded: true
+        icon: "filter_alt"
+        title: Translation.tr("App filters")
+
+        SettingsGroup {
+            ContentSubsection {
+                title: ""
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    MaterialShapeWrappedMaterialSymbol {
+                        shape: MaterialShape.Shape.ClamShell
+                        text: "notifications_off"
+                        iconSize: Appearance.font.pixelSize.large
+                        implicitSize: 44
+                        color: M3Palette.primaryContainer
+                        colSymbol: M3Palette.primary
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
+
+                        StyledText {
+                            text: Translation.tr("Notifications")
+                            color: M3Palette.surfaceForeground
+                            font.pixelSize: Appearance.font.pixelSize.normal
+                            font.weight: Font.DemiBold
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("iNiR learns senders from notification history. Block an app here and it is rejected before history, sound, counters and popups.")
+                            color: M3Palette.surfaceVariantForeground
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 6
+                    visible: (Config.options?.notifications?.blockedApps ?? []).length > 0
+
+                    Repeater {
+                        model: Config.options?.notifications?.blockedApps ?? []
+
+                        InputChip {
+                            required property string modelData
+                            text: modelData
+                            chipIcon: "notifications_off"
+                            onRemoved: root._setAppMembership(
+                                "notifications.blockedApps",
+                                Config.options?.notifications?.blockedApps ?? [],
+                                modelData, false)
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: notifCandidateColumn.implicitHeight
+                    radius: Appearance.rounding.normal
+                    color: "transparent"
+
+                    ColumnLayout {
+                        id: notifCandidateColumn
+                        anchors.fill: parent
+                        spacing: 6
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 4
+                            Layout.rightMargin: 4
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: root.notificationFilterCandidates.length > 0
+                                    ? Translation.tr("Recent notification senders")
+                                    : Translation.tr("No notification senders detected yet")
+                                color: Appearance.colors.colSubtext
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                            }
+                            StyledText {
+                                visible: root.notificationFilterCandidates.length > 0
+                                text: Translation.tr("%1 found").arg(root.notificationFilterCandidates.length)
+                                color: Appearance.colors.colSubtext
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                            }
+                        }
+
+                        Repeater {
+                            model: root.notificationFilterCandidates
+
+                            Rectangle {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                implicitHeight: 60
+                                radius: Appearance.rounding.normal + 2
+                                color: modelData.selected
+                                    ? ColorUtils.mix(M3Palette.surfaceContainer, M3Palette.primaryContainer, 0.68)
+                                    : notifHover.hovered
+                                        ? M3Palette.surfaceContainerHigh
+                                        : M3Palette.surfaceContainer
+                                border.width: modelData.selected ? 1 : 0
+                                border.color: modelData.selected
+                                    ? ColorUtils.transparentize(M3Palette.primary, 0.55)
+                                    : "transparent"
+
+                                Behavior on color {
+                                    enabled: Appearance.animationsEnabled
+                                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                }
+
+                                HoverHandler { id: notifHover }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 12
+                                    anchors.rightMargin: 12
+                                    spacing: 12
+
+                                    Rectangle {
+                                        Layout.preferredWidth: 40
+                                        Layout.preferredHeight: 40
+                                        radius: Appearance.rounding.full
+                                        color: modelData.selected
+                                            ? M3Palette.primaryContainer
+                                            : M3Palette.secondaryContainer
+
+                                        Image {
+                                            anchors.centerIn: parent
+                                            width: 24; height: 24
+                                            source: Quickshell.iconPath(modelData.icon, "application-x-executable")
+                                            sourceSize.width: 46; sourceSize.height: 46
+                                            fillMode: Image.PreserveAspectFit
+                                        }
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 0
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            text: modelData.label
+                                            color: modelData.selected
+                                                ? M3Palette.primaryContainerForeground
+                                                : M3Palette.surfaceForeground
+                                            font.pixelSize: Appearance.font.pixelSize.normal
+                                            font.weight: modelData.selected ? Font.DemiBold : Font.Medium
+                                            elide: Text.ElideRight
+                                        }
+                                        RowLayout {
+                                            spacing: 4
+                                            MaterialSymbol {
+                                                text: modelData.selected ? "block" : "check_circle"
+                                                iconSize: 13
+                                            color: modelData.selected
+                                                ? M3Palette.primaryContainerForeground
+                                                : M3Palette.surfaceVariantForeground
+                                            }
+                                            StyledText {
+                                                text: modelData.selected
+                                                    ? Translation.tr("Blocked")
+                                                    : Translation.tr("Allowed")
+                                            color: modelData.selected
+                                                ? M3Palette.primaryContainerForeground
+                                                : M3Palette.surfaceVariantForeground
+                                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                            }
+                                        }
+                                    }
+
+                                    StyledSwitch {
+                                        checked: modelData.selected
+                                        onToggled: root._setAppMembership(
+                                            "notifications.blockedApps",
+                                            Config.options?.notifications?.blockedApps ?? [],
+                                            modelData.key, checked)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                RippleButtonWithIcon {
+                    Layout.alignment: Qt.AlignLeft
+                    materialIcon: root.showManualNotificationFilter ? "expand_less" : "add"
+                    mainText: root.showManualNotificationFilter
+                        ? Translation.tr("Hide manual entry")
+                        : Translation.tr("App not listed?")
+                    onClicked: root.showManualNotificationFilter = !root.showManualNotificationFilter
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+                    visible: root.showManualNotificationFilter
+
+                    MaterialTextField {
+                        id: notificationManualApp
+                        Layout.fillWidth: true
+                        placeholderText: Translation.tr("Exact app or service name")
+                    }
+                    RippleButtonWithIcon {
+                        materialIcon: "add"
+                        mainText: Translation.tr("Add")
+                        enabled: notificationManualApp.text.trim().length > 0
+                        onClicked: {
+                            root._setAppMembership("notifications.blockedApps",
+                                Config.options?.notifications?.blockedApps ?? [],
+                                notificationManualApp.text, true)
+                            notificationManualApp.text = ""
+                            root.showManualNotificationFilter = false
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: ""
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    MaterialShapeWrappedMaterialSymbol {
+                        shape: MaterialShape.Shape.Clover4Leaf
+                        text: "graphic_eq"
+                        iconSize: Appearance.font.pixelSize.large
+                        implicitSize: 44
+                        color: M3Palette.secondaryContainer
+                        colSymbol: M3Palette.secondaryContainerForeground
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
+                        StyledText {
+                            text: Translation.tr("Visualizer sources")
+                            color: M3Palette.surfaceForeground
+                            font.pixelSize: Appearance.font.pixelSize.normal
+                            font.weight: Font.DemiBold
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("Audio apps are detected live from PipeWire. With no source selected, visualizers follow the active player; selecting apps limits capture to those sources only.")
+                            color: M3Palette.surfaceVariantForeground
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 6
+                    visible: (Config.options?.appearance?.cava?.allowedApps ?? []).length > 0
+
+                    Repeater {
+                        model: Config.options?.appearance?.cava?.allowedApps ?? []
+
+                        InputChip {
+                            required property string modelData
+                            text: modelData
+                            chipIcon: "graphic_eq"
+                            onRemoved: root._setAppMembership(
+                                "appearance.cava.allowedApps",
+                                Config.options?.appearance?.cava?.allowedApps ?? [],
+                                modelData, false)
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: vizCandidateColumn.implicitHeight
+                    radius: Appearance.rounding.normal
+                    color: "transparent"
+
+                    ColumnLayout {
+                        id: vizCandidateColumn
+                        anchors.fill: parent
+                        spacing: 6
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 4
+                            Layout.rightMargin: 4
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: root.visualizerFilterCandidates.length > 0
+                                    ? Translation.tr("Detected audio apps")
+                                    : Translation.tr("Play audio in an app and it will appear here")
+                                color: Appearance.colors.colSubtext
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                            }
+                            StyledText {
+                                visible: root.visualizerFilterCandidates.length > 0
+                                text: Translation.tr("Live")
+                                color: Appearance.colors.colPrimary
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                            }
+                        }
+
+                        Repeater {
+                            model: root.visualizerFilterCandidates
+
+                            Rectangle {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                implicitHeight: 60
+                                radius: Appearance.rounding.normal + 2
+                                color: modelData.selected
+                                    ? ColorUtils.mix(M3Palette.surfaceContainer, M3Palette.secondaryContainer, 0.68)
+                                    : vizHover.hovered
+                                        ? M3Palette.surfaceContainerHigh
+                                        : M3Palette.surfaceContainer
+                                border.width: modelData.selected ? 1 : 0
+                                border.color: modelData.selected
+                                    ? ColorUtils.transparentize(M3Palette.secondaryContainerForeground, 0.65)
+                                    : "transparent"
+
+                                Behavior on color {
+                                    enabled: Appearance.animationsEnabled
+                                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                }
+
+                                HoverHandler { id: vizHover }
+
+                                Rectangle {
+                                    visible: modelData.active
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 4
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 4
+                                    height: 28
+                                    radius: 2
+                                    color: M3Palette.primary
+                                }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 12
+                                    anchors.rightMargin: 12
+                                    spacing: 12
+
+                                    Rectangle {
+                                        Layout.preferredWidth: 40
+                                        Layout.preferredHeight: 40
+                                        radius: Appearance.rounding.full
+                                        color: modelData.active
+                                            ? M3Palette.primaryContainer
+                                            : modelData.selected
+                                                ? M3Palette.secondaryContainer
+                                                : M3Palette.secondaryContainer
+                                        Image {
+                                            anchors.centerIn: parent
+                                            width: 24; height: 24
+                                            source: Quickshell.iconPath(modelData.icon, "application-x-executable")
+                                            sourceSize.width: 46; sourceSize.height: 46
+                                            fillMode: Image.PreserveAspectFit
+                                        }
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 0
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            text: modelData.label
+                                            color: modelData.selected
+                                                ? M3Palette.secondaryContainerForeground
+                                                : M3Palette.surfaceForeground
+                                            font.pixelSize: Appearance.font.pixelSize.normal
+                                            font.weight: modelData.selected ? Font.DemiBold : Font.Medium
+                                            elide: Text.ElideRight
+                                        }
+                                        RowLayout {
+                                            spacing: 4
+                                            MaterialSymbol {
+                                                text: modelData.active ? "graphic_eq"
+                                                    : modelData.selected ? "filter_alt" : "radio_button_checked"
+                                                iconSize: 13
+                                                color: modelData.active ? M3Palette.primary
+                                                    : modelData.selected ? M3Palette.secondaryContainerForeground
+                                                    : M3Palette.surfaceVariantForeground
+                                            }
+                                            StyledText {
+                                                text: modelData.active
+                                                    ? Translation.tr("Playing now")
+                                                    : modelData.selected
+                                                        ? Translation.tr("Selected source")
+                                                        : modelData.detected
+                                                            ? Translation.tr("Detected")
+                                                            : Translation.tr("Saved source")
+                                                color: modelData.active ? M3Palette.primary
+                                                    : modelData.selected ? M3Palette.secondaryContainerForeground
+                                                    : M3Palette.surfaceVariantForeground
+                                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                            }
+                                        }
+                                    }
+
+                                    StyledSwitch {
+                                        checked: modelData.selected
+                                        onToggled: root._setAppMembership(
+                                            "appearance.cava.allowedApps",
+                                            Config.options?.appearance?.cava?.allowedApps ?? [],
+                                            modelData.key, checked)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                RippleButtonWithIcon {
+                    Layout.alignment: Qt.AlignLeft
+                    materialIcon: root.showManualVisualizerFilter ? "expand_less" : "add"
+                    mainText: root.showManualVisualizerFilter
+                        ? Translation.tr("Hide manual entry")
+                        : Translation.tr("Audio app not listed?")
+                    onClicked: root.showManualVisualizerFilter = !root.showManualVisualizerFilter
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+                    visible: root.showManualVisualizerFilter
+                    MaterialTextField {
+                        id: visualizerManualApp
+                        Layout.fillWidth: true
+                        placeholderText: Translation.tr("Exact process, app ID or service name")
+                    }
+                    RippleButtonWithIcon {
+                        materialIcon: "add"
+                        mainText: Translation.tr("Add")
+                        enabled: visualizerManualApp.text.trim().length > 0
+                        onClicked: {
+                            root._setAppMembership("appearance.cava.allowedApps",
+                                Config.options?.appearance?.cava?.allowedApps ?? [],
+                                visualizerManualApp.text, true)
+                            visualizerManualApp.text = ""
+                            root.showManualVisualizerFilter = false
+                        }
                     }
                 }
             }

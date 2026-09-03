@@ -30,6 +30,7 @@ FocusScope {
     readonly property bool loading: library.scanning || Wallpapers.thumbnailGenerationRunning
     property string _pendingGridTarget: "main"
     property string _pendingGridMonitor: ""
+    property bool _committingSelection: false
 
     implicitWidth: Math.max(carousel.itemWidth * 3 + padding * 2,
         carousel.implicitWidth + padding * 2)
@@ -83,11 +84,21 @@ FocusScope {
 
     function applyPath(path: string): void {
         if (!path) return
-        // The real apply produces its own transition; don't restore first.
-        Wallpapers.clearWallpaperPreview()
+        root._committingSelection = true
+        const target = root.selectionTarget
         Wallpapers.applySelectionTarget(path, root.selectionTarget,
             Appearance.m3colors.darkmode, root.selectionMonitorName)
+        if (target === "backdrop" || target === "waffle-backdrop") {
+            // Backdrop selection previews against the visible desktop. Applying
+            // it must restore that desktop because its configured path did not change.
+            Wallpapers.cancelWallpaperPreview()
+        } else {
+            // Visible wallpaper targets adopt the preview in place; this only
+            // releases transient state and must not repaint the same image again.
+            Wallpapers.clearWallpaperPreview()
+        }
         GlobalStates.wallpaperLauncherOpen = false
+        Qt.callLater(() => root._committingSelection = false)
     }
 
     function openGrid(): void {
@@ -134,7 +145,11 @@ FocusScope {
         target: GlobalStates
 
         function onWallpaperLauncherOpenChanged(): void {
-            if (!GlobalStates.wallpaperLauncherOpen) return
+            if (!GlobalStates.wallpaperLauncherOpen) {
+                if (!root._committingSelection)
+                    Wallpapers.cancelWallpaperPreview()
+                return
+            }
             root.refreshLibrary()
             Qt.callLater(() => {
                 root.forceActiveFocus()

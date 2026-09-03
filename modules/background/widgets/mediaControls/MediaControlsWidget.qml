@@ -7,6 +7,7 @@ import qs
 import qs.modules.common.functions
 import qs.modules.background.widgets
 import qs.modules.mediaControls.presets
+import qs.modules.mediaControls.components
 
 import QtQuick
 import QtQuick.Layouts
@@ -21,6 +22,12 @@ AbstractBackgroundWidget {
     defaultConfig: ({
         placementStrategy: "free", playerPreset: "full",
         visualizerType: "wave", visualizerPosition: "bottom",
+        visualizerPaletteMode: "cava", visualizerOpacity: 55,
+        visualizerSmoothing: 2, visualizerFrequencyProfile: "flat",
+        visualizerAccentStrength: 70, visualizerRange: 88, visualizerBarCount: 32,
+        organicSensitivity: 35, organicPulse: 150, organicMotionSpeed: 250,
+        organicIdleMotion: 40, organicGlow: 100, organicOpacity: 100,
+        organicReach: 35, organicRange: 20, organicCompression: 0,
         lyricsExpanded: false,
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         x: 240, y: 240
@@ -137,11 +144,50 @@ AbstractBackgroundWidget {
     readonly property string vizType: Config.getNestedValue("background.widgets.mediaControls.visualizerType", "wave")
     readonly property string vizPosition: Config.getNestedValue("background.widgets.mediaControls.visualizerPosition", "bottom")
 
+    MediaArtworkResolver {
+        id: organicArtworkResolver
+        sourceUrl: root.vizType === "organic" && root.meaningfulPlayer
+            ? MprisController.effectiveArtUrl(root.meaningfulPlayer) : ""
+        title: root.meaningfulPlayer?.trackTitle ?? ""
+        artist: root.meaningfulPlayer?.trackArtist ?? ""
+        album: root.meaningfulPlayer?.trackAlbum ?? ""
+    }
+
+    ColorQuantizer {
+        id: organicArtworkQuantizer
+        source: root.vizType === "organic" ? organicArtworkResolver.displaySource : ""
+        depth: 2
+        rescaleSize: 24
+    }
+
+    readonly property var organicArtworkPalette: {
+        const colors = organicArtworkQuantizer?.colors ?? []
+        if (colors.length === 0)
+            return [root.widgetAccentVisible, root.widgetAccent2Visible, root.widgetAccent3Visible]
+        const primary = colors[0]
+        const secondary = colors[Math.min(1, colors.length - 1)]
+        const tertiary = colors[Math.min(2, colors.length - 1)]
+        return [primary, secondary, tertiary]
+    }
+
     editPopoverContent: Component {
         ColumnLayout {
-            spacing: 6
+            id: mediaQuickRoot
+            implicitWidth: 360
+            readonly property bool narrow: width < 300
+            spacing: 10
+
+            StyledText {
+                Layout.alignment: Qt.AlignHCenter
+                text: Translation.tr("Player style")
+                color: Appearance.colors.colOnLayer2
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                font.weight: Font.DemiBold
+            }
+
             GridLayout {
-                columns: 3
+                Layout.fillWidth: true
+                columns: root.quickControlsWide ? 5 : 3
                 columnSpacing: 4
                 rowSpacing: 4
                 Repeater {
@@ -158,8 +204,13 @@ AbstractBackgroundWidget {
                     ]
                     SelectionGroupButton {
                         required property var modelData
+                        required property int index
                         Layout.fillWidth: true
-                        leftmost: true; rightmost: true
+                        readonly property int groupColumns:
+                            root.quickControlsWide ? 5 : 3
+                        leftmost: index % groupColumns === 0
+                        rightmost: index % groupColumns === groupColumns - 1
+                            || index === 8
                         buttonIcon: modelData.icon
                         buttonText: modelData.label
                         toggled: root.selectedPreset === modelData.value
@@ -167,48 +218,294 @@ AbstractBackgroundWidget {
                     }
                 }
             }
-            GridLayout {
-                columns: 2
-                columnSpacing: 4
-                rowSpacing: 4
-                Repeater {
-                    model: [
-                        { label: Translation.tr("Wave"), icon: "waves", value: "wave" },
-                        { label: Translation.tr("Bars"), icon: "equalizer", value: "bars" }
-                    ]
-                    SelectionGroupButton {
-                        required property var modelData
+
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: mediaVizQuick.implicitHeight + 20
+                radius: Appearance.rounding.small
+                color: Appearance.colors.colLayer2
+                border.width: 1
+                border.color: Appearance.colors.colOutlineVariant
+
+                ColumnLayout {
+                    id: mediaVizQuick
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 8
+
+                    RowLayout {
                         Layout.fillWidth: true
-                        leftmost: true; rightmost: true
-                        buttonIcon: modelData.icon
-                        buttonText: modelData.label
-                        toggled: root.vizType === modelData.value
-                        onClicked: Config.setNestedValue("background.widgets.mediaControls.visualizerType", modelData.value)
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("Visualizer")
+                            color: Appearance.colors.colOnLayer2
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            font.weight: Font.DemiBold
+                        }
+                        SelectionGroupButton {
+                            leftmost: true; rightmost: true
+                            buttonIcon: root.vizPosition === "none" ? "visibility_off" : "visibility"
+                            buttonText: root.vizPosition === "none" ? Translation.tr("Off") : Translation.tr("On")
+                            toggled: root.vizPosition !== "none"
+                            onClicked: Config.setNestedValue("background.widgets.mediaControls.visualizerPosition",
+                                root.vizPosition === "none" ? (root.vizType === "organic" ? "fill" : "bottom") : "none")
+                        }
+                    }
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 3
+                        columnSpacing: 4
+                        Repeater {
+                            model: [
+                                { label: Translation.tr("Wave"), icon: "waves", value: "wave" },
+                                { label: Translation.tr("Bars"), icon: "equalizer", value: "bars" },
+                                { label: Translation.tr("Organic"), icon: "bubble_chart", value: "organic" }
+                            ]
+                            SelectionGroupButton {
+                                required property var modelData
+                                required property int index
+                                Layout.fillWidth: true
+                                leftmost: index === 0
+                                rightmost: index === 2
+                                buttonIcon: modelData.icon
+                                buttonText: modelData.label
+                                toggled: root.vizType === modelData.value
+                                onClicked: {
+                                    Config.setNestedValue("background.widgets.mediaControls.visualizerType", modelData.value)
+                                    if (root.vizPosition === "none")
+                                        Config.setNestedValue("background.widgets.mediaControls.visualizerPosition",
+                                            modelData.value === "organic" ? "fill" : "bottom")
+                                }
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: 0
+                        Repeater {
+                            model: [
+                                { label: Translation.tr("Cava"), icon: "palette", value: "cava" },
+                                { label: Translation.tr("Accent"), icon: "colors", value: "accent" },
+                                { label: Translation.tr("Album"), icon: "album", value: "player" }
+                            ]
+                            SelectionGroupButton {
+                                required property var modelData
+                                required property int index
+                                Layout.fillWidth: true
+                                leftmost: index === 0
+                                rightmost: index === 2
+                                horizontalPadding: 8
+                                buttonIcon: modelData.icon
+                                buttonText: modelData.label
+                                toggled: Config.getNestedValue(
+                                    "background.widgets.mediaControls.visualizerPaletteMode", "cava") === modelData.value
+                                onClicked: Config.setNestedValue(
+                                    "background.widgets.mediaControls.visualizerPaletteMode", modelData.value)
+                            }
+                        }
+                    }
+
+                    component MediaVizMetric: ColumnLayout {
+                        id: mediaVizMetric
+                        required property string labelText
+                        required property string configKey
+                        required property int minimum
+                        required property int maximum
+                        property int step: 5
+                        property string suffix: "%"
+                        readonly property real currentValue: Number(
+                            Config.getNestedValue(mediaVizMetric.configKey, mediaVizMetric.minimum))
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: mediaVizMetric.labelText
+                                color: Appearance.colors.colSubtext
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                            }
+                            StyledText {
+                                text: Math.round(mediaVizMetric.currentValue) + mediaVizMetric.suffix
+                                color: Appearance.colors.colOnLayer2
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                font.family: Appearance.font.family.numbers
+                                font.weight: Font.DemiBold
+                            }
+                        }
+                        StyledSlider {
+                            Layout.fillWidth: true
+                            from: mediaVizMetric.minimum
+                            to: mediaVizMetric.maximum
+                            stepSize: mediaVizMetric.step
+                            configuration: StyledSlider.Configuration.XS
+                            stopIndicatorValues: []
+                            value: mediaVizMetric.currentValue
+                            tooltipContent: Math.round(value) + mediaVizMetric.suffix
+                            onMoved: Config.setNestedValue(
+                                mediaVizMetric.configKey, Math.round(value))
+                        }
+                    }
+
+                    RowLayout {
+                        visible: root.vizType !== "organic"
+                        Layout.fillWidth: true
+                        spacing: 0
+                        Repeater {
+                            model: [
+                                { label: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: "bottom" },
+                                { label: Translation.tr("Top"), icon: "vertical_align_top", value: "top" },
+                                { label: Translation.tr("Fill"), icon: "fullscreen", value: "fill" },
+                                { label: Translation.tr("Off"), icon: "visibility_off", value: "none" }
+                            ]
+                            SelectionGroupButton {
+                                required property var modelData
+                                required property int index
+                                Layout.fillWidth: true
+                                leftmost: index === 0
+                                rightmost: index === 3
+                                horizontalPadding: 6
+                                buttonIcon: modelData.icon
+                                buttonText: modelData.label
+                                toggled: root.vizPosition === modelData.value
+                                onClicked: Config.setNestedValue(
+                                    "background.widgets.mediaControls.visualizerPosition", modelData.value)
+                            }
+                        }
+                    }
+
+                    GridLayout {
+                        visible: root.vizType !== "organic"
+                        Layout.fillWidth: true
+                        columns: 2
+                        columnSpacing: 16
+                        rowSpacing: 4
+
+                        MediaVizMetric {
+                            labelText: Translation.tr("Opacity")
+                            configKey: "background.widgets.mediaControls.visualizerOpacity"
+                            minimum: 5; maximum: 100
+                        }
+                        MediaVizMetric {
+                            labelText: Translation.tr("Range")
+                            configKey: "background.widgets.mediaControls.visualizerRange"
+                            minimum: 10; maximum: 100
+                        }
+                        MediaVizMetric {
+                            labelText: Translation.tr("Smoothing")
+                            configKey: "background.widgets.mediaControls.visualizerSmoothing"
+                            minimum: 0; maximum: 8; step: 1; suffix: ""
+                        }
+                        MediaVizMetric {
+                            visible: root.vizType === "bars"
+                            labelText: Translation.tr("Bars")
+                            configKey: "background.widgets.mediaControls.visualizerBarCount"
+                            minimum: 8; maximum: 128; step: 4; suffix: ""
+                        }
+                    }
+
+                    GridLayout {
+                        visible: root.vizType !== "organic"
+                        Layout.fillWidth: true
+                        columns: 3
+                        columnSpacing: 4
+                        rowSpacing: 4
+                        Repeater {
+                            model: [
+                                { label: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" },
+                                { label: Translation.tr("Bass"), icon: "graphic_eq", value: "bass" },
+                                { label: Translation.tr("Warm"), icon: "local_fire_department", value: "warm" },
+                                { label: Translation.tr("Vocal"), icon: "record_voice_over", value: "vocal" },
+                                { label: Translation.tr("Treble"), icon: "trending_up", value: "treble" },
+                                { label: Translation.tr("Smile"), icon: "waves", value: "smile" }
+                            ]
+                            SelectionGroupButton {
+                                required property var modelData
+                                required property int index
+                                Layout.fillWidth: true
+                                leftmost: index % 3 === 0
+                                rightmost: index % 3 === 2
+                                horizontalPadding: 6
+                                buttonIcon: modelData.icon
+                                buttonText: modelData.label
+                                toggled: Config.getNestedValue(
+                                    "background.widgets.mediaControls.visualizerFrequencyProfile", "flat") === modelData.value
+                                onClicked: Config.setNestedValue(
+                                    "background.widgets.mediaControls.visualizerFrequencyProfile", modelData.value)
+                            }
+                        }
+                    }
+
+                    MediaVizMetric {
+                        visible: root.vizType !== "organic"
+                            && Config.getNestedValue(
+                                "background.widgets.mediaControls.visualizerFrequencyProfile", "flat") !== "flat"
+                        labelText: Translation.tr("Accent")
+                        configKey: "background.widgets.mediaControls.visualizerAccentStrength"
+                        minimum: 0; maximum: 100
+                    }
+
+                    GridLayout {
+                        visible: root.vizType === "organic"
+                        Layout.fillWidth: true
+                        columns: root.quickControlsWide ? 4
+                            : mediaQuickRoot.narrow ? 1 : 2
+                        columnSpacing: 16
+                        rowSpacing: 4
+
+                        MediaVizMetric {
+                            labelText: Translation.tr("Reach")
+                            configKey: "background.widgets.mediaControls.organicReach"
+                            minimum: 20; maximum: 140
+                        }
+                        MediaVizMetric {
+                            labelText: Translation.tr("Pulse")
+                            configKey: "background.widgets.mediaControls.organicPulse"
+                            minimum: 0; maximum: 150
+                        }
+                        MediaVizMetric {
+                            labelText: Translation.tr("Sensitivity")
+                            configKey: "background.widgets.mediaControls.organicSensitivity"
+                            minimum: 25; maximum: 200
+                        }
+                        MediaVizMetric {
+                            labelText: Translation.tr("Compression")
+                            configKey: "background.widgets.mediaControls.organicCompression"
+                            minimum: 0; maximum: 100
+                        }
+                        MediaVizMetric {
+                            labelText: Translation.tr("Glow")
+                            configKey: "background.widgets.mediaControls.organicGlow"
+                            minimum: 0; maximum: 100
+                        }
+                        MediaVizMetric {
+                            labelText: Translation.tr("Motion")
+                            configKey: "background.widgets.mediaControls.organicMotionSpeed"
+                            minimum: 20; maximum: 250
+                        }
+                        MediaVizMetric {
+                            labelText: Translation.tr("Presence")
+                            configKey: "background.widgets.mediaControls.organicOpacity"
+                            minimum: 10; maximum: 100
+                        }
+                        MediaVizMetric {
+                            labelText: Translation.tr("Range")
+                            configKey: "background.widgets.mediaControls.organicRange"
+                            minimum: 20; maximum: 100
+                        }
+                        MediaVizMetric {
+                            labelText: Translation.tr("Idle")
+                            configKey: "background.widgets.mediaControls.organicIdleMotion"
+                            minimum: 0; maximum: 100
+                        }
                     }
                 }
             }
-            GridLayout {
-                columns: 4
-                columnSpacing: 4
-                rowSpacing: 4
-                Repeater {
-                    model: [
-                        { label: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: "bottom" },
-                        { label: Translation.tr("Top"), icon: "vertical_align_top", value: "top" },
-                        { label: Translation.tr("Fill"), icon: "fullscreen", value: "fill" },
-                        { label: Translation.tr("Off"), icon: "visibility_off", value: "none" }
-                    ]
-                    SelectionGroupButton {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        leftmost: true; rightmost: true
-                        buttonIcon: modelData.icon
-                        buttonText: modelData.label
-                        toggled: root.vizPosition === modelData.value
-                        onClicked: Config.setNestedValue("background.widgets.mediaControls.visualizerPosition", modelData.value)
-                    }
-                }
-            }
+
         }
     }
 
@@ -329,13 +626,36 @@ AbstractBackgroundWidget {
                 Layout.preferredWidth: root.widgetWidth
                 Layout.preferredHeight: root.widgetHeight
 
+                MediaOrganicEdgeAura {
+                    anchors.fill: parent
+                    // Organic lives outside the card as a sibling field. The
+                    // player occludes its interior while the field remains visible
+                    // beyond the rounded perimeter.
+                    z: -1
+                    visible: root.vizType === "organic" && root.vizPosition !== "none"
+                    visualizerPoints: root.visualizerPoints
+                    audioActive: root.visualizerActive
+                    // Organic has its own idle motion. Keep the edge field alive
+                    // whenever a player exists; audio activity modulates it through
+                    // visualizerPoints instead of deciding whether it exists at all.
+                    active: root.hasPlayer && root.visible && root.powerActive
+                    playerColor: root.widgetAccentVisible
+                    albumPalette: root.organicArtworkPalette
+                    accentPalette: [root.widgetAccentVisible,
+                        root.widgetAccent2Visible, root.widgetAccent3Visible]
+                    cardRadius: root.popupRounding
+                }
+
                 StyledRectangularShadow {
+                    z: -2
                     target: playerLoader
                     radius: root.popupRounding
+                    visible: root.vizType !== "organic" || root.vizPosition === "none"
                 }
 
                 Loader {
                     id: playerLoader
+                    z: 0
                     anchors.fill: parent
                     active: root.presetLoaderActive
                     sourceComponent: root.presetComponent

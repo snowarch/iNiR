@@ -14,6 +14,12 @@ import qs.modules.sidebarRight.calendar
  */
 DashCard {
     id: root
+    title: Translation.tr("Calendar")
+    icon: "calendar_month"
+    headerActionIcon: "open_in_full"
+    headerActionTooltip: Translation.tr("Open full calendar")
+    signal requestExpand()
+    onHeaderAction: requestExpand()
 
     // Host (DashboardContent) opens the shared events dialog. null = new event;
     // a Date = new event prefilled to that day; an event object = edit it.

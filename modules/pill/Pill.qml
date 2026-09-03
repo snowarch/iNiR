@@ -41,7 +41,7 @@ Item {
      * to being hovered forever, so the rest face simply never shows.
      */
     readonly property bool barMode: Config.options?.bar?.pill?.barMode ?? false
-    readonly property bool expanded: surfaceOpen || held || hoverLatch || barMode
+    readonly property bool expanded: surfaceOpen || held || hoverLatch || trayMenuOpen || barMode
 
     readonly property bool hasMedia: PillPlayers.has
     readonly property string mediaAccess: (Config.options?.bar?.pill?.mediaAccess ?? "row") === "bud" ? "bud" : "row"

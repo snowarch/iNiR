@@ -37,6 +37,20 @@ Item {
 
     // ── Internal state ─────────────────────────────────────────────────
     property bool _transitioning: false
+    readonly property var shaderTransitionTypes: [
+        "circlePit", "circleSelect", "magic", "Doom", "Peel", "transition",
+        "pixelate", "stripes", "crt", "dissolve", "glitch", "ripple", "shatter",
+        "inirMelt", "inirVeil", "inirFracture", "inirInk", "inirPrism"
+    ]
+    readonly property bool shaderTransitionRequested: isShaderTransitionType(transitionType)
+        || String(transitionType ?? "") === "shaderRandom"
+    readonly property bool transitionBusy: _transitioning
+        || internal.pendingSource !== "" || internal.loadingSource !== ""
+    readonly property bool shaderTransitionBusy: shaderTransitionRequested && transitionBusy
+    property string _activeShader: ""
+    readonly property bool _shaderRequestedActive: _transitioning && _activeShader !== ""
+    readonly property bool _shaderRenderActive: _shaderRequestedActive
+        && shaderTransition.shaderReady && shaderTransition.shaderPresented
     readonly property bool _canTransition: enableTransitions && Appearance.animationsEnabled && _normalizedTransitionType(transitionType) !== "none"
     readonly property string _effectiveType: _canTransition ? _normalizedTransitionType(transitionType) : "none"
     readonly property real _zoomEnterFrom: 1.12
@@ -54,6 +68,9 @@ Item {
     property real _transitionWidthSnapshot: 0
     property real _transitionHeightSnapshot: 0
     property size _transitionSourceSizeSnapshot: Qt.size(0, 0)
+    property bool _shaderTexturePrimePending: false
+    property string _shaderTexturePrimeSource: ""
+    property int _shaderTexturePrimeSwaps: 0
 
     function _normalizeBezier(raw): list<real> {
         if (!raw || raw.length !== 4)
@@ -103,6 +120,61 @@ Item {
 
     function _clamp01(value: real): real {
         return Math.max(0, Math.min(1, value))
+    }
+
+    function isShaderTransitionType(rawType): bool {
+        return shaderTransitionTypes.indexOf(String(rawType ?? "")) >= 0
+    }
+
+    function _resolvedShaderName(): string {
+        const raw = String(transitionType ?? "")
+        if (raw === "shaderRandom") {
+            const index = Math.floor(Math.random() * shaderTransitionTypes.length)
+            return shaderTransitionTypes[Math.max(0, Math.min(shaderTransitionTypes.length - 1, index))]
+        }
+        return isShaderTransitionType(raw) ? raw : ""
+    }
+
+    function _startShaderTransitionIfReady(): void {
+        if (!root._shaderRequestedActive || !shaderTransition.shaderReady
+                || !shaderTransition.shaderPresented || transitionAnim.running)
+            return
+        transitionAnim.restart()
+    }
+
+    function _cancelShaderTexturePrime(): void {
+        root._shaderTexturePrimePending = false
+        root._shaderTexturePrimeSource = ""
+        root._shaderTexturePrimeSwaps = 0
+        if (!root._transitioning)
+            root._activeShader = ""
+    }
+
+    function _primeShaderTexturesForPending(): void {
+        if (!root.shaderTransitionRequested || !root._canTransition) {
+            root._cancelShaderTexturePrime()
+            internal.performSwitch()
+            return
+        }
+
+        const pending = String(internal.pendingSource ?? "")
+        const inactive = internal.inactiveImage()
+        // `Image.source` is a QML url object while pendingSource is a JS string.
+        // Their printed paths can be identical and still fail strict equality.
+        // Normalize the url before comparing or the Ready frame is discarded and
+        // shader priming never starts, which can reintroduce the wallpaper flash.
+        if (pending === "" || String(inactive.source) !== pending || inactive.status !== Image.Ready)
+            return
+
+        root._activeShader = root._resolvedShaderName()
+        if (root._activeShader === "") {
+            root._cancelShaderTexturePrime()
+            internal.performSwitch()
+            return
+        }
+        root._shaderTexturePrimeSource = pending
+        root._shaderTexturePrimeSwaps = 0
+        root._shaderTexturePrimePending = true
     }
 
     function _normalizedTransitionType(rawType: string): string {
@@ -221,6 +293,7 @@ Item {
 
         function resetTransition(): void {
             transitionAnim.stop()
+            root._cancelShaderTexturePrime()
             transitionState.progress = 0
             transitionFromIndex = -1
             transitionToIndex = -1
@@ -284,9 +357,12 @@ Item {
             }
 
             const inactive = inactiveImage()
-            if (inactive.source === pendingSource && inactive.status === Image.Ready) {
+            // Keep source identity normalized for the same url-vs-string reason as
+            // the shader prime guard above. Do not simplify this to `===` on the
+            // raw QML url object.
+            if (String(inactive.source) === pendingSource && inactive.status === Image.Ready) {
                 loadingSource = ""
-                performSwitch()
+                root._primeShaderTexturesForPending()
                 return
             }
 
@@ -303,7 +379,7 @@ Item {
                 return
 
             loadingSource = ""
-            performSwitch()
+            root._primeShaderTexturesForPending()
         }
 
         function handleError(slotIndex: int, failedSource: string): void {
@@ -316,12 +392,17 @@ Item {
 
             loadingSource = ""
             pendingSource = ""
+            root._cancelShaderTexturePrime()
         }
 
         function performSwitch(): void {
             if (pendingSource === "" || pendingSource === displayedSource)
                 return
 
+            if (!root.shaderTransitionRequested)
+                root._activeShader = ""
+            else if (root._activeShader === "")
+                root._activeShader = root._resolvedShaderName()
             root._transitioning = true
             root._transitionWidthSnapshot = Math.max(1, root.width)
             root._transitionHeightSnapshot = Math.max(1, root.height)
@@ -333,7 +414,15 @@ Item {
             transitionFromIndex = activeIndex
             transitionToIndex = activeIndex === 0 ? 1 : 0
             transitionState.progress = 0
-            transitionAnim.restart()
+            if (root._activeShader === "")
+                transitionAnim.restart()
+            else {
+                if (shaderTransition.status === ShaderEffect.Compiled) {
+                    shaderTransition.shaderReady = true
+                    shaderTransition.shaderPresented = true
+                }
+                Qt.callLater(root._startShaderTransitionIfReady)
+            }
         }
     }
 
@@ -359,12 +448,44 @@ Item {
             internal.inactiveImage().source = ""
         }
 
+        _activeShader = ""
         transitionFinished()
         if (internal.pendingSource !== "" && internal.pendingSource !== internal.displayedSource)
             internal.loadPending()
     }
 
     onSourceChanged: internal.switchTo(source)
+
+    Connections {
+        target: root.Window.window
+        enabled: root._shaderTexturePrimePending
+
+        function onFrameSwapped(): void {
+            if (!root._shaderTexturePrimePending)
+                return
+
+            const pending = String(internal.pendingSource ?? "")
+            const inactive = internal.inactiveImage()
+            if (pending === "" || pending !== root._shaderTexturePrimeSource
+                    || String(inactive.source) !== pending || inactive.status !== Image.Ready
+                    || root._transitioning) {
+                root._cancelShaderTexturePrime()
+                return
+            }
+
+            if (shaderTransition.status !== ShaderEffect.Compiled)
+                return
+
+            root._shaderTexturePrimeSwaps++
+            if (root._shaderTexturePrimeSwaps < 2)
+                return
+
+            root._shaderTexturePrimePending = false
+            root._shaderTexturePrimeSource = ""
+            root._shaderTexturePrimeSwaps = 0
+            internal.performSwitch()
+        }
+    }
 
     clip: true
 
@@ -381,6 +502,10 @@ Item {
     function _slotOpacity(slotIndex: int): real {
         if (!_transitioning)
             return internal.activeIndex === slotIndex ? 1 : 0
+
+        if (_shaderRenderActive)
+            return internal.transitionFromIndex === slotIndex
+                || internal.transitionToIndex === slotIndex ? 1 : 0
 
         const progress = _clamp01(transitionState.progress)
         const isFrom = internal.transitionFromIndex === slotIndex
@@ -408,6 +533,8 @@ Item {
 
     function _slotX(slotIndex: int): real {
         if (!_transitioning)
+            return 0
+        if (_shaderRenderActive)
             return 0
 
         const progress = _clamp01(transitionState.progress)
@@ -446,6 +573,8 @@ Item {
 
     function _slotY(slotIndex: int): real {
         if (!_transitioning)
+            return 0
+        if (_shaderRenderActive)
             return 0
 
         const progress = _clamp01(transitionState.progress)
@@ -494,6 +623,9 @@ Item {
                 return internal.activeIndex === slotIndex ? 1 : _zoomEnterFrom
             return 1
         }
+
+        if (_shaderRenderActive)
+            return 1
 
         const progress = _clamp01(transitionState.progress)
         const isFrom = internal.transitionFromIndex === slotIndex
@@ -588,6 +720,7 @@ Item {
         height: root._slotWrapperHeight(0)
         clip: root._slotClipEnabled(0)
         visible: root._slotVisible(0)
+        opacity: root._shaderRenderActive ? 0 : 1
         z: root._slotZ(0)
 
         Image {
@@ -633,6 +766,7 @@ Item {
         height: root._slotWrapperHeight(1)
         clip: root._slotClipEnabled(1)
         visible: root._slotVisible(1)
+        opacity: root._shaderRenderActive ? 0 : 1
         z: root._slotZ(1)
 
         Image {
@@ -667,6 +801,118 @@ Item {
                 blur: root._slotBlur(1)
                 blurMax: 64
             }
+        }
+    }
+
+    // ShaderEffect samples Image texture providers without applying Image.fillMode.
+    // Render each slot first so shader transitions receive the exact same
+    // aspect-correct crop/fit pixels that the user sees before and after them.
+    ShaderEffectSource {
+        id: shaderSlot0Texture
+        anchors.fill: parent
+        visible: false
+        live: root._shaderTexturePrimePending
+        sourceItem: img0
+    }
+
+    ShaderEffectSource {
+        id: shaderSlot1Texture
+        anchors.fill: parent
+        visible: false
+        live: root._shaderTexturePrimePending
+        sourceItem: img1
+    }
+
+
+    ShaderEffect {
+        id: shaderTransition
+        anchors.fill: parent
+        z: (root._shaderTexturePrimePending || root._shaderRequestedActive) ? 20 : -1
+        visible: root._shaderTexturePrimePending || root._shaderRequestedActive
+        opacity: root._shaderTexturePrimePending ? 0.001 : (shaderPresented ? 1 : 0)
+        property bool shaderReady: false
+        property bool shaderPresented: false
+
+        property int samplerFromIndex: internal.transitionFromIndex >= 0
+            ? internal.transitionFromIndex : internal.activeIndex
+        property int samplerToIndex: internal.transitionToIndex >= 0
+            ? internal.transitionToIndex : (internal.activeIndex === 0 ? 1 : 0)
+        property var fromImage: samplerFromIndex === 0 ? shaderSlot0Texture : shaderSlot1Texture
+        property var toImage: samplerToIndex === 0 ? shaderSlot0Texture : shaderSlot1Texture
+        // Qt's default fragment shader is active while no transition QSB is
+        // selected and expects a sampler named `source`. Keep it bound to the
+        // outgoing image so the idle ShaderEffect is valid too; transition QSBs
+        // use their own fromImage/toImage or source1/source2 samplers.
+        property var source: fromImage
+        property var source1: fromImage
+        property var source2: toImage
+        property real time: 0
+        property real progress: root._clamp01(transitionState.progress)
+        property real aspectX: width / Math.max(1, height)
+        property real aspectY: 1
+        property vector2d aspectRatio: Qt.vector2d(aspectX, aspectY)
+        property vector2d origin: Qt.vector2d(0.5, 0.5)
+
+        fragmentShader: root._activeShader !== ""
+            ? Qt.resolvedUrl("wallpaperTransitions/" + root._activeShader + ".frag.qsb")
+            : ""
+
+        onFragmentShaderChanged: {
+            shaderReady = false
+            shaderPresented = false
+            if (fragmentShader === "")
+                return
+            Qt.callLater(() => {
+                if (status === ShaderEffect.Compiled) {
+                    shaderReady = true
+                    if (root._shaderRequestedActive) {
+                        shaderPresented = true
+                        root._startShaderTransitionIfReady()
+                    }
+                }
+            })
+        }
+        onStatusChanged: {
+            if (!root._shaderRequestedActive && !root._shaderTexturePrimePending)
+                return
+            if (status === ShaderEffect.Compiled) {
+                shaderReady = true
+                if (root._shaderRequestedActive) {
+                    shaderPresented = true
+                    root._startShaderTransitionIfReady()
+                }
+            } else if (status === ShaderEffect.Error) {
+                console.warn("[WallpaperCrossfader] Shader failed:", log)
+                shaderReady = false
+                shaderPresented = false
+                root._activeShader = ""
+                if (root._transitioning && !transitionAnim.running)
+                    transitionAnim.restart()
+            }
+        }
+        onVisibleChanged: {
+            if (!visible) {
+                time = 0
+                shaderReady = false
+                shaderPresented = false
+                return
+            }
+            // The slot textures were captured before performSwitch(). Reusing an
+            // already-compiled QSB can therefore present immediately without a
+            // second render handoff.
+            if (root._shaderRequestedActive && fragmentShader !== ""
+                    && status === ShaderEffect.Compiled) {
+                shaderReady = true
+                shaderPresented = true
+                root._startShaderTransitionIfReady()
+            }
+        }
+
+        Timer {
+            interval: 16
+            repeat: true
+            running: root._shaderRenderActive
+            onTriggered: shaderTransition.time += interval / 1000
         }
     }
 

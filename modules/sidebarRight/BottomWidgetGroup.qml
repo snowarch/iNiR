@@ -98,8 +98,10 @@ Rectangle {
         }
     }
 
-    // Signal to open events dialog (propagated from EventsWidget)
+    // Signals consumed by SidebarRightContent.
     signal openEventsDialog(var editEvent)
+    signal requestExpand(string widgetType)
+    readonly property string activeTabType: root.tabs[root.selectedTab]?.type ?? ""
 
     // Events component
     Component {
@@ -108,6 +110,7 @@ Rectangle {
             anchors.fill: parent
             anchors.margins: 5
             onOpenEventsDialog: (editEvent) => root.openEventsDialog(editEvent)
+            onRequestExpand: root.requestExpand("events")
         }
     }
 
@@ -319,19 +322,14 @@ Rectangle {
                 ColumnLayout {
                     id: tabColumn
                     width: parent.width
+                    y: Math.max(0, (railFlickable.height - implicitHeight) / 2)
                     spacing: 0
-
-                    // Spacer to center vertically when content is small
-                    Item {
-                        Layout.fillHeight: true
-                        visible: railFlickable.contentHeight < railFlickable.height
-                    }
 
                     NavigationRailTabArray {
                         id: tabBar
                         Layout.alignment: Qt.AlignLeft
                         Layout.leftMargin: 5
-                        // Override default topMargin of 25 to restore original vertical positioning
+                        // Keep the rail geometry independent from the active widget.
                         Layout.topMargin: 0
                         currentIndex: root.selectedTab
                         expanded: false
@@ -347,12 +345,6 @@ Rectangle {
                                 }
                             }
                         }
-                    }
-
-                    // Spacer to center vertically when content is small
-                    Item {
-                        Layout.fillHeight: true
-                        visible: railFlickable.contentHeight < railFlickable.height
                     }
                 }
             }
@@ -482,6 +474,7 @@ Rectangle {
             anchors.margins: 5
             onDayWithEventsClicked: (date) => root.switchToEventsTab()
             onOpenEventsDialog: (editEvent) => root.openEventsDialog(editEvent)
+            onRequestExpand: root.requestExpand("calendar")
         }
     }
 
@@ -491,6 +484,7 @@ Rectangle {
         TodoWidget {
             anchors.fill: parent
             anchors.margins: 5
+            onRequestExpand: root.requestExpand("todo")
         }
     }
 

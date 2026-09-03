@@ -62,7 +62,7 @@ ContentPage {
                     id: packMissingText
                     anchors.fill: parent
                     anchors.margins: 10
-                    text: Translation.tr("Mascot art pack not installed — run `./setup` and pick Extras › Install mascot pack (~20 MiB). Everything below stays inert until then.")
+                    text: Translation.tr("Kira is an optional download. Run `inir setup extras` and choose Install mascot pack. Everything below stays inert until the download finishes.")
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colOnSecondaryContainer
                     wrapMode: Text.Wrap
@@ -123,7 +123,7 @@ ContentPage {
             ConfigSpinBox {
                 icon: "hourglass_empty"
                 text: Translation.tr("Visit length") + " (s)"
-                value: Config.options?.mascot?.companion?.visibleSeconds ?? 8
+                value: Config.options?.mascot?.companion?.visibleSeconds ?? 5
                 from: 3
                 to: 60
                 stepSize: 1

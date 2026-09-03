@@ -48,13 +48,14 @@ Variants {
         readonly property var wBackdrop: Config.options?.waffles?.background?.backdrop ?? {}
 
         readonly property int backdropBlurRadius: wBackdrop.blurRadius ?? 32
-        // A blurred fullscreen source carries no useful pixel-level detail. Decode
-        // it at half resolution, matching ii's backdrop ownership, while retaining
-        // native resolution for the sharp (blur 0) mode.
-        readonly property real backdropSourceScale: backdropBlurRadius > 0 ? 0.5 : 1.0
+        // Match ii: backdrop still needs a full-quality source before blur. A
+        // half-resolution decode is visibly softened again when scaled to the
+        // output, especially for low-resolution wallpapers and HiDPI screens.
+        readonly property int backdropDecodeOverflow: 64
+        readonly property real backdropDecodeScale: Math.max(1, backdropWindow.devicePixelRatio ?? 1)
         readonly property size backdropSourceSize: Qt.size(
-            Math.round((screen?.width ?? 1920) * backdropSourceScale),
-            Math.round((screen?.height ?? 1080) * backdropSourceScale))
+            Math.ceil(((screen?.width ?? 1920) + backdropDecodeOverflow * 2) * backdropDecodeScale),
+            Math.ceil(((screen?.height ?? 1080) + backdropDecodeOverflow * 2) * backdropDecodeScale))
         readonly property int thumbnailBlurStrength: Config.options?.waffles?.background?.effects?.thumbnailBlurStrength ?? (Config.options?.background?.effects?.thumbnailBlurStrength ?? 50)
         readonly property bool enableAnimatedBlur: wBackdrop.enableAnimatedBlur ?? false
         readonly property int backdropDim: wBackdrop.dim ?? 35
@@ -130,9 +131,11 @@ Variants {
             // Gaussian kernel has no pixels beyond the item edge. To fix this, all
             // wallpaper source items are oversized by blurMax (64px) on every side,
             // and this parent clips the result to exact screen bounds.
-            readonly property int blurOverflow: 64
+            readonly property int blurOverflow: backdropWindow.backdropDecodeOverflow
 
-            // Static wallpaper with crossfade transitions (shares waffle workspace transition settings)
+            // Keep the hidden Overview resource settled. The visible desktop owns
+            // wallpaper motion; this backdrop follows the path without replaying a
+            // second wallpaper transition of its own.
             WallpaperCrossfader {
                 id: wallpaper
                 anchors.fill: parent
@@ -143,11 +146,7 @@ Variants {
                     : ""
                 sourceSize: backdropWindow.backdropSourceSize
                 visible: !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
-                // Use waffle transition settings
-                transitionBaseDuration: Config.options?.waffles?.background?.transition?.duration ?? 800
-                transitionType: Config.options?.waffles?.background?.transition?.type ?? "crossfade"
-                transitionDirection: Config.options?.waffles?.background?.transition?.direction ?? "right"
-                enableTransitions: Config.options?.waffles?.background?.transition?.enable ?? true
+                enableTransitions: false
             }
 
             // Animated GIF wallpaper

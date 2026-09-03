@@ -7,11 +7,13 @@ What happens between "user logs in" and "shell is on screen", step by step.
 ```
 User logs in
   |
-Display manager starts Niri (or Hyprland)
+Display manager starts Niri through its managed session
   |
-Compositor reaches graphical-session.target
+Niri publishes DISPLAY, WAYLAND_DISPLAY and NIRI_SOCKET to the user manager
   |
-systemd starts inir.service (wants link from compositor)
+niri.service reports READY
+  |
+systemd starts inir.service (niri.service.wants link)
   |
 ExecStart calls: /usr/bin/inir run --session
   |
@@ -19,7 +21,7 @@ inir script (bash):
   - Validates QS/Qt ABI compatibility
   - Sets QT_SCALE_FACTOR=1
   - Suppresses noisy Qt log categories
-  - Bridges niri env vars to systemd session
+  - Inherits Niri's published session environment without guessing sockets
   - Launches: qs -c inir
   |
 Quickshell loads shell.qml
@@ -52,13 +54,11 @@ Shell fully operational
 
 ## Service wiring
 
-The systemd service is the key piece. It does not use `systemctl enable` in the traditional sense because there's no `[Install]` section. Instead, iNiR creates a wants link from your compositor's service:
+The systemd service is the key piece. It does not use `systemctl enable` in the traditional sense because there's no `[Install]` section. iNiR is Niri-only, so it creates a wants link from `niri.service`:
 
-**Niri**: `~/.config/systemd/user/niri.service.wants/inir.service`
+`~/.config/systemd/user/niri.service.wants/inir.service`
 
-**Hyprland**: `~/.config/systemd/user/wayland-wm@Hyprland.service.wants/inir.service`
-
-This means iNiR starts when your compositor starts and stops when it stops. It will never accidentally start under KDE or GNOME.
+`inir.service` is ordered **after** the `Type=notify` Niri service and requires it to be active. This means iNiR starts only after Niri has published the authoritative graphical-session environment, and stops/restarts with Niri. It will never accidentally start under KDE, GNOME, or another compositor.
 
 Managing the link:
 
@@ -74,7 +74,7 @@ inir service status    # check current state
 
 | | `inir run` | `qs -c inir` |
 |---|---|---|
-| Environment setup | Sets QT_SCALE_FACTOR, suppresses warnings, bridges niri env | Raw environment |
+| Environment setup | Sets shell-only Qt policy and inherits Niri's session env | Raw environment |
 | Output | Backgrounded, logs to journal | Foreground, direct stdout |
 | Crash recovery | systemd restarts on failure (max 3 in 30s) | None |
 | ABI check | Validates Quickshell/Qt compatibility | None |
@@ -94,7 +94,7 @@ The launcher sets these before starting Quickshell:
 
 The launcher also unsets inherited DPI variables that would cause blur: `QT_WAYLAND_FORCE_DPI`, `QT_FONT_DPI`, `QT_AUTO_SCREEN_SCALE_FACTOR`, `QT_SCREEN_SCALE_FACTORS`, `GDK_SCALE`, `GDK_DPI_SCALE`.
 
-The `--session` flag (used by systemd) also runs `ensure_systemd_graphical_env` in the background, which bridges critical Niri environment variables to the systemd user session. Without this, apps launched from the shell wouldn't get `WAYLAND_DISPLAY`, `NIRI_SOCKET`, or `ELECTRON_OZONE_PLATFORM_HINT`.
+The `--session` flag (used by systemd) consumes the graphical environment that Niri has already published to the user manager. iNiR does not rewrite `DISPLAY`, `WAYLAND_DISPLAY`, or `NIRI_SOCKET`; manual recovery launches may copy missing values from the manager, but they never infer them from filesystem sockets.
 
 ## Config loading
 

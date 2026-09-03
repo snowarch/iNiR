@@ -109,12 +109,29 @@ Scope {
                     }
                 }
                 property bool superShow: false
-                property bool mustShow: hoverRegion.containsMouse || superShow
-                    || ShellEditSession.active
+                readonly property bool autoHideEnabled: Config.options?.bar?.autoHide?.enable ?? false
+                readonly property bool pushWindowsWhenShown: Config.options?.bar?.autoHide?.pushWindows ?? false
+                readonly property bool overviewOwnsEdge: GlobalStates.overviewOpen
+                    || (CompositorService.isNiri && NiriService.inOverview)
+                readonly property string outputName: barRoot.screen?.name ?? ""
+                property bool contextMenuHold: false
+                property bool leftSidebarHold: false
+                property bool rightSidebarHold: false
+                property bool mediaControlsHold: false
+                property bool controlPanelHold: false
+                readonly property bool interactionHold: contextMenuHold || leftSidebarHold
+                    || rightSidebarHold || mediaControlsHold || controlPanelHold
+                readonly property bool pointerShow: !overviewOwnsEdge
+                    && (hoverRegion.containsMouse || autoHideEdgeHover.revealHover)
+                readonly property bool reservationWanted: pointerShow || interactionHold
+                property bool mustShow: pointerShow || superShow || ShellEditSession.active || interactionHold
+                property bool reservationActive: false
+                readonly property real autoHideHoverWidth: autoHideEnabled
+                    ? Math.max(1, Config.options?.bar?.autoHide?.hoverRegionWidth ?? 2) : 0
                 exclusionMode: ExclusionMode.Ignore
-                exclusiveZone:
-                    (GlobalStates.coverflowSelectorOpen || (Config?.options.bar.autoHide.enable && (!mustShow || !Config?.options.bar.autoHide.pushWindows))) ? 0 :
-                    barRoot.panelSurfaceHeight
+                exclusiveZone: GlobalStates.coverflowSelectorOpen ? 0
+                    : !autoHideEnabled ? barRoot.panelSurfaceHeight
+                    : (pushWindowsWhenShown && reservationActive ? barRoot.panelSurfaceHeight : 0)
                 WlrLayershell.namespace: "quickshell:bar"
                 implicitHeight: barRoot.panelSurfaceHeight + barRoot.roundDecoratorAllowance
                     + barRoot.islandShadowAllowance
@@ -124,9 +141,140 @@ Scope {
                 // input-blocking area at the top of the screen.
                 Item { id: emptyMask; width: 0; height: 0 }
                 mask: Region {
-                    item: hoverMaskRegion
+                    Region {
+                        item: hoverMaskRegion
+                    }
+                    Region {
+                        item: barRoot.autoHideEnabled ? autoHideEdgeHover : emptyMask
+                    }
+                    Region {
+                        intersection: Intersection.Subtract
+                        x: 0
+                        y: (Config.options?.bar?.bottom ?? false)
+                            ? barRoot.height - barRoot.autoHideHoverWidth : 0
+                        width: barRoot.edgeCornerReserve(true)
+                        height: barRoot.autoHideHoverWidth
+                    }
+                    Region {
+                        intersection: Intersection.Subtract
+                        x: barRoot.width - barRoot.edgeCornerReserve(false)
+                        y: (Config.options?.bar?.bottom ?? false)
+                            ? barRoot.height - barRoot.autoHideHoverWidth : 0
+                        width: barRoot.edgeCornerReserve(false)
+                        height: barRoot.autoHideHoverWidth
+                    }
                 }
                 color: "transparent"
+
+                function edgeCornerName(left: bool): string {
+                    const bottom = Config.options?.bar?.bottom ?? false
+                    return bottom ? (left ? "bottomLeft" : "bottomRight")
+                        : (left ? "topLeft" : "topRight")
+                }
+
+                function edgeCornerReserve(left: bool): real {
+                    const corner = edgeCornerName(left)
+                    let reserve = 0
+                    if (CompositorService.isNiri && NiriService.isOverviewHotCornerActive(outputName, corner))
+                        reserve = Math.max(reserve, 12)
+
+                    const orbitEnabled = CompositorService.isNiri
+                        && (Config.options?.panelFamily ?? "ii") !== "waffle"
+                        && (Config.options?.orbit?.enable ?? true)
+                        && (Config.options?.orbit?.hotCornerEnable ?? true)
+                    if (orbitEnabled && String(Config.options?.orbit?.hotCorner ?? "topRight") === corner)
+                        reserve = Math.max(reserve, Config.options?.orbit?.hotCornerSize ?? 12)
+
+                    const sidebarCornerEnabled = Config.options?.sidebar?.cornerOpen?.enable ?? false
+                    const sidebarCornerBottom = Config.options?.sidebar?.cornerOpen?.bottom ?? false
+                    if (sidebarCornerEnabled && sidebarCornerBottom === (Config.options?.bar?.bottom ?? false))
+                        reserve = Math.max(reserve, Config.options?.sidebar?.cornerOpen?.cornerRegionWidth ?? 20)
+                    return reserve
+                }
+
+                function syncReservation(): void {
+                    reservationShowTimer.stop()
+                    reservationHideTimer.stop()
+                    if (!autoHideEnabled || !pushWindowsWhenShown) {
+                        reservationActive = false
+                        return
+                    }
+                    if (interactionHold) {
+                        reservationActive = true
+                        return
+                    }
+                    if (pointerShow)
+                        reservationShowTimer.restart()
+                    else if (reservationActive)
+                        reservationHideTimer.restart()
+                }
+
+                onReservationWantedChanged: syncReservation()
+                onAutoHideEnabledChanged: syncReservation()
+                onPushWindowsWhenShownChanged: syncReservation()
+                Component.onCompleted: syncReservation()
+
+                Timer {
+                    id: reservationShowTimer
+                    interval: Appearance.animationsEnabled ? Appearance.animation.elementMoveEnter.duration : 1
+                    onTriggered: {
+                        if (barRoot.autoHideEnabled && barRoot.pushWindowsWhenShown && barRoot.reservationWanted)
+                            barRoot.reservationActive = true
+                    }
+                }
+
+                Timer {
+                    id: reservationHideTimer
+                    interval: Appearance.animationsEnabled ? Appearance.animation.elementMoveEnter.duration : 1
+                    onTriggered: {
+                        if (!barRoot.reservationWanted)
+                            barRoot.reservationActive = false
+                    }
+                }
+
+                Connections {
+                    target: GlobalStates
+
+                    function onActiveContextMenuCountChanged(): void {
+                        if (GlobalStates.activeContextMenuCount <= 0) {
+                            barRoot.contextMenuHold = false
+                        } else if (barRoot.pointerShow) {
+                            barRoot.contextMenuHold = true
+                        }
+                    }
+
+                    function onSidebarLeftOpenChanged(): void {
+                        if (!GlobalStates.sidebarLeftOpen) {
+                            barRoot.leftSidebarHold = false
+                        } else if (barRoot.pointerShow
+                                && GlobalStates.sidebarLeftPresentationOutput === barRoot.outputName) {
+                            barRoot.leftSidebarHold = true
+                        }
+                    }
+
+                    function onSidebarRightOpenChanged(): void {
+                        if (!GlobalStates.sidebarRightOpen) {
+                            barRoot.rightSidebarHold = false
+                        } else if (barRoot.pointerShow
+                                && GlobalStates.sidebarRightPresentationOutput === barRoot.outputName) {
+                            barRoot.rightSidebarHold = true
+                        }
+                    }
+
+                    function onMediaControlsOpenChanged(): void {
+                        if (!GlobalStates.mediaControlsOpen)
+                            barRoot.mediaControlsHold = false
+                        else if (barRoot.pointerShow)
+                            barRoot.mediaControlsHold = true
+                    }
+
+                    function onControlPanelOpenChanged(): void {
+                        if (!GlobalStates.controlPanelOpen)
+                            barRoot.controlPanelHold = false
+                        else if (barRoot.pointerShow)
+                            barRoot.controlPanelHold = true
+                    }
+                }
 
                 // Shaped compositor blur; Niri applies the request only inside the
                 // actual bar content rather than across the whole layer surface.
@@ -189,8 +337,6 @@ Scope {
                         id: hoverMaskRegion
                         anchors {
                             fill: barContent
-                            topMargin: -(Config.options?.bar?.autoHide?.hoverRegionWidth ?? 2)
-                            bottomMargin: -(Config.options?.bar?.autoHide?.hoverRegionWidth ?? 2)
                         }
                     }
 
@@ -440,6 +586,23 @@ Scope {
                             }
                         }
                     }
+                }
+
+                MouseArea {
+                    id: autoHideEdgeHover
+                    hoverEnabled: true
+                    enabled: barRoot.autoHideEnabled
+                    readonly property bool inLeftReservedCorner: mouseX < barRoot.edgeCornerReserve(true)
+                    readonly property bool inRightReservedCorner: mouseX >= width - barRoot.edgeCornerReserve(false)
+                    readonly property bool revealHover: enabled && containsMouse
+                        && !inLeftReservedCorner && !inRightReservedCorner && !barRoot.overviewOwnsEdge
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        top: (Config.options?.bar?.bottom ?? false) ? undefined : parent.top
+                        bottom: (Config.options?.bar?.bottom ?? false) ? parent.bottom : undefined
+                    }
+                    height: Config.options?.bar?.autoHide?.hoverRegionWidth ?? 2
                 }
             }
         }

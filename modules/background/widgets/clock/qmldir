@@ -3,6 +3,7 @@ AndroidStackedClock 1.0 AndroidStackedClock.qml
 CookieClock 1.0 CookieClock.qml
 CookieQuote 1.0 CookieQuote.qml
 ClockWidget 1.0 ClockWidget.qml
+PixelClock 1.0 PixelClock.qml
 HourHand 1.0 HourHand.qml
 HourMarks 1.0 HourMarks.qml
 MinuteHand 1.0 MinuteHand.qml

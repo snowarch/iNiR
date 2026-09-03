@@ -243,7 +243,7 @@ binds {
     Mod+Alt+L allow-when-locked=true { spawn "qs" "-c" "inir" "ipc" "call" "lock" "activate"; }
     
     // ii Region tools
-    Mod+Shift+S { spawn "qs" "-c" "inir" "ipc" "call" "region" "screenshot"; }
+    Mod+Shift+S { spawn "qs" "-c" "inir" "ipc" "call" "region" "menu"; }
     Mod+Shift+X { spawn "qs" "-c" "inir" "ipc" "call" "region" "ocr"; }
     Mod+Shift+A { spawn "qs" "-c" "inir" "ipc" "call" "region" "search"; }
     

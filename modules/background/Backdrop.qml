@@ -42,21 +42,22 @@ Variants {
 
         readonly property int backdropBlurRadius: iiBackdrop.blurRadius ?? 32
 
-        // The backdrop is a blurred wallpaper, so decoding the source at native
-        // screen resolution buys detail the blur immediately destroys — and the
-        // crossfader holds two of them. Halve the decoded size whenever a blur is
-        // actually applied; fall back to full resolution when the user turned the
-        // blur off, because then the backdrop IS the sharp image.
-        readonly property real backdropSourceScale: backdropBlurRadius > 0 ? 0.5 : 1.0
+        // Backdrop still needs a full-quality source before blur is applied. A
+        // half-resolution decode was noticeably soft on low-resolution images and
+        // HiDPI outputs because the result was enlarged again to cover the screen.
+        // Include the blur-overflow margin so the source is never upscaled merely
+        // to feed the edge-compensation area.
+        readonly property int backdropDecodeOverflow: 64
+        readonly property real backdropDecodeScale: Math.max(1, backdropWindow.devicePixelRatio ?? 1)
         readonly property size backdropSourceSize: Qt.size(
-            Math.round((screen?.width ?? 1920) * backdropSourceScale),
-            Math.round((screen?.height ?? 1080) * backdropSourceScale))
+            Math.ceil(((screen?.width ?? 1920) + backdropDecodeOverflow * 2) * backdropDecodeScale),
+            Math.ceil(((screen?.height ?? 1080) + backdropDecodeOverflow * 2) * backdropDecodeScale))
         readonly property int thumbnailBlurStrength: Config.options?.background?.effects?.thumbnailBlurStrength ?? 50
         readonly property bool enableAnimatedBlur: iiBackdrop.enableAnimatedBlur ?? false
-        readonly property string fillMode: iiBackdrop.fillMode === "fit" ? "fit" : "fill"
-        readonly property bool fitWallpaper: fillMode === "fit"
-        readonly property int imageFillMode: fitWallpaper ? Image.PreserveAspectFit : Image.PreserveAspectCrop
-        readonly property int videoFillMode: fitWallpaper ? VideoOutput.PreserveAspectFit : VideoOutput.PreserveAspectCrop
+        // Niri's backdrop is a full-screen visual layer, not a photo viewer. It
+        // must always cover the output; persisted legacy `fit` values are ignored.
+        readonly property int imageFillMode: Image.PreserveAspectCrop
+        readonly property int videoFillMode: VideoOutput.PreserveAspectCrop
         readonly property int backdropDim: iiBackdrop.dim ?? 35
         readonly property real backdropSaturation: iiBackdrop.saturation ?? 0
         readonly property real backdropContrast: iiBackdrop.contrast ?? 0
@@ -165,16 +166,12 @@ Variants {
             // Gaussian kernel has no pixels beyond the item edge. To fix this, all
             // wallpaper source items are oversized by blurMax (64px) on every side,
             // and this parent clips the result to exact screen bounds.
-            readonly property int blurOverflow: 64
-            readonly property int mediaMargin: backdropWindow.fitWallpaper ? 0 : -blurOverflow
+            readonly property int blurOverflow: backdropWindow.backdropDecodeOverflow
+            readonly property int mediaMargin: -blurOverflow
 
-            Rectangle {
-                anchors.fill: parent
-                visible: backdropWindow.fitWallpaper
-                color: Appearance.colors.colLayer0Base
-            }
-
-            // Static wallpaper with crossfade transitions (shares workspace transition settings)
+            // Overview/backdrop is a settled resource, not a second transition
+            // owner. It follows the configured path without replaying the desktop
+            // animation, so the hidden Overview resource can settle independently.
             WallpaperCrossfader {
                 id: wallpaper
                 anchors.fill: parent
@@ -186,9 +183,8 @@ Variants {
                         : "file://" + backdropWindow.effectiveWallpaperPath)
                     : ""
                 visible: !backdropWindow.useAuroraStyle && !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
-                // Constrain decoded size — no need for native resolution since the
-                // backdrop is always screen-sized, and halved again while blurred.
                 sourceSize: backdropWindow.backdropSourceSize
+                enableTransitions: false
             }
 
             MultiEffect {

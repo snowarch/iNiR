@@ -56,7 +56,8 @@ Item {
         radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
         color: Appearance.zzzEverywhere ? Appearance.zzz.paper : "transparent"
-        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0
+        border.width: root.vizType === "organic" && root.vizPosition !== "none"
+            ? 0 : (Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0)
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
         // Organic morph on style/shape switch (organic-transitions)
         Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
@@ -140,28 +141,12 @@ Item {
         }
         
         // Visualizer overlay
-        WaveVisualizer {
-            visible: root.vizType === "wave" && root.vizPosition !== "none"
-            anchors { left: parent.left; right: parent.right }
-            y: root.vizPosition === "top" ? 0 : (parent.height - height)
-            height: root.vizPosition === "fill" ? parent.height : 40
-            live: playerBase.effectiveIsPlaying
-            points: root.visualizerPoints
-            maxVisualizerValue: 1000; smoothing: 2
-            color: ColorUtils.transparentize(root.themeSourceColor, 0.3)
-        }
-        CavaVisualizer {
-            visible: root.vizType === "bars" && root.vizPosition !== "none"
-            anchors { left: parent.left; right: parent.right }
-            y: root.vizPosition === "top" ? 0 : (parent.height - height)
-            height: root.vizPosition === "fill" ? parent.height : 40
-            live: playerBase.effectiveIsPlaying
-            points: root.visualizerPoints
-            maxVisualizerValue: 1000; smoothing: 2
-            barCount: 32; barSpacing: 2; barRadius: 2; barMinHeight: 1
-            colorLow: ColorUtils.transparentize(root.themeSourceColor, 0.3)
-            colorMed: ColorUtils.transparentize(root.themeSourceColor, 0.1)
-            colorHigh: root.themeSourceColor
+        MediaVisualizerOverlay {
+            anchors.fill: parent
+            edgeHeight: 40
+            visualizerPoints: root.visualizerPoints
+            active: playerBase.effectiveIsPlaying
+            playerColor: root.themeSourceColor
         }
         
         // Controls overlay at bottom

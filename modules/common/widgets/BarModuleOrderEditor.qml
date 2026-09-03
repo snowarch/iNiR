@@ -16,9 +16,10 @@ import QtQuick.Controls
  * insert-index a simple `round(y / pitch)`. The dragged row reparents into
  * `dragLayer` (top z) and follows the cursor; a primary-coloured bar marks the
  * drop slot. Writes go through Config per-leaf (never assign a whole object to
- * the bar.layout JsonObject). The pivot module (workspaces in `center`) is not
- * draggable. Modules not in any zone appear as compact chips that can be
- * either dragged into a zone or added via a single popup menu trigger.
+ * the bar.layout JsonObject). Every module follows the same relocation contract;
+ * `center` is the screen-centred zone, not a hard-coded workspace pivot. Modules
+ * not in any zone appear as compact chips that can be either dragged into a zone
+ * or added via a single popup menu trigger.
  */
 ColumnLayout {
     id: root
@@ -70,7 +71,7 @@ ColumnLayout {
     }
     function _zoneLabel(z) {
         return ({ left: Translation.tr("Left edge"), centerLeft: Translation.tr("Center left"),
-            center: Translation.tr("Center (pivot)"), centerRight: Translation.tr("Center right"),
+            center: Translation.tr("Center"), centerRight: Translation.tr("Center right"),
             right: Translation.tr("Right edge") })[z] || z
     }
     function _zoneIcon(z) {
@@ -195,7 +196,7 @@ ColumnLayout {
             }
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Workspaces stays as the centred pivot — it can't be moved.")
+                text: Translation.tr("The Center zone stays screen-centred; any module can be moved into or out of it.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 opacity: 0.7
@@ -217,18 +218,16 @@ ColumnLayout {
         property string moduleId: ""
         property string zone: ""
         property int rowIndex: -1
-        property bool pivot: false
         property string visibilityKey: root._visKeys[moduleId] || ""
         readonly property bool beingDragged: root.dragInfo && root.dragInfo.id === moduleId && root.dragInfo.zone === zone && root.dragInfo.index === rowIndex
 
         width: parent ? parent.width : implicitWidth
         height: root.rowH
         radius: Appearance.rounding.small
-        color: pivot ? Appearance.colors.colSecondaryContainer
-            : (beingDragged ? Appearance.colors.colLayer2
-            : (dragMa.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1))
+        color: beingDragged ? Appearance.colors.colLayer2
+            : (dragMa.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1)
         border.color: beingDragged ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
-        border.width: pivot ? 0 : 1
+        border.width: 1
         scale: beingDragged ? 1.03 : 1
         rotation: beingDragged ? 0.6 : 0
         Behavior on scale { enabled: Appearance.animationsEnabled; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -242,8 +241,8 @@ ColumnLayout {
             z: -1
         }
 
-        readonly property color _fg: pivot ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
-        readonly property color _fgSubtle: pivot ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colSubtext
+        readonly property color _fg: Appearance.colors.colOnLayer1
+        readonly property color _fgSubtle: Appearance.colors.colSubtext
 
         // Drag plumbing — reparent into dragLayer while dragging so the row can
         // travel over other zones; Drag.drop() fires the hovered DropArea.
@@ -261,8 +260,7 @@ ColumnLayout {
             id: dragMa
             anchors.fill: parent
             hoverEnabled: true
-            enabled: !rowRoot.pivot
-            cursorShape: rowRoot.pivot ? Qt.ArrowCursor : (drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor)
+            cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
             drag.target: rowRoot
             drag.axis: Drag.XAndYAxis
             onPressed: root.dragInfo = { zone: rowRoot.zone, index: rowRoot.rowIndex, id: rowRoot.moduleId }
@@ -279,7 +277,6 @@ ColumnLayout {
             anchors.rightMargin: 6
             spacing: 8
             MaterialSymbol {
-                visible: !rowRoot.pivot
                 text: "drag_indicator"
                 iconSize: Appearance.font.pixelSize.normal
                 color: rowRoot._fgSubtle
@@ -294,7 +291,7 @@ ColumnLayout {
             }
             // Visibility toggle (modules that have a bar.modules.<key> switch)
             RippleButton {
-                visible: !rowRoot.pivot && rowRoot.visibilityKey.length > 0
+                visible: rowRoot.visibilityKey.length > 0
                 implicitWidth: 26; implicitHeight: 26
                 buttonRadius: Appearance.rounding.full
                 onClicked: {
@@ -314,7 +311,6 @@ ColumnLayout {
             }
             // Remove from layout
             RippleButton {
-                visible: !rowRoot.pivot
                 implicitWidth: 26; implicitHeight: 26
                 buttonRadius: Appearance.rounding.full
                 onClicked: root._remove(rowRoot.zone, rowRoot.rowIndex)
@@ -436,7 +432,6 @@ ColumnLayout {
                                 moduleId: modelData
                                 zone: zoneCard.zoneName
                                 rowIndex: index
-                                pivot: zoneCard.zoneName === "center" && modelData === "workspaces"
                             }
                         }
                         // Reserve the lifted row's height so the Column (and the

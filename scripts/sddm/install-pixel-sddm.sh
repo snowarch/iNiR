@@ -180,15 +180,10 @@ migrate_legacy_sddm_conf() {
     elevate rm -f "$SDDM_CONF_LEGACY"
 }
 
-# Configure SDDM to use this theme
-# Two concerns: (1) set Current theme, (2) ensure settings (DisplayServer, InputMethod) are correct.
-# On updates where ii-pixel is already active, we still need to patch settings.
-
-desired_conf="[General]
-DisplayServer=x11
-InputMethod=
-
-[Theme]
+# Configure only the theme. DisplayServer, compositor and input-method policy
+# belong to SDDM/distro provider packages (for example Fedora's sddm-x11 or
+# sddm-wayland-* packages) and must not be overridden by a theme installer.
+desired_conf="[Theme]
 Current=${THEME_NAME}"
 
 current_conf=""

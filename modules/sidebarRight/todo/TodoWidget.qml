@@ -9,6 +9,7 @@ import qs.services
 
 Item {
     id: root
+    signal requestExpand()
     property int currentTab: 0
     property var tabButtonList: [{"icon": "checklist", "name": Translation.tr("Unfinished")}, {"name": Translation.tr("Done"), "icon": "check_circle"}]
     property bool showAddDialog: false
@@ -41,31 +42,61 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        SecondaryTabBar {
-            id: tabBar
+        Item {
+            id: todoHeader
             Layout.fillWidth: true
-            currentIndex: currentTab
-            onCurrentIndexChanged: currentTab = currentIndex
+            Layout.preferredHeight: Math.max(tabBar.implicitHeight, expandViewButton.implicitHeight)
 
-            background: Item {
-                WheelHandler {
-                    onWheel: (event) => {
-                        if (event.angleDelta.y < 0)
-                            tabBar.currentIndex = Math.min(tabBar.currentIndex + 1, root.tabButtonList.length - 1)
-                        else if (event.angleDelta.y > 0)
-                            tabBar.currentIndex = Math.max(tabBar.currentIndex - 1, 0)
+            SecondaryTabBar {
+                id: tabBar
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.right: expandViewButton.left
+                anchors.rightMargin: 6
+                currentIndex: currentTab
+                onCurrentIndexChanged: currentTab = currentIndex
+
+                background: Item {
+                    WheelHandler {
+                        onWheel: (event) => {
+                            if (event.angleDelta.y < 0)
+                                tabBar.currentIndex = Math.min(tabBar.currentIndex + 1, root.tabButtonList.length - 1)
+                            else if (event.angleDelta.y > 0)
+                                tabBar.currentIndex = Math.max(tabBar.currentIndex - 1, 0)
+                        }
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                     }
-                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                }
+
+                Repeater {
+                    model: root.tabButtonList
+                    delegate: SecondaryTabButton {
+                        selected: (index == currentTab)
+                        buttonText: modelData.name
+                        buttonIcon: modelData.icon
+                    }
                 }
             }
 
-            Repeater {
-                model: root.tabButtonList
-                delegate: SecondaryTabButton {
-                    selected: (index == currentTab)
-                    buttonText: modelData.name
-                    buttonIcon: modelData.icon
+            RippleButton {
+                id: expandViewButton
+                anchors.top: parent.top
+                anchors.right: parent.right
+                z: 5
+                implicitWidth: 32
+                implicitHeight: 32
+                buttonRadius: Appearance.rounding.full
+                colBackground: "transparent"
+                colBackgroundHover: Appearance.colors.colLayer2Hover
+                onClicked: root.requestExpand()
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "open_in_full"
+                    iconSize: 17
+                    color: Appearance.colors.colPrimary
                 }
+                StyledToolTip { text: Translation.tr("Open full to-do view") }
             }
         }
 

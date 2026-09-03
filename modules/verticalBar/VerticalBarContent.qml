@@ -272,7 +272,11 @@ Item { // Bar content region
         anchors.top: parent.top
         implicitHeight: topSectionColumnLayout.implicitHeight
         implicitWidth: Appearance.sizes.baseVerticalBarWidth
-        height: (root.height - middleSection.height) / 2
+        // Edge sections own their natural height. The old symmetric
+        // `(root.height - middle.height) / 2` split assumed top and bottom had
+        // identical demand, which breaks as soon as tray/indicators or UI scale
+        // make the bottom section taller.
+        height: Math.min(root.height, implicitHeight)
         width: Appearance.sizes.verticalBarWidth
 
         onScrollDown: root.brightnessMonitor.setBrightness(root.brightnessMonitor.brightness - 0.05)
@@ -303,10 +307,19 @@ Item { // Bar content region
         }
     }
 
-    Column { // Middle section
-        id: middleSection
-        anchors.centerIn: parent
-        spacing: 4
+    Item {
+        id: middleHost
+        anchors {
+            top: barTopSectionMouseArea.bottom
+            bottom: barBottomSectionMouseArea.top
+            left: parent.left
+            right: parent.right
+        }
+
+        Column { // Middle section
+            id: middleSection
+            anchors.centerIn: parent
+            spacing: 4
 
         // When taskbar is active: clock/date moves up to where resources was
         Bar.BarGroup {
@@ -399,12 +412,13 @@ Item { // Bar content region
                 parentWindow: root.QsWindow.window
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                maximumHeight: Math.max(80, root.height
+                // `middleHost` already excludes the natural top/bottom edge
+                // sections, so only subtract the fixed middle widgets here.
+                maximumHeight: Math.max(24, middleHost.height
                     - (clockGroupTop.visible ? clockGroupTop.height : 0)
                     - middleCenterGroup.height
                     - (clockGroup.visible ? clockGroup.height : 0)
-                    - middleSection.spacing * 6
-                    - 140)
+                    - middleSection.spacing * 6)
             }
         }
 
@@ -442,6 +456,7 @@ Item { // Bar content region
             }
             
         }
+        }
     }
 
     FocusedScrollMouseArea { // Bottom section | scroll to change volume
@@ -454,7 +469,7 @@ Item { // Bar content region
         }
         implicitWidth: Appearance.sizes.baseVerticalBarWidth
         implicitHeight: bottomSectionColumnLayout.implicitHeight
-        height: (root.height - middleSection.height) / 2
+        height: Math.min(root.height, implicitHeight)
         width: Appearance.sizes.verticalBarWidth
         
         onScrollDown: Audio.decrementVolume();

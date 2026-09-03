@@ -84,7 +84,8 @@ AbstractBackgroundWidget {
     readonly property var _anchorCandidates: {
         Config.revision
         const keys = ["clock", "weather", "mediaControls", "visualizer", "systemMonitor",
-            "battery", "notes", "calendarUpcoming", "uptime", "newsTicker",
+            "battery", "notes", "calendarUpcoming", "monthCalendar", "todo", "timers",
+            "uptime", "newsTicker",
             "worldClock", "userCard"]
         const list = []
         for (const k of keys) {

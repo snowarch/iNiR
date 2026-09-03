@@ -258,8 +258,9 @@ Lock screen. For when you need to pretend you're working.
 | Function | Description |
 |----------|-------------|
 | `activate` | Lock the screen |
+| `prepareSleep` | Suspend handshake: activate immediately and wait until the compositor confirms the session lock is secure |
 | `deactivate` | Cancel lock and mark screen unlocked |
-| `status` | Return lock state (`locked`, `activating`, or `unlocked`) |
+| `status` | Return lock state (`secure`, `locked`, `activating`, or `unlocked`) |
 | `focus` | Refocus the lock screen input |
 
 ```kdl

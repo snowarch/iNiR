@@ -43,6 +43,15 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [hyprpicker]="hyprpicker"
     [songrec]="songrec"
     [trans]="translate-shell"
+    [ocr-eng]="tesseract-data-eng"
+    [ocr-spa]="tesseract-data-spa"
+    [ocr-rus]="tesseract-data-rus"
+    [ocr-jpn]="tesseract-data-jpn"
+    [ocr-jpn-vert]="tesseract-data-jpn_vert"
+    [ocr-chi-sim]="tesseract-data-chi_sim"
+    [ocr-chi-sim-vert]="tesseract-data-chi_sim_vert"
+    [ocr-chi-tra]="tesseract-data-chi_tra"
+    [ocr-chi-tra-vert]="tesseract-data-chi_tra_vert"
     # Package-level checks from doctor (no direct command binary)
     [syntax-highlighting]="syntax-highlighting"
     [kirigami]="kirigami"
@@ -124,54 +133,31 @@ elif command -v paru >/dev/null 2>&1; then
 fi
 
 #####################################################################################
-# Install packages from PKGBUILDs (read depends and install them)
+# Collect official dependencies from PKGBUILDs
 #####################################################################################
-tui_info "Installing packages from PKGBUILDs..."
+tui_info "Resolving Arch package plan..."
 
-# Function to install deps from a PKGBUILD
-install_pkgbuild_deps() {
+PKGBUILD_PACKAGES=()
+collect_pkgbuild_deps() {
   local pkgbuild_dir="$1"
   local pkgbuild_file="${pkgbuild_dir}/PKGBUILD"
-  
+
   if [[ ! -f "$pkgbuild_file" ]]; then
     log_warning "PKGBUILD not found: $pkgbuild_file"
     return 1
   fi
-  
-  log_info "Reading: $pkgbuild_file"
-  
-  # Source PKGBUILD to get depends array
+
   local depends=()
   source "$pkgbuild_file"
-  
-  if [[ ${#depends[@]} -eq 0 ]]; then
-    log_warning "No dependencies in $(basename $pkgbuild_file)"
-    return 0
+  if [[ ${#depends[@]} -gt 0 ]]; then
+    PKGBUILD_PACKAGES+=("${depends[@]}")
   fi
-  
-  local missing_deps=()
-  mapfile -t missing_deps < <(pacman -T "${depends[@]}" 2>/dev/null || true)
-
-  if [[ ${#missing_deps[@]} -eq 0 ]]; then
-    log_success "Already satisfied: ${depends[*]}"
-    return 0
-  fi
-
-  log_info "Installing missing: ${missing_deps[*]}"
-  
-  local installflags="--needed"
-  $ask || installflags="$installflags --noconfirm"
-  
-  # Install via pacman first (for official repos)
-  pkg_sudo pacman -S $installflags "${missing_deps[@]}" 2>/dev/null || {
-    # Some packages may be AUR-only, try with AUR helper
-    $AUR_HELPER -S $installflags "${missing_deps[@]}"
-  }
 }
 
-# Install from each PKGBUILD
+# Keep the same dependency surface as before, but defer installation until all
+# package groups and conflict decisions are known. This avoids one pacman
+# transaction per local PKGBUILD on fresh systems.
 for pkgdir in ./sdata/dist-arch/inir-*/; do
-  # Check group flags
   pkgname=$(basename "$pkgdir")
   case "$pkgname" in
     inir-audio) $INSTALL_AUDIO || continue ;;
@@ -179,8 +165,7 @@ for pkgdir in ./sdata/dist-arch/inir-*/; do
     inir-screencapture) $INSTALL_SCREENCAPTURE || continue ;;
     inir-fonts) $INSTALL_FONTS || continue ;;
   esac
-  
-  v install_pkgbuild_deps "$pkgdir"
+  collect_pkgbuild_deps "$pkgdir"
 done
 
 #####################################################################################
@@ -188,6 +173,7 @@ done
 # quickshell-git and quickshell-bin conflict with quickshell (official extra repo).
 # pacman --noconfirm does NOT auto-remove conflicting packages — it aborts instead.
 #####################################################################################
+_keep_existing_quickshell=false
 for qs_conflict in quickshell-git quickshell-bin; do
   if pacman -Qi "$qs_conflict" &>/dev/null 2>&1; then
     log_warning "$qs_conflict is installed and conflicts with quickshell (stable, extra repo)"
@@ -198,8 +184,8 @@ for qs_conflict in quickshell-git quickshell-bin; do
           || v pkg_sudo pacman -R --noconfirm "$qs_conflict" \
           || log_warning "Could not remove $qs_conflict — install may fail"
       else
-        log_warning "Keeping $qs_conflict — removing quickshell from install list"
-        OFFICIAL_PACKAGES=("${OFFICIAL_PACKAGES[@]/quickshell/}")
+        log_warning "Keeping $qs_conflict — removing quickshell from install plan"
+        _keep_existing_quickshell=true
       fi
     else
       log_info "Non-interactive: replacing $qs_conflict with quickshell (stable)"
@@ -321,13 +307,72 @@ OFFICIAL_PACKAGES=(
 
   # Video wallpaper support (thumbnail + SDDM background extraction)
   ffmpeg
+
+  # Prebuilt package that used to be routed through AUR
+  mission-center
 )
+
+# Preserve install-group flags while preferring signed Arch packages wherever
+# possible. These used to be installed through AUR only when their group was on.
+if $INSTALL_FONTS; then
+  OFFICIAL_PACKAGES+=(
+    adw-gtk-theme
+    capitaine-cursors
+    ttf-material-symbols-variable
+    ttf-jetbrains-mono-nerd
+  )
+fi
+if $INSTALL_TOOLKIT; then
+  OFFICIAL_PACKAGES+=(uv)
+fi
 
 installflags="--needed"
 $ask || installflags="$installflags --noconfirm"
 
-log_info "Using precompiled packages from official repos (no compilation)"
-v pkg_sudo pacman -S $installflags "${OFFICIAL_PACKAGES[@]}"
+# Merge every official dependency into one transaction. The local PKGBUILDs
+# remain the dependency source of truth; OFFICIAL_PACKAGES covers explicit
+# integration packages that are not represented by those bundles.
+_all_official=("${PKGBUILD_PACKAGES[@]}" "${OFFICIAL_PACKAGES[@]}")
+mapfile -t _all_official < <(printf '%s\n' "${_all_official[@]}" | awk 'NF' | sort -u)
+if $_keep_existing_quickshell; then
+  mapfile -t _all_official < <(printf '%s\n' "${_all_official[@]}" | grep -vx 'quickshell' || true)
+fi
+mapfile -t _missing_official < <(pacman -T "${_all_official[@]}" 2>/dev/null || true)
+REPO_FALLBACK_PACKAGES=()
+_repo_installable=()
+
+# Derivatives such as Manjaro can lag Arch `extra`. Only send packages that
+# actually exist in the configured sync databases to pacman; preserve the old
+# AUR recovery path for anything missing from those repositories. pacman -Si
+# reads the already-synced local metadata, so this adds no network round trip.
+for pkg in "${_missing_official[@]}"; do
+  if pacman -Si "$pkg" &>/dev/null; then
+    _repo_installable+=("$pkg")
+  else
+    REPO_FALLBACK_PACKAGES+=("$pkg")
+  fi
+done
+
+if [[ ${#_repo_installable[@]} -gt 0 ]]; then
+  log_info "Installing ${#_repo_installable[@]} missing packages from official repos..."
+  if ! v pkg_sudo pacman -S $installflags "${_repo_installable[@]}"; then
+    log_warning "Official package batch failed — retrying individually before AUR fallback"
+    for pkg in "${_repo_installable[@]}"; do
+      pacman -Q "$pkg" &>/dev/null && continue
+      if ! pkg_sudo pacman -S $installflags "$pkg"; then
+        REPO_FALLBACK_PACKAGES+=("$pkg")
+      fi
+    done
+  fi
+elif [[ ${#_missing_official[@]} -eq 0 ]]; then
+  log_success "Official Arch dependencies already satisfied"
+fi
+
+if [[ ${#REPO_FALLBACK_PACKAGES[@]} -gt 0 ]]; then
+  log_warning "Not available from configured repos: ${REPO_FALLBACK_PACKAGES[*]}"
+  log_info "Will try the existing AUR path for those packages"
+fi
+unset PKGBUILD_PACKAGES _all_official _missing_official _repo_installable _keep_existing_quickshell
 
 #####################################################################################
 # Install AUR packages (only those not in official repos)
@@ -338,22 +383,20 @@ REQUIRED_AUR_PACKAGES=(
 )
 
 AUR_PACKAGES=(
+  "${REPO_FALLBACK_PACKAGES[@]}"
+
   # Qt6 extras (not in official repos)
   qt6-avif-image-plugin
 
   # Wallpaper effects editor (used by Gowall integration)
   gowall-bin
 
-  # System monitor (default task manager)
-  mission-center
-  
   # Note: Python deps are handled via uv + requirements.txt, not AUR packages
 )
+unset REPO_FALLBACK_PACKAGES
 
-# Critical fonts (UI breaks without these)
+# Critical fonts that still require AUR (official-repo fonts are installed above)
 CRITICAL_FONTS=(
-  ttf-material-symbols-variable-git
-  ttf-jetbrains-mono-nerd
   ttf-roboto-flex
   ttf-oxanium
   ttf-gabarito-git
@@ -404,9 +447,7 @@ install_font_fallback() {
 # Add other AUR packages based on flags
 if $INSTALL_FONTS; then
   AUR_PACKAGES+=(
-    adw-gtk-theme         # Official repo version if available, else AUR
-    capitaine-cursors
-    whitesur-icon-theme   # Try non-git version first
+    whitesur-icon-theme
     darkly-bin
   )
 fi
@@ -415,9 +456,7 @@ if $INSTALL_AUDIO; then
   : # cava moved to inir-audio PKGBUILD
 fi
 
-if $INSTALL_TOOLKIT; then
-  AUR_PACKAGES+=(uv)
-fi
+# uv is in Arch extra and is installed in the official package batch.
 
 # Reset installflags for AUR helper
 installflags="--needed"
@@ -443,36 +482,37 @@ if [[ ${#AUR_PACKAGES[@]} -gt 0 ]]; then
   }
 fi
 
-# Install fonts separately with proper error handling
+# Install fonts with one AUR transaction first; keep the old per-package and
+# direct-download paths as recovery for flaky/region-limited AUR access.
 if $INSTALL_FONTS; then
-  tui_info "Installing critical fonts..."
-  
-  # Critical fonts - must succeed
+  tui_info "Installing AUR fonts..."
+
+  _aur_fonts=("${CRITICAL_FONTS[@]}" "${OPTIONAL_FONTS[@]}")
+  if [[ ${#_aur_fonts[@]} -gt 0 ]]; then
+    $AUR_HELPER -S $installflags "${_aur_fonts[@]}" 2>/dev/null ||
+      log_warning "AUR font batch was incomplete — checking packages individually"
+  fi
+
   for font in "${CRITICAL_FONTS[@]}"; do
-    if ! $AUR_HELPER -S $installflags "$font" 2>/dev/null; then
-      log_error "CRITICAL: Failed to install $font — UI icons may not work!"
+    if ! pacman -Q "$font" &>/dev/null && ! $AUR_HELPER -S $installflags "$font" 2>/dev/null; then
+      log_error "CRITICAL: Failed to install $font — some iNiR typography may fall back"
       log_warning "Try: $AUR_HELPER -S $font"
     fi
   done
-  
-  tui_info "Installing optional fonts..."
-  
-  # Optional fonts - try AUR first, then fallback
+
   for font in "${OPTIONAL_FONTS[@]}"; do
+    if pacman -Q "$font" &>/dev/null; then
+      continue
+    fi
     if ! $AUR_HELPER -S $installflags "$font" 2>/dev/null; then
-      log_info "$font not in AUR, trying direct download..."
+      log_info "$font unavailable through AUR, trying direct download fallback..."
       if ! install_font_fallback "$font"; then
         log_warning "$font unavailable — system will use fallback fonts"
       fi
     fi
   done
+  unset _aur_fonts
 fi
-
-#####################################################################################
-# Optional: Python environment setup
-#####################################################################################
-showfun install-python-packages
-v install-python-packages
 
 #####################################################################################
 # Register dependencies with pacman via meta-package
@@ -484,7 +524,7 @@ tui_info "Registering dependencies with pacman..."
 _meta_dir="./sdata/dist-arch/inir-deps"
 if [[ -f "$_meta_dir/PKGBUILD" ]]; then
   # Update pkgver from VERSION file
-  _inir_ver="$(cat ./VERSION 2>/dev/null || echo '2.29.3')"
+  _inir_ver="$(cat ./VERSION 2>/dev/null || echo '2.30.0')"
   sed -i "s/^pkgver=.*/pkgver=${_inir_ver}/" "$_meta_dir/PKGBUILD"
 
   (

@@ -19,6 +19,8 @@ import qs.modules.sidebarRight.quickToggles.classicStyle
 
 import qs.modules.sidebarRight.bluetoothDevices
 import qs.modules.sidebarRight.events
+import qs.modules.sidebarRight.calendar
+import qs.modules.sidebarRight.todo
 import qs.modules.sidebarRight.hotspot
 import qs.modules.sidebarRight.nightLight
 import qs.modules.sidebarRight.volumeMixer
@@ -47,10 +49,27 @@ Item {
     property bool showNightLightDialog: false
     property bool showWifiDialog: false
     property bool editMode: false
+    property string expandedWidgetType: ""
+    readonly property bool detailOpen: expandedWidgetType.length > 0
+    readonly property var detailMeta: ({
+        calendar: { title: Translation.tr("Calendar"), icon: "calendar_month" },
+        events: { title: Translation.tr("Events"), icon: "event_upcoming" },
+        todo: { title: Translation.tr("To Do"), icon: "checklist" }
+    })
+
+    function openWidgetDetail(type): void {
+        if (root.detailMeta[type]) root.expandedWidgetType = type
+    }
+    function closeWidgetDetail(): void { root.expandedWidgetType = "" }
+    function handleEscape(): bool {
+        if (!root.detailOpen) return false
+        root.closeWidgetDetail()
+        return true
+    }
 
     readonly property bool anyDialogOpen: showAudioOutputDialog || showAudioInputDialog
         || showBluetoothDialog || showEventsDialog || showHotspotDialog
-        || showNightLightDialog || showWifiDialog
+        || showNightLightDialog || showWifiDialog || root.detailOpen
     // Collapse the notification zone (and the panel around it) when there is
     // nothing to show. Dialogs re-expand so they keep their full canvas.
     readonly property bool notifsCollapsed: (Config.options?.sidebar?.collapseEmptyNotifications ?? false)
@@ -70,6 +89,13 @@ Item {
     // Events dialog target: an event object to edit, a Date for a new event
     // prefilled to that day, or null for a blank new event.
     property var eventsDialogEditEvent: null
+
+    Connections {
+        target: GlobalStates
+        function onSidebarRightOpenChanged() {
+            if (!GlobalStates.sidebarRightOpen) root.closeWidgetDetail()
+        }
+    }
     
     // Debounce timers to prevent accidental double-clicks
     property bool reloadButtonEnabled: true
@@ -854,6 +880,9 @@ Item {
                             root.eventsDialogEditEvent = editEvent
                             root.showEventsDialog = true
                         }
+                        function onRequestExpand(widgetType) {
+                            root.openWidgetDetail(widgetType)
+                        }
                     }
                 }
             }
@@ -893,6 +922,115 @@ Item {
         Component { id: centerSectionComponent; CenterWidgetGroup { collapsed: root.notifsCollapsed } }
         Component { id: widgetsSectionComponent; BottomWidgetGroup {} }
 
+    }
+
+    Component {
+        id: expandedEventsComponent
+        EventsWidget {
+            onOpenEventsDialog: editEvent => {
+                root.eventsDialogEditEvent = editEvent
+                root.showEventsDialog = true
+            }
+        }
+    }
+    Component {
+        id: expandedCalendarComponent
+        CalendarWidget {
+            onOpenEventsDialog: editEvent => {
+                root.eventsDialogEditEvent = editEvent
+                root.showEventsDialog = true
+            }
+            onDayWithEventsClicked: date => {
+                root.eventsDialogEditEvent = date
+                root.showEventsDialog = true
+            }
+        }
+    }
+    Component { id: expandedTodoComponent; TodoWidget {} }
+
+    MouseArea {
+        anchors.fill: parent
+        z: 69
+        visible: root.detailOpen
+        acceptedButtons: Qt.AllButtons
+        onClicked: root.closeWidgetDetail()
+    }
+
+    Rectangle {
+        id: organizerDetail
+        anchors.fill: parent
+        anchors.margins: root.sidebarPadding
+        z: 70
+        visible: root.detailOpen
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+            : Appearance.rounding.normal
+        color: Appearance.zzzEverywhere ? Appearance.zzz.paper
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+            : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+            : Appearance.colors.colLayer1
+        border.width: Appearance.inirEverywhere ? 1 : 0
+        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        clip: true
+        focus: visible
+        Keys.onPressed: event => {
+            if (event.key === Qt.Key_Escape) {
+                root.closeWidgetDetail()
+                event.accepted = true
+            }
+        }
+
+        MouseArea { anchors.fill: parent }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+            z: 1
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                MaterialSymbol {
+                    text: root.detailMeta[root.expandedWidgetType]?.icon ?? ""
+                    iconSize: Appearance.font.pixelSize.larger
+                    color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    text: root.detailMeta[root.expandedWidgetType]?.title ?? ""
+                    font.pixelSize: Appearance.font.pixelSize.large
+                    font.weight: Font.DemiBold
+                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                }
+                RippleButton {
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    buttonRadius: Appearance.rounding.full
+                    colBackground: "transparent"
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    colRipple: Appearance.colors.colLayer2Active
+                    onClicked: root.closeWidgetDetail()
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "close_fullscreen"
+                        iconSize: Appearance.font.pixelSize.normal
+                        color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                    }
+                    StyledToolTip { text: Translation.tr("Back to sidebar") }
+                }
+            }
+
+            Loader {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                active: root.detailOpen
+                sourceComponent: root.expandedWidgetType === "events" ? expandedEventsComponent
+                    : root.expandedWidgetType === "calendar" ? expandedCalendarComponent
+                    : root.expandedWidgetType === "todo" ? expandedTodoComponent : null
+            }
+        }
     }
 
     // With the panel collapsed the window still spans full height; clicks on
@@ -981,6 +1119,7 @@ Item {
     component ToggleDialog: Loader {
         id: toggleDialogLoader
         required property string shownPropertyString
+        z: 100
         property alias dialog: toggleDialogLoader.sourceComponent
         readonly property bool shown: root[shownPropertyString]
         property bool _loaded: false

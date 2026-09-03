@@ -19,7 +19,7 @@ spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFI
 // for text/plain instead would drop those entries entirely.
 // Access via iNiR's clipboard overlay (Mod+V).
 spawn-at-startup "bash" "-c" "wl-paste --type text --watch ~/.config/quickshell/inir/scripts/clipboard-store.py &"
-spawn-at-startup "bash" "-c" "wl-paste --type image --watch cliphist store &"
+spawn-at-startup "bash" "-c" "wl-paste --type image --watch ~/.config/quickshell/inir/scripts/clipboard-image-store.sh &"
 
 // Polkit authentication agent — needed for GUI sudo prompts (software install,
 // disk mount, etc.). iNiR's setup auto-detects which agent is installed and

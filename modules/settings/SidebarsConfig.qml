@@ -636,16 +636,6 @@ ContentPage {
                 visible: Config.options.sidebar?.ytmusic?.enable ?? false
 
                 SettingsSwitch {
-                    buttonIcon: "sync"
-                    text: Translation.tr("Reconnect account on launch")
-                    checked: Config.options.sidebar?.ytmusic?.autoConnect ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.autoConnect", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Re-reads your browser's YouTube session on startup so a stale login heals itself.")
-                    }
-                }
-
-                SettingsSwitch {
                     buttonIcon: "music_note"
                     text: Translation.tr("Up Next notifications")
                     checked: Config.options.sidebar?.ytmusic?.upNextNotifications ?? true

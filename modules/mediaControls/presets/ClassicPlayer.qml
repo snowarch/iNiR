@@ -59,8 +59,9 @@ Item {
                  blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7
                )
              : (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
-        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick
-            : Appearance.inirEverywhere ? 1 : 0
+        border.width: root.vizType === "organic" && root.vizPosition !== "none"
+            ? 0 : (Appearance.zzzEverywhere ? Appearance.zzz.borderThick
+                : Appearance.inirEverywhere ? 1 : 0)
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
             : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
         // Organic morph on style/shape switch (organic-transitions)
@@ -81,28 +82,12 @@ Item {
         }
 
         // Visualizer overlay
-        WaveVisualizer {
-            visible: root.vizType === "wave" && root.vizPosition !== "none"
-            anchors { left: parent.left; right: parent.right }
-            y: root.vizPosition === "top" ? 0 : (parent.height - height)
-            height: root.vizPosition === "fill" ? parent.height : 35
-            live: playerBase.effectiveIsPlaying
-            points: root.visualizerPoints
-            maxVisualizerValue: 1000; smoothing: 2
-            color: ColorUtils.transparentize(root.themeSourceColor, 0.4)
-        }
-        CavaVisualizer {
-            visible: root.vizType === "bars" && root.vizPosition !== "none"
-            anchors { left: parent.left; right: parent.right }
-            y: root.vizPosition === "top" ? 0 : (parent.height - height)
-            height: root.vizPosition === "fill" ? parent.height : 35
-            live: playerBase.effectiveIsPlaying
-            points: root.visualizerPoints
-            maxVisualizerValue: 1000; smoothing: 2
-            barCount: 32; barSpacing: 2; barRadius: 2; barMinHeight: 1
-            colorLow: ColorUtils.transparentize(root.themeSourceColor, 0.3)
-            colorMed: ColorUtils.transparentize(root.themeSourceColor, 0.1)
-            colorHigh: root.themeSourceColor
+        MediaVisualizerOverlay {
+            anchors.fill: parent
+            edgeHeight: 35
+            visualizerPoints: root.visualizerPoints
+            active: playerBase.effectiveIsPlaying
+            playerColor: root.themeSourceColor
         }
         
         RowLayout {

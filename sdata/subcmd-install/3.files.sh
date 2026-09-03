@@ -158,7 +158,12 @@ case "${SKIP_QUICKSHELL}" in
     [[ -f "${II_TARGET}/setup" ]] && chmod +x "${II_TARGET}/setup"
 
     if [[ -f "${REPO_ROOT}/scripts/inir" ]]; then
-      install_file "${REPO_ROOT}/scripts/inir" "${INIR_LAUNCHER_PATH}"
+      if [[ "$(get_install_mode)" == "repo-link" ]]; then
+        rm -f "${INIR_LAUNCHER_PATH}"
+        ln -s "${REPO_ROOT}/scripts/inir" "${INIR_LAUNCHER_PATH}"
+      else
+        install_file "${REPO_ROOT}/scripts/inir" "${INIR_LAUNCHER_PATH}"
+      fi
       chmod +x "${INIR_LAUNCHER_PATH}"
       ensure_launcher_path_in_shells "${XDG_BIN_HOME}"
       log_success "Launcher installed"
@@ -179,24 +184,9 @@ case "${SKIP_QUICKSHELL}" in
         rm -f "$_service_target"
       fi
 
-      if [[ -f "$_service_target" ]]; then
-        # Existing install: sync from repo template
-        if sync_user_inir_service_from_repo_if_present; then
-          _service_refresh_status=0
-          log_success "User inir.service refreshed"
-        fi
-      else
-        # Fresh install: create service from template, rewriting ExecStart path
-        local _tmp_svc="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.$$"
-        local _launcher_escaped="${INIR_LAUNCHER_PATH//&/\\&}"
-        sed -e "s|^ExecStart=.*|ExecStart=${_launcher_escaped} run --session|" \
-            -e "s|^ExecStopPost=-.*|ExecStopPost=-${_launcher_escaped} cleanup-orphans|" \
-            "$_service_asset" > "$_tmp_svc"
-        cp -f "$_tmp_svc" "$_service_target"
-        rm -f "$_tmp_svc"
-        systemctl --user daemon-reload >/dev/null 2>&1 || true
+      if sync_user_inir_service_from_repo_if_present; then
         _service_refresh_status=0
-        log_success "User inir.service installed"
+        log_success "User inir.service refreshed"
       fi
     fi
 
@@ -207,8 +197,6 @@ case "${SKIP_QUICKSHELL}" in
       local _comp_target=""
       if systemctl --user cat niri.service &>/dev/null; then
         _comp_target="niri.service"
-      elif systemctl --user cat 'wayland-wm@Hyprland.service' &>/dev/null; then
-        _comp_target="wayland-wm@Hyprland.service"
       fi
 
       if [[ -n "$_comp_target" ]]; then
@@ -222,8 +210,8 @@ case "${SKIP_QUICKSHELL}" in
           log_warning "Could not wire inir.service to ${_comp_target} — run 'inir service enable'"
         fi
       else
-        log_warning "No supported compositor detected (niri or Hyprland)"
-        log_warning "inir.service not enabled — run 'inir service enable' from your compositor session"
+        log_warning "niri.service not detected"
+        log_warning "inir.service not enabled — start Niri as a managed session and run 'inir service enable'"
       fi
     fi
 
@@ -253,6 +241,8 @@ case "${SKIP_QUICKSHELL}" in
     # Install Python packages now that requirements.txt is in place
     showfun install-python-packages
     v install-python-packages
+    showfun ensure-ytmusic-js-runtime
+    v ensure-ytmusic-js-runtime
 
     # Verify installation (only on updates, not fresh install)
     if [[ "${IS_UPDATE}" == "true" && "${SKIP_VERIFICATION}" != "true" ]]; then

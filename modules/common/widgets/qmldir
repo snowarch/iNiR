@@ -12,6 +12,7 @@ CavaProcess 1.0 CavaProcess.qml
 CavaSpectrum 1.0 CavaSpectrum.qml
 CavaVisualizer 1.0 CavaVisualizer.qml
 CavaWavyLine 1.0 CavaWavyLine.qml
+AudioVisualizerLayer 1.0 AudioVisualizerLayer.qml
 Circle 1.0 Circle.qml
 CircularProgress 1.0 CircularProgress.qml
 CliphistImage 1.0 CliphistImage.qml
@@ -85,6 +86,7 @@ NotificationAppIcon 1.0 NotificationAppIcon.qml
 NotificationGroupExpandButton 1.0 NotificationGroupExpandButton.qml
 NotificationGroup 1.0 NotificationGroup.qml
 NotificationItem 1.0 NotificationItem.qml
+OrganicAudioBlob 1.0 OrganicAudioBlob.qml
 NotificationListView 1.0 NotificationListView.qml
 OptionalMaterialSymbol 1.0 OptionalMaterialSymbol.qml
 PagePlaceholder 1.0 PagePlaceholder.qml

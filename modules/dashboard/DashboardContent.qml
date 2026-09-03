@@ -11,6 +11,8 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.common.models
 import qs.modules.sidebarRight.events
+import qs.modules.sidebarRight.calendar
+import qs.modules.sidebarRight.todo
 
 /**
  * Dashboard hub composition. Three widget columns driven by
@@ -48,6 +50,19 @@ Item {
     // their content instead — compact when empty, growing (and scrolling the
     // column) when full — so a column never shows two half-empty stretched cards.
     readonly property var _fillIds: ["notes"]
+
+    // ═══ Expandable dashboard detail surface ═════════════════════════
+    property string detailType: ""
+    readonly property bool detailOpen: detailType.length > 0
+    readonly property var _detailMeta: ({
+        agenda: { title: Translation.tr("Agenda"), icon: "event_upcoming" },
+        calendar: { title: Translation.tr("Calendar"), icon: "calendar_month" },
+        todo: { title: Translation.tr("To Do"), icon: "checklist" }
+    })
+    function openDetail(type) {
+        if (root._detailMeta[type]) root.detailType = type
+    }
+    function closeDetail() { root.detailType = "" }
 
     // ═══ Shared events dialog (agenda + calendar widgets) ══════════════
     property var _agendaEditEvent: null
@@ -218,11 +233,15 @@ Item {
         id: calendarComponent
         DashCalendar {
             onRequestEventsDialog: arg => root.openAgendaDialog(arg)
+            onRequestExpand: root.openDetail("calendar")
         }
     }
     Component { id: mediaComponent; DashMedia {} }
     Component { id: notificationsComponent; DashNotifications {} }
-    Component { id: todoComponent; DashTodo {} }
+    Component {
+        id: todoComponent
+        DashTodo { onRequestExpand: root.openDetail("todo") }
+    }
     Component { id: systemComponent; DashSystem {} }
     Component { id: githubComponent; DashGithub {} }
     Component { id: notesComponent; DashNotes {} }
@@ -230,6 +249,7 @@ Item {
         id: agendaComponent
         DashAgenda {
             onRequestEventsDialog: evt => root.openAgendaDialog(evt)
+            onRequestExpand: root.openDetail("agenda")
         }
     }
 
@@ -807,6 +827,54 @@ Item {
                 color: root.editMode ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2
                 horizontalAlignment: Text.AlignHCenter
             }
+        }
+
+        Component {
+            id: agendaDetailComponent
+            EventsWidget {
+                onOpenEventsDialog: editEvent => root.openAgendaDialog(editEvent)
+            }
+        }
+        Component {
+            id: calendarDetailComponent
+            CalendarWidget {
+                onOpenEventsDialog: editEvent => root.openAgendaDialog(editEvent)
+                onDayWithEventsClicked: date => root.openAgendaDialog(date)
+            }
+        }
+        Component { id: todoDetailComponent; TodoWidget {} }
+
+        // Full-detail surface: the compact card remains a glance; this layer is
+        // where lists can scroll and calendars/tasks can use the available panel.
+        MouseArea {
+            anchors.fill: parent
+            z: 27
+            visible: root.detailOpen
+            acceptedButtons: Qt.AllButtons
+            onClicked: root.closeDetail()
+        }
+
+        DashCard {
+            id: detailSurface
+            anchors.fill: parent
+            anchors.margins: Math.max(12, Math.round(Math.min(root.width, root.height) * 0.025))
+            z: 28
+            visible: root.detailOpen
+            title: root._detailMeta[root.detailType]?.title ?? ""
+            icon: root._detailMeta[root.detailType]?.icon ?? ""
+            headerActionIcon: "close_fullscreen"
+            headerActionTooltip: Translation.tr("Back to dashboard")
+            onHeaderAction: root.closeDetail()
+
+            Loader {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                active: root.detailOpen
+                sourceComponent: root.detailType === "agenda" ? agendaDetailComponent
+                    : root.detailType === "calendar" ? calendarDetailComponent
+                    : root.detailType === "todo" ? todoDetailComponent : null
+            }
+
         }
 
         // Events dialog overlay (created on first use, covers the panel)

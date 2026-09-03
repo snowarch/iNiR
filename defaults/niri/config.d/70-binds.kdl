@@ -48,7 +48,7 @@ binds {
     Mod+Ctrl+Shift+L allow-when-locked=true { spawn "inir" "lock" "focus"; }
 
     // Region selector: screenshot / OCR / Google Lens search.
-    Mod+Shift+S { spawn "inir" "region" "screenshot"; }
+    Mod+Shift+S { spawn "inir" "region" "menu"; }
     Mod+Shift+X { spawn "inir" "region" "ocr"; }
     Mod+Shift+A { spawn "inir" "region" "search"; }
     // Unified snip menu (pick action/scope from the in-overlay toolbar).

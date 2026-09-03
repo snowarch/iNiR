@@ -1,7 +1,7 @@
 # Maintainer: snowarch
 
 pkgname=inir-shell
-pkgver=2.29.3
+pkgver=2.30.0
 pkgrel=1
 pkgdesc='iNiR shell payload, launcher, and user service'
 arch=(any)
@@ -76,6 +76,7 @@ optdepends=(
   'mission-center: graphical system monitor (default task manager)'
   'mpv: media playback and YouTube Music support'
   'mpv-mpris: richer mpv media session integration'
+  'deno: JavaScript runtime required by current yt-dlp YouTube extraction'
   'nautilus: default file manager integration'
   'nm-connection-editor: default network settings GUI'
   'pavucontrol: advanced audio mixer UI'
@@ -95,7 +96,9 @@ optdepends=(
   'wtype: Wayland text injection helper'
   'ydotool: virtual keyboard and clipboard paste helper'
   'yt-dlp: YouTube media backend'
+  'yt-dlp-ejs: bundled YouTube JavaScript challenge solver for yt-dlp'
   'python-ytmusicapi: YouTube Music browsing (InnerTube engine)'
+  'python-secretstorage: Chromium browser cookie decryption for YouTube Music account connection'
   'millennium-bin: Steam theming via Millennium (requires steam)'
 )
 conflicts=('inir-shell-git' 'noctalia-qs' 'noctalia-shell' 'cachyos-niri-noctalia')

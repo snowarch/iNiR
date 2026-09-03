@@ -30,6 +30,7 @@ RippleButton {
     readonly property string desktopEntryId: String(root.entry?.desktopEntryId ?? "")
     readonly property bool draggableApplication: root.desktopEntryId.length > 0
     property bool suppressClick: false
+    property bool nativeApplicationDragActive: false
     signal applicationDragChanged(bool active)
     readonly property bool zzzEverywhere: Appearance.zzzEverywhere
     dragTarget: root.draggableApplication ? desktopEntryDrag : null
@@ -101,15 +102,19 @@ RippleButton {
             dragSuppressionResetTimer.restart()
     }
     cancelAction: () => {
-        root.suppressClick = false
-        dragSuppressionResetTimer.stop()
+        if (!root.nativeApplicationDragActive) {
+            root.suppressClick = false
+            dragSuppressionResetTimer.stop()
+        }
     }
     onPointerDragActiveChanged: {
-        root.applicationDragChanged(root.pointerDragActive)
-        if (root.pointerDragActive)
+        if (root.pointerDragActive && root.draggableApplication) {
+            root.nativeApplicationDragActive = true
+            root.applicationDragChanged(true)
             root.suppressClick = true
-        else if (root.suppressClick)
+        } else if (!root.nativeApplicationDragActive && root.suppressClick) {
             dragSuppressionResetTimer.restart()
+        }
     }
 
     // Matched-char colour must contrast with the CURRENT row background: when the
@@ -195,10 +200,11 @@ RippleButton {
         Drag.imageSource: Quickshell.iconPath(root.itemIcon, "application-x-executable")
         Drag.imageSourceSize: Qt.size(52, 52)
         Drag.hotSpot: Qt.point(26, 26)
-        Drag.active: root.pointerDragActive && root.draggableApplication
+        Drag.active: root.nativeApplicationDragActive && root.draggableApplication
         Drag.onDragFinished: dropAction => {
             desktopEntryDrag.x = 0
             desktopEntryDrag.y = 0
+            root.nativeApplicationDragActive = false
             root.applicationDragChanged(false)
             if (dropAction === Qt.CopyAction)
                 GlobalStates.closeOverview()

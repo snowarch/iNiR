@@ -21,6 +21,7 @@ AbstractBackgroundWidget {
         "digital.adaptToWallpaper": true,
         "digital.animateChange": true, "digital.fontWeight": 600,
         "digital.spacing": 6, "digital.preset": "default",
+        "pixel.orientation": "horizontal",
         "cookie.aiStyling": false, "cookie.constantlyRotate": false,
         "cookie.dateInClock": true, "cookie.dateStyle": "bubble",
         "cookie.dialNumberStyle": "full", "cookie.hourHandStyle": "hollow",
@@ -37,10 +38,14 @@ AbstractBackgroundWidget {
 
     readonly property real activeClockWidth: root.clockStyle === "cookie"
         ? cookieClockLoader.width
+        : root.clockStyle === "pixel"
+            ? pixelClockLoader.width
         : root.clockStyle === "androidStacked"
             ? androidStackedClockLoader.width : digitalClockLoader.width
     readonly property real activeClockHeight: root.clockStyle === "cookie"
         ? cookieClockLoader.height
+        : root.clockStyle === "pixel"
+            ? pixelClockLoader.height
         : root.clockStyle === "androidStacked"
             ? androidStackedClockLoader.height : digitalClockLoader.height
     readonly property bool statusShown: root.wallpaperSafetyTriggered
@@ -59,7 +64,7 @@ AbstractBackgroundWidget {
         ColumnLayout {
             spacing: 6
             GridLayout {
-                columns: 3
+                columns: 2
                 columnSpacing: 4
                 rowSpacing: 4
                 Layout.alignment: Qt.AlignHCenter
@@ -67,7 +72,8 @@ AbstractBackgroundWidget {
                     model: [
                         { label: "Digital", icon: "digital_out_of_home", value: "digital" },
                         { label: "Android", icon: "android", value: "androidStacked" },
-                        { label: "Cookie", icon: "circle", value: "cookie" }
+                        { label: "Cookie", icon: "circle", value: "cookie" },
+                        { label: "Pixel", icon: "view_comfy_alt", value: "pixel" }
                     ]
                     SelectionGroupButton {
                         required property var modelData
@@ -77,6 +83,25 @@ AbstractBackgroundWidget {
                         buttonText: Translation.tr(modelData.label)
                         toggled: root.clockStyle === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.clock.style", modelData.value)
+                    }
+                }
+            }
+            RowLayout {
+                spacing: 4
+                Layout.alignment: Qt.AlignHCenter
+                visible: root.clockStyle === "pixel"
+                Repeater {
+                    model: [
+                        { label: "Horizontal", icon: "view_week", value: "horizontal" },
+                        { label: "Vertical", icon: "view_agenda", value: "vertical" }
+                    ]
+                    SelectionGroupButton {
+                        required property var modelData
+                        leftmost: true; rightmost: true
+                        buttonIcon: modelData.icon
+                        buttonText: Translation.tr(modelData.label)
+                        toggled: root.pixelOrientation === modelData.value
+                        onClicked: Config.setNestedValue("background.widgets.clock.pixel.orientation", modelData.value)
                     }
                 }
             }
@@ -132,6 +157,7 @@ AbstractBackgroundWidget {
     property bool showShadow: Config.getNestedValue("background.widgets.clock.showShadow", true)
     property int digitalFontWeight: Config.getNestedValue("background.widgets.clock.digital.fontWeight", 600)
     property int digitalSpacing: Config.getNestedValue("background.widgets.clock.digital.spacing", 6)
+    readonly property string pixelOrientation: root._readConfigKey("pixel.orientation") ?? "horizontal"
 
     // ── Accent colors ── from the shared desktop-widget identity (AbstractBackgroundWidget)
     // so the clock reads as the same family as weather/sysmon/etc., wallpaper-generated.
@@ -449,6 +475,21 @@ AbstractBackgroundWidget {
                 showShadow: root.showShadow
                 animateChange: Config.getNestedValue("background.widgets.clock.digital.animateChange", false)
                 horizontalAlignment: root.textHorizontalAlignment
+            }
+        }
+        FadeLoader {
+            id: pixelClockLoader
+            x: Math.round((parent.width - width) / 2)
+            shown: root.clockStyle === "pixel"
+            width: item?.desiredImplicitWidth ?? 0
+            height: item?.desiredImplicitHeight ?? 0
+            sourceComponent: PixelClock {
+                currentDate: displayClock.date
+                orientation: root.pixelOrientation
+                scaleFactor: root.scaleFactor * root.timeScale / 100
+                softColor: root.widgetSemanticContainer(root.widgetPrimaryRole)
+                boldColor: root.widgetAccent
+                showShadow: root.showShadow
             }
         }
         Item {

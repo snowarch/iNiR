@@ -55,7 +55,8 @@ Item {
         height: parent.height - Appearance.sizes.elevationMargin
         radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
         color: root.surfaceColor
-        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0
+        border.width: root.vizType === "organic" && root.vizPosition !== "none"
+            ? 0 : (Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0)
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
         clip: true
 
@@ -312,30 +313,12 @@ Item {
                         }
                     }
 
-                    WaveVisualizer {
+                    MediaVisualizerOverlay {
                         anchors.fill: parent
-                        visible: root.vizType === "wave" && root.vizPosition !== "none"
-                        live: playerBase.effectiveIsPlaying
-                        points: root.visualizerPoints
-                        maxVisualizerValue: 1000
-                        smoothing: 2
-                        color: ColorUtils.transparentize(root.accent, 0.35)
-                    }
-
-                    CavaVisualizer {
-                        anchors.fill: parent
-                        visible: root.vizType === "bars" && root.vizPosition !== "none"
-                        live: playerBase.effectiveIsPlaying
-                        points: root.visualizerPoints
-                        maxVisualizerValue: 1000
-                        smoothing: 2
-                        barCount: 30
-                        barSpacing: 3
-                        barRadius: 2
-                        barMinHeight: 1
-                        colorLow: ColorUtils.transparentize(root.accent, 0.55)
-                        colorMed: ColorUtils.transparentize(root.accent, 0.25)
-                        colorHigh: root.accent
+                        edgeHeight: 42
+                                    visualizerPoints: root.visualizerPoints
+                        active: playerBase.effectiveIsPlaying
+                        playerColor: root.themeSourceColor
                     }
 
                     StyledText {

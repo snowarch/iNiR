@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: ad3bc64cdc20439b
+# IPC.md hash: 833d19734168bf02
 # Targets: 61
 
 declare -gA IPC_TARGET_DESC=(
@@ -154,7 +154,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [gamemode]="toggle activate deactivate status"
   [globalActions]="run runWithArgs list search open"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
-  [lock]="activate deactivate status focus"
+  [lock]="activate prepareSleep deactivate status focus"
   [mascot]="poke status setVoice romp chase hideSeek tidy appear appearContextual appearWithLine hide"
   [mascotMood]="set current"
   [mediaControls]="toggle close open"
@@ -285,8 +285,9 @@ declare -gA IPC_FUNCTION_DESC=(
   ["keyboard:getCurrentLayout"]="Get the current layout name"
   ["keyboard:getLayouts"]="Get all configured layout names (JSON array)"
   ["lock:activate"]="Lock the screen"
+  ["lock:prepareSleep"]="Suspend handshake: activate immediately and wait until the compositor confirms the session lock is secure"
   ["lock:deactivate"]="Cancel lock and mark screen unlocked"
-  ["lock:status"]="Return lock state (\`locked\`, \`activating\`, or \`unlocked\`)"
+  ["lock:status"]="Return lock state (\`secure\`, \`locked\`, \`activating\`, or \`unlocked\`)"
   ["lock:focus"]="Refocus the lock screen input"
   ["mascot:poke"]="Ask her to peek from a random edge with a random pose"
   ["mascot:status"]="Return JSON diagnostics for mood, configured/effective voice, companion state and non-sensitive Screen Time counters"

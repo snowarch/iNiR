@@ -18,8 +18,8 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "build"
         title: Translation.tr("Tools")
-        description: Translation.tr("Open only the tool you are configuring; capture, selection and overlay controls no longer share one long settings stack.")
-        summary: Translation.tr("Recording · snipping · crosshair · Discord · OSD")
+        description: Translation.tr("Configure capture, OCR and utility tools without mixing unrelated controls.")
+        summary: Translation.tr("Recording · snipping & OCR · crosshair · Discord · OSD")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
@@ -40,6 +40,9 @@ ContentPage {
     property string detectedDefaultSource: ""
     property bool audioMixAvailable: false
     property string captureFolderTarget: "recordings"
+    property bool showAdvancedOcr: false
+    property bool showAdvancedJapanese: false
+    property bool showAdvancedAnki: false
 
     readonly property string recordingAudioMode: RecorderStatus.configuredAudioMode
     readonly property string effectiveRecordingPath: {
@@ -48,6 +51,27 @@ ContentPage {
     }
     readonly property string effectiveScreenshotPath: Directories.screenshotsPath
     readonly property string detectedDefaultAudioSource: detectedDefaultSink.length > 0 ? `${detectedDefaultSink}.monitor` : ""
+    readonly property var ocrLanguageOptions: [
+        { value: "auto", displayName: Translation.tr("Auto (system language)") },
+        { value: "eng", displayName: Translation.tr("English") },
+        { value: "spa", displayName: Translation.tr("Spanish") },
+        { value: "rus", displayName: Translation.tr("Russian") },
+        { value: "jpn", displayName: Translation.tr("Japanese") },
+        { value: "jpn_vert", displayName: Translation.tr("Japanese (vertical)") },
+        { value: "chi_sim", displayName: Translation.tr("Chinese (Simplified)") },
+        { value: "chi_sim_vert", displayName: Translation.tr("Chinese (Simplified, vertical)") },
+        { value: "chi_tra", displayName: Translation.tr("Chinese (Traditional)") },
+        { value: "chi_tra_vert", displayName: Translation.tr("Chinese (Traditional, vertical)") },
+        { value: "eng+spa", displayName: Translation.tr("English + Spanish") },
+        { value: "jpn+eng", displayName: Translation.tr("Japanese + English") }
+    ]
+
+    readonly property var ocrTranslationTargetOptions: [
+        { value: "auto", displayName: Translation.tr("Auto (UI/system language)") },
+        { value: "en", displayName: Translation.tr("English") },
+        { value: "es", displayName: Translation.tr("Spanish") }
+    ]
+
     readonly property var recordingAudioModeOptions: [
         { value: "none", displayName: Translation.tr("No audio") },
         { value: "system", displayName: Translation.tr("System audio") },
@@ -77,6 +101,19 @@ ContentPage {
     SettingsNativeDialogGuard {
         dialog: captureFolderDialog
         dialogKey: "tools-capture-folder"
+    }
+
+    FileDialog {
+        id: japaneseDictionaryDialog
+        title: Translation.tr("Import Yomitan Japanese dictionary")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [Translation.tr("Yomitan dictionaries") + " (*.zip)", Translation.tr("All files") + " (*)"]
+        onAccepted: JapaneseDictionary.importArchive(FileUtils.trimFileProtocol(String(selectedFile)))
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: japaneseDictionaryDialog
+        dialogKey: "tools-japanese-dictionary"
     }
     readonly property bool vaapiRecordingAvailable: detectedVideoCodecs.some(codec => String(codec).indexOf("_vaapi") !== -1)
     readonly property bool nvencRecordingAvailable: detectedVideoCodecs.some(codec => String(codec).indexOf("_nvenc") !== -1)
@@ -750,7 +787,7 @@ ContentPage {
         visible: root.activeSection === "snipping"
         expanded: true
         icon: "screenshot_frame_2"
-        title: Translation.tr("Region selector (screen snipping/Google Lens)")
+        title: Translation.tr("Snipping & OCR")
 
         SettingsGroup {
             ContentSubsection {
@@ -762,8 +799,362 @@ ContentPage {
                     checked: Config.options?.regionSelector?.rememberSnipChoice ?? true
                     onCheckedChanged: Config.setNestedValue("regionSelector.rememberSnipChoice", checked)
                     StyledToolTip {
-                        text: Translation.tr("The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.")
+                        text: Translation.tr("Super+Shift+S reopens the unified snip menu with the action and shape last picked in its toolbar. Explicit OCR/search actions still force their requested tool. Recording is never remembered. When off, Super+Shift+S opens as a rectangle screenshot.")
                     }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Text recognition (OCR)")
+
+                RecordingDropdownField {
+                    title: Translation.tr("Text language")
+                    description: Translation.tr("Pick the language you expect to capture. Auto follows the system language. Use the vertical Japanese/Chinese choices for vertical writing.")
+                    readonly property string configuredLanguage: Config.options?.regionSelector?.ocrLanguage ?? "auto"
+                    options: root.ensureOption(root.ocrLanguageOptions, configuredLanguage,
+                        `${Translation.tr("Custom")}: ${configuredLanguage}`)
+                    currentValue: configuredLanguage
+                    onSelected: newValue => Config.setNestedValue("regionSelector.ocrLanguage", newValue)
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: ocrHelpRow.implicitHeight + 18
+                    radius: Appearance.rounding.small
+                    color: Appearance.colors.colLayer2
+                    RowLayout {
+                        id: ocrHelpRow
+                        anchors.fill: parent
+                        anchors.margins: 9
+                        spacing: 9
+                        MaterialSymbol {
+                            text: "crop_free"
+                            iconSize: 20
+                            color: Appearance.colors.colPrimary
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("OCR reads pixels, not selectable app text. Tight selections around one word or one line are most accurate; small captures are enlarged automatically before recognition. Missing language data is downloaded once when needed.")
+                            color: Appearance.colors.colOnLayer2
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+                }
+
+                RippleButtonWithIcon {
+                    Layout.fillWidth: true
+                    materialIcon: root.showAdvancedOcr ? "expand_less" : "tune"
+                    mainText: root.showAdvancedOcr ? Translation.tr("Hide advanced OCR options") : Translation.tr("Advanced OCR options")
+                    onClicked: root.showAdvancedOcr = !root.showAdvancedOcr
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: root.showAdvancedOcr
+                    spacing: Appearance.sizes.spacingSmall
+                    ContentSubsectionLabel { text: Translation.tr("Custom Tesseract language code") }
+                    Item {
+                        Layout.fillWidth: true
+                        implicitHeight: customOcrLanguageField.implicitHeight
+                        MaterialTextField {
+                            id: customOcrLanguageField
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            placeholderText: "deu  ·  fra  ·  kor  ·  eng+deu"
+                            text: Config.options?.regionSelector?.ocrLanguage ?? "auto"
+                            onEditingFinished: {
+                                const value = text.trim()
+                                if (value.length > 0) Config.setNestedValue("regionSelector.ocrLanguage", value)
+                            }
+                        }
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Advanced: use a Tesseract model code only when it is not listed above. Combine languages with + only for genuinely mixed-language captures; more models usually reduce recognition accuracy.")
+                        color: Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.smallie
+                        wrapMode: Text.WordWrap
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Japanese study assistant")
+
+                SettingsSwitch {
+                    buttonIcon: "dictionary"
+                    text: Translation.tr("Open study card after Japanese OCR")
+                    checked: Config.options?.regionSelector?.japaneseLookup?.enabled ?? true
+                    onCheckedChanged: Config.setNestedValue("regionSelector.japaneseLookup.enabled", checked)
+                    StyledToolTip {
+                        text: Translation.tr("After Japanese OCR, iNiR finds a useful word in the captured text and opens a local dictionary card. Expand the card to inspect the full OCR text and translation.")
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: japaneseStatusRow.implicitHeight + 18
+                    radius: Appearance.rounding.small
+                    color: Appearance.colors.colLayer2
+                    RowLayout {
+                        id: japaneseStatusRow
+                        anchors.fill: parent
+                        anchors.margins: 9
+                        spacing: 9
+                        MaterialSymbol {
+                            text: JapaneseDictionary.jitendexInstalled ? "check_circle" : "download"
+                            iconSize: 21
+                            color: JapaneseDictionary.jitendexInstalled ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 1
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: JapaneseDictionary.jitendexInstalled ? Translation.tr("Japanese dictionary ready") : Translation.tr("One-time dictionary setup")
+                                color: Appearance.colors.colOnLayer2
+                                font.weight: Font.Medium
+                            }
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: JapaneseDictionary.jitendexInstalled
+                                    ? Translation.tr("Jitendex is indexed locally; dictionary lookups work offline.")
+                                    : Translation.tr("Install Jitendex once. iNiR downloads and indexes it automatically; you do not need to find or import a ZIP.")
+                                color: Appearance.colors.colSubtext
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                wrapMode: Text.WordWrap
+                            }
+                        }
+                    }
+                }
+
+                RippleButtonWithIcon {
+                    Layout.fillWidth: true
+                    enabled: !JapaneseDictionary.busy
+                    materialIcon: JapaneseDictionary.jitendexInstalled ? "system_update_alt" : "download"
+                    mainText: JapaneseDictionary.busy
+                        ? Translation.tr("Preparing Japanese dictionary…")
+                        : (JapaneseDictionary.jitendexInstalled
+                            ? Translation.tr("Update Japanese dictionary")
+                            : Translation.tr("Install Japanese dictionary (~37 MB)"))
+                    onClicked: JapaneseDictionary.installRecommended()
+                }
+
+                RecordingDropdownField {
+                    title: Translation.tr("Translate to")
+                    description: Translation.tr("Translation is optional and uses the existing translate-shell service, so it needs an internet connection. Dictionary definitions remain local after Jitendex is installed.")
+                    options: root.ocrTranslationTargetOptions
+                    currentValue: Config.options?.regionSelector?.japaneseLookup?.translationTarget ?? "auto"
+                    onSelected: newValue => Config.setNestedValue("regionSelector.japaneseLookup.translationTarget", newValue)
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    visible: JapaneseDictionary.status.length > 0
+                    text: JapaneseDictionary.status
+                    color: Appearance.colors.colSubtext
+                    wrapMode: Text.WordWrap
+                }
+
+                RippleButtonWithIcon {
+                    Layout.fillWidth: true
+                    materialIcon: root.showAdvancedJapanese ? "expand_less" : "library_books"
+                    mainText: root.showAdvancedJapanese ? Translation.tr("Hide dictionary tools") : Translation.tr("More dictionary options")
+                    onClicked: root.showAdvancedJapanese = !root.showAdvancedJapanese
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: root.showAdvancedJapanese
+                    spacing: Appearance.sizes.spacingSmall
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Appearance.sizes.spacingSmall
+                        RippleButtonWithIcon {
+                            Layout.fillWidth: true
+                            materialIcon: "library_add"
+                            mainText: Translation.tr("Import another Yomitan dictionary")
+                            onClicked: japaneseDictionaryDialog.open()
+                        }
+                        RippleButtonWithIcon {
+                            Layout.fillWidth: true
+                            materialIcon: "refresh"
+                            mainText: Translation.tr("Refresh index")
+                            onClicked: JapaneseDictionary.refresh()
+                        }
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: JapaneseDictionary.dictionaryCount === 1
+                            ? Translation.tr("1 local Japanese dictionary indexed")
+                            : Translation.tr("%1 local Japanese dictionaries indexed").arg(JapaneseDictionary.dictionaryCount)
+                        color: Appearance.colors.colSubtext
+                        wrapMode: Text.WordWrap
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Anki (optional)")
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Anki turns a recognized word into a spaced-repetition flashcard. You do not need Anki for OCR, dictionary lookup or translation. To save cards, Anki Desktop must be open with the AnkiConnect add-on enabled.")
+                    color: Appearance.colors.colSubtext
+                    wrapMode: Text.WordWrap
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "school"
+                    text: Translation.tr("Show Anki actions in the study card")
+                    checked: Config.options?.regionSelector?.japaneseLookup?.anki?.enabled ?? false
+                    onCheckedChanged: {
+                        Config.setNestedValue("regionSelector.japaneseLookup.anki.enabled", checked)
+                        if (checked) JapaneseDictionary.checkAnki()
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    visible: Config.options?.regionSelector?.japaneseLookup?.anki?.enabled ?? false
+                    implicitHeight: ankiStatusRow.implicitHeight + 18
+                    radius: Appearance.rounding.small
+                    color: Appearance.colors.colLayer2
+                    RowLayout {
+                        id: ankiStatusRow
+                        anchors.fill: parent
+                        anchors.margins: 9
+                        spacing: 9
+                        MaterialSymbol {
+                            text: JapaneseDictionary.ankiAvailable ? "check_circle"
+                                : (JapaneseDictionary.ankiState === "app_closed" ? "play_circle" : "info")
+                            iconSize: 21
+                            color: JapaneseDictionary.ankiAvailable ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: JapaneseDictionary.ankiConnectionStatus
+                            color: Appearance.colors.colOnLayer2
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    visible: Config.options?.regionSelector?.japaneseLookup?.anki?.enabled ?? false
+                    spacing: Appearance.sizes.spacingSmall
+                    RippleButtonWithIcon {
+                        Layout.fillWidth: true
+                        visible: JapaneseDictionary.ankiState === "app_closed"
+                        materialIcon: "play_arrow"
+                        mainText: Translation.tr("Open Anki")
+                        onClicked: JapaneseDictionary.launchAnki()
+                    }
+                    RippleButtonWithIcon {
+                        Layout.fillWidth: true
+                        visible: JapaneseDictionary.ankiState === "not_installed"
+                        materialIcon: "download"
+                        mainText: Translation.tr("Get Anki Desktop")
+                        onClicked: Quickshell.execDetached(["xdg-open", "https://apps.ankiweb.net/"])
+                    }
+                    RippleButtonWithIcon {
+                        Layout.fillWidth: true
+                        visible: JapaneseDictionary.ankiState === "connect_unavailable"
+                        materialIcon: "extension"
+                        mainText: Translation.tr("Install / check AnkiConnect")
+                        onClicked: Quickshell.execDetached(["xdg-open", "https://ankiweb.net/shared/info/2055492159"])
+                    }
+                    RippleButtonWithIcon {
+                        Layout.fillWidth: true
+                        materialIcon: "refresh"
+                        mainText: Translation.tr("Check connection")
+                        onClicked: JapaneseDictionary.checkAnki()
+                    }
+                }
+
+                RippleButtonWithIcon {
+                    Layout.fillWidth: true
+                    visible: Config.options?.regionSelector?.japaneseLookup?.anki?.enabled ?? false
+                    materialIcon: root.showAdvancedAnki ? "expand_less" : "settings"
+                    mainText: root.showAdvancedAnki ? Translation.tr("Hide Anki advanced settings") : Translation.tr("Advanced Anki settings")
+                    onClicked: root.showAdvancedAnki = !root.showAdvancedAnki
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: (Config.options?.regionSelector?.japaneseLookup?.anki?.enabled ?? false) && root.showAdvancedAnki
+                    spacing: Appearance.sizes.spacingSmall
+                    ContentSubsectionLabel { text: Translation.tr("AnkiConnect endpoint") }
+                    Item {
+                        Layout.fillWidth: true; implicitHeight: ankiEndpointField.implicitHeight
+                        MaterialTextField { id: ankiEndpointField; anchors.left: parent.left; anchors.right: parent.right; text: Config.options?.regionSelector?.japaneseLookup?.anki?.endpoint ?? "http://127.0.0.1:8765"; onEditingFinished: { Config.setNestedValue("regionSelector.japaneseLookup.anki.endpoint", text.trim()); JapaneseDictionary.checkAnki() } }
+                    }
+                    ContentSubsectionLabel { text: Translation.tr("Deck name") }
+                    Item {
+                        Layout.fillWidth: true; implicitHeight: ankiDeckField.implicitHeight
+                        MaterialTextField { id: ankiDeckField; anchors.left: parent.left; anchors.right: parent.right; text: Config.options?.regionSelector?.japaneseLookup?.anki?.deck ?? "Default"; onEditingFinished: Config.setNestedValue("regionSelector.japaneseLookup.anki.deck", text.trim()) }
+                    }
+                    ContentSubsectionLabel { text: Translation.tr("Note model") }
+                    Item {
+                        Layout.fillWidth: true; implicitHeight: ankiModelField.implicitHeight
+                        MaterialTextField { id: ankiModelField; anchors.left: parent.left; anchors.right: parent.right; text: Config.options?.regionSelector?.japaneseLookup?.anki?.model ?? "Basic"; onEditingFinished: Config.setNestedValue("regionSelector.japaneseLookup.anki.model", text.trim()) }
+                    }
+                    ContentSubsectionLabel { text: Translation.tr("Front / back field names") }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Appearance.sizes.spacingSmall
+                        Item { Layout.fillWidth: true; implicitHeight: ankiFrontField.implicitHeight; MaterialTextField { id: ankiFrontField; anchors.left: parent.left; anchors.right: parent.right; text: Config.options?.regionSelector?.japaneseLookup?.anki?.frontField ?? "Front"; onEditingFinished: Config.setNestedValue("regionSelector.japaneseLookup.anki.frontField", text.trim()) } }
+                        Item { Layout.fillWidth: true; implicitHeight: ankiBackField.implicitHeight; MaterialTextField { id: ankiBackField; anchors.left: parent.left; anchors.right: parent.right; text: Config.options?.regionSelector?.japaneseLookup?.anki?.backField ?? "Back"; onEditingFinished: Config.setNestedValue("regionSelector.japaneseLookup.anki.backField", text.trim()) } }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Ready-made Japanese study decks")
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("These are optional Anki decks from their original upstream projects. iNiR downloads the latest .apkg to Downloads and opens it for import; the deck files are not bundled with iNiR.")
+                    color: Appearance.colors.colSubtext
+                    wrapMode: Text.WordWrap
+                }
+
+                RippleButtonWithIcon {
+                    Layout.fillWidth: true
+                    enabled: !JapaneseDictionary.deckBusy
+                    materialIcon: "download"
+                    mainText: Translation.tr("Kaishi 1.5k · Japanese → English · beginner vocabulary")
+                    onClicked: JapaneseDictionary.downloadStudyDeck("kaishi")
+                }
+                RippleButtonWithIcon {
+                    Layout.fillWidth: true
+                    enabled: !JapaneseDictionary.deckBusy
+                    materialIcon: "download"
+                    mainText: Translation.tr("Manabi 2.7k · Japanese → English · vocabulary + sentences")
+                    onClicked: JapaneseDictionary.downloadStudyDeck("manabi")
+                }
+                RippleButtonWithIcon {
+                    Layout.fillWidth: true
+                    enabled: !JapaneseDictionary.deckBusy
+                    materialIcon: "download"
+                    mainText: Translation.tr("Niponismo · Japanese → Spanish · grammar")
+                    onClicked: JapaneseDictionary.downloadStudyDeck("niponismo")
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    visible: JapaneseDictionary.studyDeckStatus.length > 0
+                    text: JapaneseDictionary.studyDeckStatus
+                    color: Appearance.colors.colSubtext
+                    wrapMode: Text.WordWrap
+                }
+                RippleButtonWithIcon {
+                    Layout.fillWidth: true
+                    materialIcon: "travel_explore"
+                    mainText: Translation.tr("Browse more shared decks")
+                    onClicked: Quickshell.execDetached(["xdg-open", "https://ankiweb.net/shared/decks?search=japanese"])
                 }
             }
 

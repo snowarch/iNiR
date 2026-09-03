@@ -1502,7 +1502,7 @@ apply_shell_scale() {
     # the user's shell environment. These override the compositor's native DPI
     # and create a mismatch between the Qt logical size and the Wayland buffer
     # physical size — resulting in blurry surfaces (dock, bar, tray, etc).
-    # The compositor (Niri/Hyprland) already handles HiDPI correctly; Qt should
+    # Niri already handles HiDPI correctly; Qt should
     # use its native DPI detection via the Wayland protocol, not forced values.
     unset QT_WAYLAND_FORCE_DPI 2>/dev/null || true
     unset QT_FONT_DPI 2>/dev/null || true
@@ -1513,31 +1513,28 @@ apply_shell_scale() {
 }
 
 wait_for_wayland_socket() {
-    # Block until a Wayland compositor socket appears in XDG_RUNTIME_DIR.
-    # At session boot, systemd may start inir.service before the compositor
-    # (Niri/Hyprland) has created its socket.  Without WAYLAND_DISPLAY, Qt
-    # falls back to XCB and crashes (SIGABRT — no X11 server on Wayland-only).
-    # Polling here is cheaper than crash-restart loops and gives instant start
-    # the moment the socket appears.
-    [[ -n "${WAYLAND_DISPLAY:-}" ]] && return 0
+    # Niri is the authority for WAYLAND_DISPLAY.  Never guess another compositor
+    # socket from XDG_RUNTIME_DIR: nested compositors and gamescope can coexist.
+    if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+        echo "Error: WAYLAND_DISPLAY is missing from the Niri session environment" >&2
+        return 1
+    fi
 
-    local runtime_dir="/run/user/$(id -u)"
+    local runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    local socket_path="$WAYLAND_DISPLAY"
+    [[ "$socket_path" == /* ]] || socket_path="$runtime_dir/$socket_path"
+    [[ -S "$socket_path" ]] && return 0
+
     local max_polls=50  # 50 × 0.2s = 10 seconds max
     local i=0
 
     while (( i < max_polls )); do
-        local candidate
-        for candidate in "$runtime_dir"/wayland-[0-9]*; do
-            if [[ -S "$candidate" ]]; then
-                export WAYLAND_DISPLAY="$(basename "$candidate")"
-                return 0
-            fi
-        done
+        [[ -S "$socket_path" ]] && return 0
         sleep 0.2
         (( i++ )) || true
     done
 
-    echo "Warning: No Wayland socket found after ~10s — Qt may crash" >&2
+    echo "Error: Niri WAYLAND_DISPLAY socket did not appear: $socket_path" >&2
     return 1
 }
 
@@ -1558,11 +1555,9 @@ apply_hot_reload_policy_for_dir() {
     export INIR_DISABLE_HOT_RELOAD=1
 }
 
-# Cached systemd user environment — avoids duplicate blocking calls.
-# On fresh boot, `systemctl --user show-environment` can block for 10-30s
-# waiting for D-Bus session activation.  We call it once with a tight
-# timeout and cache the result for both apply_qt_runtime_env() and
-# ensure_systemd_graphical_env(), cutting worst-case startup from ~60s to ~3s.
+# Cached systemd user environment — Niri publishes its session variables here
+# before niri.service reports READY.  Manual/recovery launches may still need to
+# copy missing values into the local iNiR process, but iNiR never invents them.
 _cached_systemd_env=""
 _cached_systemd_env_fetched=false
 
@@ -1572,10 +1567,7 @@ _get_systemd_user_env() {
         return 0
     fi
     _cached_systemd_env_fetched=true
-    # 3s timeout: if D-Bus isn't ready yet, bail out and let the shell start
-    # with whatever env it already has. ShellExec re-reads the live user-manager
-    # environment at application launch time, so this startup snapshot is not
-    # treated as the application environment.
+    # Keep the lookup bounded for manual invocations outside the supervised path.
     _cached_systemd_env="$(timeout 3s systemctl --user show-environment 2>/dev/null)" || true
     printf '%s' "$_cached_systemd_env"
 }
@@ -1682,50 +1674,6 @@ apply_qt_runtime_env() {
     [[ -z "${QSG_ATLAS_WIDTH:-}" ]] && export QSG_ATLAS_WIDTH=1024
     [[ -z "${QSG_ATLAS_HEIGHT:-}" ]] && export QSG_ATLAS_HEIGHT=1024
 
-    # Ensure WAYLAND_DISPLAY is set — required for Qt to select the wayland
-    # platform backend.  When systemd starts inir.service at boot, the
-    # compositor may not have exported WAYLAND_DISPLAY into the user manager
-    # environment yet.  Without it Qt falls back to XCB, which crashes on a
-    # headless Wayland session (no X11 display) and delays shell startup long
-    # enough for tray apps to miss the StatusNotifierWatcher.
-    if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
-        local candidate
-        for candidate in /run/user/"$(id -u)"/wayland-[0-9]*; do
-            if [[ -S "$candidate" ]]; then
-                export WAYLAND_DISPLAY="$(basename "$candidate")"
-                break
-            fi
-        done
-    fi
-
-    # NIRI_SOCKET — NiriService.qml reads this via Quickshell.env("NIRI_SOCKET")
-    # as a readonly property at instantiation time, so it must be present in the
-    # process environment before QS starts.
-    # At session boot, inir.service races with Niri's own import-environment call:
-    # graphical-session.target activates → systemd starts inir.service immediately,
-    # but Niri only propagates NIRI_SOCKET to the user manager a moment later.
-    # Result: QS reads an empty string → NiriService never connects → workspaces,
-    # window management, and all Niri IPC broken until inir restart.
-    # Fix: detect the socket directly from the filesystem so QS always gets a valid
-    # path regardless of import-environment timing.
-    # Niri socket format: $XDG_RUNTIME_DIR/niri.wayland-N.PID.sock
-    # Older/some builds also use: $XDG_RUNTIME_DIR/niri/socket
-    if [[ -z "${NIRI_SOCKET:-}" ]]; then
-        local _runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-        local _niri_cand
-        # Current Niri format: niri.wayland-N.PID.sock
-        for _niri_cand in "$_runtime_dir"/niri.wayland-*.sock; do
-            if [[ -S "$_niri_cand" ]]; then
-                export NIRI_SOCKET="$_niri_cand"
-                break
-            fi
-        done
-        # Legacy/alternative path
-        if [[ -z "${NIRI_SOCKET:-}" && -S "$_runtime_dir/niri/socket" ]]; then
-            export NIRI_SOCKET="$_runtime_dir/niri/socket"
-        fi
-    fi
-
     # Qt platform theme drives icon resolution (QIcon::fromTheme) and widget styling.
     # Override via INIR_QT_QPA_PLATFORMTHEME / INIR_QT_STYLE_OVERRIDE if needed.
     if [[ -n "${INIR_QT_QPA_PLATFORMTHEME+x}" ]]; then
@@ -1754,30 +1702,16 @@ apply_qt_runtime_env() {
         true
     fi
 
-    # Import missing graphical-session variables from the systemd user manager.
-    #
-    # When inir.service races compositor startup (graphical-session.target),
-    # the process environment is minimal (PATH=/usr/local/bin:/usr/bin, no
-    # XDG_SESSION_TYPE, no DISPLAY, no XCURSOR_*, etc.).  By the time
-    # wait_for_wayland_socket() returns, the compositor (niri/hyprland) has
-    # already run its import-environment step, so the systemd user manager's
-    # environment is complete. We still pull missing critical vars into the
-    # Quickshell process because internal helpers and the shell itself need a
-    # healthy startup environment. User-facing app launches re-sync through
-    # ShellExec instead of trusting this frozen process snapshot.
-    #
-    # Without this:
-    #   • Chromium/Brave/Electron apps don't see XDG_SESSION_TYPE=wayland and
-    #     fall back to X11; with no DISPLAY set they fail silently.
-    #   • Apps in ~/.local/bin, flatpak exports, nvm, pnpm, etc. are not found
-    #     because PATH is the bare systemd minimum.
-    #   • Cursor theme/size are absent, so spawned apps render the default cursor.
+    # Import missing session values from the user manager.  Niri is the sole
+    # authority for compositor-owned variables; this only copies published state
+    # into manual/recovery invocations and never probes sockets to manufacture it.
     local _qs_sys_env
     _qs_sys_env="$(_get_systemd_user_env)"
     if [[ -n "$_qs_sys_env" ]]; then
         local _qs_var _qs_val
-        for _qs_var in XDG_SESSION_TYPE XDG_SESSION_DESKTOP DESKTOP_SESSION \
-                       DISPLAY XCURSOR_THEME XCURSOR_SIZE \
+        for _qs_var in WAYLAND_DISPLAY NIRI_SOCKET DISPLAY \
+                       XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP DESKTOP_SESSION \
+                       XCURSOR_THEME XCURSOR_SIZE \
                        LANG LC_ALL XDG_MENU_PREFIX \
                        ELECTRON_OZONE_PLATFORM_HINT QT_STYLE_OVERRIDE \
                        GDK_BACKEND; do
@@ -1811,19 +1745,6 @@ apply_qt_runtime_env() {
         export ELECTRON_OZONE_PLATFORM_HINT=auto
     fi
 
-    # DISPLAY fallback for Quickshell's own startup snapshot. X11-only children
-    # need a valid display, but :0 is not special: a greeter may own it while
-    # niri/xwayland-satellite owns :1 or later. ShellExec validates DISPLAY
-    # again at application launch time and prefers the live user-manager value.
-    if [[ -z "${DISPLAY:-}" ]]; then
-        local _x _xnum
-        for _x in /tmp/.X11-unix/X*; do
-            [[ -S "$_x" ]] || continue
-            [[ "$(stat -c %U "$_x" 2>/dev/null)" == "$(id -un)" ]] || continue
-            export DISPLAY=":${_x##*/X}"
-            break
-        done
-    fi
 }
 
 apply_qt_logging_rules() {
@@ -1967,157 +1888,18 @@ is_inir_service_enabled() {
 }
 
 detect_compositor_service() {
-    # Determine the compositor service unit to wire inir to.
-    # Priority: running compositor > socket detection > no fallback.
-    #
-    # Returns the unit name (e.g. "niri.service") on stdout.
-    # Returns empty and exit 1 if no supported compositor service is found.
-    # NEVER falls back to graphical-session.target — that would cause inir
-    # to start under KDE/GNOME/etc.
-
-    # 1. niri.service — ships static with niri, always available when niri is installed
+    # iNiR is a Niri shell.  niri.service is the only valid lifecycle owner;
+    # never fall back to graphical-session.target or another compositor unit.
     if systemctl --user cat niri.service &>/dev/null; then
         printf 'niri.service\n'
         return 0
     fi
-
-    # 2. Hyprland via UWSM — creates wayland-wm@Hyprland.service
-    if systemctl --user cat 'wayland-wm@Hyprland.service' &>/dev/null; then
-        printf 'wayland-wm@Hyprland.service\n'
-        return 0
-    fi
-
-    # 3. No supported compositor found
     return 1
-}
-
-ensure_systemd_graphical_env() {
-    # Ensure the systemd user manager has critical graphical session variables.
-    # Some sessions/DMs don't export these to systemd, which breaks the shell.
-    local vars_to_import=()
-
-    # Check what systemd already has
-    local sys_env
-    sys_env="$(_get_systemd_user_env)"
-
-    # WAYLAND_DISPLAY — required for Quickshell to connect to compositor
-    if ! grep -q '^WAYLAND_DISPLAY=' <<< "$sys_env" 2>/dev/null; then
-        local wl_sock=""
-        local candidate
-        for candidate in /run/user/"$(id -u)"/wayland-[0-9]*; do
-            if [[ -S "$candidate" ]]; then
-                wl_sock="$(basename "$candidate")"
-                break
-            fi
-        done
-        if [[ -n "$wl_sock" ]]; then
-            vars_to_import+=("WAYLAND_DISPLAY=$wl_sock")
-        fi
-    fi
-
-    # NIRI_SOCKET — required for NiriService IPC (workspaces, windows, outputs).
-    # Propagate to systemd user manager so service restarts also inherit it.
-    # Niri socket format: $XDG_RUNTIME_DIR/niri.wayland-N.PID.sock
-    if ! grep -q '^NIRI_SOCKET=' <<< "$sys_env" 2>/dev/null; then
-        local _niri_runtime="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-        local _niri_found=""
-        local _nc
-        for _nc in "$_niri_runtime"/niri.wayland-*.sock; do
-            if [[ -S "$_nc" ]]; then
-                _niri_found="$_nc"
-                break
-            fi
-        done
-        [[ -z "$_niri_found" && -S "$_niri_runtime/niri/socket" ]] && _niri_found="$_niri_runtime/niri/socket"
-        [[ -n "$_niri_found" ]] && vars_to_import+=("NIRI_SOCKET=$_niri_found")
-    fi
-
-    # QT_QPA_PLATFORMTHEME — required for icon theme resolution
-    if ! grep -q '^QT_QPA_PLATFORMTHEME=' <<< "$sys_env" 2>/dev/null; then
-        if command -v kwriteconfig6 &>/dev/null; then
-            vars_to_import+=("QT_QPA_PLATFORMTHEME=kde")
-        elif command -v gsettings &>/dev/null; then
-            vars_to_import+=("QT_QPA_PLATFORMTHEME=gtk3")
-        fi
-    fi
-
-    # XDG_DATA_DIRS — required for icon/theme/app discovery
-    if ! grep -q '^XDG_DATA_DIRS=' <<< "$sys_env" 2>/dev/null; then
-        vars_to_import+=("XDG_DATA_DIRS=/usr/local/share:/usr/share")
-    fi
-
-    # XDG_CURRENT_DESKTOP — used by portal and theme detection
-    if ! grep -q '^XDG_CURRENT_DESKTOP=' <<< "$sys_env" 2>/dev/null; then
-        vars_to_import+=("XDG_CURRENT_DESKTOP=niri")
-    fi
-
-    # XDG_SESSION_TYPE — required by Chromium/Electron/Wine to select the Wayland
-    # backend.  Without it they fall back to X11; if DISPLAY is also absent (common
-    # in systemd-launched shells) they fail to open a window entirely.
-    if ! grep -q '^XDG_SESSION_TYPE=' <<< "$sys_env" 2>/dev/null; then
-        vars_to_import+=("XDG_SESSION_TYPE=wayland")
-    fi
-
-    # ELECTRON_OZONE_PLATFORM_HINT — tells Electron apps (Discord, VS Code, Chrome)
-    # to use Wayland natively.  Niri sets this in its environment{} block for
-    # processes it spawns directly, but Quickshell runs as a systemd service so
-    # apps launched from the shell's Overview/launcher inherit the systemd user
-    # session env instead, which misses this variable.
-    if ! grep -q '^ELECTRON_OZONE_PLATFORM_HINT=' <<< "$sys_env" 2>/dev/null; then
-        vars_to_import+=("ELECTRON_OZONE_PLATFORM_HINT=auto")
-    fi
-
-    # QT_QPA_PLATFORM — tells Qt apps to use the Wayland backend.  Qt usually
-    # auto-detects this from WAYLAND_DISPLAY, but some apps (especially those using
-    # older Qt builds or custom platform plugin paths) need it explicit.  Portal
-    # services reading systemd env also benefit.
-    if ! grep -q '^QT_QPA_PLATFORM=' <<< "$sys_env" 2>/dev/null; then
-        vars_to_import+=("QT_QPA_PLATFORM=wayland")
-    fi
-
-    # QT_STYLE_OVERRIDE — ensures Qt apps launched from portals or systemd-triggered
-    # contexts use the correct widget style (e.g. Darkly for dark KDE themes).
-    # Only set if the compositor provided it (via environment{} block).
-    if ! grep -q '^QT_STYLE_OVERRIDE=' <<< "$sys_env" 2>/dev/null; then
-        if [[ -n "${QT_STYLE_OVERRIDE:-}" ]]; then
-            vars_to_import+=("QT_STYLE_OVERRIDE=$QT_STYLE_OVERRIDE")
-        fi
-    fi
-
-    # DISPLAY — the XWayland display (e.g. :0 or :1).  Required by Steam, Wine,
-    # and any X11-only app.  The compositor starts XWayland and sets DISPLAY, but
-    # may not have exported it to systemd yet when this function runs (race with
-    # graphical-session.target).  Detect it from the process env (already imported
-    # in apply_qt_runtime_env) or from the live X socket.
-    if ! grep -q '^DISPLAY=' <<< "$sys_env" 2>/dev/null; then
-        if [[ -n "${DISPLAY:-}" ]]; then
-            vars_to_import+=("DISPLAY=$DISPLAY")
-        else
-            # Probe for the live XWayland socket — the compositor may have
-            # started it but not yet exported DISPLAY to systemd.  Only
-            # user-owned sockets count; the greeter's root-owned Xorg socket
-            # (sddm on :0) is not the session display.
-            local _xsock
-            for _xsock in /tmp/.X11-unix/X*; do
-                if [[ -S "$_xsock" ]] && [[ "$(stat -c %U "$_xsock" 2>/dev/null)" == "$(id -un)" ]]; then
-                    local _xnum
-                    _xnum="$(basename "$_xsock" | sed 's/^X//')"
-                    vars_to_import+=("DISPLAY=:${_xnum}")
-                    break
-                fi
-            done
-        fi
-    fi
-
-    if [[ ${#vars_to_import[@]} -gt 0 ]]; then
-        timeout 3s systemctl --user set-environment "${vars_to_import[@]}" 2>/dev/null || true
-    fi
 }
 
 start_inir_service_if_enabled() {
     if is_inir_service_enabled; then
         ensure_service_unit_available
-        ensure_systemd_graphical_env
         systemctl --user reset-failed inir.service >/dev/null 2>&1 || true
         systemctl --user start inir.service >/dev/null 2>&1 || true
         return 0
@@ -2130,7 +1912,6 @@ start_background() {
     local dir="$1"
     if is_inir_service_enabled; then
         ensure_service_unit_available
-        ensure_systemd_graphical_env
         systemctl --user reset-failed inir.service >/dev/null 2>&1 || true
         systemctl --user start inir.service >/dev/null 2>&1 || true
         return 0
@@ -2800,7 +2581,6 @@ restart_inir_service_or_fail() {
     local quiet="${2:-}"
 
     ensure_service_unit_available
-    ensure_systemd_graphical_env
     systemctl --user reset-failed inir.service >/dev/null 2>&1 || true
     systemctl --user restart inir.service >/dev/null 2>&1 || true
 
@@ -2825,11 +2605,23 @@ install_user_service() {
     local asset_path
     local launcher_path
     local tmp_file
+    local version_file install_mode
 
     require_command systemctl
-    setup_dir="$(resolve_setup_dir)"
+    setup_dir="$(canonicalize_path "$(resolve_setup_dir)")"
     asset_path="$setup_dir/assets/systemd/inir.service"
     launcher_path="$(resolve_launcher_path)"
+    version_file="$(inir_version_file 2>/dev/null || true)"
+    install_mode="$(read_version_field "$version_file" '.installMode // .install_mode' '"installMode"[[:space:]]*:[[:space:]]*"\([^"]*\)"')"
+    [[ -z "$install_mode" ]] && install_mode="$(read_version_field "$version_file" '.install_mode' '"install_mode"[[:space:]]*:[[:space:]]*"\([^"]*\)"')"
+    if [[ -z "$install_mode" || "$install_mode" == "unknown" ]]; then
+        local launcher_real repo_launcher_real
+        launcher_real="$(readlink -f "$launcher_path" 2>/dev/null || true)"
+        repo_launcher_real="$(readlink -f "$setup_dir/scripts/inir" 2>/dev/null || true)"
+        if [[ -d "$setup_dir/.git" && -n "$launcher_real" && "$launcher_real" == "$repo_launcher_real" ]]; then
+            install_mode="repo-link"
+        fi
+    fi
 
     if [[ ! -f "$asset_path" ]]; then
         echo "service asset not found in $setup_dir" >&2
@@ -2844,25 +2636,40 @@ install_user_service() {
         systemctl --user unmask inir.service >/dev/null 2>&1 || true
         systemctl --user unmask --runtime inir.service >/dev/null 2>&1 || true
     fi
-    tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.$$"
-    local escaped_launcher="${launcher_path//&/\\&}"
-    sed -e "s|^ExecStart=.*|ExecStart=${escaped_launcher} run --session|" \
-        -e "s|^ExecStopPost=-.*|ExecStopPost=-${escaped_launcher} cleanup-orphans|" \
-        "$asset_path" > "$tmp_file"
-    if [[ -L "$systemd_user_dir/inir.service" ]]; then
-        # Never leave a developer install pointing at the portable template:
-        # it uses /usr/bin/inir and fails with 203/EXEC before a local drop-in
-        # has been generated.  Install the fully rendered unit as a real file.
-        rm -f "$systemd_user_dir/inir.service"
-    fi
-    cp -f "$tmp_file" "$systemd_user_dir/inir.service"
-    rm -f "$tmp_file"
-
     local service_dropin_dir="$systemd_user_dir/inir.service.d"
     local service_override="$service_dropin_dir/override.conf"
-    if [[ -f "$service_override" ]] && grep -q '^# Managed locally:' "$service_override"; then
-        rm -f "$service_override"
-        rmdir "$service_dropin_dir" 2>/dev/null || true
+    if [[ "$install_mode" == "repo-link" ]]; then
+        # Developer installs stay live: both launcher and unit resolve directly
+        # to the checkout.  Keep launcher-specific Exec paths in a tiny drop-in
+        # so the portable package template remains valid at /usr/bin/inir.
+        rm -f "$systemd_user_dir/inir.service"
+        ln -s "$asset_path" "$systemd_user_dir/inir.service"
+        mkdir -p "$service_dropin_dir"
+        tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.override.$$"
+        cat > "$tmp_file" <<EOF
+# Managed locally: iNiR repo-link launcher override
+[Service]
+ExecStart=
+ExecStart=${launcher_path} run --session
+ExecStopPost=
+ExecStopPost=-${launcher_path} cleanup-orphans
+EOF
+        cp -f "$tmp_file" "$service_override"
+        rm -f "$tmp_file"
+    else
+        tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.$$"
+        local escaped_launcher="${launcher_path//&/\\&}"
+        sed -e "s|^ExecStart=.*|ExecStart=${escaped_launcher} run --session|" \
+            -e "s|^ExecStopPost=-.*|ExecStopPost=-${escaped_launcher} cleanup-orphans|" \
+            "$asset_path" > "$tmp_file"
+        rm -f "$systemd_user_dir/inir.service"
+        cp -f "$tmp_file" "$systemd_user_dir/inir.service"
+        rm -f "$tmp_file"
+
+        if [[ -f "$service_override" ]] && grep -q '^# Managed locally:' "$service_override"; then
+            rm -f "$service_override"
+            rmdir "$service_dropin_dir" 2>/dev/null || true
+        fi
     fi
 
     # Migrate: remove old WantedBy=graphical-session.target symlink left by
@@ -2908,8 +2715,8 @@ enable_inir_service() {
     target="$(detect_compositor_service 2>/dev/null)" || true
 
     if [[ -z "$target" ]]; then
-        echo "ERROR: No supported compositor detected (niri or Hyprland)." >&2
-        echo "       Install a supported compositor first, then re-run 'inir service enable'." >&2
+        echo "ERROR: niri.service is not available." >&2
+        echo "       Start Niri as a managed session, then re-run 'inir service enable'." >&2
         return 1
     fi
 
@@ -2974,6 +2781,11 @@ run_service_command() {
             disable_inir_service 2>/dev/null || true
             require_command systemctl
             rm -f "$systemd_user_dir/inir.service"
+            if [[ -f "$systemd_user_dir/inir.service.d/override.conf" ]] \
+                    && grep -q '^# Managed locally:' "$systemd_user_dir/inir.service.d/override.conf"; then
+                rm -f "$systemd_user_dir/inir.service.d/override.conf"
+                rmdir "$systemd_user_dir/inir.service.d" 2>/dev/null || true
+            fi
             systemctl --user daemon-reload
             echo "Uninstalled inir.service"
             ;;
@@ -3258,6 +3070,92 @@ run_ipc_target_command() {
         echo "Timed out waiting for iNiR to start" >&2
         exit 1
     fi
+
+    # swayidle -w relies on its before-sleep command not returning until the
+    # session is actually protected. Quickshell's IPC call itself is synchronous,
+    # but WlSessionLock becomes secure asynchronously after the compositor has
+    # acknowledged lock surfaces for every output.
+    if [[ "$target" == "lock" && "${1:-}" == "prepareSleep" ]]; then
+        local response state attempt swaylock_bin=""
+        if ! response="$("$qs_bin" -p "$config_dir" ipc call lock prepareSleep 2>/dev/null)"; then
+            # Lock is loaded after the first shell frame. A lid close during that
+            # short boot window must fail closed instead of returning to logind
+            # with no locker registered yet.
+            swaylock_bin="$(command -v swaylock 2>/dev/null || true)"
+            if [[ -n "$swaylock_bin" ]] && "$swaylock_bin" -f -c 1a1a2e; then
+                printf 'fallback\n'
+                return 0
+            fi
+
+            for ((attempt = 0; attempt < 20; attempt++)); do
+                sleep 0.1
+                if response="$("$qs_bin" -p "$config_dir" ipc call lock prepareSleep 2>/dev/null)"; then
+                    break
+                fi
+                response=""
+            done
+            if [[ -z "$response" ]]; then
+                echo "Lock IPC was unavailable before sleep and no fallback could secure the session" >&2
+                return 1
+            fi
+        fi
+
+        case "$response" in
+            secure|external)
+                printf '%s\n' "$response"
+                return 0
+                ;;
+        esac
+
+        # A WlSessionLock should become secure almost immediately while swayidle
+        # still holds logind's delay inhibitor. Keep comfortably inside logind's
+        # usual inhibitor deadline and fall back to swaylock if QS cannot secure.
+        for ((attempt = 0; attempt < 20; attempt++)); do
+            sleep 0.05
+            state="$("$qs_bin" -p "$config_dir" ipc call lock status 2>/dev/null || true)"
+            if [[ "$state" == "secure" ]]; then
+                printf 'secure\n'
+                return 0
+            fi
+        done
+
+        [[ -n "$swaylock_bin" ]] || swaylock_bin="$(command -v swaylock 2>/dev/null || true)"
+        if [[ -n "$swaylock_bin" ]]; then
+            "$qs_bin" -p "$config_dir" ipc call lock deactivate >/dev/null 2>&1 || true
+
+            # Do not race a second ext-session-lock client against QS while its
+            # protocol object is still being released.
+            for ((attempt = 0; attempt < 10; attempt++)); do
+                state="$("$qs_bin" -p "$config_dir" ipc call lock status 2>/dev/null || true)"
+                [[ "$state" == "unlocked" ]] && break
+                sleep 0.05
+            done
+
+            if [[ "$state" == "unlocked" ]] && "$swaylock_bin" -f -c 1a1a2e; then
+                printf 'fallback\n'
+                return 0
+            fi
+
+            # If the external fallback could not take the lock, restore the QS
+            # lock request before spending the remaining inhibitor budget.
+            "$qs_bin" -p "$config_dir" ipc call lock prepareSleep >/dev/null 2>&1 || true
+        fi
+
+        # No external fallback is available. Continue waiting for QS rather than
+        # releasing the inhibitor at the first transient delay.
+        for ((attempt = 0; attempt < 40; attempt++)); do
+            sleep 0.05
+            state="$("$qs_bin" -p "$config_dir" ipc call lock status 2>/dev/null || true)"
+            if [[ "$state" == "secure" ]]; then
+                printf 'secure\n'
+                return 0
+            fi
+        done
+
+        echo "Lock did not become secure before sleep" >&2
+        return 1
+    fi
+
     # IPC handlers for most panels register ~500ms after shell start (deferred panel
     # loading at boot). If the first call fails while the shell is still initializing,
     # retry once after a brief wait before giving up.
@@ -3623,9 +3521,8 @@ case "$command_name" in
             resolve_config_dir
             apply_hot_reload_policy_for_dir "$config_dir"
             check_qs_abi
-            wait_for_wayland_socket       # block until compositor socket exists
-            apply_qt_runtime_env          # WAYLAND_DISPLAY + platformtheme fallback
-            ensure_systemd_graphical_env & # export env to systemd for other services
+            apply_qt_runtime_env          # import Niri-owned session env if needed
+            wait_for_wayland_socket       # validate the exact Niri-owned socket
             exec "$qs_bin" -n -p "$config_dir"
         fi
 
@@ -3635,7 +3532,6 @@ case "$command_name" in
         apply_shell_scale
         apply_qt_runtime_env
         apply_qt_logging_rules
-        ensure_systemd_graphical_env &  # env already cached by apply_qt_runtime_env
         check_qs_abi
         check_setup_version_sync "$config_dir"
         if has_instances "$config_dir"; then

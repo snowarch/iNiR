@@ -13,6 +13,7 @@ WSettingsRow {
     property string text: ""
 
     signal textEdited(string newText)
+    signal editingFinished(string newText)
 
     control: Component {
         Rectangle {
@@ -48,6 +49,7 @@ WSettingsRow {
                     clip: true
                     text: root.text
                     onTextEdited: root.textEdited(text)
+                    onEditingFinished: root.editingFinished(text)
                 }
 
                 WText {

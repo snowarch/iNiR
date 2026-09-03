@@ -998,10 +998,14 @@ Scope {
             Keys.onPressed: event => {
                 if (event.key !== Qt.Key_Escape)
                     return
-                if (ShellEditSession.active)
+                if (ShellEditSession.active) {
                     ShellEditSession.handleEscape()
-                else
-                    sidebarRoot.hide()
+                } else {
+                    const roleItem = sidebarContentLoader.item?.roleContentItem
+                    const handledByContent = roleItem && typeof roleItem.handleEscape === "function"
+                        ? roleItem.handleEscape() : false
+                    if (!handledByContent) sidebarRoot.hide()
+                }
                 event.accepted = true
             }
 

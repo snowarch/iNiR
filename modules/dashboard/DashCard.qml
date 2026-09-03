@@ -13,6 +13,9 @@ Rectangle {
     id: root
     property string title: ""
     property string icon: ""
+    property string headerActionIcon: ""
+    property string headerActionTooltip: ""
+    signal headerAction()
     default property alias content: inner.data
 
     // Appearance knobs (Settings › Dashboard › Appearance)
@@ -109,18 +112,18 @@ Rectangle {
         spacing: root.compact ? 6 : 8
 
         RowLayout {
-            visible: root.title.length > 0 && root.showTitle
+            visible: (root.title.length > 0 && root.showTitle) || root.headerActionIcon.length > 0
             Layout.fillWidth: true
             spacing: 8
 
             MaterialSymbol {
-                visible: root.icon.length > 0 && !root.zzzEverywhere
+                visible: root.showTitle && root.icon.length > 0 && !root.zzzEverywhere
                 text: root.icon
                 iconSize: Appearance.font.pixelSize.larger
                 color: root.colAccent
             }
             ZzzGlyphBadge {
-                visible: root.icon.length > 0 && root.zzzEverywhere
+                visible: root.showTitle && root.icon.length > 0 && root.zzzEverywhere
                 symbol: root.icon
                 accentColor: root.colAccent
                 inkColor: Appearance.zzz.onAccent
@@ -128,11 +131,30 @@ Rectangle {
             }
             StyledText {
                 Layout.fillWidth: true
+                visible: root.showTitle && root.title.length > 0
                 text: root.zzzEverywhere ? root.title.toUpperCase() : root.title
                 font.pixelSize: Appearance.font.pixelSize.normal
                 font.weight: root.zzzEverywhere ? Font.Black : Font.Medium
                 color: root.colText
                 elide: Text.ElideRight
+            }
+
+            RippleButton {
+                visible: root.headerActionIcon.length > 0
+                implicitWidth: 30
+                implicitHeight: 30
+                buttonRadius: Appearance.rounding.full
+                colBackground: "transparent"
+                colBackgroundHover: ColorUtils.applyAlpha(root.colAccent, 0.10)
+                colRipple: ColorUtils.applyAlpha(root.colAccent, 0.16)
+                onClicked: root.headerAction()
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: root.headerActionIcon
+                    iconSize: Appearance.font.pixelSize.normal
+                    color: root.colAccent
+                }
+                StyledToolTip { text: root.headerActionTooltip }
             }
         }
 

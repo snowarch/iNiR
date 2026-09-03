@@ -199,7 +199,11 @@ Scope {
             focus: GlobalStates.dashboardOpen
             Keys.onPressed: (event) => {
                 if (event.key === Qt.Key_Escape) {
-                    panelRoot.hide()
+                    if (contentLoader.item?.detailOpen)
+                        contentLoader.item.closeDetail()
+                    else
+                        panelRoot.hide()
+                    event.accepted = true
                 }
             }
 

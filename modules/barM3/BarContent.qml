@@ -20,24 +20,64 @@ Item {
     readonly property bool isMaterial: Config.options.bar.m3.cornerStyle === 3
     readonly property real centerPillX: centerPill.x
     readonly property real centerPillWidth: centerPill.width
+    readonly property real sectionOuterMargin: root.isMaterial
+        ? (Config.options?.bar?.m3?.gapsOut ?? 5)
+        : (Config.options?.bar?.m3?.cornerStyle === 1 ? 4 : 10)
+    readonly property real leftHostDemand: root.isMaterial
+        ? leftMaterialPill.implicitWidth : leftRow.implicitWidth
+    readonly property real centerHostDemand: root.isMaterial
+        ? centerMaterialPill.implicitWidth : middleRow.implicitWidth
+    readonly property real rightHostDemand: root.isMaterial
+        ? rightMaterialPill.implicitWidth : rightRow.implicitWidth
+    readonly property real symmetricSideDemand: Math.max(root.leftHostDemand, root.rightHostDemand)
+    readonly property real availableHostWidth: Math.max(0, root.width - root.sectionOuterMargin * 2)
+    readonly property real naturalHostWidth: root.centerHostDemand + root.symmetricSideDemand * 2
+    readonly property real hostScale: root.naturalHostWidth > 0
+        ? Math.min(1, root.availableHostWidth / root.naturalHostWidth) : 1
+    readonly property bool layoutCompressionActive: root.hostScale < 0.999
 
     readonly property bool trayHasItems: SystemTray.items.values.length > 0
     readonly property bool spectrumOutputEnabled:
         (Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary") === "all"
         || Quickshell.screens.length <= 1
         || String(root.screen?.name ?? "") === String(GlobalStates.primaryScreen?.name ?? "")
-    readonly property int configuredWidgetCount:
-        (Config.options?.bar?.m3?.layouts?.leftLayout?.length ?? 0)
-        + (Config.options?.bar?.m3?.layouts?.middleLayout?.length ?? 0)
-        + (Config.options?.bar?.m3?.layouts?.rightLayout?.length ?? 0)
+    function _moduleBudget(id, level) {
+        if (level >= 1 && root.compactHiddenWidgets.includes(id)) return 0
+        if (level >= 2 && root.minimalHiddenWidgets.includes(id)) return 0
+        if (level >= 3 && root.overflowHiddenWidgets.includes(id)) return 0
+        const scale = Appearance.fontSizeScale
+        const widths = {
+            "powerButton": 40, "leftSidebarButton": 44,
+            "activeWindow": 260, "media": 190, "workspaces": 120,
+            "resources": 185, "clockWidget": 145, "utilButtons": 155,
+            "docktoPanel": 320, "notificationUnreadCount": 44,
+            "systemIcons": 150, "weatherBar": 130, "sysTray": 180,
+            "updatesCount": 44, "networkSpeed": 110,
+            "batteryIndicator": 80, "visualizer": 130, "divisor": 12,
+        }
+        return (widths[id] ?? 64) * scale
+    }
+    function _layoutBudget(layout, level) {
+        let total = 0
+        const items = Array.from(layout ?? [])
+        for (let i = 0; i < items.length; ++i)
+            total += root._moduleBudget(items[i], level)
+        return total
+    }
+    function _hostBudget(level) {
+        const left = root._layoutBudget(Config.options?.bar?.m3?.layouts?.leftLayout, level)
+        const center = root._layoutBudget(Config.options?.bar?.m3?.layouts?.middleLayout, level)
+        const right = root._layoutBudget(Config.options?.bar?.m3?.layouts?.rightLayout, level)
+        return center + Math.max(left, right) * 2 + root.sectionOuterMargin * 2
+    }
     readonly property real compactWidthThreshold: Math.max(
-        Appearance.sizes.barShortenScreenWidthThreshold,
-        (960 + root.configuredWidgetCount * 40) * Appearance.fontSizeScale)
+        Appearance.sizes.barShortenScreenWidthThreshold, root._hostBudget(0))
     readonly property real minimalWidthThreshold: Math.max(
-        Appearance.sizes.barHellaShortenScreenWidthThreshold,
-        (720 + root.configuredWidgetCount * 28) * Appearance.fontSizeScale)
+        Appearance.sizes.barHellaShortenScreenWidthThreshold, root._hostBudget(1))
+    readonly property real overflowWidthThreshold: root._hostBudget(2)
     readonly property int useShortenedForm:
-        (root.screen?.width ?? 1920) <= root.minimalWidthThreshold ? 2
+        (root.screen?.width ?? 1920) <= root.overflowWidthThreshold ? 3
+        : (root.screen?.width ?? 1920) <= root.minimalWidthThreshold ? 2
         : (root.screen?.width ?? 1920) <= root.compactWidthThreshold ? 1 : 0
     readonly property var compactHiddenWidgets: [
         "visualizer", "activeWindow", "resources", "networkSpeed",
@@ -46,6 +86,9 @@ Item {
     readonly property var minimalHiddenWidgets: [
         ...root.compactHiddenWidgets, "media", "sysTray", "utilButtons",
         "batteryIndicator", "divisor"
+    ]
+    readonly property var overflowHiddenWidgets: [
+        ...root.minimalHiddenWidgets, "docktoPanel", "systemIcons"
     ]
 
     function filterLayout(layout) {
@@ -56,6 +99,8 @@ Item {
             filtered = filtered.filter(name => name !== "batteryIndicator")
         if (!root.spectrumSignalActive)
             filtered = filtered.filter(name => name !== "visualizer")
+        if (root.useShortenedForm >= 3)
+            return filtered.filter(name => !root.overflowHiddenWidgets.includes(name))
         if (root.useShortenedForm === 2)
             return filtered.filter(name => !root.minimalHiddenWidgets.includes(name))
         if (root.useShortenedForm === 1)
@@ -386,11 +431,14 @@ Item {
 
         // Left
         Item {
+            id: leftSection
             anchors.left: parent.left
-            anchors.leftMargin: root.isMaterial ? (Config.options.bar.m3.gapsOut || 5) : (Config.options.bar.m3.cornerStyle === 1 ? 4 : 10)
+            anchors.leftMargin: root.sectionOuterMargin
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            width: root.isMaterial ? leftMaterialPill.implicitWidth : leftRow.implicitWidth
+            width: root.layoutCompressionActive
+                ? root.leftHostDemand * root.hostScale : root.leftHostDemand
+            clip: root.layoutCompressionActive
 
             // Material pill wrapper
             Rectangle {
@@ -399,6 +447,8 @@ Item {
                 anchors.centerIn: parent
                 implicitWidth: leftMaterialRow.implicitWidth + 10
                 implicitHeight: leftMaterialRow.implicitHeight
+                width: root.layoutCompressionActive ? parent.width : implicitWidth
+                clip: root.layoutCompressionActive
                 radius: Appearance.rounding.full
                 color: (Config.options?.bar?.m3?.showBackground ?? true)
                     && (Config.options?.bar?.m3?.borderless ?? "separated") === "pills"
@@ -501,8 +551,10 @@ Item {
         Item {
             id: absoluteCenter
             anchors.centerIn: parent
-            width: root.isMaterial ? centerMaterialPill.implicitWidth : middleRow.implicitWidth
+            width: root.layoutCompressionActive
+                ? root.centerHostDemand * root.hostScale : root.centerHostDemand
             height: parent.height
+            clip: root.layoutCompressionActive
 
             // Material pill wrapper
             Rectangle {
@@ -511,6 +563,8 @@ Item {
                 anchors.centerIn: parent
                 implicitWidth: centerMaterialRow.implicitWidth + 10
                 implicitHeight: centerMaterialRow.implicitHeight
+                width: root.layoutCompressionActive ? parent.width : implicitWidth
+                clip: root.layoutCompressionActive
                 radius: Appearance.rounding.full
                 color: (Config.options?.bar?.m3?.showBackground ?? true)
                     && (Config.options?.bar?.m3?.borderless ?? "separated") === "pills"
@@ -610,11 +664,14 @@ Item {
 
         // Right
         Item {
+            id: rightSection
             anchors.right: parent.right
-            anchors.rightMargin: root.isMaterial ? (Config.options.bar.m3.gapsOut || 5) : (Config.options.bar.m3.cornerStyle === 1 ? 4 : 10)
+            anchors.rightMargin: root.sectionOuterMargin
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            width: root.isMaterial ? rightMaterialPill.implicitWidth : rightRow.implicitWidth
+            width: root.layoutCompressionActive
+                ? root.rightHostDemand * root.hostScale : root.rightHostDemand
+            clip: root.layoutCompressionActive
 
             // Material pill wrapper
             Rectangle {
@@ -623,6 +680,8 @@ Item {
                 anchors.centerIn: parent
                 implicitWidth: rightMaterialRow.implicitWidth + 10
                 implicitHeight: rightMaterialRow.implicitHeight
+                width: root.layoutCompressionActive ? parent.width : implicitWidth
+                clip: root.layoutCompressionActive
                 radius: Appearance.rounding.full
                 color: (Config.options?.bar?.m3?.showBackground ?? true)
                     && (Config.options?.bar?.m3?.borderless ?? "separated") === "pills"

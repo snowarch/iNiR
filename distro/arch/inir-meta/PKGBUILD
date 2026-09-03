@@ -1,7 +1,7 @@
 # Maintainer: snowarch
 
 pkgname=inir-meta
-pkgver=2.29.3
+pkgver=2.30.0
 pkgrel=1
 pkgdesc='Full iNiR desktop experience meta-package'
 arch=(any)
@@ -35,12 +35,14 @@ depends=(
   libqalculate
   mpv
   mpv-mpris
+  deno
   nautilus
   otf-space-grotesk
   pacman-contrib
   pavucontrol
   plasma-browser-integration
   plasma-integration
+  python-secretstorage
   python-ytmusicapi
   qt6ct
   socat
@@ -49,6 +51,13 @@ depends=(
   tesseract
   tesseract-data-eng
   tesseract-data-spa
+  tesseract-data-rus
+  tesseract-data-jpn
+  tesseract-data-jpn_vert
+  tesseract-data-chi_sim
+  tesseract-data-chi_sim_vert
+  tesseract-data-chi_tra
+  tesseract-data-chi_tra_vert
   translate-shell
   ttf-oxanium
   ttf-readex-pro
@@ -61,6 +70,7 @@ depends=(
   wtype
   ydotool
   yt-dlp
+  yt-dlp-ejs
 )
 optdepends=(
   'millennium-bin: Steam theming via Millennium (requires steam)'

@@ -378,6 +378,12 @@ DockButton {
     }
 
     onClicked: {
+        // A dock click is navigation, not a request to refresh screenshots. Stop
+        // the pending hover preview before focus changes so screenshot-window can
+        // never race the first Ctrl+V in the destination app.
+        hoverDelayTimer.stop()
+        root.hoverPreviewDismissed()
+
         // Suppress the click that RippleButton fires after a drag-release
         if (appListRoot?._suppressNextClick) {
             appListRoot._suppressNextClick = false

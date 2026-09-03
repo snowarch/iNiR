@@ -439,6 +439,24 @@ WSettingsPage {
             checked: Config.options?.notifications?.silent ?? false
             onCheckedChanged: Config.setNestedValue("notifications.silent", checked)
         }
+
+        WSettingsTextField {
+            label: Translation.tr("Blocked apps")
+            icon: "alert-off"
+            description: Translation.tr("Comma-separated app or service names. Blocked notifications never enter history, sounds or popups.")
+            placeholderText: Translation.tr("Discord, Slack, Spotify")
+            text: (Config.options?.notifications?.blockedApps ?? []).join(", ")
+            onEditingFinished: newText => {
+                const seen = ({})
+                const apps = newText.split(",").map(value => value.trim()).filter(value => {
+                    const key = value.toLowerCase()
+                    if (key.length === 0 || seen[key]) return false
+                    seen[key] = true
+                    return true
+                })
+                Config.setNestedValue("notifications.blockedApps", apps)
+            }
+        }
     }
     
     WSettingsCard {

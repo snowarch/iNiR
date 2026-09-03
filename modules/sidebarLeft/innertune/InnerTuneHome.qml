@@ -63,7 +63,9 @@ StyledFlickable {
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     horizontalAlignment: Text.AlignHCenter
-                    text: InnerTube.available ? Translation.tr("Tap to load home") : Translation.tr("Install python-ytmusicapi")
+                    text: InnerTube.available
+                        ? Translation.tr("Tap to load home")
+                        : Translation.tr("YT Music runtime unavailable. Run inir doctor, then tap to retry.")
                     color: Appearance.colors.colOnSurfaceVariant
                 }
             }
@@ -71,9 +73,12 @@ StyledFlickable {
             MouseArea {
                 anchors.fill: parent
                 visible: homePlaceholder.visible
-                enabled: InnerTube.available
+                enabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: InnerTube.loadHome()
+                onClicked: {
+                    if (InnerTube.available) InnerTube.loadHome()
+                    else InnerTube.retryAvailability()
+                }
             }
         }
 

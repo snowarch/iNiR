@@ -16,12 +16,22 @@ let
       (builtins.hasAttr "qt6" pkgs && builtins.hasAttr name pkgs.qt6)
       (builtins.getAttr name pkgs.qt6);
 
+  # InnerTube and browser-cookie extraction must share one closed Python
+  # environment; putting the yt-dlp executable in PATH does not expose its
+  # module or SecretStorage backend to this interpreter on Nix.
+  pythonRuntime = pkgs.python3.withPackages (ps: [
+    ps.ytmusicapi
+    ps.yt-dlp
+    ps.secretstorage
+  ]);
+
   runtimeDeps =
     with pkgs; [
       bash
       bc
       coreutils
       curl
+      deno
       findutils
       gawk
       git
@@ -29,7 +39,7 @@ let
       gnused
       jq
       procps
-      python3
+      pythonRuntime
       ripgrep
       rsync
       systemd
@@ -48,6 +58,7 @@ let
       pipewire
       pulseaudio
       wireplumber
+      yt-dlp
     ]
     ++ optionalTop "brightnessctl"
     ++ optionalTop "cava"
@@ -77,6 +88,7 @@ let
     ++ optionalTop "wtype"
     ++ optionalTop "xwayland-satellite"
     ++ optionalTop "ydotool"
+    ++ optionalTop "yt-dlp-ejs"
     ++ optionalKde "breeze-icons"
     ++ optionalKde "kdialog"
     ++ optionalKde "kirigami"
