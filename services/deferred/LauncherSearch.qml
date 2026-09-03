@@ -138,6 +138,15 @@ Singleton {
         const startsWithMath = q.startsWith(mathPrefix)
         const startsWithShell = q.startsWith(shellPrefix)
         const startsWithWeb = q.startsWith(webPrefix)
+        const hasSearchPrefix = [
+            actionPrefix,
+            appPrefix,
+            clipboardPrefix,
+            emojisPrefix,
+            mathPrefix,
+            shellPrefix,
+            webPrefix
+        ].some(prefix => q.startsWith(prefix))
 
         // Math result (priority if starts with number or =)
         const mathObj = ({
@@ -225,6 +234,9 @@ Singleton {
             }))
         }
         result = result.concat(appResults)
+
+        if (!hasSearchPrefix)
+            result = result.concat(DevelopmentEnvironments.searchResults(q))
 
         // Actions (built-in + user scripts)
         const actionResults = root.allActions.map(action => {

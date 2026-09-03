@@ -62,6 +62,16 @@ The action id (`/setup-<slug>`), display name, icon, keywords, terminal launchin
 
 You can disable the whole category by setting `search.globalActions.enableSetup` to `false` in your config.
 
+## Development environments
+
+Search for a language, runtime, framework, or database by name in an unprefixed search. Results remain available as discovery entries everywhere; install and remove actions are shown only where the current platform supports them.
+
+Supported entries include Ruby/Rails, Node.js, Bun, Deno, Go, PHP, Laravel, Symfony, Python, Elixir, Phoenix, Rust, Java, Zig, .NET, OCaml, Clojure, Scala, and Docker databases. The search metadata is maintained in `defaults/dev-environments.json`; the private mutation helper is `scripts/setup/_development.sh`.
+
+Prefix searches remain routed to their existing providers. Unsupported systems still receive the discovery result, but no broken install/remove callback is attached.
+
+For Bun and Deno, Remove also handles an exact Arch package (`bun`, `bun-bin`, or `deno`) when the command resolves to `/usr/bin`; unrelated system packages are not removed.
+
 ## Custom actions
 
 You can add your own actions by creating scripts in:

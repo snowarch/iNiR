@@ -26,6 +26,10 @@ Files whose basename starts with `_` (e.g. `_lib.sh`, `_template.sh.example`,
 `_scan.sh`) are never registered as actions, so they are safe to use for
 shared helpers.
 
+The private `_development.sh` helper follows the same rule. Development
+environment metadata is searched from `defaults/dev-environments.json`, while
+the helper is invoked directly only for supported install/remove operations.
+
 You can run the scanner by hand to debug what the launcher will see:
 
 ```bash

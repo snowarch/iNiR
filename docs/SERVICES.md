@@ -90,6 +90,7 @@
 | **AppLauncher** | Default app slot manager (terminal, browser, file manager, etc.). |
 | **AppSearch** | Desktop entry fuzzy search with icon substitution mappings. |
 | **AppCatalog** | Curated software catalog with multi-distro install support. IPC target: `appCatalog`. |
+| **DevelopmentEnvironments** | Shared search provider for development environment status and install/remove actions. |
 | **LauncherSearch** | Overview search with prefix routing (apps, actions, calculator, packages). |
 | **TaskbarApps** | Dock/taskbar app list (merged pinned + open windows). |
 | **MinimizedWindows** | Niri window minimization via hidden workspace. IPC target: `minimize`. |

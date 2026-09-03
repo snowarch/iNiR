@@ -184,9 +184,10 @@ RowLayout {
                 spacing: 1
                 model: {
                     const isAppEntry = resultPreview.entry?.type === Translation.tr("App");
+                    const hasPrimaryAction = typeof resultPreview.entry?.execute === "function";
                     const appId = isAppEntry ? (resultPreview.entry?.id ?? "") : "";
                     const pinned = isAppEntry ? (Config.options.dock?.pinnedApps?.includes(appId) ?? false) : false;
-                    var result = [
+                    var result = hasPrimaryAction ? [
                         ({
                             name: resultPreview.entry?.verb ?? Translation.tr("Open"),
                             iconName: isAppEntry ? "open_in_new" : "keyboard_return",
@@ -205,7 +206,7 @@ RowLayout {
                                 }
                             })
                         ] : [])
-                    ];
+                    ] : [];
                     if (resultPreview.entry?.actions) {
                         result = result.concat(resultPreview.entry.actions);
                     }
