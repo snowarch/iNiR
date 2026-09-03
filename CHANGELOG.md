@@ -5,41 +5,54 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.30.0] - 2026-09-01
+## [2.30.0] - 2026-09-03
 
-A feature release focused on making iNiR easier to install outside Arch, more useful for language learning, and more reliable around previews, wallpapers and desktop utilities.
+This release brings the wallpaper transition work to a stable state, expands desktop tools and media controls, and closes a long list of setup, runtime and Settings issues across ii and Waffle xd
 
 ### Added
 
-- **Multilingual OCR and Japanese study assistant**: region capture now exposes English, Spanish, Russian, Japanese and Simplified/Traditional Chinese presets, including vertical Japanese/Chinese modes. Japanese OCR can open a compact Jitendex-backed dictionary card with readings, romaji, readable definitions, deinflection, pitch/kanji data, translation, copy actions and optional Anki export; Jitendex installs in one click and lookup works offline afterward.
-- **Japanese study resources**: Settings can download current Kaishi, Manabi and Niponismo Anki decks from their upstream releases, while advanced users can import other Yomitan dictionaries. Missing Tesseract language data can self-provision in the user data directory without a manual sudo/package step.
-- **Desktop utility widgets**: new calendar, pixel clock, timer and to-do widgets expand the desktop widget set, with matching Settings integration and persistent state.
-- **Wallpaper transition shaders**: wallpaper changes can use the new transition pipeline and shader effects, with smoother handoff between workspace wallpaper and Niri backdrop rendering.
-- **Organic audio visualizer**: the desktop visualizer gains stronger beat/bass pulse, cover sizing, idle motion and response controls; Media Player reuses the same Cava-driven Organic renderer as a continuous exterior aura around the full rounded card perimeter without entering the card or covering artwork, metadata or controls.
+- Multilingual OCR now includes Japanese and Chinese modes, Japanese dictionary lookup, optional Anki export and downloadable study resources.
+- Desktop widgets now include calendar, pixel clock, timer and to-do tools with persistent state and matching Settings controls.
+- Wallpaper changes can use the new internal shader transition set, including random shader selection and shared controls in ii and Waffle.
+- The visualizer and Media Player now support the shared Organic audio renderer with configurable response, range, glow, idle motion and presentation controls.
+- Dashboard and sidebar calendar, agenda and to-do views can open expanded detail surfaces.
+- Monitor Settings can arrange Niri outputs directly and persist their layout.
+- Settings can filter notifications and visualizer audio sources by application.
 
 ### Changed
 
-- **Orbit presentation and navigation**: spatial navigation, workspace motion, preview refresh, shelf density and presentation lifecycle were refined; preview memory is bounded and stale captures are refreshed without keeping unnecessary presentation resources alive.
-- **Calendar/task detail views**: Dashboard Calendar, Agenda and To Do can open full-detail surfaces, while the right sidebar exposes expansion from each widget header instead of adding a changing control to the navigation rail.
-- **OCR workflow and Settings**: text recognition uses the configured language instead of combining every installed model, adapts Tesseract segmentation/preprocessing to the selected region, remembers the Super+Shift+S action and keeps technical Japanese/Anki options behind an Advanced section.
-- **Cross-distro setup**: Fedora and Debian/Ubuntu now use repository-first dependency plans and distro-native repair paths, with targeted COPR/Flatpak/source fallbacks only where required. Fedora prefers the focused `scottames/awww` and `achno/gowall` COPRs before source builds; Arch dependency tracking and Nix packaging/runtime paths were refreshed as well.
-- **Wallpaper/background rendering**: lower-resolution wallpapers preserve quality when filling outputs, Niri backdrop scaling keeps its fill semantics separate from workspace wallpaper presentation, and shader-random now chooses from geometry-stable in-tree effects while explicit legacy effects remain available.
-- **Cava visualizer integration**: Advanced Cava settings remain the single owner of audio capture, stereo and global color source; desktop Visualizer and Media Player now share adaptive normalization and Cava palettes, while each widget keeps independent presentation controls such as Organic pulse, range, reach, glow, idle motion and cover geometry.
-- **Setup onboarding**: first install now recognizes the distro/package manager and useful host traits such as CPU, GPU, memory, laptop/VM state, then finishes with contextual next steps instead of an Arch-centric generic message.
+- Orbit navigation, workspace motion, shelf density and preview refresh were refined, with bounded preview memory and cleaner presentation lifetimes.
+- Wallpaper ownership is now explicit. Internal shader transitions stay inside the QML renderer while AWWW remains synchronized underneath, which removes the visible handoff between renderers.
+- Wallpaper previews, apply and cancel now share one state machine, coalesce rapid navigation and avoid repainting an already presented preview.
+- Wallpaper fill, backdrop decode and transition geometry were tightened so low resolution and mixed aspect ratio images keep their final crop and quality throughout the change.
+- Desktop Visualizer and Media Player now share the same Cava normalization, palette and Organic rendering path while keeping independent quick controls.
+- Setup and Doctor use more distro appropriate dependency paths on Arch, Fedora and Debian, with repository first providers and cleaner fallbacks. Nix packaging and runtime tool resolution were updated too.
+- Niri launcher integration is portable across repo-link and login sessions, and the generated IPC registry now matches the current command surface.
+- Session startup now gives Niri ownership of compositor environment state, waits for the real runtime and handles suspend locking more safely.
+- Settings now opens in Advanced mode by default and app filtering is available consistently in ii and Waffle.
+- Mascot defaults and optional pack guidance were aligned so a fresh install stays opt-in and existing configurations are not rewritten unexpectedly.
+- YT Music runtime authentication and dependency handling were hardened across supported distributions.
+- M3 dock context menus, workspace placement and bar module ordering were refined so layouts stay usable under tight width and custom ordering.
+- Organizer expansion controls now live in the calendar, events and to-do widget headers instead of changing the sidebar navigation rail.
+- Release and Arch package metadata were aligned on version 2.30.0, and obsolete allocator tuning was removed from the runtime.
 
 ### Fixed
 
-- **Preview capture side effects**: Dock/Task View/Orbit preview captures no longer replace the user's clipboard or enter cliphist image history; Dock refreshes are deferred away from click navigation and internal Niri screenshot notifications are suppressed without hiding normal user screenshots.
-- **Japanese OCR matching and presentation**: Jitendex structured entries render as human-readable senses, OCR-inserted spaces between Japanese glyphs are normalized, written forms/readings and common inflections are resolved, useful multi-character terms beat accidental one-kana matches, and the popup stays within screen bounds with its footer/actions visible.
-- **Anki integration states**: iNiR distinguishes Anki missing, closed, AnkiConnect unavailable and connected states before enabling card export, instead of presenting an optional integration failure as an OCR error.
-- **SDDM greeter compatibility**: the ii-pixel theme no longer forces `DisplayServer=x11` or clears the distro input method. Fedora/Nobara and other distributions keep their packaged X11/Wayland greeter provider, and migration 039 removes only iNiR's historical override from existing installs.
-- **Fedora/Debian dependency repair**: Doctor no longer treats command IDs, Arch package names or Flatpak IDs as native DNF/APT package names; awww, Gowall, Mission Center, SongRec, NetworkManager editor, OCR language packs and related providers use distro-appropriate install/repair paths.
-- **Session/runtime reliability**: Niri is now the sole owner of `DISPLAY`, `WAYLAND_DISPLAY` and `NIRI_SOCKET`; `inir.service` waits for Niri readiness instead of guessing compositor sockets, repo-link developers keep live launcher/service symlinks, masked user services are handled safely, screenshot/OCR clipboard owners and Niri night-light helpers live outside `inir.service`, InnerTube can use iNiR's managed Python environment when Debian lacks `ytmusicapi`, and legacy allocator tuning is retired.
-- **Laptop suspend locking**: swayidle now keeps logind's sleep inhibitor until Niri confirms the Quickshell session lock is secure, with a swaylock fallback if that handshake cannot complete; lock avatar fallbacks are deferred to avoid synchronous binding recursion during lid-close output teardown.
-- **Wallpaper transition geometry**: incoming static wallpapers are preflighted for their natural dimensions before the crossfader can present them, backing geometry updates atomically, crossfade has no hidden scale animation, and random shaders avoid unknown UV transforms. Carousel, Coverflow, random and normal wallpaper paths therefore transition directly from the old frame to the final fill/crop instead of showing a provisional shrink/expand/recenter step.
-- **Pixel Clock rendering**: interlocking digits keep their original composition but no longer use transparent knockout masks or an offscreen legacy drop shadow; glyphs stay on Qt scene-graph text rendering so oversized overlaps do not pick up wallpaper-colored seams or native/subpixel fringe artifacts.
-- **Setup output**: Gum alerts expand multiline messages correctly instead of printing literal `\n`, install/update completion surfaces give concise recovery and next-step hints, and session-impacting migrations can emit a one-time relog/reboot recommendation that names the change and explains what may remain stale until the next login.
-- **Desktop and shell polish**: system monitor CPU/GPU temperatures are separated, crosshair chrome clips to its rounded frame, M3 sidebar/layout hints are restored, Material text inputs remain sharp, bar auto-hide/transitions are steadier, custom-image idle tooltips stay hidden and expired notification image handles fall back to stable app icons.
+- Wallpaper shader previews no longer flash the currently applied wallpaper between frames, and rapid preview changes no longer expose AWWW underneath the transition.
+- Wallpaper transitions no longer show provisional resize, recenter or crop states before the final image geometry is ready.
+- Preview and screenshot capture no longer replace the user clipboard or pollute cliphist, while normal Niri screenshot notifications keep their icon.
+- Fedora and Debian dependency repair no longer treats Arch package names, command IDs or Flatpak IDs as native packages, and Fedora prefers packaged AWWW providers before source builds.
+- SDDM setup no longer overrides the distro greeter backend or input method.
+- Nix installs now resolve preview tools from the service environment and keep Niri and optional mascot packaging consistent.
+- Desktop app drag from Overview works again and Dashboard layout no longer regresses while moving items.
+- Visualizer wave and bars modes keep their existing sensitivity, smoothing, color and bar controls after the Organic work.
+- Pixel Clock rendering, setup output and Niri night light handling were cleaned up without changing user configuration.
+- Taskbar application state no longer enters a recursive binding loop.
+- Bar auto-hide, tray interactions and constrained layouts are more stable, and workspace modules can be moved through the full supported ordering range.
+- Material text fields stay sharp, system monitor CPU and GPU temperatures are separated, stale notification image handles fall back cleanly, and idle Custom Image shape tooltips stay hidden.
+- Crosshair chrome now clips to its rounded frame and masked user services are handled safely instead of breaking setup or runtime repair.
+- Repo-link installs keep launcher and service files synchronized with the live checkout instead of leaving stale runtime copies.
+- Managed Python dependency documentation now matches the runtime sources used by the project.
 
 ## [2.29.3] - 2026-08-25
 
