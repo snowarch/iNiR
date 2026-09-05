@@ -586,6 +586,8 @@ Item {
         required property string chipIcon
         required property string chipLabel
         property string value: ""
+        property bool toggled: true
+        property var iconAction: null
 
         signal clicked()
 
@@ -601,6 +603,7 @@ Item {
         readonly property color _colSub: bg.inirEverywhere ? Appearance.inir.colTextSecondary
             : bg.angelEverywhere ? Appearance.angel.colTextSecondary
             : Appearance.colors.colSubtext
+        readonly property color _colAccent: chip.toggled ? chip._colPrimary : chip._colSub
 
         Rectangle {
             id: chipBg
@@ -626,24 +629,61 @@ Item {
                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
             }
 
+            MouseArea {
+                id: chipMA
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: chip.clicked()
+            }
+
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 8
                 anchors.rightMargin: 10
                 spacing: 9
 
-                // Icon in accent-tinted circle
+                // Icon in accent-tinted or muted circle
                 Rectangle {
+                    id: iconCircle
                     Layout.preferredWidth: 32
                     Layout.preferredHeight: 32
                     radius: 16
-                    color: ColorUtils.transparentize(chip._colPrimary, 0.84)
+                    color: {
+                        if (chip.iconAction && iconMA.containsPress)
+                            return ColorUtils.transparentize(chip._colAccent, chip.toggled ? 0.60 : 0.70)
+                        if (chip.iconAction && iconMA.containsMouse)
+                            return ColorUtils.transparentize(chip._colAccent, chip.toggled ? 0.72 : 0.80)
+                        return ColorUtils.transparentize(chip._colAccent, chip.toggled ? 0.84 : 0.90)
+                    }
+
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    }
 
                     MaterialSymbol {
                         anchors.centerIn: parent
                         iconSize: 17
                         text: chip.chipIcon
-                        color: chip._colPrimary
+                        color: chip._colAccent
+
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        }
+                    }
+
+                    MouseArea {
+                        id: iconMA
+                        enabled: chip.iconAction !== null
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (chip.iconAction)
+                                chip.iconAction()
+                        }
                     }
                 }
 
@@ -685,18 +725,10 @@ Item {
                     }
                 }
             }
-
-            MouseArea {
-                id: chipMA
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: chip.clicked()
-            }
         }
 
         BubbleToolTip {
-            visible: chipMA.containsMouse
+            visible: chipMA.containsMouse && !iconMA.containsMouse
             position: "left"
             text: chip.chipLabel
         }
@@ -1659,8 +1691,48 @@ Item {
 
                                         ControlChipButton { Layout.fillWidth: true; chipIcon: "media_output"; chipLabel: Translation.tr("Output"); value: Audio.sink?.description ?? ""; onClicked: root.showAudioOutputDialog = true }
                                         ControlChipButton { Layout.fillWidth: true; chipIcon: "mic_external_on"; chipLabel: Translation.tr("Input"); value: Audio.source?.description ?? ""; onClicked: root.showAudioInputDialog = true }
-                                        ControlChipButton { Layout.fillWidth: true; chipIcon: "bluetooth"; chipLabel: Translation.tr("Bluetooth"); value: Bluetooth.defaultAdapter?.enabled ? Translation.tr("On") : Translation.tr("Off"); onClicked: root.showBluetoothDialog = true }
-                                        ControlChipButton { Layout.fillWidth: true; chipIcon: Network.materialSymbol; chipLabel: Translation.tr("Wi-Fi"); value: Network.networkName ?? ""; onClicked: root.showWifiDialog = true }
+                                        ControlChipButton {
+                                            Layout.fillWidth: true
+                                            chipIcon: BluetoothStatus.activeIcon
+                                            chipLabel: Translation.tr("Bluetooth")
+                                            value: {
+                                                if (!BluetoothStatus.enabled)
+                                                    return Translation.tr("Off")
+                                                if (BluetoothStatus.firstActiveDevice) {
+                                                    const devName = BluetoothStatus.firstActiveDevice.name || BluetoothStatus.firstActiveDevice.deviceName || Translation.tr("Connected")
+                                                    const extra = BluetoothStatus.activeDeviceCount > 1 ? ` (+${BluetoothStatus.activeDeviceCount - 1})` : ""
+                                                    return devName + extra
+                                                }
+                                                return Translation.tr("Not connected")
+                                            }
+                                            toggled: BluetoothStatus.enabled
+                                            iconAction: () => {
+                                                if (Bluetooth.defaultAdapter)
+                                                    Bluetooth.defaultAdapter.enabled = !Bluetooth.defaultAdapter.enabled
+                                            }
+                                            onClicked: root.showBluetoothDialog = true
+                                        }
+                                        ControlChipButton {
+                                            Layout.fillWidth: true
+                                            chipIcon: Network.wifiMaterialSymbol
+                                            chipLabel: Translation.tr("Wi-Fi")
+                                            value: {
+                                                if (!Network.wifiEnabled && !Network.wifiScanning)
+                                                    return Translation.tr("Off")
+                                                if (Network.active?.ssid)
+                                                    return Network.active.ssid
+                                                if (Network.wifiStatus === "connecting")
+                                                    return Translation.tr("Connecting")
+                                                if (Network.wifiScanning)
+                                                    return Translation.tr("Searching networks…")
+                                                return Translation.tr("Not connected")
+                                            }
+                                            toggled: Network.wifiEnabled
+                                            iconAction: () => {
+                                                Network.toggleWifi()
+                                            }
+                                            onClicked: root.showWifiDialog = true
+                                        }
                                     }
                                 }
                             }
@@ -1761,8 +1833,7 @@ Item {
             if (!Bluetooth.defaultAdapter) return
             if (!shown) {
                 Bluetooth.defaultAdapter.discovering = false
-            } else {
-                Bluetooth.defaultAdapter.enabled = true
+            } else if (Bluetooth.defaultAdapter.enabled) {
                 Bluetooth.defaultAdapter.discovering = true
             }
         }
@@ -1780,8 +1851,8 @@ Item {
         dialog: WifiDialog {}
         onShownChanged: {
             if (!shown) return
-            Network.enableWifi()
-            Network.rescanWifi()
+            if (Network.wifiEnabled)
+                Network.rescanWifi()
         }
     }
 

@@ -11,10 +11,12 @@ import Quickshell
 WindowDialog {
     id: root
     backgroundHeight: 450
+    readonly property bool wifiOn: Network.wifiEnabled
 
     WindowDialogTitle {
         text: Translation.tr("Connect to Wi-Fi")
     }
+
     WindowDialogSeparator {
         opacity: !Network.wifiScanning ? 1 : 0
         visible: opacity > 0
@@ -51,15 +53,17 @@ WindowDialog {
         clip: true
         spacing: 4
         animateAppearance: false
+        enabled: root.wifiOn
+        opacity: root.wifiOn ? 1 : 0.45
 
         model: ScriptModel {
-            values: [...Network.wifiNetworks].sort((a, b) => {
+            values: root.wifiOn ? [...Network.wifiNetworks].sort((a, b) => {
                 if (a.active && !b.active)
                     return -1;
                 if (!a.active && b.active)
                     return 1;
                 return b.strength - a.strength;
-            })
+            }) : []
         }
         delegate: WifiNetworkItem {
             required property WifiAccessPoint modelData
@@ -76,19 +80,23 @@ WindowDialog {
         ColumnLayout {
             anchors.centerIn: parent
             spacing: 6
-            visible: Network.wifiNetworks.length === 0 && !Network.wifiScanning
+            visible: Network.wifiNetworks.length === 0 || (!root.wifiOn && !Network.wifiScanning)
 
-            MascotImage {
+            MaterialSymbol {
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 100
-                Layout.preferredHeight: 100
-                pose: "network-offline"
-                surface: "wifi"
-                fallbackSurface: "emptyStates"
+                iconSize: 48
+                text: !root.wifiOn && !Network.wifiScanning ? "signal_wifi_off" : "wifi_find"
+                color: Appearance.colors.colSubtext
             }
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
-                text: Translation.tr("No networks found")
+                text: {
+                    if (!root.wifiOn && !Network.wifiScanning)
+                        return Translation.tr("Wi-Fi is off")
+                    if (Network.wifiScanning)
+                        return Translation.tr("Searching networks…")
+                    return Translation.tr("No networks found")
+                }
                 font.pixelSize: Appearance.font.pixelSize.small
                 color: Appearance.colors.colSubtext
             }
