@@ -597,6 +597,8 @@ Display brightness control.
 |----------|-------------|
 | `increment` | Increase brightness |
 | `decrement` | Decrease brightness |
+| `sleepBegin` | Disable non-internal outputs, then DPMS off (serialized niri ipc). Idle screen-off only; lock does not call this |
+| `restoreAfterWake` | DPMS on, then re-enable pinned outputs with retries until connected or the retry limit |
 
 ---
 

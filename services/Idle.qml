@@ -7,6 +7,7 @@ import Quickshell.Io
 import qs.modules.common
 import qs.modules.common.functions
 import qs.services
+import "idlePolicy.js" as IdlePolicy
 
 Singleton {
     id: root
@@ -69,9 +70,7 @@ Singleton {
 
         if (screenOffTimeout > 0 && CompositorService.isNiri) {
             const inir = StringUtils.shellSingleQuoteEscape(root.launcherPath);
-            const offCmd = `'${inir}' brightness sleepBegin; /usr/bin/niri msg action power-off-monitors`;
-            const resumeCmd = `/usr/bin/niri msg action power-on-monitors && /usr/bin/sleep 0.5 && '${inir}' brightness restoreAfterWake`;
-            cmd.push("timeout", screenOffTimeout.toString(), offCmd, "resume", resumeCmd)
+            cmd.push("timeout", screenOffTimeout.toString(), IdlePolicy.niriOffCommand(inir), "resume", IdlePolicy.niriResumeCommand(inir))
         }
 
         // Determine effective lock timeout
