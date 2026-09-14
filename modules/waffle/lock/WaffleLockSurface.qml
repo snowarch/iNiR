@@ -1729,6 +1729,10 @@ MouseArea {
     }
     
     onClicked: mouse => {
+        if (Brightness.asleep) {
+            Brightness.restoreAfterWake()
+            return
+        }
         if (!root.showLoginView) {
             root.switchToLogin()
         } else {
@@ -1737,12 +1741,21 @@ MouseArea {
     }
     
     onPositionChanged: mouse => {
+        if (Brightness.asleep) {
+            Brightness.restoreAfterWake()
+            return
+        }
         if (root.showLoginView) {
             root.forceFieldFocus()
         }
     }
     
     Keys.onPressed: event => {
+        if (Brightness.asleep) {
+            Brightness.restoreAfterWake()
+            event.accepted = true
+            return
+        }
         root.context.resetClearTimer()
         
         if (event.key === Qt.Key_Control) {
