@@ -1,0 +1,113 @@
+animations {
+    workspace-switch {
+        spring damping-ratio=0.88 stiffness=750 epsilon=0.0001
+    }
+
+    overview-open-close {
+        spring damping-ratio=0.82 stiffness=750 epsilon=0.0001
+    }
+
+    window-open {
+        duration-ms 280
+        curve "cubic-bezier" 0.05 0.7 0.1 1.0
+
+         custom-shader r"
+            vec4 open_color(vec3 coords_geo, vec3 size_geo) {
+                float p = niri_clamped_progress;
+
+                // Slight up-to-down settle.
+                float slide_px = (1.0 - p) * 60.0;
+                float slide_geo = slide_px / max(size_geo.x, 1.0);
+
+                // Very subtle scale-up into place.
+                float scale = 0.985 + 0.015 * p;
+
+                vec2 uv = coords_geo.xy;
+                uv -= vec2(0.5, 0.5);
+                uv /= scale;
+                uv += vec2(0.5, 0.5);
+
+                uv.y -= slide_geo;
+
+                vec3 coords_tex = niri_geo_to_tex * vec3(uv, 1.0);
+                vec4 color = texture2D(niri_tex, coords_tex.st);
+
+                // Gentle fade-in.
+                color *= p;
+
+                return color;
+            }
+        "
+    }
+
+    window-close {
+        duration-ms 200
+        curve "cubic-bezier" 0.3 0.0 0.8 0.15
+        
+        custom-shader r"
+            vec4 close_color(vec3 coords_geo, vec3 size_geo) {
+                float p = niri_clamped_progress;
+                float inv = 1.0 - p;
+
+                // Slight downward departure.
+                float slide_px = p * 40.0;
+                float slide_geo = slide_px / max(size_geo.x, 1.0);
+
+                // Tiny scale-down on exit.
+                float scale = 1.0 - 0.012 * p;
+
+                vec2 uv = coords_geo.xy;
+                uv -= vec2(0.5, 0.5);
+                uv /= scale;
+                uv += vec2(0.5, 0.5);
+
+                uv.y -= slide_geo;
+
+                vec3 coords_tex = niri_geo_to_tex * vec3(uv, 1.0);
+                vec4 color = texture2D(niri_tex, coords_tex.st);
+
+                color *= inv;
+                return color;
+            }
+        "
+    }
+    horizontal-view-movement {
+        spring damping-ratio=0.82 stiffness=750 epsilon=0.0001
+    }
+
+    window-movement {
+        spring damping-ratio=0.78 stiffness=850 epsilon=0.0001
+    }
+
+    window-resize {
+        spring damping-ratio=0.82 stiffness=750 epsilon=0.0001
+        custom-shader r"
+            vec4 resize_color(vec3 coords_curr_geo, vec3 size_curr_geo) {
+                // Show the next texture, but with a very mild softening
+                // toward the edges during motion for a less harsh resize feel.
+                vec3 coords_tex_next = niri_geo_to_tex_next * coords_curr_geo;
+                vec4 color = texture2D(niri_tex_next, coords_tex_next.st);
+
+                vec2 uv = coords_curr_geo.xy;
+                float edge =
+                    min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+
+                float vignette = smoothstep(0.0, 0.06, edge);
+                color.rgb *= mix(0.985, 1.0, vignette);
+
+                return color;
+            }
+        "
+    }
+
+    config-notification-open-close {
+        duration-ms 250
+        curve "cubic-bezier" 0.2 0.0 0.0 1.0
+    }
+
+    screenshot-ui-open {
+        duration-ms 250
+        curve "cubic-bezier" 0.2 0.0 0.0 1.0
+    }
+}
+
