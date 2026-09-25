@@ -3,13 +3,14 @@
 let
   common = import ./module-common.nix { inherit lib pkgs; };
   cfg = config.programs.inir;
+  finalPackage = common.resolvePackage cfg;
   wantedUnit = common.compositorUnit cfg.service.compositor;
 in
 {
   imports = [ common.optionsModule ];
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ cfg.package ];
+    environment.systemPackages = [ finalPackage ];
 
     systemd.user.services.inir = lib.mkIf cfg.service.enable {
       description = "iNiR shell";
