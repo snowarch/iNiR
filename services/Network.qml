@@ -33,30 +33,34 @@ Singleton {
     // wifiEnabled is true — so keying the strength icons off wifiEnabled both
     // rendered a stale full-strength icon after disconnecting and left the
     // "not_connected"/"wifi_find" branches permanently unreachable.
-    property string materialSymbol: root.ethernet
-        ? "lan"
-        : !root.wifiEnabled
+    property int wifiSignal: root.active?.strength || root.networkStrength
+    property string wifiMaterialSymbol: root.active
+        ? (
+            root.wifiSignal > 83 ? "signal_wifi_4_bar" :
+            root.wifiSignal > 67 ? "network_wifi" :
+            root.wifiSignal > 50 ? "network_wifi_3_bar" :
+            root.wifiSignal > 33 ? "network_wifi_2_bar" :
+            root.wifiSignal > 17 ? "network_wifi_1_bar" :
+            "signal_wifi_0_bar"
+        )
+        : (!root.wifiEnabled && !root.wifiScanning)
             ? "signal_wifi_off"
-            : (root.wifiStatus === "connected" || root.wifiStatus === "limited")
-                ? (
-                    Network.networkStrength > 83 ? "signal_wifi_4_bar" :
-                    Network.networkStrength > 67 ? "network_wifi" :
-                    Network.networkStrength > 50 ? "network_wifi_3_bar" :
-                    Network.networkStrength > 33 ? "network_wifi_2_bar" :
-                    Network.networkStrength > 17 ? "network_wifi_1_bar" :
-                    "signal_wifi_0_bar"
-                )
-                : (root.wifiStatus === "connecting")
-                    ? "signal_wifi_statusbar_not_connected"
-                    : (root.wifiStatus === "disconnected")
-                        ? "wifi_find"
-                        : (root.wifiStatus === "disabled")
-                            ? "signal_wifi_off"
-                            : "signal_wifi_bad"
+            : (root.wifiStatus === "connecting")
+                ? "signal_wifi_statusbar_not_connected"
+                : (root.wifiStatus === "disconnected" || root.wifiScanning)
+                    ? "wifi_find"
+                    : (root.wifiStatus === "disabled")
+                        ? "signal_wifi_off"
+                        : "signal_wifi_bad"
+    property string materialSymbol: root.ethernet ? "lan" : root.wifiMaterialSymbol
 
     // Control
     function enableWifi(enabled = true): void {
         const cmd = enabled ? "on" : "off";
+        if (!enabled) {
+            root.wifiScanning = false;
+            _scanPoll.stop();
+        }
         enableWifiProc.exec(["nmcli", "radio", "wifi", cmd]);
     }
 
@@ -64,8 +68,13 @@ Singleton {
         enableWifi(!wifiEnabled);
     }
 
+    property int _scanPolls: 0
+
     function rescanWifi(): void {
-        wifiScanning = true;
+        if (!root.active)
+            root.wifiScanning = true;
+        getNetworks.running = true;
+        rescanProcess.running = false;
         rescanProcess.running = true;
     }
 
@@ -129,6 +138,12 @@ Singleton {
 
     Process {
         id: enableWifiProc
+        onExited: exitCode => {
+            wifiStatusProcess.running = true;
+            if (exitCode === 0 && root.wifiEnabled) {
+                root.rescanWifi();
+            }
+        }
     }
 
     Process {
@@ -177,11 +192,28 @@ Singleton {
 
     Process {
         id: rescanProcess
-        command: ["nmcli", "dev", "wifi", "list", "--rescan", "yes"]
-        stdout: SplitParser {
-            onRead: {
-                wifiScanning = false;
-                getNetworks.running = true;
+        command: ["nmcli", "device", "wifi", "rescan"]
+        environment: ({
+            LANG: "C",
+            LC_ALL: "C"
+        })
+        onExited: {
+            getNetworks.running = true;
+            root._scanPolls = 0;
+            _scanPoll.restart();
+        }
+    }
+
+    Timer {
+        id: _scanPoll
+        interval: 500
+        repeat: true
+        onTriggered: {
+            getNetworks.running = true;
+            root._scanPolls += 1;
+            if (root._scanPolls >= 12) {
+                stop();
+                root.wifiScanning = false;
             }
         }
     }
@@ -219,6 +251,7 @@ Singleton {
 
     Component.onDestruction: {
         root._destroying = true;
+        _scanPoll.stop();
         subscriber.running = false;
     }
 
@@ -342,7 +375,7 @@ Singleton {
     Process {
         id: getNetworks
         running: false
-        command: ["nmcli", "-g", "ACTIVE,SIGNAL,FREQ,SSID,BSSID,SECURITY,RATE", "d", "w"]
+        command: ["nmcli", "-g", "ACTIVE,SIGNAL,FREQ,SSID,BSSID,SECURITY,RATE", "device", "wifi", "list", "--rescan", "no"]
         environment: ({
             LANG: "C",
             LC_ALL: "C"
@@ -387,9 +420,16 @@ Singleton {
                 }
 
                 const wifiNetworks = Array.from(networkMap.values());
+                const activeNet = wifiNetworks.find(n => n.active);
+                if (activeNet?.ssid) {
+                    root.wifi = true;
+                    if (root.wifiStatus !== "limited")
+                        root.wifiStatus = "connected";
+                }
+                if (wifiNetworks.length > 0)
+                    root.wifiScanning = false;
 
                 const rNetworks = root.wifiNetworks;
-
                 const destroyed = rNetworks.filter(rn => !wifiNetworks.find(n => n.frequency === rn.frequency && n.ssid === rn.ssid && n.bssid === rn.bssid));
                 for (const network of destroyed)
                     rNetworks.splice(rNetworks.indexOf(network), 1).forEach(n => n.destroy());
