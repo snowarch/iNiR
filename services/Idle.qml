@@ -8,6 +8,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.services
 import "idlePolicy.js" as IdlePolicy
+import "root:modules/common/functions/idleProfile.js" as IdleProfile
 
 Singleton {
     id: root
@@ -16,19 +17,19 @@ Singleton {
 
     property bool inhibit: false
 
-    // Battery profile: only meaningful on a laptop that is actually unplugged.
-    readonly property bool batteryProfileActive: (Config.options?.idle?.onBattery?.enable ?? false)
-        && Battery.available && !Battery.isPluggedIn
+    readonly property var _resolvedIdle: IdleProfile.resolveTimeouts(
+        Config.options?.idle,
+        {
+            available: Battery.available,
+            onBattery: Battery.onBattery,
+            percentage: Battery.percentage,
+        }
+    )
 
-    readonly property int screenOffTimeout: batteryProfileActive
-        ? (Config.options?.idle?.onBattery?.screenOffTimeout ?? 120)
-        : (Config.options?.idle?.screenOffTimeout ?? 300)
-    readonly property int lockTimeout: batteryProfileActive
-        ? (Config.options?.idle?.onBattery?.lockTimeout ?? 300)
-        : (Config.options?.idle?.lockTimeout ?? 600)
-    readonly property int suspendTimeout: batteryProfileActive
-        ? (Config.options?.idle?.onBattery?.suspendTimeout ?? 600)
-        : (Config.options?.idle?.suspendTimeout ?? 0)
+    readonly property bool batteryProfileActive: _resolvedIdle.isBatteryProfile
+    readonly property int screenOffTimeout: _resolvedIdle.screenOffTimeout
+    readonly property int lockTimeout: _resolvedIdle.lockTimeout
+    readonly property int suspendTimeout: _resolvedIdle.suspendTimeout
     readonly property string launcherPath: Quickshell.shellPath("scripts/inir")
 
     onScreenOffTimeoutChanged: _restartSwayidle()
