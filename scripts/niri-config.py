@@ -160,7 +160,7 @@ def cmd_outputs():
 
     for name, out in data.items():
         modes = out.get("modes", [])
-        current_idx = out.get("current_mode", 0)
+        current_idx = out.get("current_mode") or 0
         logical = out.get("logical") or {}
 
         res_map = {}
