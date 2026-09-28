@@ -23,7 +23,7 @@ Scope {
     readonly property int intervalMinutes: Config.options?.mascot?.companion?.intervalMinutes ?? 25
     readonly property int spriteSize: Config.options?.mascot?.companion?.size ?? 150
     readonly property string placement: Config.options?.mascot?.companion?.placement ?? "peek"
-    readonly property int visibleSeconds: Config.options?.mascot?.companion?.visibleSeconds ?? 8
+    readonly property int visibleSeconds: Config.options?.mascot?.companion?.visibleSeconds ?? 5
     readonly property int slideMs: Config.options?.mascot?.companion?.slideMs ?? 400
     // Per-peek entrance profile, re-rolled on every show so arrivals stop
     // feeling metronomic: sometimes she zips out, sometimes she creeps in
@@ -43,6 +43,7 @@ Scope {
 
     // Only peek from edges the user allows; fall back to any edge if all are off
     function _edgeAllowed(e) {
+        if (!["left", "right", "top", "bottom"].includes(e)) return false
         // Never slide out from behind an open sidebar — overlapping an
         // active surface reads as a rendering glitch, not a visit
         if (e === "left" && GlobalStates.sidebarLeftOpen) return false
@@ -56,10 +57,40 @@ Scope {
         if (_edgeAllowed(e)) return e
         for (const alt of ["left", "right", "top", "bottom"])
             if (_edgeAllowed(alt)) return alt
-        return e
+        return ""
     }
-    readonly property bool suppressed: GameMode.active || GameMode.hasVisibleFullscreenWindow
-        || GlobalStates.screenLocked || GlobalStates.sessionOpen
+    readonly property bool suppressed: MascotChaos.suppressed
+    property var _visits: []
+    property string _pendingRomp: ""
+    readonly property int quietMinutes: Math.max(3, Config.options?.mascot?.companion?.minQuietMinutes ?? 10)
+    readonly property int hourlyLimit: Math.max(1, Math.min(6, Config.options?.mascot?.companion?.maxVisitsPerHour ?? 3))
+
+    function _canVisit(): bool {
+        const now = Date.now()
+        return companionEnabled && !suppressed && !showing && !rompActive && !_pendingRomp.length
+            && !snoozeTimer.running && now - _lastShownAt >= quietMinutes * 60000 * _attentionFactor
+            && _visits.filter(t => now - t < 3600000).length < hourlyLimit
+    }
+    function _recordVisit(): void {
+        const now = Date.now()
+        _lastShownAt = now
+        _visits = _visits.filter(t => now - t < 3600000).concat([now])
+    }
+    function dismiss(minutes: int): void {
+        hide()
+        _pendingRomp = ""
+        rompStartTimer.stop()
+        encoreTimer.stop()
+        systemChaosFollowup.stop()
+        systemChaosRompAfterTeardown.stop()
+        if (rompLoader.item) rompLoader.item._abort()
+        MascotChaos.tidy()
+        if (minutes > 0) {
+            snoozeTimer.interval = Math.min(480, minutes) * 60000
+            snoozeTimer.restart()
+        }
+    }
+    Timer { id: snoozeTimer }
 
     // Where the user's main panel actually lives — contextual reactions and
     // panel-flavored peeks come from this edge instead of a hardcoded "top"
@@ -82,6 +113,19 @@ Scope {
     }
 
     property string pose: "edge-peek"
+    readonly property string characterState: {
+        if (_clickCount >= 4) return "failed"
+        if (_clickCount > 0) return "celebrate"
+        if (/wave|welcome|greet/.test(pose)) return "wave"
+        if (/peek|lean/.test(pose)) return "peek"
+        if (/think|read|settings|inspect|detective/.test(pose)) return "inspect"
+        if (/music|groove|celebrate/.test(pose)) return "celebrate"
+        if (/sleep|yawn|tired/.test(pose)) return "waiting"
+        return "idle"
+    }
+    property bool _useOriginalPose: false
+    readonly property string displayPose: _useOriginalPose ? pose : MascotCatalog.characterPose(pose, characterState)
+
     property string edge: "right" // "left" | "right" | "top"
     property bool showing: false
     property string line: ""
@@ -321,17 +365,19 @@ Scope {
     property string _pendingLineArg: ""
 
     function show(poseName: string, edgeName: string): bool {
-        if (!companionEnabled || suppressed || showing) {
+        if (!companionEnabled || suppressed || showing || rompActive || _pendingRomp.length) {
             console.log(`[MascotCompanion] peek denied (enabled=${companionEnabled} suppressed=${suppressed} showing=${showing})`)
             _pendingLineArg = ""
             return false
         }
         edgeName = _fixEdge(edgeName)
+        if (!edgeName.length) { _pendingLineArg = ""; return false }
         // Pose-edge coherence: edge-anchored art never appears from a wrong
         // edge, no matter what settings overrides or IPC calls request.
         const aff = _manifest.poseAffinity?.[poseName]
         if (aff && aff.length && !aff.includes(edgeName))
-            edgeName = aff.find(e => _edgeAllowed(e)) ?? aff[0]
+            edgeName = aff.find(e => _edgeAllowed(e)) ?? ""
+        if (!edgeName.length) { _pendingLineArg = ""; return false }
 
         // Edge switch mid-teardown: kill old window so slide-in originates from the new edge
         if (companionLoader.active && !showing && edgeName !== edge) {
@@ -339,6 +385,7 @@ Scope {
         }
 
         console.log(`[MascotCompanion] peek: ${poseName} from ${edgeName}`)
+        _useOriginalPose = false
         pose = poseName
         edge = edgeName
         _visitArtStyle = _artStyleOf(poseName)
@@ -353,7 +400,7 @@ Scope {
         // Dwell jitter: quick drive-by peeks and lingering stays instead of a
         // fixed on-screen time (re-rolled per peek, so the binding is moot).
         hideTimer.interval = Math.max(3, visibleSeconds) * 1000 * (0.7 + Math.random() * 0.6)
-        _lastShownAt = Date.now()
+        _recordVisit()
         showing = true
         hideTimer.restart()
         return true
@@ -368,6 +415,12 @@ Scope {
     readonly property bool commentaryOn: Config.options?.mascot?.personality?.commentary ?? true
     function _smartCandidates() {
         const out = []
+        if ((Config.options?.mascot?.companion?.shellReactions ?? true)) {
+            if (GlobalStates.sidebarLeftOpen) out.push({ key: "shell-sidebar-left", pose: "thinking-pose", edge: "right" })
+            if (GlobalStates.sidebarRightOpen) out.push({ key: "shell-sidebar-right", pose: "settings-judging", edge: "left" })
+            if (GlobalStates.overviewOpen) out.push({ key: "shell-overview", pose: "overview-orbit", edge: "bottom" })
+            if (GlobalStates.searchOpen) out.push({ key: "shell-search", pose: "detective-glass", edge: "bottom" })
+        }
         const now = new Date()
         const day = now.getDay()
         const hour = now.getHours()
@@ -469,14 +522,13 @@ Scope {
     function poke(): bool {
         // Chaos mode: once in a while the idle visit is a full desktop romp
         if (chaosEnabled && !rompActive
-            && Date.now() - _lastRompAt > 30 * 60 * 1000
-            && Math.random() < 0.12) {
-            const r = Math.random()
-            return startRomp(r < 0.15 ? "chase" : (r < 0.30 ? "hide" : "romp"))
+            && Date.now() - _lastRompAt > Math.max(15, Config.options?.mascot?.chaos?.intervalMinutes ?? 45) * 60000
+            && Math.random() < 0.25) {
+            return startRomp("romp")
         }
         const ctxs = _smartCandidates()
         const ctxLines = _manifest.contextLines ?? ({})
-        if (ctxs.length && Math.random() < 0.35) {
+        if (ctxs.length && Math.random() < 0.8) {
             const c = ctxs[Math.floor(Math.random() * ctxs.length)]
             const pool = ctxLines[c.key] ?? []
             if (pool.length) {
@@ -505,9 +557,8 @@ Scope {
 
     // Independent detectors share one long cooldown so they cannot take turns
     // interrupting the user while each appears individually rate-limited.
-    readonly property int _reactionCooldownMs: 8 * 60 * 1000
     function _showReaction(poseName, edgeName, sourceWidget) {
-        if (Date.now() - _lastShownAt < _reactionCooldownMs) {
+        if (!_canVisit()) {
             console.log(`[MascotCompanion] reaction '${poseName}' swallowed by cooldown`)
             root._pendingLineArg = ""
             return false
@@ -515,12 +566,11 @@ Scope {
         const contextualOn = Config.options?.mascot?.companion?.contextualPlacement ?? false
         if (contextualOn && sourceWidget.length > 0) {
             root._contextualSource = sourceWidget
-            show(poseName, root.panelEdge)
+            return show(poseName, root.panelEdge)
         } else {
             root._contextualSource = ""
-            show(poseName, edgeName)
+            return show(poseName, edgeName)
         }
-        return true
     }
     // Every event reaction is user-configurable: on/off per event, and an
     // optional fixed pose override (settings) replacing the manifest pool.
@@ -554,7 +604,8 @@ Scope {
         })
         const r = _reactionMap[key] ?? fallback[key]
         if (!r) return
-        _showReaction(_eventPose(key, r.poses), r.edge ?? "right", r.source ?? "")
+        if (_showReaction(_eventPose(key, r.poses), r.edge ?? "right", r.source ?? ""))
+            _useOriginalPose = (Config.options?.mascot?.companion?.eventPoses?.[key] ?? "").length > 0
     }
     function _reactWithLine(poseName, edgeName, sourceWidget, lineText) {
         if (_showReaction(poseName, edgeName, sourceWidget))
@@ -568,12 +619,12 @@ Scope {
 
     Timer {
         id: idleTimer
-        running: root.companionEnabled && !root.showing && !root.suppressed
+        running: root.companionEnabled && !root.showing && !root.rompActive && !root.suppressed && !snoozeTimer.running
         repeat: true
         interval: Math.max(3, root.intervalMinutes) * 60000 * (0.75 + Math.random() * 0.5) * root._attentionFactor
         onTriggered: {
             interval = Math.max(3, root.intervalMinutes) * 60000 * (0.75 + Math.random() * 0.5) * root._attentionFactor
-            root.poke()
+            if (root._canVisit()) root.poke()
         }
     }
 
@@ -587,7 +638,16 @@ Scope {
     }
 
     // If a fullscreen window / game / lock appears mid-peek, vanish instantly
-    onSuppressedChanged: if (suppressed) hide()
+    onSuppressedChanged: if (suppressed) dismiss(0)
+    onCompanionEnabledChanged: if (!companionEnabled) dismiss(0)
+    onChaosEnabledChanged: if (!chaosEnabled) {
+        _pendingRomp = ""
+        rompStartTimer.stop()
+        encoreTimer.stop()
+        systemChaosFollowup.stop()
+        systemChaosRompAfterTeardown.stop()
+        if (rompLoader.item) rompLoader.item._abort()
+    }
 
     Connections {
         target: MprisController
@@ -622,7 +682,12 @@ Scope {
             if (usePool.length === 0) { root._showReaction(mpose, "right", "media"); return }
             const truncatedTitle = title.length > 40 ? title.substring(0, 37) + "..." : title
             let text = Translation.tr(root._pickFrom(usePool))
-            text = artist.length > 0 ? text.arg(truncatedTitle).arg(artist) : text.arg(truncatedTitle)
+            // QString::arg replaces the lowest-numbered placeholder first, so a
+            // line containing only %2 consumes the title and then warns when the
+            // artist is applied. Preserve the manifest's positional contract.
+            text = text.replace(/%1/g, truncatedTitle)
+            if (artist.length > 0)
+                text = text.replace(/%2/g, artist)
             root._reactWithLine(mpose, "right", "media", text)
         }
     }
@@ -755,6 +820,28 @@ Scope {
     }
     Timer { id: wsHopsWindow; interval: 4000; onTriggered: root._wsHops = 0 }
 
+    Connections {
+        target: GlobalStates
+        function onSidebarLeftOpenChanged() { shellVisitTimer.restart() }
+        function onSidebarRightOpenChanged() { shellVisitTimer.restart() }
+        function onOverviewOpenChanged() { shellVisitTimer.restart() }
+        function onSearchOpenChanged() { shellVisitTimer.restart() }
+    }
+    Timer {
+        id: shellVisitTimer
+        interval: 1800
+        onTriggered: {
+            if (!root._canVisit()
+                || !(Config.options?.mascot?.companion?.shellReactions ?? true)) return
+            const candidates = root._smartCandidates().filter(c => c.key.startsWith("shell-"))
+            if (!candidates.length) return
+            const c = candidates[0]
+            const lines = root._manifest.contextLines?.[c.key] ?? []
+            if (lines.length && root._showWithLine(c.pose, c.edge, Translation.tr(root._pickFrom(lines))))
+                root._remember(root._recentContexts, c.key, 6)
+        }
+    }
+
     // ── Chaos mode: she runs across the desktop and messes with it ──────
     property bool rompActive: false
     property string rompMode: "romp"
@@ -765,10 +852,27 @@ Scope {
             console.log(`[MascotCompanion] romp denied (chaos=${chaosEnabled} suppressed=${suppressed} active=${rompActive})`)
             return false
         }
+        if (!["romp", "chase", "hide", "cleanup"].includes(mode)) return false
+        if (showing || teardownTimer.running) {
+            hide()
+            _pendingRomp = mode
+            rompStartTimer.restart()
+            return true
+        }
         _lastRompAt = Date.now()
+        _recordVisit()
         rompMode = mode
         rompActive = true
         return true
+    }
+    Timer {
+        id: rompStartTimer
+        interval: Math.max(500, root.slideMs * root._slideScale + 150)
+        onTriggered: {
+            const mode = root._pendingRomp
+            root._pendingRomp = ""
+            if (mode.length) root.startRomp(mode)
+        }
     }
     Loader {
         id: rompLoader
@@ -795,9 +899,9 @@ Scope {
     // One shared cooldown across all four signals so she doesn't nag.
     property double _lastSystemChaosAt: 0
     function _checkSystemChaos(): void {
-        if (!chaosEnabled || rompActive || suppressed) return
+        if (!chaosEnabled || !_canVisit()) return
         if (!(Config.options?.mascot?.chaos?.systemEvents ?? true)) return
-        if (Date.now() - _lastSystemChaosAt < 45 * 60 * 1000) return
+        if (Date.now() - Math.max(_lastSystemChaosAt, _lastRompAt) < Math.max(15, Config.options?.mascot?.chaos?.intervalMinutes ?? 45) * 60000) return
 
         const triggers = _manifest.chaosTriggers ?? ({})
         let key = "", pose = ""
@@ -848,7 +952,7 @@ Scope {
     }
     Timer {
         interval: 5 * 60 * 1000
-        running: true
+        running: root.chaosEnabled && !root.suppressed && !snoozeTimer.running
         repeat: true
         onTriggered: root._checkSystemChaos()
     }
@@ -862,7 +966,17 @@ Scope {
             return JSON.stringify({
                 enabled: root.companionEnabled,
                 showing: root.showing,
+                rompActive: root.rompActive,
+                rompPlan: rompLoader.item?.planType ?? "",
+                rompPhase: rompLoader.item?.phase ?? "",
+                suppressed: root.suppressed,
+                snoozed: snoozeTimer.running,
+                visitsLastHour: root._visits.filter(t => Date.now() - t < 3600000).length,
+                minQuietMinutes: root.quietMinutes,
+                maxVisitsPerHour: root.hourlyLimit,
                 pose: root.pose,
+                displayPose: root.displayPose,
+                characterStyle: MascotCatalog.characterStyle,
                 edge: root.edge,
                 mood: MascotMood.currentMood ?? "neutral",
                 configuredVoiceMode: root._configuredVoiceMode,
@@ -903,7 +1017,7 @@ Scope {
                 root.line = Translation.tr(root._pickFrom(t.lines ?? ["You saw nothing."]))
         }
         // Named "appear" because "show" collides with the `qs ipc show` subcommand
-        function appear(pose: string, edge: string): void { root.show(pose, edge) }
+        function appear(pose: string, edge: string): void { if (root.show(pose, edge)) root._useOriginalPose = true }
         function appearContextual(pose: string, sourceWidget: string): void {
             // Testable entry: skip reactTo cooldown (it's an explicit IPC call)
             root._contextualSource = sourceWidget
@@ -913,7 +1027,8 @@ Scope {
         function appearWithLine(pose: string, edge: string, line: string): void {
             if (root.show(pose, edge)) root.line = line
         }
-        function hide(): void { root.hide() }
+        function hide(): void { root.dismiss(30) }
+        function snooze(minutes: int): void { root.dismiss(Math.max(1, minutes)) }
     }
 
     // Load pose data / dialogue from manifest.json at runtime
@@ -1032,7 +1147,7 @@ Scope {
                 AnimatedImage {
                     id: companionSprite
                     anchors.fill: parent
-                    source: Quickshell.shellPath(`assets/images/mascot/inir-mascot-${root.pose}.${root.animatedPoses.includes(root.pose) ? "gif" : "png"}`)
+                    source: Quickshell.shellPath(`assets/images/mascot/inir-mascot-${root.displayPose}.${root.animatedPoses.includes(root.displayPose) ? "gif" : "png"}`)
                     playing: root.showing
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
@@ -1145,7 +1260,7 @@ Scope {
                         : mascotItem.y + mascotItem.height * 0.22 - height / 2
 
                 visible: opacity > 0
-                opacity: root.showing && root.line.length > 0 ? 1 : 0
+                opacity: (Config.options?.mascot?.companion?.dialogue ?? true) && root.showing && root.line.length > 0 ? 1 : 0
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

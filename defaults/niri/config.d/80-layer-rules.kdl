@@ -25,6 +25,15 @@ layer-rule {
     opacity 1.0
 }
 
+// iRiS surfaces. With iRiS glass set to Blur they ask Niri to blur what is
+// below them; xray off makes that the windows, not only the wallpaper.
+layer-rule {
+    match namespace="^quickshell:iris-"
+    background-effect {
+        xray false
+    }
+}
+
 // ── Examples ────────────────────────────────────────────────────────────────
 // Make a specific layer surface semi-transparent:
 // layer-rule {

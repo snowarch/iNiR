@@ -25,8 +25,8 @@ PanelSurface {
     readonly property MprisPlayer player: MprisController.activePlayer
     readonly property bool isPlaying: player?.isPlaying ?? false
     readonly property bool _zzz: Appearance.zzzEverywhere
-    readonly property real _progress: (player?.length ?? 0) > 0
-        ? Math.max(0, Math.min(1, (player?.position ?? 0) / player.length)) : 0
+    readonly property real _progress: MprisController.lengthOf(player) > 0
+        ? Math.max(0, Math.min(1, MprisController.positionOf(player) / MprisController.lengthOf(player))) : 0
 
     elevation: 2
     cardStyle: true
@@ -266,7 +266,7 @@ PanelSurface {
                 enabled: media.player?.canSeek ?? false
                 value: media._progress
                 onMoved: if (media.player)
-                    media.player.position = value * (media.player.length ?? 0)
+                    MprisController.seek(media.player, value * MprisController.lengthOf(media.player))
             }
 
             Item {
@@ -319,7 +319,7 @@ PanelSurface {
                     onPressed: mouse => dragFrac = fracAt(mouse.x)
                     onPositionChanged: mouse => { if (pressed) dragFrac = fracAt(mouse.x) }
                     onReleased: if (media.player)
-                        media.player.position = dragFrac * (media.player.length ?? 0)
+                        MprisController.seek(media.player, dragFrac * MprisController.lengthOf(media.player))
                 }
             }
 
@@ -330,15 +330,15 @@ PanelSurface {
                     id: elapsed
                     anchors.left: parent.left
                     text: StringUtils.friendlyTimeForSeconds(seekArea.pressed
-                        ? seekArea.dragFrac * (media.player?.length ?? 0)
-                        : (media.player?.position ?? 0))
+                        ? seekArea.dragFrac * MprisController.lengthOf(media.player)
+                        : MprisController.positionOf(media.player))
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.features: { "tnum": 1 }
                     color: Appearance.colors.colSubtext
                 }
                 StyledText {
                     anchors.right: parent.right
-                    text: StringUtils.friendlyTimeForSeconds(media.player?.length ?? 0)
+                    text: StringUtils.friendlyTimeForSeconds(MprisController.lengthOf(media.player))
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.features: { "tnum": 1 }
                     color: Appearance.colors.colSubtext

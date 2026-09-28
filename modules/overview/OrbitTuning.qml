@@ -434,14 +434,35 @@ QtObject {
         return (options?.advanced ?? false) || navigationPreset(options) === "custom"
     }
 
-    function navigationDuration(options): int {
+    function navigationDuration(options, layout = ""): int {
         const preset = navigationPreset(options)
         if (preset === "instant") return 0
         if (navigationAdvanced(options))
             return Math.max(80, Math.min(600, options?.durationMs ?? 320))
-        if (preset === "snappy") return 190
-        if (preset === "cinematic") return 420
-        return 320
+        const normalizedLayout = ["orbit", "horizon", "gallery", "deck", "atlas"].includes(layout)
+            ? layout : "stage"
+        if (preset === "snappy") {
+            if (normalizedLayout === "atlas") return 125
+            if (normalizedLayout === "horizon") return 145
+            if (normalizedLayout === "gallery") return 155
+            if (normalizedLayout === "deck") return 170
+            if (normalizedLayout === "orbit") return 165
+            return 150
+        }
+        if (preset === "cinematic") {
+            if (normalizedLayout === "atlas") return 250
+            if (normalizedLayout === "horizon") return 285
+            if (normalizedLayout === "gallery") return 305
+            if (normalizedLayout === "deck") return 330
+            if (normalizedLayout === "orbit") return 320
+            return 290
+        }
+        if (normalizedLayout === "atlas") return 165
+        if (normalizedLayout === "horizon") return 185
+        if (normalizedLayout === "gallery") return 200
+        if (normalizedLayout === "deck") return 220
+        if (normalizedLayout === "orbit") return 210
+        return 195
     }
 
     function navigationEasing(options): string {
@@ -453,5 +474,16 @@ QtObject {
         if (preset === "snappy") return "direct"
         if (preset === "instant") return "linear"
         return "smooth"
+    }
+
+    function navigationEasingType(options): int {
+        const easing = navigationEasing(options)
+        if (easing === "linear") return Easing.Linear
+        if (easing === "direct") return Easing.OutQuart
+        if (navigationPreset(options) === "cinematic") return Easing.InOutCubic
+        // Workspace navigation must react immediately to repeated input. An
+        // ease-out keeps the fast initial response while still settling softly;
+        // InOutCubic restarted from zero velocity on every key/scroll event.
+        return Easing.OutCubic
     }
 }

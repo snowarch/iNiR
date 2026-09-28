@@ -10,6 +10,7 @@
 
 ### Use
 - [Panel families](PANEL_FAMILIES)
+- [iRiS](IRIS)
 - [Configuration](CONFIG_SYSTEM)
 - [Wallpaper](WALLPAPER)
 - [Notifications](NOTIFICATIONS)

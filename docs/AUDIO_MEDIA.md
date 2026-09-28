@@ -24,9 +24,19 @@ The OSD (on-screen display) appears for volume and brightness changes, showing t
 
 The right sidebar (ii) and action center (waffle) include a per-app volume mixer. Each app that's outputting audio appears with its own volume slider. You can mute individual apps or adjust their volume independently.
 
+### Visualizer source filters
+
+Visualizer app filters are exclusions, not an allowlist. In **Settings → Quick → Filters**, enabling a filter for an audio app prevents that app from being selected to drive Cava/visualizers. With no visualizer filters enabled, iNiR follows the active player automatically. Cava captures the monitor of the selected playback sink rather than a recording source, so source resolution never falls through to the system microphone. The list is populated from live PipeWire applications, and manual desktop-entry filters can be added when an app is not currently producing audio.
+
+### Organic visualizer
+
+Bars, M3, Pill and Vertical layouts can use the **Organic** visualizer mode. Instead of drawing a conventional spectrum inside the panel, Organic grows from the panel edges and follows the host geometry while keeping the bar's layout and exclusive zone unchanged. Its response, reach, glow, idle motion and related controls live with the normal visualizer settings.
+
 ### EasyEffects
 
 If EasyEffects is installed, iNiR detects its virtual sink and controls the physical sink behind it instead. This means volume control works correctly whether EasyEffects is running or not. A toggle in the right sidebar/action center lets you enable/disable EasyEffects.
+
+On EasyEffects 8.2.8 or newer, the ii media controls can also open a native 10-band output equalizer. It is opt-in under **Settings → Modules → Optional → EasyEffects Equalizer**. When disabled, iNiR does not construct the equalizer panel or its IPC owner. When enabled, iNiR talks to EasyEffects through its local server, discovers the actual `equalizer#N` instance, mirrors gain changes to left and right channels, and leaves the rest of the user's effects chain untouched. The audio bundle includes the Linux Studio Plugins LV2 backend used by EasyEffects' Equalizer. On a fresh EasyEffects setup with an empty output pipeline, iNiR creates and loads a neutral `iNiR Equalizer` preset so the 10-band control works immediately. If the output pipeline already contains other effects, iNiR never replaces them just to add Equalizer; the panel instead asks the user to add Equalizer in EasyEffects and detects it automatically.
 
 ### IPC
 

@@ -37,7 +37,7 @@ RippleButton {
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colSecondary
     colBackgroundHover: root.compact ? Appearance.colors.colLayer1
         : Appearance.inirEverywhere ? Appearance.inir.colPrimaryHover : Appearance.colors.colSecondaryHover
-    colRipple: root.compact ? Appearance.colors.colLayer1Active
+    colRipple: root.compact ? Appearance.colLayer1Active
         : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colSecondaryActive
     buttonRadius: root.compact ? Appearance.rounding.small
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall

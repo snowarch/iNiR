@@ -15,6 +15,10 @@ Singleton {
         precision: {
             if ((Config.options?.time?.secondPrecision ?? false) || GlobalStates.screenLocked)
                 return SystemClock.Seconds;
+            // The lock screen may show seconds, and it is rehearsed while unlocked.
+            if ((Config.options?.iris?.lock?.type?.seconds ?? false)
+                    && (GlobalStates.irisLockEdit || GlobalStates.screenLocked))
+                return SystemClock.Seconds;
             // Cookie clock second hand needs sub-minute ticks without requiring global secondPrecision
             if ((Config.options?.background?.widgets?.clock?.style ?? "cookie") === "cookie"
                     && (Config.options?.background?.widgets?.clock?.cookie?.secondHandStyle ?? "hide") !== "hide")

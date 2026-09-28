@@ -1,9 +1,12 @@
 # iNiR Widget SDK
 
-Custom desktop widgets that run on the iNiR shell. Full QML access to 73 services,
-130+ UI components, and the entire Appearance token system.
+Custom desktop widgets that run on the iNiR shell. Full QML access to 100+ services,
+190+ UI components, and the entire Appearance token system.
 
 Widgets live in `~/.config/inir/widgets/<name>/` and are loaded automatically.
+
+Widgets may also expose a compact iRiS module, which sits on the Island's Desktop page. See
+`IRIS-SDK.md` for its manifest and tokens.
 
 ## Quick Start
 
@@ -290,12 +293,12 @@ Graph {
 ```qml
 CavaProcess {
     id: cava
-    active: true  // starts cava subprocess
+    active: root.visible  // subscribes to the shared cava stream
 }
 CavaVisualizer {
     width: 200; height: 60
     points: cava.points
-    barColor: Appearance.colors.colPrimary
+    colorHigh: Appearance.colors.colPrimary
     barRadius: Appearance.rounding.verysmall
 }
 ```

@@ -276,6 +276,27 @@ Singleton {
         return String(name ?? "").toLowerCase().replace(/[^a-z0-9]/g, "")
     }
 
+    function _notificationBlocked(notification): bool {
+        const blocked = Config.options?.notifications?.blockedApps ?? []
+        if (!blocked || blocked.length === 0)
+            return false
+
+        const appName = root._normalizeAppKey(notification?.appName)
+        // appName is the notification protocol's application identity. Fall
+        // back to appIcon only for senders that omit it; matching icon paths in
+        // addition to a valid name would make generic tokens overly broad.
+        const candidates = appName.length > 0
+            ? [appName]
+            : [root._normalizeAppKey(notification?.appIcon)].filter(value => value.length > 0)
+        if (candidates.length === 0)
+            return false
+
+        return blocked.some(value => {
+            const token = root._normalizeAppKey(value)
+            return token.length > 0 && candidates.some(candidate => candidate.includes(token))
+        })
+    }
+
     // App names whose group has at least one notification matching the query,
     // in the same order as appNameList. Empty query returns everything.
     function appNamesMatching(query): var {
@@ -373,7 +394,10 @@ Singleton {
             return maxLifetime;
         }
 
-        // 3) Defaults by urgency (use enum comparison, not fragile toString)
+        // 3) Defaults by urgency (use enum comparison, not fragile toString).
+        // iRiS banners have their own, shorter, duration for low and normal.
+        if (Config.options?.panelFamily === "iris" && notification.urgency !== NotificationUrgency.Critical)
+            return Math.max(1000, Number(Config.options?.iris?.notifications?.duration ?? 4000));
         if (notification.urgency === NotificationUrgency.Low) {
             return Config.options?.notifications?.timeoutLow ?? 5000;
         } else if (notification.urgency === NotificationUrgency.Critical) {
@@ -398,12 +422,22 @@ Singleton {
         persistenceSupported: true
 
         onNotification: (notification) => {
-            // Filter out niri screenshot notifications (TaskView preview captures)
-            if (notification.appName === "niri" &&
-                (notification.summary?.toLowerCase().includes("screenshot") ||
-                 notification.body?.toLowerCase().includes("screenshot"))) {
-                return;
-            }
+            // Niri's screenshot-window IPC always emits a desktop notification, even
+            // when iNiR only asked it for an internal preview cache frame. Match the
+            // stable message signature rather than appName (which differs across
+            // packaging/desktop integration), and suppress it only during an internal
+            // preview capture so real user screenshots keep their notification.
+            const summaryLower = String(notification.summary ?? "").toLowerCase()
+            const bodyLower = String(notification.body ?? "").toLowerCase()
+            const niriScreenshotNotice = summaryLower.includes("screenshot captured")
+                && bodyLower.includes("paste the image from the clipboard")
+            if (GlobalStates.windowPreviewCaptureActive && niriScreenshotNotice)
+                return
+
+            // User app filters are an ingress policy: blocked notifications never
+            // enter history, unread state, sound playback or popup presentation.
+            if (root._notificationBlocked(notification))
+                return
 
             if (!_ingressAllowed(notification)) {
                 return;
@@ -494,6 +528,32 @@ Singleton {
 
         // Remove from re-entrancy guard after dismiss chain completes
         Qt.callLater(() => root._discardingIds.delete(id));
+    }
+
+    function discardNotificationsForApp(appName) {
+        const doomed = root.list.filter(notif => notif.appName === appName)
+        if (doomed.length === 0)
+            return
+        for (const notif of doomed) {
+            if (notif.timer) {
+                notif.timer.stop();
+                notif.timer.destroy();
+                notif.timer = null;
+            }
+        }
+        root.list = root.list.filter(notif => notif.appName !== appName)
+        triggerListChange();
+        notifFileView.setText(stringifyList(root.list));
+        for (const notif of doomed) {
+            const id = notif.notificationId
+            root._discardingIds.add(id);
+            const tracked = notifServer.trackedNotifications.values.find(server => server.id + root.idOffset === id)
+            if (tracked)
+                tracked.dismiss()
+            root.discard(id);
+            notif.destroy();
+            Qt.callLater(() => root._discardingIds.delete(id));
+        }
     }
 
     function discardAllNotifications() {

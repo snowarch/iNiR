@@ -51,7 +51,7 @@ ApplicationWindow {
         root._navigationInitialized = true
         root._persistCurrentPage()
         if (root._requestedStartSection.length > 0) {
-            root.pendingSpotlightSection = root._requestedStartSection
+            root.pendingSpotlightTask = root._requestedStartSection
             root.pendingSpotlightPageIndex = root.currentPage
             root.trySpotlight()
         }
@@ -123,9 +123,12 @@ ApplicationWindow {
     property var searchTargetControl: null
 
     // Static section/option index — shared with the overlay via SettingsPageRegistry.
-    function getWaffleSettingsPageIndex() {
+    function getFamilySettingsPageIndex(family: string) {
+        const componentName = family === "waffle" ? "WaffleConfig.qml"
+            : family === "iris" ? "IrisConfig.qml" : ""
+        if (!componentName.length) return -1
         for (var i = 0; i < pages.length; i++) {
-            if ((pages[i].component || "").indexOf("modules/settings/WaffleConfig.qml") >= 0)
+            if ((pages[i].component || "").indexOf(componentName) >= 0)
                 return i;
         }
         return -1;
@@ -138,73 +141,36 @@ ApplicationWindow {
             return;
         }
 
-        var terms = q.split(/\s+/).filter(t => t.length > 0);
         var results = [];
 
-        // Check if waffle family is active
-        var isWaffleActive = Config.options?.panelFamily === "waffle";
-        var wafflePageIndex = getWaffleSettingsPageIndex();
+        var activeFamily = Config.options?.panelFamily ?? "ii";
+        var wafflePageIndex = getFamilySettingsPageIndex("waffle");
+        var irisPageIndex = getFamilySettingsPageIndex("iris");
         var easyOn = root.easyMode;
 
-        // 1. Buscar en el índice estático de secciones (para navegación rápida a secciones)
-        const settingsSearchIndex = SettingsPageRegistry.searchIndex();
-        for (var i = 0; i < settingsSearchIndex.length; i++) {
-            var entry = settingsSearchIndex[i];
-
-            // Skip Waffle Style page if waffle family is not active
-            if (wafflePageIndex >= 0 && entry.pageIndex === wafflePageIndex && !isWaffleActive) {
-                continue;
-            }
-
-            // Skip non-essential pages in easy mode
-            if (easyOn && entry.pageIndex >= 0 && entry.pageIndex < pages.length
-                && pages[entry.pageIndex].essential !== true) {
-                continue;
-            }
-
-            var label = (entry.label || "").toLowerCase();
-            var desc = (entry.description || "").toLowerCase();
-            var page = (entry.pageName || "").toLowerCase();
-            var sect = (entry.section || "").toLowerCase();
-            var kw = (entry.keywords || []).join(" ").toLowerCase();
-
-            var matchCount = 0;
-            var score = 0;
-
-            for (var j = 0; j < terms.length; j++) {
-                var term = terms[j];
-                if (label.indexOf(term) >= 0 || desc.indexOf(term) >= 0 ||
-                    page.indexOf(term) >= 0 || sect.indexOf(term) >= 0 || kw.indexOf(term) >= 0) {
-                    matchCount++;
-                    if (label.indexOf(term) === 0) score += 800;
-                    else if (label.indexOf(term) > 0) score += 400;
-                    if (kw.indexOf(term) >= 0) score += 300;
-                    if (sect.indexOf(term) >= 0) score += 200;
-                }
-            }
-
-            if (matchCount === terms.length) {
-                results.push({
-                    pageIndex: entry.pageIndex,
-                    pageName: entry.pageName,
-                    section: entry.section,
-                    label: entry.label,
-                    labelHighlighted: SettingsSearchRegistry.highlightTerms(entry.label, terms),
-                    description: entry.description,
-                    descriptionHighlighted: SettingsSearchRegistry.highlightTerms(entry.description, terms),
-                    score: score + 500, // Bonus para secciones principales
-                    isSection: true
-                });
-            }
-        }
+        var staticResults = SettingsSearchRegistry.buildStaticResults(
+            settingsSearchText, SettingsPageRegistry.searchIndex());
+        staticResults = staticResults.filter(entry => {
+            const family = String(entry.panelFamily || "")
+            if (family.length > 0 && family !== activeFamily)
+                return false;
+            if (wafflePageIndex >= 0 && entry.pageIndex === wafflePageIndex && activeFamily !== "waffle")
+                return false;
+            if (irisPageIndex >= 0 && entry.pageIndex === irisPageIndex && activeFamily !== "iris")
+                return false;
+            return !(easyOn && entry.pageIndex >= 0 && entry.pageIndex < pages.length
+                && pages[entry.pageIndex].essential !== true);
+        });
+        results = results.concat(staticResults);
 
         // 2. Buscar en el registro dinámico de widgets
         if (typeof SettingsSearchRegistry !== "undefined") {
             var widgetResults = SettingsSearchRegistry.buildResults(settingsSearchText);
-            // Filter out Waffle Style widgets if waffle family is not active
-            if (!isWaffleActive) {
+            if (activeFamily !== "waffle") {
                 widgetResults = widgetResults.filter(r => r.pageIndex !== wafflePageIndex);
             }
+            if (activeFamily !== "iris")
+                widgetResults = widgetResults.filter(r => r.pageIndex !== irisPageIndex);
             if (easyOn) {
                 widgetResults = widgetResults.filter(r =>
                     r.pageIndex >= 0 && r.pageIndex < pages.length
@@ -225,7 +191,8 @@ ApplicationWindow {
         var unique = [];
         for (var k = 0; k < results.length; k++) {
             var r = results[k];
-            var key = String(r.pageIndex) + "|" + String(r.label || "").toLowerCase();
+            var key = [r.pageIndex, r.task || "", r.section || "", r.label || ""]
+                .join("|").toLowerCase();
             if (!seen[key]) {
                 seen[key] = { index: unique.length, hasOptionId: r.optionId !== undefined };
                 unique.push(r);
@@ -242,6 +209,7 @@ ApplicationWindow {
     property int pendingSpotlightOptionId: -1
     property string pendingSpotlightLabel: ""
     property string pendingSpotlightSection: ""
+    property string pendingSpotlightTask: ""
     property int pendingSpotlightPageIndex: -1
     property bool pendingSpotlightIsSection: false
     property var searchTargetFlickable: null
@@ -264,6 +232,7 @@ ApplicationWindow {
         pendingSpotlightOptionId = (entry.optionId !== undefined) ? entry.optionId : -1;
         pendingSpotlightLabel = entry.label || "";
         pendingSpotlightSection = entry.section || "";
+        pendingSpotlightTask = entry.task || "";
         pendingSpotlightPageIndex = entry.pageIndex;
         pendingSpotlightIsSection = (entry.optionId === undefined) && (entry.isSection === true);
 
@@ -291,10 +260,19 @@ ApplicationWindow {
 
     function trySpotlight() {
         const pageItem = pagesStack.currentItem
-        if (pageItem && pagesStack.currentIndex === pendingSpotlightPageIndex
-                && pendingSpotlightSection.length > 0
-                && typeof pageItem.activateSettingsSearchSection === "function")
-            pageItem.activateSettingsSearchSection(pendingSpotlightSection)
+        let taskActivated = false
+        if (pageItem && pagesStack.currentIndex === pendingSpotlightPageIndex) {
+            const targetTask = pendingSpotlightTask.length > 0
+                ? pendingSpotlightTask : pendingSpotlightSection
+            if (targetTask.length > 0)
+                taskActivated = SettingsSearchRegistry.activatePageSection(pageItem, targetTask)
+        }
+
+        if (taskActivated && pendingSpotlightOptionId < 0
+                && pendingSpotlightLabel.length === 0 && pendingSpotlightSection.length === 0) {
+            resetSearchTarget()
+            return
+        }
 
         var control = null;
 
@@ -303,57 +281,16 @@ ApplicationWindow {
             control = SettingsSearchRegistry.getControlById(pendingSpotlightOptionId);
         }
 
-        // Fallback: search in registry by various criteria
-        // IMPORTANT: for static index entries (no optionId), treat as section navigation.
-        // Don't guess a specific control by fuzzy label matching.
-        if (!control && (pendingSpotlightLabel.length > 0 || pendingSpotlightSection.length > 0)) {
-            var labelLower = pendingSpotlightLabel.toLowerCase();
-            var sectionLower = pendingSpotlightSection.toLowerCase();
-            // Remove page name prefix from section if present (supports both delimiters)
-            // e.g., "Themes › Global Style" or "Themes · Global Style" -> "Global Style"
-            var sectionParts = sectionLower.split(/[·›]/).map(p => p.trim()).filter(p => p.length > 0);
-            var sectionOnly = sectionParts.length > 1 ? sectionParts[sectionParts.length - 1] : sectionLower;
+        if (!control && pageItem)
+            control = SettingsSearchRegistry.findLoadedTarget(
+                pageItem, pendingSpotlightLabel, pendingSpotlightSection, pendingSpotlightIsSection)
 
-            for (var i = 0; i < SettingsSearchRegistry.entries.length; i++) {
-                var e = SettingsSearchRegistry.entries[i];
-                if (e.pageIndex === pendingSpotlightPageIndex) {
-                    var eLabelLower = (e.label || "").toLowerCase();
-                    var eSectionLower = (e.section || "").toLowerCase();
-
-                    if (pendingSpotlightIsSection) {
-                        // Prefer matching the section title control.
-                        if (eLabelLower === labelLower || eLabelLower === sectionOnly) {
-                            control = e.control;
-                            break;
-                        }
-                        if (eSectionLower === sectionOnly || eSectionLower === labelLower) {
-                            control = e.control;
-                            break;
-                        }
-                    } else {
-                        // Exact label match
-                        if (eLabelLower === labelLower) {
-                            control = e.control;
-                            break;
-                        }
-                        // Section title match (for SettingsCardSection)
-                        if (eSectionLower === sectionOnly || eSectionLower === labelLower) {
-                            control = e.control;
-                            break;
-                        }
-                        // Label contains search term
-                        if (labelLower.length > 2 && eLabelLower.indexOf(labelLower) >= 0) {
-                            control = e.control;
-                            break;
-                        }
-                        // Keywords contain search term
-                        if (e.keywords && e.keywords.some(k => k.toLowerCase() === labelLower)) {
-                            control = e.control;
-                            break;
-                        }
-                    }
-                }
-            }
+        if (!control && pageItem && pendingSpotlightSection.length > 0
+                && spotlightRetryCount < spotlightMaxRetries
+                && SettingsSearchRegistry.revealLoadedSection(pageItem, pendingSpotlightSection)) {
+            spotlightRetryCount++
+            spotlightPageLoadTimer.restart()
+            return
         }
 
         if (control) {
@@ -366,6 +303,7 @@ ApplicationWindow {
             pendingSpotlightOptionId = -1;
             pendingSpotlightLabel = "";
             pendingSpotlightSection = "";
+            pendingSpotlightTask = "";
             pendingSpotlightPageIndex = -1;
             pendingSpotlightIsSection = false;
         }
@@ -417,6 +355,7 @@ ApplicationWindow {
         pendingSpotlightOptionId = -1;
         pendingSpotlightLabel = "";
         pendingSpotlightSection = "";
+        pendingSpotlightTask = "";
         pendingSpotlightPageIndex = -1;
         pendingSpotlightIsSection = false;
     }
@@ -444,13 +383,14 @@ ApplicationWindow {
         pendingSpotlightOptionId = -1;
         pendingSpotlightLabel = "";
         pendingSpotlightSection = "";
+        pendingSpotlightTask = "";
         pendingSpotlightPageIndex = -1;
         pendingSpotlightIsSection = false;
     }
 
     visible: true
     onClosing: Qt.quit()
-    title: "illogical-impulse Settings"
+    title: "Settings — iNiR"
 
     Component.onCompleted: {
         Quickshell.watchFiles = false
@@ -628,8 +568,26 @@ ApplicationWindow {
                     spacing: 9
 
                     Item {
+                        id: settingsAvatarButton
                         Layout.preferredWidth: 36
                         Layout.preferredHeight: 36
+
+                        HoverHandler {
+                            id: settingsAvatarHover
+                            enabled: !root.navEditMode
+                            cursorShape: Qt.PointingHandCursor
+                        }
+
+                        TapHandler {
+                            enabled: !root.navEditMode
+                            gesturePolicy: TapHandler.WithinBounds
+                            onTapped: root.openSearchResult({
+                                pageIndex: 23,
+                                label: Translation.tr("Profile picture"),
+                                section: "right",
+                                isSection: true
+                            })
+                        }
 
                         Rectangle {
                             anchors.fill: parent
@@ -688,6 +646,29 @@ ApplicationWindow {
                             text: "person"
                             iconSize: 18
                             color: Appearance.colors.colPrimary
+                        }
+
+                        Rectangle {
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            width: 15
+                            height: 15
+                            radius: width / 2
+                            color: Appearance.colors.colPrimaryContainer
+                            border.width: 1
+                            border.color: Appearance.colors.colPrimary
+                            opacity: settingsAvatarHover.hovered && !root.navEditMode ? 1 : 0
+                            scale: opacity > 0 ? 1 : 0.7
+
+                            Behavior on opacity { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+                            Behavior on scale { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "edit"
+                                iconSize: 10
+                                color: Appearance.colors.colOnPrimaryContainer
+                            }
                         }
                     }
 
@@ -1074,6 +1055,8 @@ ApplicationWindow {
                                         ? Appearance.regalia.roundSmall
                                         : Appearance.zzzEverywhere
                                         ? Appearance.zzz.controlRadius
+                                        : Appearance.editorialEverywhere
+                                        ? Appearance.rounding.small
                                         : Math.min(width, height) / 2
                                     toggled: root.currentPage === pageRealIndex
                                     // Bgless doctrine: zzz selection reads through the sticker pill
@@ -1190,6 +1173,7 @@ ApplicationWindow {
                                 width: Appearance.zzz.borderThick * 3
                                 color: Appearance.zzz.accent
                             }
+
 
                             Behavior on radius {
                                 enabled: Appearance.animationsEnabled
@@ -1430,8 +1414,9 @@ ApplicationWindow {
                         colBackgroundHover: Appearance.colors.colLayer1Hover
 
                         onClicked: {
-                            Config.setNestedValue("settingsUi.overlayMode", true)
-                            settingsRestartTimer.restart()
+                            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                                "ipc", "settings", "openOverlayAt", String(root.currentPage)])
+                            Qt.quit()
                         }
 
                         contentItem: RowLayout {
@@ -1465,14 +1450,6 @@ ApplicationWindow {
                     }
                 }
 
-                Timer {
-                    id: settingsRestartTimer
-                    interval: 500
-                    onTriggered: {
-                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
-                        Qt.quit()
-                    }
-                }
             }
 
             Rectangle { // Content container
@@ -1595,12 +1572,23 @@ ApplicationWindow {
                         height: Math.min(resultsListView.contentHeight + 16, 400)
                         // Centered under the search box, not the content pane
                         x: {
-                            var dep = searchContainer.x + searchContainer.width + root.width;
-                            var p = searchContainer.mapToItem(settingsSearchOverlay, 0, 0);
-                            return Math.max(8, Math.min(p.x + (searchContainer.width - width) / 2, parent.width - width - 8));
+                            const slotIndex = SettingsChromeLayout.columnFor("search")
+                            const slot = slotIndex === 0 ? settingsHeaderSlot0
+                                : slotIndex === 1 ? settingsHeaderSlot1 : settingsHeaderSlot2
+                            const p = settingsHeader.mapToItem(settingsSearchOverlay,
+                                slot.x, searchContainer.y + searchContainer.height)
+                            return Math.max(8, Math.min(
+                                p.x + (slot.width - width) / 2,
+                                parent.width - width - 8))
                         }
-                        anchors.top: parent.top
-                        anchors.topMargin: 8
+                        y: {
+                            const slotIndex = SettingsChromeLayout.columnFor("search")
+                            const slot = slotIndex === 0 ? settingsHeaderSlot0
+                                : slotIndex === 1 ? settingsHeaderSlot1 : settingsHeaderSlot2
+                            const p = settingsHeader.mapToItem(settingsSearchOverlay,
+                                slot.x, searchContainer.y + searchContainer.height)
+                            return Math.max(0, p.y)
+                        }
                         radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                              : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                              : Appearance.rounding.normal
@@ -1790,12 +1778,23 @@ ApplicationWindow {
                     id: noResultsCard
                     visible: root.settingsSearchText.length > 0 && root.settingsSearchResults.length === 0
                     x: {
-                        var dep = searchContainer.x + searchContainer.width + root.width;
-                        var p = searchContainer.mapToItem(parent, 0, 0);
-                        return p.x + (searchContainer.width - width) / 2;
+                        const slotIndex = SettingsChromeLayout.columnFor("search")
+                        const slot = slotIndex === 0 ? settingsHeaderSlot0
+                            : slotIndex === 1 ? settingsHeaderSlot1 : settingsHeaderSlot2
+                        const p = settingsHeader.mapToItem(parent,
+                            slot.x, searchContainer.y + searchContainer.height)
+                        return Math.max(8, Math.min(
+                            p.x + (slot.width - width) / 2,
+                            parent.width - width - 8))
                     }
-                    anchors.top: parent.top
-                    anchors.topMargin: 8
+                    y: {
+                        const slotIndex = SettingsChromeLayout.columnFor("search")
+                        const slot = slotIndex === 0 ? settingsHeaderSlot0
+                            : slotIndex === 1 ? settingsHeaderSlot1 : settingsHeaderSlot2
+                        const p = settingsHeader.mapToItem(parent,
+                            slot.x, searchContainer.y + searchContainer.height)
+                        return Math.max(0, p.y)
+                    }
                     width: noResultsRow.implicitWidth + 24
                     height: 36
                     radius: Appearance.rounding.full

@@ -133,12 +133,18 @@ Singleton {
         pomodoroSecondsLeft = pomodoroLapDuration - (getCurrentTimeInSeconds() - Persistent.states.timer.pomodoro.start);
     }
 
-    Timer {
-        id: pomodoroTimer
-        interval: 200
-        running: root.pomodoroRunning && !root.pomodoroPaused
-        repeat: true
-        onTriggered: refreshPomodoro()
+    function refreshSecondTimers(): void {
+        if (!Persistent.ready) return;
+        if (root.pomodoroRunning && !root.pomodoroPaused) root.refreshPomodoro();
+        if (root.countdownRunning && !root.countdownPaused) root.refreshCountdown();
+    }
+
+    SystemClock {
+        precision: SystemClock.Seconds
+        enabled: Persistent.ready && ((root.pomodoroRunning && !root.pomodoroPaused)
+            || (root.countdownRunning && !root.countdownPaused))
+        // Let start/resume finish writing its timestamp before the first refresh.
+        onDateChanged: Qt.callLater(root.refreshSecondTimers)
     }
 
     function togglePomodoro() {
@@ -219,7 +225,9 @@ Singleton {
     }
 
     function stopwatchRecordLap() {
-        Persistent.states.timer.stopwatch.laps.push(stopwatchTime);
+        const laps = (Persistent.states?.timer?.stopwatch?.laps ?? []).slice(0)
+        laps.push(stopwatchTime)
+        Persistent.states.timer.stopwatch.laps = laps
     }
 
     // Countdown Timer
@@ -235,14 +243,6 @@ Singleton {
                 Audio.playEvent("timerDone");
             }
         }
-    }
-
-    Timer {
-        id: countdownTimer
-        interval: 200
-        running: root.countdownRunning && !root.countdownPaused
-        repeat: true
-        onTriggered: refreshCountdown()
     }
 
     function toggleCountdown(): void {
@@ -275,6 +275,36 @@ Singleton {
         countdownDuration = seconds;
         if (!countdownRunning) {
             countdownSecondsLeft = seconds;
+        }
+    }
+
+    function adjustCountdownDuration(deltaSeconds: int): void {
+        if (!Persistent.ready || deltaSeconds === 0)
+            return;
+
+        const previousDuration = root.countdownDuration;
+        const nextDuration = Math.max(60, Math.min(24 * 60 * 60,
+            previousDuration + deltaSeconds));
+        const appliedDelta = nextDuration - previousDuration;
+        if (appliedDelta === 0)
+            return;
+
+        Persistent.states.timer.countdown.duration = nextDuration;
+        root.countdownDuration = nextDuration;
+
+        if (!root.countdownRunning) {
+            // Editing an idle/expired countdown establishes a fresh duration.
+            root.countdownSecondsLeft = nextDuration;
+            Persistent.states.timer.countdown.start = root.getCurrentTimeInSeconds();
+            return;
+        }
+
+        root.countdownSecondsLeft = Math.max(0, Math.min(nextDuration,
+            root.countdownSecondsLeft + appliedDelta));
+        if (!root.countdownPaused) {
+            // Preserve elapsed time while extending/shortening a live timer.
+            Persistent.states.timer.countdown.start = root.getCurrentTimeInSeconds()
+                - (nextDuration - root.countdownSecondsLeft);
         }
     }
 }

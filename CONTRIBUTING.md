@@ -221,6 +221,12 @@ not. Before opening a PR:
 
 PRs with no evidence of real testing may be closed without detailed review.
 
+## License
+
+iNiR is GPL-3.0 with the additional terms in [NOTICE](NOTICE): keep the credit, don't pass the work off
+as yours, and the names and logos aren't included. By contributing you license your work under GPL-3.0
+and accept that those same terms apply to it. You keep your authorship; it shows in the history.
+
 ## Code of Conduct
 
 This project follows a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold it.

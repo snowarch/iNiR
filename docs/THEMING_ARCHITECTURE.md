@@ -2,6 +2,8 @@
 
 This document describes the current iNiR theming pipeline at a high level.
 
+For component styling, see the [Editorial style guide](EDITORIAL_STYLE.md).
+
 ## Pipeline overview
 
 The theming system has two big stages:

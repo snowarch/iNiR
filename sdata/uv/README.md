@@ -10,9 +10,13 @@ This avoids conflicts with system packages and makes updates more reliable.
 
 ### Adding/Removing Packages
 
-1. Edit `requirements.in` with the package name (check [PyPI](https://pypi.org/))
-2. Run: `uv pip compile requirements.in -o requirements.txt`
-3. Commit both files
+1. Edit `requirements.in` with the package name (check [PyPI](https://pypi.org/)).
+2. Mirror the direct runtime constraint in `requirements.txt`.
+3. Keep unrelated package versions unchanged unless that upgrade is part of the task.
+
+`requirements.txt` is intentionally a direct minimum-version list, not a transitive
+lock file. Do not run `uv pip compile` over it as routine maintenance: that rewrites
+the file into a full resolved graph and can upgrade unrelated runtime packages.
 
 ### Installation
 

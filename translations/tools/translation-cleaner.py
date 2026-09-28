@@ -28,10 +28,16 @@ def clean_translation_files(translations_dir: str, source_dir: str, backup: bool
     # Create manager
     manager = TranslationManager(translations_dir, source_dir)
     
-    # Extract currently used texts
-    print("Extracting currently used translatable texts...")
-    current_texts = manager.extract_translatable_texts()
-    print(f"Extracted {len(current_texts)} currently used texts")
+    # en_US is the runtime catalog authority. Literal source extraction is
+    # discovery-only because dynamic keys and intentionally retained catalog
+    # entries are not guaranteed to appear as Translation.tr("...") literals.
+    canonical_path = Path(translations_dir) / "en_US.json"
+    if not canonical_path.exists():
+        print(f"Canonical catalog not found: {canonical_path}")
+        return
+    with open(canonical_path, 'r', encoding='utf-8') as f:
+        canonical_keys = set(json.load(f).keys())
+    print(f"Canonical en_US catalog has {len(canonical_keys)} keys")
     
     # Get all language files
     languages = manager.get_available_languages()
@@ -54,7 +60,7 @@ def clean_translation_files(translations_dir: str, source_dir: str, backup: bool
         unused_keys = set()
         for k in translations.keys():
             v = translations[k]
-            if k not in current_texts:
+            if k not in canonical_keys:
                 if isinstance(v, str) and v.strip().endswith('/*keep*/'):
                     continue
                 unused_keys.add(k)

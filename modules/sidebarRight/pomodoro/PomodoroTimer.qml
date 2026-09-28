@@ -20,11 +20,11 @@ Item {
     readonly property color _colLayerHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
-        : Appearance.colors.colLayer2Hover
+        : Appearance.colLayer2Hover
     readonly property color _colLayerActive: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
-        : Appearance.colors.colLayer2Active
+        : Appearance.colLayer2Active
     readonly property color _colText: Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.colors.colOnLayer2

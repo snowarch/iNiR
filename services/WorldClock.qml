@@ -37,14 +37,39 @@ Singleton {
                 icon: ""
             }))
 
-    readonly property var defaultTimezones: ["Australia/Sydney", "Asia/Tokyo", "Europe/London", "America/New_York"]
-    readonly property var timezones: Config.options?.background?.widgets?.worldClock?.timezones ?? root.defaultTimezones
+    readonly property int maxTimezones: 4
+    readonly property var defaultTimezones: ["Asia/Tokyo", "Europe/London", "America/New_York"]
+    readonly property var timezones: {
+        const configured = Config.options?.background?.widgets?.worldClock?.timezones
+            ?? root.defaultTimezones;
+        const normalized = configured?.slice ? configured.slice(0, root.maxTimezones) : [];
+        return normalized.length > 0 ? normalized : root.defaultTimezones;
+    }
 
     function setTimezone(index: int, tz: string): void {
         let updated = root.timezones.slice();
         if (index < 0 || index >= updated.length)
             return;
         updated[index] = tz;
+        Config.setNestedValue("background.widgets.worldClock.timezones", updated);
+    }
+
+    function addTimezone(tz: string): void {
+        const candidate = String(tz ?? "");
+        if (!candidate || root.timezones.length >= root.maxTimezones)
+            return;
+        const updated = root.timezones.slice();
+        if (updated.includes(candidate))
+            return;
+        updated.push(candidate);
+        Config.setNestedValue("background.widgets.worldClock.timezones", updated);
+    }
+
+    function removeTimezone(index: int): void {
+        if (root.timezones.length <= 1 || index < 0 || index >= root.timezones.length)
+            return;
+        const updated = root.timezones.slice();
+        updated.splice(index, 1);
         Config.setNestedValue("background.widgets.worldClock.timezones", updated);
     }
 
@@ -59,7 +84,7 @@ Singleton {
     readonly property bool use24h: root.ampmToken === ""
 
     property var now: new Date()
-    property var offsetsMinutes: [0, 0, 0, 0]
+    property var offsetsMinutes: []
     property int _offsetIndex: -1
     property var _nextOffsets: []
     property bool _refreshQueued: false
@@ -149,6 +174,17 @@ Singleton {
     function cityDate(index: int): var {
         const offsetMin = root.offsetsMinutes[index] ?? 0;
         return new Date(root.now.getTime() + offsetMin * 60000);
+    }
+
+    // cityDate() deliberately encodes the target wall clock in UTC fields so
+    // timeStringFor() can read it without the host timezone shifting it again.
+    // QML's locale formatter, however, formats Date objects in the host zone.
+    // Rebuild a local Date from those UTC fields before using it for calendar
+    // text, otherwise cities across midnight can display the previous/next day.
+    function cityDisplayDate(index: int): var {
+        const cd = root.cityDate(index);
+        return new Date(cd.getUTCFullYear(), cd.getUTCMonth(), cd.getUTCDate(),
+            cd.getUTCHours(), cd.getUTCMinutes(), cd.getUTCSeconds(), cd.getUTCMilliseconds());
     }
 
     function timeStringFor(index: int): string {

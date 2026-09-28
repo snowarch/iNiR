@@ -32,10 +32,12 @@ At a high level, the runtime works like this:
 1. `shell.qml` starts the shell and forces critical services to exist.
 2. The shell waits for `Config.ready`.
 3. When config is ready, it applies the active theme, initializes icon theming, and normalizes enabled panels for the selected family.
-4. The shell loads only one panel family at a time:
-   - `ShellIiPanels.qml`
-   - `ShellWafflePanels.qml`
-5. Those loaders create user-facing modules only when the module is enabled in config and any extra conditions are satisfied.
+4. The shell loads only one panel family at a time, in two phases:
+   - ii critical host: `modules/ii/critical/ShellIiCriticalPanels.qml`
+   - Waffle critical host: `modules/waffle/critical/ShellWaffleCriticalPanels.qml`
+   - iRiS critical host: `modules/iris/critical/ShellIrisCriticalPanels.qml`
+   - after `GlobalStates.deferredPanelsReady`, the thin `ShellIiPanels.qml` / `ShellWafflePanels.qml` / `ShellIrisPanels.qml` wrappers load their family `Shell*PanelsImpl.qml` roots.
+5. The implementation roots create deferred/on-demand user-facing modules only when the module is enabled in config and its runtime conditions are satisfied.
 6. Modules read shared state from services and singletons such as:
    - `Config`
    - `Appearance`
@@ -67,30 +69,36 @@ It affects the whole runtime because this is where startup order is defined.
 
 If you change `shell.qml`, you are changing startup behavior, family loading, or shell-wide routing.
 
-### `ShellIiPanels.qml`
+### ii composition chain
 
-This file defines the runtime composition for the `ii` family.
+`modules/ii/critical/ShellIiCriticalPanels.qml` owns the first-frame ii surfaces: background, the selected bar implementation, vertical bar when enabled, and dock.
 
-It uses a `PanelLoader` pattern built on `LazyLoader`. A module becomes active only when:
+`ShellIiPanels.qml` is intentionally only a deferred wrapper. The full ii panel composition lives in `modules/ii/ShellIiPanelsImpl.qml`, which uses `PanelLoader`, `DeferredPanelLoader`, and `OnDemandPanelLoader`. A module becomes active only when its relevant contract is satisfied, including:
 
 - config is ready
 - its identifier is present in `Config.options?.enabledPanels`
 - any family-specific condition is true
 
-This file is the authoritative list of `ii` panels that the shell can materialize.
+The critical root plus `modules/ii/ShellIiPanelsImpl.qml` are the authoritative family composition owners; the root wrapper is not a panel inventory.
 
 A change here affects module availability, startup cost, and the visible shell surface of the `ii` family.
 
-### `ShellWafflePanels.qml`
+### Waffle composition chain
 
-This is the equivalent composition root for the `waffle` family.
+`modules/waffle/critical/ShellWaffleCriticalPanels.qml` owns the first-frame Waffle taskbar, background and backdrop. `ShellWafflePanels.qml` is the thin deferred wrapper; the full family composition lives in `modules/waffle/ShellWafflePanelsImpl.qml`.
 
 It defines:
 
 - waffle-native panels such as taskbar, start menu, action center, notification center, widgets, and waffle-specific clipboard/alt-switcher/task view
 - shared modules that also remain available under waffle
 
-A change here affects the Windows-11-like family and, in many cases, the expectations of family switching.
+A change in either Waffle composition owner affects the Windows-11-like family and, in many cases, the expectations of family switching/startup cost.
+
+### iRiS composition chain
+
+`modules/iris/critical/ShellIrisCriticalPanels.qml` owns the first-frame iRiS background and Island chassis. `ShellIrisPanels.qml` is the deferred wrapper and `modules/iris/ShellIrisPanelsImpl.qml` owns the heavier transient composition: Palette, Controls, Settings/Studio, notification feedback, OSD, session/auth surfaces and shared utilities loaded on demand.
+
+iRiS keeps a deliberately small resident contract even though the family is feature-rich. Its visual owner is `modules/iris/style/IrisStyle.qml`; the chassis/field owns joined edge geometry, while page bodies and floating/transient content are loaded only when needed. User-facing behavior is documented in `docs/IRIS.md`, and extension rules live in `defaults/widgets/IRIS-SDK.md`.
 
 ### `modules/`
 
@@ -263,10 +271,11 @@ If you move behavior earlier or later in the boot sequence, you can change:
 
 The panel-family system is central to the project.
 
-iNiR has two families:
+iNiR has three families:
 
 - `ii`
 - `waffle`
+- `iris`
 
 The active family is stored in config and switched through shell logic plus IPC.
 
@@ -308,7 +317,7 @@ The practical contributor rule is:
 
 - config reads come from `Config.options?.` with null-safe access
 - config writes must go through `Config.setNestedValue(...)`
-- adding a config key is incomplete unless `Config.qml`, `defaults/config.json`, and the consumer surface all agree
+- adding a config key is incomplete unless `Config.qml`, its consumers and user-facing Settings agree; add it to `defaults/config.json` when the shipped fresh-install profile needs an explicit value/structure
 
 ## 4. Appearance is the visual contract for the ii family
 
@@ -325,14 +334,17 @@ It defines the reactive visual system for:
 - GameMode-aware effect suppression
 - wallpaper-informed visual adaptation
 
-It also centralizes style dispatch for the six supported styles:
+It also centralizes style detection and semantic tokens for the supported global styles:
 
 - material
 - cards
 - aurora
 - inir
 - angel
+- regalia
 - zzz
+- cookie
+- editorial
 
 Its impact is very broad because modules rely on it for visual consistency rather than defining their own local token systems.
 
@@ -465,10 +477,10 @@ If you change it, you are effectively changing file locations and side effects a
 
 ## 8. Settings are editor surfaces over shared state
 
-The settings experience is split into two entrypoints:
+The settings experience has shared ii/material and Waffle-native presentations:
 
-- `settings.qml` for the main settings UI
-- `waffleSettings.qml` for waffle-native settings when waffle uses its own windowed style
+- `modules/settings/SettingsOverlay.qml` or `settings.qml` for the shared Settings page registry, depending on `settingsUi.overlayMode`
+- `waffleSettings.qml` for Waffle-native settings when Waffle is not configured to reuse Material-style settings
 
 These settings files do not define all logic themselves. They assemble page components that read and write through shared services and config.
 
@@ -668,8 +680,12 @@ Use this section as a routing index.
 ### Shell composition
 
 - `shell.qml`
+- `modules/ii/critical/ShellIiCriticalPanels.qml`
 - `ShellIiPanels.qml`
+- `modules/ii/ShellIiPanelsImpl.qml`
+- `modules/waffle/critical/ShellWaffleCriticalPanels.qml`
 - `ShellWafflePanels.qml`
+- `modules/waffle/ShellWafflePanelsImpl.qml`
 - `FamilyTransitionOverlay.qml`
 - `GlobalStates.qml`
 
@@ -752,8 +768,10 @@ When you need to modify something, identify which of these questions is primary.
 For runtime architecture:
 
 - `shell.qml`
-- `ShellIiPanels.qml`
-- `ShellWafflePanels.qml`
+- `modules/ii/critical/ShellIiCriticalPanels.qml`
+- `modules/ii/ShellIiPanelsImpl.qml`
+- `modules/waffle/critical/ShellWaffleCriticalPanels.qml`
+- `modules/waffle/ShellWafflePanelsImpl.qml`
 - `GlobalStates.qml`
 
 For persistence and theming:

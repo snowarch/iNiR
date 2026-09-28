@@ -13,7 +13,7 @@ Singleton {
     id: root
 
     readonly property string provider: "awww"
-    readonly property bool enabled: true
+    readonly property bool enabled: (Config.options?.background?.backend?.provider ?? "awww") === provider
     readonly property int transitionFps: Config.options?.background?.backend?.awww?.transitionFps ?? 60
     readonly property int simpleStep: Config.options?.background?.backend?.awww?.simpleStep ?? 5
     readonly property int spatialStep: Config.options?.background?.backend?.awww?.spatialStep ?? 30
@@ -22,6 +22,9 @@ Singleton {
     readonly property bool transitionsEnabled: Config.options?.background?.transition?.enable ?? true
     readonly property string transitionType: Config.options?.background?.transition?.type ?? "crossfade"
     readonly property string transitionDirection: Config.options?.background?.transition?.direction ?? "right"
+    readonly property bool internalShaderTransitionActive: transitionsEnabled
+        && Appearance.animationsEnabled
+        && root.isInternalShaderTransitionType(transitionType)
     readonly property string fillMode: Config.options?.background?.fillMode ?? "fill"
     readonly property bool animationEnabled: Config.options?.background?.enableAnimation ?? true
     readonly property string panelFamily: Config.options?.panelFamily ?? "ii"
@@ -42,6 +45,10 @@ Singleton {
     property bool warnedMissing: false
     property bool stoppedForNoOutputs: false
     property bool _queuedStopAfterApply: false
+    // Internal shaders are only a transient QML overlay. While a configured
+    // target is being painted underneath, keep that overlay alive so it never
+    // reveals the previous awww image at the end of the effect.
+    property bool shaderHandoffPending: false
 
     readonly property bool available: clientAvailable && daemonAvailable
     readonly property bool active: enabled && available
@@ -64,22 +71,34 @@ Singleton {
     // Cancelling restores the configured state by forcing a resync.
     property bool previewActive: false
     property string _previewSignature: ""
-    property string _previewQueuedPath: ""
+    property string _previewQueuedSignature: ""
+    property string _previewQueuedCommand: ""
+    property string _previewPresentedSignature: ""
     property bool _restoreAfterPreviewExit: false
+    property bool _adoptPreviewPending: false
+    property string _adoptedPreviewPath: ""
+    property string _adoptedPreviewMonitor: ""
 
-    function _startPreviewScript(script: string): void {
-        root._previewQueuedPath = ""
+    function _clearPreviewQueue(): void {
+        root._previewQueuedSignature = ""
+        root._previewQueuedCommand = ""
+    }
+
+    function _startPreviewScript(script: string, signature: string): void {
+        root._clearPreviewQueue()
         root.stoppedForNoOutputs = false
+        previewProc.activeSignature = signature
         previewProc.command = ["/usr/bin/bash", "-lc", script]
         previewProc.running = true
     }
 
     function _drainPreviewQueue(): void {
-        if (!root.previewActive || previewProc.running || stopProc.running)
+        if ((!root.previewActive && !root._adoptPreviewPending)
+                || previewProc.running || stopProc.running)
             return
-        const queued = root._previewQueuedPath
-        if (queued.length > 0)
-            root._startPreviewScript(queued)
+        const queuedCommand = root._previewQueuedCommand
+        if (queuedCommand.length > 0)
+            root._startPreviewScript(queuedCommand, root._previewQueuedSignature)
     }
 
     function previewImage(path: string, monitorName = ""): void {
@@ -88,7 +107,7 @@ Singleton {
         // highlighted item moves to an animated file; the internal renderer owns
         // that preview and an obsolete awww command would only waste work.
         if (!supportsMainWallpaper(cleanPath)) {
-            root._previewQueuedPath = ""
+            root._clearPreviewQueue()
             return
         }
 
@@ -109,23 +128,66 @@ Singleton {
         root.previewActive = true
         root._previewSignature = signature
         root._restoreAfterPreviewExit = false
+        root._adoptPreviewPending = false
+        root._adoptedPreviewPath = ""
+        root._adoptedPreviewMonitor = ""
         if (previewProc.running || stopProc.running) {
             // Coalesce rapid navigation into the newest requested image. A stop
             // already in flight must finish first or it can kill the daemon in
             // the middle of this preview.
-            root._previewQueuedPath = script
+            root._previewQueuedSignature = signature
+            root._previewQueuedCommand = script
             Qt.callLater(root._drainPreviewQueue)
             return
         }
-        root._startPreviewScript(script)
+        root._startPreviewScript(script, signature)
     }
 
-    // Drop preview state without repainting — the caller is about to apply for
-    // real, and that apply produces its own transition.
+    // Commit a preview that is already being presented instead of repainting the
+    // exact same image through a second awww transition. Config may change while
+    // the preview command is still in flight, so _syncNow waits until the matching
+    // command has landed and then adopts the resulting backend state.
+    function adoptPreview(path: string, monitorName = ""): bool {
+        const cleanPath = FileUtils.trimFileProtocol(String(path ?? ""))
+        const monitor = String(monitorName ?? "")
+        const signature = JSON.stringify({ path: cleanPath, monitor })
+        if (!cleanPath || !supportsMainWallpaper(cleanPath))
+            return false
+
+        const matchesRunning = previewProc.running && previewProc.activeSignature === signature
+        const matchesQueued = root._previewQueuedSignature === signature
+        const matchesPresented = root.previewActive && root._previewSignature === signature
+            && root._previewPresentedSignature === signature
+        if (!matchesRunning && !matchesQueued && !matchesPresented)
+            return false
+
+        root.previewActive = false
+        root._previewSignature = ""
+        root._restoreAfterPreviewExit = false
+        root._adoptPreviewPending = true
+        root._adoptedPreviewPath = cleanPath
+        root._adoptedPreviewMonitor = monitor
+
+        if (matchesRunning) {
+            // The desired image is already being painted; any queued navigation
+            // behind it is stale once the user confirms this selection.
+            root._clearPreviewQueue()
+        } else if (!matchesQueued) {
+            root._clearPreviewQueue()
+        }
+        return true
+    }
+
+    // Drop preview state without repainting. When adoption is pending the
+    // preview itself becomes the committed backend state; otherwise a normal
+    // apply/sync owns whatever follows.
     function clearPreview(): void {
         root.previewActive = false
         root._previewSignature = ""
-        root._previewQueuedPath = ""
+        if (!root._adoptPreviewPending)
+            root._clearPreviewQueue()
+        if (root._adoptPreviewPending)
+            return
         // Process cannot be cancelled safely. If an apply races the in-flight
         // preview, resync after it exits so the obsolete image cannot win last.
         root._restoreAfterPreviewExit = previewProc.running
@@ -136,7 +198,11 @@ Singleton {
             return
         root.previewActive = false
         root._previewSignature = ""
-        root._previewQueuedPath = ""
+        root._clearPreviewQueue()
+        root._adoptPreviewPending = false
+        root._adoptedPreviewPath = ""
+        root._adoptedPreviewMonitor = ""
+        root._previewPresentedSignature = ""
         root._restoreAfterPreviewExit = previewProc.running
         // The configured wallpaper is unchanged, so the sync signature still
         // matches what awww was last told. Clear it to force a real repaint.
@@ -184,6 +250,15 @@ Singleton {
         return ["none", "simple", "fade", "left", "right", "top", "bottom", "wipe", "wave", "grow", "center", "any", "outer", "random"].includes(String(type ?? ""))
     }
 
+    function isInternalShaderTransitionType(type): bool {
+        return [
+            "circlePit", "circleSelect", "magic", "Doom", "Peel", "transition",
+            "pixelate", "stripes", "crt", "dissolve", "glitch", "ripple",
+            "shatter", "inirMelt", "inirVeil", "inirFracture", "inirInk",
+            "inirPrism", "shaderRandom"
+        ].includes(String(type ?? ""))
+    }
+
     function normalizedAwwwTransitionType(type, directionValue = transitionDirection): string {
         const rawType = String(type ?? "crossfade")
         if (isAwwwNativeTransitionType(rawType))
@@ -208,6 +283,11 @@ Singleton {
     function _mappedTransitionType(): string {
         if (!transitionsEnabled)
             return "none"
+        // Shader transitions are drawn by the shared in-shell crossfader as a
+        // transient overlay. awww still receives the final wallpaper, but must
+        // switch it instantly underneath instead of running a second effect.
+        if (isInternalShaderTransitionType(transitionType))
+            return "none"
         return normalizedAwwwTransitionType(transitionType, transitionDirection)
     }
 
@@ -215,7 +295,9 @@ Singleton {
         if (!transitionsEnabled)
             return 255
         const mappedType = _mappedTransitionType()
-        return mappedType === "simple" || mappedType === "fade" || mappedType === "none"
+        if (mappedType === "none")
+            return 255
+        return mappedType === "simple" || mappedType === "fade"
             ? Math.max(1, simpleStep)
             : Math.max(1, spatialStep)
     }
@@ -289,6 +371,32 @@ Singleton {
             transitionStep: _mappedTransitionStep(),
             outputs: keys.map(key => ({ output: key, path: map[key] }))
         })
+    }
+
+    function _adoptedPreviewMatchesOutputMap(map): bool {
+        if (!root._adoptPreviewPending || !root._adoptedPreviewPath)
+            return false
+
+        const keys = Object.keys(map)
+        if (keys.length === 0)
+            return false
+
+        if (root._adoptedPreviewMonitor) {
+            // A monitor-scoped preview only changed one output. For multi-output
+            // sessions we also need a known-good prior sync for untouched outputs.
+            if (keys.length > 1 && root.lastSyncSignature === "")
+                return false
+            return map[root._adoptedPreviewMonitor] === root._adoptedPreviewPath
+        }
+
+        return keys.every(key => map[key] === root._adoptedPreviewPath)
+    }
+
+    function _clearPreviewAdoption(): void {
+        root._adoptPreviewPending = false
+        root._adoptedPreviewPath = ""
+        root._adoptedPreviewMonitor = ""
+        root._previewPresentedSignature = ""
     }
 
     function _probe(): void {
@@ -372,6 +480,21 @@ Singleton {
         root._queuedStopAfterApply = false
         stoppedForNoOutputs = false
         const signature = _signatureFor(outputMap)
+
+        if (root._adoptPreviewPending) {
+            // Do not race the command that is producing the frame we are adopting.
+            if (previewProc.running || root._previewQueuedCommand.length > 0)
+                return
+            if (root._adoptedPreviewMatchesOutputMap(outputMap)) {
+                root.lastSyncSignature = signature
+                root.lastError = ""
+                root.shaderHandoffPending = false
+                root._clearPreviewAdoption()
+                return
+            }
+            root._clearPreviewAdoption()
+        }
+
         if (signature === lastSyncSignature && !lastError)
             return
 
@@ -450,6 +573,7 @@ Singleton {
 
             if (shouldStopAfterApply) {
                 root._queuedStopAfterApply = false
+                root.shaderHandoffPending = false
                 if (!stopProc.running)
                     stopProc.running = true
                 return
@@ -463,13 +587,37 @@ Singleton {
                 applyProc.command = queuedCommand
                 applyProc._pendingSignature = queuedSignature
                 applyProc.running = true
+                return
             }
+
+            if (exitCode === 0)
+                root.shaderHandoffPending = false
         }
     }
 
     Process {
         id: previewProc
-        onExited: {
+        property string activeSignature: ""
+
+        onExited: (exitCode) => {
+            const finishedSignature = previewProc.activeSignature
+            if (exitCode === 0)
+                root._previewPresentedSignature = finishedSignature
+            previewProc.activeSignature = ""
+
+            if (root._adoptPreviewPending) {
+                if (exitCode !== 0 && root._previewQueuedCommand.length === 0) {
+                    root._clearPreviewAdoption()
+                    root.lastSyncSignature = ""
+                    root.forceSync()
+                    return
+                }
+                root._drainPreviewQueue()
+                if (!previewProc.running && root._previewQueuedCommand.length === 0)
+                    syncDebounce.restart()
+                return
+            }
+
             if (root._restoreAfterPreviewExit) {
                 root._restoreAfterPreviewExit = false
                 root.lastSyncSignature = ""
@@ -488,6 +636,7 @@ Singleton {
             root.lastSyncSignature = ""
             root.lastError = ""
             root.stoppedForNoOutputs = true
+            root.shaderHandoffPending = false
             root._drainPreviewQueue()
         }
     }
@@ -500,14 +649,26 @@ Singleton {
 
     onEnabledChanged: syncDebounce.restart()
     onAvailableChanged: syncDebounce.restart()
-    onGlobalWallpaperPathChanged: syncDebounce.restart()
+    onGlobalWallpaperPathChanged: {
+        if (root.internalShaderTransitionActive)
+            root.shaderHandoffPending = true
+        syncDebounce.restart()
+    }
     onPanelFamilyChanged: syncDebounce.restart()
     onWaffleUsesMainWallpaperChanged: syncDebounce.restart()
     onWaffleWallpaperPathChanged: syncDebounce.restart()
-    onEffectivePerMonitorChanged: syncDebounce.restart()
+    onEffectivePerMonitorChanged: {
+        if (root.internalShaderTransitionActive)
+            root.shaderHandoffPending = true
+        syncDebounce.restart()
+    }
     onMultiMonitorEnabledChanged: syncDebounce.restart()
     onHideMainWallpaperChanged: syncDebounce.restart()
-    onTransitionTypeChanged: syncDebounce.restart()
+    onTransitionTypeChanged: {
+        if (!root.internalShaderTransitionActive)
+            root.shaderHandoffPending = false
+        syncDebounce.restart()
+    }
     onTransitionDirectionChanged: syncDebounce.restart()
     onTransitionsEnabledChanged: syncDebounce.restart()
     onTransitionDurationMsChanged: syncDebounce.restart()

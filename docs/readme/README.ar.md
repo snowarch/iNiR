@@ -1,7 +1,7 @@
 <div dir="rtl">
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="../images/iris-2.31-principal.webp" alt="iNiR 2.31 iRiS desktop" width="900">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.31.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -80,13 +80,27 @@ Wayland ← GPU
 - **Wayland**: بروتوكول العرض في لينكس (الجديد، بديل X11)
 - **QML**: لغة UI من Qt، iNiR مكتوب فيها
 - **Material You**: نظام ألوان قوقل اللي يسوي باليتات من الصور (كذا يشتغل الـ auto-theming)
-- **ii / waffle**: ستايلين للبانل. ii = فايب Material Design، waffle = فايب Windows 11. `Super+Shift+W` يبدل بينهم
+- **ii / waffle / iRiS**: ثلاث عائلات للواجهات. ii = Material Design، waffle = Windows 11، وiRiS = Island تتشكل حسب ما تفتحه. `Super+Shift+W` يبدل بينها
 
 </details>
 
 ---
 
 ## لقطات الشاشة
+
+<details open>
+<summary><b>iRiS</b> — Island، قطع سطح المكتب، البطاقات وDock</summary>
+
+<p align="center">
+  <img src="../images/iris-2.31-desktop.webp" alt="iRiS desktop layout" width="49%">
+  <img src="../images/iris-2.31-card.webp" alt="iRiS card surface" width="49%">
+</p>
+
+<p align="center">
+  <img src="../images/iris-2.31-dock.webp" alt="iRiS Dock and edge layout" width="99%">
+</p>
+
+</details>
 
 <details open>
 <summary><b>Material ii</b> — شريط عائم، أشرطة جانبية، جمالية Material Design</summary>
@@ -112,9 +126,10 @@ Wayland ← GPU
 
 ## الميزات
 
-**عائلتان من اللوحات**، قابلة للتبديل أثناء التشغيل بـ `Super+Shift+W`:
-- **Material ii** — شريط عائم، أشرطة جانبية، رصيف، 5 أنماط بصرية (material، cards، aurora، inir، angel)
+**ثلاث عائلات من اللوحات**، قابلة للتبديل أثناء التشغيل بـ `Super+Shift+W`:
+- **Material ii** — شريط عائم، أشرطة جانبية، رصيف، 9 أنماط عامة (material، cards، aurora، inir، angel، regalia، zzz، cookie، editorial)
 - **Waffle** — شريط مهام بأسلوب Windows 11، قائمة ابدأ، مركز الإجراءات، مركز الإشعارات
+- **iRiS** — عائلة Island الجديدة: كل حواف الشاشة، Pieces، Dock على أي حافة، Glass وThemes وStudio
 
 **سمات تلقائية** — اختر خلفية ويتكيف كل شيء:
 - ألوان الواجهة عبر Material You، تنتشر إلى GTK3/4، Qt، المحطات الطرفية، Firefox، Discord، SDDM
@@ -130,7 +145,7 @@ Wayland ← GPU
 
 اختر خلفية والنظام بأكمله يتبع — الواجهة، تطبيقات GTK/Qt، المحطات الطرفية، Firefox، Discord، شاشة تسجيل الدخول SDDM. تلقائياً بالكامل.
 
-- **5 أنماط بصرية** — Material (صلب)، Cards، Aurora (ضبابية زجاجية)، iNiR (مستوحى من TUI)، Angel (وحشية جديدة)
+- **9 أنماط عامة** — Material (صلب)، Cards، Aurora (ضبابية زجاجية)، iNiR (مستوحى من TUI)، Angel (وحشية جديدة)، Regalia، ZZZ، Cookie Shapes، Editorial
 - **ألوان ديناميكية من الخلفية** عبر Material You — تنتشر في كل النظام
 - **10 أدوات طرفية تلقائية السمات** — foot، kitty، alacritty، starship، fuzzel، pywalfox، btop، lazygit، yazi
 - **سمات التطبيقات** — GTK3/4، Qt (عبر plasma-integration + darkly)، Firefox (MaterialFox)، Discord/Vesktop (System24)
@@ -177,7 +192,7 @@ Wayland ← GPU
 - **تحديثات تلقائية** — `inir update` مع تراجع وترحيل وحفظ تغييرات المستخدم
 - **شاشة القفل** و**شاشة الجلسة** (تسجيل خروج/إعادة تشغيل/إيقاف/سكون)
 - **وكيل Polkit**، **لوحة مفاتيح على الشاشة**، **مدير التشغيل التلقائي**
-- **9 لغات** — كشف تلقائي، مع توليد ترجمات بمساعدة الذكاء الاصطناعي
+- **17 إعدادًا محليًا** — كشف تلقائي، مع توليد ترجمات بمساعدة الذكاء الاصطناعي
 - **إضاءة ليلية** — مجدولة أو يدوية
 - **الطقس** — Open-Meteo، يدعم GPS، إحداثيات يدوية، أو اسم المدينة
 - **إدارة البطارية** — حدود قابلة للتكوين، سكون تلقائي عند المستوى الحرج
@@ -214,7 +229,7 @@ inir update                     # سحب + ترحيل + إعادة تشغيل
 
 </div>
 
-**التوزيعات المدعومة:** Arch (مثبّت آلي). التوزيعات الأخرى يمكنها التثبيت يدوياً — راجع [PACKAGES.md](../PACKAGES.md).
+**التوزيعات:** Arch هي الهدف الأساسي. لدى Fedora وDebian/Ubuntu أيضاً مسارات آلية للاعتماديات تبدأ بمستودعات التوزيعة؛ التوزيعات الأخرى تتبع الإرشادات العامة في [قائمة الحزم](https://github.com/snowarch/inir/wiki/PACKAGES). يحتاج iNiR إلى Qt 6.9 أو أحدث: Ubuntu 25.10 وFedora 43 وDebian testing أو ما بعدها.
 
 | الطريقة | الأمر |
 |--------|---------|
@@ -287,6 +302,7 @@ inir repair                     # doctor + إعادة تشغيل + فحص سجل
 ## الشكر والتقدير
 
 - [**end-4**](https://github.com/end-4/dots-hyprland) — illogical-impulse الأصلي لـ Hyprland
+- [**pctrade/end4-pC**](https://github.com/pctrade/end4-pC) — تفريعة تخرج أحيانًا بفكرة جيدة فعلًا
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — الإطار الذي يشغّل هذه الواجهة
 - [**Niri**](https://github.com/YaLTeR/niri) — مُركّب Wayland للتبليط بالتمرير
 

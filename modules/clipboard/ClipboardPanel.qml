@@ -523,7 +523,7 @@ Scope {
                     id: headerToolbar
                     Layout.fillWidth: true
                     enableShadow: false
-                    transparent: Appearance.angelEverywhere || Appearance.auroraEverywhere
+                    transparent: Appearance.editorialEverywhere || Appearance.angelEverywhere || Appearance.auroraEverywhere
 
                     MaterialSymbol {
                         text: "content_paste"
@@ -539,9 +539,14 @@ Scope {
                     StyledText {
                         Layout.alignment: Qt.AlignVCenter
                         text: Translation.tr("Clipboard history") + ` (${root.totalCount})`
-                        font.family: Appearance.zzzEverywhere ? Appearance.font.family.title : Appearance.font.family.main
-                        font.pixelSize: Appearance.zzzEverywhere ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.small
-                        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
+                        font.family: (Appearance.zzzEverywhere || Appearance.editorialEverywhere)
+                            ? Appearance.font.family.title : Appearance.font.family.main
+                        font.pixelSize: Appearance.zzzEverywhere ? Appearance.font.pixelSize.normal
+                            : Appearance.editorialEverywhere ? Appearance.font.pixelSize.large * Appearance.editorial.titleScale
+                            : Appearance.font.pixelSize.small
+                        font.weight: Appearance.zzzEverywhere ? Font.Black
+                            : Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Normal
+                        font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
                         font.italic: Appearance.zzzEverywhere
                         color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                             : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
@@ -685,6 +690,7 @@ Scope {
                         : Appearance.auroraEverywhere
                         ? ColorUtils.transparentize(Appearance.colors.colLayer0Base,
                             Math.max(0.12, Appearance.aurora.subSurfaceTransparentize - 0.14))
+                        : Appearance.editorialEverywhere ? Appearance.editorial.layer(1)
                         : Appearance.colors.colLayer2
                     clip: true
 

@@ -22,45 +22,55 @@ Scope {
     property bool suppressOutsideClose: false
 
     readonly property bool _zzz: Appearance.zzzEverywhere
+    readonly property bool _editorial: Appearance.editorialEverywhere
 
     // Style-aware tokens (no hardcoded hex fallbacks)
     readonly property color accentColor: root._zzz ? Appearance.zzz.accent
+        : root._editorial ? Appearance.editorial.accent
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.colors.colPrimary)
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colAccent ?? Appearance.colors.colPrimary)
         : Appearance.colors.colPrimary
 
     readonly property color layerColor: root._zzz ? Appearance.zzz.bg0
+        : root._editorial ? Appearance.editorial.paper
         : Appearance.angelEverywhere ? Appearance.colors.colLayer0Base
         : Appearance.inirEverywhere ? Appearance.inir.colLayer0
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colSurface ?? Appearance.colors.colLayer0)
         : Appearance.colors.colLayer0
 
     readonly property color surfaceColor: root._zzz ? Appearance.zzz.bg1
+        : root._editorial ? Appearance.editorial.layer(1)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colSubSurface ?? Appearance.colors.colSurfaceContainerLow)
         : Appearance.colors.colSurfaceContainerLow
 
     readonly property color textColor: root._zzz ? Appearance.zzz.onBg
+        : root._editorial ? Appearance.editorial.ink
         : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnSurface
     readonly property color subtextColor: root._zzz ? Appearance.zzz.ghostInk
+        : root._editorial ? Appearance.editorial.muted
         : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : Appearance.colors.colSubtext
     readonly property color borderColor: root._zzz ? Appearance.zzz.borderColor
+        : root._editorial ? Appearance.editorial.rule
         : Appearance.angelEverywhere ? Appearance.angel.colBorder
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.colors.colLayer0Border
 
     // Adaptive rounding
     readonly property real cardRadius: root._zzz ? Appearance.zzz.panelRadius
+        : root._editorial ? Appearance.editorial.radius
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.windowRounding
     readonly property real sectionRadius: root._zzz ? Appearance.zzz.controlRadius
+        : root._editorial ? Appearance.rounding.small
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
         : Appearance.rounding.small
     readonly property real pillRadius: root._zzz ? Appearance.zzz.controlRadius
+        : root._editorial ? Appearance.rounding.small
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : 999
 
@@ -363,7 +373,9 @@ Scope {
                                 : Translation.tr("Shell Status")
                             font {
                                 pixelSize: Appearance.font.pixelSize.larger
-                                weight: Font.DemiBold
+                                family: root._editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                                weight: root._editorial ? Appearance.editorial.titleWeight : Font.DemiBold
+                                letterSpacing: root._editorial ? Appearance.editorial.titleTracking * 0.55 : 0
                             }
                             color: root.textColor
                         }
@@ -391,7 +403,8 @@ Scope {
                                         text: "v" + ShellUpdates.localVersion
                                         font {
                                             pixelSize: Appearance.font.pixelSize.smaller
-                                            family: Appearance.font.family.monospace
+                                            family: root._editorial ? Appearance.font.family.numbers : Appearance.font.family.monospace
+                                            weight: root._editorial ? Font.DemiBold : Font.Normal
                                         }
                                         color: root.subtextColor
                                     }
@@ -406,7 +419,7 @@ Scope {
                                         text: "v" + ShellUpdates.remoteVersion
                                         font {
                                             pixelSize: Appearance.font.pixelSize.smaller
-                                            family: Appearance.font.family.monospace
+                                            family: root._editorial ? Appearance.font.family.numbers : Appearance.font.family.monospace
                                             weight: Font.DemiBold
                                         }
                                         color: root.accentColor
@@ -639,6 +652,52 @@ Scope {
 
                             Item { Layout.preferredHeight: 4 }
 
+                            Rectangle {
+                                visible: ShellUpdates.repoDiverged
+                                Layout.fillWidth: true
+                                Layout.leftMargin: 24
+                                Layout.rightMargin: 24
+                                implicitHeight: rewriteWarningRow.implicitHeight + 24
+                                radius: root.sectionRadius
+                                color: ColorUtils.transparentize(Appearance.colors.colWarningContainer, 0.2)
+                                border.width: 1
+                                border.color: Appearance.colors.colWarning
+
+                                RowLayout {
+                                    id: rewriteWarningRow
+                                    anchors {
+                                        fill: parent
+                                        margins: 12
+                                    }
+                                    spacing: 10
+
+                                    MaterialSymbol {
+                                        text: "history"
+                                        iconSize: Appearance.font.pixelSize.large
+                                        color: Appearance.colors.colOnWarningContainer
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 2
+
+                                        StyledText {
+                                            text: Translation.tr("Repository history changed upstream")
+                                            font.pixelSize: Appearance.font.pixelSize.small
+                                            font.weight: Font.DemiBold
+                                            color: Appearance.colors.colOnWarningContainer
+                                        }
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            text: Translation.tr("Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.")
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            color: Appearance.colors.colOnWarningContainer
+                                            wrapMode: Text.WordWrap
+                                        }
+                                    }
+                                }
+                            }
+
                             // ── Current System Info ──
                             Rectangle {
                                 Layout.fillWidth: true
@@ -670,7 +729,9 @@ Scope {
                                             text: Translation.tr("Current System")
                                             font {
                                                 pixelSize: Appearance.font.pixelSize.normal
+                                                family: root._editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
                                                 weight: Font.DemiBold
+                                                letterSpacing: root._editorial ? 0.35 : 0
                                             }
                                             color: root.textColor
                                         }
@@ -693,7 +754,7 @@ Scope {
                                             text: ShellUpdates.localVersion.length > 0 ? ("v" + ShellUpdates.localVersion) : "\u2014"
                                             font {
                                                 pixelSize: Appearance.font.pixelSize.small
-                                                family: Appearance.font.family.monospace
+                                                family: root._editorial ? Appearance.font.family.numbers : Appearance.font.family.monospace
                                                 weight: Font.Medium
                                             }
                                             color: root.textColor
@@ -1168,7 +1229,9 @@ Scope {
                                         text: Translation.tr("Recent History")
                                         font {
                                             pixelSize: Appearance.font.pixelSize.normal
+                                            family: root._editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
                                             weight: Font.DemiBold
+                                            letterSpacing: root._editorial ? 0.35 : 0
                                         }
                                         color: root.textColor
                                     }
@@ -1462,7 +1525,7 @@ Scope {
                                     ? (ShellUpdates.updateStepMessage.length > 0
                                         ? Translation.tr(ShellUpdates.updateStepMessage) + "..."
                                         : Translation.tr("Updating..."))
-                                    : Translation.tr("Update Now")
+                                    : (ShellUpdates.repoDiverged ? Translation.tr("Repair & Update") : Translation.tr("Update Now"))
                                 font {
                                     pixelSize: Appearance.font.pixelSize.small
                                     weight: Font.DemiBold

@@ -17,6 +17,7 @@ Rectangle {
         : cardStyle 
             ? (Appearance.inirEverywhere ? Appearance.inir.colLayer1
                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass ? Appearance.editorial.glassPaper
                 : Appearance.colors.colLayer1)
             : "transparent"
     border.width: 0

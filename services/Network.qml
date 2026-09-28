@@ -7,6 +7,7 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import qs.modules.common.functions
+import qs.services
 import qs.services.network
 
 /**
@@ -28,6 +29,17 @@ Singleton {
 
     property string networkName: ""
     property int networkStrength
+
+    // NetworkManager's own check: full | limited | portal | none | unknown. Unknown (no check
+    // configured, NM absent, not read yet) counts as online so nothing is hidden on a guess.
+    property string connectivity: "unknown"
+    property string simulatedConnectivity: ""
+    readonly property string effectiveConnectivity: simulatedConnectivity || connectivity
+    readonly property bool online: effectiveConnectivity === "full" || effectiveConnectivity === "unknown"
+    readonly property string offlineReason: online ? ""
+        : effectiveConnectivity === "portal" ? Translation.tr("Sign in to the network to go online")
+        : effectiveConnectivity === "limited" ? Translation.tr("Connected, but no internet")
+        : Translation.tr("No internet connection")
     // Gated on being *connected*, not on the radio being powered. wifiStatus is
     // only ever "connecting"/"disconnected" while the radio is on — i.e. while
     // wifiEnabled is true — so keying the strength icons off wifiEnabled both
@@ -199,8 +211,11 @@ Singleton {
         _updateDebounce.restart();
     }
 
+    signal networkChanged()
+
     // Actual update logic
     function _doUpdate() {
+        root.networkChanged();
         updateConnectionType.startCheck();
         wifiStatusProcess.running = true
         updateNetworkName.running = true;
@@ -263,12 +278,12 @@ Singleton {
         }
         onExited: (exitCode, exitStatus) => {
             const lines = updateConnectionType.buffer.trim().split('\n');
-            const connectivity = lines.pop() // none, limited, full
+            const connectivity = (lines.pop() ?? "").trim()
             let hasEthernet = false;
             let hasWifi = false;
             let wifiStatus = "disconnected";
             lines.forEach(line => {
-                if (line.includes("ethernet") && line.includes("connected"))
+                if (line.startsWith("ethernet:") && line.slice(9) === "connected")
                     hasEthernet = true;
                 else if (line.includes("wifi:")) {
                     if (line.includes("disconnected")) {
@@ -291,6 +306,7 @@ Singleton {
                     }
                 }
             });
+            root.connectivity = ["full", "limited", "portal", "none"].includes(connectivity) ? connectivity : "unknown";
             root.wifiStatus = wifiStatus;
             root.ethernet = hasEthernet;
             root.wifi = hasWifi;
@@ -304,11 +320,26 @@ Singleton {
 
     Process {
         id: updateNetworkName
-        command: ["sh", "-c", "nmcli -t -f NAME c show --active | head -1"]
+        command: ["nmcli", "-t", "-f", "NAME,TYPE", "c", "show", "--active"]
         running: false
-        stdout: SplitParser {
-            onRead: data => {
-                root.networkName = data;
+        stdout: StdioCollector {
+            onStreamFinished: {
+                // A VPN is an active connection too, and it often sorts first, which used
+                // to make the bar show the VPN profile's name instead of the network's.
+                const carriers = ["802-11-wireless", "802-3-ethernet"];
+                const skipped = ["vpn", "wireguard", "tun", "tap", "bridge", "loopback"];
+                let carrier = "";
+                let fallback = "";
+                for (const line of text.split("\n")) {
+                    if (line.trim().length === 0) continue;
+                    const parts = line.replace(/\\:/g, "\u0000").split(":").map(part => part.replace(/\u0000/g, ":"));
+                    if (parts.length < 2) continue;
+                    const name = parts[0];
+                    const type = parts[parts.length - 1];
+                    if (carriers.includes(type)) { carrier = name; break; }
+                    if (fallback.length === 0 && !skipped.includes(type)) fallback = name;
+                }
+                root.networkName = carrier || fallback;
             }
         }
     }
@@ -405,6 +436,35 @@ Singleton {
                     }
                 }
             }
+        }
+    }
+
+    Process {
+        id: connectivityCheck
+        command: ["nmcli", "networking", "connectivity", "check"]
+        onExited: root.update()
+    }
+
+    IpcHandler {
+        target: "network"
+
+        function status(): string {
+            return JSON.stringify({
+                online: root.online,
+                connectivity: root.effectiveConnectivity,
+                simulated: root.simulatedConnectivity !== "",
+                ethernet: root.ethernet,
+                wifi: root.wifiStatus,
+                name: root.networkName
+            });
+        }
+        function check(): void {
+            connectivityCheck.running = true;
+        }
+        function simulate(state: string): string {
+            const s = (state ?? "").trim();
+            root.simulatedConnectivity = ["full", "limited", "portal", "none"].includes(s) ? s : "";
+            return root.effectiveConnectivity;
         }
     }
 

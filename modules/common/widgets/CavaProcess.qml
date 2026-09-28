@@ -24,7 +24,9 @@ Item {
     readonly property bool audioSignalActive: root._held
         ? CavaService.audioSignalActive : false
 
-    readonly property bool _wanted: active && !Appearance.gameModeMinimal
+    readonly property bool _wanted: active
+        && !GameMode.visualizersSuppressed
+        && !Appearance.gameModeMinimal
     property bool _held: false
     readonly property bool held: root._held
     property int _subscriptionId: -1

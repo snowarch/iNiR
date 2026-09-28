@@ -33,6 +33,10 @@ SpinBox {
             : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
             : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.colors.colLayer2
         radius: root.radius
+        border.width: Appearance.editorialEverywhere ? (root.activeFocus ? 2 : 1) : 0
+        border.color: Appearance.editorialEverywhere
+            ? (root.activeFocus ? Appearance.editorial.accent : Appearance.editorial.rule)
+            : "transparent"
 
         RegaliaControlFace {
             anchors.fill: parent
@@ -44,6 +48,7 @@ SpinBox {
 
         Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
         Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
     }
 
     contentItem: Item {

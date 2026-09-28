@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="../images/iris-2.31-principal.webp" alt="iNiR 2.31 iRiS desktop" width="900">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.31.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -78,13 +78,27 @@ Wayland → GPU
 - **Wayland**: Linux का display protocol (नया वाला, X11 की जगह)
 - **QML**: Qt की declarative UI भाषा, iNiR इसमें लिखा है
 - **Material You**: Google का color system जो इमेज से palette बनाता है (auto-theming ऐसे काम करता है)
-- **ii / waffle**: दो panel styles। ii = Material Design वाइब, waffle = Windows 11 वाइब। `Super+Shift+W` से switch करो
+- **ii / waffle / iRiS**: तीन panel families। ii = Material Design, waffle = Windows 11, iRiS = खुली चीज़ के अनुसार बदलने वाली Island। `Super+Shift+W` से switch करो
 
 </details>
 
 ---
 
 ## स्क्रीनशॉट
+
+<details open>
+<summary><b>iRiS</b> — Island, desktop pieces, cards और Dock</summary>
+
+<p align="center">
+  <img src="../images/iris-2.31-desktop.webp" alt="iRiS desktop layout" width="49%">
+  <img src="../images/iris-2.31-card.webp" alt="iRiS card surface" width="49%">
+</p>
+
+<p align="center">
+  <img src="../images/iris-2.31-dock.webp" alt="iRiS Dock and edge layout" width="99%">
+</p>
+
+</details>
 
 <details open>
 <summary><b>Material ii</b> — फ़्लोटिंग बार, साइडबार, Material Design सौंदर्य</summary>
@@ -110,9 +124,10 @@ Wayland → GPU
 
 ## विशेषताएँ
 
-**दो पैनल फ़ैमिली**, `Super+Shift+W` से तुरंत स्विच:
-- **Material ii** — फ़्लोटिंग बार, साइडबार, डॉक, 6 विज़ुअल स्टाइल (material, cards, aurora, inir, angel, zzz)
+**तीन पैनल फ़ैमिली**, `Super+Shift+W` से तुरंत स्विच:
+- **Material ii** — फ़्लोटिंग बार, साइडबार, डॉक, 9 ग्लोबल स्टाइल (material, cards, aurora, inir, angel, regalia, zzz, cookie, editorial)
 - **Waffle** — Windows 11 शैली टास्कबार, स्टार्ट मेन्यू, एक्शन सेंटर, नोटिफ़िकेशन सेंटर
+- **iRiS** — नई Island फ़ैमिली: किसी भी edge पर Island और Dock, Pieces, Glass, Themes और Studio
 
 **ऑटोमैटिक थीमिंग** — वॉलपेपर चुनें और सब कुछ अनुकूलित हो जाता है:
 - Material You के माध्यम से शेल रंग, GTK3/4, Qt, टर्मिनल, Firefox, Discord, SDDM तक प्रसारित
@@ -128,7 +143,7 @@ Wayland → GPU
 
 वॉलपेपर चुनें और पूरा सिस्टम अनुसरण करता है — शेल, GTK/Qt ऐप्स, टर्मिनल, Firefox, Discord, SDDM लॉगिन स्क्रीन। सब स्वचालित।
 
-- **6 विज़ुअल स्टाइल** — Material (ठोस), Cards, Aurora (ग्लास ब्लर), iNiR (TUI-प्रेरित), Angel (नव-ब्रूटलिज़्म), ZZZ
+- **9 ग्लोबल स्टाइल** — Material (ठोस), Cards, Aurora (ग्लास ब्लर), iNiR (TUI-प्रेरित), Angel (नव-ब्रूटलिज़्म), Regalia, ZZZ, Cookie Shapes, Editorial
 - **वॉलपेपर से डायनामिक रंग** — Material You के ज़रिए पूरे सिस्टम में प्रसारित
 - **10 टर्मिनल टूल्स ऑटो-थीम** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **ऐप थीमिंग** — GTK3/4, Qt (plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
@@ -175,7 +190,7 @@ Wayland → GPU
 - **ऑटो-अपडेट** — `inir update`, रोलबैक, माइग्रेशन, और उपयोगकर्ता परिवर्तन संरक्षण के साथ
 - **लॉक स्क्रीन** और **सेशन स्क्रीन** (लॉगआउट/रीस्टार्ट/शटडाउन/सस्पेंड)
 - **Polkit एजेंट**, **ऑन-स्क्रीन कीबोर्ड**, **ऑटोस्टार्ट मैनेजर**
-- **9 भाषाएँ** — ऑटो-डिटेक्शन, AI-सहायित अनुवाद जनरेशन के साथ
+- **17 लोकेल** — ऑटो-डिटेक्शन, AI-सहायित अनुवाद जनरेशन के साथ
 - **नाइट लाइट** — शेड्यूल या मैनुअल
 - **मौसम** — Open-Meteo, GPS, मैनुअल निर्देशांक, या शहर का नाम सपोर्ट
 - **बैटरी प्रबंधन** — कॉन्फ़िगर करने योग्य थ्रेशोल्ड, क्रिटिकल पर ऑटो-सस्पेंड
@@ -204,7 +219,7 @@ inir doctor                     # ऑटो-डायग्नोस और ठ�
 inir update                     # pull + माइग्रेशन + रीस्टार्ट
 ```
 
-**समर्थित डिस्ट्रो:** Arch (स्वचालित इंस्टॉलर)। अन्य डिस्ट्रो मैन्युअल रूप से इंस्टॉल कर सकते हैं — देखें [PACKAGES.md](../PACKAGES.md)।
+**डिस्ट्रो:** Arch मुख्य लक्ष्य है। Fedora और Debian/Ubuntu के लिए भी स्वचालित dependency पथ हैं जो पहले डिस्ट्रो के रिपॉज़िटरी आज़माते हैं; अन्य डिस्ट्रो [पैकेज सूची](https://github.com/snowarch/inir/wiki/PACKAGES) के सामान्य मार्गदर्शन का पालन करते हैं। iNiR को Qt 6.9 या नया चाहिए: Ubuntu 25.10, Fedora 43 और Debian testing या बाद के संस्करण।
 
 | तरीक़ा | कमांड |
 |--------|---------|
@@ -273,6 +288,7 @@ inir repair                     # doctor + रीस्टार्ट + फ़�
 ## श्रेय
 
 - [**end-4**](https://github.com/end-4/dots-hyprland) — Hyprland के लिए मूल illogical-impulse
+- [**pctrade/end4-pC**](https://github.com/pctrade/end4-pC) — एक फ़ोर्क जिसे कभी-कभी सच में अच्छा आइडिया सूझ जाता है
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — इस शेल को चलाने वाला फ़्रेमवर्क
 - [**Niri**](https://github.com/YaLTeR/niri) — स्क्रॉलिंग टाइलिंग Wayland कंपोज़िटर
 

@@ -50,6 +50,7 @@ ColumnLayout {
         weather:       { icon: "partly_cloudy_day",   label: Translation.tr("Weather") },
         calendar:      { icon: "calendar_month",      label: Translation.tr("Calendar") },
         agenda:        { icon: "event_upcoming",      label: Translation.tr("Agenda") },
+        focus:         { icon: "timer", label: Translation.tr("Focus") },
         notes:         { icon: "edit_note",           label: Translation.tr("Notes") }
     })
     readonly property var allIds: Object.keys(catalog)

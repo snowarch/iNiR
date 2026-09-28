@@ -18,3 +18,4 @@ NotificationToggle 1.0 NotificationToggle.qml
 OnScreenKeyboardToggle 1.0 OnScreenKeyboardToggle.qml
 PowerProfilesToggle 1.0 PowerProfilesToggle.qml
 ScreenSnipToggle 1.0 ScreenSnipToggle.qml
+VpnToggle 1.0 VpnToggle.qml

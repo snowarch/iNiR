@@ -518,10 +518,11 @@ PanelWindow {
                 /usr/bin/notify-send "Edit failed" "Could not copy to screenshots folder" -a "Screenshot" -i camera-photo -t 4000;
                 exit 2;
             fi;
-            # Clipboard is best-effort. wl-copy returns non-zero if the
-            # wl-clipboard manager isn't running — don't fail the whole chain.
+            # Clipboard ownership lives outside inir.service so editing/copying
+            # never leaves a wl-copy process behind when the shell restarts.
             _clip_msg="";
-            if command -v /usr/bin/wl-copy >/dev/null 2>&1 && /usr/bin/wl-copy < "$_ss" 2>/dev/null && echo -n "$_ss" | /usr/bin/wl-copy --primary 2>/dev/null; then
+            _clip_helper='${StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/clipboard-copy.sh"))}';
+            if "$_clip_helper" < "$_ss" 2>/dev/null && printf '%s' "$_ss" | "$_clip_helper" --primary 2>/dev/null; then
                 _clip_msg=" — copied to clipboard";
             else
                 _clip_msg=" — clipboard unavailable (is wl-clipboard running?)";

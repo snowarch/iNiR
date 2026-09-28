@@ -36,6 +36,8 @@ Item {
         ? maxMediaWidth
         : Math.min(rowLayout.implicitWidth + rowLayout.spacing * 2, maxMediaWidth)
     implicitHeight: Appearance.sizes.barHeight
+    // Narrowest it gets in a crowded bar: the glyph alone.
+    readonly property real minimumWidth: compactMediaGlyph.implicitWidth + rowLayout.spacing * 2
     clip: true
 
     Timer {
@@ -280,7 +282,7 @@ Item {
                 id: mediaCircProg
                 anchors.centerIn: parent
                 lineWidth: Appearance.zzzEverywhere ? 2 : Appearance.rounding.unsharpen
-                value: (activePlayer && activePlayer.length > 0) ? (activePlayer.position / activePlayer.length) : 0
+                value: MprisController.lengthOf(activePlayer) > 0 ? (MprisController.positionOf(activePlayer) / MprisController.lengthOf(activePlayer)) : 0
                 implicitSize: Appearance.zzzEverywhere && !root.showVerboseLabel ? 22 : 22
                 colPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
                     : Appearance.inirEverywhere ? Appearance.inir.colPrimary

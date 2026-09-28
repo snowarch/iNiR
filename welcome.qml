@@ -7,15 +7,20 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Effects
-import Qt5Compat.GraphicalEffects as GE
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import Quickshell.Widgets
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.iris.style
+import qs.modules.iris.settings
+import qs.modules.iris.preview
+import qs.modules.iris.components as Iris
+import qs.modules.waffle.looks
 
 Scope {
     id: root
@@ -28,15 +33,107 @@ Scope {
     readonly property real screenHeight: focusedScreen?.height ?? 1080
     readonly property bool compact: screenHeight < 1000
     readonly property bool veryCompact: screenHeight < 720
-    readonly property int screenPadding: compact ? 24 : 60
-    readonly property int cardPadding: compact ? 20 : 36
-    readonly property real stepWidth: Math.min(720, screenWidth - 2 * screenPadding - 2 * cardPadding)
+    readonly property int screenPadding: veryCompact ? 12 : compact ? 24 : 60
+    readonly property int cardPadding: compact ? 22 : 30
+    readonly property real stepWidth: Math.max(0, wizardCard.width
+        - 2 * (root.compact ? 22 : 28)
+        - (root.irisFamily ? 2 * IrisStyle.concentricPad(IrisStyle.radiusPanel, 10) : 0))
     readonly property int totalSteps: 5
     property var focusedScreen: GlobalStates.primaryScreen
+    readonly property real screenAspect: root.screenWidth / Math.max(1, root.screenHeight)
+
+    property string requestedFamily: ""
+    readonly property string family: root.requestedFamily.length > 0
+        ? root.requestedFamily : (Config.options?.panelFamily ?? "ii")
+    readonly property bool irisFamily: root.family === "iris"
+    readonly property bool waffleFamily: root.family === "waffle"
+    readonly property string familyTitle: root.irisFamily ? "iRiS" : root.waffleFamily ? "Waffle" : "Material II"
+
+    // Onboarding follows the selected family, independently of ii's Global Style.
+    readonly property color welcomeSurfaceRaised: root.irisFamily ? IrisStyle.surface
+        : root.waffleFamily ? Looks.colors.bg0 : Appearance.m3colors.m3surfaceContainer
+    readonly property color welcomeSurfaceHigh: root.irisFamily ? IrisStyle.surfaceHigh
+        : root.waffleFamily ? Looks.colors.bg1Base : Appearance.m3colors.m3surfaceContainerHigh
+    readonly property color welcomeSurfaceHighest: root.irisFamily ? IrisStyle.surfaceHighest
+        : root.waffleFamily ? Looks.colors.bg2Base : Appearance.m3colors.m3surfaceContainerHighest
+    readonly property color welcomeSurfaceRaisedHover: root.irisFamily ? IrisStyle.fillHover
+        : root.waffleFamily ? Looks.colors.bg1Hover
+        : ColorUtils.mix(welcomeSurfaceRaised, welcomeOnSurface, 0.94)
+    readonly property color welcomeOnSurface: root.irisFamily ? IrisStyle.textStrong
+        : root.waffleFamily ? Looks.colors.fg : Appearance.m3colors.m3onSurface
+    readonly property color welcomeOnSurfaceVariant: root.irisFamily ? IrisStyle.textSecondary
+        : root.waffleFamily ? Looks.colors.subfg : Appearance.m3colors.m3onSurfaceVariant
+    readonly property color welcomeOutline: root.irisFamily ? IrisStyle.border
+        : root.waffleFamily ? Looks.settings.strokeStrong : Appearance.m3colors.m3outlineVariant
+    readonly property color welcomeScrim: Appearance.m3colors.m3scrim
+    readonly property color welcomePrimary: root.irisFamily ? IrisStyle.accent
+        : root.waffleFamily ? Looks.colors.accent : Appearance.m3colors.m3primary
+    readonly property color welcomeOnPrimary: root.irisFamily ? IrisStyle.onAccent
+        : root.waffleFamily ? Looks.colors.accentFg : Appearance.m3colors.m3onPrimary
+    readonly property color welcomePrimaryContainer: root.irisFamily ? IrisStyle.tintFill(IrisStyle.accent)
+        : root.waffleFamily ? ColorUtils.mix(Looks.colors.bg1Base, Looks.colors.accent, 0.84)
+        : ColorUtils.mix(Appearance.m3colors.m3surfaceContainerHigh,
+            Appearance.m3colors.m3primaryContainer, 0.72)
+    readonly property color welcomeOnPrimaryContainer: root.irisFamily ? IrisStyle.textStrong
+        : root.waffleFamily ? Looks.colors.fg : Appearance.m3colors.m3onSurface
+    readonly property color welcomeSecondary: root.irisFamily ? IrisStyle.secondaryAccent
+        : root.waffleFamily ? Looks.colors.accentUnfocused : Appearance.m3colors.m3secondary
+    readonly property color welcomeSecondaryContainer: root.irisFamily ? IrisStyle.fill
+        : root.waffleFamily ? Looks.settings.tile : Appearance.m3colors.m3surfaceContainer
+    readonly property color welcomeOnSecondaryContainer: root.irisFamily ? IrisStyle.textStrong
+        : root.waffleFamily ? Looks.colors.fg : Appearance.m3colors.m3onSurface
+    readonly property color welcomeTertiary: root.irisFamily ? IrisStyle.secondaryAccent
+        : root.waffleFamily ? Looks.colors.accentUnfocused : Appearance.m3colors.m3tertiary
+    readonly property color welcomeTertiaryContainer: root.irisFamily ? IrisStyle.tintFill(IrisStyle.secondaryAccent)
+        : root.waffleFamily ? Looks.settings.tile
+        : ColorUtils.mix(Appearance.m3colors.m3surfaceContainer,
+            Appearance.m3colors.m3tertiaryContainer, 0.84)
+    readonly property color welcomeOnTertiaryContainer: root.irisFamily ? IrisStyle.textStrong
+        : root.waffleFamily ? Looks.colors.subfg : Appearance.m3colors.m3onSurfaceVariant
+    // Wallpaper colour provides feedback without switching ii's wizard dialect.
+    readonly property color welcomeAccent: welcomePrimary
+    readonly property color welcomeAccentAlt: welcomeTertiary
+    readonly property color welcomeAccentContainer: welcomePrimaryContainer
+    readonly property color welcomeAccentHover: root.irisFamily ? IrisStyle.tintFillHover(IrisStyle.accent)
+        : root.waffleFamily ? ColorUtils.mix(Looks.colors.bg1Hover, Looks.colors.accent, 0.80)
+        : ColorUtils.mix(Appearance.m3colors.m3surfaceContainerHighest,
+            Appearance.m3colors.m3primaryContainer, 0.68)
+    readonly property color welcomeOnAccent: welcomeOnPrimary
+    readonly property color welcomeOnAccentContainer: welcomeOnPrimaryContainer
+    readonly property color welcomeGuideContainer: welcomeTertiaryContainer
+    readonly property color welcomeGuideText: welcomeOnTertiaryContainer
+    readonly property string welcomeFontMain: root.irisFamily ? IrisStyle.fontMain
+        : root.waffleFamily ? Looks.fontFamily
+        : (Config.options?.appearance?.typography?.mainFont ?? "Roboto Flex")
+    readonly property string welcomeFontTitle: root.irisFamily ? IrisStyle.fontTitle
+        : root.waffleFamily ? Looks.fontFamily
+        : (Config.options?.appearance?.typography?.titleFont ?? "Gabarito")
+    readonly property string welcomeFontNumbers: root.irisFamily ? IrisStyle.fontNumbers : "Rubik"
+    readonly property string welcomeFontExpressive: "Space Grotesk"
+    readonly property int welcomeFontMeta: Math.max(13, Appearance.font.pixelSize.smallest)
+    readonly property int welcomeFontCaption: Math.max(14, Appearance.font.pixelSize.smaller)
+    readonly property int welcomeFontBody: Math.max(15, Appearance.font.pixelSize.small)
+    readonly property int welcomeFontSection: Math.max(17, Appearance.font.pixelSize.normal)
+    readonly property color welcomeSecondaryText: ColorUtils.ensureReadable(
+        welcomeOnSurfaceVariant, welcomeSurfaceRaised, 4.5)
+    readonly property color welcomeTertiaryText: ColorUtils.ensureReadable(
+        ColorUtils.applyAlpha(welcomeOnSurfaceVariant, 0.86), welcomeSurfaceRaised, 4.0)
+    readonly property real welcomePanelRadius: root.irisFamily ? IrisStyle.radiusPanel
+        : root.waffleFamily ? Looks.settings.radiusXLarge : 24
+    readonly property real welcomeControlRadius: root.irisFamily ? IrisStyle.radiusRow
+        : root.waffleFamily ? Looks.settings.radiusMedium : 12
+    readonly property real welcomeChoiceRadius: root.irisFamily ? IrisStyle.radiusTile
+        : root.waffleFamily ? Looks.settings.radiusLarge : 14
+    readonly property real welcomeCardRadius: root.irisFamily ? IrisStyle.radiusPlate
+        : root.waffleFamily ? Looks.settings.radiusLarge : 16
 
     readonly property string selectedProfile: Config.options?.welcomeWizard?.profile ?? "balanced"
+    readonly property string selectedStylePreset: Config.options?.welcomeWizard?.stylePreset ?? "material"
+    readonly property string selectedPerformancePreset: Config.options?.welcomeWizard?.performancePreset ?? "balanced"
     property bool profileCustomized: false
     property bool initialProfileApplied: false
+    property bool initialPerformanceApplied: false
+    property bool initialIrisDesktopApplied: false
     readonly property bool firstRunSetup: !(Config.options?.welcomeWizard?.completed ?? false)
         && !(Config.options?.welcomeWizard?.skipped ?? false)
 
@@ -44,15 +141,255 @@ Scope {
         ? Translation.tr("Minimum")
         : selectedProfile === "full" ? Translation.tr("Full") : Translation.tr("Balanced")
     readonly property string selectedProfileDescription: selectedProfile === "minimum"
-        ? Translation.tr("A calm desktop. Bar, dock and dashboard with one sidebar tab, two panel widgets and a bare wallpaper.")
+        ? Translation.tr("Core bar, sidebars and local controls. No desktop widgets.")
         : selectedProfile === "full"
-            ? Translation.tr("Everything local, composed on purpose. Five sidebar tabs, eight panel widgets, eight quick toggles, a placed desktop clock and system monitor, and Kira on the desktop.")
-            : Translation.tr("Three sidebar tabs, six panel widgets, system usage in the bar, the control and status cards, and an auto-placed desktop clock.")
-    readonly property string selectedProfileAudience: selectedProfile === "minimum"
-        ? Translation.tr("Best if you want the shell out of the way and will add pieces yourself.")
-        : selectedProfile === "full"
-            ? Translation.tr("Best if you want to see everything iNiR can do on day one.")
-            : Translation.tr("Best for most people. This is what a fresh install ships.")
+            ? Translation.tr("More local tools, richer sidebars and a small system monitor.")
+            : Translation.tr("Useful sidebars, eight everyday toggles and one desktop clock.")
+    readonly property var profileChoices: [
+        { id: "minimum", name: Translation.tr("Minimum"), icon: "filter_1",
+            detail: Translation.tr("Core controls with no desktop widgets.") },
+        { id: "balanced", name: Translation.tr("Balanced"), icon: "tune", badge: Translation.tr("Recommended"),
+            detail: Translation.tr("Sidebars, daily toggles and a desktop clock.") },
+        { id: "full", name: Translation.tr("Full"), icon: "auto_awesome",
+            detail: Translation.tr("More local tools, fuller sidebars and a system monitor.") }
+    ]
+    readonly property var stylePresets: [
+        {
+            id: "material", name: Translation.tr("Flow"), icon: "category",
+            globalStyle: "material",
+            description: Translation.tr("Clean Material surfaces with the M3 bar and dock."),
+            values: {
+                "appearance.iiMotionProfile": "contextual",
+                "bar.appearanceStyle": "m3",
+                "bar.m3.borderless": "pills",
+                "bar.m3.showBackground": true,
+                "bar.showBackground": true,
+                "bar.opacity": 1.0,
+                "dock.style": "m3",
+                "dock.showBackground": true,
+                "sidebar.style": "panel"
+            }
+        },
+        {
+            id: "cookie", name: Translation.tr("Expressive"), icon: "interests",
+            globalStyle: "cookie",
+            description: Translation.tr("Playful shapes, joined controls and a pill dock."),
+            values: {
+                "appearance.iiMotionProfile": "contextual",
+                "bar.appearanceStyle": "pill",
+                "bar.pill.barMode": false,
+                "bar.pill.musicViz": false,
+                "bar.pill.soul.enable": true,
+                "bar.pill.soul.style": "orb",
+                "bar.showBackground": true,
+                "bar.opacity": 1.0,
+                "dock.style": "pill",
+                "dock.showBackground": true,
+                "sidebar.style": "panel"
+            }
+        },
+        {
+            id: "aurora", name: Translation.tr("Glass"), icon: "blur_on",
+            globalStyle: "aurora",
+            description: Translation.tr("Translucent islands for the bar, dock and sidebars."),
+            values: {
+                "appearance.iiMotionProfile": "contextual",
+                "bar.appearanceStyle": "islands",
+                "bar.showBackground": true,
+                "bar.opacity": 1.0,
+                "dock.style": "island",
+                "dock.showBackground": true,
+                "sidebar.style": "island"
+            }
+        },
+        {
+            id: "inir", name: "iNiR", icon: "terminal",
+            globalStyle: "inir",
+            description: Translation.tr("Sharp framed surfaces with a denser, technical feel."),
+            values: {
+                "appearance.iiMotionProfile": "classic",
+                "bar.appearanceStyle": "frame",
+                "bar.showBackground": true,
+                "bar.opacity": 1.0,
+                "dock.style": "panel",
+                "dock.showBackground": true,
+                "sidebar.style": "panel"
+            }
+        },
+        {
+            id: "cards", name: Translation.tr("Cards"), icon: "branding_watermark",
+            globalStyle: "cards",
+            description: Translation.tr("Soft rounded cards with familiar desktop structure."),
+            values: {
+                "appearance.iiMotionProfile": "contextual",
+                "bar.appearanceStyle": "classic",
+                "bar.showBackground": true,
+                "bar.opacity": 1.0,
+                "dock.style": "panel",
+                "dock.showBackground": true,
+                "sidebar.style": "panel"
+            }
+        },
+        {
+            id: "angel", name: Translation.tr("Angel"), icon: "raven",
+            globalStyle: "angel",
+            description: Translation.tr("Scenic glass, strong accents and a pill dock."),
+            values: {
+                "appearance.iiMotionProfile": "contextual",
+                "appearance.angelSubStyle": "frost",
+                "bar.appearanceStyle": "scenic",
+                "bar.showBackground": true,
+                "bar.opacity": 1.0,
+                "dock.style": "pill",
+                "dock.showBackground": true,
+                "sidebar.style": "panel"
+            }
+        },
+        {
+            id: "regalia", name: Translation.tr("Regalia"), icon: "event_seat",
+            globalStyle: "regalia",
+            description: Translation.tr("Structured surfaces, a classic bar and a macOS-style dock."),
+            values: {
+                "appearance.iiMotionProfile": "classic",
+                "bar.appearanceStyle": "classic",
+                "bar.showBackground": true,
+                "bar.opacity": 1.0,
+                "dock.style": "macos",
+                "dock.showBackground": true,
+                "sidebar.style": "panel"
+            }
+        },
+        {
+            id: "zzz", name: "ZZZ", icon: "bolt",
+            globalStyle: "zzz",
+            description: Translation.tr("Poster-like surfaces with bold graphic contrast."),
+            values: {
+                "appearance.iiMotionProfile": "classic",
+                "bar.appearanceStyle": "classic",
+                "bar.showBackground": true,
+                "bar.opacity": 1.0,
+                "dock.style": "panel",
+                "dock.showBackground": true,
+                "sidebar.style": "panel"
+            }
+        },
+        {
+            id: "editorial", name: Translation.tr("Editorial"), icon: "auto_stories",
+            globalStyle: "editorial",
+            description: Translation.tr("Quiet paper-like surfaces led by typography."),
+            values: {
+                "appearance.iiMotionProfile": "contextual",
+                "bar.appearanceStyle": "classic",
+                "bar.showBackground": true,
+                "bar.opacity": 1.0,
+                "dock.style": "panel",
+                "dock.showBackground": true,
+                "sidebar.style": "panel"
+            }
+        }
+    ]
+
+    readonly property var performancePresets: [
+        {
+            id: "minimum", name: Translation.tr("Save power"), icon: "energy_savings_leaf",
+            description: Translation.tr("Cuts heavy effects and reduces motion for battery-first or lower-end systems."),
+            values: {
+                "performance.lowPower": true,
+                "performance.reduceAnimations": true,
+                "performance.blurBackend": "auto",
+                "performance.compositorBlur": false,
+                "performance.blurAreas.bar": "inherit",
+                "performance.blurAreas.dock": "inherit",
+                "performance.blurAreas.panels": "inherit",
+                "performance.blurAreas.islands": "inherit",
+                "performance.blurAreas.widgets": "inherit"
+            }
+        },
+        {
+            id: "efficient", name: Translation.tr("Fewer effects"), icon: "speed",
+            description: Translation.tr("Keeps normal motion while avoiding expensive blur."),
+            values: {
+                "performance.lowPower": false,
+                "performance.reduceAnimations": false,
+                "performance.blurBackend": "auto",
+                "performance.compositorBlur": false,
+                "performance.blurAreas.bar": "inherit",
+                "performance.blurAreas.dock": "inherit",
+                "performance.blurAreas.panels": "inherit",
+                "performance.blurAreas.islands": "inherit",
+                "performance.blurAreas.widgets": "inherit"
+            }
+        },
+        {
+            id: "balanced", name: Translation.tr("Full style"), icon: "tune",
+            description: Translation.tr("Uses the selected style's full motion and effects. Game Mode can still scale them back."),
+            values: {
+                "performance.lowPower": false,
+                "performance.reduceAnimations": false,
+                "performance.blurBackend": "auto",
+                "performance.compositorBlur": true,
+                "performance.blurAreas.bar": "inherit",
+                "performance.blurAreas.dock": "inherit",
+                "performance.blurAreas.panels": "inherit",
+                "performance.blurAreas.islands": "inherit",
+                "performance.blurAreas.widgets": "inherit"
+            }
+        }
+    ]
+
+    function presetById(list: var, id: string): var {
+        return list.find(preset => preset.id === id) ?? list[0]
+    }
+
+    function valuesMatch(values: var): bool {
+        const keys = Object.keys(values ?? {})
+        for (const key of keys) {
+            const current = Config.getNestedValue(key, undefined)
+            if (JSON.stringify(current) !== JSON.stringify(values[key]))
+                return false
+        }
+        return true
+    }
+
+    function flowM3Layout(profile: string): var {
+        if (profile === "minimum")
+            return {
+                "bar.m3.layoutMode": "custom",
+                "bar.m3.layouts.leftLayout": ["leftSidebarButton", "workspaces"],
+                "bar.m3.layouts.middleLayout": ["docktoPanel"],
+                "bar.m3.layouts.rightLayout": ["clockWidget", "systemIcons", "rightSidebarButton"]
+            }
+        return {
+            "bar.m3.layoutMode": "compact",
+            "bar.m3.layouts.leftLayout": ["leftSidebarButton", "media", "workspaces"],
+            "bar.m3.layouts.middleLayout": ["docktoPanel"],
+            "bar.m3.layouts.rightLayout": ["utilButtons", "weatherBar", "clockWidget", "systemIcons", "rightSidebarButton"]
+        }
+    }
+
+    function stylePresetMatches(id: string): bool {
+        const preset = root.presetById(root.stylePresets, id)
+        return (Config.options?.appearance?.globalStyle ?? "material") === preset.globalStyle
+            && root.valuesMatch(preset.values)
+            && (id !== "material" || root.valuesMatch(root.flowM3Layout(root.selectedProfile)))
+    }
+
+    function performancePresetMatches(id: string): bool {
+        return root.valuesMatch(root.presetById(root.performancePresets, id).values)
+    }
+
+    readonly property string effectiveStylePreset: root.stylePresetMatches(root.selectedStylePreset)
+        ? root.selectedStylePreset : "custom"
+    readonly property string effectivePerformancePreset: root.performancePresetMatches(root.selectedPerformancePreset)
+        ? root.selectedPerformancePreset : "custom"
+    readonly property var currentStylePreset: root.presetById(root.stylePresets, root.selectedStylePreset)
+    readonly property var currentPerformancePreset: root.presetById(root.performancePresets, root.selectedPerformancePreset)
+    readonly property string currentStylePresetDescription: root.effectiveStylePreset === "custom"
+        ? Translation.tr("Your current settings mix styles. Pick a preset to bring the shell back into sync.")
+        : root.currentStylePreset.description
+    readonly property string currentPerformancePresetDescription: root.effectivePerformancePreset === "custom"
+        ? Translation.tr("Your effects settings are custom. Pick a mode to restore a matched setup.")
+        : root.currentPerformancePreset.description
 
     // Every starting profile prepares shared services and the Material II
     // family. Waffle keeps its independent `waffles.*` configuration intact,
@@ -74,7 +411,6 @@ Scope {
         "sounds.notifications": true,
         "gameMode.autoDetect": true,
         "audio.protection.enable": true,
-        "performance.reduceAnimations": false,
         "sidebar.collapseEmptyNotifications": false,
         "sidebar.collapseWidgetsTab": false,
         "sidebar.right.headerBanner": "wallpaper",
@@ -100,8 +436,13 @@ Scope {
                 "bar.modules.resources": false,
                 "bar.modules.utilButtons": false,
                 "bar.modules.media": false,
+                "bar.m3.layoutMode": "custom",
+                "bar.m3.layouts.leftLayout": ["leftSidebarButton", "workspaces"],
+                "bar.m3.layouts.middleLayout": ["docktoPanel"],
+                "bar.m3.layouts.rightLayout": ["clockWidget", "systemIcons", "rightSidebarButton"],
                 "sidebar.news.enable": false,
                 "sidebar.wallhaven.enable": false,
+                "sidebar.ytmusic.enable": false,
                 "sidebar.tools.enable": false,
                 "sidebar.software.enable": false,
                 "sidebar.widgets.context": true,
@@ -109,6 +450,7 @@ Scope {
                 "sidebar.widgets.media": true,
                 "sidebar.widgets.controls": false,
                 "sidebar.widgets.status": false,
+                "sidebar.widgets.wallpaper": true,
                 "sidebar.widgets.note": false,
                 "sidebar.widgets.launch": false,
                 "sidebar.widgets.worldClock": false,
@@ -134,8 +476,13 @@ Scope {
                 "bar.modules.resources": true,
                 "bar.modules.utilButtons": true,
                 "bar.modules.media": true,
+                "bar.m3.layoutMode": "compact",
+                "bar.m3.layouts.leftLayout": ["leftSidebarButton", "media", "workspaces"],
+                "bar.m3.layouts.middleLayout": ["docktoPanel"],
+                "bar.m3.layouts.rightLayout": ["utilButtons", "weatherBar", "clockWidget", "systemIcons", "rightSidebarButton"],
                 "sidebar.news.enable": true,
                 "sidebar.wallhaven.enable": true,
+                "sidebar.ytmusic.enable": true,
                 "sidebar.tools.enable": true,
                 "sidebar.software.enable": true,
                 "sidebar.widgets.context": true,
@@ -143,6 +490,7 @@ Scope {
                 "sidebar.widgets.media": true,
                 "sidebar.widgets.controls": true,
                 "sidebar.widgets.status": true,
+                "sidebar.widgets.wallpaper": true,
                 "sidebar.widgets.note": true,
                 "sidebar.widgets.launch": true,
                 "sidebar.widgets.worldClock": true,
@@ -156,36 +504,35 @@ Scope {
                     { "size": 1, "type": "audio" },
                     { "size": 1, "type": "mic" },
                     { "size": 1, "type": "nightLight" },
-                    { "size": 1, "type": "gameMode" },
                     { "size": 1, "type": "screenSnip" },
-                    { "size": 1, "type": "colorPicker" }
+                    { "size": 1, "type": "colorPicker" },
+                    { "size": 1, "type": "idleInhibitor" }
                 ],
                 "background.widgets.clock.enable": true,
-                "background.widgets.clock.placementStrategy": "free",
-                "background.widgets.clock.x": 60,
-                "background.widgets.clock.y": 90,
-                "background.widgets.clock.quote.enable": true,
-                "background.widgets.visualizer.enable": true,
-                "background.widgets.visualizer.placementStrategy": "free",
-                "background.widgets.visualizer.x": 60,
-                "background.widgets.visualizer.y": 400,
+                "background.widgets.clock.placementStrategy": "topRight",
+                "background.widgets.clock.quote.enable": false,
+                "background.widgets.visualizer.enable": false,
                 "background.widgets.clock.backgroundOpacity": 0,
                 "background.widgets.clock.borderOpacity": 0.08,
-                "background.widgets.visualizer.backgroundOpacity": 0.16,
-                "background.widgets.visualizer.borderOpacity": 0.2,
-                "background.widgets.systemMonitor.enable": false,
+                "background.widgets.systemMonitor.enable": true,
+                "background.widgets.systemMonitor.placementStrategy": "bottomRight",
                 "background.widgets.weather.enable": false,
                 "background.widgets.battery.enable": false,
                 "background.widgets.mediaControls.enable": false,
                 "background.widgets.calendarUpcoming.enable": false,
-                "mascot.enable": true
+                "mascot.enable": false
             }
         return {
             "bar.modules.resources": true,
             "bar.modules.utilButtons": true,
             "bar.modules.media": true,
+            "bar.m3.layoutMode": "compact",
+            "bar.m3.layouts.leftLayout": ["leftSidebarButton", "media", "workspaces"],
+            "bar.m3.layouts.middleLayout": ["docktoPanel"],
+            "bar.m3.layouts.rightLayout": ["utilButtons", "weatherBar", "clockWidget", "systemIcons", "rightSidebarButton"],
             "sidebar.news.enable": true,
             "sidebar.wallhaven.enable": true,
+            "sidebar.ytmusic.enable": false,
             "sidebar.tools.enable": false,
             "sidebar.software.enable": false,
             "sidebar.widgets.context": true,
@@ -193,21 +540,27 @@ Scope {
             "sidebar.widgets.media": true,
             "sidebar.widgets.controls": true,
             "sidebar.widgets.status": true,
+            "sidebar.widgets.wallpaper": true,
             "sidebar.widgets.note": false,
             "sidebar.widgets.launch": false,
             "sidebar.widgets.worldClock": false,
             "sidebar.right.enabledWidgets": [
-                "calendar", "events", "todo", "calculator", "sysmon", "weather"
+                "calendar", "events", "todo", "notepad", "weather"
             ],
             "sidebar.quickToggles.android.toggles": [
                 { "size": 1, "type": "network" },
                 { "size": 1, "type": "bluetooth" },
                 { "size": 1, "type": "audio" },
-                { "size": 1, "type": "mic" }
+                { "size": 1, "type": "mic" },
+                { "size": 1, "type": "nightLight" },
+                { "size": 1, "type": "screenSnip" },
+                { "size": 1, "type": "colorPicker" },
+                { "size": 1, "type": "idleInhibitor" }
             ],
-            // One widget is the only case where leastBusy is safe.
+            // One widget is enough for a fresh desktop, and a named zone keeps
+            // the placement deterministic across common output sizes.
             "background.widgets.clock.enable": true,
-            "background.widgets.clock.placementStrategy": "leastBusy",
+            "background.widgets.clock.placementStrategy": "topRight",
             "background.widgets.clock.quote.enable": false,
             "background.widgets.clock.backgroundOpacity": 0,
             "background.widgets.clock.borderOpacity": 0.08,
@@ -231,16 +584,125 @@ Scope {
         root.profileCustomized = false
     }
 
+    function applyStylePreset(id: string): void {
+        const preset = root.presetById(root.stylePresets, id)
+        ThemeService.setGlobalStyle(preset.globalStyle)
+        const flowLayout = id === "material" ? root.flowM3Layout(root.selectedProfile) : {}
+        Config.setNestedValues(Object.assign({}, preset.values, flowLayout, {
+            "welcomeWizard.stylePreset": preset.id
+        }))
+    }
+
+    function applyPerformancePreset(id: string): void {
+        const preset = root.presetById(root.performancePresets, id)
+        Config.setNestedValues(Object.assign({}, preset.values, {
+            "welcomeWizard.performancePreset": preset.id
+        }))
+    }
+
     function setProfileFeature(path: string, value: var): void {
         root.profileCustomized = true
         Config.setNestedValue(path, value)
     }
 
+    function chooseFamily(id: string): void {
+        root.requestedFamily = id
+        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "panelFamily", "set", id])
+    }
+
+    readonly property var irisArrangements: [
+        {
+            id: "signature", name: Translation.tr("Signature"), icon: "crop_free",
+            badge: Translation.tr("Recommended"),
+            description: Translation.tr("Island attached to its edge, Surround on, Dock opposite."),
+            values: {
+                "iris.bar.layout": "island",
+                "iris.bar.notch": true,
+                "iris.surround.enable": true,
+                "iris.bar.composition": "cluster",
+                "iris.dock.enable": true,
+                "iris.dock.position": "auto",
+                "iris.dock.notch": true
+            }
+        },
+        {
+            id: "floating", name: Translation.tr("Floating"), icon: "layers",
+            description: Translation.tr("Island and Dock float above the wallpaper."),
+            values: {
+                "iris.bar.layout": "island",
+                "iris.bar.notch": false,
+                "iris.surround.enable": false,
+                "iris.bar.composition": "cluster",
+                "iris.dock.enable": true,
+                "iris.dock.position": "auto",
+                "iris.dock.notch": false
+            }
+        },
+        {
+            id: "full", name: Translation.tr("Full bar"), icon: "width_full",
+            description: Translation.tr("Island spans the edge with start, center and end zones."),
+            values: {
+                "iris.bar.layout": "full",
+                "iris.bar.notch": true,
+                "iris.surround.enable": false,
+                "iris.bar.composition": "unified",
+                "iris.dock.enable": true,
+                "iris.dock.position": "auto",
+                "iris.dock.notch": false
+            }
+        }
+    ]
+    readonly property var irisWelcomeThemeIds: [
+        "iris", "liquid-glass", "frost", "aurora", "terminal", "adaptive"
+    ]
+    readonly property var irisWelcomeThemes: IrisThemes.curated.filter(
+        theme => root.irisWelcomeThemeIds.includes(theme.id))
+
+    readonly property string effectiveIrisArrangement: {
+        for (const arrangement of root.irisArrangements) {
+            if (root.valuesMatch(arrangement.values))
+                return arrangement.id
+        }
+        return "custom"
+    }
+    readonly property var currentIrisArrangement: root.presetById(root.irisArrangements,
+        root.effectiveIrisArrangement)
+    readonly property string irisLook: Config.options?.iris?.appearance?.preset ?? "iris"
+    readonly property string irisMaterial: Config.options?.iris?.appearance?.theme?.surface ?? "black"
+    readonly property string irisAccent: Config.options?.iris?.appearance?.accent ?? "blue"
+
+    readonly property var irisDesktopDefaults: ({
+        "background.effects.enableBlur": false,
+        "background.effects.dim": 0,
+        "background.effects.dynamicDim": 0
+    })
+
+    function applyIrisArrangement(id: string): void {
+        Config.setNestedValues(root.presetById(root.irisArrangements, id).values)
+    }
+
+    function applyIrisTheme(id: string): void {
+        const theme = IrisThemes.find(id)
+        if (theme) IrisThemes.apply(theme)
+    }
+
     onCurrentStepChanged: {
-        if (root.currentStep !== 1 || root.initialProfileApplied || !root.firstRunSetup)
+        if (!root.firstRunSetup)
             return
-        root.initialProfileApplied = true
-        root.applyProfile(root.selectedProfile)
+        if (root.currentStep === 1) {
+            if (!root.irisFamily && !root.initialProfileApplied) {
+                root.initialProfileApplied = true
+                root.applyProfile(root.selectedProfile)
+            }
+            if (root.irisFamily && !root.initialIrisDesktopApplied) {
+                root.initialIrisDesktopApplied = true
+                Config.setNestedValues(root.irisDesktopDefaults)
+            }
+            if (!root.initialPerformanceApplied) {
+                root.initialPerformanceApplied = true
+                root.applyPerformancePreset(root.selectedPerformancePreset)
+            }
+        }
     }
 
     // ─── Entry/exit animation state (gate pattern) ───
@@ -254,27 +716,39 @@ Scope {
         {
             icon: "waving_hand", title: Translation.tr("Welcome"),
             headline: Translation.tr("Welcome to iNiR"),
-            subtitle: Translation.tr("Five short steps. Everything here can be changed later in Settings.")
+            subtitle: Translation.tr("Pick the desktop you want to start with. The next steps adapt to it.")
         },
         {
             icon: "tune", title: Translation.tr("Starting point"),
-            headline: Translation.tr("How much should be set up for you?"),
-            subtitle: Translation.tr("Pick a starting composition, then adjust the essentials underneath. Accounts and API-backed tabs are never enabled for you.")
+            headline: root.irisFamily ? Translation.tr("Choose an iRiS layout")
+                : Translation.tr("Choose your starting setup"),
+            subtitle: root.irisFamily
+                ? Translation.tr("Signature, floating, or a full bar.")
+                : Translation.tr("Start simple, balanced or with more tools. You can change every module later.")
         },
         {
             icon: "palette", title: Translation.tr("Appearance"),
-            headline: Translation.tr("Make it yours"),
-            subtitle: Translation.tr("Your wallpaper generates the palette. The visual style sets the shape of every surface.")
+            headline: root.irisFamily ? Translation.tr("Choose an iRiS theme")
+                : Translation.tr("Make it yours"),
+            subtitle: root.irisFamily
+                ? Translation.tr("Themes set material, shape, type and motion together.")
+                : root.waffleFamily
+                    ? Translation.tr("Wallpaper sets the colors across the shell and your apps.")
+                    : Translation.tr("Wallpaper sets the colors. Style sets the shape and feel.")
         },
         {
             icon: "dashboard", title: Translation.tr("Layout"),
             headline: Translation.tr("Arrange the desktop"),
-            subtitle: Translation.tr("Where the bar and dock live, and how the shell is shaped around them.")
+            subtitle: root.irisFamily
+                ? Translation.tr("Set the Island edge, Dock and desktop widgets.")
+                : root.waffleFamily
+                    ? Translation.tr("Choose where the taskbar sits and how it lines up apps.")
+                    : Translation.tr("Choose where the bar and dock go.")
         },
         {
             icon: "celebration", title: Translation.tr("Ready"),
             headline: Translation.tr("You're all set"),
-            subtitle: Translation.tr("A few things worth knowing before you start.")
+            subtitle: Translation.tr("A few shortcuts and actions to get you moving.")
         }
     ]
 
@@ -330,6 +804,240 @@ Scope {
         onTriggered: root._contentReady = true
     }
 
+    component WelcomeMetric: Item {
+        id: metric
+
+        property string value: "—"
+        property string label: ""
+        property color accent: root.welcomeAccent
+
+        implicitHeight: 58
+
+        RowLayout {
+            anchors.fill: parent
+            spacing: 9
+
+            Rectangle {
+                Layout.preferredWidth: 3
+                Layout.preferredHeight: 34
+                radius: 2
+                color: metric.accent
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: -1
+
+                WelcomeText {
+                    Layout.fillWidth: true
+                    text: metric.value
+                    font.family: root.welcomeFontNumbers
+                    font.pixelSize: Appearance.font.pixelSize.huge * 1.12
+                    font.weight: Font.Bold
+                    color: metric.accent
+                }
+
+                WelcomeText {
+                    Layout.fillWidth: true
+                    text: metric.label
+                    font.pixelSize: root.welcomeFontMeta
+                    font.weight: Font.Medium
+                    color: root.welcomeSecondaryText
+                    elide: Text.ElideRight
+                }
+            }
+        }
+    }
+
+
+    component WelcomeText: StyledText {
+        defaultFont: root.welcomeFontMain
+        font.letterSpacing: 0
+        font.variableAxes: ({})
+    }
+
+    component WelcomeIrisFill: Rectangle {
+        anchors.fill: parent
+        visible: root.irisFamily
+        radius: IrisStyle.radiusPlate
+        color: IrisStyle.fillQuiet
+        border.width: 0
+    }
+
+    component WelcomeActionButton: RippleButton {
+        id: actionButton
+
+        property string label: ""
+        property string materialIcon: ""
+        property bool primary: false
+
+        implicitWidth: actionContent.implicitWidth + 24
+        implicitHeight: 42
+        buttonRadius: root.welcomeControlRadius
+        rippleEnabled: true
+        cookieMorphing: false
+        colBackground: primary ? root.welcomeAccent : "transparent"
+        colBackgroundHover: primary
+            ? ColorUtils.mix(root.welcomeAccent, root.welcomeOnAccent, 0.88)
+            : root.welcomeSurfaceHigh
+        colRipple: primary
+            ? ColorUtils.applyAlpha(root.welcomeOnAccent, 0.22)
+            : root.welcomeSurfaceHighest
+
+        contentItem: RowLayout {
+            id: actionContent
+            anchors.centerIn: parent
+            spacing: actionButton.materialIcon.length > 0 ? 6 : 0
+
+            MaterialSymbol {
+                visible: actionButton.materialIcon.length > 0
+                text: actionButton.materialIcon
+                iconSize: 17
+                color: actionButton.primary ? root.welcomeOnAccent : root.welcomeAccent
+            }
+
+            WelcomeText {
+                text: actionButton.label
+                font.family: root.welcomeFontTitle
+                font.pixelSize: root.welcomeFontBody
+                font.weight: actionButton.primary ? Font.Bold : Font.Medium
+                color: actionButton.primary ? root.welcomeOnAccent : root.welcomeOnSurface
+                horizontalAlignment: Text.AlignHCenter
+            }
+        }
+    }
+
+    component WelcomeSegmentedControl: RowLayout {
+        id: segmented
+
+        property var options: []
+        property var currentValue: null
+        signal selected(var value)
+
+        spacing: 6
+
+        Repeater {
+            model: segmented.options
+
+            RippleButton {
+                id: segmentButton
+                required property var modelData
+                Layout.fillWidth: true
+                implicitHeight: 36
+                readonly property bool active: segmented.currentValue != null
+                    && segmented.currentValue == modelData.value
+                buttonRadius: root.welcomeControlRadius
+                rippleEnabled: true
+                cookieMorphing: false
+                colBackground: active ? root.welcomeAccentContainer
+                    : root.irisFamily ? IrisStyle.fill : root.welcomeSurfaceRaised
+                colBackgroundHover: active ? root.welcomeAccentHover : root.welcomeSurfaceHigh
+                colRipple: root.welcomeSurfaceHighest
+                onClicked: segmented.selected(modelData.value)
+
+                contentItem: Item {
+                    WelcomeText {
+                        anchors.centerIn: parent
+                        text: segmentButton.modelData.displayName
+                        font.family: root.welcomeFontTitle
+                        font.pixelSize: root.welcomeFontCaption
+                        font.weight: segmentButton.active ? Font.Bold : Font.Medium
+                        color: segmentButton.active ? root.welcomeOnSurface : root.welcomeSecondaryText
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    MaterialSymbol {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: segmentButton.modelData.icon || ""
+                        iconSize: 15
+                        color: segmentButton.active ? root.welcomeAccent : root.welcomeSecondaryText
+                    }
+                }
+            }
+        }
+    }
+
+    component WelcomeKey: Rectangle {
+        id: keyCap
+        property string key: ""
+
+        implicitWidth: keyLabel.implicitWidth + 14
+        implicitHeight: 24
+        radius: root.irisFamily ? IrisStyle.radiusChip : 7
+        color: root.welcomeSurfaceHighest
+        border.width: 1
+        border.color: ColorUtils.applyAlpha(root.welcomeOutline, 0.55)
+
+        WelcomeText {
+            id: keyLabel
+            anchors.centerIn: parent
+            text: keyCap.key
+            font.family: root.welcomeFontMain
+            font.pixelSize: root.welcomeFontMeta
+            font.weight: Font.Medium
+            color: root.welcomeOnSurface
+        }
+    }
+
+    component WelcomeListAction: RippleButton {
+        id: listAction
+
+        property string materialIcon: ""
+        property string title: ""
+        property string subtitle: ""
+
+        implicitHeight: 46
+        buttonRadius: root.welcomeControlRadius
+        rippleEnabled: true
+        cookieMorphing: false
+        colBackground: root.irisFamily ? IrisStyle.fill : root.welcomeSurfaceRaised
+        colBackgroundHover: root.welcomeSurfaceHigh
+        colRipple: root.welcomeSurfaceHighest
+
+        contentItem: RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            spacing: 10
+
+            MaterialSymbol {
+                text: listAction.materialIcon
+                iconSize: 18
+                color: root.welcomeAccent
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 0
+                WelcomeText {
+                    Layout.fillWidth: true
+                    text: listAction.title
+                    font.family: root.welcomeFontTitle
+                    font.pixelSize: root.welcomeFontBody
+                    font.weight: Font.DemiBold
+                    color: root.welcomeOnSurface
+                    elide: Text.ElideRight
+                }
+                WelcomeText {
+                    Layout.fillWidth: true
+                    text: listAction.subtitle
+                    font.pixelSize: root.welcomeFontCaption
+                    color: root.welcomeSecondaryText
+                    elide: Text.ElideRight
+                }
+            }
+
+            MaterialSymbol {
+                text: "arrow_forward"
+                iconSize: 16
+                color: root.welcomeSecondaryText
+                opacity: 0.7
+            }
+        }
+    }
+
     PanelWindow {
         id: wizardPanel
         visible: true
@@ -342,7 +1050,9 @@ Scope {
         implicitWidth: root.focusedScreen?.width ?? 1920
         implicitHeight: root.focusedScreen?.height ?? 1080
 
-        // ─── Blurred wallpaper backdrop (scrim) ───
+        // Keep the live desktop readable behind onboarding. Re-rendering and blurring
+        // the wallpaper hid the bar/dock changes being configured and paid a full-screen
+        // GPU cost for no useful first-run information.
         Item {
             id: scrim
             anchors.fill: parent
@@ -355,51 +1065,10 @@ Scope {
                 }
             }
 
-            // Blur edge compensation: MultiEffect fades at boundaries
-            readonly property int blurOverflow: 64
-
-            Item {
-                id: blurSource
-                anchors.fill: parent
-                anchors.margins: -scrim.blurOverflow
-
-                Image {
-                    anchors.fill: parent
-                    anchors.margins: scrim.blurOverflow
-                    source: Config.options?.background?.wallpaperPath ?? ""
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    cache: true
-                    sourceSize.width: wizardPanel.implicitWidth
-                    sourceSize.height: wizardPanel.implicitHeight
-                }
-            }
-
-            MultiEffect {
-                source: blurSource
-                anchors.fill: parent
-                anchors.margins: -scrim.blurOverflow
-                blurEnabled: Appearance.effectsEnabled
-                blurMax: 64
-                blur: Appearance.effectsEnabled ? 1.0 : 0
-                saturation: Appearance.effectsEnabled ? 0.15 : 0
-            }
-
-            // Scrim overlay
             Rectangle {
                 anchors.fill: parent
-                color: Appearance.colors.colScrim
-                opacity: 0.55
-            }
-
-            // Vignette
-            GE.RadialGradient {
-                anchors.fill: parent
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: "transparent" }
-                    GradientStop { position: 0.6; color: "transparent" }
-                    GradientStop { position: 1.0; color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.35) }
-                }
+                color: root.welcomeScrim
+                opacity: 0.28
             }
         }
 
@@ -408,490 +1077,370 @@ Scope {
             anchors.fill: parent
         }
 
-        // Main wizard card
+        // Main wizard card: one stable onboarding frame. Page content follows the
+        // same flat sections, dense rows and selective tonal groups used by iNiR.
         Item {
             id: wizardCard
+            readonly property real preferredHeight: root.currentStep === 4 ? (root.compact ? 720 : 770)
+                : root.currentStep === 0 ? (root.compact ? 660 : 720)
+                : (root.compact ? 690 : 750)
             anchors.centerIn: parent
-            width: Math.max(360, Math.min(1040, parent.width - 2 * root.screenPadding))
-            height: Math.max(320, Math.min(parent.height - 2 * root.screenPadding, 1100))
+            width: Math.max(360, Math.min(1120,
+                root.screenWidth - 2 * root.screenPadding))
+            height: Math.max(360, Math.min(root.screenHeight - 2 * root.screenPadding,
+                preferredHeight))
             focus: true
 
-            // Staggered entry animation — card comes in after scrim
+            Behavior on height {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: Appearance.animation.elementResize.duration
+                    easing.type: Appearance.animation.elementResize.type
+                    easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                }
+            }
+
             transformOrigin: Item.Center
-            scale: root._contentReady ? 1.0 : 0.92
+            scale: root._contentReady ? 1.0 : 0.96
             opacity: root._contentReady ? 1.0 : 0.0
             Behavior on scale {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation {
-                    duration: Appearance.calcEffectiveDuration(420)
+                    duration: Appearance.calcEffectiveDuration(260)
                     easing.type: Appearance.animation.elementMoveEnter.type
                     easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
                 }
             }
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled
-                NumberAnimation {
-                    duration: Appearance.calcEffectiveDuration(350)
-                    easing.type: Easing.OutCubic
-                }
+                NumberAnimation { duration: Appearance.calcEffectiveDuration(220); easing.type: Easing.OutCubic }
             }
 
-            // Keyboard navigation
             Keys.onEscapePressed: root.finish(true)
             Keys.onLeftPressed: if (root.currentStep > 0) root.currentStep--
             Keys.onRightPressed: if (root.currentStep < root.totalSteps - 1) root.currentStep++
             Keys.onReturnPressed: root.currentStep < root.totalSteps - 1 ? root.currentStep++ : root.finish(false)
             Keys.onEnterPressed: root.currentStep < root.totalSteps - 1 ? root.currentStep++ : root.finish(false)
 
-            // Shadow (hide in aurora)
-            StyledRectangularShadow {
-                target: cardBg
-                visible: Appearance.angelEverywhere || !Appearance.auroraEverywhere
+            PanelSurface {
+                id: cardBg
+                visible: !root.irisFamily
+                anchors.fill: parent
+                surfaceDialect: "material"
+                elevation: 1
+                borderless: root.irisFamily
+                opaqueSurface: true
+                cardStyle: true
+                outlined: true
+                radiusOverride: root.welcomePanelRadius
+                clipContent: true
+
             }
 
-            // Card background - style-aware
-            Rectangle {
-                id: cardBg
+            Iris.IrisMorphSurface {
                 anchors.fill: parent
-
-                radius: Appearance.inirEverywhere ? Appearance.inir.roundingLarge
-                      : Appearance.rounding.large
-
-                // Base color — colLayer1Base is the raw m3surfaceContainerLow without
-                // contentTransparency mixing, so the wizard stays solid even when the user
-                // has transparency enabled in Material/Cards styles.
-                color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                     : Appearance.auroraEverywhere ? "transparent"
-                     : Appearance.colors.colLayer1Base
-
-                border.width: Appearance.inirEverywhere ? 1 : (Appearance.auroraEverywhere ? 0 : 1)
-                border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
-                            : Appearance.colors.colLayer0Border
-
-                Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
-                Behavior on border.color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
-
-                // Aurora: Wallpaper blur inside card
-                Item {
-                    id: auroraBlurSource
-                    visible: Appearance.auroraEverywhere
-                    anchors.fill: parent
-
-                    Image {
-                        x: -wizardCard.x
-                        y: -wizardCard.y
-                        width: wizardPanel.width
-                        height: wizardPanel.height
-                        source: Config.options?.background?.wallpaperPath ?? ""
-                        fillMode: Image.PreserveAspectCrop
-                    }
-                }
-
-                MultiEffect {
-                    visible: Appearance.auroraEverywhere
-                    source: auroraBlurSource
-                    anchors.fill: parent
-                    blurEnabled: Appearance.effectsEnabled
-                    blurMax: 40
-                    blur: Appearance.effectsEnabled ? 1.0 : 0
-                    saturation: Appearance.effectsEnabled ? 0.1 : 0
-                }
-
-                // Aurora: Tinted overlay
-                Rectangle {
-                    anchors.fill: parent
-                    visible: Appearance.auroraEverywhere
-                    radius: parent.radius
-                    color: ColorUtils.transparentize(Appearance.colors.colLayer1Base, 0.25)
-                }
-
-                // Block clicks from propagating to background MouseArea
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: (event) => event.accepted = true
-                }
-
-                // Clip content to rounded corners
-                layer.enabled: Appearance.effectsEnabled
-                layer.effect: GE.OpacityMask {
-                    maskSource: Rectangle {
-                        width: cardBg.width
-                        height: cardBg.height
-                        radius: cardBg.radius
-                    }
-                }
+                visible: root.irisFamily
+                open: root._contentReady
+                radius: IrisStyle.radiusPanel
+                color: IrisStyle.surfaceHigh
+                light: IrisStyle.wallpaperLight
+                motionSurface: "settings"
             }
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: root.cardPadding
-                spacing: root.compact ? 14 : 24
+                anchors.margins: root.irisFamily ? IrisStyle.concentricPad(IrisStyle.radiusPanel, 10) : 0
+                spacing: 0
 
-                // Header with step indicator
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    // Wrapped so the stepper centres on the card, not on itself.
-                    Item {
-                        Layout.fillWidth: true
-                        implicitHeight: stepperRow.implicitHeight
-
-                    Row {
-                        id: stepperRow
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 0
-
-                        Repeater {
-                            model: root.steps
-                            Row {
-                                required property int index
-                                required property var modelData
-
-                                ColumnLayout {
-                                    spacing: 4
-
-                                    Rectangle {
-                                        id: stepCircle
-                                        Layout.alignment: Qt.AlignHCenter
-                                        implicitWidth: root.compact ? 30 : 38
-                                        implicitHeight: implicitWidth
-                                        radius: implicitWidth / 2
-
-                                        color: index < root.currentStep ? Appearance.colors.colPrimary
-                                             : index === root.currentStep ? Appearance.colors.colPrimaryContainer
-                                             : Appearance.colors.colLayer2
-
-                                        border.width: index === root.currentStep ? 2 : 0
-                                        border.color: Appearance.colors.colPrimary
-
-                                        Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
-                                        Behavior on scale {
-                                            NumberAnimation {
-                                                duration: Appearance.animation.elementMove.duration
-                                                easing.type: Easing.OutBack
-                                            }
-                                        }
-                                        Behavior on border.width { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
-
-                                        scale: index === root.currentStep ? 1.12 : 1.0
-
-                                        MaterialSymbol {
-                                            anchors.centerIn: parent
-                                            text: index < root.currentStep ? "check" : modelData.icon
-                                            iconSize: index === root.currentStep ? 20 : 18
-                                            color: index < root.currentStep ? Appearance.colors.colOnPrimary
-                                                 : index === root.currentStep ? Appearance.colors.colOnPrimaryContainer
-                                                 : Appearance.colors.colOnLayer2
-
-                                            Behavior on iconSize { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
-                                        }
-
-                                        // Click on a past step to jump back to it (forward jumping disabled to keep flow)
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: index <= root.currentStep ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                            enabled: index <= root.currentStep
-                                            onClicked: root.currentStep = index
-                                        }
-                                    }
-
-                                    StyledText {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        Layout.preferredWidth: root.compact ? 58 : 70
-                                        visible: !root.veryCompact
-                                        text: modelData.title
-                                        horizontalAlignment: Text.AlignHCenter
-                                        font.pixelSize: Appearance.font.pixelSize.smallest
-                                        font.weight: index === root.currentStep ? Font.Medium : Font.Normal
-                                        color: index === root.currentStep
-                                            ? Appearance.colors.colOnLayer1
-                                            : Appearance.colors.colSubtext
-                                        elide: Text.ElideRight
-                                        Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
-                                    }
-                                }
-
-                                // Connector line with progress
-                                Item {
-                                    visible: index < root.steps.length - 1
-                                    width: 36; height: 4
-                                    y: 17  // align with circle vertical center (38/2 - 4/2)
-
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        radius: 2
-                                        color: Appearance.colors.colLayer2
-                                    }
-
-                                    Rectangle {
-                                        height: parent.height
-                                        radius: 2
-                                        color: Appearance.colors.colPrimary
-                                        width: index < root.currentStep ? parent.width : 0
-                                        Behavior on width {
-                                            NumberAnimation {
-                                                duration: Appearance.animation.elementMove.duration
-                                                easing.type: Appearance.animation.elementMove.type
-                                                easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        Layout.topMargin: 10
-                        text: root.steps[root.currentStep].headline
-                        horizontalAlignment: Text.AlignHCenter
-                        font.family: Appearance.font.family.title
-                        font.pixelSize: Appearance.font.pixelSize.hugeass
-                        color: Appearance.colors.colOnLayer1
-                        elide: Text.ElideRight
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        Layout.maximumWidth: 620
-                        Layout.alignment: Qt.AlignHCenter
-                        text: root.steps[root.currentStep].subtitle
-                        horizontalAlignment: Text.AlignHCenter
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
-                        wrapMode: Text.WordWrap
-                    }
-                }
-
-                // Separator
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 20
-                    Layout.rightMargin: 20
-                    height: 1
-                    color: Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
-                         : Appearance.colors.colOutlineVariant
-                }
-
-                // Content area with transitions
+                // First-run navigation follows the same quiet tab grammar used
+                // across Settings: labels and glyphs sit on the field, and the
+                // active step is carried by one short accent rule.
                 Item {
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
+                    Layout.preferredHeight: root.compact ? 58 : 66
 
-                    StackLayout {
-                        id: stepStack
-                        anchors.fill: parent
-                        anchors.topMargin: 8
-                        currentIndex: root.currentStep
-
-                        // Step transition - improved with scale and better easing
-                        property int prevStep: 0
-                        onCurrentIndexChanged: {
-                            stepAnim.direction = currentIndex > prevStep ? 1 : -1
-                            stepAnim.restart()
-                            prevStep = currentIndex
-                        }
-
-                        opacity: 1
-                        scale: 1
-                        transform: Translate { id: stepTranslate; x: 0 }
-
-                        ParallelAnimation {
-                            id: stepAnim
-                            property int direction: 1
-                            property int moveDuration: Appearance.animation.elementMove.duration
-
-                            // Fade + scale out, then fade + scale in
-                            SequentialAnimation {
-                                ParallelAnimation {
-                                    NumberAnimation { 
-                                        target: stepStack; property: "opacity"; to: 0
-                                        duration: stepAnim.moveDuration * 0.35
-                                        easing.type: Easing.OutCubic
-                                    }
-                                    NumberAnimation { 
-                                        target: stepStack; property: "scale"; to: 0.96
-                                        duration: stepAnim.moveDuration * 0.35
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
-                                ParallelAnimation {
-                                    NumberAnimation { 
-                                        target: stepStack; property: "opacity"; to: 1
-                                        duration: stepAnim.moveDuration * 0.65
-                                        easing.type: Easing.OutCubic
-                                    }
-                                    NumberAnimation { 
-                                        target: stepStack; property: "scale"; to: 1
-                                        duration: stepAnim.moveDuration * 0.65
-                                        easing.type: Easing.OutBack
-                                        easing.overshoot: 1.2
-                                    }
-                                }
-                            }
-
-                            // Slide animation with improved easing
-                            SequentialAnimation {
-                                NumberAnimation { 
-                                    target: stepTranslate; property: "x"
-                                    to: stepAnim.direction * -30
-                                    duration: stepAnim.moveDuration * 0.35
-                                    easing.type: Easing.OutCubic
-                                }
-                                PropertyAction { 
-                                    target: stepTranslate; property: "x"
-                                    value: stepAnim.direction * 30
-                                }
-                                NumberAnimation { 
-                                    target: stepTranslate; property: "x"; to: 0
-                                    duration: stepAnim.moveDuration * 0.65
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-                        }
-
-                        Item {
-                            WelcomeContent {
-                                id: welcomePage
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                            }
-                            ScrollEdgeFade { target: welcomePage }
-                        }
-                        Item {
-                            FeaturesContent {
-                                id: featuresPage
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                            }
-                            ScrollEdgeFade { target: featuresPage }
-                        }
-                        Item {
-                            ThemeContent {
-                                id: themePage
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                            }
-                            ScrollEdgeFade { target: themePage }
-                        }
-                        Item {
-                            LayoutContent {
-                                id: layoutPage
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                            }
-                            ScrollEdgeFade { target: layoutPage }
-                        }
-                        Item {
-                            ReadyContent {
-                                id: readyPage
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                            }
-                            ScrollEdgeFade { target: readyPage }
-                        }
-                    }
-                }
-
-                // Navigation buttons — Back / hint / Continue (Skip moved to top-right corner)
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 12
-
-                    DialogButton {
-                        visible: root.currentStep > 0
-                        buttonText: Translation.tr("Back")
-                        colBackground: Appearance.colors.colLayer2
-                        colBackgroundHover: Appearance.colors.colLayer2Hover
-                        onClicked: root.currentStep--
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    // Keyboard hint
                     RowLayout {
-                        spacing: 6
-                        opacity: 0.6
+                        anchors.fill: parent
+                        anchors.leftMargin: root.compact ? 16 : 22
+                        anchors.rightMargin: root.compact ? 14 : 20
+                        spacing: root.compact ? 6 : 10
 
-                        Row {
+                        RowLayout {
+                            Layout.preferredWidth: wizardCard.width >= 820 ? 138 : 46
+                            spacing: 9
+                            Iris.IrisMark {
+                                visible: root.irisFamily
+                                implicitSize: 30
+                            }
+                            MaterialSymbol {
+                                visible: !root.irisFamily
+                                text: "deployed_code"
+                                iconSize: 26
+                                color: root.welcomeAccent
+                            }
+                            ColumnLayout {
+                                visible: wizardCard.width >= 820
+                                spacing: 0
+                                WelcomeText {
+                                    text: "iNiR"
+                                    font.family: root.welcomeFontTitle
+                                    font.pixelSize: Appearance.font.pixelSize.normal
+                                    font.weight: Font.Bold
+                                    color: root.welcomeOnSurface
+                                }
+                                WelcomeText {
+                                    text: Translation.tr("Setup")
+                                    font.pixelSize: root.welcomeFontMeta
+                                    color: root.welcomeSecondaryText
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
                             spacing: 2
-                            KeyboardKey { key: "←" }
-                            KeyboardKey { key: "→" }
+
+                            Repeater {
+                                model: root.steps
+
+                                RippleButton {
+                                    id: stepTab
+                                    required property int index
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    implicitHeight: root.compact ? 44 : 48
+                                    enabled: index <= root.currentStep
+                                    opacity: enabled ? 1 : 0.62
+                                    buttonRadius: 10
+                                    colBackground: index === root.currentStep
+                                        ? root.welcomeAccentContainer
+                                        : "transparent"
+                                    colBackgroundHover: index === root.currentStep
+                                        ? root.welcomeAccentHover
+                                        : root.welcomeSurfaceHigh
+                                    colRipple: root.welcomeSurfaceHighest
+                                    onClicked: root.currentStep = index
+
+                                    contentItem: Item {
+                                        WelcomeText {
+                                            id: stepLabel
+                                            anchors.centerIn: parent
+                                            visible: wizardCard.width >= 860
+                                            text: stepTab.modelData.title
+                                            font.family: root.welcomeFontTitle
+                                            font.pixelSize: root.welcomeFontCaption
+                                            font.weight: stepTab.index === root.currentStep ? Font.Bold : Font.Medium
+                                            color: stepTab.index === root.currentStep
+                                                ? root.welcomeOnSurface : root.welcomeSecondaryText
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                            elide: Text.ElideRight
+                                        }
+
+                                        MaterialSymbol {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            x: stepLabel.visible
+                                                ? Math.max(7, stepLabel.x - width - 6)
+                                                : Math.round((parent.width - width) / 2)
+                                            text: stepTab.index < root.currentStep ? "check" : stepTab.modelData.icon
+                                            iconSize: 15
+                                            color: stepTab.index === root.currentStep
+                                                ? root.welcomeAccent
+                                                : stepTab.index < root.currentStep
+                                                    ? root.welcomeAccent
+                                                    : root.welcomeSecondaryText
+                                        }
+
+                                        Rectangle {
+                                            anchors.bottom: parent.bottom
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            width: stepTab.index === root.currentStep ? Math.min(parent.width - 18, 58) : 0
+                                            height: 2
+                                            radius: 1
+                                            color: root.welcomeAccent
+                                            Behavior on width {
+                                                enabled: Appearance.animationsEnabled
+                                                NumberAnimation {
+                                                    duration: Appearance.animation.elementResize.duration
+                                                    easing.type: Appearance.animation.elementResize.type
+                                                    easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
-                        StyledText {
-                            text: Translation.tr("navigate")
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            color: Appearance.colors.colSubtext
+
+                        RippleButton {
+                            id: skipButton
+                            visible: root.currentStep < root.totalSteps - 1
+                            implicitWidth: skipContent.implicitWidth + 16
+                            implicitHeight: 34
+                            buttonRadius: 10
+                            colBackground: "transparent"
+                            colBackgroundHover: root.welcomeSurfaceHigh
+                            colRipple: root.welcomeSurfaceHighest
+                            onClicked: root.finish(true)
+
+                            contentItem: RowLayout {
+                                id: skipContent
+                                anchors.centerIn: parent
+                                spacing: 5
+                                WelcomeText {
+                                    visible: wizardCard.width >= 760
+                                    text: Translation.tr("Skip setup")
+                                    font.pixelSize: root.welcomeFontMeta
+                                    color: root.welcomeSecondaryText
+                                }
+                                MaterialSymbol {
+                                    text: "close"
+                                    iconSize: 14
+                                    color: root.welcomeSecondaryText
+                                }
+                            }
                         }
                     }
-
-                    Item { Layout.fillWidth: true }
-
-                    DialogButton {
-                        buttonText: root.currentStep === root.totalSteps - 1 ? Translation.tr("Get Started") : Translation.tr("Continue")
-                        colBackground: Appearance.colors.colPrimary
-                        colBackgroundHover: Appearance.colors.colPrimaryHover
-                        colText: Appearance.colors.colOnPrimary
-                        onClicked: root.currentStep < root.totalSteps - 1 ? root.currentStep++ : root.finish(false)
-                    }
-                }
-            }
-
-            // Subtle "Skip setup" escape hatch in the top-right corner of the card.
-            // Hidden on the last step (where "Get Started" is the right action).
-            RippleButton {
-                id: skipButton
-                property bool _hovered: false
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.topMargin: 14
-                anchors.rightMargin: 14
-                visible: root.currentStep < root.totalSteps - 1
-                opacity: visible ? (_hovered ? 1.0 : 0.65) : 0
-                Behavior on opacity { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
-
-                implicitHeight: 30
-                implicitWidth: skipRow.implicitWidth + 20
-                buttonRadius: Appearance.rounding.full
-                colBackground: "transparent"
-                colBackgroundHover: Appearance.colors.colLayer2Hover
-
-                onClicked: root.finish(true)
-
-                contentItem: RowLayout {
-                    id: skipRow
-                    anchors.centerIn: parent
-                    spacing: 4
-
-                    StyledText {
-                        text: Translation.tr("Skip setup")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
-                    }
-                    MaterialSymbol {
-                        text: "close"
-                        iconSize: 14
-                        color: Appearance.colors.colSubtext
-                    }
                 }
 
-                StyledToolTip {
-                    text: Translation.tr("You can re-open this wizard anytime with:\n  inir welcome")
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 1
+                    color: ColorUtils.applyAlpha(root.welcomeOutline, 0.55)
                 }
 
-                HoverHandler {
-                    cursorShape: Qt.PointingHandCursor
-                    onHoveredChanged: skipButton._hovered = hovered
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.leftMargin: root.compact ? 22 : 28
+                    Layout.rightMargin: root.compact ? 22 : 28
+                    Layout.topMargin: root.compact ? 14 : 18
+                    Layout.bottomMargin: root.compact ? 10 : 14
+                    spacing: root.compact ? 10 : 13
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 18
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 3
+
+                            WelcomeText {
+                                Layout.fillWidth: true
+                                text: root.steps[root.currentStep].headline
+                                font.family: root.welcomeFontTitle
+                                font.pixelSize: root.irisFamily ? 26 * IrisStyle.typeScale
+                                    : root.compact ? 28 : 32
+                                font.weight: Font.Bold
+                                font.letterSpacing: -0.42
+                                color: root.welcomeOnSurface
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 2
+                                elide: Text.ElideRight
+                            }
+
+                            WelcomeText {
+                                Layout.fillWidth: true
+                                visible: !root.veryCompact
+                                text: root.steps[root.currentStep].subtitle
+                                font.pixelSize: root.welcomeFontBody
+                                font.weight: Font.Medium
+                                color: root.welcomeSecondaryText
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 2
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+
+                        StackLayout {
+                            id: stepStack
+                            anchors.fill: parent
+                            currentIndex: root.currentStep
+                            property int prevStep: 0
+
+                            onCurrentIndexChanged: {
+                                stepTranslate.x = currentIndex > prevStep ? 18 : -18
+                                stepFade.restart()
+                                prevStep = currentIndex
+                            }
+
+                            transform: Translate { id: stepTranslate; x: 0 }
+                            opacity: 1
+
+                            SequentialAnimation {
+                                id: stepFade
+                                ParallelAnimation {
+                                    NumberAnimation { target: stepStack; property: "opacity"; from: 0.55; to: 1; duration: 190; easing.type: Easing.OutCubic }
+                                    NumberAnimation { target: stepTranslate; property: "x"; to: 0; duration: 220; easing.type: Easing.OutCubic }
+                                }
+                            }
+
+                            Item { WelcomeContent { id: welcomePage; anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.top; anchors.bottom: parent.bottom } ScrollEdgeFade { target: welcomePage; visible: welcomePage.contentHeight > welcomePage.height } }
+                            Item {
+                                FeaturesContent { id: featuresPage; visible: !root.irisFamily; anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.top; anchors.bottom: parent.bottom }
+                                IrisStartContent { id: irisStartPage; visible: root.irisFamily; anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.top; anchors.bottom: parent.bottom }
+                                ScrollEdgeFade { target: root.irisFamily ? irisStartPage : featuresPage; visible: target.contentHeight > target.height }
+                            }
+                            Item {
+                                ThemeContent { id: themePage; visible: !root.irisFamily; anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.top; anchors.bottom: parent.bottom }
+                                IrisAppearanceContent { id: irisAppearancePage; visible: root.irisFamily; anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.top; anchors.bottom: parent.bottom }
+                                ScrollEdgeFade { target: root.irisFamily ? irisAppearancePage : themePage; visible: target.contentHeight > target.height }
+                            }
+                            Item {
+                                LayoutContent { id: layoutPage; visible: !root.irisFamily; anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.top; anchors.bottom: parent.bottom }
+                                IrisLayoutContent { id: irisLayoutPage; visible: root.irisFamily; anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.top; anchors.bottom: parent.bottom }
+                                ScrollEdgeFade { target: root.irisFamily ? irisLayoutPage : layoutPage; visible: target.contentHeight > target.height }
+                            }
+                            Item { ReadyContent { id: readyPage; anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.top; anchors.bottom: parent.bottom } }
+                        }
+                    }
+                }
+
+                // Fixed footer, mirroring the proven greeter pattern: one nested
+                // surface, one secondary action, one primary action.
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: root.compact ? 56 : 62
+
+                    Rectangle {
+                        anchors.top: parent.top
+                        width: parent.width
+                        height: 1
+                        color: ColorUtils.applyAlpha(root.welcomeOutline, 0.55)
+                    }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: root.compact ? 16 : 22
+                        anchors.rightMargin: root.compact ? 16 : 22
+                        spacing: 10
+
+                        WelcomeActionButton {
+                            visible: root.currentStep > 0
+                            Layout.preferredWidth: 102
+                            materialIcon: "arrow_back"
+                            label: Translation.tr("Back")
+                            onClicked: root.currentStep--
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        WelcomeActionButton {
+                            Layout.preferredWidth: root.currentStep === root.totalSteps - 1 ? 148 : 124
+                            primary: true
+                            materialIcon: root.currentStep === root.totalSteps - 1 ? "rocket_launch" : "arrow_forward"
+                            label: root.currentStep === root.totalSteps - 1 ? Translation.tr("Get Started") : Translation.tr("Continue")
+                            onClicked: root.currentStep < root.totalSteps - 1 ? root.currentStep++ : root.finish(false)
+                        }
+                    }
                 }
             }
         }
@@ -901,300 +1450,423 @@ Scope {
     // STEP CONTENT COMPONENTS
     // ═══════════════════════════════════════════════════════════════════════
 
+    // First-run choices use tonal selection like the established Material selectors:
+    // the whole option changes mass/outline instead of repeating a decorative side rail.
+    component WelcomeChoiceRow: RippleButton {
+        id: choiceRow
+
+        property string title: ""
+        property string detail: ""
+        property string symbol: "check"
+        property string badge: ""
+        property bool selected: false
+        property bool compactRow: false
+
+        Layout.fillWidth: true
+        implicitHeight: compactRow ? 50 : (detail.length > 0 ? 76 : 52)
+        buttonRadius: choiceRow.compactRow ? root.welcomeControlRadius : root.welcomeChoiceRadius
+        colBackground: selected
+            ? root.welcomeAccentContainer
+            : "transparent"
+        colBackgroundHover: selected
+            ? root.welcomeAccentHover
+            : root.welcomeSurfaceHigh
+        colRipple: root.welcomeSurfaceHighest
+
+        contentItem: Item {
+            anchors.fill: parent
+
+            Rectangle {
+                anchors.fill: parent
+                radius: choiceRow.buttonRadius
+                color: "transparent"
+                border.width: choiceRow.selected ? 1 : 0
+                border.color: ColorUtils.applyAlpha(root.welcomeAccent, 0.58)
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 14
+                anchors.rightMargin: 12
+                spacing: 10
+
+                Item {
+                    Layout.preferredWidth: choiceRow.compactRow ? 28 : 34
+                    Layout.preferredHeight: choiceRow.compactRow ? 28 : 34
+
+                    MaterialCookie {
+                        anchors.centerIn: parent
+                        visible: !root.irisFamily && choiceRow.selected && !choiceRow.compactRow
+                        implicitSize: 32
+                        sides: 8
+                        color: ColorUtils.applyAlpha(root.welcomeSurfaceHighest, 0.96)
+                    }
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: choiceRow.symbol
+                        iconSize: choiceRow.compactRow ? 17 : 19
+                        color: choiceRow.selected ? root.welcomeAccent : root.welcomeOnSurfaceVariant
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+                    WelcomeText {
+                        Layout.fillWidth: true
+                        text: choiceRow.title
+                        font.family: root.welcomeFontTitle
+                        font.pixelSize: choiceRow.compactRow
+                            ? root.welcomeFontBody
+                            : choiceRow.selected ? root.welcomeFontSection : root.welcomeFontBody
+                        font.weight: choiceRow.selected ? Font.Bold : Font.Medium
+                        color: choiceRow.selected ? root.welcomeOnAccentContainer : root.welcomeOnSurface
+                        elide: Text.ElideRight
+                    }
+                    WelcomeText {
+                        Layout.fillWidth: true
+                        visible: choiceRow.detail.length > 0 && !choiceRow.compactRow
+                        text: choiceRow.detail
+                        font.pixelSize: root.welcomeFontCaption
+                        color: choiceRow.selected
+                            ? root.welcomeOnAccentContainer
+                            : root.welcomeSecondaryText
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                    }
+                }
+
+                Rectangle {
+                    visible: choiceRow.badge.length > 0
+                    implicitWidth: badgeText.implicitWidth + 14
+                    implicitHeight: 24
+                    radius: 12
+                    color: root.welcomeGuideContainer
+
+                    WelcomeText {
+                        id: badgeText
+                        anchors.centerIn: parent
+                        text: choiceRow.badge
+                        font.pixelSize: root.welcomeFontMeta
+                        font.weight: Font.Bold
+                        color: root.welcomeGuideText
+                    }
+                }
+
+                MaterialSymbol {
+                    visible: choiceRow.selected
+                    text: "check"
+                    iconSize: 16
+                    color: root.welcomeOnAccentContainer
+                }
+            }
+        }
+    }
+
     component WelcomeContent: Flickable {
         id: welcomeFlickable
         width: root.stepWidth
         contentHeight: welcomeColumn.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        bottomMargin: 16
-        topMargin: Math.max(0, (height - contentHeight - 16) / 2)
+        interactive: contentHeight > height
+        bottomMargin: 18
+        topMargin: Math.max(root.compact ? 8 : 14,
+            Math.min(root.compact ? 20 : 28,
+                Math.round((height - welcomeColumn.implicitHeight - bottomMargin) / 2)))
 
         ColumnLayout {
             id: welcomeColumn
             width: parent.width
-            spacing: root.compact ? 12 : 18
+            spacing: root.compact ? 14 : 18
 
-        MaterialShapeWrappedMaterialSymbol {
-            Layout.alignment: Qt.AlignHCenter
-            text: "waving_hand"
-            iconSize: 56
-            padding: 18
-            shape: MaterialShape.Shape.Cookie4Sided
-            color: Appearance.colors.colPrimaryContainer
-            colSymbol: Appearance.colors.colOnPrimaryContainer
-        }
+            GridLayout {
+                Layout.fillWidth: true
+                columns: welcomeFlickable.width < 720 ? 1 : 2
+                columnSpacing: root.compact ? 22 : 34
+                rowSpacing: 18
 
-        StyledText {
-            Layout.alignment: Qt.AlignHCenter
-            text: Translation.tr("A Wayland shell for Niri, built to be lived in.")
-            color: Appearance.colors.colSubtext
-            font.pixelSize: Appearance.font.pixelSize.normal
-            wrapMode: Text.WordWrap
-            horizontalAlignment: Text.AlignHCenter
-            Layout.maximumWidth: 520
-        }
-
-        // "What we'll set up" — gives users a preview so they see VALUE before skipping
-        Rectangle {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 6
-            Layout.maximumWidth: 540
-            implicitWidth: 520
-            implicitHeight: previewCol.implicitHeight + 24
-            radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                 : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer2, 0.5)
-                 : Appearance.colors.colLayer2
-            border.width: Appearance.inirEverywhere ? 1 : 0
-            border.color: Appearance.inir.colBorderSubtle
-
-            ColumnLayout {
-                id: previewCol
-                anchors {
-                    fill: parent
-                    margins: 12
-                }
-                spacing: 10
-
-                StyledText {
+                ColumnLayout {
+                    visible: !root.irisFamily || welcomeFlickable.width >= 720
                     Layout.fillWidth: true
-                    text: Translation.tr("What this setup covers")
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    font.weight: Font.Medium
-                    color: Appearance.colors.colSubtext
-                }
+                    Layout.preferredWidth: welcomeFlickable.width < 720
+                        ? welcomeFlickable.width : (welcomeFlickable.width - (root.compact ? 22 : 34)) * (root.irisFamily ? 0.58 : 0.43)
+                    Layout.alignment: Qt.AlignTop
+                    Layout.topMargin: root.compact ? 2 : 6
+                    spacing: 10
 
-                Repeater {
-                    model: [
-                        { icon: "palette",   label: Translation.tr("Look"),       desc: Translation.tr("Theme, wallpaper, and visual style") },
-                        { icon: "dashboard", label: Translation.tr("Structure"),  desc: Translation.tr("Bar, dock, and panel family") },
-                        { icon: "tune",      label: Translation.tr("Essentials"), desc: Translation.tr("Only the daily features worth deciding now") }
-                    ]
-                    RowLayout {
+                    Item {
                         Layout.fillWidth: true
-                        required property var modelData
-                        spacing: 12
-
-                        MaterialSymbol {
-                            text: modelData.icon
-                            iconSize: 22
-                            color: Appearance.colors.colPrimary
-                            Layout.preferredWidth: 24
+                        Layout.preferredHeight: width / root.screenAspect
+                        visible: root.irisFamily
+                        IrisScreenPreview {
+                            anchors.fill: parent
+                            screen: root.focusedScreen
+                            maxScale: 1
                         }
+                    }
+
+                    WelcomeText {
+                        visible: root.irisFamily
+                        text: "iRiS"
+                        font.family: root.welcomeFontTitle
+                        font.pixelSize: 28 * IrisStyle.typeScale
+                        font.weight: Font.Bold
+                        color: root.welcomeOnSurface
+                    }
+                    WelcomeText {
+                        visible: root.irisFamily
+                        Layout.fillWidth: true
+                        text: Translation.tr("Your desktop, built around the Island.")
+                        font.pixelSize: root.welcomeFontBody
+                        color: root.welcomeSecondaryText
+                        wrapMode: Text.WordWrap
+                    }
+
+                    RowLayout {
+                        visible: !root.irisFamily
+                        Layout.fillWidth: true
+                        spacing: 6
+
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 0
+                            spacing: 7
 
-                            StyledText {
-                                Layout.fillWidth: true
-                                text: modelData.label
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                font.weight: Font.Medium
-                                color: Appearance.colors.colOnSurface
-                            }
-                            StyledText {
-                                Layout.fillWidth: true
-                                text: modelData.desc
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: Appearance.colors.colSubtext
-                                wrapMode: Text.WordWrap
-                                elide: Text.ElideRight
-                            }
-                        }
-                    }
-                }
-            }
-        }
+                            MaterialCookie {
+                                implicitSize: root.compact ? 42 : 48
+                                sides: 8
+                                color: root.welcomeAccentContainer
 
-        // Settings UI experience choice — Easy vs Advanced
-        ColumnLayout {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 12
-            Layout.maximumWidth: 560
-            spacing: 8
-
-            StyledText {
-                Layout.alignment: Qt.AlignHCenter
-                text: Translation.tr("How much should Settings show at first?")
-                font.pixelSize: Appearance.font.pixelSize.small
-                font.weight: Font.Medium
-                color: Appearance.colors.colOnSurface
-            }
-
-            RowLayout {
-                id: settingsDepthRow
-                Layout.fillWidth: true
-                Layout.maximumWidth: 520
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 12
-
-                readonly property real cardHeight: Math.max(
-                    easyCardCol.implicitHeight, advancedCardCol.implicitHeight) + 24
-
-                // Easy mode card
-                Rectangle {
-                    id: easyCard
-                    readonly property bool selected: (Config.options?.settingsUi?.easyMode ?? false) === true
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: settingsDepthRow.cardHeight
-                    radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                    color: selected
-                        ? Appearance.colors.colPrimaryContainer
-                        : (Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                          : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer2, 0.5)
-                          : Appearance.colors.colLayer2)
-                    border.width: selected ? 2 : 1
-                    border.color: selected
-                        ? Appearance.colors.colPrimary
-                        : (Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
-                          : Appearance.colors.colLayer0Border)
-
-                    Behavior on color {
-                        enabled: Appearance.animationsEnabled
-                        animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                    }
-
-                    ColumnLayout {
-                        id: easyCardCol
-                        anchors {
-                            fill: parent
-                            margins: 12
-                        }
-                        spacing: 6
-
-                        RowLayout {
-                            spacing: 8
-                            MaterialSymbol {
-                                text: "school"
-                                iconSize: 22
-                                color: easyCard.selected
-                                    ? Appearance.colors.colOnPrimaryContainer
-                                    : Appearance.colors.colPrimary
-                            }
-                            StyledText {
-                                Layout.fillWidth: true
-                                text: Translation.tr("Focused")
-                                font.pixelSize: Appearance.font.pixelSize.normal
-                                font.weight: Font.Medium
-                                color: easyCard.selected
-                                    ? Appearance.colors.colOnPrimaryContainer
-                                    : Appearance.colors.colOnSurface
-                            }
-                            Rectangle {
-                                visible: !easyCard.selected
-                                implicitWidth: easyRecommendedLabel.implicitWidth + 12
-                                implicitHeight: easyRecommendedLabel.implicitHeight + 4
-                                radius: height / 2
-                                color: Appearance.colors.colPrimaryContainer
-                                StyledText {
-                                    id: easyRecommendedLabel
+                                MaterialSymbol {
                                     anchors.centerIn: parent
-                                    text: Translation.tr("Recommended")
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: Appearance.colors.colOnPrimaryContainer
+                                    text: "deployed_code"
+                                    iconSize: root.compact ? 22 : 25
+                                    color: root.welcomeAccent
                                 }
                             }
-                            MaterialSymbol {
-                                visible: easyCard.selected
-                                text: "check_circle"
-                                iconSize: 18
-                                color: Appearance.colors.colOnPrimaryContainer
+
+                            WelcomeText {
+                                Layout.fillWidth: true
+                                text: "iNiR"
+                                font.family: root.welcomeFontExpressive
+                                font.pixelSize: root.compact ? 42 : 54
+                                font.weight: Font.Bold
+                                font.letterSpacing: -0.7
+                                color: root.welcomeOnSurface
+                            }
+
+                            WelcomeText {
+                                Layout.fillWidth: true
+                                text: Translation.tr("A complete Niri shell with sensible defaults and room to make it yours.")
+                                font.pixelSize: root.welcomeFontBody
+                                font.weight: Font.Medium
+                                color: root.welcomeSecondaryText
+                                wrapMode: Text.WordWrap
                             }
                         }
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: Translation.tr("A shorter navigation with the controls most people need.")
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            wrapMode: Text.WordWrap
-                            color: easyCard.selected
-                                ? Appearance.colors.colOnPrimaryContainer
-                                : Appearance.colors.colSubtext
+
+                        MascotImage {
+                            id: welcomeMascot
+                            previewMode: true
+                            pose: "welcome-wave"
+                            visible: status === Image.Ready && welcomeFlickable.width >= 720
+                            Layout.preferredWidth: visible ? (root.compact ? 142 : 176) : 0
+                            Layout.preferredHeight: visible ? (root.compact ? 176 : 214) : 0
+                            Layout.alignment: Qt.AlignBottom
                         }
-                    }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: Config.setNestedValue("settingsUi.easyMode", true)
-                    }
-                }
+                        Item {
+                            visible: welcomeMascot.status !== Image.Ready && welcomeFlickable.width >= 720
+                            Layout.preferredWidth: visible ? (root.compact ? 132 : 166) : 0
+                            Layout.preferredHeight: visible ? (root.compact ? 162 : 194) : 0
+                            Layout.alignment: Qt.AlignBottom
 
-                // Advanced mode card
-                Rectangle {
-                    id: advancedCard
-                    readonly property bool selected: (Config.options?.settingsUi?.easyMode ?? false) === false
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: settingsDepthRow.cardHeight
-                    radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                    color: selected
-                        ? Appearance.colors.colPrimaryContainer
-                        : (Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                          : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer2, 0.5)
-                          : Appearance.colors.colLayer2)
-                    border.width: selected ? 2 : 1
-                    border.color: selected
-                        ? Appearance.colors.colPrimary
-                        : (Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
-                          : Appearance.colors.colLayer0Border)
-
-                    Behavior on color {
-                        enabled: Appearance.animationsEnabled
-                        animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "deployed_code"
+                                iconSize: root.compact ? 42 : 50
+                                color: root.welcomeAccent
+                            }
+                        }
                     }
 
                     ColumnLayout {
-                        id: advancedCardCol
-                        anchors {
-                            fill: parent
-                            margins: 12
-                        }
-                        spacing: 6
-
-                        RowLayout {
-                            spacing: 8
-                            MaterialSymbol {
-                                text: "tune"
-                                iconSize: 22
-                                color: advancedCard.selected
-                                    ? Appearance.colors.colOnPrimaryContainer
-                                    : Appearance.colors.colPrimary
-                            }
-                            StyledText {
+                        Layout.fillWidth: true
+                        visible: !root.irisFamily
+                        Layout.topMargin: root.compact ? 8 : 16
+                        spacing: 12
+                        Repeater {
+                            model: [
+                                { icon: "palette", label: Translation.tr("Appearance"), detail: Translation.tr("Style, theme and wallpaper") },
+                                { icon: "dashboard", label: Translation.tr("Desktop"), detail: Translation.tr("Family, bar and dock placement") },
+                                { icon: "tune", label: Translation.tr("Essentials"), detail: Translation.tr("Effects and useful defaults") }
+                            ]
+                            RowLayout {
+                                required property var modelData
                                 Layout.fillWidth: true
-                                text: Translation.tr("Complete")
-                                font.pixelSize: Appearance.font.pixelSize.normal
-                                font.weight: Font.Medium
-                                color: advancedCard.selected
-                                    ? Appearance.colors.colOnPrimaryContainer
-                                    : Appearance.colors.colOnSurface
+                                spacing: 10
+                                MaterialSymbol {
+                                    Layout.preferredWidth: 24
+                                    text: modelData.icon
+                                    iconSize: 18
+                                    color: root.welcomeAccent
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 0
+                                    WelcomeText {
+                                        text: modelData.label
+                                        font.pixelSize: root.welcomeFontBody
+                                        font.weight: Font.DemiBold
+                                        color: root.welcomeOnSurface
+                                    }
+                                    WelcomeText {
+                                        Layout.fillWidth: true
+                                        text: modelData.detail
+                                        font.pixelSize: root.welcomeFontCaption
+                                        color: root.welcomeSecondaryText
+                                        elide: Text.ElideRight
+                                    }
+                                }
                             }
-                            MaterialSymbol {
-                                visible: advancedCard.selected
-                                text: "check_circle"
-                                iconSize: 18
-                                color: Appearance.colors.colOnPrimaryContainer
-                            }
-                        }
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: Translation.tr("Every page and advanced control. You can switch between both views at any time.")
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            wrapMode: Text.WordWrap
-                            color: advancedCard.selected
-                                ? Appearance.colors.colOnPrimaryContainer
-                                : Appearance.colors.colSubtext
                         }
                     }
+                }
 
-                    MouseArea {
+                PanelSurface {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.preferredWidth: welcomeFlickable.width < 720
+                        ? welcomeFlickable.width : (welcomeFlickable.width - (root.compact ? 22 : 34)) * (root.irisFamily ? 0.42 : 0.57)
+                    Layout.alignment: Qt.AlignTop
+                    implicitHeight: welcomeSetupColumn.implicitHeight + 28
+                    surfaceDialect: "material"
+                    elevation: 2
+                    borderless: root.irisFamily
+                    outlined: false
+                    radiusOverride: root.irisFamily ? IrisStyle.radiusPlate : 16
+
+                    ColumnLayout {
+                        id: welcomeSetupColumn
                         anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: Config.setNestedValue("settingsUi.easyMode", false)
+                        anchors.margins: 14
+                        spacing: 9
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            MaterialSymbol {
+                                text: "dashboard"
+                                iconSize: 20
+                                color: root.welcomeAccent
+                            }
+                            WelcomeText {
+                                text: Translation.tr("Desktop family")
+                                font.family: root.welcomeFontTitle
+                                font.pixelSize: root.welcomeFontSection
+                                font.weight: Font.Bold
+                                color: root.welcomeOnSurface
+                            }
+                        }
+
+                        WelcomeText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("You can change this later in Settings.")
+                            font.pixelSize: root.welcomeFontCaption
+                            color: root.welcomeSecondaryText
+                            wrapMode: Text.WordWrap
+                        }
+
+                        WelcomeChoiceRow {
+                            title: "Material II"
+                            detail: Translation.tr("Modular bars, sidebars and Material controls.")
+                            symbol: "dashboard"
+                            selected: root.family === "ii"
+                            onClicked: root.chooseFamily("ii")
+                        }
+
+                        WelcomeChoiceRow {
+                            title: "Waffle"
+                            detail: Translation.tr("Taskbar, Start menu, Action Center and notification center.")
+                            symbol: "grid_view"
+                            selected: root.family === "waffle"
+                            onClicked: root.chooseFamily("waffle")
+                        }
+
+                        WelcomeChoiceRow {
+                            title: "iRiS"
+                            detail: Translation.tr("Island, pieces and a Dock on any edge.")
+                            symbol: "visibility"
+                            selected: root.family === "iris"
+                            onClicked: root.chooseFamily("iris")
+                        }
+
+                        Item {
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: 4
+                        }
+
+                        Rectangle {
+                            visible: !root.irisFamily
+                            Layout.fillWidth: true
+                            implicitHeight: 1
+                            color: ColorUtils.applyAlpha(root.welcomeOutline, 0.34)
+                        }
+
+                        RowLayout {
+                            visible: !root.irisFamily
+                            Layout.fillWidth: true
+                            spacing: 10
+
+                            WelcomeText {
+                                text: Translation.tr("Up next")
+                                font.pixelSize: root.welcomeFontMeta
+                                font.weight: Font.DemiBold
+                                color: root.welcomeSecondaryText
+                            }
+
+                            Rectangle {
+                                Layout.preferredWidth: 1
+                                Layout.preferredHeight: 20
+                                color: ColorUtils.applyAlpha(root.welcomeOutline, 0.42)
+                            }
+
+                            Repeater {
+                                model: root.steps.slice(1, 4)
+                                RowLayout {
+                                    required property int index
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    spacing: 6
+
+                                    WelcomeText {
+                                        text: String(index + 2).padStart(2, "0")
+                                        font.family: root.welcomeFontNumbers
+                                        font.pixelSize: root.welcomeFontMeta
+                                        font.weight: Font.DemiBold
+                                        color: root.welcomeAccent
+                                    }
+                                    MaterialSymbol {
+                                        text: modelData.icon
+                                        iconSize: 16
+                                        color: root.welcomeSecondaryText
+                                    }
+                                    WelcomeText {
+                                        Layout.fillWidth: true
+                                        text: modelData.title
+                                        font.pixelSize: root.welcomeFontCaption
+                                        font.weight: Font.Medium
+                                        color: root.welcomeOnSurface
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
-        }
         }
     }
 
@@ -1204,284 +1876,304 @@ Scope {
         contentHeight: themeColumn.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        bottomMargin: 16
-        topMargin: Math.max(0, (height - contentHeight - 16) / 2)
-        
-        ColumnLayout {
+        interactive: contentHeight > height
+        bottomMargin: 24
+        topMargin: Math.max(root.compact ? 6 : 10,
+            Math.min(root.compact ? 18 : 24,
+                Math.round((height - themeColumn.implicitHeight - bottomMargin) / 2)))
+
+        GridLayout {
             id: themeColumn
             width: parent.width
-            spacing: 16
-
-        // Light/Dark toggle
-        SettingsGroup {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignHCenter
+            columns: themeFlickable.width < 760 ? 1 : 2
+            columnSpacing: root.compact ? 20 : 28
+            rowSpacing: 16
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                Layout.preferredWidth: themeFlickable.width < 760
+                    ? themeFlickable.width : (themeFlickable.width - (root.compact ? 20 : 28)) * 0.34
+                Layout.alignment: Qt.AlignTop
+                spacing: 5
 
                 RowLayout {
                     Layout.fillWidth: true
-                    MaterialSymbol { text: "contrast"; iconSize: 20; color: Appearance.colors.colPrimary }
-                    StyledText { text: Translation.tr("Theme"); font.pixelSize: Appearance.font.pixelSize.normal }
-                    Item { Layout.fillWidth: true }
-                    StyledText {
-                        text: Translation.tr("Applies everywhere")
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        color: Appearance.colors.colSubtext
+                    spacing: 8
+                    MaterialSymbol { text: "auto_awesome"; iconSize: 18; color: root.welcomeAccent }
+                    WelcomeText {
+                        text: Translation.tr("Style")
+                        font.family: root.welcomeFontTitle
+                        font.pixelSize: root.welcomeFontSection
+                        font.weight: Font.Bold
+                        color: root.welcomeOnSurface
                     }
                 }
 
-                RowLayout {
-                    Layout.alignment: Qt.AlignHCenter
-                    spacing: 16
-                    LightDarkPreferenceButton { dark: false }
-                    LightDarkPreferenceButton { dark: true }
-                }
-            }
-        }
-
-        // Global style selector
-        SettingsGroup {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignHCenter
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                RowLayout {
+                WelcomeText {
                     Layout.fillWidth: true
-                    MaterialSymbol { text: "style"; iconSize: 20; color: Appearance.colors.colPrimary }
-                    StyledText { text: Translation.tr("Visual Style"); font.pixelSize: Appearance.font.pixelSize.normal }
-                    Item { Layout.fillWidth: true }
-                    StyledText {
-                        text: {
-                            const style = Config.options?.appearance?.globalStyle ?? "material"
-                            return style === "material" ? Translation.tr("Clean & Solid")
-                                 : style === "cards" ? Translation.tr("Rounded Cards")
-                                 : style === "aurora" ? Translation.tr("Glass & Blur")
-                                 : style === "angel" ? Translation.tr("Neo-Brutalism Glass")
-                                 : Translation.tr("Terminal Style")
-                        }
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                    }
-                }
-
-                ConfigSelectionArray {
-                    Layout.fillWidth: true
-                    currentValue: Config.options?.appearance?.globalStyle ?? "material"
-                    onSelected: newValue => {
-                        Config.setNestedValue("appearance.globalStyle", newValue)
-                    }
-                    options: [
-                        { displayName: "Material", icon: "dashboard", value: "material" },
-                        { displayName: "Cards", icon: "crop_square", value: "cards" },
-                        { displayName: "Aurora", icon: "blur_on", value: "aurora" },
-                        { displayName: "Inir", icon: "terminal", value: "inir" }
-                    ]
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Translation.tr("More experimental styles remain available in Settings.")
-                    color: Appearance.colors.colSubtext
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    horizontalAlignment: Text.AlignHCenter
+                    Layout.bottomMargin: 3
+                    text: Translation.tr("Choose the look for the whole shell.")
+                    font.pixelSize: root.welcomeFontCaption
+                    color: root.welcomeSecondaryText
                     wrapMode: Text.WordWrap
                 }
-            }
-        }
 
-        // Wallpaper - Inline picker (like QuickWallpaper widget)
-        SettingsGroup {
-            id: wallpaperGroup
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignHCenter
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: 2
+                    columnSpacing: 4
+                    rowSpacing: 2
 
-            property var wallpapersList: []
-            readonly property string wallpapersPath: Directories.wallpapersPath
-            readonly property real itemWidth: 130
-            readonly property real itemHeight: 78
-
-            Component.onCompleted: wallpaperScanProc.running = true
-
-            Process {
-                id: wallpaperScanProc
-                command: ["/bin/sh", "-c", `find '${wallpaperGroup.wallpapersPath}' -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.avif' \\) -printf '%C@\\t%p\\n' 2>/dev/null`]
-                stdout: SplitParser {
-                    splitMarker: ""
-                    onRead: data => {
-                        const lines = data.trim().split("\n").filter(l => l.length > 0)
-                        lines.sort((a, b) => parseFloat(b.split("\t")[0]) - parseFloat(a.split("\t")[0]))
-                        wallpaperGroup.wallpapersList = lines.map(l => l.split("\t")[1]).filter(p => p && p.length > 0)
+                    Repeater {
+                        model: root.stylePresets
+                        WelcomeChoiceRow {
+                            required property var modelData
+                            compactRow: true
+                            title: modelData.name
+                            symbol: modelData.icon
+                            selected: root.effectiveStylePreset === modelData.id
+                            onClicked: root.applyStylePreset(modelData.id)
+                        }
                     }
                 }
             }
 
-            ColumnLayout {
+            PanelSurface {
                 Layout.fillWidth: true
-                spacing: 10
+                Layout.fillHeight: true
+                Layout.preferredWidth: themeFlickable.width < 760
+                    ? themeFlickable.width : (themeFlickable.width - (root.compact ? 20 : 28)) * 0.66
+                Layout.alignment: Qt.AlignTop
+                implicitHeight: appearanceColumn.implicitHeight + 28
+                surfaceDialect: "material"
+                elevation: 2
+                outlined: false
+                radiusOverride: 16
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    MaterialSymbol { text: "wallpaper"; iconSize: 20; color: Appearance.colors.colPrimary }
-                    StyledText { text: Translation.tr("Wallpaper & Colors"); font.pixelSize: Appearance.font.pixelSize.normal }
-                    Item { Layout.fillWidth: true }
-                    StyledText {
-                        text: Translation.tr("Colors auto-generated")
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.smallest
+                ColumnLayout {
+                    id: appearanceColumn
+                    anchors.fill: parent
+                    anchors.margins: 14
+                    spacing: root.compact ? 9 : 12
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        MaterialCookie {
+                            implicitSize: 38
+                            sides: 8
+                            color: root.welcomeAccentContainer
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: root.currentStylePreset.icon
+                                iconSize: 19
+                                color: root.welcomeAccent
+                            }
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+                            WelcomeText {
+                                text: root.effectiveStylePreset === "custom"
+                                    ? Translation.tr("Custom style") : root.currentStylePreset.name
+                                font.family: root.welcomeFontTitle
+                                font.pixelSize: Appearance.font.pixelSize.larger
+                                font.weight: Font.Bold
+                                color: root.welcomeOnSurface
+                            }
+                            WelcomeText {
+                                Layout.fillWidth: true
+                                text: root.currentStylePresetDescription
+                                font.pixelSize: root.welcomeFontCaption
+                                font.weight: Font.Medium
+                                color: root.welcomeSecondaryText
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 2
+                                elide: Text.ElideRight
+                            }
+                        }
+                        Rectangle {
+                            visible: root.effectiveStylePreset === "material"
+                            implicitWidth: recommendedStyleLabel.implicitWidth + 14
+                            implicitHeight: 22
+                            radius: 11
+                            color: ColorUtils.mix(root.welcomeSurfaceHighest, root.welcomeAccentAlt, 0.62)
+
+                            WelcomeText {
+                                id: recommendedStyleLabel
+                                anchors.centerIn: parent
+                                text: Translation.tr("Recommended")
+                                font.pixelSize: root.welcomeFontMeta
+                                font.weight: Font.Bold
+                                color: ColorUtils.ensureReadable(root.welcomeOnSurface, parent.color, 4.5)
+                            }
+                        }
                     }
-                }
 
-                // Carousel like QuickWallpaper widget
-                Item {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: wallpaperGroup.itemHeight + 16
-                    visible: wallpaperGroup.wallpapersList.length > 0
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        LightDarkPreferenceButton { dark: false }
+                        LightDarkPreferenceButton { dark: true }
+                    }
 
                     Rectangle {
-                        anchors.fill: parent
-                        radius: Appearance.rounding.small
-                        color: Appearance.colors.colLayer2
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        color: ColorUtils.applyAlpha(root.welcomeOutline, 0.34)
                     }
 
-                    ListView {
-                        id: wallpaperCarousel
-                        anchors.fill: parent
-                        anchors.margins: 8
-                        orientation: ListView.Horizontal
-                        spacing: 8
-                        clip: true
-                        boundsBehavior: Flickable.StopAtBounds
-                        model: wallpaperGroup.wallpapersList
+                    ColumnLayout {
+                        id: wallpaperGroup
+                        Layout.fillWidth: true
+                        spacing: 7
 
-                        WheelHandler {
-                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                            onWheel: event => {
-                                const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
-                                wallpaperCarousel.contentX = Math.max(0, Math.min(
-                                    wallpaperCarousel.contentWidth - wallpaperCarousel.width,
-                                    wallpaperCarousel.contentX - delta
-                                ))
+                        property var wallpapersList: []
+                        readonly property string wallpapersPath: Directories.wallpapersPath
+                        readonly property real itemWidth: root.compact ? 156 : 180
+                        readonly property real itemHeight: root.compact ? 88 : 100
+
+                        Component.onCompleted: wallpaperScanProc.running = true
+
+                        Process {
+                            id: wallpaperScanProc
+                            command: ["/bin/sh", "-c", `find '${wallpaperGroup.wallpapersPath}' -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.avif' \\) -printf '%C@\\t%p\\n' 2>/dev/null`]
+                            stdout: SplitParser {
+                                splitMarker: ""
+                                onRead: data => {
+                                    const lines = data.trim().split("\n").filter(l => l.length > 0)
+                                    lines.sort((a, b) => parseFloat(b.split("\t")[0]) - parseFloat(a.split("\t")[0]))
+                                    wallpaperGroup.wallpapersList = lines.map(l => l.split("\t")[1]).filter(p => p && p.length > 0)
+                                }
                             }
                         }
 
-                        delegate: Item {
-                            id: wpDelegate
-                            required property int index
-                            required property string modelData
-                            readonly property string filePath: modelData
-                            readonly property bool isCurrentWallpaper: (Config.options?.background?.wallpaperPath ?? "") === filePath
-                            readonly property bool isHovered: wpMouseArea.containsMouse
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 7
+                            MaterialSymbol { text: "wallpaper"; iconSize: 17; color: root.welcomeAccent }
+                            WelcomeText {
+                                text: Translation.tr("Wallpaper")
+                                font.family: root.welcomeFontTitle
+                                font.pixelSize: Appearance.font.pixelSize.normal
+                                font.weight: Font.Bold
+                                color: root.welcomeOnSurface
+                            }
+                            Item { Layout.fillWidth: true }
+                            WelcomeText {
+                                text: Translation.tr("Colors update automatically")
+                                color: root.welcomeSecondaryText
+                                font.pixelSize: root.welcomeFontMeta
+                            }
+                        }
 
-                            width: wallpaperGroup.itemWidth
-                            height: wallpaperGroup.itemHeight
+                ListView {
+                    id: wallpaperCarousel
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: wallpaperGroup.itemHeight
+                    visible: wallpaperGroup.wallpapersList.length > 0
+                    orientation: ListView.Horizontal
+                    spacing: 7
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    model: wallpaperGroup.wallpapersList
 
-                            Rectangle {
+                    WheelHandler {
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                        onWheel: event => {
+                            const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+                            wallpaperCarousel.contentX = Math.max(0, Math.min(
+                                wallpaperCarousel.contentWidth - wallpaperCarousel.width,
+                                wallpaperCarousel.contentX - delta
+                            ))
+                        }
+                    }
+
+                    delegate: Item {
+                        id: wpDelegate
+                        required property int index
+                        required property string modelData
+                        readonly property string filePath: modelData
+                        readonly property bool isCurrentWallpaper: (Config.options?.background?.wallpaperPath ?? "") === filePath
+                        readonly property bool isHovered: wpMouseArea.containsMouse
+
+                        width: wallpaperGroup.itemWidth
+                        height: wallpaperGroup.itemHeight
+
+                        PanelSurface {
+                            id: wpThumb
+                            anchors.fill: parent
+                            surfaceDialect: "material"
+                                    elevation: 1
+                            cardStyle: true
+                            outlined: wpDelegate.isCurrentWallpaper
+                            borderWidthOverride: wpDelegate.isCurrentWallpaper ? 2 : 0
+                                    radiusOverride: 12
+                            clipContent: true
+
+                            Image {
                                 anchors.fill: parent
-                                radius: Appearance.rounding.small
-                                color: "transparent"
-                                border.width: wpDelegate.isCurrentWallpaper ? 2 : 0
-                                border.color: Appearance.colors.colPrimary
-                                z: 2
+                                anchors.margins: wpDelegate.isCurrentWallpaper ? 3 : 0
+                                source: wpDelegate.filePath ? `file://${wpDelegate.filePath}` : ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                cache: false
+                                sourceSize.width: Math.round(wallpaperGroup.itemWidth * 2.25)
+                                sourceSize.height: Math.round(wallpaperGroup.itemHeight * 2.25)
                             }
 
                             Rectangle {
-                                id: wpThumb
                                 anchors.fill: parent
-                                radius: Appearance.rounding.small
-                                color: Appearance.colors.colLayer3
-                                clip: true
+                                color: wpDelegate.isHovered && !wpDelegate.isCurrentWallpaper ? "#36000000" : "transparent"
+                            }
 
-                                Image {
-                                    anchors.fill: parent
-                                    source: wpDelegate.filePath ? `file://${wpDelegate.filePath}` : ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                    cache: false
-                                    sourceSize.width: wallpaperGroup.itemWidth * 2
-                                    sourceSize.height: wallpaperGroup.itemHeight * 2
-
-                                    layer.enabled: Appearance.effectsEnabled
-                                    layer.effect: GE.OpacityMask {
-                                        maskSource: Rectangle {
-                                            width: wpThumb.width
-                                            height: wpThumb.height
-                                            radius: wpThumb.radius
+                                    Rectangle {
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                        anchors.margins: 6
+                                visible: wpDelegate.isCurrentWallpaper
+                                        width: 24
+                                        height: 24
+                                        radius: 12
+                                        color: root.welcomeAccent
+                                        MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            text: "check"
+                                            iconSize: 14
+                                            color: root.welcomeOnAccent
                                         }
-                                    }
-                                }
+                            }
 
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: parent.radius
-                                    color: wpDelegate.isHovered && !wpDelegate.isCurrentWallpaper ? "#50000000" : "transparent"
-                                }
-
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    width: 28; height: 28
-                                    radius: 14
-                                    color: Appearance.colors.colPrimary
-                                    visible: wpDelegate.isCurrentWallpaper
-                                    scale: wpDelegate.isCurrentWallpaper ? 1 : 0
-                                    Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
-
-                                    MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        text: "check"
-                                        iconSize: 18
-                                        color: Appearance.colors.colOnPrimary
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: wpMouseArea
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        Wallpapers.select(wpDelegate.filePath)
-                                    }
-                                }
+                            MouseArea {
+                                id: wpMouseArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Wallpapers.select(wpDelegate.filePath)
                             }
                         }
-                    }
-
-                    ScrollEdgeFade {
-                        target: wallpaperCarousel
-                        vertical: false
                     }
                 }
 
-                // Empty state
-                Rectangle {
+                Item {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: wallpaperGroup.itemHeight + 16
+                    Layout.preferredHeight: wallpaperGroup.itemHeight
                     visible: wallpaperGroup.wallpapersList.length === 0
-                    radius: Appearance.rounding.small
-                    color: Appearance.colors.colLayer2
-
                     ColumnLayout {
                         anchors.centerIn: parent
                         spacing: 4
-                        MaterialSymbol { Layout.alignment: Qt.AlignHCenter; text: "image"; iconSize: 24; color: Appearance.colors.colSubtext }
-                        StyledText {
+                        MaterialSymbol { Layout.alignment: Qt.AlignHCenter; text: "image"; iconSize: 20; color: root.welcomeOnSurfaceVariant }
+                        WelcomeText {
                             Layout.alignment: Qt.AlignHCenter
                             text: Translation.tr("No wallpapers found in ~/Pictures/Wallpapers").replace("~/Pictures/Wallpapers", Directories.shortHomePath(Directories.wallpapersPath))
-                            color: Appearance.colors.colSubtext
-                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: root.welcomeSecondaryText
+                            font.pixelSize: root.welcomeFontMeta
                         }
                     }
                 }
             }
-        }
-
-        Item { Layout.preferredHeight: 16 }
+                }
+            }
         }
     }
 
@@ -1491,158 +2183,481 @@ Scope {
         contentHeight: layoutColumn.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        bottomMargin: 16
-        topMargin: Math.max(0, (height - contentHeight - 16) / 2)
-
-        ColumnLayout {
-            id: layoutColumn
-            width: parent.width
-            spacing: root.compact ? 12 : 16
+        interactive: contentHeight > height
+        bottomMargin: 24
+        topMargin: Math.max(root.compact ? 8 : 12,
+            Math.min(root.compact ? 20 : 28,
+                Math.round((height - layoutColumn.implicitHeight - bottomMargin) / 2)))
 
         GridLayout {
-            Layout.alignment: Qt.AlignHCenter
-            columns: 2
-            columnSpacing: 20
+            id: layoutColumn
+            width: parent.width
+            columns: layoutFlickable.width < 760 ? 1 : 2
+            columnSpacing: root.compact ? 22 : 30
             rowSpacing: 16
 
-            // Material II bar position. Waffle owns `waffles.bar.bottom`.
-            SettingsGroup {
-                Layout.preferredWidth: 260
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-                    RowLayout {
-                        MaterialSymbol { text: "web_asset"; iconSize: 18; color: Appearance.colors.colPrimary }
-                        StyledText {
-                            text: "Material II · " + Translation.tr("Bar")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                        }
-                    }
-                    ConfigSelectionArray {
-                        Layout.fillWidth: true
-                        currentValue: Config.options?.bar?.bottom ?? false
-                        onSelected: v => root.setProfileFeature("bar.bottom", v)
-                        options: [
-                            { displayName: Translation.tr("Top"), icon: "vertical_align_top", value: false },
-                            { displayName: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: true }
-                        ]
-                    }
-                }
-            }
-
-            // Material II dock position. Waffle family modules are independent.
-            SettingsGroup {
-                Layout.preferredWidth: 260
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-                    RowLayout {
-                        MaterialSymbol { text: "dock_to_bottom"; iconSize: 18; color: Appearance.colors.colPrimary }
-                        StyledText {
-                            text: "Material II · " + Translation.tr("Dock")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                        }
-                    }
-                    ConfigSelectionArray {
-                        Layout.fillWidth: true
-                        currentValue: Config.options?.dock?.position ?? "bottom"
-                        onSelected: v => root.setProfileFeature("dock.position", v)
-                        options: [
-                            { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: "bottom" },
-                            { displayName: Translation.tr("Left"), icon: "arrow_back", value: "left" },
-                            { displayName: Translation.tr("Right"), icon: "arrow_forward", value: "right" }
-                        ]
-                    }
-                }
-            }
-
-            // Selects which family starts active. Both family configurations
-            // remain stored and switching later does not reset either one.
-            SettingsGroup {
-                Layout.columnSpan: 2
+            ColumnLayout {
                 Layout.fillWidth: true
-                ColumnLayout {
+                Layout.preferredWidth: layoutFlickable.width < 760
+                    ? layoutFlickable.width : (layoutFlickable.width - (root.compact ? 22 : 30)) * 0.42
+                Layout.alignment: Qt.AlignTop
+                spacing: 8
+
+                RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
-                    RowLayout {
-                        MaterialSymbol { text: "view_quilt"; iconSize: 18; color: Appearance.colors.colPrimary }
-                        StyledText { text: Translation.tr("Panel family"); font.pixelSize: Appearance.font.pixelSize.small }
+                    MaterialSymbol { text: "dashboard"; iconSize: 18; color: root.welcomeAccent }
+                    WelcomeText {
+                        text: Translation.tr("Shell family")
+                        font.family: root.welcomeFontTitle
+                        font.pixelSize: root.welcomeFontSection
+                        font.weight: Font.Bold
+                        color: root.welcomeOnSurface
                     }
-                    ConfigSelectionArray {
-                        Layout.fillWidth: true
-                        currentValue: Config.options?.panelFamily ?? "ii"
-                        onSelected: v => root.setProfileFeature("panelFamily", v)
-                        options: [
-                            { displayName: "Material II", icon: "dashboard", value: "ii" },
-                            { displayName: "Waffle", icon: "grid_view", value: "waffle" }
-                        ]
-                    }
+                }
+
+                WelcomeText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Choose the shell family that matches how you want the desktop to work.")
+                    font.pixelSize: root.welcomeFontCaption
+                    color: root.welcomeSecondaryText
+                    wrapMode: Text.WordWrap
+                }
+
+                WelcomeChoiceRow {
+                    title: "Material II"
+                    detail: Translation.tr("M3 bar, dock and sidebars with shared Material controls.")
+                    symbol: "dashboard"
+                    selected: root.family === "ii"
+                    badge: Translation.tr("Default")
+                    onClicked: root.chooseFamily("ii")
+                }
+
+                WelcomeChoiceRow {
+                    title: "Waffle"
+                    detail: Translation.tr("Taskbar, Start menu and Action Center.")
+                    symbol: "grid_view"
+                    selected: root.family === "waffle"
+                    onClicked: root.chooseFamily("waffle")
+                }
+
+                WelcomeChoiceRow {
+                    title: "iRiS"
+                    detail: Translation.tr("Edge-aware Island, movable pieces, Dock, Themes and Studio.")
+                    symbol: "visibility"
+                    selected: root.family === "iris"
+                    onClicked: root.chooseFamily("iris")
                 }
             }
 
-            // Only the ii horizontal bar reads bar.appearanceStyle.
-            SettingsGroup {
-                Layout.columnSpan: 2
+            PanelSurface {
                 Layout.fillWidth: true
-                visible: (Config.options?.panelFamily ?? "ii") === "ii"
-                    && !(Config.options?.bar?.vertical ?? false)
+                Layout.fillHeight: true
+                Layout.preferredWidth: layoutFlickable.width < 760
+                    ? layoutFlickable.width : (layoutFlickable.width - (root.compact ? 22 : 30)) * 0.58
+                Layout.alignment: Qt.AlignTop
+                implicitHeight: Math.max(placementColumn.implicitHeight + 28, root.compact ? 300 : 330)
+                surfaceDialect: "material"
+                elevation: 2
+                outlined: false
+                radiusOverride: 16
+
                 ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
+                    id: placementColumn
+                    anchors.fill: parent
+                    anchors.margins: 14
+                    spacing: 10
+
                     RowLayout {
-                        MaterialSymbol { text: "wysiwyg"; iconSize: 18; color: Appearance.colors.colPrimary }
-                        StyledText {
-                            text: "Material II · " + Translation.tr("Bar shape")
-                            font.pixelSize: Appearance.font.pixelSize.small
+                        Layout.fillWidth: true
+                        spacing: 8
+                        MaterialCookie {
+                            implicitSize: 34
+                            sides: 8
+                            color: root.welcomeAccentContainer
+
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "view_compact"
+                                iconSize: 17
+                                color: root.welcomeAccent
+                            }
                         }
-                        Item { Layout.fillWidth: true }
-                        StyledText {
-                            text: Translation.tr("Changes how the whole bar reads")
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            color: Appearance.colors.colSubtext
+                        WelcomeText {
+                            text: Translation.tr("Placement")
+                            font.family: root.welcomeFontTitle
+                            font.pixelSize: root.welcomeFontSection
+                            font.weight: Font.Bold
+                            color: root.welcomeOnSurface
                         }
                     }
-                    ConfigSelectionArray {
+
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        currentValue: Config.options?.bar?.appearanceStyle ?? "classic"
-                        onSelected: v => root.setProfileFeature("bar.appearanceStyle", v)
-                        options: [
-                            { displayName: Translation.tr("Classic"), icon: "horizontal_rule", value: "classic" },
-                            { displayName: Translation.tr("Islands"), icon: "view_column", value: "islands" },
-                            { displayName: "Material 3", icon: "widgets", value: "m3" },
-                            { displayName: Translation.tr("Pill"), icon: "blur_circular", value: "pill" }
-                        ]
+                        spacing: 5
+                        WelcomeText {
+                            text: Translation.tr("Bar position")
+                            font.pixelSize: root.welcomeFontBody
+                            font.weight: Font.Medium
+                            color: root.welcomeOnSurface
+                        }
+                        WelcomeSegmentedControl {
+                            Layout.fillWidth: true
+                            currentValue: (Config.options?.bar?.bottom ?? false) ? "bottom" : "top"
+                            options: [
+                                { displayName: Translation.tr("Top"), icon: "vertical_align_top", value: "top" },
+                                { displayName: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: "bottom" }
+                            ]
+                            onSelected: value => root.setProfileFeature("bar.bottom", value === "bottom")
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 5
+                        WelcomeText {
+                            text: Translation.tr("Dock position")
+                            font.pixelSize: root.welcomeFontBody
+                            font.weight: Font.Medium
+                            color: root.welcomeOnSurface
+                        }
+                        WelcomeSegmentedControl {
+                            Layout.fillWidth: true
+                            currentValue: Config.options?.dock?.position ?? "bottom"
+                            options: [
+                                { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: "bottom" },
+                                { displayName: Translation.tr("Left"), icon: "arrow_back", value: "left" },
+                                { displayName: Translation.tr("Right"), icon: "arrow_forward", value: "right" }
+                            ]
+                            onSelected: value => root.setProfileFeature("dock.position", value)
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 6
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        color: ColorUtils.applyAlpha(root.welcomeOutline, 0.34)
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: (Config.options?.panelFamily ?? "ii") === "ii"
+                            && (Config.options?.bar?.appearanceStyle ?? "m3") === "m3"
+                        spacing: 9
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            MaterialSymbol {
+                                text: "side_navigation"
+                                iconSize: 18
+                                color: root.welcomeAccent
+                            }
+                            WelcomeText {
+                                text: Translation.tr("Sidebar access")
+                                font.family: root.welcomeFontTitle
+                                font.pixelSize: root.welcomeFontSection
+                                font.weight: Font.Bold
+                                color: root.welcomeOnSurface
+                            }
+                            Item { Layout.fillWidth: true }
+                            WelcomeText {
+                                text: Translation.tr("M3 bar")
+                                font.pixelSize: root.welcomeFontMeta
+                                font.weight: Font.Bold
+                                color: root.welcomeAccentAlt
+                            }
+                        }
+
+                        WelcomeText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("A sidebar button stays at each outer edge of the bar.")
+                            font.pixelSize: root.welcomeFontCaption
+                            color: root.welcomeSecondaryText
+                            wrapMode: Text.WordWrap
+                        }
+
+                        PanelSurface {
+                            Layout.fillWidth: true
+                            implicitHeight: 116
+                            surfaceDialect: "material"
+                            elevation: 1
+                            outlined: false
+                            radiusOverride: 14
+
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 7
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
+
+                                    WelcomeText {
+                                        text: Translation.tr("Edge controls")
+                                        font.pixelSize: root.welcomeFontMeta
+                                        font.weight: Font.DemiBold
+                                        color: root.welcomeSecondaryText
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    WelcomeText {
+                                        text: "M3 · COMPACT"
+                                        font.family: root.welcomeFontNumbers
+                                        font.pixelSize: root.welcomeFontMeta
+                                        font.weight: Font.Bold
+                                        font.letterSpacing: 0.7
+                                        color: root.welcomeAccentAlt
+                                    }
+                                }
+
+                                PanelSurface {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 52
+                                    surfaceDialect: "material"
+                                    elevation: 2
+                                    island: true
+                                    outlined: false
+                                    radiusOverride: 18
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 7
+                                        anchors.rightMargin: 7
+                                        spacing: 7
+
+                                        PanelSurface {
+                                            Layout.preferredWidth: 38
+                                            Layout.preferredHeight: 38
+                                            Layout.alignment: Qt.AlignVCenter
+                                            surfaceDialect: "material"
+                                            elevation: 3
+                                            island: true
+                                            outlined: false
+
+                                            MaterialSymbol {
+                                                anchors.centerIn: parent
+                                                text: "left_panel_open"
+                                                iconSize: 20
+                                                color: root.welcomeAccent
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            spacing: 4
+                                            Layout.alignment: Qt.AlignVCenter
+
+                                            Rectangle {
+                                                implicitWidth: 18
+                                                implicitHeight: 8
+                                                radius: 4
+                                                color: root.welcomeAccent
+                                            }
+                                            Rectangle {
+                                                implicitWidth: 8
+                                                implicitHeight: 8
+                                                radius: 4
+                                                color: ColorUtils.applyAlpha(root.welcomeOnSurfaceVariant, 0.34)
+                                            }
+                                            Rectangle {
+                                                implicitWidth: 8
+                                                implicitHeight: 8
+                                                radius: 4
+                                                color: ColorUtils.applyAlpha(root.welcomeOnSurfaceVariant, 0.34)
+                                            }
+                                        }
+
+                                        Item { Layout.fillWidth: true }
+
+                                        PanelSurface {
+                                            Layout.preferredWidth: 156
+                                            Layout.preferredHeight: 34
+                                            Layout.alignment: Qt.AlignVCenter
+                                            surfaceDialect: "material"
+                                            elevation: 3
+                                            island: true
+                                            outlined: false
+
+                                            RowLayout {
+                                                anchors.centerIn: parent
+                                                spacing: 6
+                                                Repeater {
+                                                    model: ["folder", "terminal", "language", "music_note"]
+                                                    MaterialSymbol {
+                                                        required property string modelData
+                                                        text: modelData
+                                                        iconSize: 16
+                                                        color: root.welcomeOnSurfaceVariant
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        Item { Layout.fillWidth: true }
+
+                                        RowLayout {
+                                            spacing: 4
+                                            Layout.alignment: Qt.AlignVCenter
+                                            MaterialSymbol {
+                                                text: "wifi"
+                                                iconSize: 15
+                                                color: root.welcomeOnSurfaceVariant
+                                            }
+                                            MaterialSymbol {
+                                                text: "volume_up"
+                                                iconSize: 15
+                                                color: root.welcomeOnSurfaceVariant
+                                            }
+                                        }
+
+                                        PanelSurface {
+                                            Layout.preferredWidth: 38
+                                            Layout.preferredHeight: 38
+                                            Layout.alignment: Qt.AlignVCenter
+                                            surfaceDialect: "material"
+                                            elevation: 3
+                                            island: true
+                                            outlined: false
+
+                                            MaterialSymbol {
+                                                anchors.centerIn: parent
+                                                text: "right_panel_open"
+                                                iconSize: 20
+                                                color: root.welcomeAccent
+                                            }
+                                        }
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
+
+                                    RowLayout {
+                                        spacing: 5
+                                        MaterialSymbol {
+                                            text: "left_panel_open"
+                                            iconSize: 14
+                                            color: root.welcomeAccent
+                                        }
+                                        WelcomeText {
+                                            text: Translation.tr("Left sidebar")
+                                            font.pixelSize: root.welcomeFontMeta
+                                            font.weight: Font.Medium
+                                            color: root.welcomeOnSurface
+                                        }
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    RowLayout {
+                                        spacing: 5
+                                        WelcomeText {
+                                            text: Translation.tr("Right sidebar")
+                                            font.pixelSize: root.welcomeFontMeta
+                                            font.weight: Font.Medium
+                                            color: root.welcomeOnSurface
+                                        }
+                                        MaterialSymbol {
+                                            text: "right_panel_open"
+                                            iconSize: 14
+                                            color: root.welcomeAccent
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: (Config.options?.panelFamily ?? "ii") === "ii"
+                            && (Config.options?.bar?.appearanceStyle ?? "m3") !== "m3"
+                        spacing: 9
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            MaterialSymbol {
+                                text: "side_navigation"
+                                iconSize: 18
+                                color: root.welcomeAccentAlt
+                            }
+                            WelcomeText {
+                                Layout.fillWidth: true
+                                text: Translation.tr("Sidebar access")
+                                font.family: root.welcomeFontTitle
+                                font.pixelSize: root.welcomeFontSection
+                                font.weight: Font.Bold
+                                color: root.welcomeOnSurface
+                            }
+                            WelcomeText {
+                                text: String(Config.options?.bar?.appearanceStyle ?? "m3").toUpperCase()
+                                font.family: root.welcomeFontNumbers
+                                font.pixelSize: root.welcomeFontMeta
+                                font.weight: Font.Bold
+                                color: root.welcomeAccentAlt
+                            }
+                        }
+
+                        PanelSurface {
+                            Layout.fillWidth: true
+                            implicitHeight: 82
+                            surfaceDialect: "material"
+                            elevation: 1
+                            outlined: false
+                            radiusOverride: 14
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 12
+
+                                MaterialCookie {
+                                    implicitSize: 42
+                                    sides: 7
+                                    color: ColorUtils.mix(root.welcomeSurfaceHighest, root.welcomeAccentAlt, 0.62)
+                                    MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        text: "visibility"
+                                        iconSize: 20
+                                        color: root.welcomeAccentAlt
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    WelcomeText {
+                                        Layout.fillWidth: true
+                                        text: Translation.tr("Sidebars stay available")
+                                        font.family: root.welcomeFontTitle
+                                        font.pixelSize: root.welcomeFontBody
+                                        font.weight: Font.Bold
+                                        color: root.welcomeOnSurface
+                                    }
+                                    WelcomeText {
+                                        Layout.fillWidth: true
+                                        text: Translation.tr("This bar style uses its own controls; your sidebars remain available.")
+                                        font.pixelSize: root.welcomeFontCaption
+                                        color: root.welcomeSecondaryText
+                                        wrapMode: Text.WordWrap
+                                        maximumLineCount: 2
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
-        }
-
-        SettingsGroup {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignHCenter
-
-            ConfigSwitch {
-                buttonIcon: "dock_to_bottom"
-                text: "Material II · " + Translation.tr("Show dock")
-                description: Translation.tr("Keep dock visible at all times (Empty workspace mode only)")
-                checked: Config.options?.dock?.enable ?? true
-                onToggledByUser: checked => root.setProfileFeature("dock.enable", checked)
-            }
-            ConfigSwitch {
-                buttonIcon: "dashboard"
-                text: "Material II · " + Translation.tr("Show dashboard")
-                description: Translation.tr("Keep a centered home panel for notifications, media, weather and daily controls.")
-                checked: Config.options?.dashboard?.enable ?? true
-                onToggledByUser: checked => root.setProfileFeature("dashboard.enable", checked)
-            }
-            ConfigSwitch {
-                buttonIcon: "auto_awesome_motion"
-                text: "Material II · " + Translation.tr("Auto-hide the bar")
-                description: Translation.tr("A quieter desktop; the bar returns from the edge or while holding Super.")
-                checked: Config.options?.bar?.autoHide?.enable ?? false
-                onToggledByUser: checked => root.setProfileFeature("bar.autoHide.enable", checked)
-            }
-        }
         }
     }
 
@@ -1652,201 +2667,705 @@ Scope {
         contentHeight: featuresColumn.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        bottomMargin: 16
-        topMargin: Math.max(0, (height - contentHeight - 16) / 2)
+        interactive: contentHeight > height
+        bottomMargin: 24
+        topMargin: Math.max(root.compact ? 8 : 12,
+            Math.min(root.compact ? 20 : 28,
+                Math.round((height - featuresColumn.implicitHeight - bottomMargin) / 2)))
 
-        ColumnLayout {
+        readonly property var profileHighlights: root.selectedProfile === "minimum" ? [
+            { value: "M3", label: Translation.tr("compact bar") },
+            { value: "2", label: Translation.tr("sidebars") },
+            { value: "4", label: Translation.tr("quick toggles") },
+            { value: "0", label: Translation.tr("desktop widgets") }
+        ] : root.selectedProfile === "full" ? [
+            { value: "M3+", label: Translation.tr("bar + media") },
+            { value: "2", label: Translation.tr("full sidebars") },
+            { value: "8", label: Translation.tr("quick toggles") },
+            { value: "2", label: Translation.tr("desktop widgets") }
+        ] : [
+            { value: "M3", label: Translation.tr("bar + dock") },
+            { value: "2", label: Translation.tr("sidebars") },
+            { value: "8", label: Translation.tr("quick toggles") },
+            { value: "1", label: Translation.tr("desktop clock") }
+        ]
+
+        GridLayout {
             id: featuresColumn
             width: parent.width
-            spacing: 16
+            columns: featuresFlickable.width < 760 ? 1 : 2
+            columnSpacing: root.compact ? 22 : 30
+            rowSpacing: 16
 
-            Item { Layout.preferredHeight: 4 }
-
-            SettingsGroup {
+            ColumnLayout {
                 Layout.fillWidth: true
-                Layout.maximumWidth: 600
-                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: featuresFlickable.width < 760
+                    ? featuresFlickable.width : (featuresFlickable.width - (root.compact ? 22 : 30)) * 0.38
+                Layout.alignment: Qt.AlignTop
+                spacing: 6
 
                 RowLayout {
                     Layout.fillWidth: true
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: Translation.tr("Choose your starting point")
-                        font.pixelSize: Appearance.font.pixelSize.normal
-                        font.weight: Font.Medium
-                        color: Appearance.colors.colOnLayer1
-                    }
-
-                    StyledText {
-                        text: Translation.tr("Balanced is recommended")
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        color: Appearance.colors.colPrimary
+                    spacing: 8
+                    MaterialSymbol { text: "tune"; iconSize: 18; color: root.welcomeAccent }
+                    WelcomeText {
+                        text: Translation.tr("Base setup")
+                        font.family: root.welcomeFontTitle
+                        font.pixelSize: root.welcomeFontSection
+                        font.weight: Font.Bold
+                        color: root.welcomeOnSurface
                     }
                 }
 
-                ConfigSelectionArray {
+                WelcomeText {
                     Layout.fillWidth: true
-                    currentValue: root.selectedProfile
-                    options: [
-                        { displayName: Translation.tr("Minimum"), icon: "filter_1", value: "minimum" },
-                        { displayName: Translation.tr("Balanced"), icon: "tune", value: "balanced" },
-                        { displayName: Translation.tr("Full"), icon: "auto_awesome", value: "full" }
-                    ]
-                    onSelected: value => root.applyProfile(value)
+                    text: Translation.tr("Choose how much iNiR sets up for your first session.")
+                    font.pixelSize: root.welcomeFontCaption
+                    color: root.welcomeSecondaryText
+                    wrapMode: Text.WordWrap
                 }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: profileSummaryColumn.implicitHeight + 20
-                    radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.small
-                    color: root.profileCustomized
-                        ? Appearance.colors.colLayer2
-                        : Appearance.colors.colPrimaryContainer
-                    border.width: 1
-                    border.color: root.profileCustomized
-                        ? Appearance.colors.colOutlineVariant
-                        : Appearance.colors.colPrimary
+                WelcomeChoiceRow {
+                    title: Translation.tr("Minimum")
+                    detail: Translation.tr("Core controls with no desktop widgets.")
+                    symbol: "filter_1"
+                    selected: !root.profileCustomized && root.selectedProfile === "minimum"
+                    onClicked: root.applyProfile("minimum")
+                }
+
+                WelcomeChoiceRow {
+                    title: Translation.tr("Balanced")
+                    detail: Translation.tr("Sidebars, daily toggles and a desktop clock.")
+                    symbol: "tune"
+                    badge: Translation.tr("Recommended")
+                    selected: !root.profileCustomized && root.selectedProfile === "balanced"
+                    onClicked: root.applyProfile("balanced")
+                }
+
+                WelcomeChoiceRow {
+                    title: Translation.tr("Full")
+                    detail: Translation.tr("More local tools, fuller sidebars and a system monitor.")
+                    symbol: "auto_awesome"
+                    selected: !root.profileCustomized && root.selectedProfile === "full"
+                    onClicked: root.applyProfile("full")
+                }
+            }
+
+            PanelSurface {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.preferredWidth: featuresFlickable.width < 760
+                    ? featuresFlickable.width : (featuresFlickable.width - (root.compact ? 22 : 30)) * 0.62
+                Layout.alignment: Qt.AlignTop
+                implicitHeight: Math.max(profileSummaryColumn.implicitHeight + 28, root.compact ? 300 : 330)
+                surfaceDialect: "material"
+                elevation: 2
+                outlined: false
+                radiusOverride: 16
+
+                ColumnLayout {
+                    id: profileSummaryColumn
+                    anchors.fill: parent
+                    anchors.margins: 14
+                    spacing: 10
 
                     RowLayout {
-                        anchors {
-                            fill: parent
-                            margins: 10
+                        Layout.fillWidth: true
+                        spacing: 8
+                        MaterialCookie {
+                            implicitSize: 38
+                            sides: 8
+                            color: root.welcomeAccentContainer
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: root.selectedProfile === "minimum" ? "filter_1"
+                                    : root.selectedProfile === "full" ? "auto_awesome" : "tune"
+                                iconSize: 19
+                                color: root.welcomeAccent
+                            }
                         }
-                        spacing: 10
-
-                        MaterialSymbol {
-                            text: root.profileCustomized ? "tune" : "check_circle"
-                            iconSize: 20
-                            color: root.profileCustomized
-                                ? Appearance.colors.colPrimary
-                                : Appearance.colors.colOnPrimaryContainer
-                        }
-
                         ColumnLayout {
-                            id: profileSummaryColumn
                             Layout.fillWidth: true
-                            spacing: 2
-
-                            StyledText {
-                                Layout.fillWidth: true
+                            spacing: 0
+                            WelcomeText {
                                 text: root.profileCustomized
-                                    ? Translation.tr("Custom setup")
-                                    : root.selectedProfileTitle
-                                font.pixelSize: Appearance.font.pixelSize.small
+                                    ? Translation.tr("Custom setup") : root.selectedProfileTitle
+                                font.family: root.welcomeFontTitle
+                                font.pixelSize: Appearance.font.pixelSize.larger
+                                font.weight: Font.Bold
+                                color: root.welcomeOnSurface
+                            }
+                            WelcomeText {
+                                Layout.fillWidth: true
+                                text: root.selectedProfileDescription
+                                font.pixelSize: root.welcomeFontCaption
                                 font.weight: Font.Medium
-                                color: root.profileCustomized
-                                    ? Appearance.colors.colOnSurface
-                                    : Appearance.colors.colOnPrimaryContainer
+                                color: root.welcomeSecondaryText
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 2
+                                elide: Text.ElideRight
                             }
-                            StyledText {
+                        }
+                    }
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 6
+                        columns: 2
+                        columnSpacing: 18
+                        rowSpacing: 2
+                        Repeater {
+                            model: featuresFlickable.profileHighlights
+                            WelcomeMetric {
+                                required property int index
+                                required property var modelData
                                 Layout.fillWidth: true
-                                text: root.profileCustomized
-                                    ? Translation.tr("Your individual choices are now in control.")
-                                    : root.selectedProfileDescription
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: root.profileCustomized
-                                    ? Appearance.colors.colSubtext
-                                    : Appearance.colors.colOnPrimaryContainer
+                                value: modelData.value
+                                label: modelData.label
+                                accent: index % 2 === 0 ? root.welcomeAccent : root.welcomeAccentAlt
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 4
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        color: ColorUtils.applyAlpha(root.welcomeOutline, 0.34)
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        MaterialSymbol { text: "speed"; iconSize: 18; color: root.welcomeAccent }
+                        WelcomeText {
+                            text: Translation.tr("Effects")
+                            font.family: root.welcomeFontTitle
+                            font.pixelSize: root.welcomeFontSection
+                            font.weight: Font.Bold
+                            color: root.welcomeOnSurface
+                        }
+                        Item { Layout.fillWidth: true }
+                        WelcomeText {
+                            text: root.effectivePerformancePreset === "custom"
+                                ? Translation.tr("Custom") : root.currentPerformancePreset.name
+                            font.pixelSize: root.welcomeFontMeta
+                            color: root.welcomeSecondaryText
+                        }
+                    }
+
+                    WelcomeSegmentedControl {
+                        Layout.fillWidth: true
+                        currentValue: root.effectivePerformancePreset
+                        options: root.performancePresets.map(preset => ({
+                            displayName: preset.name,
+                            icon: preset.icon,
+                            value: preset.id
+                        }))
+                        onSelected: value => root.applyPerformancePreset(value)
+                    }
+
+                    WelcomeText {
+                        Layout.fillWidth: true
+                        text: root.currentPerformancePresetDescription
+                        font.pixelSize: root.welcomeFontCaption
+                        color: root.welcomeSecondaryText
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                    }
+                }
+            }
+        }
+    }
+
+    component IrisStartContent: Flickable {
+        id: irisStartFlickable
+        width: root.stepWidth
+        contentHeight: irisStartGrid.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        interactive: contentHeight > height
+        bottomMargin: 24
+        topMargin: Math.max(root.compact ? 8 : 12,
+            Math.min(root.compact ? 20 : 28,
+                Math.round((height - irisStartGrid.implicitHeight - bottomMargin) / 2)))
+
+        GridLayout {
+            id: irisStartGrid
+            width: parent.width
+            columns: irisStartFlickable.width < 760 ? 1 : 2
+            columnSpacing: root.compact ? 22 : 30
+            rowSpacing: 16
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.preferredWidth: irisStartFlickable.width < 760
+                    ? irisStartFlickable.width : (irisStartFlickable.width - (root.compact ? 22 : 30)) * 0.42
+                Layout.alignment: Qt.AlignTop
+                spacing: 7
+
+                RowLayout {
+                    spacing: 8
+                    MaterialSymbol { text: "view_compact"; iconSize: 18; color: root.welcomeAccent }
+                    WelcomeText {
+                        text: Translation.tr("iRiS layout")
+                        font.family: root.welcomeFontTitle
+                        font.pixelSize: root.welcomeFontSection
+                        font.weight: Font.Bold
+                        color: root.welcomeOnSurface
+                    }
+                }
+
+                WelcomeText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Start with an Island or a full bar. Adjust its position next.")
+                    font.pixelSize: root.welcomeFontCaption
+                    color: root.welcomeSecondaryText
+                    wrapMode: Text.WordWrap
+                }
+
+                Repeater {
+                    model: root.irisArrangements
+                    WelcomeChoiceRow {
+                        required property var modelData
+                        title: modelData.name
+                        detail: modelData.description
+                        symbol: modelData.icon
+                        badge: modelData.badge ?? ""
+                        selected: root.effectiveIrisArrangement === modelData.id
+                        onClicked: root.applyIrisArrangement(modelData.id)
+                    }
+                }
+            }
+
+            PanelSurface {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.preferredWidth: irisStartFlickable.width < 760
+                    ? irisStartFlickable.width : (irisStartFlickable.width - (root.compact ? 22 : 30)) * 0.58
+                Layout.alignment: Qt.AlignTop
+                implicitHeight: Math.max(irisStartPreviewColumn.implicitHeight + 28, root.compact ? 310 : 350)
+                surfaceDialect: "material"
+                elevation: 2
+                borderless: root.irisFamily
+                outlined: false
+                radiusOverride: root.irisFamily ? IrisStyle.radiusPlate : 16
+
+                WelcomeIrisFill {}
+
+                ColumnLayout {
+                    id: irisStartPreviewColumn
+                    anchors.fill: parent
+                    anchors.margins: 14
+                    spacing: 12
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        MaterialSymbol { text: "desktop_windows"; iconSize: 18; color: root.welcomeAccent }
+                        WelcomeText {
+                            text: root.effectiveIrisArrangement === "custom"
+                                ? Translation.tr("Custom layout") : root.currentIrisArrangement.name
+                            font.family: root.welcomeFontTitle
+                            font.pixelSize: root.welcomeFontSection
+                            font.weight: Font.Bold
+                            color: root.welcomeOnSurface
+                        }
+                        Item { Layout.fillWidth: true }
+                        WelcomeText {
+                            text: root.familyTitle
+                            font.pixelSize: root.welcomeFontMeta
+                            font.weight: Font.Bold
+                            color: root.welcomeAccent
+                        }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: width / root.screenAspect
+                        IrisScreenPreview {
+                            anchors.fill: parent
+                            screen: root.focusedScreen
+                            maxScale: 1
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        color: ColorUtils.applyAlpha(root.welcomeOutline, 0.34)
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        MaterialSymbol { text: "speed"; iconSize: 17; color: root.welcomeAccent }
+                        WelcomeText {
+                            text: Translation.tr("Effects")
+                            font.family: root.welcomeFontTitle
+                            font.pixelSize: root.welcomeFontBody
+                            font.weight: Font.Bold
+                            color: root.welcomeOnSurface
+                        }
+                        Item { Layout.fillWidth: true }
+                        WelcomeText {
+                            text: root.effectivePerformancePreset === "custom"
+                                ? Translation.tr("Custom") : root.currentPerformancePreset.name
+                            font.pixelSize: root.welcomeFontMeta
+                            color: root.welcomeSecondaryText
+                        }
+                    }
+
+                    WelcomeSegmentedControl {
+                        Layout.fillWidth: true
+                        currentValue: root.effectivePerformancePreset
+                        options: root.performancePresets.map(preset => ({
+                            displayName: preset.name, icon: preset.icon, value: preset.id
+                        }))
+                        onSelected: value => root.applyPerformancePreset(value)
+                    }
+                }
+            }
+        }
+    }
+
+    component IrisAppearanceContent: Flickable {
+        id: irisAppearanceFlickable
+        width: root.stepWidth
+        contentHeight: irisAppearanceGrid.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        interactive: contentHeight > height
+        bottomMargin: 24
+        topMargin: Math.max(root.compact ? 8 : 12,
+            Math.min(root.compact ? 20 : 28,
+                Math.round((height - irisAppearanceGrid.implicitHeight - bottomMargin) / 2)))
+
+        GridLayout {
+            id: irisAppearanceGrid
+            width: parent.width
+            columns: irisAppearanceFlickable.width < 760 ? 1 : 2
+            columnSpacing: root.compact ? 22 : 30
+            rowSpacing: 16
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.preferredWidth: irisAppearanceFlickable.width < 760
+                    ? irisAppearanceFlickable.width : (irisAppearanceFlickable.width - (root.compact ? 22 : 30)) * 0.42
+                Layout.alignment: Qt.AlignTop
+                spacing: 5
+
+                RowLayout {
+                    spacing: 8
+                    MaterialSymbol { text: "palette"; iconSize: 18; color: root.welcomeAccent }
+                    WelcomeText {
+                        text: Translation.tr("Themes")
+                        font.family: root.welcomeFontTitle
+                        font.pixelSize: root.welcomeFontSection
+                        font.weight: Font.Bold
+                        color: root.welcomeOnSurface
+                    }
+                }
+
+                WelcomeText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Material, shape and motion. More themes in Studio.")
+                    font.pixelSize: root.welcomeFontCaption
+                    color: root.welcomeSecondaryText
+                    wrapMode: Text.WordWrap
+                }
+
+                Repeater {
+                    model: root.irisWelcomeThemes
+                    WelcomeChoiceRow {
+                        required property var modelData
+                        compactRow: true
+                        title: modelData.name
+                        symbol: modelData.id === "terminal" ? "terminal"
+                            : modelData.id === "adaptive" ? "auto_awesome"
+                            : modelData.id === "frost" ? "ac_unit"
+                            : modelData.id === "aurora" ? "gradient"
+                            : modelData.id === "liquid-glass" ? "water_drop" : "visibility"
+                        selected: IrisThemes.activeId === modelData.id && !IrisThemes.modified
+                        onClicked: root.applyIrisTheme(modelData.id)
+                    }
+                }
+            }
+
+            PanelSurface {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.preferredWidth: irisAppearanceFlickable.width < 760
+                    ? irisAppearanceFlickable.width : (irisAppearanceFlickable.width - (root.compact ? 22 : 30)) * 0.58
+                Layout.alignment: Qt.AlignTop
+                implicitHeight: Math.max(irisThemePreviewColumn.implicitHeight + 28, root.compact ? 310 : 350)
+                surfaceDialect: "material"
+                elevation: 2
+                borderless: root.irisFamily
+                outlined: false
+                radiusOverride: IrisStyle.radiusPlate
+
+                WelcomeIrisFill {}
+
+                ColumnLayout {
+                    id: irisThemePreviewColumn
+                    anchors.fill: parent
+                    anchors.margins: IrisStyle.concentricPad(IrisStyle.radiusPlate, 14)
+                    spacing: 12
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 1
+                            WelcomeText {
+                                text: IrisThemes.active?.name ?? Translation.tr("Custom theme")
+                                font.family: root.welcomeFontTitle
+                                font.pixelSize: root.welcomeFontSection
+                                font.weight: Font.Bold
+                                color: root.welcomeOnSurface
+                            }
+                            WelcomeText {
+                                Layout.fillWidth: true
+                                text: IrisThemes.modified
+                                    ? Translation.tr("Modified")
+                                    : (IrisThemes.active?.description ?? "")
+                                font.pixelSize: root.welcomeFontCaption
+                                color: root.welcomeSecondaryText
+                                maximumLineCount: 2
+                                elide: Text.ElideRight
                                 wrapMode: Text.WordWrap
                             }
-                            StyledText {
+                        }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: width / root.screenAspect
+                        IrisScreenPreview {
+                            anchors.fill: parent
+                            screen: root.focusedScreen
+                            maxScale: 1
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 10
+                        Repeater {
+                            model: [
+                                { icon: "texture", value: IrisStyle.glassy ? Translation.tr("Glass") : Translation.tr("Solid") },
+                                { icon: "rounded_corner", value: String(Math.round(IrisStyle.shapeScale * 100)) + "%" },
+                                { icon: "motion_mode", value: IrisStyle.morphName }
+                            ]
+                            RowLayout {
+                                required property var modelData
                                 Layout.fillWidth: true
-                                text: root.profileCustomized
-                                    ? Translation.tr("You can still choose a starting point above to reset these essentials.")
-                                    : root.selectedProfileAudience
-                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                color: root.profileCustomized
-                                    ? Appearance.colors.colSubtext
-                                    : Appearance.colors.colOnPrimaryContainer
-                                opacity: 0.8
-                                wrapMode: Text.WordWrap
+                                spacing: 5
+                                MaterialSymbol { text: modelData.icon; iconSize: 15; color: root.welcomeAccent }
+                                WelcomeText {
+                                    Layout.fillWidth: true
+                                    text: modelData.value
+                                    font.pixelSize: root.welcomeFontMeta
+                                    font.weight: Font.DemiBold
+                                    color: root.welcomeSecondaryText
+                                    elide: Text.ElideRight
+                                }
                             }
                         }
                     }
                 }
             }
+        }
+    }
 
-            RowLayout {
+    component IrisLayoutContent: Flickable {
+        id: irisLayoutFlickable
+        width: root.stepWidth
+        contentHeight: irisLayoutGrid.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        interactive: contentHeight > height
+        bottomMargin: 24
+        topMargin: Math.max(root.compact ? 8 : 12,
+            Math.min(root.compact ? 20 : 28,
+                Math.round((height - irisLayoutGrid.implicitHeight - bottomMargin) / 2)))
+
+        GridLayout {
+            id: irisLayoutGrid
+            width: parent.width
+            columns: irisLayoutFlickable.width < 760 ? 1 : 2
+            columnSpacing: root.compact ? 22 : 30
+            rowSpacing: 16
+
+            ColumnLayout {
                 Layout.fillWidth: true
-                Layout.maximumWidth: 600
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 20
+                Layout.preferredWidth: irisLayoutFlickable.width < 760
+                    ? irisLayoutFlickable.width : (irisLayoutFlickable.width - (root.compact ? 22 : 30)) * 0.48
+                Layout.alignment: Qt.AlignTop
+                spacing: 9
 
-                SettingsGroup {
-                    Layout.fillWidth: true
-
-                    ConfigSwitch {
-                        buttonIcon: "notifications_active"
-                        text: Translation.tr("Notification sounds")
-                        description: Translation.tr("Keep the desktop silent, or add subtle feedback for notifications.")
-                        checked: Config.options?.sounds?.notifications ?? false
-                        onToggledByUser: checked => root.setProfileFeature("sounds.notifications", checked)
-                    }
-                    ConfigSwitch {
-                        buttonIcon: "sports_esports"
-                        text: Translation.tr("Automatic game mode")
-                        description: Translation.tr("Pauses expensive effects while a fullscreen game is active.")
-                        checked: Config.options?.gameMode?.autoDetect ?? true
-                        onToggledByUser: checked => root.setProfileFeature("gameMode.autoDetect", checked)
-                    }
-                    ConfigSwitch {
-                        buttonIcon: "schedule"
-                        text: Translation.tr("Desktop clock")
-                        description: Translation.tr("Adds a quiet clock to the wallpaper. The bar clock remains available either way.")
-                        checked: Config.getNestedValue("background.widgets.clock.enable", false)
-                        onToggledByUser: checked => root.setProfileFeature("background.widgets.clock.enable", checked)
+                RowLayout {
+                    spacing: 8
+                    MaterialSymbol { text: "open_in_full"; iconSize: 18; color: root.welcomeAccent }
+                    WelcomeText {
+                        text: Translation.tr("Placement")
+                        font.family: root.welcomeFontTitle
+                        font.pixelSize: root.welcomeFontSection
+                        font.weight: Font.Bold
+                        color: root.welcomeOnSurface
                     }
                 }
 
-                SettingsGroup {
+                WelcomeText {
+                    text: Translation.tr("Island edge")
+                    font.pixelSize: root.welcomeFontBody
+                    font.weight: Font.Medium
+                    color: root.welcomeOnSurface
+                }
+                WelcomeSegmentedControl {
                     Layout.fillWidth: true
+                    currentValue: Config.options?.iris?.bar?.position ?? "top"
+                    options: [
+                        { displayName: Translation.tr("Top"), icon: "vertical_align_top", value: "top" },
+                        { displayName: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: "bottom" },
+                        { displayName: Translation.tr("Left"), icon: "align_horizontal_left", value: "left" },
+                        { displayName: Translation.tr("Right"), icon: "align_horizontal_right", value: "right" }
+                    ]
+                    onSelected: value => Config.setNestedValue("iris.bar.position", value)
+                }
 
-                    ConfigSwitch {
-                        buttonIcon: "cloud"
-                        text: Translation.tr("Weather")
-                        description: Translation.tr("Shows weather in the bar and glance cards after location resolves.")
-                        checked: (Config.options?.bar?.weather?.enable ?? false)
-                            && (Config.options?.bar?.modules?.weather ?? false)
-                        onToggledByUser: checked => {
-                            root.profileCustomized = true
-                            Config.setNestedValues({
-                                "bar.weather.enable": checked,
-                                "bar.modules.weather": checked
-                            })
+                WelcomeText {
+                    text: Translation.tr("Island layout")
+                    font.pixelSize: root.welcomeFontBody
+                    font.weight: Font.Medium
+                    color: root.welcomeOnSurface
+                }
+                WelcomeSegmentedControl {
+                    Layout.fillWidth: true
+                    currentValue: Config.options?.iris?.bar?.layout ?? "island"
+                    options: [
+                        { displayName: Translation.tr("Island"), icon: "pill", value: "island" },
+                        { displayName: Translation.tr("Full bar"), icon: "width_full", value: "full" }
+                    ]
+                    onSelected: value => Config.setNestedValue("iris.bar.layout", value)
+                }
+
+                WelcomeText {
+                    text: Translation.tr("Dock edge")
+                    font.pixelSize: root.welcomeFontBody
+                    font.weight: Font.Medium
+                    color: root.welcomeOnSurface
+                }
+                WelcomeSegmentedControl {
+                    Layout.fillWidth: true
+                    currentValue: Config.options?.iris?.dock?.position ?? "auto"
+                    options: [
+                        { displayName: Translation.tr("Auto"), icon: "swap_calls", value: "auto" },
+                        { displayName: Translation.tr("Top"), icon: "north", value: "top" },
+                        { displayName: Translation.tr("Bottom"), icon: "south", value: "bottom" },
+                        { displayName: Translation.tr("Left"), icon: "west", value: "left" },
+                        { displayName: Translation.tr("Right"), icon: "east", value: "right" }
+                    ]
+                    onSelected: value => Config.setNestedValue("iris.dock.position", value)
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+                    WelcomeText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Attach Island to edge")
+                        font.pixelSize: root.welcomeFontCaption
+                        color: root.welcomeOnSurface
+                    }
+                    WelcomeSegmentedControl {
+                        Layout.preferredWidth: 170
+                        currentValue: (Config.options?.iris?.bar?.notch ?? true) ? "on" : "off"
+                        options: [
+                            { displayName: Translation.tr("Off"), icon: "", value: "off" },
+                            { displayName: Translation.tr("On"), icon: "", value: "on" }
+                        ]
+                        onSelected: value => Config.setNestedValue("iris.bar.notch", value === "on")
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+                    WelcomeText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Desktop widgets")
+                        font.pixelSize: root.welcomeFontCaption
+                        color: root.welcomeOnSurface
+                    }
+                    WelcomeSegmentedControl {
+                        Layout.preferredWidth: 170
+                        currentValue: (Config.options?.iris?.modules?.desktopWidgets ?? true) ? "on" : "off"
+                        options: [
+                            { displayName: Translation.tr("Off"), icon: "", value: "off" },
+                            { displayName: Translation.tr("On"), icon: "", value: "on" }
+                        ]
+                        onSelected: value => Config.setNestedValue("iris.modules.desktopWidgets", value === "on")
+                    }
+                }
+            }
+
+            PanelSurface {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.preferredWidth: irisLayoutFlickable.width < 760
+                    ? irisLayoutFlickable.width : (irisLayoutFlickable.width - (root.compact ? 22 : 30)) * 0.52
+                Layout.alignment: Qt.AlignTop
+                implicitHeight: Math.max(irisLayoutPreviewColumn.implicitHeight + 28, root.compact ? 310 : 350)
+                surfaceDialect: "material"
+                elevation: 2
+                borderless: root.irisFamily
+                outlined: false
+                radiusOverride: IrisStyle.radiusPlate
+
+                WelcomeIrisFill {}
+
+                ColumnLayout {
+                    id: irisLayoutPreviewColumn
+                    anchors.fill: parent
+                    anchors.margins: IrisStyle.concentricPad(IrisStyle.radiusPlate, 14)
+                    spacing: 12
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        MaterialSymbol { text: "desktop_windows"; iconSize: 18; color: root.welcomeAccent }
+                        WelcomeText {
+                            text: Translation.tr("Live layout")
+                            font.family: root.welcomeFontTitle
+                            font.pixelSize: root.welcomeFontSection
+                            font.weight: Font.Bold
+                            color: root.welcomeOnSurface
                         }
                     }
-                    ConfigSwitch {
-                        buttonIcon: "bolt"
-                        text: Translation.tr("Reduce animations")
-                        description: Translation.tr("Calmer motion and less graphics work on slower hardware.")
-                        checked: Config.options?.performance?.reduceAnimations ?? false
-                        onToggledByUser: checked => root.setProfileFeature("performance.reduceAnimations", checked)
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: width / root.screenAspect
+                        IrisScreenPreview {
+                            anchors.fill: parent
+                            screen: root.focusedScreen
+                            maxScale: 1
+                        }
                     }
-                    ConfigSwitch {
-                        buttonIcon: "hearing"
-                        text: Translation.tr("Volume protection")
-                        description: Translation.tr("Prevents sudden output jumps without changing normal volume control.")
-                        checked: Config.options?.audio?.protection?.enable ?? true
-                        onToggledByUser: checked => root.setProfileFeature("audio.protection.enable", checked)
+
+                    WelcomeText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Auto keeps the Dock opposite the Island. Choosing the same edge swaps them.")
+                        font.pixelSize: root.welcomeFontCaption
+                        color: root.welcomeSecondaryText
+                        wrapMode: Text.WordWrap
                     }
                 }
             }
-
-            SettingsGroup {
-                Layout.fillWidth: true
-                Layout.maximumWidth: 600
-                Layout.alignment: Qt.AlignHCenter
-
-                ConfigSwitch {
-                    buttonIcon: "pets"
-                    text: Translation.tr("Kira, the desktop companion")
-                    description: Translation.tr("iNiR's mascot peeks in from the screen edges and reacts to what you do. Purely decorative, and she never takes focus.")
-                    checked: Config.options?.mascot?.enable ?? false
-                    onToggledByUser: checked => root.setProfileFeature("mascot.enable", checked)
-                }
-            }
-
         }
     }
 
@@ -1856,75 +3375,184 @@ Scope {
         contentHeight: readyColumn.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        bottomMargin: 16
-        topMargin: Math.max(0, (height - contentHeight - 16) / 2)
+        interactive: contentHeight > height
+        bottomMargin: 12
+        topMargin: Math.max(root.compact ? 8 : 12,
+            Math.min(root.compact ? 12 : 16,
+                Math.round((height - readyColumn.implicitHeight - bottomMargin) / 2)))
 
         ColumnLayout {
             id: readyColumn
             width: parent.width
-            spacing: 18
+            spacing: root.compact ? 10 : 14
 
-            Item { Layout.preferredHeight: 4 }
+            PanelSurface {
+                Layout.fillWidth: true
+                implicitHeight: readySummaryColumn.implicitHeight + 24
+                surfaceDialect: "material"
+                elevation: 2
+                borderless: root.irisFamily
+                outlined: false
+                radiusOverride: root.irisFamily ? IrisStyle.radiusPlate : 16
 
-            MaterialShapeWrappedMaterialSymbol {
-                Layout.alignment: Qt.AlignHCenter
-                text: "check_circle"
-                iconSize: 50
-                padding: 16
-                shape: MaterialShape.Shape.Circle
-                color: Appearance.colors.colPrimaryContainer
-                colSymbol: Appearance.colors.colOnPrimaryContainer
+                WelcomeIrisFill {}
+
+                ColumnLayout {
+                    id: readySummaryColumn
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 10
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        Iris.IrisMark {
+                            visible: root.irisFamily
+                            implicitSize: 36
+                        }
+                        MaterialCookie {
+                            visible: !root.irisFamily
+                            implicitSize: 46
+                            sides: 8
+                            color: root.welcomeAccentContainer
+
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "check"
+                                iconSize: 24
+                                color: root.welcomeAccent
+                            }
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 1
+                            WelcomeText {
+                                text: Translation.tr("Setup ready")
+                                font.family: root.welcomeFontTitle
+                                font.pixelSize: Appearance.font.pixelSize.large * 1.08
+                                font.weight: Font.DemiBold
+                                color: root.welcomeOnSurface
+                            }
+                            WelcomeText {
+                                Layout.fillWidth: true
+                                text: Translation.tr("You can change any of this later in Settings.")
+                                font.pixelSize: root.welcomeFontCaption
+                                color: root.welcomeSecondaryText
+                                wrapMode: Text.WordWrap
+                            }
+                        }
+
+                        MascotImage {
+                            previewMode: true
+                            pose: "about-confident"
+                            visible: status === Image.Ready && readyFlickable.width >= 720
+                            Layout.preferredWidth: visible ? 80 : 0
+                            Layout.preferredHeight: visible ? 90 : 0
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        color: ColorUtils.applyAlpha(root.welcomeOutline, 0.32)
+                    }
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: readyFlickable.width < 720 ? 2 : 4
+                        columnSpacing: 18
+                        rowSpacing: 8
+
+                        Repeater {
+                            model: [
+                                { icon: "tune", label: Translation.tr("Starting point"), value: root.irisFamily
+                                    ? (root.effectiveIrisArrangement === "custom" ? Translation.tr("Custom") : root.currentIrisArrangement.name)
+                                    : root.selectedProfileTitle },
+                                { icon: "palette", label: Translation.tr("Style"), value: root.irisFamily
+                                    ? (IrisThemes.active?.name ?? Translation.tr("Custom"))
+                                    : (root.effectiveStylePreset === "custom" ? Translation.tr("Custom") : root.currentStylePreset.name) },
+                                { icon: "dashboard", label: Translation.tr("Family"), value: root.familyTitle },
+                                { icon: "speed", label: Translation.tr("Effects"), value: root.effectivePerformancePreset === "custom" ? Translation.tr("Custom") : root.currentPerformancePreset.name }
+                            ]
+
+                            RowLayout {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                spacing: 8
+                                MaterialSymbol {
+                                    text: modelData.icon
+                                    iconSize: 17
+                                    color: root.welcomeAccent
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 0
+                                    WelcomeText {
+                                        text: modelData.label
+                                        font.pixelSize: root.welcomeFontMeta
+                                        color: root.welcomeSecondaryText
+                                    }
+                                    WelcomeText {
+                                        Layout.fillWidth: true
+                                        text: modelData.value
+                                        font.pixelSize: root.welcomeFontCaption
+                                        font.weight: Font.DemiBold
+                                        color: root.welcomeOnSurface
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
-            StyledText {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.maximumWidth: 540
-                horizontalAlignment: Text.AlignHCenter
-                text: Translation.tr("Four shortcuts cover most daily navigation. The full list is always one key away.")
-                color: Appearance.colors.colSubtext
-                wrapMode: Text.WordWrap
-            }
-
-            // Two cards side by side: shortcuts + first actions
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: 8
-                Layout.maximumWidth: 700
-                spacing: 14
+            // Two task columns use the full content field. Like Dashboard, each
+            // column owns one semantic group instead of stacking decorative cards.
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: 2
+                columns: readyFlickable.width < 760 ? 1 : 2
+                columnSpacing: root.compact ? 10 : 14
+                rowSpacing: root.compact ? 10 : 14
 
                 // Keyboard shortcuts card
-                Rectangle {
-                    Layout.preferredWidth: 340
+                PanelSurface {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: readyFlickable.width < 760 ? readyFlickable.width : 420
                     Layout.alignment: Qt.AlignTop
-                    implicitHeight: shortcutsCardCol.implicitHeight + 24
-                    radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                    color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                         : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer2, 0.5)
-                         : Appearance.colors.colLayer2
-                    border.width: Appearance.inirEverywhere ? 1 : 0
-                    border.color: Appearance.inir.colBorderSubtle
+                    implicitHeight: shortcutsCardCol.implicitHeight + 20
+                    surfaceDialect: "material"
+                    elevation: 1
+                    borderless: root.irisFamily
+                    outlined: false
+                    radiusOverride: root.irisFamily ? IrisStyle.radiusPlate : 16
+
+                    WelcomeIrisFill {}
 
                     ColumnLayout {
                         id: shortcutsCardCol
                         anchors {
                             fill: parent
-                            margins: 12
+                            margins: 10
                         }
-                        spacing: 10
+                        spacing: 8
 
                         RowLayout {
                             spacing: 8
-                            MaterialSymbol { text: "keyboard"; iconSize: 18; color: Appearance.colors.colPrimary }
-                            StyledText {
+                            MaterialSymbol { text: "keyboard"; iconSize: 18; color: root.welcomeAccent }
+                            WelcomeText {
                                 text: Translation.tr("Keyboard")
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                font.weight: Font.Medium
+                                font.family: root.welcomeFontTitle
+                                font.pixelSize: Appearance.font.pixelSize.normal
+                                font.weight: Font.Bold
                             }
                             Item { Layout.fillWidth: true }
-                            StyledText {
-                                text: Translation.tr("Press Super+/ for full list")
-                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                color: Appearance.colors.colSubtext
+                            WelcomeText {
+                                text: Translation.tr("Full list: Super+/")
+                                font.pixelSize: root.welcomeFontMeta
+                                color: root.welcomeSecondaryText
                             }
                         }
 
@@ -1941,20 +3569,22 @@ Scope {
                                 spacing: 10
 
                                 Row {
+                                    Layout.preferredWidth: root.compact ? 138 : 154
                                     spacing: 2
                                     Repeater {
                                         model: modelData.keys.split("+")
-                                        KeyboardKey {
+                                        WelcomeKey {
                                             required property string modelData
                                             key: modelData
                                         }
                                     }
                                 }
-                                Item { Layout.fillWidth: true }
-                                StyledText {
+                                WelcomeText {
+                                    Layout.fillWidth: true
                                     text: modelData.desc
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    color: Appearance.colors.colSubtext
+                                    font.pixelSize: root.welcomeFontCaption
+                                    color: root.welcomeSecondaryText
+                                    horizontalAlignment: Text.AlignLeft
                                 }
                             }
                         }
@@ -1962,40 +3592,38 @@ Scope {
                 }
 
                 // Try it now — interactive action card
-                Rectangle {
-                    Layout.preferredWidth: 340
+                PanelSurface {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: readyFlickable.width < 760 ? readyFlickable.width : 580
                     Layout.alignment: Qt.AlignTop
-                    implicitHeight: tryItCardCol.implicitHeight + 24
-                    radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                    color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                         : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer2, 0.5)
-                         : Appearance.colors.colLayer2
-                    border.width: Appearance.inirEverywhere ? 1 : 0
-                    border.color: Appearance.inir.colBorderSubtle
+                    implicitHeight: tryItCardCol.implicitHeight + 20
+                    surfaceDialect: "material"
+                    elevation: 2
+                    borderless: root.irisFamily
+                    outlined: false
+                    radiusOverride: root.irisFamily ? IrisStyle.radiusPlate : 16
+
+                    WelcomeIrisFill {}
 
                     ColumnLayout {
                         id: tryItCardCol
                         anchors {
                             fill: parent
-                            margins: 12
+                            margins: 10
                         }
-                        spacing: 8
+                        spacing: 6
 
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 8
-                            MaterialSymbol { text: "rocket_launch"; iconSize: 18; color: Appearance.colors.colPrimary }
-                            StyledText {
-                                text: Translation.tr("Try it now")
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                font.weight: Font.Medium
+                            MaterialSymbol { text: "rocket_launch"; iconSize: 18; color: root.welcomeAccent }
+                            WelcomeText {
+                                text: Translation.tr("Quick actions")
+                                font.family: root.welcomeFontTitle
+                                font.pixelSize: Appearance.font.pixelSize.normal
+                                font.weight: Font.Bold
                             }
                             Item { Layout.fillWidth: true }
-                            StyledText {
-                                text: Translation.tr("one click, no typing")
-                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                color: Appearance.colors.colSubtext
-                            }
                         }
 
                         Repeater {
@@ -2003,202 +3631,76 @@ Scope {
                                 {
                                     icon: "tune",
                                     label: Translation.tr("Open quick settings"),
-                                    sub: Translation.tr("Wi-Fi, audio, brightness"),
+                                    sub: Translation.tr("Network, audio and brightness"),
                                     target: "controlPanel",
                                     fn: "toggle"
                                 },
                                 {
                                     icon: "wallpaper",
                                     label: Translation.tr("Pick a wallpaper"),
-                                    sub: Translation.tr("Browse and apply"),
+                                    sub: Translation.tr("Choose a background"),
                                     target: "wallpaperSelector",
                                     fn: "toggle"
                                 },
                                 {
                                     icon: "keyboard",
                                     label: Translation.tr("Show all shortcuts"),
-                                    sub: Translation.tr("Cheatsheet overlay"),
+                                    sub: Translation.tr("Open the full shortcut list"),
                                     target: "cheatsheet",
                                     fn: "toggle"
                                 }
                             ]
-                            RippleButton {
+                            WelcomeListAction {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 46
                                 required property var modelData
-                                buttonRadius: Appearance.rounding.small
-                                colBackground: Appearance.colors.colLayer1
-                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                materialIcon: modelData.icon
+                                title: modelData.label
+                                subtitle: modelData.sub
 
                                 onClicked: Quickshell.execDetached([
                                     Quickshell.shellPath("scripts/inir"),
                                     modelData.target,
                                     modelData.fn
                                 ])
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 10
-                                    anchors.rightMargin: 10
-                                    spacing: 10
-
-                                    MaterialSymbol {
-                                        text: modelData.icon
-                                        iconSize: 22
-                                        color: Appearance.colors.colPrimary
-                                        Layout.preferredWidth: 26
-                                    }
-                                    ColumnLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 0
-                                        StyledText {
-                                            Layout.fillWidth: true
-                                            text: modelData.label
-                                            font.pixelSize: Appearance.font.pixelSize.small
-                                            font.weight: Font.Medium
-                                            color: Appearance.colors.colOnLayer1
-                                            elide: Text.ElideRight
-                                        }
-                                        StyledText {
-                                            Layout.fillWidth: true
-                                            text: modelData.sub
-                                            font.pixelSize: Appearance.font.pixelSize.smallest
-                                            color: Appearance.colors.colSubtext
-                                            elide: Text.ElideRight
-                                        }
-                                    }
-                                    MaterialSymbol {
-                                        text: "arrow_forward"
-                                        iconSize: 16
-                                        color: Appearance.colors.colSubtext
-                                        opacity: 0.6
-                                    }
-                                }
                             }
                         }
                     }
                 }
             }
 
-            // Need help? clickable callout — opens troubleshooting wiki
-            RippleButton {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: 4
-                Layout.preferredWidth: 694
-                Layout.maximumWidth: 700
-                Layout.preferredHeight: helpCalloutRow.implicitHeight + 18
-                buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                colBackground: ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.6)
-                colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.4)
-
-                onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/wiki/Troubleshooting")
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: parent.buttonRadius
-                    color: "transparent"
-                    border.width: 1
-                    border.color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.6)
-                }
-
-                RowLayout {
-                    id: helpCalloutRow
-                    anchors.fill: parent
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 14
-                    anchors.topMargin: 9
-                    anchors.bottomMargin: 9
-                    spacing: 10
-
-                    MaterialSymbol {
-                        text: "support"
-                        iconSize: 20
-                        color: Appearance.colors.colOnPrimaryContainer
-                    }
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 1
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: Translation.tr("Something not working?")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            font.weight: Font.Medium
-                            color: Appearance.colors.colOnPrimaryContainer
-                            elide: Text.ElideRight
-                        }
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: Translation.tr("Open the troubleshooting guide — common fixes, in plain English.")
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: ColorUtils.transparentize(Appearance.colors.colOnPrimaryContainer, 0.2)
-                            wrapMode: Text.WordWrap
-                        }
-                    }
-                    MaterialSymbol {
-                        text: "open_in_new"
-                        iconSize: 16
-                        color: ColorUtils.transparentize(Appearance.colors.colOnPrimaryContainer, 0.3)
-                    }
-                }
-            }
-
-            // Quick actions
             RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: 8
-                spacing: 10
+                Layout.fillWidth: true
+                Layout.topMargin: 2
+                spacing: 6
 
-                RippleButton {
-                    implicitWidth: settingsChipRow.implicitWidth + 32
-                    implicitHeight: 38
-                    buttonRadius: Appearance.rounding.small
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                Item { Layout.fillWidth: true }
+
+                WelcomeActionButton {
+                    materialIcon: "settings"
+                    label: Translation.tr("Settings")
                     onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
-                    RowLayout {
-                        id: settingsChipRow
-                        anchors.centerIn: parent
-                        spacing: 8
-                        MaterialSymbol { text: "settings"; iconSize: 16 }
-                        StyledText { text: Translation.tr("Settings"); font.pixelSize: Appearance.font.pixelSize.small }
-                    }
                 }
 
-                RippleButton {
-                    implicitWidth: docsChipRow.implicitWidth + 32
-                    implicitHeight: 38
-                    buttonRadius: Appearance.rounding.small
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                WelcomeActionButton {
+                    materialIcon: "open_in_new"
+                    label: Translation.tr("Troubleshoot")
+                    onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/wiki/Troubleshooting")
+                }
+
+                WelcomeActionButton {
+                    materialIcon: "menu_book"
+                    label: Translation.tr("Docs")
                     onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/wiki")
-                    RowLayout {
-                        id: docsChipRow
-                        anchors.centerIn: parent
-                        spacing: 8
-                        MaterialSymbol { text: "menu_book"; iconSize: 16 }
-                        StyledText { text: Translation.tr("Documentation"); font.pixelSize: Appearance.font.pixelSize.small }
-                    }
                 }
 
-                RippleButton {
-                    implicitWidth: issueChipRow.implicitWidth + 32
-                    implicitHeight: 38
-                    buttonRadius: Appearance.rounding.small
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                WelcomeActionButton {
+                    materialIcon: "bug_report"
+                    label: Translation.tr("Report")
                     onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/issues")
-                    RowLayout {
-                        id: issueChipRow
-                        anchors.centerIn: parent
-                        spacing: 8
-                        MaterialSymbol { text: "bug_report"; iconSize: 16 }
-                        StyledText { text: Translation.tr("Report issue"); font.pixelSize: Appearance.font.pixelSize.small }
-                    }
                 }
-
             }
 
-            Item { Layout.preferredHeight: 8 }
+            Item { Layout.preferredHeight: 2 }
         }
     }
 }

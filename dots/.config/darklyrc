@@ -1,2 +1,3 @@
 [Style]
 WidgetDrawShadow=false
+ViewDrawFocusIndicator=false

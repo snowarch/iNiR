@@ -26,7 +26,9 @@ Item {
     readonly property string instanceKey: root.outputName + "::desktopItem." + root.itemId
     readonly property bool selected: GlobalStates.selectedDesktopItem === root.instanceKey
     readonly property bool locked: root.itemData?.locked === true
-    readonly property bool isApplication: String(root.itemData?.kind ?? "") === "application"
+    readonly property string kind: String(root.itemData?.kind ?? "")
+    readonly property bool isApplication: root.kind === "application"
+    readonly property bool isFolder: root.kind === "folder"
     readonly property string target: String(root.itemData?.target ?? "")
     readonly property string label: String(root.itemData?.label ?? root.target)
     readonly property bool targetAvailable: {
@@ -168,6 +170,8 @@ Item {
             const entry = AppSearch.lookupDesktopEntry(root.target)
             if (entry)
                 AppSearch.launchEntry(entry)
+        } else if (root.isFolder) {
+            ShellExec.openDirectory(root._pathForProbe(), "Open desktop folder")
         } else {
             ShellExec.execDetachedArgs(["xdg-open", root.target], "Open desktop item")
         }

@@ -44,11 +44,21 @@ Item {
 
     function incrementCurrentIndex() {
         tabBar.incrementCurrentIndex()
+        root._requestedIndex = tabBar.currentIndex
     }
     function decrementCurrentIndex() {
         tabBar.decrementCurrentIndex()
+        root._requestedIndex = tabBar.currentIndex
+    }
+    // Last index requested programmatically or by a click. TabBar shifts its
+    // currentIndex as the Repeater inserts tabs, so population re-applies it.
+    property int _requestedIndex: -1
+    function _restoreRequestedIndex(): void {
+        if (root._requestedIndex >= 0 && root._requestedIndex < tabBar.count && tabBar.currentIndex !== root._requestedIndex)
+            tabBar.setCurrentIndex(root._requestedIndex)
     }
     function setCurrentIndex(index) {
+        root._requestedIndex = index
         tabBar.setCurrentIndex(index)
     }
 
@@ -150,11 +160,13 @@ Item {
                     anchors.fill: parent
                     radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
                         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : height / 2
+                        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
+                        : Appearance.editorialEverywhere ? Appearance.rounding.small : height / 2
                     color: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt
                         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                         : Appearance.inirEverywhere ? "transparent" 
                          : Appearance.auroraEverywhere ? "transparent"
+                         : Appearance.editorialEverywhere ? Appearance.editorial.layer(1)
                          : Appearance.colors.colSurfaceContainer
                     border.width: Appearance.zzzEverywhere ? 1 : (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
                     border.color: Appearance.zzzEverywhere ? Appearance.zzz.quietStroke
@@ -176,6 +188,7 @@ Item {
                         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                         : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colPrimary, 0.85)
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                        : Appearance.editorialEverywhere ? Appearance.editorial.field
                         : Appearance.cookieEverywhere ? Appearance.colors.colLayer2
                         : Appearance.colors.colSecondaryContainer
                     border.width: Appearance.zzzEverywhere ? 1 : (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
@@ -183,13 +196,14 @@ Item {
                         : Appearance.angelEverywhere ? Appearance.angel.colBorderHover
                         : Appearance.inirEverywhere ? Appearance.inir.colBorderAccent : "transparent"
                     implicitWidth: targetItem ? targetItem.implicitWidth : 0
-                    implicitHeight: targetItem ? (Appearance.zzzEverywhere ? 30 : Appearance.angelEverywhere ? 28 : Appearance.inirEverywhere ? 28 : (Appearance.auroraEverywhere ? 32 : targetItem.implicitHeight)) : 0
+                    implicitHeight: targetItem ? (Appearance.zzzEverywhere ? 30 : Appearance.angelEverywhere ? 28 : Appearance.inirEverywhere ? 28 : ((Appearance.auroraEverywhere || Appearance.editorialEverywhere) ? 32 : targetItem.implicitHeight)) : 0
                     // Concentric with groupBackground (same controlRadius, but
                     // inset ~4px): echo the track's silhouette instead of looking
                     // more-rounded-than-parent. Other styles keep their own read.
                     radius: Appearance.zzzEverywhere ? Appearance.concentricRadius(Appearance.zzz.controlRadius, 4)
                         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : height / 2
+                        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
+                        : Appearance.editorialEverywhere ? Appearance.concentricRadius(Appearance.rounding.small, 4) : height / 2
                     anchors.verticalCenter: parent.verticalCenter
 
                     // Organic morph on style/shape switch (organic-transitions)
@@ -350,6 +364,9 @@ Item {
         id: tabBar
         z: -1
         background: null
+        // TabBar adjusts currentIndex after count changes; restore on the next tick.
+        onCountChanged: Qt.callLater(root._restoreRequestedIndex)
+        onCurrentIndexChanged: if (count < root.tabButtonList.length) Qt.callLater(root._restoreRequestedIndex)
         Repeater { // This is to fool the TabBar that it has tabs so it does the indices properly
             model: root.tabButtonList.length
             delegate: TabButton {

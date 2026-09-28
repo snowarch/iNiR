@@ -10,6 +10,7 @@ import Quickshell.Services.Pipewire
 import qs
 import qs.modules.common
 import qs.modules.common.functions
+import qs.services.deferred
 
 Singleton {
 	id: root;
@@ -22,6 +23,92 @@ Singleton {
 	// Repeater-based popups destroy/recreate delegates mid-track transition.
 	property list<MprisPlayer> displayPlayers: []
 	
+	// Quickshell reads Position from D-Bus only on a track or playback change or a Seeked signal and
+	// extrapolates in between. Browsers skip Seeked for some in-page seeks, so the shown time drifts
+	// until the next track. While a player plays, its real Position is read every few seconds and a
+	// drift past 1.5 s becomes an offset that positionOf() applies; nothing is ever seeked.
+	property var positionOffsets: ({})
+	function positionOf(player): real {
+		if (!player) return 0
+		const offset = Number(root.positionOffsets[player.dbusName ?? ""] ?? 0)
+		const length = root.lengthOf(player)
+		const at = Number(player.position ?? 0) + offset
+		return Math.max(0, length > 0 ? Math.min(length, at) : at)
+	}
+	// Without mpris:length Quickshell's length() returns the position (lengthSupported false). After a
+	// seek Firefox republishes Metadata without it until the page sends it again, so a 25 minute video
+	// "lasted" as long as the point you jumped to. The last real length of the same track stands in;
+	// with none, the length is unknown (0), never the position.
+	property var knownLengths: ({})
+	function _rememberLength(player): void {
+		if (!player || !player.lengthSupported || Number(player.length ?? 0) <= 0) return
+		const name = player.dbusName ?? ""
+		const entry = { title: player.trackTitle ?? "", length: Number(player.length) }
+		const known = root.knownLengths[name]
+		if (known && known.title === entry.title && known.length === entry.length) return
+		const next = Object.assign({}, root.knownLengths)
+		next[name] = entry
+		root.knownLengths = next
+	}
+	function lengthOf(player): real {
+		if (!player) return 0
+		if (player.lengthSupported) return Number(player.length ?? 0)
+		const known = root.knownLengths[player.dbusName ?? ""]
+		return known && known.title === (player.trackTitle ?? "") ? known.length : 0
+	}
+	// A seek sets Quickshell's position itself; an offset measured before it would be added on top.
+	function clearPositionOffset(player): void { root._setPositionOffset(player?.dbusName ?? "", 0) }
+	function seek(player, seconds: real): void {
+		if (!player) return
+		root.clearPositionOffset(player)
+		player.position = Math.max(0, seconds)
+	}
+	function _setPositionOffset(name: string, offset: real): void {
+		if (Number(root.positionOffsets[name] ?? 0) === offset) return
+		const next = Object.assign({}, root.positionOffsets)
+		if (offset === 0) delete next[name]
+		else next[name] = offset
+		root.positionOffsets = next
+	}
+	Timer {
+		interval: 3000
+		repeat: true
+		running: (root.activePlayer?.isPlaying ?? false) && !(root.activePlayer?.dbusName ?? "").includes("inir")
+		onTriggered: {
+			if (positionProbe.running || !root.activePlayer) return
+			positionProbe.player = root.activePlayer
+			positionProbe.running = true
+		}
+	}
+	// Quickshell re-reads Position itself on these, so an offset from before would now be wrong.
+	Connections {
+		target: root.activePlayer
+		function onPlaybackStateChanged(): void { root._setPositionOffset(root.activePlayer?.dbusName ?? "", 0) }
+		function onPostTrackChanged(): void { root._setPositionOffset(root.activePlayer?.dbusName ?? "", 0) }
+		function onLengthChanged(): void { root._rememberLength(root.activePlayer) }
+		function onLengthSupportedChanged(): void { root._rememberLength(root.activePlayer) }
+	}
+	Process {
+		id: positionProbe
+		property var player: null
+		command: ["busctl", "--user", "get-property", positionProbe.player?.dbusName ?? "",
+			"/org/mpris/MediaPlayer2", "org.mpris.MediaPlayer2.Player", "Position"]
+		stdout: StdioCollector {
+			onStreamFinished: {
+				const player = positionProbe.player
+				const match = /^x\s+(-?\d+)/.exec(text.trim())
+				if (!player || !match) return
+				const real = Number(match[1]) / 1000000
+				const shown = Number(player.position ?? 0)
+				const name = player.dbusName ?? ""
+				// A page that stops publishing (an ad, a lost media session) reports 0 and no length
+				// while it plays: that is not a position to correct toward.
+				if (!player.lengthSupported || (real === 0 && shown > 2)) { root._setPositionOffset(name, 0); return }
+				root._setPositionOffset(name, Math.abs(real - shown) > 1.5 ? real - shown : 0)
+			}
+		}
+	}
+
 	// Debounce timer for _rebuildPlayerList to coalesce rapid signal bursts
 	Timer {
 		id: _rebuildDebounce
@@ -641,7 +728,7 @@ Singleton {
 	}
 
 	function _showUserMediaAction(action: string): void {
-		if (Config.options?.osd?.mediaEnabled ?? true)
+		if (GlobalStates.userMediaFeedback)
 			GlobalStates.showMediaAction(action);
 	}
 
@@ -861,7 +948,7 @@ Singleton {
 		}
 	}
 
-	onActivePlayerChanged: this.updateTrack();
+	onActivePlayerChanged: { this.updateTrack(); root._rememberLength(root.activePlayer) }
 
 	function updateTrack() {
 		this.activeTrack = {
@@ -1312,6 +1399,7 @@ Singleton {
 	function effectiveArtUrl(player): string {
 		const direct = player?.trackArtUrl ?? "";
 		if (direct.length > 0) return direct;
+		if (AnimeWatch.ownsPlayer(player) && AnimeWatch.playingCover.length > 0) return AnimeWatch.playingCover;
 		const videoId = root._extractYoutubeVideoId(
 			player?.metadata?.["xesam:url"] ?? "");
 		if (videoId.length > 0)
@@ -1335,7 +1423,7 @@ Singleton {
 			} else {
 				root.togglePlaying();
 			}
-			if (Config.options?.osd?.mediaEnabled ?? true) {
+			if (GlobalStates.userMediaFeedback) {
 				GlobalStates.showMediaAction(wasPlaying ? "pause" : "play");
 			}
 		}

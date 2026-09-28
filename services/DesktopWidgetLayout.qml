@@ -23,6 +23,15 @@ Singleton {
         return String(value ?? "").trim()
     }
 
+    // The lock screen keeps its own widget layout as a scope in the same store: "lock:<output>".
+    // It inherits every look and option from the desktop widget but not whether it is shown.
+    function isLockScope(value): bool {
+        return root._outputName(value).startsWith("lock:")
+    }
+    function lockScope(outputName): string {
+        return "lock:" + root._outputName(outputName)
+    }
+
     function _widgetKey(value): string {
         return String(value ?? "").trim()
     }
@@ -92,6 +101,8 @@ Singleton {
         const name = root._outputName(outputName)
         if (!name)
             return false
+        if (root.isLockScope(name))
+            return true
         const rawConfigured = Config.options?.background?.widgets?.screenList ?? []
         const configured = []
         for (let i = 0; i < (rawConfigured?.length ?? 0); ++i) {
@@ -115,6 +126,8 @@ Singleton {
     }
 
     function enabled(outputName, widgetKey, fallback = false): bool {
+        if (root.isLockScope(outputName))
+            return Boolean(root.widgetOverride(outputName, widgetKey)?.enable ?? false)
         if (!root.outputAllowed(outputName))
             return false
         return Boolean(root.value(outputName, widgetKey, "enable", fallback))
@@ -281,6 +294,8 @@ Singleton {
         const list = root._normalizedRecords()
         let changed = false
         for (let i = 0; i < list.length; ++i) {
+            if (root.isLockScope(list[i].output))
+                continue
             const widgets = list[i].widgets
             for (const widgetKey of Object.keys(widgets)) {
                 const override = widgets[widgetKey]
@@ -328,7 +343,7 @@ Singleton {
     }
 
     function savedOutputNames(): list<string> {
-        return root._normalizedRecords().map(record => record.output)
+        return root._normalizedRecords().map(record => record.output).filter(name => !root.isLockScope(name))
     }
 
     function diagnostics(): string {

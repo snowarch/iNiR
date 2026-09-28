@@ -28,6 +28,7 @@ Singleton {
     // Global summary for settings and callers without an output context.
     readonly property bool widgetsActive: !root.shouldPauseForOutput("")
     readonly property bool reducedMode: root.shouldPauseForOutput("")
+    readonly property string pauseReason: root.pauseReasonForOutput("")
 
     // ══════════════════════════════════════════════════════════════════════
     // CONFIGURATION
@@ -47,21 +48,7 @@ Singleton {
     readonly property bool pauseWhenWindowsPresent: Config.options?.background?.widgets?.powerSaving?.pauseWhenWindowsPresent ?? false
 
     function _hasWindowsOnActiveWorkspace(outputName: string): bool {
-        try {
-            if (!CompositorService.isNiri || !Array.isArray(NiriService.windows))
-                return false;
-            const allWorkspaces = Object.values(NiriService.workspaces ?? {});
-            const activeWorkspaces = allWorkspaces.filter(workspace =>
-                workspace?.is_active
-                    && (outputName.length === 0 || workspace.output === outputName));
-            if (activeWorkspaces.length === 0)
-                return false;
-            return NiriService.windows.some(window =>
-                !window?.is_minimized
-                    && activeWorkspaces.some(workspace => workspace.id === window.workspace_id));
-        } catch (e) {
-            return false;
-        }
+        return CompositorService.isNiri && NiriService.hasWindowsOnActiveWorkspace(outputName);
     }
 
     function _fullscreenForOutput(outputName: string): bool {
@@ -104,6 +91,20 @@ Singleton {
         return root.shouldPauseForOutput(outputName);
     }
 
+    function pauseReasonForOutput(outputName: string): string {
+        const scopedOutput = String(outputName ?? "");
+        if (scopedOutput.length > 0
+                && !DesktopWidgetLayout.outputAllowed(scopedOutput))
+            return "outputDisabled";
+        if (!root.enabled || GlobalStates.widgetEditMode)
+            return "";
+        const triggers = root._triggersForOutput(scopedOutput);
+        if (triggers.gameMode) return "gameMode";
+        if (triggers.fullscreen) return "fullscreen";
+        if (triggers.windowsPresent) return "windowsPresent";
+        return "";
+    }
+
     // ══════════════════════════════════════════════════════════════════════
     // IPC HANDLER
     // ══════════════════════════════════════════════════════════════════════
@@ -126,6 +127,7 @@ Singleton {
             return JSON.stringify({
                 enabled: root.enabled,
                 widgetsActive: root.widgetsActive,
+                pauseReason: root.pauseReason,
                 triggers: root._triggersForOutput(""),
                 outputs: outputs
             }, null, 2)

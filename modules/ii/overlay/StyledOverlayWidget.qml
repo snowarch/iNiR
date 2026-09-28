@@ -7,6 +7,7 @@ import Qt5Compat.GraphicalEffects as GE
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.iris.style
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
@@ -34,8 +35,8 @@ AbstractOverlayWidget {
     readonly property string materialSymbol: modelData.materialSymbol ?? "widgets"
     property string title: identifier.replace(/([A-Z])/g, " $1").replace(/^./, function(str){ return str.toUpperCase(); })
     property var persistentStateEntry: Persistent.states.overlay[identifier]
-    property real radius: Appearance.regaliaEverywhere
-        ? Appearance.regalia.roundLarge : Appearance.rounding.windowRounding
+    property real radius: OverlayLook.iris ? IrisStyle.radiusSheet
+        : Appearance.regaliaEverywhere ? Appearance.regalia.roundLarge : Appearance.rounding.windowRounding
     property real minimumWidth: contentItem.implicitWidth
     property real minimumHeight: contentItem.implicitHeight
     property real resizeMargin: 8
@@ -196,6 +197,15 @@ AbstractOverlayWidget {
     implicitWidth: contentColumn.implicitWidth + resizeMargin * 2
     implicitHeight: contentColumn.implicitHeight + resizeMargin * 2
 
+    RectangularShadow {
+        visible: OverlayLook.iris && root.fancyBorders && GlobalStates.overlayOpen
+        anchors.fill: border
+        anchors.topMargin: Math.round(4 * IrisStyle.density)
+        radius: border.radius
+        blur: Math.round(24 * IrisStyle.density)
+        spread: -Math.round(4 * IrisStyle.density)
+        color: IrisStyle.shadow
+    }
     Rectangle {
         id: border
         anchors {
@@ -205,7 +215,8 @@ AbstractOverlayWidget {
         color: {
             if (Appearance.angelEverywhere || Appearance.regaliaEverywhere)
                 return "transparent"
-            const baseColor = Appearance.inirEverywhere ? Appearance.inir.colLayer1
+            const baseColor = OverlayLook.iris ? IrisStyle.bodySurface
+                            : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                             : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base
                             : Appearance.colors.colLayer1
             return root.fancyBorders && GlobalStates.overlayOpen
@@ -216,7 +227,7 @@ AbstractOverlayWidget {
             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal : root.radius
         border.color: Appearance.regaliaEverywhere ? "transparent"
             : Appearance.angelEverywhere ? Appearance.angel.colBorder
-            : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, GlobalStates.overlayOpen ? 0 : 1)
+            : ColorUtils.transparentize(OverlayLook.iris ? IrisStyle.border : Appearance.colors.colOutlineVariant, GlobalStates.overlayOpen ? 0 : 1)
         border.width: Appearance.regaliaEverywhere ? 0
             : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
         clip: true
@@ -271,7 +282,7 @@ AbstractOverlayWidget {
             coverage: 0.5
         }
 
-        layer.enabled: GlobalStates.overlayOpen && root.fancyBorders
+        layer.enabled: GlobalStates.overlayOpen
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: border.width
@@ -315,15 +326,20 @@ AbstractOverlayWidget {
                     MaterialSymbol {
                         text: root.materialSymbol
                         Layout.leftMargin: 6
-                        iconSize: 20
+                        iconSize: OverlayLook.iris ? Math.round(18 * IrisStyle.density) : 20
                         Layout.alignment: Qt.AlignVCenter
                         Layout.rightMargin: 4
+                        Binding on color { when: OverlayLook.iris; value: IrisStyle.textSecondary }
                     }
                     
                     StyledText {
                         Layout.fillWidth: true
-                        text: root.title
+                        text: OverlayLook.iris ? Translation.tr(OverlayLook.titles[root.identifier] ?? root.title) : root.title
                         elide: Text.ElideRight
+                        Binding on color { when: OverlayLook.iris; value: IrisStyle.text }
+                        Binding on font.family { when: OverlayLook.iris; value: IrisStyle.fontMain }
+                        Binding on font.pixelSize { when: OverlayLook.iris; value: 13 * IrisStyle.typeScale }
+                        Binding on font.weight { when: OverlayLook.iris; value: Font.DemiBold }
                     }
 
                     TitlebarButton {
@@ -388,26 +404,33 @@ AbstractOverlayWidget {
         implicitWidth: implicitHeight
         padding: 0
 
-        colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        Binding on colBackground { when: OverlayLook.iris; value: ColorUtils.applyAlpha(IrisStyle.fill, 0) }
+        Binding on colBackgroundHover { when: OverlayLook.iris; value: IrisStyle.fillHover }
+        Binding on colRipple { when: OverlayLook.iris; value: IrisStyle.fillActive }
+        colBackgroundToggled: OverlayLook.iris ? IrisStyle.tintFill(IrisStyle.accent)
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
             : Appearance.colors.colSecondaryContainer
-        colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        colBackgroundToggledHover: OverlayLook.iris ? IrisStyle.tintFillHover(IrisStyle.accent)
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.colors.colSecondaryContainerHover
-        colRippleToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        colRippleToggled: OverlayLook.iris ? IrisStyle.tintFillHover(IrisStyle.accent)
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.colors.colSecondaryContainerActive
 
         contentItem: Item {
             anchors.centerIn: parent
-            implicitWidth: 30
-            implicitHeight: 30
+            implicitWidth: OverlayLook.iris ? Math.round(28 * IrisStyle.density) : 30
+            implicitHeight: OverlayLook.iris ? Math.round(28 * IrisStyle.density) : 30
 
             MaterialSymbol {
                 id: iconWidget
                 anchors.centerIn: parent
-                iconSize: 20
+                iconSize: OverlayLook.iris ? Math.round(17 * IrisStyle.density) : 20
                 text: titlebarButton.materialSymbol
                 fill: titlebarButton.toggled
                 animateFill: true
-                color: titlebarButton.toggled
+                color: OverlayLook.iris ? (titlebarButton.toggled ? IrisStyle.accent : titlebarButton.buttonHovered ? IrisStyle.text : IrisStyle.textSecondary)
+                    : titlebarButton.toggled
                     ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colOnSecondaryContainer)
                     : (Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnSurface)
             }

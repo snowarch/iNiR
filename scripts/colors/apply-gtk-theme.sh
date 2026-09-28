@@ -77,6 +77,10 @@ APP_SIDEBAR_BG=$(jq -r '.app_sidebar_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
 APP_CARD_BG=$(jq -r '.app_card_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
 APP_POPOVER_BG=$(jq -r '.app_popover_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
 APP_DIALOG_BG=$(jq -r '.app_dialog_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
+APP_SUBTEXT=$(jq -r '.app_subtext // empty' "$COLOR_SOURCE" 2>/dev/null)
+APP_SURFACE_HOVER=$(jq -r '.app_surface_hover // empty' "$COLOR_SOURCE" 2>/dev/null)
+APP_SURFACE_POPUP_HOVER=$(jq -r '.app_surface_popup_hover // empty' "$COLOR_SOURCE" 2>/dev/null)
+APP_SURFACE_POPUP_ACTIVE=$(jq -r '.app_surface_popup_active // empty' "$COLOR_SOURCE" 2>/dev/null)
 APP_SELECTION=$(jq -r '.app_selection // empty' "$COLOR_SOURCE" 2>/dev/null)
 APP_SELECTION_HOVER=$(jq -r '.app_selection_hover // empty' "$COLOR_SOURCE" 2>/dev/null)
 APP_ON_SELECTION=$(jq -r '.app_on_selection // empty' "$COLOR_SOURCE" 2>/dev/null)
@@ -163,6 +167,10 @@ write_if_changed() {
 [[ -z "$APP_CARD_BG" ]]              && APP_CARD_BG="$SURFACE_CONTAINER_LOW"
 [[ -z "$APP_POPOVER_BG" ]]           && APP_POPOVER_BG="$SURFACE_CONTAINER"
 [[ -z "$APP_DIALOG_BG" ]]            && APP_DIALOG_BG="$SURFACE_CONTAINER_HIGH"
+[[ -z "$APP_SUBTEXT" ]]              && APP_SUBTEXT="$(adjust_color "$FG" -45)"
+[[ -z "$APP_SURFACE_HOVER" ]]        && APP_SURFACE_HOVER="$(adjust_color "$SURFACE_CONTAINER_LOW" 14)"
+[[ -z "$APP_SURFACE_POPUP_HOVER" ]]  && APP_SURFACE_POPUP_HOVER="$(adjust_color "$SURFACE_CONTAINER_HIGH" 18)"
+[[ -z "$APP_SURFACE_POPUP_ACTIVE" ]] && APP_SURFACE_POPUP_ACTIVE="$(adjust_color "$SURFACE_CONTAINER_HIGH" 34)"
 
 # Derive semantic color fallbacks from Material tokens
 [[ -z "$ERROR_COLOR" ]] && ERROR_COLOR="#ff6b6b"
@@ -184,24 +192,18 @@ avg_brightness() {
 }
 
 bg_avg=$(avg_brightness "$BG")
-fg_avg=$(avg_brightness "$FG")
 
 # Use smaller deltas for very dark/light colors to avoid clamping to #000000/#ffffff
 bg_alt_delta=20
 bg_dark_delta=-20
-fg_inactive_delta=-60
 
 if (( bg_avg < 40 )); then
     bg_alt_delta=12
     bg_dark_delta=-10
 fi
-if (( fg_avg < 80 )); then
-    fg_inactive_delta=-35
-fi
-
 BG_ALT=$(adjust_color "$BG" $bg_alt_delta)
 BG_DARK=$(adjust_color "$BG" $bg_dark_delta)
-FG_INACTIVE=$(adjust_color "$FG" $fg_inactive_delta)
+FG_INACTIVE="$APP_SUBTEXT"
 
 generate_pywalfox() {
     # Generate pywalfox-compatible JSON from iNiR palette for Firefox theming
@@ -250,30 +252,30 @@ generate_kdeglobals() {
     cat << EOF
 [ColorEffects:Disabled]
 Color=${BG}
-ColorAmount=0.5
-ColorEffect=3
-ContrastAmount=0
-ContrastEffect=0
-IntensityAmount=0
-IntensityEffect=0
+ColorAmount=0
+ColorEffect=0
+ContrastAmount=0.65
+ContrastEffect=1
+IntensityAmount=0.1
+IntensityEffect=2
 
 [ColorEffects:Inactive]
 ChangeSelectionColor=true
 Color=${BG_DARK}
 ColorAmount=0.025
-ColorEffect=0
+ColorEffect=2
 ContrastAmount=0.1
-ContrastEffect=0
+ContrastEffect=2
 Enable=false
 IntensityAmount=0
 IntensityEffect=0
 
 [Colors:Button]
-BackgroundAlternate=${BG_ALT}
-BackgroundNormal=${SURFACE}
-DecorationFocus=${PRIMARY}
-DecorationHover=${PRIMARY_CONTAINER}
-ForegroundActive=${FG}
+BackgroundAlternate=${KDE_BUTTON_ALT}
+BackgroundNormal=${KDE_BUTTON_BG}
+DecorationFocus=${KDE_DECORATION_FOCUS}
+DecorationHover=${KDE_DECORATION_HOVER}
+ForegroundActive=${KDE_ACTIVE_FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
 ForegroundNegative=${FG_NEGATIVE}
@@ -283,25 +285,25 @@ ForegroundPositive=${FG_POSITIVE}
 ForegroundVisited=${PRIMARY}
 
 [Colors:Selection]
-BackgroundAlternate=${ROW_ACTIVE_BG}
-BackgroundNormal=${ROW_ACTIVE_HOVER_BG}
-DecorationFocus=${PRIMARY}
-DecorationHover=${ROW_ACTIVE_HOVER_BG}
-ForegroundActive=${ROW_SELECTED_FG}
+BackgroundAlternate=${KDE_SELECTION_ALT}
+BackgroundNormal=${KDE_SELECTION_BG}
+DecorationFocus=${KDE_DECORATION_FOCUS}
+DecorationHover=${KDE_DECORATION_HOVER}
+ForegroundActive=${KDE_SELECTION_FG}
 ForegroundInactive=${FG_INACTIVE}
-ForegroundLink=${ROW_SELECTED_FG}
-ForegroundNegative=${ROW_SELECTED_FG}
-ForegroundNeutral=${ROW_SELECTED_FG}
-ForegroundNormal=${ROW_SELECTED_FG}
-ForegroundPositive=${ROW_SELECTED_FG}
-ForegroundVisited=${ROW_SELECTED_FG}
+ForegroundLink=${PRIMARY}
+ForegroundNegative=${FG_NEGATIVE}
+ForegroundNeutral=${FG_NEUTRAL}
+ForegroundNormal=${KDE_SELECTION_FG}
+ForegroundPositive=${FG_POSITIVE}
+ForegroundVisited=${PRIMARY}
 
 [Colors:Tooltip]
-BackgroundAlternate=${BG_ALT}
-BackgroundNormal=${BG}
-DecorationFocus=${PRIMARY}
-DecorationHover=${PRIMARY}
-ForegroundActive=${FG}
+BackgroundAlternate=${KDE_TOOLTIP_ALT}
+BackgroundNormal=${KDE_TOOLTIP_BG}
+DecorationFocus=${KDE_DECORATION_FOCUS}
+DecorationHover=${KDE_DECORATION_HOVER}
+ForegroundActive=${KDE_ACTIVE_FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
 ForegroundNegative=${FG_NEGATIVE}
@@ -311,11 +313,11 @@ ForegroundPositive=${FG_POSITIVE}
 ForegroundVisited=${PRIMARY}
 
 [Colors:View]
-BackgroundAlternate=${BG}
-BackgroundNormal=${BG}
-DecorationFocus=${PRIMARY}
-DecorationHover=${ROW_HOVER_BG}
-ForegroundActive=${FG}
+BackgroundAlternate=${KDE_VIEW_ALT}
+BackgroundNormal=${KDE_VIEW_BG}
+DecorationFocus=${KDE_DECORATION_FOCUS}
+DecorationHover=${KDE_DECORATION_HOVER}
+ForegroundActive=${KDE_ACTIVE_FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
 ForegroundNegative=${FG_NEGATIVE}
@@ -325,11 +327,11 @@ ForegroundPositive=${FG_POSITIVE}
 ForegroundVisited=${PRIMARY}
 
 [Colors:Window]
-BackgroundAlternate=${BG}
-BackgroundNormal=${BG}
-DecorationFocus=${PRIMARY}
-DecorationHover=${ROW_HOVER_BG}
-ForegroundActive=${FG}
+BackgroundAlternate=${KDE_WINDOW_ALT}
+BackgroundNormal=${KDE_WINDOW_BG}
+DecorationFocus=${KDE_DECORATION_FOCUS}
+DecorationHover=${KDE_DECORATION_HOVER}
+ForegroundActive=${KDE_ACTIVE_FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
 ForegroundNegative=${FG_NEGATIVE}
@@ -339,11 +341,11 @@ ForegroundPositive=${FG_POSITIVE}
 ForegroundVisited=${PRIMARY}
 
 [Colors:Complementary]
-BackgroundAlternate=${BG_DARK}
-BackgroundNormal=${BG}
-DecorationFocus=${PRIMARY}
-DecorationHover=${ROW_HOVER_BG}
-ForegroundActive=${FG}
+BackgroundAlternate=${KDE_COMPLEMENTARY_ALT}
+BackgroundNormal=${KDE_COMPLEMENTARY_BG}
+DecorationFocus=${KDE_DECORATION_FOCUS}
+DecorationHover=${KDE_DECORATION_HOVER}
+ForegroundActive=${KDE_ACTIVE_FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
 ForegroundNegative=${FG_NEGATIVE}
@@ -353,11 +355,11 @@ ForegroundPositive=${FG_POSITIVE}
 ForegroundVisited=${PRIMARY}
 
 [Colors:Header]
-BackgroundAlternate=${BG}
-BackgroundNormal=${BG}
-DecorationFocus=${PRIMARY}
-DecorationHover=${ROW_HOVER_BG}
-ForegroundActive=${FG}
+BackgroundAlternate=${KDE_HEADER_ALT}
+BackgroundNormal=${KDE_HEADER_BG}
+DecorationFocus=${KDE_DECORATION_FOCUS}
+DecorationHover=${KDE_DECORATION_HOVER}
+ForegroundActive=${KDE_ACTIVE_FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
 ForegroundNegative=${FG_NEGATIVE}
@@ -367,11 +369,11 @@ ForegroundPositive=${FG_POSITIVE}
 ForegroundVisited=${PRIMARY}
 
 [Colors:Header][Inactive]
-BackgroundAlternate=${BG}
-BackgroundNormal=${BG}
-DecorationFocus=${PRIMARY}
-DecorationHover=${ROW_HOVER_BG}
-ForegroundActive=${FG}
+BackgroundAlternate=${KDE_HEADER_BG}
+BackgroundNormal=${KDE_HEADER_ALT}
+DecorationFocus=${KDE_DECORATION_FOCUS}
+DecorationHover=${KDE_DECORATION_HOVER}
+ForegroundActive=${KDE_ACTIVE_FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
 ForegroundNegative=${FG_NEGATIVE}
@@ -381,11 +383,11 @@ ForegroundPositive=${FG_POSITIVE}
 ForegroundVisited=${PRIMARY}
 
 [Colors:Menu]
-BackgroundAlternate=${BG_ALT}
-BackgroundNormal=${BG}
-DecorationFocus=${PRIMARY}
-DecorationHover=${ROW_HOVER_BG}
-ForegroundActive=${FG}
+BackgroundAlternate=${KDE_MENU_ALT}
+BackgroundNormal=${KDE_MENU_BG}
+DecorationFocus=${KDE_DECORATION_FOCUS}
+DecorationHover=${KDE_DECORATION_HOVER}
+ForegroundActive=${KDE_ACTIVE_FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
 ForegroundNegative=${FG_NEGATIVE}
@@ -405,13 +407,14 @@ ${font_name:+toolBarFont=${font_name},${font_size},-1,5,50,0,0,0,0,0}
 Theme=${icon_theme}
 
 [KDE]
+contrast=0
 widgetStyle=Darkly
 
 [WM]
-activeBackground=${BG}
-activeBlend=${FG}
+activeBackground=${KDE_WINDOW_BG}
+activeBlend=${PRIMARY}
 activeForeground=${FG}
-inactiveBackground=${BG}
+inactiveBackground=${KDE_WINDOW_BG}
 inactiveBlend=${FG_INACTIVE}
 inactiveForeground=${FG_INACTIVE}
 EOF
@@ -465,50 +468,94 @@ ROW_SELECTED_FG="$FG"
 [[ -n "$APP_SELECTION_HOVER" ]] && ROW_ACTIVE_HOVER_BG="$APP_SELECTION_HOVER"
 [[ -n "$APP_ON_SELECTION" ]]    && ROW_SELECTED_FG="$APP_ON_SELECTION"
 
+# KDE color roles are semantic inputs to the widget style, not literal CSS
+# state backgrounds. Keep them sourced from the same app-level palette as GTK.
+KDE_BUTTON_BG="$APP_CARD_BG"
+KDE_BUTTON_ALT="$APP_SURFACE_HOVER"
+# Keep Dolphin visually flat: content, window chrome and headers share the
+# same base surface. Popups/dialogs remain the only elevated layers.
+KDE_WINDOW_BG="$BG"
+KDE_WINDOW_ALT="$SURFACE_CONTAINER_LOW"
+KDE_VIEW_BG="$BG"
+KDE_VIEW_ALT="$SURFACE_CONTAINER_LOW"
+KDE_HEADER_BG="$BG"
+KDE_HEADER_ALT="$SURFACE_CONTAINER_LOW"
+KDE_MENU_BG="$APP_POPOVER_BG"
+KDE_MENU_ALT="$APP_SURFACE_POPUP_HOVER"
+KDE_TOOLTIP_BG="$APP_POPOVER_BG"
+KDE_TOOLTIP_ALT="$APP_SURFACE_POPUP_HOVER"
+KDE_COMPLEMENTARY_BG="$APP_DIALOG_BG"
+KDE_COMPLEMENTARY_ALT="$APP_SURFACE_POPUP_ACTIVE"
+# KCapacityBar is painted by Darkly through the same QPalette::Highlight role
+# used for item selection. Give Highlight a modest visibility lift so disk
+# usage/progress bars remain readable without turning selections into raw
+# accent blocks.
+KDE_SELECTION_BG=$(blend_hex_percent "$ROW_ACTIVE_BG" "$PRIMARY" 15)
+KDE_SELECTION_ALT=$(blend_hex_percent "$ROW_ACTIVE_HOVER_BG" "$PRIMARY" 12)
+KDE_SELECTION_FG="$ROW_SELECTED_FG"
+# Darkly paints DecorationHover/Focus prominently (menu fills and focus
+# indicators). Use subtle state-container tones instead of the raw accent.
+KDE_DECORATION_HOVER="$ROW_ACTIVE_BG"
+KDE_DECORATION_FOCUS="$ROW_ACTIVE_HOVER_BG"
+KDE_ACTIVE_FG="$PRIMARY"
+
 # Generate Darkly.colors for Qt style override
 generate_darkly_colors() {
     local bg_rgb=$(hex_to_rgb "$BG")
-    local bg_alt_rgb=$(hex_to_rgb "$BG_ALT")
     local bg_dark_rgb=$(hex_to_rgb "$BG_DARK")
     local fg_rgb=$(hex_to_rgb "$FG")
     local fg_inactive_rgb=$(hex_to_rgb "$FG_INACTIVE")
     local primary_rgb=$(hex_to_rgb "$PRIMARY")
-    local on_primary_rgb=$(hex_to_rgb "$ON_PRIMARY")
-    local surface_rgb=$(hex_to_rgb "$SURFACE")
     local error_rgb=$(hex_to_rgb "$FG_NEGATIVE")
     local neutral_rgb=$(hex_to_rgb "$FG_NEUTRAL")
     local positive_rgb=$(hex_to_rgb "$FG_POSITIVE")
-    local selection_bg_rgb=$(blend_rgb_percent "$SURFACE_CONTAINER_HIGH" "$PRIMARY" 18)
-    local selection_bg_alt_rgb=$(blend_rgb_percent "$SURFACE_CONTAINER" "$PRIMARY" 14)
-    local selection_hover_rgb=$(blend_rgb_percent "$SURFACE_CONTAINER_HIGH" "$PRIMARY" 28)
+    local button_bg_rgb=$(hex_to_rgb "$KDE_BUTTON_BG")
+    local button_alt_rgb=$(hex_to_rgb "$KDE_BUTTON_ALT")
+    local window_bg_rgb=$(hex_to_rgb "$KDE_WINDOW_BG")
+    local window_alt_rgb=$(hex_to_rgb "$KDE_WINDOW_ALT")
+    local view_bg_rgb=$(hex_to_rgb "$KDE_VIEW_BG")
+    local view_alt_rgb=$(hex_to_rgb "$KDE_VIEW_ALT")
+    local header_bg_rgb=$(hex_to_rgb "$KDE_HEADER_BG")
+    local header_alt_rgb=$(hex_to_rgb "$KDE_HEADER_ALT")
+    local menu_bg_rgb=$(hex_to_rgb "$KDE_MENU_BG")
+    local menu_alt_rgb=$(hex_to_rgb "$KDE_MENU_ALT")
+    local tooltip_bg_rgb=$(hex_to_rgb "$KDE_TOOLTIP_BG")
+    local tooltip_alt_rgb=$(hex_to_rgb "$KDE_TOOLTIP_ALT")
+    local complementary_bg_rgb=$(hex_to_rgb "$KDE_COMPLEMENTARY_BG")
+    local complementary_alt_rgb=$(hex_to_rgb "$KDE_COMPLEMENTARY_ALT")
+    local selection_bg_rgb=$(hex_to_rgb "$KDE_SELECTION_BG")
+    local selection_alt_rgb=$(hex_to_rgb "$KDE_SELECTION_ALT")
+    local selection_fg_rgb=$(hex_to_rgb "$KDE_SELECTION_FG")
+    local decoration_hover_rgb=$(hex_to_rgb "$KDE_DECORATION_HOVER")
+    local decoration_focus_rgb=$(hex_to_rgb "$KDE_DECORATION_FOCUS")
     
     cat << EOF
 [ColorEffects:Disabled]
 Color=${bg_rgb}
-ColorAmount=0.5
-ColorEffect=3
-ContrastAmount=0.5
-ContrastEffect=0
-IntensityAmount=0
-IntensityEffect=0
+ColorAmount=0
+ColorEffect=0
+ContrastAmount=0.65
+ContrastEffect=1
+IntensityAmount=0.1
+IntensityEffect=2
 
 [ColorEffects:Inactive]
 ChangeSelectionColor=true
 Color=${bg_dark_rgb}
-ColorAmount=0.4
-ColorEffect=3
-ContrastAmount=0.4
-ContrastEffect=0
-Enable=true
-IntensityAmount=-0.2
+ColorAmount=0.025
+ColorEffect=2
+ContrastAmount=0.1
+ContrastEffect=2
+Enable=false
+IntensityAmount=0
 IntensityEffect=0
 
 [Colors:Button]
-BackgroundAlternate=${bg_alt_rgb}
-BackgroundNormal=${surface_rgb}
-DecorationFocus=${primary_rgb}
-DecorationHover=$(hex_to_rgb "$PRIMARY_CONTAINER")
-ForegroundActive=${fg_rgb}
+BackgroundAlternate=${button_alt_rgb}
+BackgroundNormal=${button_bg_rgb}
+DecorationFocus=${decoration_focus_rgb}
+DecorationHover=${decoration_hover_rgb}
+ForegroundActive=${primary_rgb}
 ForegroundInactive=${fg_inactive_rgb}
 ForegroundLink=${primary_rgb}
 ForegroundNegative=${error_rgb}
@@ -518,11 +565,11 @@ ForegroundPositive=${positive_rgb}
 ForegroundVisited=${primary_rgb}
 
 [Colors:Complementary]
-BackgroundAlternate=${bg_dark_rgb}
-BackgroundNormal=${bg_rgb}
-DecorationFocus=${primary_rgb}
-DecorationHover=$(hex_to_rgb "$PRIMARY_CONTAINER")
-ForegroundActive=${fg_rgb}
+BackgroundAlternate=${complementary_alt_rgb}
+BackgroundNormal=${complementary_bg_rgb}
+DecorationFocus=${decoration_focus_rgb}
+DecorationHover=${decoration_hover_rgb}
+ForegroundActive=${primary_rgb}
 ForegroundInactive=${fg_inactive_rgb}
 ForegroundLink=${primary_rgb}
 ForegroundNegative=${error_rgb}
@@ -532,25 +579,39 @@ ForegroundPositive=${positive_rgb}
 ForegroundVisited=${primary_rgb}
 
 [Colors:Selection]
-BackgroundAlternate=${selection_bg_alt_rgb}
+BackgroundAlternate=${selection_alt_rgb}
 BackgroundNormal=${selection_bg_rgb}
-DecorationFocus=${primary_rgb}
-DecorationHover=${selection_hover_rgb}
-ForegroundActive=${fg_rgb}
+DecorationFocus=${decoration_focus_rgb}
+DecorationHover=${decoration_hover_rgb}
+ForegroundActive=${selection_fg_rgb}
 ForegroundInactive=${fg_inactive_rgb}
-ForegroundLink=${fg_rgb}
-ForegroundNegative=${fg_rgb}
-ForegroundNeutral=${fg_rgb}
-ForegroundNormal=${fg_rgb}
-ForegroundPositive=${fg_rgb}
-ForegroundVisited=${fg_rgb}
+ForegroundLink=${primary_rgb}
+ForegroundNegative=${error_rgb}
+ForegroundNeutral=${neutral_rgb}
+ForegroundNormal=${selection_fg_rgb}
+ForegroundPositive=${positive_rgb}
+ForegroundVisited=${primary_rgb}
 
 [Colors:Header]
-BackgroundAlternate=${bg_alt_rgb}
-BackgroundNormal=${bg_rgb}
-DecorationFocus=${primary_rgb}
-DecorationHover=$(hex_to_rgb "$PRIMARY_CONTAINER")
-ForegroundActive=${fg_rgb}
+BackgroundAlternate=${header_alt_rgb}
+BackgroundNormal=${header_bg_rgb}
+DecorationFocus=${decoration_focus_rgb}
+DecorationHover=${decoration_hover_rgb}
+ForegroundActive=${primary_rgb}
+ForegroundInactive=${fg_inactive_rgb}
+ForegroundLink=${primary_rgb}
+ForegroundNegative=${error_rgb}
+ForegroundNeutral=${neutral_rgb}
+ForegroundNormal=${fg_rgb}
+ForegroundPositive=${positive_rgb}
+ForegroundVisited=${primary_rgb}
+
+[Colors:Header][Inactive]
+BackgroundAlternate=${header_bg_rgb}
+BackgroundNormal=${header_alt_rgb}
+DecorationFocus=${decoration_focus_rgb}
+DecorationHover=${decoration_hover_rgb}
+ForegroundActive=${primary_rgb}
 ForegroundInactive=${fg_inactive_rgb}
 ForegroundLink=${primary_rgb}
 ForegroundNegative=${error_rgb}
@@ -560,11 +621,11 @@ ForegroundPositive=${positive_rgb}
 ForegroundVisited=${primary_rgb}
 
 [Colors:Tooltip]
-BackgroundAlternate=${bg_alt_rgb}
-BackgroundNormal=${bg_rgb}
-DecorationFocus=${primary_rgb}
-DecorationHover=${primary_rgb}
-ForegroundActive=${fg_rgb}
+BackgroundAlternate=${tooltip_alt_rgb}
+BackgroundNormal=${tooltip_bg_rgb}
+DecorationFocus=${decoration_focus_rgb}
+DecorationHover=${decoration_hover_rgb}
+ForegroundActive=${primary_rgb}
 ForegroundInactive=${fg_inactive_rgb}
 ForegroundLink=${primary_rgb}
 ForegroundNegative=${error_rgb}
@@ -574,11 +635,11 @@ ForegroundPositive=${positive_rgb}
 ForegroundVisited=${primary_rgb}
 
 [Colors:View]
-BackgroundAlternate=${bg_rgb}
-BackgroundNormal=${bg_rgb}
-DecorationFocus=${primary_rgb}
-DecorationHover=$(hex_to_rgb "$PRIMARY_CONTAINER")
-ForegroundActive=${fg_rgb}
+BackgroundAlternate=${view_alt_rgb}
+BackgroundNormal=${view_bg_rgb}
+DecorationFocus=${decoration_focus_rgb}
+DecorationHover=${decoration_hover_rgb}
+ForegroundActive=${primary_rgb}
 ForegroundInactive=${fg_inactive_rgb}
 ForegroundLink=${primary_rgb}
 ForegroundNegative=${error_rgb}
@@ -588,11 +649,25 @@ ForegroundPositive=${positive_rgb}
 ForegroundVisited=${primary_rgb}
 
 [Colors:Window]
-BackgroundAlternate=${bg_alt_rgb}
-BackgroundNormal=${bg_rgb}
-DecorationFocus=${primary_rgb}
-DecorationHover=$(hex_to_rgb "$PRIMARY_CONTAINER")
-ForegroundActive=${fg_rgb}
+BackgroundAlternate=${window_alt_rgb}
+BackgroundNormal=${window_bg_rgb}
+DecorationFocus=${decoration_focus_rgb}
+DecorationHover=${decoration_hover_rgb}
+ForegroundActive=${primary_rgb}
+ForegroundInactive=${fg_inactive_rgb}
+ForegroundLink=${primary_rgb}
+ForegroundNegative=${error_rgb}
+ForegroundNeutral=${neutral_rgb}
+ForegroundNormal=${fg_rgb}
+ForegroundPositive=${positive_rgb}
+ForegroundVisited=${primary_rgb}
+
+[Colors:Menu]
+BackgroundAlternate=${menu_alt_rgb}
+BackgroundNormal=${menu_bg_rgb}
+DecorationFocus=${decoration_focus_rgb}
+DecorationHover=${decoration_hover_rgb}
+ForegroundActive=${primary_rgb}
 ForegroundInactive=${fg_inactive_rgb}
 ForegroundLink=${primary_rgb}
 ForegroundNegative=${error_rgb}
@@ -610,10 +685,10 @@ shadeSortColumn=true
 contrast=0
 
 [WM]
-activeBackground=${bg_rgb}
-activeBlend=255,255,255
+activeBackground=${window_bg_rgb}
+activeBlend=${primary_rgb}
 activeForeground=${fg_rgb}
-inactiveBackground=${bg_rgb}
+inactiveBackground=${window_bg_rgb}
 inactiveBlend=${fg_inactive_rgb}
 inactiveForeground=${fg_inactive_rgb}
 EOF
@@ -712,6 +787,24 @@ placessidebar image {
 separator.sidebar {
     background-color: transparent;
     min-width: 0;
+}
+
+/* Generic file/list selection. xdg-desktop-portal-gtk can use GtkTreeView
+ * independently of Nautilus, so sidebar-only rules are not sufficient. */
+treeview.view:selected,
+.view:selected,
+list row:selected,
+listbox row:selected {
+    background-color: ${ROW_ACTIVE_BG};
+    color: ${ROW_SELECTED_FG};
+}
+
+treeview.view:selected:hover,
+.view:selected:hover,
+list row:selected:hover,
+listbox row:selected:hover {
+    background-color: ${ROW_ACTIVE_HOVER_BG};
+    color: ${ROW_SELECTED_FG};
 }
 
 /* Context menus and popovers */
@@ -839,6 +932,29 @@ if write_if_changed "$GTK4_CSS" << EOF
     /* Misc */
     --shade-color: rgba(0, 0, 0, 0.25);
     --scrollbar-outline-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Explicit selection states for GTK4 file choosers and list/grid views.
+ * The portal file chooser is a separate GTK process and cannot rely on
+ * Nautilus-specific selectors. */
+columnview row:selected,
+listview row:selected,
+gridview child:selected,
+listbox row:selected,
+row:selected,
+.view:selected {
+    background-color: ${ROW_ACTIVE_BG};
+    color: ${ROW_SELECTED_FG};
+}
+
+columnview row:selected:hover,
+listview row:selected:hover,
+gridview child:selected:hover,
+listbox row:selected:hover,
+row:selected:hover,
+.view:selected:hover {
+    background-color: ${ROW_ACTIVE_HOVER_BG};
+    color: ${ROW_SELECTED_FG};
 }
 
 /* Tooltip styling - children need transparent bg */

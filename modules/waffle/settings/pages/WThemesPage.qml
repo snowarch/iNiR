@@ -46,6 +46,7 @@ WSettingsPage {
             "appearance.cava.framerate": 60,
             "appearance.cava.stereo": true,
             "appearance.cava.waveOpacity": 30,
+            "appearance.cava.blockedApps": [],
         })
         cavaConfigDebounce.restart()
     }
@@ -571,7 +572,9 @@ WSettingsPage {
         WSettingsDropdown {
             label: Translation.tr("Style")
             icon: "eyedropper"
-            description: Translation.tr("Choose the visual language used across the shell")
+            description: globalStyleCard.currentStyle === "editorial"
+                ? Translation.tr("Choose the visual language used across the shell. Editorial composition is refined in ii Settings → Themes → Style.")
+                : Translation.tr("Choose the visual language used across the shell")
             currentValue: globalStyleCard.currentStyle
             options: [
                 {
@@ -605,6 +608,10 @@ WSettingsPage {
                 {
                     value: "cookie",
                     displayName: Translation.tr("Cookie Shapes")
+                },
+                {
+                    value: "editorial",
+                    displayName: Translation.tr("Editorial")
                 }
             ]
             onSelected: newValue => {
@@ -712,8 +719,11 @@ WSettingsPage {
             label: Translation.tr("Use Material colors")
             icon: "dark-theme"
             description: Translation.tr("Apply Material color scheme instead of Windows 11 grey")
-            checked: Config.options?.waffles?.theming?.useMaterialColors ?? false
-            onCheckedChanged: Config.setNestedValue("waffles.theming.useMaterialColors", checked)
+            enabled: !Appearance.editorialEverywhere
+            checked: Appearance.editorialEverywhere || (Config.options?.waffles?.theming?.useMaterialColors ?? false)
+            onCheckedChanged: {
+                if (!Appearance.editorialEverywhere) Config.setNestedValue("waffles.theming.useMaterialColors", checked)
+            }
         }
 
         WSettingsSlider {
@@ -983,6 +993,25 @@ WSettingsPage {
             value: Config.options?.appearance?.cava?.waveOpacity ?? 30
             onValueChanged: root.setCavaValue(
                 "appearance.cava.waveOpacity", value, false)
+        }
+
+        WSettingsTextField {
+            label: Translation.tr("Blocked visualizer apps")
+            icon: "music-note-2"
+            description: Translation.tr("Comma-separated playback apps to exclude from visualizers. Empty keeps automatic active-player selection.")
+            placeholderText: Translation.tr("Spotify, ncspot, ytmusic")
+            text: (Config.options?.appearance?.cava?.blockedApps ?? []).join(", ")
+            onEditingFinished: newText => {
+                const seen = ({})
+                const apps = newText.split(",").map(value => value.trim()).filter(value => {
+                    const key = value.toLowerCase()
+                    if (key.length === 0 || seen[key]) return false
+                    seen[key] = true
+                    return true
+                })
+                Config.setNestedValue("appearance.cava.blockedApps", apps)
+                Config.flushWrites()
+            }
         }
 
         WSettingsButton {

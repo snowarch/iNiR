@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="../images/iris-2.31-principal.webp" alt="iNiR 2.31 iRiS desktop" width="900">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.31.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -78,13 +78,27 @@ Wayland → GPU
 - **Wayland**：Linux のディスプレイプロトコル（X11 の後継）
 - **QML**：Qt の宣言的 UI 言語、iNiR はこれで書かれてる
 - **Material You**：Google の配色システム、画像からパレットを生成（自動テーマの仕組み）
-- **ii / waffle**：2つのパネルスタイル。ii = Material Design 風、waffle = Windows 11 風。`Super+Shift+W` で切り替え
+- **ii / waffle / iRiS**：3つのパネルファミリー。ii = Material Design、waffle = Windows 11、iRiS = 開いた内容へ変形する Island。`Super+Shift+W` で切り替え
 
 </details>
 
 ---
 
 ## スクリーンショット
+
+<details open>
+<summary><b>iRiS</b> — Island、デスクトップパーツ、カード、Dock</summary>
+
+<p align="center">
+  <img src="../images/iris-2.31-desktop.webp" alt="iRiS desktop layout" width="49%">
+  <img src="../images/iris-2.31-card.webp" alt="iRiS card surface" width="49%">
+</p>
+
+<p align="center">
+  <img src="../images/iris-2.31-dock.webp" alt="iRiS Dock and edge layout" width="99%">
+</p>
+
+</details>
 
 <details open>
 <summary><b>Material ii</b> — フローティングバー、サイドバー、Material Design 美学</summary>
@@ -110,9 +124,10 @@ Wayland → GPU
 
 ## 機能
 
-**2つのパネルファミリー**、`Super+Shift+W` でオンザフライ切り替え：
-- **Material ii** — フローティングバー、サイドバー、ドック、5つのビジュアルスタイル（material、cards、aurora、inir、angel）
+**3つのパネルファミリー**、`Super+Shift+W` でオンザフライ切り替え：
+- **Material ii** — フローティングバー、サイドバー、ドック、9つのグローバルスタイル（material、cards、aurora、inir、angel、regalia、zzz、cookie、editorial）
 - **Waffle** — Windows 11 スタイルのタスクバー、スタートメニュー、アクションセンター、通知センター
+- **iRiS** — 新しい Island ファミリー。全エッジ対応、Pieces、どの辺にも置ける Dock、Glass、Themes、Studio
 
 **自動テーマ** — 壁紙を選ぶだけですべてが適応：
 - Material You によるシェルカラー、GTK3/4、Qt、ターミナル、Firefox、Discord、SDDM に伝播
@@ -128,7 +143,7 @@ Wayland → GPU
 
 壁紙を選ぶとシステム全体が追従 — シェル、GTK/Qt アプリ、ターミナル、Firefox、Discord、SDDM ログイン画面。すべて自動。
 
-- **5つのビジュアルスタイル** — Material（ソリッド）、Cards、Aurora（ガラスブラー）、iNiR（TUI 風）、Angel（ネオブルータリズム）
+- **9つのグローバルスタイル** — Material（ソリッド）、Cards、Aurora（ガラスブラー）、iNiR（TUI 風）、Angel（ネオブルータリズム）、Regalia、ZZZ、Cookie Shapes、Editorial
 - **壁紙からの動的カラー** — Material You でシステム全体に伝播
 - **10のターミナルツール自動テーマ化** — foot、kitty、alacritty、starship、fuzzel、pywalfox、btop、lazygit、yazi
 - **アプリテーマ化** — GTK3/4、Qt（plasma-integration + darkly）、Firefox（MaterialFox）、Discord/Vesktop（System24）
@@ -175,7 +190,7 @@ Wayland → GPU
 - **自動アップデート** — `inir update`、ロールバック・マイグレーション・ユーザー変更保持付き
 - **ロック画面** と **セッション画面**（ログアウト/再起動/シャットダウン/サスペンド）
 - **Polkit エージェント**、**オンスクリーンキーボード**、**自動起動マネージャー**
-- **9言語** — 自動検出、AI 支援翻訳生成
+- **17ロケール** — 自動検出、AI 支援翻訳生成
 - **ナイトライト** — スケジュールまたは手動
 - **天気** — Open-Meteo、GPS・手動座標・都市名に対応
 - **バッテリー管理** — 設定可能なしきい値、クリティカル時の自動サスペンド
@@ -204,7 +219,7 @@ inir doctor                     # 自動診断と修復
 inir update                     # pull + マイグレーション + 再起動
 ```
 
-**対応ディストリビューション：** Arch（自動インストーラー）。他のディストリビューションは手動インストール可能 — [PACKAGES.md](../PACKAGES.md) を参照。
+**ディストリビューション：** 主な対象は Arch です。Fedora と Debian/Ubuntu にも、ディストリビューションのリポジトリを優先する自動の依存関係インストールがあります。その他のディストリビューションは[パッケージ一覧](https://github.com/snowarch/inir/wiki/PACKAGES)の一般的な手順に従ってください。iNiR には Qt 6.9 以降が必要です：Ubuntu 25.10、Fedora 43、Debian testing 以降。
 
 | 方法 | コマンド |
 |--------|---------|
@@ -273,6 +288,7 @@ issue を開く前に [LIMITATIONS.md](../LIMITATIONS.md) を確認してくだ�
 ## クレジット
 
 - [**end-4**](https://github.com/end-4/dots-hyprland) — Hyprland 向けオリジナル illogical-impulse
+- [**pctrade/end4-pC**](https://github.com/pctrade/end4-pC) — たまに本当にいいアイデアを出すフォーク
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — このシェルを動かすフレームワーク
 - [**Niri**](https://github.com/YaLTeR/niri) — スクロール式タイリング Wayland コンポジター
 

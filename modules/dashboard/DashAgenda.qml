@@ -18,6 +18,10 @@ DashCard {
 
     // Host (DashboardContent) opens the shared events dialog; null = new event.
     signal requestEventsDialog(var event)
+    signal requestExpand()
+    headerActionIcon: "open_in_full"
+    headerActionTooltip: Translation.tr("Open full agenda")
+    onHeaderAction: requestExpand()
 
     readonly property int lookaheadDays: 14
     readonly property int maxRows: 8
@@ -149,7 +153,7 @@ DashCard {
         Layout.alignment: Qt.AlignHCenter
         implicitHeight: 30
         implicitWidth: addRowContent.implicitWidth + 24
-        buttonRadius: Appearance.rounding.full
+        buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
         colBackground: "transparent"
         colBackgroundHover: Appearance.colors.colLayer1Hover
         colRipple: Appearance.colors.colLayer1Active

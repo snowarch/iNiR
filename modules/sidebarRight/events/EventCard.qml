@@ -16,7 +16,7 @@ Item {
     signal removeClicked()
     signal editClicked(var event)
     
-    implicitHeight: cardContent.implicitHeight + 16
+    implicitHeight: cardContent.implicitHeight + (Appearance.editorialEverywhere ? 24 : 16)
     
     // Style tokens
     readonly property color colPrimary: Appearance.angelEverywhere ? Appearance.angel.colPrimary
@@ -62,18 +62,19 @@ Item {
             : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
             : Appearance.rounding.small
         color: {
+            if (Appearance.editorialEverywhere) return editMA.containsMouse && !root.isExternal ? Appearance.colLayer2Hover : Appearance.editorial.layer(1)
             if (editMA.containsMouse && !root.isExternal) {
                 if (Appearance.angelEverywhere) return Appearance.angel.colGlassCardHover
                 if (Appearance.inirEverywhere) return Appearance.inir.colLayer2Hover
-                if (Appearance.auroraEverywhere) return Appearance.aurora?.colSubSurface ?? Appearance.colors.colLayer2Hover
-                return Appearance.colors.colLayer2Hover
+                if (Appearance.auroraEverywhere) return Appearance.aurora?.colSubSurface ?? Appearance.colLayer2Hover
+                return Appearance.colLayer2Hover
             }
             if (Appearance.angelEverywhere) return Appearance.angel.colGlassCard
             if (Appearance.inirEverywhere) return Appearance.inir.colLayer2
             if (Appearance.auroraEverywhere) return Appearance.aurora?.colSubSurface ?? Appearance.colors.colLayer2
             return Appearance.m3colors?.m3surfaceContainerHigh ?? Appearance.colors.colLayer2
         }
-        border.width: 1
+        border.width: Appearance.editorialEverywhere ? 0 : 1
         border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
             : Appearance.inirEverywhere ? Appearance.inir.colBorder
             : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
@@ -88,7 +89,10 @@ Item {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            width: 4
+            anchors.topMargin: Appearance.editorialEverywhere ? 12 : 0
+            anchors.bottomMargin: Appearance.editorialEverywhere ? 12 : 0
+            anchors.leftMargin: Appearance.editorialEverywhere ? 5 : 0
+            width: Appearance.editorialEverywhere ? 3 : 4
             radius: parent.radius
             color: root.indicatorColor
         }
@@ -104,7 +108,7 @@ Item {
             Rectangle {
                 Layout.preferredWidth: 40
                 Layout.preferredHeight: 40
-                radius: 20
+                radius: Appearance.editorialEverywhere ? Appearance.rounding.small : 20
                 color: ColorUtils.transparentize(root.indicatorColor, 0.85)
                 
                 MaterialSymbol {
@@ -124,7 +128,7 @@ Item {
                     Layout.fillWidth: true
                     text: root.event?.title ?? ""
                     font.pixelSize: Appearance.font.pixelSize.normal
-                    font.weight: Font.Medium
+                    font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Medium
                     color: root.colText
                     elide: Text.ElideRight
                 }
@@ -151,7 +155,7 @@ Item {
                     Rectangle {
                         implicitHeight: dateTimeRow.implicitHeight + 6
                         implicitWidth: dateTimeRow.implicitWidth + 10
-                        radius: height / 2
+                        radius: Appearance.editorialEverywhere ? Appearance.rounding.small : height / 2
                         color: root.isToday 
                             ? ColorUtils.transparentize(root.colPrimary, 0.85)
                             : root.colBadge
@@ -181,6 +185,7 @@ Item {
                                 }
                                 font.pixelSize: Appearance.font.pixelSize.smallest
                                 font.weight: Font.Medium
+                                font.family: Appearance.font.family.numbers
                                 color: root.isToday ? root.colPrimary : root.colSubtext
                             }
                         }
@@ -190,7 +195,7 @@ Item {
                     Rectangle {
                         implicitHeight: categoryText.implicitHeight + 6
                         implicitWidth: categoryText.implicitWidth + 12
-                        radius: height / 2
+                        radius: Appearance.editorialEverywhere ? Appearance.rounding.small : height / 2
                         color: root.isExternal
                             ? ColorUtils.transparentize(root.indicatorColor, 0.85)
                             : root.colBadge
@@ -224,7 +229,7 @@ Item {
                 colBackground: "transparent"
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-                    : Appearance.colors.colLayer1Hover
+                    : Appearance.colLayer1Hover
                 onClicked: root.removeClicked()
                 
                 contentItem: MaterialSymbol {

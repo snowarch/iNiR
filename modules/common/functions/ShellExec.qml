@@ -92,15 +92,23 @@ Singleton {
             }
 
             # apply_shell_scale()/apply_qt_runtime_env() own these for iNiR's
-            # process only. Restore the user's session values for launched apps.
+            # process only. Never leak them into launched applications.
             for _var in \
                 QT_SCALE_FACTOR QT_SCALE_FACTOR_ROUNDING_POLICY \
                 QT_WAYLAND_FORCE_DPI QT_FONT_DPI QT_AUTO_SCREEN_SCALE_FACTOR \
                 QT_SCREEN_SCALE_FACTORS GDK_SCALE GDK_DPI_SCALE \
                 QSG_ATLAS_WIDTH QSG_ATLAS_HEIGHT QT_LOGGING_RULES \
-                QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE QS_DISABLE_CRASH_HANDLER \
-                ELECTRON_OZONE_PLATFORM_HINT; do
+                QS_DISABLE_CRASH_HANDLER MALLOC_CONF mesa_glthread DRIRC_CONFIGDIR; do
                 restore_from_manager "$_var"
+            done
+
+            # These are application/session policy, not Quickshell-private
+            # tuning. The iNiR launcher mirrors the effective Niri config into
+            # Quickshell before startup; only fill a missing value from the
+            # manager and never override Niri's authoritative app policy.
+            for _var in QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE \
+                        ELECTRON_OZONE_PLATFORM_HINT; do
+                import_if_missing "$_var"
             done
 
             # The launcher marks exactly which GPU variables iNiR injected for
@@ -110,8 +118,8 @@ Singleton {
             done
             unset INIR_SHELL_GPU_POLICY_VARS INIR_DISABLE_HOT_RELOAD
 
-            # If startup raced the compositor/session import, fill in the late
-            # variables now rather than keeping Quickshell's frozen snapshot.
+            # Fill missing user/session values from the live user manager rather
+            # than trusting Quickshell's process snapshot.
             for _var in \
                 XDG_RUNTIME_DIR XDG_SESSION_TYPE XDG_CURRENT_DESKTOP \
                 XDG_SESSION_DESKTOP DESKTOP_SESSION XCURSOR_THEME XCURSOR_SIZE \
@@ -134,64 +142,18 @@ Singleton {
                 export PATH="$_merged_path"
             fi
 
-            # DISPLAY is not required to be :0. Display managers often own :0
-            # while the user's Niri/xwayland-satellite session owns :1 or later.
-            valid_display() {
-                _display="$1"
-                [ -n "$_display" ] || return 1
-                case "$_display" in
-                    :*)
-                        _xnum="$(printf '%s' "$_display" | cut -d. -f1 | sed 's/^://')"
-                        case "$_xnum" in
-                            ''|*[!0-9]*) return 1 ;;
-                        esac
-                        _xsock="/tmp/.X11-unix/X$_xnum"
-                        [ -S "$_xsock" ] || return 1
-                        [ "$(stat -c %u "$_xsock" 2>/dev/null)" = "$(id -u)" ] || return 1
-                        return 0
-                        ;;
-                    *) return 0 ;;
-                esac
-            }
-
-            _manager_display="$(manager_value DISPLAY)"
-            if valid_display "$_manager_display"; then
-                export DISPLAY="$_manager_display"
-            elif ! valid_display "$DISPLAY"; then
-                unset DISPLAY
-                for _x in /tmp/.X11-unix/X*; do
-                    [ -S "$_x" ] || continue
-                    [ "$(stat -c %u "$_x" 2>/dev/null)" = "$(id -u)" ] || continue
-                    export DISPLAY=":$(basename "$_x" | sed 's/^X//')"
-                    break
-                done
-            fi
-
-            valid_wayland_display() {
-                _wayland_display="$1"
-                [ -n "$_wayland_display" ] || return 1
-                case "$_wayland_display" in
-                    /*) [ -S "$_wayland_display" ] ;;
-                    *) [ -n "$XDG_RUNTIME_DIR" ] && [ -S "$XDG_RUNTIME_DIR/$_wayland_display" ] ;;
-                esac
-            }
-
-            _manager_wayland="$(manager_value WAYLAND_DISPLAY)"
-            if valid_wayland_display "$_manager_wayland"; then
-                export WAYLAND_DISPLAY="$_manager_wayland"
-            elif ! valid_wayland_display "$WAYLAND_DISPLAY"; then
-                unset WAYLAND_DISPLAY
-                for _wayland in "$XDG_RUNTIME_DIR"/wayland-[0-9]*; do
-                    [ -S "$_wayland" ] || continue
-                    export WAYLAND_DISPLAY="$(basename "$_wayland")"
-                    break
-                done
-            fi
+            # Niri owns the compositor environment. Prefer the values it
+            # published to the user manager, but preserve an inherited value
+            # for manual invocations where the manager has no session snapshot.
+            for _var in DISPLAY WAYLAND_DISPLAY NIRI_SOCKET; do
+                _value="$(manager_value "$_var")"
+                [ -n "$_value" ] && export "$_var=$_value"
+            done
 
             # Recommended by xwayland-satellite for Java/AWT clients. Keep an
             # explicit user value authoritative.
             import_if_missing _JAVA_AWT_WM_NONREPARENTING
-            if valid_display "$DISPLAY" && [ -z "$_JAVA_AWT_WM_NONREPARENTING" ]; then
+            if [ -n "$DISPLAY" ] && [ -z "$_JAVA_AWT_WM_NONREPARENTING" ]; then
                 export _JAVA_AWT_WM_NONREPARENTING=1
             fi
             systemd_run="$1"

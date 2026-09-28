@@ -41,12 +41,13 @@ declare -A AUR_HELPER_CMD=(
 # Critical dependencies (shell won't work without these)
 ###############################################################################
 
-# Quickshell - the shell framework itself
-# NOW IN OFFICIAL ARCH REPOS! Fedora has COPR. Others need to compile.
-DEPS_CRITICAL_QUICKSHELL="arch:quickshell fedora:COPR:errornointernet/quickshell debian:COMPILE:https://github.com/quickshell-mirror/quickshell ubuntu:COMPILE:https://github.com/quickshell-mirror/quickshell opensuse:COMPILE:https://github.com/quickshell-mirror/quickshell void:COMPILE:https://github.com/quickshell-mirror/quickshell"
+# Quickshell - the shell framework itself. Fedora's distro package is currently
+# below iNiR's 0.3 requirement, so its installer selects the release COPR until
+# the official package catches up. Debian resolves this from stable backports.
+DEPS_CRITICAL_QUICKSHELL="arch:quickshell fedora:quickshell debian:quickshell ubuntu:COMPILE:https://github.com/quickshell-mirror/quickshell opensuse:COMPILE:https://github.com/quickshell-mirror/quickshell void:COMPILE:https://github.com/quickshell-mirror/quickshell"
 
 # Niri compositor
-DEPS_CRITICAL_NIRI="arch:niri fedora:COPR:yalter/niri debian:COMPILE:https://github.com/YaLTeR/niri opensuse:COMPILE:https://github.com/YaLTeR/niri void:niri"
+DEPS_CRITICAL_NIRI="arch:niri fedora:niri debian:COMPILE:https://github.com/YaLTeR/niri opensuse:COMPILE:https://github.com/YaLTeR/niri void:niri"
 
 ###############################################################################
 # Qt6 dependencies
@@ -75,8 +76,9 @@ DEPS_CORE_BC="arch:bc fedora:bc debian:bc ubuntu:bc opensuse:bc void:bc"
 # Wayland utilities
 ###############################################################################
 DEPS_WAYLAND_WLCLIPBOARD="arch:wl-clipboard fedora:wl-clipboard debian:wl-clipboard ubuntu:wl-clipboard opensuse:wl-clipboard void:wl-clipboard"
-# cliphist is in official Arch repos, Fedora/Debian use GitHub binary releases
-DEPS_WAYLAND_CLIPHIST="arch:cliphist fedora:GITHUB:sentriz/cliphist debian:GITHUB:sentriz/cliphist ubuntu:GITHUB:sentriz/cliphist opensuse:cliphist void:cliphist"
+# Current Fedora releases and some Debian derivatives package cliphist; distro
+# installers retain upstream release binaries when the configured repo lacks it.
+DEPS_WAYLAND_CLIPHIST="arch:cliphist fedora:cliphist debian:GITHUB:sentriz/cliphist ubuntu:GITHUB:sentriz/cliphist opensuse:cliphist void:cliphist"
 DEPS_WAYLAND_GRIM="arch:grim fedora:grim debian:grim ubuntu:grim opensuse:grim void:grim"
 DEPS_WAYLAND_SLURP="arch:slurp fedora:slurp debian:slurp ubuntu:slurp opensuse:slurp void:slurp"
 DEPS_WAYLAND_SWAPPY="arch:swappy fedora:swappy debian:swappy ubuntu:swappy opensuse:swappy void:swappy"
@@ -84,7 +86,7 @@ DEPS_WAYLAND_WFRECORDER="arch:wf-recorder fedora:wf-recorder debian:wf-recorder 
 DEPS_WAYLAND_WLSUNSET="arch:wlsunset fedora:wlsunset debian:wlsunset ubuntu:wlsunset opensuse:wlsunset void:wlsunset"
 DEPS_WAYLAND_SWAYIDLE="arch:swayidle fedora:swayidle debian:swayidle ubuntu:swayidle opensuse:swayidle void:swayidle"
 DEPS_WAYLAND_SWAYLOCK="arch:swaylock fedora:swaylock debian:swaylock ubuntu:swaylock opensuse:swaylock void:swaylock"
-DEPS_WAYLAND_XWAYLANDSATELLITE="arch:xwayland-satellite fedora:COPR:alebastr/sway-extras debian:COMPILE:https://github.com/Supreeeme/xwayland-satellite ubuntu:COMPILE:https://github.com/Supreeeme/xwayland-satellite opensuse:COMPILE:https://github.com/Supreeeme/xwayland-satellite void:xwayland-satellite"
+DEPS_WAYLAND_XWAYLANDSATELLITE="arch:xwayland-satellite fedora:xwayland-satellite debian:COMPILE:https://github.com/Supreeeme/xwayland-satellite ubuntu:COMPILE:https://github.com/Supreeeme/xwayland-satellite opensuse:COMPILE:https://github.com/Supreeeme/xwayland-satellite void:xwayland-satellite"
 
 ###############################################################################
 # Audio stack
@@ -97,11 +99,15 @@ DEPS_AUDIO_PLASMA_BROWSER_INTEGRATION="arch:plasma-browser-integration fedora:pl
 DEPS_AUDIO_PAVUCONTROL="arch:pavucontrol fedora:pavucontrol debian:pavucontrol ubuntu:pavucontrol opensuse:pavucontrol void:pavucontrol"
 DEPS_AUDIO_CAVA="arch:AUR:cava fedora:cava debian:COMPILE:https://github.com/karlstav/cava ubuntu:COMPILE:https://github.com/karlstav/cava opensuse:cava void:cava"
 DEPS_AUDIO_EASYEFFECTS="arch:easyeffects fedora:easyeffects debian:easyeffects ubuntu:easyeffects opensuse:easyeffects void:easyeffects"
+DEPS_AUDIO_LSP_PLUGINS_LV2="arch:lsp-plugins-lv2 fedora:lsp-plugins-lv2 debian:lsp-plugins-lv2 ubuntu:lsp-plugins-lv2 opensuse:lsp-plugins-lv2 void:lsp-plugins-lv2"
 DEPS_AUDIO_MPV="arch:mpv fedora:mpv debian:mpv ubuntu:mpv opensuse:mpv void:mpv"
 DEPS_AUDIO_MPV_MPRIS="arch:mpv-mpris fedora:mpv-mpris debian:mpv-mpris ubuntu:mpv-mpris opensuse:mpv-mpris void:mpv-mpris"
 DEPS_AUDIO_YTDLP="arch:yt-dlp fedora:yt-dlp debian:yt-dlp ubuntu:yt-dlp opensuse:yt-dlp void:yt-dlp"
-DEPS_AUDIO_YTMUSICAPI="arch:python-ytmusicapi fedora:python3-ytmusicapi debian:python3-ytmusicapi ubuntu:python3-ytmusicapi opensuse:python3-ytmusicapi void:python3-ytmusicapi"
+# ytmusicapi and yt-dlp's cookie-loader module are owned by iNiR's managed
+# Python runtime on setup-managed installs; package-managed distros declare
+# their own Python runtime dependency at the packaging boundary.
 DEPS_AUDIO_SOCAT="arch:socat fedora:socat debian:socat ubuntu:socat opensuse:socat void:socat"
+DEPS_AUDIO_SONGREC="arch:songrec fedora:COMPILE:https://github.com/marin-m/SongRec debian:COMPILE:https://github.com/marin-m/SongRec ubuntu:songrec opensuse:songrec void:songrec"
 
 ###############################################################################
 # Network
@@ -124,8 +130,8 @@ DEPS_THEME_KDE_CLI_TOOLS="arch:kde-cli-tools fedora:kde-cli-tools debian:kde-cli
 ###############################################################################
 # Fonts (critical for UI)
 ###############################################################################
-DEPS_FONT_MATERIAL_SYMBOLS="arch:AUR:ttf-material-symbols-variable-git fedora:COMPILE:google-material-symbols debian:COMPILE:google-material-symbols ubuntu:COMPILE:google-material-symbols opensuse:COMPILE:google-material-symbols void:COMPILE:google-material-symbols"
-DEPS_FONT_JETBRAINS_MONO="arch:AUR:ttf-jetbrains-mono-nerd fedora:jetbrains-mono-fonts-all debian:fonts-jetbrains-mono ubuntu:fonts-jetbrains-mono opensuse:jetbrains-mono-fonts void:font-jetbrains-mono-nerd"
+DEPS_FONT_MATERIAL_SYMBOLS="arch:ttf-material-symbols-variable fedora:COMPILE:google-material-symbols debian:COMPILE:google-material-symbols ubuntu:COMPILE:google-material-symbols opensuse:COMPILE:google-material-symbols void:COMPILE:google-material-symbols"
+DEPS_FONT_JETBRAINS_MONO="arch:ttf-jetbrains-mono-nerd fedora:jetbrains-mono-fonts-all debian:fonts-jetbrains-mono ubuntu:fonts-jetbrains-mono opensuse:jetbrains-mono-fonts void:font-jetbrains-mono-nerd"
 DEPS_FONT_DEJAVU="arch:ttf-dejavu fedora:dejavu-fonts-all debian:fonts-dejavu ubuntu:fonts-dejavu opensuse:dejavu-fonts void:dejavu-fonts-ttf"
 DEPS_FONT_TWEMOJI="arch:AUR:ttf-twemoji fedora:twitter-twemoji-fonts debian:fonts-twemoji ubuntu:fonts-twemoji opensuse:twemoji-color-font void:twemoji"
 
@@ -143,22 +149,22 @@ DEPS_BUILD_CARGO="arch:rust fedora:cargo debian:cargo ubuntu:cargo opensuse:carg
 # Miscellaneous tools
 ###############################################################################
 DEPS_MISC_FISH="arch:fish fedora:fish debian:fish ubuntu:fish opensuse:fish void:fish"
-DEPS_MISC_GUM="arch:gum fedora:COPR:atim/gum debian:COMPILE:https://github.com/charmbracelet/gum ubuntu:COMPILE:https://github.com/charmbracelet/gum opensuse:gum void:gum"
-DEPS_MISC_STARSHIP="arch:starship fedora:starship debian:GITHUB:starship/starship ubuntu:GITHUB:starship/starship opensuse:starship void:starship"
+DEPS_MISC_GUM="arch:gum fedora:gum debian:GITHUB:charmbracelet/gum ubuntu:GITHUB:charmbracelet/gum opensuse:gum void:gum"
+DEPS_MISC_STARSHIP="arch:starship fedora:GITHUB:starship/starship debian:starship ubuntu:GITHUB:starship/starship opensuse:starship void:starship"
 DEPS_MISC_DUNST="arch:dunst fedora:dunst debian:dunst ubuntu:dunst opensuse:dunst void:dunst"
 DEPS_MISC_LIBNOTIFY="arch:libnotify fedora:libnotify debian:libnotify-bin ubuntu:libnotify-bin opensuse:libnotify-tools void:libnotify"
 DEPS_MISC_IMAGEMAGICK="arch:imagemagick fedora:ImageMagick debian:imagemagick ubuntu:imagemagick opensuse:ImageMagick void:ImageMagick"
 DEPS_MISC_FFMPEG="arch:ffmpeg fedora:ffmpeg debian:ffmpeg ubuntu:ffmpeg opensuse:ffmpeg void:ffmpeg"
 DEPS_MISC_TESSERACT="arch:tesseract fedora:tesseract debian:tesseract-ocr ubuntu:tesseract-ocr opensuse:tesseract-ocr void:tesseract-ocr"
-DEPS_MISC_LIBQALCULATE="arch:libqalculate fedora:libqalculate debian:qalc ubuntu:qalc opensuse:libqalculate void:libqalculate"
+DEPS_MISC_LIBQALCULATE="arch:libqalculate fedora:qalculate debian:qalc ubuntu:qalc opensuse:libqalculate void:libqalculate"
 DEPS_MISC_BRIGHTNESSCTL="arch:brightnessctl fedora:brightnessctl debian:brightnessctl ubuntu:brightnessctl opensuse:brightnessctl void:brightnessctl"
 DEPS_MISC_NAUTILUS="arch:nautilus fedora:nautilus debian:nautilus ubuntu:nautilus opensuse:nautilus void:nautilus"
 DEPS_MISC_FOOT="arch:foot fedora:foot debian:foot ubuntu:foot opensuse:foot void:foot"
 DEPS_MISC_KITTY="arch:kitty fedora:kitty debian:kitty ubuntu:kitty opensuse:kitty void:kitty"
-DEPS_MISC_POLKIT="arch:polkit fedora:polkit debian:policykit-1 ubuntu:policykit-1 opensuse:polkit void:polkit"
-DEPS_MISC_UV="arch:AUR:uv fedora:CARGO:uv debian:CARGO:uv ubuntu:CARGO:uv opensuse:CARGO:uv void:CARGO:uv"
-DEPS_MISC_GOWALL="arch:AUR:gowall-bin fedora:CARGO:gowall debian:CARGO:gowall ubuntu:CARGO:gowall opensuse:CARGO:gowall void:CARGO:gowall"
-DEPS_MISC_MISSIONCENTER="arch:AUR:mission-center fedora:FLATPAK:io.missioncenter.MissionCenter debian:FLATPAK:io.missioncenter.MissionCenter ubuntu:FLATPAK:io.missioncenter.MissionCenter opensuse:FLATPAK:io.missioncenter.MissionCenter void:FLATPAK:io.missioncenter.MissionCenter"
+DEPS_MISC_POLKIT="arch:polkit fedora:polkit debian:polkitd ubuntu:policykit-1 opensuse:polkit void:polkit"
+DEPS_MISC_UV="arch:uv fedora:uv debian:CARGO:uv ubuntu:CARGO:uv opensuse:CARGO:uv void:CARGO:uv"
+DEPS_MISC_GOWALL="arch:AUR:gowall-bin fedora:gowall debian:COMPILE:https://github.com/Achno/gowall ubuntu:COMPILE:https://github.com/Achno/gowall opensuse:COMPILE:https://github.com/Achno/gowall void:gowall"
+DEPS_MISC_MISSIONCENTER="arch:mission-center fedora:FLATPAK:io.missioncenter.MissionCenter debian:FLATPAK:io.missioncenter.MissionCenter ubuntu:FLATPAK:io.missioncenter.MissionCenter opensuse:FLATPAK:io.missioncenter.MissionCenter void:FLATPAK:io.missioncenter.MissionCenter"
 DEPS_MISC_KCONFIG="arch:kconfig fedora:kf6-kconfig debian:libkf6config-bin ubuntu:libkf6config-bin opensuse:kconfig void:kconfig"
 
 ###############################################################################

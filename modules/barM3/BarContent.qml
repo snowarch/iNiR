@@ -20,33 +20,47 @@ Item {
     readonly property bool isMaterial: Config.options.bar.m3.cornerStyle === 3
     readonly property real centerPillX: centerPill.x
     readonly property real centerPillWidth: centerPill.width
+    readonly property real sectionOuterMargin: root.isMaterial
+        ? (Config.options?.bar?.m3?.gapsOut ?? 5)
+        : (Config.options?.bar?.m3?.cornerStyle === 1 ? 4 : 10)
+    readonly property real leftHostDemand: root.isMaterial
+        ? leftMaterialPill.implicitWidth : leftRow.implicitWidth
+    readonly property real centerHostDemand: root.isMaterial
+        ? centerMaterialPill.implicitWidth : middleRow.implicitWidth
+    readonly property real rightHostDemand: root.isMaterial
+        ? rightMaterialPill.implicitWidth : rightRow.implicitWidth
+    readonly property real availableHostWidth: Math.max(0, root.width - root.sectionOuterMargin * 2)
+    readonly property real hostGap: 6 * Appearance.fontSizeScale
+    readonly property bool hasLeftHost: root.leftHostDemand > 0.5
+    readonly property bool hasCenterHost: root.centerHostDemand > 0.5
+    readonly property bool hasRightHost: root.rightHostDemand > 0.5
+    readonly property real leftCenterGap: root.hasLeftHost && root.hasCenterHost ? root.hostGap : 0
+    readonly property real centerRightGap: root.hasCenterHost && root.hasRightHost ? root.hostGap : 0
+    readonly property real sideOnlyGap: !root.hasCenterHost && root.hasLeftHost && root.hasRightHost ? root.hostGap : 0
+    readonly property real totalHostGap: root.leftCenterGap + root.centerRightGap + root.sideOnlyGap
+    readonly property real naturalHostWidth: root.leftHostDemand + root.centerHostDemand
+        + root.rightHostDemand + root.totalHostGap
+    readonly property real hostScale: root.naturalHostWidth > root.totalHostGap
+        ? Math.min(1, Math.max(0, root.availableHostWidth - root.totalHostGap)
+            / Math.max(1, root.naturalHostWidth - root.totalHostGap))
+        : 1
+    readonly property bool layoutCompressionActive: root.hostScale < 0.999
+    readonly property real leftHostWidth: root.leftHostDemand * root.hostScale
+    readonly property real centerHostWidth: root.centerHostDemand * root.hostScale
+    readonly property real rightHostWidth: root.rightHostDemand * root.hostScale
+    readonly property real preferredCenterX: (root.width - root.centerHostWidth) / 2
+    readonly property real minimumCenterX: root.sectionOuterMargin + root.leftHostWidth + root.leftCenterGap
+    readonly property real maximumCenterX: root.width - root.sectionOuterMargin - root.rightHostWidth
+        - root.centerRightGap - root.centerHostWidth
+    readonly property real centerHostX: root.layoutCompressionActive
+        ? root.minimumCenterX
+        : Math.max(root.minimumCenterX, Math.min(root.preferredCenterX, root.maximumCenterX))
 
     readonly property bool trayHasItems: SystemTray.items.values.length > 0
     readonly property bool spectrumOutputEnabled:
         (Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary") === "all"
         || Quickshell.screens.length <= 1
         || String(root.screen?.name ?? "") === String(GlobalStates.primaryScreen?.name ?? "")
-    readonly property int configuredWidgetCount:
-        (Config.options?.bar?.m3?.layouts?.leftLayout?.length ?? 0)
-        + (Config.options?.bar?.m3?.layouts?.middleLayout?.length ?? 0)
-        + (Config.options?.bar?.m3?.layouts?.rightLayout?.length ?? 0)
-    readonly property real compactWidthThreshold: Math.max(
-        Appearance.sizes.barShortenScreenWidthThreshold,
-        (960 + root.configuredWidgetCount * 40) * Appearance.fontSizeScale)
-    readonly property real minimalWidthThreshold: Math.max(
-        Appearance.sizes.barHellaShortenScreenWidthThreshold,
-        (720 + root.configuredWidgetCount * 28) * Appearance.fontSizeScale)
-    readonly property int useShortenedForm:
-        (root.screen?.width ?? 1920) <= root.minimalWidthThreshold ? 2
-        : (root.screen?.width ?? 1920) <= root.compactWidthThreshold ? 1 : 0
-    readonly property var compactHiddenWidgets: [
-        "visualizer", "activeWindow", "resources", "networkSpeed",
-        "weatherBar", "updatesCount"
-    ]
-    readonly property var minimalHiddenWidgets: [
-        ...root.compactHiddenWidgets, "media", "sysTray", "utilButtons",
-        "batteryIndicator", "divisor"
-    ]
 
     function filterLayout(layout) {
         let filtered = Array.from(layout ?? [])
@@ -56,10 +70,6 @@ Item {
             filtered = filtered.filter(name => name !== "batteryIndicator")
         if (!root.spectrumSignalActive)
             filtered = filtered.filter(name => name !== "visualizer")
-        if (root.useShortenedForm === 2)
-            return filtered.filter(name => !root.minimalHiddenWidgets.includes(name))
-        if (root.useShortenedForm === 1)
-            return filtered.filter(name => !root.compactHiddenWidgets.includes(name))
         return filtered
     }
 
@@ -82,7 +92,6 @@ Item {
     // on each side of the centre, and a per-widget process would have spawned
     // one subprocess per instance for the exact same spectrum.
     readonly property bool wantsVisualizer: root.spectrumOutputEnabled
-        && root.useShortenedForm === 0
         && ((Config.options?.bar?.m3?.layouts?.leftLayout ?? []).includes("visualizer")
             || (Config.options?.bar?.m3?.layouts?.middleLayout ?? []).includes("visualizer")
             || (Config.options?.bar?.m3?.layouts?.rightLayout ?? []).includes("visualizer"))
@@ -102,14 +111,30 @@ Item {
     readonly property int spectrumSmoothing: Math.max(0, Config.options?.bar?.visualizer?.smoothing ?? 2)
     readonly property string spectrumWaveMode: Config.options?.bar?.visualizer?.waveMode ?? "fill"
     readonly property real spectrumLineWidth: Math.max(1, Config.options?.bar?.visualizer?.lineWidth ?? 2)
-    readonly property real spectrumEdgeInset: Math.max(0, Config.options?.bar?.visualizer?.edgeInset ?? 0)
+    readonly property real spectrumEdgeInset: Math.max(6, Config.options?.bar?.visualizer?.edgeInset ?? 6)
     readonly property real spectrumEdgeSoftness: Math.max(0,
-        Math.min(1, (Config.options?.bar?.visualizer?.edgeSoftness ?? 28) / 100))
+        Math.min(1, (Config.options?.bar?.visualizer?.edgeSoftness ?? 36) / 100))
     readonly property string spectrumFrequencyProfile: Config.options?.bar?.visualizer?.frequencyProfile ?? "flat"
     readonly property real spectrumAccentStrength: Math.max(0,
         Math.min(1, (Config.options?.bar?.visualizer?.accentStrength ?? 70) / 100))
+    readonly property string spectrumOrganicFit: Config.options?.bar?.visualizer?.organicFit ?? "auto"
+    readonly property real spectrumOrganicLayoutScale: spectrumOrganicFit === "aura" ? 1
+        : spectrumOrganicFit === "contained" ? 0.72 : 0.68
+    readonly property real spectrumOrganicSensitivity: Math.max(0, Math.min(1,
+        (Config.options?.bar?.visualizer?.organicSensitivity ?? 42) / 100)) * spectrumOrganicLayoutScale
+    readonly property real spectrumOrganicPulse: Math.max(0, Math.min(1,
+        (Config.options?.bar?.visualizer?.organicPulse ?? 55) / 100)) * spectrumOrganicLayoutScale
+    readonly property real spectrumOrganicMotionSpeed: Math.max(0.25, Math.min(1.5,
+        (Config.options?.bar?.visualizer?.organicMotionSpeed ?? 80) / 100))
+    readonly property real spectrumOrganicIdleMotion: Math.max(0, Math.min(1,
+        (Config.options?.bar?.visualizer?.organicIdleMotion ?? 0) / 100))
+    readonly property real spectrumOrganicGlow: Math.max(0, Math.min(1,
+        (Config.options?.bar?.visualizer?.organicGlow ?? 25) / 100)) * spectrumOrganicLayoutScale
+    readonly property real spectrumOrganicBaseRadius: Math.max(0, Math.min(1,
+        (Config.options?.bar?.visualizer?.organicBaseRadius ?? 36) / 100))
+    readonly property bool spectrumOrganicEdgeAura: spectrumOrganicFit === "aura"
     readonly property bool materialSpectrum: root.isMaterial
-        && (Config.options?.bar?.m3?.borderless ?? "separated") !== "transparent"
+        && (Config.options?.bar?.m3?.borderless ?? "pills") !== "transparent"
 
     function spectrumStartRatio(item): real {
         if (!item || !(root.width > 0))
@@ -135,7 +160,7 @@ Item {
     }
     readonly property bool spectrumSignalActive: barCava.audioSignalActive
 
-    component SurfaceSpectrum: CavaSpectrum {
+    component SurfaceSpectrum: AudioVisualizerLayer {
         threadedRendering: true
         points: active ? barCava.points : []
         normalizationCeiling: active ? barCava.normalizationCeiling : 100
@@ -153,6 +178,14 @@ Item {
         edgeSoftness: root.spectrumEdgeSoftness
         frequencyProfile: root.spectrumFrequencyProfile
         accentStrength: root.spectrumAccentStrength
+        organicSensitivity: root.spectrumOrganicSensitivity
+        organicPulse: root.spectrumOrganicPulse
+        organicMotionSpeed: root.spectrumOrganicMotionSpeed
+        organicIdleMotion: root.spectrumOrganicIdleMotion
+        organicGlow: root.spectrumOrganicGlow
+        organicOpacity: root.spectrumOpacity
+        organicEdgeAura: root.spectrumOrganicEdgeAura
+        organicBaseRadius: root.spectrumOrganicBaseRadius
     }
 
     // Every widget is loaded through a URL, so its optional inputs are wired
@@ -182,7 +215,7 @@ Item {
         // its base capsule while information-rich widgets retain tonal pills.
         const joinedBlacklist = [
             "workspaces", "divisor", "powerButton", "docktoPanel",
-            "leftSidebarButton", "activeWindow", "visualizer",
+            "leftSidebarButton", "rightSidebarButton", "activeWindow", "visualizer",
             "notificationUnreadCount"
         ]
         return !joinedBlacklist.includes(name)
@@ -222,7 +255,7 @@ Item {
 
     function materialSectionSegments(repeater, surface): var {
         const segments = []
-        if ((Config.options?.bar?.m3?.borderless ?? "separated") === "separated")
+        if ((Config.options?.bar?.m3?.borderless ?? "pills") === "separated")
             root.appendRepeaterSegments(segments, repeater, surface)
         return segments
     }
@@ -386,11 +419,13 @@ Item {
 
         // Left
         Item {
+            id: leftSection
             anchors.left: parent.left
-            anchors.leftMargin: root.isMaterial ? (Config.options.bar.m3.gapsOut || 5) : (Config.options.bar.m3.cornerStyle === 1 ? 4 : 10)
+            anchors.leftMargin: root.sectionOuterMargin
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            width: root.isMaterial ? leftMaterialPill.implicitWidth : leftRow.implicitWidth
+            width: root.leftHostWidth
+            clip: root.layoutCompressionActive
 
             // Material pill wrapper
             Rectangle {
@@ -399,9 +434,11 @@ Item {
                 anchors.centerIn: parent
                 implicitWidth: leftMaterialRow.implicitWidth + 10
                 implicitHeight: leftMaterialRow.implicitHeight
+                width: root.layoutCompressionActive ? parent.width : implicitWidth
+                clip: root.layoutCompressionActive
                 radius: Appearance.rounding.full
                 color: (Config.options?.bar?.m3?.showBackground ?? true)
-                    && (Config.options?.bar?.m3?.borderless ?? "separated") === "pills"
+                    && (Config.options?.bar?.m3?.borderless ?? "pills") === "pills"
                     ? Appearance.colors.colLayer0 : "transparent"
 
                 SurfaceSpectrum {
@@ -424,6 +461,8 @@ Item {
                     id: leftMaterialRow
                     anchors.centerIn: parent
                     spacing: 3
+                    scale: implicitWidth > 0 ? Math.min(1, root.leftHostWidth / (implicitWidth + 10)) : 1
+                    transformOrigin: Item.Center
 
                     Repeater {
                         id: leftMaterialRepeater
@@ -500,9 +539,11 @@ Item {
         // Center
         Item {
             id: absoluteCenter
-            anchors.centerIn: parent
-            width: root.isMaterial ? centerMaterialPill.implicitWidth : middleRow.implicitWidth
-            height: parent.height
+            x: root.centerHostX
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: root.centerHostWidth
+            clip: root.layoutCompressionActive
 
             // Material pill wrapper
             Rectangle {
@@ -511,9 +552,11 @@ Item {
                 anchors.centerIn: parent
                 implicitWidth: centerMaterialRow.implicitWidth + 10
                 implicitHeight: centerMaterialRow.implicitHeight
+                width: root.layoutCompressionActive ? parent.width : implicitWidth
+                clip: root.layoutCompressionActive
                 radius: Appearance.rounding.full
                 color: (Config.options?.bar?.m3?.showBackground ?? true)
-                    && (Config.options?.bar?.m3?.borderless ?? "separated") === "pills"
+                    && (Config.options?.bar?.m3?.borderless ?? "pills") === "pills"
                     ? Appearance.colors.colLayer0 : "transparent"
 
                 SurfaceSpectrum {
@@ -536,6 +579,8 @@ Item {
                     id: centerMaterialRow
                     anchors.centerIn: parent
                     spacing: 3
+                    scale: implicitWidth > 0 ? Math.min(1, root.centerHostWidth / (implicitWidth + 10)) : 1
+                    transformOrigin: Item.Center
 
                     Repeater {
                         id: centerMaterialRepeater
@@ -610,11 +655,13 @@ Item {
 
         // Right
         Item {
+            id: rightSection
             anchors.right: parent.right
-            anchors.rightMargin: root.isMaterial ? (Config.options.bar.m3.gapsOut || 5) : (Config.options.bar.m3.cornerStyle === 1 ? 4 : 10)
+            anchors.rightMargin: root.sectionOuterMargin
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            width: root.isMaterial ? rightMaterialPill.implicitWidth : rightRow.implicitWidth
+            width: root.rightHostWidth
+            clip: root.layoutCompressionActive
 
             // Material pill wrapper
             Rectangle {
@@ -623,9 +670,11 @@ Item {
                 anchors.centerIn: parent
                 implicitWidth: rightMaterialRow.implicitWidth + 10
                 implicitHeight: rightMaterialRow.implicitHeight
+                width: root.layoutCompressionActive ? parent.width : implicitWidth
+                clip: root.layoutCompressionActive
                 radius: Appearance.rounding.full
                 color: (Config.options?.bar?.m3?.showBackground ?? true)
-                    && (Config.options?.bar?.m3?.borderless ?? "separated") === "pills"
+                    && (Config.options?.bar?.m3?.borderless ?? "pills") === "pills"
                     ? Appearance.colors.colLayer0 : "transparent"
 
                 SurfaceSpectrum {
@@ -648,6 +697,8 @@ Item {
                     id: rightMaterialRow
                     anchors.centerIn: parent
                     spacing: 3
+                    scale: implicitWidth > 0 ? Math.min(1, root.rightHostWidth / (implicitWidth + 10)) : 1
+                    transformOrigin: Item.Center
 
                     Repeater {
                         id: rightMaterialRepeater

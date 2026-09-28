@@ -18,7 +18,7 @@ function max2(a, b) {
     return a > b ? a : b;
 }
 
-function levenshteinDistance(s1, s2) {
+function levenshteinDistance(s1, s2, rows) {
     let len1 = s1.length;
     let len2 = s2.length;
 
@@ -30,8 +30,8 @@ function levenshteinDistance(s1, s2) {
         [len1, len2] = [len2, len1];
     }
 
-    let prev = new Array(len2 + 1);
-    let curr = new Array(len2 + 1);
+    let prev = rows ? rows[0] : new Array(len2 + 1);
+    let curr = rows ? rows[1] : new Array(len2 + 1);
 
     for (let j = 0; j <= len2; j++) {
         prev[j] = j;
@@ -43,7 +43,9 @@ function levenshteinDistance(s1, s2) {
             let cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
             curr[j] = min3(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
         }
-        [prev, curr] = [curr, prev];
+        const tmp = prev;
+        prev = curr;
+        curr = tmp;
     }
 
     return prev[len2];
@@ -55,10 +57,14 @@ function partialRatio(shortS, longS) {
     let best = 0.0;
 
     if (lenS === 0) return 1.0;
+    if (longS.includes(shortS)) return 1.0;
+
+    // Every sliding window has the same size; reuse its distance workspace.
+    const rows = [new Array(lenS + 1), new Array(lenS + 1)];
 
     for (let i = 0; i <= lenL - lenS; i++) {
         let sub = longS.slice(i, i + lenS);
-        let dist = levenshteinDistance(shortS, sub);
+        let dist = levenshteinDistance(shortS, sub, rows);
         let score = 1.0 - (dist / lenS);
         if (score > best) best = score;
     }

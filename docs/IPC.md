@@ -37,6 +37,9 @@ returned as JSON by `list`.
 | `open` | Open a destination by semantic identifier |
 | `close` | Close development-opened surfaces and clear the request |
 | `current` | Return the current destination or `closed` |
+| `meter` | Measure frame gaps for the given milliseconds (250–20000, default 2500) |
+| `metered` | Return the last measurement as JSON: frames, mean, p95, worst, frames over 20 and 50 ms |
+| `dragSim` | Simulate carrying an iRiS bubble (slot id, default `extra-clock`) around the focused output for 2.5 s, publishing the given number of moves per frame (1–16); never writes the config |
 
 ```bash
 inir dev list | jq -r '.[].id'
@@ -45,6 +48,8 @@ inir dev close
 inir dev audit
 inir dev audit sidebar-left/ai settings/ai
 inir dev audit --all --all-families
+inir dev meter 2500; sleep 3; inir dev metered
+inir dev dragSim extra-clock 8; inir dev meter 2400; sleep 3; inir dev metered
 ```
 
 `inir dev audit` selects destinations related to changed area-specific files in
@@ -133,6 +138,7 @@ Floating tools (Super+G): notes, images, crosshair, recorder, resources and othe
 | Function | Description |
 |----------|-------------|
 | `toggle` | Open/close Floating tools |
+| `tool` | Show or hide one floating tool by id (`crosshair`, `fpsLimiter`, `floatingImage`, `recorder`, `resources`, `notes`, `discord`, `volumeMixer`, `notifications`): `on`, `off` or `toggle` |
 
 ```kdl
 bind "Super+G" { spawn "inir" "overlay" "toggle"; }
@@ -258,8 +264,9 @@ Lock screen. For when you need to pretend you're working.
 | Function | Description |
 |----------|-------------|
 | `activate` | Lock the screen |
+| `prepareSleep` | Suspend handshake: activate immediately and wait until the compositor confirms the session lock is secure |
 | `deactivate` | Cancel lock and mark screen unlocked |
-| `status` | Return lock state (`locked`, `activating`, or `unlocked`) |
+| `status` | Return lock state (`secure`, `locked`, `activating`, or `unlocked`) |
 | `focus` | Refocus the lock screen input |
 
 ```kdl
@@ -329,7 +336,11 @@ Open or toggle the settings window. GUI config so you don't have to edit JSON by
 | Function | Description |
 |----------|-------------|
 | `open` | Open the settings window |
-| `toggle` | Toggle settings (overlay mode toggles, window mode opens) |
+| `toggle` | Toggle settings in the active host (overlay or window) |
+| `openOverlay` | Switch to overlay mode and open Settings |
+| `openOverlayAt index` | Switch to overlay mode, open Settings and preserve/jump to page `index` |
+| `openWindowAt index` | Switch to standalone Window mode and open page `index` |
+| `setOverlayStyle style index` | Switch overlay chrome while preserving page `index` |
 
 ```kdl
 bind "Super+Comma" { spawn "inir" "settings"; }
@@ -339,11 +350,12 @@ bind "Super+Comma" { spawn "inir" "settings"; }
 
 ### settingsNav
 
-Navigate the settings overlay to a specific page (same as clicking the nav rail). Opening the window itself is the `inir settings` CLI command (target `settings` above).
+Navigate the settings overlay to a specific page (same as clicking the nav rail). `inir settings` toggles the current Settings host; use the `settings` IPC target above when you need explicit open/toggle semantics.
 
 | Function | Description |
 |----------|-------------|
 | `page(index)` | Open the overlay and jump to page `index` |
+| `section(index, name)` | Open a page at its named section; for example `inir settingsNav section 28 sidebars` |
 | `count` | Number of settings pages |
 | `current` | Current page index, or `-1` when no page is open |
 
@@ -393,7 +405,8 @@ Playful mascot companion (needs `mascot.enable` and the companion switch in Sett
 | `chase` | Chase game: she hunts your mouse, every click is a spot she pounces on; click *her* to catch her and win |
 | `hideSeek` | Hide-and-seek: she tucks into a spot on the desktop. Click her before the 20s timeout to find her, otherwise she wins by default |
 | `tidy` | Undo the chaos: every displaced widget returns to its pre-chaos position |
-| `hide` | Send her away immediately |
+| `hide` | Dismiss the peek or active chaos, cancel follow-ups, tidy widgets and pause automatic visits for 30 minutes |
+| `snooze <minutes>` | Dismiss Kira and pause automatic visits for 1–480 minutes |
 
 ---
 
@@ -410,7 +423,7 @@ Session-long mood state that flavors the mascot's idle lines (needs `mascot.pers
 
 ### sidebarLeft
 
-Left sidebar (AI chat, apps).
+Left sidebar: AI chat and apps in Material; the customizable Focus panel in iRiS. In iRiS, `open`, `close` and `toggle` use the family-owned panel; AI detach and expanded-layout actions apply to Material.
 
 | Function | Description |
 |----------|-------------|
@@ -427,7 +440,7 @@ Left sidebar (AI chat, apps).
 
 ### sidebarRight
 
-Right sidebar (quick toggles, notepad, settings).
+Right sidebar: quick toggles, notepad and settings in Material; the customizable Today panel in iRiS.
 
 | Function | Description |
 |----------|-------------|
@@ -481,10 +494,16 @@ Wallpaper picker with grid, coverflow and compact launcher styles.
 | `openLauncher <mode>` | Open the compact launcher in `static` or `animated` mode |
 | `toggleOnMonitor <name>` | Open wallpaper selector on a specific monitor |
 | `random` | Pick a random wallpaper from the current folder |
+| `set <path>` | Apply a wallpaper (picture, GIF or video) by path, the same way the picker does |
+| `preview <path>` | Show a wallpaper on the desktop without applying it: no config write, no recoloring |
+| `cancelPreview` | Drop the preview and go back to the applied wallpaper |
+| `kind <name>` | Show only one kind of wallpaper in the library: `all`, `still`, `live` (videos) or `gif`. iRiS only; the filter also sits beside the search field whenever the folder holds more than one kind |
+| `browse <source> <query>` | Open the picker on a source — `library`, `wallhaven` or `live` (anime live wallpapers) — with a search, a folder to open (`~/Videos`), or `-` for none. Sources are an iRiS feature; other families just open the picker |
 | `status` | Return picker style, open surface, target monitor and selection target as JSON |
 
 ```kdl
 bind "Ctrl+Alt+T" { spawn "inir" "wallpaperSelector" "toggle"; }
+bind "Ctrl+Alt+L" { spawn "inir" "wallpaperSelector" "browse" "live" "-"; }
 bind "Ctrl+Alt+A" { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }
 ```
 
@@ -532,6 +551,28 @@ Floating media controls panel.
 | `toggle` | Open/close media controls |
 | `open` | Show media controls |
 | `close` | Hide media controls |
+
+---
+
+### equalizer
+
+Open the ii-family EasyEffects output equalizer. The integration is optional and disabled until you enable it. Run `inir settings`, then go to **Modules → Optional → EasyEffects Equalizer** and enable the switch. While it is disabled the IPC target is intentionally not constructed. On a fresh empty EasyEffects output pipeline, iNiR bootstraps a neutral 10-band `iNiR Equalizer` preset. Existing non-empty effect chains are never replaced automatically.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close equalizer |
+| `open` | Show equalizer |
+| `close` | Hide equalizer |
+| `refresh` | Refresh EasyEffects equalizer state |
+| `ensure` | Ensure Equalizer control is available; bootstraps a neutral Equalizer only when the output pipeline is empty |
+| `status` | Return current equalizer state as JSON |
+| `setBand <index> <gain>` | Set one 0-based band gain in dB |
+| `preset <name>` | Apply one built-in EQ preset |
+| `configure` | Convert the active Equalizer to the iNiR 10-band layout |
+
+```kdl
+bind "Ctrl+Alt+F" { spawn "inir" "equalizer" "toggle"; }
+```
 
 ---
 
@@ -620,6 +661,25 @@ On-screen volume indicator.
 
 ---
 
+### osd
+
+On-screen feedback for any family. The active family's OSD or Island decides where it is drawn.
+
+| Function | Description |
+|----------|-------------|
+| `volume` | Show the volume level |
+| `brightness` | Show the brightness level |
+| `mic` | Show the microphone level |
+| `keyboard` | Show the keyboard layout |
+| `media <action>` | Show now playing with a transport action: `play`, `pause`, `next` or `previous` |
+| `hide` | Hide whatever is showing |
+
+```kdl
+bind "Mod+Shift+K" { spawn "inir" "osd" "keyboard"; }
+```
+
+---
+
 ### cliphistService
 
 Clipboard history service. The backend that makes clipboard panel work. You probably don't need to call this directly.
@@ -687,17 +747,162 @@ bind "Super+F12" { spawn "inir" "gamemode" "toggle"; }
 
 ---
 
-### panelFamily
+### connections
 
-Switch between panel styles. ii supports two visual styles: Material ii (default) and Waffle (Windows 11-like).
+Short notices when something is plugged in, connected, unplugged or lost: networks, the internet, Bluetooth devices, USB devices by name (mice, keyboards, controllers, cameras, phones), the charger, the sound output, displays, and drives and memory cards with their name and size. Each family shows them its own way: a pill under the bar in Material, a panel in Waffle, the Island in iRiS. Settings has a switch for each kind.
 
 | Function | Description |
 |----------|-------------|
-| `cycle` | Cycle to next panel family (ii → waffle → ii) |
-| `set` | Set specific family ("ii" or "waffle") |
+| `sample <kind>` | Show how a notice looks without plugging anything: `network`, `internet`, `bluetooth`, `usb`, `power`, `audio`, `displays` or `drives` |
+| `status` | Print which kinds are on as JSON, and whether udev is there to watch USB devices and drives |
+| `enable` / `disable` / `toggle` | Turn connection notices on or off |
+
+---
+
+### network
+
+Whether the shell can reach the internet, as NetworkManager sees it. Surfaces that show online content (wallpaper sources, news, anime, weather, calendars, lyrics) read this to say why they are empty instead of failing quietly.
+
+| Function | Description |
+|----------|-------------|
+| `status` | Print the state as JSON: `online`, `connectivity` (`full`, `limited`, `portal`, `none`, `unknown`), connection name |
+| `check` | Ask NetworkManager to check connectivity again, for example after signing in to a captive portal |
+| `simulate <state>` | Pretend the connectivity is `none`, `limited`, `portal` or `full` until the shell restarts; any other value clears it. For testing |
+
+---
+
+### vpn
+
+NetworkManager VPN profiles (OpenVPN, WireGuard, anything with an NM plugin) and Tailscale, as the VPN piece and its card show them.
+
+| Function | Description |
+|----------|-------------|
+| `status` | Print the state as JSON: connected, through what, Tailscale's state, its devices and how many are online, your profiles |
+| `toggle` | Turn every active VPN off, or connect Tailscale (else your first profile) when none is on |
+| `details <state>` | `on`, `off` or `toggle` the card's details: addresses, name, account, exit node, devices and live traffic |
+| `refresh` | Read profiles and Tailscale again |
+| `importFile <path>` | Add a WireGuard `.conf` or OpenVPN `.ovpn` file as a NetworkManager profile; with no path, open the file chooser (*Import a file…* in the card) |
+| `add <kind>` | Create a VPN in NetworkManager's connection editor: `wireguard`, or `vpn` for the installed plugins (OpenVPN, L2TP…); `nmtui` in your terminal when the editor is not installed |
+
+```kdl
+bind "Super+Alt+V" { spawn "inir" "vpn" "toggle"; }
+```
+
+---
+
+### niriAnimations
+
+Presets for Niri's own window, workspace and overview animations. Applying one rewrites the animations in `config.d/60-animations.kdl` and keeps `off` and `slowdown` as they were. The same picker lives in Settings in every family. Your own presets go in `~/.config/inir/niri-animation-presets.json` as `{"presets": [...]}`, in the same shape as `defaults/niri-animation-presets.json`; one with a shipped id replaces it.
+
+| Function | Description |
+|----------|-------------|
+| `list` | List the presets; `*` marks the one your config matches |
+| `active` | Print the preset your config matches, or `custom` after hand edits |
+| `apply <id>` | Apply a preset: `snappy`, `niri`, `material`, `bouncy`, `gentle`, `instant` or one of yours |
+
+```kdl
+bind "Super+Alt+A" { spawn "inir" "niriAnimations" "apply" "snappy"; }
+```
+
+---
+
+### iris
+
+iRiS bar and Island design. Available while the iRiS bar is enabled.
+
+| Function | Description |
+|----------|-------------|
+| `open` | Expand the island on the focused output |
+| `close` | Collapse the island |
+| `page` | Expand the island on a page: `media`, `activity`, `desktop`, `tray` or `tools`, or step through its navigation with `next` / `prev` (the same path as scrolling over the navigation row) |
+| `toggle` | Expand or collapse the island on the focused output |
+| `card` | `open`, `close` or `toggle` the media bubble's floating card, or `pin` to keep it open |
+| `settings` | Open iRiS Settings on a section: `general`, `appearance`, `motion`, `bar`, `bubbles`, `dock`, `desktop`, `windows`, `sidebars`, `controlCenter`, `spotlight`, `notifications`, `sound`, `capture`, `display`, `keyboard`, `battery`, `gaming`, `lock`, `player`, `anime`, `sources` or `system`; add `/<group>` to open that group, e.g. `bubbles/behaviour` or `lock/security`. It also takes `next`, `prev`, `back`, `forward` (the history), `search:<words>` and `open` (the first result) |
+| `bubble` | Place an Island bubble (`left`, `right`, `utility`) or an extra bubble (`weather`, `notifications`, `controls`, `sound`, `mic`, `tools`, `media`, `tray`): a zone (`top-left`, `top-right`, `left`, `right`, `bottom-left`, `bottom-right`), `edge:<top|bottom|left|right>` with an optional `:<fraction>` along that edge (e.g. `edge:top:0.3`), `x,y` fractions of the output, `island` (slots) or `off` (extras) |
+| `dock` | `reveal`, `hide` or `toggle` the iRiS Dock (revealed stays until hidden or an app is chosen) |
+| `dockApp` | Open a Dock app's `windows` or `menu` by app id (e.g. `kitty windows`), or `<any> close` |
+| `appBubble` | Carry a Dock app out as a bubble of its own (e.g. `kitty right`): a zone, `x,y` fractions of the output, or `dock` to send it back |
+| `pin` | Keep the `left` (Focus) or `right` (Today) panel open beside windows, or stop |
+| `accent` | Set iRiS accent: `blue`, `mint`, `rose`, `lilac` or `wallpaper` |
+| `arrange` | Arrange the Island's desktop page in place — move, remove and add its blocks: `on`, `off` or `toggle` |
+| `activity` | Publish a live activity into the Island from any script: `<action> <id> <value>` — `start <id> <title>`, `title`, `progress` (`0.4`, `40`, `40%` or `-1` for indeterminate), `detail`, `glyph` (a Material Symbol), `tint` (`blue`, `sky`, `teal`, `green`, `yellow`, `orange`, `red`, `pink`, `indigo`, `purple`, `lavender`, `gray`), `end <id> <detail>` (shows a done event and retires), `dismiss <id> -`, `clear all -`. Values cannot contain commas |
+| `activities` | Return the live activities scripts have published, as JSON |
+| `motion <target>` | Measure how a Place opens, closes and reverses halfway, from the expanded Island: `spotlight`, `gallery`, `settings`, `focus` or `today`. Read the result with `motioned` |
+| `motioned` | The last `motion` measurement as JSON: frame pace, continuity, material, one surface, origin and a clean end, each passed or not, with the numbers behind them |
+| `edit` | Customize iRiS on the shell itself: the Island grows a capsule (Themes, Look, Pieces, undo, Done) and whatever you click (a piece, the Island, the Dock) grows its own options: `on`, `off`, `toggle`, a sheet (`themes`, `pieces`, or a Look tab: `material`, `colour`, `type`, `motion`, `bodies`, `places`, `transients`, `desktop`), `island`, `dock` or a piece to inspect (`vitals`, `left`, `app:kitty`) |
+| `control` | Arrange the Control Center in place (drag controls, resize them from a corner, add or take them out): `edit`, `done`, `toggle`, `undo`, `tab:<controls\|layouts\|panel>` to open the side library on that page, `expand:<display\|system\|devices\|network\|bluetooth\|none>` to open the Control Center with that expansion unfolded, or a layout (`iris`, `discs`, `compact`, `glance`, `studio`, `everything`) |
+| `lock` | Rehearse the lock screen (the real surface, editable, with nothing to unlock): `edit`, `done`, `toggle`, `page:<name>` to open the inspector on a page (`layouts`, `scene`, `type`, `clock`, `widgets`…), `widget:<key>` to put a desktop widget on the lock or take it off (`clock`, `weather`, `monthCalendar`…), `select:<key>` to select one on the lock and open its controls in the inspector (`select:<key>/look` for shape, material and opacity; `/arrange`, `/widget`), or a layout (`iris`, `centered`, `corner`, `minimal`) |
+| `studio` | Same as `edit`, kept for old keybinds: `on`, `off`, `toggle` or a sheet/target to open Customize on |
+| `barPiece` | Turn one of the Island's own pieces on or off: `weather`, `notifications`, `controls`, `sound`, `mic`, `tools`, `media` or `tray`, plus `on`, `off` or `toggle` |
+| `notch` | Melt the Island into its edge (or into the Surround band): `on`, `off` or `toggle` |
+| `surround` | Close the shell around the screen with a band on every edge: `on`, `off` or `toggle` |
+| `layout` | How the Island sits on its edge: `island`, `left`, `right`, `full` or `menubar` (top or bottom) |
+| `strip` | What the menu bar lays under its items: `transparent` (on the wallpaper) or `band` |
+| `edge` | Move the Island to a screen edge: `top`, `bottom`, `left` or `right` (on a side edge it rests as an upright capsule and its pages grow inward) |
+| `dockEdge` | Move the Dock: `auto` (opposite the Island), `top`, `bottom`, `left` or `right` |
+| `zone` | What a full-width Island carries in a zone: `start`, `center` or `end`, then kinds joined by `+` (`island`, `workspaces`, `window`, `time` or a piece kind), or `none` |
+| `preset` | Set the iRiS appearance preset: `iris`, `soft`, `round`, `crisp`, `angular` or `contrast` |
+| `theme <action>` | iRiS themes, each a whole redesign of the family: `list`, `apply:<id>`, `save:<name>` (what you see now becomes a theme file), `import:<path>` (a shared `.json`), `export` or `export:<id>` (prints the theme as JSON to share) and `folder` (where theme files live, `~/.config/inir/iris/themes`) |
+| `morph` | Set how iRiS morphs: `direct`, `liquid`, `glide`, `snap`, `elastic` or `instant` |
+| `set` | Set any iRiS option by path, e.g. `iris.appearance.theme.pieceShape squircle` or `iris.bubbles.scale 120` (values are JSON when they parse) |
+| `adaptive` | How much the wallpaper shapes iRiS, `0`-`100`; any other word prints what was read from the wallpaper |
+| `spotlight` | Open Spotlight with a query already typed, e.g. `firefox` or `12*7` (empty for suggestions) |
+| `spotlightClose` | Close Spotlight |
+| `gallerySource` | Show or hide an online source in the wallpaper gallery: `wallhaven`, `live`, `konachan` or `yandere`, then `on`, `off` or `toggle`; returns the sources shown, in order |
+| `bubbleCard` | Grow a bubble's own card: `weather`, `notifications`, `sound`, `mic`, `tools` or `tray` (from the bubble showing it, else the Island), or `close` |
+| `tap` | Tap a piece the Island carries (`controls`, `sound`, `tray`, `notifications`, `weather`…) as a click would: its card or page grows from it, or says the focused screen's bar has no such piece |
+| `bubbleMenu` | Open a floating bubble's own menu — what it opens, where it rests and how to put it away — by kind (`weather`, `sound`, …) or piece id (`app:kitty`) |
+| `icon <piece> <glyph>` | Choose the glyph a piece wears: `controls`, `tools`, `focus`, `notifications`, `bluetooth`, `updates`, `anime` or `watching`, then a Material Symbol name (e.g. `inir iris icon controls settings`) or `reset` to go back to its own face |
+| `utility` | Set the utility satellite: `tray`, `tools`, `sound`, `mic` or `none` |
+| `desktopMenu <x> <y>` | Open the desktop menu on the focused output at that point, in pixels; no point opens it in the middle |
+| `menuClose` | Close whichever iRiS or shell context menu is open |
+| `watch` | What the Continue bubble has in progress, or resume one of them: no argument lists them numbered with the episode and saved position, a number or part of a title resumes that show. Anything that matches nothing in progress starts a search instead. Only ani-cli can be pointed at one show; jerry and curd run their own picker |
+| `watchPick` | Answer whatever the Continue bubble is asking (which show, which episode, what next once one ends, which quality): no argument lists the options, a number or part of a label chooses one, `cancel` stops the run |
+| `watchSkip` | Close the episode that is playing and start the `next` (default) or `previous` one without searching again. Its place is saved first |
+| `watchSubs` | Subtitles of the episode that is playing: `size+`, `size-` (kept for every episode), `delay+`, `delay-`, `delay0` (this episode), `off`, `track:<id>`, `file:<path>` to load one. No argument lists the tracks |
+| `watchSeek` | Jump inside the episode that is playing by seconds: `85` skips an opening, `-10` goes back |
+| `status` | JSON with the Island, Dock, Control Center, Spotlight and side panel state, which edit modes, Settings or the wallpaper gallery hold the screen (`editing`, `settings`, `gallery`), plus the player the Island follows (title, position, length) |
+
+```bash
+inir iris open
+inir iris page desktop
+inir iris toggle
+inir iris dock toggle
+inir iris card toggle
+inir iris bubble right top-right
+inir iris appBubble kitty top-right
+inir iris pin right
+inir iris status
+inir iris close
+```
+
+### panelFamily
+
+Switch between the three shell families: Material ii (default), Waffle (Windows 11-like), and iRiS (the Island family).
+
+| Function | Description |
+|----------|-------------|
+| `cycle` | Switch to the next family in the switch list (`familyCycle`, in its order; all three by default, set in any family's Settings) |
+| `set` | Set specific family ("ii", "waffle", or "iris") |
 
 ```kdl
 bind "Mod+Shift+W" { spawn "inir" "panelFamily" "cycle"; }
+```
+
+---
+
+### globalStyle
+
+The Global Style every Material surface and desktop widget follows: material, cards, aurora, inir, angel, regalia, zzz, cookie or editorial.
+
+| Function | Description |
+|----------|-------------|
+| `set` | Switch to a style by name, with its bar corner and card defaults |
+| `get` | Return the active style |
+| `list` | List the styles |
+
+```kdl
+bind "Mod+Alt+S" { spawn "inir" "globalStyle" "set" "aurora"; }
 ```
 
 ---
@@ -895,16 +1100,6 @@ Waffle taskbar visibility.
 
 ---
 
-### osd
-
-Waffle on-screen display indicator (volume, brightness).
-
-| Function | Description |
-|----------|-------------|
-| `trigger` | Show the OSD indicator |
-
----
-
 ### waffleAltSwitcher
 
 Waffle Alt+Tab window switcher. Separate from the ii `altSwitcher`, supports quick-switch (first tab switches instantly, second opens UI) and no-visual-UI mode.
@@ -925,14 +1120,25 @@ Desktop background and widget controls.
 
 | Function | Description |
 |----------|-------------|
+| `widgetDesign name` | Put every desktop widget on `iris`, `material`, `individual`, `instrument` or `readout`; `undo` brings back the design and each widget's own look from before; `status` reports the design, how many widgets keep their own look and whether an undo is available. |
 | `toggleEditMode` | Toggle widget edit mode (drag, resize, configure desktop widgets) |
+| `toggleWidgetManager` | Enter edit mode if needed and toggle the widget manager on the focused output |
 | `setEditMode enabled` | Set widget edit mode explicitly |
 | `editState` | Report the active selection, physical panel insets, full desktop work area and panel-aware zone work area for each output |
 | `desktopItemsState` | Report desktop-item persistence, availability, item count, validation errors and undo state |
+| `quickControlsPage page` | Show a page of the selected widget's quick controls: widget, look or arrange |
+| `quickControlsGeometry` | Report where the selected widget's toolbar and quick-controls sheet sit, as JSON |
+| `legibilityState` | Report what each desktop widget reads under itself (brightness, spread, light or dark backdrop) and the ink and accent it chose |
 | `focusWidget widgetName openControls` | Select a desktop widget and optionally open its quick controls |
 | `promoteWidget widgetName` | Move a desktop widget to the top of the persistent layer order |
 | `resetLayerOrder` | Reset desktop widgets to their built-in stacking order |
 | `setWidgetEnabled widgetName enabled` | Enable or disable a built-in desktop widget |
+| `applyOrganicEdgePreset name` | Apply an Organic Edge scene by name without changing enabled displays |
+| `applyOrganicEdgeComposition name` | Apply only an Organic Edge topology/geometry preset |
+| `applyOrganicEdgeMaterial name` | Apply only an Organic Edge material/light preset |
+| `applyOrganicEdgeResponse name` | Apply only an Organic Edge music-response preset |
+| `organicEdgeState` | Report each Organic Edge output, selected edges, frame, audio subscription and shader status |
+| `setOrganicEdgeEnabled enabled` | Enable or disable the independent Organic Edge screen field |
 | `clockDebugState` | Report clock palette, renderer and quick-control geometry diagnostics |
 | `clockDebugSetMode digital\|cookie adaptToWallpaper` | Temporarily select a diagnostic clock mode |
 | `clockDebugSetRegion color brightness spread` | Inject a temporary wallpaper-region sample |
@@ -969,7 +1175,7 @@ Desktop-widget power management (pauses widget rendering on game mode, fullscree
 
 | Function | Description |
 |----------|-------------|
-| `status` | Returns JSON: `enabled`, `widgetsActive`, and the active `triggers` (gameMode, fullscreen, windowsPresent, editMode) |
+| `status` | Returns JSON: `enabled`, `widgetsActive`, `pauseReason`, and the active `triggers` (gameMode, fullscreen, windowsPresent, editMode) |
 
 ---
 

@@ -23,7 +23,7 @@ Button {
     property var releaseAction // When left clicking (release)
     property var altAction // When right clicking
     property var middleClickAction // When middle clicking
-    property bool bounce: !Appearance.regaliaEverywhere
+    property bool bounce: !Appearance.regaliaEverywhere && !Appearance.editorialEverywhere
     // Cookie Shapes: an organic face costs a Canvas, and a segmented group needs
     // its members to share one continuous silhouette. Standalone semantic
     // controls opt in; grouped ones stay rectangular on purpose.
@@ -41,8 +41,13 @@ Button {
     property int clickIndex: parentGroup?.clickIndex ?? -1
     property bool isAtSide: indexInParent === 0 || indexInParent === (parentGroup?.childrenCount - 1)
 
-    Layout.fillWidth: (clickIndex - 1 <= indexInParent && indexInParent <= clickIndex + 1)
-    Layout.fillHeight: (clickIndex - 1 <= indexInParent && indexInParent <= clickIndex + 1)
+    // Bounce stretch only while a press is active. With clickIndex at the idle
+    // value -1 the raw interval test also matched the first child, permanently
+    // stretching it and starving its siblings (disproportionate quick controls).
+    property bool clickStretch: root.clickIndex >= 0
+        && (root.clickIndex - 1 <= root.indexInParent && root.indexInParent <= root.clickIndex + 1)
+    Layout.fillWidth: root.clickStretch
+    Layout.fillHeight: root.clickStretch
     implicitWidth: (root.down && bounce) ? clickedWidth : baseWidth
     implicitHeight: (root.down && bounce) ? clickedHeight : baseHeight
 
@@ -153,8 +158,11 @@ Button {
 
         color: buttonBackground.cookieFace || Appearance.regaliaEverywhere
             ? "transparent" : root.color
-        border.width: 0
-        border.color: "transparent"
+        border.width: Appearance.editorialEverywhere ? (root.visualFocus ? 2 : 1) : 0
+        border.color: Appearance.editorialEverywhere
+            ? (root.visualFocus ? Appearance.editorial.focusRing
+                : root.hovered || root.down ? Appearance.editorial.edge : "transparent")
+            : "transparent"
         scale: Appearance.regaliaEverywhere && root.down ? Appearance.regalia.pressScale : 1
         Behavior on scale {
             enabled: Appearance.animationsEnabled && Appearance.regaliaEverywhere
@@ -192,12 +200,16 @@ Button {
 
     contentItem: StyledText {
         text: root.buttonText
+        font.weight: Appearance.editorialEverywhere ? Appearance.editorial.labelWeight : Font.Normal
+        horizontalAlignment: Text.AlignHCenter
         // ZZZ selected = sticker plate → onSticker ink; idle = panel ink. Keeps
         // tab/segment labels readable instead of washed default ink on a pop plate.
         color: Appearance.regaliaEverywhere
             ? (root.toggled ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onColor)
             : Appearance.zzzEverywhere
                 ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
+                : Appearance.editorialEverywhere
+                    ? (root.toggled ? Appearance.editorial.accentInk : Appearance.editorial.ink)
                 : Appearance.colors.colOnLayer0
         Behavior on color {
             enabled: Appearance.animationsEnabled

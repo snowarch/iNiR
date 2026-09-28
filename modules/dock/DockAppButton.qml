@@ -116,7 +116,9 @@ DockButton {
         id: hoverDelayTimer
         interval: Config.options?.dock?.hoverPreviewDelay ?? 400
         onTriggered: {
-            if (root.hasWindows && root.buttonHovered) {
+            if (root.hasWindows && root.buttonHovered
+                    && !(root.appListRoot?.contextMenuOpen ?? false)
+                    && !(root.appListRoot?.dragActive ?? false)) {
                 root.hoverPreviewRequested()
             }
         }
@@ -139,7 +141,7 @@ DockButton {
     // Subtle highlight for active app (disabled in macOS and pill modes —
     // macOS uses magnify, pill uses its own background highlight)
     scale: (!macosStyle && !pillStyle && appIsActive)
-        ? (root.regaliaStyle ? 1.0 : root.zzzStyle ? 1.02 : 1.05) : 1.0
+        ? (Appearance.editorialEverywhere || root.regaliaStyle ? 1.0 : root.zzzStyle ? 1.02 : 1.05) : 1.0
     Behavior on scale {
         enabled: Appearance.animationsEnabled
         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -207,14 +209,25 @@ DockButton {
     // Suppress ripple/hover bg in macOS mode so no colored rect appears under icon
     // Island mode hovers like a Ricelin row: a faint cream frame fill with a
     // vermilion-tinted press, instead of the global style's hover chain.
-    colBackgroundHover: macosStyle ? "transparent" : root.islandStyle ? PillTheme.frameBg
+    readonly property bool editorialGlassActive: Appearance.editorialEverywhere && Appearance.editorial.glassActive
+
+    colBackground: Appearance.editorialEverywhere && appIsActive
+        ? (root.editorialGlassActive ? Appearance.editorial.glassSelection : Appearance.editorial.field)
+        : "transparent"
+    colBackgroundHover: Appearance.editorialEverywhere
+        ? (root.editorialGlassActive
+            ? (root.appIsActive ? Appearance.editorial.glassSelectionHover : Appearance.editorial.glassControlHover)
+            : Appearance.editorial.field)
+        : macosStyle ? "transparent" : root.islandStyle ? PillTheme.frameBg
         : (root.regaliaStyle ? Appearance.regalia.hoverPlate
         : root.zzzStyle ? "transparent"
         : root.angelStyle ? Appearance.angel.colGlassCard
         : root.inirStyle ? Appearance.inir.colLayer1Hover
         : root.auroraStyle ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer0Hover)
-    colRipple: macosStyle ? "transparent" : root.islandStyle ? Qt.alpha(PillTheme.vermLit, 0.18)
+    colRipple: Appearance.editorialEverywhere
+        ? (root.editorialGlassActive ? Appearance.editorial.glassSelectionActive : Appearance.colors.colPrimaryContainerActive)
+        : macosStyle ? "transparent" : root.islandStyle ? Qt.alpha(PillTheme.vermLit, 0.18)
         : (root.regaliaStyle ? Appearance.regalia.pressPlate
         : root.zzzStyle ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.22)
         : root.angelStyle ? Appearance.angel.colGlassCardActive
@@ -299,6 +312,10 @@ DockButton {
     onButtonHoveredChanged: {
         if (toplevels.length > 0) {
             if (buttonHovered) {
+                if (appListRoot?.contextMenuOpen
+                        && appListRoot.contextMenuSourceButton !== root) {
+                    appListRoot.closeContextMenu(false)
+                }
                 appListRoot.lastHoveredButton = root
                 appListRoot.buttonHovered = true
                 // Start hover timer for preview
@@ -378,6 +395,15 @@ DockButton {
     }
 
     onClicked: {
+        if (appListRoot?.contextMenuOpen)
+            appListRoot.closeContextMenu(true)
+
+        // A dock click is navigation, not a request to refresh screenshots. Stop
+        // the pending hover preview before focus changes so screenshot-window can
+        // never race the first Ctrl+V in the destination app.
+        hoverDelayTimer.stop()
+        root.hoverPreviewDismissed()
+
         // Suppress the click that RippleButton fires after a drag-release
         if (appListRoot?._suppressNextClick) {
             appListRoot._suppressNextClick = false
@@ -408,6 +434,8 @@ DockButton {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         property real _accumulated: 0
         onWheel: event => {
+            if (root.appListRoot?.contextMenuOpen)
+                root.appListRoot.closeContextMenu(true)
             // Touchpads emit many small deltas; one notch is 120 units.
             _accumulated += event.angleDelta.y
             while (Math.abs(_accumulated) >= 120) {
@@ -420,6 +448,8 @@ DockButton {
     }
 
     middleClickAction: () => {
+        if (root.appListRoot?.contextMenuOpen)
+            root.appListRoot.closeContextMenu(true)
         launchFromDesktopEntry();
     }
 
@@ -428,15 +458,17 @@ DockButton {
     }
 
     function showContextMenu(): void {
-        root.appListRoot.closeAllContextMenus()
-        root.appListRoot.contextMenuOpen = true
-        root.hoverPreviewDismissed()
         hoverDelayTimer.stop()
         // Snapshot the entries. A live binding on `toplevels` re-evaluates on
         // every window/title event, which resets the menu's Repeater and kills
         // the hover state of the item under the cursor.
-        contextMenu.model = root.buildContextMenuModel()
-        contextMenu.requestOpen()
+        root.appListRoot.requestContextMenu(root, root.buildContextMenuModel())
+    }
+
+    Component.onDestruction: {
+        hoverDelayTimer.stop()
+        if (root.appListRoot && root.appListRoot.contextMenuSourceButton === root)
+            root.appListRoot.closeContextMenu(true)
     }
 
     function desktopActionIcon(action): var {
@@ -570,23 +602,6 @@ DockButton {
                 }
             ] : [])
         ]
-    }
-
-    Connections {
-        target: root.appListRoot
-        function onCloseAllContextMenus() {
-            contextMenu.close()
-        }
-    }
-
-    DockContextMenu {
-        id: contextMenu
-        anchorItem: root
-        anchorHovered: root.buttonHovered
-
-        onActiveChanged: {
-            if (!active && root.appListRoot) root.appListRoot.contextMenuOpen = false
-        }
     }
 
       contentItem: Loader {

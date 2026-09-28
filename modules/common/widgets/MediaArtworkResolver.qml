@@ -37,6 +37,8 @@ QtObject {
     readonly property string artFilePath: root.artFileName.length > 0 ? `${root.cacheDirectory}/${root.artFileName}` : ""
 
     property int _generation: 0
+    property string _lastBase: ""
+    property string _adoptBase: ""
     property int _retryCount: 0
     readonly property int _maxRetries: 3
     property int _localReloadsLeft: 0
@@ -101,9 +103,18 @@ QtObject {
     }
 
     function _setReadySource(url: string): void {
+        const value = url.toString();
+        if (root._adoptBase.length > 0) {
+            const adopted = root._adoptBase;
+            root._adoptBase = "";
+            if (value === adopted && root.displaySource.length > 0) {
+                root.ready = true;
+                return;
+            }
+        }
+        root._lastBase = value;
         root._generation += 1;
         const generation = root._generation;
-        const value = url.toString();
         const nextSource = root._cacheBust(value);
 
         if (value.startsWith("file://")) {
@@ -231,7 +242,19 @@ QtObject {
         root._refreshNow();
     }
 
+    onDisplaySourceChanged: {
+        if (root.displaySource.length > 0)
+            MediaArtworkCache.remember(root.metadataKey, root._lastBase, root.displaySource);
+    }
+
     Component.onCompleted: {
+        const cached = MediaArtworkCache.lookup(root.metadataKey);
+        if (cached) {
+            root._lastBase = cached.base;
+            root._adoptBase = cached.base;
+            root.displaySource = cached.source;
+            root.ready = true;
+        }
         root._completed = true;
         root._localReloadsLeft = root.localReloadPasses;
         root._refreshNow();

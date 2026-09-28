@@ -9,6 +9,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.background.widgets
+import qs.modules.iris.widgets
 
 // Compact desktop headline surface backed by the shared NewsService. Articles
 // only open from an explicit action, never from an incidental card click.
@@ -21,17 +22,40 @@ AbstractBackgroundWidget {
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         showBackground: true, showBorder: true, backgroundOpacity: 0.16,
         borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1, useBlur: false,
+        style: "card", showMeta: true, rotateSeconds: 45,
         x: 100, y: 260
     })
+    readonly property var rotateChoices: [
+        { label: Translation.tr("15 s"), value: 15 },
+        { label: Translation.tr("45 s"), value: 45 },
+        { label: Translation.tr("2 min"), value: 120 },
+        { label: Translation.tr("5 min"), value: 300 }
+    ]
 
-    implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 320)
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 320)
         * root.scaleFactor)
-    implicitHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 92)
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 92)
         * root.scaleFactor)
+    irisFace: Component { IrisNewsFace { widget: root } }
+    irisSizes: ["small", "medium", "large"]
+    irisDefaultSize: "medium"
+    irisOptions: [
+        { key: "showMeta", raw: true, label: Translation.tr("Source and time"), icon: "info", fallback: true },
+        { key: "rotateSeconds", raw: true, label: Translation.tr("Change every"), fallback: 45,
+            choices: root.rotateChoices }
+    ]
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 220
     resizeMinHeight: 72
     needsColText: true
+    readonly property string tickerStyle: root._readConfigKey("style") ?? "card"
+    readonly property bool instrument: root.tickerStyle === "instrument"
+    readonly property bool showMeta: root._readConfigKey("showMeta") ?? true
+    readonly property int rotateSeconds: {
+        const value = Number(root._readConfigKey("rotateSeconds") ?? 45)
+        return Number.isFinite(value) && value >= 5 ? Math.min(900, value) : 45
+    }
+    widgetSurfaceEnabled: !root.instrument
 
     property int headlineIndex: 0
     property var displayedArticle: null
@@ -97,7 +121,7 @@ AbstractBackgroundWidget {
     }
 
     Timer {
-        interval: 12000
+        interval: root.rotateSeconds * 1000
         repeat: true
         running: root.visible && root.powerActive && !root.rotationPaused
             && root.articleCount > 1
@@ -115,84 +139,64 @@ AbstractBackgroundWidget {
 
     editPopoverContent: Component {
         ColumnLayout {
-            spacing: 6
-
-            Row {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 2
-
-                SelectionGroupButton {
-                    width: 34; height: 32
-                    horizontalPadding: 7
-                    verticalPadding: 5
-                    leftmost: true; rightmost: true
-                    enabled: root.articleCount > 1
-                    buttonIcon: "chevron_left"
-                    onClicked: root._moveHeadline(-1)
-                    StyledToolTip { text: Translation.tr("Previous") }
-                }
-                SelectionGroupButton {
-                    height: 32
-                    horizontalPadding: 9
-                    verticalPadding: 5
-                    leftmost: true; rightmost: true
-                    toggled: root.rotationPaused
-                    buttonIcon: root.rotationPaused ? "play_arrow" : "pause"
-                    buttonText: root.rotationPaused
-                        ? Translation.tr("Resume") : Translation.tr("Pause")
-                    onClicked: root.rotationPaused = !root.rotationPaused
-                }
-                SelectionGroupButton {
-                    width: 34; height: 32
-                    horizontalPadding: 7
-                    verticalPadding: 5
-                    leftmost: true; rightmost: true
-                    enabled: root.articleCount > 1
-                    buttonIcon: "chevron_right"
-                    onClicked: root._moveHeadline(1)
-                    StyledToolTip { text: Translation.tr("Next") }
-                }
-                SelectionGroupButton {
-                    width: 34; height: 32
-                    horizontalPadding: 7
-                    verticalPadding: 5
-                    leftmost: true; rightmost: true
-                    enabled: !NewsService.loading
-                    buttonIcon: "refresh"
-                    onClicked: root._fetch(true)
-                    StyledToolTip { text: Translation.tr("Refresh") }
-                }
-                SelectionGroupButton {
-                    width: 34; height: 32
-                    horizontalPadding: 7
-                    verticalPadding: 5
-                    leftmost: true; rightmost: true
-                    enabled: root.displayedArticle !== null
-                    buttonIcon: "open_in_new"
-                    onClicked: root._openArticle()
-                    StyledToolTip { text: Translation.tr("Open article") }
+            spacing: 14
+            WidgetQuickSection {
+                title: Translation.tr("Style")
+                WidgetQuickChoices {
+                    current: root.tickerStyle
+                    model: [
+                        { label: Translation.tr("Card"), icon: "crop_landscape", value: "card" },
+                        { label: Translation.tr("Instrument"), icon: "avg_pace", value: "instrument" }
+                    ]
+                    onPicked: value => root._setOutputValue("style", value)
                 }
             }
-
-            StyledText {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 240
-                horizontalAlignment: Text.AlignHCenter
-                text: root.articleCount > 0
-                    ? ((root.headlineIndex % root.articleCount) + 1) + " / "
-                        + root.articleCount + (root.articleMeta.length > 0
-                            ? " · " + root.articleMeta : "")
-                    : (NewsService.loading
-                        ? Translation.tr("Loading…") : Translation.tr("No news"))
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                wrapMode: Text.NoWrap
-                elide: Text.ElideMiddle
+            WidgetQuickSection {
+                title: Translation.tr("Headlines")
+                detail: root.articleCount > 0
+                    ? ((root.headlineIndex % root.articleCount) + 1) + " / " + root.articleCount
+                    : (NewsService.loading ? Translation.tr("Loading…") : Translation.tr("No news"))
+                WidgetQuickChoices {
+                    maxColumns: 5
+                    isSelected: entry => entry.value === "pause" && root.rotationPaused
+                    model: [
+                        { value: "previous", icon: "chevron_left", tooltip: Translation.tr("Previous"), visible: root.articleCount > 1 },
+                        { value: "pause", icon: root.rotationPaused ? "play_arrow" : "pause",
+                            tooltip: root.rotationPaused ? Translation.tr("Resume") : Translation.tr("Pause") },
+                        { value: "next", icon: "chevron_right", tooltip: Translation.tr("Next"), visible: root.articleCount > 1 },
+                        { value: "refresh", icon: "refresh", tooltip: Translation.tr("Refresh"), visible: !NewsService.loading },
+                        { value: "open", icon: "open_in_new", tooltip: Translation.tr("Open article"), visible: root.displayedArticle !== null }
+                    ]
+                    onPicked: value => {
+                        if (value === "previous") root._moveHeadline(-1)
+                        else if (value === "next") root._moveHeadline(1)
+                        else if (value === "pause") root.rotationPaused = !root.rotationPaused
+                        else if (value === "refresh") root._fetch(true)
+                        else if (value === "open") root._openArticle()
+                    }
+                }
+                WidgetQuickToggle {
+                    Layout.fillWidth: true
+                    iconName: "label"
+                    label: Translation.tr("Source and time")
+                    checked: root.showMeta
+                    onToggled: root._setOutputValue("showMeta", !root.showMeta)
+                }
+            }
+            WidgetQuickSection {
+                title: Translation.tr("Change every")
+                WidgetQuickChoices {
+                    maxColumns: 4
+                    current: root.rotateSeconds
+                    model: root.rotateChoices
+                    onPicked: value => root._setOutputValue("rotateSeconds", value)
+                }
             }
         }
     }
 
     WidgetSurface {
+        irisPresentation: root.widgetIris
         regionBrightness: root.regionBrightness
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0
@@ -209,18 +213,20 @@ AbstractBackgroundWidget {
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.backgroundOpacity > 0 || root.borderWidth > 0
-            || root.effectiveBlur
+        shown: !root.irisFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0
+            || root.effectiveBlur)
     }
 
     HoverHandler { id: newsHover }
 
     RowLayout {
+        visible: !root.irisFaced
         anchors.fill: parent
         anchors.margins: Math.round(10 * root.scaleFactor)
         spacing: Math.round(9 * root.scaleFactor)
 
         MaterialShape {
+            visible: !root.instrument
             Layout.alignment: Qt.AlignVCenter
             implicitSize: Math.round(32 * root.scaleFactor)
             shape: MaterialShape.Shape.Cookie4Sided
@@ -235,6 +241,29 @@ AbstractBackgroundWidget {
         }
 
         ColumnLayout {
+            visible: root.instrument
+            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: Math.round(34 * root.scaleFactor)
+            spacing: Math.round(3 * root.scaleFactor)
+
+            Rectangle {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: Math.max(2, Math.round(2 * root.scaleFactor))
+                Layout.preferredHeight: Math.round(28 * root.scaleFactor)
+                color: root.widgetAccentVisible
+            }
+            StyledText {
+                Layout.alignment: Qt.AlignHCenter
+                text: "WIRE"
+                color: root.widgetInkMuted
+                font.family: Appearance.font.family.monospace
+                font.pixelSize: Math.max(7, Math.round(8 * root.scaleFactor))
+                font.weight: Font.DemiBold
+                font.letterSpacing: Math.round(1 * root.scaleFactor)
+            }
+        }
+
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: Math.round(2 * root.scaleFactor)
@@ -245,11 +274,15 @@ AbstractBackgroundWidget {
 
                 StyledText {
                     Layout.fillWidth: true
+                    visible: root.showMeta
                     text: root.articleMeta.length > 0
                         ? root.articleMeta : Translation.tr("News")
-                    color: root.widgetInkMuted
-                    font.pixelSize: Math.round(
-                        Appearance.font.pixelSize.smaller * root.scaleFactor)
+                    color: root.instrument ? root.widgetAccentVisible : root.widgetInkMuted
+                    font.family: root.instrument ? Appearance.font.family.monospace : root.widgetBodyFamily
+                    font.pixelSize: Math.round((root.instrument
+                        ? Appearance.font.pixelSize.smallest : Appearance.font.pixelSize.smaller) * root.scaleFactor)
+                    font.weight: root.instrument ? Font.DemiBold : Font.Normal
+                    font.letterSpacing: root.instrument ? Math.round(0.8 * root.scaleFactor) : 0
                     wrapMode: Text.NoWrap
                     elide: Text.ElideRight
                 }
@@ -258,8 +291,8 @@ AbstractBackgroundWidget {
                     visible: root.articleCount > 1
                     text: ((root.headlineIndex % Math.max(1, root.articleCount)) + 1)
                         + "/" + root.articleCount
-                    color: root.widgetInkSubtle
-                    font.family: Appearance.font.family.numbers
+                    color: root.instrument ? root.widgetInkMuted : root.widgetInkSubtle
+                    font.family: root.widgetNumbersFamily
                     font.pixelSize: Math.round(
                         Appearance.font.pixelSize.smallest * root.scaleFactor)
                 }
@@ -270,15 +303,17 @@ AbstractBackgroundWidget {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 text: root.displayedArticle?.title
-                    ?? (NewsService.loading
-                        ? Translation.tr("Loading…") : Translation.tr("No news"))
+                    ?? (!Network.online ? Network.offlineReason
+                        : NewsService.loading ? Translation.tr("Loading…") : Translation.tr("No news"))
                 color: root.widgetInk
                 wrapMode: Text.WordWrap
                 maximumLineCount: 2
                 elide: Text.ElideRight
-                font.pixelSize: Math.round(
-                    Appearance.font.pixelSize.small * root.scaleFactor)
-                font.weight: Font.DemiBold
+                font.family: root.widgetTitleFamily
+                font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.normal
+                    : Appearance.font.pixelSize.small * root.widgetTitleScale) * root.scaleFactor)
+                font.weight: root.instrument ? Font.DemiBold : root.widgetTitleWeight
+                font.letterSpacing: root.widgetTitleTracking
                 opacity: 1
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled

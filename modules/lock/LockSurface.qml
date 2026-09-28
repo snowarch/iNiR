@@ -35,6 +35,7 @@ MouseArea {
     readonly property real blurZoom: Config.options?.lock?.blur?.extraZoom ?? 1.1
     readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
     readonly property bool _zzz: Appearance.zzzEverywhere
+    readonly property bool editorial: Appearance.editorialEverywhere
 
     // Widget visibility
     readonly property bool showWeather: Config.options?.lock?.widgets?.weather ?? true
@@ -405,9 +406,9 @@ MouseArea {
                         anchors.verticalCenter: parent.verticalCenter
                         text: Network.materialSymbol ?? "signal_wifi_off"
                         iconSize: 16
-                        color: Appearance.colors.colOnSurface
+                        color: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnSurface
 
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -420,9 +421,9 @@ MouseArea {
                         visible: text.length > 0 && text.length < 16
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.main
-                        color: Appearance.colors.colOnSurfaceVariant
+                        color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant
 
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -438,9 +439,9 @@ MouseArea {
                     anchors.verticalCenter: parent.verticalCenter
                     text: BluetoothStatus.connected ? "bluetooth_connected" : "bluetooth"
                     iconSize: 16
-                    color: Appearance.colors.colOnSurface
+                    color: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnSurface
 
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                     layer.effect: DropShadow {
                         horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                         color: Qt.rgba(0, 0, 0, 0.4)
@@ -459,9 +460,9 @@ MouseArea {
                             : Audio.value < 0.66 ? "volume_down"
                             : "volume_up"
                         iconSize: 16
-                        color: Appearance.colors.colOnSurface
+                        color: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnSurface
 
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -473,9 +474,9 @@ MouseArea {
                         text: Math.round(Audio.value * 100) + "%"
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.numbers
-                        color: Appearance.colors.colOnSurfaceVariant
+                        color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant
 
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -505,9 +506,10 @@ MouseArea {
                         }
                         iconSize: 16
                         color: (topBatteryRow.batteryLevel <= 15 && !topBatteryRow.isCharging)
-                            ? Appearance.colors.colError : Appearance.colors.colOnSurface
+                            ? Appearance.colors.colError
+                            : (root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnSurface)
 
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -519,9 +521,9 @@ MouseArea {
                         text: topBatteryRow.batteryLevel + "%"
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.numbers
-                        color: Appearance.colors.colOnSurfaceVariant
+                        color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant
 
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -579,11 +581,12 @@ MouseArea {
                     Layout.alignment: clockView.clockPosition === "center" ? Qt.AlignHCenter : Qt.AlignLeft
                     text: DateTime.time
                     font.pixelSize: Math.round((clockView.clockStyle === "minimal" ? 72 : 112) * Appearance.fontSizeScale)
-                    font.weight: Font.Light
+                    font.weight: root.editorial ? Font.Normal : Font.Light
                     font.family: Appearance.font.family.numbers
-                    color: Appearance.colors.colOnSurface
+                    font.letterSpacing: root.editorial ? -1.2 : 0
+                    color: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnSurface
 
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                     layer.effect: DropShadow {
                         horizontalOffset: 0
                         verticalOffset: 3
@@ -598,12 +601,13 @@ MouseArea {
                     Layout.alignment: clockView.clockPosition === "center" ? Qt.AlignHCenter : Qt.AlignLeft
                     text: Qt.formatDate(new Date(), "dddd, d MMMM")
                     font.pixelSize: Math.round((clockView.clockStyle === "minimal" ? 15 : 20) * Appearance.fontSizeScale)
-                    font.weight: Font.Normal
-                    font.family: Appearance.font.family.title
-                    font.letterSpacing: 0.5
-                    color: Appearance.colors.colOnSurface
+                    font.weight: root.editorial ? Font.DemiBold : Font.Normal
+                    font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.title
+                    font.letterSpacing: root.editorial ? 1.1 : 0.5
+                    font.capitalization: root.editorial ? Font.AllUppercase : Font.MixedCase
+                    color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurface
 
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                     layer.effect: DropShadow {
                         horizontalOffset: 0
                         verticalOffset: 1
@@ -648,12 +652,13 @@ MouseArea {
                         }
                         text: Qt.formatDate(new Date(), "dddd, d MMMM")
                         font.pixelSize: Math.round(16 * Appearance.fontSizeScale)
-                        font.weight: Font.Normal
-                        font.family: Appearance.font.family.title
-                        font.letterSpacing: 0.5
-                        color: Appearance.colors.colOnSurface
+                        font.weight: root.editorial ? Font.DemiBold : Font.Normal
+                        font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.title
+                        font.letterSpacing: root.editorial ? 1.1 : 0.5
+                        font.capitalization: root.editorial ? Font.AllUppercase : Font.MixedCase
+                        color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurface
 
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 8; samples: 17
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -779,18 +784,22 @@ MouseArea {
                                 id: groupCard
                                 width: parent.width
                                 height: groupContent.implicitHeight + 16
-                                radius: root._zzz ? Appearance.zzz.panelRadius : Appearance.rounding.normal
+                                radius: root._zzz ? Appearance.zzz.panelRadius
+                                    : root.editorial ? Appearance.editorial.radius
+                                    : Appearance.rounding.normal
                                 border.width: 0
                                 border.color: root._zzz ? Appearance.zzz.hairline : "transparent"
                                 color: root._zzz
                                     ? "transparent"
+                                    : root.editorial
+                                        ? (groupMouseArea.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.editorial.layer(1))
                                     : (groupMouseArea.containsMouse
                                         ? ColorUtils.transparentize(Appearance.colors.colLayer1, 0.04)
                                         : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.08))
 
                                 Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
 
-                                layer.enabled: Appearance.effectsEnabled && !root._zzz
+                                layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                                 layer.effect: DropShadow {
                                     horizontalOffset: 0
                                     verticalOffset: 2
@@ -872,7 +881,7 @@ MouseArea {
                                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                                 font.weight: Font.Medium
                                                 font.family: Appearance.font.family.main
-                                                color: Appearance.colors.colOnSurfaceVariant
+                                                color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant
                                                 elide: Text.ElideRight
                                                 visible: text.length > 0
                                             }
@@ -893,7 +902,7 @@ MouseArea {
                                             font.pixelSize: Appearance.font.pixelSize.small
                                             font.weight: Font.Medium
                                             font.family: Appearance.font.family.main
-                                            color: Appearance.colors.colOnSurface
+                                                color: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnSurface
                                             elide: Text.ElideRight
                                             maximumLineCount: 1
                                         }
@@ -905,7 +914,7 @@ MouseArea {
                                             text: groupDelegate.latestNotif?.body ?? ""
                                             font.pixelSize: Appearance.font.pixelSize.smaller
                                             font.family: Appearance.font.family.main
-                                            color: Appearance.colors.colOnSurfaceVariant
+                                            color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant
                                             elide: Text.ElideRight
                                             maximumLineCount: 2
                                             wrapMode: Text.WordWrap
@@ -934,6 +943,7 @@ MouseArea {
                                         radius: root._zzz ? Appearance.zzz.controlRadius : Appearance.rounding.small
                                         color: root._zzz
                                             ? "transparent"
+                                            : root.editorial ? Appearance.editorial.layer(2)
                                             : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.12)
 
                                         ZzzPlate {
@@ -974,7 +984,7 @@ MouseArea {
                                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                                     font.weight: Font.Medium
                                                     font.family: Appearance.font.family.main
-                                                    color: Appearance.colors.colOnSurface
+                                                    color: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnSurface
                                                     elide: Text.ElideRight
                                                     maximumLineCount: 1
                                                 }
@@ -985,7 +995,7 @@ MouseArea {
                                                     text: expandedCard.modelData?.body ?? ""
                                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                                     font.family: Appearance.font.family.main
-                                                    color: Appearance.colors.colOnSurfaceVariant
+                                                    color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant
                                                     elide: Text.ElideRight
                                                     maximumLineCount: 2
                                                     wrapMode: Text.WordWrap
@@ -1005,10 +1015,12 @@ MouseArea {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "+" + (Notifications.appNameList.length - lockNotificationsLoader.lockNotifMaxCount) + " " + Translation.tr("more")
                     font.pixelSize: Appearance.font.pixelSize.smaller
-                    font.family: Appearance.font.family.main
-                    color: Appearance.colors.colOnSurfaceVariant
+                    font.family: root.editorial ? Appearance.font.family.numbers : Appearance.font.family.main
+                    font.weight: root.editorial ? Font.DemiBold : Font.Normal
+                    font.letterSpacing: root.editorial ? 0.6 : 0
+                    color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant
 
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                     layer.effect: DropShadow {
                         horizontalOffset: 0
                         verticalOffset: 1
@@ -1069,9 +1081,9 @@ MouseArea {
                     text: parent.getWeatherIconWithTime(Weather.data?.wCode ?? "113")
                     iconSize: 44
                     fill: 0
-                    color: Appearance.colors.colOnSurface
+                    color: root.editorial ? Appearance.editorial.accent : Appearance.colors.colOnSurface
                     
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                     layer.effect: DropShadow {
                         horizontalOffset: 0
                         verticalOffset: 2
@@ -1088,11 +1100,11 @@ MouseArea {
                     Text {
                         text: Weather.data?.temp ?? ""
                         font.pixelSize: Math.round(26 * Appearance.fontSizeScale)
-                        font.weight: Font.Light
-                        font.family: Appearance.font.family.main
-                        color: Appearance.colors.colOnSurface
-                        
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        font.weight: root.editorial ? Font.Medium : Font.Light
+                        font.family: root.editorial ? Appearance.font.family.numbers : Appearance.font.family.main
+                        color: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnSurface
+
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0
                             verticalOffset: 1
@@ -1107,9 +1119,12 @@ MouseArea {
                         visible: Weather.showVisibleCity
                         font.pixelSize: Appearance.font.pixelSize.small
                         font.family: Appearance.font.family.main
-                        color: Appearance.colors.colOnSurfaceVariant
-                        
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        font.weight: root.editorial ? Font.DemiBold : Font.Normal
+                        font.letterSpacing: root.editorial ? 0.7 : 0
+                        font.capitalization: root.editorial ? Font.AllUppercase : Font.MixedCase
+                        color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant
+
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0
                             verticalOffset: 1
@@ -1130,14 +1145,17 @@ MouseArea {
             anchors.bottomMargin: 40
             anchors.horizontalCenter: parent.horizontalCenter
             text: Translation.tr("Press any key or click to unlock")
-            font.pixelSize: Appearance.font.pixelSize.normal
-            font.family: Appearance.font.family.main
-            color: Appearance.colors.colOnSurfaceVariant
+            font.pixelSize: root.editorial ? Appearance.font.pixelSize.smallest : Appearance.font.pixelSize.normal
+            font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+            font.weight: root.editorial ? Font.DemiBold : Font.Normal
+            font.letterSpacing: root.editorial ? 1.2 : 0
+            font.capitalization: root.editorial ? Font.AllUppercase : Font.MixedCase
+            color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant
             opacity: root.showHintText ? hintOpacity : 0
             
             property real hintOpacity: 0.7
             
-            layer.enabled: Appearance.effectsEnabled && !root._zzz
+            layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
             layer.effect: DropShadow {
                 horizontalOffset: 0
                 verticalOffset: 1
@@ -1187,11 +1205,34 @@ MouseArea {
             }
         }
 
+        Rectangle {
+            id: editorialLoginCard
+            visible: root.editorial
+            anchors.centerIn: parent
+            width: Math.max(392, loginContent.implicitWidth + 72)
+            height: loginContent.implicitHeight + 64
+            radius: Appearance.editorial.radius
+            color: Appearance.editorial.ink
+            border.width: 1
+            border.color: ColorUtils.applyAlpha(Appearance.editorial.paperOnInk, 0.18)
+
+            MaterialShape {
+                visible: Appearance.editorial.ornaments
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: 18
+                implicitSize: 18
+                shape: MaterialShape.Shape.Flower
+                color: Appearance.editorial.paperOnInk
+                opacity: 0.72
+            }
+        }
+
         // Centered login content with staggered animation
         ColumnLayout {
             id: loginContent
             anchors.centerIn: parent
-            spacing: 16
+            spacing: root.editorial ? Math.round(12 * Appearance.editorial.spacing) : 16
             
             // Animation properties for stagger effect
             property real animProgress: root.showLoginView ? 1 : 0
@@ -1206,8 +1247,8 @@ MouseArea {
             Item {
                 id: avatarContainer
                 Layout.alignment: Qt.AlignHCenter
-                width: 100
-                height: 100
+                width: root.editorial ? 78 : 100
+                height: root.editorial ? 78 : 100
                 
                 // Stagger animation
                 opacity: Math.min(1, loginContent.animProgress * 3)
@@ -1229,11 +1270,13 @@ MouseArea {
                     height: parent.height + 8
                     radius: root._zzz ? Appearance.zzz.panelRadius : width / 2
                     color: "transparent"
-                    border.color: root._zzz ? Appearance.zzz.borderColor : Appearance.colors.colPrimary
-                    border.width: root._zzz ? Appearance.zzz.hairlineThick : 3
-                    opacity: 0.8
+                    border.color: root._zzz ? Appearance.zzz.borderColor
+                        : root.editorial ? Appearance.editorial.paperOnInk
+                        : Appearance.colors.colPrimary
+                    border.width: root._zzz ? Appearance.zzz.hairlineThick : (root.editorial ? 1 : 3)
+                    opacity: root.editorial ? 0.45 : 0.8
                     
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                     layer.effect: DropShadow {
                         horizontalOffset: 0
                         verticalOffset: 4
@@ -1247,7 +1290,9 @@ MouseArea {
                     id: avatarCircle
                     anchors.fill: parent
                     radius: root._zzz ? Appearance.zzz.panelRadius : width / 2
-                    color: root._zzz ? Appearance.zzz.bg2 : Appearance.colors.colPrimary
+                    color: root._zzz ? Appearance.zzz.bg2
+                        : root.editorial ? Appearance.editorial.paper
+                        : Appearance.colors.colPrimary
                     clip: true
                     
                     Image {
@@ -1262,6 +1307,10 @@ MouseArea {
                         sourceSize.width: avatarCircle.width * 2
                         sourceSize.height: avatarCircle.height * 2
                         visible: false
+                        onStatusChanged: {
+                            if (status === Image.Error)
+                                lockAvatarResolver.advanceAfterError()
+                        }
                     }
 
                     OpacityMask {
@@ -1281,13 +1330,16 @@ MouseArea {
                         readonly property string resolvedSource: Directories.avatarSourceAt(avatarIndex)
                         readonly property string primaryWatch: Directories.userAvatarSourcePrimary
                         onPrimaryWatchChanged: avatarIndex = 0
-                        readonly property int imgStatus: avatarImage.status
-                        onImgStatusChanged: {
-                            if (imgStatus === Image.Error) {
-                                const nextIdx = avatarIndex + 1
+
+                        function advanceAfterError(): void {
+                            const failedIndex = avatarIndex
+                            Qt.callLater(() => {
+                                if (avatarIndex !== failedIndex || avatarImage.status !== Image.Error)
+                                    return
+                                const nextIdx = failedIndex + 1
                                 if (nextIdx < Directories.userAvatarPaths.length)
                                     avatarIndex = nextIdx
-                            }
+                            })
                         }
                     }
                     
@@ -1295,9 +1347,10 @@ MouseArea {
                     Text {
                         anchors.centerIn: parent
                         text: (SystemInfo.displayName || SystemInfo.username || "?").charAt(0).toUpperCase()
-                        font.pixelSize: Math.round(40 * Appearance.fontSizeScale)
+                        font.pixelSize: Math.round((root.editorial ? 30 : 40) * Appearance.fontSizeScale)
                         font.weight: Font.Medium
-                        color: Appearance.colors.colOnPrimary
+                        font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                        color: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnPrimary
                         visible: avatarImage.status !== Image.Ready
                     }
                 }
@@ -1306,18 +1359,19 @@ MouseArea {
             // Display name
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: 8
+                Layout.topMargin: root.editorial ? 4 : 8
                 text: SystemInfo.displayName || SystemInfo.username
-                font.pixelSize: Math.round(22 * Appearance.fontSizeScale)
-                font.weight: Font.Medium
-                font.family: Appearance.font.family.main
-                color: Appearance.colors.colOnSurface
+                font.pixelSize: Math.round((root.editorial ? 28 * Appearance.editorial.titleScale : 22) * Appearance.fontSizeScale)
+                font.weight: root.editorial ? Appearance.editorial.titleWeight : Font.Medium
+                font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                font.letterSpacing: root.editorial ? Appearance.editorial.titleTracking : 0
+                color: root.editorial ? Appearance.editorial.paperOnInk : Appearance.colors.colOnSurface
                 
                 // Stagger animation (delayed)
                 opacity: Math.min(1, Math.max(0, loginContent.animProgress * 3 - 0.3))
                 transform: Translate { y: (1 - Math.min(1, Math.max(0, loginContent.animProgress * 3 - 0.3))) * 15 }
                 
-                layer.enabled: Appearance.effectsEnabled && !root._zzz
+                layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                 layer.effect: DropShadow {
                     horizontalOffset: 0
                     verticalOffset: 1
@@ -1330,9 +1384,9 @@ MouseArea {
             Rectangle {
                 id: passwordContainer
                 Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: 12
-                width: 300
-                height: 52
+                Layout.topMargin: root.editorial ? 8 : 12
+                width: root.editorial ? 316 : 300
+                height: root.editorial ? 48 : 52
 
                 // Inside the container, not a sibling of it. As a sibling this
                 // was a child of the ColumnLayout, so anchoring it to another
@@ -1352,16 +1406,21 @@ MouseArea {
                     strokeWidth: Appearance.zzz.hairlineThick
                     chamfer: Appearance.zzz.cutCorner
                 }
-                radius: root._zzz ? Appearance.zzz.controlRadius : height / 2
+                radius: root._zzz ? Appearance.zzz.controlRadius
+                    : root.editorial ? Appearance.rounding.small
+                    : height / 2
                 color: root._zzz
                     ? "transparent"
+                    : root.editorial ? Appearance.editorial.paper
                     : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.2)
                 border.color: root._zzz
                     ? (loginPasswordField.activeFocus ? Appearance.zzz.accent : Appearance.zzz.borderColor)
+                    : root.editorial
+                        ? (loginPasswordField.activeFocus ? Appearance.editorial.accent : Appearance.editorial.rule)
                     : (loginPasswordField.activeFocus
                         ? Appearance.colors.colPrimary
                         : ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.7))
-                border.width: root._zzz ? 0 : (loginPasswordField.activeFocus ? 2 : 1)
+                border.width: root._zzz ? 0 : (loginPasswordField.activeFocus ? (root.editorial ? 1 : 2) : 1)
                 
                 // Stagger animation (more delayed)
                 opacity: Math.min(1, Math.max(0, loginContent.animProgress * 3 - 0.5))
@@ -1375,7 +1434,7 @@ MouseArea {
                     animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
                 
-                layer.enabled: Appearance.effectsEnabled && !root._zzz
+                layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                 layer.effect: DropShadow {
                     horizontalOffset: 0
                     verticalOffset: 4
@@ -1400,7 +1459,7 @@ MouseArea {
                             text: "fingerprint"
                             iconSize: 22
                             fill: 1
-                            color: Appearance.colors.colOnSurfaceVariant
+                            color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant
                         }
                     }
                     
@@ -1413,8 +1472,10 @@ MouseArea {
                         echoMode: TextInput.Password
                         inputMethodHints: Qt.ImhSensitiveData
                         font.pixelSize: Appearance.font.pixelSize.large
-                        font.family: Appearance.font.family.main
-                        color: materialShapeChars ? "transparent" : Appearance.colors.colOnSurface
+                        font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                        color: materialShapeChars ? "transparent"
+                            : root.editorial ? Appearance.editorial.ink
+                            : Appearance.colors.colOnSurface
                         selectionColor: Appearance.colors.colPrimary
                         selectedTextColor: Appearance.colors.colOnPrimary
                         
@@ -1432,6 +1493,7 @@ MouseArea {
                             font: loginPasswordField.font
                             color: GlobalStates.screenUnlockFailed 
                                 ? Appearance.colors.colError 
+                                : root.editorial ? Appearance.editorial.muted
                                 : Appearance.colors.colOnSurfaceVariant
                             visible: loginPasswordField.text.length === 0
                         }
@@ -1472,7 +1534,9 @@ MouseArea {
                         Layout.preferredWidth: 36
                         Layout.preferredHeight: 36
                         Layout.alignment: Qt.AlignVCenter
-                        radius: root._zzz ? Appearance.zzz.controlRadius : width / 2
+                        radius: root._zzz ? Appearance.zzz.controlRadius
+                            : root.editorial ? Appearance.rounding.small
+                            : width / 2
                         color: root._zzz
                             ? "transparent"
                             : (submitMouseArea.pressed
@@ -1570,9 +1634,9 @@ MouseArea {
                     text: Translation.tr("Touch sensor to unlock")
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.family: Appearance.font.family.main
-                    color: Appearance.colors.colOnSurfaceVariant
+                    color: root.editorial ? Appearance.editorial.paperOnInk : Appearance.colors.colOnSurfaceVariant
                     
-                    layer.enabled: Appearance.effectsEnabled && !root._zzz
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                     layer.effect: DropShadow {
                         horizontalOffset: 0
                         verticalOffset: 1
@@ -1661,9 +1725,9 @@ MouseArea {
                         fill: 1
                         color: (Battery.isLow && !Battery.isCharging) 
                             ? Appearance.colors.colError 
-                            : Appearance.colors.colOnSurfaceVariant
+                            : (root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant)
                         
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0
                             verticalOffset: 1
@@ -1677,12 +1741,13 @@ MouseArea {
                         anchors.verticalCenter: parent.verticalCenter
                         text: Math.round(Battery.percentage * 100) + "%"
                         font.pixelSize: Appearance.font.pixelSize.normal
-                        font.family: Appearance.font.family.main
+                        font.family: root.editorial ? Appearance.font.family.numbers : Appearance.font.family.main
+                        font.weight: root.editorial ? Font.DemiBold : Font.Normal
                         color: (Battery.isLow && !Battery.isCharging) 
                             ? Appearance.colors.colError 
-                            : Appearance.colors.colOnSurfaceVariant
+                            : (root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant)
                         
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0
                             verticalOffset: 1
@@ -1709,9 +1774,9 @@ MouseArea {
                         text: "keyboard"
                         iconSize: 18
                         fill: 1
-                        color: Appearance.colors.colOnSurfaceVariant
+                        color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant
                         
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0
                             verticalOffset: 1
@@ -1725,10 +1790,12 @@ MouseArea {
                         anchors.verticalCenter: parent.verticalCenter
                         text: HyprlandXkb.currentLayoutCode.toUpperCase()
                         font.pixelSize: Appearance.font.pixelSize.small
-                        font.family: Appearance.font.family.main
-                        color: Appearance.colors.colOnSurfaceVariant
+                        font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                        font.weight: root.editorial ? Font.DemiBold : Font.Normal
+                        font.letterSpacing: root.editorial ? 0.8 : 0
+                        color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnSurfaceVariant
                         
-                        layer.enabled: Appearance.effectsEnabled && !root._zzz
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
                         layer.effect: DropShadow {
                             horizontalOffset: 0
                             verticalOffset: 1
@@ -1787,6 +1854,10 @@ MouseArea {
     activeFocusOnTab: true
     
     onClicked: mouse => {
+        if (Brightness.asleep) {
+            Brightness.restoreAfterWake()
+            return
+        }
         if (!root.showLoginView) {
             root.switchToLogin()
         } else {
@@ -1795,6 +1866,10 @@ MouseArea {
     }
     
     onPositionChanged: mouse => {
+        if (Brightness.asleep) {
+            Brightness.restoreAfterWake()
+            return
+        }
         if (root.showLoginView) {
             root.forceFieldFocus()
         }
@@ -1822,6 +1897,11 @@ MouseArea {
     }
     
     Keys.onPressed: event => {
+        if (Brightness.asleep) {
+            Brightness.restoreAfterWake()
+            event.accepted = true
+            return
+        }
         root.context.resetClearTimer()
         
         if (event.key === Qt.Key_Control) {
@@ -1947,12 +2027,22 @@ MouseArea {
 
         width: 44
         height: 44
-        radius: root._zzz ? Appearance.zzz.controlRadius : Appearance.rounding.normal
-        border.width: 0
-        border.color: root._zzz ? Appearance.zzz.hairlineStrong : "transparent"
+        radius: root._zzz ? Appearance.zzz.controlRadius
+            : root.editorial ? Appearance.rounding.small
+            : Appearance.rounding.normal
+        border.width: root.editorial ? 1 : 0
+        border.color: root._zzz ? Appearance.zzz.hairlineStrong
+            : root.editorial ? Appearance.editorial.rule
+            : "transparent"
         color: {
             if (root._zzz) {
                 return "transparent"
+            }
+            if (root.editorial) {
+                if (toggled) return Appearance.editorial.accent
+                if (lockBtnMouse.pressed) return Appearance.colors.colLayer1Active
+                if (lockBtnMouse.containsMouse) return Appearance.colors.colLayer1Hover
+                return Appearance.editorial.layer(1)
             }
             if (toggled) return Appearance.colors.colPrimary
             if (lockBtnMouse.pressed) return ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.7)
@@ -1979,7 +2069,7 @@ MouseArea {
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
         
-        layer.enabled: Appearance.effectsEnabled && !root._zzz
+        layer.enabled: Appearance.effectsEnabled && !root._zzz && !root.editorial
         layer.effect: DropShadow {
             horizontalOffset: 0
             verticalOffset: 2
@@ -1994,7 +2084,9 @@ MouseArea {
             iconSize: 22
             color: root._zzz
                 ? (lockBtn.toggled ? Appearance.zzz.onSticker : Appearance.zzz.onColor)
-                : (lockBtn.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface)
+                : root.editorial
+                    ? (lockBtn.toggled ? Appearance.editorial.accentInk : Appearance.editorial.ink)
+                    : (lockBtn.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface)
         }
         
         MouseArea {

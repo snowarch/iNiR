@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="../images/iris-2.31-principal.webp" alt="iNiR 2.31 iRiS desktop" width="900">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.31.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -78,13 +78,27 @@ Wayland → GPU
 - **Wayland**: протокол дисплея Linux (новый, замена X11)
 - **QML**: декларативный язык UI от Qt, на нём написан iNiR
 - **Material You**: система цветов Google, генерирует палитры из картинок (так работает авто-тематизация)
-- **ii / waffle**: два стиля панелей. ii = Material Design вайбы, waffle = Windows 11 вайбы. `Super+Shift+W` переключает
+- **ii / waffle / iRiS**: три семейства панелей. ii = Material Design, waffle = Windows 11, iRiS = Island, которая превращается в открытый контент. `Super+Shift+W` переключает между ними
 
 </details>
 
 ---
 
 ## Скриншоты
+
+<details open>
+<summary><b>iRiS</b> — Island, элементы рабочего стола, карточки и Dock</summary>
+
+<p align="center">
+  <img src="../images/iris-2.31-desktop.webp" alt="iRiS desktop layout" width="49%">
+  <img src="../images/iris-2.31-card.webp" alt="iRiS card surface" width="49%">
+</p>
+
+<p align="center">
+  <img src="../images/iris-2.31-dock.webp" alt="iRiS Dock and edge layout" width="99%">
+</p>
+
+</details>
 
 <details open>
 <summary><b>Material ii</b> — плавающая панель, сайдбары, эстетика Material Design</summary>
@@ -110,9 +124,10 @@ Wayland → GPU
 
 ## Возможности
 
-**Два семейства панелей**, переключаемые на лету через `Super+Shift+W`:
-- **Material ii** — плавающая панель, сайдбары, док, 6 визуальных стилей (material, cards, aurora, inir, angel, zzz)
+**Три семейства панелей**, переключаемые на лету через `Super+Shift+W`:
+- **Material ii** — плавающая панель, сайдбары, док, 9 глобальных стилей (material, cards, aurora, inir, angel, regalia, zzz, cookie, editorial)
 - **Waffle** — панель задач в стиле Windows 11, стартовое меню, центр действий, центр уведомлений
+- **iRiS** — новое семейство Island: любой край экрана, Pieces, Dock на любом краю, Glass, Themes и Studio
 
 **Автоматическая тематизация** — выбираете обои и всё подстраивается:
 - Цвета шелла через Material You, распространяются на GTK3/4, Qt, терминалы, Firefox, Discord, SDDM
@@ -128,7 +143,7 @@ Wayland → GPU
 
 Выбираете обои — и вся система подстраивается: шелл, GTK/Qt приложения, терминалы, Firefox, Discord, экран входа SDDM. Автоматически.
 
-- **6 визуальных стилей** — Material (сплошной), Cards, Aurora (стеклянное размытие), iNiR (в духе TUI), Angel (нео-брутализм), ZZZ
+- **9 глобальных стилей** — Material (сплошной), Cards, Aurora (стеклянное размытие), iNiR (в духе TUI), Angel (нео-брутализм), Regalia, ZZZ, Cookie Shapes, Editorial
 - **Динамические цвета обоев** через Material You — распространяются на всю систему
 - **10 терминальных инструментов с авто-темой** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **Тематизация приложений** — GTK3/4, Qt (через plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
@@ -175,7 +190,7 @@ Wayland → GPU
 - **Авто-обновления** — `inir update` с откатом, миграциями и сохранением пользовательских изменений
 - **Экран блокировки** и **экран сессии** (выход/перезагрузка/выключение/сон)
 - **Polkit-агент**, **экранная клавиатура**, **менеджер автозапуска**
-- **9 языков** — автоопределение, с генерацией переводов через AI
+- **17 локалей** — автоопределение, с генерацией переводов через AI
 - **Ночной свет** — по расписанию или вручную
 - **Погода** — Open-Meteo, поддержка GPS, координат или названия города
 - **Управление батареей** — настраиваемые пороги, авто-сон при критическом заряде
@@ -204,7 +219,7 @@ inir doctor                     # автодиагностика и исправ
 inir update                     # pull + миграции + перезапуск
 ```
 
-**Поддерживаемые дистрибутивы:** Arch (автоматический установщик). Другие дистрибутивы могут установить вручную — см. [PACKAGES.md](../PACKAGES.md).
+**Дистрибутивы:** основная цель: Arch. У Fedora и Debian/Ubuntu тоже есть автоматическая установка зависимостей, которая сначала берёт пакеты из репозиториев дистрибутива; остальные дистрибутивы следуют общему руководству в [списке пакетов](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR нужен Qt 6.9 или новее: Ubuntu 25.10, Fedora 43 и Debian testing или новее.
 
 | Метод | Команда |
 |--------|---------|
@@ -273,6 +288,7 @@ inir repair                     # doctor + перезапуск + проверк
 ## Благодарности
 
 - [**end-4**](https://github.com/end-4/dots-hyprland) — оригинальный illogical-impulse для Hyprland
+- [**pctrade/end4-pC**](https://github.com/pctrade/end4-pC) — форк, у которого иногда бывают действительно хорошие идеи
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — фреймворк, на котором работает этот шелл
 - [**Niri**](https://github.com/YaLTeR/niri) — скроллинговый тайлинговый Wayland-композитор
 

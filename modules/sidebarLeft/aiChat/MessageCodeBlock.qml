@@ -24,8 +24,8 @@ ColumnLayout {
         : segmentLang === "approval" ? "json" : segmentLang
 
     property real codeBlockBackgroundRounding: Appearance.rounding.small
-    property real codeBlockHeaderPadding: 3
-    property real codeBlockComponentSpacing: 2
+    property real codeBlockHeaderPadding: Appearance.editorialEverywhere ? 5 : 3
+    property real codeBlockComponentSpacing: Appearance.editorialEverywhere ? 0 : 2
 
     Layout.fillWidth: true
     Layout.minimumWidth: 0
@@ -37,7 +37,8 @@ ColumnLayout {
         topRightRadius: codeBlockBackgroundRounding
         bottomLeftRadius: Appearance.rounding.unsharpen
         bottomRightRadius: Appearance.rounding.unsharpen
-        color: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
+        color: Appearance.editorialEverywhere ? Appearance.editorial.field
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
             : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
             : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSurfaceContainerHighest
         implicitHeight: codeBlockTitleBarRowLayout.implicitHeight + codeBlockHeaderPadding * 2
@@ -61,7 +62,8 @@ ColumnLayout {
                 Layout.leftMargin: 10
                 font.pixelSize: Appearance.font.pixelSize.small
                 font.weight: Font.DemiBold
-                color: Appearance.colors.colOnLayer2
+                font.letterSpacing: Appearance.editorialEverywhere ? 0.5 : 0
+                color: Appearance.editorialEverywhere ? Appearance.editorial.fieldInk : Appearance.colors.colOnLayer2
                 text: root.displayLang ? Repository.definitionForName(root.displayLang).name : "plain"
                 elide: Text.ElideRight
                 wrapMode: Text.NoWrap
@@ -162,7 +164,7 @@ ColumnLayout {
                         Layout.alignment: Qt.AlignRight
                         font.family: Appearance.font.family.monospace
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colSubtext
+                        color: Appearance.colMetadataText
                         horizontalAlignment: Text.AlignRight
                         text: index + 1
                     }
@@ -213,7 +215,7 @@ ColumnLayout {
                         contentItem: Rectangle {
                             implicitHeight: 6
                             radius: Appearance.rounding.small
-                            color: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
+                            color: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colLayer2Active
                         }
                     }
 

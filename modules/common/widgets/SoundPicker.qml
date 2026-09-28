@@ -114,74 +114,78 @@ ColumnLayout {
     }
 
     // Expanded: theme sound list with per-row preview
-    Rectangle {
-        visible: root.expanded
+    Loader {
         Layout.fillWidth: true
-        implicitHeight: 280
-        radius: Appearance.rounding.small
-        color: Appearance.colors.colLayer2
+        Layout.preferredHeight: root.expanded ? 280 : 0
+        active: root.expanded
+        asynchronous: false
 
-        ListView {
-            id: soundList
-            anchors.fill: parent
-            anchors.margins: 8
-            clip: true
-            model: [""].concat(Audio.themeSounds)
+        sourceComponent: Rectangle {
+            radius: Appearance.rounding.small
+            color: Appearance.colors.colLayer2
 
-            delegate: Rectangle {
-                id: row
-                required property string modelData
-                readonly property bool isSelected: row.modelData === root.currentValue
-                                                   && !(root.isFile && row.modelData === "")
-                width: soundList.width
-                height: 40
-                radius: Appearance.rounding.verysmall
-                color: row.isSelected ? Appearance.colors.colPrimaryContainer
-                     : rowHover.hovered ? Appearance.colors.colLayer2Hover
-                     : "transparent"
+            ListView {
+                id: soundList
+                anchors.fill: parent
+                anchors.margins: 8
+                clip: true
+                model: [""].concat(Audio.themeSounds)
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 4
-                    spacing: 8
+                delegate: Rectangle {
+                    id: row
+                    required property string modelData
+                    readonly property bool isSelected: row.modelData === root.currentValue
+                                                       && !(root.isFile && row.modelData === "")
+                    width: soundList.width
+                    height: 40
+                    radius: Appearance.rounding.verysmall
+                    color: row.isSelected ? Appearance.colors.colPrimaryContainer
+                         : rowHover.hovered ? Appearance.colors.colLayer2Hover
+                         : "transparent"
 
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: row.modelData === ""
-                            ? Translation.tr("Theme default (%1)").arg(root.themeDefault)
-                            : row.modelData
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: row.isSelected ? Appearance.colors.colOnPrimaryContainer
-                             : Appearance.colors.colOnLayer2
-                        elide: Text.ElideMiddle
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 4
+                        spacing: 8
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: row.modelData === ""
+                                ? Translation.tr("Theme default (%1)").arg(root.themeDefault)
+                                : row.modelData
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: row.isSelected ? Appearance.colors.colOnPrimaryContainer
+                                 : Appearance.colors.colOnLayer2
+                            elide: Text.ElideMiddle
+                        }
+
+                        Rectangle {
+                            implicitWidth: 32
+                            implicitHeight: 32
+                            radius: Appearance.rounding.full
+                            color: rowPlayTap.pressed ? Appearance.colors.colPrimaryContainer : "transparent"
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "play_arrow"
+                                iconSize: 20
+                                color: Appearance.colors.colPrimary
+                            }
+                            HoverHandler { id: rowPlayHover }
+                            TapHandler {
+                                id: rowPlayTap
+                                onTapped: Audio.playSystemSound(
+                                    row.modelData === "" ? root.themeDefault : row.modelData)
+                            }
+                        }
                     }
 
-                    Rectangle {
-                        implicitWidth: 32
-                        implicitHeight: 32
-                        radius: Appearance.rounding.full
-                        color: rowPlayTap.pressed ? Appearance.colors.colPrimaryContainer : "transparent"
-                        MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "play_arrow"
-                            iconSize: 20
-                            color: Appearance.colors.colPrimary
+                    HoverHandler { id: rowHover }
+                    TapHandler {
+                        onTapped: {
+                            root.setValue(row.modelData)
+                            root.expanded = false
                         }
-                        HoverHandler { id: rowPlayHover }
-                        TapHandler {
-                            id: rowPlayTap
-                            onTapped: Audio.playSystemSound(
-                                row.modelData === "" ? root.themeDefault : row.modelData)
-                        }
-                    }
-                }
-
-                HoverHandler { id: rowHover }
-                TapHandler {
-                    onTapped: {
-                        root.setValue(row.modelData)
-                        root.expanded = false
                     }
                 }
             }
@@ -189,45 +193,49 @@ ColumnLayout {
     }
 
     // Custom file path (absolute; pw-play handles ogg/oga/wav/flac)
-    Rectangle {
-        visible: root.expanded
+    Loader {
         Layout.fillWidth: true
-        implicitHeight: 44
-        radius: Appearance.rounding.small
-        color: Appearance.colors.colLayer2
+        Layout.preferredHeight: root.expanded ? 44 : 0
+        active: root.expanded
+        asynchronous: false
 
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
-            spacing: 8
+        sourceComponent: Rectangle {
+            radius: Appearance.rounding.small
+            color: Appearance.colors.colLayer2
 
-            MaterialSymbol {
-                text: "folder_open"
-                iconSize: 20
-                color: Appearance.colors.colOnLayer2
-            }
-            TextInput {
-                id: customPathInput
-                Layout.fillWidth: true
-                text: root.isFile ? root.currentValue : ""
-                font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.colors.colOnLayer2
-                clip: true
-                selectByMouse: true
-                onEditingFinished: {
-                    const t = text.trim()
-                    if (t.startsWith("/") || t.startsWith("file://")) {
-                        root.setValue(t)
-                        root.expanded = false
-                    }
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 8
+
+                MaterialSymbol {
+                    text: "folder_open"
+                    iconSize: 20
+                    color: Appearance.colors.colOnLayer2
                 }
-                StyledText {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: customPathInput.text.length === 0
-                    text: Translation.tr("Custom file: paste an absolute path…")
+                TextInput {
+                    id: customPathInput
+                    Layout.fillWidth: true
+                    text: root.isFile ? root.currentValue : ""
                     font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.colors.colSubtext
+                    color: Appearance.colors.colOnLayer2
+                    clip: true
+                    selectByMouse: true
+                    onEditingFinished: {
+                        const t = text.trim()
+                        if (t.startsWith("/") || t.startsWith("file://")) {
+                            root.setValue(t)
+                            root.expanded = false
+                        }
+                    }
+                    StyledText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: customPathInput.text.length === 0
+                        text: Translation.tr("Custom file: paste an absolute path…")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colSubtext
+                    }
                 }
             }
         }

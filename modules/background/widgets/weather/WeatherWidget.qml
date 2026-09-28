@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Shapes
 import qs
 import qs.services
 import qs.modules.common
@@ -7,6 +8,8 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
 import qs.modules.background.widgets
+import qs.modules.background.widgets.instrument
+import qs.modules.iris.widgets
 
 AbstractBackgroundWidget {
     id: root
@@ -16,6 +19,7 @@ AbstractBackgroundWidget {
         placementStrategy: "free", preset: "default", style: "pill", shape: "pill",
         size: 200, tempSize: 80, iconSize: 80,
         showTemp: true, showIcon: true, showCondition: false, showMetrics: true,
+        showSunPath: true, showSunTimes: true, showLocation: true,
         padding: 20, tempFontWeight: 500, conditionOpacity: 0.7,
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         showBackground: true, useBlur: false, showBorder: true,
@@ -24,6 +28,7 @@ AbstractBackgroundWidget {
     })
 
     readonly property string weatherStyle: root._readConfigKey("style") ?? "pill"
+    widgetSurfaceEnabled: root.weatherStyle !== "dial"
     readonly property string weatherShape: root._readConfigKey("shape") ?? "pill"
     readonly property real logicalShapeSize: Math.max(1,
         Number(root._readConfigKey("size") ?? 200))
@@ -39,6 +44,9 @@ AbstractBackgroundWidget {
     readonly property bool showIcon: Boolean(root._readConfigKey("showIcon") ?? true)
     readonly property bool showCondition: Boolean(root._readConfigKey("showCondition") ?? false)
     readonly property bool showMetrics: Boolean(root._readConfigKey("showMetrics") ?? true)
+    readonly property bool showSunPath: Boolean(root._readConfigKey("showSunPath") ?? true)
+    readonly property bool showSunTimes: Boolean(root._readConfigKey("showSunTimes") ?? true)
+    readonly property bool showLocation: Boolean(root._readConfigKey("showLocation") ?? true)
 
     readonly property var _metricModel: {
         const d = Weather.data;
@@ -74,11 +82,19 @@ AbstractBackgroundWidget {
         return raw + "°";
     }
 
-    implicitWidth: root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2) : shapeSize
-    implicitHeight: root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
+        : root.weatherStyle === "dial" ? Math.round(shapeSize * 1.4) : shapeSize
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
+    irisFace: Component { IrisWeatherFace { widget: root } }
+    irisSizes: ["small", "medium", "large"]
+    irisOptions: [
+        { key: "showLocation", raw: true, label: Translation.tr("Location"), icon: "location_on", fallback: true }
+    ]
     resizableAxes: ({ uniform: "size" })
-    resizeMinWidth: root.weatherStyle === "detail" ? 280 : 80
-    resizeMinHeight: root.weatherStyle === "detail" ? 150 : 80
+    resizeMinWidth: root.weatherStyle === "detail" ? 280
+        : root.weatherStyle === "dial" ? 224 : 80
+    resizeMinHeight: root.weatherStyle === "detail" ? 150
+        : root.weatherStyle === "dial" ? 160 : 80
     // Analyze the region in BOTH modes: card needs colText for its overlay, pill needs
     // it so ensureVisible() and the region-aware halo can make the shape read on any
     // wallpaper instead of dissolving into a same-tone background.
@@ -125,88 +141,86 @@ AbstractBackgroundWidget {
 
     editPopoverContent: Component {
         ColumnLayout {
-            spacing: 6
-            GridLayout {
-                columns: 3
-                columnSpacing: 4
-                rowSpacing: 4
-                Repeater {
+            spacing: 14
+
+            WidgetQuickSection {
+                title: Translation.tr("Style")
+                WidgetQuickChoices {
+                    maxColumns: 2
+                    current: root.weatherStyle
                     model: [
                         { label: Translation.tr("Shape"), icon: "category", value: "pill" },
                         { label: Translation.tr("Card"), icon: "crop_landscape", value: "card" },
-                        { label: Translation.tr("Detail"), icon: "dashboard", value: "detail" }
+                        { label: Translation.tr("Detail"), icon: "dashboard", value: "detail" },
+                        { label: Translation.tr("Instrument"), icon: "wb_twilight", value: "dial" }
                     ]
-                    SelectionGroupButton {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        leftmost: true; rightmost: true
-                        buttonIcon: modelData.icon
-                        buttonText: modelData.label
-                        toggled: root.weatherStyle === modelData.value
-                        onClicked: Config.setNestedValue("background.widgets.weather.style", modelData.value)
-                    }
+                    onPicked: value => root._setOutputValue("style", value)
                 }
             }
-            // Shape picker (visible only in pill/shape mode)
-            GridLayout {
-                visible: root.weatherStyle === "pill"
-                columns: 4
-                columnSpacing: 3
-                rowSpacing: 3
-                Repeater {
-                    model: root._shapeOptions
-                    Rectangle {
-                        required property var modelData
-                        property alias hovered: shapeMouseArea.containsMouse
-                        Layout.preferredWidth: 36
-                        Layout.preferredHeight: 36
-                        radius: Appearance.rounding.small
-                        color: root.weatherShape === modelData.value
-                            ? ColorUtils.applyAlpha(root.accentPrimary, 0.18)
-                            : "transparent"
-                        border.width: root.weatherShape === modelData.value ? 1.5 : 0
-                        border.color: root.accentPrimary
 
-                        MaterialShape {
-                            anchors.centerIn: parent
-                            implicitSize: 22
-                            shape: root._shapeMap[modelData.value] ?? MaterialShape.Shape.Pill
-                            color: root.weatherShape === modelData.value
-                                ? root.accentPrimary : root.accentOnPrimaryContainer
+            WidgetQuickSection {
+                visible: root.weatherStyle === "pill"
+                title: Translation.tr("Shape")
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: 6
+                    columnSpacing: 4
+                    rowSpacing: 4
+                    Repeater {
+                        model: root._shapeOptions
+                        WidgetQuickChoice {
+                            id: shapeChoice
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            Layout.maximumWidth: Number.POSITIVE_INFINITY
+                            implicitHeight: 40
+                            selected: root.weatherShape === modelData.value
+                            tooltip: modelData.label
+                            onClicked: root._setOutputValue("shape", modelData.value)
+                            MaterialShape {
+                                anchors.centerIn: parent
+                                implicitSize: 22
+                                shape: root._shapeMap[shapeChoice.modelData.value] ?? MaterialShape.Shape.Pill
+                                color: shapeChoice.ink
+                            }
                         }
-                        MouseArea {
-                            id: shapeMouseArea
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            hoverEnabled: true
-                            onClicked: Config.setNestedValue("background.widgets.weather.shape", modelData.value)
-                        }
-                        StyledToolTip { text: modelData.label }
                     }
                 }
             }
-            // Content toggles
-            GridLayout {
-                columns: 3
-                columnSpacing: 4
-                rowSpacing: 4
+
+            WidgetQuickSection {
+                title: Translation.tr("Show")
                 Repeater {
                     model: [
-                        { label: Translation.tr("Temp"), icon: "thermostat", key: "showTemp", active: root.showTemp },
-                        { label: Translation.tr("Icon"), icon: "cloud", key: "showIcon", active: root.showIcon },
-                        { label: Translation.tr("Text"), icon: "text_fields", key: "showCondition", active: root.showCondition }
+                        { label: Translation.tr("Temperature"), icon: "thermostat", key: "showTemp" },
+                        { label: Translation.tr("Icon"), icon: "cloud", key: "showIcon" },
+                        { label: Translation.tr("Condition"), icon: "text_fields", key: "showCondition" }
                     ]
-                    SelectionGroupButton {
+                    WidgetQuickToggle {
                         required property var modelData
                         Layout.fillWidth: true
-                        leftmost: true; rightmost: true
-                        buttonIcon: modelData.icon
-                        buttonText: modelData.label
-                        toggled: modelData.active
-                        onClicked: {
-                            if (modelData.active && root.visibleContentCount <= 1) return
-                            Config.setNestedValue("background.widgets.weather." + modelData.key, !modelData.active)
-                        }
+                        iconName: modelData.icon
+                        label: modelData.label
+                        checked: Boolean(root._readConfigKey(modelData.key) ?? (modelData.key !== "showCondition"))
+                        enabled: !checked || root.visibleContentCount > 1
+                        onToggled: root._setOutputValue(modelData.key, !checked)
+                    }
+                }
+                Repeater {
+                    model: root.weatherStyle === "dial" ? [
+                        { label: Translation.tr("Sun path"), icon: "wb_twilight", key: "showSunPath", fallback: true },
+                        { label: Translation.tr("Sunrise and sunset"), icon: "schedule", key: "showSunTimes", fallback: true },
+                        { label: Translation.tr("Location"), icon: "location_on", key: "showLocation", fallback: true }
+                    ] : []
+                    WidgetQuickToggle {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        iconName: modelData.icon
+                        label: modelData.label
+                        checked: Boolean(root._readConfigKey(modelData.key) ?? modelData.fallback)
+                        enabled: modelData.key !== "showSunTimes" || root.showSunPath
+                        onToggled: root._setOutputValue(modelData.key, !checked)
                     }
                 }
             }
@@ -227,7 +241,7 @@ AbstractBackgroundWidget {
     // ensureVisible so the generated colour stays readable on any wallpaper.
     StyledDropShadow {
         target: pillBackground
-        visible: pillBackground.visible && !Appearance.zzzEverywhere
+        visible: !root.irisFaced && pillBackground.visible && !Appearance.zzzEverywhere
     }
 
     // zzz: ShapeCanvas (MaterialShape's base) has no stroke/border property, so
@@ -236,7 +250,7 @@ AbstractBackgroundWidget {
     // treatment at all. Fake a hairline stroke with a second, slightly larger
     // shape behind the fill in the hairline colour.
     MaterialShape {
-        visible: root.weatherStyle === "pill" && Appearance.zzzEverywhere
+        visible: !root.irisFaced && root.weatherStyle === "pill" && Appearance.zzzEverywhere
         anchors.centerIn: parent
         shape: root.pillShapeEnum
         color: Appearance.zzz.hairlineStrong
@@ -244,7 +258,7 @@ AbstractBackgroundWidget {
     }
 
     MaterialShape {
-        visible: root.weatherStyle === "pill" && (Appearance.inirEverywhere || Appearance.angelEverywhere)
+        visible: !root.irisFaced && root.weatherStyle === "pill" && (Appearance.inirEverywhere || Appearance.angelEverywhere)
         anchors.centerIn: parent
         shape: root.pillShapeEnum
         color: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.angel.colCardBorder
@@ -253,7 +267,7 @@ AbstractBackgroundWidget {
 
     MaterialShape {
         id: pillBackground
-        visible: root.weatherStyle === "pill"
+        visible: !root.irisFaced && root.weatherStyle === "pill"
         anchors.fill: parent
         shape: root.pillShapeEnum
         color: root.shapeFill
@@ -262,9 +276,10 @@ AbstractBackgroundWidget {
 
     // ── Card mode ──
     WidgetSurface {
+        irisPresentation: root.widgetIris
         regionBrightness: root.regionBrightness
         id: cardBackground
-        visible: (root.weatherStyle === "card" || root.weatherStyle === "detail")
+        shown: !root.irisFaced && (root.weatherStyle === "card" || root.weatherStyle === "detail")
             && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
@@ -284,7 +299,7 @@ AbstractBackgroundWidget {
 
     ColumnLayout {
         id: detailLayout
-        visible: root.weatherStyle === "detail"
+        visible: !root.irisFaced && root.weatherStyle === "detail"
         anchors.fill: parent
         anchors.margins: Math.round(16 * root.scaleFactor)
         clip: true
@@ -305,9 +320,10 @@ AbstractBackgroundWidget {
                     elide: Text.ElideRight
                     color: root.widgetInk
                     font {
-                        family: Appearance.font.family.expressive
-                        pixelSize: Math.round(38 * root.scaleFactor)
-                        weight: Font.Bold
+                        family: root.widgetEditorial ? root.widgetTitleFamily : Appearance.font.family.expressive
+                        pixelSize: Math.round(38 * root.widgetTitleScale * root.scaleFactor)
+                        weight: root.widgetEditorial ? root.widgetTitleWeight : Font.Bold
+                        letterSpacing: root.widgetEditorial ? root.widgetTitleTracking : 0
                     }
                 }
 
@@ -386,7 +402,7 @@ AbstractBackgroundWidget {
                             text: metricChip.modelData.value
                             color: metricChip.chipInk
                             font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
-                            font.weight: Font.Medium
+                            font.weight: Appearance.editorialEverywhere ? Appearance.editorial.labelWeight : Font.Medium
                         }
                     }
                 }
@@ -396,7 +412,7 @@ AbstractBackgroundWidget {
 
     Item {
         anchors.fill: parent
-        visible: root.weatherStyle !== "detail"
+        visible: !root.irisFaced && root.weatherStyle !== "detail" && root.weatherStyle !== "dial"
 
         MaterialSymbol {
             visible: root.visibleContentCount === 0
@@ -412,8 +428,9 @@ AbstractBackgroundWidget {
             height: Math.max(1, Math.round(root.height * 0.42))
             font {
                 pixelSize: root.tempFontSize
-                family: Appearance.font.family.expressive
+                family: root.widgetEditorial ? root.widgetTitleFamily : Appearance.font.family.expressive
                 weight: root.tempFontWeight
+                letterSpacing: root.widgetEditorial ? root.widgetTitleTracking : 0
             }
             fontSizeMode: Text.Fit
             minimumPixelSize: Math.max(8, Math.round(root.tempFontSize * 0.45))
@@ -460,7 +477,9 @@ AbstractBackgroundWidget {
             visible: root.showCondition
             font {
                 pixelSize: root.conditionFontSize
-                family: Appearance.font.family.expressive
+                family: root.widgetEditorial ? root.widgetTitleFamily : Appearance.font.family.expressive
+                weight: root.widgetEditorial ? root.widgetTitleWeight : Font.Normal
+                letterSpacing: root.widgetEditorial ? root.widgetTitleTracking : 0
             }
             color: root.weatherConditionColor
             text: Weather.data?.description ?? ""
@@ -474,6 +493,209 @@ AbstractBackgroundWidget {
                 verticalCenter: root.showIcon ? weatherIcon.verticalCenter : undefined
                 bottom: root.showIcon ? undefined : parent.bottom
                 bottomMargin: root.showIcon ? 0 : root.contentInset
+            }
+        }
+    }
+
+    // ── Instrument: compact weather observatory ────────────────
+    // The current condition owns the left side; the right side is an actual
+    // daylight trajectory when sunrise/sunset data exists. The arc is local to
+    // that sky stage instead of becoming an unexplained rule under the widget.
+    Item {
+        id: instrumentArea
+        anchors.fill: parent
+        opacity: root.weatherStyle === "dial" ? 1 : 0
+        visible: !root.irisFaced && opacity > 0
+        enabled: root.weatherStyle === "dial"
+        Behavior on opacity {
+            enabled: root.animationsActive
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
+
+        readonly property real side: Math.min(width, height)
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: Math.round(12 * root.scaleFactor)
+            spacing: Math.round(12 * root.scaleFactor)
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: Math.round(3 * root.scaleFactor)
+
+                InstrumentLabel {
+                    Layout.fillWidth: true
+                    text: root.showLocation && Weather.showVisibleCity && String(Weather.visibleCity || "").length > 0
+                        ? Translation.tr("Atmosphere / %1").arg(Weather.visibleCity) : Translation.tr("Atmosphere / Local")
+                    color: root.widgetAccentVisible
+                    scaleFactor: root.scaleFactor
+                    strong: true
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: Math.round(6 * root.scaleFactor)
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        verticalAlignment: Text.AlignVCenter
+                        visible: root.showTemp
+                        text: root.temperatureText
+                        color: root.widgetInk
+                        font.family: root.widgetNumbersFamily
+                        font.pixelSize: Math.round(instrumentArea.side * 0.31)
+                        font.weight: Font.Bold
+                        font.features: ({ "tnum": 1 })
+                        fontSizeMode: Text.Fit
+                        minimumPixelSize: 16
+                    }
+
+                    MaterialSymbol {
+                        visible: root.showIcon
+                        text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
+                        iconSize: Math.round(instrumentArea.side * 0.18)
+                        color: root.widgetAccentVisible
+                    }
+                }
+
+                InstrumentLabel {
+                    Layout.fillWidth: true
+                    visible: root.showCondition && text.length > 0
+                    text: Weather.data?.description ?? ""
+                    color: root.widgetInkMuted
+                    scaleFactor: root.scaleFactor
+                    size: 10
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: Math.round(4 * root.scaleFactor)
+                    visible: instrumentArea.side >= Math.round(140 * root.scaleFactor)
+                    spacing: Math.round(12 * root.scaleFactor)
+                    Repeater {
+                        model: [
+                            { label: Translation.tr("Feels"), value: String(Weather.data?.tempFeelsLike ?? "").replace(/[CF]$/, "") },
+                            { label: Translation.tr("Humidity"), value: String(Weather.data?.humidity ?? "") },
+                            { label: Translation.tr("Wind"), value: String(Weather.data?.wind ?? "").split(" ")[0] + " " + String(Weather.data?.windDir ?? "") }
+                        ]
+                        InstrumentField {
+                            required property var modelData
+                            Layout.alignment: Qt.AlignTop
+                            scaleFactor: root.scaleFactor
+                            label: modelData.label
+                            value: modelData.value
+                            ink: root.widgetInk
+                            muted: root.widgetInkMuted
+                            family: root.widgetNumbersFamily
+                            valueSize: 12
+                        }
+                    }
+                }
+            }
+
+            Item {
+                id: skyStage
+                Layout.preferredWidth: visible
+                    ? Math.max(Math.round(102 * root.scaleFactor), Math.round(instrumentArea.side * 0.52)) : 0
+                Layout.fillHeight: true
+                visible: root.showSunPath
+                    && Boolean(Weather.data?.sunrise) && Boolean(Weather.data?.sunset)
+                readonly property real rx: Math.max(1, width * 0.43)
+                readonly property real ry: Math.max(1, height * 0.28)
+                readonly property real centerX: width / 2
+                readonly property real centerY: height * 0.62
+
+                Shape {
+                    anchors.fill: parent
+                    preferredRendererType: Shape.CurveRenderer
+                    ShapePath {
+                        strokeColor: ColorUtils.applyAlpha(root.widgetInk, 0.26)
+                        strokeWidth: Math.max(1, Math.round(1.5 * root.scaleFactor))
+                        fillColor: "transparent"
+                        PathAngleArc {
+                            centerX: skyStage.centerX
+                            centerY: skyStage.centerY
+                            radiusX: skyStage.rx
+                            radiusY: skyStage.ry
+                            startAngle: 180
+                            sweepAngle: 180
+                        }
+                    }
+                }
+
+                MaterialSymbol {
+                    readonly property real markerSize: Math.round(18 * root.scaleFactor)
+                    width: markerSize
+                    height: markerSize
+                    x: skyStage.centerX - skyStage.rx * Math.cos(Math.PI * Weather.sunProgress) - width / 2
+                    y: skyStage.centerY - skyStage.ry * Math.sin(Math.PI * Weather.sunProgress) - height / 2
+                    text: "light_mode"
+                    iconSize: markerSize
+                    color: root.widgetAccentVisible
+                    visible: Weather.sunState === "day"
+                }
+
+                MaterialSymbol {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: -Math.round(skyStage.ry * 0.55)
+                    visible: Weather.sunState !== "day"
+                    text: "bedtime"
+                    iconSize: Math.round(20 * root.scaleFactor)
+                    color: root.widgetAccentVisible
+                    opacity: 0.84
+                }
+
+                RowLayout {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    visible: root.showSunTimes
+                    spacing: Math.round(8 * root.scaleFactor)
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+                        StyledText {
+                            text: root.widgetCase(Translation.tr("Rise"))
+                            color: root.widgetInkMuted
+                            font.pixelSize: Math.max(10, Math.round(10 * root.scaleFactor))
+                            font.weight: Font.DemiBold
+                            font.letterSpacing: root.widgetIris ? 0 : Math.round(1.1 * root.scaleFactor)
+                        }
+                        StyledText {
+                            text: Weather.data?.sunrise ?? ""
+                            color: root.widgetInk
+                            font.family: root.widgetNumbersFamily
+                            font.pixelSize: Math.round(10 * root.scaleFactor)
+                            font.weight: Font.DemiBold
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+                        StyledText {
+                            Layout.alignment: Qt.AlignRight
+                            text: root.widgetCase(Translation.tr("Set"))
+                            color: root.widgetInkMuted
+                            font.pixelSize: Math.max(10, Math.round(10 * root.scaleFactor))
+                            font.weight: Font.DemiBold
+                            font.letterSpacing: root.widgetIris ? 0 : Math.round(1.1 * root.scaleFactor)
+                        }
+                        StyledText {
+                            Layout.alignment: Qt.AlignRight
+                            text: Weather.data?.sunset ?? ""
+                            color: root.widgetInk
+                            font.family: root.widgetNumbersFamily
+                            font.pixelSize: Math.round(10 * root.scaleFactor)
+                            font.weight: Font.DemiBold
+                        }
+                    }
+                }
             }
         }
     }

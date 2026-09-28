@@ -2,12 +2,14 @@
 """Pick a cava [input] source that follows music, not VoIP/system mix.
 
 Prefers an uncorked PipeWire/Pulse stream belonging to the active MPRIS
-player, then other active music streams. Falls back to the default sink
-monitor when nothing better exists.
+player, then other active music streams. User-blocked applications are always
+excluded, including after MPRIS track changes. Falls back to the default sink
+monitor only when there are no live streams and no explicit blocklist.
 """
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -67,6 +69,7 @@ PREFERRED_PLAYBACK_TOKENS = (
     "youtube-music",
     "youtube_music",
     "ytmusic",
+    "ncspot",
 )
 
 DESKTOP_ENTRY_BINARIES: dict[str, tuple[str, ...]] = {
@@ -90,6 +93,7 @@ DESKTOP_ENTRY_BINARIES: dict[str, tuple[str, ...]] = {
     "youtube-music": ("youtube-music", "youtube_music", "ytmusic", "mpv"),
     "youtube_music": ("youtube-music", "youtube_music", "ytmusic", "mpv"),
     "ytmusic": ("youtube-music", "youtube_music", "ytmusic", "mpv"),
+    "ncspot": ("ncspot",),
     "com.github.th_ch.youtube_music": ("youtube-music", "youtube_music", "ytmusic"),
 }
 
@@ -99,13 +103,13 @@ class SinkInput:
     index: int
     client_id: str
     node_name: str
-    object_serial: str
     media_role: str
     media_name: str
     app_name: str
     app_id: str
     binary: str
     corked: bool
+    sink_id: str = ""
 
 
 @dataclass
@@ -175,7 +179,6 @@ def _parse_sink_inputs(text: str, clients: dict[str, PulseClient]) -> list[SinkI
                 index=int(sink_index),
                 client_id=client_id,
                 node_name=node_name,
-                object_serial=block.get("object.serial", ""),
                 media_role=block.get("media.role", "").lower(),
                 media_name=block.get("media.name", "").lower(),
                 app_name=(block.get("application.name")
@@ -185,6 +188,7 @@ def _parse_sink_inputs(text: str, clients: dict[str, PulseClient]) -> list[SinkI
                     or (client.binary if client else "")).lower(),
                 corked=(block.get("Corked", block.get("pulse.corked", "false"))
                     .lower() in ("yes", "true", "1")),
+                sink_id=block.get("Sink", ""),
             )
         )
         block = {}
@@ -206,8 +210,36 @@ def _parse_sink_inputs(text: str, clients: dict[str, PulseClient]) -> list[SinkI
         client_match = re.match(r"^\s+Client:\s+(\d+)$", line)
         if client_match and sink_index:
             block["Client"] = client_match.group(1)
+        sink_match = re.match(r"^\s+Sink:\s+(\d+)$", line)
+        if sink_match and sink_index:
+            block["Sink"] = sink_match.group(1)
     flush()
     return streams
+
+
+def _parse_sink_monitors(text: str) -> dict[str, str]:
+    monitors: dict[str, str] = {}
+    sink_id = ""
+    monitor = ""
+
+    def flush() -> None:
+        nonlocal sink_id, monitor
+        if sink_id and monitor:
+            monitors[sink_id] = monitor
+        sink_id = ""
+        monitor = ""
+
+    for line in text.splitlines():
+        match = re.match(r"^Sink #(\d+)$", line.strip())
+        if match:
+            flush()
+            sink_id = match.group(1)
+            continue
+        monitor_match = re.match(r"^\s+Monitor Source:\s+(.+?)\s*$", line)
+        if monitor_match and sink_id:
+            monitor = monitor_match.group(1)
+    flush()
+    return monitors
 
 
 def _hint_binaries(desktop_entry: str) -> set[str]:
@@ -230,6 +262,51 @@ def _hint_binaries(desktop_entry: str) -> set[str]:
     return hints
 
 
+def _normalize_identity(value: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", value.lower())
+
+
+def _filter_hints(apps: list[str]) -> tuple[set[str], set[str]]:
+    tokens: set[str] = set()
+    aliases: set[str] = set()
+    for app in apps:
+        normalized = _normalize_identity(app)
+        if normalized:
+            tokens.add(normalized)
+        # Only use aliases from an exact known desktop-entry key. The active
+        # player resolver intentionally expands browser families (Firefox ↔ Zen,
+        # Chromium ↔ Electron), but a user blocklist must stay app-specific.
+        entry = str(app).strip().lower()
+        if entry.endswith(".desktop"):
+            entry = entry[:-8]
+        if "." in entry:
+            for key, binaries in DESKTOP_ENTRY_BINARIES.items():
+                if key.lower() == entry:
+                    aliases.update(binaries)
+                    break
+    return tokens, aliases
+
+
+def _matches_blocked(stream: SinkInput, blocked_apps: list[str]) -> bool:
+    if not blocked_apps:
+        return False
+
+    tokens, aliases = _filter_hints(blocked_apps)
+    identity = " ".join((
+        stream.node_name, stream.media_name, stream.app_name,
+        stream.app_id, stream.binary,
+    )).lower()
+    normalized_identity = _normalize_identity(identity)
+    if any(token in normalized_identity for token in tokens):
+        return True
+    normalized_fields = {
+        _normalize_identity(value) for value in (
+            stream.node_name, stream.app_name, stream.app_id, stream.binary,
+        ) if value
+    }
+    return any(_normalize_identity(alias) in normalized_fields for alias in aliases if alias)
+
+
 def _is_excluded(stream: SinkInput) -> bool:
     if any(token in stream.app_name for token in EXCLUDED_APP_NAMES):
         return True
@@ -242,11 +319,13 @@ def _is_excluded(stream: SinkInput) -> bool:
     return False
 
 
-def _score_stream(stream: SinkInput, hint_binaries: set[str]) -> int:
+def _score_stream(stream: SinkInput, hint_binaries: set[str], blocked_apps: list[str]) -> int:
     if _is_excluded(stream):
         return -10_000
     if stream.corked:
         return -5_000
+    if _matches_blocked(stream, blocked_apps):
+        return -10_000
 
     score = 180
     if stream.media_role == "music":
@@ -290,30 +369,57 @@ def _default_sink_monitor() -> str:
     return "auto"
 
 
-def resolve_source(desktop_entry: str = "") -> str:
+def _stream_monitor(stream: SinkInput, sink_monitors: dict[str, str]) -> str:
+    """Return the playback sink monitor, never the app stream itself.
+
+    Cava's PipeWire input accepts capture-capable nodes/devices. A playback
+    Stream/Output/Audio object serial is not such a source and can make
+    WirePlumber auto-connect Cava to the default microphone instead.
+    """
+    return sink_monitors.get(stream.sink_id, "")
+
+
+def resolve_source(desktop_entry: str = "", blocked_apps: list[str] | None = None) -> str:
+    blocked_apps = blocked_apps or []
     server_info = _run(["pactl", "info"])
     if not server_info:
-        return "auto"
-    is_pipewire = "pipewire" in server_info.lower()
-
+        return "" if blocked_apps else "auto"
     clients = _parse_clients(_run(["pactl", "list", "clients"]))
     streams = _parse_sink_inputs(_run(["pactl", "list", "sink-inputs"]), clients)
+    sink_monitors = _parse_sink_monitors(_run(["pactl", "list", "sinks"]))
     hint_binaries = _hint_binaries(desktop_entry)
 
     ranked = sorted(
-        ((_score_stream(stream, hint_binaries), stream) for stream in streams),
+        ((_score_stream(stream, hint_binaries, blocked_apps), stream) for stream in streams),
         key=lambda item: (item[0], item[1].index),
         reverse=True,
     )
 
     for score, stream in ranked:
         if score > 0 and stream.node_name:
-            if is_pipewire and stream.object_serial:
-                return stream.object_serial
-            return stream.node_name
+            monitor = _stream_monitor(stream, sink_monitors)
+            if monitor:
+                return monitor
+
+    # If the active MPRIS player belongs to a blocked app, its identity hint
+    # must not prevent another eligible playback stream from driving the
+    # visualizer. Retry without the player hint, while keeping the user blocklist
+    # authoritative. This is what lets "block Firefox" survive YouTube track
+    # changes while another player can still feed Cava.
+    if blocked_apps and hint_binaries:
+        fallback_ranked = sorted(
+            ((_score_stream(stream, set(), blocked_apps), stream) for stream in streams),
+            key=lambda item: (item[0], item[1].index),
+            reverse=True,
+        )
+        for score, stream in fallback_ranked:
+            if score > 0 and stream.node_name:
+                monitor = _stream_monitor(stream, sink_monitors)
+                if monitor:
+                    return monitor
 
     # VoIP/system streams only — don't fall back to the full sink mix (Discord voices, etc.)
-    if streams:
+    if streams or blocked_apps:
         return ""
 
     return _default_sink_monitor()
@@ -322,8 +428,19 @@ def resolve_source(desktop_entry: str = "") -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--desktop-entry", default="")
+    parser.add_argument("--blocked-apps-json", default="[]")
     args = parser.parse_args()
-    print(resolve_source(args.desktop_entry))
+    try:
+        parsed = json.loads(args.blocked_apps_json)
+        blocked_apps = [str(value).strip() for value in parsed if str(value).strip()] \
+            if isinstance(parsed, list) else []
+    except (json.JSONDecodeError, TypeError):
+        blocked_apps = []
+
+    source = resolve_source(args.desktop_entry, blocked_apps)
+    if blocked_apps and not source:
+        raise SystemExit(3)
+    print(source)
 
 
 if __name__ == "__main__":

@@ -43,7 +43,8 @@ FocusScope {
     readonly property var studioOptions: effectiveOptions?.studio ?? ({})
     readonly property var navigationMotion: effectiveOptions?.navigationMotion ?? ({})
     readonly property var shelf: effectiveOptions?.shelf ?? ({})
-    readonly property int effectiveNavigationDuration: OrbitTuning.navigationDuration(navigationMotion)
+    readonly property int effectiveNavigationDuration: OrbitTuning.navigationDuration(
+        navigationMotion, activeView === "stage" ? "stage" : activeView)
     readonly property string effectiveNavigationEasing: OrbitTuning.navigationEasing(navigationMotion)
     readonly property string effectiveEntryStyle: OrbitTuning.presentationEntryStyle(presentation)
     readonly property string effectiveEntryDirection: OrbitTuning.presentationDirection(
@@ -367,7 +368,9 @@ FocusScope {
         property string descriptionText: ""
         default property alias choices: choiceGrid.data
         readonly property int choiceCount: choiceGrid.children.length
-        readonly property int columnCount: choiceCount <= 3 ? Math.max(1, choiceCount)
+        property int columnCountOverride: 0
+        readonly property int columnCount: columnCountOverride > 0 ? columnCountOverride
+            : choiceCount <= 3 ? Math.max(1, choiceCount)
             : root.controlColumnWidth >= 430 ? 3 : 2
 
         Layout.alignment: Qt.AlignHCenter
@@ -748,8 +751,7 @@ FocusScope {
                     iconRenderType: Text.QtRendering
                     onClicked: {
                         root.dismissed()
-                        GlobalStates.settingsOverlayRequestedPage = 27
-                        GlobalStates.settingsOverlayOpen = true
+                        GlobalStates.openSettingsPage(27)
                     }
                     M3ToolTip { text: Translation.tr("Advanced Orbit settings") }
                 }
@@ -1176,18 +1178,16 @@ FocusScope {
                     onMoved: value => root.previewRequested("orbital.surface.frameInset", Math.round(value))
                 }
                 MetricControl {
-                    labelText: Translation.tr("Core elevation")
-                    from: 0; to: 4; stepSize: 1
-                    value: root.workspaceSurface.coreElevation ?? 2
-                    valueText: String(Math.round(value))
-                    onMoved: value => root.previewRequested("orbital.surface.coreElevation", Math.round(value))
-                }
-                MetricControl {
-                    labelText: Translation.tr("Satellite elevation")
+                    labelText: Translation.tr("Card elevation")
+                    descriptionText: Translation.tr("Base material layer. Focus depth is animated separately so cards never jump between layers.")
                     from: 0; to: 4; stepSize: 1
                     value: root.workspaceSurface.satelliteElevation ?? 1
                     valueText: String(Math.round(value))
-                    onMoved: value => root.previewRequested("orbital.surface.satelliteElevation", Math.round(value))
+                    onMoved: value => {
+                        const elevation = Math.round(value)
+                        root.previewRequested("orbital.surface.coreElevation", elevation)
+                        root.previewRequested("orbital.surface.satelliteElevation", elevation)
+                    }
                 }
             }
 
@@ -1329,31 +1329,43 @@ FocusScope {
             spacing: 12
 
             SectionIntro {
-                titleText: Translation.tr("Motion language")
-                descriptionText: Translation.tr("Entry assembles the stage; Navigation controls scroll/workspace changes; exit keeps the host-level motion.")
+                titleText: Translation.tr("Motion")
+                descriptionText: Translation.tr("Pick the feel. Orbit tunes timing for the current layout automatically; detailed controls live in Advanced.")
             }
 
             ChoiceControl {
                 labelText: Translation.tr("Workspace navigation")
-                descriptionText: Translation.tr("How workspace cards settle when the Core changes")
-                DeckChip { text: Translation.tr("Snappy"); selected: (root.navigationMotion.preset ?? "fluid") === "snappy"; onClicked: root.chooseNavigationPreset("snappy") }
-                DeckChip { text: Translation.tr("Fluid"); selected: (root.navigationMotion.preset ?? "fluid") === "fluid"; onClicked: root.chooseNavigationPreset("fluid") }
-                DeckChip { text: Translation.tr("Cinematic"); selected: root.navigationMotion.preset === "cinematic"; onClicked: root.chooseNavigationPreset("cinematic") }
-                DeckChip { text: Translation.tr("Instant"); selected: root.navigationMotion.preset === "instant"; onClicked: root.chooseNavigationPreset("instant") }
+                descriptionText: Translation.tr("How quickly the focused workspace follows your scroll or keys")
+                DeckChip { text: Translation.tr("Fast"); selected: (root.navigationMotion.preset ?? "fluid") === "snappy"; onClicked: root.chooseNavigationPreset("snappy") }
+                DeckChip { text: Translation.tr("Balanced"); selected: (root.navigationMotion.preset ?? "fluid") === "fluid"; onClicked: root.chooseNavigationPreset("fluid") }
+                DeckChip { text: Translation.tr("Soft"); selected: root.navigationMotion.preset === "cinematic"; onClicked: root.chooseNavigationPreset("cinematic") }
+                DeckChip { text: Translation.tr("Off"); selected: root.navigationMotion.preset === "instant"; onClicked: root.chooseNavigationPreset("instant") }
             }
 
-            NavigationFineControls { visible: !root.workspaceMode }
+            StyledText {
+                Layout.alignment: Qt.AlignHCenter
+                visible: (root.studioOptions.showDescriptions ?? true)
+                    && (root.navigationMotion.preset ?? "fluid") !== "instant"
+                text: Translation.tr("%1 · %2 ms · tuned for %3")
+                    .arg((root.navigationMotion.preset ?? "fluid") === "snappy"
+                        ? Translation.tr("Fast")
+                        : root.navigationMotion.preset === "cinematic"
+                            ? Translation.tr("Soft") : Translation.tr("Balanced"))
+                    .arg(root.effectiveNavigationDuration)
+                    .arg(root.activeView === "stage" ? Translation.tr("Stage") : root.activeView)
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+            }
 
             ChoiceControl {
-                labelText: Translation.tr("Orbit presentation")
-                descriptionText: Translation.tr("How the Orbit scene assembles when it opens")
-                DeckChip { text: Translation.tr("By view"); selected: root.presentation.preset === "adaptive"; onClicked: root.choosePresentationPreset("adaptive") }
-                DeckChip { text: Translation.tr("Soft"); selected: root.presentation.preset === "soft"; onClicked: root.choosePresentationPreset("soft") }
+                labelText: Translation.tr("Open / close")
+                descriptionText: Translation.tr("How Orbit enters the screen; this does not change workspace navigation")
+                DeckChip { text: Translation.tr("Adaptive"); selected: root.presentation.preset === "adaptive"; onClicked: root.choosePresentationPreset("adaptive") }
+                DeckChip { text: Translation.tr("Subtle"); selected: root.presentation.preset === "soft"; onClicked: root.choosePresentationPreset("soft") }
                 DeckChip { text: Translation.tr("Float"); selected: root.presentation.preset === "float"; onClicked: root.choosePresentationPreset("float") }
                 DeckChip { text: Translation.tr("Sweep"); selected: root.presentation.preset === "sweep"; onClicked: root.choosePresentationPreset("sweep") }
-                DeckChip { text: Translation.tr("Instant"); selected: root.presentation.preset === "instant"; onClicked: root.choosePresentationPreset("instant") }
+                DeckChip { text: Translation.tr("Off"); selected: root.presentation.preset === "instant"; onClicked: root.choosePresentationPreset("instant") }
             }
-            PresentationFineControls { visible: !root.workspaceMode }
         }
     }
 
@@ -1401,8 +1413,15 @@ FocusScope {
 
             ChoiceControl {
                 labelText: Translation.tr("Density")
+                columnCountOverride: 2
                 DeckChip { text: Translation.tr("Comfortable"); selected: (root.shelf.density ?? "comfortable") === "comfortable"; onClicked: root.previewRequested("shelf.density", "comfortable") }
                 DeckChip { text: Translation.tr("Compact"); selected: root.shelf.density === "compact"; onClicked: root.previewRequested("shelf.density", "compact") }
+                DeckChip {
+                    Layout.columnSpan: 2
+                    text: Translation.tr("HUGE AS YOUR MOM")
+                    selected: root.shelf.density === "huge"
+                    onClicked: root.previewRequested("shelf.density", "huge")
+                }
             }
 
             ChoiceControl {

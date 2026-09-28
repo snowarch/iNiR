@@ -184,8 +184,10 @@ Item {
                                 text: root._displayData
                                     ? ScreenTime.formatDuration(root._displayData.totalSeconds || 0)
                                     : "0s"
-                                font.pixelSize: Appearance.font.pixelSize.larger
-                                font.weight: Font.Bold
+                                font.pixelSize: Appearance.editorialEverywhere
+                                    ? Appearance.font.pixelSize.huge * 1.15
+                                    : Appearance.font.pixelSize.larger
+                                font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Bold
                                 font.family: Appearance.font.family.numbers
                                 color: Appearance.colors.colPrimary
                             }
@@ -195,9 +197,18 @@ Item {
                                     ? Translation.tr("today")
                                     : Translation.tr("last %1 days").arg(root.currentDays)
                                 font.pixelSize: Appearance.font.pixelSize.smaller
+                                font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Normal
+                                font.letterSpacing: Appearance.editorialEverywhere ? 0.8 : 0
                                 color: root.colTextSecondary
                             }
                         }
+                    }
+
+                    EditorialRule {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 2
+                        visible: Appearance.editorialEverywhere
+                        inset: 0
                     }
 
                     // Hourly bar chart
@@ -207,9 +218,12 @@ Item {
                         visible: root._displayData && (root._displayData.totalSeconds || 0) > 0
 
                         StyledText {
-                            text: Translation.tr("Hourly activity")
+                            text: Appearance.editorialEverywhere
+                                ? Translation.tr("Hourly activity").toUpperCase()
+                                : Translation.tr("Hourly activity")
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             font.weight: Font.DemiBold
+                            font.letterSpacing: Appearance.editorialEverywhere ? 0.8 : 0
                             color: root.colTextSecondary
                         }
 
@@ -380,9 +394,9 @@ Item {
                             RippleButton {
                                 implicitWidth: 22
                                 implicitHeight: 22
-                                buttonRadius: Appearance.rounding.full
+                                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                                 colBackground: "transparent"
-                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                colBackgroundHover: Appearance.colLayer1Hover
                                 onClicked: root._clearHour()
                                 contentItem: MaterialSymbol {
                                     anchors.centerIn: parent
@@ -471,9 +485,12 @@ Item {
                         visible: root._appList.length > 0 && root._selectedHour < 0
 
                         StyledText {
-                            text: Translation.tr("Most used")
+                            text: Appearance.editorialEverywhere
+                                ? Translation.tr("Most used").toUpperCase()
+                                : Translation.tr("Most used")
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             font.weight: Font.DemiBold
+                            font.letterSpacing: Appearance.editorialEverywhere ? 0.8 : 0
                             color: root.colTextSecondary
                         }
 

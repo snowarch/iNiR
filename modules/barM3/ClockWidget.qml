@@ -177,8 +177,8 @@ BarWidgetSwitcher {
 
             Rectangle {
                 implicitWidth: timeText.implicitWidth + 16
-                implicitHeight: 24
-                radius: Appearance.rounding.full
+                implicitHeight: Math.max(24, timeText.implicitHeight + 6)
+                radius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                 color: M3Palette.primary
 
                 StyledText {
@@ -189,10 +189,10 @@ BarWidgetSwitcher {
                     font.pixelSize: root._timePixelSize > 0
                         ? root._timePixelSize : Appearance.font.pixelSize.smallie
                     color: M3Palette.primaryForeground
-                    font.weight: Font.Bold
+                    font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Bold
                     text: pill.ampm !== "" ? pill.hours.padStart(2, "0") + ":" + pill.minutes.padStart(2, "0") : DateTime.time
                     font.features: { "tnum": 1 }
-                    font.letterSpacing: -0.4
+                    font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : -0.4
                 }
             }
 

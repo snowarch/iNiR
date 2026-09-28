@@ -1,0 +1,16 @@
+module qs.modules.iris.bar.island
+Tabular 1.0 Tabular.qml
+DateMark 1.0 DateMark.qml
+Metric 1.0 Metric.qml
+Glyph 1.0 Glyph.qml
+GlyphButton 1.0 GlyphButton.qml
+RecordDot 1.0 RecordDot.qml
+ProgressRing 1.0 ProgressRing.qml
+Waveform 1.0 Waveform.qml
+IslandActivityPage 1.0 IslandActivityPage.qml
+IslandMediaPage 1.0 IslandMediaPage.qml
+IslandDesktopPage 1.0 IslandDesktopPage.qml
+IslandBarZones 1.0 IslandBarZones.qml
+IslandStackedClock 1.0 IslandStackedClock.qml
+IslandCompactColumn 1.0 IslandCompactColumn.qml
+LevelFace 1.0 LevelFace.qml

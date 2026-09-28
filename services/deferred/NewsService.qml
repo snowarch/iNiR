@@ -50,10 +50,24 @@ Singleton {
         return `https://news.google.com/rss?${root._localeQuery}`
     }
 
+    property var _lastRequest: null
+
+    Connections {
+        target: Network
+        function onOnlineChanged() {
+            if (Network.online && root._lastRequest) root.fetch(root._lastRequest.mode, root._lastRequest.topic)
+        }
+    }
+
     function fetch(mode, topic) {
+        root._lastRequest = { mode: mode, topic: topic }
         const url = root.feedUrl(mode, topic)
         if (root._isCacheValid(url) && root._cache[url]) {
             root.articles = root._cache[url]
+            return
+        }
+        if (!Network.online) {
+            if (root._cache[url]) root.articles = root._cache[url]
             return
         }
         root.loading = true

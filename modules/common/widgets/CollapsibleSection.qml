@@ -39,6 +39,8 @@ ColumnLayout {
     }
 
     Component.onCompleted: {
+        if (typeof SettingsSearchRegistry !== "undefined" && !SettingsSearchRegistry.dynamicRegistrationEnabled)
+            return;
         // Registrar como collapsible section para manejo de expand/collapse
         if (typeof SettingsSearchRegistry !== "undefined" && root.collapsible) {
             SettingsSearchRegistry.registerCollapsibleSection(root);

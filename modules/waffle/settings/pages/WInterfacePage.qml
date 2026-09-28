@@ -439,6 +439,25 @@ WSettingsPage {
             checked: Config.options?.notifications?.silent ?? false
             onCheckedChanged: Config.setNestedValue("notifications.silent", checked)
         }
+
+        WSettingsTextField {
+            label: Translation.tr("Blocked apps")
+            icon: "alert-off"
+            description: Translation.tr("Comma-separated app or service names. Blocked notifications never enter history, sounds or popups.")
+            placeholderText: Translation.tr("Discord, Slack, Spotify")
+            text: (Config.options?.notifications?.blockedApps ?? []).join(", ")
+            onEditingFinished: newText => {
+                const seen = ({})
+                const apps = newText.split(",").map(value => value.trim()).filter(value => {
+                    const key = value.toLowerCase()
+                    if (key.length === 0 || seen[key]) return false
+                    seen[key] = true
+                    return true
+                })
+                Config.setNestedValue("notifications.blockedApps", apps)
+                Config.flushWrites()
+            }
+        }
     }
     
     WSettingsCard {
@@ -540,6 +559,86 @@ WSettingsPage {
             from: 500; to: 5000; stepSize: 250
             value: Config.options?.osd?.timeout ?? 1000
             onValueChanged: Config.setNestedValue("osd.timeout", value)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Connection notices")
+            icon: "arrow-sync"
+            description: Translation.tr("A short notice when something is plugged in, connected, unplugged or lost")
+            checked: Config.options?.osd?.connections?.enable ?? true
+            onCheckedChanged: Config.setNestedValue("osd.connections.enable", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.osd?.connections?.enable ?? true
+            label: Translation.tr("Network")
+            icon: "ethernet"
+            description: Translation.tr("Wi-Fi or cable connected and dropped")
+            checked: Config.options?.osd?.connections?.network ?? true
+            onCheckedChanged: Config.setNestedValue("osd.connections.network", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.osd?.connections?.enable ?? true
+            label: Translation.tr("Internet")
+            icon: "wifi-warning"
+            description: Translation.tr("Lost and back online")
+            checked: Config.options?.osd?.connections?.internet ?? true
+            onCheckedChanged: Config.setNestedValue("osd.connections.internet", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.osd?.connections?.enable ?? true
+            label: Translation.tr("Bluetooth devices")
+            icon: "bluetooth-connected"
+            description: Translation.tr("Headphones, keyboards, controllers")
+            checked: Config.options?.osd?.connections?.bluetooth ?? true
+            onCheckedChanged: Config.setNestedValue("osd.connections.bluetooth", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.osd?.connections?.enable ?? true
+            label: Translation.tr("USB devices")
+            icon: "keyboard"
+            description: Translation.tr("Mice, keyboards, controllers, cameras, phones, by name")
+            checked: Config.options?.osd?.connections?.usb ?? true
+            onCheckedChanged: Config.setNestedValue("osd.connections.usb", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.osd?.connections?.enable ?? true
+            label: Translation.tr("Charger")
+            icon: "battery-charge"
+            description: Translation.tr("Plugged in and on battery")
+            checked: Config.options?.osd?.connections?.power ?? true
+            onCheckedChanged: Config.setNestedValue("osd.connections.power", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.osd?.connections?.enable ?? true
+            label: Translation.tr("Sound output")
+            icon: "headphones"
+            description: Translation.tr("Headphones or speakers take over")
+            checked: Config.options?.osd?.connections?.audio ?? true
+            onCheckedChanged: Config.setNestedValue("osd.connections.audio", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.osd?.connections?.enable ?? true
+            label: Translation.tr("Displays")
+            icon: "desktop"
+            description: Translation.tr("A monitor plugged in or removed")
+            checked: Config.options?.osd?.connections?.displays ?? true
+            onCheckedChanged: Config.setNestedValue("osd.connections.displays", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.osd?.connections?.enable ?? true
+            label: Translation.tr("Drives and memory cards")
+            icon: "folder"
+            description: Translation.tr("Pendrives, external disks and SD cards, with their name and size")
+            checked: Config.options?.osd?.connections?.drives ?? true
+            onCheckedChanged: Config.setNestedValue("osd.connections.drives", checked)
         }
     }
     

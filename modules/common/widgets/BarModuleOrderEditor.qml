@@ -16,9 +16,10 @@ import QtQuick.Controls
  * insert-index a simple `round(y / pitch)`. The dragged row reparents into
  * `dragLayer` (top z) and follows the cursor; a primary-coloured bar marks the
  * drop slot. Writes go through Config per-leaf (never assign a whole object to
- * the bar.layout JsonObject). The pivot module (workspaces in `center`) is not
- * draggable. Modules not in any zone appear as compact chips that can be
- * either dragged into a zone or added via a single popup menu trigger.
+ * the bar.layout JsonObject). Every module follows the same relocation contract;
+ * `center` is the screen-centred zone, not a hard-coded workspace pivot. Modules
+ * not in any zone appear as compact chips that can be either dragged into a zone
+ * or added via a single popup menu trigger.
  */
 ColumnLayout {
     id: root
@@ -39,29 +40,30 @@ ColumnLayout {
         right: ["rightSidebarButton", "tray", "timer", "shellUpdate", "spacer", "weather"],
     })
     readonly property var _knownIds: [
-        "leftSidebarButton", "activeWindow", "taskbar", "resources", "media", "workspaces",
+        "leftSidebarButton", "activeWindow", "resources", "media", "workspaces",
         "clock", "utilButtons", "battery", "rightSidebarButton", "tray", "timer", "shellUpdate", "spacer", "weather"
     ]
     readonly property var _zones: ["left", "centerLeft", "center", "centerRight", "right"]
     readonly property var _visKeys: ({
         leftSidebarButton: "leftSidebarButton", activeWindow: "activeWindow",
-        taskbar: "taskbar",
         resources: "resources", media: "media", workspaces: "workspaces", clock: "clock",
         utilButtons: "utilButtons", battery: "battery", rightSidebarButton: "rightSidebarButton",
         tray: "sysTray", weather: "weather",
     })
 
     function _metaIcon(id) {
+        if (id === "activeWindow" && (Config.options?.bar?.modules?.taskbar ?? false))
+            return "dock_to_bottom"
         return ({ leftSidebarButton: "side_navigation", activeWindow: "window",
-            taskbar: "dock_to_bottom",
             resources: "memory", media: "music_note", workspaces: "workspaces", clock: "schedule",
             utilButtons: "build", battery: "battery_full", rightSidebarButton: "call_to_action",
             tray: "shelf_auto_hide", timer: "timer", shellUpdate: "system_update", spacer: "space_bar",
             weather: "cloud" })[id] || "widgets"
     }
     function _metaLabel(id) {
+        if (id === "activeWindow" && (Config.options?.bar?.modules?.taskbar ?? false))
+            return Translation.tr("Taskbar")
         return ({ leftSidebarButton: Translation.tr("Left sidebar"), activeWindow: Translation.tr("Active window"),
-            taskbar: Translation.tr("Taskbar"),
             resources: Translation.tr("Resources"), media: Translation.tr("Media"),
             workspaces: Translation.tr("Workspaces"), clock: Translation.tr("Clock"), utilButtons: Translation.tr("Utility buttons"),
             battery: Translation.tr("Battery"), rightSidebarButton: Translation.tr("Right sidebar"), tray: Translation.tr("System tray"),
@@ -70,7 +72,7 @@ ColumnLayout {
     }
     function _zoneLabel(z) {
         return ({ left: Translation.tr("Left edge"), centerLeft: Translation.tr("Center left"),
-            center: Translation.tr("Center (pivot)"), centerRight: Translation.tr("Center right"),
+            center: Translation.tr("Center"), centerRight: Translation.tr("Center right"),
             right: Translation.tr("Right edge") })[z] || z
     }
     function _zoneIcon(z) {
@@ -80,10 +82,17 @@ ColumnLayout {
 
     // ─── Reactive layout view ───────────────────────────────────────────
     readonly property bool migrated: Config.options?.bar?.layout?.migrated === true
+    readonly property bool _layoutContainsActiveWindow: root._zones.some(zoneName => {
+        const ids = Config.options?.bar?.layout?.[zoneName] ?? []
+        return ids.includes("activeWindow")
+    })
     function _getZone(name) {
         if (!root.migrated) return root._defaultLayout[name] ?? []
         const a = Config.options?.bar?.layout?.[name]
-        return (a && a.length >= 0) ? a : (root._defaultLayout[name] ?? [])
+        const ids = (a && a.length >= 0) ? Array.from(a) : Array.from(root._defaultLayout[name] ?? [])
+        return ids
+            .map(id => id === "taskbar" && !root._layoutContainsActiveWindow ? "activeWindow" : id)
+            .filter(id => id !== "taskbar")
     }
     function _placed() {
         let s = []
@@ -195,7 +204,7 @@ ColumnLayout {
             }
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Workspaces stays as the centred pivot — it can't be moved.")
+                text: Translation.tr("The Center zone stays screen-centred; any module can be moved into or out of it.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 opacity: 0.7
@@ -204,7 +213,7 @@ ColumnLayout {
         }
         RippleButton {
             implicitWidth: 30; implicitHeight: 30
-            buttonRadius: Appearance.rounding.full
+            buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
             onClicked: root._resetToDefaults()
             contentItem: MaterialSymbol { anchors.centerIn: parent; text: "restart_alt"; iconSize: Appearance.font.pixelSize.small; color: Appearance.colors.colOnLayer1 }
             StyledToolTip { text: Translation.tr("Reset bar layout to defaults") }
@@ -217,18 +226,22 @@ ColumnLayout {
         property string moduleId: ""
         property string zone: ""
         property int rowIndex: -1
-        property bool pivot: false
-        property string visibilityKey: root._visKeys[moduleId] || ""
+        // Taskbar is a mode of the activeWindow slot, not an independent
+        // visibility bit. While that mode is active, hiding `activeWindow`
+        // would only mutate latent state and leave the visible taskbar intact.
+        property string visibilityKey: moduleId === "activeWindow"
+            && (Config.options?.bar?.modules?.taskbar ?? false)
+            ? ""
+            : (root._visKeys[moduleId] || "")
         readonly property bool beingDragged: root.dragInfo && root.dragInfo.id === moduleId && root.dragInfo.zone === zone && root.dragInfo.index === rowIndex
 
         width: parent ? parent.width : implicitWidth
         height: root.rowH
         radius: Appearance.rounding.small
-        color: pivot ? Appearance.colors.colSecondaryContainer
-            : (beingDragged ? Appearance.colors.colLayer2
-            : (dragMa.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1))
+        color: beingDragged ? Appearance.colors.colLayer2
+            : (dragMa.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1)
         border.color: beingDragged ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
-        border.width: pivot ? 0 : 1
+        border.width: 1
         scale: beingDragged ? 1.03 : 1
         rotation: beingDragged ? 0.6 : 0
         Behavior on scale { enabled: Appearance.animationsEnabled; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
@@ -242,8 +255,8 @@ ColumnLayout {
             z: -1
         }
 
-        readonly property color _fg: pivot ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
-        readonly property color _fgSubtle: pivot ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colSubtext
+        readonly property color _fg: Appearance.colors.colOnLayer1
+        readonly property color _fgSubtle: Appearance.colors.colSubtext
 
         // Drag plumbing — reparent into dragLayer while dragging so the row can
         // travel over other zones; Drag.drop() fires the hovered DropArea.
@@ -261,8 +274,7 @@ ColumnLayout {
             id: dragMa
             anchors.fill: parent
             hoverEnabled: true
-            enabled: !rowRoot.pivot
-            cursorShape: rowRoot.pivot ? Qt.ArrowCursor : (drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor)
+            cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
             drag.target: rowRoot
             drag.axis: Drag.XAndYAxis
             onPressed: root.dragInfo = { zone: rowRoot.zone, index: rowRoot.rowIndex, id: rowRoot.moduleId }
@@ -279,7 +291,6 @@ ColumnLayout {
             anchors.rightMargin: 6
             spacing: 8
             MaterialSymbol {
-                visible: !rowRoot.pivot
                 text: "drag_indicator"
                 iconSize: Appearance.font.pixelSize.normal
                 color: rowRoot._fgSubtle
@@ -294,9 +305,9 @@ ColumnLayout {
             }
             // Visibility toggle (modules that have a bar.modules.<key> switch)
             RippleButton {
-                visible: !rowRoot.pivot && rowRoot.visibilityKey.length > 0
+                visible: rowRoot.visibilityKey.length > 0
                 implicitWidth: 26; implicitHeight: 26
-                buttonRadius: Appearance.rounding.full
+                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                 onClicked: {
                     const k = rowRoot.visibilityKey
                     Config.setNestedValue("bar.modules." + k, !(Config.options?.bar?.modules?.[k] ?? true))
@@ -314,9 +325,8 @@ ColumnLayout {
             }
             // Remove from layout
             RippleButton {
-                visible: !rowRoot.pivot
                 implicitWidth: 26; implicitHeight: 26
-                buttonRadius: Appearance.rounding.full
+                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                 onClicked: root._remove(rowRoot.zone, rowRoot.rowIndex)
                 contentItem: MaterialSymbol { anchors.centerIn: parent; text: "do_not_disturb_on"; iconSize: Appearance.font.pixelSize.small; color: rowRoot._fgSubtle }
                 StyledToolTip { text: Translation.tr("Remove from layout") }
@@ -356,7 +366,7 @@ ColumnLayout {
                     spacing: 8
                     Rectangle {
                         implicitWidth: 24; implicitHeight: 24
-                        radius: Appearance.rounding.full
+                        radius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                         color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.85)
                         MaterialSymbol { anchors.centerIn: parent; text: root._zoneIcon(zoneCard.zoneName); iconSize: Appearance.font.pixelSize.small; color: Appearance.colors.colPrimary }
                     }
@@ -364,13 +374,13 @@ ColumnLayout {
                         Layout.fillWidth: true
                         text: root._zoneLabel(zoneCard.zoneName)
                         font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.DemiBold
+                        font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.DemiBold
                         color: Appearance.colors.colOnLayer0
                     }
                     Rectangle {
                         implicitHeight: 18
                         implicitWidth: Math.max(22, countLabel.implicitWidth + 12)
-                        radius: Appearance.rounding.full
+                        radius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                         color: ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.92)
                         StyledText {
                             id: countLabel
@@ -436,7 +446,6 @@ ColumnLayout {
                                 moduleId: modelData
                                 zone: zoneCard.zoneName
                                 rowIndex: index
-                                pivot: zoneCard.zoneName === "center" && modelData === "workspaces"
                             }
                         }
                         // Reserve the lifted row's height so the Column (and the
@@ -497,7 +506,7 @@ ColumnLayout {
                 spacing: 8
                 Rectangle {
                     implicitWidth: 24; implicitHeight: 24
-                    radius: Appearance.rounding.full
+                    radius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                     color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.85)
                     MaterialSymbol { anchors.centerIn: parent; text: "add_box"; iconSize: Appearance.font.pixelSize.small; color: Appearance.colors.colPrimary }
                 }
@@ -505,7 +514,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: Translation.tr("Available modules")
                     font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.DemiBold
+                    font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.DemiBold
                     color: Appearance.colors.colOnLayer0
                 }
                 StyledText {
@@ -529,7 +538,7 @@ ColumnLayout {
 
                         implicitHeight: 30
                         implicitWidth: chipRow.implicitWidth + 16
-                        radius: Appearance.rounding.full
+                        radius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                         color: chipMa.containsMouse || beingDragged
                             ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.85)
                             : ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.95)

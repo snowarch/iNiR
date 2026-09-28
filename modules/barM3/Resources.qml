@@ -9,8 +9,7 @@ BarWidgetSwitcherArea {
     property bool alwaysShowAllResources: false
     horizontalExtraPadding: 12
 
-    Component.onCompleted: ResourceUsage.keepAlive()
-    Component.onDestruction: ResourceUsage.releaseKeepAlive()
+    property QtObject resourceMonitor: ResourceUsageMonitor { target: root }
 
     readonly property bool clickForDetails: Config.options?.bar?.m3?.tooltips?.clickToShow ?? false
     hoverEnabled: true

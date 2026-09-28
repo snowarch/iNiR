@@ -1,0 +1,3 @@
+module qs.modules.background.widgets.screenTime
+ScreenTimeWidget 1.0 ScreenTimeWidget.qml
+ScreenTimeInstrument 1.0 ScreenTimeInstrument.qml

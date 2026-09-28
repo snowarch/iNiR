@@ -258,14 +258,14 @@ Item {
                         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2)
                 colBackgroundHover: (TimerService.stopwatchRunning && !TimerService.stopwatchPaused)
                     ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colLayer2Hover)
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colLayer2Hover)
                     : (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colLayer2Hover)
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colLayer2Hover)
                 colRipple: (TimerService.stopwatchRunning && !TimerService.stopwatchPaused)
                     ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active)
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colLayer2Active)
                     : (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active)
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colLayer2Active)
 
                 contentItem: StyledText {
                     horizontalAlignment: Text.AlignHCenter

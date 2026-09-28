@@ -27,6 +27,7 @@ import os
 import signal
 import time
 import hashlib
+import tempfile
 
 try:
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
@@ -78,7 +79,7 @@ _YTM_HEADER_COOKIES = {
 }
 
 
-def _read_cookie_header():
+def _read_cookie_header(cookie_path=None):
     """Build a `Cookie:` header string for YTM API requests from the Netscape cookie jar.
     Returns (cookie_str, cookies_dict) or (None, None) if no logged-in session is present. Only the
     auth-relevant cookies go into the header string (see `_YTM_HEADER_COOKIES`) — the full dict is
@@ -88,7 +89,8 @@ def _read_cookie_header():
     and `.google.com`. A real request to music.youtube.com sends the YouTube-domain value. Keep
     Google-domain cookies only as a fallback for names absent from the YouTube jar; allowing their
     later row order to overwrite YouTube values turns a valid session into a signed-out one."""
-    if not os.path.exists(YTCOOKIE_PATH):
+    path = cookie_path or YTCOOKIE_PATH
+    if not os.path.exists(path):
         return None, None
     cookies = {}
     priorities = {}
@@ -104,7 +106,7 @@ def _read_cookie_header():
         return 0
 
     try:
-        with open(YTCOOKIE_PATH) as f:
+        with open(path) as f:
             for line in f:
                 if line.startswith("#") or not line.strip():
                     continue
@@ -133,11 +135,11 @@ def _sapisid_hash(sapisid, origin="https://music.youtube.com"):
     return f"SAPISIDHASH {ts}_{digest}"
 
 
-def _browser_client():
+def _browser_client(cookie_path=None):
     """Authenticate the way InnerTune/a logged-in browser does: reuse the YouTube session
     cookies. This is the path that actually works for personalized browse (library, home,
     account) — the public device-flow OAuth client is dead (HTTP 400)."""
-    cookie_str, cookies = _read_cookie_header()
+    cookie_str, cookies = _read_cookie_header(cookie_path)
     if not cookie_str:
         return None
     sapisid = cookies.get("SAPISID") or cookies.get("__Secure-3PAPISID") or cookies.get("__Secure-1PAPISID")
@@ -159,16 +161,18 @@ def _browser_client():
         return None
 
 
-def _authenticated_client():
+def _authenticated_client(cookie_path=None, allow_oauth=True):
     """Build an authenticated YTMusic. Cookie auth (logged-in browser session) is preferred
     because it's the only method YouTube still honours for personalized browse; OAuth tokens
     are kept as a fallback. Any failure returns None so public browsing is never broken."""
     from ytmusicapi import YTMusic
     from ytmusicapi.auth.oauth import OAuthCredentials
     # 1) Browser session cookies — the working path.
-    yt = _browser_client()
+    yt = _browser_client(cookie_path)
     if yt is not None:
         return yt
+    if not allow_oauth:
+        return None
     # 2) Native one-tap token (TV client) — fallback (currently 400s on browse upstream).
     if os.path.exists(ITUBE_OAUTH_PATH):
         try:
@@ -375,17 +379,18 @@ def _auth_helper():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), "ytmusic_auth.py")
 
 
-def _account_probe():
+def _account_probe(cookie_path=None, allow_oauth=True):
     """Validate the current yt-cookies.txt against the real YTM API.
     Returns (authenticated, account_name, avatar_url). `LOGIN_INFO` is YouTube's signed-in marker —
     Google-only cookies (SID/SAPISID) without it mean the browser is logged into Google but NOT
     YouTube, so YTM serves anonymous/empty data. We require it AND a successful account call so the
     UI never claims a login that yields an empty library."""
-    cookie_str, cookies = _read_cookie_header()
+    path = cookie_path or YTCOOKIE_PATH
+    cookie_str, cookies = _read_cookie_header(path)
     signed_in = bool(cookies and cookies.get("LOGIN_INFO"))
-    if not signed_in and not (os.path.exists(ITUBE_OAUTH_PATH) or os.path.exists(OAUTH_PATH)):
+    if not signed_in and (not allow_oauth or not (os.path.exists(ITUBE_OAUTH_PATH) or os.path.exists(OAUTH_PATH))):
         return False, "", ""
-    yt = _authenticated_client()
+    yt = _authenticated_client(path, allow_oauth=allow_oauth)
     if yt is None:
         return False, "", ""
     # The ONLY reliable signed-in signal is `get_account_info` returning a real account name.
@@ -427,27 +432,68 @@ def cmd_detect_browsers():
         print(json.dumps({"browsers": [], "default": None, "error": str(e)[:200]}))
 
 
-def _extract_for(browser):
+def _candidate_cookie_path():
+    os.makedirs(_CFG_DIR, exist_ok=True)
+    fd, path = tempfile.mkstemp(prefix="yt-cookies.candidate-", dir=_CFG_DIR)
+    os.close(fd)
+    os.unlink(path)
+    return path
+
+
+def _run_auth_helper(args, output_path):
     import subprocess
     try:
-        subprocess.run([sys.executable, _auth_helper(), browser], capture_output=True, timeout=90)
+        if os.path.exists(output_path):
+            os.remove(output_path)
+    except OSError:
+        return False
+    env = os.environ.copy()
+    env["INIR_YTMUSIC_COOKIE_OUTPUT"] = output_path
+    try:
+        result = subprocess.run(
+            [sys.executable, _auth_helper(), *args], capture_output=True,
+            text=True, timeout=90, env=env)
+        data = json.loads(result.stdout or "{}")
+        return result.returncode == 0 and data.get("status") == "success" and os.path.isfile(output_path)
     except Exception:
-        pass
+        return False
+
+
+def _promote_cookie_candidate(candidate):
+    try:
+        os.makedirs(os.path.dirname(YTCOOKIE_PATH), exist_ok=True)
+        os.chmod(candidate, 0o600)
+        os.replace(candidate, YTCOOKIE_PATH)
+        return True
+    except Exception:
+        return False
 
 
 def _extract_and_probe(browser, attempts=3):
     """Extract this browser's cookies and validate against YTM, retrying a few times. Live browser
     cookies rotate constantly; a single extraction can momentarily catch a mid-rotation/anonymous
     state even though the browser IS logged in. Retrying a couple of times with a short pause lands
-    on the settled, authenticating set. Returns (authenticated, name, avatar)."""
-    for i in range(attempts):
-        _extract_for(browser)
-        auth, name, avatar = _account_probe()
-        if auth:
-            return True, name, avatar
-        if i < attempts - 1:
-            time.sleep(1.5)
-    return False, "", ""
+    on the settled, authenticating set. Candidate extraction is transactional: a failed reconnect
+    must not replace the last canonical jar with anonymous/stale browser cookies.
+    Returns (authenticated, name, avatar)."""
+    candidate = _candidate_cookie_path()
+    try:
+        for i in range(attempts):
+            if _run_auth_helper([browser], candidate):
+                # Never allow an unrelated OAuth token or the previous canonical
+                # jar to validate this browser candidate.
+                auth, name, avatar = _account_probe(candidate, allow_oauth=False)
+                if auth and _promote_cookie_candidate(candidate):
+                    return True, name, avatar
+            if i < attempts - 1:
+                time.sleep(1.5)
+        return False, "", ""
+    finally:
+        try:
+            if os.path.exists(candidate):
+                os.remove(candidate)
+        except OSError:
+            pass
 
 
 def cmd_connect(browser="auto"):
@@ -462,15 +508,20 @@ def cmd_connect(browser="auto"):
                                             capture_output=True, text=True, timeout=15).stdout or "{}")
         except Exception:
             det = {}
+        detected = [b.get("id") for b in det.get("browsers", []) if b.get("id")]
         order = []
-        if det.get("default"):
-            order.append(det["default"])
-        for b in det.get("browsers", []):
-            if b.get("id") and b["id"] not in order:
-                order.append(b["id"])
+        default = det.get("default")
+        # XDG defaults routinely outlive removed/replaced browsers. Only prioritize
+        # the default when this detector found an actual cookie store for it.
+        if default in detected:
+            order.append(default)
+        for browser_id in detected:
+            if browser_id not in order:
+                order.append(browser_id)
         if not order:
             print(json.dumps({"authenticated": False, "error": "no_browser"})); return
-        # Give the system-default browser more retries (it's the most likely to be the logged-in one).
+        # Give the preferred candidate more retries. If the real XDG default was
+        # detected it is first; otherwise this is simply the first usable profile.
         for idx, b in enumerate(order):
             auth, name, avatar = _extract_and_probe(b, attempts=3 if idx == 0 else 1)
             if auth:
@@ -486,19 +537,20 @@ def cmd_connect_manual(path):
     """Connect from a manually-exported cookies.txt (the reliable incognito-export method). YouTube
     rotates cookies on open tabs, so a file exported from a closed incognito session stays valid
     far longer than live extraction from the user's active profile."""
-    import subprocess
+    candidate = _candidate_cookie_path()
     try:
-        r = subprocess.run([sys.executable, _auth_helper(), "import", path],
-                          capture_output=True, text=True, timeout=15)
-        imp = json.loads(r.stdout or "{}")
-    except Exception as e:
-        print(json.dumps({"authenticated": False, "error": str(e)[:200]})); return
-    if imp.get("status") != "success":
-        print(json.dumps({"authenticated": False, "error": imp.get("message", "import failed")})); return
-    auth, name, avatar = _account_probe()
-    if not auth:
-        print(json.dumps({"authenticated": False, "error": "not_logged_in"})); return
-    print(json.dumps({"authenticated": True, "account": name, "avatar": avatar, "browser": "manual"}))
+        if not _run_auth_helper(["import", path], candidate):
+            print(json.dumps({"authenticated": False, "error": "import_failed"})); return
+        auth, name, avatar = _account_probe(candidate, allow_oauth=False)
+        if not auth or not _promote_cookie_candidate(candidate):
+            print(json.dumps({"authenticated": False, "error": "not_logged_in"})); return
+        print(json.dumps({"authenticated": True, "account": name, "avatar": avatar, "browser": "manual"}))
+    finally:
+        try:
+            if os.path.exists(candidate):
+                os.remove(candidate)
+        except OSError:
+            pass
 
 
 def cmd_disconnect():

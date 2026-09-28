@@ -62,8 +62,8 @@ Item {
     readonly property string effectiveArtist: isYtMusic ? YtMusic.currentArtist : (player?.trackArtist ?? "")
     readonly property string effectiveArtUrl: isYtMusic && YtMusic.currentThumbnail ? YtMusic.currentThumbnail : (player?.trackArtUrl ?? "")
     readonly property bool effectiveIsPlaying: isYtMusic ? YtMusic.isPlaying : (player?.isPlaying ?? false)
-    readonly property real effectivePosition: isYtMusic ? YtMusic.currentPosition : (player?.position ?? 0)
-    readonly property real effectiveLength: isYtMusic ? YtMusic.currentDuration : (player?.length ?? 0)
+    readonly property real effectivePosition: isYtMusic ? YtMusic.currentPosition : MprisController.positionOf(player)
+    readonly property real effectiveLength: isYtMusic ? YtMusic.currentDuration : MprisController.lengthOf(player)
     readonly property bool effectiveCanSeek: isYtMusic ? YtMusic.canSeek : (player?.canSeek ?? false)
 
     // ── Cover art download ──
@@ -158,7 +158,7 @@ Item {
     implicitWidth: dashContainer.implicitWidth + Appearance.sizes.elevationMargin * 2
     implicitHeight: dashContainer.implicitHeight + Appearance.sizes.elevationMargin * 2
 
-    Component.onCompleted: ResourceUsage.ensureRunning()
+    property QtObject resourceMonitor: ResourceUsageMonitor { target: root; active: root.cfgSystem }
 
     Timer {
         running: root.effectiveIsPlaying
@@ -356,7 +356,7 @@ Item {
                     anchors.fill: parent
                     radius: headerCard.radius
                     visible: !root.angelStyle && !root.auroraStyle
-                    color: root.colCard
+                    color: Appearance.editorialEverywhere ? Appearance.editorial.ink : root.colCard
                 }
 
                 AngelPartialBorder { targetRadius: parent.radius; coverage: 0.45 }
@@ -374,32 +374,59 @@ Item {
                             text: DateTime.time
                             font {
                                 pixelSize: Appearance.font.pixelSize.huge * 1.8
-                                weight: Font.Light
+                                weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Light
                                 family: Appearance.font.family.numbers
                             }
-                            color: root.colText
+                            color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : root.colText
                         }
                         StyledText {
                             text: root.greeting
                             font { pixelSize: Appearance.font.pixelSize.normal; weight: Font.Medium }
-                            color: root.colPrimary
+                            color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : root.colPrimary
                         }
                     }
 
                     ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                         spacing: 2
 
                         StyledText {
-                            Layout.alignment: Qt.AlignRight
-                            text: Qt.formatDate(DateTime.clock.date, "dddd, MMMM d")
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            horizontalAlignment: Text.AlignRight
+                            text: Qt.formatDate(DateTime.clock.date, "dddd, MMMM")
+                            elide: Text.ElideRight
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: root.colSubtext
+                            color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : root.colSubtext
                         }
 
                         RowLayout {
                             Layout.alignment: Qt.AlignRight
-                            spacing: 8
+                            spacing: 6
+
+                            Rectangle {
+                                Layout.preferredWidth: 30
+                                Layout.preferredHeight: 26
+                                radius: Appearance.rounding.small
+                                color: root.inirStyle ? Appearance.inir.colPrimary
+                                    : root.angelStyle ? ColorUtils.applyAlpha(root.colPrimary, 0.18)
+                                    : Appearance.colors.colPrimaryContainer
+
+                                StyledText {
+                                    anchors.centerIn: parent
+                                    text: Qt.formatDate(DateTime.clock.date, "d")
+                                    font {
+                                        family: Appearance.font.family.numbers
+                                        pixelSize: Appearance.font.pixelSize.normal
+                                        weight: Font.DemiBold
+                                    }
+                                    color: root.inirStyle ? Appearance.inir.colOnPrimary
+                                        : root.angelStyle ? root.colPrimary
+                                        : Appearance.colors.colOnPrimaryContainer
+                                }
+                            }
 
                             Revealer {
                                 reveal: Notifications.list.length > 0
@@ -408,13 +435,13 @@ Item {
                                 MaterialSymbol {
                                     text: "notifications"
                                     iconSize: 14
-                                    color: root.colSubtext
+                                    color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : root.colSubtext
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                                 StyledText {
                                     text: Notifications.list.length.toString()
                                     font { pixelSize: Appearance.font.pixelSize.smallest; family: Appearance.font.family.numbers }
-                                    color: root.colSubtext
+                                    color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : root.colSubtext
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
@@ -428,13 +455,13 @@ Item {
                                     text: "do_not_disturb_on"
                                     iconSize: 14
                                     fill: 1
-                                    color: root.colPrimary
+                                    color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : root.colPrimary
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                                 StyledText {
                                     text: Translation.tr("DND")
                                     font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: root.colPrimary
+                                    color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : root.colPrimary
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
@@ -443,17 +470,18 @@ Item {
                     }
 
                     RippleButton {
-                        implicitWidth: 32
-                        implicitHeight: 32
+                        Layout.preferredWidth: 32
+                        Layout.preferredHeight: 32
+                        Layout.alignment: Qt.AlignVCenter
                         buttonRadius: root.angelStyle ? Appearance.angel.roundingSmall : 16
                         colBackground: "transparent"
-                        colBackgroundHover: root.colCardHover
+                        colBackgroundHover: Appearance.editorialEverywhere ? ColorUtils.applyAlpha(Appearance.editorial.paperOnInk, 0.12) : root.colCardHover
                         onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: "settings"
                             iconSize: 18
-                            color: root.colSubtext
+                            color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : root.colSubtext
                         }
                         StyledToolTip { text: Translation.tr("Settings") }
                     }
@@ -751,7 +779,7 @@ Item {
                                 value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
                                 onMoved: {
                                     if (root.isYtMusic) YtMusic.seek(value * root.effectiveLength)
-                                    else if (root.player) root.player.position = value * root.player.length
+                                    else if (root.player) MprisController.seek(root.player, value * MprisController.lengthOf(root.player))
                                 }
 
                                 Binding {
@@ -1406,7 +1434,7 @@ Item {
 
         implicitHeight: chipRow.implicitHeight + 10
         implicitWidth: chipRow.implicitWidth + 20
-        radius: Appearance.rounding.full
+        radius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
         color: root.angelStyle ? ColorUtils.transparentize(root.colPrimary, 0.78)
             : root.inirStyle ? Appearance.inir.colLayer2
             : root.auroraStyle ? ColorUtils.transparentize(Appearance.colors.colSecondaryContainer, 0.45)

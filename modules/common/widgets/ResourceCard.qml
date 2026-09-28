@@ -16,7 +16,7 @@ Rectangle {
 
     width: cardWidth
     height: 96
-    radius: 16
+    radius: Appearance.editorialEverywhere ? Appearance.editorial.radius : 16
 
     color: Appearance.colors.colSurfaceContainerLow
 

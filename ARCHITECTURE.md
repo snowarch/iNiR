@@ -2,9 +2,9 @@
 
 > A complete desktop shell built on [Quickshell](https://quickshell.org/) for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor.
 
-**Version**: 2.29.3 · **Stack**: QML (Quickshell), Bash, Python, Go
+**Version**: 2.31.0 · **Stack**: QML (Quickshell), Bash, Python, Go
 
-Originally forked from [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (illogical-impulse). Secondary Hyprland support is maintained.
+Originally forked from [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (illogical-impulse). iNiR is built and tested for Niri; legacy Hyprland compatibility paths remain in the tree but are not the primary supported/tested target.
 
 ---
 
@@ -13,47 +13,65 @@ Originally forked from [end-4/dots-hyprland](https://github.com/end-4/dots-hyprl
 `shell.qml` → `ShellRoot` (Quickshell-specific root, not Item/Window).
 
 Startup flow:
-1. Environment pragmas configure Qt scale, WebEngine, etc.
-2. Singleton services force-instantiated via dummy property bindings
-3. `Config.ready` triggers panel loading
-4. Theme and icon services applied via `Qt.callLater`
-5. Hyprsunset, first-run wizard, and conflict killer loaded
+1. Environment pragmas configure Qt/Quickshell policy.
+2. Startup-critical singletons and shell-wide IPC routers are materialized.
+3. `Config.ready` applies the current theme/icon theme and selects one family.
+4. The family's **critical host** renders first-frame surfaces (background/bar/dock for ii; bar/background/backdrop for Waffle; background/bar for iRiS).
+5. After the shell entry frame, `GlobalStates.deferredPanelsReady` enables the family wrapper and its full `Shell*PanelsImpl.qml` tree.
+6. Interaction-heavy panels use deferred/on-demand loaders, while background services are staggered after first paint.
 
 ## Panel Families
 
-Two mutually exclusive UI families, switchable at runtime (`Super+Shift+W`):
+Three mutually exclusive UI families, switchable at runtime (`Super+Shift+W`):
 
-| | **Material ii** | **Waffle** |
-|---|---|---|
-| Active when | `panelFamily !== "waffle"` | `panelFamily === "waffle"` |
-| Visual tokens | `Appearance.*` | `Looks.*` |
-| Styles | material, cards, aurora, inir, angel, zzz, cookie | Single fluent style |
-| Bar | Top (or vertical; bar.appearanceStyle selects classic/islands/scenic/frame, pill, or m3) | Bottom (Win11 taskbar) |
-| App launcher | Overview | StartMenu with search |
-| Right panel | SidebarRight | ActionCenter + NotificationCenter |
-| Panels | ii (iiBar, iiDock, iiSidebarLeft, ...) | w (wBar, wStartMenu, wActionCenter, ... + shared ii panels) |
+| | **Material ii** | **Waffle** | **iRiS** |
+|---|---|---|---|
+| Active when | `panelFamily === "ii"` | `panelFamily === "waffle"` | `panelFamily === "iris"` |
+| Visual tokens | `Appearance.*` | `Looks.*` | `IrisStyle.*` |
+| Global styles | material, cards, aurora, inir, angel, regalia, zzz, cookie, editorial | Waffle keeps its Fluent layout/tokens while `Looks` adapts shared global-style color/material semantics | iRiS owns its own presets and shareable full Themes through `IrisStyle` |
+| Bar | Top (or vertical; bar.appearanceStyle selects classic/islands/scenic/frame, pill, or m3) | Bottom (Win11 taskbar) | Island on any edge, or a full-width zoned bar |
+| App launcher | Overview | StartMenu with search | IrisPalette |
+| Right panel | SidebarRight | ActionCenter + NotificationCenter | IrisControlCenter |
+| Panels | ii (iiBar, iiDock, iiSidebarLeft, ...) | w (wBar, wStartMenu, wActionCenter, ... + shared ii panels) | iris (irisBar, irisBackground, irisPalette, irisControlCenter, ...) |
 
-Each panel uses `PanelLoader` (LazyLoader wrapper):
+Panel composition is intentionally split. `shell.qml` loads a small critical family host first and only loads the heavier family implementation after `deferredPanelsReady`:
+
+```text
+shell.qml
+  -> modules/ii/critical/ShellIiCriticalPanels.qml
+  -> ShellIiPanels.qml -> modules/ii/ShellIiPanelsImpl.qml
+
+shell.qml
+  -> modules/waffle/critical/ShellWaffleCriticalPanels.qml
+  -> ShellWafflePanels.qml -> modules/waffle/ShellWafflePanelsImpl.qml
+
+shell.qml
+  -> modules/iris/critical/ShellIrisCriticalPanels.qml
+  -> ShellIrisPanels.qml -> modules/iris/ShellIrisPanelsImpl.qml
+```
+
+Inside the implementation roots, `PanelLoader`, `DeferredPanelLoader`, and `OnDemandPanelLoader` choose whether a surface should be resident. For example:
 ```qml
 PanelLoader {
-    identifier: "iiBar"
-    extraCondition: !(Config.options?.bar?.vertical ?? false)
-    component: Bar {}
+    identifier: "iiBackdrop"
+    extraCondition: Config.options?.background?.backdrop?.enable ?? false
+    source: "../background/Backdrop.qml"
 }
 ```
-Loads when ALL conditions are true: `Config.ready` + identifier in `enabledPanels` array + `extraCondition`.
+The loader contract is always based on `Config.ready`, `enabledPanels`, family/feature conditions, and the appropriate startup/open-state gate.
 
-Style dispatch priority: **cookie > zzz > angel > inir > aurora > material** (`Appearance.qml`: `cookieEverywhere`/`zzzEverywhere`/`angelEverywhere`/`inirEverywhere`/`auroraEverywhere` are `globalStyle` checks; `auroraEverywhere` is also true when `globalStyle === "angel"`, so angel must be checked before aurora wherever both matter). Cards is a material variant (no separate dispatch).
+Global-style detection is centralized in `Appearance.qml`. Use its semantic style flags/tokens instead of reproducing a local priority chain. The current style ids are `material`, `cards`, `aurora`, `inir`, `angel`, `regalia`, `zzz`, `cookie`, and `editorial`. Some capabilities deliberately overlap (for example Angel inherits Aurora's glass/blur capability), so exact-style decisions must use the specific `Appearance.*Everywhere` flag rather than an assumed order.
 
 ## Directory Structure
 
 ```
-shell.qml                     # Root entry — loads services, selects panel family
-ShellIiPanels.qml             # Material Design family
-ShellWafflePanels.qml         # Windows 11 family
+shell.qml                     # Root entry — startup, IPC routers, critical/deferred family gates
+ShellIiPanels.qml             # Thin deferred ii wrapper
+ShellWafflePanels.qml         # Thin deferred Waffle wrapper
+ShellIrisPanels.qml           # Thin deferred iRiS wrapper
 GlobalStates.qml              # Runtime UI state (panel open/closed booleans)
 FamilyTransitionOverlay.qml   # Animated family switch
-settings.qml                  # Settings GUI (separate Quickshell config)
+settings.qml                  # Standalone shared Settings entrypoint
 waffleSettings.qml            # Waffle-specific settings GUI
 welcome.qml                   # First-run wizard
 killDialog.qml                # Process kill confirmation
@@ -65,7 +83,11 @@ modules/                      # UI module directories
 │   └── widgets/              # Reusable widgets + qmldir
 ├── bar/                      # Top bar (ii family)
 ├── barM3/                    # Material 3 bar — independent layout model, bar.appearanceStyle "m3"
+├── iris/                     # iRiS Island family, chassis, surfaces, Studio, widgets and themes
 ├── background/               # Wallpaper backdrop + desktop widgets + desktop items
+├── ii/                       # ii composition implementation + critical host + ii-only overlay pieces
+│   ├── ShellIiPanelsImpl.qml # Deferred/on-demand ii composition authority
+│   └── critical/             # First-frame ii background/bar/dock host
 ├── sidebarLeft/              # AI chat, YT Music, widgets
 ├── sidebarRight/             # Toggles, calendar, tools
 ├── settings/                 # All config UI pages
@@ -73,6 +95,8 @@ modules/                      # UI module directories
 ├── overview/                 # Workspace overview + app search
 ├── wallpaperLauncher/        # Shared compact wallpaper carousel
 ├── waffle/                   # Windows 11 family
+│   ├── ShellWafflePanelsImpl.qml # Deferred/on-demand Waffle composition authority
+│   ├── critical/             # First-frame Waffle bar/background/backdrop host
 │   ├── bar/                  # Bottom taskbar
 │   ├── startMenu/            # Start menu with search
 │   ├── actionCenter/         # Quick settings
@@ -113,7 +137,7 @@ defaults/                     # Shipped defaults
 ├── niri/                     # Niri config templates
 └── [GTK, KDE, fuzzel, etc.]
 
-translations/                 # i18n strings (15 languages)
+translations/                 # i18n strings (17 locales)
 distro/arch/                  # Arch PKGBUILDs (dependency manifests)
 assets/                       # Icons, wallpapers, systemd unit, desktop entry
 docs/                         # User documentation
@@ -125,7 +149,7 @@ docs/                         # User documentation
 |--------|---------|
 | Schema | `modules/common/Config.qml` — JsonAdapter |
 | Defaults | `defaults/config.json` |
-| User file | `~/.config/illogical-impulse/config.json` (legacy namespace from fork origin) |
+| User file | `~/.config/inir/config.json` (canonical); legacy real directories remain readable and migrated installs expose `~/.config/illogical-impulse` as a compatibility alias |
 | Read | `Config.options.path.to.key` — schema-declared properties are typed QML properties with defaults |
 | Write | `Config.setNestedValue("path.to.key", value)` — writes + fires `configChanged()` signal |
 | Ready gate | `Config.ready` — true after JSON loaded (or created if missing) |
@@ -133,10 +157,10 @@ docs/                         # User documentation
 | Debounce | 50ms for both reads and writes |
 
 **Sync rule**: when adding a new config key, update together:
-1. `modules/common/Config.qml` — schema definition and shell default
+1. `modules/common/Config.qml` — schema definition and runtime fallback
 2. Consumer(s) — read/write the key
-3. Settings UI in every family that owns the behavior
-4. `defaults/config.json` only when the curated fresh-install preference differs
+3. Settings UI in every family that owns the behavior, when user-facing
+4. `defaults/config.json` when the shipped fresh-install profile needs an explicit value/structure
 
 ## Key Singletons
 
@@ -199,15 +223,7 @@ Full reference: [docs/IPC.md](docs/IPC.md).
 
 Colors flow: wallpaper image → `generate_colors_material.py` (materialyoucolor) → `colors.json` → `MaterialThemeLoader` → `Appearance` tokens → UI.
 
-Theme generation orchestrated by `scripts/colors/applycolor.sh`, which runs per-app modules in parallel:
-- Terminals (foot, kitty, alacritty)
-- Starship prompt
-- Fuzzel launcher
-- GTK3/4
-- Firefox (pywalfox)
-- VS Code, Zed, OpenCode (Go generators)
-- SDDM login theme
-- btop, lazygit, yazi
+Theme generation is orchestrated by `scripts/colors/applycolor.sh`. Enabled external targets are discovered from `scripts/colors/targets/*.json`, resolved to modules under `scripts/colors/modules/`, and run with bounded parallelism. Current target groups cover terminals, GTK/KDE, editors (including Zed), Chrome/Chromium, Spicetify, SDDM, Steam, Pear Desktop and Cava. The manifests are the inventory; do not duplicate a frozen app list in code.
 
 ## Distribution
 
@@ -221,11 +237,12 @@ cd inir
 ./setup rollback         # Restore previous snapshot
 ```
 
-Two install modes tracked in `version.json`:
-- **Repo-sync**: `./setup install` → syncs to `~/.config/quickshell/inir/`
-- **Package-managed**: `make install` → copies to `/usr/share/quickshell/inir/`
+Install topology is tracked in `version.json`:
+- **repo-copy**: normal `./setup install`; the checkout is the update source and the runtime payload is synchronized to `~/.config/quickshell/inir/`.
+- **repo-link**: development topology where the runtime resolves to the checkout itself; repo/setup owns updates without copying a second runtime tree.
+- **package-managed**: packaged/`make install`/Nix-style payload under a system prefix; the package manager owns payload updates.
 
-User config for the running QML shell lives at `~/.config/illogical-impulse/config.json` (legacy namespace, persistent across updates). NOTE: the shell scripts/CLI default to `~/.config/inir/` with a legacy fallback — the two sides are not yet unified.
+The canonical user config is `~/.config/inir/config.json`. Migration `019-config-dir-rename-compat` preserves older installs by moving/merging legacy state and creating `~/.config/illogical-impulse -> ~/.config/inir`; the resolver still honors an older real legacy directory when it exists.
 
 ### Multi-Distro Support
 

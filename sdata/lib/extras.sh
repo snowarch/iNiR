@@ -258,7 +258,7 @@ extras_install_mascot_pack() {
   local metadata_url="${base_url}/inir-mascot-pack.json"
   local checksum_url="${base_url}/inir-mascot-pack.sha256"
 
-  tui_info "Optional mascot art pack: 354 poses/animations, ~32 MiB download."
+  tui_info "Optional mascot art pack: downloading the latest published Kira release."
   tui_dim "Downloads and verifies the complete pack before updating the live assets."
 
   if [[ ! -d "$shell_dir" ]]; then

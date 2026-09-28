@@ -167,9 +167,9 @@ Singleton {
 
     function getSafeIcon(item): string {
         if (!item) return "";
+        if (item.icon) return item.icon;
         const app = getProblematicAppInfo(item);
-        if (app && app.fixedIcon) return app.fixedIcon;
-        return item.icon ?? "";
+        return app?.fixedIcon ? Quickshell.iconPath(app.fixedIcon, true) : "";
     }
 
     function getTooltipForItem(item) {

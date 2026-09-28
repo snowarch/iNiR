@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import qs.modules.common
 import qs.modules.common.models
 import qs.modules.common.widgets
+import qs.modules.mediaControls.components
 import qs.services
 import qs.modules.common.functions
 import Qt5Compat.GraphicalEffects
@@ -295,7 +296,7 @@ Item { // Player instance - Old style design
                             : Appearance.auroraEverywhere ? Appearance.aurora.colTextSecondary
                             : blendedColors.colSubtext
                         elide: Text.ElideRight
-                        text: `${StringUtils.friendlyTimeForSeconds(root.player?.position)} / ${StringUtils.friendlyTimeForSeconds(root.player?.length)}`
+                        text: `${StringUtils.friendlyTimeForSeconds(MprisController.positionOf(root.player))} / ${StringUtils.friendlyTimeForSeconds(MprisController.lengthOf(root.player))}`
                     }
                     RowLayout {
                         id: sliderRow
@@ -309,52 +310,21 @@ Item { // Player instance - Old style design
                             enabled: MprisController.canGoPreviousForPlayer(root.player)
                             downAction: () => MprisController.previousForPlayer(root.player)
                         }
-                        Item {
+                        PlayerProgress {
                             id: progressBarContainer
                             Layout.fillWidth: true
-                            implicitHeight: Math.max(sliderLoader.implicitHeight, progressBarLoader.implicitHeight)
-
-                            Loader {
-                                id: sliderLoader
-                                anchors.fill: parent
-                                active: root.player?.canSeek ?? false
-                                sourceComponent: StyledSlider {
-                                    configuration: StyledSlider.Configuration.Wavy
-                                    highlightColor: Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                                        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-                                        : blendedColors.colPrimary
-                                    trackColor: Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
-                                        : blendedColors.colSecondaryContainer
-                                    handleColor: Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                                        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-                                        : blendedColors.colPrimary
-                                    value: root.player?.position / root.player?.length
-                                    onMoved: {
-                                        root.player.position = value * root.player.length;
-                                    }
-                                }
-                            }
-
-                            Loader {
-                                id: progressBarLoader
-                                anchors {
-                                    verticalCenter: parent.verticalCenter
-                                    left: parent.left
-                                    right: parent.right
-                                }
-                                active: !(root.player?.canSeek ?? false)
-                                sourceComponent: StyledProgressBar {
-                                    wavy: root.player?.isPlaying
-                                    highlightColor: Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                                        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-                                        : blendedColors.colPrimary
-                                    trackColor: Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
-                                        : blendedColors.colSecondaryContainer
-                                    value: root.player?.position / root.player?.length
-                                }
-                            }
+                            implicitHeight: 16
+                            position: MprisController.positionOf(root.player)
+                            length: MprisController.lengthOf(root.player)
+                            canSeek: root.player?.canSeek ?? false
+                            isPlaying: root.player?.isPlaying ?? false
+                            highlightColor: Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                                : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
+                                : blendedColors.colPrimary
+                            trackColor: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                                : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                                : blendedColors.colSecondaryContainer
+                            onSeekRequested: seconds => MprisController.seek(root.player, seconds)
                         }
                         TrackChangeButton {
                             iconName: "skip_next"

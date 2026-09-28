@@ -26,8 +26,10 @@ Item {
     property QtObject blendedColors: AdaptedMaterialScheme {
         color: root.themeSourceColor
     }
+    readonly property QtObject effectiveColors: Appearance.editorialEverywhere && Appearance.colors
+        ? Appearance.colors : root.blendedColors
 
-    readonly property color ink: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? playerBase.inirText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+    readonly property color ink: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? playerBase.inirText : (root.effectiveColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
     readonly property color accent: Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.inirEverywhere ? playerBase.inirPrimary
         : root.themeSourceColor
@@ -46,8 +48,9 @@ Item {
         width: parent.width - Appearance.sizes.elevationMargin
         height: parent.height - Appearance.sizes.elevationMargin
         radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
-        color: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.inirEverywhere ? playerBase.inirLayer1 : (root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
-        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0
+        color: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.inirEverywhere ? playerBase.inirLayer1 : (root.effectiveColors?.colLayer0 ?? Appearance.colors.colLayer0)
+        border.width: root.vizType === "organic" && root.vizPosition !== "none"
+            ? 0 : (Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0)
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
         clip: true
 
@@ -96,7 +99,7 @@ Item {
 
         ZzzGraphicPlate {
             anchors.fill: parent
-            accentColor: root.blendedColors?.colPrimary ?? Appearance.zzz.accent
+            accentColor: root.effectiveColors?.colPrimary ?? Appearance.zzz.accent
         }
 
         Item {
@@ -114,30 +117,12 @@ Item {
                 }
             }
 
-            WaveVisualizer {
+                MediaVisualizerOverlay {
                 anchors.fill: parent
-                visible: root.vizType === "wave" && root.vizPosition !== "none"
-                live: playerBase.effectiveIsPlaying
-                points: root.visualizerPoints
-                maxVisualizerValue: 1000
-                smoothing: 2
-                color: ColorUtils.transparentize(root.accent, 0.35)
-            }
-
-            CavaVisualizer {
-                anchors.fill: parent
-                visible: root.vizType === "bars" && root.vizPosition !== "none"
-                live: playerBase.effectiveIsPlaying
-                points: root.visualizerPoints
-                maxVisualizerValue: 1000
-                smoothing: 2
-                barCount: 32
-                barSpacing: 3
-                barRadius: 2
-                barMinHeight: 1
-                colorLow: ColorUtils.transparentize(root.accent, 0.55)
-                colorMed: ColorUtils.transparentize(root.accent, 0.25)
-                colorHigh: root.accent
+                edgeHeight: 42
+                    visualizerPoints: root.visualizerPoints
+                active: playerBase.effectiveIsPlaying
+                playerColor: root.themeSourceColor
             }
 
             StyledText {
@@ -173,9 +158,9 @@ Item {
             lineSpacing: 12
             baseSize: Appearance.font.pixelSize.large
             activeScale: 1.22
-            activeColor: Appearance.zzzEverywhere ? (root.blendedColors?.colPrimary ?? Appearance.zzz.accent) : Appearance.inirEverywhere ? playerBase.inirPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+            activeColor: Appearance.zzzEverywhere ? (root.effectiveColors?.colPrimary ?? Appearance.zzz.accent) : Appearance.inirEverywhere ? playerBase.inirPrimary : (root.effectiveColors?.colPrimary ?? Appearance.colors.colPrimary)
             textColor: ColorUtils.applyAlpha(root.ink, 0.75)
-            indicatorColor: root.blendedColors?.colPrimaryContainer ?? Appearance.colors.colPrimaryContainer
+            indicatorColor: root.effectiveColors?.colPrimaryContainer ?? Appearance.colors.colPrimaryContainer
         }
     }
 }

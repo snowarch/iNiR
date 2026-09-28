@@ -8,6 +8,7 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
 import qs.modules.background.widgets
+import qs.modules.iris.widgets
 
 AbstractBackgroundWidget {
     id: root
@@ -17,10 +18,12 @@ AbstractBackgroundWidget {
         placementStrategy: "free", style: "digital",
         fontFamily: "Space Grotesk", timeFormat: "system",
         showSeconds: false, showDate: true, dateStyle: "long",
+        instrumentTrail: true, instrumentTrailLength: 6, instrumentNumerals: true,
         timeScale: 100, dateScale: 100, showShadow: true, dim: 70,
         "digital.adaptToWallpaper": true,
         "digital.animateChange": true, "digital.fontWeight": 600,
         "digital.spacing": 6, "digital.preset": "default",
+        "pixel.orientation": "horizontal",
         "cookie.aiStyling": false, "cookie.constantlyRotate": false,
         "cookie.dateInClock": true, "cookie.dateStyle": "bubble",
         "cookie.dialNumberStyle": "full", "cookie.hourHandStyle": "hollow",
@@ -37,101 +40,164 @@ AbstractBackgroundWidget {
 
     readonly property real activeClockWidth: root.clockStyle === "cookie"
         ? cookieClockLoader.width
+        : root.clockStyle === "pixel"
+            ? pixelClockLoader.width
+        : root.clockStyle === "instrument"
+            ? instrumentClockLoader.width
         : root.clockStyle === "androidStacked"
             ? androidStackedClockLoader.width : digitalClockLoader.width
     readonly property real activeClockHeight: root.clockStyle === "cookie"
         ? cookieClockLoader.height
+        : root.clockStyle === "pixel"
+            ? pixelClockLoader.height
+        : root.clockStyle === "instrument"
+            ? instrumentClockLoader.height
         : root.clockStyle === "androidStacked"
             ? androidStackedClockLoader.height : digitalClockLoader.height
     readonly property bool statusShown: root.wallpaperSafetyTriggered
-        || (GlobalStates.screenLocked && (Config.options?.lock?.showLockedText ?? false))
-    implicitHeight: root.activeClockHeight
+        || (root.shellLocked && (Config.options?.lock?.showLockedText ?? false))
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.activeClockHeight
         + (root.statusShown ? contentColumn.spacing + statusText.implicitHeight : 0)
-    implicitWidth: Math.max(root.activeClockWidth,
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.max(root.activeClockWidth,
         root.statusShown ? statusText.implicitWidth : 0)
+    irisFace: Component { IrisClockFace { widget: root } }
+    irisSizes: ["small", "medium"]
+    irisOptions: [
+        { key: "face", label: Translation.tr("Face"), fallback: "analog", choices: [
+            { label: Translation.tr("Analog"), icon: "schedule", value: "analog" },
+            { label: Translation.tr("Digital"), icon: "timer_10", value: "digital" }] },
+        { key: "seconds", label: Translation.tr("Second hand"), icon: "avg_pace", fallback: true }
+    ]
     // Digital mode resizes via timeScale, cookie via cookie.size — avoids scaleFactor churn
-    resizableAxes: root.clockStyle === "cookie" ? ({ uniform: "cookie.size" }) : ({ uniform: "timeScale" })
-    resizeMinWidth: root.clockStyle === "cookie" ? 120 : 80
+    resizableAxes: root.clockStyle === "cookie" ? ({ uniform: "cookie.size" })
+        : ({ uniform: "timeScale" })
+    resizeMinWidth: root.clockStyle === "cookie" ? 120
+        : root.clockStyle === "instrument" ? 120 : 80
     resizeMinHeight: root.clockStyle === "cookie" ? 120
+        : root.clockStyle === "instrument" ? 120
         : root.clockStyle === "androidStacked" ? 80 : 40
 
     editPopoverContent: Component {
         ColumnLayout {
-            spacing: 6
-            GridLayout {
-                columns: 3
-                columnSpacing: 4
-                rowSpacing: 4
-                Layout.alignment: Qt.AlignHCenter
+            spacing: 14
+
+            WidgetQuickSection {
+                title: Translation.tr("Style")
+                WidgetQuickChoices {
+                    current: root.clockStyle
+                    model: [
+                        { value: "digital", icon: "digital_out_of_home", label: Translation.tr("Digital") },
+                        { value: "androidStacked", icon: "android", label: Translation.tr("Android") },
+                        { value: "cookie", icon: "circle", label: Translation.tr("Cookie") },
+                        { value: "pixel", icon: "view_comfy_alt", label: Translation.tr("Pixel") },
+                        { value: "instrument", icon: "avg_pace", label: Translation.tr("Instrument") }
+                    ]
+                    onPicked: value => root._setOutputValue("style", value)
+                }
+            }
+
+            WidgetQuickSection {
+                visible: root.clockStyle === "pixel"
+                title: Translation.tr("Orientation")
+                WidgetQuickChoices {
+                    current: root.pixelOrientation
+                    model: [
+                        { value: "horizontal", icon: "view_week", label: Translation.tr("Horizontal") },
+                        { value: "vertical", icon: "view_agenda", label: Translation.tr("Vertical") }
+                    ]
+                    onPicked: value => root._setOutputValue("pixel.orientation", value)
+                }
+            }
+
+            WidgetQuickSection {
+                visible: root.textClockStyle
+                title: Translation.tr("Time format")
+                WidgetQuickChoices {
+                    current: root.timeFormat
+                    model: [
+                        { value: "system", icon: "settings", label: Translation.tr("System") },
+                        { value: "24h", icon: "schedule", label: Translation.tr("24h") },
+                        { value: "12h", icon: "nest_clock_farsight_analog", label: Translation.tr("12h") }
+                    ]
+                    onPicked: value => root._setOutputValue("timeFormat", value)
+                }
+            }
+
+            WidgetQuickSection {
+                visible: root.clockStyle === "instrument"
+                title: Translation.tr("Show")
                 Repeater {
                     model: [
-                        { label: "Digital", icon: "digital_out_of_home", value: "digital" },
-                        { label: "Android", icon: "android", value: "androidStacked" },
-                        { label: "Cookie", icon: "circle", value: "cookie" }
+                        { label: Translation.tr("Seconds"), icon: "timelapse", key: "showSeconds", fallback: false },
+                        { label: Translation.tr("Date"), icon: "calendar_today", key: "showDate", fallback: true },
+                        { label: Translation.tr("Numerals"), icon: "pin", key: "instrumentNumerals", fallback: true }
                     ]
-                    SelectionGroupButton {
+                    WidgetQuickToggle {
                         required property var modelData
                         Layout.fillWidth: true
-                        leftmost: true; rightmost: true
-                        buttonIcon: modelData.icon
-                        buttonText: Translation.tr(modelData.label)
-                        toggled: root.clockStyle === modelData.value
-                        onClicked: Config.setNestedValue("background.widgets.clock.style", modelData.value)
+                        iconName: modelData.icon
+                        label: modelData.label
+                        checked: Boolean(root._readConfigKey(modelData.key) ?? modelData.fallback)
+                        onToggled: root._setOutputValue(modelData.key, !checked)
                     }
                 }
             }
-            GridLayout {
-                columns: 3
-                columnSpacing: 4
-                rowSpacing: 4
-                Layout.alignment: Qt.AlignHCenter
-                visible: root.textClockStyle
-                Repeater {
+
+            WidgetQuickSection {
+                visible: root.clockStyle === "instrument"
+                title: Translation.tr("Second hand trail")
+                WidgetQuickChoices {
+                    isSelected: entry => entry.enabled === root.instrumentTrail
+                        && (!entry.enabled || (entry.length <= 6 ? root.instrumentTrailLength <= 7 : root.instrumentTrailLength > 7))
                     model: [
-                        { label: "System", icon: "settings", value: "system" },
-                        { label: "24h", icon: "schedule", value: "24h" },
-                        { label: "12h", icon: "nest_clock_farsight_analog", value: "12h" }
+                        { value: "clean", label: Translation.tr("Clean"), icon: "horizontal_rule", enabled: false, length: 0 },
+                        { value: "trace", label: Translation.tr("Trace"), icon: "blur_on", enabled: true, length: 5 },
+                        { value: "long", label: Translation.tr("Long trace"), icon: "blur_linear", enabled: true, length: 11 }
                     ]
-                    SelectionGroupButton {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        leftmost: true; rightmost: true
-                        buttonIcon: modelData.icon
-                        buttonText: Translation.tr(modelData.label)
-                        toggled: root.timeFormat === modelData.value
-                        onClicked: Config.setNestedValue("background.widgets.clock.timeFormat", modelData.value)
+                    onPicked: (value, entry) => {
+                        const updates = { instrumentTrail: entry.enabled }
+                        if (entry.enabled)
+                            updates.instrumentTrailLength = entry.length
+                        root._setOutputValues(updates)
                     }
                 }
             }
         }
     }
 
-    property string clockStyle: Config.getNestedValue("background.widgets.clock.style", "digital")
+    property string clockStyle: root._readConfigKey("style") ?? "digital"
+    widgetSurfaceEnabled: root.clockStyle !== "instrument"
     readonly property bool textClockStyle: root.clockStyle === "digital"
         || root.clockStyle === "androidStacked"
-    property bool adaptDigitalToWallpaper: Config.getNestedValue("background.widgets.clock.digital.adaptToWallpaper", true)
-    property bool forceCenter: (GlobalStates.screenLocked && (Config.options?.lock?.centerClock ?? false))
+    property bool adaptDigitalToWallpaper: root._readConfigKey("digital.adaptToWallpaper") ?? true
+    readonly property bool shellLocked: GlobalStates.screenLocked && Config.options?.panelFamily !== "iris"
+    property bool forceCenter: (root.shellLocked && (Config.options?.lock?.centerClock ?? false))
     property bool wallpaperSafetyTriggered: false
     property bool debugRegionActive: false
     property color debugRegionColor: "transparent"
     property real debugRegionBrightness: -1
     property real debugRegionSpread: 0
     property string cookieDiagnostics: "{}"
-    needsColText: root.textClockStyle && (root.adaptDigitalToWallpaper || root.widgetHasSurface)
-    liveColorTracking: root.textClockStyle && root.adaptDigitalToWallpaper && !root.widgetHasSurface
+    needsColText: root.clockStyle === "instrument"
+        || (root.textClockStyle && (root.adaptDigitalToWallpaper || root.widgetHasSurface))
     visibleWhenLocked: true
 
     // --- Clock customization config ---
-    property string clockFontFamily: Config.getNestedValue("background.widgets.clock.fontFamily", "Space Grotesk")
-    property string timeFormat: Config.getNestedValue("background.widgets.clock.timeFormat", "system")
-    property bool showSeconds: Config.getNestedValue("background.widgets.clock.showSeconds", false)
-    property bool showDate: Config.getNestedValue("background.widgets.clock.showDate", true)
-    property string dateStyle: Config.getNestedValue("background.widgets.clock.dateStyle", "long")
+    property string clockFontFamily: root._readConfigKey("fontFamily") ?? "Space Grotesk"
+    property string timeFormat: root._readConfigKey("timeFormat") ?? "system"
+    property bool showSeconds: root._readConfigKey("showSeconds") ?? false
+    property bool showDate: root._readConfigKey("showDate") ?? true
+    property bool instrumentTrail: root._readConfigKey("instrumentTrail") ?? true
+    property int instrumentTrailLength: Math.max(2, Math.min(15,
+        Number(root._readConfigKey("instrumentTrailLength") ?? 6)))
+    property bool instrumentNumerals: root._readConfigKey("instrumentNumerals") ?? true
+    property string dateStyle: root._readConfigKey("dateStyle") ?? "long"
     property int timeScale: Number(root._readConfigKey("timeScale") ?? 100)
-    property int dateScale: Config.getNestedValue("background.widgets.clock.dateScale", 100)
-    property bool showShadow: Config.getNestedValue("background.widgets.clock.showShadow", true)
-    property int digitalFontWeight: Config.getNestedValue("background.widgets.clock.digital.fontWeight", 600)
-    property int digitalSpacing: Config.getNestedValue("background.widgets.clock.digital.spacing", 6)
+    property int dateScale: Number(root._readConfigKey("dateScale") ?? 100)
+    property bool showShadow: root._readConfigKey("showShadow") ?? true
+    property int digitalFontWeight: Number(root._readConfigKey("digital.fontWeight") ?? 600)
+    property int digitalSpacing: Number(root._readConfigKey("digital.spacing") ?? 6)
+    readonly property string pixelOrientation: root._readConfigKey("pixel.orientation") ?? "horizontal"
 
     // ── Accent colors ── from the shared desktop-widget identity (AbstractBackgroundWidget)
     // so the clock reads as the same family as weather/sysmon/etc., wallpaper-generated.
@@ -164,7 +230,8 @@ AbstractBackgroundWidget {
     SystemClock {
         id: displayClock
         // Drop to minutes precision when power is reduced to save CPU
-        precision: (root.showSeconds || GlobalStates.screenLocked) && root.powerActive
+        precision: !root.irisFaced && (root.showSeconds || root.clockStyle === "instrument"
+            || GlobalStates.screenLocked) && root.powerActive
             ? SystemClock.Seconds : SystemClock.Minutes
     }
 
@@ -301,6 +368,7 @@ AbstractBackgroundWidget {
 
     // Card background (mainly for digital mode)
     WidgetSurface {
+        irisPresentation: root.widgetIris
         id: clockSurface
         regionBrightness: root.regionBrightness
         anchors.fill: parent
@@ -318,12 +386,13 @@ AbstractBackgroundWidget {
         screenY: root.y + Math.round(8 * root.scaleFactor)
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.textClockStyle
+        shown: !root.irisFaced && root.textClockStyle
             && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
     }
 
     Column {
         id: contentColumn
+        visible: !root.irisFaced
         anchors.centerIn: parent
         width: root.implicitWidth
         height: root.implicitHeight
@@ -332,7 +401,7 @@ AbstractBackgroundWidget {
         FadeLoader {
             id: cookieClockLoader
             x: Math.round((parent.width - width) / 2)
-            shown: root.clockStyle === "cookie"
+            shown: !root.irisFaced && root.clockStyle === "cookie"
             width: item?.desiredImplicitWidth ?? 0
             height: item?.desiredImplicitHeight ?? 0
             sourceComponent: Column {
@@ -360,8 +429,8 @@ AbstractBackgroundWidget {
                 FadeLoader {
                     id: cookieQuote
                     anchors.horizontalCenter: parent.horizontalCenter
-                    shown: (Config.getNestedValue("background.widgets.clock.quote.enable", false))
-                        && (Config.getNestedValue("background.widgets.clock.quote.text", "")) !== ""
+                    shown: Boolean(root._readConfigKey("quote.enable") ?? false)
+                        && String(root._readConfigKey("quote.text") ?? "") !== ""
                     sourceComponent: CookieQuote {}
                 }
             }
@@ -370,7 +439,7 @@ AbstractBackgroundWidget {
         FadeLoader {
             id: digitalClockLoader
             x: Math.round((parent.width - width) / 2)
-            shown: root.clockStyle === "digital"
+            shown: !root.irisFaced && root.clockStyle === "digital"
             width: item?.desiredImplicitWidth ?? 0
             height: item?.desiredImplicitHeight ?? 0
             sourceComponent: ColumnLayout {
@@ -405,8 +474,8 @@ AbstractBackgroundWidget {
                 StyledText {
                     id: quoteLabel
                     // Somehow gets fucked up if made a ClockText???
-                    visible: (Config.getNestedValue("background.widgets.clock.quote.enable", false))
-                        && (Config.getNestedValue("background.widgets.clock.quote.text", "")).length > 0
+                    visible: Boolean(root._readConfigKey("quote.enable") ?? false)
+                        && String(root._readConfigKey("quote.text") ?? "").length > 0
                     Layout.fillWidth: true
                     horizontalAlignment: root.textHorizontalAlignment
                     font {
@@ -416,7 +485,7 @@ AbstractBackgroundWidget {
                     color: root.digitalMetaColor
                     style: root.showShadow ? Text.Raised : Text.Normal
                     styleColor: root.colHalo
-                    text: Config.getNestedValue("background.widgets.clock.quote.text", "")
+                    text: String(root._readConfigKey("quote.text") ?? "")
                     Behavior on color {
                         enabled: Appearance.animationsEnabled
                         ColorAnimation {
@@ -430,9 +499,167 @@ AbstractBackgroundWidget {
         }
 
         FadeLoader {
+            id: instrumentClockLoader
+            x: Math.round((parent.width - width) / 2)
+            shown: !root.irisFaced && root.clockStyle === "instrument"
+            // Known before Loader construction: no zero-size frame on entry.
+            width: Math.round(230 * root.scaleFactor * root.timeScale / 100)
+            height: width
+            sourceComponent: Item {
+                id: dialClock
+                // Precision time instrument: a live minute track surrounds a
+                // typographic readout. It is intentionally not an analog clock.
+                readonly property real side: Math.round(230 * root.scaleFactor * root.timeScale / 100)
+                readonly property real desiredImplicitSize: side
+                readonly property real minutePosition: displayClock.date.getMinutes()
+                    + displayClock.date.getSeconds() / 60
+                readonly property bool secondsLive: root.showSeconds && root.powerActive
+                readonly property real trackRadius: side / 2 - Math.max(12,
+                    Math.round(18 * root.scaleFactor))
+                implicitWidth: side
+                implicitHeight: side
+
+                // Sixty precision marks. Only the recent minutes form the trail;
+                // disabling it leaves a neutral track plus the current locator.
+                Repeater {
+                    model: 60
+
+                    Item {
+                        id: minuteTick
+                        required property int index
+                        readonly property bool quarter: index % 15 === 0
+                        readonly property bool fiveMinute: index % 5 === 0 && !quarter
+                        readonly property real distanceBehind: (dialClock.minutePosition - index + 60) % 60
+                        readonly property bool current: index === Math.floor(dialClock.minutePosition) % 60
+                        readonly property bool inTrail: root.instrumentTrail && !current
+                            && distanceBehind > 0 && distanceBehind <= root.instrumentTrailLength
+                        readonly property real trailStrength: inTrail
+                            ? 1 - distanceBehind / Math.max(1, root.instrumentTrailLength) : 0
+
+                        anchors.centerIn: parent
+                        width: dialClock.side
+                        height: dialClock.side
+                        rotation: index * 6
+
+                        Rectangle {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenterOffset: -dialClock.trackRadius
+                            width: minuteTick.current ? Math.max(3, Math.round(3 * root.scaleFactor))
+                                : minuteTick.inTrail ? Math.max(2, Math.round(2 * root.scaleFactor))
+                                : minuteTick.quarter ? Math.max(2, Math.round(2 * root.scaleFactor)) : 1
+                            height: minuteTick.current ? Math.round(16 * root.scaleFactor)
+                                : minuteTick.inTrail
+                                    ? Math.round((6 + minuteTick.trailStrength * 7) * root.scaleFactor)
+                                : minuteTick.quarter ? Math.round(12 * root.scaleFactor)
+                                : minuteTick.fiveMinute ? Math.round(8 * root.scaleFactor)
+                                : Math.round(5 * root.scaleFactor)
+                            radius: width / 2
+                            color: minuteTick.current ? root.widgetAccentVisible
+                                : minuteTick.inTrail
+                                    ? ColorUtils.applyAlpha(root.widgetAccent3Visible,
+                                        0.42 + minuteTick.trailStrength * 0.58)
+                                    : ColorUtils.applyAlpha(root.widgetInk,
+                                        minuteTick.quarter ? 0.5
+                                            : minuteTick.fiveMinute ? 0.3 : 0.18)
+                            Behavior on color {
+                                enabled: root.animationsActive
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: [
+                        { text: "12", angle: -Math.PI / 2, hero: true },
+                        { text: "3", angle: 0, hero: false },
+                        { text: "6", angle: Math.PI / 2, hero: false },
+                        { text: "9", angle: Math.PI, hero: false }
+                    ]
+
+                    StyledText {
+                        required property var modelData
+                        readonly property real labelRadius: dialClock.trackRadius
+                            - Math.round(20 * root.scaleFactor)
+                        visible: root.instrumentNumerals
+                        text: modelData.text
+                        x: dialClock.width / 2 + labelRadius * Math.cos(modelData.angle) - width / 2
+                        y: dialClock.height / 2 + labelRadius * Math.sin(modelData.angle) - height / 2
+                        color: modelData.hero ? root.widgetAccentVisible : root.widgetInkMuted
+                        font {
+                            family: root.widgetNumbersFamily
+                            pixelSize: Math.round(dialClock.side * (modelData.hero ? 0.08 : 0.052))
+                            weight: modelData.hero ? Font.Bold : Font.DemiBold
+                            features: ({ "tnum": 1 })
+                        }
+                    }
+                }
+
+                // Seconds index: a small accent dot riding the tick track.
+                Item {
+                    visible: dialClock.secondsLive
+                    anchors.centerIn: parent
+                    width: dialClock.side
+                    height: dialClock.side
+                    rotation: displayClock.date.getSeconds() * 6
+
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: -dialClock.trackRadius
+                        width: Math.max(5, Math.round(6 * root.scaleFactor))
+                        height: width
+                        radius: width / 2
+                        color: root.widgetAccentVisible
+                    }
+                }
+
+                // Hero readout: the time owns the dial center.
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    spacing: 0
+
+                    StyledText {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.maximumWidth: dialClock.side * 0.62
+                        text: root.timeText
+                        color: root.widgetInk
+                        fontSizeMode: Text.Fit
+                        minimumPixelSize: Math.round(16 * root.scaleFactor)
+                        font {
+                            family: root.widgetNumbersFamily
+                            pixelSize: Math.round(dialClock.side * 0.175)
+                            weight: Font.Bold
+                            features: ({ "tnum": 1 })
+                            letterSpacing: -0.5
+                        }
+                    }
+
+                    StyledText {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.topMargin: Math.round(6 * root.scaleFactor)
+                        visible: root.showDate
+                        Layout.maximumWidth: dialClock.side * 0.64
+                        text: root.widgetCase(Qt.locale().toString(displayClock.date, "ddd d MMM"))
+                        elide: Text.ElideRight
+                        color: root.widgetInkMuted
+                        font {
+                            family: root.widgetBodyFamily
+                            pixelSize: Math.round(Math.max(9, dialClock.side * 0.048))
+                            weight: root.widgetLabelWeight
+                            letterSpacing: root.widgetIris ? 0 : Math.max(1, Math.round(1.6 * root.scaleFactor))
+                            capitalization: root.widgetCapitalization
+                        }
+                    }
+                }
+            }
+        }
+
+        FadeLoader {
             id: androidStackedClockLoader
             x: Math.round((parent.width - width) / 2)
-            shown: root.clockStyle === "androidStacked"
+            shown: !root.irisFaced && root.clockStyle === "androidStacked"
             width: item?.desiredImplicitWidth ?? 0
             height: item?.desiredImplicitHeight ?? 0
             sourceComponent: AndroidStackedClock {
@@ -447,8 +674,23 @@ AbstractBackgroundWidget {
                 dateScale: root.dateScale / 100
                 showDate: root.showDate
                 showShadow: root.showShadow
-                animateChange: Config.getNestedValue("background.widgets.clock.digital.animateChange", false)
+                animateChange: Boolean(root._readConfigKey("digital.animateChange") ?? false)
                 horizontalAlignment: root.textHorizontalAlignment
+            }
+        }
+        FadeLoader {
+            id: pixelClockLoader
+            x: Math.round((parent.width - width) / 2)
+            shown: !root.irisFaced && root.clockStyle === "pixel"
+            width: item?.desiredImplicitWidth ?? 0
+            height: item?.desiredImplicitHeight ?? 0
+            sourceComponent: PixelClock {
+                currentDate: displayClock.date
+                orientation: root.pixelOrientation
+                scaleFactor: root.scaleFactor * root.timeScale / 100
+                softColor: root.widgetSemanticContainer(root.widgetPrimaryRole)
+                boldColor: root.widgetAccent
+                showShadow: root.showShadow
             }
         }
         Item {
@@ -499,7 +741,7 @@ AbstractBackgroundWidget {
                     }
                     ClockStatusText {
                         id: lockStatusText
-                        shown: GlobalStates.screenLocked && (Config.options?.lock?.showLockedText ?? false)
+                        shown: root.shellLocked && (Config.options?.lock?.showLockedText ?? false)
                         statusIcon: "lock"
                         statusText: Translation.tr("Locked")
                     }
@@ -523,7 +765,7 @@ AbstractBackgroundWidget {
         color: root.digitalTimeColor
         style: root.showShadow ? Text.Raised : Text.Normal
         styleColor: root.colHalo
-        animateChange: Config.getNestedValue("background.widgets.clock.digital.animateChange", false)
+        animateChange: Boolean(root._readConfigKey("digital.animateChange") ?? false)
         Behavior on color {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation {

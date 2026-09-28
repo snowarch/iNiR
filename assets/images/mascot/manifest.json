@@ -1602,7 +1602,42 @@
     "headphone-groove-full-loop",
     "snapshot-director-loop",
     "wallpaper-color-sweep-loop",
-    "notice-think-wink-loop"
+    "notice-think-wink-loop",
+    "codex-celebrate-loop",
+    "codex-double-take-loop",
+    "codex-ear-listen-loop",
+    "codex-failed-loop",
+    "codex-focus-shift-loop",
+    "codex-greeting-loop",
+    "codex-idle-loop",
+    "codex-jump-loop",
+    "codex-look-around-loop",
+    "codex-review-loop",
+    "codex-run-left-loop",
+    "codex-run-right-loop",
+    "codex-running-loop",
+    "codex-thinking-loop",
+    "codex-waiting-loop",
+    "codex-watch-left-loop",
+    "codex-watch-right-loop",
+    "codex-wave-loop",
+    "jrpg-idle-loop",
+    "jrpg-inspect-loop",
+    "jrpg-jump-loop",
+    "jrpg-laugh-loop",
+    "jrpg-peek-loop",
+    "jrpg-push-loop",
+    "jrpg-run-left-loop",
+    "jrpg-run-right-loop",
+    "jrpg-wave-loop",
+    "jrpg-thinking-loop",
+    "jrpg-celebrate-loop",
+    "jrpg-listen-loop",
+    "jrpg-failed-loop",
+    "jrpg-stretch-loop",
+    "jrpg-beckon-loop",
+    "jrpg-approve-loop",
+    "jrpg-shrug-loop"
   ],
   "collectionPoses": [
     "about-confident",
@@ -1958,7 +1993,42 @@
     "street-brew-bottle",
     "street-flannel-smoke",
     "street-tongue-flipoff",
-    "street-hangover-crash"
+    "street-hangover-crash",
+    "codex-celebrate-loop",
+    "codex-double-take-loop",
+    "codex-ear-listen-loop",
+    "codex-failed-loop",
+    "codex-focus-shift-loop",
+    "codex-greeting-loop",
+    "codex-idle-loop",
+    "codex-jump-loop",
+    "codex-look-around-loop",
+    "codex-review-loop",
+    "codex-run-left-loop",
+    "codex-run-right-loop",
+    "codex-running-loop",
+    "codex-thinking-loop",
+    "codex-waiting-loop",
+    "codex-watch-left-loop",
+    "codex-watch-right-loop",
+    "codex-wave-loop",
+    "jrpg-idle-loop",
+    "jrpg-inspect-loop",
+    "jrpg-jump-loop",
+    "jrpg-laugh-loop",
+    "jrpg-peek-loop",
+    "jrpg-push-loop",
+    "jrpg-run-left-loop",
+    "jrpg-run-right-loop",
+    "jrpg-wave-loop",
+    "jrpg-thinking-loop",
+    "jrpg-celebrate-loop",
+    "jrpg-listen-loop",
+    "jrpg-failed-loop",
+    "jrpg-stretch-loop",
+    "jrpg-beckon-loop",
+    "jrpg-approve-loop",
+    "jrpg-shrug-loop"
   ],
   "chibiPoses": [
     "chibi-arms-crossed",
@@ -1983,13 +2053,34 @@
     "street-scheme-station"
   ],
   "collectionSpecial": {
-    "base": { "category": "editorial", "role": "identity" },
-    "expression-sheet": { "category": "editorial", "role": "expression-study" },
-    "hero-banner": { "category": "editorial", "role": "brand-key-art" },
-    "crash-pancake": { "category": "fullbody", "role": "chaos-fail" },
-    "recording-director": { "category": "fullbody", "role": "recording-director" },
-    "street-smoke-den": { "category": "editorial", "role": "night-owl-scene" },
-    "street-scheme-station": { "category": "editorial", "role": "villain-arc-scene" }
+    "base": {
+      "category": "editorial",
+      "role": "identity"
+    },
+    "expression-sheet": {
+      "category": "editorial",
+      "role": "expression-study"
+    },
+    "hero-banner": {
+      "category": "editorial",
+      "role": "brand-key-art"
+    },
+    "crash-pancake": {
+      "category": "fullbody",
+      "role": "chaos-fail"
+    },
+    "recording-director": {
+      "category": "fullbody",
+      "role": "recording-director"
+    },
+    "street-smoke-den": {
+      "category": "editorial",
+      "role": "night-owl-scene"
+    },
+    "street-scheme-station": {
+      "category": "editorial",
+      "role": "villain-arc-scene"
+    }
   },
   "fullBodyPoses": [
     "alert-look",
@@ -2186,7 +2277,42 @@
     "street-brew-bottle",
     "street-flannel-smoke",
     "street-tongue-flipoff",
-    "street-hangover-crash"
+    "street-hangover-crash",
+    "codex-celebrate-loop",
+    "codex-double-take-loop",
+    "codex-ear-listen-loop",
+    "codex-failed-loop",
+    "codex-focus-shift-loop",
+    "codex-greeting-loop",
+    "codex-idle-loop",
+    "codex-jump-loop",
+    "codex-look-around-loop",
+    "codex-review-loop",
+    "codex-run-left-loop",
+    "codex-run-right-loop",
+    "codex-running-loop",
+    "codex-thinking-loop",
+    "codex-waiting-loop",
+    "codex-watch-left-loop",
+    "codex-watch-right-loop",
+    "codex-wave-loop",
+    "jrpg-idle-loop",
+    "jrpg-inspect-loop",
+    "jrpg-jump-loop",
+    "jrpg-laugh-loop",
+    "jrpg-peek-loop",
+    "jrpg-push-loop",
+    "jrpg-run-left-loop",
+    "jrpg-run-right-loop",
+    "jrpg-wave-loop",
+    "jrpg-thinking-loop",
+    "jrpg-celebrate-loop",
+    "jrpg-listen-loop",
+    "jrpg-failed-loop",
+    "jrpg-stretch-loop",
+    "jrpg-beckon-loop",
+    "jrpg-approve-loop",
+    "jrpg-shrug-loop"
   ],
   "contextualOcclusionPoses": [
     "box-hideout"
@@ -2273,7 +2399,42 @@
     "street-pilot-seat",
     "street-mad-scribe",
     "street-easel-painter",
-    "street-peace-swagger"
+    "street-peace-swagger",
+    "codex-celebrate-loop",
+    "codex-double-take-loop",
+    "codex-ear-listen-loop",
+    "codex-failed-loop",
+    "codex-focus-shift-loop",
+    "codex-greeting-loop",
+    "codex-idle-loop",
+    "codex-jump-loop",
+    "codex-look-around-loop",
+    "codex-review-loop",
+    "codex-run-left-loop",
+    "codex-run-right-loop",
+    "codex-running-loop",
+    "codex-thinking-loop",
+    "codex-waiting-loop",
+    "codex-watch-left-loop",
+    "codex-watch-right-loop",
+    "codex-wave-loop",
+    "jrpg-idle-loop",
+    "jrpg-inspect-loop",
+    "jrpg-jump-loop",
+    "jrpg-laugh-loop",
+    "jrpg-peek-loop",
+    "jrpg-push-loop",
+    "jrpg-run-left-loop",
+    "jrpg-run-right-loop",
+    "jrpg-wave-loop",
+    "jrpg-thinking-loop",
+    "jrpg-celebrate-loop",
+    "jrpg-listen-loop",
+    "jrpg-failed-loop",
+    "jrpg-stretch-loop",
+    "jrpg-beckon-loop",
+    "jrpg-approve-loop",
+    "jrpg-shrug-loop"
   ],
   "desktopWidgetPoses": [
     "about-confident",
@@ -2600,7 +2761,42 @@
     "street-mad-scribe",
     "street-easel-painter",
     "street-power-flex",
-    "street-peace-swagger"
+    "street-peace-swagger",
+    "codex-celebrate-loop",
+    "codex-double-take-loop",
+    "codex-ear-listen-loop",
+    "codex-failed-loop",
+    "codex-focus-shift-loop",
+    "codex-greeting-loop",
+    "codex-idle-loop",
+    "codex-jump-loop",
+    "codex-look-around-loop",
+    "codex-review-loop",
+    "codex-run-left-loop",
+    "codex-run-right-loop",
+    "codex-running-loop",
+    "codex-thinking-loop",
+    "codex-waiting-loop",
+    "codex-watch-left-loop",
+    "codex-watch-right-loop",
+    "codex-wave-loop",
+    "jrpg-idle-loop",
+    "jrpg-inspect-loop",
+    "jrpg-jump-loop",
+    "jrpg-laugh-loop",
+    "jrpg-peek-loop",
+    "jrpg-push-loop",
+    "jrpg-run-left-loop",
+    "jrpg-run-right-loop",
+    "jrpg-wave-loop",
+    "jrpg-thinking-loop",
+    "jrpg-celebrate-loop",
+    "jrpg-listen-loop",
+    "jrpg-failed-loop",
+    "jrpg-stretch-loop",
+    "jrpg-beckon-loop",
+    "jrpg-approve-loop",
+    "jrpg-shrug-loop"
   ],
   "fullBodyReplacements": {
     "about-confident": "presence-idle-loop",
@@ -2640,26 +2836,96 @@
     "dialogs": "low-angle-guard"
   },
   "surfacePools": {
-    "notifications": ["notification-scout", "cleanup-sweep-loop", "notice-think-wink-loop"],
-    "clipboard": ["clipboard-librarian", "box-hideout", "cleanup-sweep-loop"],
-    "mediaControls": ["headphone-groove-full-loop", "volume-wave-rider", "notice-think-wink-loop"],
-    "todo": ["reading", "clipboard-librarian", "thought-spark"],
-    "calendar": ["reading", "calendar-timewarp", "notice-think-wink-loop"],
-    "wifi": ["signal-whisperer", "network-signal-fishing"],
-    "startMenu": ["follow-me", "over-shoulder-toe-tap", "welcoming"],
-    "wallpaperSelector": ["wallpaper-color-sweep-loop", "thought-spark", "weather-windswept"],
-    "bootGreeting": ["presence-idle-loop", "notice-think-wink-loop", "welcoming"],
-    "emptyStates": ["hand-on-hip", "over-shoulder-toe-tap", "notice-think-wink-loop"],
-    "about": ["presence-idle-loop", "hand-on-hip", "notice-think-wink-loop"],
-    "session": ["follow-me", "over-shoulder-toe-tap", "stand-pout"],
-    "aiChat": ["sit-laptop", "thought-spark", "notice-think-wink-loop"],
-    "dashboard": ["presence-idle-loop", "thought-spark", "notice-think-wink-loop"],
-    "cheatsheet": ["reading", "clipboard-librarian", "thought-spark"],
-    "updates": ["package-lifter", "clipboard-librarian", "thought-spark"],
-    "dialogs": ["low-angle-guard", "hand-on-hip", "caught-red-handed"]
+    "notifications": [
+      "notification-scout",
+      "cleanup-sweep-loop",
+      "notice-think-wink-loop"
+    ],
+    "clipboard": [
+      "clipboard-librarian",
+      "box-hideout",
+      "cleanup-sweep-loop"
+    ],
+    "mediaControls": [
+      "headphone-groove-full-loop",
+      "volume-wave-rider",
+      "notice-think-wink-loop"
+    ],
+    "todo": [
+      "reading",
+      "clipboard-librarian",
+      "thought-spark"
+    ],
+    "calendar": [
+      "reading",
+      "calendar-timewarp",
+      "notice-think-wink-loop"
+    ],
+    "wifi": [
+      "signal-whisperer",
+      "network-signal-fishing"
+    ],
+    "startMenu": [
+      "follow-me",
+      "over-shoulder-toe-tap",
+      "welcoming"
+    ],
+    "wallpaperSelector": [
+      "wallpaper-color-sweep-loop",
+      "thought-spark",
+      "weather-windswept"
+    ],
+    "bootGreeting": [
+      "presence-idle-loop",
+      "notice-think-wink-loop",
+      "welcoming"
+    ],
+    "emptyStates": [
+      "hand-on-hip",
+      "over-shoulder-toe-tap",
+      "notice-think-wink-loop"
+    ],
+    "about": [
+      "presence-idle-loop",
+      "hand-on-hip",
+      "notice-think-wink-loop"
+    ],
+    "session": [
+      "follow-me",
+      "over-shoulder-toe-tap",
+      "stand-pout"
+    ],
+    "aiChat": [
+      "sit-laptop",
+      "thought-spark",
+      "notice-think-wink-loop"
+    ],
+    "dashboard": [
+      "presence-idle-loop",
+      "thought-spark",
+      "notice-think-wink-loop"
+    ],
+    "cheatsheet": [
+      "reading",
+      "clipboard-librarian",
+      "thought-spark"
+    ],
+    "updates": [
+      "package-lifter",
+      "clipboard-librarian",
+      "thought-spark"
+    ],
+    "dialogs": [
+      "low-angle-guard",
+      "hand-on-hip",
+      "caught-red-handed"
+    ]
   },
   "facesRight": [
-    "rocket-ride"
+    "rocket-ride",
+    "codex-run-right-loop",
+    "jrpg-run-right-loop",
+    "jrpg-push-loop"
   ],
   "mirrorOnRight": [
     "edge-peek"
@@ -2715,13 +2981,41 @@
       "right",
       "bottom"
     ],
-    "notification-scout": ["left", "right", "bottom"],
-    "clipboard-librarian": ["left", "right", "bottom"],
-    "signal-whisperer": ["left", "right", "bottom"],
-    "thought-spark": ["left", "right", "bottom"],
-    "over-shoulder-toe-tap": ["left", "right", "bottom"],
-    "caught-red-handed": ["left", "right", "bottom"],
-    "notice-think-wink-loop": ["left", "right", "bottom"],
+    "notification-scout": [
+      "left",
+      "right",
+      "bottom"
+    ],
+    "clipboard-librarian": [
+      "left",
+      "right",
+      "bottom"
+    ],
+    "signal-whisperer": [
+      "left",
+      "right",
+      "bottom"
+    ],
+    "thought-spark": [
+      "left",
+      "right",
+      "bottom"
+    ],
+    "over-shoulder-toe-tap": [
+      "left",
+      "right",
+      "bottom"
+    ],
+    "caught-red-handed": [
+      "left",
+      "right",
+      "bottom"
+    ],
+    "notice-think-wink-loop": [
+      "left",
+      "right",
+      "bottom"
+    ],
     "lying-lazy": [
       "bottom"
     ],
@@ -2914,7 +3208,7 @@
       "line": "Deep in thought. You're not in it. Mostly."
     }
   ],
-    "prankPoses": [
+  "prankPoses": [
     "tiptoe-sneak",
     "follow-me",
     "snapshot-director-loop",
@@ -3789,6 +4083,26 @@
       "%1-minute break confirmed. The chair missed you more than I did.",
       "You vanished for %1 minutes. I guarded the pixels. Poorly.",
       "%1 minutes without the screen. Character development."
+    ],
+    "shell-search": [
+      "Search party. What are we looking for?",
+      "Type away. I will supervise the typos.",
+      "I would help, but my paws keep hitting Enter."
+    ],
+    "shell-sidebar-right": [
+      "The control panel is open. One slider at a time.",
+      "That is a lot of switches for one pair of paws.",
+      "Go on. I will pretend the volume was always like that."
+    ],
+    "shell-sidebar-left": [
+      "Oh, we are browsing. I can browse.",
+      "I am just looking over your shoulder. Figuratively.",
+      "This panel has more hobbies than I do."
+    ],
+    "shell-overview": [
+      "There they are. All your little windows.",
+      "A whole skyline of unfinished business.",
+      "Which workspace are we pretending is organized?"
     ]
   },
   "frameScale": {
@@ -3874,6 +4188,65 @@
       "ar",
       "uy",
       "py"
+    ]
+  },
+  "characterProfiles": {
+    "codex": {
+      "idle": "codex-idle-loop",
+      "run-right": "codex-run-right-loop",
+      "run-left": "codex-run-left-loop",
+      "wave": "codex-wave-loop",
+      "inspect": "codex-thinking-loop",
+      "jump": "codex-jump-loop",
+      "celebrate": "codex-celebrate-loop",
+      "peek": "codex-watch-right-loop",
+      "push": "codex-running-loop",
+      "review": "codex-review-loop",
+      "look": "codex-look-around-loop",
+      "failed": "codex-failed-loop",
+      "listen": "codex-ear-listen-loop",
+      "waiting": "codex-waiting-loop"
+    },
+    "jrpg": {
+      "idle": "jrpg-idle-loop",
+      "run-right": "jrpg-run-right-loop",
+      "run-left": "jrpg-run-left-loop",
+      "wave": "jrpg-wave-loop",
+      "inspect": "jrpg-thinking-loop",
+      "jump": "jrpg-jump-loop",
+      "celebrate": "jrpg-celebrate-loop",
+      "peek": "jrpg-peek-loop",
+      "push": "jrpg-push-loop",
+      "review": "jrpg-approve-loop",
+      "look": "jrpg-listen-loop",
+      "failed": "jrpg-failed-loop",
+      "listen": "jrpg-listen-loop",
+      "waiting": "jrpg-stretch-loop"
+    }
+  },
+  "widgetLines": {
+    "clock": [
+      "Nice clock. Still cannot negotiate with it.",
+      "I checked. Time is still passing. Rude."
+    ],
+    "dateBadge": [
+      "Nice clock. Still cannot negotiate with it.",
+      "I checked. Time is still passing. Rude."
+    ],
+    "weather": [
+      "Weather inspection. No, I cannot bonk the rain away.",
+      "Forecast says I should stay inside your monitor."
+    ],
+    "systemMonitor": [
+      "These numbers move. Very suspicious.",
+      "I am giving the graph a performance review."
+    ],
+    "timers": [
+      "Timer inspection. Carry on.",
+      "I will not touch the countdown. Character development."
+    ],
+    "photo": [
+      "Nice photo. Would be a shame if a cat stood in front of it."
     ]
   }
 }

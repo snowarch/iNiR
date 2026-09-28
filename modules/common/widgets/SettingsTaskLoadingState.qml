@@ -17,7 +17,7 @@ Item {
     property bool _hidePending: false
 
     Layout.fillWidth: true
-    Layout.preferredHeight: root._shown ? 48 : 0
+    Layout.preferredHeight: root._shown ? Math.max(48, loadingRow.implicitHeight + 16) : 0
     opacity: root._shown ? 1 : 0
     visible: root._shown || opacity > 0.001
     clip: true
@@ -82,8 +82,17 @@ Item {
         }
     }
 
+    Rectangle {
+        anchors.fill: parent
+        visible: Appearance.editorialEverywhere
+        radius: Appearance.rounding.small
+        color: Appearance.editorial.layer(1)
+    }
+
     RowLayout {
+        id: loadingRow
         anchors.centerIn: parent
+        width: Math.max(0, Math.min(implicitWidth, root.width - 24))
         spacing: 8
 
         MaterialLoadingIndicator {
@@ -92,6 +101,9 @@ Item {
 
         StyledText {
             text: root.text
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+            font.weight: Appearance.editorialEverywhere ? Font.Medium : Font.Normal
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.colors.colSubtext
         }

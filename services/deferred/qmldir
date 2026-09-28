@@ -1,5 +1,6 @@
 module qs.services.deferred
 singleton AnimeService 1.0 AnimeService.qml
+singleton AnimeWatch 1.0 AnimeWatch.qml
 singleton CavaService 1.0 CavaService.qml
 singleton Cliphist 1.0 Cliphist.qml
 singleton EasyEffects 1.0 EasyEffects.qml
@@ -11,6 +12,7 @@ singleton InnerTube 1.0 InnerTube.qml
 singleton KeyringStorage 1.0 KeyringStorage.qml
 singleton LatexRenderer 1.0 LatexRenderer.qml
 singleton LauncherSearch 1.0 LauncherSearch.qml
+MpvIpc 1.0 MpvIpc.qml
 singleton NewsService 1.0 NewsService.qml
 singleton NiriKeybinds 1.0 NiriKeybinds.qml
 singleton PackageSearch 1.0 PackageSearch.qml

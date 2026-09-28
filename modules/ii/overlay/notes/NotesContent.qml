@@ -182,6 +182,7 @@ OverlayBackground {
             }
 
             Item {
+                id: copyOverlay
                 anchors.fill: parent
                 visible: root.copyListEntries.length > 0
                 clip: true
@@ -202,7 +203,7 @@ OverlayBackground {
                         implicitWidth: lineHeight
                         buttonRadius: height / 2
                         y: modelData.y
-                        anchors.right: parent.right
+                        anchors.right: copyOverlay.right
                         anchors.rightMargin: 10
                         z: 5
 
@@ -227,7 +228,7 @@ OverlayBackground {
                                 anchors.centerIn: parent
                                 text: copyButton.justCopied ? "check" : "content_copy"
                                 iconSize: copyButton.iconSizeLocal
-                                color: Appearance.colors.colOnLayer1
+                                color: OverlayLook.colOnLayer1
                             }
                         }
                     }
@@ -241,7 +242,7 @@ OverlayBackground {
             Layout.margins: 16
             horizontalAlignment: Text.AlignRight
             text: saveDebounce.running ? Translation.tr("Saving...") : Translation.tr("Saved    ")
-            color: Appearance.colors.colSubtext
+            color: OverlayLook.colSubtext
         }
     }
 

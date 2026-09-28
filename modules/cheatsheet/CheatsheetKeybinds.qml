@@ -105,7 +105,10 @@ StyledFlickable {
             
             StyledText {
                 text: Translation.tr("Keybinds") + ` (${root.filteredKeybinds.length})`
+                font.family: Appearance.editorialEverywhere ? Appearance.font.family.title : Appearance.font.family.main
                 font.pixelSize: Appearance.font.pixelSize.large
+                font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Normal
+                font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
                 color: Appearance.colors.colOnLayer1
             }
             
@@ -129,7 +132,7 @@ StyledFlickable {
             RippleButton {
                 implicitWidth: 32
                 implicitHeight: 32
-                buttonRadius: Appearance.rounding.full
+                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                 visible: searchField.text.length > 0
                 onClicked: searchField.text = ""
                 contentItem: MaterialSymbol {
@@ -228,7 +231,7 @@ StyledFlickable {
                             StyledText {
                                 text: catCard.catName
                                 font.pixelSize: Appearance.font.pixelSize.small
-                                font.weight: Font.DemiBold
+                                font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.DemiBold
                                 color: Appearance.colors.colPrimary
                             }
 
@@ -238,7 +241,7 @@ StyledFlickable {
                             Rectangle {
                                 implicitWidth: countLabel.implicitWidth + 12
                                 implicitHeight: 20
-                                radius: Appearance.rounding.full
+                                radius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                                 color: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                                      : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                                      : Appearance.colors.colLayer2

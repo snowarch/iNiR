@@ -69,10 +69,14 @@ detect_user_modifications() {
 }
 
 # Detect files user added (exist in target but not in manifest)
-# Only checks tracked patterns (QML, JS, etc.)
+# Only checks tracked patterns (QML, JS, etc.) inside the payload scope: the
+# manifest never covers directories that are not installed (docs/, distro/, ...),
+# so scanning the whole tree reports our own files as user additions forever on
+# repo-link installs.
 detect_user_additions() {
     local target_dir="$1"
     local manifest_file="$2"
+    local repo_root="${3:-${REPO_ROOT:-}}"
 
     [[ -f "$manifest_file" ]] || return 0
 
@@ -81,20 +85,38 @@ detect_user_additions() {
     manifest_paths=$(mktemp)
     grep -v "^#" "$manifest_file" | cut -d: -f1 | sort -u > "$manifest_paths"
 
-    # Find tracked files that aren't in manifest
-    for pattern in "${TRACKED_PATTERNS[@]}"; do
-        find "$target_dir" -type f -name "$pattern" 2>/dev/null | while read -r file; do
-            local rel_path="${file#$target_dir/}"
-            # Skip hidden files
-            [[ "$rel_path" == .* ]] && continue
+    local scan_dirs
+    scan_dirs=$(mktemp)
+    grep -F / "$manifest_paths" | cut -d/ -f1 | sort -u > "$scan_dirs"
 
-            if ! grep -qxF "$rel_path" "$manifest_paths"; then
-                echo "$rel_path"
-            fi
-        done
+    local find_roots=()
+    local dir
+    while IFS= read -r dir; do
+        [[ -n "$dir" ]] || continue
+        [[ -d "${target_dir}/${dir}" ]] && find_roots+=("${target_dir}/${dir}")
+    done < "$scan_dirs"
+
+    local pattern_args=()
+    local pattern
+    for pattern in "${TRACKED_PATTERNS[@]}"; do
+        [[ ${#pattern_args[@]} -gt 0 ]] && pattern_args+=(-o)
+        pattern_args+=(-name "$pattern")
     done
 
-    rm -f "$manifest_paths"
+    {
+        find "$target_dir" -maxdepth 1 -type f \( "${pattern_args[@]}" \) 2>/dev/null
+        [[ ${#find_roots[@]} -gt 0 ]] && find "${find_roots[@]}" -type f \( "${pattern_args[@]}" \) 2>/dev/null
+    } | while IFS= read -r file; do
+        local rel_path="${file#$target_dir/}"
+        [[ "$rel_path" == .* ]] && continue
+        grep -qxF "$rel_path" "$manifest_paths" && continue
+        # Shipped but deliberately not installed (runtime exclusions, repo-link
+        # targets that are the checkout itself) — ours, not the user's.
+        [[ -n "$repo_root" && -e "${repo_root}/${rel_path}" ]] && continue
+        echo "$rel_path"
+    done
+
+    rm -f "$manifest_paths" "$scan_dirs"
 }
 
 # Detect modifications by comparing installed files directly against repo source

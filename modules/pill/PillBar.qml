@@ -16,7 +16,7 @@ import qs.modules.common.widgets
  *  - `reserve` is a zero-content strip that only claims an exclusive zone the
  *    height of the rest pill, so tiled windows always sit below the pill even
  *    while it is expanded or a surface is open.
- *  - `overlay` is a full-screen transparent Overlay layer hosting the single
+ *  - `overlay` is a full-screen transparent layer surface hosting the single
  *    morphing pill anchored at top-centre. The pill never moves and is never
  *    re-parented; it just grows in place, so every surface grows out of the rest
  *    pill instead of popping up as a separate panel.
@@ -164,11 +164,11 @@ Scope {
             readonly property real reservedH: Math.max(0, restHeight + topGapPx - 12 * (1 - root.appGap) * s)
 
             /**
-             * Same per-screen fullscreen focus check as Pill.fsCovered: in niri
-             * a fullscreen window only covers the monitor while it is the
-             * focused tile. Scrolling to another window in the same workspace
-             * unfocuses the fullscreen game without changing its size, so
-             * GameMode.active stays true but the pill is no longer hidden.
+             * Same per-screen fullscreen ownership check as Pill.fsCovered: in
+             * niri a fullscreen-sized tile only covers the monitor while it is
+             * the active tile of that output's active workspace. Scrolling to
+             * another tile leaves the old window fullscreen-sized but visible
+             * coverage has ended.
              * The reserve band must then give the pill its full rest height,
              * not the thin game-face height.
              */
@@ -176,40 +176,33 @@ Scope {
             readonly property bool fsCovered: {
                 if (!CompositorService.isNiri)
                     return GameMode.hasAnyFullscreenWindow;
-                const wins = NiriService.windows ?? [];
-                for (const w of wins) {
-                    const ws = NiriService.workspaces?.[w.workspace_id];
-                    if (!(ws?.is_active ?? false))
-                        continue;
-                    if (screenName.length > 0 && ws.output !== screenName)
-                        continue;
-                    if (!w.is_focused)
-                        continue;
-                    if (GameMode.isWindowFullscreen(w))
-                        return true;
-                }
-                return false;
+                return GameMode.hasFullscreenOnOutput(screenName);
             }
             /** Game-face height only when the pill is actually hidden by a
-             * focused fullscreen window, or Game Mode was manually engaged. */
+             * covering fullscreen window, or Game Mode was manually engaged. */
             readonly property bool useGameZone: GameMode.manuallyActivated || fsCovered
-            readonly property bool autoHideEnabled: (Config.options?.bar?.autoHide?.enable ?? false)
-                && !useGameZone
             readonly property bool autoHideShown: root.autoHideShownByScreen[screenName] ?? false
+            // Game Mode changes the pill's visual face, not the compositor's
+            // usable desktop. Changing exclusiveZone from the normal pill band
+            // to gameBarH on every fullscreen transition made Niri relayout
+            // normal windows underneath it and could feed a noisy fullscreen
+            // detect/relayout cycle. Preserve the normal reservation contract;
+            // fullscreen windows ignore it anyway, while non-fullscreen windows
+            // no longer jump when Game Mode toggles.
+            readonly property real normalExclusiveZone: (Config.options?.bar?.autoHide?.enable ?? false)
+                ? ((Config.options?.bar?.autoHide?.pushWindows ?? false) && autoHideShown ? reservedH : 0)
+                : root.floatOverWindows ? 0 : reservedH
 
             screen: modelData
             visible: !GlobalStates.widgetEditMode
             color: "transparent"
             exclusionMode: ExclusionMode.Normal
             exclusiveZone: GlobalStates.widgetEditMode ? 0
-                : useGameZone ? gameBarH
-                : autoHideEnabled
-                    ? ((Config.options?.bar?.autoHide?.pushWindows ?? false) && autoHideShown ? reservedH : 0)
-                    : root.floatOverWindows ? 0 : reservedH
+                : normalExclusiveZone
             aboveWindows: true
 
             anchors { top: true; left: true; right: true }
-            implicitHeight: useGameZone ? gameBarH : reservedH
+            implicitHeight: Math.max(useGameZone ? gameBarH : reservedH, normalExclusiveZone)
 
             mask: emptyReserve
             Region { id: emptyReserve }
@@ -232,13 +225,64 @@ Scope {
                 && !pill.fsHide
             readonly property bool transientMode: pill.mode !== "rest" && pill.mode !== "hover"
             property bool pointerReveal: false
+            property bool leftSidebarHold: false
+            property bool rightSidebarHold: false
+            readonly property bool interactionHold: leftSidebarHold || rightSidebarHold || pill.trayMenuOpen
+            readonly property bool overviewOwnsEdge: GlobalStates.overviewOpen
+                || (CompositorService.isNiri && NiriService.inOverview)
+            readonly property bool reservationWanted: !overviewOwnsEdge
+                && (edgeRevealHover.revealHover || pill.hovered || surfaceOpen || pill.held || interactionHold)
+            readonly property bool explicitReservationWanted: !overviewOwnsEdge
+                && (surfaceOpen || pill.held || interactionHold)
             readonly property bool mustShow: !autoHideEnabled || pointerReveal
-                || superShow || surfaceOpen || pill.held || pill.hoverLatch || transientMode
+                || superShow || surfaceOpen || pill.held || pill.hoverLatch || transientMode || interactionHold
             readonly property bool autoHideHidden: autoHideEnabled && !mustShow
             property bool superShow: false
+            property bool reservationShown: false
+
+            function edgeCornerName(left: bool): string {
+                return left ? "topLeft" : "topRight"
+            }
+
+            function edgeCornerReserve(left: bool): real {
+                const corner = edgeCornerName(left)
+                let reserve = 0
+                if (CompositorService.isNiri && NiriService.isOverviewHotCornerActive(modelData?.name ?? "", corner))
+                    reserve = Math.max(reserve, 12)
+                const orbitEnabled = CompositorService.isNiri
+                    && (Config.options?.panelFamily ?? "ii") === "ii"
+                    && (Config.options?.orbit?.enable ?? true)
+                    && (Config.options?.orbit?.hotCornerEnable ?? true)
+                if (orbitEnabled && String(Config.options?.orbit?.hotCorner ?? "topRight") === corner)
+                    reserve = Math.max(reserve, Config.options?.orbit?.hotCornerSize ?? 12)
+                const sidebarCornerEnabled = Config.options?.sidebar?.cornerOpen?.enable ?? false
+                const sidebarCornerBottom = Config.options?.sidebar?.cornerOpen?.bottom ?? false
+                if (sidebarCornerEnabled && !sidebarCornerBottom)
+                    reserve = Math.max(reserve, Config.options?.sidebar?.cornerOpen?.cornerRegionWidth ?? 20)
+                return reserve
+            }
+
+            function syncReservation(): void {
+                reservationShowTimer.stop()
+                reservationHideTimer.stop()
+                if (!autoHideEnabled || !(Config.options?.bar?.autoHide?.pushWindows ?? false)) {
+                    reservationShown = false
+                    root.setAutoHideShown(modelData?.name ?? "", false)
+                    return
+                }
+                if (explicitReservationWanted) {
+                    reservationShown = true
+                    root.setAutoHideShown(modelData?.name ?? "", true)
+                    return
+                }
+                if (reservationWanted)
+                    reservationShowTimer.restart()
+                else if (reservationShown)
+                    reservationHideTimer.restart()
+            }
 
             function syncPointerReveal(): void {
-                if (edgeRevealHover.hovered || pill.hovered) {
+                if (edgeRevealHover.revealHover || pill.hovered) {
                     pointerHideGrace.stop()
                     pointerReveal = true
                 } else if (pointerReveal) {
@@ -253,8 +297,31 @@ Scope {
                 interval: 450
                 repeat: false
                 onTriggered: {
-                    if (!edgeRevealHover.hovered && !pill.hovered)
+                    if (!edgeRevealHover.revealHover && !pill.hovered)
                         overlay.pointerReveal = false
+                }
+            }
+
+            Timer {
+                id: reservationShowTimer
+                interval: Appearance.animationsEnabled ? Appearance.animation.elementMoveEnter.duration : 1
+                onTriggered: {
+                    if (overlay.autoHideEnabled && overlay.reservationWanted
+                            && (Config.options?.bar?.autoHide?.pushWindows ?? false)) {
+                        overlay.reservationShown = true
+                        root.setAutoHideShown(modelData?.name ?? "", true)
+                    }
+                }
+            }
+
+            Timer {
+                id: reservationHideTimer
+                interval: Appearance.animationsEnabled ? Appearance.animation.elementMoveEnter.duration : 1
+                onTriggered: {
+                    if (!overlay.reservationWanted) {
+                        overlay.reservationShown = false
+                        root.setAutoHideShown(modelData?.name ?? "", false)
+                    }
                 }
             }
 
@@ -277,28 +344,48 @@ Scope {
                         overlay.superShow = false
                     }
                 }
+                function onSidebarLeftOpenChanged() {
+                    if (!GlobalStates.sidebarLeftOpen)
+                        overlay.leftSidebarHold = false
+                    else if ((pill.hovered || overlay.pointerReveal)
+                            && GlobalStates.sidebarLeftPresentationOutput === (modelData?.name ?? ""))
+                        overlay.leftSidebarHold = true
+                }
+                function onSidebarRightOpenChanged() {
+                    if (!GlobalStates.sidebarRightOpen)
+                        overlay.rightSidebarHold = false
+                    else if ((pill.hovered || overlay.pointerReveal)
+                            && GlobalStates.sidebarRightPresentationOutput === (modelData?.name ?? ""))
+                        overlay.rightSidebarHold = true
+                }
             }
 
-            onAutoHideHiddenChanged: root.setAutoHideShown(
-                modelData?.name ?? "", !autoHideHidden)
-            Component.onCompleted: root.setAutoHideShown(
-                modelData?.name ?? "", !autoHideHidden)
+            onReservationWantedChanged: syncReservation()
+            onExplicitReservationWantedChanged: syncReservation()
+            onAutoHideEnabledChanged: syncReservation()
+            Component.onCompleted: syncReservation()
 
             screen: modelData
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
-            WlrLayershell.layer: WlrLayer.Overlay
+            // Match Dock, classic and M3 stacking for the persistent/resting
+            // bar. Explicit surfaces and transient feedback still need Overlay
+            // semantics so they can intentionally appear over fullscreen.
+            readonly property bool overlayPresentation: modal
+                || pill.mode === "osd" || pill.mode === "toast"
+            WlrLayershell.layer: overlayPresentation ? WlrLayer.Overlay : WlrLayer.Top
             WlrLayershell.keyboardFocus: surfaceOpen || pill.held
                 ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             WlrLayershell.namespace: "inir-pill"
 
             anchors { top: true; left: true; right: true; bottom: true }
 
-            // This is a screen-sized surface on the Overlay layer — it has to be,
-            // so the pill can morph and drop its surfaces anywhere on screen. But
-            // a mapped fullscreen overlay forces the compositor to composite every
-            // frame, which costs a fullscreen game its direct-scanout path (games
-            // dropped to ~20 FPS under the pill bar and only under the pill bar).
+            // This is a screen-sized surface so the pill can morph and drop its
+            // surfaces anywhere on screen. When fullscreen ownership is known,
+            // unmapping still avoids keeping an unnecessary layer surface mapped
+            // under the game. The resting/persistent face uses Top-layer stacking,
+            // so fullscreen remains correct even when a client does not expose
+            // enough state for fsHide.
             // Hiding the pill ITEM was not enough: the surface stayed mapped and
             // kept the compositor composing. Unmap the window itself whenever a
             // fullscreen window covers this monitor — toasts and OSD clear fsHide
@@ -329,6 +416,20 @@ Scope {
                 width: pillRegion.width
                 height: pillRegion.height
                 Region { item: edgeRevealRegion }
+                Region {
+                    intersection: Intersection.Subtract
+                    x: 0
+                    y: 0
+                    width: overlay.edgeCornerReserve(true)
+                    height: edgeRevealRegion.height
+                }
+                Region {
+                    intersection: Intersection.Subtract
+                    x: overlay.width - overlay.edgeCornerReserve(false)
+                    y: 0
+                    width: overlay.edgeCornerReserve(false)
+                    height: edgeRevealRegion.height
+                }
             }
             Region {
                 id: fullRegion
@@ -341,9 +442,16 @@ Scope {
                 anchors { top: parent.top; left: parent.left; right: parent.right }
                 height: overlay.autoHideEnabled
                     ? Math.max(1, Config.options?.bar?.autoHide?.hoverRegionWidth ?? 2) : 0
-                HoverHandler {
+                MouseArea {
                     id: edgeRevealHover
-                    onHoveredChanged: overlay.syncPointerReveal()
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.NoButton
+                    readonly property bool inLeftReservedCorner: mouseX < overlay.edgeCornerReserve(true)
+                    readonly property bool inRightReservedCorner: mouseX >= width - overlay.edgeCornerReserve(false)
+                    readonly property bool revealHover: containsMouse && !inLeftReservedCorner
+                        && !inRightReservedCorner && !overlay.overviewOwnsEdge
+                    onRevealHoverChanged: overlay.syncPointerReveal()
                 }
             }
 
@@ -380,7 +488,7 @@ Scope {
                     || Quickshell.screens.length <= 1
                     || String(overlay.modelData?.name ?? "")
                         === String(GlobalStates.primaryScreen?.name ?? "")
-                readonly property bool spectrumConfigured: (Config.options?.bar?.pill?.musicViz ?? true)
+                readonly property bool spectrumConfigured: (Config.options?.bar?.pill?.musicViz ?? false)
                     && spectrumOutputEnabled
                     && !Appearance.gameModeMinimal
                 readonly property bool spectrumProcessWanted: spectrumConfigured && spectrumPlaying

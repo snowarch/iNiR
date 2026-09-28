@@ -22,7 +22,8 @@ Singleton {
         return style === "aurora" || style === "angel"
     }
     readonly property bool cookieEverywhere: Appearance.cookieEverywhere
-    property bool useMaterial: Config.options?.waffles?.theming?.useMaterialColors ?? false
+    readonly property bool editorialEverywhere: Appearance.editorialEverywhere
+    property bool useMaterial: root.editorialEverywhere || (Config.options?.waffles?.theming?.useMaterialColors ?? false)
     // Glass mode: aurora/angel active (not iNiR which has its own aesthetic)
     readonly property bool glassActive: root.auroraEverywhere && !Appearance.inirEverywhere
 
@@ -32,6 +33,7 @@ Singleton {
 
     // Font family - reactive property at root level for proper binding updates
     readonly property string fontFamily: {
+        if (root.editorialEverywhere) return Appearance.font.family.main
         const f = Config.options?.waffles?.theming?.font?.family;
         return (f && f.length > 0) ? f : "Noto Sans";
     }
@@ -192,7 +194,7 @@ Singleton {
                 : ColorUtils.transparentize(
                     root.glassActive && root.dark ? root.darkColors.bg0Border : (root.dark ? root.darkColors.bgPanelSeparator : root.lightColors.bgPanelSeparator),
                     root.backgroundTransparency)
-        property color bg0Opaque: root.useMaterial
+        property color bg0Opaque: root.editorialEverywhere ? Appearance.editorial.paper : root.useMaterial
             ? Appearance.m3colors.m3background
             : (root.dark ? root.darkColors.bg0 : root.lightColors.bg0)
         property color bg0: root.useMaterial
@@ -292,13 +294,13 @@ Singleton {
         property color controlBgInactive: root.useMaterial 
             ? Appearance.colors.colSecondaryContainer 
             : (root.dark ? root.darkColors.controlBgInactive : root.lightColors.controlBgInactive)
-        property color controlBg: root.useMaterial 
+        property color controlBg: root.editorialEverywhere ? Appearance.editorial.accent : root.useMaterial
             ? Appearance.colors.colSecondary 
             : (root.dark ? root.darkColors.controlBg : root.lightColors.controlBg)
         property color controlBgHover: root.useMaterial 
             ? Appearance.colors.colSecondaryHover 
             : (root.dark ? root.darkColors.controlBgHover : root.lightColors.controlBgHover)
-        property color controlFg: root.useMaterial 
+        property color controlFg: root.editorialEverywhere ? Appearance.editorial.accentInk : root.useMaterial
             ? Appearance.colors.colOnSecondary 
             : (root.dark ? root.darkColors.controlFg : root.lightColors.controlFg)
         property color inputBg: root.useMaterial 
@@ -326,7 +328,7 @@ Singleton {
         property int none: 0
         property int small: root.dp(2)
         property int medium: root.dp(4)
-        property int large: root.dp(8)
+        property int large: root.editorialEverywhere ? root.dp(Appearance.editorial.radius) : root.dp(8)
         property int xLarge: root.dp(12)
     }
 

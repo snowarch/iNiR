@@ -4,10 +4,10 @@ XftHintStyle=hintslight
 TerminalApplication=kitty -1
 XftSubPixel=none
 fixed=JetBrainsMono Nerd Font,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
-font=Google Sans Flex,11,-1,5,500,0,0,0,0,0,0,0,0,0,0,1,Medium
-menuFont=Google Sans Flex,10,-1,5,500,0,0,0,0,0,0,0,0,0,0,1,Medium
-smallestReadableFont=Google Sans Flex,9,-1,5,500,0,0,0,0,0,0,0,0,0,0,1,Medium
-toolBarFont=Google Sans Flex,10,-1,5,500,0,0,0,0,0,0,0,0,0,0,1,Medium
+font=Roboto Flex,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+menuFont=Roboto Flex,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+smallestReadableFont=Roboto Flex,9,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+toolBarFont=Roboto Flex,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 
 [Icons]
 Theme=WhiteSur-dark
@@ -39,4 +39,4 @@ View Style=Simple
 Theme=freedesktop
 
 [WM]
-activeFont=Google Sans Flex,10,-1,5,500,0,0,0,0,0,0,0,0,0,0,1,Medium
+activeFont=Roboto Flex,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1

@@ -90,7 +90,7 @@ WindowDialog {
                 Layout.alignment: Qt.AlignHCenter
                 text: Translation.tr("No networks found")
                 font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.colors.colSubtext
+                color: Appearance.colMetadataText
             }
         }
     }

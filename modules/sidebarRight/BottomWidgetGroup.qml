@@ -30,19 +30,24 @@ Rectangle {
          : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
          : Appearance.inirEverywhere ? Appearance.inir.colLayer1
          : Appearance.auroraEverywhere ? "transparent"
+         : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass ? Appearance.editorial.glassPaper
          : Appearance.colors.colLayer1
     Behavior on color {
         enabled: Appearance.animationsEnabled
         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
-    border.width: Appearance.zzzEverywhere ? 0 : (Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0))
+    border.width: Appearance.zzzEverywhere ? 0 : (Appearance.angelEverywhere ? 0
+        : (Appearance.inirEverywhere ? 1
+            : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass ? 1 : 0))
     Behavior on border.width {
         enabled: Appearance.animationsEnabled
         NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
     border.color: Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? "transparent"
-        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        : Appearance.inirEverywhere ? Appearance.inir.colBorder
+        : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass
+            ? Qt.alpha(Appearance.editorial.edge, 0.28) : "transparent"
     Behavior on border.color {
         enabled: Appearance.animationsEnabled
         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -98,8 +103,10 @@ Rectangle {
         }
     }
 
-    // Signal to open events dialog (propagated from EventsWidget)
+    // Signals consumed by SidebarRightContent.
     signal openEventsDialog(var editEvent)
+    signal requestExpand(string widgetType)
+    readonly property string activeTabType: root.tabs[root.selectedTab]?.type ?? ""
 
     // Events component
     Component {
@@ -108,6 +115,7 @@ Rectangle {
             anchors.fill: parent
             anchors.margins: 5
             onOpenEventsDialog: (editEvent) => root.openEventsDialog(editEvent)
+            onRequestExpand: root.requestExpand("events")
         }
     }
 
@@ -188,8 +196,10 @@ Rectangle {
     }
 
     // The thing when collapsed
-    RowLayout {
+    Item {
         id: collapsedBottomWidgetGroupRow
+        anchors.fill: parent
+        implicitHeight: Math.max(collapsedExpandButton.implicitHeight + 20, collapsedSummary.implicitHeight + 20)
         opacity: collapsed ? 1 : 0
         visible: opacity > 0
         Behavior on opacity {
@@ -202,13 +212,11 @@ Rectangle {
             }
         }
 
-        spacing: 15
-
         CalendarHeaderButton {
-            Layout.topMargin: 10
-            Layout.bottomMargin: 10
-            Layout.leftMargin: 25
-            Layout.rightMargin: 0
+            id: collapsedExpandButton
+            anchors.left: parent.left
+            anchors.leftMargin: 25
+            anchors.verticalCenter: parent.verticalCenter
             forceCircle: true
             downAction: () => {
                 root.setCollapsed(false)
@@ -228,9 +236,10 @@ Rectangle {
         }
 
         StyledText {
+            id: collapsedSummary
             property int remainingTasks: Todo.list.filter(task => !task.done).length;
-            Layout.margins: 10
-            Layout.leftMargin: 0
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
             text: Translation.tr("%1   •   %2 tasks").arg(DateTime.collapsedCalendarFormat).arg(remainingTasks)
             font.pixelSize: Appearance.font.pixelSize.large
             font.family: Appearance.zzzEverywhere ? Appearance.font.family.numbers : Appearance.font.family.main
@@ -267,7 +276,7 @@ Rectangle {
             Layout.fillWidth: false
             Layout.leftMargin: 10
             Layout.topMargin: 10
-            width: tabBar.implicitWidth + 5
+            implicitWidth: tabBar.implicitWidth + 5
 
             // Collapse button (Fixed at top)
             CalendarHeaderButton {
@@ -319,19 +328,14 @@ Rectangle {
                 ColumnLayout {
                     id: tabColumn
                     width: parent.width
+                    y: Math.max(0, (railFlickable.height - implicitHeight) / 2)
                     spacing: 0
-
-                    // Spacer to center vertically when content is small
-                    Item {
-                        Layout.fillHeight: true
-                        visible: railFlickable.contentHeight < railFlickable.height
-                    }
 
                     NavigationRailTabArray {
                         id: tabBar
                         Layout.alignment: Qt.AlignLeft
                         Layout.leftMargin: 5
-                        // Override default topMargin of 25 to restore original vertical positioning
+                        // Keep the rail geometry independent from the active widget.
                         Layout.topMargin: 0
                         currentIndex: root.selectedTab
                         expanded: false
@@ -347,12 +351,6 @@ Rectangle {
                                 }
                             }
                         }
-                    }
-
-                    // Spacer to center vertically when content is small
-                    Item {
-                        Layout.fillHeight: true
-                        visible: railFlickable.contentHeight < railFlickable.height
                     }
                 }
             }
@@ -482,6 +480,7 @@ Rectangle {
             anchors.margins: 5
             onDayWithEventsClicked: (date) => root.switchToEventsTab()
             onOpenEventsDialog: (editEvent) => root.openEventsDialog(editEvent)
+            onRequestExpand: root.requestExpand("calendar")
         }
     }
 
@@ -491,6 +490,7 @@ Rectangle {
         TodoWidget {
             anchors.fill: parent
             anchors.margins: 5
+            onRequestExpand: root.requestExpand("todo")
         }
     }
 

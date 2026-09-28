@@ -25,6 +25,20 @@ WSettingsPage {
     readonly property var wClock: wBg.widgets?.clock ?? {}
     readonly property var wBackdrop: wBg.backdrop ?? {}
     readonly property bool waffleUseMainWallpaper: wBg.useMainWallpaper ?? true
+    readonly property bool wallpaperTransitionEnabled: Config.options?.background?.transition?.enable ?? true
+    readonly property string wallpaperTransitionRawType: Config.options?.background?.transition?.type ?? "crossfade"
+    readonly property bool wallpaperTransitionIsShader: AwwwBackend.isInternalShaderTransitionType(root.wallpaperTransitionRawType)
+    readonly property string wallpaperTransitionUiType: root.wallpaperTransitionIsShader
+        ? root.wallpaperTransitionRawType
+        : AwwwBackend.normalizedAwwwTransitionType(
+            root.wallpaperTransitionRawType,
+            Config.options?.background?.transition?.direction ?? "right")
+    readonly property bool wallpaperTransitionShowsDirection: root.wallpaperTransitionEnabled
+        && !root.wallpaperTransitionIsShader
+        && ["wipe", "wave"].includes(root.wallpaperTransitionUiType)
+    readonly property bool wallpaperTransitionShowsDuration: root.wallpaperTransitionEnabled
+        && (root.wallpaperTransitionIsShader
+            || (root.wallpaperTransitionUiType !== "simple" && root.wallpaperTransitionUiType !== "none"))
 
     property bool backgroundBrowserPrimed: false
     property bool heavySectionsReady: false
@@ -1072,6 +1086,93 @@ WSettingsPage {
                     }
                 }
             }
+        }
+    }
+
+    WSettingsCard {
+        title: Translation.tr("Wallpaper transitions")
+        icon: "arrow-sync"
+
+        WSettingsSwitch {
+            label: Translation.tr("Enable wallpaper transitions")
+            icon: "play"
+            description: Translation.tr("Animate wallpaper changes and previews. This is shared with Material ii so both panel families use the same transition pipeline.")
+            checked: root.wallpaperTransitionEnabled
+            onCheckedChanged: root.setNestedValueWhenReady("background.transition.enable", checked)
+        }
+
+        WSettingsDropdown {
+            visible: root.wallpaperTransitionEnabled
+            label: Translation.tr("Transition style")
+            icon: "arrow-sync"
+            description: root.wallpaperTransitionIsShader
+                ? Translation.tr("Rendered by iNiR so both wallpapers stay synchronized during the shader effect")
+                : Translation.tr("Rendered by AWWW using the same effect for previews and final wallpaper changes")
+            currentValue: root.wallpaperTransitionUiType
+            options: [
+                { value: "none", displayName: Translation.tr("None") },
+                { value: "simple", displayName: Translation.tr("Simple") },
+                { value: "fade", displayName: Translation.tr("Fade") },
+                { value: "left", displayName: Translation.tr("From left") },
+                { value: "right", displayName: Translation.tr("From right") },
+                { value: "top", displayName: Translation.tr("From top") },
+                { value: "bottom", displayName: Translation.tr("From bottom") },
+                { value: "wipe", displayName: Translation.tr("Wipe") },
+                { value: "wave", displayName: Translation.tr("Wave") },
+                { value: "grow", displayName: Translation.tr("Grow") },
+                { value: "center", displayName: Translation.tr("Center") },
+                { value: "any", displayName: Translation.tr("Any") },
+                { value: "outer", displayName: Translation.tr("Outer") },
+                { value: "random", displayName: Translation.tr("Random") },
+                { value: "circleSelect", displayName: Translation.tr("Circle shader") },
+                { value: "circlePit", displayName: Translation.tr("Circle pit") },
+                { value: "magic", displayName: Translation.tr("Magic") },
+                { value: "Doom", displayName: Translation.tr("Doom") },
+                { value: "Peel", displayName: Translation.tr("Peel") },
+                { value: "transition", displayName: Translation.tr("Shader fade") },
+                { value: "pixelate", displayName: Translation.tr("Pixelate") },
+                { value: "stripes", displayName: Translation.tr("Stripes") },
+                { value: "crt", displayName: Translation.tr("CRT") },
+                { value: "dissolve", displayName: Translation.tr("Dissolve") },
+                { value: "glitch", displayName: Translation.tr("Glitch") },
+                { value: "ripple", displayName: Translation.tr("Ripple") },
+                { value: "shatter", displayName: Translation.tr("Shatter") },
+                { value: "inirMelt", displayName: Translation.tr("iNiR Melt") },
+                { value: "inirVeil", displayName: Translation.tr("Chromatic Veil") },
+                { value: "inirFracture", displayName: Translation.tr("Glass Fracture") },
+                { value: "inirInk", displayName: Translation.tr("Sumi Wash") },
+                { value: "inirPrism", displayName: Translation.tr("Prism Slices") },
+                { value: "shaderRandom", displayName: Translation.tr("Random shader") }
+            ]
+            onSelected: value => root.setNestedValueWhenReady("background.transition.type", value)
+        }
+
+        WSettingsDropdown {
+            visible: root.wallpaperTransitionShowsDirection
+            label: Translation.tr("Transition direction")
+            icon: "arrow-right"
+            description: Translation.tr("Choose where wipe and wave transitions travel from")
+            currentValue: Config.options?.background?.transition?.direction ?? "right"
+            options: [
+                { value: "left", displayName: Translation.tr("From left") },
+                { value: "right", displayName: Translation.tr("From right") },
+                { value: "top", displayName: Translation.tr("From top") },
+                { value: "bottom", displayName: Translation.tr("From bottom") }
+            ]
+            onSelected: value => root.setNestedValueWhenReady("background.transition.direction", value)
+        }
+
+        WSettingsSpinBox {
+            visible: root.wallpaperTransitionShowsDuration
+            label: Translation.tr("Transition duration")
+            icon: "timer"
+            description: Translation.tr("How long the wallpaper transition takes")
+            suffix: " ms"
+            from: 200
+            to: 3000
+            stepSize: 100
+            value: Config.options?.background?.transition?.duration ?? 800
+            onValueChanged: root.setNestedValueWhenReady("background.transition.duration", value)
         }
     }
 

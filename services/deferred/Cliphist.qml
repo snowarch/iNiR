@@ -247,8 +247,8 @@ Singleton {
                 selfCopyResetTimer.stop();
                 return;
             }
-            // Skip refresh while window previews are being captured
-            // (screenshots pollute clipboard temporarily, script cleans them up)
+            // Skip refresh while window previews are being captured. The persistent
+            // image watcher also filters these frames before cliphist storage.
             if (root.suppressRefresh) return;
             delayedUpdateTimer.restart()
         }

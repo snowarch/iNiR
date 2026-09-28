@@ -108,6 +108,10 @@ Item {
         return result
     }
     property string selectedTabId: ""
+    readonly property string activeTabTitle: {
+        const tab = root.tabButtonList.find(item => item.id === root.selectedTabId)
+        return tab?.name ?? ""
+    }
     property bool tabEditMode: false
 
     // Enabled tabs rendered in the user's stable-id order.
@@ -253,6 +257,9 @@ Item {
         readonly property bool auroraEverywhere: surfaceDialect === "aurora" || angelEverywhere
         readonly property bool inirEverywhere: surfaceDialect === "inir"
         readonly property bool gameModeMinimal: Appearance.gameModeMinimal
+        readonly property bool editorialGlassActive: surfaceDialect === "editorial"
+            && Appearance.editorial.sidebarFullGlass
+            && !gameModeMinimal && !islandStyle
         readonly property string wallpaperUrl: {
             const _dep1 = WallpaperListener.multiMonitorEnabled
             const _dep2 = WallpaperListener.effectivePerMonitor
@@ -260,9 +267,11 @@ Item {
             return WallpaperListener.wallpaperUrlForScreen(root.panelScreen)
         }
         readonly property bool useWallpaperBackdrop: root.panelVisible
-            && auroraEverywhere
+            && (auroraEverywhere || editorialGlassActive)
             && !gameModeMinimal
             && wallpaperUrl.length > 0
+        readonly property bool editorialBackdropReady: editorialGlassActive
+            && useWallpaperBackdrop && sidebarLeftBlurredWallpaper.status === Image.Ready
 
         ColorQuantizer {
             id: sidebarLeftWallpaperQuantizer
@@ -279,6 +288,7 @@ Item {
         color: (gameModeMinimal || islandStyle) ? "transparent"
              : zzzEverywhere ? Appearance.zzz.chrome
              : regaliaEverywhere ? "transparent"
+             : editorialGlassActive ? (editorialBackdropReady ? "transparent" : Appearance.editorial.paper)
              : inirEverywhere ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
              : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
@@ -288,7 +298,8 @@ Item {
             : angelEverywhere ? Appearance.angel.colPanelBorder
             : inirEverywhere ? Appearance.inir.colBorder
             : Appearance.colors.colLayer0Border
-        radius: zzzEverywhere ? Appearance.zzz.panelRadius
+        radius: islandStyle ? (Config.options?.appearance?.island?.radius ?? 18)
+            : zzzEverywhere ? Appearance.zzz.panelRadius
             : regaliaEverywhere ? Appearance.regalia.panelRadius
             : angelEverywhere ? Appearance.angel.roundingNormal
             : inirEverywhere ? Appearance.inir.roundingNormal
@@ -309,6 +320,18 @@ Item {
         Behavior on color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+
+
+        EditorialPaperStack {
+            anchors.fill: parent
+            z: 1
+            visible: Appearance.editorialEverywhere && Appearance.editorial.paperStack
+                && !sidebarLeftBackground.islandStyle && !sidebarLeftBackground.gameModeMinimal
+            faceColor: Appearance.editorial.paper
+            radius: sidebarLeftBackground.radius
+            materialOpacity: sidebarLeftBackground.editorialBackdropReady ? Appearance.editorial.glassOpacity : 1
+            backingOpacity: sidebarLeftBackground.editorialBackdropReady ? Appearance.editorial.glassBackingOpacity : 1
         }
 
         RegaliaPlate {
@@ -340,11 +363,12 @@ Item {
 
         Image {
             id: sidebarLeftBlurredWallpaper
+            z: 0
             x: -Appearance.sizes.hyprlandGapsOut
             y: -Appearance.sizes.hyprlandGapsOut
             width: root.screenWidth
             height: root.screenHeight
-            visible: sidebarLeftBackground.useWallpaperBackdrop
+            visible: sidebarLeftBackground.useWallpaperBackdrop && status === Image.Ready
             source: sidebarLeftBackground.useWallpaperBackdrop ? sidebarLeftBackground.wallpaperUrl : ""
             fillMode: Image.PreserveAspectCrop
             cache: true
@@ -359,11 +383,13 @@ Item {
                 anchors.fill: source
                 saturation: sidebarLeftBackground.angelEverywhere
                     ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
+                    : sidebarLeftBackground.editorialGlassActive ? 0.04
                     : (Appearance.effectsEnabled ? 0.2 : 0)
                 blurEnabled: Appearance.effectsEnabled
                 blurMax: 64
                 blur: Appearance.effectsEnabled
-                    ? (sidebarLeftBackground.angelEverywhere ? Appearance.angel.blurIntensity : 1)
+                    ? (sidebarLeftBackground.angelEverywhere ? Appearance.angel.blurIntensity
+                        : sidebarLeftBackground.editorialGlassActive ? Appearance.editorial.glassBlur : 1)
                     : 0
             }
 
@@ -371,6 +397,8 @@ Item {
                 anchors.fill: parent
                 color: sidebarLeftBackground.angelEverywhere
                     ? ColorUtils.transparentize((sidebarLeftBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity * Appearance.angel.panelTransparentize)
+                    : sidebarLeftBackground.editorialGlassActive
+                        ? (Appearance.editorial.paperStack ? "transparent" : Appearance.editorial.glassPaper)
                     : ColorUtils.transparentize((sidebarLeftBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
             }
         }
@@ -426,12 +454,61 @@ Item {
 
         ColumnLayout {
             id: contentColumn
+            z: 2
             anchors.fill: parent
             anchors.margins: sidebarPadding
             anchors.topMargin: sidebarLeftBackground.angelEverywhere ? sidebarPadding + 4
                 : sidebarLeftBackground.inirEverywhere ? sidebarPadding + 6 : sidebarPadding - 4
             spacing: sidebarLeftBackground.angelEverywhere ? sidebarPadding + 2
                 : sidebarLeftBackground.inirEverywhere ? sidebarPadding + 4 : sidebarPadding
+
+            Rectangle {
+                id: editorialHeader
+                Layout.fillWidth: true
+                implicitHeight: Math.max(42, activeTabHeading.font.pixelSize + 14)
+                Layout.preferredHeight: visible ? implicitHeight : 0
+                visible: Appearance.editorialEverywhere && !sidebarLeftBackground.islandStyle
+                    && !root.pluginViewActive && root.activeTabTitle.length > 0
+                color: "transparent"
+
+                StyledText {
+                    id: activeTabHeading
+                    anchors.left: parent.left
+                    anchors.right: activeTabFlower.left
+                    anchors.rightMargin: 8
+                    anchors.bottom: rule.top
+                    anchors.bottomMargin: 7
+                    text: root.activeTabTitle
+                    font.family: Appearance.font.family.title
+                    font.pixelSize: Appearance.font.pixelSize.larger * Appearance.editorial.titleScale
+                    font.weight: Appearance.editorial.titleWeight
+                    font.letterSpacing: Appearance.editorial.titleTracking
+                    color: Appearance.editorial.ink
+                    elide: Text.ElideRight
+                    wrapMode: Text.NoWrap
+                }
+
+                MaterialShape {
+                    id: activeTabFlower
+                    anchors.right: parent.right
+                    anchors.bottom: rule.top
+                    anchors.bottomMargin: 7
+                    implicitSize: 18
+                    shape: MaterialShape.Shape.Flower
+                    color: Appearance.editorial.accent
+                    visible: Appearance.editorial.ornaments
+                }
+
+                EditorialRule {
+                    id: rule
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: 2
+                    inset: 0
+                    emphasized: true
+                }
+            }
 
             // Tab bar — hidden when webapp is fullscreen in sidebar
             Toolbar {
@@ -441,6 +518,7 @@ Item {
                 padding: 6
                 implicitHeight: tabBar.implicitHeight + padding * 2
                 transparent: Appearance.zzzEverywhere || Appearance.auroraEverywhere || Appearance.inirEverywhere
+                    || (Appearance.editorialEverywhere && Appearance.editorial.glassActive)
                 visible: !root.pluginViewActive
 
                 ToolbarTabBar {
@@ -459,6 +537,8 @@ Item {
                     Layout.preferredWidth: 38
                     visible: root.tabButtonList.length > 1
                     toggled: root.tabEditMode
+                    colBackgroundHover: Appearance.colLayer1Hover
+                    colRipple: Appearance.colLayer1Active
                     downAction: () => root.tabEditMode = !root.tabEditMode
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent
@@ -466,7 +546,7 @@ Item {
                         iconSize: 19
                         color: tabEditButton.toggled
                             ? Appearance.colors.colOnPrimary
-                            : Appearance.colors.colOnLayer2
+                            : Appearance.colActionIcon
                     }
                     StyledToolTip {
                         text: root.tabEditMode
@@ -477,6 +557,7 @@ Item {
             }
 
             Rectangle {
+                id: leadingCard
                 Layout.fillWidth: true
                 Layout.fillHeight: !root.fitToContent
                 implicitHeight: {
@@ -484,6 +565,7 @@ Item {
                     if (root.fitToContent)
                         return Math.round(root.activeTabContentHeight)
                     const chromeHeight = contentColumn.anchors.topMargin + root.sidebarPadding
+                        + (editorialHeader.visible ? editorialHeader.implicitHeight + contentColumn.spacing : 0)
                         + (toolbarContainer.visible ? toolbarContainer.implicitHeight + contentColumn.spacing : 0)
                     return Math.round(Math.max(0,
                         Math.min(root.activeTabContentHeight,
@@ -491,27 +573,59 @@ Item {
                 }
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-                    : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                    : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+                    : Appearance.editorialEverywhere ? Appearance.editorial.radius : Appearance.rounding.normal
                 color: Appearance.zzzEverywhere ? "transparent"
                     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                      : Appearance.auroraEverywhere ? "transparent"
+                     : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass ? Appearance.editorial.glassPaper
+                     : Appearance.editorialEverywhere ? Appearance.editorial.layer(1)
                      : Appearance.colors.colLayer1
                 border.width: Appearance.zzzEverywhere ? 0
                     : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
-                    : Appearance.inirEverywhere ? 1 : 0
+                    : Appearance.inirEverywhere ? 1
+                    : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass ? 1 : 0
                 border.color: Appearance.zzzEverywhere ? "transparent"
                     : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-                    : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+                    : Appearance.inirEverywhere ? Appearance.inir.colBorder
+                    : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass
+                        ? Qt.alpha(Appearance.editorial.edge, 0.28) : "transparent"
                 // Organic morph on style/shape switch (organic-transitions)
                 Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                 Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
+                GlassBackground {
+                    anchors.fill: parent
+                    z: 0
+                    visible: Appearance.editorialEverywhere && Appearance.editorial.glassActive
+                        && !Appearance.editorial.sidebarGlassBackground
+                    forceBackdrop: true
+                    forceNeutralMaterial: true
+                    fallbackColor: Appearance.editorial.paper
+                    overlayColor: Appearance.editorial.paper
+                    blurStrength: Appearance.editorial.glassBlur
+                    saturationStrength: 0.04
+                    auroraTransparency: 1 - Appearance.editorial.glassOpacity
+                    radius: leadingCard.radius
+                    screenX: {
+                        const geometryDependency = leadingCard.x + leadingCard.y + leadingCard.width + leadingCard.height
+                        return leadingCard.mapToItem(null, 0, 0).x
+                    }
+                    screenY: {
+                        const geometryDependency = leadingCard.x + leadingCard.y + leadingCard.width + leadingCard.height
+                        return leadingCard.mapToItem(null, 0, 0).y
+                    }
+                    screenWidth: root.screenWidth
+                    screenHeight: root.screenHeight
+                }
+
                 // SwipeView with normal tab content
                 SwipeView {
                     id: swipeView
+                    z: 1
                     anchors.fill: parent
                     spacing: 10
                     visible: !root.pluginViewActive
@@ -534,7 +648,8 @@ Item {
                         maskSource: Rectangle {
                             width: swipeView.width
                             height: swipeView.height
-                            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                                : Appearance.editorialEverywhere ? Appearance.editorial.radius : Appearance.rounding.small
                             Behavior on radius {
                                 enabled: Appearance.animationsEnabled
                                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }

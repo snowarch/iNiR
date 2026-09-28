@@ -86,6 +86,10 @@ ContentPage {
         summary: Translation.tr("Activation · layout · navigation · shelf · motion")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
+        searchAliases: ({
+            "workspace layout": "layout",
+            "material motion": "motion"
+        })
         options: [
             { displayName: Translation.tr("Activation"), icon: "ads_click", value: "activation" },
             { displayName: Translation.tr("Layout"), icon: "view_carousel", value: "layout" },
@@ -95,9 +99,11 @@ ContentPage {
         ]
     }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "activation"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "activation"
-        visible: root.activeSection === "activation"
         expanded: true
         icon: "ads_click"
         title: Translation.tr("Activation")
@@ -261,10 +267,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "layout"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "layout"
-        visible: root.activeSection === "layout"
         expanded: true
         icon: "view_carousel"
         title: Translation.tr("Workspace layout")
@@ -818,10 +828,14 @@ ContentPage {
 
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "navigation"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "navigation"
-        visible: root.activeSection === "navigation"
         expanded: true
         icon: "route"
         title: Translation.tr("Navigation")
@@ -844,7 +858,7 @@ ContentPage {
                 Layout.fillWidth: true
                 visible: root.orbitOptions.keyboardNavigation ?? true
                 text: (root.orbitOptions.stageMode ?? "stage") === "orbital"
-                    ? Translation.tr("Tab cycles core windows, Shelf and Pocket · ←/→ rotates Orbit · ↑/↓ selects core windows · Space enters the core workspace · Shift+←/→ moves the selected window · Enter activates · Delete closes · S stashes · Menu or Shift+F10 opens window actions · P opens Pocket · O switches Stage/Orbital")
+                    ? Translation.tr("Tab cycles core windows, Shelf and Pocket · ←/→ rotates Orbit · ↑/↓ selects core windows · Ctrl+←/→ or PageUp/PageDown switches Niri workspaces · Space enters the core workspace · Shift+←/→ moves the selected window · Enter activates · Delete closes · S stashes · Menu or Shift+F10 opens window actions · P opens Pocket · O switches Stage/Orbital")
                     : Translation.tr("Tab cycles previews, Shelf and Pocket · arrows navigate · Shift+←/→ moves the selected window · Ctrl+←/→ or PageUp/PageDown switches workspaces · Enter activates · Delete closes · S stashes · Menu or Shift+F10 opens window actions · P opens Pocket · O switches Stage/Orbital")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.smaller
@@ -907,10 +921,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "shelf"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "shelf"
-        visible: root.activeSection === "shelf"
         expanded: true
         icon: "shelf_auto_hide"
         title: Translation.tr("Orbit Shelf")
@@ -955,7 +973,8 @@ ContentPage {
                     onSelected: value => Config.setNestedValue("orbit.shelf.density", value)
                     options: [
                         { displayName: Translation.tr("Comfortable"), icon: "density_medium", value: "comfortable" },
-                        { displayName: Translation.tr("Compact"), icon: "density_small", value: "compact" }
+                        { displayName: Translation.tr("Compact"), icon: "density_small", value: "compact" },
+                        { displayName: Translation.tr("HUGE AS YOUR MOM"), icon: "density_large", value: "huge" }
                     ]
                 }
             }
@@ -1207,10 +1226,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "motion"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "motion"
-        visible: root.activeSection === "motion"
         expanded: true
         icon: "animation"
         title: Translation.tr("Material motion")
@@ -1481,6 +1504,8 @@ ContentPage {
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 wrapMode: Text.WordWrap
             }
+        }
+    }
         }
     }
 }

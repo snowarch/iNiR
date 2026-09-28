@@ -39,7 +39,7 @@ _inir() {
         'browser:Open browser'
         'close-window:Close focused window'
         'ipc:Low-level IPC call'
-        'settings:Open settings'
+        'settings:Toggle settings'
         'settings-window:Open settings window'
         'waffle-settings-window:Open waffle settings window'
         'repair:Repair shell state'

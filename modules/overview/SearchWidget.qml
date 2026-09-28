@@ -495,6 +495,7 @@ Item { // Wrapper
             glassEnabled: true
         }
 
+
         // Collapsed search: a CLEAN plate (just the left category accent bar). The
         // search field is a small control — no ghost text, tape or frame labels.
         ZzzGraphicPlate {

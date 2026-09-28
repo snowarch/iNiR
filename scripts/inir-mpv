@@ -1,0 +1,63 @@
+#!/bin/sh
+# ani-cli dispatches its player by name and hands the mpv branch the full
+# argument set (referrer, subtitles, title, stream). This wrapper is that
+# player: inside an iNiR run (INIR_ANI_RUN, set by inir-ani) it adds the IPC
+# socket iNiR observes and the place to start, then runs the real mpv
+# unchanged. Invoked outside a run it is a plain mpv and changes nothing.
+
+[ -n "$INIR_ANI_RUN" ] || exec mpv "$@"
+
+media_title=""
+for arg in "$@"; do
+    case "$arg" in
+        --force-media-title=*) media_title="${arg#--force-media-title=}" ;;
+    esac
+done
+base=$(printf '%s' "$media_title" | LC_ALL=C sed -E 's/[[:space:]]+[Ee]pisode[[:space:]]+([0-9]+([.][0-9]+)?)[[:space:]]*$//')
+episode=$(printf '%s' "$media_title" | LC_ALL=C sed -nE 's/.*[[:space:]][Ee]pisode[[:space:]]+([0-9]+([.][0-9]+)?)[[:space:]]*$/\1/p')
+
+# The key iNiR files progress under: lowercase ASCII words joined by single
+# spaces. AnimeWatch.progressKey must produce the same string.
+key() {
+    printf '%s' "$1" | LC_ALL=C tr 'A-Z' 'a-z' | LC_ALL=C sed -E 's/[^a-z0-9]+/ /g; s/^ +//; s/ +$//'
+}
+
+# ani-cli takes the first search result when there is only one, unchecked, so a
+# resume could play another show and file its progress under the wanted one.
+if [ -n "$INIR_ANI_EXPECT" ] && [ "$(key "$INIR_ANI_EXPECT")" != "$(key "$base")" ]; then
+    printf '%s\n%s\n' "$INIR_ANI_EXPECT" "$base" > "$INIR_ANI_RUN/reject"
+    exit 1
+fi
+
+# Every episode of a run starts where it was left, so next, previous and replay
+# resume like the first one did, and a finished episode starts over.
+start=0
+if [ -n "$INIR_ANI_PROGRESS" ] && [ -f "$INIR_ANI_PROGRESS" ] && [ -n "$episode" ]; then
+    start=$(python3 - "$INIR_ANI_PROGRESS" "$(key "$base")" "$episode" "${INIR_ANI_FINISHED:-0.9}" <<'PY' 2>/dev/null
+import json, sys
+path, show, episode, finished = sys.argv[1], sys.argv[2], sys.argv[3], float(sys.argv[4])
+try:
+    saved = json.load(open(path)).get(show, {}).get(episode) or {}
+    seconds = float(saved.get("seconds") or 0)
+    duration = float(saved.get("duration") or 0)
+except Exception:
+    seconds, duration = 0, 0
+print(int(seconds) if seconds > 0 and not (duration > 0 and seconds / duration > finished) else 0)
+PY
+    )
+fi
+case "$start" in ''|*[!0-9]*) start=0 ;; esac
+[ "$start" -gt 0 ] && set -- "--start=$start" "$@"
+
+# The Island controls the episode through MPRIS; load mpv-mpris when mpv would not.
+mpris=/usr/lib/mpv-mpris/mpris.so
+if [ -f "$mpris" ] && [ ! -e /etc/mpv/scripts/mpris.so ] && [ ! -e "${XDG_CONFIG_HOME:-$HOME/.config}/mpv/scripts/mpris.so" ]; then
+    set -- "--script=$mpris" "$@"
+fi
+
+socket="$INIR_ANI_RUN/mpv.sock"
+rm -f -- "$socket"
+mpv --input-ipc-server="$socket" "$@"
+status=$?
+rm -f -- "$socket"
+exit $status

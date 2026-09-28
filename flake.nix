@@ -21,11 +21,16 @@
         let
           package = pkgs.callPackage ./nix/package.nix { inherit pkgs; };
           mascotPackage = pkgs.callPackage ./nix/mascot-package.nix { inherit pkgs; };
+          packageWithMascot = pkgs.symlinkJoin {
+            name = "inir-with-mascot-${package.version}";
+            paths = [ package mascotPackage ];
+          };
         in
         {
           default = package;
           inir = package;
           inir-mascot = mascotPackage;
+          inir-with-mascot = packageWithMascot;
         });
 
       nixosModules.default = nixosModule;

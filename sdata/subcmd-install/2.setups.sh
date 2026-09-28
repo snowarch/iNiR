@@ -17,7 +17,11 @@ function setup_user_groups(){
   fi
   
   # Add user to required groups
+  local groups_before=" $(id -nG) "
   x pkg_sudo usermod -aG video,i2c,input "$(whoami)"
+  if [[ "$groups_before" != *" video "* || "$groups_before" != *" i2c "* || "$groups_before" != *" input "* ]]; then
+    INIR_REBOOT_REASONS+=("Your user joined video, i2c and input: brightness, keyboard lights and the on-screen keyboard need it")
+  fi
   
   log_success "User added to video, i2c, input groups"
   log_warning "Group changes require logout/login to take effect"
@@ -103,7 +107,8 @@ function setup_systemd_services(){
         fi
       done
 
-      elevate systemctl enable sddm.service 2>/dev/null && log_success "SDDM service enabled"
+      elevate systemctl enable sddm.service 2>/dev/null && log_success "SDDM service enabled" \
+        && INIR_REBOOT_REASONS+=("SDDM is your login screen now${current_dm:+, instead of ${current_dm%.service}}")
     fi
   fi
   

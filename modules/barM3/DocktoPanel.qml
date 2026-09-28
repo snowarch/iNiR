@@ -10,6 +10,7 @@ import QtQuick.Effects
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import Quickshell
+import Quickshell.Wayland
 import Quickshell.Widgets
 
 Item {
@@ -200,18 +201,41 @@ Item {
                             anchorItem: pinnedButton
                             anchorHovered: pinnedButton.hovered
                             popupAbove: Config.options?.bar?.bottom ?? false
+                            popupSide: root.vertical
+                                ? ((Config.options?.bar?.bottom ?? false) ? Edges.Left : Edges.Right)
+                                : 0
                             closeOnHoverLost: false
                             model: [
                                 {
-                                    iconName: "launch",
+                                    iconName: "open_in_new",
                                     text: Translation.tr("New window"),
+                                    monochromeIcon: true,
                                     action: () => AppSearch.launchEntry(slotItem.deskEntry)
                                 },
+                                ...((slotItem.deskEntry?.actions?.length ?? 0) > 0
+                                    ? slotItem.deskEntry.actions.map(action => ({
+                                        iconName: action.icon ?? "",
+                                        text: action.name,
+                                        action: () => AppSearch.launchDesktopAction(slotItem.deskEntry, action)
+                                    })).concat({ type: "separator" })
+                                    : []),
                                 {
                                     iconName: "keep_off",
-                                    text: Translation.tr("Unpin"),
+                                    text: Translation.tr("Unpin from dock"),
+                                    monochromeIcon: true,
                                     action: () => TaskbarApps.togglePin(slotItem.appId)
-                                }
+                                },
+                                ...((slotItem.appEntry?.toplevels?.length ?? 0) > 0 ? [
+                                    { type: "separator" },
+                                    {
+                                        iconName: "close",
+                                        text: slotItem.appEntry.toplevels.length > 1
+                                            ? Translation.tr("Close all windows")
+                                            : Translation.tr("Close window"),
+                                        monochromeIcon: true,
+                                        action: () => slotItem.appEntry.toplevels.forEach(toplevel => toplevel.close())
+                                    }
+                                ] : [])
                             ]
                         }
 
@@ -353,6 +377,14 @@ Item {
                     required property var modelData
 
                     property int  _lastFocused: -1
+                    property var deskEntry: AppSearch.lookupDesktopEntry(activeSlot.modelData.appId)
+
+                    Connections {
+                        target: DesktopEntries
+                        function onApplicationsChanged() {
+                            activeSlot.deskEntry = AppSearch.lookupDesktopEntry(activeSlot.modelData.appId)
+                        }
+                    }
 
                     width:  root.btnSize
                     height: root.btnSize
@@ -370,7 +402,7 @@ Item {
                             activeSlot.modelData.toplevels[next].activate()
                         }
                         middleClickAction: () => {
-                            AppSearch.launchEntry(AppSearch.lookupDesktopEntry(activeSlot.modelData.appId))
+                            AppSearch.launchEntry(activeSlot.deskEntry)
                         }
                         altAction: () => { activeMenu.requestOpen() }
 
@@ -379,23 +411,38 @@ Item {
                             anchorItem: activeButton
                             anchorHovered: activeButton.hovered
                             popupAbove: Config.options?.bar?.bottom ?? false
+                            popupSide: root.vertical
+                                ? ((Config.options?.bar?.bottom ?? false) ? Edges.Left : Edges.Right)
+                                : 0
                             closeOnHoverLost: false
                             model: [
                                 {
-                                    iconName: "launch",
+                                    iconName: "open_in_new",
                                     text: Translation.tr("New window"),
-                                    action: () => AppSearch.launchEntry(AppSearch.lookupDesktopEntry(activeSlot.modelData.appId))
+                                    monochromeIcon: true,
+                                    action: () => AppSearch.launchEntry(activeSlot.deskEntry)
                                 },
+                                ...((activeSlot.deskEntry?.actions?.length ?? 0) > 0
+                                    ? activeSlot.deskEntry.actions.map(action => ({
+                                        iconName: action.icon ?? "",
+                                        text: action.name,
+                                        action: () => AppSearch.launchDesktopAction(activeSlot.deskEntry, action)
+                                    })).concat({ type: "separator" })
+                                    : []),
                                 {
                                     iconName: "keep",
-                                    text: Translation.tr("Pin"),
+                                    text: Translation.tr("Pin to dock"),
+                                    monochromeIcon: true,
                                     action: () => TaskbarApps.togglePin(activeSlot.modelData.appId)
                                 },
                                 { type: "separator" },
                                 {
                                     iconName: "close",
-                                    text: Translation.tr("Close"),
-                                    action: () => activeSlot.modelData.toplevels.forEach(t => t.close())
+                                    text: activeSlot.modelData.toplevels.length > 1
+                                        ? Translation.tr("Close all windows")
+                                        : Translation.tr("Close window"),
+                                    monochromeIcon: true,
+                                    action: () => activeSlot.modelData.toplevels.forEach(toplevel => toplevel.close())
                                 }
                             ]
                         }

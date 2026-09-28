@@ -159,7 +159,8 @@ Button {
             readonly property int windowId: CompositorService.isNiri
                 ? (root.toplevel?.niriWindowId ?? root.toplevel?.id ?? 0)
                 : (root.toplevel?.id ?? 0)
-            property string previewUrl: ""
+            readonly property string previewUrl: WindowPreviewService.getPreviewUrl(windowId)
+            property bool hasDisplayedPreview: false
 
             // Loading shimmer effect
             Rectangle {
@@ -170,10 +171,12 @@ Button {
                     : Appearance.inirEverywhere
                         ? (Appearance.inir?.colLayer1 ?? Appearance.colors.colSurfaceContainerLow)
                         : Appearance.colors.colSurfaceContainerLow
-                visible: windowPreview.status !== Image.Ready
+                visible: true
 
                 Rectangle {
                     id: shimmer
+                    visible: !previewArea.hasDisplayedPreview
+                        && previewArea.previewUrl.length === 0
                     width: parent.width * 0.4
                     height: parent.height
                     x: -width
@@ -185,7 +188,7 @@ Button {
                     }
 
                     SequentialAnimation on x {
-                        running: shimmerBg.visible
+                        running: shimmer.visible
                         loops: Animation.Infinite
                         NumberAnimation {
                             from: -shimmer.width
@@ -198,24 +201,13 @@ Button {
                 }
             }
 
-            // Fallback icon (snap visibility like waffle — no opacity fade)
-            IconImage {
-                id: fallbackIcon
-                anchors.centerIn: parent
-                source: appIcon.source
-                implicitSize: Math.min(48, parent.width * 0.4)
-                visible: windowPreview.status !== Image.Ready
-                opacity: 0.7
-                mipmap: true
-                smooth: true
-            }
-
             // Preview image
             Image {
                 id: windowPreview
                 source: previewArea.previewUrl
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
+                retainWhileLoading: true
                 smooth: true
                 mipmap: true
                 anchors.fill: parent
@@ -225,11 +217,11 @@ Button {
                 // window. 2x the drawn size keeps it crisp under mipmap.
                 sourceSize.width: Math.max(1, Math.round(windowPreview.width * 2))
                 sourceSize.height: Math.max(1, Math.round(windowPreview.height * 2))
-                opacity: status === Image.Ready ? 1 : 0
+                opacity: previewArea.previewUrl.length > 0 ? 1 : 0
 
-                Behavior on opacity {
-                    enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                onStatusChanged: {
+                    if (status === Image.Ready)
+                        previewArea.hasDisplayedPreview = true
                 }
 
                 layer.enabled: true
@@ -242,27 +234,6 @@ Button {
                 }
             }
 
-            // Listen for preview updates
-            Connections {
-                target: WindowPreviewService
-                function onPreviewUpdated(updatedId: int): void {
-                    if (updatedId === previewArea.windowId) {
-                        previewArea.previewUrl = WindowPreviewService.getPreviewUrl(updatedId)
-                    }
-                }
-                function onCaptureComplete(): void {
-                    const url = WindowPreviewService.getPreviewUrl(previewArea.windowId)
-                    if (url) previewArea.previewUrl = url
-                }
-            }
-
-            // Check if preview exists on load
-            Component.onCompleted: {
-                Qt.callLater(() => {
-                    const url = WindowPreviewService.getPreviewUrl(windowId)
-                    if (url) previewUrl = url
-                })
-            }
         }
     }
 }

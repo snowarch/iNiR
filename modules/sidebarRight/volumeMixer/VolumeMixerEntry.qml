@@ -36,7 +36,7 @@ Item {
             StyledText {
                 Layout.fillWidth: true
                 font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.colors.colSubtext
+                color: Appearance.colMetadataText
                 elide: Text.ElideRight
                 text: {
                     if (!root.node)

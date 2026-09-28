@@ -14,17 +14,19 @@ in
     systemd.user.services.inir = lib.mkIf cfg.service.enable {
       description = "iNiR shell";
       wantedBy = lib.optional (wantedUnit != null) wantedUnit;
-      partOf = [ "graphical-session.target" ];
-      after = [ "graphical-session.target" ];
+      partOf = [ "niri.service" ];
+      after = [ "niri.service" ];
+      before = [ "xdg-desktop-autostart.target" ];
       path = [ cfg.package ] ++ cfg.extraPackages;
       environment = common.serviceEnvironment cfg;
       unitConfig = {
-        Requisite = "graphical-session.target";
+        Requisite = "niri.service";
         StartLimitIntervalSec = 30;
         StartLimitBurst = 3;
       };
       serviceConfig = {
-        Type = "simple";
+        Type = "dbus";
+        BusName = "org.kde.StatusNotifierWatcher";
         ExecStart = "${lib.getExe cfg.package} run --session";
         ExecStopPost = "-${lib.getExe cfg.package} cleanup-orphans";
         SuccessExitStatus = 143;

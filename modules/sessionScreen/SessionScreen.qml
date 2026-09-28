@@ -16,6 +16,7 @@ import Quickshell.Hyprland
 Scope {
     id: root
     property bool _presentedOpen: false
+    readonly property bool editorial: Appearance.editorialEverywhere
     Component.onCompleted: if (GlobalStates.sessionOpen)
         Qt.callLater(() => { root._presentedOpen = GlobalStates.sessionOpen })
     property var focusedScreen: {
@@ -39,12 +40,20 @@ Scope {
     component DescriptionLabel: Rectangle {
         id: descriptionLabel
         property string text
-        property color textColor: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnTooltip
-        color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt : Appearance.colors.colTooltip
+        property color textColor: Appearance.zzzEverywhere ? Appearance.zzz.ink
+            : root.editorial ? Appearance.editorial.ink
+            : Appearance.colors.colOnTooltip
+        color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+            : root.editorial ? Appearance.editorial.paper
+            : Appearance.colors.colTooltip
         clip: true
-        radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal
-        border.width: Appearance.zzzEverywhere ? 1 : 0
-        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+            : root.editorial ? Appearance.rounding.small
+            : Appearance.rounding.normal
+        border.width: (Appearance.zzzEverywhere || root.editorial) ? 1 : 0
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+            : root.editorial ? Appearance.editorial.rule
+            : "transparent"
         Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
         Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
         Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
@@ -187,6 +196,7 @@ Scope {
                 anchors.fill: parent
                 color: Appearance.zzzEverywhere
                     ? ColorUtils.applyAlpha(Appearance.zzz.bg0, 0.62)
+                    : root.editorial ? ColorUtils.applyAlpha(Appearance.editorial.paper, 0.48)
                     : Qt.rgba(0, 0, 0, 0.4)
             }
 
@@ -227,10 +237,32 @@ Scope {
                 }
             }
 
+            Rectangle {
+                visible: root.editorial
+                anchors.centerIn: parent
+                width: contentColumn.implicitWidth + 72
+                height: contentColumn.implicitHeight + 64
+                radius: Appearance.editorial.radius
+                color: Appearance.editorial.ink
+                border.width: 1
+                border.color: ColorUtils.applyAlpha(Appearance.editorial.paperOnInk, 0.18)
+
+                MaterialShape {
+                    visible: Appearance.editorial.ornaments
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.margins: 18
+                    implicitSize: 18
+                    shape: MaterialShape.Shape.Flower
+                    color: Appearance.editorial.paperOnInk
+                    opacity: 0.72
+                }
+            }
+
             ColumnLayout { // Content column
                 id: contentColumn
                 anchors.centerIn: parent
-                spacing: 15
+                spacing: root.editorial ? Math.round(12 * Appearance.editorial.spacing) : 15
 
                 // Subtle open animation for the session dialog
                 transformOrigin: Item.Center
@@ -251,8 +283,8 @@ Scope {
 
                 MascotImage {
                     Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: 110
-                    Layout.preferredHeight: 110
+                    Layout.preferredWidth: root.editorial ? 72 : 110
+                    Layout.preferredHeight: root.editorial ? 72 : 110
                     surface: "session"
                     pose: "goodbye-wave"
                 }
@@ -264,14 +296,21 @@ Scope {
                         Layout.alignment: Qt.AlignHCenter
                         horizontalAlignment: Text.AlignHCenter
                         font {
-                            family: Appearance.font.family.title
-                            pixelSize: Appearance.font.pixelSize.title
+                            family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.title
+                            pixelSize: root.editorial
+                                ? Math.round(34 * Appearance.editorial.titleScale * Appearance.fontSizeScale)
+                                : Appearance.font.pixelSize.title
                             variableAxes: Appearance.font.variableAxes.title
                         }
-                        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
+                        font.weight: Appearance.zzzEverywhere ? Font.Black
+                            : root.editorial ? Appearance.editorial.titleWeight
+                            : Font.Normal
                         font.italic: Appearance.zzzEverywhere
+                        font.letterSpacing: root.editorial ? Appearance.editorial.titleTracking : 0
                         text: Translation.tr("Session")
-                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer0
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                            : root.editorial ? Appearance.editorial.paperOnInk
+                            : Appearance.colors.colOnLayer0
                         Behavior on color {
                             enabled: Appearance.animationsEnabled
                             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -281,8 +320,14 @@ Scope {
                     StyledText { // Small instruction
                         Layout.alignment: Qt.AlignHCenter
                         horizontalAlignment: Text.AlignHCenter
-                        font.pixelSize: Appearance.font.pixelSize.normal
-                        color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colOnLayer0
+                        font.pixelSize: root.editorial ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.normal
+                        font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                        font.weight: root.editorial ? Font.DemiBold : Font.Normal
+                        font.letterSpacing: root.editorial ? 0.7 : 0
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                            : root.editorial ? Appearance.editorial.paperOnInk
+                            : Appearance.colors.colOnLayer0
+                        opacity: root.editorial ? 0.72 : 1
                         Behavior on color {
                             enabled: Appearance.animationsEnabled
                             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -293,8 +338,8 @@ Scope {
 
                 GridLayout {
                     columns: 4
-                    columnSpacing: 15
-                    rowSpacing: 15
+                    columnSpacing: root.editorial ? 10 : 15
+                    rowSpacing: root.editorial ? 10 : 15
 
                     SessionActionButton {
                         id: sessionLock

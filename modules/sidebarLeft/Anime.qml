@@ -246,9 +246,9 @@ Item {
                 anchors.fill: parent
                 z: 2
                 shown: root.responses.length === 0
-                icon: "bookmark_heart"
+                icon: Network.online ? "bookmark_heart" : "cloud_off"
                 text: Translation.tr("Anime boorus")
-                explanation: ""
+                explanation: Network.online ? "" : Network.offlineReason
                 shape: MaterialShape.Shape.Bun
             }
 
@@ -395,7 +395,7 @@ Item {
                     wrapMode: TextArea.Wrap
                     Layout.fillWidth: true
                     padding: 10
-                    color: activeFocus ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
+                    color: activeFocus ? Appearance.colors.colOnSurface : Appearance.colMetadataText
                     renderType: Text.NativeRendering
                     placeholderText: Translation.tr('Enter tags, or "%1" for commands').arg(root.commandPrefix)
 

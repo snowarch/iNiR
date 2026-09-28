@@ -30,8 +30,7 @@ Item {
         ? Appearance.animation.elementMoveFast.duration
         : OrbitTuning.navigationDuration(navigationOptions)
     readonly property string orbitNavigationEasing: OrbitTuning.navigationEasing(navigationOptions)
-    readonly property int orbitNavigationEasingType: orbitNavigationEasing === "linear" ? Easing.Linear
-        : orbitNavigationEasing === "direct" ? Easing.OutCubic : Easing.InOutCubic
+    readonly property int orbitNavigationEasingType: OrbitTuning.navigationEasingType(navigationOptions)
     readonly property int overviewRows: orbitMode ? 1 : (overviewOptions.rows ?? 3)
     readonly property int overviewColumns: orbitMode
         ? Math.max(1, Math.min(5, orbitOptions.workspaceCount ?? 3))
@@ -175,6 +174,12 @@ Item {
         const aspect = baseWorkspaceHeight <= 0 || baseWorkspaceWidth <= 0 ? 1 : baseWorkspaceHeight / baseWorkspaceWidth;
         return workspaceImplicitWidth * aspect;
     }
+    readonly property real previewDpr: Math.max(1, panelWindow?.devicePixelRatio ?? 1)
+    readonly property real previewDecodeScale: Math.max(1.8, previewDpr * 1.35)
+    readonly property int previewDecodeWidth: Math.max(640,
+        Math.min(1600, Math.round(workspaceImplicitWidth * previewDecodeScale)))
+    readonly property int previewDecodeHeight: Math.max(360,
+        Math.min(900, Math.round(previewDecodeWidth * 9 / 16)))
 
     property real workspaceNumberMargin: 80
     property real workspaceNumberSize: root.orbitMode ? 120 : 250
@@ -976,7 +981,8 @@ Item {
                 if (GlobalStates.overviewOpen
                         && (root.orbitMode || Config.options?.overview?.showPreviews !== false)
                         && result.length > 0) {
-                    WindowPreviewService.captureForTaskView(result.map(item => item.id))
+                    WindowPreviewService.captureForTaskView(result.map(item => item.id),
+                        root.orbitMode ? 12000 : undefined)
                 }
             }
             
@@ -1142,6 +1148,7 @@ Item {
                             anchors.fill: parent
                             anchors.margins: 2
                             property int revision: 0
+                            property bool hadReadyFrame: false
                             source: {
                                 const ignoredRevision = revision
                                 if (!parent.showPreviews || !windowItem.windowId)
@@ -1151,9 +1158,22 @@ Item {
                             asynchronous: true
                             fillMode: root.orbitMode ? Image.PreserveAspectFit : Image.PreserveAspectCrop
                             smooth: true
-                            mipmap: true
-                            visible: parent.showPreviews && status === Image.Ready
-                            opacity: status === Image.Ready ? 1 : 0
+                            mipmap: false
+                            retainWhileLoading: true
+                            // Keep decode size independent from animated tile geometry. Changing
+                            // sourceSize reloads the image and used to expose the fallback icon.
+                            sourceSize.width: root.previewDecodeWidth
+                            sourceSize.height: root.previewDecodeHeight
+                            visible: parent.showPreviews && opacity > 0.001
+                            opacity: status === Image.Ready
+                                || (status === Image.Loading && hadReadyFrame) ? 1 : 0
+
+                            onStatusChanged: {
+                                if (status === Image.Ready)
+                                    hadReadyFrame = true
+                                else if (status === Image.Error || status === Image.Null)
+                                    hadReadyFrame = false
+                            }
 
                             Behavior on opacity {
                                 enabled: Appearance.animationsEnabled
@@ -1211,7 +1231,7 @@ Item {
                             source: AppSearch.getIconSource(windowData.app_id || windowData.appId || "")
                             asynchronous: true
                             fillMode: Image.PreserveAspectFit
-                            opacity: windowPreview.visible ? (root.orbitMode ? 0 : 0.6) : 1.0
+                            opacity: windowPreview.opacity > 0.001 ? (root.orbitMode ? 0 : 0.6) : 1.0
                             Behavior on opacity {
                                 enabled: Appearance.animationsEnabled
                                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic }

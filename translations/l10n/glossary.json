@@ -32,7 +32,9 @@
     "QML",
     "GTK",
     "HTTP",
-    "API"
+    "API",
+    "awww",
+    "AWWW"
   ],
   "patterns": [
     "^inir(?:\\s|$)",
@@ -50,6 +52,15 @@
     "system tray": "Use the established desktop-environment term.",
     "keybind": "Use the established term for a keyboard shortcut.",
     "wallpaper": "Use the established desktop-background term.",
+    "dock": "Use the established desktop dock term; never translate it as a harbor or pier.",
+    "dashboard": "Use the established software dashboard/overview term; never the literal vehicle dashboard term.",
+    "backend": "Use the established software backend term, not a physical rear/back translation.",
+    "renderer": "Use the established graphics/rendering term.",
+    "compositor": "Use the established Wayland/compositor term.",
+    "repository": "This is a Git repository/repo, never a warehouse or storage-room meaning.",
+    "commit": "This is a Git commit, never a promise/confirmation meaning.",
+    "checkout": "This is a Git checkout/worktree operation, never a store checkout/payment meaning.",
+    "branch": "This is a Git branch, never a tree branch unless that is the established source-control term.",
     "provider": "In AI settings this means a model/API provider, not an internet service provider.",
     "surface": "In technical settings this means a shell UI surface or panel, not a physical material.",
     "pill": "Keep the product UI term consistent. Do not translate it as medicine.",

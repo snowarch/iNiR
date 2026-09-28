@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
@@ -207,7 +208,7 @@ ColumnLayout {
                 spacing: 6
 
                 Repeater {
-                    model: root.rightOrder
+                    model: ScriptModel { values: root.rightOrder }
                     delegate: Row {
                         id: rightDelegate
                         required property string modelData
@@ -338,7 +339,7 @@ ColumnLayout {
                 spacing: 6
 
                 Repeater {
-                    model: root.leftOrder
+                    model: ScriptModel { values: root.leftOrder }
                     delegate: Row {
                         id: leftDelegate
                         required property string modelData

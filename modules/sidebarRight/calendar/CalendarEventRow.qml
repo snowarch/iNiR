@@ -19,7 +19,7 @@ Item {
 
     signal clicked()
 
-    implicitHeight: eventRow.implicitHeight + 10
+    implicitHeight: eventRow.implicitHeight + (Appearance.editorialEverywhere ? Math.round(16 * Appearance.editorial.spacing) : 10)
     implicitWidth: parent?.width ?? 200
 
     readonly property bool isExternal: (root.event?.source ?? "local") === "external"
@@ -52,8 +52,8 @@ Item {
         : Appearance.colors.colLayer1
     readonly property color colCardHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
-        : Appearance.auroraEverywhere ? (Appearance.aurora?.colSubSurface ?? Appearance.colors.colLayer1Hover)
-        : Appearance.colors.colLayer1Hover
+        : Appearance.auroraEverywhere ? (Appearance.aurora?.colSubSurface ?? Appearance.colLayer1Hover)
+        : Appearance.colLayer1Hover
     readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
 
@@ -61,7 +61,7 @@ Item {
         id: bg
         anchors.fill: parent
         radius: root.cardRadius
-        color: eventMA.containsMouse && root.interactive ? root.colCardHover : "transparent"
+        color: eventMA.containsMouse && root.interactive ? root.colCardHover : Appearance.editorialEverywhere ? Appearance.editorial.layer(1) : "transparent"
 
         Behavior on color {
             enabled: Appearance.animationsEnabled
@@ -94,7 +94,7 @@ Item {
                     Layout.fillWidth: true
                     text: root.event?.title ?? ""
                     font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.Medium
+                    font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Medium
                     color: root.colText
                     elide: Text.ElideRight
                     maximumLineCount: 1

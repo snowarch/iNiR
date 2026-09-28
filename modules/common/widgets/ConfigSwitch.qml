@@ -59,6 +59,8 @@ RippleButton {
             return;
         if (typeof SettingsSearchRegistry === "undefined")
             return;
+        if (!SettingsSearchRegistry.dynamicRegistrationEnabled)
+            return;
 
         var ctx = _findSettingsContext();
         var page = ctx.page;
@@ -105,6 +107,7 @@ RippleButton {
                 id: labelWidget
                 Layout.fillWidth: true
                 text: root.text
+                wrapMode: Text.Wrap
                 font: root.font
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                     : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
@@ -118,7 +121,7 @@ RippleButton {
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colSubtext
                 opacity: root.enabled ? 0.9 : 0.4
-                wrapMode: Text.WordWrap
+                wrapMode: Text.Wrap
             }
         }
         StyledSwitch {

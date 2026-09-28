@@ -22,6 +22,7 @@ RippleButton {
             visible: text !== ""
             text: buttonWithIconRoot.mainText
             font.pixelSize: Appearance.font.pixelSize.small
+            font.weight: Appearance.editorialEverywhere ? Font.Medium : Font.Normal
             color: buttonWithIconRoot.contentColor
             Behavior on color {
                 enabled: Appearance.animationsEnabled

@@ -63,19 +63,25 @@ Rectangle {
          : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
          : Appearance.inirEverywhere ? Appearance.inir.colLayer1
          : Appearance.auroraEverywhere ? "transparent"
+         : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass ? Appearance.editorial.glassPaper
          : Appearance.colors.colLayer1
     Behavior on color {
         enabled: Appearance.animationsEnabled
         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
-    border.width: Appearance.zzzEverywhere ? 0 : (root.compactSurface ? 0 : (Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0)))
+    border.width: Appearance.zzzEverywhere ? 0 : (root.compactSurface ? 0
+        : (Appearance.angelEverywhere ? 0
+            : (Appearance.inirEverywhere ? 1
+                : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass ? 1 : 0)))
     Behavior on border.width {
         enabled: Appearance.animationsEnabled
         NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
     border.color: Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? "transparent"
-        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        : Appearance.inirEverywhere ? Appearance.inir.colBorder
+        : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass
+            ? Qt.alpha(Appearance.editorial.edge, 0.28) : "transparent"
     Behavior on border.color {
         enabled: Appearance.animationsEnabled
         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -128,6 +134,7 @@ Rectangle {
     component DefaultQuickSlider: Item {
         id: quickSlider
         required property string materialSymbol
+        required property string label
         property real modelValue: 0
         readonly property alias value: slider.value
         signal moved(real value)
@@ -153,6 +160,8 @@ Rectangle {
             configuration: StyledSlider.Configuration.M
             stopIndicatorValues: []
             scrollable: true
+            Accessible.name: quickSlider.label
+            tooltipContent: `${quickSlider.label} · ${Math.round(value * 100)}%`
             value: quickSlider.modelValue
             onMoved: quickSlider.moved(value)
         }
@@ -164,9 +173,7 @@ Rectangle {
                 right: parent.right
             }
             iconSize: 20
-            color: Appearance.angelEverywhere ? Appearance.angel.colText
-                : Appearance.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
-                : Appearance.colors.colOnSecondaryContainer
+            color: Appearance.colActionIcon
             text: quickSlider.materialSymbol
 
             Behavior on color {
@@ -174,11 +181,23 @@ Rectangle {
                 animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
             }
         }
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -2
+            visible: slider.visualFocus
+            radius: Appearance.rounding.small
+            color: "transparent"
+            border.width: 2
+            border.color: slider.highlightColor
+        }
     }
 
     component ZzzQuickSlider: Slider {
         id: quickSlider
+        required property string label
         required property string materialSymbol
+        Accessible.name: label
         property real modelValue: 0
         property color zzzSignalColor: materialSymbol === "brightness_6" ? Appearance.zzz.tertiary
             : materialSymbol === "mic" ? Appearance.zzz.secondary
@@ -304,7 +323,7 @@ Rectangle {
         StyledToolTip {
             parent: quickSlider.handle
             extraVisibleCondition: quickSlider.pressed
-            text: `${Math.round((quickSlider.value / Math.max(0.0001, quickSlider.to)) * 100)}%`
+            text: `${quickSlider.label} · ${Math.round((quickSlider.value / Math.max(0.0001, quickSlider.to)) * 100)}%`
             font {
                 family: Appearance.font.family.numbers
                 variableAxes: Appearance.font.variableAxes.numbers
@@ -316,6 +335,7 @@ Rectangle {
     Component {
         id: defaultBrightnessSlider
         DefaultQuickSlider {
+            label: Translation.tr("Brightness")
             materialSymbol: "brightness_6"
             modelValue: root.brightnessValue
             onMoved: (value) => root.brightnessMonitor?.setBrightness(value)
@@ -325,6 +345,7 @@ Rectangle {
     Component {
         id: defaultVolumeSlider
         DefaultQuickSlider {
+            label: Translation.tr("Volume")
             materialSymbol: "volume_up"
             modelValue: root.volumeValue
             onMoved: (value) => Audio.setSinkVolume(value)
@@ -334,6 +355,7 @@ Rectangle {
     Component {
         id: defaultMicSlider
         DefaultQuickSlider {
+            label: Translation.tr("Microphone")
             materialSymbol: "mic"
             modelValue: Audio.micVolume
             onMoved: (value) => Audio.setSourceVolume(value)
@@ -344,6 +366,7 @@ Rectangle {
         id: zzzBrightnessSlider
         ZzzQuickSlider {
             id: brightnessSlider
+            label: Translation.tr("Brightness")
             materialSymbol: "brightness_6"
             modelValue: root.brightnessValue
             onMoved: () => root.brightnessMonitor?.setBrightness(brightnessSlider.value)
@@ -354,6 +377,7 @@ Rectangle {
         id: zzzVolumeSlider
         ZzzQuickSlider {
             id: volumeSlider
+            label: Translation.tr("Volume")
             materialSymbol: "volume_up"
             modelValue: root.volumeValue
             onMoved: () => Audio.setSinkVolume(volumeSlider.value)
@@ -364,6 +388,7 @@ Rectangle {
         id: zzzMicSlider
         ZzzQuickSlider {
             id: micSlider
+            label: Translation.tr("Microphone")
             materialSymbol: "mic"
             modelValue: Audio.micVolume
             onMoved: () => Audio.setSourceVolume(micSlider.value)

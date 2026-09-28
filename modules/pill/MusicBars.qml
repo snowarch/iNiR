@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import qs.services.deferred
 import qs.modules.common
+import qs.modules.common.widgets
 
 /**
  * Rest-pill spectrum: one rounded ember bar per band, packed into the clock-glyph
@@ -36,21 +36,12 @@ Row {
 
     height: span * s
     spacing: 1.2 * s
+    visible: cavaProcess.held
 
-    readonly property bool _wanted: running && !Appearance.gameModeMinimal
-    property bool _held: false
-
-    function _reconcile(): void {
-        if (_wanted === _held)
-            return
-        if (_wanted) CavaService.subscribe()
-        else CavaService.unsubscribe()
-        _held = _wanted
+    CavaProcess {
+        id: cavaProcess
+        active: root.running
     }
-
-    on_WantedChanged: root._reconcile()
-    Component.onCompleted: root._reconcile()
-    Component.onDestruction: if (root._held) CavaService.unsubscribe()
 
     /**
      * Raw band peaks for the five drawn bars. Peak, not mean: ten source bands
@@ -59,7 +50,7 @@ Row {
      * CavaService pushes a new frame.
      */
     readonly property var raw: {
-        const pts = CavaService.points ?? [];
+        const pts = cavaProcess.points ?? [];
         if (pts.length === 0)
             return [0, 0, 0, 0, 0];
 

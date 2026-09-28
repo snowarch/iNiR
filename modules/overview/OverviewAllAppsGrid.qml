@@ -19,6 +19,7 @@ Item {
     property bool applicationDragActive: false
     readonly property string mode: Config.options?.overview?.allAppsGridMode ?? "minimal"
     readonly property bool zzzEverywhere: Appearance.zzzEverywhere
+    readonly property bool editorial: Appearance.editorialEverywhere
 
     signal appLaunched()
 
@@ -36,12 +37,14 @@ Item {
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
         : Appearance.colors.colLayer1
-    readonly property color surfaceHoverColor: root.zzzEverywhere ? Appearance.zzz.paperAlt
+    readonly property color surfaceHoverColor: root.editorial ? Appearance.editorial.field
+        : root.zzzEverywhere ? Appearance.zzz.paperAlt
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
         : Appearance.colors.colLayer1Hover
-    readonly property color surfaceActiveColor: root.zzzEverywhere ? Appearance.zzz.signal
+    readonly property color surfaceActiveColor: root.editorial ? Appearance.colors.colPrimaryContainerActive
+        : root.zzzEverywhere ? Appearance.zzz.signal
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
@@ -215,7 +218,8 @@ Item {
                                     family: Appearance.font.family.title
                                     pixelSize: Appearance.font.pixelSize.larger
                                     variableAxes: Appearance.font.variableAxes.title
-                                    weight: Font.DemiBold
+                                    letterSpacing: root.editorial ? Appearance.editorial.titleTracking : 0
+                                    weight: root.editorial ? Appearance.editorial.titleWeight : Font.DemiBold
                                 }
                                 color: root.headerAccentColor
                             }
@@ -268,7 +272,8 @@ Item {
                                     family: Appearance.font.family.title
                                     pixelSize: Appearance.font.pixelSize.large
                                     variableAxes: Appearance.font.variableAxes.title
-                                    weight: Font.DemiBold
+                                    letterSpacing: root.editorial ? Appearance.editorial.titleTracking : 0
+                                    weight: root.editorial ? Appearance.editorial.titleWeight : Font.DemiBold
                                 }
                                 color: root.headerAccentColor
                             }
@@ -277,6 +282,7 @@ Item {
                                 Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignVCenter
                                 implicitHeight: 1
+                                visible: !root.editorial
                                 color: root.surfaceBorderColor
                                 opacity: 0.5
                             }
@@ -318,7 +324,7 @@ Item {
                             : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                             : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
                             : Appearance.colors.colLayer2
-                        border.width: 1
+                        border.width: root.editorial ? 0 : 1
                         border.color: root.surfaceBorderColor
 
                         Behavior on color {
@@ -354,8 +360,10 @@ Item {
                                 StyledText {
                                     Layout.fillWidth: true
                                     text: catCard.modelData.name
+                                    font.family: root.editorial ? Appearance.font.family.title : Appearance.font.family.main
+                                    font.letterSpacing: root.editorial ? Appearance.editorial.titleTracking : 0
                                     font.pixelSize: Appearance.font.pixelSize.normal
-                                    font.weight: Font.DemiBold
+                                    font.weight: root.editorial ? Appearance.editorial.titleWeight : Font.DemiBold
                                     color: root.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
                                     Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                 }
@@ -413,12 +421,13 @@ Item {
         readonly property string desktopEntryId: String(appBtn.entry?.id ?? "")
             .replace(/\.desktop$/i, "")
         property bool suppressClick: false
+        property bool nativeApplicationDragActive: false
         signal activated()
         implicitWidth: 110
         implicitHeight: 98
         dragTarget: appBtn.desktopEntryId.length > 0 ? appDragProxy : null
         pointerDragThreshold: 10
-        buttonRadius: root.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.rounding.normal
+        buttonRadius: root.editorial ? Appearance.editorial.radius : root.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.rounding.normal
         buttonRadiusPressed: root.zzzEverywhere ? Appearance.zzz.cornerRadius : Appearance.rounding.small
         colBackgroundHover: root.surfaceHoverColor
         colBackgroundToggled: root.surfaceActiveColor
@@ -429,15 +438,19 @@ Item {
                 appDragReset.restart()
         }
         cancelAction: () => {
-            appBtn.suppressClick = false
-            appDragReset.stop()
+            if (!appBtn.nativeApplicationDragActive) {
+                appBtn.suppressClick = false
+                appDragReset.stop()
+            }
         }
         onPointerDragActiveChanged: {
-            root.applicationDragActive = appBtn.pointerDragActive
-            if (appBtn.pointerDragActive)
+            if (appBtn.pointerDragActive && appBtn.desktopEntryId.length > 0) {
+                appBtn.nativeApplicationDragActive = true
+                root.applicationDragActive = true
                 appBtn.suppressClick = true
-            else if (appBtn.suppressClick)
+            } else if (!appBtn.nativeApplicationDragActive && appBtn.suppressClick) {
                 appDragReset.restart()
+            }
         }
         onClicked: {
             if (appBtn.suppressClick) {
@@ -486,7 +499,7 @@ Item {
                 elide: Text.ElideRight
                 maximumLineCount: 2
                 wrapMode: Text.Wrap
-                color: root.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
+                color: root.editorial && (appBtn.hovered || appBtn.down) ? Appearance.editorial.fieldInk : root.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
 
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
@@ -517,10 +530,11 @@ Item {
                 String(appBtn.entry?.icon ?? ""), "application-x-executable")
             Drag.imageSourceSize: Qt.size(52, 52)
             Drag.hotSpot: Qt.point(26, 26)
-            Drag.active: appBtn.pointerDragActive && appBtn.desktopEntryId.length > 0
+            Drag.active: appBtn.nativeApplicationDragActive && appBtn.desktopEntryId.length > 0
             Drag.onDragFinished: dropAction => {
                 appDragProxy.x = 0
                 appDragProxy.y = 0
+                appBtn.nativeApplicationDragActive = false
                 root.applicationDragActive = false
                 if (dropAction === Qt.CopyAction)
                     GlobalStates.closeOverview()

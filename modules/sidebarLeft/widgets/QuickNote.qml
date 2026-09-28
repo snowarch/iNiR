@@ -64,9 +64,9 @@ Item {
                     buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                     colBackground: "transparent"
                     colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colLayer2Hover
                     colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colLayer2Active
                     opacity: Notepad.text.trim() !== "" ? 1 : 0
                     visible: opacity > 0
                     onClicked: Notepad.setTextValue("")
@@ -95,7 +95,7 @@ Item {
                 radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
                 color: Appearance.inirEverywhere 
                     ? (root.editing ? Appearance.inir.colLayer2Hover : Appearance.inir.colLayer2)
-                    : (root.editing ? Appearance.colors.colLayer2Hover : Appearance.colors.colLayer2)
+                    : (root.editing ? Appearance.colLayer2Hover : Appearance.colors.colLayer2)
                 border.width: Appearance.inirEverywhere ? 1 : (root.editing ? 2 : 0)
                 border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colPrimary
 
@@ -177,9 +177,9 @@ Item {
                     buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
                     colBackground: "transparent"
                     colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colLayer2Hover
                     colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colLayer2Active
                     onClicked: {
                         root.draft = Notepad.text
                         root.editing = false

@@ -17,6 +17,7 @@ ContentPage {
         summary: Translation.tr("Edge behavior · cards")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
+        searchAliases: ({ "edge behavior": "behavior" })
         options: [
             { displayName: Translation.tr("Behavior"), icon: "swipe", value: "behavior" },
             { displayName: Translation.tr("Cards"), icon: "preview", value: "cards" }
@@ -37,9 +38,11 @@ ContentPage {
         Config.setNestedValue("enabledPanels", panels)
     }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "behavior"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "behavior"
-        visible: root.activeSection === "behavior"
         expanded: true
         icon: "view_sidebar"
         title: Translation.tr("Edge behavior")
@@ -219,10 +222,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "cards"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "cards"
-        visible: root.activeSection === "cards"
         expanded: true
         icon: "preview"
         title: Translation.tr("Workspace cards")
@@ -265,6 +272,8 @@ ContentPage {
                 checked: Config.options?.workspaceStrip?.perMonitor ?? true
                 onCheckedChanged: Config.setNestedValue("workspaceStrip.perMonitor", checked)
             }
+        }
+    }
         }
     }
 }

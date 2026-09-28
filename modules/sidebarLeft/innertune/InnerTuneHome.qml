@@ -58,22 +58,27 @@ StyledFlickable {
                     Layout.alignment: Qt.AlignHCenter
                     text: InnerTube.available ? "refresh" : "extension_off"
                     iconSize: 40
-                    color: Appearance.colors.colOnSurfaceVariant
+                    color: Appearance.colSecondaryActionIcon
                 }
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     horizontalAlignment: Text.AlignHCenter
-                    text: InnerTube.available ? Translation.tr("Tap to load home") : Translation.tr("Install python-ytmusicapi")
-                    color: Appearance.colors.colOnSurfaceVariant
+                    text: InnerTube.available
+                        ? Translation.tr("Tap to load home")
+                        : Translation.tr("YT Music runtime unavailable. Run inir doctor, then tap to retry.")
+                    color: Appearance.colMetadataText
                 }
             }
             // Tap-to-retry covers the placeholder (kept out of the layout to avoid anchor conflicts).
             MouseArea {
                 anchors.fill: parent
                 visible: homePlaceholder.visible
-                enabled: InnerTube.available
+                enabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: InnerTube.loadHome()
+                onClicked: {
+                    if (InnerTube.available) InnerTube.loadHome()
+                    else InnerTube.retryAvailability()
+                }
             }
         }
 

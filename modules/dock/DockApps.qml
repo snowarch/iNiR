@@ -25,7 +25,6 @@ Item {
     property real buttonPadding: 5
     property bool vertical: false
     property string dockPosition: "bottom"
-    property var parentWindow: null
     readonly property string surfaceDialect: Appearance.surfaceDialectFor(
         Config.options?.dock?.style === "island" ? "island" : "")
     readonly property bool zzzStyle: surfaceDialect === "zzz"
@@ -47,14 +46,18 @@ Item {
 
     property Item lastHoveredButton
     property bool buttonHovered: false
-    property bool contextMenuOpen: false
+    property bool contextMenuPending: false
+    property Item contextMenuSourceButton: null
+    property var pendingContextMenuModel: []
+    property real contextMenuAnchorX: 0
+    property real contextMenuAnchorY: 0
+    property real contextMenuAnchorWidth: 1
+    property real contextMenuAnchorHeight: 1
+    readonly property bool contextMenuOpen: contextMenuPending || dockContextMenu.active
     property bool requestDockShow: dockPreviewPopup.visible || contextMenuOpen || dragActive
 
     // Track which button has its preview visible (for macOS hover persistence)
     readonly property Item previewAnchorItem: dockPreviewPopup.visible ? dockPreviewPopup.anchorItem : null
-
-    // Signal to close any open context menu before opening a new one
-    signal closeAllContextMenus()
 
     // Flag to suppress the automatic click() that RippleButton fires after release.
     // Set true when a drag ends so the subsequent onClicked is ignored.
@@ -63,8 +66,59 @@ Item {
     // Function to show the new preview popup (Waffle-style)
     function showPreviewPopup(appEntry: var, button: Item): void {
         // Respect hoverPreview setting
-        if (Config.options?.dock?.hoverPreview === false) return
+        if (Config.options?.dock?.hoverPreview === false || contextMenuOpen || dragActive)
+            return
         dockPreviewPopup.show(appEntry, button)
+    }
+
+    function requestContextMenu(button: Item, model: var): void {
+        if (!button || dragActive)
+            return
+
+        const anchorPoint = button.mapToItem(root, 0, 0)
+        contextMenuAnchorX = anchorPoint.x
+        contextMenuAnchorY = anchorPoint.y
+        contextMenuAnchorWidth = Math.max(1, button.width)
+        contextMenuAnchorHeight = Math.max(1, button.height)
+        contextMenuSourceButton = button
+        pendingContextMenuModel = model ?? []
+        contextMenuPending = true
+
+        // A hover preview is a separate xdg-popup. Unmap it before creating the
+        // menu so Wayland never reparents the menu to the old popup grabber.
+        dockPreviewPopup.close()
+        if (dockContextMenu.active)
+            dockContextMenu.active = false
+
+        Qt.callLater(() => root._openPendingContextMenu())
+    }
+
+    function _openPendingContextMenu(): void {
+        if (!contextMenuPending || dragActive || !contextMenuSourceButton) {
+            contextMenuPending = false
+            pendingContextMenuModel = []
+            contextMenuSourceButton = null
+            return
+        }
+        dockContextMenu.model = pendingContextMenuModel
+        dockContextMenu.requestOpen()
+        contextMenuPending = false
+        Qt.callLater(() => {
+            if (dockContextMenu.active)
+                dockContextMenu.updateAnchor()
+        })
+    }
+
+    function closeContextMenu(immediate: bool): void {
+        contextMenuPending = false
+        pendingContextMenuModel = []
+        contextMenuSourceButton = null
+        if (!dockContextMenu.active)
+            return
+        if (immediate)
+            dockContextMenu.active = false
+        else
+            dockContextMenu.close()
     }
 
     Layout.fillHeight: !vertical
@@ -125,7 +179,7 @@ Item {
 
         // Close any previews or context menus
         dockPreviewPopup.close()
-        closeAllContextMenus()
+        closeContextMenu(true)
 
         dragIndex = index
         dragAppId = appId
@@ -322,13 +376,15 @@ Item {
 
     // Cache compiled regexes - only recompile when config changes
     property var _cachedIgnoredRegexes: []
-    property var _lastIgnoredRegexStrings: []
+    // Null forces the system ignore rules to be compiled on the first rebuild
+    // even when the user has the default empty ignoredAppRegexes list.
+    property var _lastIgnoredRegexStrings: null
 
     function _getIgnoredRegexes(): list<var> {
         const ignoredRegexStrings = Config.options?.dock?.ignoredAppRegexes ?? [];
         // Check if we need to recompile
         if (JSON.stringify(ignoredRegexStrings) !== JSON.stringify(_lastIgnoredRegexStrings)) {
-            const systemIgnored = ["^$", "^portal$", "^x-run-dialog$", "^kdialog$", "^org.freedesktop.impl.portal.*"];
+            const systemIgnored = ["^$", "^portal$", "^x-run-dialog$", "^kdialog$", "^xembedsniproxy$", "^org.freedesktop.impl.portal.*"];
             const allIgnored = ignoredRegexStrings.concat(systemIgnored);
             _cachedIgnoredRegexes = allIgnored.map(pattern => new RegExp(pattern, "i"));
             _lastIgnoredRegexStrings = ignoredRegexStrings.slice();
@@ -916,6 +972,26 @@ Item {
                     })
                     dockDelegate._longPressTriggered = false
                 }
+                _hasPressPos = false
+            }
+
+            // A layer-surface/input-region update can cancel the MouseArea grab
+            // without the pointer ever leaving this icon. Treat that as the
+            // click the user made, but never recover a real drag or a pointer
+            // that already left the button.
+            cancelAction: () => {
+                _dockPrimeTimer.stop()
+                _dragPrimed = false
+                const recoverClick = _hasPressPos
+                    && !_longPressTriggered
+                    && !root.dragActive
+                    && dockDelegate.buttonHovered
+                if (_longPressTriggered && root.dragActive && root.dragIndex === dockDelegate.index)
+                    root.endDrag()
+                _longPressTriggered = false
+                _hasPressPos = false
+                if (recoverClick)
+                    dockDelegate.click()
             }
 
             Timer {
@@ -944,7 +1020,26 @@ Item {
         id: dockPreviewPopup
         dockHovered: root.buttonHovered
         dockPosition: root.dockPosition
-        anchor.window: root.parentWindow
+    }
+
+    Item {
+        id: contextMenuAnchor
+        x: root.contextMenuAnchorX
+        y: root.contextMenuAnchorY
+        width: root.contextMenuAnchorWidth
+        height: root.contextMenuAnchorHeight
+    }
+
+    DockContextMenu {
+        id: dockContextMenu
+        anchorItem: contextMenuAnchor
+        anchorHovered: root.contextMenuSourceButton?.buttonHovered ?? false
+        onActiveChanged: {
+            if (!active && !root.contextMenuPending) {
+                root.pendingContextMenuModel = []
+                root.contextMenuSourceButton = null
+            }
+        }
     }
 
 }

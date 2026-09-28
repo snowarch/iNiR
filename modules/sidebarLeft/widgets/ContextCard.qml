@@ -161,8 +161,9 @@ Item {
                         return formatTime(TimerService.countdownSecondsLeft)
                     }
                     font.pixelSize: Appearance.font.pixelSize.huge * 1.4
-                    font.weight: Font.Light
-                    font.family: Appearance.font.family.monospace
+                    font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Light
+                    font.family: Appearance.editorialEverywhere
+                        ? Appearance.font.family.numbers : Appearance.font.family.monospace
                     color: timerView.isPaused 
                         ? (Appearance.inirEverywhere ? Appearance.inir.colTextMuted : Appearance.colors.colSubtext)
                         : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1)
@@ -209,8 +210,8 @@ Item {
 
                     StyledText {
                         text: Weather.data.temp
-                        font.pixelSize: Appearance.font.pixelSize.huge * 1.3
-                        font.weight: Font.Medium
+                        font.pixelSize: Appearance.font.pixelSize.huge * (Appearance.editorialEverywhere ? 1.5 : 1.3)
+                        font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Medium
                         font.family: Appearance.font.family.numbers
                         color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                     }
@@ -223,6 +224,8 @@ Item {
                             Layout.fillWidth: true
                             text: Weather.data.description || Translation.tr("Weather")
                             font.pixelSize: Appearance.font.pixelSize.small
+                            font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Normal
+                            font.letterSpacing: Appearance.editorialEverywhere ? 0.7 : 0
                             color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                             elide: Text.ElideRight
                         }
@@ -237,6 +240,7 @@ Item {
                                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic }
                             }
                             font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.letterSpacing: Appearance.editorialEverywhere ? 0.5 : 0
                             color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
                             elide: Text.ElideRight
                         }
@@ -373,7 +377,7 @@ Item {
                                 : idleView.tab === 1 ? formatTime(TimerService.countdownDuration)
                                 : "00:00.00"
                             font.pixelSize: Appearance.font.pixelSize.huge * 1.5
-                            font.weight: Font.Light
+                            font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Light
                             font.family: Appearance.font.family.monospace
                             color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                         }
@@ -448,10 +452,10 @@ Item {
         colBackground: "transparent"
         colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
-            : Appearance.colors.colLayer2Hover
+            : Appearance.colLayer2Hover
         colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
-            : Appearance.colors.colLayer2Active
+            : Appearance.colLayer2Active
 
         contentItem: MaterialSymbol {
             anchors.centerIn: parent

@@ -1,6 +1,26 @@
 module qs.modules.background.widgets
 AbstractBackgroundWidget 1.0 AbstractBackgroundWidget.qml
+EditorialWidget 1.0 EditorialWidget.qml
 CustomImageWidget 1.0 CustomImageWidget.qml
 ManifestPopover 1.0 ManifestPopover.qml
 WidgetManagerPanel 1.0 WidgetManagerPanel.qml
+DesktopEditToolbar 1.0 DesktopEditToolbar.qml
+WidgetChoiceButton 1.0 WidgetChoiceButton.qml
+WidgetEditAction 1.0 WidgetEditAction.qml
+WidgetPlacementControls 1.0 WidgetPlacementControls.qml
+WidgetLibraryCard 1.0 WidgetLibraryCard.qml
 WidgetSurface 1.0 WidgetSurface.qml
+OrganicEdgeWidget 1.0 OrganicEdgeWidget.qml
+WidgetQuickControlsLayout 1.0 WidgetQuickControlsLayout.qml
+WidgetQuickChoice 1.0 WidgetQuickChoice.qml
+WidgetQuickChoices 1.0 WidgetQuickChoices.qml
+WidgetQuickToggle 1.0 WidgetQuickToggle.qml
+WidgetQuickSection 1.0 WidgetQuickSection.qml
+WidgetQuickSlider 1.0 WidgetQuickSlider.qml
+WidgetIdentityMark 1.0 WidgetIdentityMark.qml
+singleton DesktopWidgetShapes 1.0 DesktopWidgetShapes.qml
+singleton DesktopWidgetIdentity 1.0 DesktopWidgetIdentity.qml
+singleton DesktopWidgetDesign 1.0 DesktopWidgetDesign.qml
+WidgetShapePicker 1.0 WidgetShapePicker.qml
+
+WidgetInputMask 1.0 WidgetInputMask.qml

@@ -575,8 +575,10 @@ Canvas {
         ctx.restore()
     }
 
+    // Hidden (an organic layer, a closed card) it still hears the ceiling fall on every cava frame; painting
+    // then kept the canvas thread and the GUI thread busy for nothing. Showing it again repaints it.
     function _queuePaint(): void {
-        if (root.available)
+        if (root.available && root.visible)
             root.requestPaint()
     }
 

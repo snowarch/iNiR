@@ -1,11 +1,13 @@
 import QtQuick
 import qs.modules.common
+import qs.modules.iris.style
 import qs.modules.common.functions
 
 Rectangle {
     id: root
     anchors.fill: parent
-    readonly property color surfaceColor: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
+    readonly property color surfaceColor: OverlayLook.iris ? IrisStyle.bodySurface
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? Appearance.colors.colLayer2Base
         : Appearance.colors.colSurfaceContainer

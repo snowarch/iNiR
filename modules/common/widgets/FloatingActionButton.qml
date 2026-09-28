@@ -22,7 +22,7 @@ RippleButton {
         NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
     }
 
-    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+    buttonRadius: Appearance.editorialEverywhere ? Appearance.editorial.radius : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal : (baseSize / 14 * 4)
     colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker
                  : Appearance.angelEverywhere ? Appearance.angel.colGlassCard

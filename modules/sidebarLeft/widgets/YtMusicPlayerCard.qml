@@ -57,20 +57,22 @@ Item {
         Appearance.colors.colPrimaryContainer, 0.7
     )
     property QtObject blendedColors: AdaptedMaterialScheme { color: root.artColor }
+    readonly property QtObject effectiveColors: Appearance.editorialEverywhere && Appearance.colors
+        ? Appearance.colors : root.blendedColors
 
     // Style tokens
     readonly property color colText: Appearance.inirEverywhere ? Appearance.inir.colText
-        : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+        : (effectiveColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
     readonly property color colTextSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
-        : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
+        : (effectiveColors?.colSubtext ?? Appearance.colors.colSubtext)
     readonly property color colPrimary: Appearance.inirEverywhere ? Appearance.inir.colPrimary
-        : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+        : (effectiveColors?.colPrimary ?? Appearance.colors.colPrimary)
     readonly property color colBg: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-        : Appearance.auroraEverywhere ? ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7)
-        : (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
+        : Appearance.auroraEverywhere ? ColorUtils.transparentize(effectiveColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7)
+        : (effectiveColors?.colLayer0 ?? Appearance.colors.colLayer0)
     readonly property color colLayer2: Appearance.inirEverywhere ? Appearance.inir.colLayer2
-        : (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1)
+        : (effectiveColors?.colLayer1 ?? Appearance.colors.colLayer1)
     readonly property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
     readonly property real radiusSmall: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
@@ -82,7 +84,7 @@ Item {
         id: card
         anchors.centerIn: parent
         width: parent.width - Appearance.sizes.elevationMargin
-        implicitHeight: 140
+        implicitHeight: Appearance.editorialEverywhere ? Math.max(140, 142 * Appearance.fontSizeScale) : 140
         radius: root.radius
         color: root.colBg
         border.width: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
@@ -102,7 +104,7 @@ Item {
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             cache: false
-            opacity: root.downloaded ? (Appearance.inirEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.25 : 0.5)) : 0
+            opacity: !Appearance.editorialEverywhere && root.downloaded ? (Appearance.inirEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.25 : 0.5)) : 0
             visible: opacity > 0
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled
@@ -115,7 +117,7 @@ Item {
         // Gradient overlay for Material
         Rectangle {
             anchors.fill: parent
-            visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere
+            visible: !Appearance.editorialEverywhere && !Appearance.inirEverywhere && !Appearance.auroraEverywhere
             gradient: Gradient {
                 orientation: Gradient.Horizontal
                 GradientStop { position: 0.0; color: "transparent" }
@@ -153,7 +155,7 @@ Item {
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: 10
+            anchors.margins: Appearance.editorialEverywhere ? Math.round(12 * Appearance.editorial.spacing) : 10
             spacing: 12
 
             // Cover art
@@ -261,8 +263,10 @@ Item {
                 StyledText {
                     Layout.fillWidth: true
                     text: YtMusic.currentTitle || "—"
-                    font.pixelSize: Appearance.font.pixelSize.normal
-                    font.weight: Font.Medium
+                    font.family: Appearance.editorialEverywhere ? Appearance.font.family.title : Appearance.font.family.main
+                    font.pixelSize: Appearance.editorialEverywhere ? Appearance.font.pixelSize.large * Appearance.editorial.titleScale : Appearance.font.pixelSize.normal
+                    font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Medium
+                    font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
                     color: root.colText
                     elide: Text.ElideRight
                     animateChange: true
@@ -286,8 +290,8 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 14
                     configuration: StyledSlider.Configuration.Wavy
-                    wavy: root.isPlaying
-                    animateWave: root.isPlaying
+                    wavy: !Appearance.editorialEverywhere && root.isPlaying
+                    animateWave: !Appearance.editorialEverywhere && root.isPlaying
                     highlightColor: root.colPrimary
                     trackColor: root.colLayer2
                     handleColor: root.colPrimary
@@ -325,7 +329,7 @@ Item {
                     // Previous
                     RippleButton {
                         implicitWidth: 28; implicitHeight: 28
-                        buttonRadius: 14
+                        buttonRadius: Appearance.editorialEverywhere ? root.radiusSmall : 14
                         colBackground: "transparent"
                         colBackgroundHover: root.colLayer2
                         enabled: YtMusic.canGoPrevious
@@ -337,7 +341,7 @@ Item {
                     // Play/Pause
                     RippleButton {
                         implicitWidth: 36; implicitHeight: 36
-                        buttonRadius: root.isPlaying ? root.radiusSmall : Appearance.rounding.full
+                        buttonRadius: Appearance.editorialEverywhere || root.isPlaying ? root.radiusSmall : Appearance.rounding.full
                         colBackground: "transparent"
                         colBackgroundHover: root.colLayer2
                         onClicked: YtMusic.togglePlaying()
@@ -353,7 +357,7 @@ Item {
                     // Next
                     RippleButton {
                         implicitWidth: 28; implicitHeight: 28
-                        buttonRadius: 14
+                        buttonRadius: Appearance.editorialEverywhere ? root.radiusSmall : 14
                         colBackground: "transparent"
                         colBackgroundHover: root.colLayer2
                         enabled: YtMusic.canGoNext

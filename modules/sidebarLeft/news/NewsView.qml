@@ -95,7 +95,7 @@ Item {
                         colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                             : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                            : Appearance.colors.colLayer1Hover
+                            : Appearance.colLayer1Hover
                         colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
                             : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
@@ -149,7 +149,7 @@ Item {
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     text: Translation.tr("Loading...")
-                    color: Appearance.colors.colSubtext
+                    color: Appearance.colMetadataText
                 }
             }
 
@@ -157,7 +157,7 @@ Item {
             MaterialPlaceholderMessage {
                 anchors.centerIn: parent
                 maximumWidth: 340
-                shown: NewsService.lastError.length > 0 && NewsService.articles.length === 0
+                shown: Network.online && NewsService.lastError.length > 0 && NewsService.articles.length === 0
                 icon: "error"
                 actionIcon: "refresh"
                 text: Translation.tr("Error")
@@ -169,11 +169,20 @@ Item {
                 }
             }
 
+            MaterialPlaceholderMessage {
+                anchors.centerIn: parent
+                maximumWidth: 340
+                shown: !Network.online && NewsService.articles.length === 0
+                icon: "cloud_off"
+                text: Network.offlineReason
+                explanation: Translation.tr("News loads when you're back online")
+            }
+
             // Empty
             MaterialPlaceholderMessage {
                 anchors.centerIn: parent
                 maximumWidth: 340
-                shown: !NewsService.loading && NewsService.lastError.length === 0 && NewsService.articles.length === 0
+                shown: Network.online && !NewsService.loading && NewsService.lastError.length === 0 && NewsService.articles.length === 0
                 icon: "newspaper"
                 text: Translation.tr("No news")
                 explanation: Translation.tr("Try a different board")
@@ -207,7 +216,7 @@ Item {
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                        : Appearance.colors.colLayer1Hover
+                        : Appearance.colLayer1Hover
 
                     onClicked: NewsService.openArticle(modelData)
 
@@ -235,7 +244,7 @@ Item {
                             elide: Text.ElideRight
                             wrapMode: Text.NoWrap
                             font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colSubtext
+                            color: Appearance.colMetadataText
                         }
                     }
                 }
@@ -262,26 +271,34 @@ Item {
             Layout.fillWidth: true
             spacing: 8
 
+            MaterialSymbol {
+                visible: !Network.online
+                text: "cloud_off"
+                iconSize: Appearance.font.pixelSize.normal
+                color: Appearance.colMetadataText
+            }
+
             StyledText {
                 Layout.fillWidth: true
                 elide: Text.ElideRight
                 wrapMode: Text.NoWrap
-                text: root.configMode === "local" && NewsService.localCity.length > 0
+                text: !Network.online ? Network.offlineReason
+                    : root.configMode === "local" && NewsService.localCity.length > 0
                     ? NewsService.localCity
                     : root.boards[root.currentBoardIndex].label
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
+                color: Appearance.colMetadataText
             }
 
             RippleButton {
                 implicitWidth: 32
                 implicitHeight: 32
-                buttonRadius: Appearance.rounding.full
-                enabled: !NewsService.loading
+                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
+                enabled: !NewsService.loading && Network.online
 
                 colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                    : Appearance.colors.colLayer2Hover
+                    : Appearance.colLayer2Hover
 
                 onClicked: root.refreshCurrent()
 
@@ -290,7 +307,7 @@ Item {
                     anchors.centerIn: parent
                     text: "refresh"
                     iconSize: 18
-                    color: Appearance.colors.colOnLayer1
+                    color: Appearance.colActionIcon
 
                     RotationAnimation on rotation {
                         running: NewsService.loading && GlobalStates.sidebarLeftOpen

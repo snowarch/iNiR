@@ -58,6 +58,10 @@ fi
 #    repository verification cannot drift apart.
 echo "[i18n] runtime locale structure"
 if command -v python3 >/dev/null 2>&1 && [ -f translations/tools/l10n.py ]; then
+  python3 translations/tools/l10n.py audit-guides \
+    || note "supported runtime locales and locale review guides differ"
+  python3 translations/tools/l10n.py audit-source \
+    || note "runtime source strings are missing from translations/en_US.json"
   python3 translations/tools/l10n.py audit-all \
     || note "runtime locale validation failed"
 else

@@ -25,48 +25,28 @@ Singleton {
     }
 
     // Public API
-    // Keep fullscreen activation reactive even if the debounced check or the
-    // manual-state FileView has not completed yet. Visible fullscreen state is
-    // already maintained by NiriService and is the source used by per-output
-    // surface gates.
+    // Visible fullscreen state is already maintained reactively by NiriService.
+    // Keep one automatic source of truth here; the old debounced _autoActive
+    // cache could remain true after Niri had already reported fullscreen exit.
     readonly property bool _reactiveAutoActive: autoDetect && hasVisibleFullscreenWindow
-    property bool active: _manualActive || _autoActive || _reactiveAutoActive
+    readonly property bool active: _manualActive || _reactiveAutoActive
     readonly property bool autoDetect: Config.options?.gameMode?.autoDetect ?? true
     property bool manuallyActivated: _manualActive
-    readonly property bool autoActivated: !_manualActive
-        && (_autoActive || _reactiveAutoActive)
+    readonly property bool autoActivated: !_manualActive && _reactiveAutoActive
 
     // Surface mapping caused native crash loops; GameMode only suppresses work.
-    
-    // When autoDetect is disabled, immediately clear auto state
-    onAutoDetectChanged: {
-        if (!autoDetect) {
-            _autoActive = false
-            root._log("[GameMode] autoDetect disabled, clearing auto state")
-        } else {
-            // Re-check when enabled
-            checkFullscreen()
-        }
-    }
     
     // True if ANY window in ANY workspace is fullscreen (for toast suppression)
     readonly property bool hasAnyFullscreenWindow: checkAnyFullscreenWindow()
 
-    // True only when a fullscreen window sits on an ACTIVE workspace, i.e. is
-    // actually visible right now. A fullscreen-sized window parked on a
-    // background workspace (an RDP session, a paused game) keeps
-    // hasAnyFullscreenWindow true, but must not mute desktop companions that
-    // only ever appear over the workspace the user is looking at.
+    // True only when a fullscreen window actually owns an active viewport.
+    // `window.is_focused` is global and therefore insufficient on multi-output
+    // sessions: a fullscreen tile can remain the active tile on an unfocused
+    // monitor. NiriService tracks `active_window_id` per workspace, which is the
+    // correct per-output owner signal.
     readonly property bool hasVisibleFullscreenWindow: {
         if (!CompositorService.isNiri) return hasAnyFullscreenWindow
-        const windows = NiriService.windows
-        if (!Array.isArray(windows)) return false
-        for (let i = 0; i < windows.length; i++) {
-            if (!isWindowFullscreen(windows[i])) continue
-            const ws = NiriService.workspaces[windows[i].workspace_id]
-            if (ws?.is_active) return true
-        }
-        return false
+        return hasFullscreenOnOutput("")
     }
     
     // Suppress niri reload toast briefly after GameMode changes
@@ -74,16 +54,15 @@ Singleton {
 
     // Internal state
     property bool _manualActive: false
-    property bool _autoActive: false
     property bool _initialized: false
-    property bool _focusedIsFullscreen: false
 
     // Config-driven behavior (reactive bindings - re-evaluated when Config changes)
     readonly property bool disableAnimations: Config.options?.gameMode?.disableAnimations ?? true
     readonly property bool disableEffects: Config.options?.gameMode?.disableEffects ?? true
+    readonly property bool disableVisualizers: Config.options?.gameMode?.disableVisualizers ?? true
     readonly property bool disableReloadToasts: Config.options?.gameMode?.disableReloadToasts ?? true
     readonly property bool minimalMode: Config.options?.gameMode?.minimalMode ?? true
-    readonly property int checkInterval: Config.options?.gameMode?.checkInterval ?? 5000
+    readonly property bool visualizersSuppressed: active && disableVisualizers
     readonly property bool controlNiriAnimations: Config.options?.gameMode?.disableNiriAnimations ?? true
     
     // React to controlNiriAnimations changes while active
@@ -142,16 +121,14 @@ Singleton {
         stateReader.reload()
     }
 
-    // Check if a window is fullscreen.
-    // Niri 25.11+ doesn't expose is_fullscreen on windows.
-    // We detect fullscreen by comparing window_size to the output's logical
-    // resolution (via workspace → output mapping). A small tolerance (2px)
-    // accounts for sub-pixel rounding differences.
+    // Check if a window is fullscreen. Current Niri snapshots do not expose a
+    // dependable is_fullscreen field, so derive it from Niri's own window layout.
+    // Do not use foreign-toplevel fullscreen here: those handles can outlive a
+    // Niri fullscreen transition and report stale state after the window exited.
     function isWindowFullscreen(window) {
         if (!window) return false
         if (!CompositorService.isNiri) return false
 
-        // If niri ever adds is_fullscreen back, prefer it
         if (window.is_fullscreen === true) return true
 
         // Fallback: compare window size to output logical size
@@ -182,7 +159,7 @@ Singleton {
     // "no fullscreen" forever.
     function hasFullscreenOnOutput(outputName: string): bool {
         if (!CompositorService.isNiri) return false
-        const windows = NiriService.windows
+        const windows = NiriService.liveWindows
         if (!Array.isArray(windows)) return false
 
         for (let i = 0; i < windows.length; i++) {
@@ -190,6 +167,15 @@ Singleton {
             const ws = NiriService.workspaces?.[w.workspace_id]
             if (!(ws?.is_active ?? false)) continue
             if (outputName.length > 0 && ws.output !== outputName) continue
+            // Prefer the workspace-local active tile. Fall back to global focus
+            // only while NiriService has not received an active-window event
+            // for this workspace yet.
+            const activeWindowId = ws.active_window_id
+            if (activeWindowId !== undefined && activeWindowId !== null) {
+                if (activeWindowId !== w.id) continue
+            } else if (!w.is_focused) {
+                continue
+            }
             if (isWindowFullscreen(w)) return true
         }
         return false
@@ -198,62 +184,13 @@ Singleton {
     // Check if ANY window across all workspaces is fullscreen
     function checkAnyFullscreenWindow(): bool {
         if (!CompositorService.isNiri) return false
-        const windows = NiriService.windows
+        const windows = NiriService.liveWindows
         if (!windows || !Array.isArray(windows)) return false
         
         for (let i = 0; i < windows.length; i++) {
             if (isWindowFullscreen(windows[i])) return true
         }
         return false
-    }
-
-    // Debounce timer for fullscreen checks
-    Timer {
-        id: checkDebounce
-        interval: 300
-        onTriggered: root._doCheckFullscreen()
-    }
-
-    // Auto-detection: check focused window (debounced)
-    function checkFullscreen() {
-        checkDebounce.restart()
-    }
-
-    function _doCheckFullscreen() {
-        if (!CompositorService.isNiri) {
-            _autoActive = false
-            _focusedIsFullscreen = false
-            return
-        }
-
-        // Find focused window from the current windows array, not activeWindow.
-        // activeWindow is only refreshed on focus-change events, so it's stale
-        // when a window changes fullscreen state without changing focus
-        // (e.g. pressing F11 on the already-focused window).
-        const windows = NiriService.windows
-        const focusedWindow = (Array.isArray(windows) && windows.find(w => w.is_focused))
-            || NiriService.activeWindow
-
-        // Focus flags can lag behind WindowLayoutsChanged on Niri. The
-        // per-output path is already reactive and is what background surfaces
-        // use, so keep the focused-window fast path but never miss a fullscreen
-        // window that is visible on an active workspace.
-        const isFullscreen = isWindowFullscreen(focusedWindow)
-            || root.hasVisibleFullscreenWindow
-        _focusedIsFullscreen = isFullscreen
-
-        if (!autoDetect) {
-            _autoActive = false
-            return
-        }
-        
-        // Auto-detect: activate when focused window is fullscreen,
-        // deactivate immediately when it's not. Same behavior as manual
-        // mode but triggered by fullscreen detection.
-        if (isFullscreen !== _autoActive) {
-            _autoActive = isFullscreen
-            root._log("[GameMode] Auto-detect:", _autoActive ? "fullscreen detected" : "no fullscreen")
-        }
     }
 
     // State persistence - read
@@ -288,36 +225,6 @@ Singleton {
         onExited: root._log("[GameMode] State saved:", root._manualActive)
     }
 
-    // React to window changes
-    Connections {
-        target: NiriService
-        enabled: CompositorService.isNiri && root._initialized
-
-        function onActiveWindowChanged() {
-            root.checkFullscreen()
-        }
-
-        function onWindowsChanged() {
-            // A window property changed (incl. is_fullscreen). Trigger full
-            // auto-detection — not just hasAnyFullscreenWindow — so we catch
-            // the focused window going fullscreen without a focus change.
-            root.checkFullscreen()
-        }
-    }
-
-    // Periodic check as fallback - uses config interval
-    Timer {
-        id: fallbackTimer
-        interval: root.checkInterval
-        running: root.autoDetect && CompositorService.isNiri && root._initialized
-        repeat: true
-        onTriggered: {
-            if (!checkDebounce.running) {
-                root.checkFullscreen()
-            }
-        }
-    }
-
     // Initial setup
     Component.onCompleted: {
         root._log("[GameMode] Service starting...")
@@ -330,10 +237,8 @@ Singleton {
         interval: 200
         onTriggered: {
             root._loadState()
-            if (CompositorService.isNiri) {
-                root.checkFullscreen()
+            if (CompositorService.isNiri)
                 startupNiriSyncTimer.restart()
-            }
         }
     }
 
@@ -366,7 +271,7 @@ Singleton {
         const fallbackFile = niriConfigPath
         const sedExpr = enabled
             ? "sed -i '/^animations {/,/^}/ s/^\\([ \\t]*\\)off$/\\1\\/\\/off/'"
-            : "sed -i '/^animations {/,/^}/ s/^\\([ \\t]*\\)\\/\\/off$/\\1off/'"
+            : "sed -i '/^animations {/,/^}/ s/^\\([ \\t]*\\)\\/\\/[ \\t]*off$/\\1off/'"
 
         niriAnimProcess.command = [
             "/usr/bin/bash",
@@ -414,7 +319,7 @@ Singleton {
     }
 
     onActiveChanged: {
-        root._log("[GameMode] Active:", active, "(manual:", _manualActive, "auto:", _autoActive, ")")
+        root._log("[GameMode] Active:", active, "(manual:", _manualActive, "auto:", _reactiveAutoActive, ")")
         if (CompositorService.isNiri && controlNiriAnimations) {
             root.suppressNiriToast = true
             niriAnimDebounce.restart()

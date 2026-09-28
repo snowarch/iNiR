@@ -149,7 +149,7 @@ Item {
                                 : (tabMA.containsMouse
                                     ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                                         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
-                                        : Appearance.colors.colLayer1Hover)
+                                        : Appearance.colLayer1Hover)
                                     : "transparent")
                             Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
 
@@ -433,13 +433,13 @@ Item {
                         ? ColorUtils.transparentize(Appearance.colors.colError, 0.7)
                         : (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                          : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
-                         : Appearance.colors.colLayer1Active)
+                         : Appearance.colLayer1Active)
                 if (toolBtnMA.containsMouse)
                     return toolBtn.destructive
                         ? ColorUtils.transparentize(Appearance.colors.colError, 0.85)
                         : (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                          : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
-                         : Appearance.colors.colLayer1Hover)
+                         : Appearance.colLayer1Hover)
                 return "transparent"
             }
             Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }

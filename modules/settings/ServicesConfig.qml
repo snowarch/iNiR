@@ -21,6 +21,13 @@ ContentPage {
         summary: Translation.tr("System · network · search · updates · data")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
+        searchAliases: ({
+            "music recognition": "system",
+            "networking": "network",
+            "resources": "system",
+            "weather": "data",
+            "idle & sleep": "system"
+        })
         options: [
             { displayName: Translation.tr("System"), icon: "memory", value: "system" },
             { displayName: Translation.tr("Network"), icon: "cell_tower", value: "network" },
@@ -30,9 +37,11 @@ ContentPage {
         ]
     }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "system"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "system"
-        visible: root.activeSection === "system"
         expanded: true
         icon: "bedtime"
         title: Translation.tr("Idle & Sleep")
@@ -148,11 +157,15 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "system"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "system"
-        visible: root.activeSection === "system"
-        expanded: true
+        expanded: false
         icon: "music_cast"
         title: Translation.tr("Music Recognition")
 
@@ -187,10 +200,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "network"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "network"
-        visible: root.activeSection === "network"
         expanded: true
         icon: "cell_tower"
         title: Translation.tr("Networking")
@@ -207,11 +224,15 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "network"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "network"
-        visible: root.activeSection === "network"
-        expanded: true
+        expanded: false
         icon: "wifi_tethering"
         title: Translation.tr("Hotspot")
 
@@ -248,11 +269,15 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "system"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "system"
-        visible: root.activeSection === "system"
-        expanded: true
+        expanded: false
         icon: "memory"
         title: Translation.tr("Resources")
 
@@ -273,10 +298,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "search"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "search"
-        visible: root.activeSection === "search"
         expanded: true
         icon: "search"
         title: Translation.tr("Search")
@@ -394,10 +423,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "updates"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "updates"
-        visible: root.activeSection === "updates"
         expanded: true
         icon: "system_update_alt"
         title: Translation.tr("Updates")
@@ -451,11 +484,15 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "updates"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "updates"
-        visible: root.activeSection === "updates"
-        expanded: true
+        expanded: false
         icon: "deployed_code_update"
         title: Translation.tr("iNiR Shell Updates")
 
@@ -552,6 +589,7 @@ ContentPage {
                                     if (ShellUpdates.isUpdating) return "hourglass_top"
                                     if (ShellUpdates.isChecking) return "sync"
                                     if (ShellUpdates.hasUpdate) return "upgrade"
+                                    if (ShellUpdates.waitingForNetwork) return "cloud_off"
                                     if (ShellUpdates.lastError.length > 0) return "error"
                                     if (ShellUpdates.available) return "check_circle"
                                     return "cloud_off"
@@ -579,8 +617,10 @@ ContentPage {
                                         return Translation.tr("Updating…")
                                     }
                                     if (ShellUpdates.isChecking) return Translation.tr("Checking for updates…")
+                                    if (ShellUpdates.repoDiverged) return Translation.tr("Repository history changed")
                                     if (ShellUpdates.hasUpdate) return Translation.tr("Update available")
                                     if (ShellUpdates.managedExternally) return "Managed externally"
+                                    if (ShellUpdates.waitingForNetwork) return Translation.tr("Waiting for internet")
                                     if (ShellUpdates.lastError.length > 0) return Translation.tr("Error")
                                     if (ShellUpdates.available) return Translation.tr("Up to date")
                                     return Translation.tr("Not available")
@@ -598,7 +638,10 @@ ContentPage {
 
                             StyledText {
                                 visible: ShellUpdates.hasUpdate
-                                text: Translation.tr("%1 commit(s) behind on %2").arg(ShellUpdates.commitsBehind).arg(ShellUpdates.currentBranch || "main")
+                                text: ShellUpdates.repoDiverged
+                                    ? Translation.tr("%1 local and %2 remote commit(s) differ on %3. Update can safely recover a clean published checkout.")
+                                        .arg(ShellUpdates.commitsAhead).arg(ShellUpdates.commitsBehind).arg(ShellUpdates.currentBranch || "main")
+                                    : Translation.tr("%1 commit(s) behind on %2").arg(ShellUpdates.commitsBehind).arg(ShellUpdates.currentBranch || "main")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: Appearance.colors.colSubtext
                             }
@@ -856,7 +899,7 @@ ContentPage {
                                 ? (ShellUpdates.updateStepMessage.length > 0
                                     ? Translation.tr(ShellUpdates.updateStepMessage) + "…"
                                     : Translation.tr("Updating…"))
-                                : Translation.tr("Update Now")
+                                : (ShellUpdates.repoDiverged ? Translation.tr("Repair & Update") : Translation.tr("Update Now"))
                             font {
                                 pixelSize: Appearance.font.pixelSize.smaller
                                 weight: Font.DemiBold
@@ -912,10 +955,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "data"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "data"
-        visible: root.activeSection === "data"
         expanded: true
         icon: "cloud"
         title: Translation.tr("Weather")
@@ -1087,11 +1134,15 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "data"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "data"
-        visible: root.activeSection === "data"
-        expanded: true
+        expanded: false
         icon: "calendar_month"
         title: Translation.tr("Calendar Sync")
 
@@ -1248,8 +1299,9 @@ ContentPage {
                             }
 
                             // Toggle enabled
-                            Switch {
+                            StyledSwitch {
                                 checked: sourceItem.modelData?.enabled ?? true
+                                scale: 0.6
                                 onCheckedChanged: {
                                     if (checked !== (sourceItem.modelData?.enabled ?? true)) {
                                         CalendarSync.toggleSource(sourceItem.modelData.id, checked)
@@ -1503,6 +1555,8 @@ ContentPage {
                     }
                 }
             }
+        }
+    }
         }
     }
 

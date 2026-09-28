@@ -56,7 +56,8 @@ Item {
 
         Rectangle { // Header background
             id: header
-            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+            color: Appearance.editorialEverywhere ? (headerMouseArea.containsMouse ? Appearance.colors.colSecondaryContainerHover : Appearance.editorial.secondaryField)
+                : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                 : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
                 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSurfaceContainerHighest
             Layout.fillWidth: true
@@ -88,9 +89,12 @@ Item {
                     Layout.bottomMargin: 7
                     Layout.leftMargin: 3
                     text: "linked_services"
+                    color: Appearance.editorialEverywhere ? Appearance.editorial.secondaryFieldInk : Appearance.colors.colOnLayer1
                 }
                 StyledText {
                     id: thinkBlockLanguage
+                    font.weight: Appearance.editorialEverywhere ? Font.Medium : Font.Normal
+                    color: Appearance.editorialEverywhere ? Appearance.editorial.secondaryFieldInk : Appearance.colors.colOnLayer1
                     Layout.fillWidth: false
                     Layout.alignment: Qt.AlignLeft
                     text: root.completed ? Translation.tr("Thought") : (Translation.tr("Thinking") + ".".repeat(Math.random() * 4))
@@ -103,12 +107,12 @@ Item {
                     implicitHeight: 22
                     colBackground: headerMouseArea.containsMouse 
                         ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover)
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colLayer2Hover)
                         : "transparent"
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colLayer2Hover
                     colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colLayer2Active
 
                     onClicked: { root.collapsed = !root.collapsed }
                     

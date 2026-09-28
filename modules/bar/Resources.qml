@@ -1,3 +1,4 @@
+import qs.modules.common.widgets
 import qs.modules.common
 import qs.services
 import QtQuick
@@ -11,8 +12,7 @@ MouseArea {
     implicitHeight: Appearance.sizes.barHeight
     hoverEnabled: true
 
-    Component.onCompleted: ResourceUsage.keepAlive()
-    Component.onDestruction: ResourceUsage.releaseKeepAlive()
+    property QtObject resourceMonitor: ResourceUsageMonitor { target: root }
 
     RowLayout {
         id: rowLayout

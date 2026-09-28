@@ -42,7 +42,7 @@ Item {
     readonly property var shelfOptions: orbitOptions.shelf ?? {}
     readonly property string layoutMode: ["bar", "islands", "minimal"].includes(shelfOptions.layout)
         ? shelfOptions.layout : "islands"
-    readonly property string densityMode: ["comfortable", "compact"].includes(shelfOptions.density)
+    readonly property string densityMode: ["comfortable", "compact", "huge"].includes(shelfOptions.density)
         ? shelfOptions.density : "comfortable"
     readonly property string labelMode: ["auto", "always", "icons"].includes(shelfOptions.labels)
         ? shelfOptions.labels : "auto"
@@ -73,10 +73,12 @@ Item {
     readonly property bool labelsVisible: layoutMode !== "minimal" && labelMode !== "icons"
         && (labelMode === "always" || !compact)
     readonly property bool trailTitlesPersistent: layoutMode !== "minimal" && labelMode === "always"
-    readonly property bool dense: densityMode === "compact" || layoutMode === "minimal"
-    readonly property int shelfHeight: layoutMode === "minimal" ? 40 : dense ? 44 : 50
-    readonly property int groupHeight: layoutMode === "minimal" ? 34 : dense ? 36 : 40
-    readonly property int toolSize: dense ? 30 : 32
+    readonly property bool huge: densityMode === "huge"
+    readonly property bool dense: !huge && (densityMode === "compact" || layoutMode === "minimal")
+    readonly property int shelfHeight: huge ? 66 : layoutMode === "minimal" ? 40 : dense ? 44 : 50
+    readonly property int groupHeight: huge ? 54 : layoutMode === "minimal" ? 34 : dense ? 36 : 40
+    readonly property int toolSize: huge ? 44 : dense ? 30 : 32
+    readonly property int toolbarIconSize: huge ? 28 : Appearance.regaliaEverywhere ? 18 : 22
     readonly property real groupRadius: groupHeight / 2
     readonly property bool ricelinSurface: islandStyle === "ricelin"
     readonly property int outerPadding: layoutMode === "bar" ? 6
@@ -353,7 +355,7 @@ Item {
 
             RippleButton {
                 id: stageModeButton
-                Layout.preferredWidth: root.dense ? 30 : 32
+                Layout.preferredWidth: root.huge ? 44 : root.dense ? 30 : 32
                 Layout.preferredHeight: width
                 buttonRadius: width / 2
                 colBackground: Appearance.colors.colPrimaryContainer
@@ -366,7 +368,7 @@ Item {
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: "orbit"
-                    iconSize: root.dense ? 17 : 18
+                    iconSize: root.huge ? 26 : root.dense ? 17 : 18
                     textRenderType: Text.QtRendering
                     color: Appearance.colors.colOnPrimaryContainer
                 }
@@ -386,7 +388,8 @@ Item {
                 StyledText {
                     text: root.activeWorkspaceLabel
                     renderType: Text.QtRendering
-                    font.pixelSize: Appearance.font.pixelSize.small
+                    font.pixelSize: root.huge
+                        ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.small
                     font.hintingPreference: Font.PreferNoHinting
                     font.weight: Font.DemiBold
                     color: root.foreground
@@ -400,7 +403,8 @@ Item {
                             ? Translation.tr("Core · %1").arg(countText) : countText
                     }
                     renderType: Text.QtRendering
-                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.pixelSize: root.huge
+                        ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smaller
                     font.hintingPreference: Font.PreferNoHinting
                     color: root.mutedForeground
                 }
@@ -411,6 +415,7 @@ Item {
                 visible: root.shelfOptions.showStudioButton ?? true
                 implicitWidth: root.toolSize
                 implicitHeight: root.toolSize
+                iconSize: root.toolbarIconSize
                 iconRenderType: Text.QtRendering
                 text: "tune"
                 toggled: root.studioOpen
@@ -446,7 +451,7 @@ Item {
                     Layout.leftMargin: 2
                     visible: root.layoutMode !== "minimal"
                     text: "history"
-                    iconSize: 17
+                    iconSize: root.huge ? 24 : 17
                     textRenderType: Text.QtRendering
                     color: root.mutedForeground
                 }
@@ -490,7 +495,7 @@ Item {
                             spacing: 6
 
                             IconImage {
-                                implicitSize: 20
+                                implicitSize: root.huge ? 28 : 20
                                 source: AppSearch.getIconSource(trailButton.modelData.app_id || "")
                             }
 
@@ -501,7 +506,8 @@ Item {
                                 renderType: Text.QtRendering
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
-                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                font.pixelSize: root.huge
+                                    ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smaller
                                 font.hintingPreference: Font.PreferNoHinting
                                 color: trailButton.toggled
                                     ? Appearance.colors.colOnPrimaryContainer : root.foreground
@@ -533,6 +539,7 @@ Item {
                     readonly property var actionMeta: root.niriActionMeta(modelData)
                     implicitWidth: root.toolSize
                     implicitHeight: root.toolSize
+                    iconSize: root.toolbarIconSize
                     iconRenderType: Text.QtRendering
                     text: actionMeta.icon
                     enabled: NiriService.actionReady
@@ -570,6 +577,7 @@ Item {
                     required property var modelData
                     implicitWidth: root.toolSize
                     implicitHeight: root.toolSize
+                    iconSize: root.toolbarIconSize
                     iconRenderType: Text.QtRendering
                     text: modelData.icon || "bolt"
                     toggled: root.keyboardKey === `action:${modelData.id}`
@@ -594,6 +602,7 @@ Item {
                 id: paletteButton
                 implicitWidth: root.toolSize
                 implicitHeight: root.toolSize
+                iconSize: root.toolbarIconSize
                 iconRenderType: Text.QtRendering
                 text: "more_horiz"
                 toggled: root.keyboardKey === "action:palette"
@@ -622,8 +631,10 @@ Item {
             id: stashButton
             readonly property int latestId: root.stashedIds.length > 0
                 ? root.stashedIds[root.stashedIds.length - 1] : -1
-            implicitWidth: root.labelsVisible ? 64 : 40
-            implicitHeight: root.layoutMode === "minimal" ? 32 : 34
+            implicitWidth: root.huge ? (root.labelsVisible ? 76 : 44)
+                : root.labelsVisible ? 64 : 40
+            implicitHeight: root.huge ? root.toolSize
+                : root.layoutMode === "minimal" ? 32 : 34
             enabled: MinimizedWindows.actionReady
             buttonRadius: height / 2
             toggled: latestId >= 0 && root.keyboardKey === `stash:${latestId}`
@@ -643,7 +654,7 @@ Item {
                 spacing: 4
                 MaterialSymbol {
                     text: "inventory_2"
-                    iconSize: 18
+                    iconSize: root.huge ? 24 : 18
                     textRenderType: Text.QtRendering
                     color: stashButton.toggled
                         ? Appearance.colors.colOnPrimaryContainer : root.mutedForeground
@@ -652,7 +663,8 @@ Item {
                     visible: root.labelsVisible
                     text: root.stashedIds.length.toString()
                     renderType: Text.QtRendering
-                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.pixelSize: root.huge
+                        ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smaller
                     font.hintingPreference: Font.PreferNoHinting
                     font.weight: Font.DemiBold
                     color: stashButton.toggled

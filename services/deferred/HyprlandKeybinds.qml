@@ -28,8 +28,7 @@ Singleton {
     })
 
     Connections {
-        target: Hyprland
-
+        target: CompositorService.isHyprland ? Hyprland : null
         enabled: CompositorService.isHyprland
 
         function onRawEvent(event) {

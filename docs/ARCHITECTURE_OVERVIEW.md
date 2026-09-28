@@ -4,7 +4,7 @@ How iNiR is put together, from the highest level down to the part that matters f
 
 ## The 30-second version
 
-iNiR is a single-process QML application that runs inside Quickshell. There's no backend daemon, no IPC server, no separate process for services. Everything (the bar, sidebars, notifications, audio control, compositor IPC, config management) lives in one QML runtime talking to system services through D-Bus, sockets, and subprocess calls.
+The core shell is one Quickshell/QML runtime. Bars, panels, config and most service state live in that process, while system integration deliberately crosses into D-Bus, compositor sockets and helper subprocesses/daemons where that work does not belong in QML.
 
 ```
 Your apps
@@ -25,20 +25,22 @@ Wayland protocol --> GPU
 1. Force-instantiates critical singletons (Idle, PowerProfilePersistence)
 2. Waits for `Config.ready` (JSON config loaded from disk)
 3. Applies the current theme
-4. Loads either `ShellIiPanels.qml` or `ShellWafflePanels.qml` based on the panel family config
-5. Schedules deferred service loading after the first frame renders
+4. Loads the selected family's small critical host for first-frame surfaces
+5. After the entry frame, enables deferred services and the thin `ShellIiPanels.qml` / `ShellWafflePanels.qml` / `ShellIrisPanels.qml` wrapper, which loads the corresponding `modules/*/Shell*PanelsImpl.qml`
 
-Total cold start to panels visible: under 2 seconds on decent hardware.
+Boot phases are recorded to `~/.cache/inir/last-boot.json`; `inir status` can report the measured phase breakdown instead of relying on a fixed startup-time claim.
 
-## Two panel families
+## Three panel families
 
-The shell has two completely separate visual identities that share the same services layer:
+The shell has three separate visual identities that share the same services layer:
 
-**Material ii** uses Material Design language with 6 style variants (material, cards, aurora, inir, angel, zzz). Bar at the top. Sidebars from the edges. Overview launcher.
+**Material ii** uses the shared `Appearance` system with nine global styles: material, cards, aurora, inir, angel, regalia, zzz, cookie and editorial. Bar at the top/edge. Sidebars from the edges. Overview launcher.
 
-**Waffle** uses Windows 11 Fluent Design. Taskbar at the bottom. Start menu. Action center. Notification center.
+**Waffle** uses Windows 11 Fluent Design. Taskbar at the bottom. Start menu. Action center. Notification center. Its layout/components remain Waffle-owned while `Looks` can adapt colors/material semantics from the selected global style.
 
-They're mutually exclusive at runtime. Switch with `Super+Shift+W`. Both families read from the same Config singleton and the same services, but use completely different visual token systems (`Appearance.*` vs `Looks.*`), different panel definitions, and different settings UIs.
+**iRiS** uses its own `IrisStyle` system. Its Island can live on any edge or become a full-width bar, the Dock can move independently, and pieces can attach to the chassis or float on the desktop. Studio and shareable Themes edit the family without changing ii or Waffle.
+
+They're mutually exclusive at runtime. Switch with `Super+Shift+W`. All three read from the same Config singleton and shared services, while their presentation stays family-owned through `Appearance.*`, `Looks.*` or `IrisStyle.*`.
 
 More details: [Panel Families](PANEL_FAMILIES.md)
 
@@ -61,7 +63,7 @@ Full catalog: [Services Catalog](SERVICES.md)
 One JSON file, one QML schema, one write method:
 
 - **Schema**: `modules/common/Config.qml` (~60 top-level sections)
-- **User file**: `~/.config/illogical-impulse/config.json`
+- **User file**: `~/.config/inir/config.json` (canonical; legacy installs are preserved through the compatibility resolver/symlink)
 - **Defaults**: `defaults/config.json`
 - **Write**: `Config.setNestedValue("section.key", value)` (the only way that persists)
 - **Read**: `Config.options?.section?.key ?? fallback`
@@ -110,7 +112,7 @@ A simplified map of what lives where:
 | `modules/sidebar/` | Physical sidebar hosts and live layout behavior | High |
 | `modules/sidebarLeft/` | Semantic feature content: AI chat, YT Music, widgets | Normal |
 | `modules/sidebarRight/` | Semantic system content: toggles, calendar, tools | Normal |
-| `translations/` | i18n strings (15 languages) | Low |
+| `translations/` | i18n strings (18 locales) | Low |
 
 Full breakdown: [Project Map](PROJECT_MAP.md)
 
@@ -124,10 +126,11 @@ cd inir
 ./setup install
 ```
 
-Two install modes:
+Three install topologies are recognized:
 
-- **Repo-sync**: `./setup install` syncs the repo to `~/.config/quickshell/inir/`
-- **Package-managed**: `make install` copies to `/usr/share/quickshell/inir/`
+- **repo-copy**: normal `./setup install`, with the checkout as update source and a synchronized runtime at `~/.config/quickshell/inir/`
+- **repo-link**: development/runtime points at the checkout itself
+- **package-managed**: `make install`, distro packages or Nix own a system-prefix runtime and its updates
 
 Updates: `./setup update` or `inir update` (git pull + sync + migrate + restart).
 

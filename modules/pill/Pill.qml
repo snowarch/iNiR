@@ -41,15 +41,26 @@ Item {
      * to being hovered forever, so the rest face simply never shows.
      */
     readonly property bool barMode: Config.options?.bar?.pill?.barMode ?? false
-    readonly property bool expanded: surfaceOpen || held || hoverLatch || barMode
+    readonly property bool expanded: surfaceOpen || held || hoverLatch || trayMenuOpen || barMode
 
     readonly property bool hasMedia: PillPlayers.has
     readonly property string mediaAccess: (Config.options?.bar?.pill?.mediaAccess ?? "row") === "bud" ? "bud" : "row"
+    readonly property string mediaPopupMode: Config.options?.media?.popupMode ?? "dock"
     property real mediaVolumeFeedback: -1
     property real mediaVolumeFeedbackWidth: 0
 
     signal requestSurface(string name)
     signal requestClose()
+
+    function openPreferredMediaSurface(): void {
+        if (pill.mediaPopupMode === "bar") {
+            GlobalStates.mediaControlsOpen = false
+            pill.requestSurface("media")
+        } else {
+            pill.requestClose()
+            GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen
+        }
+    }
 
     /** Forwarded up so the root Scope can host the tray menu's own window. */
     signal trayMenuRequested(var item, real anchorX, real anchorY)
@@ -180,7 +191,7 @@ Item {
     readonly property bool manualGameFace: GameMode.manuallyActivated
 
     /**
-     * A fullscreen window on this pill's active workspace hides the resting
+     * A covering fullscreen window on this pill's active workspace hides the resting
      * faces — classic-bar parity: top-layer bars get covered by the
      * compositor, but the pill's Overlay layer never is, so it opts out
      * itself. Hardware OSD feedback such as volume and brightness can still play
@@ -190,26 +201,14 @@ Item {
     readonly property bool fsCovered: {
         if (!CompositorService.isNiri)
             return GameMode.hasAnyFullscreenWindow;
-        const wins = NiriService.windows ?? [];
-        for (const w of wins) {
-            const ws = NiriService.workspaces?.[w.workspace_id];
-            if (!(ws?.is_active ?? false))
-                continue;
-            if (screenName.length > 0 && ws.output !== screenName)
-                continue;
-            // In niri a fullscreen window covers the monitor only while it
-            // is the focused tile. Scrolling to another window in the same
-            // workspace unfocuses the fullscreen window without changing its
-            // size, so without this focus check the pill stays hidden even
-            // though the game no longer covers the screen.
-            if (!w.is_focused)
-                continue;
-            if (GameMode.isWindowFullscreen(w))
-                return true;
-        }
-        return false;
+        return GameMode.hasFullscreenOnOutput(screenName);
     }
-    readonly property bool fsHide: fsCovered
+    readonly property bool gameHide: Appearance.gameModeMinimal
+    // Match the normal dock/bar interaction model: fullscreen owns the screen
+    // during play, but once Niri Overview is open the shell must become
+    // available again for workspace/navigation interaction.
+    readonly property bool compositorOverviewOpen: CompositorService.isNiri && NiriService.inOverview
+    readonly property bool fsHide: (fsCovered || gameHide) && !compositorOverviewOpen
         && (mode === "rest" || mode === "hover" || mode === "game")
 
     opacity: fsHide ? 0 : 1
@@ -404,7 +403,7 @@ Item {
             enabled: bud.shown
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: pill.requestSurface("media")
+            onClicked: pill.openPreferredMediaSurface()
             onContainsMouseChanged: budBead.requestPaint()
         }
     }
@@ -653,7 +652,7 @@ Item {
      * input on a stray click.
      */
     TapHandler {
-        enabled: !pill.surfaceOpen && !pill.barMode
+        enabled: !pill.surfaceOpen && !pill.barMode && pill.mode !== "game"
         gesturePolicy: TapHandler.WithinBounds
         onTapped: pill.pinned = !pill.pinned
     }
@@ -734,6 +733,65 @@ Item {
             font.pixelSize: 16 * pill.s
             font.weight: Font.DemiBold
             font.features: ({ "tnum": 1 })
+        }
+
+        Rectangle {
+            anchors.right: parent.right
+            anchors.rightMargin: 14 * pill.s
+            anchors.verticalCenter: parent.verticalCenter
+            width: gameModeExitRow.implicitWidth + 16 * pill.s
+            height: 26 * pill.s
+            radius: height / 2
+            color: Qt.alpha(PillTheme.vermLit, gameModeExitHover.hovered ? 0.20 : 0.10)
+            border.width: 1
+            border.color: Qt.alpha(PillTheme.vermLit, gameModeExitHover.hovered ? 0.72 : 0.42)
+
+            Behavior on color {
+                ColorAnimation { duration: PillMotion.fast }
+            }
+
+            Row {
+                id: gameModeExitRow
+                anchors.centerIn: parent
+                spacing: 6 * pill.s
+
+                GlyphIcon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 15 * pill.s
+                    height: 15 * pill.s
+                    name: "gamepad"
+                    color: PillTheme.vermLit
+                    stroke: 1.8
+                }
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: Translation.tr("Game mode")
+                    color: PillTheme.cream
+                    font.family: PillTheme.font
+                    font.pixelSize: 11.5 * pill.s
+                    font.weight: Font.Medium
+                }
+
+                GlyphIcon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 13 * pill.s
+                    height: 13 * pill.s
+                    name: "close"
+                    color: PillTheme.subtle
+                    stroke: 1.8
+                }
+            }
+
+            HoverHandler {
+                id: gameModeExitHover
+                cursorShape: Qt.PointingHandCursor
+            }
+
+            TapHandler {
+                gesturePolicy: TapHandler.WithinBounds
+                onTapped: GameMode.deactivate()
+            }
         }
     }
 
@@ -1121,7 +1179,7 @@ Item {
                         hoverEnabled: true
                         enabled: hover.live
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: pill.requestSurface("media")
+                        onClicked: pill.openPreferredMediaSurface()
                         onWheel: (event) => {
                             if (!MprisController.canChangeVolume)
                                 return;

@@ -20,6 +20,7 @@ import Quickshell.Io
 // no ambient backdrop bleed-through, no dominant color probing bloat.
 Item {
     id: root
+    readonly property bool editorial: Appearance.editorialEverywhere
 
     required property var folderModel
     required property string currentWallpaperPath
@@ -312,30 +313,37 @@ Item {
     // ═══════════════════════════════════════════════════
     // STYLE TOKENS
     // ═══════════════════════════════════════════════════
-    readonly property color surfaceColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    readonly property color surfaceColor: root.editorial ? Appearance.editorial.layer(1)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1
-    readonly property color baseColor: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
+    readonly property color baseColor: root.editorial ? Appearance.editorial.paper
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
         : Appearance.inirEverywhere ? Appearance.inir.colLayer0
         : Appearance.auroraEverywhere ? Appearance.aurora.colOverlay
         : Appearance.colors.colLayer0
-    readonly property color textColor: Appearance.angelEverywhere ? Appearance.angel.colText
+    readonly property color textColor: root.editorial ? Appearance.editorial.ink
+        : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.colors.colOnLayer1
-    readonly property color borderColor: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
+    readonly property color borderColor: root.editorial ? Appearance.editorial.rule
+        : Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
         : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
         : ColorUtils.applyAlpha(Appearance.colors.colOutlineVariant, 0.45)
-    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+    readonly property real cardRadius: root.editorial ? Appearance.editorial.radius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.small
     readonly property bool isVerticalBar: Config.options?.bar?.vertical ?? false
     readonly property bool isTopBar: !isVerticalBar && !(Config.options?.bar?.bottom ?? false)
-    readonly property color badgeSurfaceColor: ColorUtils.applyAlpha(Appearance.colors.colLayer2, 0.90)
-    readonly property color badgeTextColor: Appearance.colors.colOnLayer2
+    readonly property color badgeSurfaceColor: root.editorial ? Appearance.editorial.ink
+        : ColorUtils.applyAlpha(Appearance.colors.colLayer2, 0.90)
+    readonly property color badgeTextColor: root.editorial ? Appearance.editorial.paperOnInk
+        : Appearance.colors.colOnLayer2
 
     // Accent: simple primary color, no quantizer bloat
-    readonly property color accentColor: Appearance.colors.colPrimary
+    readonly property color accentColor: root.editorial ? Appearance.editorial.accent : Appearance.colors.colPrimary
 
     // ═══════════════════════════════════════════════════
     // NAVIGATION
@@ -487,14 +495,7 @@ Item {
     Timer {
         id: _saveFavouritesDebounce
         interval: 300
-        onTriggered: _saveFavouritesProc.running = true
-    }
-
-    Process {
-        id: _saveFavouritesProc
-        command: ["bash", "-c",
-            "printf '%s' " + JSON.stringify(JSON.stringify(root._favouritesDb)) +
-            " > " + JSON.stringify(root._favouritesCachePath)]
+        onTriggered: favouritesFileView.setText(JSON.stringify(root._favouritesDb))
     }
 
     // ─── Color cache persistence ───
@@ -523,14 +524,7 @@ Item {
     Timer {
         id: _saveColorsDebounce
         interval: 500
-        onTriggered: _saveColorsProc.running = true
-    }
-
-    Process {
-        id: _saveColorsProc
-        command: ["bash", "-c",
-            "printf '%s' " + JSON.stringify(JSON.stringify(root._colorsDb)) +
-            " > " + JSON.stringify(root._colorsCachePath)]
+        onTriggered: colorsFileView.setText(JSON.stringify(root._colorsDb))
     }
 
     // ─── File deletion ───
@@ -577,16 +571,11 @@ Item {
         const batch = _colorAnalysisQueue.splice(0, _colorBatchSize)
         _colorAnalysisProc._batchNames = batch.map(b => b.name)
         _colorAnalysisProc._resultLines = []
-        // Single bash process for the whole batch
-        let script = ""
-        for (const item of batch) {
-            // Output: name<TAB>hue sat lightness (or name<TAB>ERR)
-            script += "printf '%s\\t' " + JSON.stringify(item.name) + "; "
-            script += "convert " + JSON.stringify(item.path) +
-                " -resize 1x1\\! -colorspace HSL -format '%[fx:hue*360] %[fx:saturation] %[fx:lightness]' info: 2>/dev/null || printf 'ERR'; "
-            script += "printf '\\n'; "
-        }
-        _colorAnalysisProc.command = ["bash", "-c", script]
+        // One process for the whole batch, paths as arguments: name<TAB>hue sat lightness, or name<TAB>ERR
+        _colorAnalysisProc.command = ["sh", "-c",
+            'for p do printf "%s\\t" "${p##*/}"; '
+            + 'convert "$p" -resize "1x1!" -colorspace HSL -format "%[fx:hue*360] %[fx:saturation] %[fx:lightness]" info: 2>/dev/null || printf ERR; '
+            + 'printf "\\n"; done', "sh"].concat(batch.map(item => item.path))
         _colorAnalysisProc.running = true
     }
 
@@ -1195,16 +1184,18 @@ Item {
                 }
                 implicitWidth: activeLabel.implicitWidth + 14
                 implicitHeight: activeLabel.implicitHeight + 6
-                radius: height / 2
+                radius: root.editorial ? Appearance.rounding.small : height / 2
                 color: ColorUtils.applyAlpha(root.accentColor, 0.92)
 
                 StyledText {
                     id: activeLabel
                     anchors.centerIn: parent
                     text: Translation.tr("Active")
-                    color: ColorUtils.contrastColor(root.accentColor)
+                    color: root.editorial ? Appearance.editorial.accentInk : ColorUtils.contrastColor(root.accentColor)
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.weight: Font.DemiBold
+                    font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                    font.letterSpacing: root.editorial ? 0.45 : 0
                 }
             }
 
@@ -1707,7 +1698,7 @@ Item {
 
         // Shadow (matching Toolbar)
         Loader {
-            active: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
+            active: !root.editorial && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
             anchors.fill: filterBarGlass
             sourceComponent: StyledRectangularShadow {
                 target: filterBarGlass
@@ -1718,20 +1709,22 @@ Item {
         GlassBackground {
             id: filterBarGlass
             anchors.fill: parent
-            fallbackColor: Appearance.colors.colSurfaceContainer
+            fallbackColor: root.editorial ? Appearance.editorial.layer(1) : Appearance.colors.colSurfaceContainer
             inirColor: Appearance.inir.colLayer2
             auroraTransparency: Appearance.aurora.overlayTransparentize
+            wallpaperBackdropEnabled: !root.editorial
             screenX: { const p = filterBar.mapToGlobal(0, 0); return p.x }
             screenY: { const p = filterBar.mapToGlobal(0, 0); return p.y }
             screenWidth: Quickshell.screens[0]?.width ?? 1920
             screenHeight: Quickshell.screens[0]?.height ?? 1080
-            border.width: (Appearance.angelEverywhere || Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
+            border.width: (root.editorial || Appearance.angelEverywhere || Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
             border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+                : root.editorial ? Appearance.editorial.rule
                 : Appearance.inirEverywhere ? Appearance.inir.colBorder
                 : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
             implicitHeight: 40
             implicitWidth: filterBarRow.implicitWidth + 20
-            radius: height / 2
+            radius: root.editorial ? Appearance.rounding.small : height / 2
         }
 
         Row {
@@ -1756,12 +1749,12 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: typeChipRow.implicitWidth + 14
                     height: 24
-                    radius: height / 2
+                    radius: root.editorial ? Appearance.rounding.small : height / 2
 
                     color: isSelected
-                        ? Appearance.colors.colPrimaryContainer
+                        ? (root.editorial ? Appearance.editorial.field : Appearance.colors.colPrimaryContainer)
                         : typeChipHover.containsMouse
-                            ? ColorUtils.applyAlpha(Appearance.colors.colOnSurface, 0.08)
+                            ? (root.editorial ? Appearance.colors.colLayer1Hover : ColorUtils.applyAlpha(Appearance.colors.colOnSurface, 0.08))
                             : "transparent"
 
                     Behavior on color {
@@ -1779,7 +1772,7 @@ Item {
                             text: typeChip.modelData.icon
                             iconSize: 12
                             color: typeChip.isSelected
-                                ? Appearance.colors.colOnPrimaryContainer
+                                ? (root.editorial ? Appearance.editorial.fieldInk : Appearance.colors.colOnPrimaryContainer)
                                 : root.textColor
                             opacity: typeChip.isSelected ? 1.0 : 0.70
                         }
@@ -1788,8 +1781,10 @@ Item {
                             text: typeChip.modelData.label
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             font.weight: typeChip.isSelected ? Font.DemiBold : Font.Normal
+                            font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                            font.letterSpacing: root.editorial ? 0.35 : 0
                             color: typeChip.isSelected
-                                ? Appearance.colors.colOnPrimaryContainer
+                                ? (root.editorial ? Appearance.editorial.fieldInk : Appearance.colors.colOnPrimaryContainer)
                                 : root.textColor
                             opacity: typeChip.isSelected ? 1.0 : 0.72
                         }
@@ -1819,7 +1814,8 @@ Item {
                 rightPadding: 4
                 text: (root.currentImageIndex + 1) + " / " + root.imageCount
                 font.pixelSize: Appearance.font.pixelSize.small
-                font.family: Appearance.font.family.monospace
+                font.family: root.editorial ? Appearance.font.family.numbers : Appearance.font.family.monospace
+                font.weight: root.editorial ? Font.DemiBold : Font.Normal
                 color: root.textColor
                 opacity: 0.78
             }
@@ -1961,7 +1957,7 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                radius: height / 2
+                radius: root.editorial ? Appearance.rounding.small : height / 2
                 color: folderDropdownBtn.hovered
                     ? ColorUtils.applyAlpha(root.accentColor, 0.10)
                     : folderDropdown.visible
@@ -1982,6 +1978,8 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.currentFolderName
                     font.pixelSize: Appearance.font.pixelSize.small
+                    font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                    font.weight: root.editorial ? Font.DemiBold : Font.Normal
                     color: root.textColor
                     elide: Text.ElideMiddle
                     maximumLineCount: 1
@@ -2034,13 +2032,14 @@ Item {
 
                 background: Rectangle {
                     radius: root.cardRadius
-                    color: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
+                    color: root.editorial ? Appearance.editorial.layer(1)
+                        : Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                         : Appearance.auroraEverywhere ? Appearance.aurora.colOverlay
                         : Appearance.colors.colSurfaceContainer
                     border.width: 1
                     border.color: root.borderColor
-                    layer.enabled: true
+                    layer.enabled: !root.editorial
                     layer.effect: MultiEffect {
                         shadowEnabled: true
                         shadowColor: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.25)

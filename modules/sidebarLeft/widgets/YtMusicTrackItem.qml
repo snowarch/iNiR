@@ -40,7 +40,7 @@ Rectangle {
             ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                 : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                : Appearance.colors.colLayer1Hover)
+                : Appearance.colLayer1Hover)
             : "transparent"
 
     Behavior on color {
@@ -216,7 +216,7 @@ Rectangle {
         width: 28; height: 28
         radius: 14
         color: hovered
-            ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.colors.colLayer2Hover)
+            ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.colLayer2Hover)
             : "transparent"
 
         MaterialSymbol {

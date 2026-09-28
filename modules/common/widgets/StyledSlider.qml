@@ -36,33 +36,41 @@ Slider {
 
     property var configuration: StyledSlider.Configuration.S
 
-    property real handleDefaultWidth: Appearance.regaliaEverywhere ? 15 : Appearance.zzzEverywhere ? 0 : 3
-    property real handlePressedWidth: Appearance.regaliaEverywhere ? 13 : Appearance.zzzEverywhere ? 0 : 1.5
-    property color highlightColor: Appearance.regaliaEverywhere ? Appearance.regalia.hardwarePrimary
+    property real handleDefaultWidth: Appearance.editorialEverywhere ? 4
+        : Appearance.regaliaEverywhere ? 15 : Appearance.zzzEverywhere ? 0 : 3
+    property real handlePressedWidth: Appearance.editorialEverywhere ? 2
+        : Appearance.regaliaEverywhere ? 13 : Appearance.zzzEverywhere ? 0 : 1.5
+    property color highlightColor: Appearance.editorialEverywhere ? Appearance.editorial.accent
+        : Appearance.regaliaEverywhere ? Appearance.regalia.hardwarePrimary
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
         : Appearance.zzzEverywhere ? Appearance.zzz.accentSoft : Appearance.colors.colPrimary
-    property color trackColor: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
+    property color trackColor: Appearance.editorialEverywhere ? Appearance.editorial.layer(3)
+        : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
         : Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
         : Appearance.colors.colSecondaryContainer
-    property color handleColor: Appearance.regaliaEverywhere ? Appearance.regalia.hardwarePrimary
+    property color handleColor: Appearance.editorialEverywhere ? Appearance.editorial.accent
+        : Appearance.regaliaEverywhere ? Appearance.regalia.hardwarePrimary
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
         : Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colPrimary
-    property color dotColor: Appearance.regaliaEverywhere ? Appearance.regalia.onMuted
+    property color dotColor: Appearance.editorialEverywhere ? Appearance.editorial.muted
+        : Appearance.regaliaEverywhere ? Appearance.regalia.onMuted
         : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.zzzEverywhere ? Appearance.zzz.onMuted : Appearance.colors.colOnSecondaryContainer
-    property color dotColorHighlighted: Appearance.regaliaEverywhere ? Appearance.regalia.hardwarePrimaryInk
+    property color dotColorHighlighted: Appearance.editorialEverywhere ? Appearance.editorial.accentInk
+        : Appearance.regaliaEverywhere ? Appearance.regalia.hardwarePrimaryInk
         : Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
         : Appearance.zzzEverywhere ? Appearance.zzz.onColor : Appearance.colors.colOnPrimary
     property real unsharpenRadius: Appearance.rounding.unsharpen
     property real trackWidth: Appearance.regaliaEverywhere ? Math.min(7, configuration) : configuration
-    property real trackRadius: Appearance.regaliaEverywhere ? Appearance.regalia.roundVerySmall
+    property real trackRadius: Appearance.editorialEverywhere ? 2
+        : Appearance.regaliaEverywhere ? Appearance.regalia.roundVerySmall
         : trackWidth >= StyledSlider.Configuration.XL ? 21
         : trackWidth >= StyledSlider.Configuration.L ? 12
         : trackWidth >= StyledSlider.Configuration.M ? 9
@@ -133,6 +141,8 @@ Slider {
         if (!enableSettingsSearch)
             return;
         if (typeof SettingsSearchRegistry === "undefined")
+            return;
+        if (!SettingsSearchRegistry.dynamicRegistrationEnabled)
             return;
 
         var ctx = _findSettingsContext();
@@ -327,7 +337,8 @@ Slider {
         implicitHeight: root.handleHeight
         x: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (implicitWidth / 2)
         anchors.verticalCenter: parent.verticalCenter
-        radius: Appearance.regaliaEverywhere ? 4 : Math.min(width, height) / 2
+        radius: Appearance.editorialEverywhere ? 2
+            : Appearance.regaliaEverywhere ? 4 : Math.min(width, height) / 2
         color: root.handleColor
         border.width: 0
         gradient: Gradient {

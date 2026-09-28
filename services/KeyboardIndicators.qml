@@ -405,8 +405,7 @@ Singleton {
     }
 
     Connections {
-        target: HyprlandXkb
-
+        target: CompositorService.isHyprland ? HyprlandXkb : null
         function onCurrentLayoutNameChanged() {
             if (!root.currentLayoutName.length)
                 return;

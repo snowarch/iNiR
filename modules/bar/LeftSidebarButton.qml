@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Widgets
 import qs
 import qs.services
 import qs.modules.common
@@ -11,6 +12,13 @@ RippleButton {
     cookieMorphing: true
 
     property bool showPing: false
+    readonly property string iconName: Config.options?.bar?.topLeftIcon ?? "distro"
+    // "avatar" wears the user's picture; with none found it falls back to the distro logo.
+    property int avatarIndex: 0
+    readonly property string avatarSource: root.iconName === "avatar" ? Directories.avatarSourceAt(root.avatarIndex) : ""
+    readonly property bool avatarShown: root.avatarSource.length > 0 && avatarImage.status !== Image.Error
+    readonly property string avatarWatch: Directories.userAvatarSourcePrimary
+    onAvatarWatchChanged: root.avatarIndex = 0
 
     property real buttonPadding: 5
     implicitWidth: distroIcon.width + buttonPadding * 2
@@ -105,13 +113,36 @@ RippleButton {
     CustomIcon {
         id: distroIcon
         anchors.centerIn: parent
-        width: 19.5
-        height: 19.5
-        source: (Config.options?.bar?.topLeftIcon ?? 'distro') == 'distro' ? SystemInfo.distroIcon : `${Config.options?.bar?.topLeftIcon ?? 'distro'}-symbolic`
+        width: root.avatarShown ? 22 : 19.5
+        height: root.avatarShown ? 22 : 19.5
+        source: root.avatarShown ? ""
+            : root.iconName === "distro" || root.iconName === "avatar" ? SystemInfo.distroIcon : `${root.iconName}-symbolic`
         colorize: true
         color: Appearance.zzzEverywhere
             ? (root.toggled ? Appearance.zzz.onAccentSoft : Appearance.zzz.ink)
             : Appearance.colors.colOnLayer0
+
+        ClippingRectangle {
+            anchors.fill: parent
+            radius: width / 2
+            color: "transparent"
+            visible: root.avatarShown
+            Image {
+                id: avatarImage
+                anchors.fill: parent
+                source: root.avatarSource
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                smooth: true
+                mipmap: true
+                sourceSize.width: 48
+                sourceSize.height: 48
+                onStatusChanged: {
+                    if (status === Image.Error && root.avatarIndex + 1 < Directories.userAvatarPaths.length)
+                        root.avatarIndex++
+                }
+            }
+        }
 
         Rectangle {
             opacity: root.showPing ? 1 : 0

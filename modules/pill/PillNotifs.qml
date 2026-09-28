@@ -106,7 +106,12 @@ Singleton {
         const names = [];
         if (img.indexOf("image://icon/") === 0)
             names.push(img.substring(13));
-        else if (img.length && !/\.svg$/i.test(img))
+        else if (img.indexOf("image://qsimage/") === 0) {
+            // Quickshell inline-image handles are ephemeral. Notification
+            // history can outlive the provider handle, which otherwise emits
+            // "Requested image from unknown handle" and renders blank. Fall
+            // through to the stable app/desktop icon instead.
+        } else if (img.length && !/\.svg$/i.test(img))
             return img;
 
         names.push(n.appIcon, (n.appName || "").toLowerCase());

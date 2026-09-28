@@ -13,6 +13,7 @@ Item {
     
     // Signal to open external EventsDialog
     signal openEventsDialog(var editEvent)
+    signal requestExpand()
     
     property int fabSize: 48
     property int fabMargins: 14
@@ -120,8 +121,12 @@ Item {
             StyledText {
                 Layout.fillWidth: true
                 text: Translation.tr("Events & Reminders")
-                font.pixelSize: Appearance.font.pixelSize.small
-                font.weight: Font.Medium
+                font.family: Appearance.editorialEverywhere ? Appearance.font.family.title : Appearance.font.family.main
+                font.pixelSize: Appearance.editorialEverywhere
+                    ? Appearance.font.pixelSize.large * Appearance.editorial.titleScale
+                    : Appearance.font.pixelSize.small
+                font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Medium
+                font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
                 color: root.colText
             }
             
@@ -129,7 +134,7 @@ Item {
                 visible: root.upcomingCount > 0
                 implicitWidth: Math.max(20, countText.implicitWidth + 10)
                 implicitHeight: 20
-                radius: 10
+                radius: Appearance.editorialEverywhere ? Appearance.rounding.small : 10
                 color: root.colBadgeBg
                 
                 StyledText {
@@ -141,6 +146,22 @@ Item {
                     font.family: Appearance.font.family.numbers
                     color: root.colBadgeText
                 }
+            }
+
+            RippleButton {
+                implicitWidth: 32
+                implicitHeight: 32
+                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
+                colBackground: "transparent"
+                colBackgroundHover: Appearance.colLayer2Hover
+                onClicked: root.requestExpand()
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "open_in_full"
+                    iconSize: 17
+                    color: root.colPrimary
+                }
+                StyledToolTip { text: Translation.tr("Open full events view") }
             }
         }
         

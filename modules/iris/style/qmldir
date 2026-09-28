@@ -1,0 +1,4 @@
+module qs.modules.iris.style
+singleton IrisStyle 1.0 IrisStyle.qml
+singleton IrisMood 1.0 IrisMood.qml
+singleton IrisCompositorBlur 1.0 IrisCompositorBlur.qml

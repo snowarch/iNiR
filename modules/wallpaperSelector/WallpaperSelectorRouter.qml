@@ -196,6 +196,23 @@ Scope {
             root.toggle()
         }
         function random(): void { Wallpapers.randomFromCurrentFolder() }
+        function set(path: string): void { Wallpapers.select(path) }
+        function preview(path: string): void { Wallpapers.previewWallpaper(path, "") }
+        function cancelPreview(): void { Wallpapers.cancelWallpaperPreview() }
+        function browse(source: string, query: string): void {
+            GlobalStates.wallpaperSelectorSource = ["library", "wallhaven", "konachan", "yandere", "live"].includes(source) ? source : "library"
+            GlobalStates.wallpaperSelectorQuery = query === "-" ? "" : query
+            if (GlobalStates.wallpaperSelectorOpen) return
+            if (!GlobalStates.wallpaperLauncherOpen && !GlobalStates.coverflowSelectorOpen)
+                root.toggle()
+        }
+        function kind(name: string): string {
+            if (!["all", "still", "live", "gif"].includes(name))
+                return "Unknown kind: all, still, live or gif"
+            GlobalStates.wallpaperSelectorKind = ""
+            GlobalStates.wallpaperSelectorKind = name
+            return name
+        }
         function status(): string {
             return JSON.stringify({
                 style: Config.options?.wallpaperSelector?.style ?? "grid",
@@ -206,7 +223,8 @@ Scope {
                     || (Config.options?.wallpaperSelector?.targetMonitor ?? ""),
                 focusedMonitor: root.focusedMonitorName,
                 selectionTarget: Wallpapers.currentSelectionTarget(),
-                multiMonitor: Config.options?.background?.multiMonitor?.enable ?? false
+                multiMonitor: Config.options?.background?.multiMonitor?.enable ?? false,
+                kind: GlobalStates.wallpaperSelectorKindActive
             })
         }
     }

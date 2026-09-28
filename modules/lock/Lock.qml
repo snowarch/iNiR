@@ -6,6 +6,8 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.lock
 import qs.modules.waffle.lock
+import qs.modules.iris.lock
+import qs.modules.iris.style
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -16,6 +18,60 @@ Scope {
     id: root
 
     readonly property bool _lockActivating: lockActivateDelay.running
+    readonly property string _niriSocket: Quickshell.env("NIRI_SOCKET")
+    readonly property string _lockRecoveryPath: {
+        const runtimeDir = Quickshell.env("XDG_RUNTIME_DIR")
+        return runtimeDir.length > 0 ? runtimeDir + "/inir-session-lock.state" : ""
+    }
+    property bool _recoveryStateLoaded: false
+
+    function writeRecoveryState(locked: bool): void {
+        if (_niriSocket.length === 0 || !_recoveryStateLoaded || _lockRecoveryPath.length === 0)
+            return
+        lockRecoveryFile.setText((locked ? "locked" : "unlocked") + "\n" + _niriSocket + "\n")
+    }
+
+    function loadRecoveryState(): void {
+        if (_recoveryStateLoaded)
+            return
+
+        const lines = lockRecoveryFile.text().split("\n")
+        const wasLocked = lines[0] === "locked"
+        const previousSocket = lines[1] ?? ""
+        _recoveryStateLoaded = true
+
+        if (_niriSocket.length === 0)
+            return
+
+        if (wasLocked && previousSocket === _niriSocket) {
+            console.warn("[Lock] Recovering interrupted Niri session lock")
+            GlobalStates.screenLocked = true
+            return
+        }
+
+        writeRecoveryState(GlobalStates.screenLocked)
+    }
+
+    FileView {
+        id: lockRecoveryFile
+        path: root._lockRecoveryPath
+        blockLoading: true
+        atomicWrites: true
+        printErrors: false
+
+        onLoaded: root.loadRecoveryState()
+        onLoadFailed: {
+            root._recoveryStateLoaded = true
+            root.writeRecoveryState(GlobalStates.screenLocked)
+        }
+    }
+
+    Connections {
+        target: GlobalStates
+        function onScreenLockedChanged(): void {
+            root.writeRecoveryState(GlobalStates.screenLocked)
+        }
+    }
 
     Timer {
         id: lockActivateDelay
@@ -107,23 +163,47 @@ Scope {
             // Unlock the keyring if configured to do so
             if (Config.options?.lock?.security?.unlockKeyring ?? true) root.unlockKeyring(); // Async
 
-            // Unlock the screen before exiting, or the compositor will display a
-            // fallback lock you can't interact with.
-            GlobalStates.screenLocked = false;
-            
-            // Refocus last focused window on unlock (hack)
-            if (CompositorService.isHyprland) {
-                Quickshell.execDetached(["/usr/bin/bash", "-lc", "/usr/bin/sleep 0.2; /usr/bin/hyprctl --batch 'dispatch togglespecialworkspace; dispatch togglespecialworkspace'"])
+            if (root._cachedUseIrisLock && IrisStyle.recedeDuration > 0) {
+                root.irisUnlocking = true
+                irisRelease.restart()
+                return
             }
+            root.finishUnlock()
+        }
+    }
 
-            // Reset
-            lockContext.reset();
+    property bool irisUnlocking: false
+    Timer {
+        id: irisRelease
+        interval: IrisStyle.recedeDuration + 40
+        onTriggered: root.finishUnlock()
+    }
+    Connections {
+        target: GlobalStates
+        function onScreenLockedChanged(): void {
+            if (GlobalStates.screenLocked) return
+            irisRelease.stop()
+            root.irisUnlocking = false
+        }
+    }
 
-            // Post-unlock actions: activate idle inhibitor if requested
-            if (lockContext.alsoInhibitIdle) {
-                lockContext.alsoInhibitIdle = false;
-                Idle.toggleInhibit(true);
-            }
+    function finishUnlock(): void {
+        // Unlock the screen before exiting, or the compositor will display a
+        // fallback lock you can't interact with.
+        GlobalStates.screenLocked = false;
+        
+        // Refocus last focused window on unlock (hack)
+        if (CompositorService.isHyprland) {
+            Quickshell.execDetached(["/usr/bin/bash", "-lc", "/usr/bin/sleep 0.2; /usr/bin/hyprctl --batch 'dispatch togglespecialworkspace; dispatch togglespecialworkspace'"])
+        }
+
+        // Reset
+        lockContext.reset();
+
+        // Post-unlock actions: activate idle inhibitor if requested
+        if (lockContext.alsoInhibitIdle) {
+            lockContext.alsoInhibitIdle = false;
+            Idle.toggleInhibit(true);
         }
     }
 
@@ -132,20 +212,30 @@ Scope {
     readonly property bool useWaffleLock: Config.ready && !GlobalStates.screenLocked 
         ? (Config.options?.panelFamily === "waffle")
         : root._cachedUseWaffleLock
+    readonly property bool useIrisLock: Config.ready && !GlobalStates.screenLocked
+        ? (Config.options?.panelFamily === "iris")
+        : root._cachedUseIrisLock
     
     // Cache the last known value to prevent switching during lock
     property bool _cachedUseWaffleLock: false
+    property bool _cachedUseIrisLock: false
     
     onUseWaffleLockChanged: {
         if (!GlobalStates.screenLocked) {
             root._cachedUseWaffleLock = root.useWaffleLock
         }
     }
+    onUseIrisLockChanged: {
+        if (!GlobalStates.screenLocked)
+            root._cachedUseIrisLock = root.useIrisLock
+    }
     
     Component.onCompleted: {
         // Initialize cache.
-        if (Config.ready)
+        if (Config.ready) {
             root._cachedUseWaffleLock = Config.options?.panelFamily === "waffle"
+            root._cachedUseIrisLock = Config.options?.panelFamily === "iris"
+        }
         root.initIfReady()
     }
     
@@ -169,6 +259,13 @@ Scope {
             context: lockContext
         }
     }
+
+    Component {
+        id: irisLockComponent
+        IrisLockSurface {
+            context: lockContext
+        }
+    }
     
     WlSessionLock {
         id: lock
@@ -176,32 +273,24 @@ Scope {
 
         WlSessionLockSurface {
             id: lockSurface
-            // Use colLayer0 as transitional background - actual lock surface has its own bg
             color: Appearance.colors.colLayer0
-            
-            // Fallback timer - if lock surface doesn't load properly, use swaylock
-            Timer {
-                id: fallbackTimer
-                interval: 2000
-                running: GlobalStates.screenLocked && !lockSurfaceLoader.item
-                onTriggered: {
-                    console.warn("[Lock] Lock surface failed to load after 2s — status:",
-                                 lockSurfaceLoader.status, "active:", lockSurfaceLoader.active,
-                                 "Config.ready:", Config.ready, "waffle:", root._cachedUseWaffleLock,
-                                 "isNiri:", CompositorService.isNiri)
-                    root.useFallbackLock()
-                }
+
+            Rectangle {
+                anchors.fill: parent
+                color: Appearance.colors.colLayer0
             }
-            
+
             Loader {
                 id: lockSurfaceLoader
                 active: GlobalStates.screenLocked && Config.ready
+                // The iRiS lock arrives from the wallpaper; an async first frame is a bare colour flash.
+                asynchronous: !root._cachedUseIrisLock
                 anchors.fill: parent
                 // Don't animate opacity - causes issues during hot-reload
                 opacity: active ? 1 : 0
                 sourceComponent: root._cachedUseWaffleLock
                     ? (CompositorService.isNiri ? waffleLockSafeComponent : waffleLockComponent)
-                    : iiLockComponent
+                    : root._cachedUseIrisLock ? irisLockComponent : iiLockComponent
                 
                 // Detect load errors
                 onStatusChanged: {
@@ -215,6 +304,19 @@ Scope {
                     }
                 }
                 
+                Binding {
+                    target: lockSurfaceLoader.item
+                    when: root._cachedUseIrisLock && lockSurfaceLoader.item !== null
+                    property: "screenName"
+                    value: lockSurface.screen?.name ?? ""
+                }
+                Binding {
+                    target: lockSurfaceLoader.item
+                    when: root._cachedUseIrisLock && lockSurfaceLoader.item !== null
+                    property: "leaving"
+                    value: root.irisUnlocking
+                }
+
                 // Force focus to loaded item
                 onLoaded: {
                     if (item) {
@@ -230,6 +332,20 @@ Scope {
                             if (item) item.forceActiveFocus()
                         })
                     }
+                }
+            }
+
+            Timer {
+                id: fallbackTimer
+                interval: 2000
+                running: GlobalStates.screenLocked && !lockSurfaceLoader.item && lockSurfaceLoader.status !== Loader.Loading
+                onTriggered: {
+                    console.warn("[Lock] Lock surface failed to load after 2s — status:",
+                                 lockSurfaceLoader.status, "active:", lockSurfaceLoader.active,
+                                 "Config.ready:", Config.ready, "waffle:", root._cachedUseWaffleLock,
+                                 "iris:", root._cachedUseIrisLock,
+                                 "isNiri:", CompositorService.isNiri)
+                    root.useFallbackLock()
                 }
             }
             
@@ -308,12 +424,29 @@ Scope {
             lockActivateDelay.restart();
         }
 
+        function prepareSleep(): string {
+            if (CompositorService.isHyprland && (Config.options?.lock?.useHyprlock ?? false)) {
+                Quickshell.execDetached(["/usr/bin/bash", "-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"]);
+                return "external";
+            }
+
+            // before-sleep must not return while the interactive debounce is still
+            // pending. The launcher waits for lock.secure before swayidle releases
+            // logind's delay inhibitor.
+            lockActivateDelay.stop();
+            if (!GlobalStates.screenLocked)
+                GlobalStates.screenLocked = true;
+            return lock.secure ? "secure" : "locking";
+        }
+
         function deactivate(): void {
             lockActivateDelay.stop();
             GlobalStates.screenLocked = false;
         }
 
         function status(): string {
+            if (lock.secure)
+                return "secure";
             if (GlobalStates.screenLocked)
                 return "locked";
             if (root._lockActivating)

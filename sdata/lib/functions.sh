@@ -3,6 +3,10 @@
 
 # shellcheck shell=bash
 
+if [[ -n "${REPO_ROOT:-}" && -f "${REPO_ROOT}/scripts/lib/niri-session-env.sh" ]]; then
+  source "${REPO_ROOT}/scripts/lib/niri-session-env.sh"
+fi
+
 function try { "$@" || sleep 0; }
 
 function v(){
@@ -165,44 +169,40 @@ cp_file(){
   realpath -se "$dst" >> "${INSTALLED_LISTFILE}"
 }
 
-# Never distributed. The payload is copied one directory at a time, so every
-# pattern here is matched against a path relative to that directory — an entry
-# like 'assets/images/mascot/*.png' would never fire while copying assets/.
-# Bare names match at any depth; each one below is unique across the payload.
-RUNTIME_EXCLUDES=(
-  # Agent harness
-  --exclude='AGENTS.md' --exclude='CLAUDE.md' --exclude='CODEX.md' --exclude='PI.md'
-  --exclude='codemap.md' --exclude='.mcp.json' --exclude='opencode.json'
-  --exclude='skills-lock.json'
-  --exclude='.agents/' --exclude='.claude/' --exclude='.codex/' --exclude='.factory/'
-  --exclude='.opencode/' --exclude='.codebase-memory/' --exclude='.impeccable/'
-  --exclude='.pi-subagents/'
-  # Maintainer and development tooling. Anchored with a leading slash so these
-  # common names only ever match at the top of a payload directory, never a
-  # future modules/…/tools/ that has every right to ship.
-  --exclude='/agents/' --exclude='/tools/' --exclude='/l10n/'
-  --exclude='/release.sh' --exclude='/wiki-sync.sh' --exclude='/verify-docs.sh'
-  --exclude='/qml-check.fish' --exclude='/test-local-distribution.sh'
-  --exclude='/test-mascot-pack-flow.sh'
-  # Local art work files — the manifest always ships, the art does not
-  --exclude='graphify-out/'
-  --exclude='images/mascot/*.png' --exclude='images/mascot/*.gif'
-  --exclude='images/mascot/frames/' --exclude='images/mascot/PROMPTS.md'
+# Generate rsync exclusions from the same policy used by package delivery and manifests.
+# Resolve relative paths against the source checkout, not the copied directory's basename.
+INIR_PAYLOAD_TOOL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/runtime-payload.py"
+_runtime_rsync() {
+  local source_path payload_root relative filters
+  source_path="$(realpath -e -- "$1")" || return
+  payload_root="$(cd "$(dirname "$INIR_PAYLOAD_TOOL")/../.." && pwd)" || return
+  relative="${source_path#"$payload_root"/}"
+  [[ "$relative" != "$source_path" ]] || { echo "Install source is outside repository" >&2; return 1; }
+  filters="$(python3 "$INIR_PAYLOAD_TOOL" filters --root "$payload_root" --subdir "$relative")" || return
+  local -a exclusions
+  mapfile -t exclusions <<< "$filters"
+  local target="$2"
+  shift 2
+  rsync -a "${exclusions[@]}" "$@" "$source_path/" "$target/"
+}
+
+rsync_dir() (
+  set -o pipefail
+  x mkdir -p "$2"
+  local dest
+  dest="$(realpath -se -- "$2")" || return
+  x mkdir -p "$(dirname "${INSTALLED_LISTFILE}")"
+  _runtime_rsync "$1" "$2" --out-format='%i %n' | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
 )
 
-rsync_dir(){
+rsync_dir__sync() (
+  set -o pipefail
   x mkdir -p "$2"
-  local dest="$(realpath -se $2)"
-  x mkdir -p "$(dirname ${INSTALLED_LISTFILE})"
-  rsync -a "${RUNTIME_EXCLUDES[@]}" --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
-}
-
-rsync_dir__sync(){
-  x mkdir -p "$2"
-  local dest="$(realpath -se $2)"
-  x mkdir -p "$(dirname ${INSTALLED_LISTFILE})"
-  rsync -a --delete "${RUNTIME_EXCLUDES[@]}" --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
-}
+  local dest
+  dest="$(realpath -se -- "$2")" || return
+  x mkdir -p "$(dirname "${INSTALLED_LISTFILE}")"
+  _runtime_rsync "$1" "$2" --delete --out-format='%i %n' | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
+)
 
 function install_file(){
   local s="$1"
@@ -288,7 +288,8 @@ ${end_marker}
 "
   local shell_file=""
 
-  for shell_file in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc"; do
+  for shell_file in "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc" \
+                    "$HOME/.zprofile" "$HOME/.zshrc"; do
     touch "$shell_file"
     sed -i "/${marker}/,/${end_marker}/d" "$shell_file" 2>/dev/null || true
     printf '%s\n' "$sh_block" >> "$shell_file"
@@ -301,6 +302,97 @@ if not contains -- "${launcher_dir}" \$PATH
     set -gx PATH "${launcher_dir}" \$PATH
 end
 EOF
+
+  if command -v systemctl >/dev/null 2>&1; then
+    local manager_path
+    manager_path="$(systemctl --user show-environment 2>/dev/null \
+      | sed -n 's/^PATH=//p' | head -1)"
+    if [[ -n "$manager_path" ]]; then
+      case ":${manager_path}:" in
+        *":${launcher_dir}:"*) ;;
+        *) systemctl --user set-environment "PATH=${launcher_dir}:${manager_path}" 2>/dev/null || true ;;
+      esac
+    fi
+  fi
+}
+
+repair_legacy_niri_shell_startup() {
+  INIR_LEGACY_NIRI_STARTUP_REPAIRED=0
+  local file tmp line changed
+
+  for file in "${XDG_CONFIG_HOME}/niri/config.d/50-startup.kdl" "${XDG_CONFIG_HOME}/niri/config.kdl"; do
+    [[ -f "$file" ]] || continue
+    tmp="${file}.inir-repair.$$"
+    changed=0
+    : > "$tmp"
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      if grep -Eq '^[[:space:]]*spawn-at-startup[[:space:]]+"([^"]*/)?inir"[[:space:]]+"start"([[:space:]]*//.*)?[[:space:]]*$|^[[:space:]]*spawn-at-startup[[:space:]]+"qs"[[:space:]]+"-c"[[:space:]]+"(ii|inir)"([[:space:]]*//.*)?[[:space:]]*$' <<< "$line"; then
+        changed=1
+        continue
+      fi
+      printf '%s\n' "$line" >> "$tmp"
+    done < "$file"
+    if [[ "$changed" -eq 1 ]]; then
+      mv "$tmp" "$file"
+      ((INIR_LEGACY_NIRI_STARTUP_REPAIRED++)) || true
+    else
+      rm -f "$tmp"
+    fi
+  done
+}
+
+sync_user_desktop_integration_from_repo() {
+  INIR_DESKTOP_INTEGRATION_CHANGED=0
+
+  local launcher_target="${XDG_BIN_HOME}/inir"
+  local icon_source="${REPO_ROOT}/assets/icons/desktop-symbolic.svg"
+  local icon_target="${XDG_DATA_HOME}/icons/hicolor/scalable/apps/inir.svg"
+  local applications_dir="${XDG_DATA_HOME}/applications"
+  local name source target tmp command
+
+  if [[ -f "$icon_source" ]]; then
+    mkdir -p "$(dirname "$icon_target")"
+    if [[ ! -f "$icon_target" ]] || ! cmp -s "$icon_source" "$icon_target"; then
+      cp -f "$icon_source" "$icon_target" || return 1
+      ((INIR_DESKTOP_INTEGRATION_CHANGED++)) || true
+    fi
+  fi
+
+  mkdir -p "$applications_dir" "${XDG_CACHE_HOME:-$HOME/.cache}"
+  for name in inir inir-settings; do
+    source="${REPO_ROOT}/assets/applications/${name}.desktop"
+    [[ -f "$source" ]] || continue
+    target="${applications_dir}/${name}.desktop"
+    command="service restart"
+    [[ "$name" == "inir-settings" ]] && command="settings"
+    tmp="${XDG_CACHE_HOME:-$HOME/.cache}/${name}.desktop.$$"
+    sed "s|^Exec=.*|Exec=${launcher_target//&/\\&} ${command}|" "$source" > "$tmp" || { rm -f "$tmp"; return 1; }
+    if [[ ! -f "$target" ]] || ! cmp -s "$tmp" "$target"; then
+      cp -f "$tmp" "$target" || { rm -f "$tmp"; return 1; }
+      ((INIR_DESKTOP_INTEGRATION_CHANGED++)) || true
+    fi
+    rm -f "$tmp"
+  done
+}
+
+function niri_can_resolve_launcher_dir(){
+  local launcher_dir="$1"
+  local niri_pid=""
+  local niri_path=""
+
+  command -v pgrep >/dev/null 2>&1 || return 1
+  niri_pid="$(pgrep -xo niri 2>/dev/null || true)"
+  [[ -n "$niri_pid" ]] || return 0
+  [[ -r "/proc/${niri_pid}/environ" ]] || return 1
+
+  niri_path="$(tr '\0' '\n' < "/proc/${niri_pid}/environ" \
+    | sed -n 's/^PATH=//p' | head -1)"
+  [[ -n "$niri_path" ]] || return 1
+
+  case ":${niri_path}:" in
+    *":${launcher_dir}:"*) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 function backup_clashing_targets(){
@@ -375,4 +467,82 @@ function can_elevate() {
   else
     return 1  # No way to elevate
   fi
+}
+
+inir_user_service_is_masked() {
+  local service_path="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/inir.service"
+  local state
+
+  if [[ -L "$service_path" ]] && [[ "$(readlink -f "$service_path" 2>/dev/null || true)" == "/dev/null" ]]; then
+    return 0
+  fi
+
+  command -v systemctl >/dev/null 2>&1 || return 1
+  state="$(systemctl --user is-enabled inir.service 2>/dev/null || true)"
+  [[ "$state" == "masked" || "$state" == "masked-runtime" ]]
+}
+
+repair_legacy_quickshell_malloc_environment() {
+  local conf="${XDG_CONFIG_HOME:-$HOME/.config}/environment.d/quickshell-mem.conf"
+  local repaired=0
+
+  INIR_LEGACY_MALLOC_ENV_REPAIRED=0
+  INIR_LEGACY_MALLOC_ENV_CURRENT_PROCESS=0
+
+  if [[ -f "$conf" ]] && grep -Eq \
+      '^[[:space:]]*MALLOC_ARENA_MAX=2[[:space:]]*$|^[[:space:]]*MALLOC_MMAP_THRESHOLD_=131072[[:space:]]*$' \
+      "$conf" 2>/dev/null; then
+    local tmp="${conf}.inir-repair.$$"
+
+    local filter_rc=0
+    grep -Ev \
+        '^[[:space:]]*MALLOC_ARENA_MAX=2[[:space:]]*$|^[[:space:]]*MALLOC_MMAP_THRESHOLD_=131072[[:space:]]*$|^# Quickshell/iNiR memory optimization[[:space:]]*$|^# Prevents glibc malloc arenas from retaining freed wallpaper textures\.[[:space:]]*$|^# See: scripts/quickshell-env\.sh for details\.[[:space:]]*$' \
+        "$conf" > "$tmp" || filter_rc=$?
+    # grep returns 1 when every line matched the removal filter. That is the
+    # expected "delete the now-empty legacy file" case, not a read/filter error.
+    if [[ "$filter_rc" -gt 1 ]]; then
+      rm -f "$tmp"
+      return 1
+    fi
+
+    if grep -q '[^[:space:]]' "$tmp" 2>/dev/null; then
+      mv "$tmp" "$conf"
+    else
+      rm -f "$tmp" "$conf"
+    fi
+    ((repaired++)) || true
+  fi
+
+  # The environment.d file can already be gone while the user manager still
+  # carries values imported earlier in the login session.  Cleanup must not be
+  # gated on finding the file or Doctor reports success while future services
+  # keep inheriting the retired allocator policy.
+  if [[ "${MALLOC_ARENA_MAX:-}" == "2" ]]; then
+    unset MALLOC_ARENA_MAX
+    INIR_LEGACY_MALLOC_ENV_CURRENT_PROCESS=1
+    ((repaired++)) || true
+  fi
+  if [[ "${MALLOC_MMAP_THRESHOLD_:-}" == "131072" ]]; then
+    unset MALLOC_MMAP_THRESHOLD_
+    INIR_LEGACY_MALLOC_ENV_CURRENT_PROCESS=1
+    ((repaired++)) || true
+  fi
+
+  if command -v systemctl >/dev/null 2>&1; then
+    local manager_env=""
+    manager_env="$(systemctl --user show-environment 2>/dev/null || true)"
+    if grep -qx 'MALLOC_ARENA_MAX=2' <<< "$manager_env"; then
+      if systemctl --user unset-environment MALLOC_ARENA_MAX >/dev/null 2>&1; then
+        ((repaired++)) || true
+      fi
+    fi
+    if grep -qx 'MALLOC_MMAP_THRESHOLD_=131072' <<< "$manager_env"; then
+      if systemctl --user unset-environment MALLOC_MMAP_THRESHOLD_ >/dev/null 2>&1; then
+        ((repaired++)) || true
+      fi
+    fi
+  fi
+
+  INIR_LEGACY_MALLOC_ENV_REPAIRED=$repaired
+  return 0
 }

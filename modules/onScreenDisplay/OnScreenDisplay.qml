@@ -31,7 +31,7 @@ Scope {
     }
     property string currentIndicator: "volume"
     property bool _syncingOpenStates: false
-    readonly property bool osdActive: GlobalStates.osdVolumeOpen || GlobalStates.osdBrightnessOpen || GlobalStates.osdMicOpen || GlobalStates.osdMediaOpen || GlobalStates.osdKeyboardLayoutOpen
+    readonly property bool osdActive: GlobalStates.osdVolumeOpen || GlobalStates.osdBrightnessOpen || GlobalStates.osdMicOpen || GlobalStates.osdMediaOpen || GlobalStates.osdKeyboardLayoutOpen || GlobalStates.osdConnectionOpen
     readonly property bool mediaOsdVisible: GlobalStates.osdMediaOpen
         && root.currentIndicator === "media"
     property bool _surfaceRetained: false
@@ -61,15 +61,22 @@ Scope {
             id: "keyboardLayout",
             sourceUrl: "indicators/KeyboardLayoutIndicator.qml"
         },
+        {
+            id: "connection",
+            sourceUrl: "indicators/ConnectionIndicator.qml"
+        },
     ]
+    // Notices that are not a level sit at the top, under the bar, whatever the bar's edge.
+    readonly property bool topNotice: root.currentIndicator === "keyboardLayout" || root.currentIndicator === "connection"
 
-    function setOpenStates(volume, brightness, mic, media, keyboardLayout) {
+    function setOpenStates(volume, brightness, mic, media, keyboardLayout, connection = false) {
         root._syncingOpenStates = true;
         GlobalStates.osdVolumeOpen = volume;
         GlobalStates.osdBrightnessOpen = brightness;
         GlobalStates.osdMicOpen = mic;
         GlobalStates.osdMediaOpen = media;
         GlobalStates.osdKeyboardLayoutOpen = keyboardLayout;
+        GlobalStates.osdConnectionOpen = connection;
         root._syncingOpenStates = false;
         root._reconcilePresentation()
     }
@@ -121,7 +128,8 @@ Scope {
             indicator === "brightness",
             indicator === "mic",
             indicator === "media",
-            indicator === "keyboardLayout"
+            indicator === "keyboardLayout",
+            indicator === "connection"
         );
         if (autoHide)
             osdTimeout.restart();
@@ -140,8 +148,8 @@ Scope {
 
     Timer {
         id: osdTimeout
-        interval: root.currentIndicator === "media" 
-            ? (Config.options?.osd?.timeout ?? 2000) + 1000  // Longer for media
+        interval: root.currentIndicator === "media" || root.currentIndicator === "connection"
+            ? (Config.options?.osd?.timeout ?? 2000) + 1500
             : (Config.options?.osd?.timeout ?? 2000)
         repeat: false
         running: false
@@ -267,6 +275,16 @@ Scope {
     }
 
     Connections {
+        target: DeviceEvents
+        function onHappened(event) {
+            if (GameMode.active)
+                return;
+            root.currentIndicator = "connection";
+            root.triggerOsd();
+        }
+    }
+
+    Connections {
         target: MprisController
         function onTrackChanged(reverse: bool): void {
             if (root.mediaOsdVisible)
@@ -295,10 +313,12 @@ Scope {
                 color: "transparent"
 
                 WlrLayershell.namespace: "quickshell:onScreenDisplay"
-            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.layer: root.topNotice
+                ? WlrLayer.Top
+                : WlrLayer.Overlay
             anchors {
-                top: root.currentIndicator === "keyboardLayout" ? true : !(Config.options?.bar?.bottom ?? false)
-                bottom: root.currentIndicator === "keyboardLayout" ? false : Config.options?.bar?.bottom ?? false
+                top: root.topNotice ? true : !(Config.options?.bar?.bottom ?? false)
+                bottom: root.topNotice ? false : Config.options?.bar?.bottom ?? false
             }
             mask: Region {
                 item: osdValuesWrapper
@@ -318,7 +338,7 @@ Scope {
                 id: columnLayout
                 anchors.horizontalCenter: parent.horizontalCenter
 
-                readonly property bool entersFromTop: root.currentIndicator === "keyboardLayout"
+                readonly property bool entersFromTop: root.topNotice
                     || !(Config.options?.bar?.bottom ?? false)
                 property real openProgress: root._visualOpen ? 1 : 0
                 transformOrigin: entersFromTop ? Item.Top : Item.Bottom
@@ -421,22 +441,6 @@ Scope {
             }
         }
     }
-    }
-
-    IpcHandler {
-        target: "osdVolume"
-
-        function trigger(): void {
-            root.triggerOsd();
-        }
-
-        function hide(): void {
-            root.hideOsd();
-        }
-
-        function toggle(): void {
-            GlobalStates.osdVolumeOpen = !GlobalStates.osdVolumeOpen;
-        }
     }
 
     Loader {

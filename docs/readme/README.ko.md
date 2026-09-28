@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="../images/iris-2.31-principal.webp" alt="iNiR 2.31 iRiS desktop" width="900">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.31.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -78,13 +78,27 @@ Wayland → GPU
 - **Wayland**: Linux 디스플레이 프로토콜 (새것, X11 대체)
 - **QML**: Qt의 선언적 UI 언어, iNiR은 이걸로 작성됨
 - **Material You**: 이미지에서 팔레트 생성하는 Google 색상 시스템 (자동 테마가 이렇게 작동함)
-- **ii / waffle**: 두 패널 스타일. ii = Material Design 느낌, waffle = Windows 11 느낌. `Super+Shift+W`로 전환
+- **ii / waffle / iRiS**: 세 가지 패널 패밀리. ii = Material Design, waffle = Windows 11, iRiS = 연 항목으로 변형되는 Island. `Super+Shift+W`로 전환
 
 </details>
 
 ---
 
 ## 스크린샷
+
+<details open>
+<summary><b>iRiS</b> — Island, 데스크톱 피스, 카드, Dock</summary>
+
+<p align="center">
+  <img src="../images/iris-2.31-desktop.webp" alt="iRiS desktop layout" width="49%">
+  <img src="../images/iris-2.31-card.webp" alt="iRiS card surface" width="49%">
+</p>
+
+<p align="center">
+  <img src="../images/iris-2.31-dock.webp" alt="iRiS Dock and edge layout" width="99%">
+</p>
+
+</details>
 
 <details open>
 <summary><b>Material ii</b> — 플로팅 바, 사이드바, Material Design 미학</summary>
@@ -110,9 +124,10 @@ Wayland → GPU
 
 ## 기능
 
-**두 가지 패널 패밀리**, `Super+Shift+W`로 즉시 전환:
-- **Material ii** — 플로팅 바, 사이드바, 독, 6가지 비주얼 스타일 (material, cards, aurora, inir, angel, zzz)
+**세 가지 패널 패밀리**, `Super+Shift+W`로 즉시 전환:
+- **Material ii** — 플로팅 바, 사이드바, 독, 9가지 글로벌 스타일 (material, cards, aurora, inir, angel, regalia, zzz, cookie, editorial)
 - **Waffle** — Windows 11 스타일 작업 표시줄, 시작 메뉴, 알림 센터, 액션 센터
+- **iRiS** — 새로운 Island 패밀리. 모든 화면 가장자리, Pieces, 어느 가장자리든 가능한 Dock, Glass, Themes, Studio
 
 **자동 테마** — 배경화면을 고르면 모든 것이 맞춰짐:
 - Material You를 통한 셸 색상, GTK3/4, Qt, 터미널, Firefox, Discord, SDDM으로 전파
@@ -128,7 +143,7 @@ Wayland → GPU
 
 배경화면을 고르면 전체 시스템이 따라감 — 셸, GTK/Qt 앱, 터미널, Firefox, Discord, SDDM 로그인 화면. 전부 자동.
 
-- **6가지 비주얼 스타일** — Material (솔리드), Cards, Aurora (유리 블러), iNiR (TUI 영감), Angel (네오 브루탈리즘), ZZZ
+- **9가지 글로벌 스타일** — Material (솔리드), Cards, Aurora (유리 블러), iNiR (TUI 영감), Angel (네오 브루탈리즘), Regalia, ZZZ, Cookie Shapes, Editorial
 - **배경화면 동적 색상** — Material You로 시스템 전체에 전파
 - **10개 터미널 도구 자동 테마** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **앱 테마 적용** — GTK3/4, Qt (plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
@@ -175,7 +190,7 @@ Wayland → GPU
 - **자동 업데이트** — `inir update`, 롤백·마이그레이션·사용자 변경 보존 포함
 - **잠금 화면** 및 **세션 화면** (로그아웃/재시작/종료/절전)
 - **Polkit 에이전트**, **화면 키보드**, **자동 시작 관리자**
-- **9개 언어** — 자동 감지, AI 지원 번역 생성
+- **17개 로케일** — 자동 감지, AI 지원 번역 생성
 - **야간 모드** — 예약 또는 수동
 - **날씨** — Open-Meteo, GPS·수동 좌표·도시명 지원
 - **배터리 관리** — 설정 가능한 임계값, 위험 수준에서 자동 절전
@@ -204,7 +219,7 @@ inir doctor                     # 자동 진단 및 수정
 inir update                     # pull + 마이그레이션 + 재시작
 ```
 
-**지원 배포판:** Arch (자동 설치 프로그램). 다른 배포판은 수동 설치 가능 — [PACKAGES.md](../PACKAGES.md) 참조.
+**배포판:** 주 대상은 Arch입니다. Fedora와 Debian/Ubuntu도 배포판 저장소를 먼저 사용하는 자동 의존성 설치 경로가 있습니다. 다른 배포판은 [패키지 목록](https://github.com/snowarch/inir/wiki/PACKAGES)의 일반 안내를 따르세요. iNiR에는 Qt 6.9 이상이 필요합니다: Ubuntu 25.10, Fedora 43, Debian testing 이후.
 
 | 방법 | 명령 |
 |--------|---------|
@@ -273,6 +288,7 @@ inir repair                     # doctor + 재시작 + 필터링된 로그 확�
 ## 크레딧
 
 - [**end-4**](https://github.com/end-4/dots-hyprland) — Hyprland용 오리지널 illogical-impulse
+- [**pctrade/end4-pC**](https://github.com/pctrade/end4-pC) — 가끔은 정말 좋은 아이디어를 내는 포크
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — 이 셸을 구동하는 프레임워크
 - [**Niri**](https://github.com/YaLTeR/niri) — 스크롤링 타일링 Wayland 컴포지터
 

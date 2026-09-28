@@ -19,6 +19,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import qs.services.deferred
 
 ShellRoot {
     id: root
@@ -60,9 +61,34 @@ ShellRoot {
     // Tier 4: T+1500ms (background features - updates, sync, content services)
     property var _shellUpdatesService
     property var _autostartService
+    property var _niriAnimationPresetsService
     property var _calendarSyncService
     property var _todoService
     property var _notepadService
+
+    function _ensureDeferredFamilyServices(): void {
+        const family = Config.options?.panelFamily ?? "ii"
+        root._gameModeService = GameMode
+        root._fontSyncService = FontSyncService
+        if (family !== "iris") {
+            root._windowPreviewService = WindowPreviewService
+            root._weatherService = Weather
+            root._voiceSearchService = VoiceSearch
+            root._cavaThemeService = CavaTheme
+        }
+    }
+
+    function _ensureLateFamilyServices(): void {
+        const family = Config.options?.panelFamily ?? "ii"
+        root._shellUpdatesService = ShellUpdates
+        root._autostartService = Autostart
+        root._niriAnimationPresetsService = NiriAnimationPresets
+        if (family !== "iris") {
+            root._calendarSyncService = CalendarSync
+            root._todoService = Todo
+            root._notepadService = Notepad
+        }
+    }
 
     // Boot phase timing (ms since epoch). Written to ~/.cache/inir/last-boot.json
     // when the deferred phase finishes. `inir status` reads this back to show users
@@ -134,12 +160,7 @@ ShellRoot {
         repeat: false
         onTriggered: {
             root._log("[Boot] T+" + (Date.now() - root._bootCompletedAt) + "ms: Tier 3 (display/interaction)");
-            root._gameModeService = GameMode;
-            root._windowPreviewService = WindowPreviewService;
-            root._weatherService = Weather;
-            root._voiceSearchService = VoiceSearch;
-            root._fontSyncService = FontSyncService;
-            root._cavaThemeService = CavaTheme;
+            root._ensureDeferredFamilyServices();
             Hyprsunset.load();
             GlobalStates.deferredPanelsReady = true;
             root._ensureScreenTimeService();
@@ -159,6 +180,10 @@ ShellRoot {
         target: Config
         function onConfigChanged(): void {
             root._ensureScreenTimeService()
+            if (GlobalStates.deferredPanelsReady)
+                root._ensureDeferredFamilyServices()
+            if (root._bootLateFeaturesAt > 0)
+                root._ensureLateFamilyServices()
         }
     }
 
@@ -171,11 +196,7 @@ ShellRoot {
         repeat: false
         onTriggered: {
             root._log("[Boot] T+" + (Date.now() - root._bootCompletedAt) + "ms: Tier 4 (background features)");
-            root._shellUpdatesService = ShellUpdates;
-            root._autostartService = Autostart;
-            root._calendarSyncService = CalendarSync;
-            root._todoService = Todo;
-            root._notepadService = Notepad;
+            root._ensureLateFamilyServices();
             root._bootLateFeaturesAt = Date.now();
             root._writeBootPhase();
         }
@@ -330,6 +351,64 @@ ShellRoot {
         }
     }
 
+    // Shared OSD entrypoint. Family OSDs observe GlobalStates, so the command
+    // remains available even while a family-specific visual tree is deferred.
+    IpcHandler {
+        target: "osdVolume"
+        function trigger(): void { GlobalStates.osdVolumeOpen = true }
+        function hide(): void { GlobalStates.osdVolumeOpen = false }
+        function toggle(): void { GlobalStates.osdVolumeOpen = !GlobalStates.osdVolumeOpen }
+    }
+
+    IpcHandler {
+        target: "osd"
+        function volume(): void { GlobalStates.osdVolumeOpen = true }
+        function brightness(): void { GlobalStates.osdBrightnessOpen = true }
+        function mic(): void { GlobalStates.osdMicOpen = true }
+        function keyboard(): void { GlobalStates.osdKeyboardLayoutOpen = true }
+        function media(action: string): string {
+            const normalized = action.length === 0 ? "play" : action
+            if (!["play", "pause", "next", "previous"].includes(normalized))
+                return "Unknown action: play, pause, next or previous"
+            GlobalStates.showMediaAction(normalized)
+            return normalized
+        }
+        function hide(): void {
+            GlobalStates.osdVolumeOpen = false
+            GlobalStates.osdBrightnessOpen = false
+            GlobalStates.osdMicOpen = false
+            GlobalStates.osdMediaOpen = false
+            GlobalStates.osdKeyboardLayoutOpen = false
+        }
+    }
+
+    // Keep the SDK command available without paying for widget discovery at
+    // startup. The singleton is instantiated only when this IPC is actually
+    // used (or a Settings/bar consumer requests it).
+    IpcHandler {
+        target: "customWidgets"
+        function reload(): string {
+            CustomWidgets.reload()
+            return "Reloading custom widgets..."
+        }
+        function list(): string {
+            return JSON.stringify(CustomWidgets.widgets.map(w => ({
+                id: w.id, name: w.name, version: w.version,
+                valid: w.valid, path: w.dirPath
+            })), null, 2)
+        }
+        function create(name: string): string {
+            if (!name || name.length === 0) return "Usage: inir customWidgets create <name>"
+            CustomWidgets.create(name)
+            return `Creating widget "${name}" in ${CustomWidgets.widgetsDir}/${name}/...`
+        }
+        function remove(widgetId: string): string {
+            if (!widgetId || widgetId.length === 0) return "Usage: inir customWidgets remove <id>"
+            CustomWidgets.remove(widgetId)
+            return `Removing widget "${widgetId}"...`
+        }
+    }
+
     // ii interaction routers stay resident with the root so commands remain
     // available while the heavier family panel tree is deferred.
     IpcHandler {
@@ -429,16 +508,20 @@ ShellRoot {
     IpcHandler {
         target: "taskview"
         function _isWaffle(): bool { return (Config.options?.panelFamily ?? "ii") === "waffle" }
+        function _isIris(): bool { return (Config.options?.panelFamily ?? "ii") === "iris" }
         function toggle(): void {
             if (_isWaffle()) { GlobalStates.waffleTaskViewOpen = !GlobalStates.waffleTaskViewOpen; return }
+            if (_isIris()) { GlobalStates.searchOpen = !GlobalStates.searchOpen; return }
             if (CompositorService.isNiri) GlobalStates.toggleOrbit("")
         }
         function close(): void {
             if (_isWaffle()) { GlobalStates.waffleTaskViewOpen = false; return }
+            if (_isIris()) { GlobalStates.searchOpen = false; return }
             if (GlobalStates.overviewMode === "orbit") GlobalStates.closeOverview()
         }
         function open(): void {
             if (_isWaffle()) { GlobalStates.waffleTaskViewOpen = true; return }
+            if (_isIris()) { GlobalStates.searchOpen = true; return }
             if (CompositorService.isNiri) GlobalStates.openOrbit("")
         }
     }
@@ -487,24 +570,38 @@ ShellRoot {
     IpcHandler {
         target: "settings"
         function open(): void {
-            const isWaffle = Config.options?.panelFamily === "waffle"
-                && Config.options?.waffles?.settings?.useMaterialStyle !== true
-
-            if (isWaffle) {
-                // Waffle always opens its own Win11-style settings window
-                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
-                    "waffle-settings-window"])
-            } else if (Config.options?.settingsUi?.overlayMode ?? false) {
-                // ii overlay mode — toggle inline panel
-                GlobalStates.settingsOverlayOpen = !GlobalStates.settingsOverlayOpen
-            } else {
-                // ii window mode (default) — launch separate process
-                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
-                    "settings-window"])
-            }
+            GlobalStates.openSettings()
         }
         function toggle(): void {
-            open()
+            GlobalStates.toggleSettings()
+        }
+        function openOverlay(): void {
+            Config.setNestedValue("settingsUi.overlayMode", true)
+            GlobalStates.settingsOverlayOpen = true
+        }
+        function openOverlayAt(index: int): void {
+            if (index >= 0)
+                GlobalStates.settingsOverlayRequestedPage = index
+            Config.setNestedValue("settingsUi.overlayMode", true)
+            GlobalStates.settingsOverlayOpen = true
+        }
+        function openWindowAt(index: int): void {
+            const args = ["/usr/bin/env"]
+            if (index >= 0)
+                args.push(`QS_SETTINGS_PAGE=${index}`)
+            args.push(Quickshell.shellPath("scripts/inir"), "settings-window")
+            Quickshell.execDetached(args)
+            Config.setNestedValue("settingsUi.overlayMode", false)
+            GlobalStates.settingsOverlayOpen = false
+        }
+        function setOverlayStyle(style: string, index: int): void {
+            if (index >= 0)
+                GlobalStates.settingsOverlayRequestedPage = index
+            Config.setNestedValues({
+                "settingsUi.overlayMode": true,
+                "settingsUi.overlayStyle": style
+            })
+            GlobalStates.settingsOverlayOpen = true
         }
     }
 
@@ -519,24 +616,33 @@ ShellRoot {
         function page(index: int): void {
             GlobalStates.openSettingsPage(index)
         }
+        function section(index: int, name: string): void {
+            GlobalStates.openSettingsPage(index, name)
+        }
         function count(): int { return SettingsPageRegistry.pages.length }
         function current(): int { return GlobalStates.settingsOverlayCurrentPage }
     }
 
     // Settings overlay panel (loaded only when overlay mode is enabled).
-    // overlayStyle picks the chrome; two sibling loaders instead of a
-    // conditional `component:` so only the selected one is ever constructed.
-    // Any unrecognised style falls back to the nav rail.
+    // overlayStyle picks the chrome; sibling loaders keep only the selected
+    // presentation alive. Any unrecognised style falls back to the nav rail.
     LazyLoader {
-        active: Config.ready && (Config.options?.settingsUi?.overlayMode ?? false)
+        active: Config.ready && (Config.options?.panelFamily ?? "ii") !== "iris" && (Config.options?.settingsUi?.overlayMode ?? false)
             && (Config.options?.settingsUi?.overlayStyle ?? "rail") !== "focus"
+            && (Config.options?.settingsUi?.overlayStyle ?? "rail") !== "editorial"
         component: SettingsOverlay {}
     }
 
     LazyLoader {
-        active: Config.ready && (Config.options?.settingsUi?.overlayMode ?? false)
+        active: Config.ready && (Config.options?.panelFamily ?? "ii") !== "iris" && (Config.options?.settingsUi?.overlayMode ?? false)
             && (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
         component: SettingsFocus {}
+    }
+
+    LazyLoader {
+        active: Config.ready && (Config.options?.panelFamily ?? "ii") !== "iris" && (Config.options?.settingsUi?.overlayMode ?? false)
+            && (Config.options?.settingsUi?.overlayStyle ?? "rail") === "editorial"
+        component: SettingsEditorial {}
     }
 
     // === Panel Loaders ===
@@ -555,7 +661,7 @@ ShellRoot {
 
     LazyLoader {
         active: Config.ready
-            && (Config.options?.panelFamily ?? "ii") !== "waffle"
+            && (Config.options?.panelFamily ?? "ii") === "ii"
             && !root.iiAltSwitcherNoVisual
         source: "modules/altSwitcher/AltSwitcher.qml"
     }
@@ -569,6 +675,7 @@ ShellRoot {
     // handler per target (region, tiling, wallpaperSelector, coverflowSelector).
     // One owner here is valid whichever family is loaded.
     LazyLoader { active: Config.ready; source: "modules/regionSelector/RegionSelectorRouter.qml" }
+    LazyLoader { active: Config.ready; source: "modules/japaneseLookup/JapaneseLookup.qml" }
     LazyLoader { active: Config.ready; source: "modules/tilingOverlay/TilingOverlayRouter.qml" }
     LazyLoader { active: Config.ready; source: "modules/wallpaperSelector/WallpaperSelectorRouter.qml" }
 
@@ -587,6 +694,15 @@ ShellRoot {
     IpcHandler {
         target: "overlay"
         function toggle(): void { GlobalStates.overlayOpen = !GlobalStates.overlayOpen }
+        function tool(identifier: string, action: string): string {
+            const state = Persistent.states.overlay
+            if (!state || typeof state[identifier] !== "object") return "Unknown tool"
+            const open = state.open.includes(identifier)
+            const wanted = action === "on" ? true : action === "off" ? false : !open
+            if (wanted && !open) state.open.push(identifier)
+            else if (!wanted && open) state.open = state.open.filter(id => id !== identifier)
+            return wanted ? "on" : "off"
+        }
     }
 
     IpcHandler {
@@ -606,41 +722,55 @@ ShellRoot {
     IpcHandler {
         target: "clipboard"
         function _isWaffle(): bool { return (Config.options?.panelFamily ?? "ii") === "waffle" }
+        function _isIris(): bool { return (Config.options?.panelFamily ?? "ii") === "iris" }
+        function _openIrisClipboard(): void {
+            LauncherSearch.ensurePrefix(Config.options?.search?.prefix?.clipboard ?? ";")
+            GlobalStates.searchOpen = true
+        }
         function open(): void {
             if (_isWaffle()) GlobalStates.waffleClipboardOpen = true
+            else if (_isIris()) _openIrisClipboard()
             else GlobalStates.clipboardOpen = true
         }
         function close(): void {
             if (_isWaffle()) GlobalStates.waffleClipboardOpen = false
+            else if (_isIris()) GlobalStates.searchOpen = false
             else GlobalStates.clipboardOpen = false
         }
         function toggle(): void {
             if (_isWaffle()) GlobalStates.waffleClipboardOpen = !GlobalStates.waffleClipboardOpen
+            else if (_isIris()) {
+                if (GlobalStates.searchOpen) GlobalStates.searchOpen = false
+                else _openIrisClipboard()
+            }
             else GlobalStates.clipboardOpen = !GlobalStates.clipboardOpen
         }
     }
 
     IpcHandler {
         target: "overview"
-        function _isWaffle(): bool { return (Config.options?.panelFamily ?? "ii") === "waffle" }
+        function _usesPalette(): bool {
+            const family = Config.options?.panelFamily ?? "ii"
+            return family === "waffle" || family === "iris"
+        }
         function _usePillLauncher(): bool {
-            return !_isWaffle()
+            return (Config.options?.panelFamily ?? "ii") === "ii"
                 && (Config.options?.bar?.appearanceStyle ?? "classic") === "pill"
                 && (Config.options?.bar?.pill?.superSpaceLauncher ?? "overview") === "pill"
         }
         function toggle(): void {
-            if (_isWaffle()) { GlobalStates.searchOpen = !GlobalStates.searchOpen; return }
+            if (_usesPalette()) { GlobalStates.searchOpen = !GlobalStates.searchOpen; return }
             if (_usePillLauncher()) { GlobalStates.pillSurfaceCommand("toggle", "launcher"); return }
             GlobalStates.overviewSearchPrefix = ""
             GlobalStates.toggleOverview("")
         }
         function close(): void {
-            if (_isWaffle()) { GlobalStates.searchOpen = false; return }
+            if (_usesPalette()) { GlobalStates.searchOpen = false; return }
             if (_usePillLauncher()) { GlobalStates.pillSurfaceCommand("close", "launcher"); return }
             GlobalStates.overviewOpen = false
         }
         function open(): void {
-            if (_isWaffle()) { GlobalStates.searchOpen = true; return }
+            if (_usesPalette()) { GlobalStates.searchOpen = true; return }
             if (_usePillLauncher()) { GlobalStates.pillSurfaceCommand("open", "launcher"); return }
             GlobalStates.overviewSearchPrefix = ""
             GlobalStates.openOverview("")
@@ -648,7 +778,7 @@ ShellRoot {
         function toggleReleaseInterrupt(): void { GlobalStates.superReleaseMightTrigger = false }
         function clipboardToggle(): void {
             const prefix = Config.options?.search?.prefix?.clipboard ?? ";"
-            if (_isWaffle()) {
+            if (_usesPalette()) {
                 LauncherSearch.ensurePrefix(prefix)
                 GlobalStates.searchOpen = true
                 return
@@ -662,7 +792,7 @@ ShellRoot {
         }
         function actionOpen(): void {
             const prefix = Config.options?.search?.prefix?.action ?? "/"
-            if (_isWaffle()) {
+            if (_usesPalette()) {
                 LauncherSearch.ensurePrefix(prefix)
                 GlobalStates.searchOpen = true
                 return
@@ -673,15 +803,15 @@ ShellRoot {
     }
 
     LazyLoader {
-        loading: Config.ready && (Config.options?.panelFamily ?? "ii") !== "waffle"
-        activeAsync: Config.ready && (Config.options?.panelFamily ?? "ii") !== "waffle"
+        loading: Config.ready && (Config.options?.panelFamily ?? "ii") === "ii"
+        activeAsync: Config.ready && (Config.options?.panelFamily ?? "ii") === "ii"
         source: "modules/ii/critical/ShellIiCriticalPanels.qml"
     }
 
     LazyLoader {
         readonly property bool enabled: Config.ready
             && GlobalStates.deferredPanelsReady
-            && (Config.options?.panelFamily ?? "ii") !== "waffle"
+            && (Config.options?.panelFamily ?? "ii") === "ii"
         loading: enabled
         activeAsync: enabled
         source: "ShellIiPanels.qml"
@@ -702,6 +832,21 @@ ShellRoot {
         source: "ShellWafflePanels.qml"
     }
 
+    LazyLoader {
+        loading: Config.ready && (Config.options?.panelFamily ?? "ii") === "iris"
+        activeAsync: Config.ready && (Config.options?.panelFamily ?? "ii") === "iris"
+        source: "modules/iris/critical/ShellIrisCriticalPanels.qml"
+    }
+
+    LazyLoader {
+        readonly property bool enabled: Config.ready
+            && GlobalStates.deferredPanelsReady
+            && (Config.options?.panelFamily ?? "ii") === "iris"
+        loading: enabled
+        activeAsync: enabled
+        source: "ShellIrisPanels.qml"
+    }
+
     // Close confirmation dialog (always loaded, handles IPC)
     LazyLoader { active: Config.ready; source: "modules/closeConfirm/CloseConfirm.qml" }
 
@@ -712,7 +857,7 @@ ShellRoot {
     // AltSwitcher controller selection lives above the family loaders. Waffle
     // receives the lightweight shared router; ii receives either that controller
     // or the full visual tree according to its no-visual setting.
-    property list<string> families: ["ii", "waffle"]
+    property list<string> families: ["ii", "waffle", "iris"]
     property var panelFamilies: ({
         "ii": [
             "iiBar", "iiBackground", "iiBackdrop", "iiBootGreeting", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock",
@@ -730,6 +875,11 @@ ShellRoot {
             "iiBootGreeting", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
             "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard",
             "iiMascotCompanion"
+        ],
+        "iris": [
+            "irisBar", "irisBackground", "irisPalette", "irisControlCenter",
+            "irisNotificationPopup", "irisOnScreenDisplay", "irisSessionScreen",
+            "irisLock", "irisPolkit"
         ]
     })
 
@@ -767,9 +917,14 @@ ShellRoot {
 
     function cyclePanelFamily() {
         const currentFamily = Config.options?.panelFamily ?? "ii"
+        const wanted = Array.from(Config.options?.familyCycle ?? families)
+        const order = wanted.filter((family, index) => families.includes(family) && wanted.indexOf(family) === index)
+        if (order.length === 0) return
+        const at = order.indexOf(currentFamily)
+        const nextFamily = order[(at + 1) % order.length]
+        if (nextFamily === currentFamily) return
         const currentIndex = families.indexOf(currentFamily)
-        const nextIndex = (currentIndex + 1) % families.length
-        const nextFamily = families[nextIndex]
+        const nextIndex = families.indexOf(nextFamily)
 
         // Determine direction: ii -> waffle = left, waffle -> ii = right
         const direction = nextIndex > currentIndex ? "left" : "right"
@@ -806,6 +961,7 @@ ShellRoot {
 
         _transitionInProgress = true
         _pendingFamily = targetFamily
+        GlobalStates.familyTransitionTarget = targetFamily
         GlobalStates.familyTransitionDirection = direction
         GlobalStates.familyTransitionActive = true
     }
@@ -821,6 +977,7 @@ ShellRoot {
     function finishFamilyTransition() {
         _transitionInProgress = false
         GlobalStates.familyTransitionActive = false
+        GlobalStates.familyTransitionTarget = ""
     }
 
     // Family transition overlay stays absent outside a real family switch, so

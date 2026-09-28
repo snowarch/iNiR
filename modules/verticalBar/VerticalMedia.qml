@@ -72,7 +72,7 @@ MouseArea {
         implicitSize: 20
 
         lineWidth: Appearance.rounding.unsharpen
-        value: activePlayer?.position / activePlayer?.length
+        value: MprisController.lengthOf(activePlayer) > 0 ? MprisController.positionOf(activePlayer) / MprisController.lengthOf(activePlayer) : 0
         colPrimary: Appearance.colors.colOnLayer0
         enableAnimation: false
 

@@ -20,13 +20,15 @@ Scope {
 
     readonly property bool waffleFamilyActive:
         (Config.options?.panelFamily ?? "ii") === "waffle"
+    readonly property bool iiFamilyActive:
+        (Config.options?.panelFamily ?? "ii") === "ii"
     readonly property string iiPreset:
         Config.options?.altSwitcher?.preset ?? "default"
     readonly property bool iiNoVisual:
         (Config.options?.altSwitcher?.noVisualUi ?? false)
         && root.iiPreset !== "skew"
     readonly property bool routeToVisualIi:
-        !root.waffleFamilyActive && !root.iiNoVisual
+        root.iiFamilyActive && !root.iiNoVisual
     readonly property var waffleOptions:
         Config.options?.waffles?.altSwitcher ?? ({})
     readonly property string wafflePreset: waffleOptions.preset ?? "thumbnails"

@@ -597,6 +597,108 @@ install-uv(){
   log_success "uv installed"
 }
 
+ytmusic-deno-compatible(){
+  local deno_bin="${1:-}"
+  [[ -n "$deno_bin" && -x "$deno_bin" ]] || return 1
+
+  local deno_version
+  deno_version="$($deno_bin --version 2>/dev/null | awk 'NR == 1 { print $2; exit }')"
+  [[ -n "$deno_version" ]] || return 1
+
+  python3 - "$deno_version" <<'PY'
+import sys
+
+parts = sys.argv[1].split('.')
+try:
+    version = tuple(int(part) for part in parts[:3])
+except ValueError:
+    raise SystemExit(1)
+version += (0,) * (3 - len(version))
+raise SystemExit(0 if version >= (2, 3, 0) else 1)
+PY
+}
+
+ensure-ytmusic-js-runtime(){
+  local deno_bin
+  deno_bin="$(command -v deno 2>/dev/null || true)"
+  if ytmusic-deno-compatible "$deno_bin"; then
+    log_success "YT Music JS runtime ready ($(deno --version 2>/dev/null | head -1))"
+    return 0
+  fi
+
+  # yt-dlp's current YouTube extractor requires an external JS runtime. Deno is
+  # the upstream-recommended runtime; install a verified standalone binary into
+  # the user's normal executable directory when the distro cannot provide a
+  # sufficiently recent package. This does not modify shell rc files.
+  local target_arch
+  case "$(uname -m)" in
+    x86_64|amd64) target_arch="x86_64-unknown-linux-gnu" ;;
+    aarch64|arm64) target_arch="aarch64-unknown-linux-gnu" ;;
+    *)
+      log_warning "YT Music: unsupported architecture for Deno fallback: $(uname -m)"
+      return 1
+      ;;
+  esac
+
+  local latest_version
+  latest_version="$(curl -fsSL --max-time 15 https://dl.deno.land/release-latest.txt 2>/dev/null || true)"
+  if [[ ! "$latest_version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    log_warning "YT Music: could not resolve current Deno release"
+    return 1
+  fi
+
+  local asset="deno-${target_arch}.zip"
+  local release_base="https://github.com/denoland/deno/releases/download/${latest_version}"
+  local tmp_dir
+  tmp_dir="$(mktemp -d)" || return 1
+
+  if ! curl -fsSL --max-time 90 -o "${tmp_dir}/${asset}" "${release_base}/${asset}" \
+      || ! curl -fsSL --max-time 30 -o "${tmp_dir}/${asset}.sha256sum" "${release_base}/${asset}.sha256sum"; then
+    rm -rf "$tmp_dir"
+    log_warning "YT Music: could not download Deno ${latest_version}"
+    return 1
+  fi
+
+  if ! python3 - "$tmp_dir" "$asset" <<'PY'
+import hashlib
+import pathlib
+import sys
+import zipfile
+
+root = pathlib.Path(sys.argv[1])
+asset = sys.argv[2]
+archive = root / asset
+checksum_file = root / f"{asset}.sha256sum"
+
+expected = checksum_file.read_text(encoding="utf-8").split()[0].lower()
+actual = hashlib.sha256(archive.read_bytes()).hexdigest()
+if actual != expected:
+    raise SystemExit("Deno checksum mismatch")
+
+with zipfile.ZipFile(archive) as zf:
+    info = zf.getinfo("deno")
+    with zf.open(info) as src, (root / "deno").open("wb") as dst:
+        dst.write(src.read())
+PY
+  then
+    rm -rf "$tmp_dir"
+    log_warning "YT Music: Deno archive verification failed"
+    return 1
+  fi
+
+  mkdir -p "$XDG_BIN_HOME"
+  install -m 0755 "${tmp_dir}/deno" "${XDG_BIN_HOME}/deno"
+  rm -rf "$tmp_dir"
+
+  if ytmusic-deno-compatible "${XDG_BIN_HOME}/deno"; then
+    log_success "YT Music JS runtime installed (${latest_version#v})"
+    return 0
+  fi
+
+  log_warning "YT Music: Deno installation did not produce a usable runtime"
+  return 1
+}
+
 #####################################################################################
 # Config File Setup (All distros)
 #####################################################################################
@@ -667,11 +769,20 @@ setup-environment-config(){
 
   log_info "Setting up environment variables..."
 
-  # Detect Qt platform theme: use kde if Plasma is installed, qt6ct otherwise
+  # Detect the actual KDE Qt platform-theme provider. iNiR does not require a
+  # Plasma desktop session; plasma-integration is intentionally supported as a
+  # standalone dependency under Niri.
   local qt_theme="qt6ct"
-  if pacman -Q plasma-desktop &>/dev/null 2>&1 || pacman -Q plasma-workspace &>/dev/null 2>&1 || \
-     dpkg -l plasma-desktop 2>/dev/null | grep -q '^ii' || \
-     rpm -q plasma-desktop &>/dev/null 2>&1; then
+  local qt_plugin_dir=""
+  if command -v qtpaths6 >/dev/null 2>&1; then
+    qt_plugin_dir="$(qtpaths6 --plugin-dir 2>/dev/null || true)"
+  elif command -v qtpaths >/dev/null 2>&1; then
+    qt_plugin_dir="$(qtpaths --plugin-dir 2>/dev/null || true)"
+  fi
+  if [[ -n "$qt_plugin_dir" && -f "$qt_plugin_dir/platformthemes/KDEPlasmaPlatformTheme6.so" ]] || \
+     [[ -f /usr/lib/qt6/plugins/platformthemes/KDEPlasmaPlatformTheme6.so ]] || \
+     [[ -f /usr/lib64/qt6/plugins/platformthemes/KDEPlasmaPlatformTheme6.so ]] || \
+     [[ -f /usr/lib/x86_64-linux-gnu/qt6/plugins/platformthemes/KDEPlasmaPlatformTheme6.so ]]; then
     qt_theme="kde"
   fi
 

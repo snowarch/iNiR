@@ -1,0 +1,528 @@
+{
+  "default": "snappy",
+  "presets": [
+    {
+      "id": "snappy",
+      "name": "Snappy",
+      "description": "Lands at once, then settles softly.",
+      "keywords": [
+        "fast",
+        "quick",
+        "responsive",
+        "default"
+      ],
+      "types": {
+        "workspace-switch": {
+          "spring": [
+            1.0,
+            1000,
+            0.0001
+          ]
+        },
+        "window-open": {
+          "duration-ms": 220,
+          "curve": "cubic-bezier",
+          "curve-args": [
+            0.05,
+            0.7,
+            0.1,
+            1
+          ]
+        },
+        "window-close": {
+          "duration-ms": 160,
+          "curve": "cubic-bezier",
+          "curve-args": [
+            0.2,
+            0,
+            0,
+            1
+          ]
+        },
+        "horizontal-view-movement": {
+          "spring": [
+            1.0,
+            900,
+            0.0001
+          ]
+        },
+        "window-movement": {
+          "spring": [
+            0.92,
+            850,
+            0.0001
+          ]
+        },
+        "window-resize": {
+          "spring": [
+            1.0,
+            850,
+            0.0001
+          ]
+        },
+        "config-notification-open-close": {
+          "spring": [
+            0.7,
+            1000,
+            0.001
+          ]
+        },
+        "screenshot-ui-open": {
+          "duration-ms": 200,
+          "curve": "cubic-bezier",
+          "curve-args": [
+            0.05,
+            0.7,
+            0.1,
+            1
+          ]
+        },
+        "overview-open-close": {
+          "spring": [
+            1.0,
+            900,
+            0.0001
+          ]
+        },
+        "recent-windows-close": {
+          "spring": [
+            1.0,
+            1000,
+            0.001
+          ]
+        }
+      }
+    },
+    {
+      "id": "niri",
+      "name": "Niri",
+      "description": "Niri's own timing, untouched.",
+      "keywords": [
+        "stock",
+        "vanilla",
+        "original",
+        "upstream"
+      ],
+      "types": {
+        "workspace-switch": {
+          "spring": [
+            1.0,
+            1000,
+            0.0001
+          ]
+        },
+        "window-open": {
+          "duration-ms": 150,
+          "curve": "ease-out-expo"
+        },
+        "window-close": {
+          "duration-ms": 150,
+          "curve": "ease-out-quad"
+        },
+        "horizontal-view-movement": {
+          "spring": [
+            1.0,
+            800,
+            0.0001
+          ]
+        },
+        "window-movement": {
+          "spring": [
+            1.0,
+            800,
+            0.0001
+          ]
+        },
+        "window-resize": {
+          "spring": [
+            1.0,
+            800,
+            0.0001
+          ]
+        },
+        "config-notification-open-close": {
+          "spring": [
+            0.6,
+            1000,
+            0.001
+          ]
+        },
+        "screenshot-ui-open": {
+          "duration-ms": 200,
+          "curve": "ease-out-quad"
+        },
+        "overview-open-close": {
+          "spring": [
+            1.0,
+            800,
+            0.0001
+          ]
+        },
+        "recent-windows-close": {
+          "spring": [
+            1.0,
+            800,
+            0.001
+          ]
+        }
+      }
+    },
+    {
+      "id": "material",
+      "name": "Material",
+      "description": "Windows rise into place and sink away.",
+      "keywords": [
+        "material you",
+        "slide",
+        "rise",
+        "shader",
+        "android"
+      ],
+      "credit": "cnvuls (PR #205)",
+      "types": {
+        "workspace-switch": {
+          "spring": [
+            0.88,
+            750,
+            0.0001
+          ]
+        },
+        "window-open": {
+          "duration-ms": 280,
+          "curve": "cubic-bezier",
+          "curve-args": [
+            0.05,
+            0.7,
+            0.1,
+            1
+          ],
+          "custom-shader": "vec4 open_color(vec3 coords_geo, vec3 size_geo) {\n    float p = niri_clamped_progress;\n\n    // Slight up-to-down settle.\n    float slide_px = (1.0 - p) * 60.0;\n    float slide_geo = slide_px / max(size_geo.x, 1.0);\n\n    // Very subtle scale-up into place.\n    float scale = 0.985 + 0.015 * p;\n\n    vec2 uv = coords_geo.xy;\n    uv -= vec2(0.5, 0.5);\n    uv /= scale;\n    uv += vec2(0.5, 0.5);\n\n    uv.y -= slide_geo;\n\n    vec3 coords_tex = niri_geo_to_tex * vec3(uv, 1.0);\n    vec4 color = texture2D(niri_tex, coords_tex.st);\n\n    // Gentle fade-in.\n    color *= p;\n\n    return color;\n}\n"
+        },
+        "window-close": {
+          "duration-ms": 200,
+          "curve": "cubic-bezier",
+          "curve-args": [
+            0.3,
+            0,
+            0.8,
+            0.15
+          ],
+          "custom-shader": "vec4 close_color(vec3 coords_geo, vec3 size_geo) {\n    float p = niri_clamped_progress;\n    float inv = 1.0 - p;\n\n    // Slight downward departure.\n    float slide_px = p * 40.0;\n    float slide_geo = slide_px / max(size_geo.x, 1.0);\n\n    // Tiny scale-down on exit.\n    float scale = 1.0 - 0.012 * p;\n\n    vec2 uv = coords_geo.xy;\n    uv -= vec2(0.5, 0.5);\n    uv /= scale;\n    uv += vec2(0.5, 0.5);\n\n    uv.y -= slide_geo;\n\n    vec3 coords_tex = niri_geo_to_tex * vec3(uv, 1.0);\n    vec4 color = texture2D(niri_tex, coords_tex.st);\n\n    color *= inv;\n    return color;\n}\n"
+        },
+        "horizontal-view-movement": {
+          "spring": [
+            0.82,
+            750,
+            0.0001
+          ]
+        },
+        "window-movement": {
+          "spring": [
+            0.78,
+            850,
+            0.0001
+          ]
+        },
+        "window-resize": {
+          "spring": [
+            0.82,
+            750,
+            0.0001
+          ]
+        },
+        "config-notification-open-close": {
+          "spring": [
+            0.7,
+            1000,
+            0.001
+          ]
+        },
+        "screenshot-ui-open": {
+          "duration-ms": 250,
+          "curve": "cubic-bezier",
+          "curve-args": [
+            0.2,
+            0,
+            0,
+            1
+          ]
+        },
+        "overview-open-close": {
+          "spring": [
+            0.82,
+            750,
+            0.0001
+          ]
+        },
+        "recent-windows-close": {
+          "spring": [
+            1.0,
+            900,
+            0.001
+          ]
+        }
+      }
+    },
+    {
+      "id": "bouncy",
+      "name": "Bouncy",
+      "description": "Overshoots a little, then springs back.",
+      "keywords": [
+        "bounce",
+        "spring",
+        "playful",
+        "elastic",
+        "wobble"
+      ],
+      "types": {
+        "workspace-switch": {
+          "spring": [
+            0.78,
+            800,
+            0.0001
+          ]
+        },
+        "window-open": {
+          "duration-ms": 320,
+          "curve": "cubic-bezier",
+          "curve-args": [
+            0.34,
+            1.56,
+            0.64,
+            1
+          ]
+        },
+        "window-close": {
+          "duration-ms": 160,
+          "curve": "cubic-bezier",
+          "curve-args": [
+            0.2,
+            0,
+            0,
+            1
+          ]
+        },
+        "horizontal-view-movement": {
+          "spring": [
+            0.8,
+            800,
+            0.0001
+          ]
+        },
+        "window-movement": {
+          "spring": [
+            0.72,
+            700,
+            0.0001
+          ]
+        },
+        "window-resize": {
+          "spring": [
+            0.85,
+            800,
+            0.0001
+          ]
+        },
+        "config-notification-open-close": {
+          "spring": [
+            0.55,
+            900,
+            0.001
+          ]
+        },
+        "screenshot-ui-open": {
+          "duration-ms": 260,
+          "curve": "cubic-bezier",
+          "curve-args": [
+            0.34,
+            1.56,
+            0.64,
+            1
+          ]
+        },
+        "overview-open-close": {
+          "spring": [
+            0.8,
+            800,
+            0.0001
+          ]
+        },
+        "recent-windows-close": {
+          "spring": [
+            0.85,
+            900,
+            0.001
+          ]
+        }
+      }
+    },
+    {
+      "id": "gentle",
+      "name": "Gentle",
+      "description": "Slower and smooth, never in a hurry.",
+      "keywords": [
+        "slow",
+        "smooth",
+        "calm",
+        "relaxed",
+        "soft"
+      ],
+      "types": {
+        "workspace-switch": {
+          "spring": [
+            1.0,
+            500,
+            0.0001
+          ]
+        },
+        "window-open": {
+          "duration-ms": 320,
+          "curve": "cubic-bezier",
+          "curve-args": [
+            0.05,
+            0.7,
+            0.1,
+            1
+          ]
+        },
+        "window-close": {
+          "duration-ms": 220,
+          "curve": "cubic-bezier",
+          "curve-args": [
+            0.2,
+            0,
+            0,
+            1
+          ]
+        },
+        "horizontal-view-movement": {
+          "spring": [
+            1.0,
+            500,
+            0.0001
+          ]
+        },
+        "window-movement": {
+          "spring": [
+            1.0,
+            500,
+            0.0001
+          ]
+        },
+        "window-resize": {
+          "spring": [
+            1.0,
+            500,
+            0.0001
+          ]
+        },
+        "config-notification-open-close": {
+          "spring": [
+            0.8,
+            700,
+            0.001
+          ]
+        },
+        "screenshot-ui-open": {
+          "duration-ms": 280,
+          "curve": "cubic-bezier",
+          "curve-args": [
+            0.05,
+            0.7,
+            0.1,
+            1
+          ]
+        },
+        "overview-open-close": {
+          "spring": [
+            1.0,
+            550,
+            0.0001
+          ]
+        },
+        "recent-windows-close": {
+          "spring": [
+            1.0,
+            600,
+            0.001
+          ]
+        }
+      }
+    },
+    {
+      "id": "instant",
+      "name": "Instant",
+      "description": "Barely there: motion only as a hint.",
+      "keywords": [
+        "instant",
+        "minimal",
+        "snappy",
+        "performance",
+        "reduced motion"
+      ],
+      "types": {
+        "workspace-switch": {
+          "spring": [
+            1.0,
+            1600,
+            0.0001
+          ]
+        },
+        "window-open": {
+          "duration-ms": 120,
+          "curve": "ease-out-expo"
+        },
+        "window-close": {
+          "duration-ms": 90,
+          "curve": "ease-out-quad"
+        },
+        "horizontal-view-movement": {
+          "spring": [
+            1.0,
+            1600,
+            0.0001
+          ]
+        },
+        "window-movement": {
+          "spring": [
+            1.0,
+            1600,
+            0.0001
+          ]
+        },
+        "window-resize": {
+          "spring": [
+            1.0,
+            1400,
+            0.0001
+          ]
+        },
+        "config-notification-open-close": {
+          "spring": [
+            1.0,
+            1400,
+            0.001
+          ]
+        },
+        "screenshot-ui-open": {
+          "duration-ms": 120,
+          "curve": "ease-out-expo"
+        },
+        "overview-open-close": {
+          "spring": [
+            1.0,
+            1400,
+            0.0001
+          ]
+        },
+        "recent-windows-close": {
+          "spring": [
+            1.0,
+            1600,
+            0.001
+          ]
+        }
+      }
+    }
+  ]
+}

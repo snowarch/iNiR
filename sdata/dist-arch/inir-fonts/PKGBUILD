@@ -29,12 +29,12 @@ depends=(
 # matugen (now in official repos)
 # otf-space-grotesk
 # ttf-gabarito-git (default title font)
-# ttf-jetbrains-mono-nerd
-# ttf-material-symbols-variable-git
+# ttf-jetbrains-mono-nerd (official extra)
+# ttf-material-symbols-variable (official extra)
 # ttf-oxanium (ZZZ and Angel styles)
 # ttf-readex-pro
 # ttf-roboto-flex (CRITICAL - default UI font)
 # ttf-rubik-vf
 # ttf-twemoji
-# adw-gtk-theme-git
-# capitaine-cursors
+# adw-gtk-theme (official extra)
+# capitaine-cursors (official extra)

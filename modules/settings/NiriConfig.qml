@@ -139,6 +139,7 @@ ContentPage {
     })
     property string lastActionError: ""
     property string lastActionInfo: ""
+    property bool successFeedbackVisible: false
 
     property bool inputReady: false
     property bool layoutReady: false
@@ -308,6 +309,11 @@ ContentPage {
     function loadValidation() { validationProcess.running = true }
     function loadCustomizations() { customizationsProcess.running = true }
 
+    Connections {
+        target: NiriAnimationPresets
+        function onApplied(id: string): void { root.loadAnimations() }
+    }
+
     function setProcessError(key, message) {
         processErrors = Object.assign({}, processErrors, { [key]: message })
     }
@@ -317,6 +323,19 @@ ContentPage {
             message = ""
         lastActionError = ""
         lastActionInfo = message
+        successFeedbackVisible = message.length > 0
+        if (successFeedbackVisible)
+            successFeedbackTimer.restart()
+    }
+
+    Timer {
+        id: successFeedbackTimer
+        interval: 1600
+        repeat: false
+        onTriggered: {
+            root.successFeedbackVisible = false
+            root.lastActionInfo = ""
+        }
     }
 
     function handleJsonResult(rawText, processKey, onSuccess) {
@@ -338,6 +357,24 @@ ContentPage {
             console.warn(`[NiriConfig] ${processKey} parse failure:`, e)
             setProcessError(processKey, parseError)
         }
+    }
+
+    function commandErrorText(stdoutText, stderrText, fallback) {
+        const raw = String(stderrText || stdoutText || "").trim()
+        if (!raw.length)
+            return fallback
+        try {
+            const parsed = JSON.parse(raw)
+            if (parsed?.error)
+                return String(parsed.error)
+            if (Array.isArray(parsed?.results)) {
+                const failed = parsed.results.filter(result => result?.success === false || result?.error)
+                if (failed.length > 0)
+                    return failed.map(result => `${result.key ?? "change"}: ${result.error ?? result.output ?? "failed"}`).join("; ")
+            }
+        } catch (_) {
+        }
+        return raw
     }
 
     function saveAndRefresh(message) {
@@ -658,21 +695,6 @@ ContentPage {
     onCurrentOutputChanged: armPositionEditor()
     onLayoutDataChanged: armShadowEditor()
 
-    // Force-resync display combo boxes when output data refreshes.
-    // Inline bindings on currentIndex get broken by user interaction (classic QML issue),
-    // and Binding elements inside ContentSubsection resolve `root` to ContentSubsection's
-    // own root, not NiriConfig. So we resync imperatively here.
-    onOutputListChanged: Qt.callLater(resyncDisplayCombos)
-    onSelectedOutputIndexChanged: Qt.callLater(resyncDisplayCombos)
-
-    function resyncDisplayCombos() {
-        resolutionCombo.currentIndex = choiceIndex(resolutionCombo.model, currentResolution)
-        refreshRateCombo.currentIndex = choiceIndex(refreshRateCombo.model, currentRate)
-        scaleCombo.currentIndex = choiceIndex(scaleCombo.model, currentScale)
-        rotationCombo.currentIndex = choiceIndex(rotationCombo.model, currentTransform.toLowerCase())
-        vrrCombo.currentIndex = choiceIndex(vrrCombo.model, vrrMode)
-    }
-
     // =====================
     // CONFIRMATION TIMER
     // =====================
@@ -725,7 +747,7 @@ ContentPage {
                 root.handleJsonResult(outputsCollector.text, "outputs", data => {
                     if (Array.isArray(data))
                         root.outputList = data
-                    root.outputReady = true
+                    Qt.callLater(() => root.outputReady = true)
                 })
             }
         }
@@ -745,7 +767,7 @@ ContentPage {
                 root.inputReady = false
                 root.handleJsonResult(inputCollector.text, "input", data => {
                     root.inputData = data
-                    root.inputReady = true
+                    Qt.callLater(() => root.inputReady = true)
                 })
             }
         }
@@ -765,7 +787,7 @@ ContentPage {
                 root.layoutReady = false
                 root.handleJsonResult(layoutCollector.text, "layout", data => {
                     root.layoutData = data
-                    root.layoutReady = true
+                    Qt.callLater(() => root.layoutReady = true)
                 })
             }
         }
@@ -785,7 +807,7 @@ ContentPage {
                 root.animationsReady = false
                 root.handleJsonResult(animationsCollector.text, "animations", data => {
                     root.animationsData = data
-                    root.animationsReady = true
+                    Qt.callLater(() => root.animationsReady = true)
                 })
             }
         }
@@ -805,7 +827,7 @@ ContentPage {
                 root.windowRulesReady = false
                 root.handleJsonResult(windowRulesCollector.text, "windowRules", data => {
                     root.windowRulesData = data
-                    root.windowRulesReady = true
+                    Qt.callLater(() => root.windowRulesReady = true)
                 })
             }
         }
@@ -925,11 +947,12 @@ ContentPage {
             } else {
                 if (purpose === "preview" || purpose === "preview-revert" || purpose === "preview-revert-after-failure")
                     root.clearPreviewState()
-                root.lastActionError = text.length > 0 ? text : ((purpose === "preview")
+                root.lastActionError = root.commandErrorText(stdout, stderr, text.length > 0 ? text : ((purpose === "preview")
                     ? Translation.tr("Failed to preview display change.")
                     : ((purpose === "preview-revert" || purpose === "preview-revert-after-failure" || purpose === "apply-and-persist-rollback")
                         ? Translation.tr("Failed to revert display change.")
-                        : Translation.tr("Failed to apply display change.")))
+                        : Translation.tr("Failed to apply display change."))))
+                console.warn(`[NiriConfig] output apply failed (${root.applyOutputTargetName} ${root.applyOutputKey}=${root.applyOutputValue}): ${root.lastActionError}`)
             }
             root.clearApplyOutputState()
         }
@@ -941,7 +964,10 @@ ContentPage {
         stderr: StdioCollector { id: persistOutputErrorCollector }
         onExited: (exitCode) => {
             const purpose = root.persistOutputPurpose
-            const text = (persistOutputErrorCollector.text || persistOutputCollector.text || "").trim()
+            const text = root.commandErrorText(
+                persistOutputCollector.text,
+                persistOutputErrorCollector.text,
+                Translation.tr("Failed to save display settings."))
             if (exitCode === 0) {
                 root.lastActionError = ""
                 if (purpose === "preview-confirm")
@@ -949,7 +975,8 @@ ContentPage {
                 root.saveAndRefresh(Translation.tr("Display settings saved."))
                 root.loadOutputs()
             } else {
-                root.lastActionError = text.length > 0 ? text : Translation.tr("Failed to save display settings.")
+                root.lastActionError = text
+                console.warn(`[NiriConfig] output persist failed (${root.persistOutputTargetName} ${root.persistOutputKey}=${root.persistOutputValue}): ${root.lastActionError}`)
 
                 if (purpose === "preview-confirm" && root.persistRollbackKey.length > 0 && root.persistRollbackValue.length > 0) {
                     root.pendingActionLabel = Translation.tr("Reverting display preview")
@@ -970,7 +997,11 @@ ContentPage {
         stderr: StdioCollector { id: setErrorCollector }
         onExited: (exitCode) => {
             if (exitCode !== 0) {
-                root.lastActionError = (setErrorCollector.text || setCollector.text || Translation.tr("Failed to update Niri configuration.")).trim()
+                root.lastActionError = root.commandErrorText(
+                    setCollector.text,
+                    setErrorCollector.text,
+                    Translation.tr("Failed to update Niri configuration."))
+                console.warn(`[NiriConfig] set failed (${root.pendingActionLabel}): ${root.lastActionError}`)
                 root.pendingSetSection = ""
                 root.pendingActionLabel = ""
                 root.runNextSetRequest()
@@ -1105,38 +1136,30 @@ ContentPage {
                     Layout.alignment: Qt.AlignRight
                     spacing: 8
 
-                    Button {
-                        text: Translation.tr("Revert")
+                    RippleButton {
+                        implicitWidth: 80
+                        implicitHeight: 36
+                        buttonRadius: SettingsMaterialPreset.groupRadius
+                        colBackground: Appearance.colors.colLayer1
+                        colBackgroundHover: Appearance.colors.colLayer1Hover
                         onClicked: root.revertDisplayChange()
-
-                        background: Rectangle {
-                            implicitWidth: 80
-                            implicitHeight: 36
-                            radius: Appearance.rounding.small
-                            color: Appearance.colors.colLayer1
-                        }
-
                         contentItem: StyledText {
-                            text: parent.text
+                            text: Translation.tr("Revert")
                             color: Appearance.colors.colOnLayer1
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }
                     }
 
-                    Button {
-                        text: Translation.tr("Keep changes")
+                    RippleButton {
+                        implicitWidth: 120
+                        implicitHeight: 36
+                        buttonRadius: SettingsMaterialPreset.groupRadius
+                        colBackground: Appearance.colors.colPrimary
+                        colBackgroundHover: Appearance.colors.colPrimaryHover
                         onClicked: root.confirmDisplayChange()
-
-                        background: Rectangle {
-                            implicitWidth: 120
-                            implicitHeight: 36
-                            radius: Appearance.rounding.small
-                            color: Appearance.colors.colPrimary
-                        }
-
                         contentItem: StyledText {
-                            text: parent.text
+                            text: Translation.tr("Keep changes")
                             color: Appearance.colors.colOnPrimary
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
@@ -1154,6 +1177,16 @@ ContentPage {
         summary: Translation.tr("Displays · Input · Layout · Animations · Rules")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
+        searchAliases: ({
+            "applications": "rules",
+            "keyboard": "input",
+            "touchpad": "input",
+            "mouse": "input",
+            "trackpoint": "input",
+            "general input": "input",
+            "cursor": "input",
+            "niri config status": "rules"
+        })
         options: [
             { displayName: Translation.tr("Displays"), icon: "monitor", value: "displays" },
             { displayName: Translation.tr("Input"), icon: "keyboard", value: "input" },
@@ -1166,11 +1199,10 @@ ContentPage {
     Item {
         id: statusBanner
         Layout.fillWidth: true
-        visible: root.lastActionError.length > 0 || root.lastActionInfo.length > 0 || !root.validationData.valid || root.hasAnyProcessError
+        visible: root.lastActionError.length > 0 || !root.validationData.valid || root.hasAnyProcessError
         implicitHeight: statusColumn.implicitHeight + 24
 
-        readonly property bool isError: root.lastActionError.length > 0 || !root.validationData.valid || root.hasAnyProcessError
-        readonly property color accentColor: isError ? Appearance.colors.colError : Appearance.colors.colPrimary
+        readonly property color accentColor: Appearance.colors.colError
 
         Rectangle {
             anchors.fill: parent
@@ -1190,7 +1222,7 @@ ContentPage {
                     spacing: 8
 
                     MaterialSymbol {
-                        text: statusBanner.isError ? "error" : "check_circle"
+                        text: "error"
                         color: statusBanner.accentColor
                         iconSize: Appearance.font.pixelSize.hugeass
                     }
@@ -1205,9 +1237,7 @@ ContentPage {
                                 ? root.lastActionError
                                 : !root.validationData.valid
                                     ? (root.validationData.output?.length > 0 ? root.validationData.output : Translation.tr("Niri config validation failed."))
-                                    : root.hasAnyProcessError
-                                        ? root.processErrorSummary()
-                                        : root.lastActionInfo
+                                    : root.processErrorSummary()
                             wrapMode: Text.WordWrap
                             color: Appearance.colors.colOnLayer1
                             font.pixelSize: Appearance.font.pixelSize.small
@@ -1230,20 +1260,16 @@ ContentPage {
                     Layout.alignment: Qt.AlignRight
                     spacing: 8
 
-                    Button {
+                    RippleButton {
                         visible: !root.validationData.valid || root.hasAnyProcessError
-                        text: Translation.tr("Retry")
+                        implicitWidth: 80
+                        implicitHeight: 36
+                        buttonRadius: SettingsMaterialPreset.groupRadius
+                        colBackground: Appearance.colors.colPrimary
+                        colBackgroundHover: Appearance.colors.colPrimaryHover
                         onClicked: root.refreshAll()
-
-                        background: Rectangle {
-                            implicitWidth: 80
-                            implicitHeight: 36
-                            radius: Appearance.rounding.small
-                            color: Appearance.colors.colPrimary
-                        }
-
                         contentItem: StyledText {
-                            text: parent.text
+                            text: Translation.tr("Retry")
                             color: Appearance.colors.colOnPrimary
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
@@ -1251,23 +1277,18 @@ ContentPage {
                         }
                     }
 
-                    Button {
-                        visible: root.lastActionError.length > 0 || root.lastActionInfo.length > 0
-                        text: Translation.tr("Dismiss")
+                    RippleButton {
+                        visible: root.lastActionError.length > 0
+                        implicitWidth: 80
+                        implicitHeight: 36
+                        buttonRadius: SettingsMaterialPreset.groupRadius
+                        colBackground: Appearance.colors.colLayer1
+                        colBackgroundHover: Appearance.colors.colLayer1Hover
                         onClicked: {
                             root.lastActionError = ""
-                            root.lastActionInfo = ""
                         }
-
-                        background: Rectangle {
-                            implicitWidth: 80
-                            implicitHeight: 36
-                            radius: Appearance.rounding.small
-                            color: Appearance.colors.colLayer1
-                        }
-
                         contentItem: StyledText {
-                            text: parent.text
+                            text: Translation.tr("Dismiss")
                             color: Appearance.colors.colOnLayer1
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
@@ -1279,15 +1300,109 @@ ContentPage {
         }
     }
 
+    Item {
+        id: successFeedbackHost
+        Layout.fillWidth: true
+        Layout.preferredHeight: 0
+        implicitHeight: 0
+        z: 100
+
+        Rectangle {
+            anchors.right: parent.right
+            anchors.rightMargin: 12
+            y: 8
+            width: Math.min(Math.max(successFeedbackRow.implicitWidth + 28, 220), Math.max(220, parent.width - 24))
+            height: 44
+            radius: SettingsMaterialPreset.groupRadius
+            visible: root.successFeedbackVisible && root.lastActionInfo.length > 0
+            opacity: visible ? 1 : 0
+            color: Appearance.editorialEverywhere
+                ? Appearance.editorial.layer(2)
+                : Appearance.colors.colLayer2
+            border.width: 1
+            border.color: Appearance.editorialEverywhere
+                ? Appearance.editorial.rule
+                : Appearance.colors.colOutlineVariant
+
+            Behavior on opacity {
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+            }
+
+            RowLayout {
+                id: successFeedbackRow
+                anchors.fill: parent
+                anchors.leftMargin: 14
+                anchors.rightMargin: 12
+                spacing: 8
+
+                MaterialSymbol {
+                    text: "check_circle"
+                    iconSize: 18
+                    color: Appearance.editorialEverywhere
+                        ? Appearance.editorial.accent
+                        : Appearance.colors.colPrimary
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: root.lastActionInfo
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                    color: Appearance.colors.colOnLayer2
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    font.weight: Font.Medium
+                }
+
+                RippleButton {
+                    implicitWidth: 30
+                    implicitHeight: 30
+                    buttonRadius: 15
+                    colBackground: "transparent"
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    onClicked: {
+                        root.successFeedbackVisible = false
+                        root.lastActionInfo = ""
+                    }
+                    contentItem: MaterialSymbol {
+                        text: "close"
+                        iconSize: 16
+                        color: Appearance.colors.colSubtext
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
+            }
+        }
+    }
+
     // =====================
     // DISPLAYS SECTION
     // =====================
+    SettingsTaskLoader {
+        requested: root.activeSection === "displays"
+        sourceComponent: Component {
     SettingsCardSection {
+        id: displaysSection
         settingsTaskSection: "displays"
-        visible: root.activeSection === "displays"
         expanded: true
         icon: "monitor"
         title: Translation.tr("Displays")
+
+        function resyncDisplayCombos(): void {
+            resolutionCombo.currentIndex = root.choiceIndex(resolutionCombo.model, root.currentResolution)
+            refreshRateCombo.currentIndex = root.choiceIndex(refreshRateCombo.model, root.currentRate)
+            scaleCombo.currentIndex = root.choiceIndex(scaleCombo.model, root.currentScale)
+            rotationCombo.currentIndex = root.choiceIndex(rotationCombo.model, root.currentTransform.toLowerCase())
+            vrrCombo.currentIndex = root.choiceIndex(vrrCombo.model, root.vrrMode)
+        }
+
+        Component.onCompleted: Qt.callLater(displaysSection.resyncDisplayCombos)
+
+        Connections {
+            target: root
+            function onOutputListChanged(): void { Qt.callLater(displaysSection.resyncDisplayCombos) }
+            function onSelectedOutputIndexChanged(): void { Qt.callLater(displaysSection.resyncDisplayCombos) }
+        }
 
         SettingsGroup {
             StyledText {
@@ -1505,13 +1620,17 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // =====================
     // LAYOUT SECTION
     // =====================
+    SettingsTaskLoader {
+        requested: root.activeSection === "layout"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "layout"
-        visible: root.activeSection === "layout"
         expanded: true
         icon: "grid_view"
         title: Translation.tr("Layout")
@@ -1944,13 +2063,17 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // =====================
     // WINDOW RULES SECTION
     // =====================
+    SettingsTaskLoader {
+        requested: root.activeSection === "rules"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "rules"
-        visible: root.activeSection === "rules"
         expanded: true
         icon: "rounded_corner"
         title: Translation.tr("Window Rules")
@@ -2038,13 +2161,17 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // =====================
     // KEYBOARD SECTION
     // =====================
+    SettingsTaskLoader {
+        requested: root.activeSection === "input"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "input"
-        visible: root.activeSection === "input"
         expanded: true
         icon: "keyboard"
         title: Translation.tr("Keyboard")
@@ -2195,14 +2322,18 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // =====================
     // TOUCHPAD SECTION
     // =====================
+    SettingsTaskLoader {
+        requested: root.activeSection === "input"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "input"
-        visible: root.activeSection === "input"
-        expanded: true
+        expanded: false
         icon: "touch_app"
         title: Translation.tr("Touchpad")
 
@@ -2392,14 +2523,18 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // =====================
     // MOUSE SECTION
     // =====================
+    SettingsTaskLoader {
+        requested: root.activeSection === "input"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "input"
-        visible: root.activeSection === "input"
-        expanded: true
+        expanded: false
         icon: "mouse"
         title: Translation.tr("Mouse")
 
@@ -2510,14 +2645,18 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // =====================
     // TRACKPOINT SECTION
     // =====================
+    SettingsTaskLoader {
+        requested: root.activeSection === "input"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "input"
-        visible: root.activeSection === "input"
-        expanded: true
+        expanded: false
         icon: "joystick"
         title: Translation.tr("Trackpoint")
 
@@ -2626,14 +2765,18 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // =====================
     // CURSOR SECTION
     // =====================
+    SettingsTaskLoader {
+        requested: root.activeSection === "input"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "input"
-        visible: root.activeSection === "input"
-        expanded: true
+        expanded: false
         icon: "point_scan"
         title: Translation.tr("Cursor")
 
@@ -2696,14 +2839,18 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // =====================
     // GENERAL INPUT SECTION
     // =====================
+    SettingsTaskLoader {
+        requested: root.activeSection === "input"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "input"
-        visible: root.activeSection === "input"
-        expanded: true
+        expanded: false
         icon: "settings_input_component"
         title: Translation.tr("General Input")
 
@@ -2792,13 +2939,17 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // =====================
     // ANIMATIONS SECTION
     // =====================
+    SettingsTaskLoader {
+        requested: root.activeSection === "animations"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "animations"
-        visible: root.activeSection === "animations"
         expanded: true
         icon: "animation"
         title: Translation.tr("Animations")
@@ -2812,6 +2963,16 @@ ContentPage {
                 onCheckedChanged: {
                     if (!root.animationsReady) return
                     root.setBooleanConfig("animations", "enabled", checked)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Style")
+                tooltip: Translation.tr("How windows open, close and slide between columns.")
+                visible: root.animationsData?.enabled ?? true
+
+                NiriAnimationPresetGrid {
+                    Layout.fillWidth: true
                 }
             }
 
@@ -2961,14 +3122,18 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // =====================
     // APPLICATIONS SECTION
     // =====================
+    SettingsTaskLoader {
+        requested: root.activeSection === "rules"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "rules"
-        visible: root.activeSection === "rules"
-        expanded: true
+        expanded: false
         icon: "apps"
         title: Translation.tr("Applications")
 
@@ -3058,6 +3223,8 @@ ContentPage {
             }
         }
     }
+        }
+    }
     // =====================
     // NIRI CONFIG STATUS
     // =====================
@@ -3132,20 +3299,16 @@ ContentPage {
                 Layout.fillWidth: true
                 spacing: 8
 
-                Button {
+                RippleButton {
                     visible: root.niriConfigDir.length > 0
-                    text: Translation.tr("Open config folder")
+                    implicitWidth: 140
+                    implicitHeight: 36
+                    buttonRadius: SettingsMaterialPreset.groupRadius
+                    colBackground: Appearance.colors.colLayer2
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
                     onClicked: root.openConfigFolderExternally()
-
-                    background: Rectangle {
-                        implicitWidth: 140
-                        implicitHeight: 36
-                        radius: Appearance.rounding.small
-                        color: Appearance.colors.colLayer2
-                    }
-
                     contentItem: StyledText {
-                        text: parent.text
+                        text: Translation.tr("Open config folder")
                         color: Appearance.colors.colOnLayer1
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
@@ -3153,20 +3316,16 @@ ContentPage {
                     }
                 }
 
-                Button {
+                RippleButton {
                     visible: root.niriConfigPath.length > 0
-                    text: Translation.tr("Open config file")
+                    implicitWidth: 120
+                    implicitHeight: 36
+                    buttonRadius: SettingsMaterialPreset.groupRadius
+                    colBackground: Appearance.colors.colLayer2
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
                     onClicked: root.openConfigFileExternally()
-
-                    background: Rectangle {
-                        implicitWidth: 120
-                        implicitHeight: 36
-                        radius: Appearance.rounding.small
-                        color: Appearance.colors.colLayer2
-                    }
-
                     contentItem: StyledText {
-                        text: parent.text
+                        text: Translation.tr("Open config file")
                         color: Appearance.colors.colOnLayer1
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter

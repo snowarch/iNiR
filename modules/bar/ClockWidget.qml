@@ -25,14 +25,17 @@ Item {
     RowLayout {
         id: rowLayout
         anchors.centerIn: parent
-        spacing: 4
+        spacing: Appearance.editorialEverywhere ? Math.round(8 * Appearance.editorial.spacing) : 4
 
         StyledText {
             font.family: root._timeFontFamily.length > 0
                 ? root._timeFontFamily : Appearance.font.family.main
             font.pixelSize: root._timePixelSize > 0
                 ? root._timePixelSize : Appearance.font.pixelSize.large
-            color: Appearance.angelEverywhere ? Appearance.angel.colText
+            font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Normal
+            font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
+            font.features: { "tnum": 1 }
+            color: Appearance.editorialEverywhere ? Appearance.editorial.accent : Appearance.angelEverywhere ? Appearance.angel.colText
                 : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
             text: DateTime.timeDisplay
         }
@@ -41,7 +44,7 @@ Item {
             reveal: root.showDate
             StyledText {
                 font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                color: Appearance.editorialEverywhere ? Appearance.editorial.rule : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                     : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                 text: "•"
             }
@@ -54,7 +57,7 @@ Item {
                     ? root._dateFontFamily : Appearance.font.family.main
                 font.pixelSize: root._datePixelSize > 0
                     ? root._datePixelSize : Appearance.font.pixelSize.small
-                color: Appearance.angelEverywhere ? Appearance.angel.colText
+                color: Appearance.editorialEverywhere ? Appearance.editorial.muted : Appearance.angelEverywhere ? Appearance.angel.colText
                     : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                 text: DateTime.date
             }

@@ -177,13 +177,13 @@ Item {
             StyledText {
                 text: root._fmt(seekSlider._dragging ? seekSlider.value : YtMusic.currentPosition)
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colOnSurfaceVariant
+                color: Appearance.colMetadataText
             }
             Item { Layout.fillWidth: true }
             StyledText {
                 text: root._fmt(YtMusic.currentDuration)
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colOnSurfaceVariant
+                color: Appearance.colMetadataText
             }
         }
 
@@ -202,7 +202,7 @@ Item {
             ITIconButton {
                 Layout.fillWidth: true
                 symbol: "favorite"
-                color: root.liked ? Appearance.colors.colError : Appearance.colors.colOnSurfaceVariant
+                color: root.liked ? Appearance.colors.colError : Appearance.colSecondaryActionIcon
                 onClicked: root.liked ? YtMusic.unlikeSong(YtMusic.currentVideoId) : YtMusic.likeSong()
             }
             // Previous.
@@ -274,7 +274,7 @@ Item {
             ITIconButton {
                 Layout.fillWidth: true
                 symbol: YtMusic.repeatMode === 1 ? "repeat_one" : "repeat"
-                color: Appearance.colors.colOnSurfaceVariant
+                color: Appearance.colSecondaryActionIcon
                 active: YtMusic.repeatMode > 0
                 onClicked: YtMusic.cycleRepeatMode()
             }
@@ -527,7 +527,7 @@ Item {
                 MaterialSymbol {
                     text: YtMusic.volume <= 0 ? "volume_off" : (YtMusic.volume < 0.5 ? "volume_down" : "volume_up")
                     iconSize: Appearance.font.pixelSize.larger
-                    color: Appearance.colors.colOnSurfaceVariant
+                    color: Appearance.colSecondaryActionIcon
                 }
                 StyledSlider {
                     id: volSlider

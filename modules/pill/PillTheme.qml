@@ -62,8 +62,8 @@ Singleton {
     readonly property color faint: Appearance.colors.colOnLayer2Disabled
     readonly property color iconDim: Appearance.colors.colOnLayer1
 
-    readonly property color cardTop: Appearance.colors.colLayer3
-    readonly property color cardBot: Appearance.colors.colLayer1
+    readonly property color cardTop: Appearance.editorialEverywhere ? Appearance.editorial.rail : Appearance.colors.colLayer3
+    readonly property color cardBot: Appearance.editorialEverywhere ? Appearance.editorial.rail : Appearance.colors.colLayer1
     readonly property color tileBg: Appearance.colors.colLayer2
     readonly property color ghost: Appearance.colors.colLayer2Active
     readonly property color border: Appearance.colors.colLayer0Border
@@ -92,7 +92,7 @@ Singleton {
     /** Shared Ricelin material. Pill and every Island surface read one owner. */
     readonly property real islandRadius: Config.options?.appearance?.island?.radius ?? 18
     readonly property bool islandShadow: Config.options?.appearance?.island?.shadow ?? true
-    readonly property bool islandSheen: Config.options?.appearance?.island?.sheen ?? true
+    readonly property bool islandSheen: !Appearance.editorialEverywhere && (Config.options?.appearance?.island?.sheen ?? true)
     readonly property bool islandGlass: Config.options?.appearance?.island?.glass ?? true
     readonly property real islandGlassBlur: Config.options?.appearance?.island?.glassBlur ?? 1
     readonly property real islandOpacity: Config.options?.appearance?.island?.opacity ?? 1

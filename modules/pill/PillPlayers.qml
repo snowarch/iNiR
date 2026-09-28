@@ -32,7 +32,7 @@ Singleton {
     readonly property string artist: has ? PillTheme.joinArtists(active.trackArtists, active.trackArtist) : ""
     readonly property string artUrl: root.artUrlFor(active)
 
-    readonly property real lengthSec: (has && active.length > 0) ? active.length : 0
+    readonly property real lengthSec: has ? MprisController.lengthOf(active) : 0
 
     /** A stream has no meaningful length, or one absurdly long (radio, YouTube live). */
     readonly property bool live: has && (lengthSec <= 0 || lengthSec > 86400)

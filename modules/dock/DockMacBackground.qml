@@ -27,6 +27,10 @@ Rectangle {
     readonly property bool auroraEverywhere: surfaceDialect === "aurora" || angelEverywhere
     readonly property bool inirEverywhere: surfaceDialect === "inir"
     readonly property bool gameModeMinimal:  Appearance.gameModeMinimal
+    readonly property bool editorialGlassActive: Appearance.editorialEverywhere
+        && Appearance.editorial.glassActive && !gameModeMinimal
+    readonly property bool editorialBackdropReady: editorialGlassActive
+        && (root.nativeBlurActive || macBlurWall.status === Image.Ready)
 
     // ─── Shape ───────────────────────────────────────────────────────
     radius: zzzEverywhere   ? Appearance.zzz.panelRadius
@@ -36,7 +40,11 @@ Rectangle {
     Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
 
     // ─── Fill: genuinely translucent for macOS look ──────────────────
-    color: zzzEverywhere
+    color: editorialGlassActive
+        ? (!editorialBackdropReady ? Appearance.editorial.rail
+            : root.nativeBlurActive && !Appearance.editorial.paperStack ? Appearance.editorial.glassRail
+            : "transparent")
+        : Appearance.editorialEverywhere ? Appearance.editorial.rail : zzzEverywhere
         ? Appearance.zzz.bg0
         : auroraEverywhere
         ? ColorUtils.transparentize(blendedLayer0, 0.18)
@@ -55,7 +63,7 @@ Rectangle {
         enabled: Appearance.animationsEnabled
         NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
-    border.color: zzzEverywhere
+    border.color: Appearance.editorialEverywhere ? Appearance.editorial.rule : zzzEverywhere
         ? Appearance.zzz.borderColor
         : angelEverywhere
         ? Appearance.angel.colPanelBorder
@@ -88,8 +96,11 @@ Rectangle {
     // ─── Blurred wallpaper ────────────────────────────────────────────
     Image {
         id: macBlurWall
-        visible: root.visible && !root.gameModeMinimal
-        source: root.visible && !root.nativeBlurActive ? root.wallpaperUrl : ""
+        readonly property bool requested: root.visible && !root.gameModeMinimal
+            && (!Appearance.editorialEverywhere || root.editorialGlassActive)
+            && !root.nativeBlurActive
+        visible: requested && status === Image.Ready
+        source: requested ? root.wallpaperUrl : ""
         fillMode: Image.PreserveAspectCrop
         cache: true
         sourceSize.width: macBlurWall.scrW
@@ -114,11 +125,13 @@ Rectangle {
             anchors.fill: source
             saturation: root.angelEverywhere
                 ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
+                : root.editorialGlassActive ? 0.04
                 : (Appearance.effectsEnabled ? 0.35 : 0)
             blurEnabled: Appearance.effectsEnabled
             blurMax: 64
             blur: Appearance.effectsEnabled
-                ? (root.angelEverywhere ? Appearance.angel.blurIntensity : 0.9)
+                ? (root.angelEverywhere ? Appearance.angel.blurIntensity
+                    : root.editorialGlassActive ? Appearance.editorial.glassBlur : 0.9)
                 : 0
         }
 
@@ -129,10 +142,20 @@ Rectangle {
                 ? ColorUtils.transparentize(
                       root.blendedLayer0,
                       Appearance.angel.overlayOpacity * Appearance.angel.panelTransparentize * 0.7)
+                : root.editorialGlassActive
+                    ? (Appearance.editorial.paperStack ? "transparent" : Appearance.editorial.glassRail)
                 : ColorUtils.transparentize(
                       root.blendedLayer0,
                       (Appearance.aurora.overlayTransparentize ?? 0.5) * 0.65)
         }
+    }
+
+    EditorialPaperStack {
+        anchors.fill: parent
+        faceColor: Appearance.editorial.rail
+        radius: root.radius
+        materialOpacity: root.editorialBackdropReady ? Appearance.editorial.glassOpacity : 1
+        backingOpacity: root.editorialBackdropReady ? Appearance.editorial.glassBackingOpacity : 1
     }
 
     // ─── Angel partial border highlight ──────────────────────────────

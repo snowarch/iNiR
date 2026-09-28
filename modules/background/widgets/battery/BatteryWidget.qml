@@ -10,6 +10,8 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
 import qs.modules.background.widgets
+import qs.modules.background.widgets.instrument
+import qs.modules.iris.widgets
 
 AbstractBackgroundWidget {
     id: root
@@ -17,7 +19,7 @@ AbstractBackgroundWidget {
     configEntryName: "battery"
     defaultConfig: ({
         placementStrategy: "free", preset: "default", displayMode: "ring",
-        showTime: true, ringSize: 72, ringLineWidth: 6,
+        showTime: true, showRate: true, ringSize: 72, ringLineWidth: 6,
         barCount: 20, barSpacing: 2, barRadius: 2, pillHeight: 12,
         dim: 0, widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
         showBackground: true, useBlur: false, showBorder: true,
@@ -25,8 +27,14 @@ AbstractBackgroundWidget {
         cornerRadius: -1, x: 50, y: 50
     })
 
-    implicitWidth: Math.round(160 * scaleFactor)
-    implicitHeight: Math.round(104 * scaleFactor)
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round((root.displayMode === "instrument" ? 220 : 160) * scaleFactor)
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round((root.displayMode === "instrument" ? 140 : 104) * scaleFactor)
+    irisFace: Component { IrisBatteryFace { widget: root } }
+    irisSizes: ["small", "medium"]
+    irisOptions: [
+        { key: "showTime", raw: true, label: Translation.tr("Time remaining"), icon: "timer", fallback: true }
+    ]
+    widgetSurfaceEnabled: root.displayMode !== "instrument"
 
     visibleWhenLocked: true
     needsColText: true
@@ -36,48 +44,50 @@ AbstractBackgroundWidget {
 
     editPopoverContent: Component {
         ColumnLayout {
-            spacing: 6
-            GridLayout {
-                columns: 3
-                columnSpacing: 4
-                rowSpacing: 4
-                Layout.alignment: Qt.AlignHCenter
-                Repeater {
+            spacing: 14
+            WidgetQuickSection {
+                title: Translation.tr("Style")
+                WidgetQuickChoices {
+                    current: root.displayMode
                     model: [
-                        { label: "Ring", icon: "donut_large", value: "ring" },
-                        { label: "Bars", icon: "bar_chart", value: "bars" },
-                        { label: "Pill", icon: "horizontal_rule", value: "pill" }
+                        { label: Translation.tr("Ring"), icon: "donut_large", value: "ring" },
+                        { label: Translation.tr("Bars"), icon: "bar_chart", value: "bars" },
+                        { label: Translation.tr("Pill"), icon: "horizontal_rule", value: "pill" },
+                        { label: Translation.tr("Instrument"), icon: "battery_charging_full", value: "instrument" }
                     ]
-                    SelectionGroupButton {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        leftmost: true; rightmost: true
-                        buttonIcon: modelData.icon
-                        buttonText: Translation.tr(modelData.label)
-                        toggled: root.displayMode === modelData.value
-                        onClicked: Config.setNestedValue("background.widgets.battery.displayMode", modelData.value)
-                    }
+                    onPicked: value => root._setOutputValue("displayMode", value)
                 }
             }
-            SelectionGroupButton {
-                Layout.alignment: Qt.AlignHCenter
-                leftmost: true; rightmost: true
-                buttonIcon: "timer"
-                buttonText: Translation.tr("Show time")
-                toggled: root.showTimeEstimate
-                onClicked: Config.setNestedValue("background.widgets.battery.showTime", !root.showTimeEstimate)
+            WidgetQuickSection {
+                title: Translation.tr("Show")
+                WidgetQuickToggle {
+                    Layout.fillWidth: true
+                    iconName: "timer"
+                    label: Translation.tr("Time left")
+                    checked: root.showTimeEstimate
+                    onToggled: root._setOutputValue("showTime", !root.showTimeEstimate)
+                }
+                WidgetQuickToggle {
+                    visible: root.displayMode === "instrument"
+                    Layout.fillWidth: true
+                    iconName: "electric_bolt"
+                    label: Translation.tr("Power draw")
+                    checked: root.showEnergyRate
+                    onToggled: root._setOutputValue("showRate", !root.showEnergyRate)
+                }
             }
         }
     }
 
-    readonly property string displayMode: Config.getNestedValue("background.widgets.battery.displayMode", "ring")
-    readonly property bool showTimeEstimate: Config.getNestedValue("background.widgets.battery.showTime", true)
+    readonly property string displayMode: root._readConfigKey("displayMode") ?? "ring"
+    readonly property bool showTimeEstimate: root._readConfigKey("showTime") ?? true
+    readonly property bool showEnergyRate: root._readConfigKey("showRate") ?? true
     readonly property int ringSize: Math.round(Number(root._readConfigKey("ringSize") ?? 72) * scaleFactor)
-    readonly property int ringLineWidth: Math.round((Config.getNestedValue("background.widgets.battery.ringLineWidth", 6)) * scaleFactor)
-    readonly property int barCount: Config.getNestedValue("background.widgets.battery.barCount", 20)
-    readonly property int barSpacing: Config.getNestedValue("background.widgets.battery.barSpacing", 2)
-    readonly property int barRadius: Config.getNestedValue("background.widgets.battery.barRadius", 2)
-    readonly property int pillHeight: Math.round((Config.getNestedValue("background.widgets.battery.pillHeight", 12)) * scaleFactor)
+    readonly property int ringLineWidth: Math.round(Number(root._readConfigKey("ringLineWidth") ?? 6) * scaleFactor)
+    readonly property int barCount: Number(root._readConfigKey("barCount") ?? 20)
+    readonly property int barSpacing: Number(root._readConfigKey("barSpacing") ?? 2)
+    readonly property int barRadius: Number(root._readConfigKey("barRadius") ?? 2)
+    readonly property int pillHeight: Math.round(Number(root._readConfigKey("pillHeight") ?? 12) * scaleFactor)
 
     // ── Style tokens ──────────────────────────────────────────
     readonly property real cardRadius: root.widgetCardRadius
@@ -107,6 +117,7 @@ AbstractBackgroundWidget {
 
     // ── Card background ───────────────────────────────────────
     WidgetSurface {
+        irisPresentation: root.widgetIris
         regionBrightness: root.regionBrightness
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
@@ -122,14 +133,111 @@ AbstractBackgroundWidget {
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
+        shown: !root.irisFaced && root.displayMode !== "instrument"
+            && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
+    }
+
+    // ── Instrument: energy reserve, not a clock face ─────────
+    Item {
+        id: instrumentArea
+        anchors.fill: parent
+        opacity: root.displayMode === "instrument" ? 1 : 0
+        visible: !root.irisFaced && opacity > 0
+        enabled: root.displayMode === "instrument"
+        Behavior on opacity {
+            enabled: root.animationsActive
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: Math.round(10 * root.scaleFactor)
+            spacing: Math.round(4 * root.scaleFactor)
+
+            RowLayout {
+                Layout.fillWidth: true
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Battery")
+                    color: root.widgetInkMuted
+                    font.family: root.widgetBodyFamily
+                    font.pixelSize: Math.round(11 * root.scaleFactor)
+                    font.weight: Font.DemiBold
+                    font.capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                    font.letterSpacing: root.scaleFactor
+                }
+                MaterialSymbol {
+                    text: !Battery.available ? "power" : Battery.isCharging ? "bolt" : "battery_full"
+                    color: root.widgetSemanticForeground(root._batteryRole)
+                    iconSize: Math.round(20 * root.scaleFactor)
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: Math.round(3 * root.scaleFactor)
+                StyledText {
+                    text: Battery.available ? String(Math.round(Battery.percentage * 100)) : "—"
+                    color: root.widgetInk
+                    font.family: root.widgetNumbersFamily
+                    font.pixelSize: Math.round(52 * root.scaleFactor)
+                    font.weight: root.widgetEditorial ? Appearance.editorial.titleWeight : Font.Bold
+                    font.features: ({ "tnum": 1 })
+                    font.letterSpacing: -0.8
+                }
+                StyledText {
+                    Layout.alignment: Qt.AlignBottom
+                    Layout.bottomMargin: Math.round(10 * root.scaleFactor)
+                    visible: Battery.available
+                    text: "%"
+                    color: root.widgetInkMuted
+                    font.family: root.widgetBodyFamily
+                    font.pixelSize: Math.round(16 * root.scaleFactor)
+                    font.weight: Font.DemiBold
+                }
+                Item { Layout.fillWidth: true }
+                StyledText {
+                    Layout.alignment: Qt.AlignBottom
+                    Layout.bottomMargin: Math.round(10 * root.scaleFactor)
+                    visible: root.showEnergyRate && Battery.available && Battery.energyRate > 0
+                    text: Number(Battery.energyRate).toFixed(1) + " W"
+                    color: root.widgetSemanticForeground(root._batteryRole)
+                    font.family: root.widgetNumbersFamily
+                    font.pixelSize: Math.round(12 * root.scaleFactor)
+                    font.weight: Font.DemiBold
+                }
+            }
+            InstrumentScale {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.round(16 * root.scaleFactor)
+                fraction: Battery.available ? Battery.percentage : 0
+                ink: root.widgetInk
+                accent: root.widgetSemanticForeground(root._batteryRole)
+                animated: root.animationsActive
+            }
+            StyledText {
+                Layout.fillWidth: true
+                text: !Battery.available ? Translation.tr("No battery")
+                    : root.timeLabel || (Battery.isCharging ? Translation.tr("Charging") : Translation.tr("Battery"))
+                color: root.widgetInkMuted
+                elide: Text.ElideRight
+                font.family: root.widgetBodyFamily
+                font.pixelSize: Math.round(11 * root.scaleFactor)
+            }
+        }
     }
 
     // ── Ring mode ─────────────────────────────────────────────
     Item {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
-        visible: root.displayMode === "ring"
+        opacity: root.displayMode === "ring" ? 1 : 0
+        visible: !root.irisFaced && opacity > 0
+        enabled: root.displayMode === "ring"
+        Behavior on opacity {
+            enabled: root.animationsActive
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
 
         Column {
             anchors.centerIn: parent
@@ -150,7 +258,7 @@ AbstractBackgroundWidget {
                     color: root.widgetInk
                     font {
                         pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
-                        family: Appearance.font.family.numbers
+                        family: root.widgetNumbersFamily
                         weight: Font.DemiBold
                     }
                 }
@@ -164,7 +272,7 @@ AbstractBackgroundWidget {
                 visible: root.timeLabel !== ""
                 font {
                     pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
-                    family: Appearance.font.family.main
+                    family: root.widgetBodyFamily
                 }
             }
         }
@@ -174,7 +282,13 @@ AbstractBackgroundWidget {
     Item {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
-        visible: root.displayMode === "bars"
+        opacity: root.displayMode === "bars" ? 1 : 0
+        visible: !root.irisFaced && opacity > 0
+        enabled: root.displayMode === "bars"
+        Behavior on opacity {
+            enabled: root.animationsActive
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
 
         Row {
             anchors.left: parent.left
@@ -236,13 +350,13 @@ AbstractBackgroundWidget {
             StyledText {
                 text: root.percentText
                 color: root.widgetInk
-                font { pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor); family: Appearance.font.family.numbers; weight: Font.DemiBold }
+                font { pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor); family: root.widgetNumbersFamily; weight: Font.DemiBold }
             }
             StyledText {
                 text: root.timeLabel
                 color: root.widgetInkMuted
                 visible: root.timeLabel !== ""
-                font { pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor); family: Appearance.font.family.main }
+                font { pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor); family: root.widgetBodyFamily }
                 anchors.baseline: parent.children[0].baseline
             }
         }
@@ -252,7 +366,13 @@ AbstractBackgroundWidget {
     Item {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 8 : 4
-        visible: root.displayMode === "pill"
+        opacity: root.displayMode === "pill" ? 1 : 0
+        visible: !root.irisFaced && opacity > 0
+        enabled: root.displayMode === "pill"
+        Behavior on opacity {
+            enabled: root.animationsActive
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
 
         // Percentage + time above pill
         Row {
@@ -265,13 +385,13 @@ AbstractBackgroundWidget {
             StyledText {
                 text: root.percentText
                 color: root.widgetInk
-                font { pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor); family: Appearance.font.family.numbers; weight: Font.DemiBold }
+                font { pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor); family: root.widgetNumbersFamily; weight: Font.DemiBold }
             }
             StyledText {
                 text: root.timeLabel
                 color: root.widgetInkMuted
                 visible: root.timeLabel !== ""
-                font { pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor); family: Appearance.font.family.main }
+                font { pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor); family: root.widgetBodyFamily }
                 anchors.baseline: parent.children[0].baseline
             }
         }

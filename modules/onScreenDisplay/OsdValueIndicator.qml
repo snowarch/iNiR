@@ -32,7 +32,7 @@ Item {
             fill: parent
             margins: Appearance.sizes.elevationMargin
         }
-        radius: root._zzz ? Appearance.zzz.panelRadius : Appearance.rounding.full
+        radius: Appearance.editorialEverywhere ? Appearance.editorial.radius : root._zzz ? Appearance.zzz.panelRadius : Appearance.rounding.full
         fallbackColor: root._zzz ? Appearance.zzz.bg0 : Appearance.colors.colLayer0
         inirColor: Appearance.inir.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
@@ -110,7 +110,7 @@ Item {
                     StyledText {
                         color: root._zzz ? Appearance.zzz.accent : Appearance.colors.colOnLayer0
                         font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: root._zzz ? Font.Black : Font.Normal
+                        font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : root._zzz ? Font.Black : Font.Normal
                         Layout.fillWidth: false
                         text: Math.round(root.value * 100)
                     }

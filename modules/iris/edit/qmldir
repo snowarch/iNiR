@@ -1,0 +1,7 @@
+module qs.modules.iris.edit
+IrisEditBar 1.0 IrisEditBar.qml
+IrisWidgetBar 1.0 IrisWidgetBar.qml
+singleton IrisEditHistory 1.0 IrisEditHistory.qml
+IrisThemeCard 1.0 IrisThemeCard.qml
+IrisPieceLibrary 1.0 IrisPieceLibrary.qml
+IrisEditRows 1.0 IrisEditRows.qml

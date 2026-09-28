@@ -15,9 +15,9 @@ RippleButton {
     implicitHeight: 30
     leftPadding: (implicitHeight - faviconSize) / 2
     rightPadding: 10
-    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-    colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    colBackground: Appearance.editorialEverywhere ? Appearance.editorial.tertiaryField : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
         : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colSurfaceContainerHighest
     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
@@ -52,7 +52,7 @@ RippleButton {
                 id: text
                 horizontalAlignment: Text.AlignHCenter
                 text: displayText
-                color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                color: Appearance.editorialEverywhere ? Appearance.editorial.tertiaryFieldInk : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
             }
         }
     }

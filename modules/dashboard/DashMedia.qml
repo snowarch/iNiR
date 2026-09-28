@@ -114,7 +114,7 @@ DashCard {
                 component MediaButton: RippleButton {
                     implicitWidth: 32
                     implicitHeight: 32
-                    buttonRadius: Appearance.rounding.full
+                    buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                     colBackground: "transparent"
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : root.inirEverywhere ? Appearance.inir.colLayer2Hover

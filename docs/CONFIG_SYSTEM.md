@@ -9,10 +9,10 @@ Everything is configurable through the graphical Settings UI. Open it with `Supe
 If you do want to edit it directly, it lives at:
 
 ```
-~/.config/illogical-impulse/config.json
+~/.config/inir/config.json
 ```
 
-(The directory name is a legacy artifact from when iNiR was called illogical-impulse. `~/.config/inir` is symlinked to it.)
+Older installs used `~/.config/illogical-impulse`. Required migration `019-config-dir-rename-compat` makes `~/.config/inir` canonical and creates the compatibility link in the legacy-to-new direction (`~/.config/illogical-impulse -> ~/.config/inir`). The resolver still honors an older real legacy directory when one has not yet been migrated.
 
 Changes you make in the file are picked up automatically within 50ms. No restart needed.
 
@@ -28,14 +28,14 @@ The Welcome wizard exposes only choices that materially affect the first session
 
 ### The sync rule
 
-Adding a new config key requires updating four things together in one commit:
+Adding a new config key requires keeping its owning contracts synchronized:
 
 1. **`modules/common/Config.qml`** - declare the schema property with its type and default
-2. **`defaults/config.json`** - add the matching key for fresh installs
-3. **Consumer code** - the QML that reads or writes the key
-4. **Settings UI** - if the key is user-facing (most are)
+2. **Consumer code** - the QML/service that reads or writes the key
+3. **Settings UI** - if the key is user-facing (most are), in every family/presentation that owns it
+4. **`defaults/config.json`** - when the shipped fresh-install profile needs an explicit value or object shape rather than relying only on the schema fallback
 
-Skip any of these and something breaks silently. The most common mistake is skipping Config.qml, which means `Config.options?.your?.key` resolves to `undefined` even though the key exists in defaults.
+Skipping the schema or consumer is always incomplete. Defaults and Settings are separate contracts: defaults choose the fresh-install profile, while schema fallbacks also protect existing configs that do not contain a newly added key.
 
 ### Reading config
 
@@ -68,14 +68,17 @@ The direct assignment updates the in-memory QML property but never writes to dis
 
 ### Schema
 
-`Config.qml` is a large singleton that defines every config section as typed QML properties. Example:
+`Config.qml` is a large singleton backed by a `JsonAdapter` and nested `JsonObject` schema. Example pattern:
 
 ```qml
-readonly property QtObject bar: QtObject {
-    readonly property bool vertical: root._config?.bar?.vertical ?? false
-    readonly property QtObject autoHide: QtObject {
-        readonly property bool enable: root._config?.bar?.autoHide?.enable ?? false
-        readonly property int showDelay: root._config?.bar?.autoHide?.showDelay ?? 300
+JsonAdapter {
+    id: configOptionsJsonAdapter
+
+    property JsonObject bar: JsonObject {
+        property bool vertical: false
+        property JsonObject pill: JsonObject {
+            property bool showGlyphs: true
+        }
     }
 }
 ```
@@ -299,12 +302,12 @@ If `folder` is empty, shuffle uses the current wallpaper directory. If `generate
 
 ## Settings UI
 
-Users interact with config exclusively through Settings:
+Users normally interact with config through Settings:
 
-- **Material ii**: `Super+,` opens an overlay settings panel (lives in `modules/settings/`)
-- **Waffle**: `Super+,` opens a standalone settings window (lives in `modules/waffle/settings/`)
+- **Shared/Material Settings**: the same page registry can be presented by `modules/settings/SettingsOverlay.qml` or the standalone `settings.qml` window according to `settingsUi.overlayMode`
+- **Waffle-native Settings**: `waffleSettings.qml` and `modules/waffle/settings/` are used when Waffle is not configured to reuse Material-style Settings
 
-Both families have their own settings implementations but write to the same config.json. When a config key affects both families, both settings UIs need updating.
+Both presentations write the same effective config. When a config key affects both families, every independently implemented control that exposes that semantic must stay synchronized.
 
 ## Migrations
 

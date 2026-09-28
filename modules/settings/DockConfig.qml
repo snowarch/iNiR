@@ -17,7 +17,7 @@ ContentPage {
     settingsPageIndex: 22
     settingsPageName: Translation.tr("Dock")
 
-    property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property bool isIiActive: (Config.options?.panelFamily ?? "ii") === "ii"
 
     SettingsCardSection {
         visible: root.isIiActive

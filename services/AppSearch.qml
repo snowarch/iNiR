@@ -261,11 +261,6 @@ Singleton {
 
         const searchLower = search.toLowerCase().trim()
 
-        // Fast path: exact prefix match gets priority
-        const exactPrefixMatches = _cachedList.filter(obj =>
-            obj.name?.toLowerCase().startsWith(searchLower)
-        )
-
         if (root.sloppySearch) {
             // Levenshtein-based scoring
             const results = _cachedList.map(obj => {

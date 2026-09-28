@@ -7,7 +7,6 @@ import Quickshell.Hyprland
 import qs.modules.common
 import qs.modules.common.functions
 import qs.services
-import "root:modules/common/functions/md5.js" as MD5
 
 Singleton {
     id: root
@@ -76,14 +75,7 @@ Singleton {
             if (data && data.path) {
                 const p = data.path
                 // For videos, return image-safe URL (consumers are Image/ColorQuantizer)
-                if (isVideoPath(p)) {
-                    const ff = Wallpapers.getVideoFirstFramePath(p)
-                    if (ff) return (ff.startsWith("file://") ? ff : "file://" + ff) + "?ff=1"
-                    const expected = Wallpapers._videoThumbDir + "/" + MD5.hash(p) + ".jpg"
-                    Wallpapers.ensureVideoFirstFrame(p)
-                    return "file://" + expected + "?ff=0"
-                }
-                return p.startsWith("file://") ? p : "file://" + p
+                return Wallpapers.stillUrlFor(p)
             }
         }
         return Wallpapers.effectiveWallpaperUrl

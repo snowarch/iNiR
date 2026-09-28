@@ -4,6 +4,8 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.waffle.regionSelector as WaffleRegion
+import qs.modules.iris.regionSelector as IrisRegion
+import qs.modules.iris.style
 import qs.services
 import QtQuick
 import QtQuick.Controls
@@ -52,25 +54,35 @@ PanelWindow {
         return configured
     }
 
+    readonly property bool useIris: Config.options?.panelFamily === "iris"
+    // The toolbar rests against a screen edge the shell may already own.
+    readonly property var shellInsets: ShellLayoutController.desktopInsets(root.screen?.name ?? "")
+
     // Tri-style color support
-    property color overlayColor: Appearance.angelEverywhere ? ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.33)
+    property color overlayColor: root.useIris ? IrisStyle.veilStrong
+        : Appearance.angelEverywhere ? ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.33)
         : Appearance.inirEverywhere ? ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.53)
         : Appearance.auroraEverywhere ? ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.4) : ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.53)
-    property color brightText: Appearance.inirEverywhere ? Appearance.inir.colText
+    property color brightText: root.useIris ? IrisStyle.onMedia
+        : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
         : (Appearance.m3colors.darkmode ? Appearance.colors.colOnLayer0 : Appearance.colors.colLayer0)
-    property color brightSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+    property color brightSecondary: root.useIris ? IrisStyle.onMediaSecondary
+        : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.auroraEverywhere ? Appearance.aurora.colTextSecondary
         : (Appearance.m3colors.darkmode ? Appearance.colors.colSecondary : Appearance.colors.colOnSecondary)
-    property color brightTertiary: Appearance.zzzEverywhere ? Appearance.zzz.accent
+    property color brightTertiary: root.useIris ? IrisStyle.accent
+        : Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
         : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
         : (Appearance.m3colors.darkmode ? Appearance.colors.colTertiary : Qt.lighter(Appearance.colors.colPrimary))
-    property color selectionBorderColor: Appearance.zzzEverywhere ? Appearance.zzz.accent
+    property color selectionBorderColor: root.useIris ? IrisStyle.onMedia
+        : Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
         : ColorUtils.mix(brightText, brightSecondary, 0.5)
-    property color selectionFillColor: Appearance.zzzEverywhere ? ColorUtils.transparentize(Appearance.zzz.accent, 0.86)
+    property color selectionFillColor: root.useIris ? IrisStyle.onMediaFill
+        : Appearance.zzzEverywhere ? ColorUtils.transparentize(Appearance.zzz.accent, 0.86)
         : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colPrimary, 0.8)
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.8)
         : ColorUtils.applyAlpha(Appearance.colors.colOnLayer0, 0.2)
@@ -78,7 +90,8 @@ PanelWindow {
     property color windowFillColor: ColorUtils.transparentize(windowBorderColor, 0.85)
     property color imageBorderColor: brightTertiary
     property color imageFillColor: ColorUtils.transparentize(imageBorderColor, 0.85)
-    property color onBorderColor: Appearance.inirEverywhere ? Appearance.inir.colText
+    property color onBorderColor: root.useIris ? IrisStyle.onMedia
+        : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0 : Appearance.colors.colScrim
     readonly property var windows: useNiri
         ? (NiriService.windows || [])
@@ -367,9 +380,10 @@ PanelWindow {
             return `url=$(${primary} 2>/dev/null); if [[ -z "$url" || "$url" != http* ]]; then url=$(${fallback1}); fi; if [[ -z "$url" || "$url" != http* ]]; then url=$(${fallback2}); fi; echo "$url"`
         }
         const annotationCommand = `${(Config.options?.regionSelector?.annotation?.useSatty ?? false) ? "satty" : "swappy"} -f -`;
+        const clipboardCopy = StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/clipboard-copy.sh"));
         switch (root.action) {
             case RegionSelection.SnipAction.Copy:
-                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropToStdout} | tee "$_ss" | /usr/bin/wl-copy && echo -n "$_ss" | /usr/bin/wl-copy --primary && ${cleanup} && /usr/bin/notify-send "Screenshot copied" "${rw}x${rh} saved to $_ss" -a "Screenshot" -i camera-photo -t 3000`]
+                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropToStdout} | tee "$_ss" | '${clipboardCopy}' && printf '%s' "$_ss" | '${clipboardCopy}' --primary && ${cleanup} && /usr/bin/notify-send "Screenshot copied" "${rw}x${rh} saved to $_ss" -a "Screenshot" -i camera-photo -t 3000`]
                 break;
             case RegionSelection.SnipAction.Edit:
                 if (Config.options?.regionSelector?.annotation?.useNativeEditor ?? true) {
@@ -383,9 +397,23 @@ PanelWindow {
             case RegionSelection.SnipAction.Search:
                 snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && uploaded_url="$(${uploadAndGetUrl(root.screenshotPath)})"; if [[ -n "$uploaded_url" && "$uploaded_url" == http* ]]; then /usr/bin/xdg-open "${root.effectiveImageSearchEngineBaseUrl}$uploaded_url"; else /usr/bin/notify-send "Image search failed" "Could not upload the image for reverse search" -a "Image Search" -i image; fi; ${cleanup}`]
                 break;
-            case RegionSelection.SnipAction.CharRecognition:
-                snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && /usr/bin/tesseract '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' stdout -l $(/usr/bin/tesseract --list-langs | /usr/bin/awk 'NR>1{print $1}' | /usr/bin/tr '\\n' '+' | /usr/bin/sed 's/\\+$/\\n/') | tee >(/usr/bin/wl-copy --primary) | /usr/bin/wl-copy && ${cleanup} && /usr/bin/notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000`]
+            case RegionSelection.SnipAction.CharRecognition: {
+                const ocrLanguage = String(Config.options?.regionSelector?.ocrLanguage ?? "auto");
+                const ocrRunner = StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/ocr-runner.sh"));
+                const japaneseLookup = Config.options?.regionSelector?.japaneseLookup?.enabled ?? true;
+                if (japaneseLookup && (ocrLanguage === "jpn" || ocrLanguage === "jpn_vert" || ocrLanguage.startsWith("jpn+"))) {
+                    japaneseOcrProc.lookupX = root.regionX;
+                    japaneseOcrProc.lookupY = root.regionY;
+                    japaneseOcrProc.lookupWidth = root.regionWidth;
+                    japaneseOcrProc.lookupHeight = root.regionHeight;
+                    japaneseOcrProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && '${ocrRunner}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' '${StringUtils.shellSingleQuoteEscape(ocrLanguage)}'; _ocr_status=$?; ${cleanup}; exit $_ocr_status`];
+                    root.visible = false;
+                    japaneseOcrProc.running = true;
+                    return;
+                }
+                snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && { '${ocrRunner}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' '${StringUtils.shellSingleQuoteEscape(ocrLanguage)}' | tee >('${clipboardCopy}' --primary) | '${clipboardCopy}'; _ocr_status=\${PIPESTATUS[0]}; ${cleanup}; if (( _ocr_status == 0 )); then /usr/bin/notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000; else /usr/bin/notify-send "OCR failed" "The selected OCR language is unavailable or recognition failed" -a "OCR" -i dialog-error -t 4000; exit \$_ocr_status; fi; }`];
                 break;
+            }
             case RegionSelection.SnipAction.Record:
                 snipProc.command = ["/usr/bin/bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}'`]
                 break;
@@ -416,6 +444,41 @@ PanelWindow {
 
     Process {
         id: snipProc
+    }
+
+    Process {
+        id: japaneseOcrProc
+        property real lookupX: 0
+        property real lookupY: 0
+        property real lookupWidth: 0
+        property real lookupHeight: 0
+        property string recognizedText: ""
+        stdout: StdioCollector {
+            id: japaneseOcrOut
+            onStreamFinished: {
+                const recognized = (japaneseOcrOut.text ?? "").trim();
+                japaneseOcrProc.recognizedText = recognized;
+                if (recognized.length > 0) {
+                    const clipboardCopy = Quickshell.shellPath("scripts/clipboard-copy.sh");
+                    Quickshell.execDetached([clipboardCopy, recognized]);
+                    Quickshell.execDetached([clipboardCopy, "--primary", recognized]);
+                    JapaneseDictionary.lookupText(recognized, root.screen.name, japaneseOcrProc.lookupX, japaneseOcrProc.lookupY, japaneseOcrProc.lookupWidth, japaneseOcrProc.lookupHeight);
+                }
+            }
+        }
+        stderr: StdioCollector { id: japaneseOcrErr }
+        onExited: (exitCode) => {
+            if (exitCode === 0 && japaneseOcrProc.recognizedText.length > 0) {
+                Quickshell.execDetached(["notify-send", "Japanese OCR", "Text recognized; opening dictionary", "-a", "iNiR", "-t", "1800"]);
+            } else if (exitCode === 0) {
+                Quickshell.execDetached(["notify-send", "OCR", "No text was recognized in the selected region", "-a", "iNiR", "-t", "3500"]);
+            } else {
+                const detail = (japaneseOcrErr.text ?? "").trim();
+                const message = detail.length > 0 ? detail : Translation.tr("Japanese text recognition failed");
+                Quickshell.execDetached(["notify-send", "OCR failed", message, "-a", "iNiR", "-t", "5000"]);
+            }
+            root.dismiss();
+        }
     }
 
     // Crops the selected region to a temp file for the native annotation editor,
@@ -593,8 +656,11 @@ PanelWindow {
                 opacity: 0
                 
                 readonly property bool useWaffle: Config.options?.panelFamily === "waffle"
-                
-                // Position: waffle = top center, material = bottom center
+
+                // Position: waffle = top center, material and iRiS = bottom center
+                readonly property real restTopMargin: 16 + (root.shellInsets.top ?? 0)
+                readonly property real restBottomMargin: 8 + (root.shellInsets.bottom ?? 0)
+
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                     top: useWaffle ? parent.top : undefined
@@ -602,18 +668,26 @@ PanelWindow {
                     topMargin: useWaffle ? -height : 0
                     bottomMargin: useWaffle ? 0 : -height
                 }
-                
+
                 Connections {
                     target: root
                     function onVisibleChanged() {
                         if (!visible) return;
                         if (regionSelectionControls.useWaffle) {
-                            regionSelectionControls.anchors.topMargin = 16;
+                            regionSelectionControls.anchors.topMargin = regionSelectionControls.restTopMargin;
                         } else {
-                            regionSelectionControls.anchors.bottomMargin = 8;
+                            regionSelectionControls.anchors.bottomMargin = regionSelectionControls.restBottomMargin;
                         }
                         regionSelectionControls.opacity = 1;
                     }
+                }
+                onRestBottomMarginChanged: {
+                    if (root.visible && !regionSelectionControls.useWaffle)
+                        regionSelectionControls.anchors.bottomMargin = regionSelectionControls.restBottomMargin;
+                }
+                onRestTopMarginChanged: {
+                    if (root.visible && regionSelectionControls.useWaffle)
+                        regionSelectionControls.anchors.topMargin = regionSelectionControls.restTopMargin;
                 }
                 Behavior on opacity {
                     animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -627,7 +701,24 @@ PanelWindow {
 
                 Loader {
                     id: controlsLoader
-                    sourceComponent: regionSelectionControls.useWaffle ? waffleControls : materialControls
+                    sourceComponent: regionSelectionControls.useWaffle ? waffleControls
+                        : root.useIris ? irisControls : materialControls
+                }
+
+                Component {
+                    id: irisControls
+                    IrisRegion.IrisOptionsToolbar {
+                        action: root.action
+                        selectionMode: root.selectionMode
+                        onActionChanged: root.action = action
+                        onSelectionModeChanged: root.selectionMode = selectionMode
+                        onDismiss: root.dismiss()
+                        onFullscreenRequested: root.snipFullscreen()
+                        onColorPickerRequested: {
+                            root.dismiss();
+                            ShellExec.execDetachedArgs(["/usr/bin/bash", "-c", "sleep 0.3; /usr/bin/hyprpicker -a"], "Pick color");
+                        }
+                    }
                 }
 
                 // Material ii controls

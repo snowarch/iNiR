@@ -223,6 +223,8 @@ Singleton {
                     property bool paused: false
                     property int start: 0
                     property int duration: 60
+                    // Minutes on the iRiS Timers dials, adjusted in place.
+                    property list<int> presets: [5, 15, 30]
                 }
             }
 
@@ -244,10 +246,10 @@ Singleton {
             // should restore the tool where the user left it without adding
             // editor geometry to config.json.
             property JsonObject desktopWidgets: JsonObject {
-                property real managerXRatio: 0.76
-                property real managerYRatio: 0.42
-                property int managerWidth: 420
-                property int managerHeight: 520
+                property real managerXRatio: 0.68
+                property real managerYRatio: 0.48
+                property int managerWidth: 600
+                property int managerHeight: 700
                 property string managerFilter: "all"
             }
 

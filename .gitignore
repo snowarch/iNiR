@@ -8,8 +8,12 @@
 
 # ── AI tooling (local development only; never distributed) ───
 AGENTS.md
+AGENTS.override.md
+SKILL.md
+PROMPTS.md
 **/AGENTS.md
 .agents/
+.agents-backups/
 **/.agents/
 CODEX.md
 PI.md
@@ -22,10 +26,17 @@ mcp.json
 Session.md*
 session-*.md
 **/codemap.md
+# Private design contracts (kept local by the maintainer)
+modules/iris/DESIGN.md
+modules/iris/DECISIONS.md
+modules/iris/SYSTEM.md
+ROADMAP.md
+STATUS.md
 
 # AI tool directories
 .design-system/
 .codex/
+.crush/
 .pi/
 .cortexkit/
 .factory/
@@ -47,6 +58,7 @@ memory-bank/
 .omc/
 .lcm/
 .opencode/
+.traycer/
 openspec    
 opencode.json
 .qoder/

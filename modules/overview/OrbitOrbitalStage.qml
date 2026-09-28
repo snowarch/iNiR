@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Widgets
 import qs
 import qs.services
@@ -50,10 +51,18 @@ Item {
     readonly property var navigationOptions: orbitOptions.navigationMotion ?? ({})
     readonly property string navigationPreset: OrbitTuning.navigationPreset(navigationOptions)
     readonly property bool navigationAdvanced: OrbitTuning.navigationAdvanced(navigationOptions)
-    readonly property int transitionDurationMs: OrbitTuning.navigationDuration(navigationOptions)
+    readonly property int transitionDurationMs: OrbitTuning.navigationDuration(
+        navigationOptions, spatialLayout)
     readonly property string navigationEasing: OrbitTuning.navigationEasing(navigationOptions)
-    readonly property int navigationEasingType: navigationEasing === "linear" ? Easing.Linear
-        : navigationEasing === "direct" ? Easing.OutCubic : Easing.InOutCubic
+    readonly property int navigationEasingType: OrbitTuning.navigationEasingType(navigationOptions)
+    readonly property real previewDpr: Math.max(1, panelWindow?.devicePixelRatio ?? 1)
+    readonly property real previewDecodeScale: Math.max(1.8, previewDpr * 1.35)
+    readonly property int previewDecodeWidth: Math.max(640,
+        Math.min(1600, Math.round(coreWidth * previewDecodeScale)))
+    readonly property int previewDecodeHeight: Math.max(360,
+        Math.min(900, Math.round(previewDecodeWidth * 9 / 16)))
+    readonly property int corePreviewFreshnessMs: 10000
+    readonly property int satellitePreviewFreshnessMs: 45000
     readonly property string spatialLayout: ["horizon", "gallery", "deck", "atlas"].includes(orbitalOptions.layout)
         ? orbitalOptions.layout : "orbit"
     readonly property bool satellitePreviews: orbitalOptions.satellitePreviews ?? true
@@ -83,7 +92,6 @@ Item {
         ? surfaceOptions.shadowMode : "core"
     readonly property real workspaceShadowOpacity: Math.max(0,
         Math.min(100, surfaceOptions.shadowOpacityPercent ?? 72)) / 100
-    readonly property int coreSurfaceElevation: Math.max(0, Math.min(4, surfaceOptions.coreElevation ?? 2))
     readonly property int satelliteSurfaceElevation: Math.max(0, Math.min(4, surfaceOptions.satelliteElevation ?? 1))
     readonly property real workspaceRadiusScale: Math.max(0.55,
         Math.min(1.6, (surfaceOptions.radiusPercent ?? 100) / 100))
@@ -135,7 +143,11 @@ Item {
         const result = []
         for (let i = 0; i < root.workspacesForOutput.length; ++i) {
             if (!root.workspaceVisible(i)) continue
-            result.push({ workspace: root.workspacesForOutput[i], workspaceIndex: i })
+            result.push({
+                workspace: root.workspacesForOutput[i],
+                workspaceId: root.workspacesForOutput[i].id,
+                workspaceIndex: i
+            })
         }
         return result
     }
@@ -192,12 +204,19 @@ Item {
                 y: card.y,
                 width: card.width,
                 height: card.height,
+                scale: card.scale,
                 opacity: card.opacity,
                 z: card.z
             })
         }
         return {
             layout: root.spatialLayout,
+            selectedWorkspaceId: root.selectedWorkspaceId,
+            motion: {
+                preset: root.navigationPreset,
+                durationMs: root.transitionDurationMs,
+                easing: root.navigationEasing
+            },
             cards,
             scroll: {
                 enabled: root.orbitOptions.scrollNavigation ?? true,
@@ -298,15 +317,22 @@ Item {
 
     function syncPreviews(): void {
         if (!GlobalStates.overviewOpen) return
-        const ids = []
+        const coreIds = []
+        const satelliteIds = []
         for (let i = 0; i < root.workspacesForOutput.length; ++i) {
             if (!root.workspaceVisible(i)) continue
             if (!root.satellitePreviews && i !== root.selectedWorkspaceIndex) continue
+            const target = i === root.selectedWorkspaceIndex ? coreIds : satelliteIds
             for (const window of root.windowsForWorkspace(root.workspacesForOutput[i].id))
-                ids.push(window.id)
+                target.push(window.id)
         }
-        if (ids.length > 0)
-            WindowPreviewService.captureForTaskView(ids)
+        // Core is what the user is actively inspecting, so keep it reasonably
+        // fresh. Satellites may reuse older snapshots until they become Core.
+        // Both calls are coalesced by WindowPreviewService into one capture pass.
+        if (coreIds.length > 0)
+            WindowPreviewService.captureForTaskView(coreIds, root.corePreviewFreshnessMs)
+        if (satelliteIds.length > 0)
+            WindowPreviewService.captureForTaskView(satelliteIds, root.satellitePreviewFreshnessMs)
     }
 
     function selectWorkspace(index: int): void {
@@ -343,7 +369,10 @@ Item {
         const workspaces = root.workspacesForOutput
         if (!workspaces || workspaces.length < 2 || !NiriService.actionReady)
             return
-        const currentIndex = root.activeWorkspaceIndex
+        // Advance from the optimistic Orbit selection, not Niri's last published
+        // active workspace. This keeps rapid wheel/key navigation responsive even
+        // while the compositor is still reporting the previous transition.
+        const currentIndex = root.selectedWorkspaceIndex
         const targetIndex = root.relativeWorkspaceIndex(currentIndex, direction, shouldWrap)
         if (targetIndex === currentIndex)
             return
@@ -586,21 +615,36 @@ Item {
 
     Repeater {
         id: workspaceRepeater
-        model: root.displayedWorkspaces
+        model: ScriptModel {
+            values: root.displayedWorkspaces
+            objectProp: "workspaceId"
+        }
 
         delegate: Item {
             id: workspaceCard
             required property var modelData
             required property int index
-            readonly property var workspaceObj: modelData?.workspace ?? null
-            readonly property int workspaceIndex: modelData?.workspaceIndex ?? -1
+            readonly property int workspaceId: modelData?.workspaceId ?? modelData?.workspace?.id ?? -1
+            readonly property var workspaceObj: root.workspacesForOutput
+                .find(workspace => workspace.id === workspaceId) ?? modelData?.workspace ?? null
+            readonly property int workspaceIndex: {
+                const liveIndex = root.workspacesForOutput.findIndex(workspace => workspace.id === workspaceId)
+                return liveIndex >= 0 ? liveIndex : (modelData?.workspaceIndex ?? -1)
+            }
 
-            readonly property bool isCore: workspaceIndex === root.selectedWorkspaceIndex
+            // ScriptModel updates asynchronously when Niri creates/removes its
+            // trailing empty workspace. Identity must not depend on a transient
+            // array index or the wrong card can become core mid-transition.
+            readonly property bool isCore: workspaceId >= 0 && workspaceId === root.selectedWorkspaceId
             readonly property bool isActive: workspaceObj?.is_active ?? false
             readonly property int offset: root.relativeOffset(workspaceIndex)
             readonly property real angle: root.satelliteAngle(workspaceIndex)
             readonly property int satelliteRank: Math.max(1, Math.abs(offset))
-            readonly property int entryOrdinal: isCore ? 0 : satelliteRank
+            readonly property int entryOrdinal: isCore ? 0
+                : root.spatialLayout === "horizon" ? horizonSlot + 1
+                : root.spatialLayout === "gallery" ? gallerySlot + 1
+                : root.spatialLayout === "atlas" ? atlasRow + atlasColumn + 1
+                : satelliteRank
             readonly property real entryDelayProgress: root.entryCascade && root.entryDurationMs > 0
                 ? Math.min(0.58, entryOrdinal * root.entryStaggerMs / root.entryDurationMs) : 0
             readonly property real entryLocalProgress: root.entryCascade
@@ -632,9 +676,20 @@ Item {
                 : root.spatialLayout === "deck" ? Math.max(-0.72, Math.min(0.72,
                     (satelliteRank - 1) * 0.20 * (offset < 0 ? -1 : 1)))
                 : root.spatialLayout === "atlas" ? atlasAxisY : 0.48
-            readonly property real entryOffsetX: (1 - entryLocalProgress) * sceneAxisX * 24
-            readonly property real entryOffsetY: (1 - entryLocalProgress)
-                * (isCore ? 10 : 16 + satelliteRank * 3)
+            readonly property real entryOffsetX: (1 - entryLocalProgress) * (isCore ? 0
+                : root.spatialLayout === "orbit" ? -sceneAxisX * 52
+                : root.spatialLayout === "horizon" ? -42
+                : root.spatialLayout === "gallery" ? -gallerySide * 44
+                : root.spatialLayout === "deck" ? -gallerySide * (deckReach * 0.28 + 18)
+                : root.spatialLayout === "atlas" ? -atlasAxisX * 28 : 0)
+            readonly property real entryOffsetY: (1 - entryLocalProgress) * (isCore
+                ? (root.spatialLayout === "horizon" ? -18
+                    : root.spatialLayout === "deck" ? 12 : 8)
+                : root.spatialLayout === "orbit" ? -sceneAxisY * 38
+                : root.spatialLayout === "horizon" ? 24
+                : root.spatialLayout === "gallery" ? 0
+                : root.spatialLayout === "deck" ? -deckLift
+                : root.spatialLayout === "atlas" ? -atlasAxisY * 24 : 0)
             readonly property real configuredDepthScale: 1
                 - (root.depthPercent / 100) * (1 - depthPosition)
             readonly property real depthScale: configuredDepthScale
@@ -714,10 +769,8 @@ Item {
                 : (atlasColumn / Math.max(1, atlasColumns - 1)) * 2 - 1
             readonly property real atlasAxisY: atlasRows <= 1 ? 0
                 : (atlasRow / Math.max(1, atlasRows - 1)) * 2 - 1
-            readonly property real atlasCoreScale: isCore
-                ? atlasMaxScale : 1
             readonly property int cardWidth: root.spatialLayout === "atlas"
-                ? Math.max(1, Math.round(atlasCellWidth * atlasCoreScale))
+                ? atlasCellWidth
                 : isCore ? root.coreWidth
                 : root.spatialLayout === "horizon"
                     ? Math.max(1, Math.round(horizonCardWidth * depthScale))
@@ -727,7 +780,7 @@ Item {
                     ? Math.max(1, Math.round(root.satelliteWidth * depthScale * 0.98))
                 : Math.max(1, Math.round(root.satelliteWidth * depthScale))
             readonly property int cardHeight: root.spatialLayout === "atlas"
-                ? Math.max(1, Math.round(atlasCellHeight * atlasCoreScale))
+                ? atlasCellHeight
                 : isCore ? root.coreHeight
                 : root.spatialLayout === "horizon"
                     ? Math.max(1, Math.round(horizonCardHeight * depthScale))
@@ -737,6 +790,12 @@ Item {
                     ? Math.max(1, Math.round(root.satelliteHeight * depthScale * 0.98))
                 : Math.max(1, Math.round(root.satelliteHeight * depthScale))
             property bool dropHovered: false
+            readonly property real satelliteOpacity: dropHovered ? 0.98
+                : root.spatialLayout === "horizon" ? 0.92
+                : root.spatialLayout === "gallery" ? 0.94
+                : root.spatialLayout === "deck" ? 0.84 + depthPosition * 0.12
+                : root.spatialLayout === "atlas" ? 0.94
+                : 0.74 + depthPosition * 0.20
 
             visible: workspaceObj !== null
             width: cardWidth
@@ -792,39 +851,37 @@ Item {
                         + Math.sin(angle) * ringRadiusY * (0.82 + depthPosition * 0.28)
                         - height / 2
                         + entryOffsetY)
-            z: isCore ? 100 : root.spatialLayout === "horizon" ? 30
-                : root.spatialLayout === "gallery" ? Math.round(18 + depthPosition * 46)
-                : root.spatialLayout === "deck" ? Math.round(22 + depthPosition * 48)
-                : root.spatialLayout === "atlas" ? 40
-                : Math.round(12 + depthPosition * 58)
-            opacity: (isCore ? 1 : dropHovered ? 0.98
-                : root.spatialLayout === "horizon" ? 0.92
-                : root.spatialLayout === "gallery" ? 0.94
-                : root.spatialLayout === "deck" ? 0.84 + depthPosition * 0.12
-                : root.spatialLayout === "atlas" ? 0.94
-                : 0.74 + depthPosition * 0.20)
-                * entryLocalProgress
+            // Stacking is deliberately stable for satellites. Previously z followed
+            // selected-relative depth immediately while geometry was still moving,
+            // which made cards pop behind/in front of one another mid-transition.
+            z: isCore ? 100 : 20 + workspaceIndex * 0.01
+            scale: 1
+            opacity: (isCore ? 1 : satelliteOpacity) * entryLocalProgress
+
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled && root.transitionDurationMs > 0
+                    && root.entryProgress >= 1
+                NumberAnimation { duration: root.transitionDurationMs; easing.type: root.navigationEasingType }
+            }
 
             Behavior on x {
                 enabled: Appearance.animationsEnabled && root.transitionDurationMs > 0
-                NumberAnimation {
-                    duration: root.transitionDurationMs
-                    easing.type: root.navigationEasingType
-                }
+                    && root.entryProgress >= 1
+                NumberAnimation { duration: root.transitionDurationMs; easing.type: root.navigationEasingType }
             }
             Behavior on y {
                 enabled: Appearance.animationsEnabled && root.transitionDurationMs > 0
-                NumberAnimation {
-                    duration: root.transitionDurationMs
-                    easing.type: root.navigationEasingType
-                }
+                    && root.entryProgress >= 1
+                NumberAnimation { duration: root.transitionDurationMs; easing.type: root.navigationEasingType }
             }
             Behavior on width {
                 enabled: Appearance.animationsEnabled && root.transitionDurationMs > 0
+                    && root.spatialLayout !== "atlas"
                 NumberAnimation { duration: root.transitionDurationMs; easing.type: root.navigationEasingType }
             }
             Behavior on height {
                 enabled: Appearance.animationsEnabled && root.transitionDurationMs > 0
+                    && root.spatialLayout !== "atlas"
                 NumberAnimation { duration: root.transitionDurationMs; easing.type: root.navigationEasingType }
             }
             StyledRectangularShadow {
@@ -838,7 +895,9 @@ Item {
             PanelSurface {
                 id: workspaceSurface
                 anchors.fill: parent
-                elevation: workspaceCard.isCore ? root.coreSurfaceElevation : root.satelliteSurfaceElevation
+                // Keep the material layer stable while focus moves. Changing an integer
+                // elevation mid-flight swaps surface colors/shadows at a discrete frame.
+                elevation: root.satelliteSurfaceElevation
                 cardStyle: true
                 outlined: false
                 clipContent: true
@@ -862,6 +921,11 @@ Item {
                         asynchronous: true
                         cache: true
                         smooth: true
+                        // All workspace cards use the same bounded decode size so
+                        // Qt can share the cached image instead of decoding a 4K
+                        // wallpaper for thumbnail-sized surfaces.
+                        sourceSize.width: Math.max(1, Math.round(root.coreWidth * 2))
+                        sourceSize.height: Math.max(1, Math.round(root.coreHeight * 2))
                         visible: root.showWorkspaceWallpaper && source.toString().length > 0
                         opacity: root.workspaceWallpaperOpacity * (workspaceCard.isCore ? 1 : 0.82)
                     }
@@ -871,8 +935,9 @@ Item {
                     id: workspaceContent
                     z: 2
                     anchors.fill: parent
-                    anchors.margins: root.workspaceFrameInset + (workspaceCard.isCore
-                        ? root.coreContentMargin : root.satelliteContentMargin)
+                    // Keep the inner grid stable while workspace focus moves. A
+                    // changing inset reflows every preview during the transition.
+                    anchors.margins: root.workspaceFrameInset + root.satelliteContentMargin
                     clip: true
 
                     Repeater {
@@ -891,8 +956,7 @@ Item {
                             readonly property int rows: Math.max(1, Math.ceil(count / columns))
                             readonly property int configuredGap: Math.max(0, Math.min(16,
                                 root.orbitOptions.windowGap ?? 4))
-                            readonly property int gap: workspaceCard.isCore
-                                ? configuredGap : Math.max(1, Math.round(configuredGap * 0.6))
+                            readonly property real gap: Math.max(1, configuredGap)
                             readonly property real cellWidth: workspaceContent.width / columns
                             readonly property real cellHeight: workspaceContent.height / rows
                             readonly property bool keyboardSelected: workspaceCard.isCore
@@ -918,6 +982,7 @@ Item {
                                 Image {
                                     id: previewImage
                                     anchors.fill: parent
+                                    property bool hadReadyFrame: false
                                     source: {
                                         const ignoredRevision = windowItem.previewRevision
                                         return (workspaceCard.isCore || root.satellitePreviews)
@@ -927,8 +992,34 @@ Item {
                                     fillMode: Image.PreserveAspectCrop
                                     asynchronous: true
                                     smooth: true
-                                    mipmap: true
-                                    visible: status === Image.Ready
+                                    // Window screenshots contain small text and hard UI edges. With a
+                                    // bounded near-native decode, mipmaps soften them unnecessarily.
+                                    mipmap: false
+                                    retainWhileLoading: true
+                                    // Captures are usually near the original window size. Orbit cards are much
+                                    // smaller, so use one stable decode budget for the whole stage. Binding this
+                                    // to animated tile geometry reloads the PNG on every workspace transition.
+                                    sourceSize.width: root.previewDecodeWidth
+                                    sourceSize.height: root.previewDecodeHeight
+                                    visible: opacity > 0.001
+                                    opacity: status === Image.Ready
+                                        || (status === Image.Loading && hadReadyFrame) ? 1 : 0
+
+                                    onStatusChanged: {
+                                        if (status === Image.Ready)
+                                            hadReadyFrame = true
+                                        else if (status === Image.Error || status === Image.Null)
+                                            hadReadyFrame = false
+                                    }
+
+                                    Behavior on opacity {
+                                        enabled: Appearance.animationsEnabled
+                                        NumberAnimation {
+                                            duration: Appearance.animation.elementMoveFast.duration
+                                            easing.type: Appearance.animation.elementMoveFast.type
+                                            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                                        }
+                                    }
                                 }
 
                                 Connections {
@@ -947,7 +1038,8 @@ Item {
                                     implicitSize: Math.max(16,
                                         Math.round(Math.min(parent.width, parent.height) * 0.32))
                                     source: AppSearch.getIconSource(windowItem.modelData?.app_id ?? "")
-                                    visible: !previewImage.visible
+                                    opacity: 1 - previewImage.opacity
+                                    visible: opacity > 0.001
                                 }
 
                                 Rectangle {
@@ -1046,12 +1138,12 @@ Item {
                     visible: root.showWorkspaceLabels
                     anchors.left: parent.left
                     anchors.top: parent.top
-                    anchors.margins: workspaceCard.isCore ? 10 : 7
+                    anchors.margins: 8
                     width: Math.min(
                         Math.ceil((workspaceLabelRow.implicitWidth + 20) / 2) * 2,
                         Math.max(48, parent.width - anchors.margins * 2))
-                    height: workspaceCard.isCore ? 28 : 24
-                    elevation: workspaceCard.isCore ? 2 : 1
+                    height: 26
+                    elevation: 1
                     cardStyle: true
                     outlined: false
                     surfaceDialect: root.surfaceDialect
@@ -1067,9 +1159,10 @@ Item {
                         MaterialSymbol {
                             visible: workspaceCard.isActive
                             text: "radio_button_checked"
-                            iconSize: workspaceCard.isCore ? 14 : 12
+                            iconSize: 13
                             textRenderType: Text.QtRendering
-                            color: workspaceCard.isCore ? Appearance.colors.colPrimary : root.workspaceForeground
+                            color: workspaceCard.isCore
+                                ? Appearance.colors.colPrimary : root.workspaceForeground
                         }
 
                         StyledText {
@@ -1077,9 +1170,8 @@ Item {
                             Layout.minimumWidth: 0
                             renderType: Text.QtRendering
                             font.hintingPreference: Font.PreferNoHinting
-                            font.pixelSize: workspaceCard.isCore
-                                ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smaller
-                            font.weight: workspaceCard.isCore ? Font.DemiBold : Font.Medium
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: Font.Medium
                             text: root.workspaceLabel(workspaceCard.workspaceObj)
                             color: root.workspaceForeground
                             elide: Text.ElideRight
@@ -1094,10 +1186,12 @@ Item {
                     color: "transparent"
                     radius: workspaceSurface._radius
                     border.width: root.workspaceSurfaceOutline ? root.workspaceOutlineWidth : 0
-                    border.color: workspaceCard.isCore || workspaceCard.isActive
-                        ? ColorUtils.applyAlpha(Appearance.colors.colPrimary, root.workspaceOutlineOpacity)
-                        : ColorUtils.applyAlpha(Appearance.colors.colLayer0Border,
-                            root.workspaceOutlineOpacity * 0.72)
+                    border.color: ColorUtils.mix(
+                        ColorUtils.applyAlpha(Appearance.colors.colLayer0Border,
+                            root.workspaceOutlineOpacity * 0.72),
+                        ColorUtils.applyAlpha(Appearance.colors.colPrimary,
+                            root.workspaceOutlineOpacity),
+                        workspaceCard.isCore ? 1 : workspaceCard.isActive ? 0.65 : 0)
                 }
 
                 Rectangle {
@@ -1114,7 +1208,7 @@ Item {
                         MaterialSymbol {
                             Layout.alignment: Qt.AlignHCenter
                             text: "move_down"
-                            iconSize: workspaceCard.isCore ? 30 : 22
+                            iconSize: 26
                             textRenderType: Text.QtRendering
                             color: root.workspaceForeground
                         }

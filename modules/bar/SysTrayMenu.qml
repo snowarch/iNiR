@@ -1,3 +1,4 @@
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -13,6 +14,7 @@ PopupWindow {
     property real popupBackgroundMargin: 0
     property bool anchorHovered: false  // Set by parent to indicate if anchor is hovered
     property bool closing: false
+    property bool registeredContextMenu: false
 
     signal menuClosed
     signal menuOpened(qsWindow: var) // Correct type is QsWindow, but QML does not like that
@@ -39,6 +41,10 @@ PopupWindow {
         root.closing = false;
         root.visible = true;
         popupBackground.shown = true;
+        if (!root.registeredContextMenu) {
+            GlobalStates.activeContextMenuCount++;
+            root.registeredContextMenu = true;
+        }
         root.menuOpened(root);
     }
 
@@ -46,9 +52,18 @@ PopupWindow {
         root.visible = false;
         popupBackground.shown = false;
         root.closing = false;
+        if (root.registeredContextMenu) {
+            GlobalStates.activeContextMenuCount = Math.max(0, GlobalStates.activeContextMenuCount - 1);
+            root.registeredContextMenu = false;
+        }
         while (stackView.depth > 1)
             stackView.pop();
         root.menuClosed();
+    }
+
+    Component.onDestruction: {
+        if (root.registeredContextMenu)
+            GlobalStates.activeContextMenuCount = Math.max(0, GlobalStates.activeContextMenuCount - 1);
     }
 
     function close() {

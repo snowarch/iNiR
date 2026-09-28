@@ -4,7 +4,7 @@ import QtQuick
 RippleButton {
     id: root
 
-    buttonRadius: 0
+    buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : 0
     implicitHeight: 36
     implicitWidth: buttonTextWidget.implicitWidth + 14 * 2
 

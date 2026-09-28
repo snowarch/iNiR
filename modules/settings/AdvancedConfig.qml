@@ -22,6 +22,11 @@ ContentPage {
         summary: Translation.tr("Color generation · resources")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
+        searchAliases: ({
+            "color generation": "color",
+            "cava options": "color",
+            "cava & spectrum options": "color"
+        })
         options: [
             { displayName: Translation.tr("Color"), icon: "colors", value: "color" },
             { displayName: Translation.tr("Resources"), icon: "memory_alt", value: "resources" }
@@ -47,6 +52,7 @@ ContentPage {
             "appearance.cava.framerate": 60,
             "appearance.cava.stereo": true,
             "appearance.cava.waveOpacity": 30,
+            "appearance.cava.blockedApps": [],
         })
         colorRegenTimer.restart()
     }
@@ -57,9 +63,11 @@ ContentPage {
         onTriggered: Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
     }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "color"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "color"
-        visible: root.activeSection === "color"
         expanded: true
         icon: "colors"
         title: Translation.tr("Color generation")
@@ -444,10 +452,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "resources"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "resources"
-        visible: root.activeSection === "resources"
         expanded: true
         icon: "memory_alt"
         title: Translation.tr("Resource Monitor")
@@ -464,6 +476,8 @@ ContentPage {
                     text: Translation.tr("Poll GPU usage and temperature. Disable on hybrid laptops to keep the dGPU asleep — also pins Qt to the iGPU on next restart.")
                 }
             }
+        }
+    }
         }
     }
 }

@@ -6,6 +6,7 @@ import Quickshell.Widgets
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 
 /**
@@ -46,32 +47,53 @@ Item {
     readonly property bool _regalia: root._dialect === "regalia"
     readonly property bool _inir: root._dialect === "inir"
     readonly property bool _aurora: root._dialect === "aurora" || root._angel
+    readonly property bool _pureAurora: root._dialect === "aurora"
     readonly property bool _cookie: root._dialect === "cookie"
     readonly property bool _island: root._dialect === "island"
+    readonly property bool _editorial: root._dialect === "editorial" && !root._island
 
     readonly property color _colText: root._zzz ? Appearance.zzz.ink
         : root._angel ? Appearance.angel.colText
         : root._inir ? Appearance.inir.colText
+        : root._editorial ? Appearance.editorial.ink
         : root._aurora ? Appearance.colors.colOnSurface
         : Appearance.colors.colOnLayer1
-    readonly property color _colSubtext: root._zzz ? Appearance.zzz.inkMuted
+    readonly property color _colSubtext: root._island
+        ? ColorUtils.mix(Appearance.colors.colOnLayer1, Appearance.colors.colSecondary, 0.84)
+        : root._zzz ? Appearance.zzz.inkMuted
+        : root._regalia ? Appearance.regalia.onMuted
+        : root._cookie ? Appearance.cookie.inkMuted
         : root._angel ? Appearance.angel.colTextSecondary
         : root._inir ? Appearance.inir.colTextSecondary
+        : root._editorial ? Appearance.editorial.muted
+        : root._pureAurora ? Appearance.colors.colSecondary
         : Appearance.colors.colSubtext
+    readonly property color _colMetaIcon: root._island ? Appearance.colors.colSecondary
+        : root._zzz ? Appearance.zzz.secondary
+        : root._regalia ? Appearance.regalia.hardwareSecondary
+        : root._cookie ? Appearance.colors.colSecondary
+        : root._angel ? Appearance.angel.colSecondary
+        : root._inir ? Appearance.inir.colSecondary
+        : root._editorial ? Appearance.editorial.accent
+        : Appearance.colors.colSecondary
     readonly property color _colAccent: root._zzz ? Appearance.zzz.accent
         : root._angel ? Appearance.angel.colPrimary
         : root._inir ? Appearance.inir.colPrimary
+        : root._editorial ? Appearance.editorial.accent
         : Appearance.colors.colPrimary
     readonly property color _colBannerBase: root._zzz ? Appearance.zzz.tile
         : root._angel ? Qt.alpha(Appearance.angel.colGlassCard, 1)
         : root._inir ? Qt.alpha(Appearance.inir.colLayer1, 1)
+        : root._editorial ? Appearance.editorial.layer(1)
         : root._island ? Qt.alpha(Appearance.colors.colLayer1, 1)
         : Qt.alpha(Appearance.colors.colLayer0Base, 1)
     readonly property color _avatarPlate: root._zzz ? Appearance.zzz.chrome
         : root._angel ? Qt.alpha(Appearance.angel.colGlassCard, 1)
         : root._inir ? Qt.alpha(Appearance.inir.colLayer1, 1)
+        : root._editorial ? Appearance.editorial.layer(2)
         : root._island ? Appearance.colors.colLayer1
         : Qt.alpha(Appearance.colors.colLayer1, 1)
+    readonly property color _footerSurface: Appearance.colInactiveControlSurface
 
     readonly property var _bannerModes: ["wallpaper", "custom", "solid", "none"]
     readonly property string _bannerMode: {
@@ -110,8 +132,9 @@ Item {
         && !Appearance._gameModeActive
         && !Wallpapers.batteryPauseActive
 
-    readonly property real _contentPadding: 12
+    readonly property real _contentPadding: root._editorial ? 14 : 12
     readonly property real _bannerInset: root._zzz || root._cookie ? 6
+        : root._editorial ? 0
         : root._island ? 4
         : root._regalia ? Appearance.regalia.surfaceInset : 0
     readonly property real _bannerHeight: root._bannerAllowed
@@ -132,11 +155,13 @@ Item {
         : root._island ? (Config.options?.appearance?.island?.radius ?? 18)
         : root._angel ? Appearance.angel.roundingLarge
         : root._inir ? Appearance.inir.roundingLarge
+        : root._editorial ? Appearance.editorial.radius
         : Appearance.rounding.large
     readonly property real _panelConcentricRadius: (root.atPanelTop && root.panelRadius > root.panelInset)
         ? Appearance.concentricRadius(root.panelRadius, root.panelInset) : 0
     readonly property real _cardRadius: Math.max(root._profileRadius, root._panelConcentricRadius)
     readonly property real _bannerRadius: root._zzz ? Appearance.zzz.controlRadius
+        : root._editorial ? Appearance.editorial.radius
         : Appearance.concentricRadius(root._cardRadius, root._bannerInset)
 
     readonly property string _displayName: SystemInfo.displayName || SystemInfo.username || "user"
@@ -162,10 +187,26 @@ Item {
         elevation: 1
         cardStyle: root.panelCardStyle
         outlined: false
+        editorialGlassMaterial: root._editorial && Appearance.editorial.glassActive
+        wallpaperBackdrop: root._editorial && Appearance.editorial.glassActive
+            && !Appearance.editorial.sidebarGlassBackground
         surfaceDialect: root._dialect
         islandSkin: root._island
         radiusOverride: root._cardRadius
         implicitHeight: root._bannerHeight + root._footerHeight
+
+        Rectangle {
+            visible: root._pureAurora
+            anchors.left: parent.left
+            anchors.right: parent.right
+            y: Math.max(0, root._bannerHeight - root._bannerRadius)
+            height: root._footerHeight + root._bannerRadius
+            color: root._footerSurface
+            topLeftRadius: 0
+            topRightRadius: 0
+            bottomLeftRadius: root._cardRadius
+            bottomRightRadius: root._cardRadius
+        }
 
         Loader {
             id: bannerLoader
@@ -259,6 +300,16 @@ Item {
                     }
                 }
 
+                MaterialShape {
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.margins: 12
+                    implicitSize: 18
+                    visible: root._editorial && Appearance.editorial.ornaments
+                    shape: MaterialShape.Shape.Flower
+                    color: root._colAccent
+                }
+
                 Rectangle {
                     anchors.left: parent.left
                     anchors.right: parent.right
@@ -287,6 +338,16 @@ Item {
             anchors.left: parent.left
             anchors.leftMargin: root._contentPadding
             y: root._avatarTop
+
+            HoverHandler {
+                id: avatarAccountHover
+                cursorShape: Qt.PointingHandCursor
+            }
+
+            TapHandler {
+                gesturePolicy: TapHandler.WithinBounds
+                onTapped: AppLauncher.launch("manageUser")
+            }
 
             CookieFace {
                 anchors.fill: parent
@@ -357,6 +418,11 @@ Item {
                     color: root._colAccent
                 }
             }
+
+            StyledToolTip {
+                text: Translation.tr("Manage my account")
+                extraVisibleCondition: avatarAccountHover.hovered
+            }
         }
 
         ColumnLayout {
@@ -371,8 +437,9 @@ Item {
             StyledText {
                 Layout.fillWidth: true
                 text: root._displayName
-                font.pixelSize: Appearance.font.pixelSize.normal
-                font.weight: Font.DemiBold
+                font.family: root._editorial ? Appearance.font.family.title : Appearance.font.family.main
+                font.pixelSize: root._editorial ? Appearance.font.pixelSize.large * Appearance.editorial.titleScale : Appearance.font.pixelSize.normal
+                font.weight: root._editorial ? Appearance.editorial.titleWeight : Font.DemiBold
                 color: root._colText
                 elide: Text.ElideRight
                 wrapMode: Text.NoWrap
@@ -387,7 +454,7 @@ Item {
                     Layout.preferredHeight: 14
                     source: SystemInfo.distroIcon
                     colorize: true
-                    color: root._colSubtext
+                    color: root._colMetaIcon
                 }
 
                 StyledText {
@@ -412,6 +479,7 @@ Item {
                 visible: root.androidToggles
                 dialect: root._dialect
                 buttonIcon: "edit"
+                iconColor: root._colAccent
                 toggled: root.editMode
                 tooltipText: Translation.tr("Edit quick toggles")
                 onClicked: root.editModeRequested()
@@ -420,6 +488,7 @@ Item {
             HeaderButton {
                 dialect: root._dialect
                 buttonIcon: "settings"
+                iconColor: root._colMetaIcon
                 enabled: root.settingsEnabled
                 opacity: enabled ? 1 : 0.5
                 tooltipText: Translation.tr("Settings")
@@ -438,6 +507,7 @@ Item {
                 id: overflowButton
                 dialect: root._dialect
                 buttonIcon: "more_horiz"
+                iconColor: root._colSubtext
                 toggled: overflowMenu.active
                 tooltipText: Translation.tr("More")
                 onClicked: overflowMenu.active = !overflowMenu.active
@@ -490,24 +560,17 @@ Item {
                 : headerButton._angel ? Appearance.angel.colOnPrimary
                 : headerButton._inir ? Appearance.inir.colOnPrimaryContainer
                 : Appearance.colors.colOnPrimaryContainer)
-            : (headerButton._zzz ? Appearance.zzz.ink
-                : headerButton._angel ? Appearance.angel.colText
-                : headerButton._inir ? Appearance.inir.colText
-                : headerButton._aurora ? Appearance.colors.colOnSurface
-                : Appearance.colors.colOnLayer1)
+            : Appearance.colActionIcon
 
         implicitWidth: 34
         implicitHeight: 34
         buttonRadius: headerButton._zzz ? Appearance.zzz.controlRadius
             : headerButton._angel ? Appearance.angel.roundingSmall
             : headerButton._inir ? Appearance.inir.roundingSmall
+            : root._editorial ? Appearance.rounding.small
             : Appearance.rounding.full
         colBackground: "transparent"
-        colBackgroundHover: headerButton._zzz ? Appearance.zzz.chrome
-            : headerButton._angel ? Appearance.angel.colGlassCardHover
-            : headerButton._inir ? Appearance.inir.colLayer2Hover
-            : headerButton._aurora ? Appearance.aurora.colSubSurfaceHover
-            : Appearance.colors.colLayer2Hover
+        colBackgroundHover: Appearance.colLayer2Hover
         colBackgroundToggled: headerButton._zzz ? Appearance.zzz.chrome
             : headerButton._angel ? Appearance.angel.colPrimary
             : headerButton._inir ? Appearance.inir.colPrimaryContainer

@@ -7,6 +7,8 @@ import Quickshell
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.iris.style
+import qs.modules.iris.components as Iris
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
@@ -14,19 +16,22 @@ import qs.modules.common.widgets.widgetCanvas
 Rectangle {
     id: root
 
-    property real padding: 8
+    property real padding: OverlayLook.iris ? Math.round(6 * IrisStyle.density) : 8
 
     opacity: GlobalStates.overlayOpen ? 1 : 0
     implicitWidth: contentRow.implicitWidth + (padding * 2)
     implicitHeight: contentRow.implicitHeight + (padding * 2)
-    color: Appearance.angelEverywhere || Appearance.regaliaEverywhere ? "transparent"
+    color: OverlayLook.iris ? IrisStyle.bodySurface
+        : Appearance.angelEverywhere || Appearance.regaliaEverywhere ? "transparent"
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.colors.colSurfaceContainer
-    radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundLarge
+    radius: OverlayLook.iris ? height / 2
+        : Appearance.regaliaEverywhere ? Appearance.regalia.roundLarge
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.large
-    border.color: Appearance.regaliaEverywhere ? "transparent"
+    border.color: OverlayLook.iris ? IrisStyle.border
+        : Appearance.regaliaEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colBorder
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.colors.colOutlineVariant
@@ -89,7 +94,11 @@ Rectangle {
     }
 
     Behavior on opacity {
-        animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        animation: NumberAnimation {
+            duration: OverlayLook.iris ? IrisStyle.emergeDuration : Appearance.animation.elementMoveFast.duration
+            easing.type: OverlayLook.iris ? Easing.BezierSpline : Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: OverlayLook.iris ? IrisStyle.emergeCurve : Appearance.animation.elementMoveFast.bezierCurve
+        }
     }
 
     RowLayout {
@@ -98,10 +107,10 @@ Rectangle {
             fill: parent
             margins: root.padding
         }
-        spacing: 6
+        spacing: OverlayLook.iris ? Math.round(4 * IrisStyle.density) : 6
 
         Row {
-            spacing: 4
+            spacing: OverlayLook.iris ? Math.round(2 * IrisStyle.density) : 4
             Repeater {
                 model: ScriptModel {
                     values: OverlayContext.availableWidgets
@@ -115,7 +124,14 @@ Rectangle {
         }
 
         Separator {}
-        TimeWidget {}
+        TimeWidget { visible: !OverlayLook.iris }
+        Iris.IrisClock {
+            visible: OverlayLook.iris
+            Layout.alignment: Qt.AlignVCenter
+            Layout.leftMargin: Math.round(8 * IrisStyle.density)
+            Layout.rightMargin: Math.round(6 * IrisStyle.density)
+            pixelSize: 18 * IrisStyle.typeScale
+        }
         Separator {
             visible: Battery.available
         }
@@ -126,7 +142,8 @@ Rectangle {
 
     component Separator: Rectangle {
         implicitWidth: 1
-        color: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
+        color: OverlayLook.iris ? IrisStyle.hairlineStrong
+            : Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
             : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
             : Appearance.colors.colOutlineVariant
         Layout.fillHeight: true
@@ -154,7 +171,7 @@ Rectangle {
         Layout.leftMargin: 6
         Layout.rightMargin: 6
         spacing: 2
-        property color colText: Battery.isLowAndNotCharging ? Appearance.colors.colError : Appearance.colors.colOnSurface
+        property color colText: Battery.isLowAndNotCharging ? OverlayLook.colError : OverlayLook.colOnSurface
 
         MaterialSymbol {
             id: boltIcon
@@ -162,19 +179,20 @@ Rectangle {
             fill: 1
             text: Battery.isCharging ? "bolt" : "battery_android_full"
             color: batteryWidget.colText
-            iconSize: 24
+            iconSize: OverlayLook.iris ? 20 : 24
             animateChange: true
         }
         
         StyledText {
             id: batteryText
             anchors.verticalCenter: parent.verticalCenter
+            Binding on font.weight { when: OverlayLook.iris; value: Font.DemiBold }
             text: Math.round(Battery.percentage * 100) + "%"
             color: batteryWidget.colText
             font {
-                family: Appearance.font.family.numbers
+                family: OverlayLook.fontNumbers
                 variableAxes: Appearance.font.variableAxes.numbers
-                pixelSize: 18
+                pixelSize: OverlayLook.iris ? 14 * IrisStyle.typeScale : 18
             }
         }
     }
@@ -196,29 +214,37 @@ Rectangle {
         }
         implicitWidth: implicitHeight
 
-        colBackgroundToggled: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
+        Binding on colBackground { when: OverlayLook.iris; value: ColorUtils.applyAlpha(IrisStyle.fill, 0) }
+        Binding on colBackgroundHover { when: OverlayLook.iris; value: IrisStyle.fillHover }
+        Binding on colRipple { when: OverlayLook.iris; value: IrisStyle.fillActive }
+        colBackgroundToggled: OverlayLook.iris ? IrisStyle.tintFill(IrisStyle.accent)
+            : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
             : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
             : Appearance.colors.colSecondaryContainer
-        colBackgroundToggledHover: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateHover
+        colBackgroundToggledHover: OverlayLook.iris ? IrisStyle.tintFillHover(IrisStyle.accent)
+            : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateHover
             : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.colors.colSecondaryContainerHover
-        colRippleToggled: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateActive
+        colRippleToggled: OverlayLook.iris ? IrisStyle.tintFillHover(IrisStyle.accent)
+            : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateActive
             : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.colors.colSecondaryContainerActive
 
-        buttonRadius: root.radius - (root.height - height) / 2
+        buttonRadius: OverlayLook.iris ? height / 2 : root.radius - (root.height - height) / 2
 
         contentItem: Item {
             anchors.centerIn: parent
-            implicitWidth: 32
-            implicitHeight: 32
+            implicitWidth: OverlayLook.iris ? Math.round(30 * IrisStyle.density) : 32
+            implicitHeight: OverlayLook.iris ? Math.round(30 * IrisStyle.density) : 32
             MaterialSymbol {
                 id: iconWidget
                 anchors.centerIn: parent
-                iconSize: 24
+                iconSize: OverlayLook.iris ? Math.round(19 * IrisStyle.density) : 24
+                fill: OverlayLook.iris && widgetButton.toggled ? 1 : 0
                 text: widgetButton.identifier === "recorder" && RecorderStatus.isRecording ? "radio_button_checked" : widgetButton.materialSymbol
                 color: widgetButton.identifier === "recorder" && RecorderStatus.isRecording
-                        ? Appearance.colors.colError
+                        ? OverlayLook.colError
+                        : OverlayLook.iris ? (widgetButton.toggled ? IrisStyle.accent : widgetButton.buttonHovered ? IrisStyle.text : IrisStyle.textSecondary)
                         : (widgetButton.toggled
                             ? (Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
                                 : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colOnSecondaryContainer)

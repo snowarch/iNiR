@@ -42,7 +42,9 @@ RippleButton {
             anchors.verticalCenterOffset: (button.eventCount > 0 && !button.isHeader) ? -2 : 0
             text: button.day
             horizontalAlignment: Text.AlignHCenter
-            font.weight: button.bold ? Font.DemiBold : Font.Normal
+            font.family: button.isHeader ? Appearance.font.family.main : Appearance.font.family.numbers
+            font.letterSpacing: Appearance.editorialEverywhere && button.isHeader ? 0.5 : 0
+            font.weight: button.bold || (Appearance.editorialEverywhere && button.isHeader) ? Font.DemiBold : Font.Normal
             color: Appearance.regaliaEverywhere
                 ? (button.isHeader && (button.isToday == 1) ? Appearance.regalia.hardwarePrimary
                     : (button.isToday == 1) ? Appearance.regalia.primaryPlateInk
@@ -114,6 +116,8 @@ RippleButton {
                     height: 5
                     radius: 2.5
                     color: modelData
+                    border.width: Appearance.editorialEverywhere && button.isToday == 1 ? 1 : 0
+                    border.color: Appearance.editorial.accentInk
 
                     Behavior on color {
                         enabled: Appearance.animationsEnabled

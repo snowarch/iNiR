@@ -1,7 +1,7 @@
 # Maintainer: snowarch
 
 pkgname=inir-shell
-pkgver=2.29.2
+pkgver=2.31.0
 pkgrel=1
 pkgdesc='iNiR shell payload, launcher, and user service'
 arch=(any)
@@ -59,6 +59,7 @@ optdepends=(
   'cava: audio visualizer'
   'ddcutil: external monitor brightness control'
   'easyeffects: audio effects integration'
+  'lsp-plugins-lv2: EasyEffects equalizer backend'
   'ffmpeg: recording and video wallpaper helpers'
   'fprintd: fingerprint authentication integration'
   'geoclue: GPS-backed weather location detection'
@@ -76,6 +77,7 @@ optdepends=(
   'mission-center: graphical system monitor (default task manager)'
   'mpv: media playback and YouTube Music support'
   'mpv-mpris: richer mpv media session integration'
+  'deno: JavaScript runtime required by current yt-dlp YouTube extraction'
   'nautilus: default file manager integration'
   'nm-connection-editor: default network settings GUI'
   'pavucontrol: advanced audio mixer UI'
@@ -95,7 +97,9 @@ optdepends=(
   'wtype: Wayland text injection helper'
   'ydotool: virtual keyboard and clipboard paste helper'
   'yt-dlp: YouTube media backend'
+  'yt-dlp-ejs: bundled YouTube JavaScript challenge solver for yt-dlp'
   'python-ytmusicapi: YouTube Music browsing (InnerTube engine)'
+  'python-secretstorage: Chromium browser cookie decryption for YouTube Music account connection'
   'millennium-bin: Steam theming via Millennium (requires steam)'
 )
 conflicts=('inir-shell-git' 'noctalia-qs' 'noctalia-shell' 'cachyos-niri-noctalia')
@@ -111,28 +115,8 @@ package() {
   local timestamp
   timestamp="$(date -Iseconds)"
 
-  install -dm755 "$shellroot"
-
-  while IFS= read -r -d '' root_qml; do
-    install -Dm644 "$root_qml" "$shellroot/$(basename "$root_qml")"
-  done < <(find "$srcroot" -maxdepth 1 -type f -name '*.qml' -print0)
-
-  while IFS= read -r runtime_file; do
-    [[ -n "$runtime_file" ]] || continue
-    if [[ "$runtime_file" == "setup" ]]; then
-      install -Dm755 "$srcroot/$runtime_file" "$shellroot/$runtime_file"
-    else
-      install -Dm644 "$srcroot/$runtime_file" "$shellroot/$runtime_file"
-    fi
-  done < "$srcroot/sdata/runtime-root-files.txt"
-
-  while IFS= read -r dir; do
-    [[ -n "$dir" ]] || continue
-    cp -a "$srcroot/$dir" "$shellroot/"
-  done < "$srcroot/sdata/runtime-payload-dirs.txt"
-
-  find "$shellroot" \( -name AGENTS.md -o -name CLAUDE.md -o -name CODEX.md -o -name PI.md -o -name codemap.md -o -name .mcp.json -o -name opencode.json -o -name skills-lock.json \) -delete
-  find "$shellroot" \( -name .agents -o -name .claude -o -name .codex -o -name .factory -o -name .opencode -o -name .codebase-memory -o -name .impeccable -o -name .pi-subagents \) -type d -prune -exec rm -rf {} +
+  python3 "$srcroot/sdata/lib/runtime-payload.py" copy --root "$srcroot" --target "$shellroot" || return
+  chmod +x "$shellroot/setup" "$shellroot/scripts/inir"
 
   find "$shellroot/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} +
 
@@ -144,6 +128,7 @@ package() {
   install -Dm644 "$srcroot/distro/arch/inir-shell/inir-quickshell-rebuild.hook" \
     "$pkgdir/usr/share/libalpm/hooks/inir-quickshell-rebuild.hook"
   install -Dm644 "$srcroot/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 "$srcroot/NOTICE" "$pkgdir/usr/share/licenses/$pkgname/NOTICE"
   install -Dm644 "$srcroot/README.md" "$docroot/README.md"
   install -Dm644 "$srcroot/docs/SETUP.md" "$docroot/SETUP.md"
   install -Dm644 "$srcroot/docs/IPC.md" "$docroot/IPC.md"

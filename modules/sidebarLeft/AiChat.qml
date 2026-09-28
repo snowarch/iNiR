@@ -277,12 +277,13 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
             MaterialSymbol {
                 text: statusItem.icon
                 iconSize: Appearance.font.pixelSize.huge
-                color: Appearance.colors.colSubtext
+                color: Appearance.colSecondaryActionIcon
             }
             StyledText {
                 font.pixelSize: Appearance.font.pixelSize.small
+                font.weight: Font.Medium
                 text: statusItem.statusText
-                color: Appearance.colors.colSubtext
+                color: Appearance.colMetadataText
                 animateChange: true
             }
         }
@@ -353,7 +354,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 // plate, so clipping it to contain the row also swallowed the whole
                 // menu. Nothing overflows any more — the cap plus the model name
                 // eliding is what keeps the row inside.
-                radius: Appearance.rounding.normal - root.padding
+                radius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.normal - root.padding
                 color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                     : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
@@ -494,7 +495,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     wrapMode: Text.Wrap
                     text: Translation.tr("Choose a recommended, free or local model above. Connect providers in AI Settings — no model IDs required.\nCtrl+O expands · Ctrl+P detaches")
                     font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colSubtext
+                    color: Appearance.colMetadataText
                 }
             }
 
@@ -523,7 +524,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     ? Translation.tr("Select model") 
                     : ""
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
+                color: Appearance.colMetadataText
                 elide: Text.ElideRight
             }
             KeyboardKey {
@@ -638,10 +639,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.colors.colErrorContainer
                     colBackgroundHover: Appearance.colors.colErrorContainerHover
-                    onClicked: {
-                        GlobalStates.settingsOverlayRequestedPage = 24
-                        GlobalStates.settingsOverlayOpen = true
-                    }
+                    onClicked: GlobalStates.openSettingsPage(24)
                     contentItem: RowLayout {
                         anchors.centerIn: parent
                         spacing: 4
@@ -666,9 +664,11 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
 
         Rectangle { // Input area
             id: inputWrapper
+            border.width: Appearance.editorialEverywhere ? 1 : 0
+            border.color: messageInputField.activeFocus ? Appearance.editorial.accent : Appearance.editorial.rule
             property real spacing: 5
             Layout.fillWidth: true
-            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal - root.padding
+            radius: Appearance.editorialEverywhere ? Appearance.editorial.radius : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal - root.padding
             Behavior on radius {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
@@ -718,8 +718,10 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     Layout.minimumHeight: 40
                     Layout.maximumHeight: root.compactLayout ? 104 : 156
                     padding: 10
-                    color: activeFocus ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
-                    placeholderText: Ai.currentModelReady
+                    color: activeFocus ? Appearance.colors.colOnSurface : Appearance.colMetadataText
+                    placeholderText: !Network.online && !(Ai.getModel()?.local ?? false)
+                        ? Translation.tr("%1. Local models still work").arg(Network.offlineReason)
+                        : Ai.currentModelReady
                         ? Translation.tr("Ask %1 anything...").arg(Ai.getModel()?.name ?? Translation.tr("the assistant"))
                         : Translation.tr("Connect the selected provider to start chatting")
 
@@ -1034,10 +1036,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     icon: "settings"
                     text: ""
                     tooltipText: Translation.tr("AI Settings")
-                    clickAction: () => {
-                        GlobalStates.settingsOverlayRequestedPage = 24
-                        GlobalStates.settingsOverlayOpen = true
-                    }
+                    clickAction: () => GlobalStates.openSettingsPage(24)
                 }
 
                 Item {

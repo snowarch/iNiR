@@ -5,6 +5,8 @@ import Quickshell.Widgets
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.iris.frame
+import qs.modules.iris.style
 import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
 
@@ -19,7 +21,7 @@ Item {
         }
     }
 
-    property real initScale: Config.options.overlay.openingZoomAnimation ? 1.08 : 1.000001
+    property real initScale: Config.options.overlay.openingZoomAnimation ? (OverlayLook.iris ? 1.03 : 1.08) : 1.000001
     scale: initScale
     Component.onCompleted: {
         scale = 1
@@ -35,14 +37,14 @@ Item {
     Rectangle {
         id: bg
         anchors.fill: parent
-        color: Appearance.colors.colScrim
+        color: OverlayLook.iris ? IrisStyle.scrim : Appearance.colors.colScrim
         visible: Config.options.overlay.darkenScreen && opacity > 0
         opacity: (GlobalStates.overlayOpen && root.scale !== initScale)
                  ? (Config.options.overlay.scrimDim / 100)
                  : 0
         Behavior on opacity {
             animation: NumberAnimation {
-                duration: Config.options.overlay.scrimAnimationDurationMs ?? Appearance.animation.elementMoveFast.duration
+                duration: OverlayLook.iris ? IrisStyle.emergeDuration : Config.options.overlay.scrimAnimationDurationMs ?? Appearance.animation.elementMoveFast.duration
                 easing.type: Appearance.animation.elementMoveFast.type
                 easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
             }
@@ -57,7 +59,7 @@ Item {
             anchors {
                 horizontalCenter: parent.horizontalCenter
                 top: parent.top
-                topMargin: 50
+                topMargin: OverlayLook.iris ? IrisFrame.inset("top") + Math.round(14 * IrisStyle.density) : 50
             }
         }
 

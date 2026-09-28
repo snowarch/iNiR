@@ -9,6 +9,7 @@ StyledFlickable {
     // Metadatos opcionales para páginas de Settings
     property int settingsPageIndex: -1
     property string settingsPageName: ""
+    property var settingsTaskNavigator: null
 
     default property alias contentData: contentColumn.data
 

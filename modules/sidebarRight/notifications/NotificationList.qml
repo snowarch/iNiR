@@ -1,7 +1,6 @@
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
-import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -28,14 +27,6 @@ Item {
         anchors.bottomMargin: 5
 
         clip: true
-        layer.enabled: true
-        layer.effect: OpacityMask {
-            maskSource: Rectangle {
-                width: listview.width
-                height: listview.height
-                radius: 0
-            }
-        }
 
         popup: false
     }
@@ -68,7 +59,8 @@ Item {
 
             MaterialPlaceholderMessage {
                 Layout.alignment: Qt.AlignHCenter
-                icon: "notifications_active"
+                compact: true
+                icon: Notifications.silent ? "notifications_paused" : "notifications_none"
                 shape: MaterialShape.Shape.Ghostish
                 text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("All caught up")
             }
@@ -123,6 +115,7 @@ Item {
         NotificationStatusButton {
             Layout.fillWidth: false
             buttonIcon: "delete_sweep"
+            enabled: listview.count > 0
             onClicked: () => {
                 Notifications.discardAllNotifications()
             }

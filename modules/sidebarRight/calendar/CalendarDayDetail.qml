@@ -135,7 +135,7 @@ Item {
                 colBackground: "transparent"
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colLayer2Hover
                 onClicked: root.backClicked()
 
                 contentItem: MaterialSymbol {
@@ -162,8 +162,10 @@ Item {
                         if (tomorrow.toDateString() === sel.toDateString()) return Translation.tr("Tomorrow")
                         return root.locale.toString(sel, "dddd")
                     }
-                    font.pixelSize: Appearance.font.pixelSize.normal
-                    font.weight: Font.Medium
+                    font.family: Appearance.editorialEverywhere ? Appearance.font.family.title : Appearance.font.family.main
+                    font.pixelSize: Appearance.editorialEverywhere ? Appearance.font.pixelSize.larger * Appearance.editorial.titleScale : Appearance.font.pixelSize.normal
+                    font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Medium
+                    font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
                     color: root.colText
                 }
 

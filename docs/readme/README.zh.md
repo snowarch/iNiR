@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="../images/iris-2.31-principal.webp" alt="iNiR 2.31 iRiS desktop" width="900">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.31.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -78,13 +78,27 @@ Wayland → GPU
 - **Wayland**：Linux 的显示协议（新的，替代 X11）
 - **QML**：Qt 的声明式 UI 语言，iNiR 就是用这个写的
 - **Material You**：Google 的配色系统，从图片生成调色板（自动主题就是这么工作的）
-- **ii / waffle**：两种面板风格。ii = Material Design 风，waffle = Windows 11 风。`Super+Shift+W` 切换
+- **ii / waffle / iRiS**：三套面板家族。ii = Material Design，waffle = Windows 11，iRiS = 会变形成当前内容的 Island。`Super+Shift+W` 切换
 
 </details>
 
 ---
 
 ## 截图
+
+<details open>
+<summary><b>iRiS</b> — Island、桌面组件、卡片与 Dock</summary>
+
+<p align="center">
+  <img src="../images/iris-2.31-desktop.webp" alt="iRiS desktop layout" width="49%">
+  <img src="../images/iris-2.31-card.webp" alt="iRiS card surface" width="49%">
+</p>
+
+<p align="center">
+  <img src="../images/iris-2.31-dock.webp" alt="iRiS Dock and edge layout" width="99%">
+</p>
+
+</details>
 
 <details open>
 <summary><b>Material ii</b> — 浮动栏、侧边栏、Material Design 风格</summary>
@@ -110,9 +124,10 @@ Wayland → GPU
 
 ## 功能
 
-**两套面板家族**，通过 `Super+Shift+W` 随时切换：
-- **Material ii** — 浮动栏、侧边栏、Dock、5 种视觉风格（material、cards、aurora、inir、angel）
+**三套面板家族**，通过 `Super+Shift+W` 随时切换：
+- **Material ii** — 浮动栏、侧边栏、Dock、9 种全局风格（material、cards、aurora、inir、angel、regalia、zzz、cookie、editorial）
 - **Waffle** — Windows 11 风格任务栏、开始菜单、操作中心、通知中心
+- **iRiS** — 新的 Island 家族：四边可用、Pieces、任意边 Dock、Glass、Themes 和 Studio
 
 **自动主题** — 选一张壁纸，一切自动适配：
 - 通过 Material You 生成 Shell 配色，传播到 GTK3/4、Qt、终端、Firefox、Discord、SDDM
@@ -128,7 +143,7 @@ Wayland → GPU
 
 选一张壁纸，整个系统跟着变 — Shell、GTK/Qt 应用、终端、Firefox、Discord、SDDM 登录界面。全自动。
 
-- **5 种视觉风格** — Material（纯色）、Cards、Aurora（毛玻璃）、iNiR（TUI 风格）、Angel（新残酷主义）
+- **9 种全局风格** — Material（纯色）、Cards、Aurora（毛玻璃）、iNiR（TUI 风格）、Angel（新残酷主义）、Regalia、ZZZ、Cookie Shapes、Editorial
 - **壁纸动态取色** — 通过 Material You 传播到全系统
 - **10 个终端工具自动主题化** — foot、kitty、alacritty、starship、fuzzel、pywalfox、btop、lazygit、yazi
 - **应用主题化** — GTK3/4、Qt（通过 plasma-integration + darkly）、Firefox（MaterialFox）、Discord/Vesktop（System24）
@@ -175,7 +190,7 @@ Wayland → GPU
 - **自动更新** — `inir update`，支持回滚、迁移和用户更改保留
 - **锁屏** 和 **会话界面**（注销/重启/关机/休眠）
 - **Polkit 代理**、**屏幕键盘**、**自启动管理器**
-- **9 种语言** — 自动检测，支持 AI 辅助翻译生成
+- **17 个区域设置** — 自动检测，支持 AI 辅助翻译生成
 - **夜灯** — 定时或手动
 - **天气** — Open-Meteo，支持 GPS、手动坐标或城市名
 - **电池管理** — 可配置阈值，低电量自动休眠
@@ -204,7 +219,7 @@ inir doctor                     # 自动诊断和修复
 inir update                     # 拉取 + 迁移 + 重启
 ```
 
-**支持的发行版：** Arch（自动化安装器）。其他发行版可手动安装——参见 [PACKAGES.md](../PACKAGES.md)。
+**发行版：** Arch 是主要目标。Fedora 和 Debian/Ubuntu 也有自动安装依赖的流程，优先使用发行版仓库；其他发行版请参照[软件包列表](https://github.com/snowarch/inir/wiki/PACKAGES)中的通用说明。iNiR 需要 Qt 6.9 或更新版本：Ubuntu 25.10、Fedora 43 和 Debian testing 或更新版本。
 
 | 方式 | 命令 |
 |--------|---------|
@@ -273,6 +288,7 @@ inir repair                     # doctor + 重启 + 过滤日志检查
 ## 致谢
 
 - [**end-4**](https://github.com/end-4/dots-hyprland) — 原始的 illogical-impulse（Hyprland 版）
+- [**pctrade/end4-pC**](https://github.com/pctrade/end4-pC) — 一个偶尔真能冒出好点子的分支
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — 驱动此 Shell 的框架
 - [**Niri**](https://github.com/YaLTeR/niri) — 滚动平铺式 Wayland 合成器
 

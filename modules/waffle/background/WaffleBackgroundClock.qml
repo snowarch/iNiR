@@ -68,7 +68,20 @@ AbstractWidget {
     readonly property real localScale: Math.max(0.92, Math.min(1.12, Math.min(screenWidth, screenHeight) / 1080))
     readonly property color dominantColor: _dominantColor
     readonly property bool dominantColorIsDark: dominantColor.hslLightness < 0.5
-    readonly property color colText: Appearance.colors.colOnLayer0
+    // Adaptive ink follows the wallpaper under the clock (WallpaperLuma, the desktop widgets' reading):
+    // Fluent's dark foreground once that region reads light, the light one once it reads dark again.
+    readonly property bool onBlurredLock: GlobalStates.screenLocked && (Config.options?.lock?.blur?.enable ?? false)
+    readonly property var backdropSample: {
+        void Lume.revision
+        if (root.colorMode !== "adaptive" || !(Config.options?.background?.widgets?.adaptColorsToWallpaperPosition ?? true))
+            return null
+        return Lume.readFrom(WallpaperLuma.imagePath(root.wallpaperPath), root.outputName, root.x, root.y, root.width, root.height)
+    }
+    property bool backdropIsLight: false
+    onBackdropSampleChanged: root.backdropIsLight = Lume.lightAfter(root.backdropSample?.luminance ?? -1, root.backdropIsLight, 0.30, 0.21)
+    readonly property bool darkInk: root.colorMode === "adaptive" && !root.onBlurredLock && root.backdropIsLight
+    readonly property color colText: root.darkInk ? Looks.lightColors.fg : Appearance.colors.colOnLayer0
+    readonly property color shadowColor: root.darkInk ? Qt.rgba(1, 1, 1, 0.3) : Appearance.colors.colShadow
     readonly property color clockTextColor: {
         const dark = Qt.rgba(0, 0, 0, 1)
         const accent = Looks.colors.accent
@@ -77,9 +90,10 @@ AbstractWidget {
         if (colorMode === "plain")
             return ColorUtils.mix(colText, dark, dimFactor)
 
-        const onBlurredLock = GlobalStates.screenLocked && (Config.options?.lock?.blur?.enable ?? false)
-        const adaptiveBase = onBlurredLock ? colText : ColorUtils.mix(colText, accent, dominantColorIsDark ? 0.22 : 0.12)
-        return ColorUtils.mix(adaptiveBase, dark, dimFactor)
+        // Adaptive ink is mostly the accent; on a light region it keeps that hue taken near black.
+        const adaptiveBase = root.onBlurredLock ? colText : ColorUtils.mix(colText, accent, root.darkInk ? 0.72 : dominantColorIsDark ? 0.22 : 0.12)
+        // Dimming darkens light ink; dark ink is already there.
+        return root.darkInk ? adaptiveBase : ColorUtils.mix(adaptiveBase, dark, dimFactor)
     }
     readonly property int timePixelSize: Math.round(96 * Looks.fontScale * localScale * timeStyleMultiplier * timeScaleFactor)
     readonly property int datePixelSize: Math.round(26 * Looks.fontScale * localScale * dateStyleMultiplier * dateScaleFactor)
@@ -120,6 +134,7 @@ AbstractWidget {
     width: implicitWidth
     height: implicitHeight
     draggable: placementStrategy === "free" && !GlobalStates.screenLocked && !GlobalStates.overviewOpen
+    grabCursor: GlobalStates.widgetEditMode
     visible: opacity > 0
     opacity: clockEnabled ? 1 : 0
     enabled: clockEnabled && !GlobalStates.screenLocked && !GlobalStates.overviewOpen
@@ -256,7 +271,7 @@ AbstractWidget {
             animateChange: root.animateDigits
             color: root.clockTextColor
             style: root.showShadow ? Text.Raised : Text.Normal
-            styleColor: root.showShadow ? Appearance.colors.colShadow : "transparent"
+            styleColor: root.showShadow ? root.shadowColor : "transparent"
             font {
                 family: root.resolvedFontFamily
                 pixelSize: root.timePixelSize
@@ -273,7 +288,7 @@ AbstractWidget {
             animateChange: root.animateDigits
             color: root.clockTextColor
             style: root.showShadow ? Text.Raised : Text.Normal
-            styleColor: root.showShadow ? Appearance.colors.colShadow : "transparent"
+            styleColor: root.showShadow ? root.shadowColor : "transparent"
             font {
                 family: root.resolvedFontFamily
                 pixelSize: root.datePixelSize
@@ -291,14 +306,14 @@ AbstractWidget {
                 text: "lock"
                 color: root.clockTextColor
                 style: root.showShadow ? Text.Raised : Text.Normal
-                styleColor: root.showShadow ? Appearance.colors.colShadow : "transparent"
+                styleColor: root.showShadow ? root.shadowColor : "transparent"
             }
 
             StyledText {
                 text: Translation.tr("Locked")
                 color: root.clockTextColor
                 style: root.showShadow ? Text.Raised : Text.Normal
-                styleColor: root.showShadow ? Appearance.colors.colShadow : "transparent"
+                styleColor: root.showShadow ? root.shadowColor : "transparent"
                 font {
                     family: root.resolvedFontFamily
                     pixelSize: root.statusPixelSize

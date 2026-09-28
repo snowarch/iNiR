@@ -23,68 +23,21 @@ generate_manifest() {
     local manifest_file="$2"
     local commit
     commit=$(git -C "$repo_root" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-    local runtime_root_manifest="${repo_root}/sdata/runtime-root-files.txt"
-    local runtime_dirs_manifest="${repo_root}/sdata/runtime-payload-dirs.txt"
-
-    # Extensions that get checksums (code files users might modify)
-    local checksum_extensions="qml|js|py|sh|fish"
-
+    local entries
+    entries=$(mktemp) || return
+    if ! python3 "$repo_root/sdata/lib/runtime-payload.py" manifest --root "$repo_root" > "$entries"; then
+        rm -f "$entries"
+        return 1
+    fi
     {
-        # Header (will be prepended after sort)
-        # Actual file entries follow
-
-        # Root QML files (with checksums)
-        for qml in "$repo_root"/*.qml; do
-            [[ -f "$qml" ]] || continue
-            local name
-            name=$(basename "$qml")
-            local checksum
-            checksum=$(sha256sum "$qml" 2>/dev/null | cut -d' ' -f1)
-            echo "${name}:${checksum}"
-        done
-
-        if [[ -f "$runtime_root_manifest" ]]; then
-            while IFS= read -r runtime_file; do
-                [[ -n "$runtime_file" ]] || continue
-                local file="${repo_root}/${runtime_file}"
-                [[ -f "$file" ]] || continue
-                local ext="${file##*.}"
-                if [[ "$ext" =~ ^($checksum_extensions)$ ]]; then
-                    local checksum
-                    checksum=$(sha256sum "$file" 2>/dev/null | cut -d' ' -f1)
-                    echo "${runtime_file}:${checksum}"
-                else
-                    echo "${runtime_file}:"
-                fi
-            done < "$runtime_root_manifest"
-        fi
-
-        if [[ -f "$runtime_dirs_manifest" ]]; then
-            while IFS= read -r dir; do
-                [[ -n "$dir" ]] || continue
-                [[ -d "$repo_root/$dir" ]] || continue
-                find "$repo_root/$dir" -type f ! -name 'AGENTS.md' 2>/dev/null | while read -r file; do
-                    local rel_path="${file#$repo_root/}"
-                    local ext="${file##*.}"
-
-                    if [[ "$ext" =~ ^($checksum_extensions)$ ]]; then
-                        local checksum
-                        checksum=$(sha256sum "$file" 2>/dev/null | cut -d' ' -f1)
-                        echo "${rel_path}:${checksum}"
-                    else
-                        echo "${rel_path}:"
-                    fi
-                done
-            done < "$runtime_dirs_manifest"
-        fi
-
-    } | sort -t: -k1 | {
-        # Prepend header
         echo "# inir-manifest v2"
         echo "# generated: $(date -Iseconds)"
         echo "# commit: $commit"
-        cat
+        cat "$entries"
     } > "$manifest_file"
+    local result=$?
+    rm -f "$entries"
+    return "$result"
 }
 
 # Get list of files that exist in target but not in manifest (orphans)
@@ -101,9 +54,11 @@ get_orphan_files() {
 
     # Get current files in target (excluding hidden, backups, and non-tracked dirs)
     local current_files
-    current_files=$(mktemp)
+    current_files=$(mktemp) || return
 
-    {
+    if ! (
+      set -o pipefail
+      {
         # Root QML files
         find "$target_dir" -maxdepth 1 -name "*.qml" -type f -printf "%f\n" 2>/dev/null
 
@@ -123,7 +78,11 @@ get_orphan_files() {
             done < "$runtime_dirs_manifest"
         fi
 
-    } | sort -u > "$current_files"
+    } | python3 "$REPO_ROOT/sdata/lib/runtime-payload.py" filter-installed --root "$REPO_ROOT" | sort -u > "$current_files"
+    ); then
+        rm -f "$current_files"
+        return 1
+    fi
 
     # Extract just paths from manifest (handles both v1 and v2 formats)
     local manifest_paths
@@ -299,7 +258,7 @@ cleanup_orphans() {
     local dry_run="${3:-false}"
     
     local orphans
-    orphans=$(get_orphan_files "$target_dir" "$manifest_file")
+    orphans=$(get_orphan_files "$target_dir" "$manifest_file") || return 1
     
     if [[ -z "$orphans" ]]; then
         log_info "No orphan files found"
@@ -368,7 +327,7 @@ perform_robust_update() {
     
     # 5. Cleanup orphans
     log_info "Checking for orphan files..."
-    cleanup_orphans "$target_dir" "$II_MANIFEST_FILE"
+    cleanup_orphans "$target_dir" "$II_MANIFEST_FILE" || return 1
     
     # 6. Fix permissions
     log_info "Fixing script permissions..."

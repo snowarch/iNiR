@@ -84,6 +84,6 @@ Item {
         anchors.centerIn: parent
         visible: !root.isSynced && root.plain === ""
         text: Translation.tr("No lyrics")
-        color: Appearance.colors.colOnSurfaceVariant
+        color: Appearance.colMetadataText
     }
 }

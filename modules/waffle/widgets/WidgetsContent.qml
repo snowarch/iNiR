@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
@@ -19,19 +18,7 @@ WBarAttachedPanelContent {
     revealFromSides: true
     revealFromLeft: true
 
-    Component.onCompleted: {
-        if (GlobalStates.waffleWidgetsOpen)
-            ResourceUsage.ensureRunning()
-    }
-
-    Connections {
-        target: GlobalStates
-        function onWaffleWidgetsOpenChanged() {
-            if (GlobalStates.waffleWidgetsOpen) {
-                ResourceUsage.ensureRunning()
-            }
-        }
-    }
+    property QtObject resourceMonitor: ResourceUsageMonitor { active: GlobalStates.waffleWidgetsOpen }
 
     readonly property bool barAtBottom: Config.options?.waffles?.bar?.bottom ?? false
     readonly property var quickActionDefinitions: [
@@ -269,7 +256,7 @@ WBarAttachedPanelContent {
                         WeatherStat { statLabel: Translation.tr("Precip"); statValue: Weather.data.precip }
                         WeatherStat { statLabel: Translation.tr("Sunrise"); statValue: Weather.data.sunrise }
                         WeatherStat { statLabel: Translation.tr("Sunset"); statValue: Weather.data.sunset }
-                        WeatherStat { statLabel: Translation.tr("Refreshed"); statValue: Weather.data.lastRefresh }
+                        WeatherStat { statLabel: Network.online ? Translation.tr("Refreshed") : Translation.tr("Offline, from"); statValue: Weather.updatedLabel }
                     }
 
                     // Daily forecast with temperature-range bars
@@ -534,26 +521,30 @@ WBarAttachedPanelContent {
                     visible: opacity > 0
                     z: 100
 
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Looks.transition.easing.bezierCurve.standard
+                        }
+                    }
+
                     ColumnLayout {
                         anchors.centerIn: parent
                         spacing: Looks.dp(4)
 
                         FluentIcon {
                             Layout.alignment: Qt.AlignHCenter
-                            icon: MprisController.volume > 0 ? "speaker" : "speaker-mute"
+                            icon: (MprisController.activePlayer?.volume ?? 0) > 0 ? "speaker" : "speaker-mute"
                             implicitSize: Looks.dp(24)
                         }
 
                         WText {
                             Layout.alignment: Qt.AlignHCenter
-                            text: Math.round(MprisController.volume * 100) + "%"
+                            text: Math.round((MprisController.activePlayer?.volume ?? 0) * 100) + "%"
                             font.pixelSize: Looks.font.pixelSize.normal
                             font.weight: Font.DemiBold
                         }
-                    }
-
-                    Behavior on opacity {
-                        animation: Looks.transition.opacity
                     }
 
                     Timer {
@@ -594,21 +585,6 @@ WBarAttachedPanelContent {
                     readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (activePlayer?.trackTitle ?? "")
                     readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (activePlayer?.trackArtist ?? "")
 
-                    // Blurred album art background
-                    Image {
-                        id: bgArt
-                        anchors.fill: parent
-                        source: MediaArtwork.displaySource
-                        fillMode: Image.PreserveAspectCrop
-                        cache: false
-                        visible: false
-                    }
-                    FastBlur {
-                        anchors.fill: parent
-                        source: bgArt
-                        radius: 64
-                        visible: bgArt.source != ""
-                    }
                     Rectangle {
                         anchors.fill: parent
                         color: Looks.colors.bgPanelFooterBase

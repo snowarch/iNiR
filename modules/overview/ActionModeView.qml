@@ -31,6 +31,7 @@ Item {
     onVisibleChanged: if (visible) selectedCategoryIndex = 0
     property real availableHeight: Number.POSITIVE_INFINITY
     readonly property bool zzzEverywhere: Appearance.zzzEverywhere
+    readonly property bool editorial: Appearance.editorialEverywhere
 
     readonly property var categoryList: [
         { id: "all",        label: Translation.tr("All"),        icon: "apps" },
@@ -273,7 +274,7 @@ Item {
             clip: true
             topMargin: 10
             bottomMargin: 8
-            spacing: root.zzzEverywhere ? 6 : 2
+            spacing: root.editorial ? 4 : root.zzzEverywhere ? 6 : 2
             highlightMoveDuration: Appearance.animation.elementMoveFast.duration / 2
             focus: true
 
@@ -346,26 +347,30 @@ Item {
                 readonly property color normalTextColor: root.zzzEverywhere ? Appearance.zzz.ink
                     : Appearance.angelEverywhere ? Appearance.angel.colText
                     : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-                readonly property color selectedTextColor: root.zzzEverywhere ? Appearance.zzz.onSignal
+                readonly property color selectedTextColor: root.editorial ? Appearance.editorial.fieldInk
+                    : root.zzzEverywhere ? Appearance.zzz.onSignal
                     : Appearance.angelEverywhere ? Appearance.angel.colText
                     : Appearance.inirEverywhere ? Appearance.inir.colText
                     : Appearance.colors.colOnLayer1
                 readonly property color descriptionTextColor: delegateBtn.isHighlighted
-                    ? (root.zzzEverywhere ? Appearance.zzz.onSignal
+                    ? (root.editorial ? Appearance.editorial.fieldInk : root.zzzEverywhere ? Appearance.zzz.onSignal
                         : Appearance.angelEverywhere ? Appearance.angel.colText
                         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
                         : Appearance.colors.colOnLayer1)
                     : (root.zzzEverywhere ? Appearance.zzz.inkMuted
                         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext)
-                readonly property color selectedBackgroundColor: root.zzzEverywhere ? Appearance.zzz.signal
+                readonly property color selectedBackgroundColor: root.editorial ? Appearance.editorial.field
+                    : root.zzzEverywhere ? Appearance.zzz.signal
                     : Appearance.angelEverywhere
                     ? Appearance.angel.colGlassCardHover
                     : Appearance.colors.colLayer1
-                readonly property color hoverBackgroundColor: root.zzzEverywhere ? Appearance.zzz.paperAlt
+                readonly property color hoverBackgroundColor: root.editorial ? Appearance.colors.colLayer2Hover
+                    : root.zzzEverywhere ? Appearance.zzz.paperAlt
                     : Appearance.angelEverywhere
                     ? Appearance.angel.colGlassCardHover
                     : Appearance.colors.colLayer1
-                readonly property color pressedBackgroundColor: root.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.signal, Appearance.zzz.ink, 0.78)
+                readonly property color pressedBackgroundColor: root.editorial ? Appearance.colors.colPrimaryContainerActive
+                    : root.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.signal, Appearance.zzz.ink, 0.78)
                     : Appearance.angelEverywhere
                     ? Appearance.angel.colGlassCardActive
                     : Appearance.colors.colLayer1Hover
@@ -375,12 +380,12 @@ Item {
 
                 property int horizontalMargin: root.zzzEverywhere ? 14 : 10
                 property int buttonHorizontalPadding: root.zzzEverywhere ? 12 : 10
-                property int buttonVerticalPadding: root.zzzEverywhere ? 8 : 6
+                property int buttonVerticalPadding: root.editorial ? Math.round(9 * Appearance.editorial.spacing) : root.zzzEverywhere ? 8 : 6
 
                 implicitHeight: delegateRow.implicitHeight + buttonVerticalPadding * 2
 
                 // Style tokens — exactly match SearchItem.qml
-                buttonRadius: root.zzzEverywhere ? Appearance.zzz.pillRadius
+                buttonRadius: root.editorial ? Appearance.rounding.small : root.zzzEverywhere ? Appearance.zzz.pillRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                     : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal
                 colBackground: (delegateBtn.down || delegateBtn.keyboardDown)
@@ -388,7 +393,7 @@ Item {
                     : (delegateBtn.isHighlighted
                         ? delegateBtn.selectedBackgroundColor
                         : (delegateBtn.hovered ? delegateBtn.hoverBackgroundColor : "transparent"))
-                colBackgroundHover: delegateBtn.hoverBackgroundColor
+                colBackgroundHover: root.editorial && delegateBtn.isHighlighted ? Appearance.colors.colPrimaryContainerHover : delegateBtn.hoverBackgroundColor
                 colRipple: root.zzzEverywhere ? ColorUtils.transparentize(Appearance.zzz.ink, 0.72)
                     : Appearance.angelEverywhere
                     ? Appearance.angel.colGlassCardActive

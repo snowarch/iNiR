@@ -243,7 +243,8 @@ Scope {
                         Connections {
                             target: MascotChaos
                             enabled: MascotChaos.enabled
-                            function onPanelShake(intensity) {
+                            function onPanelShake(intensity, output) {
+                                if (dockRoot.screen?.name !== output || MascotChaos.suppressed) return
                                 dockHoverRegion._quakeScale = Math.max(1, intensity)
                                 if (Appearance.animationsEnabled) _dockQuakeAnim.restart()
                             }
@@ -306,6 +307,11 @@ Scope {
                                     readonly property bool auroraEverywhere: !root.isM3Style && (root.surfaceDialect === "aurora" || angelEverywhere)
                                     readonly property bool inirEverywhere: !root.isM3Style && root.surfaceDialect === "inir"
                                     readonly property bool gameModeMinimal: Appearance.gameModeMinimal
+                                    readonly property bool editorialGlassActive: Appearance.editorialEverywhere
+                                        && Appearance.editorial.glassActive
+                                        && !gameModeMinimal
+                                    readonly property bool editorialBackdropReady: editorialGlassActive
+                                        && (dockRoot.nativeBlurActive || dockBlurredWallpaper.status === Image.Ready)
                                     readonly property string wallpaperUrl: {
                                         const _dep1 = WallpaperListener.multiMonitorEnabled
                                         const _dep2 = WallpaperListener.effectivePerMonitor
@@ -338,7 +344,12 @@ Scope {
                                 // islands bar).
                                 visible: (Config.options?.dock?.showBackground ?? true) && !gameModeMinimal && ((root.zzzEverywhere && !root.isIslandStyle) || (!root.isPillStyle && !root.isMacosStyle && !root.isIslandStyle))
                                 // ZZZ: the visible shelf is the chamfered ZzzPlate below.
-                                color: root.isM3Style ? Appearance.colors.colLayer0
+                                color: dockVisualBackground.editorialGlassActive
+                                    ? (!dockVisualBackground.editorialBackdropReady ? Appearance.editorial.rail
+                                        : dockRoot.nativeBlurActive && !Appearance.editorial.paperStack ? Appearance.editorial.glassRail
+                                        : "transparent")
+                                    : Appearance.editorialEverywhere ? Appearance.editorial.rail
+                                    : root.isM3Style ? Appearance.colors.colLayer0
                                     : root.zzzEverywhere || regaliaEverywhere ? "transparent"
                                     : auroraEverywhere ? ColorUtils.applyAlpha(
                                         (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0),
@@ -360,6 +371,13 @@ Scope {
                                     : angelEverywhere ? Appearance.angel.roundingNormal
                                     : inirEverywhere ? Appearance.inir.roundingNormal
                                     : cardStyle ? Appearance.rounding.normal : Appearance.rounding.large
+                                EditorialPaperStack {
+                                    anchors.fill: parent
+                                    faceColor: Appearance.editorial.rail
+                                    radius: dockVisualBackground.radius
+                                    materialOpacity: dockVisualBackground.editorialBackdropReady ? Appearance.editorial.glassOpacity : 1
+                                    backingOpacity: dockVisualBackground.editorialBackdropReady ? Appearance.editorial.glassBackingOpacity : 1
+                                }
                                 // Radius is a direct style binding. Adding a Behavior here
                                 // installs a second interceptor when the dock Rectangle is
                                 // rebuilt after an edge move, which Qt rejects at runtime.
@@ -416,7 +434,8 @@ Scope {
                                 }
 
                                 clip: true
-                                layer.enabled: auroraEverywhere && !inirEverywhere && !root.zzzEverywhere
+                                layer.enabled: (auroraEverywhere || dockVisualBackground.editorialGlassActive)
+                                    && !inirEverywhere && !root.zzzEverywhere
                                     && !gameModeMinimal && !dockRoot.nativeBlurActive
                                 layer.effect: GE.OpacityMask {
                                     maskSource: Rectangle {
@@ -428,6 +447,11 @@ Scope {
 
                                 Image {
                                     id: dockBlurredWallpaper
+                                    readonly property bool requested: (dockVisualBackground.auroraEverywhere || dockVisualBackground.editorialGlassActive)
+                                        && !dockVisualBackground.inirEverywhere
+                                        && !root.zzzEverywhere
+                                        && !dockVisualBackground.gameModeMinimal
+                                        && !dockRoot.nativeBlurActive
                                     x: root.isVertical 
                                         ? (root.isLeft ? 0 : (-(dockRoot.screen?.width ?? 1920) + dockVisualBackground.width + Appearance.sizes.hyprlandGapsOut))
                                         : (-(dockRoot.screen?.width ?? 1920) / 2 + dockVisualBackground.width / 2)
@@ -436,14 +460,10 @@ Scope {
                                         : (root.isTop ? 0 : (-(dockRoot.screen?.height ?? 1080) + dockVisualBackground.height + Appearance.sizes.hyprlandGapsOut))
                                     width: dockRoot.screen?.width ?? 1920
                                     height: dockRoot.screen?.height ?? 1080
-                                    visible: dockVisualBackground.auroraEverywhere
-                                        && !dockVisualBackground.inirEverywhere
-                                        && !root.zzzEverywhere
-                                        && !dockVisualBackground.gameModeMinimal
-                                        && !dockRoot.nativeBlurActive
+                                    visible: requested && status === Image.Ready
                                     // An invisible Image still decodes its source: gate it too,
                                     // or non-aurora users keep a screen-sized wallpaper resident.
-                                    source: visible ? dockVisualBackground.wallpaperUrl : ""
+                                    source: requested ? dockVisualBackground.wallpaperUrl : ""
                                     fillMode: Image.PreserveAspectCrop
                                     cache: true
                                     sourceSize.width: dockRoot.screen?.width ?? 1920
@@ -451,17 +471,21 @@ Scope {
                                     asynchronous: true
 
                                     // See #159 — skip QML blur when compositor blur covers this layer
-                                    layer.enabled: Appearance.effectsEnabled && dockVisualBackground.auroraEverywhere && !dockVisualBackground.inirEverywhere && !dockVisualBackground.gameModeMinimal && !dockRoot.nativeBlurActive
+                                    layer.enabled: Appearance.effectsEnabled
+                                        && (dockVisualBackground.auroraEverywhere || dockVisualBackground.editorialGlassActive)
+                                        && !dockVisualBackground.inirEverywhere && !dockVisualBackground.gameModeMinimal && !dockRoot.nativeBlurActive
                                     layer.effect: MultiEffect {
                                         source: dockBlurredWallpaper
                                         anchors.fill: source
                                         saturation: dockVisualBackground.angelEverywhere
                                             ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
+                                            : dockVisualBackground.editorialGlassActive ? 0.04
                                             : (Appearance.effectsEnabled ? 0.2 : 0)
                                         blurEnabled: Appearance.effectsEnabled
                                         blurMax: 64
                                         blur: Appearance.effectsEnabled
-                                            ? (dockVisualBackground.angelEverywhere ? Appearance.angel.blurIntensity : 1)
+                                            ? (dockVisualBackground.angelEverywhere ? Appearance.angel.blurIntensity
+                                                : dockVisualBackground.editorialGlassActive ? Appearance.editorial.glassBlur : 1)
                                             : 0
                                     }
 
@@ -469,6 +493,8 @@ Scope {
                                         anchors.fill: parent
                                         color: dockVisualBackground.angelEverywhere
                                             ? ColorUtils.transparentize((dockVisualBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity * Appearance.angel.panelTransparentize)
+                                            : dockVisualBackground.editorialGlassActive
+                                                ? (Appearance.editorial.paperStack ? "transparent" : Appearance.editorial.glassRail)
                                             : ColorUtils.transparentize((dockVisualBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
                                     }
                                 }
@@ -512,7 +538,6 @@ Scope {
                                     buttonPadding: dockRow.padding
                                     vertical: false
                                     dockPosition: root.position
-                                    parentWindow: dockRoot
                                 }
                                 DockButton {
                                     vertical: false
@@ -544,7 +569,6 @@ Scope {
                                     buttonPadding: dockColumn.padding
                                     vertical: true
                                     dockPosition: root.position
-                                    parentWindow: dockRoot
                                 }
                                 DockButton {
                                     vertical: true

@@ -12,6 +12,7 @@ import qs.services
 
 Scope {
     id: root
+    readonly property bool editorial: Appearance.editorialEverywhere
 
     property bool isVertical: false
     property bool collapsed: false
@@ -209,13 +210,19 @@ Scope {
                     screenX: screenPos.x
                     screenY: screenPos.y
 
-                    fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.colors.colLayer2
+                    fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.bg1
+                        : root.editorial ? Appearance.editorial.layer(1)
+                        : Appearance.colors.colLayer2
                     inirColor: Appearance.inir.colLayer1
                     auroraTransparency: Appearance.aurora.popupTransparentize
+                    wallpaperBackdropEnabled: !root.editorial
 
-                    radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.rounding.large
+                    radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                        : root.editorial ? Appearance.editorial.radius
+                        : Appearance.rounding.large
                     border.width: Appearance.zzzEverywhere ? 1 : (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1)
                     border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+                                : root.editorial ? Appearance.editorial.rule
                                 : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                                 : Appearance.inirEverywhere ? Appearance.inir.colBorder
                                 : Appearance.colors.colOutlineVariant
@@ -389,7 +396,9 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                : root.editorial ? Appearance.rounding.small
+                : Appearance.rounding.full
             Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
             color: dragHandler.active
                 ? (Appearance.zzzEverywhere ? Appearance.zzz.bg4
@@ -414,7 +423,7 @@ Scope {
             anchors.centerIn: parent
             text: "drag_indicator"
             iconSize: Appearance.font.pixelSize.normal
-            color: Appearance.colors.colOnLayer2
+            color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnLayer2
         }
 
         HoverHandler {
@@ -442,7 +451,9 @@ Scope {
         Layout.preferredWidth: isVertical ? 22 : 1
         Layout.preferredHeight: isVertical ? 1 : 22
         Layout.alignment: Qt.AlignCenter
-        color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : Appearance.colors.colOutlineVariant
+        color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+            : root.editorial ? Appearance.editorial.rule
+            : Appearance.colors.colOutlineVariant
         Behavior on color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -495,10 +506,10 @@ Scope {
                     id: hTimerText
                     anchors.centerIn: parent
                     text: indicator.timeString
-                    font.family: Appearance.font.family.monospace
+                    font.family: root.editorial ? Appearance.font.family.numbers : Appearance.font.family.monospace
                     font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.Medium
-                    color: Appearance.colors.colOnLayer2
+                    font.weight: root.editorial ? Font.DemiBold : Font.Medium
+                    color: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnLayer2
                 }
             }
         }
@@ -528,10 +539,10 @@ Scope {
                     required property string modelData
                     Layout.alignment: Qt.AlignHCenter
                     text: modelData === ":" ? "\u00B7\u00B7" : modelData
-                    font.family: Appearance.font.family.monospace
+                    font.family: root.editorial ? Appearance.font.family.numbers : Appearance.font.family.monospace
                     font.pixelSize: modelData === ":" ? Appearance.font.pixelSize.smaller : Appearance.font.pixelSize.small
-                    font.weight: Font.Medium
-                    color: Appearance.colors.colOnLayer2
+                    font.weight: root.editorial ? Font.DemiBold : Font.Medium
+                    color: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnLayer2
                     opacity: modelData === ":" ? 0.5 : 1.0
                 }
             }
@@ -545,12 +556,14 @@ Scope {
         property string tooltip: ""
         property bool dimmed: false
         property bool filled: false
-        property color iconColor: Appearance.colors.colOnLayer2
+        property color iconColor: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnLayer2
 
         Layout.preferredWidth: 30
         Layout.preferredHeight: 30
         Layout.alignment: Qt.AlignCenter
-        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+            : root.editorial ? Appearance.rounding.small
+            : Appearance.rounding.full
         colBackground: "transparent"
         colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.bg3
             : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover

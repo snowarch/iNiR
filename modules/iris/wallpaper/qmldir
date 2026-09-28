@@ -1,0 +1,9 @@
+module qs.modules.iris.wallpaper
+IrisWallpaperPicker 1.0 IrisWallpaperPicker.qml
+WallpaperDiscovery 1.0 WallpaperDiscovery.qml
+WallpaperShowcase 1.0 WallpaperShowcase.qml
+WallpaperTile 1.0 WallpaperTile.qml
+WallpaperFolders 1.0 WallpaperFolders.qml
+WallpaperEmpty 1.0 WallpaperEmpty.qml
+WallpaperKinds 1.0 WallpaperKinds.qml
+WallpaperGlyphButton 1.0 WallpaperGlyphButton.qml

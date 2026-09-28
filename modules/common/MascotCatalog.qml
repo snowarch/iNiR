@@ -42,6 +42,24 @@ Singleton {
     // logged in PROMPTS.md (extreme close-ups read "bigger" than full-body
     // shots at the same box size). Absent = 1.0, no correction.
     property var frameScale: ({})
+    property var characterProfiles: ({})
+    readonly property string requestedCharacterStyle: Config.options?.mascot?.chaos?.artStyle ?? "jrpg"
+    readonly property string characterStyle: requestedCharacterStyle === "jrpg" && jrpgProbe.loaded ? "jrpg"
+        : requestedCharacterStyle !== "classic" && codexProbe.loaded ? "codex" : "classic"
+
+    function characterPose(original, state) {
+        return characterProfiles[characterStyle]?.[state] ?? original
+    }
+    FileView {
+        id: jrpgProbe
+        path: Quickshell.shellPath("assets/images/mascot/inir-mascot-jrpg-idle-loop.gif")
+        printErrors: false
+    }
+    FileView {
+        id: codexProbe
+        path: Quickshell.shellPath("assets/images/mascot/inir-mascot-codex-idle-loop.gif")
+        printErrors: false
+    }
 
     function _uniquePoses(values) {
         const seen = ({})
@@ -167,6 +185,7 @@ Singleton {
             try {
                 const m = JSON.parse(text())
                 root.animatedPoses = m.animatedPoses ?? []
+                root.characterProfiles = m.characterProfiles ?? ({})
                 root.collectionPoses = m.collectionPoses ?? []
                 root.pickerPoses = m.pickerPoses ?? []
                 root.desktopWidgetPoses = m.desktopWidgetPoses ?? []

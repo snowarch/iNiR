@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="../images/iris-2.31-principal.webp" alt="iNiR 2.31 iRiS desktop" width="900">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.31.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -78,13 +78,27 @@ Volevo che il mio desktop avesse un certo aspetto e funzionasse in un certo modo
 - **Wayland**: protocollo display di Linux (il nuovo, sostituisce X11)
 - **QML**: linguaggio UI dichiarativo di Qt, iNiR è scritto in questo
 - **Material You**: sistema colori Google che genera palette da immagini (così funziona l'auto-theming)
-- **ii / waffle**: i due stili di pannello. ii = vibes Material Design, waffle = vibes Windows 11. `Super+Shift+W` per cambiare
+- **ii / waffle / iRiS**: le tre famiglie di pannelli. ii = Material Design, waffle = Windows 11, iRiS = un'Island che diventa ciò che apri. `Super+Shift+W` le scorre
 
 </details>
 
 ---
 
 ## Screenshot
+
+<details open>
+<summary><b>iRiS</b> — Island, elementi desktop, card e Dock</summary>
+
+<p align="center">
+  <img src="../images/iris-2.31-desktop.webp" alt="iRiS desktop layout" width="49%">
+  <img src="../images/iris-2.31-card.webp" alt="iRiS card surface" width="49%">
+</p>
+
+<p align="center">
+  <img src="../images/iris-2.31-dock.webp" alt="iRiS Dock and edge layout" width="99%">
+</p>
+
+</details>
 
 <details open>
 <summary><b>Material ii</b> — barra flottante, barre laterali, estetica Material Design</summary>
@@ -110,9 +124,10 @@ Volevo che il mio desktop avesse un certo aspetto e funzionasse in un certo modo
 
 ## Funzionalità
 
-**Due famiglie di pannelli**, commutabili al volo con `Super+Shift+W`:
-- **Material ii** — barra flottante, barre laterali, dock, 6 stili visivi (material, cards, aurora, inir, angel, zzz)
+**Tre famiglie di pannelli**, commutabili al volo con `Super+Shift+W`:
+- **Material ii** — barra flottante, barre laterali, dock, 9 stili globali (material, cards, aurora, inir, angel, regalia, zzz, cookie, editorial)
 - **Waffle** — barra delle applicazioni stile Windows 11, menu start, centro azioni, centro notifiche
+- **iRiS** — la nuova famiglia Island con bordi configurabili, pezzi, Dock su ogni lato, Glass, Themes e Studio
 
 **Tematizzazione automatica** — scegli uno sfondo e tutto si adatta:
 - Colori della shell via Material You, propagati a GTK3/4, Qt, terminali, Firefox, Discord, SDDM
@@ -128,7 +143,7 @@ Volevo che il mio desktop avesse un certo aspetto e funzionasse in un certo modo
 
 Scegli uno sfondo e l'intero sistema segue — shell, app GTK/Qt, terminali, Firefox, Discord, schermata di login SDDM. Tutto automatico.
 
-- **6 stili visivi** — Material (pieno), Cards, Aurora (sfocatura vetro), iNiR (ispirato TUI), Angel (neo-brutalismo), ZZZ
+- **9 stili globali** — Material (pieno), Cards, Aurora (sfocatura vetro), iNiR (ispirato TUI), Angel (neo-brutalismo), Regalia, ZZZ, Cookie Shapes, Editorial
 - **Colori dinamici dallo sfondo** via Material You — propagati a tutto il sistema
 - **10 strumenti terminale auto-tematizzati** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **Tematizzazione app** — GTK3/4, Qt (via plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
@@ -175,7 +190,7 @@ Barra laterale destra:
 - **Aggiornamenti automatici** — `inir update` con rollback, migrazioni e preservazione delle modifiche utente
 - **Schermata di blocco** e **schermata di sessione** (logout/riavvio/spegnimento/sospensione)
 - **Agente polkit**, **tastiera su schermo**, **gestore avvio automatico**
-- **9 lingue** — rilevamento automatico, con generazione traduzioni assistita da IA
+- **17 localizzazioni** — rilevamento automatico, con generazione traduzioni assistita da IA
 - **Luce notturna** — programmata o manuale
 - **Meteo** — Open-Meteo, supporta GPS, coordinate manuali o nome città
 - **Gestione batteria** — soglie configurabili, sospensione automatica in stato critico
@@ -204,7 +219,7 @@ inir doctor                     # auto-diagnosi e riparazione
 inir update                     # pull + migrazioni + riavvio
 ```
 
-**Distro supportate:** Arch (installer automatizzato). Altre distro possono installare manualmente — vedi [PACKAGES.md](../PACKAGES.md).
+**Distro:** Arch è l'obiettivo principale. Anche Fedora e Debian/Ubuntu hanno percorsi automatici per le dipendenze che usano prima i repository della distro; le altre distribuzioni seguono la guida generale nella [lista dei pacchetti](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR richiede Qt 6.9 o successivo: Ubuntu 25.10, Fedora 43 e Debian testing o successive.
 
 | Metodo | Comando |
 |--------|---------|
@@ -273,6 +288,7 @@ Vedi [CONTRIBUTING.md](../../CONTRIBUTING.md) per la configurazione dell'ambient
 ## Crediti
 
 - [**end-4**](https://github.com/end-4/dots-hyprland) — illogical-impulse originale per Hyprland
+- [**pctrade/end4-pC**](https://github.com/pctrade/end4-pC) — un fork che ogni tanto ha un’idea davvero buona
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — il framework che alimenta questa shell
 - [**Niri**](https://github.com/YaLTeR/niri) — il compositor Wayland a tiling con scorrimento
 

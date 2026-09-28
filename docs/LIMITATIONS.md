@@ -90,8 +90,9 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 ### OCR
 
-- **Requires tesseract**: OCR won't work without `tesseract` and language data packages installed.
-- **English only by default**: Install `tesseract-data-<lang>` for other languages.
+- **Requires Tesseract**: OCR needs `tesseract` plus at least one language model.
+- **Language-aware**: the installer provides English, Spanish, Russian, Japanese, Simplified Chinese, and Traditional Chinese models, including vertical Japanese/Chinese variants. Tools > Snipping selects one model (or a deliberate combination) instead of running every installed model at once, which keeps recognition accuracy predictable.
+- **Auto mode follows the session locale** and falls back to an installed model if that locale's model is unavailable.
 
 ### Screen Recording
 
@@ -136,7 +137,7 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 ### Backdrop & Wallpaper
 
-- **Separate configs**: Material ii and Waffle have independent backdrop/wallpaper settings. If you enable both families, each manages its own background layer.
+- **Family backgrounds**: Material ii and Waffle have independent backdrop/wallpaper settings. iRiS intentionally uses the shared main wallpaper and does not maintain another animated-wallpaper configuration.
 - **Niri layer rules required**: The backdrop uses Niri's `place-within-backdrop` layer rule. If your wallpaper doesn't show in overview, check that your `config.kdl` has the layer rules for `quickshell:iiBackdrop` and `quickshell:wBackdrop`.
 - **Migration is automatic**: Switching between families auto-migrates your `enabledPanels` config. You shouldn't need to touch it manually.
 
@@ -160,7 +161,7 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 - **Incomplete translations**: Not all strings are translated. English is the fallback.
 - **Auto-detection**: Language is detected from system locale. Override with `language.ui` in config.
-- **Generated translations**: AI-generated translations go to `~/.config/illogical-impulse/translations/`. Quality varies.
+- **Generated translations**: AI-generated translations live under the iNiR config directory (`~/.config/inir/translations/` on canonical/migrated installs). Quality varies.
 
 ---
 
@@ -206,7 +207,7 @@ Before opening an issue and making me read your bug report:
 
 1. Check `inir logs` for errors - the answer is usually right there
 2. Verify the feature isn't listed as a known limitation above - yes, you have to actually read this page
-3. Test with a fresh config: `mv ~/.config/illogical-impulse/config.json ~/.config/illogical-impulse/config.json.bak`
+3. Test with a fresh config: `mv ~/.config/inir/config.json ~/.config/inir/config.json.bak` (older unmigrated installs may still resolve the legacy directory)
 4. Include your Niri version (`niri --version`) and Quickshell version (`qs --version`)
 
 If it's still broken after all that, congratulations - you found a real bug. Gold star for you.

@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.services
 import qs.modules.common
 
@@ -239,6 +240,14 @@ Singleton {
             desc: Translation.tr("Niri workspace navigator, Trail and Stash"),
             essential: true,
             component: "modules/settings/OrbitConfig.qml"
+        },
+        {
+            key: "iris",
+            name: "iRiS",
+            icon: "visibility",
+            desc: Translation.tr("Apple-inspired Island shell and modules"),
+            essential: true,
+            component: "modules/settings/IrisConfig.qml"
         }
     ]
 
@@ -247,7 +256,7 @@ Singleton {
     readonly property var defaultCategories: [
         { label: Translation.tr("Essentials"), pages: [0] },
         { label: Translation.tr("Appearance"), pages: [4, 25, 3, 14, 21] },
-        { label: Translation.tr("Shell"), pages: [2, 26, 27, 5, 22, 23, 16, 10, 11, 18, 19, 20] },
+        { label: Translation.tr("Shell"), pages: [2, 28, 26, 27, 5, 22, 23, 16, 10, 11, 18, 19, 20] },
         { label: Translation.tr("System"), pages: [1, 24, 7, 6, 12, 15, 8, 17] },
         { label: Translation.tr("Reference"), pages: [9, 13] }
     ]
@@ -296,6 +305,51 @@ Singleton {
 
     property var _staticSearchIndex: null
 
+    FileView {
+        id: generatedSearchIndexFile
+        path: Qt.resolvedUrl("settings-search-index.generated.json")
+        blockLoading: true
+        printErrors: false
+        watchChanges: false
+        onLoadedChanged: root._staticSearchIndex = null
+    }
+
+    function generatedSearchIndex(): var {
+        if (!generatedSearchIndexFile.loaded)
+            return []
+        try {
+            const raw = JSON.parse(generatedSearchIndexFile.text())
+            if (!Array.isArray(raw))
+                return []
+            const result = []
+            for (let i = 0; i < raw.length; ++i) {
+                const entry = raw[i] ?? ({})
+                const pageIndex = Number(entry.pageIndex)
+                if (!Number.isInteger(pageIndex) || pageIndex < 0 || pageIndex >= root.pages.length)
+                    continue
+                const section = String(entry.section || "")
+                const label = String(entry.label || "")
+                if (!label.length)
+                    continue
+                result.push({
+                    pageIndex: pageIndex,
+                    pageName: root.pages[pageIndex].name,
+                    task: String(entry.task || ""),
+                    panelFamily: String(entry.panelFamily || ""),
+                    section: section.length > 0 ? Translation.tr(section) : "",
+                    label: Translation.tr(label),
+                    description: "",
+                    keywords: entry.keywords || [],
+                    generated: true
+                })
+            }
+            return result
+        } catch (error) {
+            console.warn("SettingsPageRegistry: invalid generated search index", error)
+            return []
+        }
+    }
+
     Connections {
         target: Translation
         function onLanguageCodeChanged(): void { root._staticSearchIndex = null }
@@ -307,7 +361,14 @@ Singleton {
         if (_staticSearchIndex !== null)
             return _staticSearchIndex
 
-        _staticSearchIndex = [
+        const manualIndex = [
+        {
+            pageIndex: 10, pageName: root.pages[10].name,
+            section: Translation.tr("Modules"),
+            label: Translation.tr("EasyEffects Equalizer"),
+            description: Translation.tr("Load or unload the native 10-band EasyEffects equalizer integration"),
+            keywords: ["equalizer", "easyeffects", "eq", "audio", "10 band", "module", "optional"]
+        },
         {
             pageIndex: 27, pageName: root.pages[27].name,
             section: Translation.tr("Activation"),
@@ -380,6 +441,13 @@ Singleton {
             label: Translation.tr("Screenshots folder"),
             description: Translation.tr("Where iNiR screenshots are saved"),
             keywords: ["capture", "screenshot", "snip", "save", "path", "folder", "directory", "picture"]
+        },
+        {
+            pageIndex: 0, pageName: root.pages[0].name,
+            section: Translation.tr("App filters"),
+            label: Translation.tr("Notification and visualizer app filters"),
+            description: Translation.tr("Mute selected notification senders and restrict visualizer playback sources"),
+            keywords: ["filter", "filters", "app", "apps", "notification", "mute", "block", "visualizer", "cava", "audio", "spotify", "ncspot", "ytmusic", "discord", "slack"]
         },
         {
             pageIndex: 19, pageName: root.pages[19].name,
@@ -521,7 +589,7 @@ Singleton {
         {
             pageIndex: 1, pageName: root.pages[1].name,
             section: Translation.tr("Sounds"),
-            label: Translation.tr("Notification sound"),
+            label: Translation.tr("Notifications"),
             description: Translation.tr("Play sound when a notification arrives"),
             keywords: ["sound", "notification", "alert", "ring", "chime"]
         },
@@ -741,9 +809,16 @@ Singleton {
         },
         {
             pageIndex: 2, pageName: root.pages[2].name,
+            section: Translation.tr("Modules"),
+            label: Translation.tr("Taskbar (apps in bar)"),
+            description: Translation.tr("Taskbar replaces the active window title. Pinned apps and running windows appear in the bar, like a traditional taskbar. Uses the same pinned apps as the dock."),
+            keywords: ["taskbar", "apps", "bar", "dock", "running", "pinned"]
+        },
+        {
+            pageIndex: 2, pageName: root.pages[2].name,
             section: Translation.tr("Bar module layout"),
             label: Translation.tr("Bar module layout"),
-            description: Translation.tr("Reorder and toggle bar modules"),
+            description: Translation.tr("Reorder modules in horizontal Stock, Islands, Scenic and Frame bars"),
             keywords: ["bar", "module", "layout", "order", "reorder", "resources", "media", "clock"]
         },
 
@@ -1210,6 +1285,13 @@ Singleton {
         {
             pageIndex: 23, pageName: root.pages[23].name,
             section: Translation.tr("Sidebars"),
+            label: Translation.tr("Profile picture"),
+            description: Translation.tr("Profile card with avatar and banner, or the classic uptime row"),
+            keywords: ["profile", "avatar", "picture", "photo", "user", "account", "sidebar", "settings"]
+        },
+        {
+            pageIndex: 23, pageName: root.pages[23].name,
+            section: Translation.tr("Sidebars"),
             label: Translation.tr("Header banner"),
             description: Translation.tr("Live wallpaper, custom media, a solid plate, or no banner at all"),
             keywords: ["sidebar", "header", "banner", "wallpaper", "video", "gif", "image", "solid", "custom", "picture"]
@@ -1248,6 +1330,13 @@ Singleton {
             label: Translation.tr("Media OSD"),
             description: Translation.tr("Control explicit media feedback and Pill track announcements; automatic changes stay hidden during games"),
             keywords: ["osd", "media", "music", "player", "shortcuts", "pill", "track", "fullscreen", "game", "automatic", "skip"]
+        },
+        {
+            pageIndex: 6, pageName: root.pages[6].name,
+            section: Translation.tr("On-screen display"),
+            label: Translation.tr("Connection notices"),
+            description: Translation.tr("A short notice when something is plugged in, connected, unplugged or lost"),
+            keywords: ["connection", "connected", "disconnected", "plug", "unplug", "device", "toast", "popup", "notice", "cable", "wifi", "ethernet", "internet", "offline", "bluetooth", "headphones", "charger", "charging", "battery", "sound output", "speaker", "monitor", "display", "usb", "drive", "pendrive", "mouse", "keyboard", "controller", "gamepad", "webcam", "camera", "phone", "sd", "memory card"]
         },
         {
             pageIndex: 5, pageName: root.pages[5].name,
@@ -1464,8 +1553,8 @@ Singleton {
             pageIndex: 0, pageName: root.pages[0].name,
             section: Translation.tr("Game Mode"),
             label: Translation.tr("GameMode"),
-            description: Translation.tr("Auto-detect fullscreen games and reduce effects"),
-            keywords: ["game", "mode", "fullscreen", "performance", "fps", "auto", "detect", "animations", "effects"]
+            description: Translation.tr("Auto-detect fullscreen games and reduce background work"),
+            keywords: ["game", "mode", "fullscreen", "performance", "fps", "auto", "detect", "animations", "effects", "cava", "visualizer", "spectrum"]
         },
         {
             pageIndex: 12, pageName: root.pages[12].name,
@@ -1752,6 +1841,13 @@ Singleton {
         {
             pageIndex: 12, pageName: root.pages[12].name,
             section: Translation.tr("Animations"),
+            label: Translation.tr("Style"),
+            description: Translation.tr("Presets for how windows open, close and slide"),
+            keywords: ["animation", "preset", "style", "motion", "bounce", "bouncy", "snappy", "fast", "slow", "smooth", "material", "open", "close", "window", "niri"]
+        },
+        {
+            pageIndex: 12, pageName: root.pages[12].name,
+            section: Translation.tr("Animations"),
             label: Translation.tr("Per-animation toggles"),
             description: Translation.tr("Enable or disable individual compositor animations"),
             keywords: ["animation", "toggle", "enable", "disable", "compositor", "transition"]
@@ -1776,8 +1872,14 @@ Singleton {
         },
 
         // =====================================================================
+        { pageIndex: 4, pageName: root.pages[4].name, section: Translation.tr("Global Style"), label: Translation.tr("Editorial style"), description: Translation.tr("Layered paper, light or charcoal, wallpaper or custom tint, headline weight and tracking, accents, spacing, corners and motion"), keywords: ["editorial", "style", "paper", "second paper layer", "paper layer depth", "layers", "light paper", "charcoal", "paper pigment", "paper tint", "custom color", "accent ink", "accent pigment", "custom ink", "wallpaper primary", "wallpaper secondary", "wallpaper tertiary", "wallpaper", "ink", "serif", "sans", "typography", "poster", "studio", "reading", "title scale", "headline weight", "headline tracking", "warmth", "accent", "accent intensity", "color", "tonal", "spacing", "radius", "corners", "flower", "ornaments", "motion", "reset"] },
+
         // Desktop Widgets (page 14)
         // =====================================================================
+        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Editorial"), label: Translation.tr("Editorial"), description: Translation.tr("Personal typography in poster, quote and label compositions"), keywords: ["editorial", "text", "typography", "poster", "quote", "label", "caption", "footer", "desktop", "widget"] },
+        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Organic edge"), label: Translation.tr("Organic edge"), description: Translation.tr("Reusable screen-edge compositions with independent material, color, music response, idle behavior and corner topology"), keywords: ["organic", "edge", "screen", "scene", "preset", "composition", "horizon", "twin rails", "crown", "corner drift", "open frame", "full frame", "quiet horizon", "aurora rails", "album tide", "pulse gate", "contour frame", "soft silk", "aurora thread", "ink contour", "liquid tide", "pulse glass", "velvet", "balanced", "rhythmic", "percussive", "fine detail", "shape", "ribbon", "cells", "filament", "join", "connected", "corner", "corner blend", "clockwise", "counter clockwise", "wallpaper", "album", "adaptive", "vivid", "shimmer", "echo", "spectral prism", "bass bloom", "liquid caustics", "peak afterglow", "glow", "opacity", "rest presence", "ambient", "still", "hidden", "crest", "hue", "color", "colour", "audio", "music", "beat", "pulse", "bass", "treble", "attack", "release", "smoothing", "palette", "reset"] },
+        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Date badge"), label: Translation.tr("Date badge"), description: Translation.tr("Desktop date in ticket, stacked or seal styles"), keywords: ["date", "badge", "day", "month", "year", "ticket", "stacked", "seal", "desktop", "widget"] },
+        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Decorative shape"), label: Translation.tr("Decorative shape"), description: Translation.tr("Desktop shapes with fill, outline and rotation controls"), keywords: ["shape", "decorative", "decoration", "flower", "circle", "fill", "outline", "rotation", "desktop", "widget"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Edit Mode"), label: Translation.tr("Widget edit mode"), description: Translation.tr("Grid overlay and snap-to-grid for widget placement"), keywords: ["widget", "edit", "grid", "snap", "placement", "drag"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Appearance"), label: Translation.tr("Desktop widgets"), description: Translation.tr("Current iNiR palette"), keywords: ["widget", "color", "colour", "palette", "preset", "primary", "secondary", "tertiary", "signal", "surface", "wallpaper"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Desktop clock"), description: Translation.tr("Clock widget on the desktop background"), keywords: ["clock", "widget", "cookie", "digital", "background", "desktop", "wallpaper", "adaptive", "colors"] },
@@ -1797,6 +1899,7 @@ Singleton {
         // =====================================================================
         // Monitors (page 15)
         // =====================================================================
+        { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Monitor arrangement"), label: Translation.tr("Arrange monitors"), description: Translation.tr("Drag displays to match their physical position in Niri"), keywords: ["monitor", "display", "output", "arrange", "position", "layout", "drag", "niri"] },
         { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Shell visibility"), label: Translation.tr("Primary monitor"), description: Translation.tr("Choose the default output for shell popups"), keywords: ["monitor", "display", "primary", "screen", "output"] },
         { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Overview placement"), label: Translation.tr("Active screen only"), description: Translation.tr("Open the overview on the monitor where it was invoked"), keywords: ["overview", "monitor", "screen", "focused", "active", "output"] },
         { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Material shell surfaces"), label: Translation.tr("Bar, dock, sidebars, and media controls"), description: Translation.tr("Choose which monitors show Material shell surfaces"), keywords: ["monitor", "visibility", "bar", "dock", "sidebar", "media", "workspace", "secondary"] },
@@ -1834,6 +1937,59 @@ Singleton {
         { pageIndex: 25, pageName: root.pages[25].name, section: Translation.tr("Per-area overrides"), label: Translation.tr("Bars, dock, panels, islands and widgets"), description: Translation.tr("Override the blur backend independently for each shell area"), keywords: ["effects", "area", "bar", "dock", "panel", "island", "ricelin", "widget"] },
         { pageIndex: 25, pageName: root.pages[25].name, section: Translation.tr("Motion and power"), label: Translation.tr("Reduce animations"), description: Translation.tr("Use immediate reduced-motion state changes"), keywords: ["motion", "animation", "reduce", "accessibility", "performance"] }
         ]
+
+        const generatedIndex = root.generatedSearchIndex()
+        const generatedByLabel = ({})
+        for (let i = 0; i < generatedIndex.length; ++i) {
+            const entry = generatedIndex[i] ?? ({})
+            const labelKey = `${entry.pageIndex}|${String(entry.label || "").toLowerCase()}`
+            if (!generatedByLabel[labelKey])
+                generatedByLabel[labelKey] = []
+            generatedByLabel[labelKey].push(entry)
+        }
+
+        const destinationKey = entry => [
+            entry.pageIndex,
+            String(entry.panelFamily || "").toLowerCase(),
+            String(entry.task || "").toLowerCase(),
+            String(entry.section || "").toLowerCase(),
+            String(entry.label || "").toLowerCase()
+        ].join("|")
+
+        const merged = []
+        const seen = ({})
+        for (let i = 0; i < manualIndex.length; ++i) {
+            const entry = manualIndex[i] ?? ({})
+            const labelKey = `${entry.pageIndex}|${String(entry.label || "").toLowerCase()}`
+            const candidates = generatedByLabel[labelKey] ?? []
+            if (!entry.task && candidates.length > 0) {
+                const section = String(entry.section || "").toLowerCase()
+                const sectionMatches = candidates.filter(candidate =>
+                    String(candidate.section || "").toLowerCase() === section)
+                const resolved = sectionMatches.length === 1
+                    ? sectionMatches[0]
+                    : (candidates.length === 1 ? candidates[0] : null)
+                if (resolved) {
+                    entry.task = resolved.task || ""
+                    entry.panelFamily = resolved.panelFamily || ""
+                    if (candidates.length === 1 && resolved.section)
+                        entry.section = resolved.section
+                }
+            }
+            const key = destinationKey(entry)
+            merged.push(entry)
+            seen[key] = true
+        }
+        for (let i = 0; i < generatedIndex.length; ++i) {
+            const entry = generatedIndex[i] ?? ({})
+            const key = destinationKey(entry)
+            if (seen[key])
+                continue
+            seen[key] = true
+            merged.push(entry)
+        }
+
+        _staticSearchIndex = merged
         return _staticSearchIndex
     }
 }

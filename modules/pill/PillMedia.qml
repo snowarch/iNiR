@@ -44,7 +44,7 @@ PillSurface {
     onCoverSourceChanged: if (coverSource.length === 0) everReady = false
 
     readonly property real lengthSec: PillPlayers.lengthSec
-    readonly property real positionSec: hasPlayer ? player.position : 0
+    readonly property real positionSec: hasPlayer ? MprisController.positionOf(player) : 0
     readonly property real playFrac: lengthSec > 0 ? Math.max(0, Math.min(1, positionSec / lengthSec)) : 0
     property real dragFrac: 0
     property bool dragging: false
@@ -645,7 +645,7 @@ PillSurface {
             onPositionChanged: (e) => { if (pressed) root.dragFrac = fracAt(e.x); }
             onReleased: {
                 if (root.player)
-                    root.player.position = root.dragFrac * root.lengthSec;
+                    MprisController.seek(root.player, root.dragFrac * root.lengthSec);
                 root.dragging = false;
             }
         }

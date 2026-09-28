@@ -47,6 +47,8 @@ Item {
     // Some nested cards already have enough separation from fill/shape and do
     // not need a second outer contour.
     property bool outlined: true
+    property bool editorialFocus: false
+    property bool editorialGlassMaterial: false
     // Optional explicit stroke width for consumers that expose border tuning.
     // -1 preserves the dialect/default width.
     property real borderWidthOverride: -1
@@ -98,17 +100,36 @@ Item {
     readonly property bool _inir: root._resolvedDialect === "inir"
     readonly property bool _aurora: root._resolvedDialect === "aurora" || root._angel
     readonly property bool _cookie: root._resolvedDialect === "cookie"
+    readonly property bool _editorial: root._resolvedDialect === "editorial"
     readonly property bool _island: root._resolvedDialect === "island"
+    readonly property bool _material: root._resolvedDialect === "material"
+    readonly property bool _editorialStackActive: root._editorial
+        && Appearance.editorial.paperStack && !root.borderless
+        && (root.editorialFocus || (root.outlined && root.elevation <= 1))
     readonly property bool _backdropActive: !root.borderless && Appearance.effectsEnabled
-        && root.wallpaperBackdrop && root._aurora
+        && root.wallpaperBackdrop
+        && (root._aurora || (root._editorial && Appearance.editorial.glassActive && !root.editorialFocus))
 
     // ── Color de fondo (misma elección que hacían los paneles a mano) ──
-    readonly property color _solidFill: root.elevation <= 0 ? Appearance.colors.colLayer0Base
+    // An explicit Material dialect is a real ownership boundary: consumers such
+    // as onboarding must not become Aurora glass, Regalia mass or Cookie dough
+    // merely because the shell style changes underneath them.
+    readonly property color _materialFill: root.elevation <= 0 ? Appearance.m3colors.m3surface
+        : root.elevation === 1 ? Appearance.m3colors.m3surfaceContainerLow
+        : root.elevation === 2 ? Appearance.m3colors.m3surfaceContainer
+        : root.elevation === 3 ? Appearance.m3colors.m3surfaceContainerHigh
+        : Appearance.m3colors.m3surfaceContainerHighest
+    readonly property color _solidFill: root._material ? root._materialFill
+        : root.elevation <= 0 ? Appearance.colors.colLayer0Base
         : root.elevation === 1 ? Appearance.colors.colLayer1Base
         : root.elevation === 2 ? Appearance.colors.colLayer2Base
         : root.elevation === 3 ? Appearance.colors.colLayer3Base
         : Appearance.colors.colLayer4Base
     readonly property color _fill: root.borderless ? "transparent"
+        : root._editorial && root.editorialFocus ? Appearance.editorial.ink
+        : root._editorial && root.editorialGlassMaterial && Appearance.editorial.glassActive
+            ? (root.elevation >= 2 ? Appearance.editorial.glassLayer2 : Appearance.editorial.glassPaper)
+        : root._material ? root._materialFill
         : root.opaqueSurface ? root._solidFill
         : root._angel ? Appearance.angel.colGlassCard
         : root._regalia ? (root.elevation <= 0 ? Appearance.regalia.bg0
@@ -130,6 +151,7 @@ Item {
         : root._angel ? Appearance.angel.roundingSmall
         : root._regalia ? Appearance.regalia.roundNormal
         : root._inir ? Appearance.inir.roundingNormal
+        : root._editorial ? Appearance.editorial.radius
         : (root.cardStyle ? Appearance.rounding.normal : Appearance.rounding.small)
 
     // ── Borde ──
@@ -138,9 +160,11 @@ Item {
         : root.island ? 1
         : root._angel ? Appearance.angel.cardBorderWidth
         : root._regalia ? 0
+        : root._editorial ? 1
         : root._inir ? 1
         : (root.cardStyle ? 1 : 0)
-    readonly property color _borderColor: root._angel ? Appearance.angel.colCardBorder
+    readonly property color _borderColor: root._material ? Appearance.m3colors.m3outlineVariant
+        : root._angel ? Appearance.angel.colCardBorder
         : root._regalia ? "transparent"
         : root._inir ? Appearance.inir.colBorder
         : Appearance.colors.colLayer0Border
@@ -150,9 +174,17 @@ Item {
         anchors.fill: parent
         visible: root._backdropActive
         wallpaperBackdropEnabled: root._backdropActive
-        blurStrength: 1
-        saturationStrength: 0.2
-        auroraTransparency: Appearance.aurora.popupTransparentize
+        forceBackdrop: root._editorial && Appearance.editorial.glassActive
+        forceNeutralMaterial: root._editorial
+        // Transparent dialects must still be readable if the configured
+        // wallpaper disappears or has not decoded yet.
+        fallbackColor: root._editorial ? Appearance.editorial.paper : root._solidFill
+        overlayColor: root._editorial ? Appearance.editorial.paper : Appearance.colors.colLayer0Base
+        blurStrength: root._editorial ? Appearance.editorial.glassBlur : 1
+        saturationStrength: root._editorial ? 0.04 : 0.2
+        auroraTransparency: root._editorial
+            ? (root._editorialStackActive ? 1 : 1 - Appearance.editorial.glassOpacity)
+            : Appearance.aurora.popupTransparentize
         radius: root._radius
         screenX: root.backdropScreenX
         screenY: root.backdropScreenY
@@ -206,7 +238,7 @@ Item {
         anchors.fill: parent
         visible: !(root._zzz && root.zzzChamfer && !root.borderless)
             && !root._island && !root._cookie && !root._regalia
-        color: root._zzz ? "transparent" : root._fill
+        color: root._zzz || (root._editorial && root._backdropActive) ? "transparent" : root._fill
         radius: root._zzz ? Appearance.zzz.cardRadius : root._radius
         border.width: root._zzz ? 0 : root._borderWidth
         border.color: root._borderColor
@@ -227,6 +259,17 @@ Item {
         showLabels: root.frameLabel.length > 0 || root.frameIndex.length > 0
         label: root.frameLabel
         index: root.frameIndex
+    }
+
+    EditorialPaperStack {
+        anchors.fill: parent
+        visible: root._editorialStackActive
+        faceColor: root._backdropActive ? Appearance.editorial.paper : root._fill
+        radius: root._radius
+        materialOpacity: (root._backdropActive || root.editorialGlassMaterial && Appearance.editorial.glassActive)
+            ? Appearance.editorial.glassOpacity : 1
+        backingOpacity: (root._backdropActive || root.editorialGlassMaterial && Appearance.editorial.glassActive)
+            ? Appearance.editorial.glassBackingOpacity : 1
     }
 
     // Contenido encima de la cara.

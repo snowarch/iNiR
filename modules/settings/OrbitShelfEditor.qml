@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
@@ -136,7 +137,7 @@ ColumnLayout {
                 spacing: 6
 
                 Repeater {
-                    model: root.shelfModules
+                    model: ScriptModel { values: root.shelfModules }
 
                     delegate: Row {
                         id: shelfDelegate
@@ -193,8 +194,8 @@ ColumnLayout {
             Layout.fillWidth: true
             spacing: 6
 
-            Repeater {
-                model: root.availableModules
+                Repeater {
+                    model: ScriptModel { values: root.availableModules }
 
                 ArrangeChip {
                     required property string modelData

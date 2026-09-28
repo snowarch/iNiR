@@ -21,11 +21,14 @@ depends=(
 
   # Audio effects
   easyeffects
+  lsp-plugins-lv2
 
   # Media playback
   mpv
   mpv-mpris
   yt-dlp
+  yt-dlp-ejs
+  deno
   socat
 )
 

@@ -263,7 +263,7 @@ Item {
                     implicitWidth: 24; implicitHeight: 24
                     buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                     colBackground: "transparent"
-                    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.chrome : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.colors.colLayer1Hover
+                    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.chrome : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.colLayer1Hover
                     onClicked: root.fetchPrices()
                     contentItem: MaterialSymbol {
                         text: "refresh"; iconSize: 14

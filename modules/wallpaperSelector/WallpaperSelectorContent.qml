@@ -13,6 +13,7 @@ import Quickshell.Io
 
 MouseArea {
     id: root
+    readonly property bool editorial: Appearance.editorialEverywhere
     property int columns: 4
     property real previewCellAspectRatio: 4 / 3
     property bool useDarkMode: Appearance.m3colors.darkmode
@@ -214,7 +215,7 @@ MouseArea {
 
     StyledRectangularShadow {
         target: wallpaperGridBackground
-        visible: !Appearance.inirEverywhere && !Appearance.zzzEverywhere
+        visible: !root.editorial && !Appearance.inirEverywhere && !Appearance.zzzEverywhere
     }
     GlassBackground {
         id: wallpaperGridBackground
@@ -226,6 +227,7 @@ MouseArea {
         Keys.forwardTo: [root]
         border.width: (Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 1
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+            : root.editorial ? Appearance.editorial.rule
             : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
             : Appearance.inirEverywhere ? Appearance.inir.colBorder 
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : Appearance.colors.colLayer0Border
@@ -233,10 +235,14 @@ MouseArea {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
-        fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colLayer0
+        fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper
+            : root.editorial ? Appearance.editorial.paper
+            : Appearance.colors.colLayer0
         inirColor: Appearance.inir.colLayer0
         auroraTransparency: Appearance.aurora.overlayTransparentize
+        wallpaperBackdropEnabled: !root.editorial
         radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            : root.editorial ? Appearance.editorial.radius
             : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
             : Appearance.inirEverywhere ? Appearance.inir.roundingLarge 
             : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
@@ -272,12 +278,17 @@ MouseArea {
                 implicitWidth: quickDirColumnLayout.implicitWidth
                 implicitHeight: quickDirColumnLayout.implicitHeight
                 color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                    : root.editorial ? Appearance.editorial.layer(1)
                     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1
-                radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : wallpaperGridBackground.radius - Layout.margins
-                border.width: Appearance.zzzEverywhere ? 1 : 0
-                border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline : "transparent"
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                    : root.editorial ? Appearance.editorial.radius
+                    : wallpaperGridBackground.radius - Layout.margins
+                border.width: (Appearance.zzzEverywhere || root.editorial) ? 1 : 0
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
+                    : root.editorial ? Appearance.editorial.rule
+                    : "transparent"
                 Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                 Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
@@ -288,24 +299,60 @@ MouseArea {
                     anchors.fill: parent
                     spacing: 0
 
-                    StyledText {
-                        Layout.margins: 12
-                        font.family: Appearance.zzzEverywhere ? Appearance.font.family.title : Appearance.font.family.main
-                        font.pixelSize: Appearance.zzzEverywhere ? Appearance.font.pixelSize.large : Appearance.font.pixelSize.normal
-                        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Medium
-                        font.italic: Appearance.zzzEverywhere
-                        text: Translation.tr("Pick a wallpaper")
-                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
-                        Behavior on color {
-                            enabled: Appearance.animationsEnabled
-                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 12
+                        Layout.rightMargin: 12
+                        Layout.topMargin: 11
+                        Layout.bottomMargin: root.editorial ? 5 : 11
+                        spacing: 8
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            font.family: Appearance.zzzEverywhere ? Appearance.font.family.title
+                                : root.editorial ? Appearance.editorial.displayFamily
+                                : Appearance.font.family.main
+                            font.pixelSize: Appearance.zzzEverywhere || root.editorial
+                                ? Appearance.font.pixelSize.large
+                                : Appearance.font.pixelSize.normal
+                            font.weight: Appearance.zzzEverywhere ? Font.Black
+                                : root.editorial ? Appearance.editorial.titleWeight
+                                : Font.Medium
+                            font.letterSpacing: root.editorial ? Appearance.editorial.titleTracking * 0.45 : 0
+                            font.italic: Appearance.zzzEverywhere
+                            text: Translation.tr("Pick a wallpaper")
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                                : root.editorial ? Appearance.editorial.ink
+                                : Appearance.colors.colOnLayer1
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
+                        }
+
+                        StyledText {
+                            visible: root.editorial
+                            text: String(Wallpapers.folderModel?.count ?? 0)
+                            font.family: Appearance.font.family.numbers
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: Font.DemiBold
+                            color: Appearance.editorial.muted
                         }
                     }
+
+                    EditorialRule {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 4
+                        Layout.rightMargin: 4
+                        Layout.preferredHeight: root.editorial ? 2 : 0
+                        inset: 8
+                    }
+
                     ListView {
                         // Quick dirs
                         Layout.fillHeight: true
                         Layout.margins: 4
-                        implicitWidth: 140
+                        implicitWidth: root.editorial ? 160 : 140
                         clip: true
                         model: [
                             { icon: "home", name: "Home", path: Directories.home }, 
@@ -327,17 +374,27 @@ MouseArea {
                             onClicked: Wallpapers.setDirectory(quickDirButton.modelData.path)
                             enabled: modelData.icon.length > 0
                             toggled: Wallpapers.directory === Qt.resolvedUrl(modelData.path)
-                            colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colSecondaryContainer
-                            colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.88) : Appearance.colors.colSecondaryContainerHover
+                            colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker
+                                : root.editorial ? Appearance.editorial.field
+                                : Appearance.colors.colSecondaryContainer
+                            colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.88)
+                                : root.editorial ? Appearance.colors.colPrimaryContainerHover
+                                : Appearance.colors.colSecondaryContainerHover
                             colRippleToggled: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.30) : Appearance.colors.colSecondaryContainerActive
-                            buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : height / 2
+                            buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                                : root.editorial ? Appearance.rounding.small
+                                : height / 2
                             implicitHeight: 38
 
                             contentItem: RowLayout {
                                 MaterialSymbol {
                                     color: quickDirButton.toggled
-                                        ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer)
-                                        : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1)
+                                        ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+                                            : root.editorial ? Appearance.editorial.fieldInk
+                                            : Appearance.colors.colOnSecondaryContainer)
+                                        : (Appearance.zzzEverywhere ? Appearance.zzz.ink
+                                            : root.editorial ? Appearance.editorial.ink
+                                            : Appearance.colors.colOnLayer1)
                                     iconSize: Appearance.font.pixelSize.larger
                                     text: quickDirButton.modelData.icon
                                     fill: quickDirButton.toggled ? 1 : 0
@@ -347,8 +404,12 @@ MouseArea {
                                     Layout.fillWidth: true
                                     horizontalAlignment: Text.AlignLeft
                                     color: quickDirButton.toggled
-                                        ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer)
-                                        : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1)
+                                        ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+                                            : root.editorial ? Appearance.editorial.fieldInk
+                                            : Appearance.colors.colOnSecondaryContainer)
+                                        : (Appearance.zzzEverywhere ? Appearance.zzz.ink
+                                            : root.editorial ? Appearance.editorial.ink
+                                            : Appearance.colors.colOnLayer1)
                                     text: quickDirButton.modelData.name
                                 }
                             }
@@ -382,12 +443,17 @@ MouseArea {
                     Layout.topMargin: 0
                     implicitHeight: visible ? monitorIndicatorText.implicitHeight + 16 : 0
                     color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                        : root.editorial ? Appearance.editorial.layer(1)
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                         : Appearance.colors.colLayer1
-                    radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : wallpaperGridBackground.radius - Layout.margins
-                    border.width: Appearance.zzzEverywhere ? 1 : Appearance.inirEverywhere ? 1 : 0
-                    border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+                    radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                        : root.editorial ? Appearance.rounding.small
+                        : wallpaperGridBackground.radius - Layout.margins
+                    border.width: Appearance.zzzEverywhere ? 1 : (root.editorial || Appearance.inirEverywhere) ? 1 : 0
+                    border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
+                        : root.editorial ? Appearance.editorial.rule
+                        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
                     Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                     Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
@@ -401,7 +467,9 @@ MouseArea {
                         MaterialSymbol {
                             text: "monitor"
                             font.pixelSize: Appearance.font.pixelSize.normal
-                            color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.accent
+                                : root.editorial ? Appearance.editorial.accent
+                                : Appearance.colors.colPrimary
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
                                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -416,7 +484,9 @@ MouseArea {
                             text: root.selectedMonitor ?
                                 Translation.tr("Configuring monitor: %1").arg(root.selectedMonitor) :
                                 Translation.tr("Multi-monitor mode active")
-                            color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colPrimary
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                                : root.editorial ? Appearance.editorial.muted
+                                : Appearance.colors.colPrimary
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
                                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -511,8 +581,20 @@ MouseArea {
                             })
                             width: grid.cellWidth
                             height: grid.cellHeight
-                            colBackground: (index === grid?.currentIndex || containsMouse) ? Appearance.colors.colPrimary : _isCurrent ? Appearance.colors.colSecondaryContainer : ColorUtils.transparentize(Appearance.colors.colPrimaryContainer)
-                            colText: (index === grid.currentIndex || containsMouse) ? Appearance.colors.colOnPrimary : _isCurrent ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
+                            colBackground: root.editorial
+                                ? ((index === grid?.currentIndex || containsMouse) ? Appearance.editorial.field
+                                    : _isCurrent ? Appearance.editorial.secondaryField
+                                    : Appearance.editorial.layer(1))
+                                : ((index === grid?.currentIndex || containsMouse) ? Appearance.colors.colPrimary
+                                    : _isCurrent ? Appearance.colors.colSecondaryContainer
+                                    : ColorUtils.transparentize(Appearance.colors.colPrimaryContainer))
+                            colText: root.editorial
+                                ? ((index === grid.currentIndex || containsMouse) ? Appearance.editorial.fieldInk
+                                    : _isCurrent ? Appearance.editorial.secondaryFieldInk
+                                    : Appearance.editorial.ink)
+                                : ((index === grid.currentIndex || containsMouse) ? Appearance.colors.colOnPrimary
+                                    : _isCurrent ? Appearance.colors.colOnSecondaryContainer
+                                    : Appearance.colors.colOnLayer0)
 
                             onEntered: {
                                 grid.currentIndex = index;

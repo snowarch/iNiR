@@ -24,7 +24,7 @@ Item {
         // (aurora and angel give it their own surface), so a raw colLayer2 hover
         // was the same colour as its background and the state never appeared.
         color: indicatorMA.containsMouse && root.interactive
-            ? Appearance.colors.colLayer2Hover : "transparent"
+            ? Appearance.colLayer2Hover : "transparent"
         Behavior on color {
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
         }
@@ -38,7 +38,7 @@ Item {
         MaterialSymbol {
             text: root.icon
             iconSize: Appearance.font.pixelSize.normal
-            color: Appearance.colors.colOnSurfaceVariant
+            color: Appearance.colSecondaryActionIcon
         }
         StyledText {
             id: providerName
@@ -55,7 +55,7 @@ Item {
             visible: root.interactive && root.showDisclosure
             text: "expand_more"
             iconSize: Appearance.font.pixelSize.small
-            color: Appearance.colors.colOnSurfaceVariant
+            color: Appearance.colSecondaryActionIcon
         }
     }
 

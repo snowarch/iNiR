@@ -1,6 +1,6 @@
 # Compositor Integration
 
-iNiR is built for Niri. Secondary Hyprland support is maintained from the project's origins as a fork of end-4's Hyprland dots.
+iNiR is built and tested for Niri. Legacy Hyprland compatibility code remains from the project's origins as a fork of end-4's Hyprland dots, but Hyprland is not the primary supported/tested target.
 
 ## Detection
 
@@ -61,9 +61,9 @@ iNiR manages Niri's config through modular KDL files in `~/.config/niri/config.d
 
 `scripts/niri-config.py` does surgical edits to these files, preserving comments and unknown settings. It never rewrites entire files.
 
-## Hyprland
+## Hyprland compatibility paths
 
-Secondary support. Uses the Quickshell Hyprland module (built-in) plus `hyprctl` for queries that the module doesn't cover.
+Legacy paths use the built-in Quickshell Hyprland module plus `hyprctl` for queries that the module does not cover. They are retained for compatibility and code reuse, but their presence should not be read as the same support/test guarantee as Niri.
 
 ### Differences from Niri
 
@@ -88,7 +88,7 @@ Some features require Niri-specific IPC that has no Hyprland equivalent:
 - Column-based window management
 - Some Overview features
 
-The shell adapts gracefully. Missing features hide themselves rather than crashing.
+Where a legacy path is still wired, missing Niri-only features should be gated rather than crashing. That is a compatibility goal, not a claim that the complete shell is validated on Hyprland.
 
 ## Shared abstractions
 
@@ -102,8 +102,8 @@ This means most UI components don't need compositor guards at all. They just rea
 
 ## For contributors
 
-**Always use compositor guards** when writing compositor-specific code. Never assume Niri is running.
+**Use compositor guards** when shared code contains a compositor-specific path. Niri remains the supported product target, but legacy/unsupported environments should not crash merely because an old adapter is present.
 
 **Prefer shared abstractions** over direct NiriService/HyprlandData access when possible. If you need something that only Niri provides, gate it with `CompositorService.isNiri` and provide a fallback (even if the fallback is just hiding the feature).
 
-**Test both** if you're touching compositor-facing code. At minimum, check that the feature doesn't crash on the other compositor.
+For product acceptance, test Niri. If a change deliberately touches a retained Hyprland compatibility path, verify that path separately and describe the result as compatibility evidence rather than broad support.

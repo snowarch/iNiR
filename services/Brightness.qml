@@ -19,6 +19,7 @@ import "brightnessPolicy.js" as BrightnessPolicy
 Singleton {
     id: root
     signal brightnessChanged()
+    property real lastUserChange: 0
 
     property var ddcMonitors: []
     property list<BrightnessMonitor> monitors: []
@@ -28,6 +29,12 @@ Singleton {
     // last >0 level per screen.name; survives monitor recreation after dpms
     property var lastValidBrightness: ({})
     property bool asleep: false
+    property var _sleepDisabledOutputs: []
+    property var _wakePendingOutputs: []
+    property int _wakeRetryAttempt: 0
+    property var _niriQueue: []
+    property bool _niriBusy: false
+    property var _niriActive: null
 
     // Reconcile against the live screen list rather than binding to
     // Quickshell.screens: createObject() parents each monitor to root, so a
@@ -63,19 +70,144 @@ Singleton {
         backlightDetectProc.running = true
     }
 
+    function _connectedNames(): var {
+        const names = []
+        for (let i = 0; i < Quickshell.screens.length; ++i)
+            names.push(Quickshell.screens[i].name)
+        return names
+    }
+
+    function _enqueueNiri(args, phase = "", outputName = "", abortOnFailure = false): void {
+        root._niriQueue = root._niriQueue.concat([{
+            args: args,
+            phase: phase,
+            outputName: outputName,
+            abortOnFailure: abortOnFailure,
+        }])
+        root._drainNiriQueue()
+    }
+
+    function _drainNiriQueue(): void {
+        if (root._niriBusy || root._niriQueue.length === 0)
+            return
+        const next = root._niriQueue[0]
+        root._niriQueue = root._niriQueue.slice(1)
+        root._niriBusy = true
+        root._niriActive = next
+        niriSerialProc.command = next.args
+        niriSerialProc.running = false
+        niriSerialProc.running = true
+    }
+
+    function _queueWake(names): void {
+        root._wakePendingOutputs = BrightnessPolicy.mergeOutputNames([], names)
+        root._enqueueNiri(BrightnessPolicy.niriPowerOnMonitorsArgs(), "wake")
+        root._tryWakeOutputs()
+        if (root._wakePendingOutputs.length > 0)
+            wakeRetryTimer.restart()
+    }
+
+    function _finishWakeIfDone(): void {
+        if (root.asleep || root._wakePendingOutputs.length > 0)
+            return
+        wakeRetryTimer.stop()
+        root._wakeRetryAttempt = 0
+        root._sleepDisabledOutputs = []
+    }
+
+    function _recoverFailedSleep(): void {
+        root._niriQueue = root._niriQueue.filter(item => item.phase !== "sleep")
+        root.asleep = false
+        root._wakeRetryAttempt = 0
+        root._queueWake(root._sleepDisabledOutputs)
+    }
+
     function sleepBegin(): void {
+        if (!CompositorService.isNiri)
+            return
+        wakeRetryTimer.stop()
+        root._niriQueue = root._niriQueue.filter(item => item.phase !== "wake")
+        root._wakeRetryAttempt = 0
+        const connected = root._connectedNames()
+        root._sleepDisabledOutputs = BrightnessPolicy.pinnedForSleep(
+            root._sleepDisabledOutputs, connected, root.asleep)
+        root._wakePendingOutputs = []
         root.asleep = true
+        const cmds = BrightnessPolicy.sleepCommandQueue(connected)
+        for (let i = 0; i < cmds.length; ++i)
+            root._enqueueNiri(cmds[i], "sleep", "", true)
+    }
+
+    function _tryWakeOutputs(): void {
+        const names = root._wakePendingOutputs
+        for (let i = 0; i < names.length; ++i)
+            root._enqueueNiri(BrightnessPolicy.niriOutputOnArgs(names[i]), "wake", names[i])
     }
 
     function restoreAfterWake(): void {
+        if (!CompositorService.isNiri) {
+            root.asleep = false
+            return
+        }
+        const pinned = BrightnessPolicy.mergeOutputNames([], root._sleepDisabledOutputs)
+        root._niriQueue = root._niriQueue.filter(item => item.phase !== "sleep")
         root.asleep = false
+        root._wakeRetryAttempt = 0
+        root._queueWake(pinned)
+        root._syncMonitors()
         for (let i = 0; i < root.monitors.length; ++i)
-            root.monitors[i].restoreLastGood();
+            root.monitors[i].restoreLastGood()
     }
 
     Component.onCompleted: {
         root._syncMonitors()
         root._detectBacklight()
+    }
+
+    Process {
+        id: niriSerialProc
+        stderr: StdioCollector { id: niriSerialErr }
+        onExited: (exitCode, exitStatus) => {
+            const completed = root._niriActive
+            root._niriActive = null
+            root._niriBusy = false
+
+            if (exitCode !== 0) {
+                const detail = (niriSerialErr.text || "").trim()
+                if (completed?.abortOnFailure) {
+                    console.warn(`[Brightness] sleep command failed (${completed?.args?.join(" ") ?? "unknown"}): ${detail || `exit ${exitCode}`}; skipping DPMS and restoring pinned outputs`)
+                    root._niriQueue = root._niriQueue.filter(item => item.phase !== "sleep")
+                    if (root.asleep) {
+                        root._recoverFailedSleep()
+                        return
+                    }
+                } else if (!completed?.outputName) {
+                    console.warn(`[Brightness] niri command failed (${completed?.args?.join(" ") ?? "unknown"}): ${detail || `exit ${exitCode}`}`)
+                }
+            } else if (completed?.phase === "wake" && completed?.outputName) {
+                root._wakePendingOutputs = BrightnessPolicy.removeOutputName(root._wakePendingOutputs, completed.outputName)
+                root._finishWakeIfDone()
+            }
+
+            root._drainNiriQueue()
+        }
+    }
+
+    Timer {
+        id: wakeRetryTimer
+        interval: 400
+        repeat: true
+        onTriggered: {
+            root._wakeRetryAttempt++
+            if (!BrightnessPolicy.shouldRetryWakeOutput(root._wakeRetryAttempt, BrightnessPolicy.wakeOutputRetryLimit())) {
+                if (root._wakePendingOutputs.length > 0)
+                    console.warn(`[Brightness] wake retry limit reached for: ${root._wakePendingOutputs.join(", ")}`)
+                stop()
+                root._wakeRetryAttempt = 0
+                return
+            }
+            root._tryWakeOutputs()
+        }
     }
 
     Connections {
@@ -343,6 +475,7 @@ Singleton {
         }
 
         function setBrightness(value: real): void {
+            root.lastUserChange = Date.now()
             value = Math.max(0, Math.min(1, value));
             const screenName = monitor.screen?.name ?? ""
             if (screenName && value >= 0.01)

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import qs.modules.common
+import qs.services
 import QtQuick
 import QtMultimedia
 
@@ -19,6 +20,13 @@ Item {
     id: root
 
     property string source: ""
+    // Decoded no taller than this in device pixels; -1 follows the item's own height, 0 plays the file as it is.
+    property int decodeHeight: -1
+    readonly property int _decodeHeight: root.decodeHeight >= 0 ? root.decodeHeight
+        : Math.ceil(root.height * (root.Window.window?.devicePixelRatio ?? 1))
+    // An auto-sized player waits for its size instead of opening the full file first.
+    readonly property string playbackSource: !root.source || (root.decodeHeight < 0 && root.height <= 0) ? ""
+        : Wallpapers.videoPlaybackPath(root.source, root._decodeHeight)
     property int fillMode: VideoOutput.PreserveAspectCrop
     property bool shouldPlay: true
     property bool enableTransitions: true
@@ -43,7 +51,7 @@ Item {
     function _activePlayer(): var { return root.activeSlot === 0 ? playerA : playerB }
     function _inactivePlayer(): var { return root.activeSlot === 0 ? playerB : playerA }
 
-    onSourceChanged: root._applySource()
+    onPlaybackSourceChanged: root._applySource()
     Component.onCompleted: root._applySource()
     onShouldPlayChanged: root._syncPlayback()
 
@@ -61,7 +69,7 @@ Item {
     }
 
     function _applySource(): void {
-        const next = root._normalized(root.source)
+        const next = root._normalized(root.playbackSource)
         if (!next) {
             root._cancelPendingLoad()
             playerA.source = ""
@@ -131,13 +139,11 @@ Item {
             if (!String(player.source)) continue
             const hasFrame = player === playerA
                 ? root._slotAHasFrame : root._slotBHasFrame
-            if (root.shouldPlay || !hasFrame) {
+            // Pause in place: a covered wallpaper resumes where it was, not from the start.
+            if (root.shouldPlay || !hasFrame)
                 player.play()
-            } else {
+            else
                 player.pause()
-                if (player.seekable && player.position !== 0)
-                    player.position = 0
-            }
         }
     }
 
