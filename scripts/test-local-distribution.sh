@@ -666,26 +666,9 @@ if 'Alt+Tab { next-window; }' not in binds or 'Alt+Shift+Tab { previous-window; 
     raise SystemExit("FAIL: native Niri Alt+Tab bindings are missing")
 if 'spawn "inir" "altSwitcher"' in binds:
     raise SystemExit("FAIL: fresh-install Alt+Tab invokes the iNiR switcher")
-if 'Ctrl+Alt+F { spawn "inir" "equalizer" "toggle"; }' not in binds:
-    raise SystemExit("FAIL: fresh-install EasyEffects Equalizer binding is missing")
-if 'Ctrl+Alt+E { spawn "inir" "equalizer" "toggle"; }' in binds:
-    raise SystemExit("FAIL: fresh-install Equalizer binding regressed to the old Ctrl+Alt+E chord")
+if 'spawn "inir" "equalizer"' in binds:
+    raise SystemExit("FAIL: fresh-install binds still target the removed legacy equalizer IPC target")
 PY
-
-equalizer_helper="$runtime_root/scripts/audio/easyeffects-eq.sh"
-equalizer_service="$runtime_root/services/deferred/EasyEffects.qml"
-equalizer_owner="$runtime_root/modules/ii/ShellIiPanelsImpl.qml"
-if grep -Fq 'equalizer:0:' "$equalizer_helper" \
-        || grep -Fq 'get_last_loaded_preset:output' "$equalizer_helper" \
-        || ! grep -Fq 'find_equalizer_instance()' "$equalizer_helper" \
-        || ! grep -Fq 'output_pipeline_is_empty()' "$equalizer_helper" \
-        || ! grep -Fq "load_preset:output:iNiR Equalizer" "$equalizer_helper" \
-        || ! grep -Fq '"instanceId":%s' "$equalizer_helper" \
-        || ! grep -Fq 'property int equalizerInstanceId: -1' "$equalizer_service" \
-        || ! grep -Fq 'Component.onCompleted: EasyEffects.ensureEqualizer()' "$equalizer_owner"; then
-    printf 'FAIL: EasyEffects Equalizer can regress to instance #0, unsafe preset restore, or lose fresh-pipeline bootstrap\n' >&2
-    exit 1
-fi
 
 arch_installer="$runtime_root/sdata/dist-arch/install-deps.sh"
 if ! grep -Fq 'pacman -T "${_all_official[@]}"' "$arch_installer" \
