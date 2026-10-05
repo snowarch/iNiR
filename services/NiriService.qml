@@ -68,23 +68,38 @@ Singleton {
         }
     }
 
+    // Proof the event stream is live: niri actually sent us a line. Not the
+    // socket's connectionStateChanged — that signal is emitted while the Loader
+    // builds the socket, so a listener attached to the finished object can miss
+    // it entirely.
+    property bool _streamLive: false
+
+    // Subscribe by retrying until the proof arrives, instead of trusting a
+    // signal that can be missed. Sending the request is idempotent and cheap;
+    // giving up because a callback never arrived is not something I can accept
+    // for the only source of workspace and window data in the shell.
+    Timer {
+        id: eventStreamRetry
+        interval: 1500
+        repeat: true
+        running: root.socketPath !== "" && CompositorService.isNiri && !root._streamLive
+        onTriggered: eventStreamSocket.send('"EventStream"')
+    }
+
     DankSocket {
         id: eventStreamSocket
         path: root.socketPath
         connected: CompositorService.isNiri
 
-        onConnectionStateChanged: {
-            if (connected) {
-                send('"EventStream"')
-                fetchOutputs()
-                refreshOverviewHotCorners()
-            }
-        }
-
         parser: SplitParser {
             onRead: line => {
                 try {
                     const event = JSON.parse(line)
+                    if (!root._streamLive) {
+                        root._streamLive = true
+                        root.fetchOutputs()
+                        root.refreshOverviewHotCorners()
+                    }
                     handleNiriEvent(event)
                 } catch (e) {
                     console.warn("NiriService: Failed to parse event:", line, e)

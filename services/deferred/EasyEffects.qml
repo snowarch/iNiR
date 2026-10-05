@@ -177,9 +177,9 @@ Singleton {
         if (!root.available) return
         root.active = true
         if (root.nativeInstalled) {
-            Quickshell.execDetached(["easyeffects", "--service-mode"])
+            Quickshell.execDetached(["easyeffects", "--hide-window", "--service-mode"])
         } else {
-            Quickshell.execDetached(["flatpak", "run", "com.github.wwmm.easyeffects", "--service-mode"])
+            Quickshell.execDetached(["flatpak", "run", "com.github.wwmm.easyeffects", "--hide-window", "--service-mode"])
         }
         refreshStateTimer.restart()
     }
