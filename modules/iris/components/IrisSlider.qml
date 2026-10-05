@@ -6,6 +6,12 @@ Item {
     id: root
 
     property alias value: slider.value
+    // Whether Shift turns the wheel into a fine step. Off by default, because
+    // the wheel already means "nudge by stepSize" everywhere and this only adds
+    // the modifier where a caller asks for it. The field's bands take 0.5 dB
+    // per notch and 0.1 with Shift, so a control that sits next to that field
+    // can answer the same modifier the same way.
+    property bool fineStep: false
     signal moved(real value)
 
     implicitWidth: 220
@@ -30,6 +36,7 @@ Item {
         dotColor: IrisStyle.subtext
         dotColorHighlighted: IrisStyle.inkOnAccentContainer
         scrollable: true
+        fineStep: root.fineStep
         onMoved: root.moved(slider.value)
     }
 }

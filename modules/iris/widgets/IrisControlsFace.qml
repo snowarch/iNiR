@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Bluetooth
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets

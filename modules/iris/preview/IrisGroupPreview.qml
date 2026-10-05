@@ -651,7 +651,7 @@ ClippingRectangle {
             readonly property real naturalWidth: Math.round(680 * root.d)
             readonly property real naturalHeight: Math.round(220 * root.d)
             readonly property var names: ({ island: "Island", workspaces: "Workspaces", window: "Window", time: "Time", tray: "Tray",
-                notifications: "Notifications", sound: "Sound", controls: "Controls", mic: "Mic", weather: "Weather", tools: "Tools", media: "Media" })
+                notifications: "Notifications", sound: "Sound", controls: "Controls", mic: "Mic", weather: "Weather", tools: "Tools", media: "Media", equalizer: "Equalizer" })
             function listOf(path: string, fallback: var): var { return Array.from(root.opt(path, fallback) ?? []).map(kind => String(kind)) }
             readonly property var zones: [
                 zonesRoot.listOf("iris.bar.fullStart", ["workspaces", "window"]),

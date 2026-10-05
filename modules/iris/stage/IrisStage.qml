@@ -1062,6 +1062,8 @@ Item {
             Audio.toggleMute()
         } else if (kind === "mic") {
             Audio.toggleMicMute()
+        } else if (kind === "equalizer") {
+            GlobalStates.irisEqualizerOpen = true
         }
     }
 

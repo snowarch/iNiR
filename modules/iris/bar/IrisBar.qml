@@ -177,6 +177,13 @@ Scope {
             else return "Choose open, close or toggle"
             return GlobalStates.controlPanelOpen ? "open" : "closed"
         }
+        function equalizer(action: string): string {
+            if (action === "open") GlobalStates.irisEqualizerOpen = true
+            else if (action === "close") GlobalStates.irisEqualizerOpen = false
+            else if (action === "toggle" || action === "") GlobalStates.irisEqualizerOpen = !GlobalStates.irisEqualizerOpen
+            else return "Choose open, close or toggle"
+            return GlobalStates.irisEqualizerOpen ? "open" : "closed"
+        }
         function pin(side: string): void {
             if (side !== "left" && side !== "right") return
             const path = "iris.sidebars." + side + ".pinned"
@@ -456,7 +463,7 @@ Scope {
             return wanted ? "editing" : "closed"
         }
         function utility(name: string): string {
-            if (!["tray", "tools", "sound", "mic", "none"].includes(name)) return "Unknown utility"
+            if (!["tray", "tools", "sound", "mic", "equalizer", "none"].includes(name)) return "Unknown utility"
             Config.setNestedValue("iris.bar.auxiliary", name)
             return String(Config.options.iris.bar.auxiliary)
         }

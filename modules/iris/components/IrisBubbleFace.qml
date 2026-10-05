@@ -327,6 +327,54 @@ Item {
             iconSize: 15 * root.d
             color: root.kind === "mic" && Audio.micMuted ? root.dangerInk : root.ink
         }
+        // The equalizer at a glance: its glyph, lit while it shapes the sound,
+        // with the count of working modules under it (the bluetooth idiom).
+        // Muted and count-less while the engine has not answered — never a lie.
+        Item {
+            id: equalizerFace
+            visible: root.kind === "equalizer"
+            anchors.fill: parent
+            readonly property bool ready: IrisAudio.ready
+            readonly property int active: {
+                if (root.kind !== "equalizer") return 0
+                let n = 0
+                const modules = IrisAudio.modules ?? {}
+                for (const id of Object.keys(modules)) {
+                    if (modules[id]?.active) n++
+                }
+                return n
+            }
+            readonly property bool shaped: {
+                if (equalizerFace.active > 0) return true
+                if (!equalizerFace.ready) return false
+                const bands = IrisAudio.bands ?? []
+                for (let i = 0; i < bands.length; i++) {
+                    if (Math.abs(Number(bands[i]?.gain ?? 0)) > 0.05) return true
+                }
+                return false
+            }
+            Column {
+                anchors.centerIn: parent
+                spacing: -Math.round(2 * root.d)
+                Glyph {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "equalizer"
+                    iconSize: (equalizerFace.active > 0 ? 13 : 18) * root.d
+                    color: !equalizerFace.ready ? root.inkMuted
+                        : equalizerFace.shaped ? root.faceAccent : root.ink
+                }
+                FaceText {
+                    visible: equalizerFace.active > 0
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: equalizerFace.active
+                    color: root.faceAccent
+                    font.family: IrisStyle.fontNumbers
+                    font.features: ({ "tnum": 1 })
+                    font.pixelSize: IrisStyle.typeMeta
+                    font.weight: IrisStyle.weight(Font.Bold)
+                }
+            }
+        }
         Column {
             id: weatherFace
             readonly property string raw: String(Weather.data?.temp ?? "")
@@ -842,6 +890,7 @@ Item {
         : root.kind === "visualizer" ? Translation.tr("Visualizer")
         : root.kind === "sound" ? Translation.tr("Sound")
         : root.kind === "mic" ? Translation.tr("Microphone")
+        : root.kind === "equalizer" ? Translation.tr("Equalizer")
         : root.kind === "network" ? Translation.tr("Network")
         : root.kind === "bluetooth" ? Translation.tr("Bluetooth")
         : root.kind === "vitals" ? Translation.tr("Vitals")

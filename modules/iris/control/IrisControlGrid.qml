@@ -375,9 +375,33 @@ Item {
             : String(ctl.model?.icon ?? IrisControlOptions.glyphOf(ctl.moduleId))
         readonly property string detail: ctl.moduleId === "devices" ? String(Audio.defaultSink?.description ?? "")
             : ctl.moduleId === "record" ? (ctl.recording ? Translation.tr("Recording") : Translation.tr("Whole screen, with sound"))
+            : ctl.moduleId === "equalizer" ? ctl.eqDetail
             : String(ctl.model?.statusText ?? "")
+        // The equalizer entry is an action, not a toggle: it glows while the
+        // chain shapes the sound and reads the loaded preset, like a status.
+        readonly property int eqActive: {
+            let n = 0
+            const modules = IrisAudio.modules ?? {}
+            for (const id of Object.keys(modules)) {
+                if (modules[id]?.active) n++
+            }
+            return n
+        }
+        readonly property bool eqShaped: {
+            if (ctl.eqActive > 0) return true
+            if (!IrisAudio.ready) return false
+            const bands = IrisAudio.bands ?? []
+            for (let i = 0; i < bands.length; i++) {
+                if (Math.abs(Number(bands[i]?.gain ?? 0)) > 0.05) return true
+            }
+            return false
+        }
+        readonly property string eqDetail: !IrisAudio.ready ? Translation.tr("Waiting for engine")
+            : String(IrisAudio.presetName ?? "").length > 0 ? String(IrisAudio.presetName)
+            : ctl.eqActive > 0 ? Translation.tr("%1 shaping").arg(ctl.eqActive) : Translation.tr("Flat")
         readonly property bool lit: ctl.moduleId === "record" ? ctl.recording
             : ctl.moduleId === "devices" ? root.picker === "devices"
+            : ctl.moduleId === "equalizer" ? ctl.eqShaped
             : Boolean(ctl.model?.toggled ?? false)
         readonly property bool ready: ctl.moduleId === "record" || ctl.moduleId === "devices"
             || Boolean(ctl.model?.available ?? true)
@@ -397,6 +421,13 @@ Item {
         function activate(): void {
             if (!ctl.ready || root.editing) return
             if (ctl.moduleId === "devices") { root.picker = root.picker === "devices" ? "" : "devices"; return }
+            // The panel lives outside Control Center: open it by its flag (a
+            // sibling agent owns the flag and the loader) and stand down.
+            if (ctl.moduleId === "equalizer") {
+                GlobalStates.irisEqualizerOpen = true
+                GlobalStates.controlPanelOpen = false
+                return
+            }
             if (ctl.moduleId === "record") {
                 const args = ["/usr/bin/bash", Directories.recordScriptPath]
                 args.push(...(ctl.recording ? ["--stop"] : ["--fullscreen", "--sound"]))
@@ -690,6 +721,41 @@ Item {
                 anchors.centerIn: parent
                 width: single.upright ? Math.min(single.width, Math.round(56 * root.d)) : single.width
                 height: single.upright ? single.height : Math.min(single.height, Math.round(48 * root.d))
+            }
+            // The EQ door on the volume tile. Drag stays volume and the glyph
+            // stays mute — both are taken, high-frequency gestures — so the
+            // panel gets its own small, explicit target instead of a hidden
+            // gesture. Top corner: the mute pocket lives at the bottom, and a
+            // press-accepting MouseArea (not a TapHandler) keeps the tap from
+            // leaking through into a drag start on the slider below.
+            Item {
+                visible: single.moduleId === "volume" && !root.editing
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.topMargin: Math.round(2 * root.d)
+                anchors.rightMargin: Math.round(2 * root.d)
+                width: Math.round(28 * root.d)
+                height: width
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "equalizer"
+                    fill: 0
+                    iconSize: Math.round(16 * root.d)
+                    color: eqTap.containsMouse || eqTap.pressed ? IrisStyle.accent : IrisStyle.textSecondary
+                    Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
+                }
+                MouseArea {
+                    id: eqTap
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        GlobalStates.irisEqualizerOpen = true
+                        GlobalStates.controlPanelOpen = false
+                    }
+                }
+                Accessible.role: Accessible.Button
+                Accessible.name: Translation.tr("Open equalizer")
             }
         }
     }

@@ -30,6 +30,8 @@ QtObject {
         { id: "controls", label: "Controls", description: "Opens the Control Center out of the bubble.", card: false },
         { id: "sound", label: "Sound", description: "Output level as a ring; scroll to change it. Its card holds devices and apps.", card: true },
         { id: "mic", label: "Microphone", description: "Input level as a ring; scroll to change it. Its card holds the inputs.", card: true },
+        { id: "equalizer", label: "Equalizer", description: "The sound you shaped — how many modules are working, at a glance. Opens the full equalizer.", card: false,
+            keywords: ["equalizer", "ecualizador", "eq", "sound", "sonido", "audio", "bass", "graves", "treble", "preset", "presets", "preajuste", "easyeffects"] },
         { id: "tools", label: "Timers", description: "Countdown presets, Focus and the stopwatch.", card: true },
         { id: "media", label: "Now playing", description: "The cover while something plays; opens its card.", card: true },
         { id: "visualizer", label: "Visualizer", description: "What plays, drawn as it sounds: capsules, a rising equalizer, dots, a wave or a ring. Its look is in Now Playing; it opens the player's card.", card: true,

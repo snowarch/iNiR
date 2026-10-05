@@ -148,6 +148,63 @@ Item {
         }
     }
 
+    // The door to the equalizer, wherever a card plays sound: its glyph, its
+    // live state, and a chevron. A press-accepting MouseArea, like every other
+    // card row, so the tap never leaks into what sits under it.
+    component EqDoor: MouseArea {
+        id: door
+        property string detail: ""
+        implicitHeight: Math.round(44 * root.d)
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        Accessible.role: Accessible.Button
+        Accessible.name: Translation.tr("Open equalizer")
+        onClicked: GlobalStates.irisEqualizerOpen = true
+        Rectangle {
+            anchors.fill: parent
+            radius: IrisStyle.radiusTile
+            color: door.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
+            Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
+        }
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Math.round(12 * root.d)
+            anchors.rightMargin: Math.round(10 * root.d)
+            spacing: Math.round(10 * root.d)
+            MaterialSymbol {
+                Layout.alignment: Qt.AlignVCenter
+                text: "equalizer"
+                iconSize: Math.round(20 * root.d)
+                color: IrisStyle.text
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 0
+                IrisText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Equalizer")
+                    elide: Text.ElideRight
+                    font.pixelSize: IrisStyle.typeLabel
+                    font.weight: Font.DemiBold
+                }
+                IrisText {
+                    Layout.fillWidth: true
+                    visible: door.detail.length > 0
+                    text: door.detail
+                    color: IrisStyle.muted
+                    elide: Text.ElideRight
+                    font.pixelSize: IrisStyle.typeFootnote
+                }
+            }
+            MaterialSymbol {
+                Layout.alignment: Qt.AlignVCenter
+                text: "chevron_right"
+                iconSize: Math.round(18 * root.d)
+                color: IrisStyle.textSecondary
+            }
+        }
+    }
+
     // One fact of a connection: its name quiet on the left, the value on the right; a tap copies it.
     component VpnFact: MouseArea {
         id: fact
@@ -1015,7 +1072,12 @@ Item {
             readonly property color tint: IrisStyle.artTintOf(tintQuantizer.colors)
             // The artwork is the card's material, edge to edge in its own contour; the player sits on it at the card's margin.
             readonly property real inset: Math.max(0, IrisStyle.cardPad - Math.round(14 * root.d))
-            implicitHeight: card.implicitHeight + player.inset * 2
+            readonly property string eqDetail: !IrisAudio.ready ? Translation.tr("Waiting for engine")
+                : IrisAudio.equalizerBypass ? Translation.tr("Off")
+                : String(IrisAudio.presetName ?? "").length > 0 ? String(IrisAudio.presetName) : Translation.tr("On")
+            // Plain: the column is the only thing that decides this height, and the
+            // equalizer row's air is its own Layout.bottomMargin.
+            implicitHeight: mediaColumn.implicitHeight + player.inset * 2
             Rectangle {
                 anchors.fill: parent
                 color: IrisStyle.surfaceHigh
@@ -1038,15 +1100,32 @@ Item {
                     }
                 }
             }
-            IrisMediaCard {
-                id: card
+            ColumnLayout {
+                id: mediaColumn
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.margins: player.inset
-                showBackground: false
-                active: root.contentActive
-                tint: player.tint
+                spacing: Math.round(10 * root.d)
+                IrisMediaCard {
+                    id: card
+                    Layout.fillWidth: true
+                    showBackground: false
+                    active: root.contentActive
+                    tint: player.tint
+                }
+                // The only child of this column that is not inside the media card, and
+                // so the only one that never gets the card's own 14 px of
+                // padding. Left alone it sat 2 px off the bottom border, and
+                // 2 px inside a 28 px corner radius is what read as clipped.
+                // The same 14 px the media card already uses, so the row
+                // breathes like everything above it instead of being given a
+                // number of its own.
+                EqDoor {
+                    Layout.fillWidth: true
+                    Layout.bottomMargin: Math.round(14 * root.d)
+                    detail: player.eqDetail
+                }
             }
         }
     }

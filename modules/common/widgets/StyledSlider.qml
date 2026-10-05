@@ -83,6 +83,10 @@ Slider {
     property real trackDotSize: 3
     property string tooltipContent: `${Math.round(value * 100)}%`
     property bool scrollable: false
+    // Whether Shift turns the wheel into a fifth of a step. Off by default:
+    // the wheel means "nudge by stepSize" and this only adds the modifier where
+    // a caller asks for it, so no existing slider changes behaviour.
+    property bool fineStep: false
     property bool _userInteracting: false
     property bool wavy: !Appearance.regaliaEverywhere && configuration === StyledSlider.Configuration.Wavy
     property bool animateWave: true
@@ -224,11 +228,13 @@ Slider {
             _userInteractingReset.restart()
 
             const step = root.stepSize > 0 ? root.stepSize : 0.02
+            const fine = root.fineStep && (event.modifiers & Qt.ShiftModifier) !== 0
+            const amount = fine ? step / 5 : step
             if (event.angleDelta.y > 0) {
-                root.value = Math.min(root.value + step, root.to)
+                root.value = Math.min(root.value + amount, root.to)
                 root.moved()
             } else {
-                root.value = Math.max(root.value - step, root.from)
+                root.value = Math.max(root.value - amount, root.from)
                 root.moved()
             }
         }

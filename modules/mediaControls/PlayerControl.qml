@@ -349,38 +349,6 @@ Item {
                         animationDistanceY: 0
                     }
 
-                    RippleButton {
-                        implicitWidth: 30
-                        implicitHeight: 30
-                        visible: EasyEffects.available
-                            && (Config.options?.panelFamily ?? "ii") === "ii"
-                            && (Config.options?.enabledPanels ?? []).includes("iiEqualizer")
-                        buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
-                        colBackground: "transparent"
-                        colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-                            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                            : Appearance.colors.colLayer1Hover
-                        colRipple: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.28)
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
-                            : Appearance.colors.colLayer1Active
-                        onClicked: {
-                            GlobalStates.mediaControlsOpen = false
-                            GlobalStates.openEqualizer(root.outputName)
-                        }
-                        contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "graphic_eq"
-                            iconSize: 19
-                            fill: 1
-                            color: Appearance.regaliaEverywhere ? Appearance.regalia.hardwarePrimary
-                                : Appearance.zzzEverywhere ? Appearance.zzz.accent
-                                : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                                : Appearance.colors.colPrimary
-                        }
-                        StyledToolTip { text: Translation.tr("Equalizer") }
-                    }
                 }
 
                 // Artist

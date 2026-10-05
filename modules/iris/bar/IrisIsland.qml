@@ -975,6 +975,7 @@ Item {
         else if (kind === "focus") Notifications.silent = !Notifications.silent
         else if (kind === "weather" || kind === "clock") root.openPage("desktop", true, part)
         else if (kind === "tray" || kind === "tools") root.openPage(kind, true, part)
+        else if (kind === "equalizer") GlobalStates.irisEqualizerOpen = true
         else root.openControlCenterFrom(part)
     }
 
@@ -2439,6 +2440,65 @@ Item {
                             active: mediaPage.resident
                             asynchronous: !mediaPage.current
                             sourceComponent: IslandMediaPage { width: mediaLoader.width; island: root }
+                        }
+                        // The door to the equalizer, on the Island's own player page: its
+                        // glyph, its live state, and a chevron. A press-accepting
+                        // MouseArea, so the tap never leaks into the page under it.
+                        MouseArea {
+                            id: eqDoor
+                            Layout.fillWidth: true
+                            implicitHeight: Math.round(44 * root.d)
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            Accessible.role: Accessible.Button
+                            Accessible.name: Translation.tr("Open equalizer")
+                            onClicked: GlobalStates.irisEqualizerOpen = true
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: IrisStyle.radiusTile
+                                color: eqDoor.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
+                                Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
+                            }
+                            readonly property string detail: !IrisAudio.ready ? Translation.tr("Waiting for engine")
+                                : IrisAudio.equalizerBypass ? Translation.tr("Off")
+                                : String(IrisAudio.presetName ?? "").length > 0 ? String(IrisAudio.presetName) : Translation.tr("On")
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: Math.round(12 * root.d)
+                                anchors.rightMargin: Math.round(10 * root.d)
+                                spacing: Math.round(10 * root.d)
+                                Glyph {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    text: "equalizer"
+                                    iconSize: 20 * root.d
+                                    color: IrisStyle.text
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 0
+                                    IrisText {
+                                        Layout.fillWidth: true
+                                        text: Translation.tr("Equalizer")
+                                        elide: Text.ElideRight
+                                        font.pixelSize: IrisStyle.typeLabel
+                                        font.weight: IrisStyle.weight(Font.DemiBold)
+                                    }
+                                    IrisText {
+                                        Layout.fillWidth: true
+                                        visible: eqDoor.detail.length > 0
+                                        text: eqDoor.detail
+                                        color: IrisStyle.muted
+                                        elide: Text.ElideRight
+                                        font.pixelSize: IrisStyle.typeFootnote
+                                    }
+                                }
+                                Glyph {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    text: "chevron_right"
+                                    iconSize: 18 * root.d
+                                    color: IrisStyle.textSecondary
+                                }
+                            }
                         }
                     }
 
