@@ -575,28 +575,6 @@ Floating media controls panel.
 
 ---
 
-### equalizer
-
-Open the ii-family EasyEffects output equalizer. The integration is optional and disabled until you enable it. Run `inir settings`, then go to **Modules → Optional → EasyEffects Equalizer** and enable the switch. While it is disabled the IPC target is intentionally not constructed. On a fresh empty EasyEffects output pipeline, iNiR bootstraps a neutral 10-band `iNiR Equalizer` preset. Existing non-empty effect chains are never replaced automatically.
-
-| Function | Description |
-|----------|-------------|
-| `toggle` | Open/close equalizer |
-| `open` | Show equalizer |
-| `close` | Hide equalizer |
-| `refresh` | Refresh EasyEffects equalizer state |
-| `ensure` | Ensure Equalizer control is available; bootstraps a neutral Equalizer only when the output pipeline is empty |
-| `status` | Return current equalizer state as JSON |
-| `setBand <index> <gain>` | Set one 0-based band gain in dB |
-| `preset <name>` | Apply one built-in EQ preset |
-| `configure` | Convert the active Equalizer to the iNiR 10-band layout |
-
-```kdl
-Ctrl+Alt+F { spawn "inir" "equalizer" "toggle"; }
-```
-
----
-
 ### osk
 
 On-screen keyboard.
@@ -846,6 +824,7 @@ iRiS bar and Island design. Available while the iRiS bar is enabled.
 | `focus` | `open`, `close` or `toggle` the Focus panel (the left one), and say whether it is open |
 | `today` | `open`, `close` or `toggle` the Today panel (the right one), and say whether it is open |
 | `controlCenter` | `open`, `close` or `toggle` the Control Center, and say whether it is open |
+| `equalizer` | `open`, `close` or `toggle` the Equalizer panel, and say whether it is open |
 | `pin` | Keep the `left` (Focus) or `right` (Today) panel open beside windows, or stop |
 | `accent` | Set iRiS accent: `blue`, `mint`, `rose`, `lilac` or `wallpaper` |
 | `arrange` | Arrange the Island's desktop page in place — move, remove and add its blocks: `on`, `off` or `toggle` |

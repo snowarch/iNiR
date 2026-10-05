@@ -3330,6 +3330,7 @@ Mod+M|iris page media|The Island on the player|iris
 Mod+D|iris dock toggle|Show or hide the Dock|iris
 Mod+Comma|iris settings general|iRiS Settings|iris
 Mod+E|iris edit toggle|Customize iRiS where it is|iris
+Mod+U|iris equalizer toggle|The Equalizer|iris
 Mod+Tab|overview toggle|The overview|ii
 Mod+A|sidebarLeft toggle|Left sidebar: AI chat and apps|ii
 Mod+N|sidebarRight toggle|Right sidebar: toggles, notes and settings|ii
@@ -3600,22 +3601,6 @@ run_ipc_target_command() {
 
     # Validate function name against registry before forwarding to qs.
     validate_ipc_function "$target" "$1"
-
-    # Some IPC owners are intentionally optional. The equalizer target is only
-    # constructed while the iiEqualizer panel is enabled, so report that state
-    # explicitly instead of leaking Quickshell's generic "Target not found".
-    if [[ "$target" == "equalizer" ]]; then
-        local user_cfg
-        user_cfg="$(inir_config_file)"
-        if [[ -f "$user_cfg" ]] && command -v jq >/dev/null 2>&1 \
-                && ! jq -e '(.enabledPanels // []) | index("iiEqualizer") != null' "$user_cfg" >/dev/null 2>&1; then
-            echo "EasyEffects Equalizer is disabled." >&2
-            echo "Open Settings with: inir settings" >&2
-            echo "Then go to: Modules → Optional → EasyEffects Equalizer" >&2
-            echo "Enable that switch, then run this command again." >&2
-            exit 1
-        fi
-    fi
 
     resolve_config_dir
     if ! ensure_running_instance_for_ipc "$config_dir" "${1:-}"; then

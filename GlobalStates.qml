@@ -31,35 +31,6 @@ Singleton {
     property bool sidebarRightOpen: false
     property string sidebarRightTargetOutput: ""
     property bool mediaControlsOpen: false
-    property bool equalizerOpen: false
-    property string equalizerTargetOutput: ""
-    readonly property bool equalizerEnabled: (Config.options?.enabledPanels ?? []).includes("iiEqualizer")
-
-    function openEqualizer(outputName: string): void {
-        if (!root.equalizerEnabled)
-            return
-        const requested = String(outputName ?? "")
-        equalizerTargetOutput = requested.length > 0
-            ? requested
-            : String(root.focusedScreen?.name ?? root.primaryScreen?.name ?? "")
-        equalizerOpen = true
-    }
-
-    function closeEqualizer(): void {
-        equalizerOpen = false
-    }
-
-    function toggleEqualizer(outputName: string): void {
-        if (!root.equalizerEnabled) {
-            closeEqualizer()
-            return
-        }
-        if (equalizerOpen) {
-            closeEqualizer()
-            return
-        }
-        openEqualizer(outputName)
-    }
     property real irisLevelQuietUntil: 0
     function quietIrisLevels(): void { root.irisLevelQuietUntil = Date.now() + 700 }
     property bool osdBrightnessOpen: false
@@ -410,6 +381,9 @@ Singleton {
     // iRiS Studio, the panel form of Customize, is open. It and Customize on the shell never show together.
     property bool irisStudioOpen: false
     onIrisStudioOpenChanged: if (irisStudioOpen && irisEdit) irisEdit = false
+    // The iRiS Equalizer panel. Opened by its own entry points (IPC verb, Control
+    // Center) and closed by the panel itself; it never gates on enabledPanels.
+    property bool irisEqualizerOpen: false
     // Customize, in the form the person chose (iris.appearance.customize), on a target ("" = where it was).
     function openIrisCustomize(target): void {
         const wanted = String(target ?? "")

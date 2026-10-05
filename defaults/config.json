@@ -2686,6 +2686,11 @@
             "cardPinned": false,
             "visualizer": { "style": "capsules", "bars": 5, "colour": "art" }
         },
+        "equalizer": {
+            "enabled": false,
+            "bands": 10,
+            "spectrum": { "enabled": true, "style": "capsules", "opacity": 0.5 }
+        },
         "bubbles": {
             "scale": 100,
             "left": { "place": "island", "fx": 0.5, "fy": 0.5 },

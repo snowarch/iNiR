@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 3c10a0189fd0c4fd
-# Targets: 70
+# IPC.md hash: 6ef340453704fc06
+# Targets: 69
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -25,7 +25,6 @@ declare -gA IPC_TARGET_DESC=(
   [customWidgets]="Custom widget management. Create, list, reload, and remove user-installed widgets from \`~/.config/inir/widgets/\`."
   [dashboard]="Centered welcome hub panel (ii family): greeting, clock, notifications, media, weather, calendar, todo, system usage and GitHub activity."
   [dev]="Development navigation for loading lazy surfaces and internal views without automating pointer or keyboard input. Destination identifiers are stable and returned as JSON by \`list\`."
-  [equalizer]="Open the ii-family EasyEffects output equalizer. The integration is optional and disabled until you enable it. Run \`inir settings\`, then go to **Modules → Optional → EasyEffects Equalizer** and enable the switch. While it is disabled the IPC target is intentionally not constructed. On a fresh empty EasyEffects output pipeline, iNiR bootstraps a neutral 10-band \`iNiR Equalizer\` preset. Existing non-empty effect chains are never replaced automatically."
   [gamemode]="Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects. Can also be toggled manually for those stubborn games that don't go fullscreen properly."
   [globalActions]="Command palette / action registry. Search and execute shell actions from scripts or keybinds."
   [globalStyle]="The Global Style every Material surface and desktop widget follows: material, cards, aurora, inir, angel, regalia, zzz, cookie or editorial."
@@ -98,7 +97,6 @@ declare -gA IPC_TARGET_FAMILY=(
   [customWidgets]="waffle"
   [dashboard]="shared"
   [dev]="shared"
-  [equalizer]="ii"
   [gamemode]="shared"
   [globalActions]="shared"
   [globalStyle]="shared"
@@ -171,11 +169,10 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [customWidgets]="reload list create remove"
   [dashboard]="toggle close open"
   [dev]="list open close current meter metered dragSim"
-  [equalizer]="toggle close open refresh ensure status setBand preset configure"
   [gamemode]="toggle activate deactivate status"
   [globalActions]="run runWithArgs list search open"
   [globalStyle]="set get list"
-  [iris]="open page close toggle card theme settings bubble dock dockApp appBubble focus today controlCenter pin layout strip edge dockEdge zone barPiece arrange edit studio notch surround accent spotlight gallerySource orbit orbitCorner orbitClose spotlightClose bubbleCard tap bubbleMenu morph activity activities set adaptive palette preset icon control lock utility watch watchPick desktopMenu menuClose watchSubs watchSeek watchSkip motion motioned status"
+  [iris]="open page close toggle card theme settings bubble dock dockApp appBubble focus today controlCenter equalizer pin layout strip edge dockEdge zone barPiece arrange edit studio notch surround accent spotlight gallerySource orbit orbitCorner orbitClose spotlightClose bubbleCard tap bubbleMenu morph activity activities set adaptive palette preset icon control lock utility watch watchPick desktopMenu menuClose watchSubs watchSeek watchSkip motion motioned status"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
   [lock]="activate prepareSleep deactivate status focus"
   [mascot]="poke status setVoice romp chase hideSeek tidy appear appearContextual appearWithLine hide snooze"
@@ -324,15 +321,6 @@ declare -gA IPC_FUNCTION_DESC=(
   ["dev:meter"]="Measure frame gaps for the given milliseconds (250–20000, default 2500)"
   ["dev:metered"]="Return the last measurement as JSON: frames, mean, p95, worst, frames over 20 and 50 ms"
   ["dev:dragSim"]="Simulate carrying an iRiS bubble (slot id, default \`extra-clock\`) around the focused output for 2.5 s, publishing the given number of moves per frame (1–16); never writes the config"
-  ["equalizer:toggle"]="Open/close equalizer"
-  ["equalizer:close"]="Hide equalizer"
-  ["equalizer:open"]="Show equalizer"
-  ["equalizer:refresh"]="Refresh EasyEffects equalizer state"
-  ["equalizer:ensure"]="Ensure Equalizer control is available; bootstraps a neutral Equalizer only when the output pipeline is empty"
-  ["equalizer:status"]="Return current equalizer state as JSON"
-  ["equalizer:setBand"]="Set one 0-based band gain in dB"
-  ["equalizer:preset"]="Apply one built-in EQ preset"
-  ["equalizer:configure"]="Convert the active Equalizer to the iNiR 10-band layout"
   ["gamemode:toggle"]="Toggle gamemode on/off"
   ["gamemode:activate"]="Force enable gamemode"
   ["gamemode:deactivate"]="Force disable gamemode"
@@ -359,6 +347,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["iris:focus"]="\`open\`, \`close\` or \`toggle\` the Focus panel (the left one), and say whether it is open"
   ["iris:today"]="\`open\`, \`close\` or \`toggle\` the Today panel (the right one), and say whether it is open"
   ["iris:controlCenter"]="\`open\`, \`close\` or \`toggle\` the Control Center, and say whether it is open"
+  ["iris:equalizer"]="\`open\`, \`close\` or \`toggle\` the Equalizer panel, and say whether it is open"
   ["iris:pin"]="Keep the \`left\` (Focus) or \`right\` (Today) panel open beside windows, or stop"
   ["iris:layout"]="How the Island sits on its edge: \`island\`, \`left\`, \`right\`, \`full\` or \`menubar\` (top or bottom)"
   ["iris:strip"]="What the menu bar lays under its items: \`transparent\` (on the wallpaper) or \`band\`"
@@ -666,8 +655,6 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["dev:open"]="<destination>"
   ["dev:meter"]="<ms>"
   ["dev:dragSim"]="<slot> <perFrame>"
-  ["equalizer:setBand"]="<index> <gain>"
-  ["equalizer:preset"]="<name>"
   ["globalActions:run"]="<actionId>"
   ["globalActions:runWithArgs"]="<actionId> <args>"
   ["globalActions:list"]="<category>"
@@ -684,6 +671,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["iris:focus"]="<action>"
   ["iris:today"]="<action>"
   ["iris:controlCenter"]="<action>"
+  ["iris:equalizer"]="<action>"
   ["iris:pin"]="<side>"
   ["iris:layout"]="<name>"
   ["iris:strip"]="<name>"
@@ -794,6 +782,7 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["iris:focus"]="open close toggle"
   ["iris:today"]="open close toggle"
   ["iris:controlCenter"]="open close toggle"
+  ["iris:equalizer"]="open close toggle"
   ["iris:pin"]="left right"
   ["iris:layout"]="island left right full menubar"
   ["iris:strip"]="transparent band"
@@ -854,7 +843,6 @@ Alt+Shift+Tab { spawn "inir" "altSwitcher" "previous"; }'
   [clipboard]='Super+V repeat=false { spawn "inir" "clipboard" "toggle"; }'
   [closeConfirm]='Mod+Q repeat=false { spawn "inir" "close-window"; }'
   [colorMode]='Mod+Alt+L { spawn "inir" "colorMode" "set" "toggle"; }'
-  [equalizer]='Ctrl+Alt+F { spawn "inir" "equalizer" "toggle"; }'
   [gamemode]='Super+F12 { spawn "inir" "gamemode" "toggle"; }'
   [globalActions]='Super+Slash { spawn "inir" "globalActions" "open"; }
 Super+M { spawn "inir" "globalActions" "run" "toggle-mute"; }'
@@ -886,9 +874,9 @@ Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }'
   [ytmusic]='Mod+M+Space { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle iris keyboard lock mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions globalStyle iris keyboard lock mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
 IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector dashboard dev gamemode globalActions globalStyle iris keyboard lock mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
-IPC_II_TARGETS=(equalizer)
+IPC_II_TARGETS=()
 IPC_WAFFLE_TARGETS=(autostart customWidgets recordingOsd search wactionCenter waffleAltSwitcher wbar widgetStacks widgetpower wnotificationCenter wwidgets)
 
 declare -gA IPC_KEBAB_ALIASES=(
