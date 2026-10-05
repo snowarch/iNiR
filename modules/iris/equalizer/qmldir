@@ -1,0 +1,9 @@
+module qs.modules.iris.equalizer
+singleton IrisEqSpec 1.0 IrisEqSpec.qml
+IrisEqualizerPanel 1.0 IrisEqualizerPanel.qml
+IrisEqBands 1.0 IrisEqBands.qml
+IrisEqModuleCard 1.0 IrisEqModuleCard.qml
+IrisEqCrystalizer 1.0 IrisEqCrystalizer.qml
+IrisEqPresets 1.0 IrisEqPresets.qml
+IrisEqProfiles 1.0 IrisEqProfiles.qml
+IrisEqSliderRow 1.0 IrisEqSliderRow.qml

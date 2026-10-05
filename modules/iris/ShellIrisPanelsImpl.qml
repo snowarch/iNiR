@@ -13,6 +13,7 @@ import qs.modules.iris.style
 import qs.modules.iris.pieces
 import qs.modules.iris.settings
 import qs.modules.iris.studio
+import qs.modules.iris.equalizer
 import qs.modules.iris.lock
 import qs.modules.iris.sidebar
 import qs.modules.iris.orbit
@@ -132,6 +133,22 @@ Item {
         open: GlobalStates.settingsOverlayOpen || GlobalStates.irisSettingsWarm
         closeGraceMs: IrisStyle.settleDuration + 120
         component: IrisSettings {}
+    }
+
+    // Permanently resident rather than OnDemandPanelLoader's grace-then-unload:
+    // that path deactivates activeAsync on close and reactivates it on the next
+    // open, and if the reopen lands before the async teardown finishes, LazyLoader
+    // builds a second instance while the first is still alive. Two PanelWindows
+    // then map at once and the equalizer looks like it opened twice. Keeping one
+    // instance for the session makes that impossible; the panel hides itself via
+    // `visible`, so nothing is mapped while it is closed.
+    LazyLoader {
+        id: irisEqualizerPanel
+        activeAsync: Config.ready && IrisGate.official && GlobalStates.deferredPanelsReady
+        component: IrisEqualizerPanel {
+            open: GlobalStates.irisEqualizerOpen
+            onCloseRequested: GlobalStates.irisEqualizerOpen = false
+        }
     }
 
     LazyLoader {

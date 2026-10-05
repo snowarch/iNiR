@@ -4179,6 +4179,20 @@ Singleton {
                     property bool suggestive: false // swimsuits, lingerie, fan service in online results
                     property list<string> pinned: []
                 }
+                // What the equalizer does to the engine when its panel opens. The bar
+                // capsule switch is display-only; these two are the audio ones.
+                property JsonObject equalizer: JsonObject {
+                    property bool enabled: false
+                    // 10 | 15 | 32, matching the panel's own band-count selector.
+                    property int bands: 10
+                    // The live spectrum behind the band columns. Display-only: none of
+                    // this reaches the engine.
+                    property JsonObject spectrum: JsonObject {
+                        property bool enabled: true
+                        property string style: "capsules" // capsules | rise | dots | wave | ring
+                        property real opacity: 0.5 // 0 | 1, how strongly it reads
+                    }
+                }
                 property JsonObject player: JsonObject {
                     property bool roundCover: false
                     property bool artworkBackground: true

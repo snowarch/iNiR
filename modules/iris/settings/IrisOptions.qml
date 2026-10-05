@@ -521,11 +521,12 @@ QtObject {
                 choices: IrisPieces.zoneChoices(true) })
         for (const piece of IrisPieces.extras) {
             const path = IrisPieces.configPath(piece.id)
-            // The two anime pieces live with the rest of anime in Settings; every
-            // other bubble stays under Bubbles. One switch, one place.
+            // The two anime pieces live with the rest of anime in Settings, and the
+            // equalizer lives in its own Equalizer section; every other bubble stays
+            // under Bubbles. One switch, one place.
             const anime = piece.id === "anime" || piece.id === "watching"
-            const section = anime ? "anime" : "bubbles"
-            const group = anime ? (piece.id === "anime" ? "Airing" : "Continue") : "Extra bubbles"
+            const section = piece.id === "equalizer" ? "equalizer" : anime ? "anime" : "bubbles"
+            const group = piece.id === "equalizer" ? "Bar capsule" : anime ? (piece.id === "anime" ? "Airing" : "Continue") : "Extra bubbles"
             const hint = IrisPieces.dependencyHint(piece.id)
             rows.push({ section: section, group: group, label: piece.label,
                 description: hint.length > 0 ? hint : piece.description,
@@ -543,6 +544,21 @@ QtObject {
         }
         return rows
     }
+
+    // The Equalizer section's own rows. The bar capsule's enable and place rows
+    // come from bubbleRows above (same paths, same write path); these are the
+    // standing preferences the panel honours the next time it opens. Nothing
+    // here is display-only: iris.equalizer.enabled drives the global bypass and
+    // iris.equalizer.bands drives the band count, both read on panel open.
+    readonly property var equalizerRows: [
+        { section: "equalizer", group: "Equalizer", label: "Equalizer", description: "The global bypass, applied the next time the equalizer opens. Off returns every stream untouched; while the panel is open its own switch stays live.", path: "iris.equalizer.enabled", kind: "switch", fallback: false, keywords: ["equalizer", "ecualizador", "eq", "bypass", "enable", "on", "off", "easyeffects", "sound", "audio", "bass", "treble", "activar", "encender"] },
+        { section: "equalizer", group: "Equalizer", label: "Bands", description: "How many bands the chain is built with, applied the next time the equalizer opens. A different count rebuilds the chain.", path: "iris.equalizer.bands", kind: "choice", fallback: 10, choices: [{label:"10",value:10},{label:"15",value:15},{label:"32",value:32}], keywords: ["equalizer", "ecualizador", "eq", "bands", "bandas", "10", "15", "32", "easyeffects"] },
+        { section: "equalizer", group: "Spectrum", label: "Spectrum", description: "The live bars drawn behind the band columns. Applied right away, and it changes nothing you hear. A display preference only; it never changes the sound.", path: "iris.equalizer.spectrum.enabled", kind: "switch", fallback: true, keywords: ["spectrum", "cava", "visualizer", "visualizador", "onda", "wave", "bars", "barras", "display", "show", "mostrar", "encender"] },
+        { section: "equalizer", group: "Spectrum", label: "Spectrum style", description: "How the spectrum behind the band columns is drawn. Applied right away, and it changes nothing you hear. Display only; the sound is untouched.", path: "iris.equalizer.spectrum.style", kind: "choice", fallback: "capsules",
+            choices: [{label:"Capsules",value:"capsules",glyph:"graphic_eq"},{label:"Equalizer",value:"rise",glyph:"equalizer"},{label:"Dots",value:"dots",glyph:"more_horiz"},{label:"Wave",value:"wave",glyph:"airwave"},{label:"Ring",value:"ring",glyph:"brightness_empty"}],
+            keywords: ["visualizer", "visualiser", "cava", "spectrum", "equalizer", "ecualizador", "bars", "barras", "wave", "onda", "dots", "puntos", "ring", "anillo", "estilo", "style"] },
+        { section: "equalizer", group: "Spectrum", label: "Spectrum opacity", description: "How strongly the spectrum behind the band columns reads against the panel. Applied right away, and it changes nothing you hear. Display only; it does not touch the sound.", path: "iris.equalizer.spectrum.opacity", kind: "range", fallback: 0.5, min: 0, max: 1, step: 0.05, keywords: ["spectrum", "cava", "visualizer", "visualizador", "onda", "wave", "bars", "barras", "opacity", "opacidad", "transparency", "transparencia", "intensity", "intensidad"] }
+    ]
 
     readonly property var behaviour: [
         { section: "appearance", group: "Look", label: "Base look", description: "The starting shape and contrast language. Customize tweaks stay on top of it.", path: "iris.appearance.preset", kind: "choice", fallback: "iris", choices: [{label:"iRiS",value:"iris"},{label:"Soft",value:"soft"},{label:"Round",value:"round"},{label:"Crisp",value:"crisp"},{label:"Angular",value:"angular"},{label:"Contrast",value:"contrast"}] },
@@ -572,7 +588,7 @@ QtObject {
         { section: "bar", group: "Bar", showIf: () => ["full", "menubar"].includes(String(Config.options?.iris?.bar?.layout ?? "island")), label: "End", description: "What rests at the far end. A piece that also floats on its own is left out here: one piece, one place.", path: "iris.bar.fullEnd", kind: "pieces", fallback: ["tray", "notifications", "sound", "controls"], choices: root.barZoneChoices },
         { section: "player", group: "Bubble", label: "Media bubble opens", description: "A card that floats out of the bubble, or the Island's player page. Cluster composition only.", path: "iris.player.bubbleOpens", kind: "choice", fallback: "card", choices: [{label:"Card",value:"card",glyph:"web_asset"},{label:"Island",value:"island",glyph:"pill"}] },
         { section: "player", group: "Bubble", label: "Keep the card open", description: "The card stays beside the Island while a player is active.", path: "iris.player.cardPinned", kind: "switch", fallback: false },
-    ].concat(root.bubbleRows, [
+    ].concat(root.bubbleRows, root.equalizerRows, [
         { section: "sources", group: "Weather", label: "Fahrenheit", description: "Degrees and distances in US units instead of Celsius and metric.", path: "bar.weather.useUSCS", kind: "switch", fallback: false },
         { section: "sources", group: "Weather", label: "Place", description: "The city the forecast is for. Leave it empty and iRiS works it out from your connection, which is usually close but not always right.", path: "bar.weather.city", kind: "text", placeholder: "Worked out from your connection", fallback: "" },
         { section: "sources", group: "Weather", label: "Use GPS when there is one", description: "Asks geoclue instead of guessing from your connection. Off unless you want it.", path: "bar.weather.enableGPS", kind: "switch", fallback: false },
@@ -972,6 +988,7 @@ QtObject {
         { id: "gaming", cluster: 3, title: "Gaming & Fullscreen", subtitle: "What iRiS steps back from while you play", icon: "sports_esports", get tint() { return IrisStyle.identity.purple }, tip: "Game mode turns on by itself for fullscreen games." },
         { id: "lock", cluster: 3, title: "Lock Screen", subtitle: "What it shows, when it locks and how it reads", icon: "lock", get tint() { return IrisStyle.identity.gray }, tip: "Rehearse it: the real surface, editable, with nothing to unlock." },
         { id: "player", cluster: 4, title: "Now Playing", subtitle: "Music in the Island and on the lock screen", icon: "music_note", get tint() { return IrisStyle.identity.pink }, tip: "Middle-click the Island to play or pause." },
+        { id: "equalizer", cluster: 4, title: "Equalizer", subtitle: "The chain behind every sound, and its capsule", icon: "equalizer", get tint() { return IrisStyle.identity.teal }, tip: "Off returns every stream untouched; bands rebuild the chain when the panel opens." },
         { id: "frameMusic", cluster: 4, title: "Frame Music", subtitle: "Shape and response of the music-driven frame", icon: "graphic_eq", get tint() { return IrisStyle.identity.pink }, tip: "Choose The frame to make the screen contour move with your music." },
         { id: "anime", cluster: 4, title: "Anime", subtitle: "Airing, Continue and the anime colour layer", icon: "live_tv", get tint() { return IrisStyle.identity.purple }, tip: "Airing tracks what is coming; Continue resumes what you were watching." },
         { id: "sources", cluster: 5, title: "Sources", subtitle: "Where the Island gets what it shows", icon: "cloud_sync", get tint() { return IrisStyle.identity.yellow }, tip: "A setting belongs here when an iRiS surface puts its data on screen." },
@@ -1036,6 +1053,7 @@ QtObject {
         "Card contents": "view_agenda", "Cards": "web_asset", "Charge limit": "battery_charging_80", "Clipboard": "content_paste", "Connections": "cable", "Clock": "schedule",
         "Colour layer": "palette", "Comfort": "visibility", "Continue": "play_circle", "Control Center": "tune",
         "Curve": "show_chart", "Date & time": "calendar_clock", "Desktop page": "dashboard", "Do Not Disturb": "do_not_disturb_on",
+        "Equalizer": "equalizer", "Bar capsule": "bubble_chart",
         "Extra bubbles": "add_circle", "Faces": "font_download", "Feedback": "campaign", "Floating": "flight",
         "Focus · left": "dock_to_left", "Frame": "crop_free", "Frame response": "graphic_eq", "On the edges": "border_outer", "Finish": "flare", "Fullscreen": "fullscreen", "Game mode": "sports_esports",
         "Glass": "blur_on", "Highlight": "highlight", "Icons": "emoji_symbols", "Interaction": "ads_click", "Joining": "join_inner",
@@ -1091,6 +1109,8 @@ QtObject {
         get "Date & time"() { return IrisStyle.identity.orange },
         get "Desktop page"() { return IrisStyle.identity.teal },
         get "Do Not Disturb"() { return IrisStyle.identity.indigo },
+        get "Equalizer"() { return IrisStyle.identity.pink },
+        get "Bar capsule"() { return IrisStyle.identity.sky },
         get "Extra bubbles"() { return IrisStyle.identity.green },
         get "Faces"() { return IrisStyle.identity.gray },
         get "Feedback"() { return IrisStyle.identity.orange },
@@ -1236,6 +1256,7 @@ QtObject {
             "Text", "Faces", "Settings", "Menus", "Material per surface", "Customize", "Previews", "App colours"],
         bar: ["Notch", "Layout", "Shape", "At rest", "Resting Island", "Bar", "Pages", "Desktop page", "Player page", "Interaction", "Visibility", "Connections"],
         bubbles: ["Size", "Behaviour", "On the contour", "Floating", "Opening bodies", "Cards", "Card contents", "Joining", "Tray"],
+        equalizer: ["Equalizer", "Bar capsule", "Control Center"],
         dock: ["Notch", "Look", "Icons", "Visibility"],
         desktop: ["Widgets", "Wallpaper shuffle", "Live wallpapers", "Behind windows", "Parallax", "Overview backdrop", "Wallpaper gallery", "Desktop menu"],
         lock: ["When idle", "Security", "Scene", "Clock", "At a glance", "Now playing", "Activity", "Status", "Sign in", "Type"]

@@ -33,6 +33,7 @@ QtObject {
         { id: "mic", label: "Mic", glyph: "mic_off", category: "sound", description: "Mute the input.", kind: "toggle", shapes: ["1x1", "2x1"] },
         { id: "devices", label: "Devices", glyph: "speaker", category: "sound", description: "The output and input list.", kind: "action", shapes: ["1x1", "2x1"] },
         { id: "easyEffects", label: "Effects", glyph: "graphic_eq", category: "sound", description: "The audio effects chain.", kind: "toggle", shapes: ["1x1", "2x1"] },
+        { id: "equalizer", label: "Equalizer", glyph: "equalizer", category: "sound", description: "Shape the sound: bands, colour and control.", kind: "action", shapes: ["1x1", "2x1"] },
         { id: "musicRecognition", label: "Name song", glyph: "music_cast", category: "sound", description: "Listens and tells you what is playing.", kind: "toggle", shapes: ["1x1", "2x1"] },
         { id: "media", label: "Now playing", glyph: "play_circle", category: "sound", description: "Cover, title and transport.", kind: "media", shapes: ["2x2", "Fx1", "Fx2"] },
         { id: "snip", label: "Capture", glyph: "screenshot_region", category: "tools", description: "Pick a region to screenshot.", kind: "toggle", shapes: ["1x1", "2x1"] },
@@ -110,7 +111,7 @@ QtObject {
         network: "blue", bluetooth: "blue", vpn: "green", hotspot: "teal", warp: "orange",
         focus: "indigo", gameMode: "green", profiles: "yellow", idle: "orange",
         darkMode: "gray", nightLight: "orange", antiFlashbang: "yellow",
-        audio: "pink", mic: "orange", devices: "blue", easyEffects: "purple", musicRecognition: "pink",
+        audio: "pink", mic: "orange", devices: "blue", easyEffects: "purple", equalizer: "purple", musicRecognition: "pink",
         snip: "teal", record: "red", colorPicker: "purple", osk: "gray"
     })
     function tintFor(id: string): color {
