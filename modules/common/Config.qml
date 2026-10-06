@@ -4146,6 +4146,7 @@ Singleton {
                     property int height: 42
                     property int margin: 8
                     property bool autoHide: false // Rest the pointer at the Island's edge to bring it back
+                    property bool revealOnEmpty: true // Keep the Island visible on an empty workspace while auto-hide is on
                     property bool reserveSpace: true
                     property list<string> screenList: []
                     property list<string> leftModules: []

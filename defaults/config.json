@@ -2623,6 +2623,7 @@
             "height": 42,
             "margin": 8,
             "autoHide": false,
+            "revealOnEmpty": true,
             "reserveSpace": true,
             "screenList": [],
             "leftModules": [],

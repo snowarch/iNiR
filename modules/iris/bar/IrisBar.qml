@@ -690,13 +690,18 @@ Scope {
                     ? (islandLoader.item?.suppressed ?? false) : false
 
                 readonly property bool islandAutoHide: IrisFrame.islandAutoHide && islandLoader.active
+                readonly property bool islandWorkspaceEmpty: {
+                    if (!(root.options?.revealOnEmpty ?? true) || !CompositorService.isNiri) return false
+                    const active = (NiriService.allWorkspaces ?? []).find(ws => ws.output === barWindow.screen?.name && ws.is_active)
+                    return active !== undefined && !(NiriService.windows ?? []).some(w => w.workspace_id === active.id)
+                }
                 property bool islandEdgeIntent: false
                 readonly property bool islandWants: barWindow.expanded || barWindow.pinned || barWindow.editHere
                     || (islandLoader.item?.feedback ?? false) || (islandLoader.item?.eventShown ?? false)
                     || (islandLoader.item?.morphing ?? false) || stage.cardPresent
                     || (controlCentreLoader.item?.present ?? false)
                 readonly property bool islandRevealed: !barWindow.islandAutoHide
-                    || barWindow.islandEdgeIntent || barWindow.islandWants
+                    || barWindow.islandWorkspaceEmpty || barWindow.islandEdgeIntent || barWindow.islandWants
                 // Off the edge the chassis is gone, but its fuse still reaches back onto
                 // the screen and leaves a smudge where the Island used to melt in.
                 readonly property bool islandTucked: islandLoader.tuck > islandLoader.hidden - 1
