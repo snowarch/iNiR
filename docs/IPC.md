@@ -649,6 +649,8 @@ Display brightness control.
 | `set <0-100>` | Set the focused output's brightness, the same path as the sliders; prints the result |
 | `refresh` | Re-read every output's level from the hardware (after the monitor's own buttons moved it) |
 | `status` | Each output: how it is driven (DDC bus or backlight), the shell's level and the last hardware level written (`-1` until the first write) |
+| `sleepBegin` | Disable non-internal outputs, then DPMS off (serialized niri ipc). Idle screen-off only; lock does not call this |
+| `restoreAfterWake` | DPMS on, then re-enable pinned outputs with retries until connected or the retry limit |
 
 ---
 
