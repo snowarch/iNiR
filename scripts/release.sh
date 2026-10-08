@@ -260,6 +260,22 @@ check_changelog() {
     if ! diff -q <(released_history "$prev" "$prev_v") <(released_history worktree "$prev_v") >/dev/null; then
       fail "sections released up to $prev changed since then (entries for this cycle belong under $v): git diff $prev -- $changelog"
     fi
+    # Every issue a commit since the last tag fixes and every PR it merges is named, and whoever opened an issue is thanked.
+    local n missing=""
+    for n in $( { git log --format=%B "$prev"..HEAD | grep -oiE '(fixes|closes|part of) #[0-9]+' || true
+                  git log --format=%s "$prev"..HEAD | grep -oE '\(#[0-9]+\)$' || true; } | grep -oE '[0-9]+' | sort -un); do
+      grep -qE "/(issues|pull)/$n\)" <<<"$body" || missing+=" #$n"
+    done
+    [[ -z "$missing" ]] || fail "the $v notes don't name$missing, which commits since $prev fix or merge"
+    local issue author
+    for issue in $(fixed_issues "$v"); do
+      author="$(gh issue view "$issue" --repo "$github_repo" --json author -q .author.login 2>/dev/null || true)"
+      if [[ -z "$author" ]]; then
+        warn "could not read who opened #$issue"
+      elif [[ "$author" != "${github_repo%%/*}" ]] && ! grep -qF "[@$author]" <<<"$body"; then
+        fail "the $v Contributors don't thank @$author, who opened #$issue"
+      fi
+    done
   fi
 }
 
@@ -507,7 +523,10 @@ cmd_publish() {
       git tag -a "$tag" -m "$message" -m "$title"
     fi
   fi
-  git push --quiet "$remote" "HEAD:refs/heads/$branch"
+  # Skip what the remote already has: a publish after a manual push or a run that stopped halfway goes on.
+  if [[ "$(git rev-parse "$remote/$branch" 2>/dev/null)" != "$head" ]]; then
+    git push --quiet "$remote" "HEAD:refs/heads/$branch"
+  fi
   if [[ "$(git rev-parse "$remote/main" 2>/dev/null)" != "$head" ]]; then
     git push --quiet "$remote" "HEAD:refs/heads/main"
     say "main -> $(git rev-parse --short HEAD)"
@@ -517,7 +536,7 @@ cmd_publish() {
     git update-ref refs/heads/main "$head"
   fi
 
-  git push --quiet "$remote" "refs/tags/$tag"
+  [[ -n "$(git ls-remote "$remote" "refs/tags/$tag")" ]] || git push --quiet "$remote" "refs/tags/$tag"
   [[ "$(git ls-remote "$remote" "refs/tags/$tag^{}" | cut -f1)" == "$head" ]] \
     || die "$remote does not show $tag on $head; stopping before the GitHub release"
 
