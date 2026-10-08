@@ -1713,11 +1713,6 @@ for cmd in qs niri fish gum cliphist; do
 done
 echo ""
 
-# Run compatibility fixes for Debian/Ubuntu QML stack
-if [[ -f "${SCRIPT_DIR}/../lib/compat-debian.sh" ]]; then
-  bash "${SCRIPT_DIR}/../lib/compat-debian.sh"
-fi
-
 # PATH reminder
 if [[ ":$PATH:" != *":$HOME/.cargo/bin:"* ]] || [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
   log_info "Add to your shell config (~/.bashrc or ~/.config/fish/config.fish):"
