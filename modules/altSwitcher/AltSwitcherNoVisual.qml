@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import qs
 import qs.services
+import qs.services.deferred
 import qs.modules.common
 import QtQuick
 import Quickshell
@@ -20,13 +21,15 @@ Scope {
 
     readonly property bool waffleFamilyActive:
         (Config.options?.panelFamily ?? "ii") === "waffle"
+    readonly property bool iiFamilyActive:
+        (Config.options?.panelFamily ?? "ii") === "ii"
     readonly property string iiPreset:
         Config.options?.altSwitcher?.preset ?? "default"
     readonly property bool iiNoVisual:
         (Config.options?.altSwitcher?.noVisualUi ?? false)
         && root.iiPreset !== "skew"
     readonly property bool routeToVisualIi:
-        !root.waffleFamilyActive && !root.iiNoVisual
+        root.iiFamilyActive && !root.iiNoVisual
     readonly property var waffleOptions:
         Config.options?.waffles?.altSwitcher ?? ({})
     readonly property string wafflePreset: waffleOptions.preset ?? "thumbnails"
@@ -158,6 +161,15 @@ Scope {
 
     IpcHandler {
         target: "altSwitcher"
+
+        function opens(which: string): string {
+            if (which === "inir" || which === "niri") {
+                NiriKeybinds.setAltTabSource(which)
+                return which
+            }
+            NiriKeybinds.refreshAltTab()
+            return NiriKeybinds.altTabSource || "reading, ask again"
+        }
 
         function open(): void {
             if (root.routeToVisualWaffle) {

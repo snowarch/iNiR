@@ -10,13 +10,16 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.common.models
+import qs.modules.mediaControls.components
 import qs.services
+import qs.services.deferred
 import "root:"
 
 Item {
     id: root
     required property MprisPlayer player
     required property list<real> visualizerPoints
+    property string outputName: ""
     property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.large
     // Track-change slide direction: +1 next/forward (new content enters from the
     // right), -1 previous (enters from the left). Set by the prev/next handlers
@@ -55,8 +58,8 @@ Item {
     property real screenY: 0
 
     readonly property string effectiveArtUrl: isYtMusicPlayer ? YtMusic.currentThumbnail : MprisController.effectiveArtUrl(player)
-    readonly property string effectiveTitle: isYtMusicPlayer ? YtMusic.currentTitle : (player?.trackTitle ?? "")
-    readonly property string effectiveArtist: isYtMusicPlayer ? YtMusic.currentArtist : (player?.trackArtist ?? "")
+    readonly property string effectiveTitle: isYtMusicPlayer ? YtMusic.currentTitle : (MprisController.titleOf(player) ?? "")
+    readonly property string effectiveArtist: isYtMusicPlayer ? YtMusic.currentArtist : (MprisController.artistOf(player) ?? "")
     // Only the artwork identity may trigger cover motion. Title/artist often
     // arrive before the real art URL and caused the same cover to slide twice.
     readonly property string mediaTransitionKey: (root.effectiveArtUrl ?? "").split("?")[0].split("#")[0]
@@ -140,7 +143,9 @@ Item {
         Appearance.colors.colPrimaryContainer, 0.7
     )
 
-    property QtObject blendedColors: AdaptedMaterialScheme { color: root.artDominantColor }
+    property QtObject artColors: AdaptedMaterialScheme { color: root.artDominantColor }
+    readonly property QtObject blendedColors: Appearance.editorialEverywhere && Appearance.colors
+        ? Appearance.colors : root.artColors
 
     // Inir fixed colors
     readonly property color inirText: Appearance.inir.colText
@@ -251,7 +256,7 @@ Item {
             opacity: Appearance.zzzEverywhere ? 0.20
                 : Appearance.inirEverywhere ? 0.15
                 : (Appearance.auroraEverywhere ? 0.2 : 0.5)
-            visible: root.displayedArtFilePath !== ""
+            visible: !Appearance.editorialEverywhere && root.displayedArtFilePath !== ""
             effectEnabled: Appearance.effectsEnabled
             blurEnabled: true
             blur: Appearance.inirEverywhere ? 0.3 : 0.15
@@ -263,7 +268,7 @@ Item {
         // clashes with the flat ZZZ console plate, so exclude it there.
         Rectangle {
             anchors.fill: parent
-            visible: !Appearance.zzzEverywhere && !Appearance.inirEverywhere && !Appearance.auroraEverywhere
+            visible: !Appearance.editorialEverywhere && !Appearance.zzzEverywhere && !Appearance.inirEverywhere && !Appearance.auroraEverywhere
             gradient: Gradient {
                 orientation: Gradient.Horizontal
                 GradientStop { position: 0.0; color: "transparent" }
@@ -321,29 +326,67 @@ Item {
                 Layout.fillHeight: true
                 spacing: 4
 
-                // Title
-                StyledText {
+                // Title + equalizer entry point
+                RowLayout {
                     Layout.fillWidth: true
-                    text: StringUtils.cleanMusicTitle(root.isYtMusicPlayer ? YtMusic.currentTitle : root.player?.trackTitle) || "—"
-                    font.pixelSize: Appearance.font.pixelSize.large
-                    font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Medium
-                    font.italic: Appearance.zzzEverywhere
-                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink
-                        : Appearance.inirEverywhere ? root.inirText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
-                    Behavior on color {
-                        enabled: Appearance.animationsEnabled
-                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    spacing: 6
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: StringUtils.cleanMusicTitle(root.isYtMusicPlayer ? YtMusic.currentTitle : MprisController.titleOf(root.player)) || "—"
+                        font.pixelSize: Appearance.font.pixelSize.large
+                        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Medium
+                        font.italic: Appearance.zzzEverywhere
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                            : Appearance.inirEverywhere ? root.inirText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
+                        elide: Text.ElideRight
+                        animateChange: true
+                        animationDistanceX: root.slideDirection * 8
+                        animationDistanceY: 0
                     }
-                    elide: Text.ElideRight
-                    animateChange: true
-                    animationDistanceX: root.slideDirection * 8
-                    animationDistanceY: 0
+
+                    RippleButton {
+                        implicitWidth: 30
+                        implicitHeight: 30
+                        visible: EasyEffects.available
+                            && (Config.options?.panelFamily ?? "ii") === "ii"
+                            && (Config.options?.enabledPanels ?? []).includes("iiEqualizer")
+                        buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
+                        colBackground: "transparent"
+                        colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                            : Appearance.colors.colLayer1Hover
+                        colRipple: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.28)
+                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                            : Appearance.colors.colLayer1Active
+                        onClicked: {
+                            GlobalStates.mediaControlsOpen = false
+                            GlobalStates.openEqualizer(root.outputName)
+                        }
+                        contentItem: MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: "graphic_eq"
+                            iconSize: 19
+                            fill: 1
+                            color: Appearance.regaliaEverywhere ? Appearance.regalia.hardwarePrimary
+                                : Appearance.zzzEverywhere ? Appearance.zzz.accent
+                                : Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                                : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                                : Appearance.colors.colPrimary
+                        }
+                        StyledToolTip { text: Translation.tr("Equalizer") }
+                    }
                 }
 
                 // Artist
                 StyledText {
                     Layout.fillWidth: true
-                    text: root.isYtMusicPlayer ? YtMusic.currentArtist : (root.player?.trackArtist || "")
+                    text: root.isYtMusicPlayer ? YtMusic.currentArtist : (MprisController.artistOf(root.player) || "")
                     font.pixelSize: Appearance.font.pixelSize.small
                     color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
                         : Appearance.inirEverywhere ? root.inirTextSecondary : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
@@ -361,52 +404,22 @@ Item {
                 Item { Layout.fillHeight: true }
 
                 // Progress bar
-                Item {
+                PlayerProgress {
                     Layout.fillWidth: true
                     implicitHeight: 16
-
-                    Loader {
-                        anchors.fill: parent
-                        active: root.player?.canSeek ?? false
-                        sourceComponent: StyledSlider {
-                            configuration: StyledSlider.Configuration.Wavy
-                            wavy: root.player?.isPlaying ?? false
-                            animateWave: root.player?.isPlaying ?? false
-                            highlightColor: Appearance.zzzEverywhere ? Appearance.zzz.metricFill
-                                : Appearance.inirEverywhere ? root.inirPrimary
-                                : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-                                : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                            trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
-                                : Appearance.inirEverywhere ? root.inirLayer2
-                                : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
-                                : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
-                            handleColor: Appearance.zzzEverywhere ? Appearance.zzz.metricFill
-                                : Appearance.inirEverywhere ? root.inirPrimary
-                                : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-                                : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                            value: root.player?.length > 0 ? root.player.position / root.player.length : 0
-                            onMoved: root.player.position = value * root.player.length
-                            scrollable: true
-                        }
-                    }
-
-                    Loader {
-                        anchors.fill: parent
-                        active: !(root.player?.canSeek ?? false)
-                        sourceComponent: StyledProgressBar {
-                            wavy: root.player?.isPlaying ?? false
-                            animateWave: root.player?.isPlaying ?? false
-                            highlightColor: Appearance.zzzEverywhere ? Appearance.zzz.metricFill
-                                : Appearance.inirEverywhere ? root.inirPrimary
-                                : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-                                : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                            trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
-                                : Appearance.inirEverywhere ? root.inirLayer2
-                                : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
-                                : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
-                            value: root.player?.length > 0 ? root.player.position / root.player.length : 0
-                        }
-                    }
+                    position: MprisController.positionOf(root.player)
+                    length: MprisController.lengthOf(root.player)
+                    canSeek: root.player?.canSeek ?? false
+                    isPlaying: root.player?.isPlaying ?? false
+                    highlightColor: Appearance.zzzEverywhere ? Appearance.zzz.metricFill
+                        : Appearance.inirEverywhere ? root.inirPrimary
+                        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
+                        : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                    trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
+                        : Appearance.inirEverywhere ? root.inirLayer2
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                        : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
+                    onSeekRequested: seconds => MprisController.seek(root.player, seconds)
                 }
 
                 // Time + controls
@@ -415,7 +428,7 @@ Item {
                     spacing: 4
 
                     StyledText {
-                        text: StringUtils.friendlyTimeForSeconds(root.player?.position ?? 0)
+                        text: StringUtils.friendlyTimeForSeconds(MprisController.positionOf(root.player))
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: Appearance.zzzEverywhere ? Appearance.zzz.ink
@@ -529,7 +542,7 @@ Item {
                     Item { Layout.fillWidth: true }
 
                     StyledText {
-                        text: StringUtils.friendlyTimeForSeconds(root.player?.length ?? 0)
+                        text: StringUtils.friendlyTimeForSeconds(MprisController.lengthOf(root.player))
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: Appearance.zzzEverywhere ? Appearance.zzz.ink

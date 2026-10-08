@@ -39,8 +39,8 @@ Item {
         && !root.trackSuppressed
     readonly property bool subjectHas: subject !== null
     readonly property bool subjectPlaying: subjectHas && subject.isPlaying
-    readonly property string subjectTitle: subjectHas ? PillPlayers.refineTitle(subject, subject.trackTitle || PillPlayers.labelOf(subject)) : ""
-    readonly property string subjectArtist: subjectHas ? PillTheme.joinArtists(subject.trackArtists, subject.trackArtist) : ""
+    readonly property string subjectTitle: subjectHas ? PillPlayers.refineTitle(subject, MprisController.titleOf(subject) || PillPlayers.labelOf(subject)) : ""
+    readonly property string subjectArtist: subjectHas ? PillTheme.joinArtists(subject.trackArtists, MprisController.artistOf(subject)) : ""
     readonly property string subjectIcon: subjectHas ? PillPlayers.appIconFor(subject) : ""
 
     /** Subject art, live so a cover that lands a beat after the title still resolves; the key forces a reload when a browser reuses one file path. */

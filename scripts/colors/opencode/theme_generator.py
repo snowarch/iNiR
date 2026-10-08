@@ -183,12 +183,12 @@ def generate_opencode_theme(colors: dict[str, str]) -> dict:
         "success": "m3Success",
         "info": "m3Primary",
         # ── Text ────────────────────────────────────
-        "text": "m3OnSurface",
-        "textMuted": "m3OnSurfaceVariant",
+        "text": term[15],
+        "textMuted": term[7],
         # ── Backgrounds ─────────────────────────────
-        "background": "m3Surface",
-        "backgroundPanel": "m3SurfaceContainer",
-        "backgroundElement": "m3SurfaceContainerHigh",
+        "background": term[0],
+        "backgroundPanel": blend(term[0], term[15], 0.05),
+        "backgroundElement": blend(term[0], term[15], 0.10),
         # ── Borders ─────────────────────────────────
         "border": "m3OutlineVariant",
         "borderActive": "m3Primary",
@@ -196,7 +196,7 @@ def generate_opencode_theme(colors: dict[str, str]) -> dict:
         # ── Diffs ───────────────────────────────────
         "diffAdded": "m3Success",
         "diffRemoved": "m3Error",
-        "diffContext": "m3OnSurfaceVariant",
+        "diffContext": term[7],
         "diffHunkHeader": "m3Outline",
         "diffHighlightAdded": "ansiBrightGreen",
         "diffHighlightRemoved": "ansiBrightRed",
@@ -207,12 +207,12 @@ def generate_opencode_theme(colors: dict[str, str]) -> dict:
         "diffAddedLineNumberBg": diff_added_line_bg,
         "diffRemovedLineNumberBg": diff_removed_line_bg,
         # ── Markdown ────────────────────────────────
-        "markdownText": "m3OnSurface",
+        "markdownText": term[15],
         "markdownHeading": "m3Primary",
         "markdownLink": "m3Tertiary",
         "markdownLinkText": "ansiCyan",
         "markdownCode": "ansiGreen",
-        "markdownBlockQuote": "m3OnSurfaceVariant",
+        "markdownBlockQuote": term[7],
         "markdownEmph": "ansiYellow",
         "markdownStrong": "ansiBrightYellow",
         "markdownHorizontalRule": "m3OutlineVariant",
@@ -220,7 +220,7 @@ def generate_opencode_theme(colors: dict[str, str]) -> dict:
         "markdownListEnumeration": "m3Secondary",
         "markdownImage": "ansiMagenta",
         "markdownImageText": "ansiBrightMagenta",
-        "markdownCodeBlock": "m3OnSurface",
+        "markdownCodeBlock": term[15],
         # ── Syntax highlighting ─────────────────────
         "syntaxComment": "m3Outline",
         "syntaxKeyword": "ansiMagenta",
@@ -229,8 +229,8 @@ def generate_opencode_theme(colors: dict[str, str]) -> dict:
         "syntaxString": "ansiGreen",
         "syntaxNumber": "ansiBrightMagenta",
         "syntaxType": "ansiYellow",
-        "syntaxOperator": "m3OnSurfaceVariant",
-        "syntaxPunctuation": "m3OnSurfaceVariant",
+        "syntaxOperator": term[7],
+        "syntaxPunctuation": term[7],
     }
 
     return {

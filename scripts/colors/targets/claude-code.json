@@ -1,0 +1,9 @@
+{
+  "id": "claude-code",
+  "label": "Claude Code",
+  "module": "95-claude-code.sh",
+  "category": "terminal",
+  "inputs": ["terminal.json", "palette.json", "theme-meta.json"],
+  "description": "Write Claude Code's custom themes (iNiR, iNiR Soft, iNiR Monokai, iNiR Monokai Soft) from the terminal palette. Runs when off too, to take them back (enableClaudeCode).",
+  "configKey": "appearance.wallpaperTheming.enableClaudeCode"
+}

@@ -29,6 +29,43 @@ fi
 MIGRATIONS_STATE_FILE="${_inir_config_dir}/migrations.json"
 MIGRATIONS_BACKUP_DIR="${_inir_config_dir}/backups"
 
+# Session-impact notices live only for the current setup process. A migration can
+# opt in when its change cannot be fully realized by restarting Quickshell alone.
+SESSION_IMPACT_NOTICE_IDS=()
+SESSION_IMPACT_NOTICE_TITLES=()
+SESSION_IMPACT_NOTICE_REFERENCES=()
+SESSION_IMPACT_NOTICE_REASONS=()
+SESSION_IMPACT_NOTICE_EFFECTS=()
+SESSION_IMPACT_NOTICE_ACTIONS=()
+
+# Historical migrations that no longer own current upgrade state.
+# Keep their files for history, but repair current state through present owners.
+RETIRED_MIGRATIONS=(
+    "001-gamemode-animation-toggle"
+    "002-backdrop-layer-rules"
+    "003-qt-theming-kde"
+    "004-audio-keybinds-ipc"
+    "005-dolphin-xdg-menu"
+    "006-close-confirm"
+    "007-brightness-keybinds"
+    "008-media-keybinds"
+    "009-quickshell-dbus-properties-logspam"
+    "014-malloc-arena-optimization"
+    "021-systemd-single-instance"
+    "022-service-compositor-wants"
+    "028-bar-modular-layout"
+    "040-niri-session-environment-lifecycle"
+)
+
+is_migration_retired() {
+    local migration_id="$1"
+    local retired
+    for retired in "${RETIRED_MIGRATIONS[@]}"; do
+        [[ "$migration_id" == "$retired" ]] && return 0
+    done
+    return 1
+}
+
 #####################################################################################
 # Migration State Management
 #####################################################################################
@@ -144,6 +181,8 @@ list_available_migrations() {
 # Check if a migration is actually needed (runs the check function)
 is_migration_needed() {
     local migration_id="$1"
+
+    is_migration_retired "$migration_id" && return 1
     
     load_migration "$migration_id" 2>/dev/null || return 1
     
@@ -238,6 +277,11 @@ load_migration() {
     MIGRATION_DESCRIPTION=""
     MIGRATION_TARGET_FILE=""
     MIGRATION_REQUIRED=false
+    MIGRATION_SESSION_IMPACT=false
+    MIGRATION_SESSION_REFERENCE=""
+    MIGRATION_SESSION_REASON=""
+    MIGRATION_SESSION_EFFECT=""
+    MIGRATION_SESSION_ACTION=""
     
     # Unset previous functions
     unset -f migration_check migration_preview migration_diff migration_apply 2>/dev/null
@@ -245,11 +289,44 @@ load_migration() {
     source "$migration_file"
 }
 
+record_migration_session_impact() {
+    [[ "${MIGRATION_SESSION_IMPACT:-false}" == "true" ]] || return 0
+
+    SESSION_IMPACT_NOTICE_IDS+=("${MIGRATION_ID}")
+    SESSION_IMPACT_NOTICE_TITLES+=("${MIGRATION_TITLE:-$MIGRATION_ID}")
+    SESSION_IMPACT_NOTICE_REFERENCES+=("${MIGRATION_SESSION_REFERENCE:-$MIGRATION_ID}")
+    SESSION_IMPACT_NOTICE_REASONS+=("${MIGRATION_SESSION_REASON:-A session-owned component changed.}")
+    SESSION_IMPACT_NOTICE_EFFECTS+=("${MIGRATION_SESSION_EFFECT:-The current login session may still hold the previous state.}")
+    SESSION_IMPACT_NOTICE_ACTIONS+=("${MIGRATION_SESSION_ACTION:-Log out and back in, or reboot.}")
+}
+
+show_session_impact_notices() {
+    [[ ${#SESSION_IMPACT_NOTICE_IDS[@]} -gt 0 ]] || return 0
+
+    echo ""
+    tui_title "Session restart recommended"
+    local i
+    for ((i = 0; i < ${#SESSION_IMPACT_NOTICE_IDS[@]}; i++)); do
+        tui_warn "${SESSION_IMPACT_NOTICE_TITLES[$i]}"
+        tui_info "Change: ${SESSION_IMPACT_NOTICE_REFERENCES[$i]}"
+        tui_info "Why: ${SESSION_IMPACT_NOTICE_REASONS[$i]}"
+        tui_info "Until then: ${SESSION_IMPACT_NOTICE_EFFECTS[$i]}"
+        tui_info "Recommended: ${SESSION_IMPACT_NOTICE_ACTIONS[$i]}"
+        [[ $i -lt $((${#SESSION_IMPACT_NOTICE_IDS[@]} - 1)) ]] && echo ""
+    done
+}
+
 apply_migration() {
     local migration_id="$1"
     local force="${2:-false}"
     
     load_migration "$migration_id" || return 1
+
+    if is_migration_retired "$migration_id"; then
+        mark_migration_applied "$migration_id"
+        tui_check_skip "Retired migration: $MIGRATION_TITLE"
+        return 0
+    fi
     
     # Check if already applied
     if is_migration_applied "$migration_id" && [[ "$force" != "true" ]]; then
@@ -278,6 +355,7 @@ apply_migration() {
     if type migration_apply &>/dev/null; then
         if migration_apply; then
             mark_migration_applied "$migration_id"
+            record_migration_session_impact
             tui_check_ok "Applied: $MIGRATION_TITLE"
             return 0
         else

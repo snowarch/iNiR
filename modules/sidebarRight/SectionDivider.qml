@@ -37,10 +37,8 @@ Item {
             font.pixelSize: root.fontSize
             font.weight: root.fontWeight
             font.letterSpacing: 0.5
-            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
-                : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                : Appearance.colors.colSubtext
-            opacity: 0.8
+            color: Appearance.colMetadataText
+            opacity: 0.9
         }
     }
 }

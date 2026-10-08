@@ -12,6 +12,7 @@ import qs.modules.polkit
 import qs.modules.regionSelector
 import qs.modules.screenCorners
 import qs.modules.sessionScreen
+import qs.modules.shellUpdate
 import qs.modules.wallpaperSelector
 import qs.modules.wallpaperLauncher
 import qs.modules.ii.overlay
@@ -133,6 +134,7 @@ Item {
     OnDemandPanelLoader { identifier: "iiCoverflowSelector"; open: GlobalStates.coverflowSelectorOpen; retainAfterUse: true; closeGraceMs: 300; component: WallpaperCoverflow {} }
     DeferredPanelLoader { identifier: "iiClipboard"; extraCondition: Config.options?.panelFamily !== "waffle"; component: ClipboardModule.ClipboardPanel {} }
     OnDemandPanelLoader { identifier: "iiRecordingOsd"; open: RecorderStatus.isRecording; closeGraceMs: 250; component: RecordingOsd {} }
+    OnDemandPanelLoader { identifier: "iiShellUpdate"; open: ShellUpdates.overlayOpen; closeGraceMs: 250; component: ShellUpdateOverlay {} }
 
     OnDemandPanelLoader {
         identifier: "iiTilingOverlay"

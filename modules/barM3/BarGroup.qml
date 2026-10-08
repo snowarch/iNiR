@@ -76,6 +76,16 @@ Item {
         topRightRadius: (root.isMaterial && root.paintMaterialPill) ? root.fullRadius : (Config.options?.bar.m3.borderless === "separated" ? root.fullRadius : root.vertical ? root.startRadius : root.endRadius)
         bottomRightRadius: (root.isMaterial && root.paintMaterialPill) ? root.fullRadius : (Config.options?.bar.m3.borderless === "separated" ? root.fullRadius : root.endRadius)
 
+        EditorialPaperStack {
+            anchors.fill: parent
+            visible: Appearance.editorialEverywhere && Appearance.editorial.paperStack && background.color.a > 0
+            faceColor: background.color
+            topLeftRadius: background.topLeftRadius
+            topRightRadius: background.topRightRadius
+            bottomLeftRadius: background.bottomLeftRadius
+            bottomRightRadius: background.bottomRightRadius
+        }
+
         Behavior on color {
             animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
         }

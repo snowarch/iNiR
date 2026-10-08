@@ -106,8 +106,7 @@ Item {
     // deep link, so this intentionally takes no provider argument.
     function openProviderSettings(): void {
         root.close()
-        GlobalStates.settingsOverlayRequestedPage = 24
-        GlobalStates.settingsOverlayOpen = true
+        GlobalStates.openSettingsPage(24)
     }
 
     function contextLabel(tokens): string {
@@ -125,9 +124,9 @@ Item {
         implicitHeight: 30
         implicitWidth: pillRow.implicitWidth + 20
         width: root.width > 0 ? root.width : implicitWidth
-        buttonRadius: Appearance.rounding.full
+        buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
         colBackground: Appearance.colors.colLayer2
-        colBackgroundHover: Appearance.colors.colLayer2Hover
+        colBackgroundHover: Appearance.colLayer2Hover
         onClicked: root.expanded = !root.expanded
 
         contentItem: RowLayout {
@@ -167,7 +166,7 @@ Item {
             MaterialSymbol {
                 text: root.expanded ? "expand_less" : "expand_more"
                 iconSize: Appearance.font.pixelSize.large
-                color: Appearance.colors.colSubtext
+                color: Appearance.colSecondaryActionIcon
             }
         }
     }
@@ -262,7 +261,7 @@ Item {
                         anchors.leftMargin: 8
                         text: "search"
                         iconSize: Appearance.font.pixelSize.large
-                        color: Appearance.colors.colSubtext
+                        color: Appearance.colSecondaryActionIcon
                     }
                     StyledTextInput {
                         id: searchInput
@@ -279,7 +278,7 @@ Item {
                             visible: searchInput.text.length === 0
                             text: Translation.tr("Search models or providers…")
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colSubtext
+                            color: Appearance.colMetadataText
                             elide: Text.ElideRight
                             width: parent.width
                         }
@@ -290,9 +289,9 @@ Item {
                     implicitWidth: 34
                     implicitHeight: 34
                     enabled: !AiProviderCatalog.refreshing
-                    buttonRadius: Appearance.rounding.full
+                    buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                     colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    colBackgroundHover: Appearance.colLayer2Hover
                     onClicked: AiProviderCatalog.refreshAll()
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent
@@ -327,12 +326,12 @@ Item {
                             readonly property bool selected: root.catalogFilter === modelData.id
                             Layout.preferredWidth: filterButtonContent.implicitWidth + 14
                             Layout.preferredHeight: 26
-                            buttonRadius: Appearance.rounding.full
+                            buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                             colBackground: selected
                                 ? Appearance.colors.colSecondaryContainer : "transparent"
                             colBackgroundHover: selected
                                 ? Appearance.colors.colSecondaryContainerHover
-                                : Appearance.colors.colLayer2Hover
+                                : Appearance.colLayer2Hover
                             onClicked: root.catalogFilter = modelData.id
 
                             contentItem: RowLayout {
@@ -342,9 +341,9 @@ Item {
                                 MaterialSymbol {
                                     text: filterButton.modelData.icon
                                     iconSize: Appearance.font.pixelSize.normal
-                                    color: filterButton.selected
-                                        ? Appearance.colors.colOnSecondaryContainer
-                                        : Appearance.colors.colSubtext
+                        color: filterButton.selected
+                            ? Appearance.colors.colOnSecondaryContainer
+                            : Appearance.colSecondaryActionIcon
                                 }
                                 StyledText {
                                     text: filterButton.modelData.label
@@ -369,7 +368,7 @@ Item {
                             .arg(root.readyEntryCount).arg(root.lockedEntryCount)
                         : Translation.tr("%1 available model(s)").arg(root.readyEntryCount)
                     font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: Appearance.colors.colSubtext
+                    color: Appearance.colMetadataText
                     elide: Text.ElideRight
                 }
                 StyledText {
@@ -390,7 +389,7 @@ Item {
                 wrapMode: Text.WordWrap
                 horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
+                color: Appearance.colMetadataText
             }
 
             StyledListView {
@@ -413,7 +412,7 @@ Item {
                     readonly property bool isCurrent: modelData.id === Ai.currentModelId
                     colBackground: isCurrent
                         ? Appearance.colors.colSecondaryContainer : "transparent"
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    colBackgroundHover: Appearance.colLayer2Hover
                     opacity: modelData.ready ? 1 : 0.72
 
                     onClicked: {
@@ -472,7 +471,7 @@ Item {
                                 font.pixelSize: Appearance.font.pixelSize.smallest
                                 color: modelRow.isCurrent
                                     ? ColorUtils.transparentize(Appearance.colors.colOnSecondaryContainer, 0.25)
-                                    : Appearance.colors.colSubtext
+                                    : Appearance.colMetadataText
                                 elide: Text.ElideRight
                                 wrapMode: Text.NoWrap
                             }
@@ -482,14 +481,14 @@ Item {
                                 && modelRow.modelData.capabilities.vision === "supported"
                             text: "image"
                             iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colSubtext
+                            color: Appearance.colSecondaryActionIcon
                         }
                         MaterialSymbol {
                             visible: !popup.compact
                                 && modelRow.modelData.capabilities.toolCalling === "supported"
                             text: "service_toolbox"
                             iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colSubtext
+                            color: Appearance.colSecondaryActionIcon
                         }
                         MaterialSymbol {
                             visible: !modelRow.modelData.ready

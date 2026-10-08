@@ -17,7 +17,11 @@ function setup_user_groups(){
   fi
   
   # Add user to required groups
+  local groups_before=" $(id -nG) "
   x pkg_sudo usermod -aG video,i2c,input "$(whoami)"
+  if [[ "$groups_before" != *" video "* || "$groups_before" != *" i2c "* || "$groups_before" != *" input "* ]]; then
+    INIR_REBOOT_REASONS+=("Your user joined video, i2c and input: brightness, keyboard lights and the on-screen keyboard need it")
+  fi
   
   log_success "User added to video, i2c, input groups"
   log_warning "Group changes require logout/login to take effect"
@@ -81,32 +85,38 @@ function setup_systemd_services(){
     v pkg_sudo systemctl enable bluetooth --now
   fi
 
-  # SDDM display manager (enable if installed but not yet active)
-  # This runs unconditionally of the theme install — theme is cosmetic, service is functional.
-  if command -v sddm &>/dev/null; then
-    if ! systemctl is-enabled sddm.service &>/dev/null 2>&1; then
-      # Remove conflicting display-manager.service symlink if it points elsewhere
-      if [[ -L /etc/systemd/system/display-manager.service ]]; then
-        local current_dm
-        current_dm=$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null | xargs basename 2>/dev/null || echo "unknown")
-        if [[ "$current_dm" != "sddm.service" ]]; then
-          log_info "Removing conflicting display-manager.service -> ${current_dm}"
-          elevate rm -f /etc/systemd/system/display-manager.service 2>/dev/null || true
-        fi
-      fi
+  # SDDM display manager. A machine without a login screen gets SDDM. One that already has another
+  # (GDM, plasmalogin...) keeps it: only a first install asks, and the answer defaults to keeping it.
+  if command -v sddm &>/dev/null && ! systemctl is-enabled sddm.service &>/dev/null; then
+    local current_dm="" take_over=false
+    if [[ -L /etc/systemd/system/display-manager.service ]]; then
+      current_dm=$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null | xargs basename 2>/dev/null || true)
+    fi
+    if [[ -z "$current_dm" || "$current_dm" == "sddm.service" ]]; then
+      take_over=true
+    elif [[ "$ask" != "false" && ! -f "${FIRSTRUN_FILE}" ]] \
+        && tui_confirm "Use SDDM as your login screen instead of ${current_dm%.service}?" "no"; then
+      take_over=true
+    else
+      log_info "Keeping ${current_dm%.service} as your login screen (SDDM can be chosen later in ./setup extras)"
+    fi
 
-      # Disable known conflicting display managers
+    if [[ "$take_over" == true ]]; then
+      if [[ -n "$current_dm" && "$current_dm" != "sddm.service" ]]; then
+        log_info "Removing conflicting display-manager.service -> ${current_dm}"
+        elevate rm -f /etc/systemd/system/display-manager.service 2>/dev/null || true
+      fi
       for dm in gdm lightdm lxdm greetd plasmalogin; do
-        if systemctl is-enabled "${dm}.service" &>/dev/null 2>&1; then
+        if systemctl is-enabled "${dm}.service" &>/dev/null; then
           log_info "Disabling conflicting display manager: ${dm}"
           elevate systemctl disable "${dm}.service" 2>/dev/null || true
         fi
       done
-
-      elevate systemctl enable sddm.service 2>/dev/null && log_success "SDDM service enabled"
+      elevate systemctl enable sddm.service 2>/dev/null && log_success "SDDM service enabled" \
+        && INIR_REBOOT_REASONS+=("SDDM is your login screen now${current_dm:+, instead of ${current_dm%.service}}")
     fi
   fi
-  
+
   log_success "Services configured"
 }
 

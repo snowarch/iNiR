@@ -1,0 +1,32 @@
+diff --git a/src/services/status_notifier/item.cpp b/src/services/status_notifier/item.cpp
+index 17404e1..39ff35a 100644
+--- a/src/services/status_notifier/item.cpp
++++ b/src/services/status_notifier/item.cpp
+@@ -137,6 +137,13 @@ QPixmap StatusNotifierItem::createPixmap(const QSize& size) const {
+ 		const DBusSniIconPixmap* ret = nullptr;
+ 
+ 		for (const auto& pixmap: pixmaps) {
++			// Some items briefly publish an empty 0x0 entry; it has no image to scale.
++			if (pixmap.width <= 0 || pixmap.height <= 0
++			    || pixmap.data.size() < static_cast<qsizetype>(pixmap.width) * pixmap.height * 4)
++			{
++				continue;
++			}
++
+ 			if (ret == nullptr) {
+ 				ret = &pixmap;
+ 				continue;
+@@ -210,6 +217,13 @@ QPixmap StatusNotifierItem::createPixmap(const QSize& size) const {
+ 		}
+ 	}
+ 
++	// Pixmaps were published but none holds an image (an empty 0x0 entry): the item has no icon
++	// right now, which is a blank icon, not a missing one.
++	if (pixmap.isNull() && this->bIconName.value().isEmpty() && !this->bIconPixmaps.value().isEmpty()) {
++		pixmap = QPixmap(size);
++		pixmap.fill(Qt::transparent);
++	}
++
+ 	return pixmap;
+ }
+ 

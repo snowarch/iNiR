@@ -28,7 +28,7 @@ Button {
         : Appearance.cookieEverywhere ? Appearance.animation.elementMoveFast.duration
         : Appearance.zzzEverywhere ? Appearance.zzz.overshootDuration : 1200
     // Regalia uses material compression + metal edge feedback, not a Material ripple.
-    property bool rippleEnabled: !Appearance.regaliaEverywhere
+    property bool rippleEnabled: !Appearance.regaliaEverywhere && !Appearance.editorialEverywhere
     property bool stateTransitionsEnabled: true
     property bool pressScaleEnabled: true
     // Expensive organic morph is explicit. Generic buttons remain familiar
@@ -73,6 +73,12 @@ Button {
             ? (root.buttonHovered ? root.colBackgroundToggledHover : root.colBackgroundToggled)
             : (root.buttonHovered ? root.colBackgroundHover : root.colBackground)
 
+        if (Appearance.editorialEverywhere && root.down)
+            targetColor = root.toggled && root.colBackgroundToggled === Appearance.editorial.accent
+                ? Appearance.editorial.accentPressed
+                : targetColor.a === 0 ? Appearance.editorial.controlPressed
+                : ColorUtils.mix(targetColor, Appearance.editorial.ink, 0.90)
+
         // Qt's literal "transparent" is transparent black. Interpolating from
         // it to a light/tinted hover first travels through black, producing the
         // apparent two-stage hover seen across Settings. Preserve the target
@@ -109,8 +115,8 @@ Button {
 
     component RippleAnim: NumberAnimation {
         duration: rippleDuration
-        easing.type: Appearance?.animation.elementMoveEnter.type
-        easing.bezierCurve: Appearance?.animationCurves.standardDecel
+        easing.type: Appearance?.animation.elementMoveEnter.type ?? Easing.BezierSpline
+        easing.bezierCurve: Appearance?.animationCurves.standardDecel ?? [0, 0, 0, 1, 1, 1]
     }
 
     MouseArea {
@@ -210,9 +216,12 @@ Button {
         radius: Appearance.cookieEverywhere ? root._cookieRadius : root.buttonEffectiveRadius
         // Cookie has no rectangular chrome: a pill focus ring fights the organic
         // silhouette. cookieMorphing surfaces still show focus through CookieFace.
-        border.width: Appearance.cookieEverywhere || Appearance.regaliaEverywhere ? 0
+        border.width: Appearance.editorialEverywhere ? (root.visualFocus ? 2 : 1)
+            : Appearance.cookieEverywhere || Appearance.regaliaEverywhere ? 0
             : (Appearance.angelEverywhere ? 1 : 0)
-        border.color: Appearance.angelEverywhere
+        border.color: Appearance.editorialEverywhere
+            ? (root.visualFocus ? Appearance.editorial.focusRing : root.buttonHovered || root.toggled ? Appearance.editorial.edge : "transparent")
+            : Appearance.angelEverywhere
             ? (root.buttonHovered ? Appearance.angel.colBorderHover : "transparent")
             : "transparent"
         Behavior on border.color {
@@ -239,6 +248,21 @@ Button {
                 duration: Appearance.animation.elementMoveFast.duration
                 easing.type: Appearance.animation.elementMoveFast.type
                 easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
+
+        Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 3
+            width: root.toggled ? Math.min(24, Math.max(0, parent.width - 16)) : 0
+            height: 2
+            radius: 1
+            visible: Appearance.editorialEverywhere && root.enabled
+            color: Appearance.editorial.accent
+            Behavior on width {
+                enabled: Appearance.animationsEnabled && root.stateTransitionsEnabled
+                NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
             }
         }
 

@@ -19,6 +19,8 @@ import qs.modules.sidebarRight.quickToggles.classicStyle
 
 import qs.modules.sidebarRight.bluetoothDevices
 import qs.modules.sidebarRight.events
+import qs.modules.sidebarRight.calendar
+import qs.modules.sidebarRight.todo
 import qs.modules.sidebarRight.hotspot
 import qs.modules.sidebarRight.nightLight
 import qs.modules.sidebarRight.volumeMixer
@@ -47,10 +49,27 @@ Item {
     property bool showNightLightDialog: false
     property bool showWifiDialog: false
     property bool editMode: false
+    property string expandedWidgetType: ""
+    readonly property bool detailOpen: expandedWidgetType.length > 0
+    readonly property var detailMeta: ({
+        calendar: { title: Translation.tr("Calendar"), icon: "calendar_month" },
+        events: { title: Translation.tr("Events"), icon: "event_upcoming" },
+        todo: { title: Translation.tr("To Do"), icon: "checklist" }
+    })
+
+    function openWidgetDetail(type): void {
+        if (root.detailMeta[type]) root.expandedWidgetType = type
+    }
+    function closeWidgetDetail(): void { root.expandedWidgetType = "" }
+    function handleEscape(): bool {
+        if (!root.detailOpen) return false
+        root.closeWidgetDetail()
+        return true
+    }
 
     readonly property bool anyDialogOpen: showAudioOutputDialog || showAudioInputDialog
         || showBluetoothDialog || showEventsDialog || showHotspotDialog
-        || showNightLightDialog || showWifiDialog
+        || showNightLightDialog || showWifiDialog || root.detailOpen
     // Collapse the notification zone (and the panel around it) when there is
     // nothing to show. Dialogs re-expand so they keep their full canvas.
     readonly property bool notifsCollapsed: (Config.options?.sidebar?.collapseEmptyNotifications ?? false)
@@ -70,6 +89,13 @@ Item {
     // Events dialog target: an event object to edit, a Date for a new event
     // prefilled to that day, or null for a blank new event.
     property var eventsDialogEditEvent: null
+
+    Connections {
+        target: GlobalStates
+        function onSidebarRightOpenChanged() {
+            if (!GlobalStates.sidebarRightOpen) root.closeWidgetDetail()
+        }
+    }
     
     // Debounce timers to prevent accidental double-clicks
     property bool reloadButtonEnabled: true
@@ -111,7 +137,7 @@ Item {
             _log("[SidebarRight] Checking for existing settings window among", wins.length, "windows");
             for (let i = 0; i < wins.length; i++) {
                 const w = wins[i]
-                if (w.title === "illogical-impulse Settings" && w.app_id === "org.quickshell") {
+                if (w.title === "Settings — iNiR" && w.app_id === "org.quickshell") {
                     _log("[SidebarRight] Found existing settings window, focusing it");
                     GlobalStates.sidebarRightOpen = false;
                     Qt.callLater(() => {
@@ -443,6 +469,9 @@ Item {
         readonly property bool auroraEverywhere: surfaceDialect === "aurora" || angelEverywhere
         readonly property bool inirEverywhere: surfaceDialect === "inir"
         readonly property bool gameModeMinimal: Appearance.gameModeMinimal
+        readonly property bool editorialGlassActive: surfaceDialect === "editorial"
+            && Appearance.editorial.sidebarFullGlass
+            && !gameModeMinimal && !islandStyle
         readonly property string wallpaperUrl: {
             const _dep1 = WallpaperListener.multiMonitorEnabled
             const _dep2 = WallpaperListener.effectivePerMonitor
@@ -450,10 +479,12 @@ Item {
             return WallpaperListener.wallpaperUrlForScreen(root.panelScreen)
         }
         readonly property bool useWallpaperBackdrop: root.panelVisible
-            && auroraEverywhere
+            && (auroraEverywhere || editorialGlassActive)
             && !inirEverywhere
             && !gameModeMinimal
             && wallpaperUrl.length > 0
+        readonly property bool editorialBackdropReady: editorialGlassActive
+            && useWallpaperBackdrop && sidebarRightBlurredWallpaper.status === Image.Ready
 
         ColorQuantizer {
             id: sidebarRightWallpaperQuantizer
@@ -470,6 +501,7 @@ Item {
         color: (gameModeMinimal || islandStyle) ? "transparent"
             : zzzEverywhere ? Appearance.zzz.chrome
             : regaliaEverywhere ? "transparent"
+            : editorialGlassActive ? (editorialBackdropReady ? "transparent" : Appearance.editorial.paper)
             : inirEverywhere ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
             : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
             : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
@@ -479,7 +511,8 @@ Item {
             : angelEverywhere ? Appearance.angel.colPanelBorder
             : inirEverywhere ? Appearance.inir.colBorder
             : Appearance.colors.colLayer0Border
-        radius: zzzEverywhere ? Appearance.zzz.panelRadius
+        radius: islandStyle ? (Config.options?.appearance?.island?.radius ?? 18)
+            : zzzEverywhere ? Appearance.zzz.panelRadius
             : regaliaEverywhere ? Appearance.regalia.panelRadius
             : angelEverywhere ? Appearance.angel.roundingNormal
             : inirEverywhere ? (cardStyle ? Appearance.inir.roundingLarge : Appearance.inir.roundingNormal)
@@ -500,6 +533,18 @@ Item {
         Behavior on color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+
+
+        EditorialPaperStack {
+            anchors.fill: parent
+            z: 1
+            visible: Appearance.editorialEverywhere && Appearance.editorial.paperStack
+                && !sidebarRightBackground.islandStyle && !sidebarRightBackground.gameModeMinimal
+            faceColor: Appearance.editorial.paper
+            radius: sidebarRightBackground.radius
+            materialOpacity: sidebarRightBackground.editorialBackdropReady ? Appearance.editorial.glassOpacity : 1
+            backingOpacity: sidebarRightBackground.editorialBackdropReady ? Appearance.editorial.glassBackingOpacity : 1
         }
 
         RegaliaPlate {
@@ -528,11 +573,12 @@ Item {
 
         Image {
             id: sidebarRightBlurredWallpaper
+            z: 0
             x: -(root.screenWidth - sidebarRightBackground.width - Appearance.sizes.hyprlandGapsOut)
             y: -Appearance.sizes.hyprlandGapsOut
             width: root.screenWidth ?? 1920
             height: root.screenHeight ?? 1080
-            visible: sidebarRightBackground.useWallpaperBackdrop
+            visible: sidebarRightBackground.useWallpaperBackdrop && status === Image.Ready
             source: sidebarRightBackground.useWallpaperBackdrop ? sidebarRightBackground.wallpaperUrl : ""
             fillMode: Image.PreserveAspectCrop
             cache: true
@@ -547,11 +593,13 @@ Item {
                 anchors.fill: source
                 saturation: sidebarRightBackground.angelEverywhere
                     ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
+                    : sidebarRightBackground.editorialGlassActive ? 0.04
                     : (Appearance.effectsEnabled ? 0.2 : 0)
                 blurEnabled: Appearance.effectsEnabled
                 blurMax: 64
                 blur: Appearance.effectsEnabled
-                    ? (sidebarRightBackground.angelEverywhere ? Appearance.angel.blurIntensity : 1)
+                    ? (sidebarRightBackground.angelEverywhere ? Appearance.angel.blurIntensity
+                        : sidebarRightBackground.editorialGlassActive ? Appearance.editorial.glassBlur : 1)
                     : 0
             }
 
@@ -559,6 +607,8 @@ Item {
                 anchors.fill: parent
                 color: sidebarRightBackground.angelEverywhere
                     ? ColorUtils.transparentize((sidebarRightBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity * Appearance.angel.panelTransparentize)
+                    : sidebarRightBackground.editorialGlassActive
+                        ? (Appearance.editorial.paperStack ? "transparent" : Appearance.editorial.glassPaper)
                     : ColorUtils.transparentize((sidebarRightBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
             }
         }
@@ -614,6 +664,7 @@ Item {
 
         ColumnLayout {
             id: contentColumn
+            z: 2
             anchors.fill: parent
             anchors.margins: sidebarPadding
             spacing: sidebarPadding
@@ -719,7 +770,7 @@ Item {
                         z: 20
                         radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
                         color: sectionHandleArea.containsMouse || sectionLoader.isBeingDragged
-                            ? (Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.colors.colLayer1Hover)
+                            ? (Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.colLayer1Hover)
                             : (Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1)
                         border.width: Appearance.inirEverywhere ? 1 : 0
                         border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
@@ -854,6 +905,9 @@ Item {
                             root.eventsDialogEditEvent = editEvent
                             root.showEventsDialog = true
                         }
+                        function onRequestExpand(widgetType) {
+                            root.openWidgetDetail(widgetType)
+                        }
                     }
                 }
             }
@@ -891,8 +945,123 @@ Item {
         Component { id: classicTogglesComponent; ClassicQuickPanel {} }
         Component { id: androidTogglesComponent; AndroidQuickPanel { editMode: root.editMode } }
         Component { id: centerSectionComponent; CenterWidgetGroup { collapsed: root.notifsCollapsed } }
-        Component { id: widgetsSectionComponent; BottomWidgetGroup {} }
+        Component {
+            id: widgetsSectionComponent
+            BottomWidgetGroup {
+                anchors.left: parent.left
+                anchors.right: parent.right
+            }
+        }
 
+    }
+
+    Component {
+        id: expandedEventsComponent
+        EventsWidget {
+            onOpenEventsDialog: editEvent => {
+                root.eventsDialogEditEvent = editEvent
+                root.showEventsDialog = true
+            }
+        }
+    }
+    Component {
+        id: expandedCalendarComponent
+        CalendarWidget {
+            onOpenEventsDialog: editEvent => {
+                root.eventsDialogEditEvent = editEvent
+                root.showEventsDialog = true
+            }
+            onDayWithEventsClicked: date => {
+                root.eventsDialogEditEvent = date
+                root.showEventsDialog = true
+            }
+        }
+    }
+    Component { id: expandedTodoComponent; TodoWidget {} }
+
+    MouseArea {
+        anchors.fill: parent
+        z: 69
+        visible: root.detailOpen
+        acceptedButtons: Qt.AllButtons
+        onClicked: root.closeWidgetDetail()
+    }
+
+    Rectangle {
+        id: organizerDetail
+        anchors.fill: parent
+        anchors.margins: root.sidebarPadding
+        z: 70
+        visible: root.detailOpen
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+            : Appearance.rounding.normal
+        color: Appearance.zzzEverywhere ? Appearance.zzz.paper
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+            : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+            : Appearance.colors.colLayer1
+        border.width: Appearance.inirEverywhere ? 1 : 0
+        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        clip: true
+        focus: visible
+        Keys.onPressed: event => {
+            if (event.key === Qt.Key_Escape) {
+                root.closeWidgetDetail()
+                event.accepted = true
+            }
+        }
+
+        MouseArea { anchors.fill: parent }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+            z: 1
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                MaterialSymbol {
+                    text: root.detailMeta[root.expandedWidgetType]?.icon ?? ""
+                    iconSize: Appearance.font.pixelSize.larger
+                    color: Appearance.colActionIcon
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    text: root.detailMeta[root.expandedWidgetType]?.title ?? ""
+                    font.pixelSize: Appearance.font.pixelSize.large
+                    font.weight: Font.DemiBold
+                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                }
+                RippleButton {
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
+                    colBackground: "transparent"
+                    colBackgroundHover: Appearance.colLayer2Hover
+                    colRipple: Appearance.colLayer2Active
+                    onClicked: root.closeWidgetDetail()
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "close_fullscreen"
+                        iconSize: Appearance.font.pixelSize.normal
+                        color: Appearance.colSecondaryActionIcon
+                    }
+                    StyledToolTip { text: Translation.tr("Back to sidebar") }
+                }
+            }
+
+            Loader {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                active: root.detailOpen
+                sourceComponent: root.expandedWidgetType === "events" ? expandedEventsComponent
+                    : root.expandedWidgetType === "calendar" ? expandedCalendarComponent
+                    : root.expandedWidgetType === "todo" ? expandedTodoComponent : null
+            }
+        }
     }
 
     // With the panel collapsed the window still spans full height; clicks on
@@ -981,6 +1150,7 @@ Item {
     component ToggleDialog: Loader {
         id: toggleDialogLoader
         required property string shownPropertyString
+        z: 100
         property alias dialog: toggleDialogLoader.sourceComponent
         readonly property bool shown: root[shownPropertyString]
         property bool _loaded: false
@@ -1025,13 +1195,15 @@ Item {
                 : sidebarRightBackground.angelEverywhere ? Appearance.angel.colGlassCard
                 : sidebarRightBackground.auroraEverywhere
                 ? Appearance.aurora.colSubSurface
+                : sidebarRightBackground.editorialGlassActive ? Appearance.editorial.glassPaper
                 : Appearance.colors.colLayer1
             Behavior on color {
                 enabled: Appearance.animationsEnabled
                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
             }
             radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
-                : sidebarRightBackground.angelEverywhere ? Appearance.angel.roundingSmall : height / 2
+                : sidebarRightBackground.angelEverywhere ? Appearance.angel.roundingSmall
+                : Appearance.editorialEverywhere ? Appearance.rounding.small : height / 2
             Behavior on radius {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -1098,6 +1270,7 @@ Item {
                 : sidebarRightBackground.angelEverywhere ? Appearance.angel.colGlassCard
                 : sidebarRightBackground.auroraEverywhere
                 ? Appearance.aurora.colSubSurface
+                : sidebarRightBackground.editorialGlassActive ? Appearance.editorial.glassPaper
                 : Appearance.colors.colLayer1
             Behavior on color {
                 enabled: Appearance.animationsEnabled

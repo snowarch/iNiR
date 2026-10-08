@@ -8,7 +8,6 @@ XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 
 GENERATED_MILLENNIUM_CSS="$STATE_DIR/user/generated/steam-millennium-material.css"
-MILLENNIUM_TEMPLATE="$SCRIPT_DIR/../../defaults/matugen/templates/steam/millennium-material.css"
 COLORS_JSON="$STATE_DIR/user/generated/app-palette.json"
 [[ -f "$COLORS_JSON" ]] || COLORS_JSON="$STATE_DIR/user/generated/palette.json"
 [[ -f "$COLORS_JSON" ]] || COLORS_JSON="$STATE_DIR/user/generated/colors.json"
@@ -96,6 +95,118 @@ generate_millennium_css_from_colors_json() {
     --md-sys-color-source-color: rgb($(read_token source_color "$(read_token app_accent "$(read_token primary)")"));
 }
 EOCSS
+  steam_refinements_css
+}
+
+# iNiR's finish on Material-Theme. It rides in this file because Material-Theme re-reads it every 1.5 s in
+# every Steam window, so it follows the palette live without touching Millennium's options or reloading Steam.
+# Selectors are Material-Theme's own (css/main/restyle/recolor.css), doubled to outrank them.
+steam_refinements_css() {
+  local font
+  font="$(shell_font_family)"
+  cat <<'EOCSS'
+
+/* iNiR: a selection is the accent's container, as in every themed app; the accent itself is kept for actions */
+._3pSPluBgf0NeR1kkCLWMhR._3pSPluBgf0NeR1kkCLWMhR.eNLOx4LVceeMwRvTVWh3 {
+    background-color: var(--md-sys-color-primary-container) !important;
+}
+._3pSPluBgf0NeR1kkCLWMhR._3pSPluBgf0NeR1kkCLWMhR.eNLOx4LVceeMwRvTVWh3:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary-container), var(--md-sys-color-on-primary-container) 8%) !important;
+}
+.eNLOx4LVceeMwRvTVWh3.eNLOx4LVceeMwRvTVWh3 ._3O48LaKWcabKx07xdrt1TH,
+._3pSPluBgf0NeR1kkCLWMhR.eNLOx4LVceeMwRvTVWh3:hover ._3O48LaKWcabKx07xdrt1TH {
+    color: var(--md-sys-color-on-primary-container) !important;
+}
+._3pSPluBgf0NeR1kkCLWMhR._3pSPluBgf0NeR1kkCLWMhR:not(.eNLOx4LVceeMwRvTVWh3):hover ._3O48LaKWcabKx07xdrt1TH {
+    color: var(--md-sys-color-on-surface) !important;
+}
+
+/* Dropdowns read as fields, not buttons */
+body .DialogDropDown.DialogDropDown, ._3few7361SOf4k_YuKCmM62 .DialogDropDown.DialogDropDown,
+._2J170P0ckFcUIlsDU13MLS ._DialogInputContainer._DialogInputContainer,
+._3_7wzN0kdchWheVyim6nmo .DialogDropDown.DialogDropDown, ._1UeO0R_NRSTMbWLI02pecg .DialogDropDown.DialogDropDown {
+    color: var(--md-sys-color-on-surface) !important;
+    background: var(--md-sys-color-surface-container-highest) !important;
+}
+body .DialogDropDown.DialogDropDown:hover, ._3few7361SOf4k_YuKCmM62 .DialogDropDown.DialogDropDown:hover,
+._2J170P0ckFcUIlsDU13MLS ._DialogInputContainer._DialogInputContainer:hover,
+._3_7wzN0kdchWheVyim6nmo .DialogDropDown.DialogDropDown:hover, ._1UeO0R_NRSTMbWLI02pecg .DialogDropDown.DialogDropDown:hover {
+    color: var(--md-sys-color-on-surface) !important;
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-highest), var(--md-sys-color-on-surface) 8%) !important;
+}
+body .DialogDropDown_CurrentDisplay.DialogDropDown_CurrentDisplay { color: var(--md-sys-color-on-surface) !important; }
+body .DialogDropDown_Arrow .SVGIcon_DownArrowContextMenu.SVGIcon_DownArrowContextMenu,
+._2J170P0ckFcUIlsDU13MLS ._DialogInputContainer .DialogDropDown_Arrow svg {
+    color: var(--md-sys-color-on-surface-variant) !important;
+    fill: var(--md-sys-color-on-surface-variant) !important;
+}
+
+/* The library's type picker (Games, Software, ...) */
+._1ZS_xta5HMXzR8JgxDH6n7._1ZS_xta5HMXzR8JgxDH6n7 ._2PF_m-I5yte3WnQhpcz8RC {
+    background: var(--md-sys-color-surface-container-highest) !important;
+}
+._1ZS_xta5HMXzR8JgxDH6n7._1ZS_xta5HMXzR8JgxDH6n7 ._2PF_m-I5yte3WnQhpcz8RC:hover {
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-highest), var(--md-sys-color-on-surface) 8%) !important;
+}
+._1ZS_xta5HMXzR8JgxDH6n7._1ZS_xta5HMXzR8JgxDH6n7 ._2PF_m-I5yte3WnQhpcz8RC,
+._1ZS_xta5HMXzR8JgxDH6n7._1ZS_xta5HMXzR8JgxDH6n7 ._2PF_m-I5yte3WnQhpcz8RC * {
+    color: var(--md-sys-color-on-surface) !important;
+}
+._1ZS_xta5HMXzR8JgxDH6n7._1ZS_xta5HMXzR8JgxDH6n7 ._2PF_m-I5yte3WnQhpcz8RC svg,
+._1ZS_xta5HMXzR8JgxDH6n7._1ZS_xta5HMXzR8JgxDH6n7 ._2PF_m-I5yte3WnQhpcz8RC svg polygon {
+    color: var(--md-sys-color-on-surface-variant) !important;
+    fill: var(--md-sys-color-on-surface-variant) !important;
+}
+
+/* Library section headers are labels, not bars */
+._2sYIghGVXJr6tsQVvcryy8._2sYIghGVXJr6tsQVvcryy8 {
+    background: transparent !important;
+    color: var(--md-sys-color-on-surface-variant) !important;
+}
+._2sYIghGVXJr6tsQVvcryy8._2sYIghGVXJr6tsQVvcryy8:hover,
+._2sYIghGVXJr6tsQVvcryy8._2sYIghGVXJr6tsQVvcryy8._1dcGFHhye9BeEOg7CkFNQG,
+._2sYIghGVXJr6tsQVvcryy8._2sYIghGVXJr6tsQVvcryy8.sXMOsx8OIRalBMxO9yFY5 {
+    background: color-mix(in srgb, transparent, var(--md-sys-color-on-surface) 6%) !important;
+}
+._2sYIghGVXJr6tsQVvcryy8._2sYIghGVXJr6tsQVvcryy8 ._3cV3O8FnPQqpJO5kIMUlLX { color: var(--md-sys-color-on-surface-variant) !important; }
+
+/* A game without art is a tile of the palette, not Steam's olive placeholder with grey-gradient text */
+._1R9r2OBCxAmtuUVrgBEUBw:has(._13fGPw2BaM5wWIahr2xNKt) { background: var(--md-sys-color-surface-container-high) !important; }
+._1R9r2OBCxAmtuUVrgBEUBw:has(._13fGPw2BaM5wWIahr2xNKt) img { opacity: 0 !important; }
+._13fGPw2BaM5wWIahr2xNKt._13fGPw2BaM5wWIahr2xNKt {
+    background-image: none !important;
+    -webkit-text-fill-color: var(--md-sys-color-on-surface-variant) !important;
+    color: var(--md-sys-color-on-surface-variant) !important;
+}
+
+/* Shelf headers are labels, not rules */
+._2W0O30CG0Q1UtW0Oq2-p6N._2W0O30CG0Q1UtW0Oq2-p6N { background: transparent !important; }
+
+/* Menus are windows of their own with no alpha: a rounded plate showed black in its corners. The window is the
+   plate, square and in the menu's colour; the items keep their rounded fill inside it. */
+html.MillenniumWindow_ContextMenu, body.ContextMenuPopupBody.ContextMenuPopupBody {
+    background: var(--md-sys-color-surface-container) !important;
+    box-shadow: none !important;
+}
+body.ContextMenuPopupBody .PP7LM0Ow1K5qkR8WElLpt.PP7LM0Ow1K5qkR8WElLpt,
+body.ContextMenuPopupBody ._2yAm5LY_eu-Vg_52l0HFlM._2yAm5LY_eu-Vg_52l0HFlM {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+body.ContextMenuPopupBody ._1n7Wloe5jZ6fSuvV18NNWI.contextMenuItem.contextMenuItem { border-radius: 8px !important; }
+
+/* What's New titles clamp at two lines but clip at their padding, where the top of a third line showed */
+.DVBcpUzJ0x6kaRMfug0OJ.DVBcpUzJ0x6kaRMfug0OJ { overflow: clip !important; overflow-clip-margin: content-box !important; }
+EOCSS
+  if [[ -n "$font" ]]; then
+    cat <<EOCSS
+
+/* The shell's interface font */
+:root *:not(.SVGIcon_Button):not([class*="Icon"]):not(code):not(pre) {
+    font-family: "${font}", "Open Sans", sans-serif !important;
+}
+EOCSS
+  fi
 }
 
 millennium_runtime_available() {
@@ -178,13 +289,7 @@ resolve_millennium_material_loopback_skin_dir() {
 }
 
 millennium_material_appearance() {
-  local mode
-  if [[ -f "$STATE_DIR/user/generated/theme-meta.json" ]] && command -v jq >/dev/null 2>&1; then
-    mode="$(jq -r '.mode // "dark"' "$STATE_DIR/user/generated/theme-meta.json" 2>/dev/null || printf dark)"
-  else
-    mode="dark"
-  fi
-  if [[ "$mode" == "light" ]]; then
+  if [[ "$(theme_mode)" == "light" ]]; then
     printf Light
   else
     printf Dark
@@ -212,9 +317,10 @@ import sys
 path, tmp, active_theme, condition_theme, appearance = sys.argv[1:6]
 try:
     with open(path) as f:
-        data = json.load(f)
+        before = f.read()
+    data = json.loads(before)
 except Exception:
-    data = {}
+    before, data = None, {}
 
 general = data.setdefault("general", {})
 general["injectCSS"] = True
@@ -229,10 +335,13 @@ theme_conditions = conditions.setdefault(condition_theme, {})
 theme_conditions["Color"] = "Matugen"
 theme_conditions["Appearance"] = appearance
 
+after = json.dumps(data, indent=2) + "\n"
+# Millennium owns this file too and reacts to writes: touch it only when a value changed.
+if before is not None and json.loads(before) == data:
+    sys.exit(0)
 os.makedirs(os.path.dirname(path), exist_ok=True)
 with open(tmp, "w") as f:
-    json.dump(data, f, indent=2)
-    f.write("\n")
+    f.write(after)
 os.replace(tmp, path)
 PYCFG
 }
@@ -254,23 +363,20 @@ deploy_millennium_material() {
   fi
   command -v jq &>/dev/null || { log_module "jq not installed — cannot generate Steam Matugen CSS"; return 1; }
 
-  if [[ ! -f "$css_file" ||
-        ( -f "$COLORS_JSON" && "$COLORS_JSON" -nt "$css_file" ) ||
-        ( -f "$MILLENNIUM_TEMPLATE" && "$MILLENNIUM_TEMPLATE" -nt "$css_file" ) ]]; then
-    generate_millennium_css_from_colors_json > "$css_file"
-  fi
+  generate_millennium_css_from_colors_json | write_if_changed "$css_file" || true
 
   for theme_dir in "${theme_dirs[@]}"; do
     [[ -n "$theme_dir" ]] || continue
     mkdir -p "$theme_dir/css/main/colors"
-    cp "$css_file" "$theme_dir/css/main/colors/matugen.css"
+    # Millennium refreshes on every write: an identical copy would restyle a running Steam for nothing.
+    cmp -s "$css_file" "$theme_dir/css/main/colors/matugen.css" || cp "$css_file" "$theme_dir/css/main/colors/matugen.css"
     deployed=$((deployed + 1))
   done
 
   while IFS= read -r loopback_dir; do
     [[ -n "$loopback_dir" ]] || continue
     mkdir -p "$loopback_dir/css/main/colors"
-    cp "$css_file" "$loopback_dir/css/main/colors/matugen.css"
+    cmp -s "$css_file" "$loopback_dir/css/main/colors/matugen.css" || cp "$css_file" "$loopback_dir/css/main/colors/matugen.css"
     loopback_deployed=$((loopback_deployed + 1))
   done < <(resolve_millennium_material_loopback_skin_dir)
 
@@ -286,7 +392,7 @@ deploy_millennium_material() {
 
 main() {
   local enabled
-  enabled=$(config_bool '.appearance.wallpaperTheming.enableSteam' false)
+  enabled=$(config_bool '.appearance.wallpaperTheming.enableSteam' true)
 
   [[ "$enabled" == 'true' || "${INIR_STEAM_THEME_FORCE:-0}" == "1" ]] || exit 0
 

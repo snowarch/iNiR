@@ -14,6 +14,7 @@ Item {
     required property int requestedIndex
     property bool loadEnabled: true
     property int cacheLimit: 2
+    property bool directNavigation: false
 
     readonly property int currentIndex: _currentIndex
     readonly property bool error: _errorIndex === requestedIndex
@@ -45,7 +46,13 @@ Item {
     function _sourceFor(index) {
         if (index < 0 || index >= pages.length)
             return ""
-        return pages[index]?.component ?? ""
+        const source = pages[index]?.component ?? ""
+        // Quickshell's qs: VFS currently prevents Qt's QML disk cache from
+        // caching Loader documents. Keep imports on qs:, but load these
+        // already-resolved local page files as file:// so Qt can reuse .qmlc.
+        if (source.startsWith("/"))
+            return "file://" + source
+        return source
     }
 
     function _loaderFor(index) {
@@ -126,6 +133,8 @@ Item {
         if (!loadEnabled || requestedIndex < 0 || requestedIndex >= pages.length)
             return
 
+
+
         if (_transitionRunning)
             switchAnimation.complete()
 
@@ -147,6 +156,40 @@ Item {
                 _errorIndex = -1
                 _retain(_currentIndex)
             }
+            _retain(_currentIndex)
+            _trimCache()
+            return
+        }
+
+        if (directNavigation) {
+            switchAnimation.stop()
+            _transitionRunning = false
+
+            const oldIndex = _currentIndex
+            const oldLoader = _loaderFor(oldIndex)
+            if (oldLoader) {
+                oldLoader.opacity = 0
+                oldLoader.x = 0
+            }
+
+            if (_pendingIndex >= 0 && _pendingIndex !== requestedIndex) {
+                const stalePending = _loaderFor(_pendingIndex)
+                if (stalePending) {
+                    stalePending.opacity = 0
+                    stalePending.x = 0
+                }
+            }
+
+            _pendingIndex = -1
+            _currentIndex = requestedIndex
+            _errorIndex = -1
+
+            const nextLoader = _loaderFor(_currentIndex)
+            if (nextLoader) {
+                nextLoader.opacity = 1
+                nextLoader.x = 0
+            }
+
             _retain(_currentIndex)
             _trimCache()
             return
@@ -293,7 +336,7 @@ Item {
             // Imperative residency avoids a Loader construction feedback cycle.
             active: false
             source: root._sourceFor(index)
-            asynchronous: index !== root._currentIndex
+            asynchronous: !root.directNavigation && index !== root._currentIndex
             visible: active && (index === root._currentIndex || index === root._pendingIndex)
             enabled: index === root._currentIndex
                 && root._pendingIndex < 0

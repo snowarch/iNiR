@@ -15,6 +15,13 @@ SYNC_SCRIPT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/s
 SDDM_CONF="/etc/sddm.conf.d/99-inir-theme.conf"
 SDDM_CONF_LEGACY="/etc/sddm.conf.d/inir-theme.conf"
 AUTO_APPLY_MODE="${INIR_SDDM_AUTO_APPLY:-ask}" # ask|yes|no
+# Whether this run may make SDDM the login screen. An update only refreshes the theme: someone who went
+# back to GDM or another display manager keeps it.
+ENABLE_SERVICE="${INIR_SDDM_ENABLE_SERVICE:-yes}" # yes|no
+GREETER_MODE="${INIR_SDDM_GREETER:-keep}"
+GREETER_CONF="/etc/sddm.conf.d/98-inir-greeter.conf"
+GREETER_KDL_SRC="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/dots/sddm/niri-greeter.kdl"
+GREETER_KDL="/usr/share/inir/sddm/niri-greeter.kdl"
 
 log_info() { echo -e "\033[0;36m[sddm] $*\033[0m"; }
 log_ok()   { echo -e "\033[0;32m[sddm] ✓ $*\033[0m"; }
@@ -145,6 +152,19 @@ else
     log_ok "Theme files already up to date — skipping copy"
 fi
 
+# The iRiS appearance's faces, one static file per weight: the sddm user cannot read the shell's copy.
+FONTS_SRC="${THEME_SRC%/dots/sddm/pixel}/assets/fonts"
+for font in "$FONTS_SRC"/rubik/Rubik-*.ttf "$FONTS_SRC"/inter/Inter-{Regular,Medium,SemiBold,Bold}.ttf; do
+    [[ -f "$font" ]] || continue
+    target="${THEME_DIR}/fonts/$(basename "$font")"
+    cmp -s "$font" "$target" && continue
+    if [[ -O "${THEME_DIR}" ]]; then
+        install -Dm644 "$font" "$target"
+    else
+        elevate install -Dm644 "$font" "$target"
+    fi
+done
+
 # Create a placeholder background (symlinked to wallpaper later by sync script)
 if [[ ! -f "${THEME_DIR}/assets/background.png" ]]; then
     log_info "No background.png yet — creating placeholder..."
@@ -180,15 +200,10 @@ migrate_legacy_sddm_conf() {
     elevate rm -f "$SDDM_CONF_LEGACY"
 }
 
-# Configure SDDM to use this theme
-# Two concerns: (1) set Current theme, (2) ensure settings (DisplayServer, InputMethod) are correct.
-# On updates where ii-pixel is already active, we still need to patch settings.
-
-desired_conf="[General]
-DisplayServer=x11
-InputMethod=
-
-[Theme]
+# Configure only the theme. DisplayServer, compositor and input-method policy
+# belong to SDDM/distro provider packages (for example Fedora's sddm-x11 or
+# sddm-wayland-* packages) and must not be overridden by a theme installer.
+desired_conf="[Theme]
 Current=${THEME_NAME}"
 
 current_conf=""
@@ -213,6 +228,40 @@ else
     fi
 fi
 
+# Login screen display server. X11 is SDDM's default on Arch; on laptops with an NVIDIA GPU next to the
+# integrated one, Xorg can start on the GPU that has no screens attached and the greeter stays black
+# (https://bbs.archlinux.org/viewtopic.php?id=291860). Niri drives the right GPU, as GDM's Wayland greeter does.
+apply_greeter_mode() {
+    case "$GREETER_MODE" in
+        niri)
+            local niri_bin
+            niri_bin="$(command -v niri || true)"
+            if [[ -z "$niri_bin" || ! -f "$GREETER_KDL_SRC" ]]; then
+                log_warn "Niri or the greeter config is missing; login screen left as it is"
+                return 0
+            fi
+            local desired="[General]
+DisplayServer=wayland
+
+[Wayland]
+CompositorCommand=${niri_bin} -c ${GREETER_KDL}"
+            elevate install -Dm644 "$GREETER_KDL_SRC" "$GREETER_KDL"
+            if [[ "$(cat "$GREETER_CONF" 2>/dev/null || true)" != "$desired" ]]; then
+                elevate mkdir -p /etc/sddm.conf.d
+                echo "$desired" | elevate tee "$GREETER_CONF" > /dev/null
+            fi
+            log_ok "Login screen runs on Wayland with Niri (${GREETER_CONF})"
+            ;;
+        x11)
+            if [[ -f "$GREETER_CONF" ]]; then
+                elevate rm -f "$GREETER_CONF"
+                log_ok "Login screen back to the distribution's default display server"
+            fi
+            ;;
+    esac
+}
+apply_greeter_mode
+
 # Clean up legacy drop-in name (if user is migrating from pre-2.26 install).
 # Our new 99- prefixed file already wins by alphabetical merge order.
 migrate_legacy_sddm_conf
@@ -225,12 +274,9 @@ else
     log_warn "Color sync skipped (run after first wallpaper generation)"
 fi
 
-# Install sync script to ~/.local/bin for wallpaper change hook
-SYNC_DST="${HOME}/.local/bin/sync-pixel-sddm.py"
-mkdir -p "$(dirname "$SYNC_DST")"
-cp "$SYNC_SCRIPT" "$SYNC_DST"
-chmod +x "$SYNC_DST"
-log_ok "Sync script installed to ${SYNC_DST}"
+# The colour pipeline runs the sync from the iNiR tree (scripts/colors/modules/60-sddm.sh); the copy older
+# installs left here went stale and raced it.
+rm -f "${HOME}/.local/bin/sync-pixel-sddm.py"
 
 # NOTE: We no longer mutate the user theming config here.
 # Color sync runs from the unified Python theming pipeline. Keep installer idempotent.
@@ -246,7 +292,7 @@ fi
 
 # Enable SDDM service (only on first install — on updates the service is already enabled,
 # and running sudo without a terminal would fail in IPC mode)
-if command -v systemctl &>/dev/null && [[ -d /run/systemd/system ]]; then
+if [[ "$ENABLE_SERVICE" == "yes" ]] && command -v systemctl &>/dev/null && [[ -d /run/systemd/system ]]; then
     if ! systemctl is-enabled sddm.service &>/dev/null 2>&1; then
         # Handle conflicting display-manager.service symlink (e.g., plasmalogin, gdm, etc.)
         if [[ -L /etc/systemd/system/display-manager.service ]]; then
@@ -272,4 +318,3 @@ fi
 log_ok "${THEME_NAME} installed and configured"
 log_info "Test with: sddm-greeter-qt6 --test-mode --theme ${THEME_DIR}"
 log_info "Colors auto-sync on wallpaper change via the iNiR theming pipeline"
-log_info "Manual re-sync: python3 ~/.local/bin/sync-pixel-sddm.py"

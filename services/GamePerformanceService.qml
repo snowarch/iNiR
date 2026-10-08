@@ -201,7 +201,6 @@ Singleton {
     function acquire(): void {
         root._consumers++
         if (root._consumers !== 1) return
-        ResourceUsage.keepAlive()
         if (!rigInfoProcess.running) rigInfoProcess.running = true
         if (!root.mangoHudInstalled && !mangoHudProbe.running)
             mangoHudProbe.running = true
@@ -212,7 +211,6 @@ Singleton {
         if (root._consumers <= 0) return
         root._consumers--
         if (root._consumers !== 0) return
-        ResourceUsage.releaseKeepAlive()
         if (telemetryProcess.running) telemetryProcess.running = false
         telemetryRestartTimer.stop()
         root._resetTelemetry()
@@ -558,7 +556,7 @@ Singleton {
     }
 
     Connections {
-        target: HyprlandData
+        target: CompositorService.isHyprland ? HyprlandData : null
         enabled: root._consumers > 0 && CompositorService.isHyprland
 
         function onWindowListChanged(): void { root._refreshTarget() }

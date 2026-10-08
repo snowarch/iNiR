@@ -11,11 +11,6 @@
       "output": "~/.config/gtk-3.0/gtk.css"
     },
     {
-      "name": "fuzzel",
-      "input": "fuzzel/fuzzel_theme.ini",
-      "output": "~/.config/fuzzel/fuzzel_theme.ini"
-    },
-    {
       "name": "kde_colors",
       "input": "kde/color.txt",
       "output": "~/.local/state/quickshell/user/generated/color.txt"

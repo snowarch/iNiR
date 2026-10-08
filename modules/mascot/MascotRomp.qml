@@ -49,8 +49,7 @@ PanelWindow {
     // Which behavior this window starts in ("romp" | "chase")
     property string startMode: "romp"
 
-    readonly property bool suppressed: GameMode.active || GameMode.hasVisibleFullscreenWindow
-        || GlobalStates.screenLocked || GlobalStates.sessionOpen
+    readonly property bool suppressed: MascotChaos.suppressed || !MascotChaos.enabled
     onSuppressedChanged: if (suppressed) romp._abort()
 
     readonly property int spriteSize: Config.options?.mascot?.companion?.size ?? 150
@@ -135,7 +134,7 @@ PanelWindow {
     }
 
     function _makePlan(): bool {
-        const targets = MascotChaos.targets().filter(t => t.y + t.h < romp.height && t.w < romp.width * 0.7)
+        const targets = MascotChaos.targets(romp.rompScreen.name).filter(t => t.y + t.h < romp.height && t.w < romp.width * 0.7)
         const rearrange = MascotChaos.allowRearrange
         const stops = []
 
@@ -147,9 +146,10 @@ PanelWindow {
             return true
         }
 
-        const options = ["quake", "punt", "sightsee"]
+        const options = ["sightsee", "sightsee", "sightsee", "punt"]
         if (targets.length > 0) {
-            options.push("bonk", "bonk", "wreck", "steal", "inspect", "occupy", "occupy")
+            options.push("bonk", "inspect", "inspect", "occupy", "occupy")
+            if (rearrange) options.push("wreck", "steal")
             if (targets.length >= 2) options.push("rampage", "rampage", "parkour")
             if (rearrange) options.push("toss")
         }
@@ -173,7 +173,7 @@ PanelWindow {
                 stops.push({
                     kind: "hit", key: t.key, x: t.x, w: t.w, actX: romp._actXFor(t),
                     vx: (Math.random() < 0.5 ? -1 : 1) * (160 + Math.random() * 200), vy: 30,
-                    mode: i === n - 1 ? "wreck" : hitMode("")
+                    mode: rearrange && i === n - 1 ? "wreck" : hitMode("")
                 })
             }
         } else if (romp.planType === "steal") {
@@ -230,7 +230,7 @@ PanelWindow {
     function _checkDomino(stop): void {
         if (stop.mode === "wreck") return
         const lx = stop.x + stop.vx
-        for (const t of MascotChaos.targets()) {
+        for (const t of MascotChaos.targets(romp.rompScreen.name)) {
             if (t.key === stop.key) continue
             if (lx < t.x + t.w && lx + stop.w > t.x && Math.abs(t.y - 0) < romp.height) {
                 romp._dominoHit = { key: t.key, vx: stop.vx * 0.5 }
@@ -242,7 +242,7 @@ PanelWindow {
 
     // Calling card after a proper wrecking (real notification, 40% chance)
     function _maybeCallingCard(): void {
-        if (Math.random() > 0.4) return
+        if (!(Config.options?.mascot?.chaos?.callingCards ?? false) || Math.random() > 0.4) return
         const lines = romp._chaosCfg.notify ?? ["Nothing happened. Don't check your widgets."]
         const body = Translation.tr(lines[Math.floor(Math.random() * lines.length)])
         Quickshell.execDetached(["notify-send", "-a", "Kira", "-i",
@@ -265,12 +265,28 @@ PanelWindow {
     property string line: ""
     readonly property bool running: phase === "enter" || phase === "leave"
     readonly property bool movingRight: runTween.to > spriteX
+    readonly property string characterState: {
+        if (hopAnim.running) return "jump"
+        if (running) return movingRight ? "run-right" : "run-left"
+        if (phase === "hide") return "peek"
+        if (phase === "chase") return "listen"
+        const kind = planStops[planIndex]?.kind ?? ""
+        if (kind === "trip") return "failed"
+        if (phase === "aftermath") return "celebrate"
+        if (kind === "inspect" || kind === "occupy") return "inspect"
+        if (kind === "hit" || kind === "punt" || kind === "quake") return "push"
+        if (kind === "cleanup") return "review"
+        return "look"
+    }
+    readonly property string displayPose: MascotCatalog.characterPose(pose, characterState)
+
 
     NumberAnimation {
         id: runTween
         target: romp
         property: "spriteX"
         onStopped: {
+            if (romp._aborting) return
             if (romp._beatPending) { romp._playBeat(); return }
             romp._phaseDone()
         }
@@ -281,8 +297,8 @@ PanelWindow {
         interval: 1300
         onTriggered: {
             romp._sfx("bell")
-            MascotChaos.panelShake(1.5)
-            for (const t of MascotChaos.targets())
+            MascotChaos.panelShake(1.5, romp.rompScreen.name)
+            for (const t of MascotChaos.targets(romp.rompScreen.name))
                 MascotChaos.impact(t.key, (Math.random() - 0.5) * 60, 0, "bounce")
         }
     }
@@ -387,7 +403,9 @@ PanelWindow {
         romp._runTo(first.actX)
     }
 
+    NumberAnimation { id: perchTween; target: romp; property: "spriteY"; duration: 380; easing.type: Easing.InOutQuad }
     function _runTo(x: real): void {
+        if (romp.spriteY >= 0) { perchTween.to = romp.groundY; perchTween.restart() }
         const dist = Math.abs(x - romp.spriteX)
         if (romp.phase === "enter" && !romp._beatPending && dist > 600 && Math.random() < 0.35) {
             romp._beatPending = true
@@ -420,6 +438,7 @@ PanelWindow {
     }
 
     function _phaseDone(): void {
+        if (_aborting || suppressed) return
         if (romp.phase === "chase") { romp._chaseTimeout(); return }
         if (romp.phase === "hide") { romp._endHide("notFound"); return }
         const stop = romp.planStops[romp.planIndex]
@@ -469,7 +488,15 @@ PanelWindow {
             // to the tier-4 click ladder, not to a character moving through
             // desktop space next to full-body art.
             romp.pose = romp._pickActPose(act.pose, stop.kind === "trip" ? "dead-crash" : "mallet-swing")
-            romp.line = romp._pickLine(act.lines)
+            const target = stop.key ? MascotChaos.geometry[stop.key] : null
+            if (stop.key && !target) { romp._abort(); return }
+            const contextualLines = target ? romp._manifest.widgetLines?.[target.widget] : null
+            romp.line = romp._pickLine(contextualLines?.length ? contextualLines : act.lines)
+            if (target && (stop.kind === "inspect" || stop.kind === "occupy" || stop.kind === "hit")) {
+                if (romp.spriteY < 0) romp.spriteY = romp.groundY
+                perchTween.to = Math.max(0, target.y - romp.spriteSize * 0.8)
+                perchTween.restart()
+            }
             romp.phase = "act"
             phaseTimer.interval = stop.kind === "trip" ? 2000
                 : stop.kind === "occupy" ? 1800
@@ -559,13 +586,13 @@ PanelWindow {
                 // no two quakes alike: variable magnitude, and sometimes
                 // an aftershock rolls through a beat later
                 romp._sfx("dialog-warning")
-                MascotChaos.panelShake(1 + Math.random() * 1.4)
-                for (const t of MascotChaos.targets())
+                MascotChaos.panelShake(1 + Math.random() * 1.4, romp.rompScreen.name)
+                for (const t of MascotChaos.targets(romp.rompScreen.name))
                     MascotChaos.impact(t.key, (Math.random() - 0.5) * (90 + Math.random() * 130), 0, "bounce")
                 if (Math.random() < 0.35) aftershockTimer.restart()
             } else if (stop.kind === "punt") {
                 romp._sfx("dialog-warning")
-                MascotChaos.panelShake(2.4)
+                MascotChaos.panelShake(2.4, romp.rompScreen.name)
             } else {
                 romp._sfx(stop.mode === "vanish" ? "trash-empty" : (stop.mode === "wreck" ? "dialog-error" : "bell"))
                 MascotChaos.impact(stop.key, stop.vx, stop.vy, stop.mode)
@@ -591,6 +618,7 @@ PanelWindow {
         } else if (romp.phase === "aftermath") {
             // stolen goods leave with her, at a burdened waddle
             const stealing = romp.planType === "steal"
+            if (romp.spriteY >= 0) { perchTween.to = romp.groundY; perchTween.restart() }
             romp.pose = stealing
                 ? romp._safeFullBodyPose(romp._chaosCfg.steal?.carry, "carry-crate")
                 : romp._runPose
@@ -615,11 +643,19 @@ PanelWindow {
         return stop.mode === "wreck" ? "wreck" : "bonk"
     }
 
+    property bool _aborting: false
     function _abort(): void {
+        if (_aborting) return
+        _aborting = true
         runTween.stop()
         chaseXTween.stop()
         chaseYTween.stop()
         phaseTimer.stop()
+        perchTween.stop()
+        dominoTimer.stop()
+        aftershockTimer.stop()
+        beatTimer.stop()
+        hopAnim.stop()
         romp.finished()
     }
 
@@ -782,7 +818,7 @@ PanelWindow {
             enabled: romp.phase === "act" || romp.phase === "aftermath" || romp.phase === "hide"
             onTapped: {
                 if (romp.phase === "hide") { romp._endHide("found"); return }
-                if (Math.random() < 0.45) {
+                if (romp.startMode === "chase") {
                     romp._startChase()
                 } else {
                     romp.pose = romp._pickActPose(romp._chaosCfg.startle_pose, "stand-pout")
@@ -798,7 +834,7 @@ PanelWindow {
             // real run-cycle GIFs animate their own gait — bob only fakes
             // locomotion for static poses like tiptoe-sneak
             running: romp.running && Appearance.animationsEnabled
-                && !(romp._manifest.animatedPoses ?? []).includes(romp.pose)
+                && !(romp._manifest.animatedPoses ?? []).includes(romp.displayPose)
             loops: Animation.Infinite
             alwaysRunToEnd: false
             onRunningChanged: if (!running) sprite.bob = 0
@@ -817,9 +853,9 @@ PanelWindow {
 
             readonly property string source: romp.phase === "idle"
                 ? ""
-                : Quickshell.shellPath(`assets/images/mascot/inir-mascot-${romp.pose}.${(romp._manifest.animatedPoses ?? []).includes(romp.pose) ? "gif" : "png"}`)
+                : Quickshell.shellPath(`assets/images/mascot/inir-mascot-${romp.displayPose}.${(romp._manifest.animatedPoses ?? []).includes(romp.displayPose) ? "gif" : "png"}`)
             readonly property bool mirrored: romp.running
-                && (romp.movingRight !== (romp._manifest.facesRight ?? []).includes(romp.pose))
+                && (romp.movingRight !== (romp._manifest.facesRight ?? []).includes(romp.displayPose))
             readonly property int fadeDuration: Appearance.calcEffectiveDuration(130)
 
             // Which layer currently owns the visible pose.
@@ -895,7 +931,7 @@ PanelWindow {
         readonly property int pad: 10
         visible: opacity > 0
         // The flyby lives entirely in "leave", so it keeps its bubble mid-flight
-        opacity: romp.line.length > 0 && (romp.phase !== "leave" || romp.planType === "flyby") ? 1 : 0
+        opacity: (Config.options?.mascot?.companion?.dialogue ?? true) && romp.line.length > 0 && (romp.phase !== "leave" || romp.planType === "flyby") ? 1 : 0
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

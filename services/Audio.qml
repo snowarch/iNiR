@@ -26,6 +26,7 @@ Singleton {
         if (root._pendingSink) root._pendingSink = null
     }
     readonly property real hardMaxValue: 2.00
+    readonly property real ceiling: Math.min(root.hardMaxValue, (Config.options?.audio?.protection?.maxAllowed ?? 100) / 100)
     property string audioTheme: Config.options?.sounds?.theme ?? "freedesktop"
     property real value: sink?.audio?.volume ?? rawSink?.audio?.volume ?? 0
     property bool micBeingAccessed: Pipewire.links.values.filter(link =>
@@ -56,9 +57,10 @@ Singleton {
     function friendlyDeviceName(node) {
         return node ? (node.nickname || node.description || Translation.tr("Unknown")) : Translation.tr("Unknown");
     }
+    // The app behind a stream, not its engine: an app playing through mpv or GStreamer names itself "mpv".
     function appNodeDisplayName(node) {
         if (!node) return Translation.tr("Unknown");
-        return (node.properties?.["application.name"] || node.description || node.name || Translation.tr("Unknown"))
+        return MprisController.streamDisplayName(node)
     }
 
     function resolveControllableSink(node) {
@@ -112,20 +114,24 @@ Singleton {
 
     // Signals
     signal sinkProtectionTriggered(string reason);
+    property real lastUserChange: 0
 
     // Controls
     function toggleMute() {
         if (!root.sink?.audio) return;
+        root.lastUserChange = Date.now()
         root.sink.audio.muted = !root.sink.audio.muted
     }
 
     function setSourceVolume(target: real): void {
+        root.lastUserChange = Date.now()
         const clamped = Math.max(0, Math.min(root.hardMaxValue, target))
         root._micVolume = clamped
         root._queueSourceVolume(clamped)
     }
 
     function toggleMicMute() {
+        root.lastUserChange = Date.now()
         const shouldMute = !root._micMuted
         root._micMuted = shouldMute
         const muteVal = shouldMute ? "1" : "0"
@@ -139,14 +145,23 @@ Singleton {
         wpctlSetMicMute.exec(["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", muteVal])
     }
 
+    function _isVirtualSource(dev): bool {
+        const props = dev?.properties ?? {}
+        const nodeName = String(props["node.name"] ?? dev?.name ?? "")
+        const appId = String(props["application.id"] ?? "")
+        return nodeName === "easyeffects_source" || appId === "com.github.wwmm.easyeffects"
+            || String(props["node.virtual"] ?? "false") === "true"
+    }
+
     function _hardwareSourceId(): int {
+        // The default source is the one setSourceVolume() writes; read it back
+        // whenever it is a real device. Reading the first hardware input instead
+        // snapped the level back to an unrelated device (e.g. a USB mic as default
+        // beside an onboard input at 100 %) after every adjustment.
+        const defaultId = Number(root.source?.id ?? 0)
+        if (defaultId > 0 && !root._isVirtualSource(root.source)) return defaultId
         for (const dev of root.inputDevices) {
-            const props = dev.properties ?? {}
-            const nodeName = String(props["node.name"] ?? dev.name ?? "")
-            const appId = String(props["application.id"] ?? "")
-            const isVirtual = String(props["node.virtual"] ?? "false") === "true"
-            if (nodeName === "easyeffects_source" || appId === "com.github.wwmm.easyeffects" || isVirtual)
-                continue
+            if (root._isVirtualSource(dev)) continue
             const id = Number(dev.id ?? 0)
             if (id > 0) return id
         }
@@ -272,6 +287,7 @@ Singleton {
     // To keep UX consistent with brightness (click anywhere on slider), we ramp in small steps.
     // The queued wpctl path also works while Quickshell is rebuilding its node bindings.
     function setSinkVolume(target: real): void {
+        root.lastUserChange = Date.now()
         const maxAllowed = (Config.options?.audio?.protection?.maxAllowed ?? 100) / 100;
         const clamped = Math.max(0, Math.min(Math.min(maxAllowed, root.hardMaxValue), target));
 
@@ -321,12 +337,14 @@ Singleton {
     }
 
     function incrementVolume() {
+        root.lastUserChange = Date.now()
         // Fire wpctl relative increment first — works even when sink?.audio is not yet tracked.
         if (!wpctlIncrementSinkVolume.running)
             wpctlIncrementSinkVolume.running = true
     }
 
     function decrementVolume() {
+        root.lastUserChange = Date.now()
         // Fire wpctl relative decrement first — works even when sink?.audio is not yet tracked.
         if (!wpctlDecrementSinkVolume.running)
             wpctlDecrementSinkVolume.running = true

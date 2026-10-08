@@ -71,8 +71,9 @@ body:
     attributes:
       label: Panel family
       options:
-        - ii
-        - waffle
+        - iRiS
+        - ii (Material)
+        - Waffle
     validations:
       required: true
 

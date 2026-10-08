@@ -6,10 +6,13 @@ import Quickshell
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.iris.style
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
 import qs.modules.background.widgets
+import qs.modules.background.widgets.instrument
+import qs.modules.iris.widgets
 
 AbstractBackgroundWidget {
     id: root
@@ -28,69 +31,98 @@ AbstractBackgroundWidget {
         cornerRadius: -1, x: 50, y: 400
     })
 
-    implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 320) * scaleFactor)
+    widgetSurfaceEnabled: root.displayMode !== "instrument" && root.displayMode !== "tiles"
+    readonly property int meterColumns: Math.max(1, Math.min(root._resourceModel.length,
+        Math.floor((root.implicitWidth + 10 * root.scaleFactor) / (110 * root.scaleFactor))))
+    readonly property int meterRows: Math.ceil(root._resourceModel.length / root.meterColumns)
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 320) * scaleFactor)
     implicitHeight: {
+        if (root.irisFaced)
+            return root.irisFaceHeight;
         const stored = Math.round(Number(root._readConfigKey("contentHeight") ?? 120) * scaleFactor);
-        return root.displayMode === "tiles" ? Math.max(stored, root._tilesMinHeight) : stored;
+        if (root.displayMode === "tiles")
+            return Math.max(stored, root._tilesMinHeight);
+        if (root.displayMode === "instrument")
+            return Math.max(stored, Math.round((root.meterRows * 110 + 20) * root.scaleFactor));
+        return stored;
     }
 
     visibleWhenLocked: false
     needsColText: true
+    irisFace: Component { IrisVitalsFace { widget: root } }
+    irisSizes: ["small", "medium", "large"]
+    irisDefaultSize: "medium"
+    irisOptions: [
+        { key: "showCpu", raw: true, label: Translation.tr("CPU"), icon: "memory", fallback: true },
+        { key: "showMemory", raw: true, label: Translation.tr("Memory"), icon: "storage", fallback: true },
+        { key: "showGpu", raw: true, label: Translation.tr("GPU"), icon: "developer_board", fallback: true },
+        { key: "showTemp", raw: true, label: Translation.tr("CPU heat"), icon: "thermostat", fallback: false },
+        { key: "showGpuTemp", raw: true, label: Translation.tr("GPU heat"), icon: "device_thermostat", fallback: false },
+        { key: "showDisk", raw: true, label: Translation.tr("Disk"), icon: "hard_drive", fallback: false }
+    ]
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
-    resizeMinWidth: root.displayMode === "tiles" ? 100 : 120
-    resizeMinHeight: root.displayMode === "tiles" ? 100 : 60
+    resizeMinWidth: root.displayMode === "tiles" ? 100
+        : root.displayMode === "instrument" ? 150 : 120
+    resizeMinHeight: root.displayMode === "tiles" ? 100
+        : root.displayMode === "instrument" ? 150 : 60
 
     // ── Popover: mode + resource toggles ──
     editPopoverContent: Component {
         ColumnLayout {
-            spacing: 6
-            GridLayout {
-                columns: 2
-                columnSpacing: 4
-                rowSpacing: 4
-                Layout.alignment: Qt.AlignHCenter
-                Repeater {
+            spacing: 14
+
+            WidgetQuickSection {
+                title: Translation.tr("Style")
+                WidgetQuickChoices {
+                    current: root.displayMode
                     model: [
                         { label: Translation.tr("Bars"), icon: "bar_chart", value: "bars" },
                         { label: Translation.tr("Graph"), icon: "show_chart", value: "graph" },
                         { label: Translation.tr("Rings"), icon: "donut_large", value: "rings" },
                         { label: Translation.tr("Text"), icon: "text_fields", value: "text" },
-                        { label: Translation.tr("Tiles"), icon: "grid_view", value: "tiles" }
+                        { label: Translation.tr("Tiles"), icon: "grid_view", value: "tiles" },
+                        { label: Translation.tr("Instrument"), icon: "equalizer", value: "instrument" }
                     ]
-                    SelectionGroupButton {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        leftmost: true; rightmost: true
-                        buttonIcon: modelData.icon
-                        buttonText: modelData.label
-                        toggled: root.displayMode === modelData.value
-                        onClicked: Config.setNestedValue("background.widgets.systemMonitor.displayMode", modelData.value)
-                    }
+                    onPicked: value => root._setOutputValue("displayMode", value)
                 }
             }
-            GridLayout {
-                columns: 3
-                columnSpacing: 4
-                rowSpacing: 4
-                Layout.alignment: Qt.AlignHCenter
-                Repeater {
-                    model: [
-                        { label: Translation.tr("CPU"), icon: "memory", key: "showCpu", active: root.showCpu },
-                        { label: Translation.tr("RAM"), icon: "storage", key: "showMemory", active: root.showMemory },
-                        { label: Translation.tr("GPU"), icon: "developer_board", key: "showGpu", active: root.showGpu },
-                        { label: Translation.tr("Temp"), icon: "thermostat", key: "showTemp", active: root.showTemp },
-                        { label: Translation.tr("GPU temp"), icon: "device_thermostat", key: "showGpuTemp", active: root.showGpuTemp },
-                        { label: Translation.tr("Disk"), icon: "hard_drive", key: "showDisk", active: root.showDisk }
-                    ]
-                    SelectionGroupButton {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        leftmost: true; rightmost: true
-                        buttonIcon: modelData.icon
-                        buttonText: modelData.label
-                        toggled: modelData.active
-                        onClicked: Config.setNestedValue("background.widgets.systemMonitor." + modelData.key, !modelData.active)
+
+            WidgetQuickSection {
+                title: Translation.tr("Metrics")
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: 2
+                    columnSpacing: 4
+                    rowSpacing: 4
+                    Repeater {
+                        model: [
+                            { label: Translation.tr("CPU"), icon: "memory", key: "showCpu", fallback: true },
+                            { label: Translation.tr("RAM"), icon: "storage", key: "showMemory", fallback: true },
+                            { label: Translation.tr("GPU"), icon: "developer_board", key: "showGpu", fallback: true },
+                            { label: Translation.tr("Disk"), icon: "hard_drive", key: "showDisk", fallback: false },
+                            { label: Translation.tr("CPU temp"), icon: "thermostat", key: "showTemp", fallback: false },
+                            { label: Translation.tr("GPU temp"), icon: "device_thermostat", key: "showGpuTemp", fallback: false }
+                        ]
+                        WidgetQuickToggle {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            Layout.maximumWidth: Number.POSITIVE_INFINITY
+                            implicitWidth: 150
+                            iconName: modelData.icon
+                            label: modelData.label
+                            checked: Boolean(root._readConfigKey(modelData.key) ?? modelData.fallback)
+                            enabled: !checked || root._resourceModel.length > 1
+                            onToggled: root._setOutputValue(modelData.key, !checked)
+                        }
                     }
+                }
+                WidgetQuickToggle {
+                    Layout.fillWidth: true
+                    iconName: "label"
+                    label: Translation.tr("Labels")
+                    checked: root.showLabels
+                    onToggled: root._setOutputValue("showLabels", !root.showLabels)
                 }
             }
         }
@@ -101,17 +133,17 @@ AbstractBackgroundWidget {
     // Rechecking the global base here breaks output-local overrides and can
     // leave a visible monitor without ResourceUsage keep-alive.
     readonly property bool _active: root.visible
-    readonly property string displayMode: Config.getNestedValue("background.widgets.systemMonitor.displayMode", "bars")
-    readonly property bool showCpu: Config.getNestedValue("background.widgets.systemMonitor.showCpu", true)
-    readonly property bool showMemory: Config.getNestedValue("background.widgets.systemMonitor.showMemory", true)
-    readonly property bool showGpu: Config.getNestedValue("background.widgets.systemMonitor.showGpu", true)
-    readonly property bool showTemp: Config.getNestedValue("background.widgets.systemMonitor.showTemp", false)
-    readonly property bool showGpuTemp: Config.getNestedValue("background.widgets.systemMonitor.showGpuTemp", false)
-    readonly property bool showDisk: Config.getNestedValue("background.widgets.systemMonitor.showDisk", false)
-    readonly property bool showLabels: Config.getNestedValue("background.widgets.systemMonitor.showLabels", true)
-    readonly property real trackAlpha: Config.getNestedValue("background.widgets.systemMonitor.trackAlpha", 0.08)
-    readonly property real fillOpacity: Config.getNestedValue("background.widgets.systemMonitor.fillOpacity", 0.7)
-    readonly property real graphFillOpacity: Config.getNestedValue("background.widgets.systemMonitor.graphFillOpacity", 0.3)
+    readonly property string displayMode: root._readConfigKey("displayMode") ?? "bars"
+    readonly property bool showCpu: root._readConfigKey("showCpu") ?? true
+    readonly property bool showMemory: root._readConfigKey("showMemory") ?? true
+    readonly property bool showGpu: root._readConfigKey("showGpu") ?? true
+    readonly property bool showTemp: root._readConfigKey("showTemp") ?? false
+    readonly property bool showGpuTemp: root._readConfigKey("showGpuTemp") ?? false
+    readonly property bool showDisk: root._readConfigKey("showDisk") ?? false
+    readonly property bool showLabels: root._readConfigKey("showLabels") ?? true
+    readonly property real trackAlpha: root._readConfigKey("trackAlpha") ?? 0.08
+    readonly property real fillOpacity: root._readConfigKey("fillOpacity") ?? 0.7
+    readonly property real graphFillOpacity: root._readConfigKey("graphFillOpacity") ?? 0.3
 
     // ── Static resource model (metadata only — no live values) ──
     readonly property var _resourceModel: {
@@ -119,21 +151,39 @@ AbstractBackgroundWidget {
         if (root.showCpu) items.push({ icon: "memory", label: Translation.tr("CPU"), key: "cpu" });
         if (root.showMemory) items.push({ icon: "storage", label: Translation.tr("RAM"), key: "mem" });
         if (root.showGpu) items.push({ icon: "developer_board", label: Translation.tr("GPU"), key: "gpu" });
-        if (root.showTemp) items.push({ icon: "thermostat", label: Translation.tr("Temp"), key: "temp" });
-        if (root.showGpuTemp) items.push({ icon: "device_thermostat", label: Translation.tr("GPU temp"), key: "gpuTemp" });
+        if (root.showTemp) items.push({ icon: "thermostat", label: Translation.tr("CPU"), key: "temp" });
+        if (root.showGpuTemp) items.push({ icon: "device_thermostat", label: Translation.tr("GPU"), key: "gpuTemp" });
         if (root.showDisk) items.push({ icon: "hard_drive", label: Translation.tr("Disk"), key: "disk" });
         return items;
+    }
+
+    // What the widget shows: the live readings while the desktop is seen, the last ones behind windows.
+    // Another consumer (ii's bar) can keep ResourceUsage polling; a covered widget must not redraw for it.
+    function _readingNow(): var {
+        return {
+            cpu: ResourceUsage.cpuUsage, mem: ResourceUsage.memoryUsedPercentage, gpu: ResourceUsage.gpuUsage,
+            cpuTemp: ResourceUsage.cpuTemp, gpuTemp: ResourceUsage.gpuTemp, gpuTempPercentage: ResourceUsage.gpuTempPercentage,
+            disk: ResourceUsage.diskUsedPercentage, cpuHistory: ResourceUsage.cpuUsageHistory,
+            memHistory: ResourceUsage.memoryUsageHistory, gpuHistory: ResourceUsage.gpuUsageHistory,
+            gpuTempHistory: ResourceUsage.gpuTempHistory
+        };
+    }
+    property var reading: ({})
+    Binding on reading {
+        when: root.motionActive
+        value: root._readingNow()
+        restoreMode: Binding.RestoreNone
     }
 
     // Live value accessor — delegates use this to read current value
     function _getValue(key: string): real {
         switch (key) {
-            case "cpu": return ResourceUsage.cpuUsage;
-            case "mem": return ResourceUsage.memoryUsedPercentage;
-            case "gpu": return ResourceUsage.gpuUsage;
-            case "temp": return ResourceUsage.tempPercentage;
-            case "gpuTemp": return ResourceUsage.gpuTempPercentage;
-            case "disk": return ResourceUsage.diskUsedPercentage;
+            case "cpu": return root.reading.cpu ?? 0;
+            case "mem": return root.reading.mem ?? 0;
+            case "gpu": return root.reading.gpu ?? 0;
+            case "temp": return Math.min((root.reading.cpuTemp ?? 0) / 100, 1.0);
+            case "gpuTemp": return root.reading.gpuTempPercentage ?? 0;
+            case "disk": return root.reading.disk ?? 0;
             default: return 0;
         }
     }
@@ -151,12 +201,14 @@ AbstractBackgroundWidget {
     }
 
     function _getDisplayText(key: string): string {
-        if (key === "temp") return ResourceUsage.maxTemp + "°C";
-        if (key === "gpuTemp") return ResourceUsage.gpuTemp + "°C";
+        if (key === "temp") return (root.reading.cpuTemp ?? 0) + "°C";
+        if (key === "gpuTemp") return (root.reading.gpuTemp ?? 0) + "°C";
         return Math.round(root._getValue(key) * 100) + "%";
     }
 
     function _tileShape(key: string): int {
+        // iRiS keeps glyph badges plain round; expressive shapes are Material's.
+        if (root.widgetIris) return MaterialShape.Shape.Circle
         switch (key) {
             case "cpu": return MaterialShape.Shape.Gem;
             case "mem": return MaterialShape.Shape.Cookie4Sided;
@@ -173,7 +225,9 @@ AbstractBackgroundWidget {
     function _tileRole(key: string): var {
         const role = key === "mem" ? root.widgetSecondaryRole
             : key === "gpu" ? root.widgetTertiaryRole
-            : key === "temp" || key === "gpuTemp" ? root.widgetSignalRole
+            // Heat is only a signal when it is one: a cool reading in the alarm colour reads as a fault.
+            : key === "temp" || key === "gpuTemp" ? (root._metricSeverity(key) >= 2 ? root.widgetSignalRole
+                : root._metricSeverity(key) === 1 ? "warning" : root.widgetSurfaceRole)
             : key === "disk" ? root.widgetSurfaceRole
             : root.widgetPrimaryRole;
         const set = root.widgetSemanticSet(role);
@@ -220,10 +274,8 @@ AbstractBackgroundWidget {
     // backdrop polarity; do not saturate or re-hue either token. This keeps the
     // labels consistent with the shell's text hierarchy while the metric arc owns
     // the accent color.
-    readonly property color _metricLightInk: Appearance.m3colors.darkmode
-        ? Appearance.colors.colOnLayer0 : Appearance.m3colors.m3inverseOnSurface
-    readonly property color _metricDarkInk: Appearance.m3colors.darkmode
-        ? Appearance.m3colors.m3inverseOnSurface : Appearance.colors.colOnLayer0
+    readonly property color _metricLightInk: root._inkLight
+    readonly property color _metricDarkInk: root._inkDark
     readonly property color _metricText: root.forceLightInk ? root._metricLightInk
         : root.forceDarkInk ? root._metricDarkInk
         : root.widgetHasSurface
@@ -283,10 +335,13 @@ AbstractBackgroundWidget {
 
     // Animation duration for smooth value transitions
     readonly property int _animDuration: Appearance.animation.elementMove.duration
+    // Values tick every second: easing them behind windows repaints the desktop for nothing.
+    readonly property bool animatesValues: Appearance.animationsEnabled && root.motionActive
 
+    // Readings behind windows are never seen and each one redraws the desktop: polling follows motionActive.
     property bool _holdingResourceUsage: false
     function _syncResourceUsage(): void {
-        const shouldHold = root._active && root.visible && root.powerActive;
+        const shouldHold = root._active && root.visible && root.motionActive;
         if (shouldHold && !root._holdingResourceUsage) {
             root._holdingResourceUsage = true;
             ResourceUsage.keepAlive();
@@ -297,14 +352,15 @@ AbstractBackgroundWidget {
     }
     on_ActiveChanged: root._syncResourceUsage()
     onVisibleChanged: root._syncResourceUsage()
-    onPowerActiveChanged: root._syncResourceUsage()
-    Component.onCompleted: root._syncResourceUsage()
+    onMotionActiveChanged: root._syncResourceUsage()
+    Component.onCompleted: { root.reading = root._readingNow(); root._syncResourceUsage(); }
     Component.onDestruction: if (root._holdingResourceUsage) {
         root._holdingResourceUsage = false;
         ResourceUsage.releaseKeepAlive();
     }
 
     WidgetSurface {
+        irisPresentation: root.widgetIris
         regionBrightness: root.regionBrightness
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
@@ -320,8 +376,115 @@ AbstractBackgroundWidget {
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.displayMode !== "tiles"
+        shown: !root.irisFaced && root.displayMode !== "tiles" && root.displayMode !== "instrument"
             && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // INSTRUMENT MODE — a bank of comparable vertical measurement rails.
+    // Values, units and resource identity stay readable without watch faces.
+    // ══════════════════════════════════════════════════════════
+    Grid {
+        anchors.centerIn: parent
+        opacity: root.displayMode === "instrument" ? 1 : 0
+        visible: !root.irisFaced && opacity > 0
+        enabled: root.displayMode === "instrument"
+        Behavior on opacity {
+            enabled: root.animationsActive
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
+        columns: root.meterColumns
+        spacing: Math.round(10 * root.scaleFactor)
+        move: Transition {
+            enabled: root.animateGeometry
+            NumberAnimation {
+                properties: "x,y"
+                duration: Appearance.animation.elementMove.duration
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        Repeater {
+            model: root._resourceModel
+
+            Item {
+                id: resourceMeter
+                required property var modelData
+                readonly property real side: Math.min(
+                    (root.height - root._innerMargin * 2 - Math.round(10 * root.scaleFactor) * (root.meterRows - 1)) / Math.max(1, root.meterRows),
+                    (root.width - root._innerMargin * 2 - Math.round(10 * root.scaleFactor) * (root.meterColumns - 1))
+                        / root.meterColumns)
+                readonly property real liveValue: root._getValue(modelData.key)
+                readonly property color liveColor: root.widgetRoleColor(root._getColor(modelData.key))
+
+                width: Math.max(40, Math.round(resourceMeter.side))
+                height: Math.max(40, Math.round(resourceMeter.side))
+
+                InstrumentScale {
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: Math.round(8 * root.scaleFactor)
+                    anchors.bottomMargin: Math.round(8 * root.scaleFactor)
+                    width: Math.round(14 * root.scaleFactor)
+                    vertical: true
+                    divisions: 20
+                    fraction: resourceMeter.liveValue
+                    ink: root.widgetInk
+                    accent: resourceMeter.liveColor
+                    animated: root.animationsActive
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: Math.round(24 * root.scaleFactor)
+                    anchors.topMargin: Math.round(6 * root.scaleFactor)
+                    anchors.bottomMargin: Math.round(6 * root.scaleFactor)
+                    spacing: Math.round(4 * root.scaleFactor)
+
+                    MaterialSymbol {
+                        Layout.alignment: Qt.AlignLeft
+                        text: resourceMeter.modelData.icon
+                        iconSize: Math.max(14, Math.round(resourceMeter.side * 0.12))
+                        color: resourceMeter.liveColor
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        verticalAlignment: Text.AlignBottom
+                        fontSizeMode: Text.Fit
+                        minimumPixelSize: Math.round(14 * root.scaleFactor)
+                        text: root._getDisplayText(resourceMeter.modelData.key)
+                        color: root.widgetInk
+                        font {
+                            family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily
+                            pixelSize: Math.round(resourceMeter.side * 0.29)
+                            weight: Font.Bold
+                            features: ({ "tnum": 1 })
+                            letterSpacing: -0.5
+                        }
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        visible: root.showLabels
+                        elide: Text.ElideRight
+                        text: resourceMeter.modelData.key === "temp" ? Translation.tr("CPU temp")
+                            : resourceMeter.modelData.key === "gpuTemp" ? Translation.tr("GPU temp")
+                            : resourceMeter.modelData.label
+                        color: root.widgetInkMuted
+                        font {
+                            family: root.widgetBodyFamily
+                            pixelSize: Math.max(10, Math.round(resourceMeter.side * 0.075))
+                            weight: Font.DemiBold
+                            letterSpacing: Math.round(1.4 * root.scaleFactor)
+                            capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // ══════════════════════════════════════════════════════════
@@ -331,7 +494,13 @@ AbstractBackgroundWidget {
         anchors.fill: parent
         anchors.margins: root._innerMargin
         spacing: Appearance.sizes.spacingSmall ?? 4
-        visible: root.displayMode === "bars"
+        opacity: root.displayMode === "bars" ? 1 : 0
+        visible: !root.irisFaced && opacity > 0
+        enabled: root.displayMode === "bars"
+        Behavior on opacity {
+            enabled: root.animationsActive
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
 
         Repeater {
             model: root._resourceModel
@@ -374,7 +543,7 @@ AbstractBackgroundWidget {
                         opacity: root.fillOpacity
 
                         Behavior on width {
-                            enabled: Appearance.animationsEnabled
+                            enabled: root.animatesValues
                             NumberAnimation { duration: root._animDuration; easing.type: Easing.OutCubic }
                         }
                     }
@@ -386,7 +555,7 @@ AbstractBackgroundWidget {
                     color: barRow._liveColor
                     font {
                         pixelSize: Appearance.font.pixelSize.smaller
-                        family: Appearance.font.family.numbers
+                        family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily
                     }
                     horizontalAlignment: Text.AlignRight
                     Layout.preferredWidth: barRow.modelData.key === "temp" ? 40 : 32
@@ -401,7 +570,13 @@ AbstractBackgroundWidget {
     Item {
         anchors.fill: parent
         anchors.margins: root._innerMargin
-        visible: root.displayMode === "graph"
+        opacity: root.displayMode === "graph" ? 1 : 0
+        visible: !root.irisFaced && opacity > 0
+        enabled: root.displayMode === "graph"
+        Behavior on opacity {
+            enabled: root.animationsActive
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
 
         readonly property int _legendH: root.showLabels ? 16 : 0
 
@@ -425,7 +600,7 @@ AbstractBackgroundWidget {
                     StyledText {
                         text: root._getDisplayText(modelData.key)
                         color: root._graphColor(modelData.key)
-                        font { pixelSize: Appearance.font.pixelSize.smaller; family: Appearance.font.family.numbers }
+                        font { pixelSize: Appearance.font.pixelSize.smaller; family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily }
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
@@ -443,7 +618,7 @@ AbstractBackgroundWidget {
                 required property var modelData
                 text: modelData.label
                 color: root._metricSubtext
-                font { pixelSize: Appearance.font.pixelSize.smaller - 2; family: Appearance.font.family.numbers }
+                font { pixelSize: Appearance.font.pixelSize.smaller - 2; family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily }
                 anchors.right: parent.right
                 anchors.rightMargin: 2
                 y: parent._legendH + (parent.height - parent._legendH) * (1.0 - modelData.pct) - height / 2
@@ -465,7 +640,7 @@ AbstractBackgroundWidget {
         Graph {
             anchors.fill: parent
             anchors.topMargin: parent._legendH
-            values: root.showCpu ? ResourceUsage.cpuUsageHistory : []
+            values: root.showCpu ? (root.reading.cpuHistory ?? []) : []
             color: root._graphColor("cpu")
             fillOpacity: root.graphFillOpacity + 0.05
             alignment: Graph.Alignment.Right
@@ -475,7 +650,7 @@ AbstractBackgroundWidget {
         Graph {
             anchors.fill: parent
             anchors.topMargin: parent._legendH
-            values: root.showMemory ? ResourceUsage.memoryUsageHistory : []
+            values: root.showMemory ? (root.reading.memHistory ?? []) : []
             color: root._graphColor("mem")
             fillOpacity: root.graphFillOpacity
             alignment: Graph.Alignment.Right
@@ -485,7 +660,7 @@ AbstractBackgroundWidget {
         Graph {
             anchors.fill: parent
             anchors.topMargin: parent._legendH
-            values: root.showGpuTemp ? ResourceUsage.gpuTempHistory : []
+            values: root.showGpuTemp ? (root.reading.gpuTempHistory ?? []) : []
             color: root._graphColor("gpuTemp")
             fillOpacity: root.graphFillOpacity - 0.05
             alignment: Graph.Alignment.Right
@@ -495,7 +670,7 @@ AbstractBackgroundWidget {
         Graph {
             anchors.fill: parent
             anchors.topMargin: parent._legendH
-            values: root.showGpu ? ResourceUsage.gpuUsageHistory : []
+            values: root.showGpu ? (root.reading.gpuHistory ?? []) : []
             color: root._graphColor("gpu")
             fillOpacity: root.graphFillOpacity - 0.05
             alignment: Graph.Alignment.Right
@@ -509,7 +684,13 @@ AbstractBackgroundWidget {
     Row {
         anchors.centerIn: parent
         spacing: Appearance.sizes.spacingNormal ?? 8
-        visible: root.displayMode === "rings"
+        opacity: root.displayMode === "rings" ? 1 : 0
+        visible: !root.irisFaced && opacity > 0
+        enabled: root.displayMode === "rings"
+        Behavior on opacity {
+            enabled: root.animationsActive
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
 
         Repeater {
             model: root._resourceModel
@@ -524,11 +705,12 @@ AbstractBackgroundWidget {
                 )
                 readonly property real _liveValue: root._getValue(modelData.key)
                 readonly property color _liveColor: root._getColor(modelData.key)
+                width: _ringSize
 
                 // Smoothly interpolated value for display
                 property real _animatedValue: _liveValue
                 Behavior on _animatedValue {
-                    enabled: Appearance.animationsEnabled
+                    enabled: root.animatesValues
                     NumberAnimation { duration: root._animDuration; easing.type: Easing.OutCubic }
                 }
 
@@ -554,13 +736,13 @@ AbstractBackgroundWidget {
                     // Percentage/value inside the ring
                     StyledText {
                         anchors.centerIn: parent
-                        text: ringCol.modelData.key === "temp" ? ResourceUsage.maxTemp + "°"
-                            : ringCol.modelData.key === "gpuTemp" ? ResourceUsage.gpuTemp + "°"
+                        text: ringCol.modelData.key === "temp" ? (root.reading.cpuTemp ?? 0) + "°"
+                            : ringCol.modelData.key === "gpuTemp" ? (root.reading.gpuTemp ?? 0) + "°"
                             : Math.round(ringCol._animatedValue * 100)
                         color: ringCol._liveColor
                         font {
                             pixelSize: Math.max(10, Math.round(ringCol._ringSize * 0.26))
-                            family: Appearance.font.family.numbers
+                            family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily
                             weight: Font.DemiBold
                         }
                     }
@@ -572,16 +754,23 @@ AbstractBackgroundWidget {
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 2
                     MaterialSymbol {
+                        id: ringLabelIcon
                         text: ringCol.modelData.icon
                         iconSize: Appearance.font.pixelSize.smaller
                         color: root._metricSubtext
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     StyledText {
+                        width: Math.min(
+                            implicitWidth,
+                            Math.max(0, ringCol._ringSize - ringLabelIcon.implicitWidth - parent.spacing)
+                        )
                         text: ringCol.modelData.label
                         color: root._metricSubtext
-                        font { pixelSize: Appearance.font.pixelSize.smaller; family: Appearance.font.family.main }
+                        font { pixelSize: Appearance.font.pixelSize.smaller; family: root.widgetBodyFamily }
                         anchors.verticalCenter: parent.verticalCenter
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
                     }
                 }
             }
@@ -594,7 +783,13 @@ AbstractBackgroundWidget {
     Flow {
         anchors.centerIn: parent
         spacing: Appearance.sizes.spacingSmall ?? 4
-        visible: root.displayMode === "text"
+        opacity: root.displayMode === "text" ? 1 : 0
+        visible: !root.irisFaced && opacity > 0
+        enabled: root.displayMode === "text"
+        Behavior on opacity {
+            enabled: root.animationsActive
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
         width: parent.width - root._innerMargin * 2
 
         Repeater {
@@ -623,10 +818,11 @@ AbstractBackgroundWidget {
 
                     StyledText {
                         text: textChip.modelData.label
+                        font.weight: root.widgetLabelWeight
                         color: root._metricSubtext
                         font {
                             pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
-                            family: Appearance.font.family.main
+                            family: root.widgetBodyFamily
                         }
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -636,7 +832,7 @@ AbstractBackgroundWidget {
                         color: textChip._liveColor
                         font {
                             pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
-                            family: Appearance.font.family.numbers
+                            family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily
                             weight: Font.DemiBold
                         }
                         anchors.verticalCenter: parent.verticalCenter
@@ -650,7 +846,13 @@ AbstractBackgroundWidget {
         id: tileGrid
         anchors.fill: parent
         anchors.margins: root._innerMargin
-        visible: root.displayMode === "tiles" && root._resourceModel.length > 0
+        opacity: root.displayMode === "tiles" && root._resourceModel.length > 0 ? 1 : 0
+        visible: !root.irisFaced && opacity > 0
+        enabled: root.displayMode === "tiles"
+        Behavior on opacity {
+            enabled: root.animationsActive
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
         columnSpacing: root._tileGap
         rowSpacing: root._tileGap
         columns: root._tileColumns
@@ -690,7 +892,7 @@ AbstractBackgroundWidget {
                 StyledRectangularShadow {
                     target: tile
                     z: -2
-                    visible: !Appearance.zzzEverywhere && !Appearance.inirEverywhere
+                    visible: !root.widgetIris && !Appearance.zzzEverywhere && !Appearance.inirEverywhere
                         && !Appearance.regaliaEverywhere
                 }
 
@@ -723,7 +925,7 @@ AbstractBackgroundWidget {
                                 Math.round(Appearance.font.pixelSize.hugeass * root.scaleFactor),
                                 Math.round(tile.height * 0.30),
                                 Math.round(tile.width * 0.34)))
-                            family: Appearance.font.family.numbers
+                            family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily
                             weight: Font.Bold
                         }
                     }
@@ -733,6 +935,7 @@ AbstractBackgroundWidget {
                         Layout.topMargin: -Math.round(tile.height * 0.03)
                         visible: root.showLabels && tile.height >= 62
                         text: tile.modelData.label
+                        font.weight: root.widgetLabelWeight
                         color: ColorUtils.applyAlpha(tile.role.ink, 0.62)
                         elide: Text.ElideRight
                         font.pixelSize: Math.max(10, Math.min(
@@ -745,7 +948,7 @@ AbstractBackgroundWidget {
     }
 
     Column {
-        visible: root._resourceModel.length === 0
+        visible: !root.irisFaced && root._resourceModel.length === 0
         anchors.centerIn: parent
         spacing: Math.round((Appearance.sizes.spacingSmall ?? 8) / 2)
 

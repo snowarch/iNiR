@@ -12,7 +12,7 @@ The service connects to your compositor via a wants link:
 ~/.config/systemd/user/niri.service.wants/inir.service
 ```
 
-When niri starts, systemd starts iNiR. When niri stops, iNiR stops. Manage the link with:
+When Niri starts, `inir.service` waits for the `Type=notify` compositor service to report ready, so it inherits Niri's authoritative `DISPLAY`, `WAYLAND_DISPLAY` and `NIRI_SOCKET`. When Niri stops, iNiR stops. Manage the link with:
 
 ```bash
 inir service enable     # create wants link
@@ -30,9 +30,8 @@ There are two layers of autostart in a typical iNiR setup:
 
 These are defined in `~/.config/niri/config.d/50-startup.kdl` and managed by the compositor:
 
-- `wl-paste --type text --watch cliphist store` (clipboard text history)
-- `wl-paste --type image --watch cliphist store` (clipboard image history)
-- `polkit-mate-authentication-agent-1` (GUI sudo prompts)
+- `wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/clipboard-store.py` (clipboard text history; avoids synthetic trailing newlines and strips browser markup)
+- `wl-paste --type image --watch ~/.config/quickshell/inir/scripts/clipboard-image-store.sh` (clipboard image history; internal preview frames are filtered)
 - `kbuildsycoca6` (KDE desktop entry cache)
 
 These run before iNiR starts and are independent of the shell.
@@ -86,11 +85,11 @@ Before executing an action, the session screen checks for running package manage
 
 ## Polkit agent
 
-iNiR includes a PolicyKit authentication agent. When a privileged operation needs authorization (installing a package, mounting a disk), a dialog appears asking for your password.
+iNiR is your PolicyKit authentication agent. When a privileged operation needs authorization (installing a package, mounting a disk), its dialog asks for your password, in the look of the family you use. Niri starts no other agent.
 
-The shell's polkit agent coexists with the system one (mate-polkit, which niri starts). If the shell's agent fails to register (because another one is already active), that's fine. You'll still get prompted.
+If you run an agent of your own, iNiR sees it at start and steps aside. Turn the shell's agent off with `QS_DISABLE_POLKIT=1`.
 
-Disable the shell's agent with `QS_DISABLE_POLKIT=1` if it causes issues.
+While the shell is restarting, nothing answers graphical prompts and they fail as not authorized; try again once it is back (systemd restarts it on its own). `pkexec` and `run0` in a terminal ask there instead.
 
 ## Idle management
 

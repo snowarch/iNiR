@@ -14,6 +14,7 @@ import Quickshell
 
 Item {
     id: root
+    readonly property bool editorial: Appearance.editorialEverywhere
 
     required property var folderModel
     required property string currentWallpaperPath
@@ -40,31 +41,39 @@ Item {
     readonly property real sideCardWidth: Math.max(180, Math.min(heroWidth * 0.42, 340))
     readonly property real sideCardHeight: Math.round(sideCardWidth * 0.64)
     readonly property real filmstripHeight: Math.max(112, Math.min(height * 0.18, 164))
-    readonly property real panelRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+    readonly property real panelRadius: root.editorial ? Appearance.rounding.small
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.normal
-    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+    readonly property real cardRadius: root.editorial ? Appearance.editorial.radius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
         : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
         : Appearance.rounding.large
-    readonly property color surfaceColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    readonly property color surfaceColor: root.editorial ? Appearance.editorial.layer(1)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1
-    readonly property color elevatedColor: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
+    readonly property color elevatedColor: root.editorial ? Appearance.editorial.layer(2)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colOverlay
         : Appearance.colors.colLayer2
-    readonly property color baseColor: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
+    readonly property color baseColor: root.editorial ? Appearance.editorial.paper
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
         : Appearance.inirEverywhere ? Appearance.inir.colLayer0
         : Appearance.auroraEverywhere ? Appearance.aurora.colOverlay
         : Appearance.colors.colLayer0
-    readonly property color textColor: Appearance.angelEverywhere ? Appearance.angel.colText
+    readonly property color textColor: root.editorial ? Appearance.editorial.ink
+        : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.colors.colOnLayer1
-    readonly property color subtleTextColor: Appearance.angelEverywhere ? Appearance.angel.colTextMuted
+    readonly property color subtleTextColor: root.editorial ? Appearance.editorial.muted
+        : Appearance.angelEverywhere ? Appearance.angel.colTextMuted
         : Appearance.inirEverywhere ? Appearance.inir.colTextMuted
         : Appearance.colors.colSubtext
-    readonly property color borderColor: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
+    readonly property color borderColor: root.editorial ? Appearance.editorial.rule
+        : Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
         : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
         : ColorUtils.applyAlpha(Appearance.colors.colOutlineVariant, 0.55)
     readonly property string helperText: searchField.activeFocus
@@ -309,7 +318,7 @@ Item {
 
     ColorQuantizer {
         id: quantizer
-        source: root._debouncedQuantizerSource
+        source: root.editorial ? "" : root._debouncedQuantizerSource
         depth: 0
         rescaleSize: 10
     }
@@ -319,6 +328,8 @@ Item {
         color: ColorUtils.mix(root.dominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.colors.colSecondaryContainer
     }
     readonly property color accentColor: {
+        if (root.editorial)
+            return Appearance.editorial.accent
         if (activeIsDir || activePath.length === 0)
             return Appearance.colors.colPrimary
         return blendedColors?.colPrimary ?? dominantColor
@@ -509,7 +520,7 @@ Item {
             GradientStop { position: 0.45; color: ColorUtils.applyAlpha(root._accent, 0.045) }
             GradientStop { position: 1.0; color: "transparent" }
         }
-        opacity: root.previewMode ? 0.25 : 0.48
+        opacity: root.editorial ? 0 : (root.previewMode ? 0.25 : 0.48)
     }
 
     Rectangle {
@@ -535,11 +546,12 @@ Item {
         opacity: visible ? 1.0 : 0.0
         screenX: { const p = topPill.mapToGlobal(0, 0); return p.x }
         screenY: { const p = topPill.mapToGlobal(0, 0); return p.y }
-        radius: Appearance.rounding.full
+        radius: root.editorial ? Appearance.rounding.small : Appearance.rounding.full
         fallbackColor: root.surfaceColor
         inirColor: Appearance.inir.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
-        border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
+        wallpaperBackdropEnabled: !root.editorial
+        border.width: root.editorial || Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
         border.color: root.borderColor
         Behavior on opacity { enabled: Appearance.animationsEnabled; animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
@@ -552,7 +564,7 @@ Item {
             Rectangle {
                 implicitWidth: mediaPillLabel.implicitWidth + 28
                 implicitHeight: mediaPillLabel.implicitHeight + 10
-                radius: height / 2
+                radius: root.editorial ? Appearance.rounding.small : height / 2
                 color: ColorUtils.applyAlpha(root._kindColor(root.activeKind, root.activeIsDir), 0.18)
                 border.width: 1
                 border.color: ColorUtils.applyAlpha(root._kindColor(root.activeKind, root.activeIsDir), 0.45)
@@ -573,6 +585,8 @@ Item {
                         color: root.textColor
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.weight: Font.DemiBold
+                        font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                        font.letterSpacing: root.editorial ? 0.35 : 0
                     }
                 }
             }
@@ -581,7 +595,8 @@ Item {
                 text: root.hasItems ? "%1 / %2".arg(root.currentIndex + 1).arg(root.totalCount) : "0 / 0"
                 color: root.subtleTextColor
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                font.family: Appearance.font.family.monospace
+                font.family: root.editorial ? Appearance.font.family.numbers : Appearance.font.family.monospace
+                font.weight: root.editorial ? Font.DemiBold : Font.Normal
             }
 
             StyledText {
@@ -623,7 +638,8 @@ Item {
             fallbackColor: root.surfaceColor
             inirColor: Appearance.inir.colLayer1
             auroraTransparency: Appearance.aurora.popupTransparentize
-            border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
+            wallpaperBackdropEnabled: !root.editorial
+            border.width: root.editorial || Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
             border.color: root.borderColor
             Behavior on opacity { enabled: Appearance.animationsEnabled; animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
@@ -637,7 +653,9 @@ Item {
                     text: Translation.tr("Selection")
                     color: root.textColor
                     font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.DemiBold
+                    font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                    font.weight: root.editorial ? Appearance.editorial.titleWeight : Font.DemiBold
+                    font.letterSpacing: root.editorial ? 0.4 : 0
                 }
 
                 Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: root.borderColor; opacity: 0.35 }
@@ -647,7 +665,9 @@ Item {
                     text: root.activeDisplayName.length > 0 ? root.activeDisplayName : Translation.tr("Choose a wallpaper")
                     color: root.textColor
                     font.pixelSize: Appearance.font.pixelSize.normal
-                    font.weight: Font.DemiBold
+                    font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                    font.weight: root.editorial ? Appearance.editorial.titleWeight : Font.DemiBold
+                    font.letterSpacing: root.editorial ? Appearance.editorial.titleTracking * 0.45 : 0
                     maximumLineCount: 2
                     wrapMode: Text.Wrap
                     elide: Text.ElideMiddle
@@ -714,7 +734,8 @@ Item {
             fallbackColor: root.surfaceColor
             inirColor: Appearance.inir.colLayer1
             auroraTransparency: Appearance.aurora.popupTransparentize
-            border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
+            wallpaperBackdropEnabled: !root.editorial
+            border.width: root.editorial || Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
             border.color: root.borderColor
             Behavior on opacity { enabled: Appearance.animationsEnabled; animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
@@ -728,7 +749,9 @@ Item {
                     text: Translation.tr("Quick actions")
                     color: root.textColor
                     font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.DemiBold
+                    font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                    font.weight: root.editorial ? Appearance.editorial.titleWeight : Font.DemiBold
+                    font.letterSpacing: root.editorial ? 0.4 : 0
                 }
 
                 Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: root.borderColor; opacity: 0.35 }
@@ -737,17 +760,17 @@ Item {
                     Layout.fillWidth: true
                     implicitHeight: 40
                     buttonRadius: root.panelRadius
-                    colBackground: ColorUtils.applyAlpha(root._accent, 0.18)
-                    colBackgroundHover: ColorUtils.applyAlpha(root._accent, 0.28)
+                    colBackground: root.editorial ? Appearance.editorial.accent : ColorUtils.applyAlpha(root._accent, 0.18)
+                    colBackgroundHover: root.editorial ? Appearance.colors.colPrimaryHover : ColorUtils.applyAlpha(root._accent, 0.28)
                     onClicked: root.activateCurrent()
 
                     contentItem: RowLayout {
                         anchors.centerIn: parent
                         spacing: 6
-                        MaterialSymbol { text: root.activeIsDir ? "folder_open" : "check_circle"; iconSize: Appearance.font.pixelSize.small; color: root.textColor }
+                        MaterialSymbol { text: root.activeIsDir ? "folder_open" : "check_circle"; iconSize: Appearance.font.pixelSize.small; color: root.editorial ? Appearance.editorial.accentInk : root.textColor }
                         StyledText {
                             text: root.activeIsDir ? Translation.tr("Open folder") : Translation.tr("Apply selected")
-                            color: root.textColor
+                            color: root.editorial ? Appearance.editorial.accentInk : root.textColor
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.DemiBold
                         }
@@ -821,7 +844,7 @@ Item {
 
             StyledRectangularShadow {
                 target: heroCard
-                visible: !Appearance.auroraEverywhere
+                visible: !root.editorial && !Appearance.auroraEverywhere
                 radius: heroCard.radius
                 opacity: root.previewMode ? 0.28 : 0.18
             }
@@ -1009,7 +1032,7 @@ Item {
                                 Rectangle {
                                     implicitWidth: kindLabel.implicitWidth + 14
                                     implicitHeight: kindLabel.implicitHeight + 6
-                                    radius: height / 2
+                                    radius: root.editorial ? Appearance.rounding.small : height / 2
                                     color: ColorUtils.applyAlpha(root._kindColor(root.activeKind, root.activeIsDir), 0.25)
                                     border.width: 1
                                     border.color: ColorUtils.applyAlpha(root._kindColor(root.activeKind, root.activeIsDir), 0.50)
@@ -1021,6 +1044,8 @@ Item {
                                         color: Appearance.colors.colOnLayer0
                                         font.pixelSize: Appearance.font.pixelSize.smaller
                                         font.weight: Font.DemiBold
+                                        font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                                        font.letterSpacing: root.editorial ? 0.35 : 0
                                     }
                                 }
 
@@ -1030,17 +1055,19 @@ Item {
                                     visible: root.activeMatchesCurrentWallpaper && !root.activeIsDir
                                     implicitWidth: activeBadge.implicitWidth + 14
                                     implicitHeight: activeBadge.implicitHeight + 6
-                                    radius: height / 2
+                                    radius: root.editorial ? Appearance.rounding.small : height / 2
                                     color: ColorUtils.applyAlpha(root._accent, 0.92)
 
                                     StyledText {
                                         id: activeBadge
                                         anchors.centerIn: parent
                                         text: Translation.tr("Active")
-                                        color: ColorUtils.contrastColor(root._accent)
+                                        color: root.editorial ? Appearance.editorial.accentInk : ColorUtils.contrastColor(root._accent)
                                         font.pixelSize: Appearance.font.pixelSize.small
                                         font.weight: Font.DemiBold
-                                        layer.enabled: true
+                                        font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                                        font.letterSpacing: root.editorial ? 0.35 : 0
+                                        layer.enabled: !root.editorial
                                         layer.effect: GE.DropShadow {
                                             verticalOffset: 1
                                             horizontalOffset: 0
@@ -1110,7 +1137,7 @@ Item {
 
                 StyledRectangularShadow {
                     target: sideCard
-                    visible: !Appearance.auroraEverywhere
+                    visible: !root.editorial && !Appearance.auroraEverywhere
                     radius: sideCard.radius
                     opacity: 0.12
                 }
@@ -1201,7 +1228,8 @@ Item {
         fallbackColor: root.surfaceColor
         inirColor: Appearance.inir.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
-        border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
+        wallpaperBackdropEnabled: !root.editorial
+        border.width: root.editorial || Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
         border.color: root.borderColor
         Behavior on height { enabled: Appearance.animationsEnabled; animation: NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve } }
 
@@ -1319,14 +1347,14 @@ Item {
                             }
                             implicitWidth: currentBadge.implicitWidth + 10
                             implicitHeight: currentBadge.implicitHeight + 5
-                            radius: height / 2
-                            color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.78)
+                            radius: root.editorial ? Appearance.rounding.small : height / 2
+                            color: root.editorial ? Appearance.editorial.ink : ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.78)
 
                             StyledText {
                                 id: currentBadge
                                 anchors.centerIn: parent
                                 text: Translation.tr("Current")
-                                color: Appearance.colors.colOnLayer0
+                                color: root.editorial ? Appearance.editorial.paperOnInk : Appearance.colors.colOnLayer0
                                 font.pixelSize: Appearance.font.pixelSize.smaller - 2
                                 font.weight: Font.DemiBold
                             }
@@ -1394,8 +1422,8 @@ Item {
         visible: root.previewMode || root.showKeyboardGuide
         opacity: visible ? 1.0 : 0.0
         z: 220
-        radius: height / 2
-        color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.72)
+        radius: root.editorial ? Appearance.rounding.small : height / 2
+        color: root.editorial ? Appearance.editorial.ink : ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.72)
         width: hintText.implicitWidth + 24
         height: hintText.implicitHeight + 10
         Behavior on opacity { enabled: Appearance.animationsEnabled; animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
@@ -1407,7 +1435,10 @@ Item {
                 ? Translation.tr("Space to exit preview  ·  Enter to apply")
                 : Translation.tr("/ Search  ·  Space Preview  ·  Enter Apply  ·  Esc Close")
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.colors.colOnLayer0
+            font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+            font.weight: root.editorial ? Font.DemiBold : Font.Normal
+            font.letterSpacing: root.editorial ? 0.55 : 0
+            color: root.editorial ? Appearance.editorial.paperOnInk : Appearance.colors.colOnLayer0
         }
     }
 

@@ -479,7 +479,12 @@ Singleton {
             }
             else if (xhr.readyState === XMLHttpRequest.DONE) {
                 console.log("[Booru] Request failed with status: " + xhr.status)
-                newResponse.message = root.failMessage
+                const sourceName = requestProvider?.name ?? requestProviderId
+                newResponse.message = xhr.status === 0
+                    ? (Network.online ? Translation.tr("%1 didn't answer. It may be down; try again in a while.").arg(sourceName) : Network.offlineReason)
+                    : [502, 503, 504].includes(xhr.status)
+                        ? Translation.tr("%1 is temporarily unavailable (HTTP %2).").arg(sourceName).arg(xhr.status)
+                        : Translation.tr("%1 request failed (HTTP %2).").arg(sourceName).arg(xhr.status)
                 root.runningRequests--;
                 root._appendResponse(newResponse)
             }

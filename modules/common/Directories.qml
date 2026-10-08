@@ -6,6 +6,7 @@ import qs.services
 import QtCore
 import QtQuick
 import Quickshell
+import Quickshell.Io
 
 Singleton {
     id: root
@@ -48,12 +49,19 @@ Singleton {
     property string userAvatarPathAccountsService: FileUtils.trimFileProtocol(`/var/lib/AccountsService/icons/${SystemInfo.username}`)
     property string userAvatarPathRicersAndWeirdSystems: `${Directories.homePath}/.face`
     property string userAvatarPathRicersAndWeirdSystems2: `${Directories.homePath}/.face.icon`
+    property int userAvatarRevision: 0
     readonly property var userAvatarPaths: [
         userAvatarPathAccountsService,
         userAvatarPathRicersAndWeirdSystems,
         userAvatarPathRicersAndWeirdSystems2
-    ]
+    ].filter(path => String(path ?? "").trim().length > 0)
     readonly property string userAvatarSourcePrimary: avatarSourceAt(0)
+
+    FileView {
+        path: root.userAvatarPathAccountsService
+        watchChanges: true
+        onFileChanged: root.userAvatarRevision++
+    }
     property string coverArt: `${Directories.cachePath}/media/coverart`
     property string tempImages: "/tmp/quickshell/media/images"
     property string booruPreviews: `${Directories.cachePath}/media/boorus`
@@ -72,6 +80,7 @@ Singleton {
     property string conflictCachePath: `${Directories.cachePath}/conflict-killer`
     property string notificationsPath: `${Directories.stateUserPath}/notifications.json`
     property string calendarSyncCachePath: `${Directories.stateUserPath}/calendar-sync-cache.json`
+    property string weatherCachePath: `${Directories.stateUserPath}/weather-cache.json`
     property string generatedMaterialThemePath: `${Directories.stateUserPath}/generated/colors.json`
     property string generatedPalettePath: `${Directories.stateUserPath}/generated/palette.json`
     property string generatedAppPalettePath: `${Directories.stateUserPath}/generated/app-palette.json`
@@ -103,11 +112,13 @@ Singleton {
             return ""
 
         const path = String(userAvatarPaths[index] ?? "").trim()
-        return path.length > 0 ? `file://${path}` : ""
+        return path.length > 0 ? `file://${path}?inir-avatar=${root.userAvatarRevision}` : ""
     }
 
     function nextAvatarSource(currentSource: string): string {
-        const normalized = String(currentSource ?? "").replace(/^file:\/\//, "")
+        const normalized = String(currentSource ?? "")
+            .replace(/^file:\/\//, "")
+            .replace(/\?inir-avatar=\d+$/, "")
 
         for (let i = 0; i < userAvatarPaths.length; ++i) {
             if (String(userAvatarPaths[i] ?? "") === normalized)

@@ -74,7 +74,6 @@ RippleButton {
     // Atomic number — top-left
     StyledText {
         id: elementNumber
-        visible: !root.compact
         anchors {
             top: parent.top
             left: parent.left

@@ -6,6 +6,7 @@ import Quickshell.Io
 import QtQuick
 
 import qs.modules.common
+import qs.services
 
 Singleton {
     id: root
@@ -176,8 +177,9 @@ Singleton {
         return Translation.tr("Hazardous")
     }
 
-    function describeWeather(code): string {
+    function describeWeather(code, night): string {
         const weatherCode = String(code ?? "113")
+        if (weatherCode === "113" && night === true) return Translation.tr("Clear")
         const descriptions = {
             "113": Translation.tr("Sunny"),
             "116": Translation.tr("Partly cloudy"),
@@ -244,7 +246,7 @@ Singleton {
         result.sunset = astro?.sunset ?? "--:--";
         result.windDir = current.winddir16Point ?? "N";
         result.wCode = current.weatherCode ?? "113";
-        result.description = root.describeWeather(result.wCode);
+        result.description = root.describeWeather(result.wCode, root.isNightNow());
         result.city = root.location.name || "Unknown";
 
         if (root.useUSCS) {
@@ -304,6 +306,7 @@ Singleton {
 
         result.lastRefresh = Qt.formatTime(new Date(), "hh:mm");
         root.data = result;
+        root._stamp()
         console.info("[Weather] Updated:", result.temp, root.redactedLogCity(result.city));
         root.fetchAirQuality();
     }
@@ -353,8 +356,9 @@ Singleton {
         result.sunrise = sunrise ? sunrise.split("T")[1] ?? sunrise : "--:--"
         result.sunset = sunset ? sunset.split("T")[1] ?? sunset : "--:--"
         result.windDir = root._degToCompass(current.wind_direction_10m)
-        result.wCode = String(current.weather_code ?? 113)
-        result.description = root.describeWeather(result.wCode)
+        // Current conditions speak wttr codes too, like the daily and hourly rows.
+        result.wCode = root._wmoToWttr(current.weather_code ?? 0)
+        result.description = root.describeWeather(result.wCode, root.isNightNow())
         result.city = root.location.name || "Unknown"
 
         result.temp = (current.temperature_2m ?? 0) + (units.temperature_2m ?? (root.useUSCS ? "°F" : "°C"))
@@ -403,6 +407,7 @@ Singleton {
 
         result.lastRefresh = Qt.formatTime(new Date(), "hh:mm")
         root.data = result
+        root._stamp()
         console.info("[Weather] Updated via Open-Meteo:", result.temp, root.redactedLogCity(result.city))
         root.fetchAirQuality()
     }
@@ -479,6 +484,7 @@ Singleton {
 
     // Resolve location: manual coords > manual city > GPS > IP auto-detect
     function resolveLocation(): void {
+        if (!Network.online) return;
         if (gpsLocator.running || ipLocator.running || fallbackLocator.running
                 || forwardGeocoder.running || reverseGeocoder.running || fetcher.running) {
             return;
@@ -558,7 +564,53 @@ Singleton {
             || fetcher.running || openMeteoFetcher.running;
     }
 
+    // Epoch ms of the last successful refresh; kept across restarts through the cache.
+    property double lastUpdated: 0
+    readonly property bool hasData: lastUpdated > 0
+    // Shown data that is not current: no internet, or older than two refresh intervals.
+    readonly property bool stale: hasData && (!Network.online || (_clockTick, Date.now() - lastUpdated > 2 * Math.max(root.fetchInterval, 600000)))
+
+    // When the shown data was fetched: the time today, the weekday and time before that.
+    readonly property string updatedLabel: {
+        root._clockTick
+        if (!root.hasData) return "--:--"
+        const then = new Date(root.lastUpdated)
+        const time = Qt.formatTime(then, "hh:mm")
+        return then.toDateString() === new Date().toDateString() ? time : Qt.formatDate(then, "ddd") + " " + time
+    }
+
+    function _stamp(): void {
+        root.lastUpdated = Date.now()
+        weatherCache.setText(JSON.stringify({ savedAt: root.lastUpdated, data: root.data }))
+    }
+
+    FileView {
+        id: weatherCache
+        path: Directories.weatherCachePath
+        printErrors: false
+        onLoaded: {
+            if (root.hasData) return
+            try {
+                const cached = JSON.parse(weatherCache.text())
+                if (!cached?.data || !(cached.savedAt > 0) || Date.now() - cached.savedAt > 3 * 86400000) return
+                root.data = cached.data
+                root.lastUpdated = cached.savedAt
+            } catch (e) {}
+        }
+        onLoadFailed: error => {}
+    }
+
+    Connections {
+        target: Network
+        function onOnlineChanged() {
+            if (!Network.online || !root.enabled || !root._initialized) return
+            root._retryCount = 0
+            if (!root.hasData || root.stale) root.getData()
+        }
+    }
+
     function getData(): void {
+        if (!Network.online) return;
         if (root.location.valid) {
             fetchWeather();
         } else {
@@ -597,7 +649,7 @@ Singleton {
         interval: Math.min(5000 * Math.pow(2, root._retryCount), 80000)
         repeat: false
         onTriggered: {
-            if (root._retryCount < 5) {
+            if (root._retryCount < 5 && Network.online) {
                 root._retryCount++;
                 console.info("[Weather] Retry attempt", root._retryCount);
                 if (!root.location.valid) {
@@ -825,7 +877,7 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.trim().length === 0) {
-                    console.warn("[Weather] GPS failed, falling back to IP");
+                    console.info("[Weather] GPS unavailable, using IP location");
                     gpsLocator._handledFallback = true;
                     root.getLocation();
                     return;
@@ -851,7 +903,7 @@ Singleton {
         }
         onExited: (code) => {
             if (code !== 0 && !root.location.valid && !gpsLocator._handledFallback) {
-                console.warn("[Weather] GPS process failed (code " + code + "), falling back to IP");
+                console.info("[Weather] GPS unavailable (code " + code + "), using IP location");
                 gpsLocator._handledFallback = true;
                 root.getLocation();
             }

@@ -317,7 +317,7 @@ strip_cava_config() {
 
 main() {
   local enabled
-  enabled=$(config_bool '.appearance.wallpaperTheming.enableCava' false)
+  enabled=$(config_bool '.appearance.wallpaperTheming.enableCava' true)
 
   if [[ "$enabled" == 'true' ]]; then
     apply_cava_config

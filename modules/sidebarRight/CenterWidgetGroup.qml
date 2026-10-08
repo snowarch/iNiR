@@ -25,19 +25,24 @@ Rectangle {
          : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
          : Appearance.inirEverywhere ? Appearance.inir.colLayer1
          : Appearance.auroraEverywhere ? "transparent"
+         : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass ? Appearance.editorial.glassPaper
          : Appearance.colors.colLayer1
     Behavior on color {
         enabled: Appearance.animationsEnabled
         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
-    border.width: Appearance.zzzEverywhere ? 0 : (Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0))
+    border.width: Appearance.zzzEverywhere ? 0 : (Appearance.angelEverywhere ? 0
+        : (Appearance.inirEverywhere ? 1
+            : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass ? 1 : 0))
     Behavior on border.width {
         enabled: Appearance.animationsEnabled
         NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
     border.color: Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? "transparent"
-        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        : Appearance.inirEverywhere ? Appearance.inir.colBorder
+        : Appearance.editorialEverywhere && Appearance.editorial.sidebarFullGlass
+            ? Qt.alpha(Appearance.editorial.edge, 0.28) : "transparent"
     Behavior on border.color {
         enabled: Appearance.animationsEnabled
         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

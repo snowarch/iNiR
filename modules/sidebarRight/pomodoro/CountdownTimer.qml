@@ -248,10 +248,10 @@ Item {
                         : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer2
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colLayer2Hover
                     colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colLayer2Active
                     onClicked: TimerService.setCountdownDuration(modelData.seconds)
 
                     contentItem: StyledText {

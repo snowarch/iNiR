@@ -1,0 +1,5 @@
+module qs.modules.iris.orbit
+IrisOrbit 1.0 IrisOrbit.qml
+IrisOrbitCard 1.0 IrisOrbitCard.qml
+IrisOrbitThumb 1.0 IrisOrbitThumb.qml
+IrisOrbitCorner 1.0 IrisOrbitCorner.qml

@@ -3,7 +3,6 @@
   "label": "Chromium browsers",
   "module": "40-chrome.sh",
   "category": "browser",
-  "inputs": ["app-palette.json", "palette.json"],
-  "description": "Apply generated theme colors to supported Chromium-based browsers.",
-  "configKey": "appearance.wallpaperTheming.enableAppsAndShell"
+  "inputs": ["app-palette.json", "palette.json", "theme-meta.json"],
+  "description": "Write the header bar colour as the BrowserThemeColor policy of Chrome, Chromium, ungoogled-chromium, Brave, Helium and Thorium, native and Flatpak; a running browser repaints within seconds. Folders under /etc need one password prompt; Flatpak Chromium needs none. Runs when off too, to give the colours back (enableChrome)."
 }

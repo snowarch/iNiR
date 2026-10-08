@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import Quickshell
 import Quickshell.Io
+import Quickshell.Widgets
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -19,9 +20,41 @@ ContentPage {
     settingsPageIndex: 23
     settingsPageName: Translation.tr("Sidebars")
 
-    property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property bool isIiActive: (Config.options?.panelFamily ?? "ii") === "ii"
 
     property string activeSection: "general"
+    property string pendingProfileAvatarPath: ""
+
+    function activateSettingsSearchSection(section: string): bool {
+        const normalized = String(section ?? "").trim().toLowerCase()
+        const aliases = ({
+            general: "general",
+            left: "left",
+            right: "right",
+            media: "media",
+            open: "open",
+            opening: "open"
+        })
+        const target = aliases[normalized]
+        if (!target)
+            return false
+        root.activeSection = target
+        return true
+    }
+
+    function openAccountSettings(): void {
+        AppLauncher.launch("manageUser")
+    }
+
+    Process {
+        id: setProfileAvatarProcess
+        command: [Quickshell.shellPath("scripts/accounts/set-avatar.sh"), root.pendingProfileAvatarPath]
+        onExited: exitCode => {
+            if (exitCode === 0)
+                Directories.userAvatarRevision++
+            root.pendingProfileAvatarPath = ""
+        }
+    }
 
     SettingsTaskNavigator {
         icon: "side_navigation"
@@ -39,9 +72,11 @@ ContentPage {
         ]
     }
 
+    SettingsTaskLoader {
+        requested: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "general"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "general"
-        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "general"
         expanded: true
         icon: "tune"
         title: Translation.tr("General")
@@ -72,15 +107,19 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "branding_watermark"
                     text: Translation.tr("Use Card style")
-                    enabled: Appearance.globalStyle === "material" || Appearance.globalStyle === "inir"
+                    enabled: Appearance.globalStyle === "material"
+                        || Appearance.globalStyle === "inir"
+                        || Appearance.editorialEverywhere
                     checked: Config.options.sidebar?.cardStyle ?? false
                     onCheckedChanged: {
                         Config.setNestedValue("sidebar.cardStyle", checked);
                     }
                     StyledToolTip {
-                        text: (Appearance.globalStyle === "material" || Appearance.globalStyle === "inir")
+                        text: (Appearance.globalStyle === "material"
+                            || Appearance.globalStyle === "inir"
+                            || Appearance.editorialEverywhere)
                             ? Translation.tr("Apply rounded card styling to sidebars")
-                            : Translation.tr("Only available with Material or Inir global style")
+                            : Translation.tr("Only available with Material, Editorial, or Inir global style")
                     }
                 }
 
@@ -193,10 +232,14 @@ ContentPage {
 
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "left"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "left"
-        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "left"
         expanded: true
         icon: "first_page"
         title: Translation.tr("Left sidebar")
@@ -330,10 +373,14 @@ ContentPage {
 
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "right"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "right"
-        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "right"
         expanded: true
         icon: "last_page"
         title: Translation.tr("Right sidebar")
@@ -353,6 +400,109 @@ ContentPage {
                         { displayName: Translation.tr("Profile card"), icon: "account_box", value: "profile" },
                         { displayName: Translation.tr("Classic"), icon: "view_agenda", value: "classic" }
                     ]
+                }
+
+                ContentSubsectionLabel {
+                    visible: (Config.options?.sidebar?.right?.headerStyle ?? "profile") === "profile"
+                    text: Translation.tr("Profile picture")
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    visible: (Config.options?.sidebar?.right?.headerStyle ?? "profile") === "profile"
+
+                    Rectangle {
+                        Layout.preferredWidth: 40
+                        Layout.preferredHeight: 40
+                        radius: width / 2
+                        color: Appearance.colors.colLayer2
+                        border.width: 1
+                        border.color: Appearance.colors.colPrimary
+
+                        ClippingRectangle {
+                            anchors.centerIn: parent
+                            width: parent.width - 4
+                            height: parent.height - 4
+                            radius: width / 2
+                            color: "transparent"
+
+                            Image {
+                                id: profileAvatarPreview
+                                anchors.fill: parent
+                                source: profileAvatarResolver.resolvedSource
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                cache: true
+                                smooth: true
+                                visible: status === Image.Ready
+                            }
+                        }
+
+                        QtObject {
+                            id: profileAvatarResolver
+                            property int avatarIndex: 0
+                            readonly property string resolvedSource: Directories.avatarSourceAt(avatarIndex)
+                            readonly property string primaryWatch: Directories.userAvatarSourcePrimary
+                            onPrimaryWatchChanged: avatarIndex = 0
+                            readonly property int imgStatus: profileAvatarPreview.status
+                            onImgStatusChanged: {
+                                if (imgStatus !== Image.Error)
+                                    return
+                                const next = avatarIndex + 1
+                                if (next < Directories.userAvatarPaths.length)
+                                    avatarIndex = next
+                            }
+                        }
+
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            visible: profileAvatarPreview.status !== Image.Ready
+                            text: "person"
+                            iconSize: 20
+                            color: Appearance.colors.colPrimary
+                        }
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Manage my account")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colSubtext
+                        elide: Text.ElideMiddle
+                        wrapMode: Text.NoWrap
+                    }
+
+                    RippleButtonWithIcon {
+                        materialIcon: "folder_open"
+                        mainText: Translation.tr("Choose")
+                        onClicked: profileAvatarDialog.open()
+                    }
+
+                    RippleButtonWithIcon {
+                        materialIcon: "manage_accounts"
+                        mainText: Translation.tr("Manage my account")
+                        onClicked: root.openAccountSettings()
+                    }
+                }
+
+                FileDialog {
+                    id: profileAvatarDialog
+                    title: Translation.tr("Profile picture")
+                    fileMode: FileDialog.OpenFile
+                    nameFilters: [
+                        Translation.tr("Images") + " (*.png *.jpg *.jpeg *.webp *.bmp *.avif)",
+                        Translation.tr("All files") + " (*)"
+                    ]
+                    onAccepted: {
+                        root.pendingProfileAvatarPath = FileUtils.trimFileProtocol(String(selectedFile))
+                        setProfileAvatarProcess.running = true
+                    }
+                }
+
+                SettingsNativeDialogGuard {
+                    dialog: profileAvatarDialog
+                    dialogKey: "profile-avatar"
                 }
 
                 ContentSubsectionLabel {
@@ -621,10 +771,14 @@ ContentPage {
 
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "media"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "media"
-        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "media"
         expanded: true
         icon: "music_note"
         title: Translation.tr("Media & content")
@@ -634,16 +788,6 @@ ContentPage {
                 title: Translation.tr("YT Music")
                 tooltip: Translation.tr("Control how next-track notifications behave")
                 visible: Config.options.sidebar?.ytmusic?.enable ?? false
-
-                SettingsSwitch {
-                    buttonIcon: "sync"
-                    text: Translation.tr("Reconnect account on launch")
-                    checked: Config.options.sidebar?.ytmusic?.autoConnect ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.autoConnect", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Re-reads your browser's YouTube session on startup so a stale login heals itself.")
-                    }
-                }
 
                 SettingsSwitch {
                     buttonIcon: "music_note"
@@ -861,10 +1005,14 @@ ContentPage {
 
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "open"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "open"
-        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "open"
         expanded: true
         icon: "swipe"
         title: Translation.tr("Opening")
@@ -1024,6 +1172,8 @@ ContentPage {
                     }
                 }
             }
+        }
+    }
         }
     }
 

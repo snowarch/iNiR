@@ -28,7 +28,9 @@ Examples:
 - `60-sddm.sh`
 - `70-steam.sh`
 - `80-pear-desktop.sh`
+- `85-limusic.sh`
 - `90-cava.sh`
+- `95-claude-code.sh`
 
 Rules:
 

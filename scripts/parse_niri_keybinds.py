@@ -243,6 +243,11 @@ def generate_comment(action: str) -> str:
     # Direct niri actions
     if action in ACTION_MAP:
         return ACTION_MAP[action]
+
+    rw_match = re.match(r'(next|previous)-window\b(.*)', action)
+    if rw_match:
+        same_app = 'app-id' in rw_match.group(2)
+        return f"Recent windows{' of this app' if same_app else ''} ({rw_match.group(1)})"
     
     # Focus/move workspace N
     ws_match = re.match(r'(focus-workspace|move-column-to-workspace)\s+(\d+)', action)
@@ -421,6 +426,56 @@ def find_binds_block(content: str) -> str | None:
     return content[start:i-1] if depth == 0 else None
 
 
+def find_all_binds_blocks(content: str) -> tuple[list[str], list[str]]:
+    """Every top-level `binds { }` in file order, and the `binds { }` inside `recent-windows { }`."""
+    text = '\n'.join('' if line.lstrip().startswith('//') else line for line in content.split('\n'))
+    normal, recent = [], []
+    depth = 0
+    parents = []
+    i = 0
+    header = re.compile(r'([A-Za-z0-9_-]+)\s*\{')
+    while i < len(text):
+        ch = text[i]
+        if ch == '{':
+            name = ''
+            for back in range(i - 1, max(-1, i - 64), -1):
+                m = header.match(text, back)
+                if m and m.end() == i + 1:
+                    name = m.group(1)
+                elif name:
+                    break
+            if name == 'binds' and depth == 0:
+                end = _block_end(text, i + 1)
+                normal.append(text[i + 1:end])
+                i = end + 1
+                continue
+            if name == 'binds' and depth == 1 and parents and parents[-1] == 'recent-windows':
+                end = _block_end(text, i + 1)
+                recent.append(text[i + 1:end])
+                i = end + 1
+                continue
+            parents.append(name)
+            depth += 1
+        elif ch == '}':
+            depth = max(0, depth - 1)
+            if parents:
+                parents.pop()
+        i += 1
+    return normal, recent
+
+
+def _block_end(text: str, start: int) -> int:
+    depth = 1
+    i = start
+    while i < len(text) and depth > 0:
+        if text[i] == '{':
+            depth += 1
+        elif text[i] == '}':
+            depth -= 1
+        i += 1
+    return i - 1
+
+
 def resolve_includes(content: str, config_dir: Path) -> str:
     """Resolve include directives by inlining included file contents."""
     def replace_include(match):
@@ -439,11 +494,20 @@ def parse_niri_config(config_path: Path) -> dict:
     
     content = config_path.read_text()
     content = resolve_includes(content, config_path.parent)
-    binds_content = find_binds_block(content)
-    if not binds_content:
+    normal_blocks, recent_blocks = find_all_binds_blocks(content)
+    if not normal_blocks and not recent_blocks:
         return {'error': 'No binds block found', 'children': []}
-    
-    keybinds = parse_keybinds_from_block(binds_content)
+
+    # Niri: a later binds block overrides an earlier one on the same keys, and recent-windows
+    # binds only work where no normal bind takes the key.
+    merged = {}
+    for block in normal_blocks:
+        for kb in parse_keybinds_from_block(block):
+            merged[(tuple(kb['mods']), kb['key'])] = kb
+    for block in recent_blocks:
+        for kb in parse_keybinds_from_block(block):
+            merged.setdefault((tuple(kb['mods']), kb['key']), kb)
+    keybinds = list(merged.values())
     keybinds_by_category = {}
     
     for kb in keybinds:

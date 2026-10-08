@@ -1,0 +1,3 @@
+module qs.modules.iris.dock
+IrisDock 1.0 IrisDock.qml
+singleton IrisDockOrder 1.0 IrisDockOrder.qml

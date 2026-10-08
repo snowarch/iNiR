@@ -7,6 +7,7 @@ import Qt5Compat.GraphicalEffects
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.iris.style
 import qs.modules.common.widgets
 import qs.modules.ii.overlay
 
@@ -15,7 +16,7 @@ StyledOverlayWidget {
     minimumWidth: 300
     minimumHeight: 200
 
-    Component.onCompleted: ResourceUsage.ensureRunning()
+    property QtObject resourceMonitor: ResourceUsageMonitor { target: root }
     property list<var> resources: [
         {
             "icon": "planner_review",
@@ -59,8 +60,16 @@ StyledOverlayWidget {
             }
             spacing: 8
 
+            OverlaySegments {
+                visible: OverlayLook.iris
+                Layout.fillWidth: true
+                segments: root.resources.map(resource => ({ label: resource.name, glyph: resource.icon }))
+                currentIndex: tabBar.currentIndex
+                onActivated: index => tabBar.currentIndex = index
+            }
             SecondaryTabBar {
                 id: tabBar
+                visible: !OverlayLook.iris
 
                 currentIndex: Persistent.states.overlay.resources.tabIndex
                 onCurrentIndexChanged: {
@@ -99,9 +108,10 @@ StyledOverlayWidget {
         ColumnLayout {
             spacing: 2
             StyledText {
-                text: (resourceSummary.history[resourceSummary.history.length - 1] * 100).toFixed(1) + "%"
+                readonly property real latest: Number(resourceSummary.history[resourceSummary.history.length - 1])
+                text: Number.isFinite(latest) ? (latest * 100).toFixed(1) + "%" : "--"
                 font {
-                    family: Appearance.font.family.numbers
+                    family: OverlayLook.fontNumbers
                     variableAxes: Appearance.font.variableAxes.numbers
                     pixelSize: Appearance.font.pixelSize.huge
                 }
@@ -113,12 +123,12 @@ StyledOverlayWidget {
                     // variableAxes: Appearance.font.variableAxes.numbers
                     pixelSize: Appearance.font.pixelSize.smallie
                 }
-                color: Appearance.colors.colSubtext
+                color: OverlayLook.colSubtext
             }
             StyledText {
                 text: resourceSummary.detailString
                 font.pixelSize: Appearance.font.pixelSize.smallie
-                color: Appearance.colors.colSubtext
+                color: OverlayLook.colSubtext
                 visible: text.length > 0
             }
             Item {
@@ -129,10 +139,10 @@ StyledOverlayWidget {
             id: graphBg
             Layout.fillWidth: true
             Layout.fillHeight: true
-            radius: Appearance.rounding.small
+            radius: OverlayLook.roundingSmall
             // ZZZ: a recessed carbon plate for the graph; the bright signal is for
             // the plotted line, not the track behind it.
-            color: Appearance.zzzEverywhere ? Appearance.zzz.bg3 : Appearance.colors.colSecondaryContainer
+            color: Appearance.zzzEverywhere ? Appearance.zzz.bg3 : OverlayLook.colRecessed
             Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             layer.enabled: true
             layer.effect: OpacityMask {
@@ -144,6 +154,7 @@ StyledOverlayWidget {
             }
             Graph {
                 anchors.fill: parent
+                Binding on color { when: OverlayLook.iris; value: IrisStyle.accent }
                 values: root.resources[tabBar.currentIndex]?.history ?? []
                 points: ResourceUsage.historyLength
                 alignment: Graph.Alignment.Right

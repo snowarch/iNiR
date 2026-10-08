@@ -60,26 +60,6 @@ post_process() {
     # Editor theming is handled by modules/30-editors.sh via applycolor.sh.
 }
 
-hex_to_rgb_triplet() {
-    local hex="$1"
-    hex="${hex#\#}"
-    [[ "$hex" =~ ^[A-Fa-f0-9]{6}$ ]] || return 1
-    printf "%d,%d,%d\n" "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}"
-}
-
-write_chromium_theme_contract() {
-    local source_json="$1"
-    local output_path="$2"
-    local hex_color=""
-    local rgb_color=""
-
-    [[ -f "$source_json" ]] || return 1
-    hex_color=$(jq -r '.app_headerbar_bg // .app_surface // .surface_container_low // .surface // .background // empty' "$source_json" 2>/dev/null)
-    [[ "$hex_color" =~ ^#[A-Fa-f0-9]{6}$ ]] || return 1
-    rgb_color=$(hex_to_rgb_triplet "$hex_color") || return 1
-    printf '%s\n' "$rgb_color" > "$output_path"
-}
-
 write_generated_wallpaper_path() {
     local wallpaper_path="$1"
     local wallpaper_state_path="$STATE_DIR/user/generated/wallpaper/path.txt"
@@ -347,8 +327,8 @@ switch() {
             cursorposx=$(printf '%s' "$cursor_json" | jq -r '.x // empty' 2>/dev/null)
             cursorposy=$(printf '%s' "$cursor_json" | jq -r '.y // empty' 2>/dev/null)
             if [[ -n "$cursorposx" && -n "$cursorposy" ]]; then
-                cursorposx=$(bc <<< "scale=0; ($cursorposx - $screenx) * $scale / 1")
-                cursorposy=$(bc <<< "scale=0; ($cursorposy - $screeny) * $scale / 1")
+                cursorposx=$(awk -v c="$cursorposx" -v o="$screenx" -v s="$scale" 'BEGIN { printf "%d", (c - o) * s }')
+                cursorposy=$(awk -v c="$cursorposy" -v o="$screeny" -v s="$scale" 'BEGIN { printf "%d", (c - o) * s }')
             else
                 cursorposx=960
                 cursorposy=540
@@ -477,46 +457,16 @@ switch() {
         fi
     fi
 
-    # Determine mode if not set
-    if [[ -z "$mode_flag" ]]; then
-        # Auto light/dark from wallpaper brightness (opt-in). Keeps UI text
-        # readable: a bright wallpaper selects the light scheme (dark text), a
-        # dark one selects dark. Falls back to the gsettings color-scheme on any
-        # failure (missing magick, unreadable image, etc.).
-        if [[ "$cfg_auto_dark_light" == "true" && -n "$imgpath" && -f "$imgpath" ]] \
-            && command -v magick >/dev/null 2>&1; then
-            wp_lum=$(magick "${imgpath}[0]" -resize 64x64\! -colorspace Gray -format '%[fx:mean]' info: 2>/dev/null)
-            if [[ -n "$wp_lum" ]]; then
-                if awk -v l="$wp_lum" 'BEGIN { exit !(l > 0.5) }'; then
-                    mode_flag="light"
-                else
-                    mode_flag="dark"
-                fi
-                echo "[switchwall.sh] auto dark/light: wallpaper luminance ${wp_lum} -> ${mode_flag}"
-            fi
-        fi
-    fi
-    if [[ -z "$mode_flag" ]]; then
-        if [[ "$cfg_preferred_darkmode" == "false" ]]; then
-            mode_flag="light"
-        else
-            mode_flag="dark"
-        fi
-    fi
-    if [[ -z "$mode_flag" ]]; then
-        current_mode=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | tr -d "'")
-        if [[ "$current_mode" == "prefer-dark" ]]; then
-            mode_flag="dark"
-        else
-            mode_flag="light"
-        fi
+    # iRiS: a scheme the person chose is the system's mode (Ink is a paper light), so the shell and the apps agree.
+    if [[ -z "$mode_flag" && "$cfg_panel_family" == "iris" ]]; then
+        case "$cfg_iris_scheme" in
+            dark) mode_flag="dark" ;;
+            light|ink) mode_flag="light" ;;
+        esac
     fi
 
     # Shell/UI colors follow the requested real mode.
     # Terminal colors may optionally force dark mode, but that must not darken the shell palette.
-    if [[ -n "$mode_flag" ]]; then
-        generate_colors_material_args+=(--mode "$mode_flag")
-    fi
     # If useBackdropForColors is enabled, override color source to use backdrop wallpaper
     # Respects active panel family: ii reads from background.backdrop, waffle from waffles.background.backdrop
     if [[ "$color_flag" != "1" ]]; then
@@ -547,8 +497,42 @@ switch() {
         fi
     fi
 
+    # The mode comes after the source is chosen, and Auto reads the very image the palette is drawn from (a video's
+    # thumbnail, the backdrop), never a different one. -alpha off: `fx:mean` averages the alpha channel in, so every
+    # PNG that carries one, opaque or not, read at least half bright and turned light.
+    if [[ -z "$mode_flag" && "$cfg_auto_dark_light" == "true" ]] && command -v magick >/dev/null 2>&1; then
+        local lum_source="$imgpath" lum_index
+        for ((lum_index = 0; lum_index < ${#generate_colors_material_args[@]} - 1; lum_index++)); do
+            [[ "${generate_colors_material_args[lum_index]}" == "--path" ]] && lum_source="${generate_colors_material_args[lum_index + 1]}"
+        done
+        if [[ -f "$lum_source" ]]; then
+            wp_lum=$(magick "${lum_source}[0]" -alpha off -resize 64x64\! -colorspace Gray -format '%[fx:mean]' info: 2>/dev/null)
+            if [[ -n "$wp_lum" ]]; then
+                if awk -v l="$wp_lum" 'BEGIN { exit !(l > 0.5) }'; then mode_flag="light"; else mode_flag="dark"; fi
+                echo "[switchwall.sh] auto dark/light: luminance ${wp_lum} of ${lum_source} -> ${mode_flag}"
+            fi
+        fi
+    fi
+    if [[ -z "$mode_flag" ]]; then
+        [[ "$cfg_preferred_darkmode" == "false" ]] && mode_flag="light" || mode_flag="dark"
+    fi
+    generate_colors_material_args+=(--mode "$mode_flag")
     [[ -n "$type_flag" ]] && generate_colors_material_args+=(--scheme "$type_flag")
     generate_colors_material_args+=(--termscheme "$terminalscheme" --blend_bg_fg)
+    # iRiS: the surfaces the shell wears (its material, tone included) anchor the apps' neutrals. The shell writes the file.
+    if [[ "$cfg_panel_family" == "iris" && "$cfg_theme" == "auto" ]]; then
+        iris_surface_file="$STATE_DIR/user/generated/iris-surface.json"
+        if [[ -s "$iris_surface_file" ]]; then
+            if [[ "$cfg_iris_material_apps" == "true" ]]; then
+                iris_surface_seed=$(jq -r '.seed // empty' "$iris_surface_file" 2>/dev/null)
+                [[ "$iris_surface_seed" =~ ^#[0-9A-Fa-f]{6}$ ]] && generate_colors_material_args+=(--surface-seed "$iris_surface_seed")
+                jq -e '.roles.background // empty' "$iris_surface_file" >/dev/null 2>&1 \
+                    && generate_colors_material_args+=(--washi-roles "$iris_surface_file")
+            fi
+            iris_accent_seed=$(jq -r '.accent // empty' "$iris_surface_file" 2>/dev/null)
+            [[ "$iris_accent_seed" =~ ^#[0-9A-Fa-f]{6}$ ]] && generate_colors_material_args+=(--accent-seed "$iris_accent_seed")
+        fi
+    fi
     generate_colors_material_args+=(--cache "$STATE_DIR/user/generated/color.txt")
 
     pre_process "$mode_flag"
@@ -598,8 +582,6 @@ switch() {
     _terminal_out="$STATE_DIR/user/generated/terminal.json"
     _meta_tmp="$STATE_DIR/user/generated/theme-meta.json.tmp"
     _meta_out="$STATE_DIR/user/generated/theme-meta.json"
-    _chromium_tmp="$STATE_DIR/user/generated/chromium.theme.tmp"
-    _chromium_out="$STATE_DIR/user/generated/chromium.theme"
     force_dark_terminal="$cfg_force_dark_terminal"
 
     # 1) Generate authoritative shell/UI colors.json + render app templates.
@@ -624,11 +606,6 @@ switch() {
         if [[ "$force_dark_terminal" != "true" ]]; then
             [[ -s "$_scss_tmp" ]] && mv "$_scss_tmp" "$STATE_DIR/user/generated/material_colors.scss" || rm -f "$_scss_tmp"
         fi
-        if write_chromium_theme_contract "$_app_palette_out" "$_chromium_tmp" && [[ -s "$_chromium_tmp" ]]; then
-            mv "$_chromium_tmp" "$_chromium_out"
-        else
-            rm -f "$_chromium_tmp"
-        fi
     else
         echo "[switchwall] Warning: colors.json generation failed, keeping previous JSON" >&2
         rm -f "$_json_tmp"
@@ -637,7 +614,6 @@ switch() {
         rm -f "$_terminal_tmp"
         rm -f "$_meta_tmp"
         rm -f "$_scss_tmp"
-        rm -f "$_chromium_tmp"
     fi
 
     if [[ "$force_dark_terminal" == "true" ]]; then
@@ -727,7 +703,9 @@ main() {
             (.background.hideUpscaleNotification // false),
             (if .appearance.customTheme.darkmode == null then true else .appearance.customTheme.darkmode end),
             (.appearance.wallpaperTheming.autoDarkLightMode // false),
-            (.appearance.colorInvert // false)
+            (.appearance.colorInvert // false),
+            (.iris.appearance.scheme // "auto"),
+            (.iris.appearance.materialForApps // true)
         ] | .[]' "$SHELL_CONFIG_FILE" 2>/dev/null)
     fi
     cfg_palette_type="${_cfg[0]:-auto}"
@@ -757,6 +735,8 @@ main() {
     cfg_preferred_darkmode="${_cfg[24]:-true}"
     cfg_auto_dark_light="${_cfg[25]:-false}"
     cfg_color_invert="${_cfg[26]:-false}"
+    cfg_iris_scheme="${_cfg[27]:-auto}"
+    cfg_iris_material_apps="${_cfg[28]:-true}"
 
     set_accent_color() {
         local color="$1"

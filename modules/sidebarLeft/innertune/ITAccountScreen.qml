@@ -112,7 +112,7 @@ StyledFlickable {
                                 ? Translation.tr("Couldn't read your YouTube session. Make sure you're signed in, then retry.")
                                 : Translation.tr("Connect to get your library, liked songs and a personalized home.")))))
             font.pixelSize: Appearance.font.pixelSize.small
-            color: InnerTube.connectError !== "" ? Appearance.colors.colError : Appearance.colors.colOnSurfaceVariant
+            color: InnerTube.connectError !== "" ? Appearance.colors.colError : Appearance.colMetadataText
         }
 
         MaterialLoadingIndicator {
@@ -149,7 +149,7 @@ StyledFlickable {
             visible: !InnerTube.authenticated && !InnerTube.connecting && InnerTube.detectedBrowsers.length > 0
             text: Translation.tr("Or pick a browser")
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.colors.colOnSurfaceVariant
+            color: Appearance.colMetadataText
         }
         Flow {
             Layout.alignment: Qt.AlignHCenter
@@ -223,7 +223,7 @@ StyledFlickable {
                     Layout.topMargin: 8
                     wrapMode: Text.Wrap
                     font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colOnSurfaceVariant
+                    color: Appearance.colMetadataText
                     text: Translation.tr("YouTube rotates cookies on open tabs, which can break auto-connect. For a stable login: open a private/incognito window, sign into YouTube, visit youtube.com/robots.txt, export youtube.com cookies to a cookies.txt, then close the window. Paste the file path below.")
                 }
                 MaterialTextField {

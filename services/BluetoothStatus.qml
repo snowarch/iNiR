@@ -45,6 +45,10 @@ Singleton {
         return root.activeDeviceSummary() || Translation.tr("Bluetooth connected");
     }
 
+    function iconForDevice(device: BluetoothDevice): string {
+        return root._materialIconForDevice(device);
+    }
+
     function _materialIconForDevice(device: BluetoothDevice): string {
         const xdg = (device?.icon ?? "").toLowerCase();
         if (xdg.length === 0) return "bluetooth_connected";

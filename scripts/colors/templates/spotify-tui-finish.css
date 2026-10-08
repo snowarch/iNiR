@@ -1,0 +1,27 @@
+/* iNiR's finish for the text theme: panes with the shell's rounded corners (btop's rounded box), the shell's mono face */
+/* Appended by apply-spicetify-theme.sh after the line that defines --inir-mono (the shell's monospace face). */
+:root {
+  --border-radius: 10px;
+  /* Resting panes are quiet lines; the pane under the pointer takes the accent */
+  --spice-border-inactive: color-mix(in srgb, var(--spice-text) 22%, var(--spice-main));
+  --font-family: var(--inir-mono), "JetBrainsMono Nerd Font", "JetBrains Mono", monospace;
+}
+.Root__globalNav::before, .Root__main-view::before, .main-nowPlayingBar-container::before,
+.Root__right-sidebar:has(aside:not(:empty))::before,
+.Root__nav-bar .main-yourLibraryX-entryPoints:has(.main-yourLibraryX-navItems)::before,
+.Root__nav-bar .main-yourLibraryX-entryPoints:has(.main-yourLibraryX-libraryContainer)::before {
+  margin: -10px 12px !important; padding: 0 5px !important;
+}
+/* Scrollbars read the palette; the horizontal thumb under shelves was a white block */
+.os-scrollbar-handle { background: rgba(var(--spice-rgb-text), 0.22) !important; }
+.os-scrollbar-handle:hover { background: rgba(var(--spice-rgb-text), 0.4) !important; }
+.os-scrollbar-horizontal { height: 4px !important; bottom: 3px !important; }
+.os-scrollbar-horizontal .os-scrollbar-handle { height: 2px !important; top: auto !important; bottom: 0 !important; }
+/* Every square on the shell's ladder: cards 10, tiles and chips 6 */
+.main-card-card, .main-cardImage-imageWrapper, .main-card-imageContainer, .main-cardImage-image,
+.view-homeShortcutsGrid-shortcut, .main-trackList-trackListRow, .main-contextMenu-menu,
+.x-filterBox-filterInput, .main-topBar-searchBar, .search-searchCategory-categoryGrid > div { border-radius: 6px !important; }
+.view-homeShortcutsGrid-imageContainer, .view-homeShortcutsGrid-imageContainer img { border-radius: 6px 0 0 6px !important; }
+.main-playButton-PlayButton button, .main-playButton-PlayButton span, .e-10451-button-primary__inner,
+button[data-encore-id="buttonPrimary"] span { border-radius: 6px !important; }
+.x-progressBar-progressBarBg, .x-progressBar-fillColor { border-radius: 6px !important; }

@@ -25,7 +25,9 @@ GroupButton {
     baseHeight: root.baseCellHeight
 
     property bool editMode: false
-    readonly property color colDarkSurface: Appearance.angelEverywhere
+    readonly property color colDarkSurface: Appearance.editorialEverywhere
+        ? Appearance.colors.colLayer2
+        : Appearance.angelEverywhere
         ? ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.76)
         : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colLayer1, 0.22)
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(
@@ -33,7 +35,9 @@ GroupButton {
             Math.max(0.12, Appearance.aurora.subSurfaceTransparentize - 0.14)
         )
         : ColorUtils.transparentize(Appearance.colors.colLayer2, 0.24)
-    readonly property color colDarkSurfaceHover: Appearance.angelEverywhere
+    readonly property color colDarkSurfaceHover: Appearance.editorialEverywhere
+        ? Appearance.colors.colLayer2Hover
+        : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(
@@ -41,7 +45,9 @@ GroupButton {
             Math.max(0.16, Appearance.aurora.subSurfaceTransparentize - 0.10)
         )
         : ColorUtils.transparentize(Appearance.colors.colLayer2Hover, 0.20)
-    readonly property color colDarkSurfaceActive: Appearance.angelEverywhere
+    readonly property color colDarkSurfaceActive: Appearance.editorialEverywhere
+        ? Appearance.colors.colLayer2Active
+        : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(
@@ -119,11 +125,13 @@ GroupButton {
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere
         ? Appearance.inir.roundingSmall
+        : Appearance.editorialEverywhere ? Appearance.rounding.small
         : (toggled ? Appearance.rounding.large : baseHeight / 2)
     buttonRadiusPressed: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
         : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
+        : Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.normal
     property color colText: Appearance.regaliaEverywhere
         ? (toggled ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onMuted)
         : Appearance.zzzEverywhere

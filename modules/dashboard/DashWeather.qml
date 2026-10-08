@@ -68,7 +68,8 @@ DashCard {
             visible: Weather.showVisibleCity
             text: Weather.visibleCity
             font.pixelSize: Appearance.font.pixelSize.small
-            font.weight: Font.Medium
+            font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Medium
+            font.letterSpacing: Appearance.editorialEverywhere ? 0.8 : 0
             color: root.colText
             elide: Text.ElideRight
         }
@@ -76,9 +77,12 @@ DashCard {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             text: Weather.data?.temp ?? "--°"
-            font.pixelSize: Appearance.font.pixelSize.huge
+            font.pixelSize: Appearance.editorialEverywhere
+                ? Appearance.font.pixelSize.huge * 1.35
+                : Appearance.font.pixelSize.huge
             font.family: Appearance.font.family.numbers
-            font.weight: root.zzzEverywhere ? Font.Black : Font.Medium
+            font.weight: root.zzzEverywhere ? Font.Black
+                : Appearance.editorialEverywhere ? Font.DemiBold : Font.Medium
             font.italic: root.zzzEverywhere
             color: root.colText
         }
@@ -110,9 +114,12 @@ DashCard {
 
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
-                    text: modelData?.dayName ?? ""
+                    text: Appearance.editorialEverywhere
+                        ? String(modelData?.dayName ?? "").toUpperCase()
+                        : (modelData?.dayName ?? "")
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     font.weight: Font.Medium
+                    font.letterSpacing: Appearance.editorialEverywhere ? 0.7 : 0
                     color: root.colText
                 }
                 MaterialSymbol {
@@ -125,6 +132,7 @@ DashCard {
                     Layout.alignment: Qt.AlignHCenter
                     text: `${modelData?.lo ?? "--"} / ${modelData?.hi ?? "--"}`
                     font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.family: Appearance.font.family.numbers
                     color: root.colSubtext
                 }
             }

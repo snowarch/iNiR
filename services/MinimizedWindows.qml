@@ -98,6 +98,12 @@ Singleton {
         });
     }
     
+    // A workspace that holds only stashed windows is the stash, not somewhere a person works.
+    function isStashWorkspace(workspaceId) {
+        const held = (NiriService.windows ?? []).filter(window => window.workspace_id === workspaceId);
+        return held.length > 0 && held.every(window => minimizedIds.includes(window.id));
+    }
+
     // Count minimized windows for an app
     function countMinimizedForApp(appId) {
         return getMinimizedForApp(appId).length;

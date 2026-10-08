@@ -128,8 +128,10 @@ Currently there's no manual refresh button in the UI. The service re-fetches whe
 
 For debugging:
 ```bash
-QS_DEBUG=1 qs -c inir    # shows [CalendarSync] log lines
+inir logs --debug    # foreground debug run; shows [CalendarSync] log lines
 ```
+
+Exit with `Ctrl+C`, then run `inir restart` to restore the normal supervised shell.
 
 **Cache issues:**
 

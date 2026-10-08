@@ -21,7 +21,7 @@ Item {
             fill: parent
             margins: Appearance.sizes.elevationMargin
         }
-        radius: Appearance.rounding.full
+        radius: Appearance.editorialEverywhere ? Appearance.editorial.radius : Appearance.rounding.full
         color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
              : Appearance.inirEverywhere ? Appearance.inir.colLayer1
              : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
@@ -70,11 +70,14 @@ Item {
 
             StyledText {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: KeyboardIndicators.popupText
                 font.pixelSize: Appearance.font.pixelSize.normal
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                      : Appearance.inirEverywhere ? Appearance.inir.colText
                      : Appearance.colors.colOnLayer0
+                elide: Text.ElideRight
+                maximumLineCount: 1
             }
         }
     }

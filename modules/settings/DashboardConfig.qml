@@ -10,7 +10,7 @@ ContentPage {
     settingsPageIndex: 16
     settingsPageName: Translation.tr("Dashboard")
 
-    property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property bool isIiActive: (Config.options?.panelFamily ?? "ii") === "ii"
     property string activeSection: "general"
 
     SettingsTaskNavigator {
@@ -45,9 +45,11 @@ ContentPage {
         }
     }
 
+    SettingsTaskLoader {
+        requested: root.isIiActive && root.activeSection === "general"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "general"
-        visible: root.isIiActive && root.activeSection === "general"
         expanded: true
         icon: "space_dashboard"
         title: Translation.tr("General")
@@ -142,10 +144,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.isIiActive && root.activeSection === "appearance"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "appearance"
-        visible: root.isIiActive && root.activeSection === "appearance"
         expanded: true
         icon: "palette"
         title: Translation.tr("Appearance")
@@ -178,10 +184,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.isIiActive && root.activeSection === "layout"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "layout"
-        visible: root.isIiActive && root.activeSection === "layout"
         expanded: true
         icon: "widgets"
         title: Translation.tr("Widgets & layout")
@@ -190,6 +200,8 @@ ContentPage {
             DashLayoutEditor {
                 Layout.fillWidth: true
             }
+        }
+    }
         }
     }
 }

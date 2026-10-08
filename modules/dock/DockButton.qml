@@ -27,17 +27,22 @@ RippleButton {
     buttonRadius: root.regaliaStyle ? Appearance.regalia.roundNormal
         : root.zzzStyle ? Appearance.zzz.controlRadius
         : root.angelStyle ? Appearance.angel.roundingSmall
+        : Appearance.editorialEverywhere ? Appearance.rounding.small
         : root.inirStyle ? Appearance.inir.roundingSmall : Appearance.rounding.normal
 
     colBackground: "transparent"
 
-    colBackgroundHover: root.regaliaStyle ? Appearance.regalia.hoverPlate
+    colBackgroundHover: Appearance.editorialEverywhere
+        ? (Appearance.editorial.glassActive ? Appearance.editorial.glassControlHover : Appearance.editorial.field)
+        : root.regaliaStyle ? Appearance.regalia.hoverPlate
         : root.zzzStyle ? "transparent"
         : root.angelStyle ? Appearance.angel.colGlassCard
         : root.inirStyle ? Appearance.inir.colLayer1Hover
         : root.auroraStyle ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer0Hover
-    colRipple: root.regaliaStyle ? Appearance.regalia.pressPlate
+    colRipple: Appearance.editorialEverywhere
+        ? (Appearance.editorial.glassActive ? Appearance.editorial.glassSelectionActive : Appearance.colors.colPrimaryContainerActive)
+        : root.regaliaStyle ? Appearance.regalia.pressPlate
         : root.zzzStyle ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.22)
         : root.angelStyle ? Appearance.angel.colGlassCardActive
         : root.inirStyle ? Appearance.inir.colLayer1Active

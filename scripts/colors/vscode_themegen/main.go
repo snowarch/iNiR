@@ -83,8 +83,10 @@ func stripJSONCComments(data []byte) []byte {
 
 const (
 	themeName        = "iNiR Material"
+	themeNameLight   = "iNiR Material Light"
 	themeExtensionID = "inir-material-theme"
 	themeFileName    = "inir-material-color-theme.json"
+	themeFileLight   = "inir-material-light-color-theme.json"
 	prevThemeKey     = "inir.previousColorTheme"
 )
 
@@ -231,11 +233,76 @@ func adjustLightness(hex string, minL, maxL float64) string {
 	return hslToHex(c)
 }
 
-func syntaxColor(termColors map[string]string, primary string, termIdx int) string {
+func relLuminance(hex string) float64 {
+	h := strings.TrimPrefix(hex, "#")
+	if len(h) < 6 {
+		return 0
+	}
+	lin := func(v int) float64 {
+		c := float64(v) / 255
+		if c <= 0.03928 {
+			return c / 12.92
+		}
+		return math.Pow((c+0.055)/1.055, 2.4)
+	}
+	return 0.2126*lin(hexByte(h[0:2])) + 0.7152*lin(hexByte(h[2:4])) + 0.0722*lin(hexByte(h[4:6]))
+}
+
+func contrastHex(a, b string) float64 {
+	la, lb := relLuminance(a), relLuminance(b)
+	if la < lb {
+		la, lb = lb, la
+	}
+	return (la + 0.05) / (lb + 0.05)
+}
+
+// withContrast moves lightness away from the background until the ratio holds.
+func withContrast(hex, bg string, ratio float64, dark bool) string {
+	c := hexToHSL(hex)
+	for i := 0; i < 60 && contrastHex(hslToHex(c), bg) < ratio; i++ {
+		if dark {
+			c.l = math.Min(0.96, c.l+0.01)
+		} else {
+			c.l = math.Max(0.04, c.l-0.01)
+		}
+	}
+	return hslToHex(c)
+}
+
+// mutedInk is `fg` at `alpha` (0-255) over `bg`, kept translucent while that reads at 4.5:1 and otherwise the nearest
+// solid colour that does: a comment stays quiet on any editor background, never under the ratio.
+func mutedInk(fg, bg string, alpha int, dark bool) string {
+	fg, bg = "#"+strings.TrimPrefix(fg, "#"), "#"+strings.TrimPrefix(bg, "#")
+	a := float64(alpha) / 255
+	mix := func(i int) int {
+		return clampInt(int(float64(hexByte(fg[i:i+2]))*a+float64(hexByte(bg[i:i+2]))*(1-a)+0.5), 0, 255)
+	}
+	over := fmt.Sprintf("#%02x%02x%02x", mix(1), mix(3), mix(5))
+	if contrastHex(over, bg) >= 4.5 {
+		return fg + fmt.Sprintf("%02x", alpha)
+	}
+	return withContrast(fg, bg, 4.5, dark)
+}
+
+// syntaxColor keeps the ANSI hue of a slot and solves its lightness for the
+// editor background: the dark range on a dark theme, a deep one on a light theme.
+func syntaxColor(termColors map[string]string, primary, bg string, termIdx int) string {
 	raw := pick(termColors, fmt.Sprintf("term%d", termIdx), "#888888")
-	boosted := saturateColor(raw, 2.1, 0.50)
-	blended := blendColors(boosted, primary, 0.28)
-	return adjustLightness(blended, 0.50, 0.88)
+	dark := hexToHSL(bg).l < 0.5
+	if dark {
+		// Pastel, like the best dark schemes (Catppuccin Mocha sits at s 0.5-0.6, l 0.75-0.85): a 2.1x boost
+		// turned the terminal's green into a neon (hsl 83, 77 %, 64 %) that fought every warm palette.
+		tuned := saturateColor(raw, 1.0, 0.42)
+		if c := hexToHSL(tuned); c.s > 0.62 {
+			c.s = 0.62
+			tuned = hslToHex(c)
+		}
+		blended := blendColors(tuned, primary, 0.25)
+		return withContrast(adjustLightness(blended, 0.72, 0.86), bg, 4.5, true)
+	}
+	boosted := saturateColor(raw, 1.2, 0.45)
+	blended := blendColors(boosted, primary, 0.2)
+	return withContrast(adjustLightness(blended, 0.22, 0.46), bg, 4.5, false)
 }
 
 func hexByte(s string) int {
@@ -371,12 +438,10 @@ func writeExtensionManifest(extDir string) error {
 		"engines":     map[string]string{"vscode": "^1.34.0"},
 		"categories":  []string{"Themes"},
 		"contributes": map[string]any{
-			"themes": []map[string]any{{
-				"label":   themeName,
-				"uiTheme": "vs-dark",
-				"path":    "./themes/" + themeFileName,
-				"_watch":  true,
-			}},
+			"themes": []map[string]any{
+				{"label": themeName, "uiTheme": "vs-dark", "path": "./themes/" + themeFileName, "_watch": true},
+				{"label": themeNameLight, "uiTheme": "vs", "path": "./themes/" + themeFileLight, "_watch": true},
+			},
 		},
 	}
 	data, err := json.MarshalIndent(manifest, "", "  ")
@@ -384,6 +449,21 @@ func writeExtensionManifest(extDir string) error {
 		return err
 	}
 	return os.WriteFile(filepath.Join(extDir, "package.json"), append(data, '\n'), 0o644)
+}
+
+// themeIdentity picks the entry VS Code knows the palette by: the uiTheme of
+// each entry sets the base (webview class, unset colours), the file's own
+// "type" is ignored.
+func themeIdentity(colors map[string]string) (label, file string) {
+	if isDarkTheme(colors) {
+		return themeName, themeFileName
+	}
+	return themeNameLight, themeFileLight
+}
+
+func manifestHasLight(pkgPath string) bool {
+	data, err := os.ReadFile(pkgPath)
+	return err == nil && strings.Contains(string(data), themeFileLight)
 }
 
 func writeThemeFile(themePath string, colors, termColors map[string]string) error {
@@ -394,9 +474,10 @@ func writeThemeFile(themePath string, colors, termColors map[string]string) erro
 	if !isDarkTheme(colors) {
 		themeType = "light"
 	}
+	label, _ := themeIdentity(colors)
 	theme := map[string]any{
 		"$schema":              "vscode://schemas/color-theme",
-		"name":                 themeName,
+		"name":                 label,
 		"type":                 themeType,
 		"colors":               generateColors(colors, termColors),
 		"tokenColors":          generateSyntax(colors, termColors),
@@ -542,7 +623,7 @@ func generateThemeForFork(colorsPath, terminalJSONPath, scssPath, settingsPath, 
 		return false, fmt.Errorf("failed to create extension dir: %v", err)
 	}
 	pkgPath := filepath.Join(extDir, "package.json")
-	if _, err := os.Stat(pkgPath); os.IsNotExist(err) {
+	if _, err := os.Stat(pkgPath); os.IsNotExist(err) || !manifestHasLight(pkgPath) {
 		if err := writeExtensionManifest(extDir); err != nil {
 			return false, fmt.Errorf("failed to write extension manifest: %v", err)
 		}
@@ -554,7 +635,8 @@ func generateThemeForFork(colorsPath, terminalJSONPath, scssPath, settingsPath, 
 	}
 
 	// Write the theme file (atomic rename — _watch handles live reload)
-	themePath := filepath.Join(extDir, "themes", themeFileName)
+	activeName, activeFile := themeIdentity(colors)
+	themePath := filepath.Join(extDir, "themes", activeFile)
 	if err := writeThemeFile(themePath, colors, termColors); err != nil {
 		return false, fmt.Errorf("failed to write theme: %v", err)
 	}
@@ -569,7 +651,7 @@ func generateThemeForFork(colorsPath, terminalJSONPath, scssPath, settingsPath, 
 	settingsChanged := false
 
 	// Save previous theme for restoration on strip
-	if currentTheme != "" && currentTheme != themeName {
+	if currentTheme != "" && currentTheme != themeName && currentTheme != themeNameLight {
 		settings[prevThemeKey] = currentTheme
 		settingsChanged = true
 	}
@@ -587,8 +669,8 @@ func generateThemeForFork(colorsPath, terminalJSONPath, scssPath, settingsPath, 
 	}
 
 	// Activate our theme if not already active
-	if currentTheme != themeName {
-		settings["workbench.colorTheme"] = themeName
+	if currentTheme != activeName {
+		settings["workbench.colorTheme"] = activeName
 		settingsChanged = true
 	}
 	// If already our theme: do nothing. _watch:true reloads on file change.
@@ -626,7 +708,7 @@ func generateColors(colors, termColors map[string]string) map[string]string {
 	termBg := term("term0")
 	termFg := term("term15")
 	transparent := "#00000000"
-	return map[string]string{
+	m := map[string]string{
 		"focusBorder": primary, "foreground": fg, "disabledForeground": onSurfaceVariant + "80", "widget.shadow": "#00000060", "selection.background": primary + "60", "descriptionForeground": onSurfaceVariant, "errorForeground": errorCol, "icon.foreground": onSurface,
 		"window.activeBorder": transparent, "window.inactiveBorder": transparent,
 		"textBlockQuote.background": surfaceLow, "textBlockQuote.border": transparent, "textCodeBlock.background": surfaceLow, "textLink.activeForeground": primary, "textLink.foreground": primary, "textPreformat.foreground": tertiary, "textSeparator.foreground": transparent,
@@ -662,6 +744,27 @@ func generateColors(colors, termColors map[string]string) map[string]string {
 		"symbolIcon.arrayForeground": secondary, "symbolIcon.booleanForeground": tertiary, "symbolIcon.classForeground": primary, "symbolIcon.colorForeground": secondary, "symbolIcon.constantForeground": tertiary, "symbolIcon.constructorForeground": primary, "symbolIcon.enumeratorForeground": secondary, "symbolIcon.enumeratorMemberForeground": tertiary, "symbolIcon.eventForeground": errorCol, "symbolIcon.fieldForeground": secondary, "symbolIcon.fileForeground": onSurface, "symbolIcon.folderForeground": onSurface, "symbolIcon.functionForeground": primary, "symbolIcon.interfaceForeground": secondary, "symbolIcon.keyForeground": tertiary, "symbolIcon.keywordForeground": secondary, "symbolIcon.methodForeground": primary, "symbolIcon.moduleForeground": onSurface, "symbolIcon.namespaceForeground": onSurface, "symbolIcon.nullForeground": onSurfaceVariant, "symbolIcon.numberForeground": tertiary, "symbolIcon.objectForeground": secondary, "symbolIcon.operatorForeground": secondary, "symbolIcon.packageForeground": onSurface, "symbolIcon.propertyForeground": secondary, "symbolIcon.referenceForeground": secondary, "symbolIcon.snippetForeground": tertiary, "symbolIcon.stringForeground": tertiary, "symbolIcon.structForeground": primary, "symbolIcon.textForeground": onSurface, "symbolIcon.typeParameterForeground": secondary, "symbolIcon.unitForeground": tertiary, "symbolIcon.variableForeground": onSurface,
 		"notebook.editorBackground": bg, "notebook.cellEditorBackground": bg, "notebook.cellBorderColor": transparent, "notebook.cellToolbarSeparator": transparent, "notebook.focusedCellBackground": bg, "notebookStatusRunningIcon.foreground": primary,
 	}
+	if hexToHSL(bg).l >= 0.5 {
+		lightenEdges(m, bg, onSurfaceVariant, outline, outlineVariant, primary)
+	}
+	if contrastHex(term("term0"), termBg) < 3 {
+		m["terminal.ansiBlack"] = outline
+	}
+	return m
+}
+
+// lightenEdges gives a light theme the boundaries a tonal dark one gets from
+// its darker surfaces: hairlines on the panels and a solid placeholder.
+func lightenEdges(m map[string]string, bg, onSurfaceVariant, outline, outlineVariant, primary string) {
+	for _, k := range []string{"panel.border", "sideBar.border", "editorGroup.border", "editorGroupHeader.tabsBorder", "tab.border", "activityBar.border", "statusBar.border", "titleBar.border"} {
+		m[k] = outlineVariant
+	}
+	m["input.border"] = outline
+	m["dropdown.border"] = outline
+	m["checkbox.border"] = outline
+	m["input.placeholderForeground"] = withContrast(onSurfaceVariant, bg, 4.5, false)
+	m["editor.selectionBackground"] = primary + "40"
+	m["editor.inactiveSelectionBackground"] = primary + "22"
 }
 
 func generateSyntax(colors, termColors map[string]string) []tokenRule {
@@ -669,20 +772,21 @@ func generateSyntax(colors, termColors map[string]string) []tokenRule {
 	onSurface := pick(colors, "on_surface", "#e3dfd9")
 	onSurfaceVariant := pick(colors, "on_surface_variant", "#c4bfb8")
 	errorCol := saturateColor(pick(colors, "error", "#ffb4ab"), 1.4, 0.50)
+	editorBg := pick(colors, "background", pick(colors, "surface", "#080809"))
 
 	// ANSI palette: always has distinct hues regardless of wallpaper saturation
-	colKeyword := syntaxColor(termColors, primary, 5)  // magenta
-	colString := syntaxColor(termColors, primary, 2)   // green
-	colFunction := syntaxColor(termColors, primary, 4) // blue
-	colType := syntaxColor(termColors, primary, 6)     // cyan
-	colConstant := syntaxColor(termColors, primary, 3) // yellow
-	colTag := syntaxColor(termColors, primary, 1)      // red
-	colProperty := blendColors(syntaxColor(termColors, primary, 4), syntaxColor(termColors, primary, 6), 0.5)
+	colKeyword := syntaxColor(termColors, primary, editorBg, 5)  // magenta
+	colString := syntaxColor(termColors, primary, editorBg, 2)   // green
+	colFunction := syntaxColor(termColors, primary, editorBg, 4) // blue
+	colType := syntaxColor(termColors, primary, editorBg, 6)     // cyan
+	colConstant := syntaxColor(termColors, primary, editorBg, 3) // yellow
+	colTag := syntaxColor(termColors, primary, editorBg, 1)      // red
+	colProperty := withContrast(blendColors(syntaxColor(termColors, primary, editorBg, 4), syntaxColor(termColors, primary, editorBg, 6), 0.5), editorBg, 4.5, hexToHSL(editorBg).l < 0.5)
 
 	return []tokenRule{
 		// Comments — muted, italic
-		{[]string{"comment", "punctuation.definition.comment"}, map[string]string{"foreground": onSurfaceVariant + "aa", "fontStyle": "italic"}},
-		{[]string{"comment.block.documentation", "comment.block.javadoc"}, map[string]string{"foreground": onSurfaceVariant + "cc", "fontStyle": "italic"}},
+		{[]string{"comment", "punctuation.definition.comment"}, map[string]string{"foreground": mutedInk(onSurfaceVariant, editorBg, 0xaa, hexToHSL(editorBg).l < 0.5), "fontStyle": "italic"}},
+		{[]string{"comment.block.documentation", "comment.block.javadoc"}, map[string]string{"foreground": mutedInk(onSurfaceVariant, editorBg, 0xcc, hexToHSL(editorBg).l < 0.5), "fontStyle": "italic"}},
 		// Keywords & storage
 		{[]string{"keyword", "storage.type", "storage.modifier"}, map[string]string{"foreground": colKeyword}},
 		{[]string{"keyword.control", "keyword.control.flow"}, map[string]string{"foreground": colKeyword}},
@@ -748,14 +852,15 @@ func generateSemantic(colors, termColors map[string]string) map[string]string {
 	primary := pick(colors, "primary", "#d4b796")
 	onSurface := pick(colors, "on_surface", "#e3dfd9")
 	onSurfaceVariant := pick(colors, "on_surface_variant", "#c4bfb8")
+	editorBg := pick(colors, "background", pick(colors, "surface", "#080809"))
 
-	colKeyword := syntaxColor(termColors, primary, 5)
-	colString := syntaxColor(termColors, primary, 2)
-	colFunction := syntaxColor(termColors, primary, 4)
-	colType := syntaxColor(termColors, primary, 6)
-	colConstant := syntaxColor(termColors, primary, 3)
-	colTag := syntaxColor(termColors, primary, 1)
-	colProperty := blendColors(syntaxColor(termColors, primary, 4), syntaxColor(termColors, primary, 6), 0.5)
+	colKeyword := syntaxColor(termColors, primary, editorBg, 5)
+	colString := syntaxColor(termColors, primary, editorBg, 2)
+	colFunction := syntaxColor(termColors, primary, editorBg, 4)
+	colType := syntaxColor(termColors, primary, editorBg, 6)
+	colConstant := syntaxColor(termColors, primary, editorBg, 3)
+	colTag := syntaxColor(termColors, primary, editorBg, 1)
+	colProperty := withContrast(blendColors(syntaxColor(termColors, primary, editorBg, 4), syntaxColor(termColors, primary, editorBg, 6), 0.5), editorBg, 4.5, hexToHSL(editorBg).l < 0.5)
 
 	return map[string]string{
 		"class": colType, "enum": colType, "enumMember": colConstant,
@@ -764,7 +869,7 @@ func generateSemantic(colors, termColors map[string]string) map[string]string {
 		"parameter": onSurface, "property": colProperty,
 		"struct": colType, "type": colType, "typeParameter": colConstant,
 		"variable": onSurface, "variable.constant": colConstant, "variable.defaultLibrary": colTag,
-		"comment": onSurfaceVariant + "aa",
+		"comment": mutedInk(onSurfaceVariant, editorBg, 0xaa, hexToHSL(editorBg).l < 0.5),
 		"keyword": colKeyword, "keyword.control": colKeyword,
 		"number": colConstant, "string": colString, "regexp": colTag,
 		"operator": colKeyword, "decorator": colTag,
@@ -795,7 +900,7 @@ func stripThemeForFork(settingsPath, forkKey string) bool {
 	changed := false
 
 	// Restore previous theme if we're the active one
-	if current, ok := settings["workbench.colorTheme"].(string); ok && current == themeName {
+	if current, ok := settings["workbench.colorTheme"].(string); ok && (current == themeName || current == themeNameLight) {
 		if prev, ok := settings[prevThemeKey].(string); ok && prev != "" {
 			settings["workbench.colorTheme"] = prev
 		} else {

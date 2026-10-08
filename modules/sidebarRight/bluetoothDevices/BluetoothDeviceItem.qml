@@ -36,7 +36,7 @@ DialogListItem {
             MaterialSymbol {
                 iconSize: Appearance.font.pixelSize.larger
                 text: Icons.getBluetoothDeviceMaterialSymbol(root.device?.icon || "")
-                color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOnSurfaceVariant
+                color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colSecondaryActionIcon
             }
 
             ColumnLayout {
@@ -44,7 +44,7 @@ DialogListItem {
                 Layout.fillWidth: true
                 StyledText {
                     Layout.fillWidth: true
-                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant
+                    color: Appearance.colors.colOnLayer1
                     elide: Text.ElideRight
                     text: root.device?.name || Translation.tr("Unknown device")
                 }

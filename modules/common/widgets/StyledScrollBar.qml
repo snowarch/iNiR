@@ -16,7 +16,9 @@ ScrollBar {
         radius: width / 2
         color: Appearance.colors.colOnSurfaceVariant
         
-        opacity: root.policy === ScrollBar.AlwaysOn || (root.active && root.size < 1.0) ? 0.5 : 0
+        // iRiS shows it only under the pointer: a bar flashing on every wheel turn fights its pages.
+        readonly property bool shows: Config.options?.panelFamily === "iris" ? (root.hovered || root.pressed) : root.active
+        opacity: root.policy === ScrollBar.AlwaysOn || (shows && root.size < 1.0) ? 0.5 : 0
         Behavior on opacity {
             NumberAnimation {
                 duration: 350

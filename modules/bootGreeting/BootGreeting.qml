@@ -13,6 +13,7 @@ import qs.modules.common.functions
 
 Scope {
     id: root
+    readonly property bool editorial: Appearance.editorialEverywhere
 
     // Config shortcuts
     readonly property int autoDismissDelay: Config.options?.bootGreeting?.autoDismissDelay ?? 5000
@@ -216,10 +217,33 @@ Scope {
             }
         }
 
+        Rectangle {
+            visible: root.editorial
+            anchors.centerIn: parent
+            width: Math.min(parent.width - 64, 680)
+            height: greetingContent.implicitHeight + 64
+            radius: Appearance.editorial.radius
+            color: Appearance.editorial.ink
+            border.width: 1
+            border.color: ColorUtils.applyAlpha(Appearance.editorial.paperOnInk, 0.18)
+
+            MaterialShape {
+                visible: Appearance.editorial.ornaments
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: 18
+                implicitSize: 18
+                shape: MaterialShape.Shape.Flower
+                color: Appearance.editorial.paperOnInk
+                opacity: 0.72
+            }
+        }
+
         // ── Content: centered column with staggered entrance ──
         ColumnLayout {
+            id: greetingContent
             anchors.centerIn: parent
-            spacing: 8
+            spacing: root.editorial ? Math.round(10 * Appearance.editorial.spacing) : 8
             width: Math.min(600, parent.width * 0.8)
 
             // ── Clock ──
@@ -229,10 +253,13 @@ Scope {
                 text: DateTime.time
                 font {
                     family: Appearance.font.family.numbers
-                    pixelSize: 96
-                    weight: Font.Light
+                    pixelSize: root.editorial ? 88 : 96
+                    weight: root.editorial ? Font.Normal : Font.Light
+                    letterSpacing: root.editorial ? -1.2 : 0
                 }
-                color: Appearance.zzzEverywhere ? Appearance.zzz.onBg : Appearance.colors.colOnLayer0
+                color: Appearance.zzzEverywhere ? Appearance.zzz.onBg
+                    : root.editorial ? Appearance.editorial.paperOnInk
+                    : Appearance.colors.colOnLayer0
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -260,8 +287,8 @@ Scope {
             // ── Mascot wave ──
             Item {
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 132
-                Layout.preferredHeight: 132
+                Layout.preferredWidth: root.editorial ? 92 : 132
+                Layout.preferredHeight: root.editorial ? 92 : 132
                 visible: greetingMascotAnim.active
                 opacity: root._cascade >= 1 ? 1.0 : 0.0
                 scale: root._cascade >= 1 ? 1.0 : 0.85
@@ -314,12 +341,20 @@ Scope {
                 Layout.topMargin: 4
                 text: Appearance.zzzEverywhere ? root.greeting.toUpperCase() : root.greeting
                 font {
-                    family: Appearance.font.family.title
-                    pixelSize: Appearance.font.pixelSize.hugeass
-                    weight: Appearance.zzzEverywhere ? Font.Bold : Font.Normal
-                    letterSpacing: Appearance.zzzEverywhere ? 2 : 0
+                    family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.title
+                    pixelSize: root.editorial
+                        ? Math.round(38 * Appearance.editorial.titleScale * Appearance.fontSizeScale)
+                        : Appearance.font.pixelSize.hugeass
+                    weight: Appearance.zzzEverywhere ? Font.Bold
+                        : root.editorial ? Appearance.editorial.titleWeight
+                        : Font.Normal
+                    letterSpacing: Appearance.zzzEverywhere ? 2
+                        : root.editorial ? Appearance.editorial.titleTracking
+                        : 0
                 }
-                color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                color: Appearance.zzzEverywhere ? Appearance.zzz.accent
+                    : root.editorial ? Appearance.editorial.paperOnInk
+                    : Appearance.colors.colPrimary
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -353,19 +388,21 @@ Scope {
                 visible: root.showDate && opacity > 0
                 text: DateTime.date
                 font {
-                    family: Appearance.font.family.main
-                    pixelSize: Appearance.font.pixelSize.larger
-                    weight: Font.Normal
-                    capitalization: Font.Capitalize
+                    family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                    pixelSize: root.editorial ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.larger
+                    weight: root.editorial ? Font.DemiBold : Font.Normal
+                    letterSpacing: root.editorial ? 1.1 : 0
+                    capitalization: root.editorial ? Font.AllUppercase : Font.Capitalize
                 }
                 color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
+                    : root.editorial ? Appearance.editorial.paperOnInk
                     : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.2)
+                opacity: root._cascade >= 3 ? (root.editorial ? 0.72 : 1.0) : 0.0
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
 
-                opacity: root._cascade >= 3 ? 1.0 : 0.0
                 transform: Translate {
                     y: root._cascade >= 3 ? 0 : 12
                     Behavior on y {
@@ -415,7 +452,9 @@ Scope {
                 MaterialSymbol {
                     text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "thermostat"
                     iconSize: 22
-                    color: Appearance.zzzEverywhere ? Appearance.zzz.onBg : Appearance.colors.colOnLayer0
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.onBg
+                        : root.editorial ? Appearance.editorial.paperOnInk
+                        : Appearance.colors.colOnLayer0
                     Behavior on color {
                         enabled: Appearance.animationsEnabled
                         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -424,7 +463,11 @@ Scope {
                 StyledText {
                     text: Weather.data?.temp ?? ""
                     font.pixelSize: Appearance.font.pixelSize.large
-                    color: Appearance.zzzEverywhere ? Appearance.zzz.onBg : Appearance.colors.colOnLayer0
+                    font.family: root.editorial ? Appearance.font.family.numbers : Appearance.font.family.main
+                    font.weight: root.editorial ? Font.DemiBold : Font.Normal
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.onBg
+                        : root.editorial ? Appearance.editorial.paperOnInk
+                        : Appearance.colors.colOnLayer0
                     Behavior on color {
                         enabled: Appearance.animationsEnabled
                         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -433,8 +476,11 @@ Scope {
                 StyledText {
                     text: Weather.data?.description ?? ""
                     font.pixelSize: Appearance.font.pixelSize.normal
+                    font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
+                        : root.editorial ? Appearance.editorial.paperOnInk
                         : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.3)
+                    opacity: root.editorial ? 0.72 : 1
                     Behavior on color {
                         enabled: Appearance.animationsEnabled
                         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -446,10 +492,15 @@ Scope {
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 40
-                text: Appearance.zzzEverywhere ? Translation.tr("Click or press any key to continue").toUpperCase() : Translation.tr("Click or press any key to continue")
-                font.pixelSize: Appearance.font.pixelSize.small
-                font.letterSpacing: Appearance.zzzEverywhere ? 1 : 0
+                text: (Appearance.zzzEverywhere || root.editorial)
+                    ? Translation.tr("Click or press any key to continue").toUpperCase()
+                    : Translation.tr("Click or press any key to continue")
+                font.pixelSize: root.editorial ? Appearance.font.pixelSize.smallest : Appearance.font.pixelSize.small
+                font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                font.weight: root.editorial ? Font.DemiBold : Font.Normal
+                font.letterSpacing: Appearance.zzzEverywhere ? 1 : root.editorial ? 1.1 : 0
                 color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
+                    : root.editorial ? Appearance.editorial.paperOnInk
                     : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.5)
                 Behavior on color {
                     enabled: Appearance.animationsEnabled

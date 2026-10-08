@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.modules.common
 import qs.services
 
@@ -23,6 +24,17 @@ Singleton {
     readonly property var terminalAdjCfg: wallpaperThemingCfg?.terminalColorAdjustments ?? null
     readonly property string panelFamily: Config.options?.panelFamily ?? "ii"
     readonly property bool waffleUsesMainWallpaper: Config.options?.waffles?.background?.useMainWallpaper ?? true
+    // What iRiS asks of the system's mode and of the apps' surfaces: both are read by switchwall.sh, so a change regenerates.
+    readonly property string irisSchemeChoice: panelFamily === "iris" ? String(Config.options?.iris?.appearance?.scheme ?? "auto") : "auto"
+    readonly property bool irisMaterialApps: panelFamily === "iris" && (Config.options?.iris?.appearance?.materialForApps ?? true)
+    property string appsSurfaceSeed: ""
+    // A scheme the person picks is also their saved preference, so Auto keeps what they last saw instead of an older toggle.
+    onIrisSchemeChoiceChanged: {
+        if (!Config.ready || irisSchemeChoice === "auto") return
+        const wantDark = irisSchemeChoice === "dark"
+        if ((Config.options?.appearance?.customTheme?.darkmode ?? true) !== wantDark)
+            Config.setNestedValue("appearance.customTheme.darkmode", wantDark)
+    }
     readonly property string liveRegenSignature: JSON.stringify({
         theme: currentTheme,
         panelFamily: root.panelFamily,
@@ -33,6 +45,7 @@ Singleton {
         enableTerminal: wallpaperThemingCfg?.enableTerminal ?? true,
         enableVesktop: wallpaperThemingCfg?.enableVesktop ?? true,
         enableChrome: wallpaperThemingCfg?.enableChrome ?? true,
+        enableFirefox: wallpaperThemingCfg?.enableFirefox ?? true,
         enableZed: wallpaperThemingCfg?.enableZed ?? true,
         enableVSCode: wallpaperThemingCfg?.enableVSCode ?? true,
         enableNeovim: wallpaperThemingCfg?.enableNeovim ?? false,
@@ -44,6 +57,8 @@ Singleton {
         termBackgroundBrightness: terminalAdjCfg?.backgroundBrightness ?? 0.5,
         softenColors: Config.options?.appearance?.softenColors ?? true,
         autoDarkLightMode: wallpaperThemingCfg?.autoDarkLightMode ?? false,
+        irisScheme: root.irisSchemeChoice === "ink" ? "light" : root.irisSchemeChoice,
+        irisMaterialApps: root.irisMaterialApps,
     })
     property string _lastLiveRegenSignature: ""
     property string _lastPanelFamily: ""
@@ -114,6 +129,7 @@ Singleton {
         case "regalia": return styles?.regalia ?? 1
         case "zzz": return styles?.zzz ?? 0
         case "cookie": return styles?.cookie ?? 1
+        case "editorial": return styles?.editorial ?? 1
         default: return styles?.material ?? 1
         }
     }
@@ -131,6 +147,42 @@ Singleton {
             "sidebar.cardStyle": cards,
             "bar.cornerStyle": cornerStyle
         })
+    }
+
+    readonly property var globalStyles: ["material", "cards", "aurora", "inir", "angel", "regalia", "zzz", "cookie", "editorial"]
+
+    IpcHandler {
+        target: "globalStyle"
+        function set(style: string): string {
+            const id = String(style ?? "").trim().toLowerCase()
+            if (!root.globalStyles.includes(id))
+                return "Unknown style: " + root.globalStyles.join(", ")
+            root.setGlobalStyle(id)
+            return id
+        }
+        function get(): string { return Config.options?.appearance?.globalStyle ?? "material" }
+        function list(): string { return root.globalStyles.join(", ") }
+    }
+
+    IpcHandler {
+        target: "colorMode"
+        function set(mode: string): string {
+            const wanted = String(mode ?? "").trim().toLowerCase()
+            if (wanted === "toggle") { Appearance.toggleDarkMode(); return "toggled" }
+            if (!["dark", "light"].includes(wanted)) return "Unknown mode: dark, light or toggle"
+            if (root.isAutoTheme) MaterialThemeLoader.setDarkMode(wanted === "dark")
+            else if (Appearance.m3colors.darkmode !== (wanted === "dark")) Appearance.toggleDarkMode()
+            return wanted
+        }
+        function get(): string {
+            return JSON.stringify({
+                mode: Appearance.m3colors.darkmode ? "dark" : "light",
+                colourTheme: root.currentTheme,
+                saved: (Config.options?.appearance?.customTheme?.darkmode ?? true) ? "dark" : "light",
+                fromWallpaper: wallpaperThemingCfg?.autoDarkLightMode ?? false,
+                irisScheme: root.irisSchemeChoice
+            })
+        }
     }
 
     function _triggerVesktopThemeGeneration(): void {
@@ -260,17 +312,22 @@ Singleton {
             liveRegenerateDebounce.restart()
         }
         function onReadyChanged() {
-            if (!Config.ready) return
-            // Prime the signature to current value so the first config write
-            // doesn't get treated as a delta-from-empty.  The forced regen on
-            // shell startup is still done explicitly by shell.qml via
-            // ThemeService.applyCurrentTheme() — no need to do it here too.
-            // Standalone settings windows must NEVER run a phantom regen on
-            // open: they're observers, not orchestrators.
-            root._lastLiveRegenSignature = root.liveRegenSignature
-            root._lastPanelFamily = root.panelFamily
+            root._primeLiveRegen()
         }
     }
+    // Prime the signature to current value so the first config write
+    // doesn't get treated as a delta-from-empty.  The forced regen on
+    // shell startup is still done explicitly by shell.qml via
+    // ThemeService.applyCurrentTheme() — no need to do it here too.
+    // Standalone settings windows must NEVER run a phantom regen on
+    // open: they're observers, not orchestrators.
+    // Config is usually ready before this singleton is first imported, and then readyChanged never comes.
+    function _primeLiveRegen(): void {
+        if (!Config.ready) return
+        root._lastLiveRegenSignature = root.liveRegenSignature
+        root._lastPanelFamily = root.panelFamily
+    }
+    Component.onCompleted: root._primeLiveRegen()
 
     Timer {
         id: liveRegenerateDebounce

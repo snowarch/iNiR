@@ -37,13 +37,18 @@ Item {
 
     function focusFromSettingsSearch() {
         root.expanded = true;
-        root.forceActiveFocus();
+        if (root.collapsible)
+            headerBackground.forceActiveFocus(Qt.TabFocusReason);
+        else
+            root.forceActiveFocus();
     }
 
     Component.onCompleted: {
         if (!enableSettingsSearch || !root.title)
             return;
         if (typeof SettingsSearchRegistry === "undefined")
+            return;
+        if (!SettingsSearchRegistry.dynamicRegistrationEnabled)
             return;
 
         if (SettingsSearchRegistry.registerCollapsibleSection) {
@@ -77,7 +82,9 @@ Item {
     // Material/aurora: simple offset rectangle instead of GPU-blurred RectangularShadow
     // for much better performance (especially with many cards visible at once).
     Rectangle {
-        visible: !Appearance.angelEverywhere
+        visible: !SettingsMaterialPreset.unified
+            && !Appearance.angelEverywhere
+            && !Appearance.editorialEverywhere
             && !Appearance.zzzEverywhere
             && Appearance.effectsEnabled
         x: card.x + 0.5
@@ -110,39 +117,6 @@ Item {
         z: -0.5
     }
 
-    // Non-ZZZ, non-angel: subtle left accent bar when expanded
-    Rectangle {
-        id: accentBar
-        visible: !Appearance.angelEverywhere && !Appearance.regaliaEverywhere
-            && !Appearance.zzzEverywhere && !Appearance.cookieEverywhere
-        anchors {
-            left: card.left
-            top: card.top
-            bottom: card.bottom
-            leftMargin: 0
-            topMargin: SettingsMaterialPreset.cardRadius
-            bottomMargin: SettingsMaterialPreset.cardRadius
-        }
-        width: 2
-        radius: 1
-        color: SettingsMaterialPreset.accentColor
-        opacity: root.expanded
-            ? 0.6
-            : (headerMouseArea.containsMouse ? 0.3 : 0)
-        z: 1
-        Behavior on opacity {
-            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        Behavior on width {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
-        }
-        Behavior on color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-    }
-
     Loader {
         anchors.fill: card
         active: Appearance.cookieEverywhere && root.visible
@@ -161,12 +135,14 @@ Item {
         radius: SettingsMaterialPreset.cardRadius
         color: Appearance.cookieEverywhere || Appearance.regaliaEverywhere
             ? "transparent" : SettingsMaterialPreset.cardColor
-        border.width: Appearance.angelEverywhere ? 0
+        border.width: SettingsMaterialPreset.unified ? 0
+                     : Appearance.angelEverywhere ? 0
                      : (Appearance.regaliaEverywhere ? 0
                      : (Appearance.zzzEverywhere ? 0
                      : (Appearance.cookieEverywhere ? 0
+                     : (Appearance.editorialEverywhere ? 0
                      : (Appearance.inirEverywhere ? 1
-                     : (Appearance.auroraEverywhere ? 1 : 1)))))
+                     : (Appearance.auroraEverywhere ? 1 : 1))))))
         border.color: Appearance.angelEverywhere ? "transparent" : SettingsMaterialPreset.cardBorderColor
 
         Behavior on color {
@@ -217,6 +193,21 @@ Item {
                 Layout.fillWidth: true
                 implicitHeight: headerRow.implicitHeight + SettingsMaterialPreset.headerPaddingY * 2
                 radius: SettingsMaterialPreset.headerRadius
+                activeFocusOnTab: root.collapsible
+                Accessible.role: root.collapsible ? Accessible.Button : Accessible.Heading
+                Accessible.name: root.title
+                Accessible.focusable: root.collapsible
+                Accessible.onPressAction: toggleExpanded()
+
+                function toggleExpanded() {
+                    if (root.collapsible)
+                        root.expanded = !root.expanded;
+                }
+
+                Keys.onSpacePressed: toggleExpanded()
+                Keys.onReturnPressed: toggleExpanded()
+                Keys.onEnterPressed: toggleExpanded()
+
                 color: Appearance.regaliaEverywhere ? "transparent"
                     : headerMouseArea.containsMouse && root.collapsible
                         ? SettingsMaterialPreset.headerHoverColor
@@ -224,6 +215,25 @@ Item {
 
                 Behavior on color {
                     animation: ColorAnimation { duration: Appearance.animation.stateChange.duration; easing.type: Appearance.animation.stateChange.type; easing.bezierCurve: Appearance.animation.stateChange.bezierCurve }
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: headerBackground.radius
+                    color: "transparent"
+                    border.width: 2
+                    border.color: Appearance.editorialEverywhere
+                        ? Appearance.editorial.focusRing : Appearance.colors.colPrimary
+                    visible: headerBackground.activeFocus && root.collapsible
+                }
+
+                EditorialRule {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: 2
+                    inset: SettingsMaterialPreset.headerPaddingX
+                    emphasized: root.expanded || headerMouseArea.containsMouse
                 }
 
                 RegaliaControlFace {
@@ -238,11 +248,28 @@ Item {
                     anchors.fill: parent
                     anchors.leftMargin: SettingsMaterialPreset.headerPaddingX
                     anchors.rightMargin: SettingsMaterialPreset.headerPaddingX
-                    spacing: 8
+                    spacing: Appearance.editorialEverywhere ? Math.round(8 * Appearance.editorial.spacing) : 8
+
+                    Loader {
+                        active: Appearance.editorialEverywhere && Appearance.editorial.ornaments
+                        Layout.preferredWidth: active ? 28 : 0
+                        Layout.preferredHeight: active ? 28 : 0
+                        visible: active
+                        sourceComponent: MaterialShape {
+                            implicitSize: 26
+                            shape: MaterialShape.Shape.Flower
+                            color: Appearance.editorial.accent
+                            rotation: root.expanded ? 45 : 0
+                            Behavior on rotation {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation { duration: 260; easing.type: Easing.OutCubic }
+                            }
+                        }
+                    }
 
                     // Icon with expand-state color
                     Loader {
-                        active: root.icon && root.icon.length > 0
+                        active: !Appearance.editorialEverywhere && root.icon && root.icon.length > 0
                         visible: active
                         Layout.alignment: Qt.AlignVCenter
 
@@ -303,8 +330,14 @@ Item {
 
                     StyledText {
                         text: Appearance.zzzEverywhere ? root.title.toUpperCase() : root.title
-                        font.pixelSize: Appearance.font.pixelSize.normal
-                        font.weight: Appearance.zzzEverywhere ? Font.ExtraBold : Font.DemiBold
+                        wrapMode: Text.Wrap
+                        font.family: Appearance.editorialEverywhere ? Appearance.font.family.title : Appearance.font.family.main
+                        font.pixelSize: Appearance.editorialEverywhere ? Appearance.font.pixelSize.huge * Appearance.editorial.titleScale : Appearance.font.pixelSize.normal
+                        readonly property int titleWeight: Appearance.editorialEverywhere
+                            ? Appearance.editorial.titleWeight : Appearance.zzzEverywhere ? Font.ExtraBold : Font.DemiBold
+                        font.weight: titleWeight
+                        font.variableAxes: Object.assign({}, Appearance.font.variableAxes.main, { "wght": titleWeight })
+                        font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
                         color: root.expanded
                             ? SettingsMaterialPreset.titleExpandedColor
                             : SettingsMaterialPreset.titleCollapsedColor
@@ -341,7 +374,8 @@ Item {
                     cursorShape: root.collapsible ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: {
                         if (root.collapsible) {
-                            root.expanded = !root.expanded;
+                            headerBackground.forceActiveFocus(Qt.MouseFocusReason);
+                            headerBackground.toggleExpanded();
                         }
                     }
                 }

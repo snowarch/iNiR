@@ -13,6 +13,7 @@ import Quickshell.Hyprland
 
 Scope {
     id: root
+    readonly property bool editorial: Appearance.editorialEverywhere
     property bool _presentedOpen: false
     property var pages: [
         {
@@ -125,13 +126,14 @@ Scope {
         StyledRectangularShadow {
             target: cheatsheetBackground
             radius: cheatsheetBackground.radius
-            visible: !Appearance.zzzEverywhere
+            visible: !root.editorial && !Appearance.zzzEverywhere
         }
 
         Rectangle {
             id: cheatsheetBackground
             anchors.centerIn: parent
             color: Appearance.zzzEverywhere ? Appearance.zzz.bg0
+                 : root.editorial ? Appearance.editorial.paper
                  : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                  : Appearance.inirEverywhere ? Appearance.inir.colLayer0
                  : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
@@ -144,10 +146,12 @@ Scope {
                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
             }
             border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+                        : root.editorial ? Appearance.editorial.rule
                         : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                         : Appearance.inirEverywhere ? Appearance.inir.colBorder
                         : Appearance.colors.colLayer0Border
             radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                  : root.editorial ? Appearance.editorial.radius
                   : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                   : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                   : Appearance.rounding.windowRounding
@@ -292,7 +296,9 @@ Scope {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    color: Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.colors.colSurfaceContainerLow
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.bg1
+                        : root.editorial ? Appearance.editorial.layer(1)
+                        : Appearance.colors.colSurfaceContainerLow
                     radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                     Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }

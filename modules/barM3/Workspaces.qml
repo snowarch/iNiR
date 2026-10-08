@@ -27,6 +27,6 @@ Item {
         indicatorStyle: Config.options.bar.m3.workspaces.indicatorStyle
         numberMap: Config.options.bar.m3.workspaces.numberMap
         forceMaterialStyle: Config.options.bar.m3.cornerStyle === 3
-            && Appearance.globalStyle === "material"
+            && (Appearance.globalStyle === "material" || Appearance.editorialEverywhere)
     }
 }

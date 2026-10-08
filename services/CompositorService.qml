@@ -113,19 +113,19 @@ Singleton {
         function onValuesChanged() { root.scheduleSort() }
     }
     Connections {
-        target: Hyprland.toplevels
+        target: root.isHyprland ? Hyprland.toplevels : null
         enabled: root.isHyprland && root.sortingActive
         function onValuesChanged() {
             root.scheduleSort()
         }
     }
     Connections {
-        target: Hyprland.workspaces
+        target: root.isHyprland ? Hyprland.workspaces : null
         enabled: root.isHyprland && root.sortingActive
         function onValuesChanged() { root.scheduleSort() }
     }
     Connections {
-        target: Hyprland
+        target: root.isHyprland ? Hyprland : null
         enabled: root.isHyprland && root.sortingActive
         function onFocusedWorkspaceChanged() { root.scheduleSort() }
     }

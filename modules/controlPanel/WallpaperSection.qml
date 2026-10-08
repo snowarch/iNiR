@@ -60,7 +60,7 @@ PanelSurface {
                 colBackgroundHover: root.inirEverywhere ? Appearance.inir.colLayer2Hover 
                     : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                     : Appearance.colors.colLayer2Hover
-                onClicked: Wallpapers.randomFromCurrentFolder()
+                onClicked: Wallpapers.nextWallpaper()
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: "shuffle"

@@ -4,11 +4,19 @@ UI components organized by panel family. Modules handle rendering and interactio
 
 ## How modules load
 
-Every visible panel is wrapped in a `PanelLoader` inside either `ShellIiPanels.qml` (Material ii) or `ShellWafflePanels.qml` (Waffle). A panel loads when:
+Panel loading has two stages. `shell.qml` first activates one family-specific critical host:
 
-1. `Config.ready` is true
-2. Its identifier is in the `enabledPanels` config array
-3. Its `extraCondition` (if any) is satisfied
+- `modules/ii/critical/ShellIiCriticalPanels.qml`
+- `modules/waffle/critical/ShellWaffleCriticalPanels.qml`
+
+After the first shell frame, `GlobalStates.deferredPanelsReady` enables the thin root wrapper (`ShellIiPanels.qml`, `ShellWafflePanels.qml`, or `ShellIrisPanels.qml`), which loads the corresponding family implementation root.
+
+Those implementation roots use `PanelLoader`, `DeferredPanelLoader`, and `OnDemandPanelLoader`. Depending on the loader, a panel is gated by some combination of:
+
+1. `Config.ready`
+2. Its identifier being present in `enabledPanels`
+3. A family/feature-specific `extraCondition`
+4. The shell-entry/deferred phase or the panel's actual open/resident state
 
 Users can disable any panel from Settings without touching config files.
 
@@ -88,9 +96,9 @@ Users can disable any panel from Settings without touching config files.
 |--------|----------|-------------|
 | `waffle/notificationPopup/` | `wNotificationPopup` | Notification popups (Fluent style). |
 | `waffle/onScreenDisplay/` | `wOnScreenDisplay` | Volume/brightness OSD (Fluent style). |
-| `waffle/lock/` | `wLock` | Lock screen (Fluent variant). |
-| `waffle/polkit/` | `wPolkit` | PolicyKit dialog (Fluent variant). |
-| `waffle/sessionScreen/` | `wSessionScreen` | Session screen (Fluent variant). |
+| `lock/` + `waffle/lock/` presentation | `wLock` | Shared lock owner with Waffle-specific surface presentation. |
+| `polkit/` + Waffle presentation | `wPolkit` | Shared PolicyKit owner rendered for Waffle. |
+| `sessionScreen/` + Waffle presentation | `wSessionScreen` | Shared session owner rendered for Waffle. |
 
 ### Design System
 
@@ -147,13 +155,15 @@ If no timezones are configured, it suggests useful zones from the user's locale/
 
 Some panels work under both families. They keep their `ii` prefix but load in waffle mode too:
 
-`iiCheatsheet`, `iiOnScreenKeyboard`, `iiOverlay`, `iiOverview`, `iiRegionSelector`, `iiScreenCorners`, `iiWallpaperSelector`, `iiWallpaperLauncher`, `iiClipboard`, `iiRecordingOsd`, `iiWorkspaceStrip`, `iiMascotCompanion`
+`iiBootGreeting`, `iiCheatsheet`, `iiOnScreenKeyboard`, `iiOverlay`, `iiOverview`, `iiRegionSelector`, `iiScreenCorners`, `iiWallpaperSelector`, `iiWallpaperLauncher`, `iiRecordingOsd`, `iiWorkspaceStrip`, `iiMascotCompanion`
+
+Waffle owns its clipboard implementation separately (`modules/waffle/clipboard/`); the legacy `iiClipboard` identifier can still appear in family/config compatibility lists, but the ii clipboard component is not the active Waffle clipboard surface.
 
 ## For contributors
 
 1. Read [Architecture Overview](ARCHITECTURE_OVERVIEW.md) to locate the module's place in the tree and its owning family
 2. Identify which family owns the module before making visual changes
 3. Use the correct token system: `Appearance.*` for ii, `Looks.*` for waffle
-4. Register new panels in the appropriate panels file
+4. Register new panels in the correct composition owner: a `critical/` host only for first-frame surfaces, otherwise the family's `Shell*PanelsImpl.qml`; keep shell-wide IPC routers in `shell.qml` when the command must exist before heavy panels load
 5. Register new shared widgets in `modules/common/widgets/qmldir`
-6. If touching shared modules, test under both families
+6. If touching shared modules, test every family that consumes the changed contract

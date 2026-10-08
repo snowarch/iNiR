@@ -1,0 +1,3 @@
+module qs.modules.iris.polkit
+IrisPolkit 1.0 IrisPolkit.qml
+IrisPolkitContent 1.0 IrisPolkitContent.qml

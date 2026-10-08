@@ -86,7 +86,8 @@ Item {
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
                         implicitHeight: todoContentRowLayout.implicitHeight
-                        color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                        color: Appearance.editorialEverywhere ? (modelData.done ? Appearance.editorial.layer(1) : Appearance.editorial.secondaryField)
+                            : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                             : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                             : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
                         radius: Appearance.rounding.small
@@ -102,6 +103,9 @@ Item {
                                 Layout.topMargin: todoListItemPadding
                                 id: todoContentText
                                 text: modelData.content
+                                font.weight: Appearance.editorialEverywhere && !modelData.done ? Font.Medium : Font.Normal
+                                font.strikeout: Appearance.editorialEverywhere && modelData.done
+                                color: Appearance.editorialEverywhere ? (modelData.done ? Appearance.editorial.muted : Appearance.editorial.secondaryFieldInk) : Appearance.colors.colOnLayer1
                                 wrapMode: Text.Wrap
                             }
                             RowLayout {
@@ -195,7 +199,7 @@ Item {
                 wrapMode: Text.Wrap
                 text: root.emptyPlaceholderText
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
+                color: Appearance.colMetadataText
             }
         }
     }

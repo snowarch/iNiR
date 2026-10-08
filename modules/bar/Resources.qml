@@ -1,3 +1,4 @@
+import qs.modules.common.widgets
 import qs.modules.common
 import qs.services
 import QtQuick
@@ -11,8 +12,7 @@ MouseArea {
     implicitHeight: Appearance.sizes.barHeight
     hoverEnabled: true
 
-    Component.onCompleted: ResourceUsage.keepAlive()
-    Component.onDestruction: ResourceUsage.releaseKeepAlive()
+    property QtObject resourceMonitor: ResourceUsageMonitor { target: root }
 
     RowLayout {
         id: rowLayout
@@ -34,7 +34,7 @@ MouseArea {
             percentage: ResourceUsage.tempPercentage
             shown: (Config.options?.bar?.resources?.showTempIndicator ?? true) &&
                 ((Config.options?.bar?.resources?.alwaysShowTemp ?? true) || 
-                    (MprisController.activePlayer?.trackTitle == null) ||
+                    !MprisController.activePlayer ||
                     root.alwaysShowAllResources)
             Layout.leftMargin: shown ? 6 : 0
             cautionThreshold: Config.options?.bar?.resources?.tempCautionThreshold ?? 65
@@ -46,7 +46,7 @@ MouseArea {
             percentage: ResourceUsage.cpuUsage
             shown: (Config.options?.bar?.resources?.showCpuIndicator ?? true) &&
                 ((Config.options?.bar?.resources?.alwaysShowCpu ?? true) || 
-                    !(MprisController.activePlayer?.trackTitle?.length > 0) ||
+                    !(MprisController.titleOf(MprisController.activePlayer)?.length > 0) ||
                     root.alwaysShowAllResources)
             Layout.leftMargin: shown ? 6 : 0
             warningThreshold: Config.options?.bar?.resources?.cpuWarningThreshold ?? 90
@@ -57,7 +57,7 @@ MouseArea {
             percentage: ResourceUsage.gpuUsage
             shown: (Config.options?.bar?.resources?.showGpuIndicator ?? true) &&
                 ((Config.options?.bar?.resources?.alwaysShowGpu ?? true) || 
-                    !(MprisController.activePlayer?.trackTitle?.length > 0) ||
+                    !(MprisController.titleOf(MprisController.activePlayer)?.length > 0) ||
                     root.alwaysShowAllResources)
             Layout.leftMargin: shown ? 6 : 0
             warningThreshold: Config.options?.bar?.resources?.gpuWarningThreshold ?? 90

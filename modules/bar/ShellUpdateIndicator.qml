@@ -232,12 +232,12 @@ MouseArea {
                     Layout.minimumWidth: 0
 
                     MaterialSymbol {
-                        text: "download"
+                        text: ShellUpdates.repoDiverged ? "history" : "download"
                         iconSize: Appearance.font.pixelSize.large
                         color: Appearance.colors.colOnSurfaceVariant
                     }
                     StyledText {
-                        text: Translation.tr("Behind:")
+                        text: ShellUpdates.repoDiverged ? Translation.tr("History:") : Translation.tr("Behind:")
                         color: Appearance.colors.colOnSurfaceVariant
                     }
                     StyledText {
@@ -245,7 +245,9 @@ MouseArea {
                         Layout.minimumWidth: 0
                         horizontalAlignment: Text.AlignRight
                         elide: Text.ElideRight
-                        text: ShellUpdates.commitsBehind > 0
+                        text: ShellUpdates.repoDiverged
+                            ? Translation.tr("changed upstream")
+                            : ShellUpdates.commitsBehind > 0
                             ? (ShellUpdates.commitsBehind + " " + Translation.tr("commit(s)"))
                             : Translation.tr("Update available")
                         color: ShellUpdates.commitsBehind > 10
@@ -357,6 +359,16 @@ MouseArea {
                     color: Appearance.colors.colTertiary
                     wrapMode: Text.WordWrap
                     opacity: 0.85
+                }
+
+                StyledText {
+                    visible: ShellUpdates.repoDiverged && !ShellUpdates.isUpdating
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    text: Translation.tr("Repair & Update will only auto-realign a clean checkout when Git recorded a forced upstream rewrite.")
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    color: Appearance.colors.colWarning
+                    wrapMode: Text.WordWrap
                 }
 
                 // Error display

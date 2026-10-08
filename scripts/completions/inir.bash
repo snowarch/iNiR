@@ -1,5 +1,6 @@
 # Bash completion for inir CLI
-# Install: eval "$(inir completions bash)"
+# Install: inir completions install bash
+# Or: eval "$(inir completions bash)"
 # Or: inir completions bash > /etc/bash_completion.d/inir
 
 _inir_completions() {
@@ -9,7 +10,7 @@ _inir_completions() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # Top-level CLI commands
-    local cli_commands="install start stop run restart kill logs terminal browser close-window ipc settings settings-window waffle-settings-window repair path test-local setup service doctor migrate status update rollback my-changes uninstall config info backup version theme help completions"
+    local cli_commands="bind install start stop run restart kill logs terminal browser close-window ipc settings settings-window waffle-settings-window repair path test-local setup service doctor migrate status update rollback my-changes uninstall config info backup version theme help completions"
 
     # Source IPC registry for target/function completion
     local script_dir inir_bin
@@ -43,47 +44,51 @@ _inir_completions() {
         fi
     fi
 
-    case "$COMP_CWORD" in
+    # The words of an IPC call: after `inir`, `inir ipc` or `inir bind [--opts] <keys>`.
+    local -a call=()
+    local i=1 first="${COMP_WORDS[1]:-}"
+    if [[ "$first" == "ipc" ]]; then
+        i=2
+    elif [[ "$first" == "bind" ]]; then
+        i=2
+        while (( i < COMP_CWORD )) && [[ "${COMP_WORDS[i]}" == --* ]]; do ((i++)); done
+        # Keys first: nothing to offer while they are being typed.
+        if (( COMP_CWORD <= i )); then
+            [[ "$cur" == -* ]] && COMPREPLY=( $(compgen -W "--add --remove --list --examples" -- "$cur") )
+            return 0
+        fi
+        ((i++))
+    fi
+    for (( ; i < COMP_CWORD; i++ )); do call+=("${COMP_WORDS[i]}"); done
+
+    if (( COMP_CWORD == 1 )); then
+        COMPREPLY=( $(compgen -W "$cli_commands $ipc_targets $ipc_aliases" -- "$cur") )
+        return 0
+    fi
+    if [[ "$first" != "ipc" && "$first" != "bind" && ${#call[@]} -eq 1 ]]; then
+        case "$first" in
+            service) COMPREPLY=( $(compgen -W "install uninstall enable disable start stop restart status logs" -- "$cur") ); return 0 ;;
+            theme) COMPREPLY=( $(compgen -W "list-targets inspect doctor scaffold apply" -- "$cur") ); return 0 ;;
+            completions) COMPREPLY=( $(compgen -W "bash zsh fish install" -- "$cur") ); return 0 ;;
+        esac
+    fi
+
+    local target="${call[0]:-}"
+    [[ -n "$target" && -n "${IPC_KEBAB_ALIASES[$target]+_}" ]] && target="${IPC_KEBAB_ALIASES[$target]}"
+    case "${#call[@]}" in
+        0)
+            COMPREPLY=( $(compgen -W "$ipc_targets $ipc_aliases" -- "$cur") )
+            ;;
         1)
-            # First argument: CLI commands + IPC targets + kebab aliases
-            COMPREPLY=( $(compgen -W "$cli_commands $ipc_targets $ipc_aliases" -- "$cur") )
+            [[ -n "$target" && -n "${IPC_TARGET_FUNCTIONS[$target]+_}" ]] && \
+                COMPREPLY=( $(compgen -W "${IPC_TARGET_FUNCTIONS[$target]}" -- "$cur") )
             ;;
-        2)
-            case "$prev" in
-                service)
-                    COMPREPLY=( $(compgen -W "install uninstall enable disable start stop restart status logs" -- "$cur") )
-                    ;;
-                theme)
-                    COMPREPLY=( $(compgen -W "list-targets inspect doctor scaffold apply" -- "$cur") )
-                    ;;
-                completions)
-                    COMPREPLY=( $(compgen -W "bash zsh fish" -- "$cur") )
-                    ;;
-                ipc)
-                    COMPREPLY=( $(compgen -W "$ipc_targets $ipc_aliases" -- "$cur") )
-                    ;;
-                *)
-                    # Check if prev is an IPC target — complete with its functions
-                    local normalized="$prev"
-                    if [[ -n "${IPC_KEBAB_ALIASES[$prev]+_}" ]]; then
-                        normalized="${IPC_KEBAB_ALIASES[$prev]}"
-                    fi
-                    if [[ -n "${IPC_TARGET_FUNCTIONS[$normalized]+_}" ]]; then
-                        COMPREPLY=( $(compgen -W "${IPC_TARGET_FUNCTIONS[$normalized]}" -- "$cur") )
-                    fi
-                    ;;
-            esac
-            ;;
-        3)
-            # Third arg: if "ipc <target>" pattern, complete functions
-            if [[ "${COMP_WORDS[1]}" == "ipc" ]]; then
-                local target="${COMP_WORDS[2]}"
-                if [[ -n "${IPC_KEBAB_ALIASES[$target]+_}" ]]; then
-                    target="${IPC_KEBAB_ALIASES[$target]}"
-                fi
-                if [[ -n "${IPC_TARGET_FUNCTIONS[$target]+_}" ]]; then
-                    COMPREPLY=( $(compgen -W "${IPC_TARGET_FUNCTIONS[$target]}" -- "$cur") )
-                fi
+        *)
+            # A function's own values, for as many arguments as it takes.
+            local key="${target}:${call[1]}"
+            local -a hint=( ${IPC_FUNCTION_ARGS[$key]:-} )
+            if (( ${#call[@]} - 1 <= ${#hint[@]} )) && [[ -n "${IPC_FUNCTION_VALUES[$key]+_}" ]]; then
+                COMPREPLY=( $(compgen -W "${IPC_FUNCTION_VALUES[$key]}" -- "$cur") )
             fi
             ;;
     esac

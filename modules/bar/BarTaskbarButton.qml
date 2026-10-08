@@ -271,14 +271,7 @@ RippleButton {
                 iconName: appEntry?.pinned ? "keep_off" : "keep",
                 text: appEntry?.pinned ? Translation.tr("Unpin from dock") : Translation.tr("Pin to dock"),
                 monochromeIcon: true,
-                action: () => {
-                    const appId = appEntry?.originalAppId ?? appEntry?.appId ?? "";
-                    if (Config.options?.dock?.pinnedApps?.indexOf(appId) !== -1) {
-                        Config.setNestedValue("dock.pinnedApps", (Config.options?.dock?.pinnedApps ?? []).filter(id => id !== appId))
-                    } else {
-                        Config.setNestedValue("dock.pinnedApps", (Config.options?.dock?.pinnedApps ?? []).concat([appId]))
-                    }
-                }
+                action: () => TaskbarApps.togglePin(appEntry?.originalAppId ?? appEntry?.appId ?? "")
             },
             // Close
             ...(root.hasWindows ? [

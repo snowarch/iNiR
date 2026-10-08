@@ -59,7 +59,9 @@ inir run
 
 Add `-y` for non-interactive mode.
 
-If you want a packaging-style local install surface instead of the repo-sync installer:
+On a fresh CachyOS install, setup also enables `niri-focused-booster` when the package is available and the kernel exposes the required DMEM cgroup interface. Existing installs are not rewritten by this release path.
+
+If you want a packaging-style local install surface instead of the normal setup-managed `repo-copy` installer:
 
 ```bash
 sudo make install
@@ -121,7 +123,7 @@ Diagnoses and **automatically fixes** common issues:
 - Version tracking
 - File manifest
 
-For externally managed installs, `doctor` can rebuild `~/.config/illogical-impulse/version.json` from the runtime metadata already present under `~/.config/quickshell/inir/version.json`. It also skips the repo-sync manifest requirement when the install is package-managed.
+For externally managed installs, `doctor` can rebuild the canonical `~/.config/inir/version.json` from runtime metadata already present in the installed shell payload. It also skips setup-managed runtime-manifest requirements when the install is package-managed.
 
 If you want the same repair flow plus restart and filtered logs:
 
@@ -185,7 +187,7 @@ For new installs and migrated setups, `~/.config/niri/config.kdl` becomes a smal
 - `90-user-extra.kdl`
   - preserved custom blocks that do not map to the standard split
 
-If you want to change which apps iNiR launches, edit `~/.config/illogical-impulse/config.json` instead of hardcoding new executables into the distributed binds:
+If you want to change which apps iNiR launches, use Settings or edit `~/.config/inir/config.json` instead of hardcoding new executables into the distributed binds:
 
 - `apps.terminal`
   - used by `inir terminal`
@@ -229,7 +231,7 @@ Useful when you want to see what you've changed or restore defaults after custom
 | `inir stop`          | Stop the active runtime                                     |
 | `inir run`           | Launch iNiR from the active runtime                         |
 | `inir restart`       | Restart the active runtime                                  |
-| `inir settings`      | Open settings via IPC                                       |
+| `inir settings`      | Toggle settings via IPC                                     |
 | `inir terminal`      | Launch the configured terminal from `apps.terminal`         |
 | `inir browser`       | Launch the configured browser from `apps.browser`           |
 | `inir doctor`        | Wrapper around `./setup doctor`                             |
@@ -254,7 +256,7 @@ Shows:
 - Repo path when relevant
 - Health checks and snapshot availability
 
-For externally managed installs, `status` also shows the detected package update command and makes it explicit that repo-sync updates are disabled for that installation mode.
+For externally managed installs, `status` also shows the detected package update command and makes it explicit that repo/setup payload updates are disabled for that installation mode.
 
 It also reports:
 
@@ -296,7 +298,7 @@ These checks cover:
 | ----------------------------------------- | -------------------------------------------------------------------- |
 | QML code (`./setup install`)              | `~/.config/quickshell/inir/`                                         |
 | QML code (`make install` / package style) | `/usr/share/quickshell/inir/` or `/usr/local/share/quickshell/inir/` |
-| User config                               | `~/.config/illogical-impulse/config.json`                            |
+| User config                               | `~/.config/inir/config.json`                                         |
 | State files                               | `~/.local/state/quickshell/user/`                                    |
 | Cache                                     | `~/.cache/inir/`                                                     |
 | Launcher                                  | `inir` in the install prefix                                         |
@@ -312,7 +314,6 @@ These checks cover:
 | Qt themes       | `~/.config/kdeglobals`, `~/.config/Kvantum/`                                       |
 | Color schemes   | `~/.local/share/color-schemes/`                                                    |
 | Color templates | `~/.config/matugen/` _(legacy directory name, matugen binary no longer required)_ |
-| Fuzzel config   | `~/.config/fuzzel/`                                                                |
 | Vesktop themes  | `~/.config/vesktop/themes/`                                                        |
 
 ### Behavior
@@ -381,7 +382,7 @@ The following are removed without prompting (iNiR-exclusive):
 
 ```
 ~/.config/quickshell/inir/                       # Shell configuration
-~/.config/illogical-impulse/                     # User preferences
+~/.config/inir/                                  # Canonical user preferences
 ~/.local/state/quickshell/user/                  # Notifications, todo
 ~/.cache/inir/                                   # Cache
 ~/.local/bin/inir_super_overview_daemon.py       # Super daemon
@@ -406,7 +407,7 @@ These may be used by other applications. The script asks before removing:
 | `~/.config/dolphinrc`                                          | Optional     | Ask (remove if not using Dolphin)                                                                       |
 | `~/.config/gtk-3.0/gtk.css`                                    | Optional     | Ask                                                                                                     |
 | `~/.config/gtk-4.0/gtk.css`                                    | Optional     | Ask                                                                                                     |
-| `~/.config/fontconfig/`                                        | Essential    | Keep                                                                                                    |
+| `~/.config/fontconfig/conf.d/90-inir-shell.conf`               | iNiR default | Remove                                                                                                  |
 | `${XDG_DATA_HOME:-~/.local/share}/color-schemes/Darkly.colors` | iNiR default | Remove                                                                                                  |
 
 ### Installed Packages
@@ -449,20 +450,24 @@ To restore from backup:
 
 ```bash
 cp -r ~/.local/share/inir-uninstall-backup-*/quickshell-inir ~/.config/quickshell/inir
-cp -r ~/.local/share/inir-uninstall-backup-*/illogical-impulse ~/.config/illogical-impulse
+cp -r ~/.local/share/inir-uninstall-backup-*/inir ~/.config/inir
 ```
+
+Backups made from an older unmigrated installation can use the legacy directory name instead.
 
 ### Manual Uninstall (Fallback)
 
 If the automated script fails or is unavailable:
 
 ```bash
-# Stop services
-qs kill -c inir
+# Stop the shell through the iNiR control path
+inir stop
+inir service disable
 systemctl --user disable --now inir-super-overview.service 2>/dev/null
 
 # Remove iNiR-exclusive files
 rm -rf ~/.config/quickshell/inir
+rm -rf ~/.config/inir
 rm -rf ~/.config/illogical-impulse
 rm -rf ~/.local/state/quickshell/user
 rm -rf ~/.cache/inir

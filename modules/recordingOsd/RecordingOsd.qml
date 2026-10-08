@@ -12,8 +12,8 @@ import qs.services
 
 Scope {
     id: root
+    readonly property bool editorial: Appearance.editorialEverywhere
 
-    property bool isVertical: false
     property bool collapsed: false
     readonly property bool autoHide: Config.options?.screenRecord?.recordingOsd?.autoHide ?? false
     readonly property string audioMode: RecorderStatus.effectiveAudioMode
@@ -47,7 +47,6 @@ Scope {
         function onIsRecordingChanged(): void {
             if (RecorderStatus.isRecording) {
                 root.collapsed = false
-                root.isVertical = false
                 root.revealed = true
                 // Start auto-hide timer if enabled
                 if (root.autoHide) {
@@ -67,14 +66,16 @@ Scope {
         }
     }
 
-    Loader {
-        id: osdLoader
-        active: RecorderStatus.isRecording
+    Variants {
+        model: RecorderStatus.isRecording ? Quickshell.screens : []
 
-        sourceComponent: PanelWindow {
+        PanelWindow {
             id: osdWindow
-            visible: osdLoader.active && !GlobalStates.screenLocked
-            screen: GlobalStates.primaryScreen
+            required property ShellScreen modelData
+            property bool isVertical: false
+
+            visible: RecorderStatus.isRecording && !GlobalStates.screenLocked
+            screen: modelData
 
             anchors {
                 top: true
@@ -93,6 +94,16 @@ Scope {
 
             readonly property real edgeMargin: Appearance.sizes.elevationMargin
 
+            function positionPill(): void {
+                if (pill._userPositioned || pill.width <= 0 || osdWindow.width <= 0)
+                    return
+                pill.x = (osdWindow.width - pill.width) / 2
+                pill.y = Appearance.sizes.elevationMargin
+                Qt.callLater(() => { pill.initScale = 1.0 })
+            }
+
+            Component.onCompleted: Qt.callLater(positionPill)
+
             function snapToNearestEdge(): void {
                 const margin = edgeMargin
                 const pw = osdWindow.width
@@ -109,9 +120,9 @@ Scope {
 
                 const minDist = Math.min(distLeft, distRight, distTop, distBottom)
 
-                const wasVertical = root.isVertical
+                const wasVertical = osdWindow.isVertical
                 const snapsToSide = (minDist === distLeft || minDist === distRight)
-                root.isVertical = snapsToSide
+                osdWindow.isVertical = snapsToSide
 
                 let targetX, targetY
 
@@ -123,7 +134,7 @@ Scope {
                     targetX = Math.max(margin, Math.min(pw - pillW - margin, pill.x))
                 }
 
-                if (root.isVertical !== wasVertical) {
+                if (osdWindow.isVertical !== wasVertical) {
                     Qt.callLater(() => {
                         const newPillW = pill.width
                         const newPillH = pill.height
@@ -158,17 +169,17 @@ Scope {
                 id: pill
                 property bool animatePosition: false
                 property real contentPadding: 6
-                property bool _positioned: false
+                property bool _userPositioned: false
                 property bool _osdHovered: false
 
                 // When auto-hide is active and not revealed: fade + shrink away
                 opacity: root.autoHide && !root.revealed ? 0 : (initScale < 0.95 ? 0 : 1)
                 scale: root.autoHide && !root.revealed ? 0.5 : initScale
 
-                width: root.isVertical
+                width: osdWindow.isVertical
                     ? verticalContent.implicitWidth + contentPadding * 2
                     : horizontalContent.implicitWidth + contentPadding * 2
-                height: root.isVertical
+                height: osdWindow.isVertical
                     ? verticalContent.implicitHeight + contentPadding * 2
                     : horizontalContent.implicitHeight + contentPadding * 2
 
@@ -190,12 +201,7 @@ Scope {
                 Connections {
                     target: osdWindow
                     function onWidthChanged(): void {
-                        if (!pill._positioned && osdWindow.width > 0) {
-                            pill.x = (osdWindow.width - pill.width) / 2
-                            pill.y = Appearance.sizes.elevationMargin
-                            pill._positioned = true
-                            Qt.callLater(() => { pill.initScale = 1.0 })
-                        }
+                        osdWindow.positionPill()
                     }
                 }
 
@@ -209,13 +215,19 @@ Scope {
                     screenX: screenPos.x
                     screenY: screenPos.y
 
-                    fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.colors.colLayer2
+                    fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.bg1
+                        : root.editorial ? Appearance.editorial.layer(1)
+                        : Appearance.colors.colLayer2
                     inirColor: Appearance.inir.colLayer1
                     auroraTransparency: Appearance.aurora.popupTransparentize
+                    wallpaperBackdropEnabled: !root.editorial
 
-                    radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.rounding.large
+                    radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                        : root.editorial ? Appearance.editorial.radius
+                        : Appearance.rounding.large
                     border.width: Appearance.zzzEverywhere ? 1 : (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1)
                     border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+                                : root.editorial ? Appearance.editorial.rule
                                 : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                                 : Appearance.inirEverywhere ? Appearance.inir.colBorder
                                 : Appearance.colors.colOutlineVariant
@@ -276,7 +288,7 @@ Scope {
                 // Horizontal layout (default, top/bottom edge)
                 RowLayout {
                     id: horizontalContent
-                    visible: !root.isVertical
+                    visible: !osdWindow.isVertical
                     anchors.centerIn: parent
                     spacing: 2
 
@@ -322,7 +334,7 @@ Scope {
                 // Vertical layout (left/right edge)
                 ColumnLayout {
                     id: verticalContent
-                    visible: root.isVertical
+                    visible: osdWindow.isVertical
                     anchors.centerIn: parent
                     spacing: 2
 
@@ -389,7 +401,9 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                : root.editorial ? Appearance.rounding.small
+                : Appearance.rounding.full
             Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
             color: dragHandler.active
                 ? (Appearance.zzzEverywhere ? Appearance.zzz.bg4
@@ -414,7 +428,7 @@ Scope {
             anchors.centerIn: parent
             text: "drag_indicator"
             iconSize: Appearance.font.pixelSize.normal
-            color: Appearance.colors.colOnLayer2
+            color: root.editorial ? Appearance.editorial.muted : Appearance.colors.colOnLayer2
         }
 
         HoverHandler {
@@ -426,12 +440,15 @@ Scope {
             id: dragHandler
             target: pill
             xAxis.minimum: 0
-            xAxis.maximum: osdLoader.item ? osdLoader.item.width - pill.width : 0
+            xAxis.maximum: osdWindow.width - pill.width
             yAxis.minimum: 0
-            yAxis.maximum: osdLoader.item ? osdLoader.item.height - pill.height : 0
+            yAxis.maximum: osdWindow.height - pill.height
             onActiveChanged: {
-                if (active) pill.animatePosition = false
-                else if (osdLoader.item) osdLoader.item.snapToNearestEdge()
+                if (active) {
+                    pill._userPositioned = true
+                    pill.animatePosition = false
+                }
+                else osdWindow.snapToNearestEdge()
             }
         }
     }
@@ -442,7 +459,9 @@ Scope {
         Layout.preferredWidth: isVertical ? 22 : 1
         Layout.preferredHeight: isVertical ? 1 : 22
         Layout.alignment: Qt.AlignCenter
-        color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : Appearance.colors.colOutlineVariant
+        color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+            : root.editorial ? Appearance.editorial.rule
+            : Appearance.colors.colOutlineVariant
         Behavior on color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -473,7 +492,7 @@ Scope {
                 width: 8; height: 8; radius: 4
                 color: Appearance.colors.colError
                 SequentialAnimation on opacity {
-                    running: osdLoader.active
+                    running: RecorderStatus.isRecording
                     loops: Animation.Infinite
                     NumberAnimation { to: 0.2; duration: 800; easing.type: Easing.InOutSine }
                     NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
@@ -495,10 +514,10 @@ Scope {
                     id: hTimerText
                     anchors.centerIn: parent
                     text: indicator.timeString
-                    font.family: Appearance.font.family.monospace
+                    font.family: root.editorial ? Appearance.font.family.numbers : Appearance.font.family.monospace
                     font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.Medium
-                    color: Appearance.colors.colOnLayer2
+                    font.weight: root.editorial ? Font.DemiBold : Font.Medium
+                    color: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnLayer2
                 }
             }
         }
@@ -514,7 +533,7 @@ Scope {
                 width: 8; height: 8; radius: 4
                 color: Appearance.colors.colError
                 SequentialAnimation on opacity {
-                    running: osdLoader.active
+                    running: RecorderStatus.isRecording
                     loops: Animation.Infinite
                     NumberAnimation { to: 0.2; duration: 800; easing.type: Easing.InOutSine }
                     NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
@@ -528,10 +547,10 @@ Scope {
                     required property string modelData
                     Layout.alignment: Qt.AlignHCenter
                     text: modelData === ":" ? "\u00B7\u00B7" : modelData
-                    font.family: Appearance.font.family.monospace
+                    font.family: root.editorial ? Appearance.font.family.numbers : Appearance.font.family.monospace
                     font.pixelSize: modelData === ":" ? Appearance.font.pixelSize.smaller : Appearance.font.pixelSize.small
-                    font.weight: Font.Medium
-                    color: Appearance.colors.colOnLayer2
+                    font.weight: root.editorial ? Font.DemiBold : Font.Medium
+                    color: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnLayer2
                     opacity: modelData === ":" ? 0.5 : 1.0
                 }
             }
@@ -545,12 +564,14 @@ Scope {
         property string tooltip: ""
         property bool dimmed: false
         property bool filled: false
-        property color iconColor: Appearance.colors.colOnLayer2
+        property color iconColor: root.editorial ? Appearance.editorial.ink : Appearance.colors.colOnLayer2
 
         Layout.preferredWidth: 30
         Layout.preferredHeight: 30
         Layout.alignment: Qt.AlignCenter
-        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+            : root.editorial ? Appearance.rounding.small
+            : Appearance.rounding.full
         colBackground: "transparent"
         colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.bg3
             : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover

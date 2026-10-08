@@ -31,12 +31,45 @@ Singleton {
     property bool sidebarRightOpen: false
     property string sidebarRightTargetOutput: ""
     property bool mediaControlsOpen: false
+    property bool equalizerOpen: false
+    property string equalizerTargetOutput: ""
+    readonly property bool equalizerEnabled: (Config.options?.enabledPanels ?? []).includes("iiEqualizer")
+
+    function openEqualizer(outputName: string): void {
+        if (!root.equalizerEnabled)
+            return
+        const requested = String(outputName ?? "")
+        equalizerTargetOutput = requested.length > 0
+            ? requested
+            : String(root.focusedScreen?.name ?? root.primaryScreen?.name ?? "")
+        equalizerOpen = true
+    }
+
+    function closeEqualizer(): void {
+        equalizerOpen = false
+    }
+
+    function toggleEqualizer(outputName: string): void {
+        if (!root.equalizerEnabled) {
+            closeEqualizer()
+            return
+        }
+        if (equalizerOpen) {
+            closeEqualizer()
+            return
+        }
+        openEqualizer(outputName)
+    }
+    property real irisLevelQuietUntil: 0
+    function quietIrisLevels(): void { root.irisLevelQuietUntil = Date.now() + 700 }
     property bool osdBrightnessOpen: false
     property bool osdVolumeOpen: false
     property bool osdMicOpen: false
     property bool osdMediaOpen: false
     property string osdMediaAction: "play" // "play", "pause", "next", "previous"
     signal osdMediaActionTriggered(string action)
+    readonly property bool userMediaFeedback: Config.options?.panelFamily === "iris"
+        || (Config.options?.osd?.mediaEnabled ?? true)
 
     function showMediaAction(action: string): void {
         const normalized = String(action ?? "")
@@ -48,6 +81,7 @@ Singleton {
     }
 
     property bool osdKeyboardLayoutOpen: false
+    property bool osdConnectionOpen: false
     property bool oskOpen: false
     property bool overlayOpen: false
     property bool overviewOpen: false
@@ -67,25 +101,67 @@ Singleton {
     property int activeContextMenuCount: 0
     property var activeContextMenu: null
     property bool clipboardOpen: false
+    // True only while iNiR asks Niri for internal window-preview frames.
+    property bool windowPreviewCaptureActive: false
     property bool settingsOverlayOpen: false
     property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page
+    property string settingsOverlayRequestedSection: ""
     property int settingsOverlayCurrentPage: -1 // Published by whichever overlay chrome is loaded
+    // iRiS Settings as a window: open or toggle with it mapped but not focused brings it forward instead.
+    property bool settingsWindowBehind: false
+    property int settingsRaiseRequest: 0
     property var _settingsNativeDialogs: ({})
     readonly property bool settingsNativeDialogOpen:
         Object.keys(root._settingsNativeDialogs).length > 0
 
-    function openSettingsPage(index: int): void {
+    function openSettingsPage(index: int, section): void {
+        const requestedSection = String(section ?? "")
         const isWaffle = Config.options?.panelFamily === "waffle"
             && Config.options?.waffles?.settings?.useMaterialStyle !== true
         if (isWaffle) {
             Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
                 "waffle-settings-window"])
-        } else if (Config.options?.settingsUi?.overlayMode ?? false) {
+        } else if (Config.options?.panelFamily === "iris" || (Config.options?.settingsUi?.overlayMode ?? false)) {
             root.settingsOverlayRequestedPage = index
+            root.settingsOverlayRequestedSection = requestedSection
+            if (root.settingsOverlayOpen) root.settingsRaiseRequest++
             root.settingsOverlayOpen = true
         } else {
-            Quickshell.execDetached(["/usr/bin/env", `QS_SETTINGS_PAGE=${index}`,
-                Quickshell.shellPath("scripts/inir"), "settings-window"])
+            const args = ["/usr/bin/env", `QS_SETTINGS_PAGE=${index}`]
+            if (requestedSection.length > 0)
+                args.push(`QS_SETTINGS_SECTION=${requestedSection}`)
+            args.push(Quickshell.shellPath("scripts/inir"), "settings-window")
+            Quickshell.execDetached(args)
+        }
+    }
+
+    function openSettings(): void {
+        const isWaffle = Config.options?.panelFamily === "waffle"
+            && Config.options?.waffles?.settings?.useMaterialStyle !== true
+        if (isWaffle) {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                "waffle-settings-window"])
+        } else if (Config.options?.panelFamily === "iris" || (Config.options?.settingsUi?.overlayMode ?? false)) {
+            if (root.settingsOverlayOpen) root.settingsRaiseRequest++
+            root.settingsOverlayOpen = true
+        } else {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                "settings-window"])
+        }
+    }
+
+    function toggleSettings(): void {
+        const isWaffle = Config.options?.panelFamily === "waffle"
+            && Config.options?.waffles?.settings?.useMaterialStyle !== true
+        if (isWaffle) {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                "waffle-settings-window", "--toggle"])
+        } else if (Config.options?.panelFamily === "iris" || (Config.options?.settingsUi?.overlayMode ?? false)) {
+            if (root.settingsOverlayOpen && root.settingsWindowBehind) root.settingsRaiseRequest++
+            else root.settingsOverlayOpen = !root.settingsOverlayOpen
+        } else {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                "settings-window", "--toggle"])
         }
     }
 
@@ -101,6 +177,14 @@ Singleton {
     }
 
     property bool regionSelectorOpen: false
+    property bool japaneseLookupOpen: false
+    property bool japaneseLookupExpanded: false
+    property var japaneseLookupResult: ({})
+    property string japaneseLookupScreen: ""
+    property real japaneseLookupX: 0
+    property real japaneseLookupY: 0
+    property real japaneseLookupWidth: 0
+    property real japaneseLookupHeight: 0
     property var regionSelectorAction: 0
     property var regionSelectorMode: 0
     // Explicit screenshot callers must remain deterministic. The dedicated
@@ -133,6 +217,7 @@ Singleton {
     // Native screenshot annotation editor (Edit action)
     property bool annotationEditorOpen: false
     property string annotationEditorPath: ""
+    property string annotationEditorScreenName: ""
     property bool screenLocked: false
     property bool screenLockContainsCharacters: false
     property bool screenUnlockFailed: false
@@ -140,21 +225,39 @@ Singleton {
     property bool superDown: false
     property bool superReleaseMightTrigger: true
     property bool wallpaperSelectorOpen: false
+    property string wallpaperSelectorSource: ""
+    property string wallpaperSelectorQuery: ""
+    property string wallpaperSelectorKind: ""
+    // `inir wallpaperSelector move <step>`: the gallery moves its selection as the arrow keys do.
+    signal wallpaperSelectorMoveRequested(int step)
+    property var wallpaperSelectorSeries: null
+    property string wallpaperSelectorKindActive: "all"
     property bool wallpaperLauncherOpen: false
     property string wallpaperLauncherMode: "static"
     property bool widgetEditMode: false
+    // Finding a widget while arranging (the iRiS widget bar); `inir background widgetSearch` drives the same state.
+    property bool widgetSearchOpen: false
+    property string widgetSearchText: ""
+    signal widgetSearchCommand(string verb)
+    // Arrow keys while arranging under iRiS: the chassis owns the keyboard and hands the step to the selected widget.
+    signal desktopWidgetNudge(int dx, int dy)
     property string selectedDesktopWidget: ""
     property string selectedDesktopItem: ""
     property string desktopWidgetQuickControls: ""
+    property string desktopWidgetManagerOutput: ""
     property bool shellLayoutEditMode: false
 
     function setWidgetEditMode(enabled: bool): void {
-        if (enabled)
+        if (enabled) {
             shellLayoutEditMode = false
+            irisEdit = false
+        }
         else {
             selectedDesktopWidget = ""
             selectedDesktopItem = ""
             desktopWidgetQuickControls = ""
+            widgetSearchOpen = false
+            widgetSearchText = ""
         }
         widgetEditMode = enabled
     }
@@ -208,6 +311,7 @@ Singleton {
     // Target monitor for wallpaper selector (set before opening, avoids config timing issues)
     property string wallpaperSelectorTargetMonitor: ""
     onWallpaperSelectorOpenChanged: {
+        if (wallpaperSelectorOpen) irisOrbitOpen = false
         // Reset selection target when selector closes without selection
         if (!wallpaperSelectorOpen) {
             wallpaperSelectionTarget = "main";
@@ -223,6 +327,7 @@ Singleton {
         }
     }
     onWallpaperLauncherOpenChanged: {
+        if (wallpaperLauncherOpen) irisOrbitOpen = false
         if (!wallpaperLauncherOpen) {
             // Restore the configured wallpaper if the user browsed away without applying.
             Wallpapers.cancelWallpaperPreview()
@@ -251,6 +356,141 @@ Singleton {
         }
     }
     property bool controlPanelOpen: false
+    // iRiS: screen-local geometry ({x, y, width, height, radius, screen}) of the
+    // Island part that last opened a surface, so it can morph out of and back
+    // into that exact shape. Transient coordination only; null means "no origin".
+    property var irisMorphOrigin: null
+    // Who published that origin when it is not the Island (e.g. "left" for a
+    // side panel's button). The Island leaves a foreign origin alone on open and
+    // close; the morph surface clears it once it has fully collapsed.
+    property string irisMorphOwner: ""
+    // True while a surface is mid-morph out of or back into that origin; the
+    // Island hides the published part so only one shape is ever on screen.
+    // iRiS intent preloading: the pointer resting on the Island (controls) or an
+    // expanded Island (settings) instantiates those surfaces hidden, so the
+    // morph starts on the click frame instead of after an async load.
+    property bool irisControlsWarm: false
+    // Asks the focused Island to open a page ("media", "desktop", "activity",
+    // "tray", "tools") from a surface that is not the Island (card, floating bubble).
+    property string irisIslandPageRequest: ""
+    // A bubble's own card: { kind, x, y, width, height, radius, screen, source }
+    // with the screen-local rect of the bubble it grows out of; `source` names
+    // that bubble ("island-<slot>" or "float-<slot>") so it can hide meanwhile.
+    property var irisBubbleCard: null
+    // The Island's desktop page is being arranged in place (iRiS Studio).
+    property bool irisArrange: false
+    // The Dock's body per output, so the chassis field draws it in the same pass
+    // as the frame and the Island instead of the Dock carrying a second surface.
+    property var irisDockBody: ({})
+    // iRiS is being edited in place: every piece is grabbable, the edit bar
+    // holds the pieces, the look and the sizes, and Done ends it.
+    // Arranging the Control Center in place; closing the panel ends it.
+    property bool irisControlEdit: false
+    property string irisControlTab: "controls"
+    // The lock screen rehearsal: the same surface, editable, with no PAM behind it.
+    property bool irisLockEdit: false
+    property string irisLockSelection: ""
+    // The quick-controls tab `inir iris lock select:<key>/<tab>` asks the selected lock widget to show.
+    property string irisLockWidgetTab: ""
+    property string irisLockPage: "scene"
+    property bool irisEdit: false
+    // What the edit bar is inspecting: a piece slot ("extra:vitals", "left",
+    // "app:kitty"), a surface ("island", "dock", "cards"…) or "" for the family.
+    property string irisEditSelection: ""
+    // A Studio target the edit bar should inspect ("" = keep what it shows).
+    property string irisEditTarget: ""
+    property int irisChassisEpoch: 0
+    onIrisEditChanged: {
+        if (!irisEdit) { irisEditSelection = ""; irisEditTarget = "" }
+        else if (widgetEditMode) setWidgetEditMode(false)
+        if (irisEdit && irisStudioOpen) irisStudioOpen = false
+    }
+    onIrisEditSelectionChanged: if (irisEditSelection.length > 0) irisEditTarget = ""
+    onIrisEditTargetChanged: if (irisEditTarget.length > 0) irisEditSelection = ""
+    // The in-place editors belong to iRiS: leaving the family ends them, or they are destroyed open and
+    // come back open when the family does.
+    function endIrisEditing(): void {
+        irisLockEdit = false
+        irisEdit = false
+        irisControlEdit = false
+    }
+    onControlPanelOpenChanged: if (!controlPanelOpen) irisControlEdit = false
+    onIrisControlEditChanged: if (!irisControlEdit) irisControlTab = "controls"
+    // iRiS Studio, the panel form of Customize, is open. It and Customize on the shell never show together.
+    property bool irisStudioOpen: false
+    onIrisStudioOpenChanged: if (irisStudioOpen && irisEdit) irisEdit = false
+    // Customize, in the form the person chose (iris.appearance.customize), on a target ("" = where it was).
+    function openIrisCustomize(target): void {
+        const wanted = String(target ?? "")
+        if (String(Config.options?.iris?.appearance?.customize ?? "shell") === "studio") {
+            irisStudioTarget = wanted
+            irisStudioOpen = true
+        } else {
+            irisEditTarget = wanted
+            irisEdit = true
+        }
+    }
+    // A target Studio should show when it opens or is already open ("" = keep).
+    property string irisStudioTarget: ""
+    // The `source` of the card on screen (kept while it collapses), "" when none.
+    // Asks whichever bubble shows this kind (floating first, then the Island)
+    // to open its card; IPC and keyboard paths use it.
+    property string irisBubbleCardRequest: ""
+    // A floating piece asked to open its own menu, by kind (IPC).
+    property string irisBubbleMenuRequest: ""
+    // A bubble being carried: { slot, kind, screen, x, y (screen-local centre),
+    // size, released }. The bubble layer draws it and resolves the drop.
+    property var irisBubbleDrag: null
+    // Per output name: what each bubble slot shows ({ left, right, utility }) and
+    // the resting Island's screen-local geometry, published by each Island.
+    property var irisBubbleKinds: ({})
+    property var irisIslandGeometry: ({})
+    // Per output: pieces an edge owner carries instead of floating over it ({ island: [...], dock: [...] }).
+    property var irisAbsorbed: ({})
+    property bool irisSettingsWarm: false
+    // iRiS side panel ("left"/"right") that was revealed by resting at its screen
+    // edge: it closes when the pointer leaves until a press inside commits it.
+    property string irisSidebarPeek: ""
+    // iRiS Dock held on screen by IPC (`inir iris dock show`) until hidden again
+    // or an app is chosen from it.
+    property bool irisDockShown: false
+    // Opens an app's windows or menu on the focused Dock: { appId, mode: "windows" | "menu" }.
+    property var irisDockMenuRequest: null
+    property var irisDockSlide: null
+    property var irisDockHome: null
+    // A query for Spotlight to type as it opens (IPC); taken and cleared by the palette.
+    property string irisSpotlightQuery: ""
+    // Orbit (iRiS): Niri's workspaces and windows as a place to find and go. `irisOrbitQuery` is what it types as it opens.
+    property bool irisOrbitOpen: false
+    property string irisOrbitQuery: ""
+    // The output Orbit opened on when a hot corner asked for one; empty means the focused output. It stays put until the
+    // next open, so a leaving Orbit is not pulled to another output.
+    property string irisOrbitOutput: ""
+    property bool _irisOrbitOutputAsked: false
+    // The corner each output's Orbit hot corner is on right now ("" = none), published by the corner itself.
+    property var irisOrbitCorners: ({})
+    function openIrisOrbit(outputName: string): void {
+        irisOrbitOutput = outputName
+        _irisOrbitOutputAsked = true
+        irisOrbitOpen = true
+    }
+    onIrisOrbitOpenChanged: {
+        if (!irisOrbitOpen) return
+        if (!_irisOrbitOutputAsked) irisOrbitOutput = ""
+        _irisOrbitOutputAsked = false
+        searchOpen = false
+        wallpaperSelectorOpen = false
+        wallpaperLauncherOpen = false
+    }
+    // Desktop widget manager toggle routed to the output that should show it.
+    signal desktopWidgetManagerToggleRequested(string outputName)
+    // The iRiS desktop menu opened at a point of an output (`inir iris desktopMenu`).
+    signal irisDesktopMenuRequested(string outputName, real x, real y)
+    // Whether any output's Island is expanded, published for `inir iris status`.
+    property bool irisIslandExpanded: false
+    property string irisIslandShape: ""
+    property string irisControlPickerRequest: ""
+    property string irisIslandPage: ""
     property bool dashboardOpen: false
     property bool workspaceShowNumbers: false
     property var activeBooruImageMenu: null  // Track which BooruImage has its menu open
@@ -266,6 +506,7 @@ Singleton {
     // Panel family transition animation state
     property bool familyTransitionActive: false
     property string familyTransitionDirection: "left" // "left" = current exits left, new enters from right
+    property string familyTransitionTarget: ""
 
     signal requestRipple(real x, real y, string screenName)
 
@@ -323,12 +564,14 @@ Singleton {
 
     readonly property string overviewPresentationOutput:
         root.resolveOutputName(root.overviewTargetOutput, [])
+    readonly property var sidebarScreenList: (Config.options?.panelFamily ?? "ii") === "iris"
+        ? [] : (Config.options?.sidebar?.screenList ?? [])
     readonly property string sidebarLeftPresentationOutput:
         root.resolveOutputName(root.sidebarLeftTargetOutput,
-            Config.options?.sidebar?.screenList ?? [])
+            root.sidebarScreenList)
     readonly property string sidebarRightPresentationOutput:
         root.resolveOutputName(root.sidebarRightTargetOutput,
-            Config.options?.sidebar?.screenList ?? [])
+            root.sidebarScreenList)
 
     function openOverview(outputName): void {
         overviewMode = "default"
@@ -412,8 +655,9 @@ Singleton {
     function toggleTaskView(outputName): void { root.toggleOrbit(outputName) }
 
     function openSidebarLeft(outputName): void {
+        if (Config.options?.panelFamily === "iris" && !(Config.options?.iris?.sidebars?.left?.enable ?? true)) return
         sidebarLeftTargetOutput = root.resolveOutputName(outputName,
-            Config.options?.sidebar?.screenList ?? [])
+            root.sidebarScreenList)
         sidebarLeftOpen = true
     }
 
@@ -423,7 +667,7 @@ Singleton {
 
     function toggleSidebarLeft(outputName): void {
         const resolved = root.resolveOutputName(outputName,
-            Config.options?.sidebar?.screenList ?? [])
+            root.sidebarScreenList)
         if (sidebarLeftOpen && sidebarLeftPresentationOutput === resolved)
             root.closeSidebarLeft()
         else
@@ -431,8 +675,9 @@ Singleton {
     }
 
     function openSidebarRight(outputName): void {
+        if (Config.options?.panelFamily === "iris" && !(Config.options?.iris?.sidebars?.right?.enable ?? true)) return
         sidebarRightTargetOutput = root.resolveOutputName(outputName,
-            Config.options?.sidebar?.screenList ?? [])
+            root.sidebarScreenList)
         sidebarRightOpen = true
     }
 
@@ -442,7 +687,7 @@ Singleton {
 
     function toggleSidebarRight(outputName): void {
         const resolved = root.resolveOutputName(outputName,
-            Config.options?.sidebar?.screenList ?? [])
+            root.sidebarScreenList)
         if (sidebarRightOpen && sidebarRightPresentationOutput === resolved)
             root.closeSidebarRight()
         else
@@ -457,12 +702,13 @@ Singleton {
     onSidebarLeftOpenChanged: {
         if (sidebarLeftOpen && sidebarLeftTargetOutput.length === 0)
             sidebarLeftTargetOutput = root.resolveOutputName("",
-                Config.options?.sidebar?.screenList ?? [])
+                root.sidebarScreenList)
     }
 
     // Close other waffle popups when one opens (unless allowMultiplePanels is enabled)
     property bool _allowMultiple: Config.options?.waffles?.behavior?.allowMultiplePanels ?? false
     onSearchOpenChanged: {
+        if (searchOpen) irisOrbitOpen = false
         if (searchOpen && !_allowMultiple) {
             waffleActionCenterOpen = false
             waffleNotificationCenterOpen = false
@@ -521,7 +767,7 @@ Singleton {
     onSidebarRightOpenChanged: {
         if (sidebarRightOpen && sidebarRightTargetOutput.length === 0)
             sidebarRightTargetOutput = root.resolveOutputName("",
-                Config.options?.sidebar?.screenList ?? [])
+                root.sidebarScreenList)
         if (sidebarRightOpen) {
             Notifications.timeoutAll()
             Notifications.markAllRead()

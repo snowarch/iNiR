@@ -13,7 +13,9 @@ Rectangle {
     
     property color fallbackColor: Appearance.colors.colLayer1
     property color inirColor: Appearance.inir.colLayer1
-    property real auroraTransparency: Appearance.aurora.popupTransparentize
+    property color overlayColor: Appearance.colors.colLayer0Base
+    property real auroraTransparency: Appearance.editorialEverywhere && Appearance.editorial.glassActive
+        ? 1 - Appearance.editorial.glassOpacity : Appearance.aurora.popupTransparentize
     property bool wallpaperBackdropEnabled: true
     property string wallpaperUrl: WallpaperListener.wallpaperUrlForScreen(root.QsWindow?.window?.screen ?? null)
     
@@ -34,14 +36,20 @@ Rectangle {
     property bool forceNeutralMaterial: false
     // Blur radius as a fraction of blurMax. 1 is the house default every existing
     // caller inherits; lower values are for surfaces that expose it to the user.
-    property real blurStrength: 1
-    property real saturationStrength: 0.2
+    property real blurStrength: Appearance.editorialEverywhere && Appearance.editorial.glassActive
+        ? Appearance.editorial.glassBlur : 1
+    property real saturationStrength: Appearance.editorialEverywhere && Appearance.editorial.glassActive ? 0.04 : 0.2
     readonly property bool useWallpaperBackdrop: root.forceBackdrop
         ? Appearance.effectsEnabled
         : (Appearance.blurBackendFor("panels", Appearance.blurTopology.unsupported) === "wallpaper"
             && root.wallpaperBackdropEnabled)
+    readonly property bool backdropReady: !root.useWallpaperBackdrop
+        || blurredWallpaper.status === Image.Ready
     
-    color: root.useWallpaperBackdrop ? "transparent"
+    // Never expose a raw transparent hole while the wallpaper is loading or
+    // unavailable. Consumers can provide a solid style base as fallback; once
+    // the backdrop is ready this becomes transparent and the glass stack takes over.
+    color: root.useWallpaperBackdrop && root.backdropReady ? "transparent"
         : root.inirEverywhere ? root.inirColor
         : root.fallbackColor
     
@@ -105,7 +113,7 @@ Rectangle {
         visible: root.useWallpaperBackdrop
         color: root.angelEverywhere && !root.forceNeutralMaterial
             ? ColorUtils.transparentize(Appearance.colors.colLayer0Base, Appearance.angel.overlayOpacity)
-            : ColorUtils.transparentize(Appearance.colors.colLayer0Base, root.auroraTransparency)
+            : ColorUtils.transparentize(root.overlayColor, root.auroraTransparency)
     }
 
     // Inset glow — light-from-above on top edge, angel only

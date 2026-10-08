@@ -7,42 +7,45 @@ This suite is used to manage project translation files, automatically extract tr
 Use `l10n.py` for current runtime localization work. It audits English fallbacks, creates contextual review batches and validates reviewed translations before applying them.
 
 ```bash
+python3 translations/tools/l10n.py audit-guides
+python3 translations/tools/l10n.py audit-source
 python3 translations/tools/l10n.py audit-all
-python3 translations/tools/l10n.py audit es_AR --strict-terms
-python3 translations/tools/l10n.py extract es_AR /tmp/es_AR-001.json --limit 200
-python3 translations/tools/l10n.py apply /tmp/es_AR-001.json
+python3 translations/tools/l10n.py audit es_419
+python3 translations/tools/l10n.py extract es_419 /tmp/es_419-001.json --limit 200
+python3 translations/tools/l10n.py apply /tmp/es_419-001.json
 ```
 
 See `translations/l10n/README.md` for the full workflow. The older automatic translators below are useful only for rough drafts and are not an approval step.
 
 ## Tool Components
 
-### 1. `translation-manager.py` - Main Translation Manager
-- Extract translatable texts
-- Compare and update translation files
-- Interactive addition/removal of translation keys
+### 1. `translation-manager.py` - Legacy source discovery helper
+- Extract literal translatable texts from product source
+- Compare discovered literals with a locale during manual maintenance
+- Does not define the canonical runtime catalog or release gate
 
-### 2. `translation-cleaner.py` - Translation File Maintenance Tool
-- Clean unused translation keys
-- Synchronize key structure across different language files
+### 2. `translation-cleaner.py` - Canonical structure maintenance
+- Remove locale keys that are not present in canonical `en_US.json`
+- Synchronize locale key structure from canonical `en_US.json`
+- Never treats literal source extraction as deletion authority
 
-### 3. `manage-translations.sh` - Convenient Wrapper Script
-- Provides a unified command-line interface
-- Displays translation status
-- Simplifies common operations
+### 3. `manage-translations.sh` - Maintenance wrapper
+- `status` reports the canonical `en_US.json` + `l10n.py audit-all` contract
+- `extract` is source discovery only and is intentionally not a release-status metric
+- Legacy mutation helpers remain available for deliberate maintenance
 
 ### 4. `auto-translate.js` - Bulk Auto-Translation Tool
 - Uses Google Translate to automatically fill empty or missing translations.
 - Processes keys in batches to avoid API limits.
-- **Usage**: `node auto-translate.js <lang_code>` (e.g. `node auto-translate.js es_AR`)
+- **Usage**: `node auto-translate.js <lang_code>` (e.g. `node auto-translate.js es_419`)
 
 ## Quick Start
 
-### Using the Wrapper Script (Recommended)
+### Canonical status and review workflow
 
 ```bash
 # Enter the tools directory
-cd .config/quickshell/translations/tools
+cd translations/tools
 
 # Show help
 ./manage-translations.sh --help
@@ -50,27 +53,22 @@ cd .config/quickshell/translations/tools
 # Show current translation status
 ./manage-translations.sh status
 
-# Extract translatable texts
+# Discover literal Translation.tr(...) strings when auditing source coverage
 ./manage-translations.sh extract
 
-# Update all translation files
-./manage-translations.sh update
+# Prepare and apply reviewed locale work with the canonical helper
+python3 l10n.py extract es_419 /tmp/es_419-review.json --limit 200
+python3 l10n.py apply /tmp/es_419-review.json
 
-# Update a specific language
-./manage-translations.sh update -l zh_CN
-
-# Clean unused keys
-./manage-translations.sh clean
-
-# Synchronize keys across all language files
+# Structural sync/legacy maintenance remains explicit
 ./manage-translations.sh sync
 ```
 
 Or run from the project root:
 ```bash
 # Run from the project root
-.config/quickshell/translations/tools/manage-translations.sh status
-.config/quickshell/translations/tools/manage-translations.sh update
+translations/tools/manage-translations.sh status
+translations/tools/manage-translations.sh update
 ```
 
 ## Detailed Usage

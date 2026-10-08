@@ -22,6 +22,7 @@ PanelSurface {
 
     property var screen: root.QsWindow.window?.screen ?? null
     property var brightnessMonitor: screen ? Brightness.getMonitorForScreen(screen) : null
+    onVisibleChanged: if (visible) root.brightnessMonitor?.refresh()
 
     elevation: 1
     radiusOverride: islandSkin ? -1

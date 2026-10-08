@@ -90,13 +90,13 @@ Item {
                         : Appearance.inirEverywhere
                         ? Appearance.inir.colLayer1Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                        : (isRunning ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover)
+                        : (isRunning ? Appearance.colors.colPrimaryContainerHover : Appearance.colLayer1Hover)
                     colRipple: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt
                         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                         : Appearance.inirEverywhere
                         ? Appearance.inir.colLayer1Active
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
-                        : (isRunning ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active)
+                        : (isRunning ? Appearance.colors.colPrimaryContainerActive : Appearance.colLayer1Active)
                     
                     onClicked: {
                         if (!modelData.cmd) return

@@ -155,6 +155,7 @@ ContentPage {
             model: root.hasEnrichedData ? NiriKeybinds.enrichedCategories : []
 
             delegate: SettingsCardSection {
+                id: enrichedCategoryCard
                 required property var modelData
                 required property int index
                 Layout.fillWidth: true
@@ -171,7 +172,7 @@ ContentPage {
 
                     Repeater {
                         id: enrichedBindRepeater
-                        model: bindIndices
+                        model: enrichedCategoryCard.expanded ? bindIndices : []
 
                         delegate: KeybindRow {
                             required property int modelData   // index into allBinds
@@ -208,6 +209,7 @@ ContentPage {
             model: root.categories
 
             delegate: SettingsCardSection {
+                id: legacyCategoryCard
                 required property var modelData
                 required property int index
                 Layout.fillWidth: true
@@ -223,7 +225,7 @@ ContentPage {
 
                     Repeater {
                         id: legacyBindRepeater
-                        model: categoryKeybinds
+                        model: legacyCategoryCard.expanded ? categoryKeybinds : []
 
                         delegate: KeybindRow {
                             required property var modelData
@@ -603,11 +605,9 @@ ContentPage {
                     spacing: 0
 
                     // ── Edit form (Loader — instantiate only when active) ────
-                    Loader {
+                    SettingsTaskLoader {
                         id: editFormLoader
-                        active: kbRow.editState === "editing"
-                        visible: active
-                        Layout.fillWidth: true
+                        requested: kbRow.editState === "editing"
 
                         sourceComponent: Component {
                             ColumnLayout {
@@ -717,11 +717,9 @@ ContentPage {
                     }
 
                     // ── Confirm delete ───────────────────────────────────────
-                    Loader {
+                    SettingsTaskLoader {
                         id: confirmDeleteLoader
-                        active: kbRow.editState === "confirmDelete"
-                        visible: active
-                        Layout.fillWidth: true
+                        requested: kbRow.editState === "confirmDelete"
 
                         sourceComponent: Component {
                             RowLayout {

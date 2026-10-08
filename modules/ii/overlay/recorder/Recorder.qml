@@ -134,7 +134,7 @@ StyledOverlayWidget {
                 implicitHeight: RecorderStatus.isRecording ? 28 : 0
                 Layout.preferredHeight: implicitHeight
                 radius: Math.min(width, height) / 2
-                color: Appearance.colors.colErrorContainer
+                color: OverlayLook.colErrorContainer
 
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
@@ -151,7 +151,7 @@ StyledOverlayWidget {
 
                     Rectangle {
                         width: 8; height: 8; radius: 4
-                        color: Appearance.colors.colError
+                        color: OverlayLook.colError
                         SequentialAnimation on opacity {
                             running: RecorderStatus.isRecording
                             loops: Animation.Infinite
@@ -162,7 +162,7 @@ StyledOverlayWidget {
 
                     StyledText {
                         text: root.formatElapsed(RecorderStatus.elapsedSeconds)
-                        color: Appearance.colors.colOnErrorContainer
+                        color: OverlayLook.colOnErrorContainer
                         font.family: Appearance.font.family.monospace
                         font.pixelSize: Appearance.font.pixelSize.normal
                         font.weight: Font.Medium
@@ -170,18 +170,17 @@ StyledOverlayWidget {
 
                     StyledText {
                         text: Translation.tr("Recording")
-                        color: Appearance.colors.colOnErrorContainer
+                        color: OverlayLook.colOnErrorContainer
                         font.pixelSize: Appearance.font.pixelSize.small
                         opacity: 0.7
                     }
                 }
             }
 
-            PanelSurface {
+            OverlayPanel {
                 Layout.fillWidth: true
                 implicitHeight: 42
                 elevation: 2
-                outlined: false
 
                 RowLayout {
                     anchors.fill: parent
@@ -191,7 +190,7 @@ StyledOverlayWidget {
                     StyledText {
                         text: Translation.tr("Audio")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnLayer2
+                        color: OverlayLook.colOnLayer2
                         Layout.leftMargin: 4
                     }
 
@@ -294,11 +293,10 @@ StyledOverlayWidget {
                 Layout.fillWidth: true
             }
 
-            PanelSurface {
+            OverlayPanel {
                 Layout.fillWidth: true
                 implicitHeight: destinationsColumn.implicitHeight + 16
                 elevation: 2
-                outlined: false
 
                 ColumnLayout {
                     id: destinationsColumn
@@ -310,7 +308,7 @@ StyledOverlayWidget {
                         text: Translation.tr("Capture folders")
                         font.pixelSize: Appearance.font.pixelSize.small
                         font.weight: Font.Medium
-                        color: Appearance.colors.colOnLayer2
+                        color: OverlayLook.colOnLayer2
                     }
 
                     DestinationRow {
@@ -371,9 +369,9 @@ StyledOverlayWidget {
         implicitWidth: 72
         implicitHeight: 28
         buttonRadius: height / 2
-        colBackground: modeSelected ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer3
-        colBackgroundHover: modeSelected ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer3Hover
-        colRipple: modeSelected ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer3Active
+        colBackground: modeSelected ? OverlayLook.colPrimaryContainer : OverlayLook.colLayer3
+        colBackgroundHover: modeSelected ? OverlayLook.colPrimaryContainerHover : OverlayLook.colLayer3Hover
+        colRipple: modeSelected ? OverlayLook.colPrimaryContainerActive : OverlayLook.colLayer3Active
         onClicked: root.setAudioMode(audioModeValue)
 
         contentItem: Row {
@@ -384,7 +382,7 @@ StyledOverlayWidget {
                 anchors.verticalCenter: parent.verticalCenter
                 text: audioButton.materialSymbol
                 iconSize: 15
-                color: audioButton.modeSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer3
+                color: audioButton.modeSelected ? OverlayLook.colOnPrimaryContainer : OverlayLook.colOnLayer3
             }
             StyledText {
                 anchors.verticalCenter: parent.verticalCenter
@@ -393,7 +391,7 @@ StyledOverlayWidget {
                     : audioButton.audioModeValue === "system" ? Translation.tr("System")
                     : Translation.tr("None")
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: audioButton.modeSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer3
+                color: audioButton.modeSelected ? OverlayLook.colOnPrimaryContainer : OverlayLook.colOnLayer3
             }
         }
 
@@ -411,10 +409,10 @@ StyledOverlayWidget {
         implicitHeight: 54
         buttonRadius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
             : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-            : Appearance.rounding.normal
-        colBackground: destructive ? Appearance.colors.colErrorContainer : Appearance.colors.colLayer3
-        colBackgroundHover: destructive ? Appearance.colors.colError : Appearance.colors.colLayer3Hover
-        colRipple: destructive ? Appearance.colors.colErrorActive : Appearance.colors.colLayer3Active
+            : OverlayLook.roundingNormal
+        colBackground: destructive ? OverlayLook.colErrorContainer : OverlayLook.colLayer3
+        colBackgroundHover: destructive ? OverlayLook.colError : OverlayLook.colLayer3Hover
+        colRipple: destructive ? OverlayLook.colErrorActive : OverlayLook.colLayer3Active
 
         contentItem: RowLayout {
             anchors.fill: parent
@@ -426,7 +424,7 @@ StyledOverlayWidget {
                 text: actionButton.materialSymbol
                 iconSize: 22
                 color: actionButton.destructive
-                    ? Appearance.colors.colOnErrorContainer : Appearance.colors.colOnLayer3
+                    ? OverlayLook.colOnErrorContainer : OverlayLook.colOnLayer3
             }
 
             ColumnLayout {
@@ -439,7 +437,7 @@ StyledOverlayWidget {
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.weight: Font.Medium
                     color: actionButton.destructive
-                        ? Appearance.colors.colOnErrorContainer : Appearance.colors.colOnLayer3
+                        ? OverlayLook.colOnErrorContainer : OverlayLook.colOnLayer3
                     elide: Text.ElideRight
                 }
 
@@ -448,7 +446,7 @@ StyledOverlayWidget {
                     text: actionButton.detailText
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: actionButton.destructive
-                        ? Appearance.colors.colOnErrorContainer : Appearance.colors.colSubtext
+                        ? OverlayLook.colOnErrorContainer : OverlayLook.colSubtext
                     opacity: 0.78
                     elide: Text.ElideRight
                 }
@@ -468,20 +466,20 @@ StyledOverlayWidget {
         MaterialSymbol {
             text: "folder"
             iconSize: 15
-            color: Appearance.colors.colOnLayer2
+            color: OverlayLook.colOnLayer2
         }
 
         StyledText {
             text: destinationRow.titleText
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.colors.colOnLayer2
+            color: OverlayLook.colOnLayer2
         }
 
         StyledText {
             Layout.fillWidth: true
             text: destinationRow.pathText
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.colors.colSubtext
+            color: OverlayLook.colSubtext
             horizontalAlignment: Text.AlignRight
             elide: Text.ElideMiddle
         }
@@ -491,14 +489,14 @@ StyledOverlayWidget {
             implicitHeight: 26
             buttonRadius: height / 2
             colBackground: "transparent"
-            colBackgroundHover: Appearance.colors.colLayer3Hover
-            colRipple: Appearance.colors.colLayer3Active
+            colBackgroundHover: OverlayLook.colLayer3Hover
+            colRipple: OverlayLook.colLayer3Active
             onClicked: destinationRow.openRequested()
             contentItem: MaterialSymbol {
                 anchors.centerIn: parent
                 text: "folder_open"
                 iconSize: 15
-                color: Appearance.colors.colOnLayer2
+                color: OverlayLook.colOnLayer2
             }
             StyledToolTip { text: Translation.tr("Open folder") }
         }
@@ -508,14 +506,14 @@ StyledOverlayWidget {
             implicitHeight: 26
             buttonRadius: height / 2
             colBackground: "transparent"
-            colBackgroundHover: Appearance.colors.colLayer3Hover
-            colRipple: Appearance.colors.colLayer3Active
+            colBackgroundHover: OverlayLook.colLayer3Hover
+            colRipple: OverlayLook.colLayer3Active
             onClicked: destinationRow.changeRequested()
             contentItem: MaterialSymbol {
                 anchors.centerIn: parent
                 text: "drive_file_move"
                 iconSize: 15
-                color: Appearance.colors.colOnLayer2
+                color: OverlayLook.colOnLayer2
             }
             StyledToolTip { text: Translation.tr("Change folder") }
         }
@@ -541,14 +539,14 @@ StyledOverlayWidget {
                     MaterialSymbol {
                         text: root.audioModeIcon(root.statusAudioMode)
                         iconSize: 14
-                        color: root.statusAudioMode === "none" ? Appearance.colors.colSubtext : Appearance.colors.colOnLayer2
+                        color: root.statusAudioMode === "none" ? OverlayLook.colSubtext : OverlayLook.colOnLayer2
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     StyledText {
                         text: Translation.tr("Audio") + ": " + root.audioModeLabel(root.statusAudioMode)
                             + (RecorderStatus.isRecording && RecorderStatus.audioFallback ? " · " + Translation.tr("Fallback") : "")
                         font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: root.statusAudioMode === "none" ? Appearance.colors.colSubtext : Appearance.colors.colOnLayer2
+                        color: root.statusAudioMode === "none" ? OverlayLook.colSubtext : OverlayLook.colOnLayer2
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
@@ -559,13 +557,13 @@ StyledOverlayWidget {
                     MaterialSymbol {
                         text: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
                         iconSize: 14
-                        color: Audio.sink?.audio?.muted ? Appearance.colors.colError : Appearance.colors.colOnLayer2
+                        color: Audio.sink?.audio?.muted ? OverlayLook.colError : OverlayLook.colOnLayer2
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     StyledText {
                         text: Math.round((Audio.sink?.audio?.volume ?? 1) * 100) + "%"
                         font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Audio.sink?.audio?.muted ? Appearance.colors.colError : Appearance.colors.colOnLayer2
+                        color: Audio.sink?.audio?.muted ? OverlayLook.colError : OverlayLook.colOnLayer2
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
@@ -576,13 +574,13 @@ StyledOverlayWidget {
                     MaterialSymbol {
                         text: Audio.micMuted ? "mic_off" : "mic"
                         iconSize: 14
-                        color: Audio.micMuted ? Appearance.colors.colError : Appearance.colors.colOnLayer2
+                        color: Audio.micMuted ? OverlayLook.colError : OverlayLook.colOnLayer2
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     StyledText {
                         text: Audio.micMuted ? Translation.tr("OFF") : Translation.tr("ON")
                         font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Audio.micMuted ? Appearance.colors.colError : Appearance.colors.colOnLayer2
+                        color: Audio.micMuted ? OverlayLook.colError : OverlayLook.colOnLayer2
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
@@ -597,13 +595,13 @@ StyledOverlayWidget {
                     MaterialSymbol {
                         text: "storage"
                         iconSize: 14
-                        color: Appearance.colors.colOnLayer2
+                        color: OverlayLook.colOnLayer2
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     StyledText {
                         text: root.getDiskFreeText() + " " + Translation.tr("free")
                         font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colOnLayer2
+                        color: OverlayLook.colOnLayer2
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }

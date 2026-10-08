@@ -17,21 +17,13 @@ fi
 TERMINAL="${TERMINAL:-kitty}"
 
 if command -v "$TERMINAL" &>/dev/null; then
-    if command -v systemd-run &>/dev/null; then
-        exec systemd-run --user --scope --quiet --collect --property="Description=iNiR Terminal" -- "$TERMINAL" "$@"
-    else
-        exec "$TERMINAL" "$@"
-    fi
+    exec "$TERMINAL" "$@"
 fi
 
 # Fallback chain: project default first, then popular alternatives
 for fallback in kitty foot ghostty alacritty wezterm konsole xterm; do
     if command -v "$fallback" &>/dev/null; then
-        if command -v systemd-run &>/dev/null; then
-            exec systemd-run --user --scope --quiet --collect --property="Description=iNiR Terminal" -- "$fallback" "$@"
-        else
-            exec "$fallback" "$@"
-        fi
+        exec "$fallback" "$@"
     fi
 done
 

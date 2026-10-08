@@ -58,17 +58,39 @@ Variants {
         }
         readonly property bool enableAnimation: wBg.enableAnimation ?? true
         readonly property bool enableAnimatedBlur: wEffects.enableAnimatedBlur ?? false
+        readonly property bool webWallpaperActive: WebWallpaper.active
         readonly property int thumbnailBlurStrength: wEffects.thumbnailBlurStrength ?? Config.options?.background?.effects?.thumbnailBlurStrength ?? 70
 
+        // Wallpapers.fillMode is the one answer every desktop and awww share; span lays one picture across all screens.
+        readonly property string fillMode: Wallpapers.fillMode
+        readonly property bool spanning: panelRoot.fillMode === "span"
         readonly property bool externalMainWallpaperEligible:
+            !panelRoot.webWallpaperActive &&
             AwwwBackend.supportsVisibleMainWallpaper(
                 wallpaperSourceRaw,
-                "fill",
+                panelRoot.fillMode,
                 false,
                 enableAnimatedBlur
             )
+        readonly property bool internalShaderTransitionRequested:
+            (Config.options?.background?.transition?.enable ?? true)
+            && Looks.transition.enabled
+            && !panelRoot.webWallpaperActive
+            && AwwwBackend.isInternalShaderTransitionType(
+                Config.options?.background?.transition?.type ?? "crossfade")
+            && !panelRoot.wallpaperIsGif
+            && !panelRoot.wallpaperIsVideo
+        // Shader transitions are owned by the in-shell crossfader. Keep QML as
+        // the visible static-wallpaper owner while that mode is selected so the
+        // compositor never has to hand the desktop between AWWW and QML during
+        // a transition.
         readonly property bool externalMainWallpaperActive: panelRoot.externalMainWallpaperEligible
+            && !panelRoot.internalShaderTransitionRequested
         readonly property bool showInternalStaticWallpaper: !externalMainWallpaperActive
+        readonly property bool internalShaderPreviewActive: panelRoot.internalShaderTransitionRequested
+            && Wallpapers.internalPreviewActive
+            && (!Wallpapers.internalPreviewMonitor
+                || Wallpapers.internalPreviewMonitor === panelRoot._monitorName)
 
         // Mirror of Background.qml: the family LazyLoader can retain this tree
         // after a switch, and without this both families kept a video decoding.
@@ -211,7 +233,11 @@ Variants {
 
             Item {
                 id: wallpaperContainer
-                anchors.fill: parent
+                // Span: this output's slice of the box around every screen.
+                x: panelRoot.spanning ? Wallpapers.spanArea.x - panelRoot.modelData.x : 0
+                y: panelRoot.spanning ? Wallpapers.spanArea.y - panelRoot.modelData.y : 0
+                width: panelRoot.spanning ? Wallpapers.spanArea.width : parent.width
+                height: panelRoot.spanning ? Wallpapers.spanArea.height : parent.height
 
                 readonly property bool localBlurNeedsStaticTexture:
                     panelRoot.visible
@@ -223,34 +249,52 @@ Variants {
                     !panelRoot.wallpaperIsGif
                     && !panelRoot.wallpaperIsVideo
                     && (panelRoot.showInternalStaticWallpaper
-                        || wallpaperContainer.localBlurNeedsStaticTexture)
+                        || wallpaperContainer.localBlurNeedsStaticTexture
+                        || panelRoot.internalShaderTransitionRequested)
+
+                // Fit and center leave bars around the picture: black, as awww draws them, never what awww holds underneath.
+                Rectangle {
+                    anchors.fill: parent
+                    color: "black"
+                    visible: (panelRoot.fillMode === "fit" || panelRoot.fillMode === "center") && !panelRoot.webWallpaperActive
+                        && (panelRoot.showInternalStaticWallpaper || panelRoot.wallpaperIsGif || panelRoot.wallpaperIsVideo)
+                }
 
                 WallpaperCrossfader {
                     id: wallpaper
+                    readonly property bool shaderOverlayHeld: panelRoot.internalShaderTransitionRequested
+                        && (wallpaper.shaderTransitionBusy
+                            || panelRoot.internalShaderPreviewActive
+                            || AwwwBackend.shaderHandoffPending)
                     anchors.fill: parent
-                    fillMode: Image.PreserveAspectCrop
-                    enableTransitions: !AwwwBackend.active
+                    fillMode: Wallpapers.imageFillFor(panelRoot.fillMode)
+                    // Decoded at the size it is drawn, not the file's full resolution; tile and center draw it at its own.
+                    sourceSize: panelRoot.fillMode === "tile" || panelRoot.fillMode === "center" ? Qt.size(0, 0)
+                        : Qt.size(Math.ceil(wallpaperContainer.width * panelRoot.devicePixelRatio),
+                            Math.ceil(wallpaperContainer.height * panelRoot.devicePixelRatio))
+                    // A scaling awww does not draw (fit, stretch, tile, center, span) hides awww's transition: this one runs.
+                    enableTransitions: (!AwwwBackend.active
+                            || panelRoot.internalShaderTransitionRequested
+                            || !AwwwBackend.supportsFillMode(panelRoot.fillMode))
                         && (Config.options?.background?.transition?.enable ?? true)
                     transitionType: Config.options?.background?.transition?.type ?? "crossfade"
                     transitionDirection: Config.options?.background?.transition?.direction ?? "right"
                     transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
                     source: wallpaperContainer.needsStaticTexture
-                        ? panelRoot.wallpaperUrl : ""
-                    visible: !panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo && ready
-                    opacity: panelRoot.showInternalStaticWallpaper ? 1 : 0
+                        && !panelRoot.webWallpaperActive ? panelRoot.wallpaperUrl : ""
+                    visible: !panelRoot.webWallpaperActive && !panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo && ready
+                    opacity: panelRoot.showInternalStaticWallpaper
+                        || wallpaper.shaderOverlayHeld ? 1 : 0
                     layer.enabled: wallpaperContainer.needsStaticTexture
                         && !panelRoot.showInternalStaticWallpaper
-                    sourceSize {
-                        width: panelRoot.screen.width
-                        height: panelRoot.screen.height
-                    }
+                        && !wallpaper.shaderOverlayHeld
                 }
 
                 AnimatedImage {
                     id: gifWallpaper
                     anchors.fill: parent
-                    fillMode: Image.PreserveAspectCrop
-                    source: panelRoot.wallpaperIsGif
+                    fillMode: Wallpapers.imageFillFor(panelRoot.fillMode)
+                    source: panelRoot.wallpaperIsGif && !panelRoot.webWallpaperActive
                         ? (panelRoot.wallpaperSourceRaw.startsWith("file://")
                             ? panelRoot.wallpaperSourceRaw
                             : "file://" + panelRoot.wallpaperSourceRaw)
@@ -280,9 +324,9 @@ Variants {
                     id: videoWallpaper
                     anchors.fill: parent
                     visible: panelRoot.wallpaperIsVideo && !blurEffect.visible
-                    source: (panelRoot.wallpaperIsVideo && panelRoot._familyOwnsScreen)
+                    source: (panelRoot.wallpaperIsVideo && panelRoot._familyOwnsScreen && !panelRoot.webWallpaperActive)
                         ? panelRoot.wallpaperSourceRaw : ""
-                    fillMode: VideoOutput.PreserveAspectCrop
+                    fillMode: Wallpapers.videoFillFor(panelRoot.fillMode)
                     enableTransitions: Config.options?.background?.transition?.enable ?? true
                     transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
                     shouldPlay: panelRoot.enableAnimation && !GlobalStates.screenLocked
@@ -304,9 +348,9 @@ Variants {
             // Blur effect for static images — reads from crossfader texture (works with both QML and awww rendering)
             MultiEffect {
                 id: blurEffect
-                anchors.fill: parent
+                anchors.fill: wallpaperContainer
                 source: wallpaper
-                visible: Looks.effectsEnabled && panelRoot.blurProgress > 0 &&
+                visible: !panelRoot.webWallpaperActive && Looks.effectsEnabled && panelRoot.blurProgress > 0 &&
                          !panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo &&
                          wallpaper.ready
                 blurEnabled: visible

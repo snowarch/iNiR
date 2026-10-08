@@ -15,7 +15,7 @@ RippleButton { // Expand button
     Layout.alignment: Qt.AlignVCenter
     Layout.fillHeight: false
 
-    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+    buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
     colBackground: Appearance.zzzEverywhere
         ? (expanded ? Appearance.zzz.sticker : Appearance.zzz.paperAlt)
         : Appearance.angelEverywhere

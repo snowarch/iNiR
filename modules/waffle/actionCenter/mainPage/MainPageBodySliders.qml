@@ -13,6 +13,7 @@ ColumnLayout {
     id: root
     property var screen: root.QsWindow.window?.screen
     property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
+    onVisibleChanged: if (visible) root.brightnessMonitor?.refresh()
     spacing: 12
 
     RowLayout {

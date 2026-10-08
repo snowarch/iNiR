@@ -1,0 +1,8 @@
+{
+  "id": "limusic",
+  "label": "LiMusic",
+  "module": "85-limusic.sh",
+  "category": "music",
+  "inputs": ["app-palette.json", "palette.json", "colors.json"],
+  "description": "Write the palette to LiMusic's live theme file (~/.config/limusic/matugen.css). Runs when off too, to take it back (enableLimusic)."
+}

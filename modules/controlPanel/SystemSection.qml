@@ -11,6 +11,7 @@ import qs.modules.common.functions
 // la placa con esquina cortada de las cards; en el resto, el color de capa correcto.
 PanelSurface {
     id: root
+    property QtObject resourceMonitor: ResourceUsageMonitor { target: root }
     islandSkin: (Config.options?.controlPanel?.style ?? "panel") === "island"
     Layout.fillWidth: true
     implicitHeight: statsRow.implicitHeight + 12
@@ -90,6 +91,8 @@ PanelSurface {
             StyledText {
                 text: bar.label
                 font.pixelSize: Appearance.font.pixelSize.smallest
+                font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Normal
+                font.letterSpacing: Appearance.editorialEverywhere ? 0.8 : 0
                 color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                      : root.inirEverywhere ? Appearance.inir.colTextSecondary
                      : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
@@ -98,8 +101,11 @@ PanelSurface {
             Item { Layout.fillWidth: true }
             StyledText {
                 text: Math.round(bar.value) + "%"
-                font.pixelSize: Appearance.font.pixelSize.smallest
+                font.pixelSize: Appearance.editorialEverywhere
+                    ? Appearance.font.pixelSize.small
+                    : Appearance.font.pixelSize.smallest
                 font.family: Appearance.font.family.numbers
+                font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Normal
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                      : root.inirEverywhere ? Appearance.inir.colText
                      : root.auroraEverywhere ? Appearance.colors.colOnSurface

@@ -1,0 +1,17 @@
+// Niri as SDDM's greeter compositor (installed by iNiR when the login screen runs on Wayland).
+// Niri picks the GPU that drives the screens, which Xorg gets wrong on some hybrid-graphics laptops
+// (a black screen at boot). SDDM starts the greeter itself; this only makes it fill every output.
+// The keyboard layout comes from localectl, like SDDM's X11 greeter.
+hotkey-overlay { skip-at-startup; }
+prefer-no-csd
+layout {
+    gaps 0
+    focus-ring { off; }
+    border { off; }
+    shadow { off; }
+}
+animations { off; }
+window-rule {
+    open-fullscreen true
+    draw-border-with-background false
+}

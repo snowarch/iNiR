@@ -2,6 +2,7 @@ import QtQuick
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.iris.closeConfirm
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -147,7 +148,8 @@ Scope {
                 // instantiated from an inline Component. A Loader source URL cannot
                 // initialize required properties and fails to Loader.Error, leaving
                 // this keyboard-exclusive fullscreen window with no way out.
-                sourceComponent: Config.options?.panelFamily === "waffle" ? waffleContent : iiContent
+                sourceComponent: Config.options?.panelFamily === "waffle" ? waffleContent
+                    : Config.options?.panelFamily === "iris" ? irisContent : iiContent
                 onLoaded: if (item) item.forceActiveFocus()
 
                 Component {
@@ -162,6 +164,15 @@ Scope {
                 Component {
                     id: waffleContent
                     WCloseConfirmContent {
+                        targetWindow: root.targetWindow
+                        onConfirm: root.confirmClose()
+                        onCancel: root.cancel()
+                    }
+                }
+
+                Component {
+                    id: irisContent
+                    IrisCloseConfirmContent {
                         targetWindow: root.targetWindow
                         onConfirm: root.confirmClose()
                         onCancel: root.cancel()

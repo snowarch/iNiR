@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.modules.common
+import qs.services
 import "calendar_ics.js" as IcsParser
 
 // External calendar sync via ICS/iCal URLs.
@@ -38,9 +39,14 @@ Singleton {
             return
         }
         loadCache()
-        if (root.sources.length > 0) {
-            Qt.callLater(() => root.fetchAll())
-        }
+    }
+
+    // Fetching waits for the cache, or a failed first fetch would save an empty calendar over it.
+    property bool _cacheLoaded: false
+    function _afterCacheLoad(): void {
+        root._cacheLoaded = true
+        root.ready = true
+        if (root.enabled && root.sources.length > 0) Qt.callLater(() => root.fetchAll())
     }
 
     // React to config changes — re-fetch when sources change
@@ -56,6 +62,10 @@ Singleton {
     }
 
     onEnabledChanged: {
+        if (root.enabled && !root._cacheLoaded) {
+            loadCache()
+            return
+        }
         if (root.enabled && root.sources.length > 0) {
             Qt.callLater(() => root.fetchAll())
         }
@@ -76,8 +86,15 @@ Singleton {
     property var _pendingSources: []
     property var _fetchedEvents: []
 
+    Connections {
+        target: Network
+        function onOnlineChanged() {
+            if (Network.online && root.enabled && root.sources.length > 0) root.fetchAll()
+        }
+    }
+
     function fetchAll(): void {
-        if (root.fetching) return
+        if (root.fetching || !root._cacheLoaded || !Network.online) return
         const enabledSources = root.sources.filter(s => s.enabled && s.url && s.url.trim() !== "")
         if (enabledSources.length === 0) {
             root.events = []
@@ -147,6 +164,7 @@ Singleton {
                 _log("Error fetching", source.name, ":", errMsg)
                 root._updateSourceStatus(source.id, { error: errMsg, lastFetch: new Date().toISOString() })
                 root.sourceError(source.id, errMsg)
+                root._keepPrevious(source.id)
             } else {
                 try {
                     const parsed = IcsParser.parseICS(fetchProc._rawData, source.id, source.name, source.color)
@@ -162,12 +180,18 @@ Singleton {
                     _log("Parse error for", source.name, ":", e.message)
                     root._updateSourceStatus(source.id, { error: errMsg, lastFetch: new Date().toISOString() })
                     root.sourceError(source.id, errMsg)
+                    root._keepPrevious(source.id)
                 }
             }
 
             root._fetchIndex++
             root._fetchNext()
         }
+    }
+
+    // A failed fetch keeps what this source had, so a dropped connection never empties the calendar.
+    function _keepPrevious(sourceId: string): void {
+        root._fetchedEvents = root._fetchedEvents.concat(root.events.filter(e => e.sourceId === sourceId))
     }
 
     function _updateSourceStatus(sourceId: string, updates: var): void {
@@ -292,26 +316,23 @@ Singleton {
         printErrors: false
         onLoaded: {
             const content = cacheFileView.text()
-            if (!content || content.trim() === "") {
-                root.ready = true
-                return
+            if (content && content.trim() !== "") {
+                try {
+                    const data = JSON.parse(content)
+                    root.events = data.events || []
+                    root.sourceStatuses = data.sourceStatuses || {}
+                    _log("Loaded cache:", root.events.length, "events")
+                } catch (e) {
+                    _log("Cache parse error:", e.message)
+                }
             }
-            try {
-                const data = JSON.parse(content)
-                root.events = data.events || []
-                root.sourceStatuses = data.sourceStatuses || {}
-                root.ready = true
-                _log("Loaded cache:", root.events.length, "events")
-            } catch (e) {
-                _log("Cache parse error:", e.message)
-                root.ready = true
-            }
+            root._afterCacheLoad()
         }
         onLoadFailed: (error) => {
             if (error === FileViewError.FileNotFound) {
                 _log("No cache file, starting fresh")
             }
-            root.ready = true
+            root._afterCacheLoad()
         }
     }
 

@@ -16,6 +16,7 @@ Item {
     // Emitted to open the events dialog. An event object means edit it, a Date
     // means a new event prefilled to that day.
     signal openEventsDialog(var editEvent)
+    signal requestExpand()
 
     // Two states: "month" (grid + upcoming) and "day" (day detail)
     property string viewState: "month"
@@ -245,13 +246,19 @@ Item {
 
                         StyledText {
                             text: locale.toString(viewingDate, "MMMM")
-                            font.pixelSize: Appearance.font.pixelSize.normal
-                            font.weight: Font.Medium
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            font.family: Appearance.editorialEverywhere ? Appearance.font.family.title : Appearance.font.family.main
+                            font.pixelSize: Appearance.editorialEverywhere ? Appearance.font.pixelSize.larger * Appearance.editorial.titleScale : Appearance.font.pixelSize.normal
+                            font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Medium
+                            font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
                             color: root.colText
                         }
 
                         StyledText {
                             text: locale.toString(viewingDate, "yyyy")
+                            font.family: Appearance.font.family.numbers
+                            font.letterSpacing: Appearance.editorialEverywhere ? 1 : 0
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             color: root.colTextSecondary
                         }
@@ -278,6 +285,12 @@ Item {
                             icon: "chevron_right"
                             tooltipText: Translation.tr("Next month")
                             onClicked: monthShift++
+                        }
+
+                        CalNavButton {
+                            icon: "open_in_full"
+                            tooltipText: Translation.tr("Open full calendar")
+                            onClicked: root.requestExpand()
                         }
                     }
                 }
@@ -392,11 +405,11 @@ Item {
                 if (navBtnMA.containsPress)
                     return Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
-                        : Appearance.colors.colLayer1Active
+                        : Appearance.colLayer1Active
                 if (navBtnMA.containsMouse)
                     return Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
-                        : Appearance.colors.colLayer1Hover
+                        : Appearance.colLayer1Hover
                 return "transparent"
             }
             Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }

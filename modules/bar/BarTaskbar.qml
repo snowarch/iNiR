@@ -108,12 +108,14 @@ Item {
     onSeparatePinnedFromRunningChanged: rebuildDockItems()
 
     property var _cachedIgnoredRegexes: []
-    property var _lastIgnoredRegexStrings: []
+    // Null forces the system ignore rules to be compiled on the first rebuild
+    // even when the user has the default empty ignoredAppRegexes list.
+    property var _lastIgnoredRegexStrings: null
 
     function _getIgnoredRegexes(): list<var> {
         const ignoredRegexStrings = Config.options?.dock?.ignoredAppRegexes ?? [];
         if (JSON.stringify(ignoredRegexStrings) !== JSON.stringify(_lastIgnoredRegexStrings)) {
-            const systemIgnored = ["^$", "^portal$", "^x-run-dialog$", "^kdialog$", "^org.freedesktop.impl.portal.*"];
+            const systemIgnored = ["^$", "^portal$", "^x-run-dialog$", "^kdialog$", "^xembedsniproxy$", "^org.freedesktop.impl.portal.*"];
             const allIgnored = ignoredRegexStrings.concat(systemIgnored);
             _cachedIgnoredRegexes = allIgnored.map(pattern => new RegExp(pattern, "i"));
             _lastIgnoredRegexStrings = ignoredRegexStrings.slice();

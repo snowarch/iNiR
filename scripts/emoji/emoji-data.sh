@@ -1,28 +1,6 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
-MODE="${1:-type}"
-
-emoji="$(sed '1,/^### DATA ###$/d' "$0" | fuzzel --match-mode fzf --dmenu | cut -d ' ' -f 1 | tr -d '\n')"
-
-case "$MODE" in
-    type)
-        wtype "${emoji}" || wl-copy "${emoji}"
-        ;;
-    copy)
-        wl-copy "${emoji}"
-        ;;
-    both)
-        wtype "${emoji}" || true
-        wl-copy "${emoji}"
-        ;;
-    *)
-        echo "Usage: $0 [type|copy|both]"
-        exit 1
-        ;;
-esac
-
-exit
+# Emoji list read by services/deferred/Emojis.qml: every line after the DATA marker.
+exit 0
 ### DATA ###
 😀 grinning face face smile happy joy :D grin
 😃 grinning face with big eyes face happy joy haha :D :) smile funny

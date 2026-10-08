@@ -1,0 +1,17 @@
+module qs.modules.iris.settings
+IrisSettings 1.0 IrisSettings.qml
+IrisSettingsOverlay 1.0 IrisSettingsOverlay.qml
+IrisSettingsWindow 1.0 IrisSettingsWindow.qml
+IrisSetting 1.0 IrisSetting.qml
+singleton IrisOptions 1.0 IrisOptions.qml
+singleton IrisThemes 1.0 IrisThemes.qml
+singleton IrisSearch 1.0 IrisSearch.qml
+IrisSquircle 1.0 IrisSquircle.qml
+IrisLinkRow 1.0 IrisLinkRow.qml
+IrisLinkCard 1.0 IrisLinkCard.qml
+IrisWallpaperCard 1.0 IrisWallpaperCard.qml
+IrisAboutPage 1.0 IrisAboutPage.qml
+IrisShortcutsPage 1.0 IrisShortcutsPage.qml
+singleton IrisNiri 1.0 IrisNiri.qml
+IrisGameModeCard 1.0 IrisGameModeCard.qml
+IrisNiriMotionGallery 1.0 IrisNiriMotionGallery.qml

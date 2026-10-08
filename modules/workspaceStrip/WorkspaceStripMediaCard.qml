@@ -39,8 +39,8 @@ Item {
         : islandChrome ? PillTheme.border
         : Appearance.colors.colOutlineVariant
 
-    readonly property real _progress: (player?.length ?? 0) > 0
-        ? Math.max(0, Math.min(1, (player?.position ?? 0) / player.length)) : 0
+    readonly property real _progress: MprisController.lengthOf(player) > 0
+        ? Math.max(0, Math.min(1, MprisController.positionOf(player) / MprisController.lengthOf(player))) : 0
 
     // Coarse position tick so the burn line crawls while the rail is open
     // (MPRIS doesn't push position changes on its own).

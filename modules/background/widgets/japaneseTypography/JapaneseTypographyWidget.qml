@@ -88,7 +88,6 @@ AbstractBackgroundWidget {
     resizeMaxWidth: 720
     resizeMaxHeight: 1000
     needsColText: true
-    liveColorTracking: true
 
     readonly property string compositionPreset: Config.getNestedValue("background.widgets.japaneseTypography.preset", "exhibition")
     readonly property string palettePreset: Config.getNestedValue("background.widgets.japaneseTypography.palettePreset", "adaptive")
@@ -111,149 +110,72 @@ AbstractBackgroundWidget {
     }
 
     editPopoverContent: Component {
-        GridLayout {
-            implicitWidth: 520
-            columns: 2
-            columnSpacing: 10
-            rowSpacing: 0
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                spacing: 6
-
-                StyledText {
-                    text: Translation.tr("Composition")
-                    color: Appearance.colors.colOnLayer1
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.DemiBold
-                }
-
-                GridLayout {
-                    Layout.fillWidth: true
-                    columns: 2
-                    columnSpacing: 4
-                    rowSpacing: 4
-
-                    Repeater {
-                        model: [
-                            { label: "Exhibition", icon: "museum", value: "exhibition" },
-                            { label: "Magazine", icon: "newspaper", value: "magazine" },
-                            { label: "Minimal", icon: "view_agenda", value: "minimal" },
-                            { label: "Traditional", icon: "history_edu", value: "traditional" }
-                        ]
-                        SelectionGroupButton {
-                            required property var modelData
-                            Layout.fillWidth: true
-                            leftmost: true; rightmost: true
-                            buttonIcon: modelData.icon
-                            buttonText: Translation.tr(modelData.label)
-                            toggled: root.compositionPreset === modelData.value
-                            onClicked: root.applyCompositionPreset(modelData.value)
-                        }
-                    }
-                }
-
-                StyledText {
-                    Layout.topMargin: 4
-                    text: Translation.tr("Typography")
-                    color: Appearance.colors.colOnLayer1
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.DemiBold
-                }
-
-                GridLayout {
-                    Layout.fillWidth: true
-                    columns: 3
-                    columnSpacing: 4
-                    rowSpacing: 4
-
-                    Repeater {
-                        model: [
-                            { label: "Mincho", icon: "history_edu", value: "mincho" },
-                            { label: "Mixed", icon: "format_shapes", value: "mixed" },
-                            { label: "Gothic", icon: "text_fields", value: "gothic" }
-                        ]
-                        SelectionGroupButton {
-                            required property var modelData
-                            Layout.fillWidth: true
-                            leftmost: true; rightmost: true
-                            buttonIcon: modelData.icon
-                            buttonText: Translation.tr(modelData.label)
-                            toggled: root.fontPreset === modelData.value
-                            onClicked: root.applyFontPreset(modelData.value)
-                        }
-                    }
+        ColumnLayout {
+            spacing: 14
+            WidgetQuickSection {
+                title: Translation.tr("Composition")
+                WidgetQuickChoices {
+                    maxColumns: 2
+                    current: root.compositionPreset
+                    model: [
+                        { label: Translation.tr("Exhibition"), icon: "museum", value: "exhibition" },
+                        { label: Translation.tr("Magazine"), icon: "newspaper", value: "magazine" },
+                        { label: Translation.tr("Minimal"), icon: "view_agenda", value: "minimal" },
+                        { label: Translation.tr("Traditional"), icon: "history_edu", value: "traditional" }
+                    ]
+                    onPicked: value => root.applyCompositionPreset(value)
                 }
             }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                spacing: 6
-
-                StyledText {
-                    text: Translation.tr("Palette")
-                    color: Appearance.colors.colOnLayer1
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.DemiBold
+            WidgetQuickSection {
+                title: Translation.tr("Typography")
+                WidgetQuickChoices {
+                    current: root.fontPreset
+                    model: [
+                        { label: Translation.tr("Mincho"), icon: "history_edu", value: "mincho" },
+                        { label: Translation.tr("Mixed"), icon: "format_shapes", value: "mixed" },
+                        { label: Translation.tr("Gothic"), icon: "text_fields", value: "gothic" }
+                    ]
+                    onPicked: value => root.applyFontPreset(value)
                 }
-
-                GridLayout {
-                    Layout.fillWidth: true
-                    columns: 3
-                    columnSpacing: 4
-                    rowSpacing: 4
-
-                    Repeater {
-                        model: [
-                            { label: "Auto", icon: "auto_awesome", value: "adaptive" },
-                            { label: "Sumi", icon: "dark_mode", value: "sumi" },
-                            { label: "Ivory", icon: "light_mode", value: "ivory" },
-                            { label: "Sunset", icon: "wb_twilight", value: "sunset" },
-                            { label: "Cinema", icon: "movie", value: "cinema" }
-                        ]
-                        SelectionGroupButton {
-                            required property var modelData
-                            Layout.fillWidth: true
-                            leftmost: true; rightmost: true
-                            buttonIcon: modelData.icon
-                            buttonText: Translation.tr(modelData.label)
-                            toggled: root.palettePreset === modelData.value
-                            onClicked: root.applyPalettePreset(modelData.value)
-                        }
-                    }
+            }
+            WidgetQuickSection {
+                title: Translation.tr("Palette")
+                WidgetQuickChoices {
+                    current: root.palettePreset
+                    model: [
+                        { label: Translation.tr("Auto"), icon: "auto_awesome", value: "adaptive" },
+                        { label: Translation.tr("Sumi"), icon: "dark_mode", value: "sumi" },
+                        { label: Translation.tr("Ivory"), icon: "light_mode", value: "ivory" },
+                        { label: Translation.tr("Sunset"), icon: "wb_twilight", value: "sunset" },
+                        { label: Translation.tr("Cinema"), icon: "movie", value: "cinema" }
+                    ]
+                    onPicked: value => root.applyPalettePreset(value)
                 }
-
-                StyledText {
-                    Layout.topMargin: 4
-                    text: Translation.tr("Visible elements")
-                    color: Appearance.colors.colOnLayer1
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.DemiBold
-                }
-
+            }
+            WidgetQuickSection {
+                title: Translation.tr("Show")
                 GridLayout {
                     Layout.fillWidth: true
                     columns: 2
                     columnSpacing: 4
                     rowSpacing: 4
-
                     Repeater {
                         model: [
-                            { key: "showSecondary", label: "Secondary", icon: "notes", value: root.showSecondary },
-                            { key: "showSeal", label: "Seal", icon: "ink_pen", value: root.showSeal },
-                            { key: "showFooter", label: "Footer", icon: "subtitles", value: root.showFooter },
-                            { key: "mirrorLayout", label: "Mirror", icon: "swap_horiz", value: root.mirrorLayout }
+                            { key: "showSecondary", label: Translation.tr("Secondary"), icon: "notes" },
+                            { key: "showSeal", label: Translation.tr("Seal"), icon: "ink_pen" },
+                            { key: "showFooter", label: Translation.tr("Footer"), icon: "subtitles" },
+                            { key: "mirrorLayout", label: Translation.tr("Mirror"), icon: "swap_horiz" }
                         ]
-                        SelectionGroupButton {
+                        WidgetQuickToggle {
                             required property var modelData
                             Layout.fillWidth: true
-                            leftmost: true; rightmost: true
-                            buttonIcon: modelData.icon
-                            buttonText: Translation.tr(modelData.label)
-                            toggled: Boolean(modelData.value)
-                            onClicked: root.setCompositionOption(modelData.key, !Boolean(modelData.value))
+                            Layout.preferredWidth: 1
+                            Layout.maximumWidth: Number.POSITIVE_INFINITY
+                            implicitWidth: 150
+                            iconName: modelData.icon
+                            label: modelData.label
+                            checked: Boolean(root[modelData.key])
+                            onToggled: root.setCompositionOption(modelData.key, !checked)
                         }
                     }
                 }
@@ -389,6 +311,7 @@ AbstractBackgroundWidget {
     }
 
     WidgetSurface {
+        irisPresentation: root.widgetIris
         regionBrightness: root.regionBrightness
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
@@ -404,7 +327,7 @@ AbstractBackgroundWidget {
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
+        shown: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
     }
 
     Item {

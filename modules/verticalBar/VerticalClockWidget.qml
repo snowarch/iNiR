@@ -24,7 +24,10 @@ Item {
                 font.pixelSize: modelData.match(/am|pm/i) ? 
                     Appearance.font.pixelSize.smaller // Smaller "am"/"pm" text
                     : Appearance.font.pixelSize.large
-                color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Normal
+                font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
+                font.features: { "tnum": 1 }
+                color: Appearance.editorialEverywhere ? Appearance.editorial.accent : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                 text: modelData.padStart(2, "0")
             }
         }

@@ -3,7 +3,7 @@
  * @description iNiR Midnight Discord theme with Material You colors.
  * @author iNiR
  * @version 2.2.0
- * @source https://github.com/end-4/iNiR
+ * @source https://github.com/snowarch/iNiR
  */
 
 /*
@@ -11,7 +11,6 @@
  * - Prefer your local copy (if you have it in the same folder).
  * - Fallback to remote so the theme works on fresh installs.
  */
-@import url('midnight-discord.local.css');
 @import url('https://refact0r.github.io/midnight-discord/build/midnight.css');
 
 /* Material You Palette - Auto-generated */

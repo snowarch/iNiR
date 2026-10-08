@@ -429,7 +429,7 @@ Item {
                             ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                                : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
                                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                               : Appearance.colors.colLayer1Hover)
+                               : Appearance.colLayer1Hover)
                             : ColorUtils.transparentize(
                                 Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1

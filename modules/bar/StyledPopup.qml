@@ -61,6 +61,32 @@ LazyLoader {
         implicitWidth: popupBackground.implicitWidth + Appearance.sizes.elevationMargin * 2 + root.popupBackgroundMargin
         implicitHeight: popupBackground.implicitHeight + Appearance.sizes.elevationMargin * 2 + root.popupBackgroundMargin
 
+        readonly property real centeredLeft: {
+            const margin = Appearance.sizes.elevationMargin
+            const base = root.QsWindow?.mapFromItem(
+                root.hoverTarget,
+                ((root.hoverTarget?.width ?? 0) - popupBackground.implicitWidth) / 2,
+                0
+            ).x ?? margin
+            const maxLeft = Math.max(margin,
+                (popupWindow.screen?.width ?? popupBackground.implicitWidth)
+                - popupBackground.implicitWidth - margin)
+            return Math.max(margin, Math.min(base, maxLeft))
+        }
+
+        readonly property real centeredTop: {
+            const margin = Appearance.sizes.elevationMargin
+            const base = root.QsWindow?.mapFromItem(
+                root.hoverTarget,
+                0,
+                ((root.hoverTarget?.height ?? 0) - popupBackground.implicitHeight) / 2
+            ).y ?? margin
+            const maxTop = Math.max(margin,
+                (popupWindow.screen?.height ?? popupBackground.implicitHeight)
+                - popupBackground.implicitHeight - margin)
+            return Math.max(margin, Math.min(base, maxTop))
+        }
+
         mask: Region {
             item: popupBackground
         }
@@ -69,23 +95,13 @@ LazyLoader {
         exclusiveZone: 0
         margins {
             left: {
-                if (!(Config.options?.bar?.vertical ?? false) && root.QsWindow && root.hoverTarget && root.hoverTarget.width > 0) {
-                    return root.QsWindow.mapFromItem(
-                        root.hoverTarget,
-                        (root.hoverTarget.width - popupBackground.implicitWidth) / 2, 0
-                    ).x;
-                }
+                if (!(Config.options?.bar?.vertical ?? false))
+                    return popupWindow.centeredLeft
                 return Appearance.sizes.verticalBarWidth
             }
             top: {
                 if (!(Config.options?.bar?.vertical ?? false)) return Appearance.sizes.barHeight;
-                if (root.QsWindow && root.hoverTarget && root.hoverTarget.height > 0) {
-                    return root.QsWindow.mapFromItem(
-                        root.hoverTarget,
-                        0, (root.hoverTarget.height - popupBackground.implicitHeight) / 2
-                    ).y;
-                }
-                return Appearance.sizes.barHeight;
+                return popupWindow.centeredTop
             }
             right: Appearance.sizes.verticalBarWidth
             bottom: Appearance.sizes.barHeight

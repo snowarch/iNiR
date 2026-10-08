@@ -11,6 +11,8 @@ StyledText {
     font {
         family: Appearance.font.family.title
         pixelSize: Appearance.font.pixelSize.title
-        variableAxes: Appearance.font.variableAxes.title
+        variableAxes: Appearance.editorialEverywhere ? ({}) : Appearance.font.variableAxes.title
+        weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Normal
+        letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
     }
 }

@@ -28,12 +28,46 @@ Singleton {
         function dismiss(): void { root.dismiss() }
         function undismiss(): void { root.undismiss() }
         function diagnose(): string { return root.getDiagnostics() }
+        function simulate(state: string): string { return root.simulate(state) }
     }
     id: root
+
+    // A fake pending update for checking every surface that shows one; git, config and setup stay untouched.
+    property bool simulated: false
+    function simulate(state: string): string {
+        if (state === "off") {
+            if (!root.simulated) return "off"
+            root.simulated = false
+            root.commitLog = ""
+            root.hasUpdate = false
+            root.commitsBehind = 0
+            root.isUpdating = false
+            root.check()
+            return "off"
+        }
+        if (state !== "on" && state !== "") return "Use on or off"
+        if (state === "on") {
+            root.simulated = true
+            root.isUpdating = false
+            root.repoRelation = "behind"
+            root.commitsBehind = 3
+            root.remoteCommit = "simulated"
+            root.remoteVersion = root.localVersion.length > 0 ? root.localVersion + "+1" : ""
+            root.commitLog = ["a1b2c3d|feat(iris): a pending update to look at|1 hour ago|iNiR",
+                "e4f5a6b|fix(bar): a fix that comes with it|2 hours ago|iNiR",
+                "c7d8e9f|chore: one more commit|3 hours ago|iNiR"].join("\n")
+            root.latestMessage = "a1b2c3d feat(iris): a pending update to look at"
+            root.hasUpdate = true
+        }
+        return root.simulated ? "on: " + root.commitsBehind + " commits behind" : "off"
+    }
 
     // Public state
     property bool hasUpdate: false
     property int commitsBehind: 0
+    property int commitsAhead: 0
+    property string repoRelation: "unknown" // current | behind | ahead | diverged | unknown
+    readonly property bool repoDiverged: repoRelation === "diverged"
     property string latestMessage: ""
     property string localCommit: ""
     property string remoteCommit: ""
@@ -59,6 +93,25 @@ Singleton {
         root.updateTotalSteps = 0
         root.updateStepMessage = ""
         root._lastWatchdogStatus = ""
+    }
+
+    function updateFailureMessage(status: string, previous: bool): string {
+        const parts = status.split(":")
+        const code = parts.length > 1 ? parts[1] : "unknown"
+        const detail = parts.length > 2 ? parts.slice(2).join(":").trim() : ""
+        const lead = previous ? "Last update failed" : "Update failed"
+        return detail.length > 0
+            ? detail + ". Check " + Directories.updateLogPath + " for details."
+            : lead + " (exit " + code + "). Check " + Directories.updateLogPath + " for details."
+    }
+
+    function handleFailedUpdateStatus(status: string, previous: bool): void {
+        const parts = status.split(":")
+        const code = parts.length > 1 ? parts[1] : "unknown"
+        root.clearUpdateProgressUi()
+        root.lastError = root.updateFailureMessage(status, previous)
+        clearStatusFileProc.running = true
+        print("[ShellUpdates] Update FAILED with exit code " + code + (previous ? " (resume)" : ""))
     }
 
     // Notification tracking (prevent spam)
@@ -88,8 +141,14 @@ Singleton {
     readonly property int checkIntervalMs: (Config.options?.shellUpdates?.checkIntervalMinutes ?? 360) * 60 * 1000
     readonly property string dismissedCommit: Config.options?.shellUpdates?.dismissedCommit ?? ""
     readonly property string lastNotifiedCommit: Config.options?.shellUpdates?.lastNotifiedCommit ?? ""
+    readonly property int remindDays: Math.max(0, Number(Config.options?.shellUpdates?.remindDays ?? 3))
+    readonly property real lastNotifiedAt: Number(Config.options?.shellUpdates?.lastNotifiedAt ?? 0)
     readonly property bool showUpdate: hasUpdate && !isDismissed && !isUpdating
+    readonly property real dismissedAt: Number(Config.options?.shellUpdates?.dismissedAt ?? 0)
+    // Not now hides that version until `remindDays` have passed, then it shows again; 0 keeps it hidden.
+    property real _clock: Date.now()
     readonly property bool isDismissed: dismissedCommit.length > 0 && remoteCommit === dismissedCommit
+        && !(root.remindDays > 0 && root.dismissedAt > 0 && root._clock - root.dismissedAt >= root.remindDays * 86400000)
 
     // Repo path - try to get from version.json, fallback to config dir
     readonly property string configDir: FileUtils.trimFileProtocol(Quickshell.shellPath("."))
@@ -116,13 +175,7 @@ Singleton {
     onAvailableChanged: {
         if (initialAvailabilityChecked && !available && !unavailableNotificationShown && !managedExternally) {
             unavailableNotificationShown = true
-            Notifications.notify({
-                summary: root.unavailableTitle,
-                body: root.unavailableHint,
-                urgency: NotificationUrgency.Normal,
-                timeout: 10000,
-                appName: "iNiR Shell"
-            })
+            Notifications.send(root.unavailableTitle, root.unavailableHint, "normal", 10000)
             print("[ShellUpdates] Notification sent: Updates unavailable")
         }
         // Reset notification flag when available becomes true again
@@ -132,25 +185,64 @@ Singleton {
     }
 
     // Handler: notify when a new update is detected
-    onHasUpdateChanged: {
+    onHasUpdateChanged: root.maybeNotifyUpdate()
+
+    // Raised once per upstream commit, then again every `remindDays` while it is still
+    // pending, so an update that is never applied does not go quiet forever.
+    function maybeNotifyUpdate(): void {
         if (!hasUpdate || !available || !initialUpdateCheckDone || isDismissed) return
-        if (remoteCommit.length === 0 || remoteCommit === lastNotifiedCommit) return
+        if (remoteCommit.length === 0) return
+        if (root.simulated) {
+            root.postUpdateNotice("iNiR Update Available (simulated)", "3 commits behind.")
+            return
+        }
+        const now = Date.now()
+        if (remoteCommit === lastNotifiedCommit) {
+            if (root.remindDays <= 0 || root.lastNotifiedAt <= 0) return
+            if (now - root.lastNotifiedAt < root.remindDays * 86400000) return
+        }
 
         const version = root.remoteVersion.length > 0 ? (" v" + root.remoteVersion) : ""
-        const commits = root.commitsBehind > 0 ? (root.commitsBehind + " commits behind") : "New version available"
-        Notifications.notify({
-            summary: "iNiR Update Available" + version,
-            body: commits + ". Click the update indicator in the bar or open Settings → Services.",
-            urgency: NotificationUrgency.Normal,
-            timeout: 15000,
-            appName: "iNiR Shell"
+        const commits = root.repoDiverged
+            ? "Repository history changed upstream. iNiR will preserve local work and recover clean published checkouts automatically."
+            : (root.commitsBehind > 0 ? (root.commitsBehind + " commits behind") : "New version available")
+        root.postUpdateNotice("iNiR Update Available" + version,
+            commits + ". Run `inir update`, or open it from the shell's own updater.")
+        Config.setNestedValues({
+            "shellUpdates.lastNotifiedCommit": remoteCommit,
+            "shellUpdates.lastNotifiedAt": now
         })
-        Config.setNestedValue("shellUpdates.lastNotifiedCommit", remoteCommit)
         print("[ShellUpdates] Notification sent: Update available" + version)
     }
 
+    function postUpdateNotice(summary: string, body: string): void {
+        updateNotice.running = false
+        updateNotice.command = ["/usr/bin/notify-send", "-a", "iNiR", "-u", "normal", "-t", "15000", "-w",
+            "-A", "open=" + Translation.tr("What changed"), "--", summary, body]
+        updateNotice.running = true
+    }
+
+    Process {
+        id: updateNotice
+        stdout: StdioCollector {
+            onStreamFinished: if ((text ?? "").trim() === "open") root.openOverlay()
+        }
+    }
+
+    // A check that could not run for lack of internet; retried when the connection returns.
+    property bool waitingForNetwork: false
+    Connections {
+        target: Network
+        function onOnlineChanged() {
+            if (Network.online && root.waitingForNetwork) root.check()
+        }
+    }
+
     function check(): void {
-        if (!enabled || isChecking || isUpdating || managedExternally) return
+        if (!enabled || isChecking || isUpdating || managedExternally || simulated) return
+        root._clock = Date.now()
+        root.waitingForNetwork = !Network.online
+        if (root.waitingForNetwork) return
         root.isChecking = true
         root.lastError = ""
         fetchProc.running = true
@@ -159,6 +251,7 @@ Singleton {
     // Fetch detailed info for the overlay (commit log, changelog, local mods)
     function fetchDetails(): void {
         if (isFetchingDetails || managedExternally) return
+        if (root.simulated) return
         root.isFetchingDetails = true
         root.commitLog = ""
         root.remoteChangelog = ""
@@ -199,6 +292,19 @@ Singleton {
 
     function performUpdate(): void {
         if (isUpdating || !hasUpdate || !available || managedExternally) return
+        if (root.simulated) {
+            root.overlayOpen = false
+            root.isUpdating = true
+            simulatedUpdate.restart()
+            if (Config.options?.shellUpdates?.openTerminalOnUpdate ?? true) {
+                const slot = (AppLauncher && typeof AppLauncher.commandFor === "function") ? AppLauncher.commandFor("terminal") : ""
+                ShellExec.execDetachedArgs([(slot.length > 0 ? slot : "kitty").trim().split(/\s+/)[0], "-e", "/usr/bin/bash", "-c",
+                    "echo 'Simulated iNiR update: nothing is downloaded or changed.'; echo; "
+                    + "for s in Fetching Applying 'Restarting the shell'; do echo \"==> $s\"; sleep 1; done; "
+                    + "echo; echo 'All good. You can close this window whenever you want.'; read -r _"], "Update iNiR", root.repoPath)
+            }
+            return
+        }
         root.isUpdating = true
         root.lastError = ""
         root.updateStep = 0
@@ -214,25 +320,30 @@ Singleton {
         const useTerminal = Config.options?.shellUpdates?.openTerminalOnUpdate ?? true
 
         // Bash one-liner: writes the initial 'updating' marker, runs setup, captures
-        // exit code. Terminal mode pipes through tee so both the user and the log
-        // file see everything; detached mode redirects to the log file only.
+        // its exit code. Terminal mode mirrors output through tee with process
+        // substitution instead of a pipeline, so `$?` always belongs to setup and
+        // does not depend on PIPESTATUS surviving the terminal/scope launch path.
+        // Detached mode redirects to the log file only.
         // Terminal always stays open with a summary so people can read what happened.
         const teeCmd = useTerminal
-            ? "./setup -y update 2>&1 | tee '" + logPath + "'; rc=${PIPESTATUS[0]}"
+            ? "./setup -y update > >(tee '" + logPath + "') 2>&1; rc=$?"
             : "./setup -y -q update > '" + logPath + "' 2>&1; rc=$?"
+        const preserveFailureStatus =
+            "status=$(cat '" + statusPath + "' 2>/dev/null || true); " +
+            "if (( rc != 0 )) && [[ $status != failed:* ]]; then echo \"failed:$rc\" > '" + statusPath + "'; fi; "
         const termTail =
             "echo; " +
-            "if [ $rc -eq 0 ]; then " +
+            preserveFailureStatus +
+            "if (( rc == 0 )); then " +
                 "echo 'All good — iNiR updated successfully. The shell will restart on its own.'; " +
                 "echo 'You can close this window whenever you want.'; " +
             "else " +
-                "echo \"failed:$rc\" > '" + statusPath + "'; " +
                 "echo \"Something went wrong (exit $rc). Check the output above for details.\"; " +
                 "echo 'You can close this window whenever you want.'; " +
             "fi; " +
             "read -r _"
         const detachedTail =
-            "if [ $rc -ne 0 ]; then echo \"failed:$rc\" > '" + statusPath + "'; fi"
+            preserveFailureStatus
         const tail = useTerminal ? termTail : detachedTail
         const bashCmd = "echo 'updating' > '" + statusPath + "'; " +
             "cd '" + repoDir + "' && " + teeCmd + "; " + tail
@@ -260,9 +371,16 @@ Singleton {
         updateProgressPoller.restart()
     }
 
+    Timer {
+        id: simulatedUpdate
+        interval: 4000
+        onTriggered: root.simulate("off")
+    }
+
     function dismiss(): void {
+        if (root.simulated) { root.simulate("off"); return }
         if (remoteCommit.length > 0) {
-            Config.setNestedValue("shellUpdates.dismissedCommit", remoteCommit)
+            Config.setNestedValues({ "shellUpdates.dismissedCommit": remoteCommit, "shellUpdates.dismissedAt": Date.now() })
         }
         root.overlayOpen = false
     }
@@ -286,7 +404,11 @@ Singleton {
             lastError: root.lastError,
             consecutiveFetchErrors: root.consecutiveFetchErrors,
             hasUpdate: root.hasUpdate,
+            isDismissed: root.isDismissed,
+            showUpdate: root.showUpdate,
             commitsBehind: root.commitsBehind,
+            commitsAhead: root.commitsAhead,
+            repoRelation: root.repoRelation,
             localCommit: root.localCommit,
             remoteCommit: root.remoteCommit,
             currentBranch: root.currentBranch,
@@ -366,10 +488,7 @@ Singleton {
                 }
 
                 if (status.startsWith("failed")) {
-                    const code = status.split(":")[1] || "unknown"
-                    root.lastError = "Last update failed (exit " + code + "). Check " + Directories.updateLogPath + " for details."
-                    print("[ShellUpdates] Detected failed update from previous shell: exit " + code)
-                    clearStatusFileProc.running = true
+                    root.handleFailedUpdateStatus(status, true)
                     return
                 }
 
@@ -777,13 +896,7 @@ Singleton {
                     root.fetchErrorNotificationShown = true
                     const title = "iNiR Update Check Failed"
                     const body = "Cannot reach remote repository. Check your internet connection or run './setup doctor'."
-                    Notifications.notify({
-                        summary: title,
-                        body: body,
-                        urgency: NotificationUrgency.Low,
-                        timeout: 8000,
-                        appName: "iNiR Shell"
-                    })
+                    Notifications.send(title, body, "low", 8000)
                     print("[ShellUpdates] Notification sent: Persistent fetch errors")
                 }
                 return
@@ -896,15 +1009,24 @@ Singleton {
         }
     }
 
-    // Step 6: Count commits behind
+    // Step 6: Classify the graph in both directions. Counting only HEAD..remote
+    // made a force-pushed branch look like an ordinary update even when the
+    // checkout also had commits that disappeared from the rewritten remote.
     Process {
         id: countCommitsProc
         running: false
-        command: [...root._gitCmd, "rev-list", "--count", "HEAD..origin/" + root._remoteBranch]
+        command: [...root._gitCmd, "rev-list", "--left-right", "--count", "HEAD...origin/" + root._remoteBranch]
         stdout: StdioCollector {
             onStreamFinished: {
-                const count = parseInt((text ?? "0").trim())
-                root.commitsBehind = isNaN(count) ? 0 : count
+                const parts = (text ?? "0 0").trim().split(/\s+/)
+                const localOnly = parseInt(parts[0] ?? "0")
+                const remoteOnly = parseInt(parts[1] ?? "0")
+                root.commitsAhead = isNaN(localOnly) ? 0 : localOnly
+                root.commitsBehind = isNaN(remoteOnly) ? 0 : remoteOnly
+                root.repoRelation = root.commitsAhead > 0 && root.commitsBehind > 0 ? "diverged"
+                    : root.commitsAhead > 0 ? "ahead"
+                    : root.commitsBehind > 0 ? "behind"
+                    : "current"
             }
         }
         onExited: (exitCode, exitStatus) => {
@@ -912,12 +1034,16 @@ Singleton {
                 // Fallback: compare commits directly
                 root.hasUpdate = root.localCommit !== root.remoteCommit && root.remoteCommit.length > 0
                 root.commitsBehind = root.hasUpdate ? 1 : 0
+                root.commitsAhead = 0
+                root.repoRelation = "unknown"
                 root.isChecking = false
                 root.initialUpdateCheckDone = true
+                root.maybeNotifyUpdate()
                 return
             }
             root.hasUpdate = root.commitsBehind > 0
-            print("[ShellUpdates] Commits behind: " + root.commitsBehind + ", hasUpdate: " + root.hasUpdate)
+            print("[ShellUpdates] Repo relation: " + root.repoRelation
+                + " (ahead=" + root.commitsAhead + ", behind=" + root.commitsBehind + "), hasUpdate: " + root.hasUpdate)
             if (root.hasUpdate) {
                 latestMessageProc.running = true
             } else {
@@ -928,19 +1054,22 @@ Singleton {
         }
     }
 
-    // Step 7: Get latest commit message from remote
+    // Step 7: Get the pending commits; the newest is the latest message
     Process {
         id: latestMessageProc
         running: false
-        command: [...root._gitCmd, "log", "--oneline", "-1", "origin/" + root._remoteBranch]
+        command: [...root._gitCmd, "log", "--pretty=format:%h|%s|%cr|%an", "HEAD..origin/" + root._remoteBranch]
         stdout: StdioCollector {
             onStreamFinished: {
-                root.latestMessage = (text ?? "").trim()
+                root.commitLog = (text ?? "").trim()
+                const newest = root.commitLog.split("\n")[0].split("|")
+                root.latestMessage = newest.length > 1 ? newest[0] + " " + newest[1] : ""
             }
         }
         onExited: (exitCode, exitStatus) => {
             root.isChecking = false
             root.initialUpdateCheckDone = true
+            root.maybeNotifyUpdate()
         }
     }
 
@@ -1101,8 +1230,9 @@ Singleton {
                     root.updateStep = 0
                     root.updateStepMessage = ""
                 } else if (status.startsWith("failed")) {
-                    // Update failed — stop polling, let watchdog handle error display
-                    updateProgressPoller.running = false
+                    // The setup process has already exited. Handle this immediately
+                    // instead of leaving the bar spinner alive until the 120s watchdog.
+                    root.handleFailedUpdateStatus(status, false)
                 }
             }
         }
@@ -1131,13 +1261,7 @@ Singleton {
                 const status = (text ?? "").trim()
                 print("[ShellUpdates] Update status file: " + status)
                 if (status.startsWith("failed")) {
-                    // Update process exited with error
-                    const parts = status.split(":")
-                    const code = parts.length > 1 ? parts[1] : "unknown"
-                    root.clearUpdateProgressUi()
-                    root.lastError = "Update failed (exit " + code + "). Check " + Directories.updateLogPath + " for details."
-                    clearStatusFileProc.running = true
-                    print("[ShellUpdates] Update FAILED with exit code " + code)
+                    root.handleFailedUpdateStatus(status, false)
                 } else if (status.startsWith("progress:")) {
                     if (status === root._lastWatchdogStatus) {
                         // Same progress marker seen twice — update is stuck

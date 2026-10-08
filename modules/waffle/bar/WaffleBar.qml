@@ -72,7 +72,16 @@ Scope {
                     // Mascot chaos: her ground slam rattles the taskbar; a kick more so
                     property real _quakeY: 0
                     property real _quakeScale: 1
-                    transform: Translate { y: content._quakeY }
+                    // Arrives with the shell: the taskbar rises out of its edge on Fluent's decelerate.
+                    property real _entry: GlobalStates.shellEntryReady ? 1 : 0
+                    Behavior on _entry {
+                        NumberAnimation {
+                            duration: Looks.transition.enabled ? Looks.transition.duration.panel : 0
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
+                        }
+                    }
+                    transform: Translate { y: content._quakeY + (1 - content._entry) * content.height * (root.isBottom ? 1 : -1) }
                     SequentialAnimation {
                         id: _quakeAnim
                         NumberAnimation { target: content; property: "_quakeY"; to: (root.isBottom ? -7 : 7) * content._quakeScale; duration: 60; easing.type: Easing.OutQuad }
@@ -83,7 +92,8 @@ Scope {
                     Connections {
                         target: MascotChaos
                         enabled: MascotChaos.enabled
-                        function onPanelShake(intensity) {
+                        function onPanelShake(intensity, output) {
+                            if (barRoot.screen?.name !== output || MascotChaos.suppressed) return
                             content._quakeScale = Math.max(1, intensity)
                             if (Looks.transition.enabled) _quakeAnim.restart()
                         }

@@ -1,0 +1,6 @@
+module qs.modules.iris.field
+IrisField 1.0 IrisField.qml
+IrisGlassSource 1.0 IrisGlassSource.qml
+IrisBlurRegion 1.0 IrisBlurRegion.qml
+IrisWaveBlur 1.0 IrisWaveBlur.qml
+singleton IrisGlassBackdrops 1.0 IrisGlassBackdrops.qml

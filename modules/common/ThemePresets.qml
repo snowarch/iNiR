@@ -112,6 +112,17 @@ Singleton {
             }
         },
         {
+            id: "iris-ink",
+            name: "iRiS Ink",
+            description: "Washi and sumi, softer than white",
+            icon: "ink_pen",
+            colors: irisInkColors,
+            tags: ["light", "minimal"],
+            meta: {
+                roundingScale: 1.1
+            }
+        },
+        {
             id: "material-black",
             name: "Material Black",
             description: "Pure black with elegant muted accents",
@@ -813,6 +824,63 @@ Singleton {
         m3onSuccess: "#ffffff",
         m3successContainer: "#dce0e8",
         m3onSuccessContainer: "#40a02b"
+    })
+
+    readonly property var irisInkColors: ({
+        darkmode: false,
+        m3background: "#dcd7ca",
+        m3onBackground: "#26231f",
+        m3surface: "#dcd7ca",
+        m3surfaceDim: "#d0cbbe",
+        m3surfaceBright: "#e6e2d6",
+        m3surfaceContainerLowest: "#e9e5da",
+        m3surfaceContainerLow: "#e2ded2",
+        m3surfaceContainer: "#d6d1c4",
+        m3surfaceContainerHigh: "#cec9bc",
+        m3surfaceContainerHighest: "#c2bdb0",
+        m3onSurface: "#26231f",
+        m3surfaceVariant: "#cfc9bb",
+        m3onSurfaceVariant: "#4a463f",
+        m3inverseSurface: "#33302b",
+        m3inverseOnSurface: "#ebe6da",
+        m3outline: "#7b766b",
+        m3outlineVariant: "#b7b1a3",
+        m3shadow: "#000000",
+        m3scrim: "#000000",
+        m3surfaceTint: "#3f5f8a",
+        m3primary: "#3f5f8a",
+        m3onPrimary: "#ffffff",
+        m3primaryContainer: "#c6d0df",
+        m3onPrimaryContainer: "#1e3350",
+        m3inversePrimary: "#a9bfdc",
+        m3secondary: "#4a7c66",
+        m3onSecondary: "#ffffff",
+        m3secondaryContainer: "#cadcd2",
+        m3onSecondaryContainer: "#1d3b2f",
+        m3tertiary: "#a8505f",
+        m3onTertiary: "#ffffff",
+        m3tertiaryContainer: "#e3ccd0",
+        m3onTertiaryContainer: "#4d1f28",
+        m3error: "#b5382a",
+        m3onError: "#ffffff",
+        m3errorContainer: "#f0d0ca",
+        m3onErrorContainer: "#4b1108",
+        m3primaryFixed: "#c6d0df",
+        m3primaryFixedDim: "#a9bfdc",
+        m3onPrimaryFixed: "#14243a",
+        m3onPrimaryFixedVariant: "#2f4a70",
+        m3secondaryFixed: "#cadcd2",
+        m3secondaryFixedDim: "#aac6b8",
+        m3onSecondaryFixed: "#10281f",
+        m3onSecondaryFixedVariant: "#365d4c",
+        m3tertiaryFixed: "#e3ccd0",
+        m3tertiaryFixedDim: "#cfa9b0",
+        m3onTertiaryFixed: "#360f18",
+        m3onTertiaryFixedVariant: "#7f3a47",
+        m3success: "#4f7a4a",
+        m3onSuccess: "#ffffff",
+        m3successContainer: "#cfdcc9",
+        m3onSuccessContainer: "#1c3a18"
     })
 
     readonly property var materialBlackColors: ({

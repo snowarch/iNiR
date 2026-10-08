@@ -16,13 +16,14 @@ MIGRATION_TARGET_FILE="~/.config/niri/config.d/50-startup.kdl"
 MIGRATION_REQUIRED=true
 
 _cliphist_startup_file="${HOME}/.config/niri/config.d/50-startup.kdl"
-_text_watcher='spawn-at-startup "bash" "-c" "wl-paste --type text --watch ~/.config/quickshell/inir/scripts/clipboard-store.py \&"'
+_text_watcher='spawn-at-startup "bash" "-c" "wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/clipboard-store.py \&"'
 
 migration_check() {
     [[ -f "$_cliphist_startup_file" ]] || return 1
 
-    # Any text watcher at all means 032 owns this file, not us.
-    if grep -q 'wl-paste --type text' "$_cliphist_startup_file" 2>/dev/null; then
+    # Accept the current watcher and older option ordering. Newer fixes may add
+    # wl-paste flags before --type without removing text capture.
+    if grep -Eq 'wl-paste .*--type text(/plain)? .*--watch' "$_cliphist_startup_file" 2>/dev/null; then
         return 1
     fi
 
@@ -31,7 +32,7 @@ migration_check() {
 }
 
 migration_preview() {
-    echo -e "${STY_GREEN}+ wl-paste --type text --watch ~/.config/quickshell/inir/scripts/clipboard-store.py${STY_RST}"
+    echo -e "${STY_GREEN}+ wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/clipboard-store.py${STY_RST}"
     echo "  wl-paste --type image --watch cliphist store"
     echo ""
     echo "Only the image watcher is spawned, so copied text never reaches the"
@@ -43,5 +44,5 @@ migration_apply() {
 
     sed -i -E "\|wl-paste --type image|i\\${_text_watcher}" "$_cliphist_startup_file"
 
-    grep -q 'wl-paste --type text' "$_cliphist_startup_file"
+    grep -Eq 'wl-paste .*--type text(/plain)? .*--watch' "$_cliphist_startup_file"
 }

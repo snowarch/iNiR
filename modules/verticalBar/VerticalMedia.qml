@@ -17,7 +17,7 @@ MouseArea {
     id: root
     property bool borderless: Config.options.bar.borderless
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
-    readonly property string cleanedTitle: StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || Translation.tr("No media")
+    readonly property string cleanedTitle: StringUtils.cleanMusicTitle(MprisController.titleOf(activePlayer)) || Translation.tr("No media")
     readonly property string popupMode: Config.options?.media?.popupMode ?? "dock"
     property bool volumePopupVisible: false
     property bool barMediaPopupVisible: false
@@ -72,7 +72,7 @@ MouseArea {
         implicitSize: 20
 
         lineWidth: Appearance.rounding.unsharpen
-        value: activePlayer?.position / activePlayer?.length
+        value: MprisController.lengthOf(activePlayer) > 0 ? MprisController.positionOf(activePlayer) / MprisController.lengthOf(activePlayer) : 0
         colPrimary: Appearance.colors.colOnLayer0
         enableAnimation: false
 

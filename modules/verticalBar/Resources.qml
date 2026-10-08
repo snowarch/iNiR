@@ -1,3 +1,4 @@
+import qs.modules.common.widgets
 import qs.services
 import qs.modules.common
 import QtQuick
@@ -11,8 +12,7 @@ MouseArea {
     implicitWidth: columnLayout.implicitWidth
     hoverEnabled: true
 
-    Component.onCompleted: ResourceUsage.keepAlive()
-    Component.onDestruction: ResourceUsage.releaseKeepAlive()
+    property QtObject resourceMonitor: ResourceUsageMonitor { target: root }
 
     ColumnLayout {
         id: columnLayout

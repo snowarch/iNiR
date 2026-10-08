@@ -22,6 +22,11 @@ ContentPage {
         summary: Translation.tr("Color generation · resources")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
+        searchAliases: ({
+            "color generation": "color",
+            "cava options": "color",
+            "cava & spectrum options": "color"
+        })
         options: [
             { displayName: Translation.tr("Color"), icon: "colors", value: "color" },
             { displayName: Translation.tr("Resources"), icon: "memory_alt", value: "resources" }
@@ -47,6 +52,7 @@ ContentPage {
             "appearance.cava.framerate": 60,
             "appearance.cava.stereo": true,
             "appearance.cava.waveOpacity": 30,
+            "appearance.cava.blockedApps": [],
         })
         colorRegenTimer.restart()
     }
@@ -57,9 +63,11 @@ ContentPage {
         onTriggered: Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
     }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "color"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "color"
-        visible: root.activeSection === "color"
         expanded: true
         icon: "colors"
         title: Translation.tr("Color generation")
@@ -116,7 +124,7 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "music_note"
                 text: Translation.tr("Spotify (Spicetify)")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
+                checked: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? true
                 onCheckedChanged: {
                     Config.setNestedValue("appearance.wallpaperTheming.enableSpicetify", checked);
                     colorRegenTimer.restart();
@@ -127,7 +135,7 @@ ContentPage {
             }
 
             ContentSubsection {
-                visible: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
+                visible: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? true
                 title: Translation.tr("Spotify theme")
                 tooltip: Translation.tr("Choose the Spicetify layout while keeping iNiR wallpaper colors")
 
@@ -138,7 +146,7 @@ ContentPage {
                         colorRegenTimer.restart()
                     }
                     options: [
-                        { displayName: Translation.tr("Sleek"), value: "Inir" },
+                        { displayName: "iNiR", value: "Inir" },
                         { displayName: Translation.tr("Text (TUI)"), value: "InirTUI" }
                     ]
                 }
@@ -146,7 +154,7 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "sports_esports"
                 text: Translation.tr("Steam (Millennium)")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableSteam ?? false
+                checked: Config.options?.appearance?.wallpaperTheming?.enableSteam ?? true
                 onCheckedChanged: {
                     Config.setNestedValue("appearance.wallpaperTheming.enableSteam", checked);
                     colorRegenTimer.restart();
@@ -165,6 +173,30 @@ ContentPage {
                 }
                 StyledToolTip {
                     text: Translation.tr("Apply Material You colors to YouTube Music Desktop App")
+                }
+            }
+            SettingsSwitch {
+                buttonIcon: "music_note"
+                text: Translation.tr("LiMusic")
+                checked: Config.options?.appearance?.wallpaperTheming?.enableLimusic ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("appearance.wallpaperTheming.enableLimusic", checked);
+                    colorRegenTimer.restart();
+                }
+                StyledToolTip {
+                    text: Translation.tr("LiMusic follows your wallpaper colours, from the next time it opens")
+                }
+            }
+            SettingsSwitch {
+                buttonIcon: "terminal"
+                text: Translation.tr("Claude Code")
+                checked: Config.options?.appearance?.wallpaperTheming?.enableClaudeCode ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("appearance.wallpaperTheming.enableClaudeCode", checked);
+                    colorRegenTimer.restart();
+                }
+                StyledToolTip {
+                    text: Translation.tr("Adds iNiR themes to Claude Code's theme list: two follow your wallpaper, two keep a fixed Monokai palette")
                 }
             }
             SettingsSwitch {
@@ -204,6 +236,18 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                buttonIcon: "public"
+                text: Translation.tr("Firefox")
+                checked: Config.options?.appearance?.wallpaperTheming?.enableFirefox ?? true
+                onCheckedChanged: {
+                    Config.setNestedValue("appearance.wallpaperTheming.enableFirefox", checked);
+                    colorRegenTimer.restart();
+                }
+                StyledToolTip {
+                    text: Translation.tr("Follows the wallpaper from its next launch; LibreWolf, Floorp, Waterfox and Zen too.")
+                }
+            }
+            SettingsSwitch {
                 buttonIcon: "code"
                 text: Translation.tr("OpenCode")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableOpenCode ?? false
@@ -231,7 +275,7 @@ ContentPage {
                 id: cavaSwitch
                 buttonIcon: "equalizer"
                 text: Translation.tr("Theme standalone Cava")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableCava ?? false
+                checked: Config.options?.appearance?.wallpaperTheming?.enableCava ?? true
                 onCheckedChanged: root.setCavaValue(
                     "appearance.wallpaperTheming.enableCava", checked, true)
                 StyledToolTip {
@@ -444,10 +488,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "resources"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "resources"
-        visible: root.activeSection === "resources"
         expanded: true
         icon: "memory_alt"
         title: Translation.tr("Resource Monitor")
@@ -464,6 +512,8 @@ ContentPage {
                     text: Translation.tr("Poll GPU usage and temperature. Disable on hybrid laptops to keep the dGPU asleep — also pins Qt to the iGPU on next restart.")
                 }
             }
+        }
+    }
         }
     }
 }

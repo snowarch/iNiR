@@ -102,11 +102,11 @@ Item {
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
-                        : Appearance.colors.colLayer2Hover
+                        : Appearance.colLayer2Hover
                     colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
-                        : Appearance.colors.colLayer2Active
+                        : Appearance.colLayer2Active
                     onClicked: {
                         if (root.wallpapersList.length === 0) return
                         const randomIndex = Math.floor(Math.random() * root.wallpapersList.length)
@@ -131,11 +131,11 @@ Item {
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
-                        : Appearance.colors.colLayer2Hover
+                        : Appearance.colLayer2Hover
                     colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
-                        : Appearance.colors.colLayer2Active
+                        : Appearance.colLayer2Active
                     onClicked: GlobalActions.runLauncher(["wallpaperSelector", "toggle"])
                     contentItem: Item {
                         MaterialSymbol {

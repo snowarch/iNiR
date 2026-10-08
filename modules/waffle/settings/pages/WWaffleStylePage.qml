@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import qs.services
+import qs.services.deferred
 import qs.modules.common
 import qs.modules.waffle.looks
 import qs.modules.waffle.settings
@@ -41,7 +42,21 @@ WSettingsPage {
         visible: root.isWaffleActive
         title: Translation.tr("Alt+Tab Switcher")
         icon: "apps"
-        
+
+        WSettingsDropdown {
+            label: Translation.tr("Alt+Tab opens")
+            icon: "keyboard"
+            description: NiriKeybinds.altTabSource === "custom"
+                ? Translation.tr("Alt+Tab is bound in your own Niri binds. Choosing here takes it over; your line stays as it is.")
+                : Translation.tr("Niri's Recent Windows, or this switcher with the style below")
+            currentValue: NiriKeybinds.altTabSource
+            options: [
+                { value: "niri", displayName: Translation.tr("Niri's Recent Windows") },
+                { value: "inir", displayName: Translation.tr("iNiR switcher") }
+            ]
+            onSelected: newValue => NiriKeybinds.setAltTabSource(newValue)
+        }
+
         WSettingsDropdown {
             label: Translation.tr("Style")
             icon: "image"

@@ -12,11 +12,9 @@ depends=(
   awww
   
   # Basic utilities
-  bc
   coreutils
   cliphist
   curl
-  wget
   ripgrep
   jq
   python
@@ -34,9 +32,8 @@ depends=(
   xdg-desktop-portal-gtk
   xdg-desktop-portal-gnome
   
-  # Polkit agent (needed for auth dialogs — gnome agent works universally)
+  # Polkit, for the shell's own authentication dialogs
   polkit
-  polkit-gnome
   
   # Network
   networkmanager

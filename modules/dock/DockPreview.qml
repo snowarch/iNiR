@@ -29,7 +29,24 @@ PopupWindow {
 
     ///////////////////// Functions ////////////////////
 
+    property var pendingPreviewIds: []
+
+    Timer {
+        id: previewRefreshTimer
+        // The popup can render an existing cached frame immediately. Delay the
+        // invasive Niri screenshot-window refresh until the hover is clearly
+        // intentional, so a normal dock click never races the user's next paste.
+        interval: 260
+        repeat: false
+        onTriggered: {
+            if (!root.visible || root.pendingPreviewIds.length === 0) return
+            WindowPreviewService.captureForTaskView(root.pendingPreviewIds, 60000)
+        }
+    }
+
     function close(): void {
+        previewRefreshTimer.stop()
+        root.pendingPreviewIds = []
         marginBehavior.enabled = false
         root.visible = false
     }
@@ -45,11 +62,21 @@ PopupWindow {
     }
 
     function show(appEntry: var, button: Item): void {
+        // Cache discovery is cheap and must not inherit the delayed screenshot
+        // policy below. The Sep-1 clipboard fix delayed captureForTaskView(),
+        // which also delayed service initialization and caused a fallback frame
+        // before an already-cached preview could be resolved.
+        WindowPreviewService.initialize()
         root.appEntry = appEntry
         root.anchorItem = button
         root.anchor.updateAnchor()
-        WindowPreviewService.captureForTaskView()
+        const windows = button?.toplevels ?? appEntry?.toplevels ?? []
+        root.pendingPreviewIds = windows
+            .map(toplevel => Number(toplevel?.niriWindowId ?? 0))
+            .filter(id => Number.isFinite(id) && id > 0)
         root.open()
+        if (root.pendingPreviewIds.length > 0)
+            previewRefreshTimer.restart()
     }
 
     ///////////////////// Model ////////////////////
@@ -97,6 +124,7 @@ PopupWindow {
     ///////////////////// Internals ////////////////////
 
     visible: false
+    grabFocus: false
     color: "transparent"
     implicitWidth: contentItem.implicitWidth + ambientShadowWidth + (visualMargin * 2)
     implicitHeight: contentItem.implicitHeight + ambientShadowWidth + (visualMargin * 2)
@@ -140,7 +168,7 @@ PopupWindow {
             id: contentItem
             property real sourceEdgeMargin: root.visible 
                 ? (root.ambientShadowWidth + root.visualMargin) 
-                : (root.isVertical ? -root.implicitWidth : -root.implicitHeight)
+                : (root.ambientShadowWidth + root.visualMargin - 8)
 
             Behavior on sourceEdgeMargin {
                 id: marginBehavior

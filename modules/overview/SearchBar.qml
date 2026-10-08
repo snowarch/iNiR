@@ -13,7 +13,7 @@ import Quickshell.Io
 
 RowLayout {
     id: root
-    spacing: 6
+    spacing: Appearance.editorialEverywhere ? Math.round(10 * Appearance.editorial.spacing) : 6
     property bool animateWidth: false
     property alias searchInput: searchInput
     property string searchingText

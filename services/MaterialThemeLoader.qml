@@ -46,6 +46,14 @@ Singleton {
     // Toggle dark/light mode by running switchwall.sh with --mode and scheduling a reload.
     function setDarkMode(dark: bool): void {
         Config.setNestedValue("appearance.customTheme.darkmode", dark)
+        // A switch by hand is the last word: the wallpaper's brightness would decide again on the very next regeneration
+        // (the seed of the new mode starts one) and undo it. The Settings switch shows it off; the person turns it back on.
+        if (Config.options?.appearance?.wallpaperTheming?.autoDarkLightMode ?? false)
+            Config.setNestedValue("appearance.wallpaperTheming.autoDarkLightMode", false)
+        // A scheme iRiS was told to keep is the mode: leaving it behind would put the shell and the apps in different ones on the next regeneration.
+        const scheme = String(Config.options?.iris?.appearance?.scheme ?? "auto")
+        if ((Config.options?.panelFamily ?? "ii") === "iris" && scheme !== "auto")
+            Config.setNestedValue("iris.appearance.scheme", dark ? "dark" : scheme === "ink" ? "ink" : "light")
         darkModeProc.command = [
             "/usr/bin/bash",
             Directories.wallpaperSwitchScriptPath,
@@ -292,6 +300,9 @@ Singleton {
     // containers with their own plates and every other style resolves back to
     // the Material roles.
     function _styleAppPaletteOverlay(): var {
+        // iRiS hands its own surface to the generator (IrisAppsSync): the Material style's layers
+        // are another family's, and overwrote the apps' ramp with them (#242122 over iRiS's #221f20).
+        if ((Config.options?.panelFamily ?? "ii") === "iris") return null
         const c = Appearance.colors
         if (!c) return null
 
@@ -373,8 +384,130 @@ Singleton {
         }
     }
 
-    function _applyExternalTheming(): void {
+    readonly property string _appTargetsKey: {
+        const t = Config.options?.appearance?.wallpaperTheming
+        if (!t) return ""
+        return [t.enableTerminal, t.enableVesktop, t.enableZed, t.enableVSCode, t.enableChrome, t.enableFirefox, t.enableSpicetify,
+                t.spicetifyTheme, t.enableSteam, t.enablePearDesktop, t.enableLimusic, t.enableOpenCode,
+                t.enableNeovim, t.enableCava, t.enableClaudeCode].join("|")
+    }
+    // What the config held once loaded: the load itself sets these one by one and must not apply anything.
+    property string _appliedAppTargetsKey: ""
+    Connections {
+        target: Config
+        function onReadyChanged() {
+            if (!Config.ready) return
+            root._appliedAppTargetsKey = root._appTargetsKey
+            root._syncedLoginScreenKey = root._loginScreenKey
+        }
+    }
+    Component.onCompleted: if (Config.ready) {
+        root._appliedAppTargetsKey = root._appTargetsKey
+        root._syncedLoginScreenKey = root._loginScreenKey
+    }
+    on_AppTargetsKeyChanged: {
+        if (!Config.ready || root._appliedAppTargetsKey === root._appTargetsKey) return
+        root._appliedAppTargetsKey = root._appTargetsKey
+        root.requestExternalApply()
+    }
+
+    // The login screen (SDDM) copies the lock and follows the family. A palette change reaches it with the other apps;
+    // its look, the lock it mirrors and the family re-sync it here. The sync writes only what differs.
+    readonly property bool loginScreenInstalled: loginThemeView.loaded
+    FileView {
+        id: loginThemeView
+        path: "/usr/share/sddm/themes/ii-pixel/theme.conf"
+        printErrors: false
+    }
+    readonly property string _loginScreenKey: {
+        const o = Config.options
+        if (!o) return ""
+        const lock = o.iris?.lock
+        const look = o.iris?.appearance
+        return JSON.stringify([o.lock?.loginScreen, o.panelFamily, o.lock?.materialShapeChars, lock?.scene, lock?.type,
+            lock?.blocks?.clock, lock?.blocks?.session, look?.fontFamily, look?.numbersFontFamily, look?.titleFontFamily,
+            look?.followTheme, look?.theme?.surface])
+    }
+    // What the config held once loaded, like _appliedAppTargetsKey below.
+    property string _syncedLoginScreenKey: ""
+    on_LoginScreenKeyChanged: {
+        if (!Config.ready || !root.loginScreenInstalled || !root.defaultApplyExternal) return
+        if (root._syncedLoginScreenKey !== root._loginScreenKey) loginScreenSync.restart()
+    }
+    Timer {
+        id: loginScreenSync
+        interval: 1500
+        onTriggered: {
+            root._syncedLoginScreenKey = root._loginScreenKey
+            Quickshell.execDetached(["/usr/bin/bash", Directories.scriptsPath + "/colors/apply-targets.sh", "sddm"])
+        }
+    }
+    IpcHandler {
+        target: "loginScreen"
+        function set(look: string): string {
+            if (["auto", "classic", "iris"].indexOf(look) < 0) return "unknown look: " + look + " (auto, classic or iris)"
+            Config.setNestedValue("lock.loginScreen", look)
+            return look
+        }
+        function status(): string {
+            if (!root.loginScreenInstalled) return "not installed"
+            const look = String(Config.options?.lock?.loginScreen ?? "auto")
+            if (look !== "auto") return look
+            return "auto (" + ((Config.options?.panelFamily ?? "ii") === "iris" ? "iris" : "classic") + ")"
+        }
+        function sync(): void { loginScreenSync.restart() }
+    }
+
+    // Apps are not restyled under a game: Spotify, Steam and the terminals reload their theme on every
+    // run, mid-match. The shell's own colours still follow; the apps catch up once, when Game mode ends.
+    property bool _externalApplyHeld: false
+    Connections {
+        target: GameMode
+        function onActiveChanged() {
+            if (!GameMode.active && root._externalApplyHeld) {
+                root._externalApplyHeld = false
+                root.requestExternalApply()
+            }
+        }
+    }
+
+    // iRiS hands the generator a surface of its own (ThemeService.appsSurfaceSeed). A new wallpaper is generated at
+    // once with the surface of the old one, and again once iRiS has read the new wallpaper: applying both restyled
+    // every app twice, first with the wrong body. Apps wait for the generation that carries the wanted surface, or
+    // 10 s if none comes.
+    readonly property string _generatedSurfaceSeed: {
+        try { return String(JSON.parse(themeMetaView.text() || "{}").surface_seed ?? "").toLowerCase() } catch (e) { return "" }
+    }
+    readonly property bool surfacePending: ThemeService.appsSurfaceSeed.length > 0
+        && root._generatedSurfaceSeed !== ThemeService.appsSurfaceSeed.toLowerCase()
+    property bool _surfaceHeld: false
+    onSurfacePendingChanged: if (!root.surfacePending && root._surfaceHeld) root.requestExternalApply()
+    Timer {
+        id: surfaceHoldLimit
+        interval: 10000
+        onTriggered: if (root._surfaceHeld) root._applyExternalTheming(true)
+    }
+    FileView {
+        id: themeMetaView
+        path: `${Directories.stateUserPath}/generated/theme-meta.json`
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+    }
+
+    function _applyExternalTheming(surfaceWaitOver = false): void {
         if (!root.defaultApplyExternal) return;
+        if (GameMode.active) {
+            root._externalApplyHeld = true
+            return
+        }
+        if (root.surfacePending && !surfaceWaitOver) {
+            if (!root._surfaceHeld) surfaceHoldLimit.restart()
+            root._surfaceHeld = true
+            return
+        }
+        root._surfaceHeld = false
+        surfaceHoldLimit.stop()
         const applyColorPath = Directories.scriptsPath + "/colors/applycolor.sh"
         const overlay = root._styleAppPaletteOverlay()
         if (!overlay) {

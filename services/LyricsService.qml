@@ -64,10 +64,10 @@ Singleton {
 
     function _snapshot(): var {
         const player = root.activePlayer;
-        const title = player?.trackTitle ?? "";
-        const artist = player?.trackArtist ?? "";
+        const title = MprisController.titleOf(player) ?? "";
+        const artist = MprisController.artistOf(player) ?? "";
         const album = player?.trackAlbum ?? "";
-        const duration = player?.length ?? 0;
+        const duration = MprisController.lengthOf(player);
         const key = JSON.stringify([
             player?.dbusName ?? "",
             player?.uniqueId ?? 0,
@@ -126,6 +126,12 @@ Singleton {
             if (lyricsProc.running)
                 lyricsProc.running = false;
             root._publishFailure(requestId, "no_info");
+            return;
+        }
+        if (!Network.online) {
+            root._pendingRequest = null;
+            root._latestTrackKey = "";
+            root._publishFailure(requestId, "offline");
             return;
         }
 
@@ -188,11 +194,18 @@ Singleton {
             root.activeIndex = -1;
             root.slots = root.buildSlots(-1);
             root._lastReported = -1;
-            const reported = root.activePlayer?.position ?? 0;
+            const reported = MprisController.positionOf(root.activePlayer);
             root._reanchor(reported);
             root._publishedTrackKey = root._latestTrackKey;
             root.status = "ok";
         });
+    }
+
+    Connections {
+        target: Network
+        function onOnlineChanged() {
+            if (Network.online && root.status === "offline") root.scheduleRefresh()
+        }
     }
 
     onActiveChanged: root.scheduleRefresh()
@@ -231,7 +244,7 @@ Singleton {
         running: root.active && root.status === "ok" && root.lyricsLines.length > 0
         onTriggered: {
             root.activePlayer?.positionChanged();
-            const reported = root.activePlayer?.position ?? 0;
+            const reported = MprisController.positionOf(root.activePlayer);
             if (reported !== root._lastReported) {
                 root._lastReported = reported;
                 if (reported > 0 || root._anchorPos === 0)

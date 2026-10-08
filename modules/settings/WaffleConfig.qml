@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.services
+import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
@@ -54,9 +55,11 @@ ContentPage {
         ]
     }
 
+    SettingsTaskLoader {
+        requested: root.isWaffleActive && root.isPanelEnabled("wBackground") && root.activeSection === "wallpaper"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "wallpaper"
-        visible: root.isWaffleActive && root.isPanelEnabled("wBackground") && root.activeSection === "wallpaper"
         expanded: true
         title: Translation.tr("Wallpaper")
 
@@ -119,10 +122,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.isWaffleActive && root.isPanelEnabled("wBackground") && root.activeSection === "wallpaper"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "wallpaper"
-        visible: root.isWaffleActive && root.isPanelEnabled("wBackground") && root.activeSection === "wallpaper"
         expanded: true
         title: Translation.tr("Wallpaper Effects")
 
@@ -161,10 +168,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.isWaffleActive && root.activeSection === "wallpaper"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "wallpaper"
-        visible: root.isWaffleActive && root.activeSection === "wallpaper"
         expanded: true
         title: Translation.tr("Backdrop (Niri Overview)")
 
@@ -287,10 +298,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.isWaffleActive && root.isPanelEnabled("wBar") && root.activeSection === "taskbar"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "taskbar"
-        visible: root.isWaffleActive && root.isPanelEnabled("wBar") && root.activeSection === "taskbar"
         expanded: true
         title: Translation.tr("Taskbar")
 
@@ -324,11 +339,15 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.isWaffleActive && root.activeSection === "style"
+        sourceComponent: Component {
     SettingsCardSection {
         id: themingSection
         settingsTaskSection: "style"
-        visible: root.isWaffleActive && root.activeSection === "style"
         expanded: true
         title: Translation.tr("Theming")
 
@@ -339,8 +358,11 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "format_color_fill"
                 text: Translation.tr("Use Material colors")
-                checked: Config.options?.waffles?.theming?.useMaterialColors ?? false
-                onCheckedChanged: Config.setNestedValue("waffles.theming.useMaterialColors", checked)
+                enabled: !Appearance.editorialEverywhere
+                checked: Appearance.editorialEverywhere || (Config.options?.waffles?.theming?.useMaterialColors ?? false)
+                onCheckedChanged: {
+                    if (!Appearance.editorialEverywhere) Config.setNestedValue("waffles.theming.useMaterialColors", checked)
+                }
                 StyledToolTip { text: Translation.tr("Apply the Material ii color scheme instead of Windows 11 grey") }
             }
 
@@ -404,10 +426,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.isWaffleActive && root.activeSection === "style"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "style"
-        visible: root.isWaffleActive && root.activeSection === "style"
         expanded: true
         title: Translation.tr("Behavior")
 
@@ -420,17 +446,21 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "transition"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "transition"
-        visible: root.activeSection === "transition"
         expanded: true
         title: Translation.tr("Family Transition")
 
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Settings for switching between Material ii and Waffle panel styles.")
+                text: Translation.tr("Settings for switching between Material ii, Waffle, and iRiS panel families.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -443,6 +473,8 @@ ContentPage {
                 onCheckedChanged: Config.setNestedValue("familyTransitionAnimation", checked)
                 StyledToolTip { text: Translation.tr("Show a smooth animated overlay when switching between panel families") }
             }
+        }
+    }
         }
     }
 
@@ -522,6 +554,14 @@ ContentPage {
         title: Translation.tr("Alt+Tab Switcher")
 
         SettingsGroup {
+            ConfigSelectionArray {
+                options: [
+                    { displayName: Translation.tr("Niri's Recent Windows"), icon: "view_carousel", value: "niri" },
+                    { displayName: Translation.tr("iNiR switcher"), icon: "keyboard_tab", value: "inir" }
+                ]
+                currentValue: NiriKeybinds.altTabSource
+                onSelected: newValue => NiriKeybinds.setAltTabSource(newValue)
+            }
             SettingsSwitch {
                 enabled: {
                     const preset = Config.options?.waffles?.altSwitcher?.preset ?? "thumbnails"

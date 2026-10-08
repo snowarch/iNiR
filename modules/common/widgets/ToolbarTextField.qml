@@ -40,10 +40,10 @@ TextField {
         id: background
         color: Appearance.regaliaEverywhere ? "transparent"
             : Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colLayer1
-        radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
+        radius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
             : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
-        border.width: Appearance.zzzEverywhere ? 1 : 0
-        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
+        border.width: Appearance.editorialEverywhere ? 1 : Appearance.zzzEverywhere ? 1 : 0
+        border.color: Appearance.editorialEverywhere ? (filterField.activeFocus ? Appearance.editorial.accent : Appearance.editorial.rule) : Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
 
         RegaliaControlFace {
             anchors.fill: parent

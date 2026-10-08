@@ -51,7 +51,7 @@ Item {
     readonly property color colBgHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-        : Appearance.colors.colLayer1Hover
+        : Appearance.colLayer1Hover
     readonly property color colBorder: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.colors.colLayer0Border

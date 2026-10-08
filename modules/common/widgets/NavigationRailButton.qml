@@ -66,11 +66,15 @@ TabButton {
             Rectangle {
                 id: bubbleBackground
                 color: Appearance.regaliaEverywhere ? "transparent"
-                    : Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                    : Appearance.zzzEverywhere ? Appearance.zzz.accent
+                    : Appearance.editorialEverywhere ? Appearance.editorial.field
+                    : Appearance.colors.colPrimary
                 radius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
-                    : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
-                border.width: 0
-                border.color: "transparent"
+                    : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                    : Appearance.editorialEverywhere ? Appearance.rounding.small
+                    : Appearance.rounding.full
+                border.width: Appearance.editorialEverywhere ? 1 : 0
+                border.color: Appearance.editorialEverywhere ? Appearance.editorial.edge : "transparent"
                 // Organic morph on style/shape switch (organic-transitions)
                 Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                 Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
@@ -92,7 +96,9 @@ TabButton {
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.weight: Font.Medium
                     color: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
-                        : Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary
+                        : Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+                        : Appearance.editorialEverywhere ? Appearance.editorial.fieldInk
+                        : Appearance.colors.colOnPrimary
                     Behavior on color {
                         enabled: Appearance.animationsEnabled
                         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -126,6 +132,7 @@ TabButton {
             implicitWidth: root.expanded ? root.visualWidth : root.baseSize
             radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
                 : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                : Appearance.editorialEverywhere ? Appearance.rounding.small
                 : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                 : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
             // Organic morph on style/shape switch (organic-transitions)
@@ -144,6 +151,7 @@ TabButton {
                 selected: root.toggled
                 focused: root.visualFocus
             }
+
 
             states: State {
                 name: "expanded"
@@ -206,11 +214,13 @@ TabButton {
                     ? (toggled ? Appearance.angel.colPrimary : (root.hovered ? Appearance.angel.colText : Appearance.angel.colTextSecondary))
                     : Appearance.inirEverywhere
                     ? (toggled ? Appearance.inir.colPrimary : (root.hovered ? Appearance.inir.colText : Appearance.inir.colTextSecondary))
+                    : Appearance.editorialEverywhere
+                    ? (toggled ? Appearance.editorial.accent : (root.hovered ? Appearance.editorial.ink : Appearance.editorial.muted))
                     : (toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1)
 
                 // Bgless press feedback: the glyph dips on press so a click reads
                 // as registered without any plate behind it.
-                scale: root.down && !Appearance.regaliaEverywhere ? 0.82 : 1
+                scale: root.down && !Appearance.regaliaEverywhere ? (Appearance.editorialEverywhere ? 0.96 : 0.82) : 1
                 Behavior on scale {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation { duration: Appearance.animation.clickBounce.duration; easing.type: Appearance.animation.clickBounce.type; easing.bezierCurve: Appearance.animation.clickBounce.bezierCurve }
@@ -238,7 +248,9 @@ TabButton {
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.regaliaEverywhere
                 ? (root.toggled ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onMuted)
-                : Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
+                : Appearance.zzzEverywhere ? Appearance.zzz.ink
+                : Appearance.editorialEverywhere ? (root.toggled ? Appearance.editorial.accent : Appearance.editorial.ink)
+                : Appearance.colors.colOnLayer1
             Behavior on color {
                 enabled: Appearance.animationsEnabled
                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

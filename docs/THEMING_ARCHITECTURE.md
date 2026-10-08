@@ -2,6 +2,8 @@
 
 This document describes the current iNiR theming pipeline at a high level.
 
+For component styling, see the [Editorial style guide](EDITORIAL_STYLE.md).
+
 ## Pipeline overview
 
 The theming system has two big stages:
@@ -60,7 +62,7 @@ Important practical rule:
 - `terminal.json` is the explicit terminal palette contract for future target consumers
 - `theme-meta.json` carries generation metadata such as source, mode, scheme, and generator
 - `generate_colors_material.py` is the single authoritative palette generator: it handles
-  both Material You color extraction AND template rendering (GTK, fuzzel, KDE, etc.)
+  both Material You color extraction AND template rendering (GTK, KDE, etc.)
 
 Current state:
 

@@ -22,17 +22,17 @@ Singleton {
     readonly property var list: MprisController.players ?? []
 
     /** Players worth offering in the picker: real ones carrying any metadata. */
-    readonly property var pickable: root.list.filter(p => p && (p.trackTitle || p.trackArtist))
+    readonly property var pickable: root.list.filter(p => p && (MprisController.titleOf(p) || MprisController.artistOf(p)))
 
     readonly property var active: MprisController.activePlayer
     readonly property bool has: active !== null && active !== undefined
     readonly property bool playing: MprisController.isPlaying
 
-    readonly property string title: has ? (active.trackTitle || root.labelOf(active)) : ""
-    readonly property string artist: has ? PillTheme.joinArtists(active.trackArtists, active.trackArtist) : ""
+    readonly property string title: has ? (MprisController.titleOf(active) || root.labelOf(active)) : ""
+    readonly property string artist: has ? PillTheme.joinArtists(active.trackArtists, MprisController.artistOf(active)) : ""
     readonly property string artUrl: root.artUrlFor(active)
 
-    readonly property real lengthSec: (has && active.length > 0) ? active.length : 0
+    readonly property real lengthSec: has ? MprisController.lengthOf(active) : 0
 
     /** A stream has no meaningful length, or one absurdly long (radio, YouTube live). */
     readonly property bool live: has && (lengthSec <= 0 || lengthSec > 86400)
@@ -76,11 +76,11 @@ Singleton {
         const url = String(p.metadata?.["xesam:url"] ?? "").trim().replace(/#.*$/, "");
         if (url.length > 0)
             return "url|" + url;
-        const rawTitle = String(p.trackTitle ?? "").trim();
+        const rawTitle = String(MprisController.titleOf(p) ?? "").trim();
         if (rawTitle.length === 0)
             return "";
         const cleanTitle = root.refineTitle(p, rawTitle).toLowerCase().replace(/\s+/g, " ");
-        const cleanArtist = PillTheme.joinArtists(p.trackArtists, p.trackArtist).toLowerCase().trim().replace(/\s+/g, " ");
+        const cleanArtist = PillTheme.joinArtists(p.trackArtists, MprisController.artistOf(p)).toLowerCase().trim().replace(/\s+/g, " ");
         return "meta|" + cleanTitle + "|" + cleanArtist;
     }
 
@@ -114,7 +114,7 @@ Singleton {
     function keyFor(p) {
         if (!p)
             return "";
-        return root.labelOf(p) + "|" + (p.trackTitle ?? "");
+        return root.labelOf(p) + "|" + (MprisController.titleOf(p) ?? "");
     }
 
     function labelOf(p) {
@@ -124,14 +124,14 @@ Singleton {
     }
 
     function artUrlFor(p) {
-        return (p && p.trackArtUrl) ? String(p.trackArtUrl) : "";
+        return (p && MprisController.artUrlOf(p)) ? String(MprisController.artUrlOf(p)) : "";
     }
 
     function nowPlayingFor(p) {
         if (!p)
             return "";
-        const t = p.trackTitle ?? "";
-        const a = PillTheme.joinArtists(p.trackArtists, p.trackArtist);
+        const t = MprisController.titleOf(p) ?? "";
+        const a = PillTheme.joinArtists(p.trackArtists, MprisController.artistOf(p));
         return a.length > 0 ? (t + " — " + a) : t;
     }
 }

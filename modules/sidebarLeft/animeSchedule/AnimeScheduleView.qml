@@ -71,20 +71,24 @@ Item {
                 colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                     : Appearance.auroraEverywhere ? "transparent"
+                    : Appearance.editorialEverywhere ? Appearance.editorial.layer(1)
                     : Appearance.colors.colLayer1
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                    : Appearance.colors.colLayer1Hover
+                    : Appearance.editorialEverywhere ? Appearance.editorial.layer(2)
+                    : Appearance.colLayer1Hover
                 colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
                     : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                     : Appearance.zzzEverywhere ? Appearance.zzz.sticker
+                    : Appearance.editorialEverywhere ? Appearance.editorial.accent
                     : Appearance.colors.colSecondaryContainer
                 colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                     : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                     : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
+                    : Appearance.editorialEverywhere ? Appearance.colors.colPrimaryHover
                     : Appearance.colors.colSecondaryContainerHover
                 onClicked: {
                     tabGroup.clickIndex = 0
@@ -101,20 +105,24 @@ Item {
                 colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                     : Appearance.auroraEverywhere ? "transparent"
+                    : Appearance.editorialEverywhere ? Appearance.editorial.layer(1)
                     : Appearance.colors.colLayer1
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                    : Appearance.colors.colLayer1Hover
+                    : Appearance.editorialEverywhere ? Appearance.editorial.layer(2)
+                    : Appearance.colLayer1Hover
                 colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
                     : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                     : Appearance.zzzEverywhere ? Appearance.zzz.sticker
+                    : Appearance.editorialEverywhere ? Appearance.editorial.accent
                     : Appearance.colors.colSecondaryContainer
                 colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                     : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                     : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
+                    : Appearance.editorialEverywhere ? Appearance.colors.colPrimaryHover
                     : Appearance.colors.colSecondaryContainerHover
                 onClicked: {
                     tabGroup.clickIndex = 1
@@ -131,20 +139,24 @@ Item {
                 colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                     : Appearance.auroraEverywhere ? "transparent"
+                    : Appearance.editorialEverywhere ? Appearance.editorial.layer(1)
                     : Appearance.colors.colLayer1
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                    : Appearance.colors.colLayer1Hover
+                    : Appearance.editorialEverywhere ? Appearance.editorial.layer(2)
+                    : Appearance.colLayer1Hover
                 colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
                     : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                     : Appearance.zzzEverywhere ? Appearance.zzz.sticker
+                    : Appearance.editorialEverywhere ? Appearance.editorial.accent
                     : Appearance.colors.colSecondaryContainer
                 colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                     : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                     : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
+                    : Appearance.editorialEverywhere ? Appearance.colors.colPrimaryHover
                     : Appearance.colors.colSecondaryContainerHover
                 onClicked: {
                     tabGroup.clickIndex = 2
@@ -190,17 +202,21 @@ Item {
                         // Same theming as tabs above
                         colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2
                             : Appearance.auroraEverywhere ? "transparent"
+                            : Appearance.editorialEverywhere ? Appearance.editorial.layer(1)
                             : Appearance.colors.colLayer1
                         colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                            : Appearance.colors.colLayer1Hover
+                            : Appearance.editorialEverywhere ? Appearance.editorial.layer(2)
+                            : Appearance.colLayer1Hover
                         colBackgroundToggled: Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                             : Appearance.zzzEverywhere ? Appearance.zzz.sticker
+                            : Appearance.editorialEverywhere ? Appearance.editorial.accent
                             : Appearance.colors.colSecondaryContainer
                         colBackgroundToggledHover: Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                             : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
+                            : Appearance.editorialEverywhere ? Appearance.colors.colPrimaryHover
                             : Appearance.colors.colSecondaryContainerHover
                         
                         onClicked: {
@@ -234,13 +250,13 @@ Item {
                 RippleButton {
                     implicitWidth: 32
                     implicitHeight: 32
-                    buttonRadius: Appearance.rounding.full
+                    buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                     enabled: !AnimeService.loading
                     
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                        : Appearance.colors.colLayer2Hover
+                        : Appearance.colLayer2Hover
                     
                     onClicked: AnimeService.prevSeason()
                     
@@ -276,13 +292,13 @@ Item {
                 RippleButton {
                     implicitWidth: 32
                     implicitHeight: 32
-                    buttonRadius: Appearance.rounding.full
+                    buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                     enabled: !AnimeService.loading
                     
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                        : Appearance.colors.colLayer2Hover
+                        : Appearance.colLayer2Hover
                     
                     onClicked: AnimeService.nextSeason()
                     
@@ -328,14 +344,14 @@ Item {
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     text: Translation.tr("Loading...")
-                    color: Appearance.colors.colSubtext
+                    color: Appearance.colMetadataText
                 }
             }
             
             // Error message
             MaterialPlaceholderMessage {
                 anchors.centerIn: parent
-                shown: AnimeService.lastError.length > 0 && root.getCurrentData().length === 0
+                shown: Network.online && AnimeService.lastError.length > 0 && root.getCurrentData().length === 0
                 maximumWidth: 360
                 icon: "error"
                 actionIcon: "refresh"
@@ -349,10 +365,19 @@ Item {
                 }
             }
             
+            MaterialPlaceholderMessage {
+                anchors.centerIn: parent
+                shown: !Network.online && root.getCurrentData().length === 0
+                maximumWidth: 360
+                icon: "cloud_off"
+                text: Network.offlineReason
+                explanation: Translation.tr("The schedule loads when you're back online")
+            }
+
             // Empty state
             MaterialPlaceholderMessage {
                 anchors.centerIn: parent
-                shown: !AnimeService.loading && AnimeService.lastError.length === 0 && root.getCurrentData().length === 0
+                shown: Network.online && !AnimeService.loading && AnimeService.lastError.length === 0 && root.getCurrentData().length === 0
                 maximumWidth: 360
                 icon: "calendar_month"
                 actionIcon: "refresh"
@@ -419,26 +444,35 @@ Item {
             Layout.fillWidth: true
             spacing: 8
             
+            MaterialSymbol {
+                visible: !Network.online
+                text: "cloud_off"
+                iconSize: Appearance.font.pixelSize.normal
+                color: Appearance.colMetadataText
+            }
+
             StyledText {
                 Layout.fillWidth: true
-                text: root.currentTab === 0 
+                elide: Text.ElideRight
+                text: !Network.online ? Network.offlineReason
+                    : root.currentTab === 0 
                     ? Translation.tr("Airing on %1").arg(AnimeService.getDayName(root.selectedDay === "today" ? root.todayName : root.selectedDay))
                     : root.currentTab === 1 
                         ? Translation.tr("%1 %2").arg(AnimeService.getSeasonDisplayName(AnimeService.selectedSeason)).arg(AnimeService.selectedYear)
                         : Translation.tr("Top Airing")
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
+                color: Appearance.colMetadataText
             }
             
             RippleButton {
                 implicitWidth: 32
                 implicitHeight: 32
-                buttonRadius: Appearance.rounding.full
-                enabled: !AnimeService.loading
+                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
+                enabled: !AnimeService.loading && Network.online
                 
                 colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                    : Appearance.colors.colLayer2Hover
+                    : Appearance.colLayer2Hover
                 
                 onClicked: root.refreshCurrentTab()
                 

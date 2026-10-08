@@ -13,7 +13,8 @@ RippleButton {
     padding: 14
     implicitHeight: 36
     implicitWidth: buttonTextWidget.implicitWidth + padding * 2
-    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+    buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small
+               : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
                : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : (Appearance?.rounding.full ?? 9999)
 
@@ -48,7 +49,7 @@ RippleButton {
         horizontalAlignment: Text.AlignHCenter
         font.pixelSize: Appearance?.font.pixelSize.small ?? 12
         font.family: Appearance.zzzEverywhere ? Appearance.font.family.title : Appearance.font.family.main
-        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
+        font.weight: Appearance.editorialEverywhere ? Appearance.editorial.labelWeight : Appearance.zzzEverywhere ? Font.Black : Font.Normal
         font.italic: Appearance.zzzEverywhere
         color: root.enabled ? root.colEnabled : root.colDisabled
 

@@ -51,7 +51,7 @@ Singleton {
     readonly property string popupFluentIcon: root.popupKind === "layout" ? "keyboard"
         : root.popupKind === "caps" ? root.capsFluentIcon
         : root.numFluentIcon
-    readonly property string currentLayoutCodeMultiline: root.abbreviateLayoutCode(root.currentLayoutCode, "\n")
+    readonly property string currentLayoutCodeMultiline: root.abbreviateLayoutCode(root.currentLayoutCode, "\n").toUpperCase()
     readonly property string currentLayoutCodeInline: root.abbreviateLayoutCode(root.currentLayoutCode, " ").toUpperCase()
     readonly property bool usingEvdev: root._lockSource === "evdev"
     readonly property bool layoutVisible: root.showLayoutPanel && root.hasMultipleLayouts && root.currentLayoutCode.length > 0
@@ -70,7 +70,7 @@ Singleton {
 
         return fullCode.split(":").map(layout => {
             const baseLayout = layout.split("-")[0];
-            return baseLayout.slice(0, 4);
+            return baseLayout.slice(0, 3);
         }).join(separator);
     }
 
@@ -405,8 +405,7 @@ Singleton {
     }
 
     Connections {
-        target: HyprlandXkb
-
+        target: CompositorService.isHyprland || CompositorService.isNiri ? HyprlandXkb : null
         function onCurrentLayoutNameChanged() {
             if (!root.currentLayoutName.length)
                 return;

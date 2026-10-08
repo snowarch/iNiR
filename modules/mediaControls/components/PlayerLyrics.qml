@@ -66,6 +66,7 @@ Item {
 
         readonly property bool isLoading: LyricsService.status === "loading" || LyricsService.status === "idle"
         readonly property bool isNoTrack: LyricsService.status === "no_info"
+        readonly property bool isOffline: LyricsService.status === "offline"
 
         ColumnLayout {
             anchors.centerIn: parent
@@ -83,7 +84,7 @@ Item {
             MaterialSymbol {
                 Layout.alignment: Qt.AlignHCenter
                 visible: !placeholder.isLoading
-                text: placeholder.isNoTrack ? "music_off" : "lyrics"
+                text: placeholder.isNoTrack ? "music_off" : placeholder.isOffline ? "cloud_off" : "lyrics"
                 iconSize: 28
                 color: ColorUtils.applyAlpha(root.textColor, 0.55)
             }
@@ -96,6 +97,7 @@ Item {
                 color: ColorUtils.applyAlpha(root.textColor, 0.85)
                 text: placeholder.isLoading ? Translation.tr("Looking for lyrics")
                     : placeholder.isNoTrack ? Translation.tr("Nothing playing")
+                    : placeholder.isOffline ? Translation.tr("Lyrics need an internet connection")
                     : Translation.tr("No synced lyrics for this track")
             }
         }

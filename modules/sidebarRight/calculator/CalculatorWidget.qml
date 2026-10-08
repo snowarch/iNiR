@@ -548,8 +548,8 @@ FocusScope {
         colBackgroundHover: accent
             ? (accentSecondary ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colPrimaryHover)
             : secondary
-                ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.colors.colLayer2Hover)
-                : (Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.colors.colLayer1Hover)
+                ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.colLayer2Hover)
+                : (Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.colLayer1Hover)
 
         contentItem: StyledText {
             text: parent.buttonText

@@ -6,6 +6,8 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.waffle.looks
 import qs.services
+import qs.modules.iris.components
+import qs.modules.iris.style
 
 // Elegant family transition overlay
 //
@@ -17,6 +19,7 @@ import qs.services
 // Each family has its own visual identity:
 //   Waffle  → Fluent acrylic card with decelerate curve and accent shimmer
 //   Material → Ink ripple with Material emphasized curves and container badge
+//   iRiS    → Minimal optical mark with restrained type over a light blur
 Scope {
     id: root
 
@@ -33,6 +36,8 @@ Scope {
 
     // ── State ───────────────────────────────────────────────────────────
     property bool _isWaffle: false
+    property bool _isIris: false
+    property string _targetFamily: "ii"
     property bool _phase: false   // false = enter/hold, true = exit
     property bool _active: false
 
@@ -110,13 +115,18 @@ Scope {
             // Side effect kept out of the source binding: make sure the still
             // for a video/GIF wallpaper exists before the overlay asks for it.
             const wp = Config.options?.background?.wallpaperPath ?? ""
-            if (wp) Wallpapers.ensureVideoStill(wp)
+            if (wp) {
+                Wallpapers.ensureVideoFirstFrame(FileUtils.trimFileProtocol(wp))
+                Wallpapers.ensureVideoStill(wp)
+            }
 
             // Cancel any running exit
             fadeOut.stop()
             bgScaleOut.stop()
 
-            root._isWaffle = GlobalStates.familyTransitionDirection === "left"
+            root._targetFamily = GlobalStates.familyTransitionTarget || "ii"
+            root._isWaffle = root._targetFamily === "waffle"
+            root._isIris = root._targetFamily === "iris"
             root._phase = false
             root._active = true
 
@@ -168,7 +178,7 @@ Scope {
     NumberAnimation {
         id: blurIn
         target: root; property: "_blurAmount"
-        from: 0; to: 0.8
+        from: 0; to: root._isIris ? 0.22 : 0.8
         duration: _animated ? 360 : 5
         easing.type: Easing.OutQuad
     }
@@ -293,7 +303,11 @@ Scope {
                             // Pure: generating the thumbnail from in here mutated
                             // state this same binding reads and Qt flagged a
                             // binding loop. _beginTransition() requests it.
+                            // The full-size first frame, not the 256 px thumbnail still: iRiS
+                            // barely blurs it, and a stretched thumbnail read as pixelated.
                             if (/\.(mp4|webm|mkv|avi|mov)$/i.test(path)) {
+                                const frame = Wallpapers.stillUrlFor(path)
+                                if (frame) return frame
                                 const still = Wallpapers.videoStillPath(path)
                                 if (!still) return ""
                                 return still.startsWith("file://") ? still : "file://" + still
@@ -301,6 +315,8 @@ Scope {
                             return path.startsWith("file://") ? path : "file://" + path
                         }
                         fillMode: Image.PreserveAspectCrop
+                        // Decoded at the output's size: a 4K frame never becomes a 4K texture.
+                        sourceSize: Qt.size(Math.ceil(Screen.width * Screen.devicePixelRatio), Math.ceil(Screen.height * Screen.devicePixelRatio))
                         asynchronous: true
                         cache: true
                         visible: false
@@ -320,7 +336,7 @@ Scope {
                     Rectangle {
                         anchors.fill: parent
                         color: root._snapBackground
-                        opacity: root._isWaffle ? 0.08 : 0.28
+                        opacity: root._isWaffle ? 0.08 : root._isIris ? 0.16 : 0.28
                     }
                 }
 
@@ -337,7 +353,56 @@ Scope {
                 // ── Family-specific transition effect ──
                 Loader {
                     anchors.fill: parent
-                    sourceComponent: root._isWaffle ? waffleTransition : materialTransition
+                    sourceComponent: root._isWaffle ? waffleTransition
+                        : root._isIris ? irisTransition : materialTransition
+                }
+            }
+        }
+    }
+
+    Component {
+        id: irisTransition
+
+        // iRiS arrives as its own mark: the real IrisMark, orbiting, over the veiled wallpaper, its name
+        // under it in the family's title face. It emerges on the family's curve and leaves the way it
+        // came, never bouncing; the shell then grows inward on its own arrival (IrisStyle.arrival).
+        Item {
+            id: irisRoot
+            anchors.fill: parent
+            property bool entered: false
+            Component.onCompleted: Qt.callLater(() => entered = true)
+            readonly property real shown: root._phase ? 0 : (irisRoot.entered ? 1 : 0)
+
+            Column {
+                anchors.centerIn: parent
+                spacing: Math.round(16 * IrisStyle.density)
+                opacity: irisRoot.shown
+                scale: root._phase ? 0.94 : (irisRoot.entered ? 1 : 0.86)
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: root._phase ? IrisStyle.recedeDuration : IrisStyle.emergeDuration
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root._phase ? IrisStyle.recedeCurve : IrisStyle.emergeCurve
+                    }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: root._phase ? IrisStyle.recedeDuration : IrisStyle.emergeDuration
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root._phase ? IrisStyle.recedeCurve : IrisStyle.emergeCurve
+                    }
+                }
+
+                IrisMark {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    implicitSize: Math.round(72 * IrisStyle.density)
+                    orbiting: true
+                }
+                IrisText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    role: IrisText.Display
+                    text: "iRiS"
+                    color: IrisStyle.onMedia
                 }
             }
         }

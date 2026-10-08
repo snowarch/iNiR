@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import qs
 import qs.services
+import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.widgets
 
@@ -18,8 +19,26 @@ ContentPage {
     settingsPageIndex: 5
     settingsPageName: Translation.tr("Panels")
 
-    property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property bool isIiActive: (Config.options?.panelFamily ?? "ii") === "ii"
     property string activeSection: "control"
+
+    function activateSettingsSearchSection(section: string): bool {
+        const label = String(section || "").toLowerCase().trim()
+        const sections = {
+            "floating tools (super+g)": "tools",
+            "visual effects": "tools",
+            "alt-tab switcher (material ii)": "tools",
+            "notifications": "notifications",
+            "control panel": "control",
+            "widgets": "widgets",
+            "overview": "overview"
+        }
+        const target = sections[label] ?? ""
+        if (!target)
+            return false
+        root.activeSection = target
+        return true
+    }
 
     SettingsTaskNavigator {
         icon: "bottom_app_bar"
@@ -63,9 +82,41 @@ ContentPage {
         return Math.max(0, Math.min(1, isFinite(value) ? value : 0.9))
     }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "tools"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "tools"
-        visible: root.activeSection === "tools"
+        expanded: true
+        icon: "keyboard_tab"
+        title: Translation.tr("Alt+Tab")
+
+        SettingsGroup {
+            ConfigSelectionArray {
+                options: [
+                    { displayName: Translation.tr("Niri's Recent Windows"), icon: "view_carousel", value: "niri" },
+                    { displayName: Translation.tr("iNiR switcher"), icon: "keyboard_tab", value: "inir" }
+                ]
+                currentValue: NiriKeybinds.altTabSource
+                onSelected: newValue => NiriKeybinds.setAltTabSource(newValue)
+            }
+            NoticeBox {
+                Layout.fillWidth: true
+                materialIcon: "info"
+                text: NiriKeybinds.altTabSource === "custom"
+                    ? Translation.tr("Alt+Tab is bound in your own Niri binds. Choosing here takes it over; your line stays as it is.")
+                    : Translation.tr("Which window switcher Alt+Tab opens. Niri's shows live previews of every window; iNiR's follows your panel style.")
+            }
+        }
+    }
+        }
+    }
+
+    SettingsTaskLoader {
+        requested: root.activeSection === "tools"
+        sourceComponent: Component {
+    SettingsCardSection {
+        settingsTaskSection: "tools"
         expanded: true
         icon: "dashboard_customize"
         title: Translation.tr("Floating tools (Super+G)")
@@ -200,12 +251,16 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // ── Shell Desaturation Effect ───────────────────────────────────────
+    SettingsTaskLoader {
+        requested: root.activeSection === "tools"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "tools"
-        visible: root.activeSection === "tools"
-        expanded: true
+        expanded: false
         icon: "filter_b_and_w"
         title: Translation.tr("Visual Effects")
 
@@ -338,11 +393,15 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "tools" && root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "tools"
-        visible: root.activeSection === "tools" && root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
-        expanded: true
+        expanded: false
         icon: "keyboard_tab"
         title: Translation.tr("Alt-Tab switcher (Material ii)")
 
@@ -520,10 +579,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "notifications" && root.isIiActive
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "notifications"
-        visible: root.activeSection === "notifications" && root.isIiActive
         expanded: true
         icon: "notifications"
         title: Translation.tr("Notifications")
@@ -653,10 +716,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "control" && root.isIiActive
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "control"
-        visible: root.activeSection === "control" && root.isIiActive
         expanded: true
         icon: "tune"
         title: Translation.tr("Control panel")
@@ -743,10 +810,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "widgets" && root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "widgets"
-        visible: root.activeSection === "widgets" && root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: true
         icon: "widgets"
         title: Translation.tr("Widgets")
@@ -1253,6 +1324,7 @@ ContentPage {
                     { tz: "Africa/Nairobi",                    off: 180 },
                     { tz: "Asia/Jerusalem",                    off: 120 },
                     { tz: "Asia/Tehran",                       off: 210 },
+                    { tz: "Asia/Qatar",                        off: 180 },
                     { tz: "Asia/Dubai",                        off: 240 },
                     { tz: "Asia/Karachi",                      off: 300 },
                     { tz: "Asia/Kolkata",                      off: 330 },
@@ -1976,10 +2048,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "overview" && root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "overview"
-        visible: root.activeSection === "overview" && root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: true
         icon: "overview_key"
         title: Translation.tr("Overview")
@@ -2462,6 +2538,8 @@ ContentPage {
                     }
                 }
             }
+        }
+    }
         }
     }
 

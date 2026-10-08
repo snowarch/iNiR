@@ -339,6 +339,77 @@ get_update_tracking_branch() {
     printf '%s' "$branch"
 }
 
+repo_worktree_is_clean() {
+    [[ -d "${REPO_ROOT}/.git" ]] || return 1
+    [[ -z "$(git -C "$REPO_ROOT" status --porcelain --untracked-files=normal 2>/dev/null)" ]]
+}
+
+get_previous_remote_tip() {
+    local branch="${1:-$(get_update_tracking_branch)}"
+    git -C "$REPO_ROOT" rev-parse "refs/remotes/origin/${branch}@{1}" 2>/dev/null
+}
+
+repo_checkout_matches_rewritten_remote_history() {
+    # Realignment is allowed only when HEAD is still part of the last recorded
+    # origin/<branch> lineage. A clean worktree is not enough: local commits also
+    # make `git status` clean, and must never be discarded by a recovery command.
+    local branch="${1:-$(get_update_tracking_branch)}"
+    local current_branch remote previous_remote
+
+    current_branch="$(git -C "$REPO_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" || return 1
+    [[ "$current_branch" == "$branch" ]] || return 1
+
+    remote="origin/${branch}"
+    previous_remote="$(get_previous_remote_tip "$branch")" || return 1
+    git -C "$REPO_ROOT" merge-base --is-ancestor HEAD "$previous_remote" >/dev/null 2>&1 || return 1
+    git -C "$REPO_ROOT" merge-base --is-ancestor "$previous_remote" "$remote" >/dev/null 2>&1 && return 1
+    return 0
+}
+
+is_upstream_rewrite_divergence() {
+    # Automatic recovery additionally requires Git to have recorded the latest
+    # remote movement as a forced update. Manual --realign may relax that label,
+    # but it still uses repo_checkout_matches_rewritten_remote_history() and can
+    # never erase branch-visible local commits or a detached checkout.
+    local branch="${1:-$(get_update_tracking_branch)}"
+    local reflog_subject
+
+    reflog_subject="$(git -C "$REPO_ROOT" reflog show -1 --format='%gs' "refs/remotes/origin/${branch}" 2>/dev/null || true)"
+    [[ "$reflog_subject" == *"forced-update"* ]] || return 1
+    repo_checkout_matches_rewritten_remote_history "$branch"
+}
+
+create_repo_recovery_ref() {
+    local branch="${1:-$(get_update_tracking_branch)}"
+    local stamp sha ref
+    stamp="$(date +%Y%m%d-%H%M%S)"
+    sha="$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null)" || return 1
+    ref="refs/inir/recovery/${branch}-${stamp}-${sha:0:8}"
+    git -C "$REPO_ROOT" update-ref "$ref" "$sha" || return 1
+    printf '%s' "$ref"
+}
+
+realign_repo_to_remote() {
+    local branch="${1:-$(get_update_tracking_branch)}"
+    local remote="origin/${branch}"
+    local recovery_ref
+
+    git -C "$REPO_ROOT" rev-parse --verify "$remote" >/dev/null 2>&1 || return 2
+    repo_worktree_is_clean || return 3
+    repo_checkout_matches_rewritten_remote_history "$branch" || return 6
+    recovery_ref="$(create_repo_recovery_ref "$branch")" || return 4
+    git -C "$REPO_ROOT" reset --hard "$remote" >/dev/null 2>&1 || return 5
+    INIR_REPO_RECOVERY_REF="$recovery_ref"
+    return 0
+}
+
+show_repo_realign_guidance() {
+    local branch="${1:-$(get_update_tracking_branch)}"
+    tui_info "Recovery check: inir update --realign"
+    tui_dim "  iNiR realigns only a clean ${branch} checkout that Git can prove still belongs to the previous origin/${branch} history."
+    tui_dim "  Stash uncommitted changes first. Local commits and detached checkouts are never reset by this recovery path."
+}
+
 check_remote_updates() {
     # Returns:
     #   0 = remote ahead (safe fast-forward pull available)

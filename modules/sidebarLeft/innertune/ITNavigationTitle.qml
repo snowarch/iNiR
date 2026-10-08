@@ -34,7 +34,7 @@ Item {
                 visible: root.label !== ""
                 text: root.label
                 font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.colors.colOnSurfaceVariant
+                color: Appearance.colMetadataText
                 elide: Text.ElideRight
             }
             StyledText {

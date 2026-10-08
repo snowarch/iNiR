@@ -3,6 +3,7 @@ import qs.modules.barM3
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.mediaControls
 import qs.services
 import qs.modules.common.models
 import qs
@@ -12,6 +13,7 @@ import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Mpris
+import Quickshell.Wayland
 
 Item {
     id: root
@@ -31,10 +33,12 @@ Item {
     }
 
     readonly property string cleanedTitle: StringUtils.cleanMusicTitle(root.trackTitle) || Translation.tr("No media")
+    readonly property string popupMode: Config.options?.media?.popupMode ?? "dock"
+    property bool barMediaPopupVisible: false
 
-    readonly property string artUrl: activePlayer?.trackArtUrl ?? ""
-    readonly property string trackTitle: activePlayer?.trackTitle ?? ""
-    readonly property string trackArtist: activePlayer?.trackArtist ?? ""
+    readonly property string artUrl: MprisController.artUrlOf(activePlayer) ?? ""
+    readonly property string trackTitle: MprisController.titleOf(activePlayer) ?? ""
+    readonly property string trackArtist: MprisController.artistOf(activePlayer) ?? ""
     readonly property string artworkTransitionKey: `${activePlayer?.dbusName ?? ""}\u001f${activePlayer?.uniqueId ?? 0}\u001f${root.artUrl}`
     property bool   isPlaying:   activePlayer?.isPlaying   ?? false
     property bool   hasTrack:    trackTitle.length > 0
@@ -84,6 +88,101 @@ Item {
         onTriggered: activePlayer.positionChanged()
     }
 
+    function toggleMediaSurface(): void {
+        if (root.popupMode === "bar") {
+            GlobalStates.mediaControlsOpen = false
+            root.barMediaPopupVisible = !root.barMediaPopupVisible
+        } else {
+            root.barMediaPopupVisible = false
+            GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen
+        }
+    }
+
+    onPopupModeChanged: {
+        if (root.popupMode !== "bar")
+            root.barMediaPopupVisible = false
+    }
+
+    // Keep the same From bar contract as the stock/vertical bar. M3 owns the
+    // anchor and chrome; BarMediaPopup remains the canonical player content.
+    Loader {
+        active: root.barMediaPopupVisible && root.popupMode === "bar" && CompositorService.isNiri
+        sourceComponent: PanelWindow {
+            anchors { top: true; bottom: true; left: true; right: true }
+            color: "transparent"
+            exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.layer: WlrLayer.Top
+            WlrLayershell.namespace: "quickshell:mediaBackdrop"
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.barMediaPopupVisible = false
+            }
+        }
+    }
+
+    Loader {
+        id: barMediaPopupLoader
+        active: (root.barMediaPopupVisible || _closing) && root.popupMode === "bar"
+        property bool _closing: false
+
+        Connections {
+            target: root
+            function onBarMediaPopupVisibleChanged() {
+                if (!root.barMediaPopupVisible) {
+                    barMediaPopupLoader._closing = true
+                    closeTimer.restart()
+                }
+            }
+        }
+
+        Timer {
+            id: closeTimer
+            interval: Math.max(50, Appearance.animation.elementMoveFast.duration + 40)
+            onTriggered: barMediaPopupLoader._closing = false
+        }
+
+        sourceComponent: PopupWindow {
+            visible: true
+            color: "transparent"
+            anchor {
+                window: root.QsWindow.window
+                item: root
+                edges: (Config.options?.bar?.bottom ?? false) ? Edges.Top : Edges.Bottom
+                gravity: (Config.options?.bar?.bottom ?? false) ? Edges.Top : Edges.Bottom
+            }
+            implicitWidth: mediaPopupContent.width + Appearance.sizes.elevationMargin * 2
+            implicitHeight: mediaPopupContent.height + Appearance.sizes.elevationMargin * 2
+
+            BarMediaPopup {
+                id: mediaPopupContent
+                anchors.centerIn: parent
+                onCloseRequested: root.barMediaPopupVisible = false
+                property bool presented: false
+                Component.onCompleted: Qt.callLater(() => {
+                    mediaPopupContent.presented = root.barMediaPopupVisible
+                })
+                Connections {
+                    target: root
+                    function onBarMediaPopupVisibleChanged() {
+                        mediaPopupContent.presented = root.barMediaPopupVisible
+                    }
+                }
+                opacity: presented ? 1 : 0
+                scale: presented ? 1 : 0.975
+                transformOrigin: (Config.options?.bar?.bottom ?? false) ? Item.Bottom : Item.Top
+                Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                Behavior on scale {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+            }
+        }
+    }
+
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.MiddleButton | Qt.BackButton | Qt.ForwardButton | Qt.RightButton | Qt.LeftButton
@@ -92,7 +191,7 @@ Item {
             if (event.button === Qt.MiddleButton)      activePlayer?.togglePlaying()
             else if (event.button === Qt.BackButton)   MprisController.previousForPlayer(activePlayer)
             else if (event.button === Qt.ForwardButton || event.button === Qt.RightButton) MprisController.nextForPlayer(activePlayer)
-            else if (event.button === Qt.LeftButton)   GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen
+            else if (event.button === Qt.LeftButton)   root.toggleMediaSurface()
         }
     }
 
@@ -105,7 +204,7 @@ Item {
         sourceComponent: ClippedFilledCircularProgress {
             implicitSize: 20
             lineWidth: Appearance.rounding.unsharpen
-            value: root.activePlayer?.position / root.activePlayer?.length
+            value: MprisController.lengthOf(root.activePlayer) > 0 ? MprisController.positionOf(root.activePlayer) / MprisController.lengthOf(root.activePlayer) : 0
             colPrimary: Appearance.colors.colOnLayer1
             enableAnimation: false
             Item {
@@ -154,7 +253,7 @@ Item {
                 Layout.leftMargin: 3
                 implicitSize: 20
                 lineWidth: Appearance.rounding.unsharpen
-                value: root.activePlayer?.position / root.activePlayer?.length
+                value: MprisController.lengthOf(root.activePlayer) > 0 ? MprisController.positionOf(root.activePlayer) / MprisController.lengthOf(root.activePlayer) : 0
                 colPrimary: Appearance.colors.colOnLayer1
                 enableAnimation: false
                 Item {
@@ -178,7 +277,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 color: Appearance.colors.colOnLayer1
-                text: Config.options.bar.m3.media.onlyTitle ? root.cleanedTitle : `${root.cleanedTitle}${root.activePlayer?.trackArtist ? ' • ' + root.activePlayer.trackArtist : ''}`
+                text: Config.options.bar.m3.media.onlyTitle ? root.cleanedTitle : `${root.cleanedTitle}${MprisController.artistOf(root.activePlayer) ? ' • ' + MprisController.artistOf(root.activePlayer) : ''}`
             }
         }
     }

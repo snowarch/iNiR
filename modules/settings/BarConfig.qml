@@ -12,7 +12,7 @@ ContentPage {
     settingsPageIndex: 2
     settingsPageName: Translation.tr("Bar")
 
-    property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property bool isIiActive: (Config.options?.panelFamily ?? "ii") === "ii"
     property string activeSection: "appearance"
     property int _taskLoadingCount: 0
 
@@ -49,7 +49,7 @@ ContentPage {
         property bool _countedLoading: false
 
         Layout.fillWidth: true
-        asynchronous: true
+        asynchronous: false
         active: resident
         visible: requested && status !== Loader.Null
         enabled: requested && status === Loader.Ready && opacity > 0.99
@@ -59,7 +59,7 @@ ContentPage {
         transform: Translate {
             y: sectionLoader.requested && sectionLoader.status === Loader.Ready ? 0 : 4
             Behavior on y {
-                enabled: Appearance.animationsEnabled
+                enabled: Appearance.animationsEnabled && !SettingsMaterialPreset.unified
                 NumberAnimation {
                     duration: Appearance.animation.elementMoveEnter.duration
                     easing.type: Appearance.animation.elementMoveEnter.type
@@ -69,7 +69,7 @@ ContentPage {
         }
 
         Behavior on opacity {
-            enabled: Appearance.animationsEnabled
+            enabled: Appearance.animationsEnabled && !SettingsMaterialPreset.unified
             NumberAnimation {
                 duration: Appearance.animation.elementMoveEnter.duration
                 easing.type: Appearance.animation.elementMoveEnter.type
@@ -89,6 +89,8 @@ ContentPage {
             if (requested) {
                 unloadDelay.stop()
                 resident = true
+            } else if (SettingsMaterialPreset.unified) {
+                unloadDelay.stop()
             } else if (status === Loader.Ready) {
                 unloadDelay.restart()
             } else {
@@ -168,7 +170,7 @@ ContentPage {
     readonly property bool showBackground: Config.options?.bar?.showBackground ?? true
     readonly property string barAppearance: Config.options?.bar?.appearanceStyle ?? "classic"
     readonly property bool spectrumEnabled: root.barAppearance === "pill"
-        ? (Config.options?.bar?.pill?.musicViz ?? true)
+        ? (Config.options?.bar?.pill?.musicViz ?? false)
         : (Config.options?.bar?.visualizer?.enable ?? false)
     readonly property color workspaceThemeIndicatorColor: Appearance.zzzEverywhere ? Appearance.zzz.accentSoft
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
@@ -218,17 +220,24 @@ ContentPage {
             "bar.visualizer.smoothing": 2,
             "bar.visualizer.waveMode": "fill",
             "bar.visualizer.lineWidth": 2,
-            "bar.visualizer.edgeInset": 0,
-            "bar.visualizer.edgeSoftness": 28,
+            "bar.visualizer.edgeInset": 6,
+            "bar.visualizer.edgeSoftness": 36,
             "bar.visualizer.frequencyProfile": "flat",
             "bar.visualizer.accentStrength": 70,
+            "bar.visualizer.organicFit": "auto",
+            "bar.visualizer.organicSensitivity": 42,
+            "bar.visualizer.organicPulse": 55,
+            "bar.visualizer.organicMotionSpeed": 80,
+            "bar.visualizer.organicIdleMotion": 0,
+            "bar.visualizer.organicGlow": 25,
+            "bar.visualizer.organicBaseRadius": 36,
             "bar.visualizer.pillWingMode": "bounded",
             "bar.visualizer.pillWingLength": 180,
             "bar.visualizer.pillWingGap": 12,
             "bar.visualizer.pillScreenPadding": 24,
             "bar.visualizer.pillUnderlap": 28,
             "bar.visualizer.pillEdgeFade": 92,
-            "bar.pill.musicViz": true,
+            "bar.pill.musicViz": false,
         })
     }
 
@@ -243,14 +252,18 @@ ContentPage {
     // Corner style only shapes the classic bar surface; the other appearances draw
     // their own (islands capsules, scenic scrim, frame outline, pill).
     readonly property bool cornerStyleApplies: (Config.options?.bar?.appearanceStyle ?? "classic") === "classic"
+    readonly property bool stockHorizontalLayoutActive: !(Config.options?.bar?.vertical ?? false)
+        && !["m3", "pill"].includes(Config.options?.bar?.appearanceStyle ?? "classic")
+    readonly property bool taskbarModeSupported: (Config.options?.bar?.vertical ?? false)
+        || root.stockHorizontalLayoutActive
 
     function detectM3LayoutPreset(): string {
         const left = JSON.stringify(Config.options?.bar?.m3?.layouts?.leftLayout ?? [])
         const middle = JSON.stringify(Config.options?.bar?.m3?.layouts?.middleLayout ?? [])
         const right = JSON.stringify(Config.options?.bar?.m3?.layouts?.rightLayout ?? [])
-        if (left === JSON.stringify(["media", "workspaces"])
+        if (left === JSON.stringify(["leftSidebarButton", "media", "workspaces"])
                 && middle === JSON.stringify(["docktoPanel"])
-                && right === JSON.stringify(["utilButtons", "systemIcons", "weatherBar", "clockWidget"]))
+                && right === JSON.stringify(["utilButtons", "weatherBar", "clockWidget", "systemIcons", "rightSidebarButton"]))
             return "compact"
         if (left === JSON.stringify(["media", "workspaces"])
                 && middle === JSON.stringify(["visualizer", "docktoPanel", "visualizer"])
@@ -265,8 +278,12 @@ ContentPage {
 
     readonly property string m3LayoutPreset: {
         const stored = Config.options?.bar?.m3?.layoutMode ?? "auto"
-        return ["compact", "showcase", "information", "custom"].includes(stored)
-            ? stored : root.detectM3LayoutPreset()
+        if (stored === "custom")
+            return "custom"
+        const detected = root.detectM3LayoutPreset()
+        if (["compact", "showcase", "information"].includes(stored))
+            return detected === stored ? stored : detected
+        return detected
     }
 
     function currentM3Layouts(): var {
@@ -275,6 +292,37 @@ ContentPage {
             middle: Array.from(Config.options?.bar?.m3?.layouts?.middleLayout ?? []),
             right: Array.from(Config.options?.bar?.m3?.layouts?.rightLayout ?? [])
         }
+    }
+
+    function moveM3Widget(sourceSection, sourceIndex, id, targetSection, targetIndex): bool {
+        const layouts = root.currentM3Layouts()
+        if (!layouts[sourceSection] || !layouts[targetSection])
+            return false
+
+        const source = layouts[sourceSection].slice()
+        if (sourceIndex < 0 || sourceIndex >= source.length)
+            return false
+        const moved = source.splice(sourceIndex, 1)[0]
+        const target = sourceSection === targetSection ? source : layouts[targetSection].slice()
+        let insertAt = targetIndex
+        if (sourceSection === targetSection && insertAt > sourceIndex)
+            insertAt--
+        insertAt = Math.max(0, Math.min(insertAt, target.length))
+        target.splice(insertAt, 0, moved)
+        layouts[sourceSection] = sourceSection === targetSection ? target : source
+        layouts[targetSection] = target
+
+        root.setM3Values({
+            "bar.m3.layoutMode": "custom",
+            "bar.m3.customLayoutSaved": true,
+            "bar.m3.layouts.leftLayout": layouts.left,
+            "bar.m3.layouts.middleLayout": layouts.middle,
+            "bar.m3.layouts.rightLayout": layouts.right,
+            "bar.m3.customLayouts.leftLayout": layouts.left,
+            "bar.m3.customLayouts.middleLayout": layouts.middle,
+            "bar.m3.customLayouts.rightLayout": layouts.right
+        })
+        return true
     }
 
     function updateM3CustomLayout(side, list): void {
@@ -325,9 +373,9 @@ ContentPage {
         }
 
         if (value === "compact") {
-            updates["bar.m3.layouts.leftLayout"] = ["media", "workspaces"]
+            updates["bar.m3.layouts.leftLayout"] = ["leftSidebarButton", "media", "workspaces"]
             updates["bar.m3.layouts.middleLayout"] = ["docktoPanel"]
-            updates["bar.m3.layouts.rightLayout"] = ["utilButtons", "systemIcons", "weatherBar", "clockWidget"]
+            updates["bar.m3.layouts.rightLayout"] = ["utilButtons", "weatherBar", "clockWidget", "systemIcons", "rightSidebarButton"]
         } else if (value === "showcase") {
             updates["bar.m3.layouts.leftLayout"] = ["media", "workspaces"]
             updates["bar.m3.layouts.middleLayout"] = ["visualizer", "docktoPanel", "visualizer"]
@@ -341,7 +389,10 @@ ContentPage {
     }
 
     readonly property var m3Widgets: [
-        { id: "leftSidebarButton", name: Translation.tr("Left Sidebar Button"), icon: "left_panel_open" },
+        { id: "leftSidebarButton", name: Translation.tr("Left Sidebar Button"), icon: "left_panel_open",
+            description: Translation.tr("Click: Left Sidebar") },
+        { id: "rightSidebarButton", name: Translation.tr("Right Sidebar Button"), icon: "right_panel_open",
+            description: Translation.tr("Click: Right Sidebar") },
         { id: "workspaces", name: Translation.tr("Workspaces"), icon: "steppers" },
         { id: "weatherBar", name: Translation.tr("Weather"), icon: "flare" },
         { id: "media", name: Translation.tr("Media"), icon: "music_note" },
@@ -359,11 +410,20 @@ ContentPage {
         { id: "visualizer", name: Translation.tr("Visualizer"), icon: "graphic_eq" },
         { id: "hyprlandXkbIndicator", name: Translation.tr("Keyboard Layout"), icon: "keyboard" },
         { id: "divisor", name: Translation.tr("Divider"), icon: "horizontal_distribute" },
-        { id: "notificationUnreadCount", name: Translation.tr("Unread Notifications"), icon: "notifications" }
+        { id: "notificationUnreadCount", name: Translation.tr("Unread Notifications"), icon: "notifications",
+            description: Translation.tr("Click: Right Sidebar") }
     ]
 
     function m3WidgetName(id): string {
         return root.m3Widgets.find(widget => widget.id === id)?.name ?? id
+    }
+
+    function m3WidgetDescription(id): string {
+        return root.m3Widgets.find(widget => widget.id === id)?.description ?? ""
+    }
+
+    function m3WidgetIcon(id): string {
+        return root.m3Widgets.find(widget => widget.id === id)?.icon ?? "widgets"
     }
 
     function m3WidgetHint(id): string {
@@ -412,9 +472,11 @@ ContentPage {
     // ═══════════════════════════════════════════════════════════════════
     // APPEARANCE & LAYOUT
     // ═══════════════════════════════════════════════════════════════════
+    LazySection {
+        requested: root.isIiActive && root.activeSection === "appearance"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "appearance"
-        visible: root.isIiActive && root.activeSection === "appearance"
         expanded: true
         icon: "dashboard"
         title: Translation.tr("Appearance & Layout")
@@ -530,6 +592,8 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     LazySection {
         requested: root.isIiActive && root.activeSection === "m3"
@@ -595,7 +659,7 @@ ContentPage {
                 }
 
                     ConfigSelectionArray {
-                        currentValue: Config.options?.bar?.m3?.borderless ?? "separated"
+                        currentValue: Config.options?.bar?.m3?.borderless ?? "pills"
                         onSelected: newValue => root.setM3Value("bar.m3.borderless", newValue)
                         options: [
                             { displayName: Translation.tr("Joined pills"), icon: "join", value: "pills" },
@@ -610,28 +674,78 @@ ContentPage {
                     }
                 }
 
-                M3LayoutSection {
-                    sectionTitle: Translation.tr("Left")
-                    layout: Config.options?.bar?.m3?.layouts?.leftLayout ?? []
-                    availableWidgets: root.availableM3Widgets()
-                    getWidgetName: root.m3WidgetName
-                    onUpdate: list => root.updateM3CustomLayout("left", list)
+                Item {
+                    id: m3LayoutEditor
+                    Layout.fillWidth: true
+                    implicitHeight: m3LayoutGrid.implicitHeight
+
+                    GridLayout {
+                        id: m3LayoutGrid
+                        width: parent.width
+                        columns: width >= 720 ? 3 : width >= 480 ? 2 : 1
+                        columnSpacing: 8
+                        rowSpacing: 8
+
+                        M3LayoutSection {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignTop
+                            sectionTitle: Translation.tr("Left")
+                            sectionKey: "left"
+                            orderHint: Translation.tr("Top to bottom")
+                            layout: Config.options?.bar?.m3?.layouts?.leftLayout ?? []
+                            availableWidgets: root.availableM3Widgets()
+                            getWidgetName: root.m3WidgetName
+                            getWidgetDescription: root.m3WidgetDescription
+                            getWidgetIcon: root.m3WidgetIcon
+                            onUpdate: list => root.updateM3CustomLayout("left", list)
+                            onMove: root.moveM3Widget
+                            dragOverlay: m3DragOverlay
+                        }
+
+                        M3LayoutSection {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignTop
+                            sectionTitle: Translation.tr("Center")
+                            sectionKey: "middle"
+                            orderHint: Translation.tr("Top to bottom")
+                            layout: Config.options?.bar?.m3?.layouts?.middleLayout ?? []
+                            availableWidgets: root.availableM3Widgets()
+                            getWidgetName: root.m3WidgetName
+                            getWidgetDescription: root.m3WidgetDescription
+                            getWidgetIcon: root.m3WidgetIcon
+                            onUpdate: list => root.updateM3CustomLayout("middle", list)
+                            onMove: root.moveM3Widget
+                            dragOverlay: m3DragOverlay
+                        }
+
+                        M3LayoutSection {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignTop
+                            sectionTitle: Translation.tr("Right")
+                            sectionKey: "right"
+                            orderHint: Translation.tr("Top to bottom")
+                            layout: Config.options?.bar?.m3?.layouts?.rightLayout ?? []
+                            availableWidgets: root.availableM3Widgets()
+                            getWidgetName: root.m3WidgetName
+                            getWidgetDescription: root.m3WidgetDescription
+                            getWidgetIcon: root.m3WidgetIcon
+                            onUpdate: list => root.updateM3CustomLayout("right", list)
+                            onMove: root.moveM3Widget
+                            dragOverlay: m3DragOverlay
+                        }
+                    }
+
+                    Item {
+                        id: m3DragOverlay
+                        anchors.fill: parent
+                        z: 1000
+                        clip: false
+                    }
                 }
 
-                M3LayoutSection {
-                    sectionTitle: Translation.tr("Center")
-                    layout: Config.options?.bar?.m3?.layouts?.middleLayout ?? []
-                    availableWidgets: root.availableM3Widgets()
-                    getWidgetName: root.m3WidgetName
-                    onUpdate: list => root.updateM3CustomLayout("middle", list)
-                }
-
-                M3LayoutSection {
-                    sectionTitle: Translation.tr("Right")
-                    layout: Config.options?.bar?.m3?.layouts?.rightLayout ?? []
-                    availableWidgets: root.availableM3Widgets()
-                    getWidgetName: root.m3WidgetName
-                    onUpdate: list => root.updateM3CustomLayout("right", list)
+                SettingsNote {
+                    icon: "drag_indicator"
+                    text: Translation.tr("Drag by the handle to reorder or move widgets between zones. The insertion line marks the exact drop position. Each list renders top to bottom as left to right in the bar.")
                 }
 
                 SettingsNote {
@@ -1315,10 +1429,12 @@ ContentPage {
         }
     }
 
+    LazySection {
+        requested: root.isIiActive && root.activeSection === "appearance"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "appearance"
-        visible: root.isIiActive && root.activeSection === "appearance"
-        expanded: true
+        expanded: false
         icon: "straighten"
         title: Translation.tr("Sizing & surface")
 
@@ -1410,6 +1526,8 @@ ContentPage {
 
         }
     }
+        }
+    }
 
     LazySection {
         requested: root.isIiActive && root.activeSection === "spectrum"
@@ -1456,6 +1574,7 @@ ContentPage {
                     options: [
                         { displayName: Translation.tr("Bars"), icon: "equalizer", value: "bars" },
                         { displayName: Translation.tr("Wave"), icon: "waves", value: "wave" },
+                        { displayName: Translation.tr("Organic"), icon: "bubble_chart", value: "organic" },
                     ]
                 }
 
@@ -1484,6 +1603,22 @@ ContentPage {
                         { displayName: Translation.tr("Line"), icon: "line_weight", value: "line" },
                         { displayName: Translation.tr("Ribbon"), icon: "unfold_more", value: "ribbon" },
                     ]
+                }
+
+                ConfigSelectionArray {
+                    visible: (Config.options?.bar?.visualizer?.type ?? "bars") === "organic"
+                    enabled: root.spectrumEnabled
+                    opacity: enabled ? 1 : 0.5
+                    currentValue: Config.options?.bar?.visualizer?.organicFit ?? "auto"
+                    onSelected: newValue => root.setSpectrumValue("bar.visualizer.organicFit", newValue)
+                    options: [
+                        { displayName: Translation.tr("Auto fit"), icon: "auto_awesome", value: "auto" },
+                        { displayName: Translation.tr("Contained"), icon: "crop_free", value: "contained" },
+                        { displayName: Translation.tr("Edge aura"), icon: "flare", value: "aura" },
+                    ]
+                    StyledToolTip {
+                        text: Translation.tr("Auto scales Organic to the active bar layout. Contained keeps deformation inside the surface; Edge aura allows it to breathe beyond the edge.")
+                    }
                 }
 
                 ConfigSelectionArray {
@@ -1579,8 +1714,8 @@ ContentPage {
                         ConfigSpinBox {
                             icon: "width_full"
                             text: Translation.tr("Edge inset (px)")
-                            value: Config.options?.bar?.visualizer?.edgeInset ?? 0
-                            from: 0
+                            value: Math.max(6, Config.options?.bar?.visualizer?.edgeInset ?? 6)
+                            from: 6
                             to: 32
                             stepSize: 1
                             onValueChanged: root.setSpectrumValue("bar.visualizer.edgeInset", value)
@@ -1588,7 +1723,7 @@ ContentPage {
                         ConfigSpinBox {
                             icon: "rounded_corner"
                             text: Translation.tr("Curve headroom (%)")
-                            value: Config.options?.bar?.visualizer?.edgeSoftness ?? 28
+                            value: Config.options?.bar?.visualizer?.edgeSoftness ?? 36
                             from: 0
                             to: 100
                             stepSize: 5
@@ -1610,6 +1745,70 @@ ContentPage {
                         enabled: (Config.options?.bar?.visualizer?.frequencyProfile ?? "flat") !== "flat"
                         opacity: enabled ? 1 : 0.45
                         onValueChanged: root.setSpectrumValue("bar.visualizer.accentStrength", value)
+                    }
+
+                    ConfigRow {
+                        visible: (Config.options?.bar?.visualizer?.type ?? "bars") === "organic"
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "graphic_eq"
+                            text: Translation.tr("Organic response (%)")
+                            value: Config.options?.bar?.visualizer?.organicSensitivity ?? 42
+                            from: 0
+                            to: 100
+                            stepSize: 5
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.organicSensitivity", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "pulse_alert"
+                            text: Translation.tr("Beat pulse (%)")
+                            value: Config.options?.bar?.visualizer?.organicPulse ?? 55
+                            from: 0
+                            to: 100
+                            stepSize: 5
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.organicPulse", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "speed"
+                            text: Translation.tr("Motion speed (%)")
+                            value: Config.options?.bar?.visualizer?.organicMotionSpeed ?? 80
+                            from: 25
+                            to: 150
+                            stepSize: 5
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.organicMotionSpeed", value)
+                        }
+                    }
+
+                    ConfigRow {
+                        visible: (Config.options?.bar?.visualizer?.type ?? "bars") === "organic"
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "motion_blur"
+                            text: Translation.tr("Idle motion (%)")
+                            value: Config.options?.bar?.visualizer?.organicIdleMotion ?? 0
+                            from: 0
+                            to: 100
+                            stepSize: 5
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.organicIdleMotion", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "flare"
+                            text: Translation.tr("Glow (%)")
+                            value: Config.options?.bar?.visualizer?.organicGlow ?? 25
+                            from: 0
+                            to: 100
+                            stepSize: 5
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.organicGlow", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "rounded_corner"
+                            text: Translation.tr("Contour roundness (%)")
+                            value: Config.options?.bar?.visualizer?.organicBaseRadius ?? 36
+                            from: 0
+                            to: 100
+                            stepSize: 5
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.organicBaseRadius", value)
+                        }
                     }
 
                     ConfigSelectionArray {
@@ -2124,196 +2323,95 @@ ContentPage {
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // MODULES (what to show)
+    // MODULE BEHAVIOR (settings not represented by the layout editor)
     // ═══════════════════════════════════════════════════════════════════
     LazySection {
         requested: root.isIiActive && root.activeSection === "modules"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "modules"
-                expanded: false
-        icon: "widgets"
-        title: Translation.tr("Modules")
+                expanded: true
+                icon: "tune"
+                title: Translation.tr("Modules")
 
-        SettingsGroup {
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Toggle which widgets appear in the bar")
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.smaller
-            }
-
-            ConfigRow {
-                uniform: true
-                SettingsSwitch {
-                    buttonIcon: "side_navigation"
-                    text: Translation.tr("Left sidebar button")
-                    checked: Config.options?.bar?.modules?.leftSidebarButton ?? true
-                    onCheckedChanged: Config.setNestedValue("bar.modules.leftSidebarButton", checked)
-                }
-                SettingsSwitch {
-                    buttonIcon: "call_to_action"
-                    text: Translation.tr("Right sidebar button")
-                    checked: Config.options?.bar?.modules?.rightSidebarButton ?? true
-                    onCheckedChanged: Config.setNestedValue("bar.modules.rightSidebarButton", checked)
-                }
-            }
-
-            // Left sidebar button icon. "distro" auto-detects from /etc/os-release;
-            // anything else looks up <name>-symbolic in the icon theme.
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 4
-                visible: Config.options?.bar?.modules?.leftSidebarButton ?? true
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Left sidebar icon")
-                    color: Appearance.colors.colSubtext
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                }
-                MaterialTextField {
-                    id: topLeftIconField
-                    Layout.fillWidth: true
-                    placeholderText: "distro"
-                    text: Config.options?.bar?.topLeftIcon ?? "distro"
-                    // Persisting per keystroke resolves every prefix as an icon name.
-                    onTextChanged: topLeftIconCommit.restart()
-                    onEditingFinished: {
-                        topLeftIconCommit.stop();
-                        Config.setNestedValue("bar.topLeftIcon", topLeftIconField.text);
+                SettingsGroup {
+                    SettingsSwitch {
+                        visible: root.taskbarModeSupported
+                        buttonIcon: "dock_to_bottom"
+                        text: Translation.tr("Taskbar (apps in bar)")
+                        checked: Config.options?.bar?.modules?.taskbar ?? false
+                        onCheckedChanged: Config.setNestedValue("bar.modules.taskbar", checked)
                     }
 
-                    Timer {
-                        id: topLeftIconCommit
-                        interval: 600
-                        repeat: false
-                        onTriggered: Config.setNestedValue("bar.topLeftIcon", topLeftIconField.text)
+                    SettingsNote {
+                        visible: root.taskbarModeSupported && (Config.options?.bar?.modules?.taskbar ?? false)
+                        icon: "info"
+                        text: Translation.tr("Taskbar replaces the active window title. Pinned apps and running windows appear in the bar, like a traditional taskbar. Uses the same pinned apps as the dock.")
+                    }
+
+                    SettingsSwitch {
+                        visible: (Config.options?.bar?.modules?.activeWindow ?? true)
+                            && (!root.taskbarModeSupported || !(Config.options?.bar?.modules?.taskbar ?? false))
+                        buttonIcon: "subtitles"
+                        text: Translation.tr("Show window title under app name")
+                        checked: Config.options?.bar?.activeWindow?.showTitle ?? true
+                        onCheckedChanged: Config.setNestedValue("bar.activeWindow.showTitle", checked)
+                    }
+
+                    ConfigSpinBox {
+                        visible: Config.options?.bar?.modules?.media ?? true
+                        icon: "music_note"
+                        text: Translation.tr("Music width (px)")
+                        value: Config.options?.bar?.media?.maxWidth ?? 220
+                        from: 120
+                        to: 640
+                        stepSize: 10
+                        onValueChanged: if (value !== (Config.options?.bar?.media?.maxWidth ?? 220)) Config.setNestedValue("bar.media.maxWidth", value)
+                        StyledToolTip {
+                            text: Translation.tr("How wide the song title gets. The window title gives way; a crowded bar still shrinks music first.")
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+                        visible: Config.options?.bar?.modules?.leftSidebarButton ?? true
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("Left sidebar icon")
+                            color: Appearance.colors.colSubtext
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                        }
+
+                        MaterialTextField {
+                            id: topLeftIconField
+                            Layout.fillWidth: true
+                            placeholderText: "distro"
+                            text: Config.options?.bar?.topLeftIcon ?? "distro"
+                            onTextChanged: topLeftIconCommit.restart()
+                            onEditingFinished: {
+                                topLeftIconCommit.stop()
+                                Config.setNestedValue("bar.topLeftIcon", topLeftIconField.text)
+                            }
+
+                            Timer {
+                                id: topLeftIconCommit
+                                interval: 600
+                                repeat: false
+                                onTriggered: Config.setNestedValue("bar.topLeftIcon", topLeftIconField.text)
+                            }
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("‘distro’ auto-detects your distribution, ‘avatar’ shows your profile picture. Otherwise enter any icon name (looked up as <name>-symbolic).")
+                            color: Appearance.colors.colSubtext
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            wrapMode: Text.WordWrap
+                        }
                     }
                 }
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Translation.tr("‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).")
-                    color: Appearance.colors.colSubtext
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    wrapMode: Text.WordWrap
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-                SettingsSwitch {
-                    buttonIcon: "window"
-                    text: Translation.tr("Active window title")
-                    checked: Config.options?.bar?.modules?.activeWindow ?? true
-                    onCheckedChanged: Config.setNestedValue("bar.modules.activeWindow", checked)
-                    enabled: !(Config.options?.bar?.modules?.taskbar ?? false)
-                    opacity: enabled ? 1 : 0.5
-                }
-                SettingsSwitch {
-                    buttonIcon: "dock_to_bottom"
-                    text: Translation.tr("Taskbar (apps in bar)")
-                    checked: Config.options?.bar?.modules?.taskbar ?? false
-                    onCheckedChanged: Config.setNestedValue("bar.modules.taskbar", checked)
-                }
-            }
-
-            SettingsNote {
-                visible: (Config.options?.bar?.modules?.taskbar ?? false)
-                icon: "info"
-                text: Translation.tr("Taskbar replaces the active window title. Pinned apps and running windows appear in the bar, like a traditional taskbar. Uses the same pinned apps as the dock.")
-            }
-
-            // Sub-toggle for the active window indicator: hide the second line (window title)
-            // and only show the app name. Hidden when activeWindow is off or taskbar is on.
-            SettingsSwitch {
-                visible: (Config.options?.bar?.modules?.activeWindow ?? true) && !(Config.options?.bar?.modules?.taskbar ?? false)
-                buttonIcon: "subtitles"
-                text: Translation.tr("Show window title under app name")
-                checked: Config.options?.bar?.activeWindow?.showTitle ?? true
-                onCheckedChanged: Config.setNestedValue("bar.activeWindow.showTitle", checked)
-            }
-
-            ConfigRow {
-                uniform: true
-                SettingsSwitch {
-                    buttonIcon: "shelf_auto_hide"
-                    text: Translation.tr("System tray")
-                    checked: Config.options?.bar?.modules?.sysTray ?? true
-                    onCheckedChanged: Config.setNestedValue("bar.modules.sysTray", checked)
-                }
-                Item { Layout.fillWidth: true }
-            }
-
-            ConfigRow {
-                uniform: true
-                SettingsSwitch {
-                    buttonIcon: "memory"
-                    text: Translation.tr("Resources")
-                    checked: Config.options?.bar?.modules?.resources ?? true
-                    onCheckedChanged: Config.setNestedValue("bar.modules.resources", checked)
-                }
-                SettingsSwitch {
-                    buttonIcon: "music_note"
-                    text: Translation.tr("Media")
-                    checked: Config.options?.bar?.modules?.media ?? true
-                    onCheckedChanged: Config.setNestedValue("bar.modules.media", checked)
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-                SettingsSwitch {
-                    buttonIcon: "workspaces"
-                    text: Translation.tr("Workspaces")
-                    checked: Config.options?.bar?.modules?.workspaces ?? true
-                    onCheckedChanged: Config.setNestedValue("bar.modules.workspaces", checked)
-                }
-                SettingsSwitch {
-                    buttonIcon: "schedule"
-                    text: Translation.tr("Clock")
-                    checked: Config.options?.bar?.modules?.clock ?? true
-                    onCheckedChanged: Config.setNestedValue("bar.modules.clock", checked)
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-                SettingsSwitch {
-                    buttonIcon: "build"
-                    text: Translation.tr("Utility buttons")
-                    checked: Config.options?.bar?.modules?.utilButtons ?? true
-                    onCheckedChanged: Config.setNestedValue("bar.modules.utilButtons", checked)
-                }
-                SettingsSwitch {
-                    buttonIcon: "battery_full"
-                    text: Translation.tr("Battery")
-                    checked: Config.options?.bar?.modules?.battery ?? true
-                    onCheckedChanged: Config.setNestedValue("bar.modules.battery", checked)
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-                SettingsSwitch {
-                    buttonIcon: "cloud"
-                    text: Translation.tr("Weather")
-                    checked: Config.options?.bar?.modules?.weather ?? false
-                    onCheckedChanged: Config.setNestedValue("bar.modules.weather", checked)
-                    enabled: Config.options?.bar?.weather?.enable ?? false
-                    opacity: enabled ? 1 : 0.5
-                }
-                Item { Layout.fillWidth: true }
-            }
-
-            SettingsDivider {}
-
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Weather configuration is in Services → Weather")
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.smaller
-            }
-        }
             }
         }
     }
@@ -2331,7 +2429,17 @@ ContentPage {
         title: Translation.tr("Bar module layout")
 
         SettingsGroup {
+            NoticeBox {
+                Layout.fillWidth: true
+                visible: !root.stockHorizontalLayoutActive
+                materialIcon: "info"
+                text: (Config.options?.bar?.vertical ?? false)
+                    ? Translation.tr("The vertical bar has its own fixed adaptive composition. Switch to a horizontal bar to reorder these modules.")
+                    : Translation.tr("This editor belongs to the horizontal Stock, Islands, Scenic and Frame bars. M3 and Pill use their own layout systems.")
+            }
+
             ConfigSpinBox {
+                visible: root.stockHorizontalLayoutActive
                 icon: "space_bar"
                 text: Translation.tr("Flexible spacer width")
                 value: Config.options?.bar?.layout?.spacerWidth ?? 0
@@ -2345,6 +2453,7 @@ ContentPage {
             }
 
             ConfigSelectionArray {
+                visible: root.stockHorizontalLayoutActive
                 currentValue: Config.options?.bar?.layout?.spacerMode ?? "auto"
                 onSelected: (newValue) => Config.setNestedValue("bar.layout.spacerMode", newValue)
                 options: [
@@ -2352,9 +2461,14 @@ ContentPage {
                     { displayName: Translation.tr("Always elastic"), icon: "width_full", value: "fill" },
                     { displayName: Translation.tr("Fixed width"), icon: "width_normal", value: "fixed" }
                 ]
+                StyledToolTip {
+                    text: Translation.tr("Elastic modes use available space in the left or right edge zones. Center zones stay content-sized, so spacers there use their configured width instead of stretching the bar.")
+                }
             }
 
-            BarModuleOrderEditor {}
+            BarModuleOrderEditor {
+                visible: root.stockHorizontalLayoutActive
+            }
         }
             }
         }
@@ -2555,8 +2669,8 @@ ContentPage {
             SettingsNote {
                 icon: "info"
                 text: Config.options?.media?.popupMode === "bar"
-                    ? Translation.tr("Classic style popup anchored to bar widget")
-                    : Translation.tr("Modern overlay at screen bottom")
+                    ? Translation.tr("Open the media player from the active bar surface. Stock, Islands, M3, vertical and Pill layouts keep the player attached to where you clicked.")
+                    : Translation.tr("Open the shared media player as the screen-bottom overlay from every bar layout.")
             }
         }
             }

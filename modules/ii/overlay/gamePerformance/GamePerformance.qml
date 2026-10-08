@@ -24,6 +24,8 @@ StyledOverlayWidget {
         : root.simpleView ? 360 : root.compactView ? 220 : 210
 
     property bool _holdingTelemetry: false
+    // ResourceUsage owns the hardware readings and polls only while this widget is visible.
+    property QtObject resourceMonitor: ResourceUsageMonitor { target: root }
     readonly property string viewMode: {
         // Keep persisted mode names stable while adding the minimal readout.
         const stored = String(root.persistentStateEntry?.viewMode ?? "")

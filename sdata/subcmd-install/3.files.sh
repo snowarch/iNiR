@@ -113,7 +113,7 @@ case "${SKIP_QUICKSHELL}" in
 
     # Generate manifest BEFORE syncing (to know what should exist)
     log_info "Generating file manifest..."
-    generate_manifest "$II_SOURCE" "${II_TARGET}/.inir-manifest.new"
+    generate_manifest "$II_SOURCE" "${II_TARGET}/.inir-manifest.new" || return 1
 
     # Copy all .qml files from root (auto-detect, no manual list needed)
     for qml_file in "${II_SOURCE}"/*.qml; do
@@ -138,7 +138,7 @@ case "${SKIP_QUICKSHELL}" in
       while IFS= read -r dir; do
         [[ -n "$dir" ]] || continue
         if [[ -d "${II_SOURCE}/${dir}" ]]; then
-          install_dir__sync "${II_SOURCE}/${dir}" "${II_TARGET}/${dir}"
+          install_dir__sync "${II_SOURCE}/${dir}" "${II_TARGET}/${dir}" || return 1
         fi
       done < "$runtime_dirs_manifest"
     fi
@@ -149,7 +149,7 @@ case "${SKIP_QUICKSHELL}" in
     # Cleanup orphan files (files that no longer exist in repo)
     if [[ "${IS_UPDATE}" == "true" ]]; then
       log_info "Cleaning up orphan files..."
-      cleanup_orphans "$II_TARGET" "${II_TARGET}/.inir-manifest"
+      cleanup_orphans "$II_TARGET" "${II_TARGET}/.inir-manifest" || return 1
     fi
 
     # Fix script permissions
@@ -158,12 +158,16 @@ case "${SKIP_QUICKSHELL}" in
     [[ -f "${II_TARGET}/setup" ]] && chmod +x "${II_TARGET}/setup"
 
     if [[ -f "${REPO_ROOT}/scripts/inir" ]]; then
-      install_file "${REPO_ROOT}/scripts/inir" "${INIR_LAUNCHER_PATH}"
-      chmod +x "${INIR_LAUNCHER_PATH}"
-      ensure_launcher_path_in_shells "${XDG_BIN_HOME}"
-      log_success "Launcher installed"
-      log_success "Launcher path configured for login and interactive shells"
+      if sync_launcher_from_repo >/dev/null; then
+        log_success "Launcher installed"
+        log_success "Launcher path configured for login and interactive shells"
+      else
+        log_error "Could not install the inir launcher"
+        return 1
+      fi
     fi
+
+    repair_legacy_niri_shell_startup >/dev/null 2>&1 || true
 
     local _service_refresh_status=1
     local _service_dir="${XDG_CONFIG_HOME}/systemd/user"
@@ -173,73 +177,34 @@ case "${SKIP_QUICKSHELL}" in
     if [[ -f "$_service_asset" ]]; then
       mkdir -p "$_service_dir"
 
-      if [[ -f "$_service_target" ]]; then
-        # Existing install: sync from repo template
-        if sync_user_inir_service_from_repo_if_present; then
-          _service_refresh_status=0
-          log_success "User inir.service refreshed"
-        fi
-      else
-        # Fresh install: create service from template, rewriting ExecStart path
-        local _tmp_svc="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.$$"
-        local _launcher_escaped="${INIR_LAUNCHER_PATH//&/\\&}"
-        sed -e "s|^ExecStart=.*|ExecStart=${_launcher_escaped} run --session|" \
-            -e "s|^ExecStopPost=-.*|ExecStopPost=-${_launcher_escaped} cleanup-orphans|" \
-            "$_service_asset" > "$_tmp_svc"
-        cp -f "$_tmp_svc" "$_service_target"
-        rm -f "$_tmp_svc"
-        systemctl --user daemon-reload >/dev/null 2>&1 || true
+      if inir_user_service_is_masked; then
+        systemctl --user unmask inir.service >/dev/null 2>&1 || true
+        systemctl --user unmask --runtime inir.service >/dev/null 2>&1 || true
+        rm -f "$_service_target"
+      fi
+
+      if sync_user_inir_service_from_repo_if_present; then
         _service_refresh_status=0
-        log_success "User inir.service installed"
+        if [[ "${INIR_SERVICE_SYNC_CHANGED:-0}" -gt 0 ]]; then
+          log_success "User inir.service refreshed"
+        else
+          log_success "User inir.service current"
+        fi
       fi
     fi
 
     if [[ -f "$_service_target" ]]; then
-      # Wire to compositor-specific wants so inir only starts under the correct
-      # compositor — NOT under KDE/GNOME/etc.  Never fall back to
-      # graphical-session.target: that target is active in ANY desktop session.
-      local _comp_target=""
-      if systemctl --user cat niri.service &>/dev/null; then
-        _comp_target="niri.service"
-      elif systemctl --user cat 'wayland-wm@Hyprland.service' &>/dev/null; then
-        _comp_target="wayland-wm@Hyprland.service"
-      fi
-
-      if [[ -n "$_comp_target" ]]; then
-        local _wants_dir="${XDG_CONFIG_HOME}/systemd/user/${_comp_target}.wants"
-        if mkdir -p "$_wants_dir" \
-            && ln -sf "${XDG_CONFIG_HOME}/systemd/user/inir.service" "$_wants_dir/inir.service" \
-            && systemctl --user daemon-reload >/dev/null 2>&1 \
-            && [[ -e "$_wants_dir/inir.service" || -L "$_wants_dir/inir.service" ]]; then
-          log_success "User inir.service enabled (wired to ${_comp_target})"
-        else
-          log_warning "Could not wire inir.service to ${_comp_target} — run 'inir service enable'"
-        fi
+      if ensure_user_inir_service_enabled; then
+        log_success "User inir.service enabled (wired to niri.service)"
       else
-        log_warning "No supported compositor detected (niri or Hyprland)"
-        log_warning "inir.service not enabled — run 'inir service enable' from your compositor session"
+        log_warning "Could not wire inir.service to niri.service — run 'inir service enable'"
       fi
     fi
 
-    if [[ -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" ]]; then
-      install_file "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "${INIR_ICON_DIR}/inir.svg"
-      log_success "Launcher icon installed"
-    fi
-
-    if [[ -f "${REPO_ROOT}/assets/applications/inir.desktop" ]]; then
-      INIR_DESKTOP_TMP="${XDG_CACHE_HOME}/inir.desktop.$$"
-      sed "s|^Exec=.*|Exec=${INIR_LAUNCHER_PATH//&/\\&} service restart|" "${REPO_ROOT}/assets/applications/inir.desktop" > "${INIR_DESKTOP_TMP}"
-      install_file "${INIR_DESKTOP_TMP}" "${INIR_APPLICATIONS_DIR}/inir.desktop"
-      rm -f "${INIR_DESKTOP_TMP}"
-      log_success "Shell desktop entry installed"
-    fi
-
-    if [[ -f "${REPO_ROOT}/assets/applications/inir-settings.desktop" ]]; then
-      INIR_SETTINGS_DESKTOP_TMP="${XDG_CACHE_HOME}/inir-settings.desktop.$$"
-      sed "s|^Exec=.*|Exec=${INIR_LAUNCHER_PATH//&/\\&} settings|" "${REPO_ROOT}/assets/applications/inir-settings.desktop" > "${INIR_SETTINGS_DESKTOP_TMP}"
-      install_file "${INIR_SETTINGS_DESKTOP_TMP}" "${INIR_APPLICATIONS_DIR}/inir-settings.desktop"
-      rm -f "${INIR_SETTINGS_DESKTOP_TMP}"
-      log_success "Settings desktop entry installed"
+    if sync_user_desktop_integration_from_repo; then
+      log_success "Desktop integration installed"
+    else
+      log_warning "Could not install desktop integration"
     fi
 
     log_success "Quickshell inir config installed"
@@ -247,18 +212,19 @@ case "${SKIP_QUICKSHELL}" in
     # Install Python packages now that requirements.txt is in place
     showfun install-python-packages
     v install-python-packages
+    showfun ensure-ytmusic-js-runtime
+    v ensure-ytmusic-js-runtime
 
-    # Verify installation (only on updates, not fresh install)
-    if [[ "${IS_UPDATE}" == "true" && "${SKIP_VERIFICATION}" != "true" ]]; then
-      log_info "Verifying installation..."
-      if ! verify_qs_loads 8; then
-        log_error "Verification failed!"
-        echo ""
-        log_warning "Update may have issues — run './setup doctor' or './setup restore' to rollback"
-        echo ""
-      else
-        log_success "Verification passed"
-      fi
+    if [[ "${IS_UPDATE}" == "true" && "${SKIP_VERIFICATION}" != "true" ]] \
+        && [[ -n "${NIRI_SOCKET:-}${WAYLAND_DISPLAY:-}" ]] && ! inir_user_service_is_masked; then
+      log_info "Restarting the shell on the new files..."
+      restart_shell_and_verify 30
+      case $? in
+        0) log_success "The shell loaded the new files" ;;
+        1) log_error "The shell did not load the new files"
+           log_warning "Run './setup rollback' to go back to the previous version" ;;
+        *) log_warning "Could not confirm the shell loaded; 'inir logs' shows why" ;;
+      esac
     fi
     ;;
 esac
@@ -295,7 +261,7 @@ case "${SKIP_NIRI}" in
       log_success "Niri config installed (dots)"
     fi
 
-    # Patch config.kdl: detect polkit agent
+    # Patch the Niri config: startup extras and the Qt platform theme
     NIRI_CFG="${XDG_CONFIG_HOME}/niri/config.kdl"
     NIRI_ENV_CFG="${XDG_CONFIG_HOME}/niri/config.d/40-environment.kdl"
     NIRI_STARTUP_CFG="${XDG_CONFIG_HOME}/niri/config.d/50-startup.kdl"
@@ -309,12 +275,14 @@ case "${SKIP_NIRI}" in
     [[ -f "$NIRI_BINDS_CFG" ]] && NIRI_BINDS_TARGET="$NIRI_BINDS_CFG"
 
     if [[ -f "$NIRI_CFG" ]]; then
-      POLKIT_AGENT="$(get-polkit-agent)"
-      if [[ -n "$POLKIT_AGENT" ]]; then
-        sed -i "s|spawn-at-startup \"/usr/lib/mate-polkit/polkit-mate-authentication-agent-1\"|spawn-at-startup \"${POLKIT_AGENT}\"|" "$NIRI_STARTUP_TARGET"
-        log_success "Polkit agent: $(basename "$(dirname "$POLKIT_AGENT")")/$(basename "$POLKIT_AGENT")"
-      else
-        log_warning "No polkit agent found — sudo dialogs may not work"
+      # No polkit agent is spawned: the shell is the agent (migration 044 retires the line older setups wrote).
+
+      if [[ "${INSTALL_FIRSTRUN}" == true && "${OS_SPECIFIC_ID:-}" == "cachyos" ]] \
+          && command -v niri-focused-booster >/dev/null 2>&1 \
+          && ! grep -Fq 'niri-focused-booster' "$NIRI_STARTUP_TARGET"; then
+        printf '\nspawn-sh-at-startup "command -v niri-focused-booster >/dev/null 2>&1 && [ -r /sys/fs/cgroup/dmem.capacity ] && exec niri-focused-booster"\n' \
+          >> "$NIRI_STARTUP_TARGET"
+        log_success "Niri DMEM focus booster enabled"
       fi
 
       # Patch config.kdl: detect QT platform theme
@@ -365,21 +333,15 @@ if command -v sddm &>/dev/null; then
     if [[ "${ask}" == "true" ]]; then
       tui_info "Recommended: install ii-pixel-sddm login theme (matches iNiR lockscreen)."
       if tui_confirm "Install ii-pixel-sddm now?" "yes"; then
-        extras_install_sddm_theme "yes"
+        extras_install_sddm_theme "yes" no
       else
         log_info "Skipping ii-pixel-sddm setup"
       fi
     else
       # Non-interactive: auto-install SDDM theme
-      extras_install_sddm_theme "yes"
+      extras_install_sddm_theme "yes" no
     fi
   fi
-fi
-
-# Fuzzel (launcher)
-if [[ -d "dots/.config/fuzzel" ]]; then
-  install_dir__sync "dots/.config/fuzzel" "${XDG_CONFIG_HOME}/fuzzel"
-  log_success "Fuzzel config installed"
 fi
 
 # Starship (prompt)
@@ -462,7 +424,45 @@ done
 
 # Darkly Qt style config
 if [[ -f "dots/.config/darklyrc" ]]; then
-  install_file "dots/.config/darklyrc" "${XDG_CONFIG_HOME}/darklyrc"
+  darkly_target="${XDG_CONFIG_HOME}/darklyrc"
+  if [[ ! -f "$darkly_target" ]]; then
+    install_file "dots/.config/darklyrc" "$darkly_target"
+  else
+    # Keep user Darkly preferences intact. Newer Dolphin versions ask the
+    # QStyle to draw FrameFocusRect for focused items, and current Darkly draws
+    # that as an extra underline. Disable only that one style feature.
+    python3 - "$darkly_target" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+section = re.search(r'(?ms)^\[Style\]\s*$.*?(?=^\[|\Z)', text)
+
+if section:
+    block = section.group(0)
+    if re.search(r'(?m)^ViewDrawFocusIndicator=', block):
+        updated = re.sub(
+            r'(?m)^ViewDrawFocusIndicator=.*$',
+            'ViewDrawFocusIndicator=false',
+            block,
+            count=1,
+        )
+    else:
+        trailing = re.search(r'(?:\n[ \t]*)*\Z', block).group(0)
+        body = block[:-len(trailing)] if trailing else block
+        updated = body + ('' if body.endswith('\n') else '\n') \
+            + 'ViewDrawFocusIndicator=false' + (trailing or '\n')
+    text = text[:section.start()] + updated + text[section.end():]
+else:
+    if text and not text.endswith('\n'):
+        text += '\n'
+    text += '\n[Style]\nViewDrawFocusIndicator=false\n'
+
+path.write_text(text)
+PY
+  fi
 fi
 
 # MPV config
@@ -588,9 +588,13 @@ if [[ -d "dots/.config/vesktop/themes" ]]; then
   fi
 fi
 
-# Fontconfig
-if [[ -d "dots/.config/fontconfig" ]]; then
-  install_dir__sync "dots/.config/fontconfig" "${XDG_CONFIG_HOME}/fontconfig"
+# Fontconfig: grayscale for the shell only; the rest of the desktop keeps the user's choice
+if [[ -f "dots/.config/fontconfig/conf.d/90-inir-shell.conf" ]]; then
+  LEGACY_FONTCONFIG="${XDG_CONFIG_HOME}/fontconfig/fonts.conf"
+  if [[ -f "$LEGACY_FONTCONFIG" ]] && [[ "$(tr -d '[:space:]' < "$LEGACY_FONTCONFIG")" == '<?xmlversion="1.0"?><!DOCTYPEfontconfigSYSTEM"urn:fontconfig:fonts.dtd"><fontconfig><matchtarget="font"><editname="rgba"mode="assign"><const>none</const></edit></match></fontconfig>' ]]; then
+    v rm -f "$LEGACY_FONTCONFIG"
+  fi
+  install_file "dots/.config/fontconfig/conf.d/90-inir-shell.conf" "${XDG_CONFIG_HOME}/fontconfig/conf.d/90-inir-shell.conf"
 fi
 
 # Config (use defaults for distribution)
@@ -626,6 +630,8 @@ if [[ "${SKIP_MIGRATIONS}" != "true" ]]; then
   run_migrations_auto
 fi
 
+repair_legacy_quickshell_malloc_environment || true
+
 #####################################################################################
 # Mark first run complete
 #####################################################################################
@@ -643,6 +649,7 @@ v dedup_and_sort_listfile "${INSTALLED_LISTFILE}" "${INSTALLED_LISTFILE}"
 # Environment variables are configured in Niri
 #####################################################################################
 tui_info "Configuring environment variables..."
+[[ "${IS_UPDATE}" != "true" ]] && INIR_REBOOT_REASONS+=("Niri's environment and the shell profile variables only load on a new login")
 
 # Primary: environment {} block in Niri config.kdl (already installed)
 # Secondary: shell profile files for terminals outside Niri session (SSH, TTY, etc.)
@@ -965,7 +972,6 @@ if [[ "${INSTALL_FIRSTRUN}" == true && -n "${DEFAULT_WALLPAPER}" && -f "${DEFAUL
   mkdir -p "${XDG_STATE_HOME}/quickshell/user/generated/wallpaper"
   mkdir -p "${XDG_CONFIG_HOME}/gtk-3.0"
   mkdir -p "${XDG_CONFIG_HOME}/gtk-4.0"
-  mkdir -p "${XDG_CONFIG_HOME}/fuzzel"
 
   # Update config.json with default wallpaper path
   shell_config_json="${DOTS_CORE_CONFDIR}/config.json"
@@ -1114,7 +1120,6 @@ if ! ${quiet:-false}; then
     in "${XDG_CONFIG_HOME}/niri/config.kdl:Niri config" \
        "${DOTS_CORE_CONFDIR}/config.json:iNiR config" \
        "${XDG_CONFIG_HOME}/matugen:Theming templates" \
-       "${XDG_CONFIG_HOME}/fuzzel:Fuzzel config" \
        "${XDG_STATE_HOME}/quickshell/user/generated/colors.json:Theme colors"; do
     _cfg_file="${_cfg_path%%:*}"
     _cfg_label="${_cfg_path##*:}"
@@ -1212,33 +1217,26 @@ if ! ${quiet:-false}; then
     echo ""
   fi
 
-  # REBOOT WARNING (first install only)
-  if [[ "${IS_UPDATE}" != "true" ]]; then
-    echo ""
-    echo -e "${STY_CYAN}${STY_BOLD}┌─ Session Note${STY_RST}"
-    echo -e "${STY_CYAN}│${STY_RST}"
-    echo -e "${STY_CYAN}│${STY_RST}  ${STY_YELLOW}Log out or reboot${STY_RST} if new groups, env vars, or user services"
-    echo -e "${STY_CYAN}│${STY_RST}  do not apply immediately in your current session."
-    echo ""
-  else
+  # First installs end on the reboot notice from ./setup (show_install_completion)
+  if [[ "${IS_UPDATE}" == "true" ]]; then
     echo -e "${STY_CYAN}${STY_BOLD}┌─ Session Note${STY_RST}"
     echo -e "${STY_CYAN}│${STY_RST}"
     echo -e "${STY_CYAN}│${STY_RST}  Reload Niri or restart the session if the updated launcher bindings"
     echo -e "${STY_CYAN}│${STY_RST}  are not visible immediately."
+    echo -e "${STY_CYAN}└──────────────────────────────${STY_RST}"
+    echo ""
   fi
-  echo -e "${STY_CYAN}└──────────────────────────────${STY_RST}"
-  echo ""
 
   # Key shortcuts (only show on install, not update)
   if [[ "${IS_UPDATE}" != "true" ]]; then
     echo -e "${STY_PURPLE}${STY_BOLD}┌─ Key Shortcuts${STY_RST}"
     echo -e "${STY_PURPLE}│${STY_RST}"
-    echo -e "${STY_PURPLE}│${STY_RST}  ${STY_INVERT} Super+Space ${STY_RST}     Search / Overview"
-    echo -e "${STY_PURPLE}│${STY_RST}  ${STY_INVERT} Super+G ${STY_RST}         Overlay (widgets, tools)"
-    echo -e "${STY_PURPLE}│${STY_RST}  ${STY_INVERT} Alt+Tab ${STY_RST}         Window switcher"
+    echo -e "${STY_PURPLE}│${STY_RST}  ${STY_INVERT} Super+Space ${STY_RST}     Search and overview"
+    echo -e "${STY_PURPLE}│${STY_RST}  ${STY_INVERT} Super+, ${STY_RST}         Settings"
+    echo -e "${STY_PURPLE}│${STY_RST}  ${STY_INVERT} Super+Shift+W ${STY_RST}   Switch between Material, Waffle and iRiS"
     echo -e "${STY_PURPLE}│${STY_RST}  ${STY_INVERT} Super+V ${STY_RST}         Clipboard history"
-    echo -e "${STY_PURPLE}│${STY_RST}  ${STY_INVERT} Ctrl+Alt+T ${STY_RST}      Wallpaper picker"
-    echo -e "${STY_PURPLE}│${STY_RST}  ${STY_INVERT} Super+/ ${STY_RST}         Show all shortcuts"
+    echo -e "${STY_PURPLE}│${STY_RST}  ${STY_INVERT} Ctrl+Alt+T ${STY_RST}      Wallpapers"
+    echo -e "${STY_PURPLE}│${STY_RST}  ${STY_INVERT} Super+/ ${STY_RST}         Every other shortcut"
     echo -e "${STY_PURPLE}│${STY_RST}"
     echo -e "${STY_PURPLE}└──────────────────────────────${STY_RST}"
     echo ""
@@ -1250,9 +1248,7 @@ if ! ${quiet:-false}; then
 
   if [[ "${IS_UPDATE}" == "true" ]]; then
     echo -e "${STY_GREEN}Done. Hot reload should kick in any second now.${STY_RST}"
-  else
-    echo -e "${STY_GREEN}Install complete. iNiR is ready through the inir launcher.${STY_RST}"
+    echo ""
   fi
-  echo ""
 
 fi  # end quiet check

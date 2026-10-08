@@ -11,7 +11,7 @@ RippleButton {
     downAction: () => {
         parent.expanded = !parent.expanded;
     }
-    buttonRadius: Appearance.rounding.full
+    buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
 
     rotation: root.parent.expanded ? 0 : -180
     Behavior on rotation {

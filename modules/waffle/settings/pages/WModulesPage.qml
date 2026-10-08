@@ -93,11 +93,33 @@ WSettingsPage {
             currentValue: Config.options?.panelFamily ?? "waffle"
             options: [
                 { value: "ii", displayName: Translation.tr("Material (ii)") },
-                { value: "waffle", displayName: Translation.tr("Windows 11 (Waffle)") }
+                { value: "waffle", displayName: Translation.tr("Windows 11 (Waffle)") },
+                { value: "iris", displayName: "iRiS" }
             ]
             onSelected: newValue => {
                 if (newValue !== Config.options?.panelFamily) {
                     Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "panelFamily", "set", newValue])
+                }
+            }
+        }
+
+        Repeater {
+            model: [
+                { value: "ii", label: Translation.tr("Material in the switch shortcut") },
+                { value: "waffle", label: Translation.tr("Windows 11 in the switch shortcut") },
+                { value: "iris", label: Translation.tr("iRiS in the switch shortcut") }
+            ]
+            WSettingsSwitch {
+                required property var modelData
+                readonly property var cycle: Array.from(Config.options?.familyCycle ?? ["ii", "waffle", "iris"])
+                label: modelData.label
+                icon: "arrow-sync"
+                checked: cycle.includes(modelData.value)
+                onCheckedChanged: {
+                    if (checked === cycle.includes(modelData.value)) return
+                    const next = cycle.filter(family => family !== modelData.value)
+                    if (checked) next.push(modelData.value)
+                    Config.setNestedValue("familyCycle", next)
                 }
             }
         }

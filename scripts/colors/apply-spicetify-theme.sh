@@ -8,8 +8,6 @@
 #   current matugen palette.
 # - Sync the generated user.css directly into the live xpui install so the
 #   running client and the next launch use the same colors.
-# - If Spotify is running with an existing remote-debugging port, trigger a
-#   Page.reload over DevTools. No watch mode, no restart, no spawn.
 # - If the live install is not patched yet, fall back to `spicetify -n apply`
 #   so disk state is updated without opening Spotify.
 # - This script never starts/opens Spotify itself.
@@ -33,9 +31,11 @@ LOG_FILE="$STATE_DIR/user/generated/spicetify_theme.log"
 THEME_NAME="Inir"
 TUI_THEME_NAME="InirTUI"
 SCHEME_NAME="matugen"
-SLEEK_CSS_URL="https://raw.githubusercontent.com/spicetify/spicetify-themes/master/Sleek/user.css"
 TEXT_CSS_URL="https://raw.githubusercontent.com/spicetify/spicetify-themes/master/text/user.css"
 REQUESTED_THEME=""
+INIR_FINISH_CSS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/templates/spotify-finish.css"
+TUI_FINISH_CSS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/templates/spotify-tui-finish.css"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/config-path.sh"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -166,19 +166,57 @@ response = sock.recv(4096)
 if b" 101 " not in response:
     raise SystemExit(1)
 
-payload = json.dumps({"id": 1, "method": "Page.reload", "params": {"ignoreCache": True}}).encode()
-mask = os.urandom(4)
-header = bytearray([0x81])
-length = len(payload)
-if length < 126:
-    header.append(0x80 | length)
-elif length < 65536:
-    header.extend((0x80 | 126, *struct.pack("!H", length)))
-else:
-    header.extend((0x80 | 127, *struct.pack("!Q", length)))
+def send(message):
+    payload = json.dumps(message).encode()
+    mask = os.urandom(4)
+    header = bytearray([0x81])
+    length = len(payload)
+    if length < 126:
+        header.append(0x80 | length)
+    elif length < 65536:
+        header.extend((0x80 | 126, *struct.pack("!H", length)))
+    else:
+        header.extend((0x80 | 127, *struct.pack("!Q", length)))
+    sock.sendall(bytes(header) + mask + bytes(byte ^ mask[index % 4] for index, byte in enumerate(payload)))
 
-masked = bytes(byte ^ mask[index % 4] for index, byte in enumerate(payload))
-sock.sendall(bytes(header) + mask + masked)
+def receive(wanted_id):
+    buffer = b""
+    while True:
+        while len(buffer) < 2:
+            buffer += sock.recv(65536)
+        length = buffer[1] & 0x7F
+        offset = 2
+        if length == 126:
+            while len(buffer) < 4:
+                buffer += sock.recv(65536)
+            length = struct.unpack("!H", buffer[2:4])[0]
+            offset = 4
+        elif length == 127:
+            while len(buffer) < 10:
+                buffer += sock.recv(65536)
+            length = struct.unpack("!Q", buffer[2:10])[0]
+            offset = 10
+        while len(buffer) < offset + length:
+            buffer += sock.recv(65536)
+        frame, buffer = buffer[offset:offset + length], buffer[offset + length:]
+        try:
+            message = json.loads(frame)
+        except ValueError:
+            continue
+        if message.get("id") == wanted_id:
+            return message
+
+# Swap the theme stylesheet in place: a page reload flashes the whole client and can raise its window.
+swap = """(() => {
+  const links = [...document.querySelectorAll('link.userCSS, link[href^="user.css"]')];
+  // Each link keeps its own file: colors.css is a userCSS link too, and pointing it at user.css dropped the scheme.
+  links.forEach(link => { link.href = new URL(link.href, location.href).pathname.split('/').pop() + '?inir=' + Date.now(); });
+  return links.length;
+})()"""
+send({"id": 1, "method": "Runtime.evaluate", "params": {"expression": swap, "returnByValue": True}})
+swapped = receive(1).get("result", {}).get("result", {}).get("value", 0)
+if not swapped:
+    send({"id": 2, "method": "Page.reload", "params": {"ignoreCache": True}})
 sock.close()
 PY
 }
@@ -261,6 +299,9 @@ button             = $(strip_hash "${SPICE_COLORS[accent]}")
 button-active      = $(strip_hash "${SPICE_COLORS[selection_hover]}")
 button-disabled    = $(strip_hash "${SPICE_COLORS[disabled]}")
 tab-active         = $(strip_hash "${SPICE_COLORS[popup]}")
+highlight          = $(strip_hash "${SPICE_COLORS[card]}")
+highlight-elevated = $(strip_hash "${SPICE_COLORS[popup]}")
+main-elevated      = $(strip_hash "${SPICE_COLORS[card]}")
 notification       = $(strip_hash "${SPICE_COLORS[notification]}")
 notification-error = $(strip_hash "${SPICE_COLORS[error]}")
 misc               = $(strip_hash "${SPICE_COLORS[border]}")
@@ -280,6 +321,8 @@ border-active      = $(strip_hash "${SPICE_COLORS[accent]}")
 border-inactive    = $(strip_hash "${SPICE_COLORS[border]}")
 header             = $(strip_hash "${SPICE_COLORS[subtext]}")
 highlight          = $(strip_hash "${SPICE_COLORS[card]}")
+highlight-elevated = $(strip_hash "${SPICE_COLORS[popup]}")
+main-elevated      = $(strip_hash "${SPICE_COLORS[card]}")
 main               = $(strip_hash "${SPICE_COLORS[main]}")
 notification       = $(strip_hash "${SPICE_COLORS[notification]}")
 notification-error = $(strip_hash "${SPICE_COLORS[error]}")
@@ -291,7 +334,6 @@ EOF
 regenerate_user_css_bridge() {
   local css_file="$1"
 
-  # user.css must already exist (downloaded by download_sleek_css)
   [[ -f "$css_file" ]] || return 0
 
   # ── Derive bridge values from matugen palette ─────────────────────────────
@@ -331,7 +373,7 @@ regenerate_user_css_bridge() {
   --spice-notification-error:  #$(strip_hash "${COLORS[error]}");
   --spice-misc:                #$(strip_hash "${COLORS[outline]}");
 
-  /* Aliases for variables used by Sleek CSS but not in color.ini */
+  /* Tones color.ini does not carry */
   --spice-main-secondary:      #$(strip_hash "$main_secondary");
   --spice-main-elevated:       #$(strip_hash "$main_elevated");
   --spice-highlight:           #$(strip_hash "$highlight");
@@ -370,7 +412,6 @@ regenerate_user_css_bridge() {
   # Use python3 for reliable multi-line regex replace without temp file races.
   # The regex removes ALL occurrences (handles stale duplicate blocks from
   # previous buggy runs) and appends a single fresh block at the end so these
-  # vars win over any later Sleek defaults/redefinitions.
   python3 - "$css_file" "$bridge_block" <<'PYEOF'
 import sys, re, pathlib
 css_path = pathlib.Path(sys.argv[1])
@@ -386,6 +427,8 @@ content = pattern.sub('', content).lstrip('\n')
 if content and not content.endswith('\n'):
     content += '\n'
 content = content + '\n' + new_block + '\n'
+# Removing a block from the middle leaves its blank lines behind: collapse them, or every run grows the file.
+content = re.sub(r'\n{3,}', '\n\n', content)
 css_path.write_text(content)
 PYEOF
 
@@ -440,33 +483,25 @@ content = pattern.sub('', content)
 content = re.sub(r'/\* === end iNiR playback controls fix === \*/\n?', '', content)
 content = content.lstrip('\n')
 content = new_block + '\n' + content
+# Removing a block from the middle leaves its blank lines behind: collapse them, or every run grows the file.
+content = re.sub(r'\n{3,}', '\n\n', content)
 css_path.write_text(content)
 PYEOF
 
   log "Playback controls fix regenerated from current palette"
 }
 
-patch_existing_user_css() {
-  local css_file="$1"
-
-  [[ -f "$css_file" ]] || return 0
-
-  sed -i 's/rgba(var(--spice-rgb-selected-row),.7)/var(--spice-subtext)/g' "$css_file"
-}
-download_sleek_css() {
-  local css_file="$1"
-  if [[ ! -f "$css_file" ]]; then
-    log "Downloading base CSS from Sleek theme..."
-    if curl -L --create-dirs -o "$css_file" "$SLEEK_CSS_URL" 2>/dev/null; then
-      log "Downloaded base CSS"
-      # Fix hard-to-read right-side playback controls (queue, connect, volume).
-      # Sleek bases these on selected-row (which is a dark background in Matugen).
-      # Change it to use the subtext color instead so they are visible.
-      sed -i 's/rgba(var(--spice-rgb-selected-row),.7)/var(--spice-subtext)/g' "$css_file"
-    else
-      log "Warning: Failed to download base CSS"
-    fi
-  fi
+write_inir_user_css() {
+  local css_file="$1" font
+  font="$(grep -s '^gtk-font-name=' "$XDG_CONFIG_HOME/gtk-3.0/settings.ini" | head -n1)"
+  font="${font#gtk-font-name=}"
+  font="$(sed -E 's/[[:space:]]+[0-9]+(\.[0-9]+)?$//' <<<"$font")"
+  font="${font//\"/}"
+  {
+    printf '/* iNiR for Spotify. Generated from the shell; edits are overwritten. */\n'
+    printf ':root { --inir-font: "%s"; }\n' "${font:-Inter}"
+    cat "$INIR_FINISH_CSS"
+  } > "$css_file"
 }
 
 download_text_css() {
@@ -499,6 +534,8 @@ regenerate_tui_color_bridge() {
   --spice-border-inactive:    #$(strip_hash "${SPICE_COLORS[border]}");
   --spice-header:             #$(strip_hash "${SPICE_COLORS[subtext]}");
   --spice-highlight:          #$(strip_hash "${SPICE_COLORS[card]}");
+  --spice-highlight-elevated: #$(strip_hash "${SPICE_COLORS[popup]}");
+  --spice-main-elevated:      #$(strip_hash "${SPICE_COLORS[card]}");
   --spice-main:               #$(strip_hash "${SPICE_COLORS[main]}");
   --spice-notification:       #$(strip_hash "${SPICE_COLORS[notification]}");
   --spice-notification-error: #$(strip_hash "${SPICE_COLORS[error]}");
@@ -533,6 +570,8 @@ pattern = re.compile(
 )
 content = pattern.sub('', content).rstrip()
 content += '\n\n' + new_block + '\n'
+# Removing a block from the middle leaves its blank lines behind: collapse them, or every run grows the file.
+content = re.sub(r'\n{3,}', '\n\n', content)
 css_path.write_text(content)
 PYEOF
 
@@ -543,13 +582,13 @@ regenerate_tui_overrides() {
   local css_file="$1"
   [[ -f "$css_file" ]] || return 0
 
-  # Keep upstream text responsible for layout. iNiR supplies the local font and
-  # raises playback control contrast so generated palettes remain readable.
+  local mono_font
+  mono_font=$(jq -r '.appearance.typography.monospaceFont // empty' "$(inir_config_dir)/config.json" 2>/dev/null) || true
+  mono_font="${mono_font:-JetBrainsMono Nerd Font}"
   local tui_block
   tui_block="/* === iNiR TUI overrides - auto-generated === */
-:root {
-  --font-family: 'JetBrainsMono Nerd Font', 'JetBrains Mono', monospace;
-}
+:root { --inir-mono: \"${mono_font}\"; }
+$(cat "$TUI_FINISH_CSS" 2>/dev/null)
 
 .player-controls__buttons,
 .main-nowPlayingBar-extraControls {
@@ -599,6 +638,8 @@ pattern = re.compile(
 )
 content = pattern.sub('', content).rstrip()
 content += '\n\n' + new_block + '\n'
+# Removing a block from the middle leaves its blank lines behind: collapse them, or every run grows the file.
+content = re.sub(r'\n{3,}', '\n\n', content)
 css_path.write_text(content)
 PYEOF
 
@@ -609,8 +650,21 @@ PYEOF
 
 CDP_PORT=8976
 
-ensure_spotify_desktop_override() {
-  # Create a .desktop override that launches Spotify with CDP enabled for live reload.
+# Live updates need Spotify's DevTools port. The Arch wrapper appends ~/.config/spotify-flags.conf to every
+# launch (menu, tray, autostart, terminal); elsewhere a user .desktop override carries it from the menu.
+ensure_spotify_cdp_flag() {
+  local flag="--remote-debugging-port=$CDP_PORT" launcher flags_file="$XDG_CONFIG_HOME/spotify-flags.conf"
+  launcher="$(command -v spotify 2>/dev/null || true)"
+  if [[ -n "$launcher" ]] && grep -qs 'spotify-flags.conf' "$launcher"; then
+    if ! grep -qsxF -- "$flag" "$flags_file"; then
+      mkdir -p "$(dirname "$flags_file")"
+      # On a line of its own even when the file ends without a newline
+      [[ -s "$flags_file" && -n "$(tail -c1 "$flags_file")" ]] && printf '\n' >> "$flags_file"
+      printf '%s\n' "$flag" >> "$flags_file"
+      log "Added $flag to $flags_file"
+    fi
+  fi
+
   local user_apps="$HOME/.local/share/applications"
   local override="$user_apps/spotify.desktop"
   local system_desktop="/usr/share/applications/spotify.desktop"
@@ -623,11 +677,22 @@ ensure_spotify_desktop_override() {
   [[ -f "$system_desktop" ]] || return 0
   mkdir -p "$user_apps" 2>/dev/null || return 0
 
-  sed "s|^Exec=spotify|Exec=spotify --remote-debugging-port=$CDP_PORT|" \
-    "$system_desktop" > "$override"
-  # TryExec must remain just the binary name
-  sed -i 's|^TryExec=.*|TryExec=spotify|' "$override"
+  sed -e "s|^Exec=spotify|Exec=spotify --remote-debugging-port=$CDP_PORT|" \
+    -e 's|^TryExec=.*|TryExec=spotify|' "$system_desktop" > "$override"
   log "Created Spotify desktop override with CDP port $CDP_PORT"
+}
+
+# Spicetify rewrites its config on every `config` call: only when a value differs.
+spicetify_config_set() {
+  local config_file="$1"; shift
+  local key value current changed=()
+  while [[ $# -ge 2 ]]; do
+    key="$1" value="$2"; shift 2
+    current="$(awk -F'= *' -v k="$key" '$1 ~ "^"k"[[:space:]]*$" {print $2; exit}' "$config_file" 2>/dev/null | xargs)"
+    [[ "$current" == "$value" ]] || changed+=("$key" "$value")
+  done
+  [[ ${#changed[@]} -eq 0 ]] && return 0
+  spicetify config "${changed[@]}" >> "$LOG_FILE" 2>&1 || true
 }
 
 configure_spicetify() {
@@ -645,8 +710,7 @@ configure_spicetify() {
   read_colors || return 1
   derive_spicetify_colors
 
-  download_sleek_css "$user_css"
-  patch_existing_user_css "$user_css"
+  write_inir_user_css "$user_css"
   # Write user.css bridge FIRST so the live xpui sync always ships the full
   # variable set in a single file copy.
   regenerate_user_css_bridge "$user_css"
@@ -658,8 +722,8 @@ configure_spicetify() {
   regenerate_tui_overrides "$tui_user_css"
   generate_tui_color_ini "$tui_color_file" || return 1
 
-  spicetify config inject_css 1 replace_colors 1 >> "$LOG_FILE" 2>&1 || true
-  spicetify config current_theme "$active_theme" color_scheme "$SCHEME_NAME" >> "$LOG_FILE" 2>&1 || true
+  spicetify_config_set "$(get_spicetify_config_path)" inject_css 1 replace_colors 1 \
+    current_theme "$active_theme" color_scheme "$SCHEME_NAME"
 }
 
 apply_spicetify_theme() {
@@ -684,11 +748,13 @@ apply_spicetify_theme() {
 
   return 1
 }
+# 0: copied, 1: no install, 2: the live copy already matches (the running client needs nothing).
 sync_live_user_css() {
   local user_css="$1"
   local xpui_dir="$2"
   local live_user_css="$xpui_dir/user.css"
   [[ -d "$xpui_dir" ]] || return 1
+  cmp -s "$user_css" "$live_user_css" && return 2
   cp "$user_css" "$live_user_css"
 }
 
@@ -772,7 +838,7 @@ main() {
   }
 
   # Ensure Spotify launches with CDP for live reload on next start
-  ensure_spotify_desktop_override
+  ensure_spotify_cdp_flag
 
   local spotify_running=false
   is_process_running "spotify" && spotify_running=true
@@ -782,7 +848,13 @@ main() {
   fi
 
   if [[ -n "$xpui_dir" ]] && is_live_install_patched "$xpui_dir"; then
-    if sync_live_user_css "$active_theme_dir/user.css" "$xpui_dir"; then
+    local sync_status=0
+    sync_live_user_css "$active_theme_dir/user.css" "$xpui_dir" || sync_status=$?
+    if [[ "$sync_status" -eq 2 ]]; then
+      log "Spotify theme unchanged - client left alone"
+      exit 0
+    fi
+    if [[ "$sync_status" -eq 0 ]]; then
       log "Synced live Spotify user.css"
       if $spotify_running; then
         local debugger_port

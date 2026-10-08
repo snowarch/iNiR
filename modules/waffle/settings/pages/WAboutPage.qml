@@ -214,7 +214,8 @@ WSettingsPage {
         
         WSettingsRow {
             label: Translation.tr("Panel family")
-            description: Config.options?.panelFamily === "waffle" ? "Waffle (Windows 11)" : "ii (Material)"
+            description: Config.options?.panelFamily === "waffle" ? "Waffle (Windows 11)"
+                : Config.options?.panelFamily === "iris" ? "iRiS" : "ii (Material)"
             icon: "app-generic"
         }
     }

@@ -19,6 +19,7 @@ import qs.modules.ii.overlay
 import qs.modules.shellUpdate
 import qs.modules.workspaceStrip
 import qs.modules.clipboard as ClipboardModule
+import qs.modules.equalizer
 
 import QtQuick
 import Quickshell
@@ -27,11 +28,14 @@ import Quickshell.Io
 import Quickshell.Wayland
 import qs
 import qs.services
+import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.widgets
 
 Item {
     id: panelsRoot
+    readonly property bool equalizerEnabled: Config.ready
+        && (Config.options?.enabledPanels ?? []).includes("iiEqualizer")
 
     component PanelLoader: LazyLoader {
         required property string identifier
@@ -164,6 +168,63 @@ Item {
         open: GlobalStates.dashboardOpen
         keepLoaded: Config.options?.dashboard?.keepLoaded ?? false
         source: "../dashboard/Dashboard.qml"
+    }
+    OnDemandPanelLoader {
+        identifier: "iiEqualizer"
+        open: GlobalStates.equalizerOpen
+        closeGraceMs: 260
+        component: EqualizerPanel {}
+        onEnabledPanelChanged: {
+            if (!enabledPanel)
+                GlobalStates.closeEqualizer()
+        }
+    }
+
+    Loader {
+        active: panelsRoot.equalizerEnabled
+        sourceComponent: Component {
+            Item {
+                Component.onCompleted: EasyEffects.ensureEqualizer()
+
+                IpcHandler {
+                    target: "equalizer"
+                    function toggle(): void { GlobalStates.toggleEqualizer("") }
+                    function close(): void { GlobalStates.closeEqualizer() }
+                    function open(): void { GlobalStates.openEqualizer("") }
+                    function refresh(): void { EasyEffects.refreshEqualizer() }
+                    function ensure(): void { EasyEffects.ensureEqualizer() }
+                    function status(): string {
+                        return JSON.stringify({
+                            ready: EasyEffects.equalizerReady,
+                            loading: EasyEffects.equalizerLoading,
+                            serverAvailable: EasyEffects.equalizerServerAvailable,
+                            pluginAvailable: EasyEffects.equalizerPluginAvailable,
+                            supported: EasyEffects.equalizerSupported,
+                            bypassed: EasyEffects.equalizerBypassed,
+                            preset: EasyEffects.equalizerPreset,
+                            bands: EasyEffects.equalizerBands,
+                            error: EasyEffects.equalizerError
+                        })
+                    }
+                    function setBand(index: int, gain: real): string {
+                        if (!EasyEffects.equalizerReady) return "not_ready"
+                        EasyEffects.setEqualizerBand(index, gain)
+                        return "queued"
+                    }
+                    function preset(name: string): string {
+                        if (!EasyEffects.equalizerReady) return "not_ready"
+                        EasyEffects.applyEqualizerPreset(name)
+                        return "queued"
+                    }
+                    function configure(): string {
+                        if (!EasyEffects.equalizerPluginAvailable || !EasyEffects.equalizerSupported)
+                            return "not_ready"
+                        EasyEffects.configureTenBandEqualizer()
+                        return "queued"
+                    }
+                }
+            }
+        }
     }
     DeferredPanelLoader { identifier: "iiLock"; component: Lock {} }
     DeferredPanelLoader { identifier: "iiMediaControls"; component: MediaControls {} }

@@ -7,10 +7,7 @@ import QtQuick.Layouts
 StyledPopup {
     id: popup
 
-    onActiveChanged: {
-        if (popup.active)
-            ResourceUsage.ensureRunning()
-    }
+    property QtObject resourceMonitor: ResourceUsageMonitor { active: popup.active }
 
     component ResourceItem: RowLayout {
         id: resourceItem
@@ -92,7 +89,7 @@ StyledPopup {
                 }
                 ResourceItem {
                     icon: "check_circle"
-                    label: Translation.tr("Free:")
+                    label: Translation.tr("Available") + ":"
                     value: (ResourceUsage.memoryFree / (1024 * 1024)).toFixed(1) + " GB"
                 }
                 ResourceItem {
@@ -144,7 +141,9 @@ StyledPopup {
                 ResourceItem {
                     icon: "memory_alt"
                     label: Translation.tr("GPU:")
-                    value: (ResourceUsage.gpuUsage > 0.8 ? Translation.tr("High") : ResourceUsage.gpuUsage > 0.4 ? Translation.tr("Medium") : Translation.tr("Low")) + ` (${Math.round(ResourceUsage.gpuUsage * 100)}%)`
+                    value: ResourceUsage.gpuUsageAvailable
+                        ? (ResourceUsage.gpuUsage > 0.8 ? Translation.tr("High") : ResourceUsage.gpuUsage > 0.4 ? Translation.tr("Medium") : Translation.tr("Low")) + ` (${Math.round(ResourceUsage.gpuUsage * 100)}%)`
+                        : "--"
                 }
             }
         }

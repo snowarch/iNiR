@@ -32,11 +32,6 @@ output_path = '~/.config/gtk-4.0/gtk.css'
 input_path = '~/.config/matugen/templates/gtk-3.0/gtk.css'
 output_path = '~/.config/gtk-3.0/gtk.css'
 
-# Fuzzel launcher theme
-[templates.fuzzel]
-input_path = '~/.config/matugen/templates/fuzzel/fuzzel_theme.ini'
-output_path = '~/.config/fuzzel/fuzzel_theme.ini'
-
 # KDE source color cache (used by kde-material-you-colors-wrapper)
 [templates.kde_colors]
 input_path = '~/.config/matugen/templates/kde/color.txt'
@@ -53,12 +48,6 @@ output_path = '~/.local/state/quickshell/user/generated/wallpaper/path.txt'
 [templates.firefox_materialfox]
 input_path = '~/.config/matugen/templates/firefox/materialfox.css'
 output_path = '~/.local/state/quickshell/user/generated/firefox-materialfox.css'
-
-# SDDM ii-pixel theme sync (safe no-op if script/theme are not present)
-[templates.ii_pixel_sddm_sync]
-input_path = '/dev/null'
-output_path = '/dev/null'
-post_hook = 'bash -lc "[[ -x ~/.local/bin/sync-pixel-sddm.py && -d /usr/share/sddm/themes/ii-pixel ]] && nohup python3 ~/.local/bin/sync-pixel-sddm.py >/dev/null 2>&1 &"'
 
 # Zed Editor Theme
 [templates.zed]

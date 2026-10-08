@@ -51,6 +51,8 @@ Singleton {
     readonly property int cfgSensitivity: Config.options?.appearance?.cava?.sensitivity ?? 100
     readonly property int cfgBars: Config.options?.appearance?.cava?.bars ?? 0
     readonly property bool cfgStereo: Config.options?.appearance?.cava?.stereo ?? true
+    readonly property var cfgBlockedApps: Config.options?.appearance?.cava?.blockedApps ?? []
+    readonly property string cfgBlockedAppsJson: JSON.stringify(root.cfgBlockedApps)
     readonly property int requestedBars: {
         let requested = 0
         for (let i = 0; i < root._sampleRequests.length; ++i)
@@ -141,6 +143,7 @@ Singleton {
     onCfgFramerateChanged: if (active) configRestart.restart()
     onCfgSensitivityChanged: if (active) configRestart.restart()
     onCfgStereoChanged: if (active) configRestart.restart()
+    onCfgBlockedAppsJsonChanged: if (active) configRestart.restart()
     onEffectiveBarsChanged: if (active && !root._suppressConfigRestart) configRestart.restart()
     onPlayerDesktopEntryChanged: if (active) sourceRefresh.restart()
 
@@ -195,6 +198,16 @@ Singleton {
         }
         root._generationBars = root.effectiveBars
         configGen.running = true
+    }
+
+    function _clearFrame(): void {
+        signalRelease.stop()
+        frameClear.stop()
+        root.points = []
+        root.framePeak = 0
+        root.frameAverage = 0
+        root.normalizationCeiling = root.normalizationFloor
+        root.audioSignalActive = false
     }
 
     Connections {
@@ -280,7 +293,7 @@ Singleton {
         command: ["/usr/bin/bash", root.scriptPath, root.configPath,
             String(root.cfgFramerate), String(root.cfgSensitivity),
             String(root._generationBars), String(root.cfgStereo),
-            root.playerDesktopEntry]
+            root.playerDesktopEntry, root.cfgBlockedAppsJson]
         onExited: (code, status) => {
             if (root._pendingConfigGeneration && root.active) {
                 root._pendingConfigGeneration = false
@@ -288,6 +301,11 @@ Singleton {
             } else if (code === 0 && root.active) {
                 root._processBars = root._generationBars
                 cavaProc.running = true
+            } else if (code === 3 && root.active) {
+                // Every live playback stream is currently excluded by policy.
+                // Stay subscribed so the next player/track event can retry, but
+                // never display stale spectrum data from the previous source.
+                root._clearFrame()
             } else if (root.active) {
                 signalRelease.restart()
                 frameClear.restart()

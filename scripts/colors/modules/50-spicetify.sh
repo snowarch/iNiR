@@ -6,7 +6,7 @@ COLOR_MODULE_ID="spicetify"
 
 main() {
   local enable_spicetify
-  enable_spicetify=$(config_bool '.appearance.wallpaperTheming.enableSpicetify' false)
+  enable_spicetify=$(config_bool '.appearance.wallpaperTheming.enableSpicetify' true)
   [[ "$enable_spicetify" == 'true' ]] || exit 0
   command -v spicetify &>/dev/null || exit 0
   local theme

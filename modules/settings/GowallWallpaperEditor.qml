@@ -460,8 +460,9 @@ ColumnLayout {
             spacing: 8
 
             MaterialSymbol { text: "zoom_out_map"; iconSize: 16; color: Appearance.colors.colSubtext }
-            Slider {
+            StyledSlider {
                 Layout.fillWidth: true
+                enableSettingsSearch: false
                 from: 2
                 to: 4
                 stepSize: 1
@@ -531,9 +532,10 @@ ColumnLayout {
             spacing: 8
 
             MaterialSymbol { text: "brightness_low"; iconSize: 16; color: Appearance.colors.colSubtext }
-            Slider {
+            StyledSlider {
                 id: brightnessSlider
                 Layout.fillWidth: true
+                enableSettingsSearch: false
                 from: 0.3; to: 2.0; stepSize: 0.05
                 value: root.brightnessFactor
                 onMoved: root.brightnessFactor = value
@@ -561,9 +563,10 @@ ColumnLayout {
             spacing: 8
 
             MaterialSymbol { text: "grid_on"; iconSize: 16; color: Appearance.colors.colSubtext }
-            Slider {
+            StyledSlider {
                 id: pixelSlider
                 Layout.fillWidth: true
+                enableSettingsSearch: false
                 from: 1; to: 25; stepSize: 1
                 value: root.pixelateScale
                 onMoved: root.pixelateScale = value

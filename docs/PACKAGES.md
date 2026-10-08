@@ -16,11 +16,9 @@ Essential packages for Niri + ii to function.
 |---------|---------|
 | `niri` | Compositor |
 | `awww` | Wallpaper daemon |
-| `bc` | Math in scripts |
 | `coreutils` | Basic utils |
 | `cliphist` | Clipboard history |
 | `curl` | HTTP requests |
-| `wget` | Downloads |
 | `ripgrep` | Fast search |
 | `jq` | JSON parsing |
 | `python` | Python interpreter (scripts) |
@@ -35,8 +33,7 @@ Essential packages for Niri + ii to function.
 | `xdg-desktop-portal` | XDG portal base |
 | `xdg-desktop-portal-gtk` | GTK portal |
 | `xdg-desktop-portal-gnome` | GNOME portal (screenshare) |
-| `polkit` | Privilege elevation |
-| `polkit-gnome` | Polkit auth-dialog agent (works universally) |
+| `polkit` | Privilege elevation (iNiR shows the password dialog itself) |
 | `networkmanager` | Network management |
 | `gnome-keyring` | Secrets storage |
 | `nautilus` | File manager |
@@ -62,12 +59,8 @@ Qt6 stack and Quickshell runtime.
 | `qt6-5compat` | Qt5 compatibility |
 | `qt6-imageformats` | Image formats |
 | `qt6-multimedia` | Media playback |
-| `qt6-positioning` | Geolocation |
-| `qt6-quicktimeline` | Timeline animations |
-| `qt6-sensors` | Sensor APIs |
 | `qt6-tools` | Qt tools |
 | `qt6-translations` | Translations |
-| `qt6-virtualkeyboard` | Virtual keyboard |
 | `jemalloc` | Memory allocator |
 | `libpipewire` | PipeWire integration |
 | `libxcb` | X11 bridge |
@@ -101,16 +94,18 @@ Audio stack and media controls.
 | `wireplumber` | Session manager |
 | `playerctl` | Media player control |
 | `plasma-browser-integration` | Browser media sessions for MPRIS controls/artwork |
-| `libdbusmenu-gtk3` | Tray menus |
 | `pavucontrol` | Volume control GUI |
 | `mpv` | Media playback backend |
 | `mpv-mpris` | MPRIS bridge for mpv |
 | `yt-dlp` | YouTube extraction backend |
+| `deno` | JavaScript runtime used by yt-dlp for current YouTube challenges |
+| `yt-dlp-ejs` | YouTube challenge solver scripts (Arch/package-managed path) |
 | `socat` | IPC fallback for YTMusic control |
 | `cava` | Audio visualizer |
 | `easyeffects` | Audio effects |
+| `lsp-plugins-lv2` | EasyEffects equalizer backend |
 
-`pipewire-jack` and `nodejs` are optional/recommended extras depending on your audio and YTMusic setup.
+`pipewire-jack` is an optional/recommended extra depending on your audio setup.
 
 ---
 
@@ -124,7 +119,9 @@ Region tools dependencies.
 | `slurp` | Region selection |
 | `swappy` | Screenshot editor |
 | `tesseract` | OCR engine |
-| `tesseract-data-eng` | English OCR data |
+| `tesseract-data-eng` / `spa` / `rus` | English, Spanish, Russian OCR data |
+| `tesseract-data-jpn` / `jpn_vert` | Japanese horizontal/vertical OCR data |
+| `tesseract-data-chi_sim*` / `chi_tra*` | Simplified/Traditional Chinese horizontal/vertical OCR data |
 | `wf-recorder` | Screen recording |
 | `imagemagick` | Image processing |
 | `ffmpeg` | Video processing |
@@ -151,8 +148,9 @@ Input simulation, hardware control, and idle management.
 | `fprintd` | Fingerprint authentication (lock screen) |
 | `libqalculate` | Calculator backend |
 | `tesseract` | OCR engine |
-| `tesseract-data-eng` | English OCR data |
-| `tesseract-data-spa` | Spanish OCR data |
+| `tesseract-data-eng` / `spa` / `rus` | English, Spanish, Russian OCR data |
+| `tesseract-data-jpn` / `jpn_vert` | Japanese horizontal/vertical OCR data |
+| `tesseract-data-chi_sim*` / `chi_tra*` | Simplified/Traditional Chinese horizontal/vertical OCR data |
 
 ---
 
@@ -167,18 +165,22 @@ Fonts, theming, and utilities.
 | `fontconfig` | Font configuration |
 | `ttf-dejavu` | DejaVu fonts |
 | `ttf-liberation` | Liberation fonts |
-| `fuzzel` | Application launcher |
 | `glib2` | GLib utilities |
 | `translate-shell` | Translation CLI |
 | `kvantum` | Qt theming |
+
+### Official packages recently promoted from AUR
+
+`ttf-material-symbols-variable`, `ttf-jetbrains-mono-nerd`, `adw-gtk-theme`,
+`capitaine-cursors`, `mission-center`, and `uv` are installed from Arch `extra`.
+Keeping them on the mirror path avoids unnecessary AUR builds and is friendlier
+to users whose networks cannot reliably reach GitHub/AUR endpoints.
 
 ### From AUR
 
 | Package | Purpose | Required |
 |---------|---------|----------|
 | `darkly-bin` | Darkly Qt style (Material You widget style for Qt apps) | Yes |
-| `ttf-jetbrains-mono-nerd` | JetBrains Mono Nerd | Yes (monospace and glyphs) |
-| `ttf-material-symbols-variable-git` | Material Symbols | Yes (UI icons) |
 | `ttf-roboto-flex` | Roboto Flex variable font | Yes (default UI font) |
 | `ttf-oxanium` | Oxanium font | Yes (ZZZ and Angel styles) |
 | `ttf-gabarito-git` | Gabarito variable font | Yes (default title font) |
@@ -186,9 +188,6 @@ Fonts, theming, and utilities.
 | `ttf-rubik-vf` | Rubik variable font | No (has fallback) |
 | `otf-space-grotesk` | Space Grotesk font | No (has fallback) |
 | `ttf-twemoji` | Twitter emoji | No (has fallback) |
-| `adw-gtk-theme-git` | Adwaita GTK theme | Yes |
-| `capitaine-cursors` | Capitaine cursor theme | Yes |
-| `xwayland-satellite` | Xwayland helper for legacy apps | Yes |
 
 > **Note:** Optional fonts will be downloaded directly from GitHub if AUR packages are unavailable (e.g., due to regional restrictions). The UI will use system fallback fonts if installation fails completely.
 
@@ -205,10 +204,11 @@ Not installed by default, but useful. The shell handles their absence gracefully
 | `whisper-cpp` | Local speech-to-text, no API key needed | Voice input and voice search |
 | `cava` | Audio visualizer | Bar widget (optional) |
 | `easyeffects` | Audio effects | Quick toggles panel |
+| `lsp-plugins-lv2` | EasyEffects equalizer backend | Media Controls equalizer |
 | `yt-dlp` | YouTube video/audio extraction | YTMusic sidebar |
 | `mpv` | Media player | YTMusic sidebar |
-| `deno` / `node` / `bun` | JavaScript runtime for yt-dlp | YTMusic sidebar (YouTube anti-bot) |
+| `deno` | JavaScript runtime for yt-dlp | YTMusic sidebar (YouTube challenge solving) |
 
 > **Note:** `cava` and `easyeffects` are included in `inir-audio` but are optional features. The toggles will be hidden if the packages aren't installed.
 
-> **YTMusic Requirements:** The YTMusic sidebar requires `yt-dlp` and `mpv` for playback. Additionally, yt-dlp needs a JavaScript runtime (`deno`, `node` ≥20, or `bun` ≥1.0.31) to solve YouTube's anti-bot challenges. Install at least one: `deno` (recommended), `nodejs`, or `bun`.
+> **YTMusic Requirements:** iNiR provisions its Python browsing runtime and a current playback `yt-dlp` (including SecretStorage and EJS support) in the managed venv. The shell selects that managed binary before an older distro copy. Playback also requires `mpv`, `socat`, and Deno >= 2.3. Package-managed Arch/Nix installations provide the equivalent closed runtime through their package metadata. `inir doctor` repairs the managed Python/Deno runtime instead of asking users to install Python packages manually.

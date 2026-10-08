@@ -1,0 +1,8 @@
+{
+  "id": "firefox",
+  "label": "Firefox family",
+  "module": "45-firefox.sh",
+  "category": "browser",
+  "inputs": ["app-palette.json"],
+  "description": "Write the palette as Firefox system colours (ui.* prefs) into a managed block of every Firefox, LibreWolf, Floorp, Waterfox and Zen profile's user.js; applies when the browser starts. Runs when off too, to give the colours back (enableFirefox)."
+}

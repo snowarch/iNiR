@@ -102,7 +102,7 @@ Loader {
                 visible: opacity > 0
                 horizontalAlignment: Text.AlignHCenter
                 text: KeyboardIndicators.currentLayoutCodeMultiline
-                font.pixelSize: text.includes("\n") ? Appearance.font.pixelSize.smallie : Appearance.font.pixelSize.small
+                font.pixelSize: text.includes("\n") ? Appearance.font.pixelSize.smallie : Appearance.font.pixelSize.smaller
                 color: root.color
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled

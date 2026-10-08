@@ -7,6 +7,200 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.32.0] - 2026-09-29
+
+**iRiS 0.2**
+
+> **iRiS is still under construction.** Parts of it might look ass for now, and they get better every release. Point us at the worst ones on Discord.
+
+2.32.0 turns iRiS into a desktop you shape by touching it: click the Island, the Dock, a bubble or a widget and its options grow right there, widgets stack and read the wallpaper under them, the Control Center and the lock screen are yours to arrange, Orbit lays your whole session out from the Island, and the shell and your apps switch together between dark, ink and light.
+
+### Added
+- **Customize where you look**: click the Island, the Dock, a bubble or a piece and its options grow out of it, with Themes, Look, Pieces, undo and Done on the Island and a ring that follows the shape you are editing. Prefer one panel? Studio keeps every area in a column beside the screen (Settings › Appearance › *Customize opens*). Right-click the desktop › *Customize iRiS*, or `inir iris edit`.
+- **Dark, Ink and Light**: *Scheme* in Appearance follows the system or stays where you put it. Ink is washi and sumi, softer than white, and each scheme has its own tone, colour strength and frost. The scheme is the system's mode, so GTK, Qt, terminals and VS Code switch with the shell (`inir colorMode set dark|light|toggle`).
+- **Colour themes for the shell and your apps**: Catppuccin, Nord, Rosé Pine, Tokyo Night, iRiS Ink and more instead of the wallpaper's palette, and *Match the shell* lends iRiS the theme's accent and material (`inir iris palette catppuccin-mocha`).
+- **Menu bar layout**: a thin strip with your workspaces, the focused window and your pieces, clear over the wallpaper (its items turn dark over a light one) or on a band, with the Island hanging from it as a notch that grows into whatever it opens (`inir iris layout menubar`).
+- **Island and Dock shapes**: capsule, round, squircle or square, the open Island follows, and one switch gives both the bubbles' shape (Settings › Appearance › Shape).
+- **Six new themes**: Twilight and Daybreak over a clear menu bar, Horizon with one black band across the top, Lume with clear glass and iNstrument widgets, and the anime themes Magical Girl and Spirit Forest.
+- **Widget stacks**: drop one desktop widget on another while arranging, or pick *Stack with*, and they share one place, turning by themselves, with the wheel or from the dots on their edge. Order, interval, taking a widget out and splitting the stack are in its quick controls (`inir widgetStacks`).
+- **One design for every widget**: iRiS, Material, iNstrument or Readout from Settings or any widget's Look page, with *Match* for the ones that kept their own look and *Undo* for your old mix. iNstrument now covers music, Screen Time and Controls.
+- **Widgets that read the wallpaper under them**: over a bright spot a widget turns to dark ink and deeper accents and its glass turns to frost, following it as you drag. Accents come from the wallpaper, iRiS, Spectrum or Mono with a strength you pick once, and *Lume on every widget* backs every text anyway.
+- **A widget bar that finds things**: Ctrl+F or the magnifier searches by name or by what a widget does, typos forgiven; arrows, Enter and Escape work as you expect, and the arrow keys nudge the selected widget. Its quick controls are one sheet with Widget, Look, Arrange and Stack pages.
+- **A Control Center you arrange**: drag, resize from a corner and add from a library with all 20 quick toggles, or start from six layouts. Right-click a display or system control to unfold brightness, Night Light warmth and schedule, dark mode, Do Not Disturb, Game mode, Stay awake and the power profile (`inir iris control edit`).
+- **A lock screen you design on the real lock**: move the clock, the player and the sign-in field, start from four layouts, choose what plays behind them (video included) and give each lock widget its own design, material, corners and opacity (`inir iris lock edit`).
+- **Spotlight searches the whole shell**: widgets, shell actions and every option by area, with typos, initials and short words forgiven; `/` lists iRiS's switches and themes and flips them in place, and the clipboard scrolls through its whole history.
+- **Orbit**: the Island grows into your session: the workspace you are on as a strip of its windows, each a picture where Niri keeps it, with its neighbours in miniature above and below and a rail naming each by its number. Type to light up where a window is and ↵ goes to it; the window you pick lists its actions under its workspace, and Recent and set-aside windows sit below. It starts off while it matures: turn it on in Settings › Orbit, then open it from a hot corner that picks a free one itself or bind `inir orbit toggle`.
+- **Keybinds in one line**: `inir bind Mod+O orbit toggle` checks the call and tells you what those keys do now; `--add` saves it to your own Niri file, where it wins over iNiR's default, and `--examples` lists ready binds for your family. Tab completion in bash, zsh and fish knows every target, function and the values each one takes, and installs itself (`inir completions install`). In iRiS, `inir iris focus`, `today` and `controlCenter` open the side panels and the Control Center by their names.
+- **iRiS Settings for the whole desktop**: date and time, language, notifications and quiet hours, sounds, night light, battery, game mode, idle, screenshots and a Sources section for weather, calendars and updates, plus native pages for Niri's windows, keyboard, mouse and displays. Lay it out as a sidebar, a rail or a home.
+- **Every surface on its own terms**: each iRiS surface can be solid or glass and move in its own style, cards come in four designs, the Island can auto-hide, pieces can sit before the clock, and six pieces let you choose their icon.
+- **A visualizer wherever music plays**: capsules, a rising equalizer, dots, a wave or a ring on the resting Island, its player page and a new Visualizer bubble, with bands and colour in Now Playing.
+- **New pieces**: VPN for NetworkManager and Tailscale (addresses, your tailnet's devices, live traffic, WireGuard and OpenVPN import, `inir vpn`), Airing counting down to the next episode from AniList, Continue to search, play and resume anime in mpv to the second with its subtitles at hand, and a bubble that shows what changed in a new iNiR version and updates from its card.
+- **Connection notices in every family**: mice, keyboards, controllers, phones, drives and SD cards by name, plus Bluetooth, the charger, displays, sound output and the internet (`inir connections sample usb`).
+- **Niri from Settings**: six window animation presets (Snappy, Niri, Material, Bouncy, Gentle, Instant) in every family, and window opacity and blur rules without editing KDL (`inir niriAnimations apply snappy`).
+- **Wallpaper gallery sources and filters**: stills, live wallpapers or GIFs only, Konachan and yande.re beside Wallhaven, and sorting with a range for Wallhaven's top picks.
+- **A family switch list**: choose which families Super+Shift+W cycles through, in any family's Settings.
+- **Your avatar in the Material bar**: your picture can be the top-left icon.
+
+### Changed
+- Live wallpapers play from a copy sized to your screen and glass shares one small decoder: 1.8 GB became under 700 MB with a 4K wallpaper, and pausing holds the frame instead of rewinding.
+- The desktop stops drawing when nobody can see it: music visuals, the system monitor and the Organic edge hold still behind windows, and idle GPU use went from 22 % to 9 %.
+- The shell hands freed memory back to the system (about 290 MB with a live wallpaper) and no longer starts Mesa's extra GL threads.
+- Live wallpapers download in 4K when MotionBgs has it; *Light* keeps HD for slower machines.
+- Snappy is the default Niri animation on fresh installs, so windows open in about half the time.
+- iRiS ships its own type (Inter, Inter Display and Rubik) with a weight setting.
+- Glass catches light on its cut edge, so it no longer vanishes over a desktop darkened by windows, and compositor blur follows iRiS's real shape.
+- Dock previews show the app's icon and a strip of its workspace's columns with its window lit; middle-click one to close it.
+- The iRiS desktop menu is yours to arrange (screenshot, terminal, files, colour picker, next wallpaper and more).
+- Themes dress the lock screen and the Control Center too, and a theme can lend only its colours.
+- You decide what the iRiS OSD shows, in fullscreen too, and the volume limit goes up to 153 %.
+- Online features (wallpaper sources, news, anime, weather, lyrics, AI chat) say when you are offline and pick up again on their own; weather keeps its last forecast.
+- iRiS Settings reads better on glass: groups open on what people look for first, search reads descriptions and marks the words you typed, and the section you are in wears the accent.
+- A fresh iRiS install keeps the wallpaper clear of Material's blur and dim, and cards leave a little air between themselves and the bubble that opened them.
+- The music widget rests as a single tile when nothing plays, and the media card's artwork fills the card.
+- The installer says when a distribution's Qt is older than 6.9 instead of failing halfway, and a first install ends by saying why to reboot.
+
+### Fixed
+- YouTube previews no longer take over what is playing, and apps that play through mpv or GStreamer show their own name in the sound lists.
+- Track time and length stay right after seeks and ads in every family, and artwork no longer flickers between tracks.
+- Light mode keeps its contrast: accents are solved against the surface they sit on, text on accent fills is readable, and VS Code gets a real light theme.
+- Auto light or dark reads the wallpaper you actually see (PNGs with an alpha channel turned the shell light on 56 of 265 wallpapers here), and a mode you pick by hand stays.
+- The shell starts without recolouring every app, and apps under frost or blur take the material the shell actually shows.
+- iRiS loads again on Ubuntu, Debian and Fedora, whose Qt still reserved four names it used.
+- Repeating calendar events show every time they repeat, and external calendars no longer empty out after a sync without internet.
+- Fullscreen is noticed every time, so the bar hides and game mode starts on a second fullscreen window, and the next song no longer pops up over a game.
+- Screen corners open on their own monitor, and Material sidebars open on the monitor you clicked.
+- A crowded Material bar no longer cuts its modules in half; the music title gives way first.
+- Transparent widgets are bare instead of sitting on a faint dark plate.
+- Bare desktop widgets on a light scheme keep light ink over a dark wallpaper instead of turning near black, and a soft shadow holds their text where the wallpaper under them is bright.
+- The keybind examples in the IPC reference use Niri's own syntax, so they can be pasted into your config.
+- Icon themes follow the light or dark scheme: WhiteSur-dark's white folders no longer show up in Nautilus, Dolphin or the tray on a light scheme.
+- Live wallpapers no longer restart when you uncover the desktop, and switching families no longer shows a pixelated frame.
+- Big wallpaper folders no longer choke the shell (3736 processes became 31 for a 300-image folder), folders with spaces get thumbnails, and a file name can no longer run a command.
+- Done and the other edit-mode buttons answer the first click, locking and unlocking iRiS no longer flash, and lock-screen widgets show up.
+- Tray icons show the icon the app publishes, and Island bubbles no longer contact AniList unless you placed Airing.
+- Your language shows outside the one region it was written for, language names read the same in every picker, and Spotlight's usage hints keep the command you type.
+- Setup leaves your font settings alone, and `inir update` names the checkout it updates, shows the real pull error and stops flagging our own files as your changes.
+- Niri window rules stay scoped to iNiR's own and keep the game mode marker.
+
+### Issues / PRs
+- Fixed [#261](https://github.com/snowarch/iNiR/issues/261), [#262](https://github.com/snowarch/iNiR/issues/262), [#265](https://github.com/snowarch/iNiR/issues/265) and [#268](https://github.com/snowarch/iNiR/issues/268).
+- Included contributions from [#205](https://github.com/snowarch/iNiR/pull/205) and [#252](https://github.com/snowarch/iNiR/pull/252).
+
+### Contributors
+Thanks to [@cnvuls](https://github.com/cnvuls) for the Material animation preset and the idea behind the presets, to [@Azhar457](https://github.com/Azhar457) for the Indonesian translation, to jen9 on Discord for the idea behind widget stacks, and to [@Itstatertots](https://github.com/Itstatertots), [@kayliox](https://github.com/kayliox), [@Angel173hu](https://github.com/Angel173hu) and [@noxygalaxy](https://github.com/noxygalaxy) for the reports behind the fixes.
+
+## [2.31.0] - 2026-09-19
+
+2.31.0 introduces **iRiS**, the third panel family, together with its Island,
+Themes, Studio, edge-aware Dock and desktop pieces. The release also folds in
+the wallpaper, widget, Settings, runtime and installer work completed on
+`prerelease` since 2.30.0.
+
+### Added
+
+- **iRiS, the third panel family.** An Island that lives on a screen edge and turns into whatever you opened, pieces you can carry around, bodies that grow out of what you clicked, and a Studio that edits the whole thing live. It is built for Niri and it is the flagship from here on, so expect it to get most of the love.
+- **iRiS Themes** are whole redesigns, not palettes: 14 curated ones, plus your own as plain JSON files in `~/.config/inir/iris/themes`. Save, import, export and share them from Studio or with `inir iris theme`. A theme never touches what you placed, only how it looks and moves.
+- **The Island goes on any edge.** Top, bottom, left or right (`inir iris edge <side>`, or drag it there). On a side it stands up as a capsule with a stacked clock and its bubbles above and below, and everything it opens grows inward.
+- **The Dock goes on any edge too** (`iris.dock.position`, `inir iris dockEdge <side|auto>`). Auto sits opposite the Island, and if you send one to the other's edge they just trade places.
+- **Pieces that share an edge with the Dock or the Island join them** instead of floating on top: the Dock gives them a section of their own after a separator, and the Island carries them as part of its body.
+- **The Island can also be a full width bar** with start, center and end zones (`iris.bar.fullStart`, `fullCenter`, `fullEnd`) for the Island itself, workspaces, the focused window, the time or any piece. Settings, Island, Bar, or `inir iris zone start|center|end kinds+joined+with+plus`.
+- **Glass is the iRiS material**: the wallpaper, frosted and tinted, behind every body, with text that keeps its contrast on bright wallpapers. Real compositor blur is in there too, labelled as experimental because it is.
+- **Studio and Settings show what you are changing**, with live miniatures and small animated scenes for the Island edge, the bar zones, Light, Fusion, Glass and the Dock. Not a fan? Animated previews in Settings, Appearance, Previews turns them all off.
+- **Multiple monitors**: every output gets its own Island, frame and Dock, while Spotlight, the Dock reveal and editing in place follow the output you are on.
+- **Desktop widgets get an iRiS face system** instead of a second widget backend: glass, transparent, solid and tinted materials, per-widget controls and native faces for the everyday set. Controls and Screen Time join the desktop library too.
+- **The iRiS wallpaper gallery** browses the local library, Wallhaven and live anime scenery with showcase/strip/wall layouts, pinned folders and one-at-a-time muted video previews. Live wallpaper decoding pauses when it is not useful instead of burning through frames under covered desktops.
+- **iRiS keeps the expensive stuff on demand**: inactive Island pages, external Controls, Settings previews and floating bubble bodies are not kept alive just because the family is selected. The family stays feature-heavy without making every feature resident.
+- **Editorial global style** adds a configurable Material-based visual system across Settings, bars, dock, dashboard, sidebars, media, notifications, wallpaper flows, desktop widgets, lock/session surfaces and shared paper components, with separate paper/accent controls instead of one hard-coded treatment.
+- **Organic Edge** brings the Organic audio renderer to screen edges and desktop backgrounds with layout-aware spectrum behavior, configurable placement/composition and dedicated Settings controls.
+- **Desktop composition tools** add a dashboard focus timer, decorative shape/date-badge widgets, Editorial typography compositions and a substantially expanded widget editor for placement, shape, visibility and per-widget controls.
+- **Optional Kira companion runtime** adds the companion shell integration, Settings/IPC controls, expanded JRPG animation profile, locale coverage and safer optional asset-pack delivery.
+- **Fresh-install experience presets** now combine curated desktop compositions, coherent visual styles and explicit graphics budgets so new installs can choose a complete starting point instead of assembling every subsystem manually.
+- **Kalaallisut (`kl_GL`) localization** is now available as a complete selectable locale.
+- **Day progress desktop widget** shows a borderless instrument ring of 60 minute ticks with quarter hour labels, a comet-tipped elapsed arc and the current time/percentage at the center, with style (ring/arc/ticks), text size, icon, labels and date toggles plus the shared per-role palette.
+
+### Changed
+
+- **First-run setup is family-aware.** The family is chosen before its setup pages; iRiS gets its own Themes, live chassis preview and real Island/Dock placement controls instead of inheriting Material ii profiles and controls that do not own iRiS.
+- **Settings architecture and search** now use the rebuilt Material ii host/navigation model, generated search registry, clearer focus/readability states and consistent embedded/window lifecycle behavior.
+- **M3 bar layout editing** has been rebuilt for clearer module placement and better compression on constrained widths while preserving the existing bar ownership model.
+- **Localization tooling and runtime switching** now separate source coverage from locale parity, improve translations across the shipped catalogs and scope locale discovery to actual translation files.
+- **Organic audio behavior** is more layout-aware across bars and screen edges, follows the active playback sink more reliably and uses less fragment work for edge rendering.
+- **Runtime work is more demand-driven**: resource polling is scoped to visible consumers, countdowns share a second-aligned clock, hidden/reduced-motion widget animations stop unnecessary work and Settings search reuses edit-distance state.
+- **Default Niri animation timing** is slower and more deliberate on fresh/default configurations.
+- **Fresh CachyOS installs** enable `niri-focused-booster` when the official package and DMEM cgroup interface are available. Existing installations are left alone.
+
+### Fixed
+
+- **The iRiS desktop menu stays available with desktop widgets disabled.** Turning off the widget canvas no longer removes bare-desktop right-click actions such as Wallpaper, Studio, Search and Settings.
+- **Update/crash recovery** now refreshes Niri-owned session environment from the running compositor and limits `cleanup-orphans` to Quickshell processes owned by `inir.service`, fixing the two failure paths reported in [#257](https://github.com/snowarch/iNiR/issues/257). Doctor also surfaces a failed/start-limit shell service with the normal concise `inir logs` path instead of requiring full framework logs.
+- **Terminal update completion** now captures the real `setup update` exit status without relying on `PIPESTATUS`, so successful VM updates no longer end with Bash unary-operator errors and a false failure summary.
+- **Uninstall restoration** now restores pre-iNiR Kitty and Foot configuration, removes generated terminal theme links safely, preserves a final uninstall backup and removes only iNiR-owned shell integration ([#256](https://github.com/snowarch/iNiR/issues/256)).
+- **Niri lock recovery** now survives an interrupted Quickshell/session-lock lifecycle without leaving the next shell instance in a broken lock state.
+- **Niri display Settings** no longer write compositor configuration merely by loading the page, persist actual display edits correctly and keep success/error feedback from disrupting the Settings workflow.
+- **Fullscreen/Game Mode behavior** is reactive again: visualizers suspend correctly, Orbit hot corners stay out of fullscreen/game sessions, Overview can reclaim shell navigation, and Ricelin Pill uses the same native Top-layer fullscreen stacking as Dock/Classic/M3 while reserving Overlay only for explicit surfaces, OSD and toasts.
+- **Dock interactions** recover canceled pointer activations and keep previews/context menus stable long enough to interact with them without leaving stale menus behind.
+- **Bar popups** are clamped to their output bounds instead of rendering partially off-screen.
+- **Wallpaper/network content retries** handle booru array responses correctly and retry transient Wallhaven service failures instead of failing permanently on a temporary response.
+- **Sidebar geometry** preserves its bottom navigation rail width and correctly centers the collapsed footer summary.
+- **Audio visualizer source selection** keeps Cava attached to playback sink monitors instead of silently following the wrong PipeWire path.
+- **Locale discovery** no longer treats unrelated JSON files as selectable languages.
+
+### Issues / PRs
+
+- Fixed [#256](https://github.com/snowarch/iNiR/issues/256) and [#257](https://github.com/snowarch/iNiR/issues/257).
+- [#258](https://github.com/snowarch/iNiR/issues/258) remains under review in contributor PR [#259](https://github.com/snowarch/iNiR/pull/259) and is not part of 2.31.0.
+
+## [2.30.0] - 2026-09-03
+
+This release brings the **wallpaper transition pipeline** to a stable base, expands **desktop tools** and **media controls**, and closes a long list of setup, runtime and Settings issues across ii and Waffle xd
+
+2.30.0 is not meant to be the final shape of any of this. It is the base I am choosing to build on for the next stage of iNiR. There will be bugs, regressions and things that need to be reworked as development continues, but this release is where I am starting that next stage.
+
+### Added
+
+- **Multilingual OCR** now includes Japanese and Chinese modes, Japanese dictionary lookup, optional Anki export and downloadable study resources.
+- **Desktop widgets** now include calendar, pixel clock, timer and to-do tools with persistent state and matching Settings controls.
+- **Wallpaper shader transitions** add a larger internal transition set, random shader selection and shared controls in ii and Waffle.
+- **Organic audio rendering** is now available in the Visualizer and Media Player with configurable response, range, glow, idle motion and presentation controls.
+- **Dashboard and sidebar organizers** can open expanded calendar, agenda and to-do views.
+- **Niri monitor arrangement** is available directly from Monitor Settings and persists the output layout.
+- **App-level filters** can exclude applications from notifications and visualizer audio sources.
+
+### Changed
+
+- **Orbit** navigation, workspace motion, shelf density and preview refresh were refined, with bounded preview memory and cleaner presentation lifetimes.
+- **Wallpaper ownership** is now explicit. Internal shader transitions stay inside the QML renderer while AWWW remains synchronized underneath, removing the visible handoff between renderers.
+- **Wallpaper preview, apply and cancel** now share one state machine, coalesce rapid navigation and avoid repainting an already presented preview.
+- **Wallpaper fill and backdrop rendering** keep the final crop and quality more consistently across low resolution and mixed aspect ratio images.
+- **Visualizer and Media Player** now share the same Cava normalization, palette and Organic rendering path while keeping independent quick controls.
+- **Setup and Doctor** use more distro-appropriate dependency paths on Arch, Fedora and Debian, with repository-first providers and cleaner fallbacks. Nix packaging and runtime tool resolution were updated too.
+- **Niri launcher integration** is portable across repo-link and login sessions, and the generated IPC registry matches the current command surface.
+- **Session startup** now gives Niri ownership of compositor environment state, waits for the real runtime and handles suspend locking more safely.
+- **Settings** now opens in Advanced mode by default and app filtering is available consistently in ii and Waffle.
+- **Mascot defaults** and optional pack guidance were aligned so fresh installs stay opt-in and existing configurations are not rewritten unexpectedly.
+- **YT Music** runtime authentication and dependency handling were hardened across supported distributions.
+- **M3 dock and bar layout** behavior was refined so context menus, workspace placement and module ordering remain usable under tight width and custom ordering.
+- **Organizer expansion controls** now live in the calendar, events and to-do widget headers instead of changing the sidebar navigation rail.
+- **Release and Arch package metadata** are aligned on version 2.30.0, and obsolete allocator tuning was removed from the runtime.
+
+### Fixed
+
+- **Wallpaper shader previews** no longer flash the currently applied wallpaper between frames, and rapid preview changes no longer expose AWWW underneath the transition.
+- **Wallpaper transition geometry** no longer shows provisional resize, recenter or crop states before the final image geometry is ready.
+- **Preview and screenshot capture** no longer replace the user clipboard or pollute cliphist, while normal Niri screenshot notifications keep their icon.
+- **Fedora and Debian dependency repair** no longer treats Arch package names, command IDs or Flatpak IDs as native packages, and Fedora prefers packaged AWWW providers before source builds.
+- **SDDM setup** no longer overrides the distro greeter backend or input method.
+- **Nix installs** now resolve preview tools from the service environment and keep Niri and optional mascot packaging consistent.
+- **Overview desktop app drag** works again and Dashboard layout no longer regresses while moving items.
+- **Visualizer wave and bars controls** keep their sensitivity, smoothing, color and bar settings after the Organic work.
+- **Pixel Clock, setup output and Niri night light** behavior was cleaned up without changing user configuration.
+- **Taskbar application state** no longer enters a recursive binding loop.
+- **Bar auto-hide, tray interactions and constrained layouts** are more stable, and workspace modules can move through the full supported ordering range.
+- **Material text fields and system widgets** render more cleanly, CPU and GPU temperatures are separated, stale notification image handles fall back safely, and idle Custom Image shape tooltips stay hidden.
+- **Crosshair chrome and masked user services** now handle their edge cases without clipping outside the rounded frame or breaking setup/runtime repair.
+- **Repo-link installs** keep launcher and service files synchronized with the live checkout instead of leaving stale runtime copies.
+- **Managed Python dependency documentation** now matches the runtime sources used by the project.
+
 ## [2.29.3] - 2026-08-25
 
 A polish release for Pill controls and surfaces, settings navigation, TUI app themes, and several runtime fixes including privileged graphical apps and audio feedback stability.

@@ -21,7 +21,8 @@ RippleButton {
             + (Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal * 2 : 24))
     implicitHeight: Appearance.regaliaEverywhere ? Appearance.regalia.compactControlHeight : 30
     buttonRadius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
-        : root._zzz ? Appearance.zzz.controlRadius : height / 2
+        : root._zzz ? Appearance.zzz.controlRadius
+        : Appearance.editorialEverywhere ? Appearance.rounding.small : height / 2
     buttonRadiusPressed: buttonRadius
     toggled: root.selected
 
@@ -49,7 +50,7 @@ RippleButton {
         root.selected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1,
         root.buttonHovered ? root._hoverFill : root._restFill, 4.5)
 
-    readonly property color _border: Appearance.regaliaEverywhere ? "transparent"
+    readonly property color _border: Appearance.editorialEverywhere ? "transparent" : Appearance.regaliaEverywhere ? "transparent"
         : root.selected ? "transparent"
         : (root.buttonHovered ? Appearance.colors.colOutline : Appearance.colors.colOutlineVariant)
 

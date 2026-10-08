@@ -163,7 +163,7 @@ reload_terminal_colors() {
 apply_terminal_configs() {
   [[ -f "$SCSS_FILE" ]] || return 0
 
-  local all_supported=(kitty alacritty foot wezterm ghostty konsole starship omp btop lazygit yazi)
+  local all_supported=(kitty alacritty foot wezterm ghostty konsole starship omp btop lazygit yazi fuzzel)
   local enabled_terminals=()
   for term in "${all_supported[@]}"; do
     local enabled

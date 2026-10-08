@@ -50,7 +50,11 @@ Scope {
             readonly property real orbitSceneCenterOffset: -root.orbitStudioReservedWidth / 2
             property real orbitStageReveal: 1
             property real orbitPresentationProgress: 0
+            property real orbitBackdropProgress: 0
             property real orbitEntryProgress: 0
+            property bool _orbitStageReady: false
+            property bool _orbitHostStarted: false
+            property bool _orbitSceneStarted: false
             property int orbitStageSwitchDirection: 1
             property bool orbitLensOpen: false
             property string orbitLensText: ""
@@ -73,6 +77,8 @@ Scope {
             readonly property int orbitPresentationDistance: OrbitTuning.presentationDistance(orbitPresentation)
             readonly property int orbitEnterDuration: OrbitTuning.presentationEnterDuration(orbitPresentation)
             readonly property int orbitExitDuration: OrbitTuning.presentationExitDuration(orbitPresentation)
+            readonly property int orbitBackdropWarmupBudgetMs: Math.min(80,
+                Math.max(24, Math.round(root.orbitEnterDuration * 0.25)))
             readonly property int orbitEntryDelayMs: OrbitTuning.presentationEntryDelay(orbitPresentation)
             readonly property string orbitEntryStyle: OrbitTuning.presentationEntryStyle(orbitPresentation)
             readonly property int orbitEntryStaggerMs: OrbitTuning.presentationStagger(orbitPresentation)
@@ -97,11 +103,12 @@ Scope {
                 Math.min(100, root.orbitOptions.backdropBlurSaturation ?? 18))
             readonly property int orbitBackdropBlurTint: Math.max(0,
                 Math.min(100, root.orbitOptions.backdropBlurTint ?? 28))
-            readonly property bool orbitWallpaperBlurActive: root.orbitMode
-                && root.orbitBackdropBlurMode === "shell"
+            readonly property bool orbitWallpaperBlurConfigured: root.orbitBackdropBlurMode === "shell"
                 && root.orbitBackdropBlurStrength > 0
                 && Appearance.effectsEnabled
                 && !GameMode.active
+            readonly property bool orbitWallpaperBlurActive: root.orbitMode
+                && root.orbitWallpaperBlurConfigured
             readonly property HyprlandMonitor monitor: CompositorService.isHyprland ? Hyprland.monitorFor(root.screen) : null
             property bool monitorIsFocused: CompositorService.isHyprland 
                 ? (Hyprland.focusedMonitor?.id == monitor?.id)
@@ -184,6 +191,10 @@ Scope {
                     stageHeight: item?.height ?? 0,
                     stageOpacity: overviewLoader.opacity,
                     stageVisible: overviewLoader.visible,
+                    backdropLoaded: orbitBackdropLoader.status === Loader.Ready
+                        && orbitBackdropLoader.item !== null,
+                    presentationProgress: root.orbitPresentationProgress,
+                    backdropProgress: root.orbitBackdropProgress,
                     entryProgress: root.orbitEntryProgress,
                     stageReveal: root.orbitStageReveal,
                     cards: visual.cards ?? [],
@@ -438,20 +449,43 @@ Scope {
             function present(): void {
                 if (root._presentedOpen || root._presentPending)
                     return
+                const freshOrbitOpen = root.orbitMode && !root.visible
                 root._presentPending = true
                 _overviewCloseTimer.stop()
                 orbitPresentationExit.stop()
-                orbitSceneExit.stop()
+                orbitBackdropExit.stop()
                 visible = true
                 if (root.orbitMode) {
-                    root.orbitPresentationProgress = 1
+                    root._orbitHostStarted = false
+                    root._orbitStageReady = overviewLoader.status === Loader.Ready
+                    root._orbitSceneStarted = root.orbitEntryProgress >= 1
+                }
+                if (freshOrbitOpen) {
+                    root.orbitPresentationProgress = 0
+                    root.orbitBackdropProgress = 0
                     root.orbitEntryProgress = 0
+                    root._orbitSceneStarted = false
                 }
                 Qt.callLater(() => {
                     root._presentPending = false
                     if (!root.shouldShow)
                         return
                     root._presentedOpen = true
+                    if (root.orbitMode) {
+                        if (Appearance.animationsEnabled && root.orbitEnterDuration > 0) {
+                            if (root.orbitWallpaperBlurActive) {
+                                orbitBackdropWarmupDeadline.restart()
+                                root.beginOrbitBackdropWarmup()
+                            } else {
+                                root.startOrbitHost()
+                            }
+                        } else {
+                            root.orbitPresentationProgress = 1
+                            root.orbitBackdropProgress = root.orbitWallpaperBlurActive ? 1 : 0
+                            root._orbitHostStarted = true
+                            root.maybeStartOrbitScene()
+                        }
+                    }
                     if (!root.isTargetOutput)
                         return
                     if (root.orbitMode) {
@@ -492,13 +526,19 @@ Scope {
                 root.orbitLensText = ""
                 root.clearOrbitStudioPreview()
                 if (root.orbitMode) {
+                    orbitPresentationWarmup.running = false
+                    orbitBackdropWarmupDeadline.stop()
                     orbitPresentationDelayTimer.stop()
+                    orbitSceneEnter.stop()
                     orbitPresentationEnter.stop()
+                    orbitBackdropEnter.stop()
                     if (Appearance.animationsEnabled && root.orbitExitDuration > 0) {
                         orbitPresentationExit.restart()
-                        orbitSceneExit.restart()
+                        if (root.orbitBackdropProgress > 0)
+                            orbitBackdropExit.restart()
                     } else {
                         root.orbitPresentationProgress = 0
+                        root.orbitBackdropProgress = 0
                         root.orbitEntryProgress = 0
                     }
                 }
@@ -508,18 +548,59 @@ Scope {
             function startOrbitPresentation(): void {
                 if (!root.orbitMode || !root.shouldShow || overviewLoader.status !== Loader.Ready)
                     return
-                orbitPresentationExit.stop()
+                root._orbitStageReady = true
+                root.maybeStartOrbitScene()
+            }
+
+            function startOrbitHost(): void {
+                if (!root.orbitMode || !root.shouldShow || root._orbitHostStarted)
+                    return
+                root._orbitHostStarted = true
+                if (!Appearance.animationsEnabled || root.orbitEnterDuration <= 0)
+                    root.orbitPresentationProgress = 1
+                else
+                    orbitPresentationEnter.restart()
+                root.maybeStartOrbitScene()
+            }
+
+            function startOrbitBackdrop(): void {
+                if (!root.orbitWallpaperBlurActive || root.orbitBackdropProgress >= 1)
+                    return
+                if (!Appearance.animationsEnabled || root.orbitEnterDuration <= 0)
+                    root.orbitBackdropProgress = 1
+                else
+                    orbitBackdropEnter.restart()
+            }
+
+            function beginOrbitBackdropWarmup(): void {
+                if (!root._presentedOpen || !root.shouldShow || !root.orbitWallpaperBlurActive
+                        || !root.orbitBackdropReady() || orbitPresentationWarmup.running)
+                    return
+                orbitPresentationWarmup.frames = 0
+                orbitPresentationWarmup.running = true
+            }
+
+            function maybeStartOrbitScene(): void {
+                if (!root.orbitMode || !root.shouldShow || !root._orbitStageReady
+                        || !root._orbitHostStarted || root._orbitSceneStarted)
+                    return
+                root._orbitSceneStarted = true
                 if (!Appearance.animationsEnabled || root.orbitEnterDuration <= 0) {
                     root.orbitEntryProgress = 1
                     root.publishOrbitRuntimeStatus()
                     return
                 }
-                root.orbitPresentationProgress = 1
-                root.orbitEntryProgress = 0
                 if (root.orbitEntryDelayMs > 0)
                     orbitPresentationDelayTimer.restart()
                 else
-                    orbitPresentationEnter.restart()
+                    orbitSceneEnter.restart()
+            }
+
+            function orbitBackdropReady(): bool {
+                if (!root.orbitWallpaperBlurActive)
+                    return true
+                return orbitBackdropLoader.status === Loader.Ready
+                    && (orbitBackdropLoader.item?.backdropReady ?? false)
             }
 
             Component.onCompleted: {
@@ -535,6 +616,23 @@ Scope {
             onOrbitStageModeChanged: {
                 root.animateOrbitStageSwitch()
                 Qt.callLater(root.publishOrbitRuntimeStatus)
+            }
+            onOrbitWallpaperBlurActiveChanged: {
+                if (!root._presentedOpen || !root.shouldShow)
+                    return
+                if (root.orbitWallpaperBlurActive) {
+                    orbitBackdropExit.stop()
+                    root.beginOrbitBackdropWarmup()
+                    return
+                }
+                orbitPresentationWarmup.running = false
+                orbitBackdropWarmupDeadline.stop()
+                orbitBackdropEnter.stop()
+                if (Appearance.animationsEnabled && root.orbitExitDuration > 0
+                        && root.orbitBackdropProgress > 0)
+                    orbitBackdropExit.restart()
+                else
+                    root.orbitBackdropProgress = 0
             }
             onOrbitOptionsChanged: Qt.callLater(root.publishOrbitRuntimeStatus)
             onOrbitStudioOpenChanged: root.publishOrbitRuntimeStatus()
@@ -561,6 +659,50 @@ Scope {
             NumberAnimation {
                 id: orbitPresentationEnter
                 target: root
+                property: "orbitPresentationProgress"
+                to: 1
+                duration: root.orbitEnterDuration
+                easing.type: Easing.Linear
+                onFinished: root.publishOrbitRuntimeStatus()
+            }
+
+            FrameAnimation {
+                id: orbitPresentationWarmup
+                property int frames: 0
+                running: false
+                onTriggered: {
+                    frames++
+                    if (frames < 2)
+                        return
+                    running = false
+                    orbitBackdropWarmupDeadline.stop()
+                    if (!root.shouldShow || !root.orbitMode || !root._presentedOpen)
+                        return
+                    root.startOrbitBackdrop()
+                    root.startOrbitHost()
+                }
+            }
+
+            Timer {
+                id: orbitBackdropWarmupDeadline
+                interval: root.orbitBackdropWarmupBudgetMs
+                repeat: false
+                onTriggered: root.startOrbitHost()
+            }
+
+            NumberAnimation {
+                id: orbitBackdropEnter
+                target: root
+                property: "orbitBackdropProgress"
+                to: 1
+                duration: root.orbitEnterDuration
+                easing.type: Easing.Linear
+                onFinished: root.publishOrbitRuntimeStatus()
+            }
+
+            NumberAnimation {
+                id: orbitSceneEnter
+                target: root
                 property: "orbitEntryProgress"
                 to: 1
                 duration: root.orbitEnterDuration
@@ -573,7 +715,7 @@ Scope {
                 id: orbitPresentationDelayTimer
                 interval: root.orbitEntryDelayMs
                 repeat: false
-                onTriggered: if (root.shouldShow && root.orbitMode) orbitPresentationEnter.restart()
+                onTriggered: if (root.shouldShow && root.orbitMode) orbitSceneEnter.restart()
             }
 
             NumberAnimation {
@@ -582,17 +724,17 @@ Scope {
                 property: "orbitPresentationProgress"
                 to: 0
                 duration: root.orbitExitDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Appearance.animationCurves.standardAccel
+                easing.type: Easing.Linear
             }
 
             NumberAnimation {
-                id: orbitSceneExit
+                id: orbitBackdropExit
                 target: root
-                property: "orbitEntryProgress"
+                property: "orbitBackdropProgress"
                 to: 0
                 duration: root.orbitExitDuration
-                easing.type: Easing.InCubic
+                easing.type: Easing.Linear
+                onFinished: root.publishOrbitRuntimeStatus()
             }
 
             Timer {
@@ -602,7 +744,18 @@ Scope {
                 // never torn down mid-close.
                 interval: (root.orbitMode ? root.orbitExitDuration
                     : Appearance.animation.elementMoveExit.duration) + 40
-                onTriggered: root.visible = false
+                onTriggered: {
+                    root.visible = false
+                    if (root.orbitMode) {
+                        root.orbitPresentationProgress = 0
+                        root.orbitBackdropProgress = 0
+                        root.orbitEntryProgress = 0
+                        root._orbitStageReady = false
+                        root._orbitHostStarted = false
+                        root._orbitSceneStarted = false
+                    }
+                    Qt.callLater(root.publishOrbitRuntimeStatus)
+                }
             }
 
             exclusionMode: ExclusionMode.Ignore
@@ -642,6 +795,7 @@ Scope {
                 anchors.fill: parent
                 z: -3
                 visible: root.orbitWallpaperBlurActive && root.visible
+                opacity: root.orbitPresentationProgress
                 source: WallpaperListener.wallpaperUrlForScreen(root.screen)
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
@@ -652,12 +806,17 @@ Scope {
             }
 
             Loader {
+                id: orbitBackdropLoader
                 anchors.fill: parent
                 z: -2
-                active: root.orbitWallpaperBlurActive && root.visible
-                visible: active
+                // Qt Loader.active=false destroys the loaded item. Keep the blur
+                // subtree alive only for the visible Orbit lifecycle.
+                active: root.visible
+                    && (root.orbitWallpaperBlurConfigured || root.orbitBackdropProgress > 0)
+                visible: active && root.orbitMode && root.visible
 
                 sourceComponent: GlassBackground {
+                    visible: orbitBackdropLoader.visible
                     anchors.fill: parent
                     radius: 0
                     forceBackdrop: true
@@ -671,15 +830,17 @@ Scope {
                     screenY: 0
                     screenWidth: root.width
                     screenHeight: root.height
-                    opacity: root._presentedOpen ? 1 : 0
+                    opacity: root._presentedOpen && root.orbitBackdropProgress <= 0
+                        ? 0.001 : root.orbitBackdropProgress
+                }
+            }
 
-                    Behavior on opacity {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation {
-                            duration: root._presentedOpen ? root.orbitEnterDuration : root.orbitExitDuration
-                            easing.type: Easing.OutCubic
-                        }
-                    }
+            Connections {
+                target: orbitBackdropLoader.item
+                ignoreUnknownSignals: true
+                function onBackdropReadyChanged(): void {
+                    if (orbitBackdropLoader.item?.backdropReady ?? false)
+                        root.beginOrbitBackdropWarmup()
                 }
             }
 
@@ -696,14 +857,15 @@ Scope {
                     const a = clamped / 100
                     return ColorUtils.transparentize(Appearance.colors.colLayer0Base, 1 - a)
                 }
-                opacity: root._presentedOpen ? 1 : 0
+                opacity: root.orbitMode ? root.orbitPresentationProgress
+                    : (root._presentedOpen ? 1 : 0)
                 visible: opacity > 0.001
 
                 // The scrim fades a little slower than the content on the way out, so
                 // the dimmed backdrop lingers under the dissolving panel instead of
                 // snapping the desktop back before the surface has left.
                 Behavior on opacity {
-                    enabled: Appearance.animationsEnabled
+                    enabled: Appearance.animationsEnabled && !root.orbitMode
                     animation: NumberAnimation {
                         duration: root._presentedOpen
                             ? Appearance.animation.elementMoveEnter.duration
@@ -912,7 +1074,9 @@ Scope {
                 // receded ~45%, so the slow decel tail collapses invisibly.
                 opacity: root._presentedOpen
                     ? 1
-                    : Math.max(0, (openProgress - 0.45) / 0.55)
+                    : root.orbitMode
+                        ? root.orbitPresentationProgress
+                        : Math.max(0, (openProgress - 0.45) / 0.55)
                 visible: openProgress > 0.001
 
                 Scale {
@@ -1322,10 +1486,10 @@ Scope {
                     active: root.visible && root.orbitMode
                         && (root.orbitOptions.shelf?.enable ?? true)
                     visible: active && status === Loader.Ready
-                    opacity: root._presentedOpen ? root.orbitShelfEntryProgress : 1
+                    opacity: root.orbitShelfEntryProgress
                     Translate {
                         id: orbitShelfEntryTransform
-                        y: root._presentedOpen ? (1 - root.orbitShelfEntryProgress) * 14 : 0
+                        y: (1 - root.orbitShelfEntryProgress) * 14
                     }
                     transform: [orbitShelfEntryTransform]
                     sourceComponent: Component {

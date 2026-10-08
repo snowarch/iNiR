@@ -53,8 +53,10 @@ PanelSurface {
 
             StyledText {
                 text: Weather.data?.temp ?? "--°"
-                font.pixelSize: root.compactMode ? Appearance.font.pixelSize.larger : Appearance.font.pixelSize.huge
-                font.weight: Font.Medium
+                font.pixelSize: Appearance.editorialEverywhere
+                    ? (root.compactMode ? Appearance.font.pixelSize.huge : Appearance.font.pixelSize.huge * 1.15)
+                    : (root.compactMode ? Appearance.font.pixelSize.larger : Appearance.font.pixelSize.huge)
+                font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Medium
                 font.family: Appearance.font.family.numbers
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                      : root.inirEverywhere ? Appearance.inir.colText
@@ -70,7 +72,8 @@ PanelSurface {
             RippleButton {
                 implicitWidth: root.compactMode ? 24 : 28
                 implicitHeight: root.compactMode ? 24 : 28
-                buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                     : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                 colBackground: "transparent"
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
@@ -94,7 +97,8 @@ PanelSurface {
             RippleButton {
                 implicitWidth: root.compactMode ? 24 : 28
                 implicitHeight: root.compactMode ? 24 : 28
-                buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                     : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                 colBackground: "transparent"
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
@@ -120,6 +124,8 @@ PanelSurface {
             Layout.leftMargin: root.compactMode ? 34 : 42
             text: root.secondaryText
             font.pixelSize: root.hideLocation ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smallest
+            font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Normal
+            font.letterSpacing: Appearance.editorialEverywhere ? 0.6 : 0
             color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                  : root.inirEverywhere ? Appearance.inir.colTextSecondary
                  : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant

@@ -12,8 +12,8 @@ Item {
     readonly property MprisPlayer player: MprisController.activePlayer
     readonly property bool isYtMusicActive: MprisController.isYtMusicActive
     readonly property string sourceUrl: root.isYtMusicActive && YtMusic.currentThumbnail ? YtMusic.currentThumbnail : MprisController.effectiveArtUrl(root.player)
-    readonly property string title: root.isYtMusicActive && YtMusic.currentTitle ? YtMusic.currentTitle : (root.player?.trackTitle ?? "")
-    readonly property string artist: root.isYtMusicActive && YtMusic.currentArtist ? YtMusic.currentArtist : (root.player?.trackArtist ?? "")
+    readonly property string title: root.isYtMusicActive && YtMusic.currentTitle ? YtMusic.currentTitle : (MprisController.titleOf(root.player) ?? "")
+    readonly property string artist: root.isYtMusicActive && YtMusic.currentArtist ? YtMusic.currentArtist : (MprisController.artistOf(root.player) ?? "")
     readonly property string album: root.player?.trackAlbum ?? ""
     readonly property bool ready: artworkResolver.ready
     readonly property string displaySource: artworkResolver.displaySource

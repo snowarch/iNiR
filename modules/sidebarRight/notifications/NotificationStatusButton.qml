@@ -14,26 +14,31 @@ GroupButton {
 
     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : baseHeight / 2
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
+        : Appearance.editorialEverywhere ? Appearance.rounding.small : baseHeight / 2
     buttonRadiusPressed: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
     colBackground: Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+        : Appearance.editorialEverywhere ? Appearance.editorial.layer(2)
         : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer2
     colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.chrome
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
+        : Appearance.editorialEverywhere ? Appearance.editorial.field
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colLayer2Hover
     colBackgroundActive: Appearance.zzzEverywhere ? Appearance.zzz.sticker
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colLayer2Active
     property color colText: Appearance.zzzEverywhere
         ? (toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
         : Appearance.inirEverywhere
         ? (toggled ? Appearance.inir.colOnPrimaryContainer : Appearance.inir.colText)
+        : Appearance.editorialEverywhere
+        ? (toggled ? Appearance.editorial.fieldInk : Appearance.editorial.ink)
         : (toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1)
 
     contentItem: Item {

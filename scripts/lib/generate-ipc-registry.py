@@ -24,9 +24,13 @@ QML_DIRS = [
     REPO_ROOT / "shell.qml",
     REPO_ROOT / "ShellIiPanels.qml",
     REPO_ROOT / "ShellWafflePanels.qml",
+    REPO_ROOT / "ShellIrisPanels.qml",
 ]
 IPC_MD = REPO_ROOT / "docs" / "IPC.md"
 OUTPUT = REPO_ROOT / "scripts" / "lib" / "ipc-registry.sh"
+FISH_COMPLETIONS = REPO_ROOT / "scripts" / "completions" / "inir.fish"
+FISH_BEGIN = "# >>> generated from the IPC registry: python3 scripts/lib/generate-ipc-registry.py >>>"
+FISH_END = "# <<< generated from the IPC registry <<<"
 
 # Targets under this IPC.md heading are waffle-only.
 WAFFLE_SECTION_HEADING = "## Waffle-Specific Targets"
@@ -494,6 +498,16 @@ def generate_bash(targets: list[IpcTarget], aliases: dict[str, str]) -> str:
     lines.append(")")
     lines.append("")
 
+    # Literal values each function takes, read from its description (for completion)
+    lines.append("declare -gA IPC_FUNCTION_VALUES=(")
+    for t in targets:
+        for fn in t.functions:
+            values = function_values(fn)
+            if values:
+                lines.append(f'  ["{t.name}:{fn.name}"]="{_bash_escape(" ".join(values))}"')
+    lines.append(")")
+    lines.append("")
+
     # Keybind examples
     lines.append("declare -gA IPC_TARGET_EXAMPLE=(")
     for t in targets:
@@ -524,6 +538,83 @@ def generate_bash(targets: list[IpcTarget], aliases: dict[str, str]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Argument values and fish completions
+# ---------------------------------------------------------------------------
+
+_RE_BACKTICK = re.compile(r"`([^`]+)`")
+_RE_VALUE = re.compile(r"^[A-Za-z][A-Za-z0-9_.+/-]*:?$")
+
+
+def function_values(fn: IpcFunction) -> list[str]:
+    """The literal values a function's description names in backticks, for completion.
+
+    `apply:<id>` offers `apply:`; paths, commands, numbers and placeholders are left out.
+    """
+    if not fn.args or not fn.description:
+        return []
+    out: list[str] = []
+    # An example ("e.g. `firefox`") is not a value the function knows.
+    described = re.sub(r"e\.g\.,?\s*`[^`]+`", "", fn.description)
+    for raw in _RE_BACKTICK.findall(described):
+        token = re.sub(r"<[^>]*>.*$", "", raw.strip())
+        if " " in token or token.startswith(("~", "/", "-")) or (token.startswith("inir") and token != "inir") or not _RE_VALUE.match(token):
+            continue
+        if token.endswith(".json") or token.endswith(".qml") or "|" in token:
+            continue
+        if token not in out:
+            out.append(token)
+    return out
+
+
+def short_desc(text: str, limit: int = 60) -> str:
+    """First sentence of a description, trimmed for a completion menu."""
+    text = re.sub(r"[`*]", "", text or "").strip()
+    first = re.split(r"(?<=[.!?])\s", text, maxsplit=1)[0].rstrip(".")
+    if len(first) > limit:
+        first = first[: limit - 1].rstrip() + "…"
+    return first
+
+
+def _fish_quote(s: str) -> str:
+    return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'"
+
+
+def generate_fish(targets: list[IpcTarget], aliases: dict[str, str]) -> str:
+    """The generated block of scripts/completions/inir.fish: targets, functions and their values."""
+    by_target: dict[str, list[str]] = {}
+    for kebab, camel in aliases.items():
+        by_target.setdefault(camel, []).append(kebab)
+    lines = [FISH_BEGIN]
+    for t in targets:
+        names = [t.name] + sorted(by_target.get(t.name, []))
+        desc = _fish_quote(short_desc(t.description) or t.name)
+        for name in names:
+            lines.append(f"complete -c inir -n '__inir_at_target' -a {name} -d {desc}")
+        cond = " ".join(names)
+        for fn in t.functions:
+            fdesc = _fish_quote(short_desc(fn.description) or fn.name)
+            lines.append(f"complete -c inir -n '__inir_at_function {cond}' -a {fn.name} -d {fdesc}")
+            values = function_values(fn)
+            if values:
+                lines.append(
+                    f"complete -c inir -n '__inir_at_value {len(fn.args)} {fn.name} {cond}' -a {_fish_quote(' '.join(values))}"
+                )
+    lines.append(FISH_END)
+    return "\n".join(lines) + "\n"
+
+
+def splice_fish(existing: str, block: str) -> str:
+    start = existing.find(FISH_BEGIN)
+    end = existing.find(FISH_END)
+    if start < 0 or end < 0:
+        return existing.rstrip("\n") + "\n\n" + block
+    end += len(FISH_END)
+    if existing[end:end + 1] == "\n":
+        end += 1
+    return existing[:start] + block + existing[end:]
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -536,8 +627,14 @@ def main():
     targets = merge(qml_targets, md_entries)
     aliases = generate_aliases(targets)
     content = generate_bash(targets, aliases)
+    fish_existing = FISH_COMPLETIONS.read_text() if FISH_COMPLETIONS.exists() else ""
+    fish_content = splice_fish(fish_existing, generate_fish(targets, aliases))
 
     if check_mode:
+        if fish_existing != fish_content:
+            print(f"FAIL: {FISH_COMPLETIONS} is stale. Regenerate with:", file=sys.stderr)
+            print(f"  python3 scripts/lib/generate-ipc-registry.py", file=sys.stderr)
+            sys.exit(1)
         if not OUTPUT.exists():
             print(
                 f"FAIL: {OUTPUT} does not exist. Run the generator first.",
@@ -554,6 +651,7 @@ def main():
             sys.exit(1)
     else:
         OUTPUT.write_text(content)
+        FISH_COMPLETIONS.write_text(fish_content)
         print(
             f"Generated {OUTPUT} ({len(targets)} targets, {sum(len(t.functions) for t in targets)} functions)"
         )

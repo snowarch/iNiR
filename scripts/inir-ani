@@ -1,0 +1,41 @@
+#!/bin/sh
+# Runs ani-cli for iNiR: inir-ani <run-dir> [ani-cli arguments...]
+#
+# Everything one run needs lives in its own directory under $XDG_RUNTIME_DIR, so
+# runs never share a socket or a question and a reloaded shell can find the one
+# still going. The directory holds the mpv socket, the question ani-cli is asking,
+# the answer, a refusal from the player wrapper and, once ani-cli is gone, `exit`:
+# its status and the last thing it complained about.
+#
+# ani-cli swaps its menu for rofi or dmenu whenever it has no terminal, ignoring
+# ANI_CLI_MENU. A `rofi` first in PATH that is really inir-ani-menu keeps every
+# question coming to the shell on machines that have either installed.
+
+run=$1
+[ -n "$run" ] || exit 2
+shift
+
+here=$(dirname -- "$(readlink -f -- "$0")")
+mkdir -p -- "$run/bin" || exit 2
+ln -sf -- "$here/inir-ani-menu" "$run/bin/rofi"
+printf '%s\n' "$$" > "$run/pid"
+
+finish() {
+    status=$1
+    message=$(sed 's/\x1b\[[0-9;]*[A-Za-z]//g; s/\r/\n/g' "$run/log" 2>/dev/null | grep -v '^[[:space:]]*$' | tail -n 1)
+    printf '%s\n%s\n' "$status" "$message" > "$run/exit.part" && mv -f -- "$run/exit.part" "$run/exit"
+    exit "$status"
+}
+# ani-cli runs in a process group of its own, so stopping a run also stops the
+# menu it is waiting on and every subshell around it.
+set -m
+trap 'kill -TERM -- "-$child" 2>/dev/null; finish 143' TERM INT HUP
+
+PATH="$run/bin:$PATH" \
+ANI_CLI_MENU="$run/bin/rofi" \
+ANI_CLI_PLAYER="$here/inir-mpv" \
+INIR_ANI_RUN="$run" \
+    ani-cli "$@" > /dev/null 2> "$run/log" < /dev/null &
+child=$!
+wait "$child"
+finish $?

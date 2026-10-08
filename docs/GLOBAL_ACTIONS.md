@@ -67,12 +67,12 @@ You can disable the whole category by setting `search.globalActions.enableSetup`
 You can add your own actions by creating scripts in:
 
 ```
-~/.config/illogical-impulse/actions/
+~/.config/inir/actions/
 ```
 
 Each script becomes an action that appears in Overview search. The filename becomes the action name (without extension).
 
-Example: create `~/.config/illogical-impulse/actions/deploy.sh`:
+Example: create `~/.config/inir/actions/deploy.sh`:
 
 ```bash
 #!/bin/bash

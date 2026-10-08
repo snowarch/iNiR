@@ -36,11 +36,22 @@ class TranslationManager:
             r'Translation\.tr\s*\(\s*`([^`]*(?:\\.[^`]*)*?)`\s*\)',          # Backticks (template strings)
         ]
         
-        # Search all .qml and .js files
+        # Search product source only. Runtime evidence, harness copies and build/cache
+        # trees can mirror the shell and must not inflate discovery counts.
         file_extensions = ['*.qml', '*.js']
+        ignored_dir_names = {
+            '.git', '.agents', '.agents-backups', '.cache', 'node_modules',
+            'build', 'dist', '__pycache__',
+        }
         
         for ext in file_extensions:
             for file_path in self.source_dir.rglob(ext):
+                try:
+                    relative_parts = file_path.relative_to(self.source_dir).parts[:-1]
+                except ValueError:
+                    relative_parts = file_path.parts[:-1]
+                if any(part in ignored_dir_names for part in relative_parts):
+                    continue
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         content = f.read()

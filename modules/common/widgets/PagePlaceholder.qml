@@ -30,7 +30,8 @@ Item {
 
     ColumnLayout {
         anchors.centerIn: parent
-        spacing: Appearance.inirEverywhere ? 8 : 5
+        width: Appearance.editorialEverywhere ? Math.max(0, Math.min(340, root.width - 24)) : implicitWidth
+        spacing: Appearance.editorialEverywhere ? Math.round(12 * Appearance.editorial.spacing) : Appearance.inirEverywhere ? 8 : 5
 
         MascotImage {
             id: placeholderMascot
@@ -44,16 +45,16 @@ Item {
 
         // Inir: simple rectangle with centered icon
         Item {
-            visible: Appearance.inirEverywhere && !placeholderMascot.visible
+            visible: (Appearance.inirEverywhere || (Appearance.editorialEverywhere && !Appearance.editorial.ornaments)) && !placeholderMascot.visible
             Layout.alignment: Qt.AlignHCenter
             width: 72
             height: 72
             
             Rectangle {
                 anchors.fill: parent
-                radius: Appearance.inir.roundingNormal
-                color: Appearance.inir.colLayer2
-                border.width: 1
+                radius: Appearance.editorialEverywhere ? Appearance.editorial.radius : Appearance.inir.roundingNormal
+                color: Appearance.editorialEverywhere ? Appearance.editorial.secondaryField : Appearance.inir.colLayer2
+                border.width: Appearance.editorialEverywhere ? 0 : 1
                 border.color: Appearance.inir.colBorder
             }
             
@@ -61,18 +62,18 @@ Item {
                 anchors.centerIn: parent
                 text: root.icon
                 iconSize: 32
-                color: Appearance.inir.colTextSecondary
+                color: Appearance.editorialEverywhere ? Appearance.editorial.secondaryFieldInk : Appearance.inir.colTextSecondary
             }
         }
 
         // Material/Aurora: decorative shape wrapper
         MaterialShapeWrappedMaterialSymbol {
-            visible: !Appearance.inirEverywhere && !placeholderMascot.visible
+            visible: !Appearance.inirEverywhere && (!Appearance.editorialEverywhere || Appearance.editorial.ornaments) && !placeholderMascot.visible
             Layout.alignment: Qt.AlignHCenter
             text: root.icon
             shape: root.shape
             padding: 12
-            iconSize: 56
+            iconSize: Appearance.editorialEverywhere ? 36 : 56
             rotation: -30 * (1 - root.opacity)
         }
         
@@ -80,12 +81,16 @@ Item {
             visible: root.title !== ""
             Layout.alignment: Qt.AlignHCenter
             text: root.title
+            Layout.fillWidth: Appearance.editorialEverywhere
+            wrapMode: Text.WordWrap
             font {
                 family: Appearance.font.family.title
-                pixelSize: Appearance.font.pixelSize.larger
+                pixelSize: Appearance.font.pixelSize.larger * (Appearance.editorialEverywhere ? Appearance.editorial.titleScale : 1)
+                weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Normal
+                letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
                 variableAxes: Appearance.font.variableAxes.title
             }
-            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOutline
+            color: Appearance.editorialEverywhere ? Appearance.editorial.ink : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOutline
             horizontalAlignment: Text.AlignHCenter
         }
         StyledText {
@@ -93,7 +98,7 @@ Item {
             Layout.fillWidth: true
             text: root.description
             font.pixelSize: Appearance.font.pixelSize.small
-            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOutline
+            color: Appearance.editorialEverywhere ? Appearance.editorial.muted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOutline
             horizontalAlignment: root.descriptionHorizontalAlignment
             wrapMode: Text.Wrap
         }

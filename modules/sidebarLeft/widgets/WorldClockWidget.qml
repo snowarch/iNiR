@@ -52,7 +52,7 @@ Item {
     readonly property color colSurfaceHover: Appearance.zzzEverywhere ? Appearance.zzz.chrome
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
-        : Appearance.colors.colLayer2Hover
+        : Appearance.colLayer2Hover
     readonly property real radiusCard: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
     readonly property real radiusInner: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
@@ -354,7 +354,7 @@ Item {
                                     Layout.alignment: Qt.AlignVCenter
                                     implicitWidth: localLabel.implicitWidth + 10
                                     implicitHeight: localLabel.implicitHeight + 3
-                                    radius: height / 2
+                                    radius: Appearance.editorialEverywhere ? Appearance.rounding.small : height / 2
                                     color: ColorUtils.transparentize(root.colPrimary, 0.8)
                                     StyledText {
                                         id: localLabel
@@ -362,6 +362,7 @@ Item {
                                         text: Translation.tr("LOCAL")
                                         font.pixelSize: Appearance.font.pixelSize.smallest
                                         font.weight: Font.Bold
+                                        font.letterSpacing: Appearance.editorialEverywhere ? 0.8 : 0
                                         color: root.colPrimary
                                     }
                                 }
@@ -392,8 +393,11 @@ Item {
                                 id: timeText
                                 Layout.alignment: Qt.AlignRight
                                 text: clockRow.d?.time ?? "--:--"
-                                font.pixelSize: Appearance.font.pixelSize.larger ?? Appearance.font.pixelSize.normal
-                                font.weight: Appearance.zzzEverywhere ? Font.Black : Font.DemiBold
+                                font.pixelSize: Appearance.editorialEverywhere
+                                    ? Appearance.font.pixelSize.large
+                                    : (Appearance.font.pixelSize.larger ?? Appearance.font.pixelSize.normal)
+                                font.weight: Appearance.zzzEverywhere ? Font.Black
+                                    : Appearance.editorialEverywhere ? Font.DemiBold : Font.DemiBold
                                 font.family: Appearance.font.family.numbers
                                 font.italic: Appearance.zzzEverywhere
                                 color: clockRow.accentLocal ? root.colPrimary : clockRow.rowTextCol

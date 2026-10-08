@@ -30,11 +30,11 @@ RippleButton {
     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-        : Appearance.colors.colLayer1Hover
+        : Appearance.colLayer1Hover
     colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
-        : Appearance.colors.colLayer1Active
+        : Appearance.colLayer1Active
     colBackgroundToggled: colBackgroundHover
     colBackgroundToggledHover: colRipple
     
@@ -122,7 +122,7 @@ RippleButton {
                     anchors.centerIn: parent
                     text: "image"
                     iconSize: 24
-                    color: Appearance.colors.colSubtext
+                    color: Appearance.colSecondaryActionIcon
                 }
             }
             
@@ -161,7 +161,7 @@ RippleButton {
                 visible: !root.compact && root.anime?.titleJapanese && root.anime.titleJapanese !== (root.anime?.titleEnglish ?? root.anime?.title)
                 text: root.anime?.titleJapanese ?? ""
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
+                color: Appearance.colMetadataText
                 elide: Text.ElideRight
             }
             
@@ -196,12 +196,12 @@ RippleButton {
                     MaterialSymbol {
                         text: "movie"
                         iconSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
+                        color: Appearance.colSecondaryActionIcon
                     }
                     StyledText {
                         text: root.anime?.episodes ?? "?"
                         font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
+                        color: Appearance.colMetadataText
                     }
                 }
                 
@@ -241,7 +241,7 @@ RippleButton {
                     Layout.fillWidth: true
                     text: AnimeService.formatBroadcast(root.anime?.broadcast ?? "")
                     font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colSubtext
+                    color: Appearance.colMetadataText
                     elide: Text.ElideRight
                 }
             }
@@ -269,7 +269,7 @@ RippleButton {
                             text: modelData
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             color: Appearance.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
-                                : Appearance.colors.colOnSurfaceVariant
+                                : Appearance.colMetadataText
                         }
                     }
                 }

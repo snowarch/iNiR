@@ -1,0 +1,103 @@
+/* iNiR's finish for YouTube Music: the shell's grammar, not only its colours. Appended by 80-pear-desktop.sh after
+   the palette block, which defines --inir-* (and --inir-font, the face the shell shows). Selectors cover the
+   older ytmusic-player-bar and the newer ytmusic-miniplayer, which YouTube serves to different accounts. */
+:root { --inir-r-sheet: 26px; --inir-r-plate: 22px; --inir-r-tile: 14px; --inir-r-row: 10px; --inir-r-chip: 7px; }
+ytmusic-app, ytmusic-app *:not(yt-icon):not(.yt-icon-shape), tp-yt-paper-dialog, tp-yt-paper-dialog *,
+ytmusic-popup-container, ytmusic-popup-container * {
+  font-family: var(--inir-font), "Roboto", sans-serif !important;
+}
+
+/* The page is the field: no featured-art wash (a cold blur over the palette, cut straight across), no rules */
+ytmusic-fullbleed-thumbnail-renderer { display: none !important; }
+.background-gradient.ytmusic-browse-response { background: none !important; }
+ytmusic-nav-bar, #nav-bar-background { background: var(--inir-bg) !important; border: 0 !important; box-shadow: none !important; }
+#nav-bar-divider, #divider.ytmusic-guide-section-renderer { display: none !important; }
+#guide-wrapper, #mini-guide-background, ytmusic-guide-section-renderer { border: 0 !important; }
+ytmusic-player-queue-item, ytmusic-responsive-list-item-renderer { border-bottom: 0 !important; }
+
+/* Controls are quiet fills, never outlines */
+.yt-spec-button-shape-next--outline, .ytSpecButtonShapeNextOutline {
+  border: 0 !important; background: var(--inir-fg-10) !important; color: var(--inir-fg) !important;
+}
+.yt-spec-button-shape-next--outline:hover, .ytSpecButtonShapeNextOutline:hover { background: var(--inir-fg-15) !important; }
+#previous-items-button, #next-items-button { border: 0 !important; background: var(--inir-fg-10) !important; border-radius: 50% !important; }
+ytmusic-search-box { background: var(--inir-fg-10) !important; border: 0 !important; border-radius: var(--inir-r-row) !important; }
+ytmusic-search-box[opened] { background: var(--inir-popup) !important; }
+
+/* Where you are is the accent's container, as in every themed app */
+ytmusic-guide-entry-renderer[active] tp-yt-paper-item {
+  background: var(--inir-accent-container) !important; color: var(--inir-on-accent-container) !important;
+}
+ytmusic-guide-entry-renderer[active] yt-icon, ytmusic-guide-entry-renderer[active] .title {
+  color: var(--inir-on-accent-container) !important; --iron-icon-fill-color: var(--inir-on-accent-container) !important;
+}
+
+/* Shapes on the shell's ladder: tiles 14, rows 10, chips 7 */
+ytmusic-two-row-item-renderer ytmusic-thumbnail-renderer, ytmusic-two-row-item-renderer .image-wrapper,
+ytmusic-two-row-item-renderer #thumbnail, ytmusic-two-row-item-renderer img { border-radius: var(--inir-r-tile) !important; }
+ytmusic-responsive-list-item-renderer ytmusic-thumbnail-renderer, ytmusic-responsive-list-item-renderer img,
+ytmusic-player-queue-item yt-img-shadow, ytmusic-player-queue-item img { border-radius: var(--inir-r-chip) !important; }
+button.ytmusic-navigation-button-renderer, ytmusic-chip-cloud-chip-renderer .gradient-box, ytmusic-chip-cloud-chip-renderer a,
+ytmusic-guide-entry-renderer tp-yt-paper-item, ytmusic-player-queue-item[selected] { border-radius: var(--inir-r-row) !important; }
+
+/* The player is an island floating over the field, like the shell's own */
+/* The player keeps its 72 px; pages end 24 px earlier so nothing slides under the floating island */
+ytmusic-player-page, ytmusic-browse-response, ytmusic-search-page { padding-bottom: 24px !important; box-sizing: border-box !important; }
+ytmusic-player-bar, ytmusic-miniplayer {
+  left: 12px !important; right: 12px !important; bottom: 12px !important; width: auto !important;
+  border-radius: var(--inir-r-sheet) !important;
+  background: var(--inir-raised) !important; border: 0 !important;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.38) !important;
+}
+ytmusic-player-bar { overflow: hidden !important; }
+#player-bar-background { display: none !important; }
+/* The newer player's seek line: YouTube paints it brand red to magenta and centres it on the top edge, where the
+   island cuts it in half. Here it reads the accent and sits inside the island on the artwork's edge,
+   which at 4 px down already clears the 26 px corner. */
+ytmusic-miniplayer {
+  --yt-sys-color-baseline--static-brand-red: var(--inir-accent) !important;
+  --yt-sys-color-baseline--static-magenta: var(--inir-accent) !important;
+  --yt-sys-color-baseline--mono-tonal-hover: var(--inir-fg-20) !important;
+  --yt-sys-color-baseline--ten-percent-layer: var(--inir-fg-10) !important;
+}
+.ytMusicMiniPlayerProgressBarWrapper {
+  left: 16px !important; width: calc(100% - 32px) !important;
+  top: 0 !important; transform: none !important; padding: 4px 0 !important;
+}
+.ytMusicMiniPlayerProgressBar { border-radius: 3px !important; }
+/* The older player's slider is centred on the top edge the same way (left -16 px, lifted 16 px) */
+ytmusic-player-bar #progress-bar.ytmusic-player-bar {
+  left: 0 !important; width: calc(100% - 32px) !important; top: -11px !important; transform: none !important;
+}
+ytmusic-player-bar #progress-bar #progressContainer, ytmusic-player-bar #progress-bar #primaryProgress,
+ytmusic-player-bar #progress-bar #secondaryProgress { border-radius: 2px !important; }
+/* The mini video above the player is a tile of the same family */
+ytmusic-player[player-ui-state="MINIPLAYER"] {
+  border-radius: var(--inir-r-tile) !important; overflow: hidden !important; right: 12px !important;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.38) !important;
+}
+.ytMusicMiniPlayerProgressBar::-webkit-slider-thumb { background-color: var(--inir-accent) !important; }
+.ytmusicTrackInfoThumbnailWrapper, .ytmusicTrackInfoThumbnail, ytmusic-player-bar .image.ytmusic-player-bar {
+  border-radius: var(--inir-r-tile) !important; overflow: hidden !important;
+}
+
+/* Text and icons YouTube colours with literal white/grey in the newer player and the nav bar (invisible on a
+   light palette): measured #f1f1f1 title, white icons, #aaa time, #f1f1f1 menu button. */
+ytmusic-miniplayer .ytAttributedStringHost, ytmusic-miniplayer button, .ytmusicTrackInfoTitle { color: var(--inir-fg) !important; }
+.ytMusicMiniPlayerHost, .ytmusicTrackInfoByline { color: var(--inir-subtext) !important; }
+.ytMusicMiniPlayerLiveDotBehind { background-color: var(--inir-fg-20) !important; }
+.ytMusicMiniPlayerProgressBar:focus-visible { outline-color: var(--inir-accent) !important; }
+ytmusic-miniplayer .ytAttributedStringLink, ytmusic-miniplayer .ytMusicMiniPlayerTimeInfo { color: var(--inir-subtext) !important; }
+ytmusic-miniplayer svg, ytmusic-miniplayer svg path:not([fill="none"]) { fill: currentColor !important; }
+/* Its round buttons are the "over video" kind (white at 10 %), and its volume popup and seek tooltip are #212121 */
+ytmusic-miniplayer .ytSpecButtonShapeNextTonal.ytSpecButtonShapeNextOverlay { background: var(--inir-fg-10) !important; }
+ytmusic-miniplayer .ytSpecButtonShapeNextTonal.ytSpecButtonShapeNextOverlay:hover { background: var(--inir-fg-15) !important; }
+ytmusic-miniplayer .ytSpecTouchFeedbackShapeOverlayTouchResponse .ytSpecTouchFeedbackShapeFill { background-color: var(--inir-fg) !important; }
+.ytMusicMiniPlayerVolumePopup, .ytMusicMiniPlayerHoverTimeInfo {
+  background-color: var(--inir-popup) !important; color: var(--inir-fg) !important; box-shadow: 0 6px 18px rgb(0 0 0 / 0.22) !important;
+}
+#guide-button, #guide-button yt-icon, ytmusic-nav-bar yt-icon-button { color: var(--inir-fg) !important; --iron-icon-fill-color: var(--inir-fg) !important; }
+/* Chips are filled in both polarities (YouTube's own fill is white at 10 %, gone on a light palette) */
+ytmusic-chip-cloud-chip-renderer:not([is-selected]):not([chip-style="STYLE_PRIMARY"]):not([chip-style="STYLE_TRANSPARENT"]):not([chip-style="STYLE_SECONDARY"]) a.ytmusic-chip-cloud-chip-renderer {
+  background-color: var(--inir-fg-10) !important;
+}

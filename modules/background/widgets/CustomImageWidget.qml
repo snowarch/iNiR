@@ -358,7 +358,7 @@ AbstractBackgroundWidget {
         interval: root.intervalSeconds * 1000
         repeat: true
         running: root.sourceMode === "folder" && root.mediaPaths.length > 1
-            && !root.rotationPaused && root.powerActive && root.visible
+            && !root.rotationPaused && root.motionActive && root.visible
         onTriggered: root.advance(1, root.rotationOrder === "random")
     }
 
@@ -476,256 +476,101 @@ AbstractBackgroundWidget {
     }
 
     editPopoverContent: Component {
-        Item {
-            id: mediaQuickControlsHost
-            implicitWidth: Math.max(300,
-                Math.min(420, root.scaledScreenWidth - 48))
-            implicitHeight: mediaQuickControls.implicitHeight
-
-            ColumnLayout {
-                id: mediaQuickControls
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    top: parent.top
-                }
-                spacing: 6
-                readonly property var sourceChoices: [
+        ColumnLayout {
+            id: mediaQuickControls
+            readonly property bool folder: root.sourceMode === "folder" && root.mediaCount > 1
+            readonly property var sourceChoices: [
                 { label: Translation.tr("File"), icon: "draft", value: "file",
-                    available: Images.isValidMediaByName(root.mediaPath) },
+                    visible: Images.isValidMediaByName(root.mediaPath) },
                 { label: Translation.tr("All") + " " + root.folderMediaCount,
-                    icon: "perm_media", value: "all", available: root.folderMediaCount > 0 },
+                    icon: "perm_media", value: "all", visible: root.folderMediaCount > 0 },
                 { label: Translation.tr("Images") + " " + root.folderImageCount,
-                    icon: "image", value: "images", available: root.folderImageCount > 0 },
+                    icon: "image", value: "images", visible: root.folderImageCount > 0 },
                 { label: "GIF " + root.folderGifCount,
-                    icon: "motion_photos_on", value: "gifs", available: root.folderGifCount > 0 },
+                    icon: "motion_photos_on", value: "gifs", visible: root.folderGifCount > 0 },
                 { label: Translation.tr("Videos") + " " + root.folderVideoCount,
-                    icon: "movie", value: "videos", available: root.folderVideoCount > 0 }
-                ].filter(choice => choice.available)
+                    icon: "movie", value: "videos", visible: root.folderVideoCount > 0 }
+            ]
+            spacing: 14
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                MaterialSymbol {
-                    text: root.currentIsVideo ? "movie" : "photo_library"
-                    iconSize: 30
-                    color: Appearance.colors.colPrimary
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.maximumWidth: 238
-                    spacing: 0
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: root.currentName.length > 0
-                            ? root.currentName : Translation.tr("No media selected")
-                        color: Appearance.colors.colOnLayer2
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.DemiBold
-                        elide: Text.ElideMiddle
-                        maximumLineCount: 1
-                    }
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: root.sourceMode === "folder"
-                            ? Translation.tr("%1 of %2").arg(Math.max(0, root.currentIndex + 1)).arg(root.mediaCount)
-                                + " · " + root.folderImageCount + " " + Translation.tr("Images")
-                                + " · " + root.folderGifCount + " GIF"
-                                + " · " + root.folderVideoCount + " " + Translation.tr("Videos")
-                            : Translation.tr("Single file")
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
+            WidgetQuickSection {
+                title: root.currentName.length > 0 ? root.currentName : Translation.tr("No media selected")
+                detail: root.sourceMode === "folder"
+                    ? Translation.tr("%1 of %2").arg(Math.max(0, root.currentIndex + 1)).arg(root.mediaCount)
+                    : Translation.tr("Single file")
+                WidgetQuickChoices {
+                    visible: mediaQuickControls.folder
+                    isSelected: entry => entry.value === "pause" && root.rotationPaused
+                    model: [
+                        { value: "previous", icon: "chevron_left", tooltip: Translation.tr("Previous") },
+                        { value: "pause", icon: root.rotationPaused ? "play_arrow" : "pause",
+                            tooltip: root.rotationPaused ? Translation.tr("Resume") : Translation.tr("Pause") },
+                        { value: "shuffle", icon: "casino", tooltip: Translation.tr("Shuffle") },
+                        { value: "next", icon: "chevron_right", tooltip: Translation.tr("Next") }
+                    ]
+                    maxColumns: 4
+                    onPicked: value => {
+                        if (value === "previous") root.advance(-1, false)
+                        else if (value === "next") root.advance(1, false)
+                        else if (value === "shuffle") root.advance(1, true)
+                        else root.rotationPaused = !root.rotationPaused
                     }
                 }
-
-                Row {
-                    visible: root.sourceMode === "folder" && root.mediaCount > 1
-                    spacing: 2
-                    SelectionGroupButton {
-                        width: 32; height: 32
-                        horizontalPadding: 6; verticalPadding: 5
-                        leftmost: true; rightmost: true
-                        buttonIcon: "chevron_left"
-                        onClicked: root.advance(-1, false)
-                        StyledToolTip { text: Translation.tr("Previous") }
-                    }
-                    SelectionGroupButton {
-                        width: 32; height: 32
-                        horizontalPadding: 6; verticalPadding: 5
-                        leftmost: true; rightmost: true
-                        buttonIcon: "casino"
-                        onClicked: root.advance(1, true)
-                        StyledToolTip { text: Translation.tr("Shuffle") }
-                    }
-                    SelectionGroupButton {
-                        width: 32; height: 32
-                        horizontalPadding: 6; verticalPadding: 5
-                        leftmost: true; rightmost: true
-                        buttonIcon: "chevron_right"
-                        onClicked: root.advance(1, false)
-                        StyledToolTip { text: Translation.tr("Next") }
-                    }
-                }
-            }
-
-            GridLayout {
-                Layout.fillWidth: true
-                columns: Math.max(1, mediaQuickControls.sourceChoices.length)
-                columnSpacing: 4
-                rowSpacing: 4
-
-                Repeater {
+                WidgetQuickChoices {
+                    current: root.activeSourceChoice
                     model: mediaQuickControls.sourceChoices
-                    SelectionGroupButton {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        leftmost: true; rightmost: true
-                        toggled: root.activeSourceChoice === modelData.value
-                        buttonIcon: modelData.icon
-                        buttonText: modelData.label
-                        onClicked: root.activateSourceChoice(modelData.value)
-                    }
+                    onPicked: value => root.activateSourceChoice(value)
                 }
             }
 
-            RowLayout {
-                visible: root.sourceMode === "folder" && root.mediaCount > 1
-                Layout.fillWidth: true
-                spacing: 4
-
-                SelectionGroupButton {
-                    Layout.fillWidth: true
-                    leftmost: true; rightmost: true
-                    toggled: root.rotationPaused
-                    buttonIcon: root.rotationPaused ? "play_arrow" : "pause"
-                    buttonText: root.rotationPaused ? Translation.tr("Resume") : Translation.tr("Pause")
-                    onClicked: root.rotationPaused = !root.rotationPaused
+            WidgetQuickSection {
+                visible: mediaQuickControls.folder
+                title: Translation.tr("Change every")
+                WidgetQuickChoices {
+                    maxColumns: 4
+                    current: root.intervalSeconds
+                    model: [10, 30, 60, 180].map(seconds => ({ value: seconds, label: seconds + " s" }))
+                    onPicked: value => root.setInterval(value)
                 }
-                StyledSpinBox {
-                    from: 3; to: 3600; stepSize: 1
-                    value: root.intervalSeconds
-                    onValueModified: root.setInterval(value)
-                    StyledToolTip { text: Translation.tr("Seconds between changes") }
+                WidgetQuickSlider {
+                    title: Translation.tr("Seconds")
+                    from: 3; to: 600; stepSize: 1; unit: " s"
+                    value: Math.min(600, root.intervalSeconds)
+                    onCommitted: v => root.setInterval(v)
                 }
-                SelectionGroupButton {
+                WidgetQuickToggle {
                     Layout.fillWidth: true
-                    leftmost: true; rightmost: true
-                    toggled: root.rotationOrder === "random"
-                    buttonIcon: root.rotationOrder === "random" ? "shuffle" : "format_list_numbered"
-                    buttonText: root.rotationOrder === "random" ? Translation.tr("Random") : Translation.tr("Sequential")
-                    onClicked: Config.setNestedValue(root._configPath + ".order",
+                    iconName: "shuffle"
+                    label: Translation.tr("Random order")
+                    checked: root.rotationOrder === "random"
+                    onToggled: Config.setNestedValue(root._configPath + ".order",
                         root.rotationOrder === "random" ? "sequential" : "random")
                 }
             }
 
-            RowLayout {
-                visible: root.sourceMode === "folder" && root.mediaCount > 1
-                Layout.fillWidth: true
-                spacing: 4
-
-                StyledText {
-                    text: Translation.tr("Speed")
-                    color: Appearance.colors.colSubtext
-                    font.pixelSize: Appearance.font.pixelSize.smaller
+            WidgetQuickSection {
+                title: Translation.tr("Shape")
+                WidgetShapePicker {
+                    Layout.fillWidth: true
+                    selectedShape: root.shapeName
+                    onShapeSelected: name => root._setOutputValue("shape", name)
                 }
-
-                Repeater {
-                    model: [10, 30, 60, 180]
-                    SelectionGroupButton {
-                        required property int modelData
-                        Layout.fillWidth: true
-                        leftmost: true; rightmost: true
-                        toggled: root.intervalSeconds === modelData
-                        buttonText: modelData + "s"
-                        onClicked: root.setInterval(modelData)
-                    }
-                }
-            }
-
-            GridLayout {
-                Layout.fillWidth: true
-                columns: 4
-                columnSpacing: 4
-                rowSpacing: 4
-                Repeater {
+                WidgetQuickChoices {
+                    current: root.fitMode
                     model: [
-                        { label: Translation.tr("Circle"), value: "Circle", shape: MaterialShape.Shape.Circle },
-                        { label: Translation.tr("Square"), value: "Square", shape: MaterialShape.Shape.Square },
-                        { label: Translation.tr("Cookie"), value: "Cookie4Sided", shape: MaterialShape.Shape.Cookie4Sided },
-                        { label: Translation.tr("Heart"), value: "Heart", shape: MaterialShape.Shape.Heart }
+                        { value: "cover", icon: "crop_free", label: Translation.tr("Fill") },
+                        { value: "contain", icon: "fit_screen", label: Translation.tr("Fit") }
                     ]
-                    Rectangle {
-                        id: quickShape
-                        required property var modelData
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 38
-                        radius: Appearance.rounding.small
-                        color: root.shapeName === modelData.value
-                            ? ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
-                            : quickShapeHover.hovered
-                                ? Appearance.colors.colLayer2Hover : "transparent"
-                        border.width: root.shapeName === modelData.value ? 1.5 : 1
-                        border.color: root.shapeName === modelData.value
-                            ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
-
-                        MaterialShape {
-                            anchors.centerIn: parent
-                            implicitSize: 23
-                            shape: quickShape.modelData.shape
-                            color: root.shapeName === quickShape.modelData.value
-                                ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
-                        }
-                        HoverHandler { id: quickShapeHover }
-                        TapHandler {
-                            onTapped: Config.setNestedValue(root._configPath + ".shape", quickShape.modelData.value)
-                        }
-                        StyledToolTip {
-                            text: quickShape.modelData.label
-                            extraVisibleCondition: quickShapeHover.hovered
-                        }
-                    }
+                    onPicked: value => Config.setNestedValue(root._configPath + ".fitMode", value)
                 }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 4
-
-                SelectionGroupButton {
-                    Layout.fillWidth: true
-                    leftmost: true; rightmost: false
-                    toggled: root.fitMode === "cover"
-                    buttonIcon: "crop_free"
-                    buttonText: Translation.tr("Fill")
-                    onClicked: Config.setNestedValue(root._configPath + ".fitMode", "cover")
-                }
-                SelectionGroupButton {
-                    Layout.fillWidth: true
-                    leftmost: false; rightmost: true
-                    toggled: root.fitMode === "contain"
-                    buttonIcon: "fit_screen"
-                    buttonText: Translation.tr("Fit")
-                    onClicked: Config.setNestedValue(root._configPath + ".fitMode", "contain")
-                }
-                SelectionGroupButton {
+                WidgetQuickToggle {
                     visible: root.currentIsVideo || root.currentIsAnimatedImage
-                    width: 36
-                    leftmost: true; rightmost: true
-                    toggled: root.mediaPlaybackPaused
-                    buttonIcon: root.mediaPlaybackPaused ? "play_arrow" : "pause_circle"
-                    onClicked: root.mediaPlaybackPaused = !root.mediaPlaybackPaused
-                    StyledToolTip {
-                        text: root.mediaPlaybackPaused
-                            ? Translation.tr("Play media") : Translation.tr("Pause media")
-                    }
+                    Layout.fillWidth: true
+                    iconName: "play_circle"
+                    label: Translation.tr("Play media")
+                    checked: !root.mediaPlaybackPaused
+                    onToggled: root.mediaPlaybackPaused = !root.mediaPlaybackPaused
                 }
-            }
-
             }
         }
     }

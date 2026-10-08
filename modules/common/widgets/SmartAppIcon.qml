@@ -39,6 +39,7 @@ Item {
     
     // Error handling state
     property bool _imageError: false
+    onResolvedSourceChanged: root._imageError = false
 
     Loader {
         anchors.fill: parent

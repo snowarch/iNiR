@@ -56,7 +56,7 @@ Item {
             Layout.topMargin: 6
             implicitWidth: clearContent.implicitWidth + 20
             implicitHeight: 32
-            buttonRadius: Appearance.rounding.full
+            buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
             colBackground: Appearance.colors.colSurfaceContainer
             colBackgroundHover: Appearance.colors.colSurfaceContainerHigh
             colRipple: Appearance.colors.colSurfaceContainerHighest

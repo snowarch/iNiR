@@ -21,12 +21,8 @@ depends=(
   qt6-5compat
   qt6-imageformats
   qt6-multimedia
-  qt6-positioning
-  qt6-quicktimeline
-  qt6-sensors
   qt6-tools
   qt6-translations
-  qt6-virtualkeyboard
   
   # System libs for Quickshell
   jemalloc

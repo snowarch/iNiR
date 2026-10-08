@@ -40,6 +40,25 @@ Singleton {
         ThemeService.setGlobalStyle(styleId)
     }
 
+    function irisMusicOn(mode: string): bool {
+        const edge = Config.options?.background?.edgeWidgets?.organic ?? ({})
+        const surround = Config.options?.iris?.surround ?? ({})
+        return Boolean(edge.enable) && String(surround.music ?? "widget") === mode
+    }
+
+    function toggleIrisMusic(mode: string): void {
+        if (root.irisMusicOn(mode)) {
+            Config.setNestedValue("background.edgeWidgets.organic.enable", false)
+            return
+        }
+        const updates = {
+            "iris.surround.music": mode,
+            "background.edgeWidgets.organic.enable": true
+        }
+        if (mode === "frame") updates["iris.surround.enable"] = true
+        Config.setNestedValues(updates)
+    }
+
     function fuzzyQuery(query: string): list<var> {
         if (!query || query.trim() === "") return allActions
         const q = query.toLowerCase().trim()
@@ -201,7 +220,7 @@ Singleton {
             icon: "settings",
             category: "system",
             keywords: ["settings", "config", "preferences", "configure"],
-            execute: () => { GlobalStates.settingsOverlayOpen = true }
+            execute: () => { GlobalStates.openSettings() }
         },
         {
             id: "toggle-dashboard",
@@ -377,6 +396,15 @@ Singleton {
             execute: () => { root.applyGlobalStyle("zzz") }
         },
         {
+            id: "style-editorial",
+            name: Translation.tr("Style: Editorial"),
+            description: Translation.tr("Paper surfaces, expressive typography and floral accents"),
+            icon: "auto_stories",
+            category: "appearance",
+            keywords: ["style", "editorial", "paper", "serif", "flower", "poster"],
+            execute: () => { root.applyGlobalStyle("editorial") }
+        },
+        {
             id: "style-cookie",
             name: Translation.tr("Style: Cookie Shapes"),
             description: Translation.tr("Switch to Cookie Shapes style"),
@@ -385,6 +413,29 @@ Singleton {
             keywords: ["style", "cookie", "shapes", "theme", "expressive", "morph"],
             execute: () => { root.applyGlobalStyle("cookie") }
         },
+    ]
+
+    readonly property var _irisActions: [
+        {
+            id: "frame-music",
+            name: Translation.tr("Frame Music"),
+            description: Translation.tr("Toggle music on the iRiS frame"),
+            icon: "graphic_eq",
+            category: "appearance",
+            keywords: ["iris", "frame", "chassis", "music", "visualizer"],
+            isOn: () => root.irisMusicOn("frame"),
+            execute: () => root.toggleIrisMusic("frame")
+        },
+        {
+            id: "edge-music",
+            name: Translation.tr("Edge Music"),
+            description: Translation.tr("Toggle the Organic Edge music wave"),
+            icon: "waves",
+            category: "appearance",
+            keywords: ["iris", "edge", "music", "wave", "visualizer"],
+            isOn: () => root.irisMusicOn("widget"),
+            execute: () => root.toggleIrisMusic("widget")
+        }
     ]
 
     // TOOLS: Screenshot, Screen Record, Color Picker, Clipboard
@@ -778,6 +829,17 @@ Singleton {
             }
         },
         {
+            id: "switch-family-iris",
+            name: Translation.tr("Switch to iRiS Panel Family"),
+            description: Translation.tr("Use the minimal iRiS shell layout"),
+            icon: "visibility",
+            category: "settings",
+            keywords: ["family", "panel", "iris", "minimal", "lightweight", "layout"],
+            execute: () => {
+                root.runLauncher(["panelFamily", "set", "iris"])
+            }
+        },
+        {
             id: "toggle-control-panel",
             name: Translation.tr("Toggle Quick Settings"),
             description: Translation.tr("Open or close the quick settings panel"),
@@ -961,6 +1023,7 @@ Singleton {
         let result = []
         if (cfg?.enableSystem ?? true)     result = result.concat(_systemActions)
         if (cfg?.enableAppearance ?? true) result = result.concat(_appearanceActions)
+        if ((cfg?.enableAppearance ?? true) && Config.options?.panelFamily === "iris") result = result.concat(_irisActions)
         if (cfg?.enableTools ?? true)      result = result.concat(_toolActions)
         if (cfg?.enableMedia ?? true)      result = result.concat(_mediaActions)
         if (cfg?.enableSettings ?? true)   result = result.concat(_settingsActions)

@@ -14,6 +14,7 @@ ContentPage {
     settingsPageIndex: 17
     settingsPageName: Translation.tr("Autostart")
     property string activeSection: "apps"
+    property string appSearchQuery: ""
 
     SettingsTaskNavigator {
         visible: Autostart.isNiri
@@ -45,7 +46,7 @@ ContentPage {
     // Sorted + filtered app list: on first, then alphabetical, filtered by search.
     // "On" means either a managed entry or an external spawn line matches.
     function getFilteredApps(): var {
-        const search = appSearchField.text.toLowerCase().trim()
+        const search = root.appSearchQuery.toLowerCase().trim()
         const apps = AppSearch.list ?? []
         const result = []
         for (let i = 0; i < apps.length; ++i) {
@@ -102,12 +103,14 @@ ContentPage {
 
     // ── Info banner ──────────────────────────────────────────────────────
 
+    SettingsTaskLoader {
+        requested: Autostart.isNiri && root.activeSection === "guide"
+        sourceComponent: Component {
     SettingsCardSection {
         expanded: true
         icon: "info"
         title: Translation.tr("How autostart works")
         settingsTaskSection: "guide"
-        visible: Autostart.isNiri && root.activeSection === "guide"
 
         ColumnLayout {
             Layout.fillWidth: true
@@ -169,15 +172,19 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // ── Applications ─────────────────────────────────────────────────────
 
+    SettingsTaskLoader {
+        requested: Autostart.isNiri && root.activeSection === "apps"
+        sourceComponent: Component {
     SettingsCardSection {
         expanded: true
         icon: "apps"
         title: Translation.tr("Applications")
         settingsTaskSection: "apps"
-        visible: Autostart.isNiri && root.activeSection === "apps"
 
         ColumnLayout {
             Layout.fillWidth: true
@@ -196,6 +203,8 @@ ContentPage {
                 Layout.fillWidth: true
                 placeholderText: Translation.tr("Search applications...")
                 font.pixelSize: Appearance.font.pixelSize.small
+                text: root.appSearchQuery
+                onTextChanged: root.appSearchQuery = text
             }
 
             ListView {
@@ -208,7 +217,7 @@ ContentPage {
 
                 // No apps match the filter
                 PagePlaceholder {
-                    shown: appSearchField.text.length > 0 && appListView.count === 0
+                    shown: root.appSearchQuery.length > 0 && appListView.count === 0
                     icon: "search_off"
                     title: Translation.tr("No matching apps")
                     description: Translation.tr("Try a different search term.")
@@ -343,15 +352,19 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // ── Custom Commands ──────────────────────────────────────────────────
 
+    SettingsTaskLoader {
+        requested: Autostart.isNiri && root.activeSection === "commands"
+        sourceComponent: Component {
     SettingsCardSection {
         expanded: true
         icon: "terminal"
         title: Translation.tr("Custom Commands")
         settingsTaskSection: "commands"
-        visible: Autostart.isNiri && root.activeSection === "commands"
 
         ColumnLayout {
             Layout.fillWidth: true
@@ -481,6 +494,8 @@ ContentPage {
                     }
                 }
             }
+        }
+    }
         }
     }
 }

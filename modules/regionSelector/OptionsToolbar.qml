@@ -53,11 +53,13 @@ Toolbar {
         id: actionBar
         Layout.alignment: Qt.AlignVCenter
         tabButtonList: root.actionList.map(a => ({"icon": a.icon, "name": a.name}))
-        onCurrentIndexChanged: {
-            const a = root.actionList[currentIndex]?.action;
+        // Only explicit choices change the action; programmatic index moves
+        // (including tab population) must never write state back.
+        onUserSelected: index => {
+            const a = root.actionList[index]?.action;
             if (a !== undefined && a !== root.action) root.action = a;
+            root.persistSnipChoice();
         }
-        onUserSelected: root.persistSnipChoice()
     }
 
     // Region shape (applies when drawing a region)
@@ -68,10 +70,10 @@ Toolbar {
             {"icon": "activity_zone", "name": Translation.tr("Rect")},
             {"icon": "gesture", "name": Translation.tr("Circle")}
         ]
-        onCurrentIndexChanged: {
-            root.selectionMode = currentIndex === 0 ? RegionSelection.SelectionMode.RectCorners : RegionSelection.SelectionMode.Circle;
+        onUserSelected: index => {
+            root.selectionMode = index === 0 ? RegionSelection.SelectionMode.RectCorners : RegionSelection.SelectionMode.Circle;
+            root.persistSnipChoice();
         }
-        onUserSelected: root.persistSnipChoice()
     }
 
     // Instant tools (no region selection needed)

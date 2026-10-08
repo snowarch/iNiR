@@ -318,6 +318,8 @@ MouseArea { // Notification group area
                         spacing: 5
                         StyledText {
                             id: appName
+                            font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Normal
+                            font.letterSpacing: Appearance.editorialEverywhere && topRow.showAppName ? 0.4 : 0
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                             text: (topRow.showAppName ?
@@ -332,6 +334,7 @@ MouseArea { // Notification group area
                         }
                         StyledText {
                             id: timeText
+                            font.family: Appearance.editorialEverywhere ? Appearance.font.family.numbers : Appearance.font.family.main
                             Layout.rightMargin: 10
                             horizontalAlignment: Text.AlignLeft
                             text: NotificationUtils.getFriendlyNotifTimeString(notificationGroup?.time)

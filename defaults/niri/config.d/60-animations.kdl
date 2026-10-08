@@ -14,68 +14,55 @@
 //
 //   epsilon        Threshold to consider the animation "done" (0.0001 is fine).
 //
+// Settings has presets for all of this, as does `inir niriAnimations apply <id>`;
+// applying one rewrites this block and keeps `off` and `slowdown`.
+//
 // You can also use duration-based easing instead of springs:
 //   duration-ms 250 curve "ease-out-expo"
 // ─────────────────────────────────────────────────────────────────────────────
-
 animations {
-    // Uncomment to disable all animations globally.
     // off
 
-    // Slow down every animation by this factor (useful for debugging).
-    // Values below 1.0 speed them up. Default: 1.0
-    // slowdown 3.0
-
-    // ── Workspace transitions ───────────────────────────────────────────────
     workspace-switch {
-        spring damping-ratio=0.98 stiffness=700 epsilon=0.0001
+        spring damping-ratio=1.0 stiffness=1000 epsilon=0.0001
     }
 
-    // ── Window lifecycle ────────────────────────────────────────────────────
     window-open {
-        duration-ms 200
-        curve "ease-out-quad"
+        duration-ms 220
+        curve "cubic-bezier" 0.05 0.7 0.1 1.0
     }
 
     window-close {
-        duration-ms 175
-        curve "ease-out-quad"
+        duration-ms 160
+        curve "cubic-bezier" 0.2 0.0 0.0 1.0
     }
 
-    // ── Layout movement ─────────────────────────────────────────────────────
-    // Scrolling the horizontal strip when you focus a different column.
     horizontal-view-movement {
-        spring damping-ratio=1.0 stiffness=700 epsilon=0.0001
+        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
     }
 
-    // Dragging or moving a window between columns/workspaces.
     window-movement {
-        spring damping-ratio=1.0 stiffness=700 epsilon=0.0001
+        spring damping-ratio=0.92 stiffness=850 epsilon=0.0001
     }
 
-    // Interactive column/window resize.
     window-resize {
-        spring damping-ratio=1.0 stiffness=700 epsilon=0.0001
+        spring damping-ratio=1.0 stiffness=850 epsilon=0.0001
     }
 
-    // ── UI chrome ───────────────────────────────────────────────────────────
-    // The "config saved" toast that appears after editing this file.
     config-notification-open-close {
-        spring damping-ratio=0.8 stiffness=750 epsilon=0.001
+        spring damping-ratio=0.7 stiffness=1000 epsilon=0.001
     }
 
-    // Niri's built-in screenshot UI opening.
     screenshot-ui-open {
-        duration-ms 210
-        curve "ease-out-quad"
+        duration-ms 200
+        curve "cubic-bezier" 0.05 0.7 0.1 1.0
     }
 
     overview-open-close {
-        spring damping-ratio=1.0 stiffness=700 epsilon=0.0001
+        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
     }
 
     recent-windows-close {
-        duration-ms 160
-        curve "ease-out-quad"
+        spring damping-ratio=1.0 stiffness=1000 epsilon=0.001
     }
 }

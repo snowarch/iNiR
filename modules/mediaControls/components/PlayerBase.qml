@@ -31,10 +31,10 @@ QtObject {
     // Effective properties (YtMusic or regular player)
     readonly property string effectiveTitle: isYtMusicPlayer 
         ? YtMusic.currentTitle 
-        : (player?.trackTitle ?? "")
+        : (MprisController.titleOf(player) ?? "")
     readonly property string effectiveArtist: isYtMusicPlayer 
         ? YtMusic.currentArtist 
-        : (player?.trackArtist ?? "")
+        : (MprisController.artistOf(player) ?? "")
     readonly property string effectiveArtUrl: isYtMusicPlayer
         ? YtMusic.currentThumbnail
         : MprisController.effectiveArtUrl(player)
@@ -43,10 +43,10 @@ QtObject {
     readonly property string mediaTransitionKey: (root.effectiveArtUrl ?? "").split("?")[0].split("#")[0]
     readonly property real effectivePosition: isYtMusicPlayer 
         ? YtMusic.currentPosition 
-        : (player?.position ?? 0)
+        : MprisController.positionOf(player)
     readonly property real effectiveLength: isYtMusicPlayer 
         ? YtMusic.currentDuration 
-        : (player?.length ?? 0)
+        : MprisController.lengthOf(player)
     readonly property bool effectiveIsPlaying: isYtMusicPlayer 
         ? YtMusic.isPlaying 
         : (player?.isPlaying ?? false)
@@ -108,7 +108,7 @@ QtObject {
         if (isYtMusicPlayer) {
             YtMusic.seek(seconds)
         } else if (player) {
-            player.position = seconds
+            MprisController.seek(player, seconds)
         }
     }
     
@@ -132,26 +132,26 @@ QtObject {
             root.displayedArtFilePath = root.resolverDisplaySource
     }
 
-    onPlayerChanged: Qt.callLater(root.checkAndDownloadArt)
+    onPlayerChanged: artRefreshTimer.restart()
 
     property var playerConnections: Connections {
         target: root.player
 
         function onTrackArtUrlChanged(): void {
             if (!root.isYtMusicPlayer)
-                Qt.callLater(root.checkAndDownloadArt)
+                artRefreshTimer.restart()
         }
 
         function onTrackTitleChanged(): void {
-            Qt.callLater(root.checkAndDownloadArt)
+            artRefreshTimer.restart()
         }
 
         function onTrackArtistChanged(): void {
-            Qt.callLater(root.checkAndDownloadArt)
+            artRefreshTimer.restart()
         }
 
         function onTrackAlbumChanged(): void {
-            Qt.callLater(root.checkAndDownloadArt)
+            artRefreshTimer.restart()
         }
     }
 
@@ -160,17 +160,17 @@ QtObject {
 
         function onCurrentThumbnailChanged(): void {
             if (root.isYtMusicPlayer)
-                Qt.callLater(root.checkAndDownloadArt)
+                artRefreshTimer.restart()
         }
 
         function onCurrentTitleChanged(): void {
             if (root.isYtMusicPlayer)
-                Qt.callLater(root.checkAndDownloadArt)
+                artRefreshTimer.restart()
         }
 
         function onCurrentArtistChanged(): void {
             if (root.isYtMusicPlayer)
-                Qt.callLater(root.checkAndDownloadArt)
+                artRefreshTimer.restart()
         }
     }
     
@@ -181,6 +181,12 @@ QtObject {
         artist: root.effectiveArtist
         album: root.player?.trackAlbum ?? ""
         cacheDirectory: root.artDownloadLocation
+    }
+
+    // Qt.callLater outlives a destroyed widget and then runs in an invalid context.
+    property var artRefreshTimer: Timer {
+        interval: 0
+        onTriggered: root.checkAndDownloadArt()
     }
 
     property var clearArtTimer: Timer {

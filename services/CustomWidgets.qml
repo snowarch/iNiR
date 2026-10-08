@@ -87,6 +87,8 @@ Singleton {
                 if (warnings.length > 0)
                     console.warn("[CustomWidgets]", warnings.join("; "));
                 const qmlFile = m.main || (entry.id.charAt(0).toUpperCase() + entry.id.slice(1) + ".qml");
+                const iris = m.iris && typeof m.iris === "object" ? m.iris : {};
+                const irisFile = typeof iris.main === "string" ? iris.main.trim() : "";
                 result.push({
                     id: entry.id,
                     name: m.name || entry.id,
@@ -96,6 +98,8 @@ Singleton {
                     description: m.description || "",
                     category: m.category || "",
                     qmlPath: `file://${entry.dir}/${qmlFile}`,
+                    irisQmlPath: irisFile.length > 0 ? `file://${entry.dir}/${irisFile}` : "",
+                    irisSlots: Array.isArray(iris.slots) ? iris.slots : [],
                     dirPath: entry.dir,
                     configKeys: m.configKeys || {},
                     resizableAxes: m.resizableAxes || {},
@@ -213,34 +217,6 @@ Singleton {
         Qt.openUrlExternally("file://" + dirPath);
     }
 
-    IpcHandler {
-        target: "customWidgets"
-
-        function reload(): string {
-            root.reload();
-            return "Reloading custom widgets...";
-        }
-
-        function list(): string {
-            return JSON.stringify(root.widgets.map(w => ({
-                id: w.id, name: w.name, version: w.version,
-                valid: w.valid, path: w.dirPath
-            })), null, 2);
-        }
-
-        function create(name: string): string {
-            if (!name || name.length === 0) return "Usage: inir customWidgets create <name>";
-            root.create(name);
-            return `Creating widget "${name}" in ${root.widgetsDir}/${name}/...`;
-        }
-
-        function remove(widgetId: string): string {
-            if (!widgetId || widgetId.length === 0) return "Usage: inir customWidgets remove <id>";
-            root.remove(widgetId);
-            return `Removing widget "${widgetId}"...`;
-        }
-    }
-
     // Widget template generator — creates scaffold with all imports, services, and patterns
     Process {
         id: _createProcess
@@ -259,6 +235,10 @@ Singleton {
     "description": "Custom desktop widget",
     "category": "custom",
     "main": "${_createProcess._pascalName}.qml",
+    "iris": {
+        "main": "IrisCompact.qml",
+        "slots": ["island.desktop"]
+    },
     "defaultConfig": {
         "placementStrategy": "free",
         "widgetScale": 100,
@@ -359,7 +339,7 @@ AbstractBackgroundWidget {
     //   Audio.value (0-2.0), Audio.sink?.audio?.muted, Audio.ready
     //   Network.wifi, Network.networkName, Network.networkStrength (0-100)
     //   ResourceUsage.cpuUsage (0-1), ResourceUsage.memoryUsedPercentage (call ensureRunning() first)
-    //   MprisController.activePlayer?.trackTitle, MprisController.displayPlayers
+    //   MprisController.titleOf(MprisController.activePlayer), MprisController.displayPlayers
     //   Notifications.unread, Notifications.list
 
     // Available components (import qs.modules.common.widgets):
@@ -379,6 +359,35 @@ AbstractBackgroundWidget {
     //   root.colText adapts to wallpaper brightness automatically
 }
 QML
+            cat > "$dir/IrisCompact.qml" << 'IRIS_QML'
+import QtQuick
+import QtQuick.Layouts
+import qs.services
+import qs.modules.iris.style
+import qs.modules.iris.components
+
+Item {
+    id: root
+    property string irisSlot: ""
+    property var targetScreen
+    implicitWidth: compactRow.implicitWidth
+    implicitHeight: Math.round(28 * IrisStyle.density)
+
+    RowLayout {
+        id: compactRow
+        anchors.centerIn: parent
+        spacing: IrisStyle.spaceSmall
+
+        IrisMark { implicitSize: Math.round(14 * IrisStyle.density) }
+        IrisText {
+            text: DateTime.timeDisplay
+            role: IrisText.Meta
+            font.family: IrisStyle.fontNumbers
+            color: IrisStyle.text
+        }
+    }
+}
+IRIS_QML
             echo "done"
         `]
         stdout: StdioCollector {

@@ -27,6 +27,10 @@ Loader {
     property var anchorRect: null
     property var popupAdjustment: null
     property bool scaleContent: Appearance.motion.popupReveal.enableScale
+    property bool fadeContent: Appearance.motion.popupReveal.enableFade
+    property real revealDistance: -1
+    property int enterDuration: Appearance.animation.elementMoveEnter.duration
+    property int exitDuration: Appearance.animation.elementMoveExit.duration
     signal focusCleared()
 
     property real visualMargin: 8
@@ -79,6 +83,14 @@ Loader {
         grabFocus: CompositorService.isNiri
         property bool closing: false
         property bool popupWasHovered: false
+
+        // Keep the Loader's logical state in sync when the compositor dismisses
+        // the xdg-popup because its grab/focus was lost. Without this, Niri can
+        // close the backing popup while the ContextMenu remains logically active.
+        onClosed: {
+            if (root.active)
+                root.active = false
+        }
 
         // Keep the Niri click surface below the popup content, matching the
         // SysTrayMenu stacking order so outside clicks close without blocking buttons.
@@ -178,11 +190,14 @@ Loader {
         }
 
         readonly property real settledMargin: root.ambientShadowWidth + root.visualMargin
+        readonly property real hiddenMargin: root.revealDistance >= 0
+            ? settledMargin - root.revealDistance
+            : (isHorizontalPopup ? -implicitWidth : -implicitHeight)
         // Cookie fades in at its final geometry. Sliding an overshooting spring
         // inside this fixed PopupWindow clipped the face and temporarily split
         // visual rows from their pointer regions.
-        property real sourceEdgeMargin: Appearance.cookieEverywhere
-            ? settledMargin : -implicitHeight
+        property real sourceEdgeMargin: Appearance.cookieEverywhere && root.revealDistance < 0
+            ? settledMargin : hiddenMargin
         readonly property bool isHorizontalPopup: root.popupSide !== 0
         readonly property bool isLeftSide: root.popupSide === Edges.Left
 
@@ -191,7 +206,7 @@ Loader {
             target: popupWindow
             property: "sourceEdgeMargin"
             to: popupWindow.settledMargin
-            duration: Appearance.animation.elementMoveEnter.duration
+            duration: root.enterDuration
             easing.type: Appearance.animation.elementMoveEnter.type
             easing.bezierCurve: Appearance.motion.popupReveal.enterBezierCurve
         }
@@ -200,8 +215,8 @@ Loader {
             PropertyAnimation {
                 target: popupWindow
                 property: "sourceEdgeMargin"
-                to: popupWindow.isHorizontalPopup ? -popupWindow.implicitWidth : -popupWindow.implicitHeight
-                duration: Appearance.animation.elementMoveExit.duration
+                to: popupWindow.hiddenMargin
+                duration: root.exitDuration
                 easing.type: Appearance.animation.elementMoveExit.type
                 easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve
             }
@@ -240,7 +255,7 @@ Loader {
                 : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                 : Appearance.rounding.normal
             border.width: Appearance.regaliaEverywhere ? 0 : 1
-            border.color: Appearance.regaliaEverywhere ? "transparent"
+            border.color: Appearance.editorialEverywhere ? Appearance.editorial.rule : Appearance.regaliaEverywhere ? "transparent"
                         : Appearance.angelEverywhere ? Appearance.angel.colBorder
                         : Appearance.inirEverywhere ? Appearance.inir.colBorder
                         : Appearance.auroraEverywhere
@@ -256,7 +271,7 @@ Loader {
                 inset: Appearance.regalia.surfaceInset
                 elevated: true
             }
-            opacity: Appearance.motion.popupReveal.enableFade ? (shown ? 1 : 0) : 1
+            opacity: root.fadeContent ? (shown ? 1 : 0) : 1
             scale: shown ? 1
                 : (root.scaleContent
                     ? Appearance.motion.popupReveal.closedScale
@@ -272,8 +287,8 @@ Loader {
                 enabled: Appearance.animationsEnabled
                 animation: NumberAnimation {
                     duration: popupWindow.closing
-                        ? Appearance.animation.elementMoveExit.duration
-                        : Appearance.animation.elementMoveEnter.duration
+                        ? root.exitDuration
+                        : root.enterDuration
                     easing.type: popupWindow.closing
                         ? Appearance.animation.elementMoveExit.type
                         : Appearance.animation.elementMoveEnter.type
@@ -287,8 +302,8 @@ Loader {
                 enabled: Appearance.animationsEnabled && root.scaleContent
                 animation: NumberAnimation {
                     duration: popupWindow.closing
-                        ? Appearance.animation.elementMoveExit.duration
-                        : Appearance.animation.elementMoveEnter.duration
+                        ? root.exitDuration
+                        : root.enterDuration
                     easing.type: popupWindow.closing
                         ? Appearance.animation.elementMoveExit.type
                         : Appearance.animation.elementMoveEnter.type
@@ -310,11 +325,14 @@ Loader {
                         DelegateChoice {
                             roleValue: "separator"
                             Rectangle {
-                                Layout.topMargin: 2
-                                Layout.bottomMargin: 2
+                                Layout.topMargin: Appearance.editorialEverywhere ? 5 : 2
+                                Layout.bottomMargin: Appearance.editorialEverywhere ? 5 : 2
+                                Layout.leftMargin: Appearance.editorialEverywhere ? 10 : 0
+                                Layout.rightMargin: Appearance.editorialEverywhere ? 10 : 0
                                 Layout.fillWidth: true
                                 implicitHeight: 1
-                                color: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
+                                color: Appearance.editorialEverywhere ? Appearance.editorial.rule
+                                    : Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
                                     : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
                                     : Appearance.colors.colOutlineVariant
                             }

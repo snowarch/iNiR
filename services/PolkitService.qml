@@ -89,8 +89,7 @@ Singleton {
             return
         }
 
-        // If another authentication agent already exists, registering will fail and spam warnings.
-        // Best-effort detection: if we can see a known agent process, skip our agent.
+        // iNiR is the agent. One the person runs on purpose still wins: registering beside it fails and spams warnings.
         polkitAgentCheck.running = true
     }
 
@@ -104,7 +103,8 @@ Singleton {
             "polkit-gnome-authentication-agent-1",
             "lxqt-policykit-agent",
             "polkit-kde-authentication-agent-1",
-            "mate-polkit"
+            "polkit-mate-authentication-agent-1",
+            "lxpolkit"
         ]
 
         onExited: (exitCode, exitStatus) => {

@@ -61,13 +61,8 @@ Scope {
             _closeAnimRunning = false;
             closeAnimTimer.stop();
             root.clearSearch();
-            const requested = GlobalStates.settingsOverlayRequestedPage ?? -1;
-            if (requested >= 0 && requested < root.pages.length) {
-                root.openPage(requested);
-                GlobalStates.settingsOverlayRequestedPage = -1;
-            } else {
+            if (!root.applyRequestedNavigation())
                 root.level = 0;
-            }
         } else {
             _closeAnimRunning = true;
             closeAnimTimer.restart();
@@ -88,6 +83,34 @@ Scope {
         root.level = 1;
     }
 
+    function applyRequestedNavigation(): bool {
+        if (!root.settingsOpen)
+            return false
+
+        let handled = false
+        const requestedPage = GlobalStates.settingsOverlayRequestedPage ?? -1
+        if (requestedPage >= 0 && requestedPage < root.pages.length) {
+            root.openPage(requestedPage)
+            GlobalStates.settingsOverlayRequestedPage = -1
+            handled = true
+        }
+
+        const requestedSection = String(GlobalStates.settingsOverlayRequestedSection ?? "")
+        if (requestedSection.length > 0 && root.currentPage >= 0) {
+            root._pendingOptionId = -1
+            root._pendingPageIndex = root.currentPage
+            root._pendingLabel = ""
+            root._pendingTask = requestedSection
+            root._pendingSection = ""
+            root._pendingIsSection = false
+            root._spotlightRetries = 0
+            GlobalStates.settingsOverlayRequestedSection = ""
+            spotlightTimer.restart()
+            handled = true
+        }
+        return handled
+    }
+
     function goHome(): void {
         root.level = 0;
     }
@@ -102,15 +125,12 @@ Scope {
     // standalone process, so the panel must close before the window appears.
     function setLayout(mode: string): void {
         if (mode === "window") {
-            Config.setNestedValue("settingsUi.overlayMode", false);
-            GlobalStates.settingsOverlayOpen = false;
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window"]);
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                "ipc", "settings", "openWindowAt", String(root.currentPage)]);
             return;
         }
-        Config.setNestedValues({
-            "settingsUi.overlayMode": true,
-            "settingsUi.overlayStyle": mode
-        });
+        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+            "ipc", "settings", "setOverlayStyle", mode, String(root.currentPage)]);
     }
 
     // ── Home grid model: categories that still have visible pages ──
@@ -203,61 +223,40 @@ Scope {
     }
 
     function recomputeSearch(): void {
-        var q = String(root.searchText || "").toLowerCase().trim();
+        var q = SettingsSearchRegistry.normalizeSearchText(root.searchText);
         if (!q.length) {
             root.searchResults = [];
             return;
         }
 
-        var terms = q.split(/\s+/).filter(t => t.length > 0);
-        var isWaffle = Config.options?.panelFamily === "waffle";
+        var activeFamily = Config.options?.panelFamily ?? "ii";
         var wafflePage = SettingsPageRegistry.pages.findIndex(
             p => String(p.component || "").indexOf("WaffleConfig.qml") >= 0);
+        var irisPage = SettingsPageRegistry.pages.findIndex(
+            p => String(p.component || "").indexOf("IrisConfig.qml") >= 0);
         var results = [];
 
         function allowed(pageIndex) {
             if (pageIndex < 0 || pageIndex >= root.pages.length)
                 return false;
-            if (wafflePage >= 0 && pageIndex === wafflePage && !isWaffle)
+            if (wafflePage >= 0 && pageIndex === wafflePage && activeFamily !== "waffle")
+                return false;
+            if (irisPage >= 0 && pageIndex === irisPage && activeFamily !== "iris")
                 return false;
             if (root.easyMode && root.pages[pageIndex].essential !== true)
                 return false;
             return true;
         }
 
-        // Static section index — coarse targets, ranked below real controls.
-        var index = SettingsPageRegistry.searchIndex();
-        for (var i = 0; i < index.length; i++) {
-            var e = index[i];
-            if (!allowed(e.pageIndex))
-                continue;
-
-            var haystack = [e.label, e.description, e.pageName, e.section,
-                (e.keywords || []).join(" ")].join(" ").toLowerCase();
-            var matched = terms.every(t => haystack.indexOf(t) >= 0);
-            if (!matched)
-                continue;
-
-            var label = String(e.label || "").toLowerCase();
-            var score = 500;
-            for (var t = 0; t < terms.length; t++) {
-                if (label.indexOf(terms[t]) === 0)
-                    score += 800;
-                else if (label.indexOf(terms[t]) > 0)
-                    score += 400;
-            }
-
-            results.push({
-                pageIndex: e.pageIndex,
-                pageName: e.pageName,
-                section: e.section,
-                label: e.label,
-                labelHighlighted: SettingsSearchRegistry.highlightTerms(e.label, terms),
-                description: e.description,
-                score: score,
-                isSection: true
-            });
+        function familyAllowed(entry) {
+            var family = String(entry?.panelFamily || "")
+            return family.length === 0 || family === activeFamily
         }
+
+        var staticResults = SettingsSearchRegistry.buildStaticResults(
+            root.searchText, SettingsPageRegistry.searchIndex())
+            .filter(e => allowed(e.pageIndex) && familyAllowed(e));
+        results = results.concat(staticResults);
 
         // Live control registry — the precise targets, so they outrank sections.
         if (typeof SettingsSearchRegistry !== "undefined") {
@@ -274,7 +273,8 @@ Scope {
         var unique = [];
         for (var k = 0; k < results.length; k++) {
             var r = results[k];
-            var key = String(r.pageIndex) + "|" + String(r.label || "").toLowerCase();
+            var key = [r.pageIndex, r.task || "", r.section || "", r.label || ""]
+                .join("|").toLowerCase();
             if (seen[key] === undefined) {
                 seen[key] = unique.length;
                 unique.push(r);
@@ -289,7 +289,10 @@ Scope {
     // ── Spotlight: land on the page, then scroll the matched control in ──
     property int _pendingOptionId: -1
     property int _pendingPageIndex: -1
+    property string _pendingLabel: ""
+    property string _pendingTask: ""
     property string _pendingSection: ""
+    property bool _pendingIsSection: false
     property int _spotlightRetries: 0
     readonly property int _spotlightMaxRetries: 15
 
@@ -301,17 +304,23 @@ Scope {
         if (!entry || entry.pageIndex === undefined || entry.pageIndex < 0) {
             root._pendingOptionId = -1;
             root._pendingPageIndex = -1;
+            root._pendingLabel = "";
+            root._pendingTask = "";
             root._pendingSection = "";
+            root._pendingIsSection = false;
             return;
         }
 
         root._pendingOptionId = (entry.optionId !== undefined) ? entry.optionId : -1;
         root._pendingPageIndex = entry.pageIndex;
-        root._pendingSection = (root._pendingOptionId < 0 && entry.section)
-            ? String(entry.section) : "";
+        root._pendingLabel = String(entry.label || "");
+        root._pendingTask = String(entry.task || "");
+        root._pendingSection = String(entry.section || "");
+        root._pendingIsSection = entry.optionId === undefined && entry.isSection === true;
         root.openPage(entry.pageIndex);
 
-        if (root._pendingOptionId >= 0 || root._pendingSection.length > 0)
+        if (root._pendingOptionId >= 0 || root._pendingLabel.length > 0
+                || root._pendingTask.length > 0 || root._pendingSection.length > 0)
             spotlightTimer.restart();
         else
             root._pendingPageIndex = -1;
@@ -324,18 +333,37 @@ Scope {
     }
 
     function _trySpotlight(): void {
-        if (root._pendingOptionId < 0 && root._pendingSection.length === 0)
+        if (root._pendingOptionId < 0 && root._pendingLabel.length === 0
+                && root._pendingTask.length === 0 && root._pendingSection.length === 0)
             return;
 
         const pageItem = pageHost.currentItem
-        if (pageItem && pageHost.currentIndex === root._pendingPageIndex
-                && root._pendingSection.length > 0
-                && typeof pageItem.activateSettingsSearchSection === "function")
-            pageItem.activateSettingsSearchSection(root._pendingSection)
+        let taskActivated = false
+        if (pageItem && pageHost.currentIndex === root._pendingPageIndex) {
+            const targetTask = root._pendingTask.length > 0 ? root._pendingTask : root._pendingSection
+            if (targetTask.length > 0)
+                taskActivated = SettingsSearchRegistry.activatePageSection(pageItem, targetTask)
+        }
+
+        if (taskActivated && root._pendingOptionId < 0
+                && root._pendingLabel.length === 0 && root._pendingSection.length === 0) {
+            root._pendingPageIndex = -1
+            root._pendingTask = ""
+            root._pendingIsSection = false
+            return
+        }
 
         var control = root._pendingOptionId >= 0
             ? SettingsSearchRegistry.getControlById(root._pendingOptionId)
-            : SettingsSearchRegistry.findSectionControl(root._pendingPageIndex, root._pendingSection);
+            : (pageItem ? SettingsSearchRegistry.findLoadedTarget(
+                pageItem, root._pendingLabel, root._pendingSection, root._pendingIsSection) : null);
+        if (!control && pageItem && root._pendingSection.length > 0
+                && root._spotlightRetries < root._spotlightMaxRetries
+                && SettingsSearchRegistry.revealLoadedSection(pageItem, root._pendingSection)) {
+            root._spotlightRetries++;
+            spotlightTimer.restart();
+            return;
+        }
         if (!control) {
             if (root._spotlightRetries < root._spotlightMaxRetries) {
                 root._spotlightRetries++;
@@ -343,7 +371,10 @@ Scope {
             } else {
                 root._pendingOptionId = -1;
                 root._pendingPageIndex = -1;
+                root._pendingLabel = "";
+                root._pendingTask = "";
                 root._pendingSection = "";
+                root._pendingIsSection = false;
             }
             return;
         }
@@ -361,7 +392,10 @@ Scope {
 
         root._pendingOptionId = -1;
         root._pendingPageIndex = -1;
+        root._pendingLabel = "";
+        root._pendingTask = "";
         root._pendingSection = "";
+        root._pendingIsSection = false;
     }
 
     function _findParentFlickable(item): var {
@@ -390,11 +424,10 @@ Scope {
         // Also fires while the panel is already open, which is how
         // `settingsNav page` navigates instead of only picking the landing page.
         function onSettingsOverlayRequestedPageChanged() {
-            const requested = GlobalStates.settingsOverlayRequestedPage ?? -1;
-            if (requested < 0 || !root.settingsOpen)
-                return;
-            root.openPage(requested);
-            GlobalStates.settingsOverlayRequestedPage = -1;
+            root.applyRequestedNavigation();
+        }
+        function onSettingsOverlayRequestedSectionChanged() {
+            root.applyRequestedNavigation();
         }
     }
 
@@ -815,6 +848,21 @@ Scope {
                         x: 14
                         y: header.bannerHeight - header.avatarSize * 0.45
 
+                        HoverHandler {
+                            id: focusAvatarHover
+                            cursorShape: Qt.PointingHandCursor
+                        }
+
+                        TapHandler {
+                            gesturePolicy: TapHandler.WithinBounds
+                            onTapped: root.openSearchResult({
+                                pageIndex: 23,
+                                label: Translation.tr("Profile picture"),
+                                section: "right",
+                                isSection: true
+                            })
+                        }
+
                         Rectangle {
                             anchors.fill: parent
                             radius: Appearance.zzzEverywhere
@@ -872,6 +920,30 @@ Scope {
                                 text: "person"
                                 iconSize: 20
                                 color: SettingsMaterialPreset.accentColor
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            width: 16
+                            height: 16
+                            radius: Appearance.zzzEverywhere
+                                ? Appearance.zzz.controlRadius : width / 2
+                            color: Appearance.colors.colPrimaryContainer
+                            border.width: 1
+                            border.color: SettingsMaterialPreset.accentColor
+                            opacity: focusAvatarHover.hovered ? 1 : 0
+                            scale: opacity > 0 ? 1 : 0.7
+
+                            Behavior on opacity { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+                            Behavior on scale { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "edit"
+                                iconSize: 10
+                                color: Appearance.colors.colOnPrimaryContainer
                             }
                         }
                     }
@@ -976,10 +1048,12 @@ Scope {
                             Layout.minimumWidth: 160
                             Layout.preferredHeight: 36
                             Layout.alignment: Qt.AlignVCenter
-                            radius: Appearance.rounding.full
+                            radius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                             color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                                  : Appearance.inirEverywhere
                                     ? (focusSearchField.activeFocus ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
+                                 : Appearance.editorialEverywhere
+                                    ? (focusSearchField.activeFocus ? Appearance.editorial.field : Appearance.editorial.layer(1))
                                     : (focusSearchField.activeFocus ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
                             border.width: focusSearchField.activeFocus ? 2
                                 : (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1)
@@ -987,6 +1061,7 @@ Scope {
                                 ? Appearance.colors.colPrimary
                                 : (Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                                   : Appearance.inirEverywhere ? Appearance.inir.colBorderMuted
+                                  : Appearance.editorialEverywhere ? Appearance.editorial.rule
                                   : Appearance.m3colors.m3outlineVariant)
 
                             Behavior on color {

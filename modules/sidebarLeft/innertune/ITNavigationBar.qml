@@ -64,7 +64,7 @@ Item {
                             text: navItem.modelData.icon
                             iconSize: Appearance.font.pixelSize.huge
                             fill: navItem.active ? 1 : 0
-                            color: navItem.active ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnSurfaceVariant
+                            color: navItem.active ? Appearance.colors.colOnSecondaryContainer : Appearance.colSecondaryActionIcon
                         }
                     }
 
@@ -73,7 +73,7 @@ Item {
                         text: navItem.modelData.label
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.weight: navItem.active ? Font.Bold : Font.Medium
-                        color: navItem.active ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
+                        color: navItem.active ? Appearance.colors.colOnSurface : Appearance.colMetadataText
                     }
                 }
 

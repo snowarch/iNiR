@@ -1,0 +1,72 @@
+#!/bin/sh
+# ani-cli asks its menu program for every choice: it pipes the list to stdin and
+# passes the prompt as an argument (`-p <prompt>` when it believes this is rofi,
+# the last argument otherwise), then reads the chosen line back. Inside an iNiR
+# run (INIR_ANI_RUN) the question is written to the run directory and the answer
+# the shell writes back is returned; that is how iNiR is the interface without
+# touching how ani-cli finds anything.
+
+prompt=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -p) prompt=$2; shift ;;
+        *) [ -z "$prompt" ] && last=$1 ;;
+    esac
+    shift
+done
+[ -n "$prompt" ] || prompt=$last
+list=$(cat -)
+
+if [ -z "$INIR_ANI_RUN" ]; then
+    case "$prompt" in
+        "Playing episode"*) printf 'quit\n' ;;
+        *) printf '%s\n' "$list" | head -n 1 ;;
+    esac
+    exit 0
+fi
+
+# A resume knows which show it wants: the entry whose title matches, never
+# ani-cli's first result, and nothing at all when none matches.
+if [ -n "$INIR_ANI_EXPECT" ] && [ "$prompt" = "Select anime: " ]; then
+    INIR_ANI_LIST="$list" python3 -c '
+import os, re
+def key(value):
+    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+want = key(os.environ["INIR_ANI_EXPECT"])
+for line in os.environ.get("INIR_ANI_LIST", "").split("\n"):
+    index, _, title = line.partition(" ")
+    if title and key(title) == want:
+        print(index)
+        raise SystemExit(0)
+raise SystemExit(1)
+'
+    exit $?
+fi
+
+request="$INIR_ANI_RUN/request.json"
+response="$INIR_ANI_RUN/response"
+rm -f -- "$response"
+INIR_ANI_LIST="$list" INIR_ANI_PROMPT="$prompt" python3 -c '
+import json, os, tempfile
+target = os.path.join(os.environ["INIR_ANI_RUN"], "request.json")
+items = [line for line in os.environ.get("INIR_ANI_LIST", "").split("\n") if line.strip()]
+handle, staging = tempfile.mkstemp(dir=os.environ["INIR_ANI_RUN"])
+with os.fdopen(handle, "w") as out:
+    json.dump({"prompt": os.environ.get("INIR_ANI_PROMPT", ""), "items": items}, out)
+os.replace(staging, target)
+' || exit 1
+
+# The person is reading a list, not watching a progress bar: wait long, not forever.
+deadline=$(( $(date +%s) + 600 ))
+while [ "$(date +%s)" -lt "$deadline" ]; do
+    if [ -f "$response" ]; then
+        answer=$(cat -- "$response")
+        rm -f -- "$response" "$request"
+        [ -n "$answer" ] || exit 1
+        printf '%s\n' "$answer"
+        exit 0
+    fi
+    sleep 0.2
+done
+rm -f -- "$request"
+exit 1

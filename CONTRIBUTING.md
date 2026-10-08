@@ -42,10 +42,18 @@ supervised systemd service, and raw quickshell commands leave it unmanaged.
 
 ## Commit Conventions
 
-- **Imperative mood**, max 72 characters: `Fix bar crash when weather widget is disabled`
+- Subject `type(scope): what changed`, lowercase, no period, under 60 characters: `fix(bar): no crash when the weather widget is off`
 - Be specific — not "fix bug" or "update code"
 - One logical change per commit (one feature, one fix, one refactor)
-- Body (optional): explain **why**, not what
+- Body (optional): the **why**, in three short lines at most. No measurements, no history, no list of what you touched
+
+## Comments
+
+A comment earns its place only when it states a constraint the code can't show and would otherwise be broken:
+an engine limit, a binding loop, a cost trap, a packed contract. Never what the code does, how you found the
+bug, a date, or a measurement. One or two lines each, and none around code you did not change.
+
+A PR that is mostly comments is returned to be trimmed before review.
 
 ## Branch Naming
 
@@ -220,6 +228,12 @@ not. Before opening a PR:
   it is not held against you; it tells the reviewer where to look.
 
 PRs with no evidence of real testing may be closed without detailed review.
+
+## License
+
+iNiR is GPL-3.0 with the additional terms in [NOTICE](NOTICE): keep the credit, don't pass the work off
+as yours, and the names and logos aren't included. By contributing you license your work under GPL-3.0
+and accept that those same terms apply to it. You keep your authorship; it shows in the history.
 
 ## Code of Conduct
 

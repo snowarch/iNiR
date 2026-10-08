@@ -1,0 +1,62 @@
+/* iNiR for Spotify: Spotify's own layout in the shell's palette, face and shapes. Appended after the palette
+   bridge, which defines --spice-* and --inir-font (the face the shell shows). */
+:root {
+  --inir-r-sheet: 26px; --inir-r-tile: 14px; --inir-r-row: 10px; --inir-r-chip: 7px; --inir-gap: 8px;
+  --encore-title-font-stack: var(--inir-font), sans-serif !important;
+  --encore-body-font-stack: var(--inir-font), sans-serif !important;
+  --encore-variable-font-stack: var(--inir-font), sans-serif !important;
+  --background-base: var(--spice-main) !important;
+  --background-highlight: var(--spice-highlight) !important;
+  --background-press: var(--spice-highlight-elevated) !important;
+  --background-elevated-base: var(--spice-main-elevated) !important;
+  --background-elevated-highlight: var(--spice-highlight) !important;
+  --background-tinted-base: rgba(var(--spice-rgb-text), 0.08) !important;
+  --background-tinted-highlight: rgba(var(--spice-rgb-text), 0.12) !important;
+  --background-tinted-press: rgba(var(--spice-rgb-text), 0.16) !important;
+  --text-base: var(--spice-text) !important;
+  --text-subdued: var(--spice-subtext) !important;
+  --essential-subdued: rgba(var(--spice-rgb-text), 0.3) !important;
+  --decorative-subdued: rgba(var(--spice-rgb-text), 0.1) !important;
+}
+body, input, button, textarea { font-family: var(--inir-font), sans-serif; }
+
+/* The field is the wallpaper's tone; panes are tiles on it */
+.Root__top-container { background: color-mix(in srgb, var(--spice-main) 72%, var(--spice-shadow)) !important; gap: 0; padding: var(--inir-gap) !important; padding-top: 0 !important; }
+.Root__main-view, .Root__nav-bar .main-yourLibraryX-entryPoints, .Root__right-sidebar aside {
+  border-radius: var(--inir-r-tile) !important; background: var(--spice-main) !important; border: 0 !important;
+}
+.Root__main-view { overflow: hidden; }
+.NowPlayingView::before { background: var(--spice-main) !important; }
+
+/* Shelves fade into the pane, not into Spotify's black */
+.search-searchCategory-contentArea::before { background-image: linear-gradient(90deg, rgba(var(--spice-rgb-main), 0.85), transparent) !important; }
+.search-searchCategory-contentArea::after { background-image: linear-gradient(-90deg, rgba(var(--spice-rgb-main), 0.85), transparent) !important; }
+.main-home-homeHeader { background-color: transparent !important; }
+.main-entityHeader-backgroundColor, .main-actionBarBackground-background,
+.main-entityHeader-overlay, .before-scroll-node + div [style*="background-color"] { background-image: none !important; }
+
+/* Quiet fills, no rules */
+.os-scrollbar-handle { background: rgba(var(--spice-rgb-text), 0.22) !important; border-radius: 4px !important; }
+.os-scrollbar-handle:hover { background: rgba(var(--spice-rgb-text), 0.4) !important; }
+hr, .main-trackList-trackListHeader { border-color: transparent !important; }
+.main-trackList-trackListHeader { box-shadow: none !important; }
+
+/* Shapes on the shell's ladder */
+.main-card-card, .main-cardImage-imageWrapper, .main-cardImage-image, .main-card-imageContainer,
+.main-image-image.cover-art-image, .main-nowPlayingView-coverArt, .cover-art { border-radius: var(--inir-r-tile) !important; }
+.view-homeShortcutsGrid-shortcut, .main-trackList-trackListRow, [class*="listRow-isInteractive"],
+.main-contextMenu-menu, .main-topBar-searchBar, .x-filterBox-filterInput { border-radius: var(--inir-r-row) !important; }
+.view-homeShortcutsGrid-shortcut { background: var(--spice-highlight) !important; }
+.view-homeShortcutsGrid-imageContainer, .view-homeShortcutsGrid-imageContainer img { border-radius: var(--inir-r-row) 0 0 var(--inir-r-row) !important; }
+.main-coverSlotCollapsed-container img, .main-nowPlayingWidget-coverArt img, .main-nowPlayingWidget-coverArt .cover-art { border-radius: var(--inir-r-row) !important; }
+
+/* The player is an island over the field, like the shell's own */
+.Root__now-playing-bar { padding: 0 var(--inir-gap) var(--inir-gap) !important; background: transparent !important; }
+.main-nowPlayingBar-container, footer[data-testid="now-playing-bar"], .main-nowPlayingBar-nowPlayingBar {
+  border-radius: var(--inir-r-sheet) !important; background: var(--spice-player) !important; border: 0 !important;
+}
+.main-nowPlayingBar-nowPlayingBar { padding: 0 14px !important; }
+.x-progressBar-fillColor { background-color: var(--spice-button) !important; }
+.x-progressBar-progressBarBg { background-color: rgba(var(--spice-rgb-text), 0.16) !important; border-radius: 4px !important; }
+.main-playPauseButton-button, button[data-testid="control-button-playpause"] { background: var(--spice-button) !important; color: var(--spice-main) !important; }
+.main-playButton-PlayButton button span, button[data-encore-id="buttonPrimary"] > span { background-color: var(--spice-button) !important; color: var(--spice-main) !important; }

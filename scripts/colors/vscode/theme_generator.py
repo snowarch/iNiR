@@ -842,17 +842,54 @@ def _write_theme_file(
     tmp.rename(theme_path)
 
 
-def _load_settings(path: Path) -> dict:
-    """Read settings.json, back up if corrupt."""
-    if path.exists():
-        try:
-            with open(path, "r") as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            backup = path.with_suffix(".json.backup")
-            path.rename(backup)
-            return {}
-    return {}
+def _strip_jsonc(text: str) -> str:
+    """Drop // and /* */ comments and trailing commas outside strings (settings.json is JSONC)."""
+    out = []
+    i, n = 0, len(text)
+    in_string = escaped = False
+    while i < n:
+        c = text[i]
+        if in_string:
+            out.append(c)
+            if escaped:
+                escaped = False
+            elif c == "\\":
+                escaped = True
+            elif c == '"':
+                in_string = False
+            i += 1
+        elif c == '"':
+            in_string = True
+            out.append(c)
+            i += 1
+        elif text.startswith("//", i):
+            end = text.find("\n", i)
+            i = n if end < 0 else end
+        elif text.startswith("/*", i):
+            end = text.find("*/", i + 2)
+            i = n if end < 0 else end + 2
+        elif c == ",":
+            j = i + 1
+            while j < n and text[j] in " \t\r\n":
+                j += 1
+            if j >= n or text[j] not in "]}":
+                out.append(c)
+            i += 1
+        else:
+            out.append(c)
+            i += 1
+    return "".join(out)
+
+
+def _load_settings(path: Path):
+    """settings.json as a dict, {} when missing, None when it can't be read: the caller then leaves it alone."""
+    if not path.exists():
+        return {}
+    try:
+        settings = json.loads(_strip_jsonc(path.read_text()))
+    except (OSError, ValueError):
+        return None
+    return settings if isinstance(settings, dict) else None
 
 
 def _write_settings(path: Path, settings: dict) -> None:
@@ -972,6 +1009,9 @@ def generate_vscode_theme(colors_json_path, scss_path, settings_path, fork_key="
     # Once our theme is active, _watch:true handles reload — no settings changes needed.
     settings_path = Path(settings_path)
     settings = _load_settings(settings_path)
+    if settings is None:
+        print(f"  could not parse {settings_path}; theme written, not activated", file=sys.stderr)
+        return False
     changed = False
 
     current_theme = settings.get("workbench.colorTheme", "")
@@ -1074,10 +1114,8 @@ def strip_vscode_theme(settings_path: str, fork_key: str = "") -> bool:
     if not settings_path.exists():
         return True
 
-    try:
-        with open(settings_path, "r") as f:
-            settings = json.load(f)
-    except (json.JSONDecodeError, OSError):
+    settings = _load_settings(settings_path)
+    if settings is None:
         return False
 
     changed = False

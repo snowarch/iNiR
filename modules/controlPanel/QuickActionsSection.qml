@@ -74,6 +74,25 @@ PanelSurface {
         }
 
         ActionTile {
+            id: vpnTile
+            property bool holding: false
+            function syncHold(): void {
+                if (vpnTile.visible === vpnTile.holding) return
+                vpnTile.holding = vpnTile.visible
+                if (vpnTile.holding) Vpn.keepAlive()
+                else Vpn.releaseKeepAlive()
+            }
+            visible: Vpn.available && (Config.options?.vpn?.quickToggle ?? false)
+            icon: Vpn.connected ? "vpn_lock" : "vpn_key_off"
+            active: Vpn.connected
+            enabled: !Vpn.busy
+            onClicked: Vpn.toggle()
+            onVisibleChanged: vpnTile.syncHold()
+            Component.onCompleted: vpnTile.syncHold()
+            Component.onDestruction: if (vpnTile.holding) Vpn.releaseKeepAlive()
+        }
+
+        ActionTile {
             icon: "coffee"
             active: Idle.inhibit
             onClicked: Idle.toggleInhibit()

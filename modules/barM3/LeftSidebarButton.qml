@@ -11,13 +11,8 @@ RippleButton {
     id: root
     property bool showPing: false
     property bool vertical: Config.options.bar.vertical
-    property bool aiChatEnabled: Config.options.policies.ai !== 0
-    property bool translatorEnabled: Config.options.sidebar.translator.enable
-    property bool animeEnabled: Config.options.policies.weeb !== 0
     property bool isMaterial: Config.options.bar.m3.cornerStyle === 3
     property real buttonPadding: 5
-
-    visible: aiChatEnabled || translatorEnabled || animeEnabled
 
     implicitWidth: 32
     implicitHeight: 32
@@ -29,11 +24,12 @@ RippleButton {
     colBackgroundToggled: isMaterial ? M3Palette.secondaryContainer : Appearance.colors.colSecondaryContainer
     colBackgroundToggledHover: isMaterial ? M3Palette.secondaryContainerHover : Appearance.colors.colSecondaryContainerHover
     colRippleToggled: isMaterial ? M3Palette.secondaryContainerActive : Appearance.colors.colSecondaryContainerActive
-    toggled: GlobalStates.sidebarLeftOpen
-        && GlobalStates.sidebarLeftPresentationOutput === (root.QsWindow.window?.screen?.name ?? "")
+    toggled: ShellLayoutController.sidebarOpenAtSlot("left",
+        root.QsWindow.window?.screen?.name ?? "")
 
     onPressed: {
-        GlobalStates.toggleSidebarLeft(root.QsWindow.window?.screen?.name ?? "");
+        ShellLayoutController.toggleSidebarAtSlot("left",
+            root.QsWindow.window?.screen?.name ?? "");
     }
 
     Connections {

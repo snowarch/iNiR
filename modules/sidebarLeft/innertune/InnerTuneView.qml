@@ -92,7 +92,7 @@ Item {
                     MaterialSymbol {
                         text: "search"
                         iconSize: Appearance.font.pixelSize.huge
-                        color: Appearance.colors.colOnSurfaceVariant
+                        color: Appearance.colSecondaryActionIcon
                     }
 
                     Item {
@@ -112,7 +112,7 @@ Item {
                             width: parent.width
                             visible: searchField.text.length === 0
                             text: Translation.tr("Search songs, albums, artists")
-                            color: Appearance.colors.colOnSurfaceVariant
+                            color: Appearance.colMetadataText
                             font.pixelSize: Appearance.font.pixelSize.normal
                             elide: Text.ElideRight
                         }
@@ -122,14 +122,14 @@ Item {
                         Layout.alignment: Qt.AlignVCenter
                         visible: root.searchMode
                         symbol: "close"
-                        color: Appearance.colors.colOnSurfaceVariant
+                        color: Appearance.colSecondaryActionIcon
                         onClicked: searchField.text = ""
                     }
                     ITIconButton {
                         Layout.alignment: Qt.AlignVCenter
                         visible: !root.searchMode
                         symbol: "account_circle"
-                        color: InnerTube.authenticated ? Appearance.colors.colPrimary : Appearance.colors.colOnSurfaceVariant
+                        color: InnerTube.authenticated ? Appearance.colActionIcon : Appearance.colSecondaryActionIcon
                         onClicked: root.detail = (root.detail === "account" ? "" : "account")
                     }
                 }
@@ -168,7 +168,7 @@ Item {
                         anchors.centerIn: parent
                         text: chip.modelData.label
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: chip.active ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnSurfaceVariant
+                        color: chip.active ? Appearance.colors.colOnSecondaryContainer : Appearance.colMetadataText
                     }
                     MouseArea {
                         anchors.fill: parent

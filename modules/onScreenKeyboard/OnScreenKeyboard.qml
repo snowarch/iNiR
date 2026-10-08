@@ -54,11 +54,6 @@ Scope { // Scope
     Loader {
         id: oskLoader
         active: GlobalStates.oskOpen
-        onActiveChanged: {
-            if (!oskLoader.active) {
-                Ydotool.releaseAllKeys();
-            }
-        }
 
         sourceComponent: PanelWindow {
             id: oskRoot

@@ -10,10 +10,11 @@ Item {
     id: root
     required property string label
     required property string colorKey
+    property string configPath: "appearance.customTheme." + colorKey
     property string contrastAgainst: ""  // Key to check contrast against (e.g., "m3background")
     signal colorChanged()
 
-    property color currentColor: Config.options?.appearance?.customTheme?.[colorKey] ?? "#888888"
+    property color currentColor: Config.getNestedValue(root.configPath, "#888888")
     property color bgColor: contrastAgainst ? (Config.options?.appearance?.customTheme?.[contrastAgainst] ?? "#000000") : "#000000"
     property real ratio: contrastAgainst ? ColorUtils.contrastRatio(currentColor, bgColor) : 0
     property bool showContrast: contrastAgainst !== ""
@@ -121,13 +122,13 @@ Item {
         id: colorDialog
         selectedColor: root.currentColor
         onAccepted: {
-            Config.setNestedValue("appearance.customTheme." + root.colorKey, selectedColor.toString())
+            Config.setNestedValue(root.configPath, selectedColor.toString())
             root.colorChanged()
         }
     }
 
     SettingsNativeDialogGuard {
         dialog: colorDialog
-        dialogKey: "color-picker-row-" + root.colorKey
+        dialogKey: "color-picker-row-" + root.configPath
     }
 }

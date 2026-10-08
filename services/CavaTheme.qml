@@ -11,7 +11,7 @@ import qs.services
 Singleton {
     id: root
 
-    readonly property bool enabled: Config.options?.appearance?.wallpaperTheming?.enableCava ?? false
+    readonly property bool enabled: Config.options?.appearance?.wallpaperTheming?.enableCava ?? true
     readonly property string colorSource: Config.options?.appearance?.cava?.colorSource ?? "theme"
     readonly property bool useCoverSource: root.colorSource === "cover"
     readonly property int gradientCount: Math.max(1,
@@ -100,16 +100,16 @@ Singleton {
     readonly property string coverSourceUrl: {
         if (MprisController.isYtMusicActive && YtMusic.currentVideoId)
             return YtMusic.currentThumbnail ?? ""
-        return MprisController.activePlayer?.trackArtUrl ?? ""
+        return MprisController.artUrlOf(MprisController.activePlayer) ?? ""
     }
 
     readonly property string coverTitle: MprisController.isYtMusicActive && YtMusic.currentVideoId
         ? YtMusic.currentTitle
-        : (MprisController.activePlayer?.trackTitle ?? "")
+        : (MprisController.titleOf(MprisController.activePlayer) ?? "")
 
     readonly property string coverArtist: MprisController.isYtMusicActive && YtMusic.currentVideoId
         ? YtMusic.currentArtist
-        : (MprisController.activePlayer?.trackArtist ?? "")
+        : (MprisController.artistOf(MprisController.activePlayer) ?? "")
 
     readonly property string coverAlbum: MprisController.isYtMusicActive && YtMusic.currentVideoId
         ? ""

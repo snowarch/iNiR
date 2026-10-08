@@ -215,6 +215,7 @@ Scope {
 
                                 player: modelData
                                 visualizerPoints: root.visualizerPoints
+                                outputName: String(mediaControlsRoot.screen?.name ?? "")
                                 implicitWidth: root.widgetWidth
                                 implicitHeight: root.widgetHeight
                                 radius: root.popupRounding

@@ -314,6 +314,25 @@ Item {
                                 font.weight: Font.Medium
                                 color: upcomingArea._colText
                             }
+                            RippleButton {
+                                implicitWidth: 28
+                                implicitHeight: 28
+                                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
+                                colBackground: "transparent"
+                                colBackgroundHover: Appearance.colLayer2Hover
+                                colRipple: Appearance.colLayer2Active
+                                onClicked: {
+                                    const eventsIdx = root.sections.findIndex(s => s.id === "events")
+                                    if (eventsIdx !== -1) root.activeSection = eventsIdx
+                                }
+                                contentItem: MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "open_in_full"
+                                    iconSize: 15
+                                    color: upcomingArea._colPrimary
+                                }
+                                StyledToolTip { text: Translation.tr("Open all events") }
+                            }
                         }
 
                         // Event list or empty hint
@@ -824,7 +843,7 @@ Item {
                 (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1),
                 Math.max(0.16, Appearance.aurora.subSurfaceTransparentize - 0.10)
             )
-            : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.20)
+            : ColorUtils.transparentize(Appearance.colLayer1Hover, 0.20)
         readonly property color colDarkSurfaceActive: angelEverywhere
             ? Appearance.angel.colGlassCardActive
             : zzzEverywhere ? Appearance.zzz.bg3
@@ -833,7 +852,7 @@ Item {
                 (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1),
                 Math.max(0.12, Appearance.aurora.subSurfaceTransparentize - 0.14)
             )
-            : ColorUtils.transparentize(Appearance.colors.colLayer1Active, 0.18)
+            : ColorUtils.transparentize(Appearance.colLayer1Active, 0.18)
 
         color: (gameModeMinimal || islandStyle) ? "transparent"
              : zzzEverywhere ? "transparent"
@@ -855,7 +874,8 @@ Item {
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
 
-        radius: zzzEverywhere ? Appearance.zzz.panelRadius
+        radius: islandStyle ? (Config.options?.appearance?.island?.radius ?? 18)
+              : zzzEverywhere ? Appearance.zzz.panelRadius
               : angelEverywhere  ? Appearance.angel.roundingNormal
               : inirEverywhere   ? (cardStyle ? Appearance.inir.roundingLarge : Appearance.inir.roundingNormal)
               : cardStyle        ? Appearance.rounding.normal
@@ -1518,7 +1538,7 @@ Item {
                                     colBackground: "transparent"
                                     colBackgroundHover: bg.inirEverywhere ? Appearance.inir.colLayer1Hover
                                         : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                        : Appearance.colors.colLayer1Hover
+                                        : Appearance.colLayer1Hover
                                     onClicked: root.moveSectionUp(sectionDelegate.index)
                                     contentItem: MaterialSymbol { anchors.centerIn: parent; text: "arrow_upward"; iconSize: 16; color: bg.inirEverywhere ? Appearance.inir.colText : bg.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
                                     StyledToolTip { text: Translation.tr("Move up") }
@@ -1532,7 +1552,7 @@ Item {
                                     colBackground: "transparent"
                                     colBackgroundHover: bg.inirEverywhere ? Appearance.inir.colLayer1Hover
                                         : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                        : Appearance.colors.colLayer1Hover
+                                        : Appearance.colLayer1Hover
                                     onClicked: root.moveSectionDown(sectionDelegate.index)
                                     contentItem: MaterialSymbol { anchors.centerIn: parent; text: "arrow_downward"; iconSize: 16; color: bg.inirEverywhere ? Appearance.inir.colText : bg.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
                                     StyledToolTip { text: Translation.tr("Move down") }
@@ -1810,7 +1830,7 @@ Item {
             const wins = NiriService.windows || []
             for (let i = 0; i < wins.length; i++) {
                 const w = wins[i]
-                if (w.title === "illogical-impulse Settings" && w.app_id === "org.quickshell") {
+                if (w.title === "Settings — iNiR" && w.app_id === "org.quickshell") {
                     GlobalStates.sidebarRightOpen = false
                     Qt.callLater(() => NiriService.focusWindow(w.id))
                     return
@@ -1924,15 +1944,11 @@ Item {
                     : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.72)
                     : bg.auroraEverywhere ? bg.colDarkSurface
                     : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.68)
-                colBackgroundHover: bg.angelEverywhere ? Appearance.angel.colGlassCardHover
-                    : bg.inirEverywhere ? Appearance.inir.colLayer1Hover
-                    : Appearance.colors.colLayer1Hover
+                colBackgroundHover: Appearance.colLayer1Hover
                 onClicked: sectionHeader.secondaryActionClicked()
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent; text: sectionHeader.secondaryActionIcon; iconSize: 16
-                    color: bg.inirEverywhere  ? Appearance.inir.colTextSecondary
-                         : bg.angelEverywhere ? Appearance.angel.colTextSecondary
-                         : Appearance.colors.colSubtext
+                    color: Appearance.colActionIcon
                 }
                 StyledToolTip {
                     position: "left"
@@ -1956,9 +1972,7 @@ Item {
                      : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.72)
                      : bg.auroraEverywhere ? bg.colDarkSurface
                      : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.68))
-                colBackgroundHover: bg.angelEverywhere ? Appearance.angel.colGlassCardHover
-                    : bg.inirEverywhere ? Appearance.inir.colLayer1Hover
-                    : Appearance.colors.colLayer1Hover
+                colBackgroundHover: Appearance.colLayer1Hover
                 onClicked: sectionHeader.actionClicked()
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent; text: sectionHeader.actionIcon; iconSize: 16
@@ -1967,9 +1981,7 @@ Item {
                         ? (bg.inirEverywhere  ? Appearance.inir.colOnSecondaryContainer
                          : bg.angelEverywhere ? Appearance.angel.colOnPrimary
                          : Appearance.colors.colOnSecondaryContainer)
-                        : (bg.inirEverywhere  ? Appearance.inir.colTextSecondary
-                         : bg.angelEverywhere ? Appearance.angel.colTextSecondary
-                         : Appearance.colors.colSubtext)
+                        : Appearance.colActionIcon
                 }
                 StyledToolTip {
                     position: "left"
@@ -2019,7 +2031,7 @@ Item {
                         : bg.inirEverywhere ? Appearance.inir.colSecondaryContainerHover
                         : bg.angelEverywhere ? Appearance.angel.colPrimaryHover
                         : Appearance.colors.colSecondaryContainerHover)
-                    : (bg.zzzEverywhere ? Appearance.colors.colLayer1Hover
+                    : (bg.zzzEverywhere ? Appearance.colLayer1Hover
                         : bg.inirEverywhere ? Appearance.inir.colLayer1Hover
                         : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : bg.colDarkSurfaceHover)
@@ -2028,7 +2040,7 @@ Item {
                         : bg.inirEverywhere ? Appearance.inir.colSecondaryContainerActive
                         : bg.angelEverywhere ? Appearance.angel.colPrimaryActive
                         : Appearance.colors.colSecondaryContainerActive)
-                    : (bg.zzzEverywhere ? Appearance.colors.colLayer1Active
+                    : (bg.zzzEverywhere ? Appearance.colLayer1Active
                         : bg.inirEverywhere ? Appearance.inir.colLayer1Active
                         : bg.angelEverywhere ? Appearance.angel.colGlassCardActive
                         : bg.colDarkSurfaceActive)

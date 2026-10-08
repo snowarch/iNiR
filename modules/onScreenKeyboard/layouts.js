@@ -71,9 +71,8 @@ const byName = {
                 { keytype: "normal", label: "\\", labelShift: "|", shape: "expand", keycode: 43 }
             ],
             [
-                // Caps disabled (double-tap shift does caps lock). Single caps-shaped
-                // spacer keeps home-row alignment with Tab / Shift above & below.
-                { keytype: "spacer", label: "", shape: "caps" },
+                // Locks the OSK's shift (same as a double tap on Shift); sends no keycode.
+                { keytype: "caps", label: "Caps", shape: "caps" },
                 { keytype: "normal", label: "a", labelShift: "A", shape: "normal", keycode: 30 },
                 { keytype: "normal", label: "s", labelShift: "S", shape: "normal", keycode: 31 },
                 { keytype: "normal", label: "d", labelShift: "D", shape: "normal", keycode: 32 },
@@ -167,8 +166,8 @@ const byName = {
                 { keytype: "normal", label: "↵", shape: "expand", keycode: 28 }
             ],
             [
-                // Caps disabled (double-tap shift). Single caps-shaped spacer for alignment.
-                { keytype: "spacer", label: "", shape: "caps" },
+                // Locks the OSK's shift (same as a double tap on Shift); sends no keycode.
+                { keytype: "caps", label: "Caps", shape: "caps" },
                 { keytype: "normal", label: "a", labelShift: "A", labelAlt: "æ", shape: "normal", keycode: 30 },
                 { keytype: "normal", label: "s", labelShift: "S", labelAlt: "ſ", shape: "normal", keycode: 31 },
                 { keytype: "normal", label: "d", labelShift: "D", labelAlt: "ð", shape: "normal", keycode: 32 },
@@ -266,8 +265,8 @@ const byName = {
                 { keytype: "normal", label: "\\", labelShift: "/", shape: "expand", keycode: 43 }
             ],
             [
-                // Caps disabled (double-tap shift). Single caps-shaped spacer for alignment.
-                { keytype: "spacer", label: "", shape: "caps" },
+                // Locks the OSK's shift (same as a double tap on Shift); sends no keycode.
+                { keytype: "caps", label: "Caps", shape: "caps" },
                 { keytype: "normal", label: "ф", labelShift: "Ф", shape: "normal", keycode: 30 },
                 { keytype: "normal", label: "ы", labelShift: "Ы", shape: "normal", keycode: 31 },
                 { keytype: "normal", label: "в", labelShift: "В", shape: "normal", keycode: 32 },

@@ -56,6 +56,7 @@ if [[ ! -d "$REPO_ROOT" || ! -f "$REPO_ROOT/shell.qml" ]]; then
     exit 1
 fi
 
+INVOKED_FROM="$PWD"
 cd "$REPO_ROOT"
 
 # Handle Ctrl+C gracefully
@@ -87,6 +88,8 @@ run_migrate() {
     else
         tui_success "No pending migrations"
     fi
+
+    show_session_impact_notices
 }
 trap cleanup INT
 trap 'type _tui_kill_spinner &>/dev/null && _tui_kill_spinner 2>/dev/null || true; rm -rf /tmp/buildyay /tmp/buildparu 2>/dev/null' EXIT TERM
@@ -190,53 +193,119 @@ _check_privilege_prereqs() {
 
 sync_launcher_from_repo() {
     local launcher_target="${XDG_BIN_HOME}/inir"
-    if [[ -f "${REPO_ROOT}/scripts/inir" ]]; then
-        mkdir -p "$XDG_BIN_HOME"
-        cp -f "${REPO_ROOT}/scripts/inir" "$launcher_target"
-        chmod +x "$launcher_target"
-        ensure_launcher_path_in_shells "$XDG_BIN_HOME"
-        printf '%s\n' "$launcher_target"
+    local launcher_source="${REPO_ROOT}/scripts/inir"
+    [[ -f "$launcher_source" ]] || return 1
+
+    mkdir -p "$XDG_BIN_HOME"
+
+    local source_real target_real install_mode launcher_tmp
+    source_real="$(readlink -f "$launcher_source" 2>/dev/null || printf '%s' "$launcher_source")"
+    target_real="$(readlink -f "$launcher_target" 2>/dev/null || true)"
+    install_mode="$(get_installed_install_mode 2>/dev/null || true)"
+    if [[ -z "$install_mode" || "$install_mode" == "unknown" ]]; then
+        install_mode="$(get_install_mode 2>/dev/null || true)"
     fi
+
+    if [[ "$install_mode" == "repo-link" ]]; then
+        if [[ ! -L "$launcher_target" || "$source_real" != "$target_real" ]]; then
+            rm -f "$launcher_target"
+            ln -s "$launcher_source" "$launcher_target"
+        fi
+    elif [[ -L "$launcher_target" ]] || [[ ! -f "$launcher_target" ]] \
+            || ! cmp -s "$launcher_source" "$launcher_target" 2>/dev/null; then
+        # repo-copy owns a real launcher file. `cp -f` follows an existing
+        # symlink, which can silently update an old target while leaving the
+        # launcher itself pointed at the wrong checkout/runtime. Replace the
+        # directory entry atomically so topology and contents are both correct.
+        launcher_tmp="${launcher_target}.tmp.$$"
+        rm -f "$launcher_tmp"
+        install -m755 "$launcher_source" "$launcher_tmp" || return 1
+        mv -f "$launcher_tmp" "$launcher_target" || {
+            rm -f "$launcher_tmp"
+            return 1
+        }
+    fi
+
+    chmod +x "$launcher_source"
+    [[ "$install_mode" == "repo-link" ]] || chmod +x "$launcher_target"
+    ensure_launcher_path_in_shells "$XDG_BIN_HOME"
+    # Tab completion in the person's own shell: a link to the runtime's file, never over one of theirs.
+    "$launcher_target" completions install "$(basename "${SHELL:-bash}")" >/dev/null 2>&1 || true
+    printf '%s\n' "$launcher_target"
 }
 
 sync_user_inir_service_from_repo_if_present() {
+    INIR_SERVICE_SYNC_CHANGED=0
     local service_asset="${REPO_ROOT}/assets/systemd/inir.service"
     local service_target_dir="${XDG_CONFIG_HOME}/systemd/user"
     local service_target="${service_target_dir}/inir.service"
     local launcher_target="${XDG_BIN_HOME}/inir"
-    local tmp_file
+    local tmp_file install_mode
     local changed=false
 
     [[ -f "$service_asset" ]] || return 1
-    [[ -f "$service_target" ]] || return 1
+    inir_user_service_is_masked && return 2
 
     mkdir -p "$service_target_dir"
     mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}"
-    tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.$$"
+    local service_dropin_dir="${service_target_dir}/inir.service.d"
+    local service_override="${service_dropin_dir}/override.conf"
+    install_mode="$(get_installed_install_mode 2>/dev/null || true)"
+    if [[ -z "$install_mode" || "$install_mode" == "unknown" ]]; then
+        install_mode="$(get_install_mode 2>/dev/null || true)"
+    fi
 
+    if [[ "$install_mode" == "repo-link" ]]; then
+        local service_asset_real service_target_real override_tmp
+        service_asset_real="$(readlink -f "$service_asset" 2>/dev/null || printf '%s' "$service_asset")"
+        service_target_real="$(readlink -f "$service_target" 2>/dev/null || true)"
+        if [[ ! -L "$service_target" || "$service_asset_real" != "$service_target_real" ]]; then
+            rm -f "$service_target"
+            ln -s "$service_asset" "$service_target"
+            changed=true
+            INIR_SERVICE_SYNC_CHANGED=1
+        fi
+
+        mkdir -p "$service_dropin_dir"
+        override_tmp="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.override.$$"
+        cat > "$override_tmp" <<EOF
+# Managed locally: iNiR repo-link launcher override
+[Service]
+ExecStart=
+ExecStart=${launcher_target} run --session
+ExecStopPost=
+ExecStopPost=-${launcher_target} cleanup-orphans
+EOF
+        if [[ ! -f "$service_override" ]] || ! cmp -s "$override_tmp" "$service_override"; then
+            cp -f "$override_tmp" "$service_override"
+            changed=true
+            INIR_SERVICE_SYNC_CHANGED=1
+        fi
+        rm -f "$override_tmp"
+
+        # The symlink target can change after git pull without changing the link.
+        # Reload every repo-link sync so systemd sees the current checkout unit.
+        command -v systemctl >/dev/null 2>&1 && systemctl --user daemon-reload >/dev/null 2>&1 || true
+        return 0
+    fi
+
+    tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.$$"
     sed -e "s|^ExecStart=.*|ExecStart=${launcher_target//&/\\&} run --session|" \
         -e "s|^ExecStopPost=-.*|ExecStopPost=-${launcher_target//&/\\&} cleanup-orphans|" \
         "$service_asset" > "$tmp_file"
 
-    if [[ -L "$service_target" ]]; then
-        # A repo-link unit points at the portable template, whose /usr/bin/inir
-        # path is wrong for developer installs.  A drop-in fixes it only after
-        # the first setup/doctor run, so a fresh login can hit 203/EXEC before
-        # that override exists.  Materialize the rendered unit instead.
+    if [[ -L "$service_target" ]] || [[ ! -f "$service_target" ]] || ! cmp -s "$tmp_file" "$service_target"; then
         rm -f "$service_target"
         cp -f "$tmp_file" "$service_target"
         changed=true
-    elif ! cmp -s "$tmp_file" "$service_target"; then
-        changed=true
-        cp -f "$tmp_file" "$service_target"
+        INIR_SERVICE_SYNC_CHANGED=1
     fi
 
-    local service_dropin_dir="${service_target_dir}/inir.service.d"
-    local service_override="${service_dropin_dir}/override.conf"
     if [[ -f "$service_override" ]] && grep -q '^# Managed locally:' "$service_override"; then
         rm -f "$service_override"
         rmdir "$service_dropin_dir" 2>/dev/null || true
         changed=true
+        INIR_SERVICE_SYNC_CHANGED=1
     fi
 
     rm -f "$tmp_file"
@@ -245,44 +314,88 @@ sync_user_inir_service_from_repo_if_present() {
         systemctl --user daemon-reload >/dev/null 2>&1 || true
     fi
 
-    if [[ "$changed" == true ]]; then
-        return 0
-    fi
-
-    return 1
+    return 0
 }
 
 ensure_user_inir_service_enabled() {
-    if ! command -v systemctl >/dev/null 2>&1; then
-        return 1
+    INIR_SERVICE_WIRING_CHANGED=0
+    command -v systemctl >/dev/null 2>&1 || return 1
+
+    local installed_strategy service_path
+    installed_strategy="$(get_installed_update_strategy 2>/dev/null || true)"
+    service_path="${XDG_CONFIG_HOME}/systemd/user/inir.service"
+    inir_user_service_is_masked && return 2
+
+    if [[ "$installed_strategy" == "package-manager" ]]; then
+        systemctl --user daemon-reload >/dev/null 2>&1 || true
+        service_path="$(systemctl --user show -p FragmentPath --value inir.service 2>/dev/null || true)"
     fi
 
-    local service_path="${XDG_CONFIG_HOME}/systemd/user/inir.service"
-    if [[ ! -f "$service_path" ]]; then
-        return 1
+    [[ -f "$service_path" ]] || return 1
+    systemctl --user cat niri.service &>/dev/null || return 1
+
+    local systemd_user_dir="${XDG_CONFIG_HOME}/systemd/user"
+    local correct_wants_dir="${systemd_user_dir}/niri.service.wants"
+    local wants_dir link
+    for wants_dir in "$systemd_user_dir"/*.wants; do
+        [[ -d "$wants_dir" ]] || continue
+        link="$wants_dir/inir.service"
+        [[ -e "$link" || -L "$link" ]] || continue
+        [[ "$(realpath "$wants_dir" 2>/dev/null)" == "$(realpath "$correct_wants_dir" 2>/dev/null)" ]] && continue
+        rm -f "$link" || return 1
+        INIR_SERVICE_WIRING_CHANGED=1
+    done
+
+    mkdir -p "$correct_wants_dir" || return 1
+    link="$correct_wants_dir/inir.service"
+    local service_real link_real
+    service_real="$(readlink -f "$service_path" 2>/dev/null || printf '%s' "$service_path")"
+    link_real="$(readlink -f "$link" 2>/dev/null || true)"
+    if [[ ! -L "$link" || "$link_real" != "$service_real" ]]; then
+        ln -sf "$service_path" "$link" || return 1
+        INIR_SERVICE_WIRING_CHANGED=1
     fi
 
-    # Detect the compositor service — never fall back to graphical-session.target
-    # because that target is active in KDE/GNOME/etc.
-    local target=""
-    if systemctl --user cat niri.service &>/dev/null; then
-        target="niri.service"
-    elif systemctl --user cat 'wayland-wm@Hyprland.service' &>/dev/null; then
-        target="wayland-wm@Hyprland.service"
+    if [[ "$INIR_SERVICE_WIRING_CHANGED" -gt 0 ]]; then
+        systemctl --user daemon-reload >/dev/null 2>&1 || return 1
+    fi
+    [[ -e "$link" || -L "$link" ]]
+}
+
+repair_update_owned_state() {
+    local include_repo_integration="${1:-true}"
+
+    if ! repair_legacy_quickshell_malloc_environment; then
+        tui_warn "Could not clean legacy Quickshell allocator environment"
+    elif [[ "${INIR_LEGACY_MALLOC_ENV_REPAIRED:-0}" -gt 0 ]]; then
+        tui_success "Removed legacy global Quickshell allocator tuning"
     fi
 
-    if [[ -z "$target" ]]; then
-        return 1  # no compositor found — don't enable
+    if [[ "$include_repo_integration" == "true" ]]; then
+        if repair_legacy_niri_shell_startup; then
+            [[ "${INIR_LEGACY_NIRI_STARTUP_REPAIRED:-0}" -gt 0 ]] && tui_success "Removed legacy Niri shell startup"
+        else
+            tui_warn "Could not repair legacy Niri shell startup"
+        fi
+        sync_launcher_from_repo >/dev/null 2>&1 || tui_warn "Could not refresh the inir launcher"
+        if sync_user_desktop_integration_from_repo; then
+            [[ "${INIR_DESKTOP_INTEGRATION_CHANGED:-0}" -gt 0 ]] && tui_success "Refreshed desktop integration"
+        else
+            tui_warn "Could not refresh desktop integration"
+        fi
+        if inir_user_service_is_masked; then
+            tui_warn "User inir.service is masked; leaving it unchanged (restore with: inir service install && inir service enable)"
+        else
+            if sync_user_inir_service_from_repo_if_present; then
+                [[ "${INIR_SERVICE_SYNC_CHANGED:-0}" -gt 0 ]] && tui_success "Refreshed user inir.service"
+            else
+                tui_warn "Could not refresh user inir.service"
+            fi
+            if [[ -f "${XDG_CONFIG_HOME}/systemd/user/inir.service" ]]; then
+                ensure_user_inir_service_enabled >/dev/null 2>&1 || true
+            fi
+        fi
     fi
-
-    local wants_dir="${XDG_CONFIG_HOME}/systemd/user/${target}.wants"
-    if [[ ! -e "$wants_dir/inir.service" ]]; then
-        mkdir -p "$wants_dir" || return 1
-        ln -sf "$service_path" "$wants_dir/inir.service" || return 1
-    fi
-
-    systemctl --user daemon-reload >/dev/null 2>&1 || return 1
-    [[ -e "$wants_dir/inir.service" || -L "$wants_dir/inir.service" ]]
 }
 
 ###############################################################################
@@ -429,13 +542,19 @@ show_setup_context_card() {
     fi
 
     tui_summary_card "$title" "${pairs[@]}"
+
+    if [[ "$remote_state" == "diverged" ]] && declare -F show_repo_realign_guidance >/dev/null 2>&1; then
+        echo ""
+        tui_warn "This checkout and origin/${tracked_branch} no longer share one update path."
+        show_repo_realign_guidance "$tracked_branch"
+    fi
 }
 
 show_help() {
     echo ""
     tui_hero_card "iNiR setup" \
-        "Install, sync, repair, inspect, and unfuck the shell without guessing which entrypoint owns what." \
-        "Use inir for daily runtime control. Use ./setup when you want the maintenance brain."
+        "Install, update, repair and inspect the shell without guessing which component owns what." \
+        "Use inir for everyday control. Use ./setup for installation, recovery and maintenance."
 
     tui_key_value "Usage:" "./setup [command] [options]"
     show_setup_context_card "Setup Overview"
@@ -475,6 +594,7 @@ show_help() {
     tui_list_item "-y, --yes              Skip prompts (auto-yes)"
     tui_list_item "-q, --quiet            Minimal output"
     tui_list_item "--local                Sync local repo to install (skip git pull)"
+    tui_list_item "--realign              Safely realign an old published checkout after rewritten remote history (update only)"
     tui_list_item "--simulate             Walk the update flow visually without touching files (update only)"
     tui_list_item "--set-default-shell    Set Fish as default shell (uses chsh)"
     tui_list_item "-h, --help             Show this help"
@@ -1212,37 +1332,34 @@ run_config() {
         return 0
     fi
 
-    # Show current key settings
-    local panel_family="ii"
-    local bar_position="top"
-    local clock_format="12h"
-    local search_engine="google"
-    local animations="true"
-    local blur="true"
-
+    # Keys as Config.qml names them; a missing key shows the fresh-install value from defaults/config.json.
+    local panel_family="ii" global_style="?" bar_place="?" clock_format="?" search_url="?"
     if command -v jq &>/dev/null; then
-        panel_family=$(jq -r '.panelFamily // "ii"' "$config_file" 2>/dev/null)
-        bar_position=$(jq -r '.bar?.position // "top"' "$config_file" 2>/dev/null)
-        clock_format=$(jq -r '.time?.format // "12h"' "$config_file" 2>/dev/null)
-        search_engine=$(jq -r '.search?.engine // "google"' "$config_file" 2>/dev/null)
-        animations=$(jq -r '.animations?.enabled // true' "$config_file" 2>/dev/null)
-        blur=$(jq -r '.appearance?.blur // true' "$config_file" 2>/dev/null)
+        local defaults="${REPO_ROOT}/defaults/config.json"
+        # Not jq's `//`: it skips false too, and a switch that is off is a value.
+        read_key() { jq -r --slurpfile d "$defaults" "[($1), (\$d[0] | $1)] | map(select(. != null)) | if length > 0 then .[0] else \"?\" end" "$config_file" 2>/dev/null; }
+        panel_family=$(read_key '.panelFamily')
+        global_style=$(read_key '.appearance.globalStyle')
+        clock_format=$(read_key '.time.format')
+        search_url=$(read_key '.search.engineBaseUrl')
+        if [[ "$(read_key '.bar.vertical')" == "true" ]]; then bar_place="vertical"
+        elif [[ "$(read_key '.bar.bottom')" == "true" ]]; then bar_place="bottom"
+        else bar_place="top"; fi
     fi
 
     tui_summary_card "Current Settings" \
         "Panel Family:$panel_family" \
-        "Bar Position:$bar_position" \
+        "Global Style (ii):$global_style" \
+        "Bar (ii):$bar_place" \
         "Clock Format:$clock_format" \
-        "Search Engine:$search_engine" \
-        "Animations:$animations" \
-        "Blur:$blur"
+        "Search:${search_url%%\?*}"
 
     echo ""
 
     local action
     action=$(tui_choose_rich "Configuration" \
         "${ICON_ARROW}|Edit in Editor|Open config.json in your editor" \
-        "${ICON_DOT}|Panel Family|Switch between ii and waffle" \
+        "${ICON_DOT}|Panel Family|Switch between Material ii, Waffle and iRiS" \
         "${ICON_DOT}|Open Config Dir|Open the config directory" \
         "${ICON_DOT}|Reset to Defaults|Restore default configuration" \
         "${ICON_CIRCLE}|Back|Return to main menu")
@@ -1252,20 +1369,21 @@ run_config() {
             local editor="${EDITOR:-${VISUAL:-nano}}"
             tui_info "Opening $config_file with $editor..."
             "$editor" "$config_file"
-            tui_success "Config saved"
-            tui_info "Run 'inir restart' to apply changes"
+            tui_success "Config saved; a running shell applies it as soon as the file changes"
             ;;
         "Panel Family")
             echo ""
             local new_family
-            new_family=$(tui_choose "Select panel family:" "ii" "waffle")
+            new_family=$(tui_choose "Select panel family:" "ii" "waffle" "iris")
             if [[ -n "$new_family" && "$new_family" != "$panel_family" ]]; then
-                if command -v jq &>/dev/null; then
+                # A running shell owns the config in memory and would overwrite a direct write: ask it.
+                if bash "${REPO_ROOT}/scripts/inir" panelFamily set "$new_family" &>/dev/null; then
+                    tui_success "Panel family set to: $new_family"
+                elif command -v jq &>/dev/null; then
                     local tmp_file
                     tmp_file=$(mktemp)
                     jq --arg f "$new_family" '.panelFamily = $f' "$config_file" > "$tmp_file" && mv "$tmp_file" "$config_file"
-                    tui_success "Panel family set to: $new_family"
-                    tui_info "Run 'inir restart' to apply"
+                    tui_success "Panel family set to: $new_family (applies when the shell starts)"
                 else
                     tui_warn "jq required to edit config programmatically"
                     tui_info "Edit $config_file manually"
@@ -1288,8 +1406,7 @@ run_config() {
                 if [[ -f "${REPO_ROOT}/defaults/config.json" ]]; then
                     cp "$config_file" "${config_file}.backup.$(date +%Y%m%d%H%M%S)"
                     cp "${REPO_ROOT}/defaults/config.json" "$config_file"
-                    tui_success "Config reset to defaults (backup created)"
-                    tui_info "Run 'inir restart' to apply"
+                    tui_success "Config reset to defaults (backup created); a running shell applies it now"
                 else
                     tui_error "Default config not found"
                 fi
@@ -1450,7 +1567,7 @@ run_extras() {
         "${ICON_DOT}|Install iNiR-Walls|Download optional wallpaper pack and copy image files" \
         "${ICON_DOT}|Install ii-pixel-sddm|Install/apply iNiR SDDM login theme" \
         "${ICON_DOT}|Install YAMIS icons|Install/update yet-another-monochrome-icon-set (GPL-3, ~23 MiB)" \
-        "${ICON_DOT}|Install mascot pack|Kira mascot art (354 poses/animations, ~32 MiB, feature stays opt-in)" \
+        "${ICON_DOT}|Install mascot pack|Kira mascot art pack (optional download, feature stays opt-in)" \
         "${ICON_DOT}|Install all|Run all optional installers" \
         "${ICON_CIRCLE}|Back|Return to main menu")
 
@@ -1533,77 +1650,92 @@ run_logs() {
     tui_title "Runtime Logs"
     echo ""
 
-    local log_sources=()
-    local log_labels=()
+    # `inir logs` owns the shell's log; this menu only picks a view of it.
+    local inir_cmd
+    inir_cmd=$(command -v inir 2>/dev/null || echo "${REPO_ROOT}/scripts/inir")
+    local labels=("Shell: what went wrong since it started" "Shell: last 200 lines")
+    command -v journalctl &>/dev/null && labels+=("Niri: last 100 lines")
+    labels+=("Back")
 
-    # Quickshell logs
-    local qs_log="${XDG_STATE_HOME}/quickshell/log"
-    local qs_log_alt="${XDG_CACHE_HOME}/quickshell/log"
-    local journal_available=false
-    command -v journalctl &>/dev/null && journal_available=true
-
-    [[ -f "$qs_log" ]] && log_sources+=("$qs_log") && log_labels+=("Quickshell log (state)")
-    [[ -f "$qs_log_alt" ]] && log_sources+=("$qs_log_alt") && log_labels+=("Quickshell log (cache)")
-
-    if $journal_available; then
-        log_sources+=("__journal_qs__")
-        log_labels+=("Journal: quickshell (last 200 lines)")
-        log_sources+=("__journal_niri__")
-        log_labels+=("Journal: niri (last 100 lines)")
-    fi
-
-    if [[ ${#log_sources[@]} -eq 0 ]]; then
-        tui_warn "No log sources found"
-        tui_info "Start iNiR first: inir run"
-        echo ""
-        read -rp "Press Enter to continue..."
-        return 0
-    fi
-
-    log_labels+=("Back")
     local choice
-    choice=$(tui_choose "Select log source:" "${log_labels[@]}")
-
-    [[ "$choice" == "Back" ]] && return 0
-
-    # Find matching source
-    local source_idx=0
-    for i in "${!log_labels[@]}"; do
-        if [[ "${log_labels[$i]}" == "$choice" ]]; then
-            source_idx=$i
-            break
-        fi
-    done
-
-    local source="${log_sources[$source_idx]}"
-
+    choice=$(tui_choose "Select log:" "${labels[@]}")
     echo ""
-    case "$source" in
-        __journal_qs__)
-            tui_info "Showing last 200 lines from journalctl..."
-            if $HAS_GUM; then
-                journalctl --user -u quickshell --no-pager -n 200 2>/dev/null | gum pager
-            else
-                journalctl --user -u quickshell --no-pager -n 200 2>/dev/null | less
-            fi
-            ;;
-        __journal_niri__)
-            tui_info "Showing last 100 lines from niri journal..."
-            if $HAS_GUM; then
-                journalctl --user -u niri --no-pager -n 100 2>/dev/null | gum pager
-            else
-                journalctl --user -u niri --no-pager -n 100 2>/dev/null | less
-            fi
-            ;;
-        *)
-            tui_info "Viewing: $source"
-            if $HAS_GUM; then
-                gum pager < "$source"
-            else
-                less "$source"
-            fi
-            ;;
+    local pager=(less -R)
+    $HAS_GUM && pager=(gum pager)
+    case "$choice" in
+        "Shell: what went wrong since it started") bash "$inir_cmd" logs --issues 2>&1 | "${pager[@]}" ;;
+        "Shell: last 200 lines") bash "$inir_cmd" logs -n 200 2>&1 | "${pager[@]}" ;;
+        "Niri: last 100 lines") journalctl --user -u niri --no-pager -n 100 2>/dev/null | "${pager[@]}" ;;
+        *) return 0 ;;
     esac
+}
+
+###############################################################################
+# Install completion: short, and it ends on the one thing nobody may skip
+###############################################################################
+show_reboot_notice() {
+    local reasons=("${INIR_REBOOT_REASONS[@]}") reason
+    local bar="══════════════════════════════════════════════════════════════"
+    echo ""
+    echo -e "  ${STY_YELLOW}${STY_BOLD}╔${bar}╗${STY_RST}"
+    printf "  ${STY_YELLOW}${STY_BOLD}║%-62s║${STY_RST}\n" ""
+    printf "  ${STY_YELLOW}${STY_BOLD}║%-62s║${STY_RST}\n" "    RESTART YOUR COMPUTER BEFORE USING iNiR"
+    printf "  ${STY_YELLOW}${STY_BOLD}║%-62s║${STY_RST}\n" "    Not a suggestion. Half of it isn't live until you do."
+    printf "  ${STY_YELLOW}${STY_BOLD}║%-62s║${STY_RST}\n" ""
+    echo -e "  ${STY_YELLOW}${STY_BOLD}╚${bar}╝${STY_RST}"
+    if [[ ${#reasons[@]} -gt 0 ]]; then
+        echo ""
+        echo -e "    ${STY_BOLD}Why:${STY_RST}"
+        for reason in "${reasons[@]}"; do
+            echo "$reason" | fold -s -w 64 | sed '1s/^/    • /; 2,$s/^/      /'
+        done
+    fi
+    echo ""
+    echo -e "    Then pick ${STY_BOLD}Niri${STY_RST} at the login screen and you're in."
+    echo -e "    ${STY_FAINT}Reboot now:${STY_RST} ${STY_BOLD}systemctl reboot${STY_RST}"
+    echo ""
+}
+
+show_install_completion() {
+    local version distro package_manager host gpu ram compositor
+    version="$(get_repo_version)"
+    distro="${DETECTED_DISTRO:-${OS_PRETTY_NAME:-Linux}}"
+    package_manager="${DETECTED_PACKAGE_MANAGER:-$(get_package_manager 2>/dev/null || echo unknown)}"
+    host="${DETECTED_PORTABLE:-desktop}"
+    [[ "${DETECTED_VIRT:-none}" != "none" ]] && host+=" / ${DETECTED_VIRT} VM"
+    gpu="${DETECTED_GPU:-unknown}"
+    ram="${DETECTED_RAM_GIB:-?} GiB"
+    compositor="${DETECTED_DE:-${XDG_CURRENT_DESKTOP:-not detected}}"
+
+    tui_summary_card "iNiR ${version}" \
+        "Distro:${distro}" \
+        "Packages:${package_manager}" \
+        "Host:${host}" \
+        "GPU:${gpu}" \
+        "RAM:${ram}" \
+        "Session:${compositor}"
+
+    tui_section_start "After that"
+    tui_list_item "Super+/ lists every shortcut, Super+, opens Settings"
+    tui_list_item "Something off? inir doctor, then inir logs"
+    tui_list_item "Regret it? ./setup rollback"
+    tui_section_end
+
+    if [[ "${IS_UPDATE}" != "true" || ${#INIR_REBOOT_REASONS[@]} -gt 0 ]]; then
+        show_reboot_notice
+    fi
+}
+
+show_update_completion() {
+    local version="$1" commit="$2"
+    tui_alert "success" "Update applied" \
+        "iNiR ${version} (${commit}) is synced. The shell restart was requested when the session allowed it."
+
+    tui_section_start "If something looks off"
+    tui_list_item "Verify the result: inir status"
+    tui_list_item "Run diagnostics: inir doctor"
+    tui_list_item "Undo this update: ./setup rollback"
+    tui_section_end
 }
 
 ###############################################################################
@@ -1611,6 +1743,8 @@ run_logs() {
 ###############################################################################
 run_install() {
     detect_distro
+    # Filled by the install steps with what only a fresh login or a reboot applies.
+    INIR_REBOOT_REASONS=()
 
     # Greeting & system info
     source ./sdata/subcmd-install/0.greeting.sh
@@ -1754,7 +1888,7 @@ run_install() {
     tui_task_finalize
 
     echo ""
-    tui_alert "success" "Installation complete" "Version $(get_repo_version) is ready.\nRun 'inir run' to start the shell, or log out and back in."
+    show_install_completion
 }
 
 ###############################################################################
@@ -1997,9 +2131,31 @@ restore_single_user_mod() {
 _update_status_file="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/update-status"
 _update_total_steps=7
 
+_write_update_status() {
+    local status="$1"
+    local status_dir
+    status_dir="$(dirname "$_update_status_file")"
+    mkdir -p "$status_dir" 2>/dev/null || return 0
+    printf '%s\n' "$status" > "$_update_status_file" 2>/dev/null || true
+}
+
 _report_progress() {
     local step="$1" msg="$2"
-    echo "progress:${step}:${_update_total_steps}:${msg}" > "$_update_status_file" 2>/dev/null || true
+    _write_update_status "progress:${step}:${_update_total_steps}:${msg}"
+}
+
+_report_update_failure() {
+    local code="$1" msg="$2"
+    _write_update_status "failed:${code}:${msg}"
+}
+
+_reexec_update_after_repo_change() {
+    local reexec_args=()
+    $ask || reexec_args+=("-y")
+    $quiet && reexec_args+=("-q")
+    reexec_args+=("update")
+    export _II_POST_PULL=1
+    exec "$REPO_ROOT/setup" "${reexec_args[@]}"
 }
 
 # Composed helpers: write the status marker AND start the animated visual line.
@@ -2094,13 +2250,14 @@ run_update_simulated() {
     sleep 1
     tui_success "Python venv up to date"
 
-    # Mirror the real flow's order: write success BEFORE the final "Restarting" marker.
-    echo "success" > "$_update_status_file" 2>/dev/null || true
-
     # Step 7 — fast atomic op: animated spinner
     _step_phase_start 7 "Restarting shell"
     sleep 1
     _step_phase_done "Shell restart skipped in simulation"
+    # Unlike the real update, simulation does not restart the shell. Leave a
+    # terminal success marker instead of a stale step-7 progress marker that
+    # resume logic could mistake for an interrupted update on the next boot.
+    _write_update_status "success"
 
     echo ""
     tui_alert "success" "Simulation complete" \
@@ -2111,6 +2268,12 @@ refresh_sddm_theme_on_update() {
     local ask_mode="${1:-true}"
 
     if ! command -v sddm >/dev/null 2>&1; then
+        return 0
+    fi
+    # SDDM installed but not the login screen: the person chose another display manager. An update
+    # leaves it alone (re-enabling SDDM here put some machines on a black screen at every update).
+    if command -v systemctl >/dev/null 2>&1 && [[ -d /run/systemd/system ]] \
+            && ! systemctl is-enabled sddm.service >/dev/null 2>&1; then
         return 0
     fi
 
@@ -2124,7 +2287,7 @@ refresh_sddm_theme_on_update() {
     echo ""
     tui_info "Refreshing ii-pixel SDDM theme..."
 
-    if ! extras_install_sddm_theme "$auto_apply_mode"; then
+    if ! extras_install_sddm_theme "$auto_apply_mode" no keep; then
         tui_warn "SDDM theme refresh failed — you may need to run manually:"
         tui_dim "  sudo bash ${REPO_ROOT}/scripts/sddm/install-pixel-sddm.sh"
     fi
@@ -2156,6 +2319,14 @@ run_update() {
         tui_info "Branch: $tracked_branch"
     fi
 
+    tui_info "Repo: $REPO_ROOT"
+    local invoked_from="${INIR_INVOKED_FROM:-${INVOKED_FROM:-$PWD}}"
+    if [[ "$invoked_from" != "$REPO_ROOT" && -d "${invoked_from}/.git" && -f "${invoked_from}/shell.qml" ]]; then
+        tui_warn "Updating that repo, not the one you are standing in:"
+        tui_dim "    you are in: $invoked_from"
+        tui_dim "    repo path comes from ~/.config/inir/version.json"
+    fi
+
     local installed_mode=$(get_installed_install_mode)
     local installed_strategy=$(get_installed_update_strategy)
     local package_name=$(get_installed_package_name)
@@ -2184,12 +2355,17 @@ run_update() {
             fi
         fi
 
-        ensure_user_inir_service_enabled >/dev/null 2>&1 || true
-        # Only start inir if we're running under a supported compositor.
-        # WAYLAND_DISPLAY alone is not enough — KDE/GNOME set it too.
-        if [[ -n "${NIRI_SOCKET:-}" ]] || pgrep -x niri &>/dev/null || pgrep -x Hyprland &>/dev/null; then
-            systemctl --user reset-failed inir.service >/dev/null 2>&1 || true
-            systemctl --user start inir.service >/dev/null 2>&1 || true
+        repair_update_owned_state false
+
+        if inir_user_service_is_masked; then
+            tui_warn "User inir.service is masked; package-managed update left it unchanged"
+        else
+            ensure_user_inir_service_enabled >/dev/null 2>&1 || true
+            # The shipped unit is Niri-owned (PartOf/Requisite=niri.service).
+            if [[ -n "${NIRI_SOCKET:-}" ]] || systemctl --user is-active --quiet niri.service >/dev/null 2>&1; then
+                systemctl --user reset-failed inir.service >/dev/null 2>&1 || true
+                systemctl --user start inir.service >/dev/null 2>&1 || true
+            fi
         fi
 
         # Even on package-managed installs, refresh the shipped ii-pixel theme from
@@ -2201,7 +2377,7 @@ run_update() {
 
         echo ""
         tui_success "Package-managed installation left unchanged"
-        echo "success" > "$_update_status_file" 2>/dev/null || true
+        _write_update_status "success"
         return 0
     fi
 
@@ -2248,38 +2424,90 @@ run_update() {
 
             # Pull changes
             _step_phase_start 1 "Pulling changes"
-            if ! git -C "$REPO_ROOT" pull --ff-only origin "$tracked_branch" 2>/dev/null; then
+            local pull_log
+            pull_log="$(mktemp)"
+            if ! LC_ALL=C git -C "$REPO_ROOT" pull --ff-only origin "$tracked_branch" 2>"$pull_log"; then
                 _step_phase_fail "Git pull failed"
-                tui_error "Git pull from origin/${tracked_branch} failed. You may have local changes."
-                tui_info "Try: git stash && ./setup update"
+                tui_error "Git pull from origin/${tracked_branch} failed in ${REPO_ROOT}"
+                if [[ -s "$pull_log" ]]; then
+                    echo ""
+                    while IFS= read -r line; do
+                        tui_dim "    $line"
+                    done < "$pull_log"
+                    echo ""
+                fi
+                if grep -qi "untracked working tree files" "$pull_log"; then
+                    tui_info "Untracked files are in the way. Move or remove the files listed above,"
+                    tui_info "or stash them too: git -C \"$REPO_ROOT\" stash -u"
+                    tui_dim "    (plain 'git stash' never touches untracked files)"
+                else
+                    tui_info "Try: git -C \"$REPO_ROOT\" stash && ./setup update"
+                fi
+                rm -f "$pull_log"
                 return 1
             fi
+            rm -f "$pull_log"
             _step_phase_done "Pulled changes from origin/${tracked_branch}"
 
             # Re-exec to pick up updated library code from the pull.
             # Without this, functions sourced at startup (doctor, migrations, etc.)
             # would still be the OLD versions in memory.
-            local reexec_args=()
-            $ask || reexec_args+=("-y")
-            $quiet && reexec_args+=("-q")
-            reexec_args+=("update")
-            export _II_POST_PULL=1
-            exec "$REPO_ROOT/setup" "${reexec_args[@]}"
+            _reexec_update_after_repo_change
         elif [[ "$update_rc" -eq 3 ]]; then
             tui_warn "Local checkout is ahead of origin/${tracked_branch}. Skipping git pull."
             show_local_ahead_commits
             tui_info "Syncing from the current local repo state..."
         elif [[ "$update_rc" -eq 4 ]]; then
             show_diverged_commits
-            if [[ "$tracked_branch" == "main" || "$tracked_branch" == "master" ]]; then
-                tui_error "Remote branch '${tracked_branch}' diverged from this checkout."
-                tui_info "Release branch history should not be rewritten. Refusing automatic update."
-            else
-                tui_error "Branch '${current_branch}' diverged from origin/${tracked_branch}."
-                tui_info "Non-release branches may be rewritten during testing. Refusing to auto-reset this checkout."
-                tui_info "If the rewrite was intentional, realign manually: git fetch origin && git reset --hard origin/${tracked_branch}"
+            local rewrite_detected=false
+            local realign_requested=false
+            is_upstream_rewrite_divergence "$tracked_branch" && rewrite_detected=true
+            [[ "${INIR_REALIGN_REMOTE:-0}" == "1" ]] && realign_requested=true
+
+            if $rewrite_detected || $realign_requested; then
+                if ! repo_worktree_is_clean; then
+                    _report_update_failure 21 "Repository history changed, but this checkout has uncommitted changes. Stash them first, then retry: inir update --realign"
+                    tui_error "Repository history changed, but this checkout has local changes."
+                    tui_info "Nothing was reset. Your files were left untouched."
+                    show_repo_realign_guidance "$tracked_branch"
+                    return 21
+                fi
+
+                if $rewrite_detected; then
+                    tui_warn "Detected an upstream force-push on origin/${tracked_branch}."
+                    tui_info "This clean checkout is still on the previously published lineage, so iNiR can recover it safely."
+                else
+                    tui_warn "Explicit repository realignment requested for origin/${tracked_branch}."
+                fi
+
+                _step_phase_start 1 "Realigning repository"
+                local realign_rc=0
+                realign_repo_to_remote "$tracked_branch" || realign_rc=$?
+                if [[ "$realign_rc" -eq 6 ]]; then
+                    _step_phase_fail "Repository contains local history"
+                    _report_update_failure 23 "Realignment refused because this checkout has local commits, is detached, or no previous remote lineage can prove the reset safe. Nothing was changed"
+                    tui_error "Realignment refused: iNiR cannot prove this checkout contains only the old published history."
+                    tui_info "Nothing was reset. Local commits and detached checkouts are preserved."
+                    return 23
+                elif [[ "$realign_rc" -ne 0 ]]; then
+                    _step_phase_fail "Repository realignment failed"
+                    _report_update_failure 22 "Could not realign the checkout to origin/${tracked_branch}. Run: inir doctor"
+                    tui_error "Could not realign this checkout to origin/${tracked_branch}."
+                    tui_info "No update was installed. Run: inir doctor"
+                    return 22
+                fi
+
+                _step_phase_done "Realigned to origin/${tracked_branch}"
+                tui_success "Repository recovered without recloning"
+                tui_dim "  Recovery ref: ${INIR_REPO_RECOVERY_REF}"
+                _reexec_update_after_repo_change
             fi
-            return 1
+
+            _report_update_failure 20 "Repository history diverged from origin/${tracked_branch}. Run: inir update --realign"
+            tui_error "This checkout diverged from origin/${tracked_branch}, and iNiR cannot prove it was only an upstream rewrite."
+            tui_info "Refusing to destroy local commits automatically."
+            show_repo_realign_guidance "$tracked_branch"
+            return 20
         elif [[ "$update_rc" -eq 2 ]]; then
             # Could not check remote (offline/no git/missing tracked branch)
             tui_warn "Could not check for remote updates (offline, not a git repo, or missing tracked branch)"
@@ -2297,7 +2525,7 @@ run_update() {
             tui_info "Detected existing installation without version tracking"
         elif [[ "$installed_commit" == "$repo_commit" ]]; then
             tui_success "Already up to date ($installed_ver)"
-            echo "success" > "$_update_status_file" 2>/dev/null || true
+            _write_update_status "success"
 
             local pending=$(count_pending_migrations)
             if [[ "$pending" -gt 0 ]]; then
@@ -2311,6 +2539,7 @@ run_update() {
                     fi
                 fi
             fi
+            repair_update_owned_state true
             return 0
         else
             # Local repo ahead of installed - create snapshot
@@ -2403,27 +2632,8 @@ run_update() {
         echo ""
         tui_info "Syncing files..."
 
-        # Sync root QML files
-        for qml in "${II_SOURCE}"/*.qml; do
-            [[ -f "$qml" ]] && cp -f "$qml" "${II_TARGET}/$(basename "$qml")"
-        done
-
-        local runtime_root_manifest="${II_SOURCE}/sdata/runtime-root-files.txt"
-        local runtime_dirs_manifest="${II_SOURCE}/sdata/runtime-payload-dirs.txt"
-
-        if [[ -f "$runtime_root_manifest" ]]; then
-            while IFS= read -r runtime_file; do
-                [[ -n "$runtime_file" ]] || continue
-                [[ -f "${II_SOURCE}/${runtime_file}" ]] && cp -f "${II_SOURCE}/${runtime_file}" "${II_TARGET}/${runtime_file}"
-            done < "$runtime_root_manifest"
-        fi
-
-        if [[ -f "$runtime_dirs_manifest" ]]; then
-            while IFS= read -r dir; do
-                [[ -n "$dir" ]] || continue
-                [[ -d "${II_SOURCE}/${dir}" ]] && mkdir -p "${II_TARGET}/${dir}" && rsync -a --delete --exclude='AGENTS.md' "${II_SOURCE}/${dir}/" "${II_TARGET}/${dir}/"
-            done < "$runtime_dirs_manifest"
-        fi
+        python3 "${II_SOURCE}/sdata/lib/runtime-payload.py" copy \
+            --root "$II_SOURCE" --target "$II_TARGET" --delete || return 1
 
         # Cleanup deprecated files
         [[ -f "${II_TARGET}/requirements.txt" ]] && rm -f "${II_TARGET}/requirements.txt"
@@ -2437,21 +2647,18 @@ run_update() {
     fi
 
     # Generate manifest
-    generate_manifest "$II_SOURCE" "${II_TARGET}/.inir-manifest"
+    generate_manifest "$II_SOURCE" "${II_TARGET}/.inir-manifest" || return 1
 
     # Remove orphan files left from previous versions
-    cleanup_orphans "$II_TARGET" "${II_TARGET}/.inir-manifest"
+    cleanup_orphans "$II_TARGET" "${II_TARGET}/.inir-manifest" || return 1
 
-    # Fix permissions
-    find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \; 2>/dev/null || true
+    # Fix runtime command permissions without turning test modules into executables.
+    find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o \( -name "*.py" ! -name "test-*.py" \) \) -exec chmod +x {} \; 2>/dev/null || true
     [[ -f "${II_TARGET}/setup" ]] && chmod +x "${II_TARGET}/setup"
 
     local launcher_target="${XDG_BIN_HOME}/inir"
     if [[ -f "${REPO_ROOT}/scripts/inir" ]]; then
-        mkdir -p "$XDG_BIN_HOME"
-        cp -f "${REPO_ROOT}/scripts/inir" "$launcher_target"
-        chmod +x "$launcher_target"
-        ensure_launcher_path_in_shells "$XDG_BIN_HOME"
+        sync_launcher_from_repo >/dev/null || tui_warn "Could not refresh the inir launcher"
         if ! command -v inir &>/dev/null && [[ ":$PATH:" != *":${XDG_BIN_HOME}:"* ]]; then
             tui_warn "Launcher installed to ${launcher_target}, but ${XDG_BIN_HOME} is not in PATH for this shell"
         fi
@@ -2459,22 +2666,10 @@ run_update() {
 
     local _service_refresh_status=1
 
-    if [[ -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" ]]; then
-        local icon_target_dir="${XDG_DATA_HOME}/icons/hicolor/scalable/apps"
-        mkdir -p "$icon_target_dir"
-        cp -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "${icon_target_dir}/inir.svg"
-    fi
-
-    local applications_dir="${XDG_DATA_HOME}/applications"
-    mkdir -p "$applications_dir"
-    if [[ -f "${REPO_ROOT}/assets/applications/inir.desktop" ]]; then
-        cp -f "${REPO_ROOT}/assets/applications/inir.desktop" "${applications_dir}/inir.desktop"
-    fi
-    if [[ -f "${REPO_ROOT}/assets/applications/inir-settings.desktop" ]]; then
-        local settings_tmp="${XDG_CACHE_HOME}/inir-settings.desktop.$$"
-        sed "s|^Exec=.*|Exec=${launcher_target//&/\\&} settings|" "${REPO_ROOT}/assets/applications/inir-settings.desktop" > "$settings_tmp"
-        cp -f "$settings_tmp" "${applications_dir}/inir-settings.desktop"
-        rm -f "$settings_tmp"
+    if sync_user_desktop_integration_from_repo; then
+        [[ "${INIR_DESKTOP_INTEGRATION_CHANGED:-0}" -gt 0 ]] && tui_success "Desktop integration updated"
+    else
+        tui_warn "Could not refresh desktop integration"
     fi
 
     # Update version
@@ -2539,21 +2734,31 @@ run_update() {
         fi
     fi
 
-    _step_phase_header 4 "Finalizing"
-    _service_refresh_status=1
-    if sync_user_inir_service_from_repo_if_present; then
-        _service_refresh_status=0
-    else
-        _service_refresh_status=$?
-    fi
-    if [[ $_service_refresh_status -eq 0 ]]; then
-        tui_success "Updated existing user inir.service"
-    fi
+    repair_update_owned_state false
 
-    if ensure_user_inir_service_enabled; then
-        tui_success "User inir.service autostart verified"
+    _step_phase_header 4 "Finalizing"
+    if inir_user_service_is_masked; then
+        tui_warn "User inir.service is masked; leaving it unchanged (restore with: inir service install && inir service enable)"
     else
-        tui_warn "Could not wire inir.service to the compositor — run 'inir service enable'"
+        _service_refresh_status=1
+        if sync_user_inir_service_from_repo_if_present; then
+            _service_refresh_status=0
+        else
+            _service_refresh_status=$?
+        fi
+        if [[ $_service_refresh_status -eq 0 && "${INIR_SERVICE_SYNC_CHANGED:-0}" -gt 0 ]]; then
+            tui_success "Updated existing user inir.service"
+        fi
+
+        if ensure_user_inir_service_enabled; then
+            if [[ "${INIR_SERVICE_WIRING_CHANGED:-0}" -gt 0 ]]; then
+                tui_success "Repaired user inir.service autostart wiring"
+            else
+                tui_success "User inir.service autostart verified"
+            fi
+        else
+            tui_warn "Could not wire inir.service to the compositor — run 'inir service enable'"
+        fi
     fi
 
     local niri_config="${XDG_CONFIG_HOME}/niri/config.kdl"
@@ -2690,47 +2895,39 @@ run_update() {
     #     fi
     # fi
 
-    # Update Python venv packages
-    _step_phase_header 6 "Python packages"
-    local venv_dir="${XDG_STATE_HOME}/quickshell/.venv"
-    local req_file="${REPO_ROOT}/sdata/uv/requirements.txt"
-
-    if [[ -f "$req_file" ]] && command -v uv &>/dev/null; then
-        if [[ ! -d "$venv_dir/bin" ]]; then
-            tui_info "Creating Python venv..."
-            uv venv --prompt ii-venv "$venv_dir" -p 3.12 2>/dev/null || uv venv --prompt ii-venv "$venv_dir" 2>/dev/null
-        fi
-
-        if [[ -d "$venv_dir/bin" ]]; then
-            tui_info "Updating Python packages..."
-            source "$venv_dir/bin/activate"
-            uv pip install -q -r "$req_file" 2>/dev/null
-            deactivate
-            tui_success "Python packages updated"
-        fi
-    else
-        tui_success "Python packages (skipped - uv not available)"
-    fi
+    # Keep update semantics identical to fresh install: the managed Python venv
+    # owns ytmusicapi, and Deno is repaired as part of the YT playback runtime.
+    _step_phase_header 6 "Python / YT runtime"
+    install-python-packages
+    ensure-ytmusic-js-runtime
 
     # Signal success to the shell UI before restart
-    echo "success" > "$_update_status_file" 2>/dev/null || true
+    _write_update_status "success"
 
     # Restart shell (only if we have access to the session)
     if [[ -n "$NIRI_SOCKET" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; then
         _step_phase_start 7 "Restarting shell"
-        if command -v systemctl >/dev/null 2>&1 && systemctl --user cat inir.service >/dev/null 2>&1; then
-            nohup systemctl --user restart inir.service >/dev/null 2>&1 &
-            disown
+        if inir_user_service_is_masked; then
+            _step_phase_done "Shell restart skipped: inir.service is masked"
+        elif command -v systemctl >/dev/null 2>&1 && systemctl --user cat inir.service >/dev/null 2>&1; then
+            restart_shell_and_verify 30
+            case $? in
+                0) _step_phase_done "Shell restarted on the new version" ;;
+                1) _step_phase_done "The shell did not load the new version"
+                   tui_warn "Run './setup rollback' to go back to the previous version" ;;
+                *) _step_phase_done "Shell restart requested; 'inir logs' shows how it went" ;;
+            esac
         elif [[ -x "${II_TARGET}/scripts/inir" ]]; then
             nohup bash "${II_TARGET}/scripts/inir" restart -c "${II_TARGET}" >/dev/null 2>&1 &
             disown
+            _step_phase_done "Shell restart triggered"
         else
             qs -p "${II_TARGET}" kill 2>/dev/null || true
             sleep 1
             nohup qs -p "${II_TARGET}" >/dev/null 2>&1 &
             disown
+            _step_phase_done "Shell restart triggered"
         fi
-        _step_phase_done "Shell restart triggered"
     else
         _step_phase_header 7 "Restarting shell"
         tui_warn "Not in graphical session - shell restart skipped"
@@ -2738,8 +2935,10 @@ run_update() {
         tui_info "Or run: inir restart"
     fi
 
+    show_session_impact_notices
+
     echo ""
-    tui_alert "success" "Update complete" "Version $repo_ver ($repo_commit) synced.\nRun './setup rollback' if something breaks."
+    show_update_completion "$repo_ver" "$repo_commit"
 }
 
 ###############################################################################
@@ -2768,9 +2967,18 @@ while [[ $# -gt 0 ]]; do
         -y|--yes) ask=false; shift ;;
         -q|--quiet) quiet=true; shift ;;
         --local) export _II_POST_PULL=local; shift ;;
+        --realign) export INIR_REALIGN_REMOTE=1; shift ;;
         --set-default-shell) export INIR_SET_DEFAULT_SHELL=true; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "Unknown: $1"; show_help; exit 1 ;;
+    esac
+done
+
+# Subcommand help must be non-destructive. `inir update --help` delegates here,
+# so consume help before install privilege checks or any maintenance workflow runs.
+for _arg in "${SUBCMD_ARGS[@]}"; do
+    case "$_arg" in
+        -h|--help) show_help; exit 0 ;;
     esac
 done
 
@@ -2804,6 +3012,7 @@ case "$COMMAND" in
                 -y|--yes) ask=false ;;
                 -q|--quiet) quiet=true ;;
                 --local) export _II_POST_PULL=local ;;
+                --realign) export INIR_REALIGN_REMOTE=1 ;;
                 --simulate|--dry-run) export INIR_SIMULATE_UPDATE=1 ;;
             esac
         done

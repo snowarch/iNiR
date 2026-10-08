@@ -5,10 +5,11 @@ iNiR has been installed.
 Recommended next steps:
   - Start the shell manually with: inir run
   - Or enable the user service with:
-      systemctl --user enable --now inir.service
+      inir service enable
+      inir service start
 
 Package-managed installs keep user config in:
-  ~/.config/illogical-impulse/config.json
+  ~/.config/inir/config.json
 
 The packaged runtime lives in:
   /usr/share/quickshell/inir

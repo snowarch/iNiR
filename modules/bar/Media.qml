@@ -16,12 +16,12 @@ Item {
     id: root
     property bool borderless: Config.options?.bar?.borderless ?? false
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
-    readonly property string cleanedTitle: StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || Translation.tr("No media")
-    readonly property string fullTrackText: `${cleanedTitle}${activePlayer?.trackArtist ? ' • ' + activePlayer.trackArtist : ''}`
+    readonly property string cleanedTitle: StringUtils.cleanMusicTitle(MprisController.titleOf(activePlayer)) || Translation.tr("No media")
+    readonly property string fullTrackText: `${cleanedTitle}${MprisController.artistOf(activePlayer) ? ' • ' + MprisController.artistOf(activePlayer) : ''}`
     readonly property string popupMode: Config.options?.media?.popupMode ?? "dock"
     readonly property bool showVerboseLabel: Config.options?.bar?.verbose ?? true
-    readonly property bool hasTrackMetadata: (activePlayer?.trackTitle?.length ?? 0) > 0
-        || (activePlayer?.trackArtist?.length ?? 0) > 0
+    readonly property bool hasTrackMetadata: (MprisController.titleOf(activePlayer)?.length ?? 0) > 0
+        || (MprisController.artistOf(activePlayer)?.length ?? 0) > 0
     readonly property bool lockMediaWidth: showVerboseLabel && hasTrackMetadata
     property int pendingTrackDirection: 0
     readonly property int effectiveTrackAnimationDirection: pendingTrackDirection !== 0 ? pendingTrackDirection : 1
@@ -31,11 +31,13 @@ Item {
     // The bar's centerSideModuleWidth binding already accounts for this, but
     // a stable natural width prevents track-length changes from resizing the
     // center pill every time metadata changes.
-    readonly property real maxMediaWidth: 220 * Appearance.fontSizeScale
+    readonly property real maxMediaWidth: Math.max(120, Config.options?.bar?.media?.maxWidth ?? 220) * Appearance.fontSizeScale
     implicitWidth: lockMediaWidth
         ? maxMediaWidth
         : Math.min(rowLayout.implicitWidth + rowLayout.spacing * 2, maxMediaWidth)
     implicitHeight: Appearance.sizes.barHeight
+    // Narrowest it gets in a crowded bar: the glyph alone.
+    readonly property real minimumWidth: compactMediaGlyph.implicitWidth + rowLayout.spacing * 2
     clip: true
 
     Timer {
@@ -280,7 +282,7 @@ Item {
                 id: mediaCircProg
                 anchors.centerIn: parent
                 lineWidth: Appearance.zzzEverywhere ? 2 : Appearance.rounding.unsharpen
-                value: (activePlayer && activePlayer.length > 0) ? (activePlayer.position / activePlayer.length) : 0
+                value: MprisController.lengthOf(activePlayer) > 0 ? (MprisController.positionOf(activePlayer) / MprisController.lengthOf(activePlayer)) : 0
                 implicitSize: Appearance.zzzEverywhere && !root.showVerboseLabel ? 22 : 22
                 colPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
                     : Appearance.inirEverywhere ? Appearance.inir.colPrimary

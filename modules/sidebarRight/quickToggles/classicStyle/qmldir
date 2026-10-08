@@ -1,6 +1,5 @@
 module qs.modules.sidebarRight.quickToggles.classicStyle
 BluetoothToggle 1.0 BluetoothToggle.qml
-ClassicToggleDelegateChooser 1.0 ClassicToggleDelegateChooser.qml
 CloudflareWarp 1.0 CloudflareWarp.qml
 EasyEffectsToggle 1.0 EasyEffectsToggle.qml
 GameMode 1.0 GameMode.qml

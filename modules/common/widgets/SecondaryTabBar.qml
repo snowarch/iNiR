@@ -48,7 +48,7 @@ TabBar {
 
                 const rawWidth = Number(item.tabContentWidth ?? item.width)
                 const safeWidth = Number.isFinite(rawWidth) ? rawWidth : item.width
-                return Math.max(0, Math.min(item.width, safeWidth))
+                return Math.max(0, Math.min(item.width, safeWidth, Appearance.editorialEverywhere ? 32 : Infinity))
             }
             property real targetVisualX: {
                 const item = currentTabItem
@@ -61,7 +61,7 @@ TabBar {
                 return safeX + (item.width - targetVisualWidth) / 2
             }
 
-            height: 3
+            height: Appearance.editorialEverywhere ? 2 : 3
             x: targetVisualX
             width: targetVisualWidth
 
@@ -85,7 +85,7 @@ TabBar {
         Rectangle { // Tabbar bottom border
             id: tabBarBottomBorder
             z: 9998
-            visible: root.bottomBorderVisible
+            visible: root.bottomBorderVisible && !Appearance.editorialEverywhere
             anchors.bottom: parent.bottom
             height: visible ? 1 : 0
             anchors {

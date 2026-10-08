@@ -1,0 +1,6 @@
+module qs.modules.equalizer
+
+EqualizerPanel 1.0 EqualizerPanel.qml
+EqualizerContent 1.0 EqualizerContent.qml
+EqualizerBandSlider 1.0 EqualizerBandSlider.qml
+EqualizerPresetButton 1.0 EqualizerPresetButton.qml

@@ -26,6 +26,7 @@ Text {
         family: defaultFont
         pixelSize: Appearance?.font.pixelSize.small ?? 15
         variableAxes: shouldUseNumberFont ? ({}) : Appearance.font.variableAxes.main
+        features: shouldUseNumberFont ? ({ "tnum": 1 }) : ({})
         // ZZZ poster crispness: a small global letter-spacing under the zzz style
         // (token-driven, absolute px). Numbers stay untracked so digit columns
         // don't drift. Other styles unaffected (0).
@@ -38,13 +39,13 @@ Text {
 
     component Anim: NumberAnimation {
         target: root
-        duration: 300 / 2
+        duration: Appearance.animation.elementMoveFast.duration
         easing.type: Easing.BezierSpline
         easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
     }
 
     Behavior on text {
-        enabled: root.animateChange
+        enabled: root.animateChange && Appearance.animationsEnabled
 
         SequentialAnimation {
             alwaysRunToEnd: true

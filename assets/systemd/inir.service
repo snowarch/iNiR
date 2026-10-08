@@ -1,15 +1,14 @@
 [Unit]
 Description=iNiR shell
-# Lifecycle: stop/restart inir when the graphical session stops/restarts.
-PartOf=graphical-session.target
-# Ordering: the compositor-specific wants link starts iNiR alongside the
-# compositor. The launcher waits for the Wayland socket, then systemd keeps the
-# graphical session target blocked until Quickshell owns the tray watcher name.
-# XDG autostart applications start after graphical-session.target, so native
-# StatusNotifierItems cannot race the watcher on cold login.
-Wants=graphical-session-pre.target
-After=graphical-session-pre.target
-Before=graphical-session.target
+# Niri owns the graphical-session environment.  Since niri.service is
+# Type=notify, ordering after it guarantees DISPLAY, WAYLAND_DISPLAY and
+# NIRI_SOCKET have already been published to the user manager before iNiR starts.
+PartOf=niri.service
+Requisite=niri.service
+After=niri.service
+# Keep the StatusNotifier watcher ready before desktop autostart applications
+# register tray items.  Niri also orders itself before this target.
+Before=xdg-desktop-autostart.target
 # Rate-limit restarts: max 3 attempts in 30 seconds, then stop trying.
 # These MUST live in [Unit], not [Service] — systemd ignores them elsewhere.
 StartLimitIntervalSec=30

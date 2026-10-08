@@ -13,6 +13,7 @@ import qs.modules.common.widgets
 Item {
     id: root
     focus: true
+    readonly property bool editorial: Appearance.editorialEverywhere
 
     required property var targetWindow
     signal confirm()
@@ -30,6 +31,7 @@ Item {
     readonly property color detailSurface: Appearance.cookieEverywhere
         ? Appearance.cookie.secondaryFace
         : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+        : editorial ? Appearance.editorial.layer(1)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
@@ -37,6 +39,7 @@ Item {
     readonly property color detailBorder: Appearance.cookieEverywhere
         ? Appearance.cookie.borderColor
         : Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+        : editorial ? Appearance.editorial.rule
         : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
         : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
@@ -44,6 +47,7 @@ Item {
     readonly property int detailRadius: Appearance.cookieEverywhere
         ? Appearance.cookie.roundNormal
         : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : editorial ? Appearance.rounding.small
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
         : Appearance.rounding.small
@@ -69,6 +73,7 @@ Item {
         horizontalPadding: Appearance.sizes.spacingLarge
         buttonRadius: Appearance.cookieEverywhere ? height / 2
             : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+            : root.editorial ? Appearance.rounding.small
             : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
             : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
             : Appearance.rounding.full
@@ -98,9 +103,12 @@ Item {
                 text: Appearance.zzzEverywhere
                     ? actionButton.label.toUpperCase() : actionButton.label
                 font.family: Appearance.zzzEverywhere
-                    ? Appearance.font.family.title : Appearance.font.family.main
+                    ? Appearance.font.family.title
+                    : root.editorial ? Appearance.editorial.displayFamily
+                    : Appearance.font.family.main
                 font.pixelSize: Appearance.font.pixelSize.small
                 font.weight: Appearance.zzzEverywhere ? Font.Black : Font.DemiBold
+                font.letterSpacing: root.editorial ? 0.35 : 0
                 color: actionButton.destructive
                     ? root.dangerForeground
                     : Appearance.colors.colOnLayer2
@@ -152,55 +160,88 @@ Item {
         show: false
         Component.onCompleted: show = true
 
-        RowLayout {
+        Rectangle {
             Layout.fillWidth: true
-            spacing: Appearance.sizes.spacingMedium
+            implicitHeight: headerRow.implicitHeight + (root.editorial ? 20 : 0)
+            radius: root.editorial ? Appearance.editorial.radius : 0
+            color: root.editorial ? Appearance.editorial.ink : "transparent"
+            border.width: root.editorial ? 1 : 0
+            border.color: root.editorial
+                ? ColorUtils.applyAlpha(Appearance.editorial.paperOnInk, 0.16)
+                : "transparent"
 
-            Rectangle {
-                Layout.preferredWidth: 48
-                Layout.preferredHeight: 48
-                Layout.alignment: Qt.AlignTop
-                radius: root.detailRadius
-                color: root.detailSurface
-                border.width: 1
-                border.color: root.detailBorder
+            RowLayout {
+                id: headerRow
+                anchors.fill: parent
+                anchors.margins: root.editorial ? 10 : 0
+                spacing: Appearance.sizes.spacingMedium
 
-                Kirigami.Icon {
-                    anchors.fill: parent
-                    anchors.margins: Appearance.sizes.spacingSmall
-                    source: root.appId
-                    fallback: "application-x-executable"
-                    roundToIconSize: false
-                }
-            }
+                Rectangle {
+                    Layout.preferredWidth: 48
+                    Layout.preferredHeight: 48
+                    Layout.alignment: Qt.AlignTop
+                    radius: root.detailRadius
+                    color: root.editorial ? Appearance.editorial.paper : root.detailSurface
+                    border.width: 1
+                    border.color: root.editorial
+                        ? ColorUtils.applyAlpha(Appearance.editorial.paperOnInk, 0.18)
+                        : root.detailBorder
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 3
-
-                WindowDialogTitle {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Close this window?")
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: root.appDisplayName
-                    font.pixelSize: Appearance.font.pixelSize.normal
-                    font.weight: Font.DemiBold
-                    color: Appearance.colors.colOnSurface
-                    elide: Text.ElideMiddle
-                    maximumLineCount: 1
+                    Kirigami.Icon {
+                        anchors.fill: parent
+                        anchors.margins: Appearance.sizes.spacingSmall
+                        source: root.appId
+                        fallback: "application-x-executable"
+                        roundToIconSize: false
+                    }
                 }
 
-                StyledText {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    visible: root.showAppId
-                    text: root.appId
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colSubtext
-                    elide: Text.ElideMiddle
-                    maximumLineCount: 1
+                    spacing: 3
+
+                    StyledText {
+                        visible: root.editorial
+                        text: Translation.tr("Window").toUpperCase()
+                        font.family: Appearance.editorial.displayFamily
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.weight: Font.DemiBold
+                        font.letterSpacing: 1.1
+                        color: ColorUtils.applyAlpha(Appearance.editorial.paperOnInk, 0.68)
+                    }
+
+                    WindowDialogTitle {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Close this window?")
+                        color: root.editorial
+                            ? Appearance.editorial.paperOnInk
+                            : Appearance.colors.colOnSurface
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: root.appDisplayName
+                        font.pixelSize: Appearance.font.pixelSize.normal
+                        font.weight: Font.DemiBold
+                        color: root.editorial
+                            ? Appearance.editorial.paperOnInk
+                            : Appearance.colors.colOnSurface
+                        elide: Text.ElideMiddle
+                        maximumLineCount: 1
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        visible: root.showAppId
+                        text: root.appId
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                        color: root.editorial
+                            ? ColorUtils.applyAlpha(Appearance.editorial.paperOnInk, 0.64)
+                            : Appearance.colors.colSubtext
+                        elide: Text.ElideMiddle
+                        maximumLineCount: 1
+                    }
                 }
             }
         }

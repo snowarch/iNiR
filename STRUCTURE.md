@@ -5,11 +5,11 @@
 ```
 inir/
 ├── shell.qml                     # Root entry — loads services, selects panel family
-├── ShellIiPanels.qml             # Material Design panel family
-├── ShellWafflePanels.qml         # Windows 11 panel family
+├── ShellIiPanels.qml             # Thin deferred wrapper -> modules/ii/ShellIiPanelsImpl.qml
+├── ShellWafflePanels.qml         # Thin deferred wrapper -> modules/waffle/ShellWafflePanelsImpl.qml
 ├── GlobalStates.qml              # Runtime UI state (panel open/closed booleans)
 ├── FamilyTransitionOverlay.qml   # Animated family switch
-├── settings.qml                  # Settings GUI (separate Quickshell config)
+├── settings.qml                  # Standalone shared Settings entrypoint
 ├── waffleSettings.qml            # Waffle-specific settings GUI
 ├── welcome.qml                   # First-run wizard
 ├── killDialog.qml                # Process kill confirmation
@@ -28,13 +28,17 @@ inir/
 │   ├── overview/                 # Workspace overview + app search
 │   ├── wallpaperLauncher/        # Shared compact wallpaper carousel
 │   ├── waffle/                   # Windows 11 family
+│   │   ├── ShellWafflePanelsImpl.qml # Deferred/on-demand family composition
+│   │   ├── critical/             # First-frame taskbar/background/backdrop
 │   │   ├── bar/                  # Bottom taskbar
 │   │   ├── startMenu/            # Start menu with search
 │   │   ├── actionCenter/         # Quick settings
 │   │   ├── notificationCenter/   # Notification list + calendar
 │   │   ├── looks/Looks.qml       # Waffle visual tokens
 │   │   └── [13 more subdirs]
-│   ├── ii/                       # ii-family overlay and sidebarRight components
+│   ├── ii/                       # ii family composition + ii-only components
+│   │   ├── ShellIiPanelsImpl.qml # Deferred/on-demand family composition
+│   │   ├── critical/             # First-frame background/bar/dock
 │   │   ├── overlay/
 │   │   └── sidebarRight/
 │   └── [more modules]
@@ -69,11 +73,10 @@ inir/
 │   ├── config.json               # Default config
 │   ├── niri/                     # Niri config templates
 │   └── [GTK, KDE, fuzzel, etc.]
-├── translations/                 # i18n strings (15 languages)
+├── translations/                 # i18n strings (17 locales)
 ├── distro/arch/                  # Arch PKGBUILDs (dependency manifests)
 ├── assets/                       # Icons, wallpapers, systemd unit, desktop entry
-├── docs/                         # User documentation
-└── wiki/                         # Wiki documentation
+└── docs/                         # Canonical public documentation; Wiki is published from here
 ```
 
 ## Directory Purposes
@@ -84,7 +87,7 @@ inir/
 - Key files: `modules/common/Config.qml`, `modules/common/Appearance.qml`, `modules/common/widgets/qmldir`
 
 **modules/common/:**
-- Purpose: Shared infrastructure used across both panel families
+- Purpose: Shared infrastructure used across panel families
 - Contains: Visual token definitions (Appearance.qml), config schema (Config.qml), reusable widget library (widgets/)
 - Key files: `modules/common/Config.qml`, `modules/common/Appearance.qml`, `modules/common/widgets/qmldir`
 
@@ -94,9 +97,9 @@ inir/
 - Key files: `modules/waffle/looks/Looks.qml`, `modules/waffle/bar/WaffleBar.qml`, `modules/waffle/settings/WSettingsContent.qml`
 
 **modules/ii/:**
-- Purpose: ii-family-specific overlay and sidebarRight components
-- Contains: Overlay system (crosshair, discord, floatingImage, fpsLimiter, gamePerformance, notes, recorder, volumeMixer), sidebarRight integration
-- Key files: `modules/ii/overlay/Overlay.qml`, `modules/ii/sidebarRight/`
+- Purpose: ii-family composition plus ii-specific overlay/sidebar integration
+- Contains: deferred/on-demand composition (`ShellIiPanelsImpl.qml`), critical first-frame host, overlay system, sidebarRight integration
+- Key files: `modules/ii/ShellIiPanelsImpl.qml`, `modules/ii/critical/ShellIiCriticalPanels.qml`, `modules/ii/overlay/Overlay.qml`
 
 **modules/background/:**
 - Purpose: Per-output desktop surface rendering the wallpaper and hosting desktop widgets and desktop items
@@ -130,7 +133,7 @@ inir/
 
 **translations/:**
 - Purpose: i18n string files for all supported languages
-- Contains: JSON translation files (ar_SA, de_DE, en_US, es_AR, fr_FR, he_HE, hi_IN, it_IT, ja_JP, ko_KR, pt_BR, ru_RU, uk_UA, vi_VN, zh_CN)
+- Contains: 18 JSON locale catalogs (ar_SA, de_DE, en_US, es_419, fr_FR, he_HE, hi_IN, id_ID, it_IT, ja_JP, kl_GL, ko_KR, pt_BR, ru_RU, tr_TR, uk_UA, vi_VN, zh_CN)
 - Key files: `translations/en_US.json`
 
 **distro/arch/:**
@@ -146,17 +149,15 @@ inir/
 - Purpose: User-facing documentation (IPC, packages, setup, etc.)
 - Contains: Markdown documentation files
 
-**wiki/:**
-- Purpose: Internal wiki documentation (architecture, modules, compositors, etc.)
-- Contains: Categorized documentation pages and assets
-
 ## Key File Locations
 
 **Entry Points:**
 - `shell.qml`: Root entry — loads services, selects panel family, triggers panel loading
-- `ShellIiPanels.qml`: Material Design panel family loader
-- `ShellWafflePanels.qml`: Windows 11 panel family loader
-- `settings.qml`: Settings GUI (separate Quickshell config)
+- `modules/ii/critical/ShellIiCriticalPanels.qml`: ii first-frame composition
+- `ShellIiPanels.qml` -> `modules/ii/ShellIiPanelsImpl.qml`: deferred/on-demand ii composition
+- `modules/waffle/critical/ShellWaffleCriticalPanels.qml`: Waffle first-frame composition
+- `ShellWafflePanels.qml` -> `modules/waffle/ShellWafflePanelsImpl.qml`: deferred/on-demand Waffle composition
+- `settings.qml`: Standalone shared Settings entrypoint (same page registry as the shell overlay)
 - `welcome.qml`: First-run wizard
 
 **Configuration:**

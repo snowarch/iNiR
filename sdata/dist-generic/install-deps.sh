@@ -201,7 +201,7 @@ echo ""
 
 echo -e "${STY_BLUE}Qt6 (required):${STY_RST}"
 echo "  qt6-base, qt6-declarative, qt6-svg, qt6-wayland, qt6-5compat"
-echo "  qt6-multimedia, qt6-imageformats, qt6-virtualkeyboard"
+echo "  qt6-multimedia, qt6-imageformats"
 echo ""
 
 echo -e "${STY_BLUE}Wayland tools (required):${STY_RST}"
@@ -216,8 +216,8 @@ echo "  plasma-browser-integration (browser MPRIS sessions and artwork)"
 echo ""
 
 echo -e "${STY_BLUE}Utilities (required):${STY_RST}"
-echo "  fish, jq, curl, wget, git, rsync, ripgrep, bc"
-echo "  dunst, libnotify, imagemagick, brightnessctl"
+echo "  fish, jq, curl, git, rsync, ripgrep"
+echo "  libnotify, imagemagick, brightnessctl"
 echo ""
 
 echo -e "${STY_BLUE}Desktop integration:${STY_RST}"
@@ -226,7 +226,7 @@ echo "  polkit, networkmanager, gnome-keyring, blueman"
 echo ""
 
 echo -e "${STY_BLUE}Optional but recommended:${STY_RST}"
-echo "  kitty (terminal), nautilus (file manager), fuzzel (launcher)"
+echo "  kitty (terminal), nautilus (file manager)"
 echo "  easyeffects, mpv, yt-dlp, tesseract-ocr"
 echo ""
 

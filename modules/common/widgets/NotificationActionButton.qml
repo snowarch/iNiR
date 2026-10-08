@@ -25,7 +25,9 @@ RippleButton {
         : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-    colBackground: Appearance.regaliaEverywhere
+    colBackground: Appearance.editorialEverywhere
+        ? (button.critical ? Appearance.colors.colErrorContainer : Appearance.editorial.field)
+        : Appearance.regaliaEverywhere
         ? (button.critical ? Appearance.regalia.signalPlate : Appearance.regalia.controlPlate)
         : Appearance.zzzEverywhere
         ? (button.critical ? Appearance.zzz.secondary : Appearance.zzz.paperAlt)
@@ -35,7 +37,9 @@ RippleButton {
         : Appearance.inirEverywhere ? Appearance.inir.colLayer3
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colLayer4
-    colBackgroundHover: Appearance.regaliaEverywhere
+    colBackgroundHover: Appearance.editorialEverywhere
+        ? (button.critical ? Appearance.colors.colErrorContainerHover : Appearance.colors.colPrimaryContainerHover)
+        : Appearance.regaliaEverywhere
         ? (button.critical ? Appearance.regalia.signalPlateHover : Appearance.regalia.controlPlateHover)
         : Appearance.zzzEverywhere
         ? (button.critical
@@ -47,7 +51,9 @@ RippleButton {
         : Appearance.inirEverywhere ? Appearance.inir.colLayer3Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer4Hover
-    colRipple: Appearance.regaliaEverywhere
+    colRipple: Appearance.editorialEverywhere
+        ? (button.critical ? Appearance.colors.colErrorContainerActive : Appearance.colors.colPrimaryContainerActive)
+        : Appearance.regaliaEverywhere
         ? (button.critical ? Appearance.regalia.signalPlateHover : Appearance.regalia.controlPlateActive)
         : Appearance.zzzEverywhere
         ? (button.critical
@@ -63,7 +69,10 @@ RippleButton {
     contentItem: StyledText {
         horizontalAlignment: Text.AlignHCenter
         text: buttonText
-        color: Appearance.regaliaEverywhere
+        font.weight: Appearance.editorialEverywhere ? Font.Medium : Font.Normal
+        color: Appearance.editorialEverywhere
+            ? (button.critical ? Appearance.colors.colOnErrorContainer : Appearance.editorial.fieldInk)
+            : Appearance.regaliaEverywhere
             ? (button.critical ? Appearance.regalia.signalPlateInk : Appearance.regalia.onColor)
             : Appearance.zzzEverywhere
             ? (button.critical ? Appearance.zzz.onSecondary : Appearance.zzz.ink)

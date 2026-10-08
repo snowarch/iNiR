@@ -16,24 +16,33 @@ let
       (builtins.hasAttr "qt6" pkgs && builtins.hasAttr name pkgs.qt6)
       (builtins.getAttr name pkgs.qt6);
 
+  # InnerTube and browser-cookie extraction must share one closed Python
+  # environment; putting the yt-dlp executable in PATH does not expose its
+  # module or SecretStorage backend to this interpreter on Nix.
+  pythonRuntime = pkgs.python3.withPackages (ps: [
+    ps.ytmusicapi
+    ps.yt-dlp
+    ps.secretstorage
+  ]);
+
   runtimeDeps =
     with pkgs; [
       bash
-      bc
       coreutils
       curl
+      deno
       findutils
       gawk
       git
       gnugrep
+      go
       gnused
       jq
       procps
-      python3
+      pythonRuntime
       ripgrep
       rsync
       systemd
-      wget
       xdg-user-dirs
       xdg-utils
 
@@ -48,6 +57,7 @@ let
       pipewire
       pulseaudio
       wireplumber
+      yt-dlp
     ]
     ++ optionalTop "brightnessctl"
     ++ optionalTop "cava"
@@ -55,16 +65,13 @@ let
     ++ optionalTop "ffmpeg"
     ++ optionalTop "fish"
     ++ optionalTop "foot"
-    ++ optionalTop "fuzzel"
     ++ optionalTop "geoclue2"
-    ++ optionalTop "hyprland"
     ++ optionalTop "hyprpicker"
     ++ optionalTop "gum"
     ++ optionalTop "imagemagick"
     ++ optionalTop "kitty"
     ++ optionalTop "libqalculate"
     ++ optionalTop "mpv"
-    ++ optionalTop "mangohud"
     ++ optionalTop "nautilus"
     ++ optionalTop "networkmanager"
     ++ optionalTop "socat"
@@ -78,6 +85,7 @@ let
     ++ optionalTop "wtype"
     ++ optionalTop "xwayland-satellite"
     ++ optionalTop "ydotool"
+    ++ optionalTop "yt-dlp-ejs"
     ++ optionalKde "breeze-icons"
     ++ optionalKde "kdialog"
     ++ optionalKde "kirigami"
@@ -90,13 +98,9 @@ let
     ++ optionalQt6 "qtdeclarative"
     ++ optionalQt6 "qtimageformats"
     ++ optionalQt6 "qtmultimedia"
-    ++ optionalQt6 "qtpositioning"
-    ++ optionalQt6 "qtquicktimeline"
-    ++ optionalQt6 "qtsensors"
     ++ optionalQt6 "qtsvg"
     ++ optionalQt6 "qttools"
     ++ optionalQt6 "qttranslations"
-    ++ optionalQt6 "qtvirtualkeyboard"
     ++ optionalQt6 "qtwayland";
 
   materialSymbolsFont =
@@ -117,19 +121,18 @@ let
     ++ optionalQt6 "qtdeclarative"
     ++ optionalQt6 "qtimageformats"
     ++ optionalQt6 "qtmultimedia"
-    ++ optionalQt6 "qtpositioning"
-    ++ optionalQt6 "qtquicktimeline"
-    ++ optionalQt6 "qtsensors"
     ++ optionalQt6 "qtsvg"
-    ++ optionalQt6 "qtvirtualkeyboard"
     ++ optionalQt6 "qtwayland";
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "inir";
   version = lib.removeSuffix "\n" (builtins.readFile ../VERSION);
-  src = lib.cleanSource ../.;
+  src = lib.cleanSourceWith {
+    src = ../.;
+    filter = import ./runtime-source-filter.nix { inherit lib; root = ../.; };
+  };
 
-  nativeBuildInputs = [ pkgs.makeWrapper ];
+  nativeBuildInputs = [ pkgs.makeWrapper pkgs.python3 pkgs.rsync ];
 
   # Prevent patchShebangs from attempting to rewrite Python scripts;
   # non-executable files are skipped during fixupPhase.
@@ -147,22 +150,7 @@ pkgs.stdenvNoCC.mkDerivation {
     runtime="$out/share/quickshell/inir"
     mkdir -p "$runtime" "$out/bin"
 
-    while IFS= read -r path; do
-      [ -n "$path" ] || continue
-      install -Dm644 "$path" "$runtime/$path"
-    done < sdata/runtime-root-files.txt
-
-    while IFS= read -r dir; do
-      [ -n "$dir" ] || continue
-      cp -R "$dir" "$runtime/$dir"
-    done < sdata/runtime-payload-dirs.txt
-
-    # Copy root-level QML entry points (shell.qml, settings.qml, etc.)
-    # which aren't listed in runtime-root-files.txt.
-    for f in *.qml; do
-      [ -f "$f" ] || continue
-      install -Dm644 "$f" "$runtime/$f"
-    done
+    python3 sdata/lib/runtime-payload.py copy --root . --target "$runtime"
 
     chmod +x "$runtime/setup" "$runtime/scripts/inir"
     find "$runtime/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} \;

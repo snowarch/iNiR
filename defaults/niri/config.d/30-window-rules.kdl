@@ -16,6 +16,15 @@ window-rule {
     clip-to-geometry true
 }
 
+// Gaming surfaces: avoid client clipping so fullscreen games remain eligible
+// for direct scanout. Keep the global rounded/clipped behavior for normal apps.
+window-rule {
+    match app-id=r#"^(gamescope|steam_app_[0-9]+|dota2|lutris|net\.lutris\..*|heroic|com\.heroicgameslauncher\.hgl|org\.prismlauncher\.PrismLauncher|minecraft|wine|wine64)$"#
+
+    geometry-corner-radius 0
+    clip-to-geometry false
+}
+
 // Dim unfocused windows slightly for visual hierarchy.
 window-rule {
     match is-active=false

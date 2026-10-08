@@ -49,6 +49,8 @@ Singleton {
         }
     }
 
+    Component.onCompleted: if (Config.ready) availabilityDefer.start()
+
     Process {
         id: checkAvailabilityProc
         running: false
@@ -69,6 +71,11 @@ Singleton {
             }
         }
         onExited: (exitCode, exitStatus) => {
+            // checkupdates exits 2 when the system is already up to date.
+            if (exitCode === 2) {
+                root.count = 0
+                return
+            }
             if (exitCode !== 0) {
                 console.error("[Updates] checkupdates failed", exitCode, exitStatus)
             }

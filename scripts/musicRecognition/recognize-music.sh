@@ -27,7 +27,10 @@ else
     exit 1
 fi
 
-if [ ! -x /usr/bin/songrec ] || [ ! -x /usr/bin/parec ] || [ ! -x /usr/bin/ffmpeg ]; then
+SONGREC_BIN="$(command -v songrec 2>/dev/null || true)"
+PAREC_BIN="$(command -v parec 2>/dev/null || true)"
+FFMPEG_BIN="$(command -v ffmpeg 2>/dev/null || true)"
+if [ -z "$SONGREC_BIN" ] || [ -z "$PAREC_BIN" ] || [ -z "$FFMPEG_BIN" ]; then
     exit 1
 fi
 
@@ -42,7 +45,7 @@ cleanup() {
 trap cleanup EXIT
 
 /usr/bin/mkdir -p "$TMP_PATH"
-/usr/bin/parec --device="$MONITOR_SOURCE" --format=s16le --rate=44100 --channels=2 > "$TMP_RAW" &
+"$PAREC_BIN" --device="$MONITOR_SOURCE" --format=s16le --rate=44100 --channels=2 > "$TMP_RAW" &
 PAREC_PID=$!
 START_TIME=$(/usr/bin/date +%s)
 
@@ -59,8 +62,8 @@ while true; do
         exit 1
     fi
 
-    /usr/bin/ffmpeg -f s16le -ar 44100 -ac 2 -i "$TMP_RAW" -acodec libmp3lame -y -hide_banner -loglevel error "$TMP_MP3" 2>/dev/null
-    RESULT=$(/usr/bin/songrec recognize -j "$TMP_MP3" 2>/dev/null || true)
+    "$FFMPEG_BIN" -f s16le -ar 44100 -ac 2 -i "$TMP_RAW" -acodec libmp3lame -y -hide_banner -loglevel error "$TMP_MP3" 2>/dev/null
+    RESULT=$("$SONGREC_BIN" recognize -j "$TMP_MP3" 2>/dev/null || true)
 
     if echo "$RESULT" | /usr/bin/grep -q '"matches"[[:space:]]*:[[:space:]]*\[' && [ ${#RESULT} -gt $MIN_VALID_RESULT_LENGTH ]; then
         echo "$RESULT"

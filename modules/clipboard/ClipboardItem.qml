@@ -60,7 +60,8 @@ RippleButton {
         ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive)
         : (root.isSelected
-            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+            ? (Appearance.editorialEverywhere ? Appearance.editorial.field
+                : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                 : Appearance.inirEverywhere ? Appearance.inir.colLayer3
                 : Appearance.colors.colLayer3)
             : ((root.hovered || root.focus)
@@ -218,6 +219,7 @@ RippleButton {
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.zzzEverywhere
                     ? ((root.down || root.keyboardDown) ? Appearance.zzz.onSignal : Appearance.zzz.inkMuted)
+                    : root.isSelected && Appearance.editorialEverywhere ? Appearance.editorial.fieldInk
                     : (root.isSelected || root.hovered || root.focus) ? (Appearance.inirEverywhere ? Appearance.inir.colOnLayer3 : Appearance.colors.colOnLayer3) : (Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext)
                 visible: root.itemType && root.itemType != Translation.tr("App")
                 text: root.itemType
@@ -265,6 +267,7 @@ RippleButton {
                     font.family: Appearance.font.family[root.fontType]
                     color: Appearance.zzzEverywhere
                         ? ((root.down || root.keyboardDown) ? Appearance.zzz.onSignal : Appearance.zzz.ink)
+                        : root.isSelected && Appearance.editorialEverywhere ? Appearance.editorial.fieldInk
                         : (root.isSelected || root.hovered || root.focus) ? (Appearance.inirEverywhere ? Appearance.inir.colOnLayer3 : Appearance.colors.colOnLayer3) : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface)
                     horizontalAlignment: Text.AlignLeft
                     elide: Text.ElideRight

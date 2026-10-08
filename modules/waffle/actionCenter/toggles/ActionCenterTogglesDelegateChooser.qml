@@ -52,6 +52,13 @@ DelegateChooser {
         }
     }
     DelegateChoice {
+        roleValue: "vpn"
+        ActionCenterToggleButton {
+            toggleModel: VpnToggle {}
+            icon: "shield-lock"
+        }
+    }
+    DelegateChoice {
         roleValue: "cloudflareWarp"
         ActionCenterToggleButton {
             toggleModel: CloudflareWarpToggle {}

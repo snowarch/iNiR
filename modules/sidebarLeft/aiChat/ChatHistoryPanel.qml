@@ -49,13 +49,16 @@ Rectangle {
             StyledText {
                 Layout.fillWidth: true
                 text: Translation.tr("Conversations")
+                font.family: Appearance.editorialEverywhere ? Appearance.font.family.title : Appearance.font.family.main
                 font.pixelSize: Appearance.font.pixelSize.large
+                font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Normal
+                font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
                 color: Appearance.colors.colOnLayer1
             }
             RippleButton {
                 implicitWidth: newChatRow.implicitWidth + 16
                 implicitHeight: 30
-                buttonRadius: Appearance.rounding.full
+                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                 colBackground: Appearance.colors.colSecondaryContainer
                 colBackgroundHover: Appearance.colors.colSecondaryContainerHover
                 onClicked: {
@@ -82,7 +85,7 @@ Rectangle {
             RippleButton {
                 implicitWidth: 30
                 implicitHeight: 30
-                buttonRadius: Appearance.rounding.full
+                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                 onClicked: root.requestClose()
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
@@ -113,7 +116,7 @@ Rectangle {
                 implicitHeight: Math.max(40, rowContent.implicitHeight + 12)
                 radius: Appearance.rounding.small
                 color: rowMouseArea.containsMouse
-                    ? Appearance.colors.colLayer2Hover
+                    ? Appearance.colLayer2Hover
                     : Appearance.colors.colLayer2
 
                 MouseArea {
@@ -138,7 +141,7 @@ Rectangle {
                     MaterialSymbol {
                         text: chatRow.isLastSession ? "history" : "chat_bubble"
                         iconSize: Appearance.font.pixelSize.large
-                        color: Appearance.colors.colSubtext
+                        color: Appearance.colSecondaryActionIcon
                     }
 
                     StyledText {
@@ -206,7 +209,7 @@ Rectangle {
             horizontalAlignment: Text.AlignHCenter
             text: Translation.tr("No saved conversations yet")
             font.pixelSize: Appearance.font.pixelSize.small
-            color: Appearance.colors.colSubtext
+            color: Appearance.colMetadataText
         }
     }
 }

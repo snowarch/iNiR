@@ -37,47 +37,63 @@ Item {
     property QtObject blendedColors: AdaptedMaterialScheme {
         color: playerBase.artDominantColor
     }
+    readonly property QtObject effectiveColors: Appearance.editorialEverywhere && Appearance.colors
+        ? Appearance.colors : root.blendedColors
 
     // ── Style tokens ──────────────────────────────────────────────
     readonly property bool angelStyle: Appearance.angelEverywhere
     readonly property bool inirStyle: Appearance.inirEverywhere
     readonly property bool auroraStyle: Appearance.auroraEverywhere
+    readonly property bool regaliaStyle: Appearance.regaliaEverywhere
     readonly property bool zzzStyle: Appearance.zzzEverywhere
     readonly property bool cookieStyle: Appearance.cookieEverywhere
+    readonly property bool editorialStyle: Appearance.editorialEverywhere
     readonly property bool compactNarrow: width > 0 && width < 300
 
-    readonly property color colText: zzzStyle ? Appearance.zzz.ink
+    readonly property color colText: editorialStyle ? Appearance.editorial.ink
+        : regaliaStyle ? Appearance.regalia.onColor
+        : zzzStyle ? Appearance.zzz.ink
         : cookieStyle ? Appearance.cookie.onColor
         : angelStyle ? Appearance.angel.colText
         : inirStyle ? Appearance.inir.colText
-        : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
-    readonly property color colTextSecondary: zzzStyle ? Appearance.zzz.inkMuted
+        : (effectiveColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+    readonly property color colTextSecondary: editorialStyle ? Appearance.editorial.accent
+        : regaliaStyle ? Appearance.regalia.hardwareSecondary
+        : zzzStyle ? Appearance.zzz.secondary
         : cookieStyle ? Appearance.cookie.inkMuted
-        : angelStyle ? Appearance.angel.colTextSecondary
-        : inirStyle ? Appearance.inir.colTextSecondary
-        : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
+        : angelStyle ? Appearance.angel.colSecondary
+        : inirStyle ? Appearance.inir.colSecondary
+        : ColorUtils.ensureReadable(
+            Appearance.colors.colSecondary,
+            effectiveColors?.colLayer0Base ?? Appearance.colors.colLayer0Base,
+            4.5
+        )
     readonly property color colCard: (zzzStyle || cookieStyle) ? "transparent"
         : angelStyle ? Appearance.angel.colGlassCard
         : inirStyle ? Appearance.inir.colLayer1
         : auroraStyle ? ColorUtils.transparentize(
-            blendedColors?.colLayer0 ?? Appearance.aurora.colSubSurface, 0.7)
-        : (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
+            effectiveColors?.colLayer0 ?? Appearance.aurora.colSubSurface, 0.7)
+        : (effectiveColors?.colLayer0 ?? Appearance.colors.colLayer0)
     readonly property color colBorder: zzzStyle ? Appearance.zzz.hairlineStrong
         : cookieStyle ? Appearance.cookie.hairline
         : angelStyle ? Appearance.angel.colCardBorder
         : inirStyle ? Appearance.inir.colBorder
         : auroraStyle ? Appearance.aurora.colTooltipBorder
         : ColorUtils.transparentize(
-            blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0, 0.88)
+            effectiveColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0, 0.88)
     readonly property real cardRadius: zzzStyle ? Appearance.zzz.cardRadius
         : cookieStyle ? Appearance.cookie.roundNormal
         : angelStyle ? Appearance.angel.roundingNormal
         : inirStyle ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    readonly property color colPrimary: zzzStyle ? Appearance.zzz.accent
+    readonly property color colPrimary: editorialStyle ? Appearance.editorial.accent
+        : regaliaStyle ? Appearance.regalia.hardwarePrimary
+        : zzzStyle ? Appearance.zzz.accent
         : cookieStyle ? Appearance.cookie.primaryFace
         : angelStyle ? Appearance.angel.colPrimary
         : inirStyle ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
-    readonly property color colOnPrimary: zzzStyle ? Appearance.zzz.onSticker
+    readonly property color colOnPrimary: editorialStyle ? Appearance.editorial.accentInk
+        : regaliaStyle ? Appearance.regalia.hardwarePrimaryInk
+        : zzzStyle ? Appearance.zzz.onSticker
         : cookieStyle ? Appearance.cookie.onFace
         : angelStyle ? Appearance.angel.colOnPrimary
         : inirStyle ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary
@@ -86,23 +102,23 @@ Item {
         : angelStyle ? Appearance.angel.colGlassCardHover
         : inirStyle ? Appearance.inir.colLayer2Hover
         : ColorUtils.transparentize(
-            blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
+            effectiveColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
     readonly property color colAuxActive: zzzStyle ? Appearance.zzz.sticker
         : cookieStyle ? Appearance.cookie.bg4
         : angelStyle ? Appearance.angel.colGlassCardActive
         : inirStyle ? Appearance.inir.colLayer2Active
-        : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
+        : (effectiveColors?.colLayer1Active ?? Appearance.colLayer1Active)
 
     // Album colors belong to Material and Aurora. Identity-heavy styles keep
     // their own accent ramp so artwork cannot recolor the entire control set.
     readonly property bool useAlbumAccent: playerBase.downloaded
-        && !zzzStyle && !cookieStyle && !inirStyle && !angelStyle
+        && Appearance.globalStyle === "material"
     readonly property color accentColor: useAlbumAccent
-        ? (blendedColors?.colPrimary ?? colPrimary) : colPrimary
+        ? (effectiveColors?.colPrimary ?? colPrimary) : colPrimary
     readonly property color onAccentColor: useAlbumAccent
-        ? (blendedColors?.colOnPrimary ?? colOnPrimary) : colOnPrimary
+        ? (effectiveColors?.colOnPrimary ?? colOnPrimary) : colOnPrimary
 
-    readonly property real artBgOpacity: zzzStyle ? 0.20
+    readonly property real artBgOpacity: Appearance.editorialEverywhere ? 0 : zzzStyle ? 0.20
         : cookieStyle ? 0.10
         : inirStyle ? 0.14
         : angelStyle ? 0.20
@@ -453,8 +469,8 @@ Item {
                                 anchors.right: parent.right
                                 text: "open_in_full"
                                 iconSize: 12
-                                color: root.colTextSecondary
-                                opacity: playerInfoMA.containsMouse ? 0.72 : 0
+                                color: root.accentColor
+                                opacity: playerInfoMA.containsMouse ? 0.88 : 0
                                 Behavior on opacity {
                                     enabled: Appearance.animationsEnabled
                                     NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
@@ -492,7 +508,8 @@ Item {
                                         : root.cookieStyle ? Appearance.cookie.bg4
                                         : root.angelStyle ? Appearance.angel.colBorderSubtle
                                         : root.inirStyle ? Appearance.inir.colLayer2
-                                        : (root.blendedColors?.colSecondaryContainer
+                                        : root.auroraStyle ? Appearance.colInactiveControlSurface
+                                        : (root.effectiveColors?.colSecondaryContainer
                                             ?? Appearance.colors.colSecondaryContainer)
                                     enableWavy: true
                                     onSeekRequested: (seconds) => playerBase.seek(seconds)
@@ -565,22 +582,22 @@ Item {
                         }
                         if (root.auroraStyle) {
                             if (playMA.containsPress)
-                                return root.blendedColors?.colLayer1Active ?? root.colAuxActive
+                                return root.effectiveColors?.colLayer1Active ?? root.colAuxActive
                             if (playMA.containsMouse) return root.colAuxHover
                             return "transparent"
                         }
                         if (playerBase.effectiveIsPlaying) {
                             if (playMA.containsPress)
-                                return root.blendedColors?.colPrimaryActive ?? root.accentColor
+                                return root.effectiveColors?.colPrimaryActive ?? root.accentColor
                             if (playMA.containsMouse)
-                                return root.blendedColors?.colPrimaryHover ?? root.accentColor
+                                return root.effectiveColors?.colPrimaryHover ?? root.accentColor
                             return root.accentColor
                         }
                         if (playMA.containsPress)
-                            return root.blendedColors?.colSecondaryContainerActive ?? root.colAuxActive
+                            return root.effectiveColors?.colSecondaryContainerActive ?? root.colAuxActive
                         if (playMA.containsMouse)
-                            return root.blendedColors?.colSecondaryContainerHover ?? root.colAuxHover
-                        return root.blendedColors?.colSecondaryContainer
+                            return root.effectiveColors?.colSecondaryContainerHover ?? root.colAuxHover
+                        return root.effectiveColors?.colSecondaryContainer
                             ?? Appearance.colors.colSecondaryContainer
                     }
                     readonly property color glyphColor: root.zzzStyle
@@ -591,7 +608,7 @@ Item {
                         : root.inirStyle ? Appearance.inir.colPrimary
                         : root.auroraStyle ? root.colText
                         : playerBase.effectiveIsPlaying ? root.onAccentColor
-                        : (root.blendedColors?.colOnSecondaryContainer
+                        : (root.effectiveColors?.colOnSecondaryContainer
                             ?? Appearance.colors.colOnSecondaryContainer)
 
                     scale: playMA.containsPress ? 0.90 : 1.0
@@ -747,7 +764,9 @@ Item {
                 ? (root.cookieStyle ? Appearance.cookie.onFace
                     : root.inirStyle ? Appearance.inir.colOnSecondaryContainer
                     : root.accentColor)
-                : (tBtn.enabled ? root.colText : root.colTextSecondary)
+                : (tBtn.enabled
+                    ? ColorUtils.mix(root.colText, root.accentColor, 0.82)
+                    : root.colTextSecondary)
 
         Behavior on implicitWidth {
             enabled: Appearance.animationsEnabled

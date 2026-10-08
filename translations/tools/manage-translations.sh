@@ -5,7 +5,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TRANSLATIONS_DIR="$(dirname "$SCRIPT_DIR")"
-SOURCE_DIR="$(dirname "$(dirname "$TRANSLATIONS_DIR")")"
+SOURCE_DIR="$(dirname "$TRANSLATIONS_DIR")"
 
 show_help() {
     echo "Translation Management Tool - Convenient Wrapper"
@@ -13,11 +13,11 @@ show_help() {
     echo "Usage: $0 [options] <command>"
     echo ""
     echo "Commands:"
-    echo "  extract      Extract translatable texts to temporary file"
-    echo "  update       Update translation files (add missing/remove extra keys)"
-    echo "  clean        Clean unused translation keys"
-    echo "  sync         Sync keys across all language files"
-    echo "  status       Show translation status"
+    echo "  extract      Discover literal Translation.tr source strings (informational)"
+    echo "  update       Legacy source-driven locale maintenance (manual)"
+    echo "  clean        Remove locale keys not present in canonical en_US"
+    echo "  sync         Sync locale keys from canonical en_US"
+    echo "  status       Validate source coverage and locale structure"
     echo ""
     echo "Options:"
     echo "  -l, --lang LANG     Specify language (e.g.: zh_CN)"
@@ -36,29 +36,29 @@ show_help() {
 }
 
 show_status() {
-    echo "Analyzing translation status..."
-    
-    # Extract current text count
-    echo "=== Current Project Status ==="
-    python3 "$SCRIPT_DIR/translation-manager.py" \
-        --translations-dir "$TRANSLATIONS_DIR" \
-        --source-dir "$SOURCE_DIR" \
-        --extract-only | grep "Extracted"
-    
+    echo "Analyzing canonical runtime localization..."
     echo ""
-    echo "=== Translation File Status ==="
-    
-    if [ -d "$TRANSLATIONS_DIR" ]; then
-        for file in "$TRANSLATIONS_DIR"/*.json; do
-            if [ -f "$file" ]; then
-                lang=$(basename "$file" .json)
-                count=$(jq 'length' "$file" 2>/dev/null || echo "error")
-                echo "  $lang: $count keys"
-            fi
-        done
-    else
-        echo "  Translation directory does not exist: $TRANSLATIONS_DIR"
-    fi
+    echo "=== Canonical Catalog ==="
+    python3 - "$TRANSLATIONS_DIR/en_US.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+data = json.loads(path.read_text(encoding="utf-8"))
+print(f"  en_US: {len(data)} canonical keys")
+PY
+    echo ""
+    echo "=== Locale Guides ==="
+    python3 "$SCRIPT_DIR/l10n.py" audit-guides
+    echo ""
+    echo "=== Source Coverage ==="
+    python3 "$SCRIPT_DIR/l10n.py" audit-source
+    echo ""
+    echo "=== Locale Structure ==="
+    python3 "$SCRIPT_DIR/l10n.py" audit-all
+    echo ""
+    echo "The legacy extract command is discovery-only; canonical status is defined above."
 }
 
 # Parse command line arguments
@@ -116,10 +116,6 @@ if ! command -v python3 >/dev/null 2>&1; then
     exit 1
 fi
 
-if [ "$COMMAND" = "status" ] && ! command -v jq >/dev/null 2>&1; then
-    echo "Warning: jq is not installed, status display may be incomplete"
-fi
-
 # Build base arguments
 BASE_ARGS="--translations-dir $TRANSLATIONS_DIR --source-dir $SOURCE_DIR"
 
@@ -129,7 +125,8 @@ case $COMMAND in
         python3 "$SCRIPT_DIR/translation-manager.py" $BASE_ARGS $YES_FLAG --extract-only --show-temp
         ;;
     update)
-        echo "Updating translation files..."
+        echo "Legacy source-driven translation maintenance..."
+        echo "Note: en_US.json is canonical; use status/audit-source before accepting catalog changes."
         if [ -n "$LANG_CODE" ]; then
             python3 "$SCRIPT_DIR/translation-manager.py" $BASE_ARGS $YES_FLAG --language "$LANG_CODE"
         else

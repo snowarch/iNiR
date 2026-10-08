@@ -12,12 +12,48 @@ Singleton {
     readonly property bool sortingEnabled:
         (Config.options?.panelFamily ?? "ii") === "waffle"
     property int _identityRulesRevision: 0
+    readonly property var apps: _apps
+    property var _apps: []
 
     Connections {
         target: Config.options?.windows
         function onAppIdentityRulesChanged() {
             root._identityRulesRevision++
+            root.scheduleAppsRebuild()
         }
+    }
+
+    Connections {
+        target: Config.options?.dock
+        function onPinnedAppsChanged() { root.scheduleAppsRebuild() }
+        function onIgnoredAppRegexesChanged() { root.scheduleAppsRebuild() }
+    }
+
+    Connections {
+        target: CompositorService
+        function onSortedToplevelsChanged() { root.scheduleAppsRebuild() }
+        function onIsNiriChanged() { root.scheduleAppsRebuild() }
+    }
+
+    Connections {
+        target: ToplevelManager.toplevels
+        function onValuesChanged() { root.scheduleAppsRebuild() }
+    }
+
+    Connections {
+        target: DesktopEntries.applications
+        function onValuesChanged() { root.scheduleAppsRebuild() }
+    }
+
+    Timer {
+        id: appsRebuildTimer
+        interval: 0
+        repeat: false
+        onTriggered: root._apps = root._buildApps()
+    }
+
+    function scheduleAppsRebuild(): void {
+        appsRebuildTimer.restart()
     }
 
     function syncSortingDemand(): void {
@@ -26,18 +62,28 @@ Singleton {
     }
 
     onSortingEnabledChanged: syncSortingDemand()
-    Component.onCompleted: syncSortingDemand()
+    Component.onCompleted: {
+        syncSortingDemand()
+        scheduleAppsRebuild()
+    }
     Component.onDestruction:
         CompositorService.setSortingConsumer("waffleTaskbar", false)
 
+    // The dock keys apps by lowercase id while the pinned list keeps the desktop entry's
+    // case (org.gnome.Nautilus): an exact match missed it, so Unpin pinned it a second time.
     function togglePin(appId) {
+        const id = String(appId ?? "")
+        if (id.length === 0)
+            return
+        const lower = id.toLowerCase()
         const pinned = Config.options?.dock?.pinnedApps ?? []
-        const exists = pinned.indexOf(appId) !== -1
-        const next = exists ? pinned.filter(id => id !== appId) : pinned.concat([appId])
+        const exists = pinned.some(p => String(p).toLowerCase() === lower)
+        const next = exists ? pinned.filter(p => String(p).toLowerCase() !== lower)
+            : pinned.concat([AppSearch.lookupDesktopEntry(id)?.id || id])
         Config.setNestedValue(["dock", "pinnedApps"], next)
     }
 
-    property list<var> apps: {
+    function _buildApps(): var {
         const identityRulesRevision = root._identityRulesRevision;
         var map = new Map();
 
@@ -62,6 +108,7 @@ Singleton {
         const ignoredRegexStrings = Config.options?.dock?.ignoredAppRegexes ?? [];
         const systemIgnored = [
             "^$", "^portal$", "^x-run-dialog$", "^kdialog$",
+            "^xembedsniproxy$",
             "^org.freedesktop.impl.portal.*"
         ];
         const ignoredRegexes = ignoredRegexStrings.concat(systemIgnored)

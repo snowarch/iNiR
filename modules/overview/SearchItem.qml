@@ -30,15 +30,17 @@ RippleButton {
     readonly property string desktopEntryId: String(root.entry?.desktopEntryId ?? "")
     readonly property bool draggableApplication: root.desktopEntryId.length > 0
     property bool suppressClick: false
+    property bool nativeApplicationDragActive: false
     signal applicationDragChanged(bool active)
     readonly property bool zzzEverywhere: Appearance.zzzEverywhere
+    readonly property bool editorial: Appearance.editorialEverywhere
     dragTarget: root.draggableApplication ? desktopEntryDrag : null
     pointerDragThreshold: 10
     
     visible: root.entryShown
     property int horizontalMargin: Appearance.sizes.elevationMargin
     property int buttonHorizontalPadding: Appearance.sizes.elevationMargin
-    property int buttonVerticalPadding: Appearance.sizes.wallpaperSelectorItemPadding
+    property int buttonVerticalPadding: root.editorial ? Math.round(9 * Appearance.editorial.spacing) : Appearance.sizes.wallpaperSelectorItemPadding
     property bool keyboardDown: false
     readonly property bool isCurrentItem: ListView.isCurrentItem
     readonly property bool isHighlighted: root.isCurrentItem
@@ -46,7 +48,8 @@ RippleButton {
         : Appearance.regaliaEverywhere ? Appearance.regalia.onColor
         : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-    readonly property color selectedTextColor: root.zzzEverywhere ? Appearance.zzz.onSticker
+    readonly property color selectedTextColor: root.editorial ? Appearance.editorial.fieldInk
+        : root.zzzEverywhere ? Appearance.zzz.onSticker
         : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
         : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText
@@ -58,17 +61,20 @@ RippleButton {
         : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.colors.colSubtext
-    readonly property color selectedBackgroundColor: root.zzzEverywhere ? Appearance.zzz.sticker
+    readonly property color selectedBackgroundColor: root.editorial ? Appearance.editorial.field
+        : root.zzzEverywhere ? Appearance.zzz.sticker
         : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
         : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardHover
         : Appearance.colors.colLayer1
-    readonly property color hoverBackgroundColor: root.zzzEverywhere ? Appearance.colors.colLayer1Hover
+    readonly property color hoverBackgroundColor: root.editorial ? Appearance.colors.colLayer2Hover
+        : root.zzzEverywhere ? Appearance.colors.colLayer1Hover
         : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
         : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardHover
         : Appearance.colors.colLayer1
-    readonly property color pressedBackgroundColor: root.zzzEverywhere ? Appearance.colors.colPrimaryActive
+    readonly property color pressedBackgroundColor: root.editorial ? Appearance.colors.colPrimaryContainerActive
+        : root.zzzEverywhere ? Appearance.colors.colPrimaryActive
         : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateActive
         : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardActive
@@ -84,7 +90,7 @@ RippleButton {
 
     implicitHeight: rowLayout.implicitHeight + root.buttonVerticalPadding * 2
     implicitWidth: rowLayout.implicitWidth + root.buttonHorizontalPadding * 2
-    buttonRadius: root.zzzEverywhere ? Appearance.zzz.controlRadius
+    buttonRadius: root.editorial ? Appearance.rounding.small : root.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal
@@ -93,7 +99,7 @@ RippleButton {
         : (root.isHighlighted
             ? root.selectedBackgroundColor
             : (root.hovered ? root.hoverBackgroundColor : "transparent"))
-    colBackgroundHover: root.hoverBackgroundColor
+    colBackgroundHover: root.editorial && root.isHighlighted ? Appearance.colors.colPrimaryContainerHover : root.hoverBackgroundColor
     colRipple: root.activeRippleColor
 
     releaseAction: () => {
@@ -101,21 +107,25 @@ RippleButton {
             dragSuppressionResetTimer.restart()
     }
     cancelAction: () => {
-        root.suppressClick = false
-        dragSuppressionResetTimer.stop()
+        if (!root.nativeApplicationDragActive) {
+            root.suppressClick = false
+            dragSuppressionResetTimer.stop()
+        }
     }
     onPointerDragActiveChanged: {
-        root.applicationDragChanged(root.pointerDragActive)
-        if (root.pointerDragActive)
+        if (root.pointerDragActive && root.draggableApplication) {
+            root.nativeApplicationDragActive = true
+            root.applicationDragChanged(true)
             root.suppressClick = true
-        else if (root.suppressClick)
+        } else if (!root.nativeApplicationDragActive && root.suppressClick) {
             dragSuppressionResetTimer.restart()
+        }
     }
 
     // Matched-char colour must contrast with the CURRENT row background: when the
     // row is selected the bg is the accent plate, so the accent-coloured match
     // would vanish into it — switch to onSignal (the readable on-accent ink).
-    property string highlightPrefix: `<u><font color="${root.zzzEverywhere ? (root.isHighlighted ? Appearance.zzz.onSticker : Appearance.zzz.accent) : Appearance.regaliaEverywhere ? (root.isHighlighted ? Appearance.regalia.primaryPlateInk : Appearance.regalia.hardwarePrimary) : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary}">`
+    property string highlightPrefix: `<u><font color="${root.editorial ? (root.isHighlighted ? Appearance.editorial.fieldInk : Appearance.editorial.accent) : root.zzzEverywhere ? (root.isHighlighted ? Appearance.zzz.onSticker : Appearance.zzz.accent) : Appearance.regaliaEverywhere ? (root.isHighlighted ? Appearance.regalia.primaryPlateInk : Appearance.regalia.hardwarePrimary) : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary}">`
     property string highlightSuffix: `</font></u>`
     function highlightContent(content, query) {
         if (!query || query.length === 0 || content == query || fontType === "monospace")
@@ -195,10 +205,11 @@ RippleButton {
         Drag.imageSource: Quickshell.iconPath(root.itemIcon, "application-x-executable")
         Drag.imageSourceSize: Qt.size(52, 52)
         Drag.hotSpot: Qt.point(26, 26)
-        Drag.active: root.pointerDragActive && root.draggableApplication
+        Drag.active: root.nativeApplicationDragActive && root.draggableApplication
         Drag.onDragFinished: dropAction => {
             desktopEntryDrag.x = 0
             desktopEntryDrag.y = 0
+            root.nativeApplicationDragActive = false
             root.applicationDragChanged(false)
             if (dropAction === Qt.CopyAction)
                 GlobalStates.closeOverview()
@@ -337,6 +348,8 @@ RippleButton {
                 color: root.descriptionTextColor
                 visible: root.itemType && root.itemType != Translation.tr("App")
                 text: root.itemType
+                font.letterSpacing: root.editorial ? 0.5 : 0
+                font.weight: root.editorial ? Font.Medium : Font.Normal
             }
             RowLayout {
                 Loader { // Checkmark for copied clipboard entry
@@ -374,6 +387,7 @@ RippleButton {
                     textFormat: Text.StyledText // RichText also works, but StyledText ensures elide work
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.family: Appearance.font.family[root.fontType]
+                    font.weight: root.editorial && root.fontType !== "monospace" ? Font.Medium : Font.Normal
                     color: root.isHighlighted ? root.selectedTextColor : root.normalTextColor
                     horizontalAlignment: Text.AlignLeft
                     elide: Text.ElideRight
@@ -441,7 +455,7 @@ RippleButton {
                     implicitWidth: 34
                     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.pillRadius : Appearance.rounding.full
 
-                    colBackgroundHover: root.hoverBackgroundColor
+                    colBackgroundHover: root.editorial && root.isHighlighted ? Appearance.colors.colPrimaryContainerHover : root.hoverBackgroundColor
                     colRipple: root.activeRippleColor
 
                     contentItem: Item {

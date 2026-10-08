@@ -84,6 +84,14 @@ Singleton {
         }
     }
 
+    function clearCompleted() {
+        const remaining = root.list.filter(item => !item.done)
+        if (remaining.length === root.list.length)
+            return
+        root.list = remaining
+        _persistAll()
+    }
+
     function refresh() {
         todoFileView.reload()
     }

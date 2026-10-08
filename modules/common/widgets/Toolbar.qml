@@ -27,6 +27,7 @@ Item {
 
     Loader {
         active: root.enableShadow && !root.transparent && !Appearance.zzzEverywhere
+            && !Appearance.editorialEverywhere
             && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
         anchors.fill: background
         sourceComponent: StyledRectangularShadow {
@@ -48,7 +49,9 @@ Item {
         id: background
         anchors.fill: parent
         visible: !root.transparent && !Appearance.regaliaEverywhere
-        fallbackColor: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colSurfaceContainer
+        fallbackColor: Appearance.zzzEverywhere ? "transparent"
+            : Appearance.editorialEverywhere ? Appearance.editorial.layer(1)
+            : Appearance.colors.colSurfaceContainer
         inirColor: Appearance.inir.colLayer2
         auroraTransparency: Appearance.aurora.overlayTransparentize
         screenX: root.screenX
@@ -56,12 +59,14 @@ Item {
         screenWidth: Quickshell.screens[0]?.width ?? 1920
         screenHeight: Quickshell.screens[0]?.height ?? 1080
         border.width: Appearance.zzzEverywhere ? 0
+            : Appearance.editorialEverywhere ? 1
             : (Appearance.angelEverywhere || Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
         Behavior on border.width {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+            : Appearance.editorialEverywhere ? Appearance.editorial.rule
             : Appearance.angelEverywhere ? Appearance.angel.colBorder
             : Appearance.inirEverywhere ? Appearance.inir.colBorder 
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
@@ -74,7 +79,8 @@ Item {
         radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundNormal
             : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : (height / 2)
+            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+            : Appearance.editorialEverywhere ? Appearance.rounding.small : (height / 2)
         Behavior on radius {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

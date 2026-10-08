@@ -43,6 +43,19 @@ WSettingsPage {
 
         property var poseOptions: [{ displayName: Translation.tr("Auto (rotate pool)"), value: "" }]
 
+        Image {
+            id: packProbe
+            visible: false
+            source: Quickshell.shellPath("assets/images/mascot/inir-mascot-edge-peek.png")
+            asynchronous: true
+        }
+
+        WSettingsInfoBar {
+            visible: packProbe.status === Image.Error
+            severity: WSettingsInfoBar.Severity.Info
+            message: Translation.tr("Kira is an optional download. Run `inir setup extras` and choose Install mascot pack. The controls below become available after the download finishes.")
+        }
+
         FileView {
             path: Quickshell.shellPath("assets/images/mascot/manifest.json")
             watchChanges: true
@@ -83,6 +96,43 @@ WSettingsPage {
         }
 
         WSettingsSpinBox {
+            label: Translation.tr("Minimum quiet time")
+            icon: "timer"
+            from: 3; to: 60; stepSize: 1
+            value: Config.options?.mascot?.companion?.minQuietMinutes ?? 10
+            onValueChanged: Config.setNestedValue("mascot.companion.minQuietMinutes", value)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Maximum visits per hour")
+            icon: "timer"
+            from: 1; to: 6; stepSize: 1
+            value: Config.options?.mascot?.companion?.maxVisitsPerHour ?? 3
+            onValueChanged: Config.setNestedValue("mascot.companion.maxVisitsPerHour", value)
+        }
+
+            WSettingsSwitch {
+                label: Translation.tr("Respect Do Not Disturb and quiet hours")
+                icon: "alert-snooze"
+                checked: Config.options?.mascot?.companion?.respectQuiet ?? true
+                onCheckedChanged: Config.setNestedValue("mascot.companion.respectQuiet", checked)
+            }
+
+            WSettingsSwitch {
+                label: Translation.tr("React to opened shell panels")
+                icon: "panel-left-expand"
+                checked: Config.options?.mascot?.companion?.shellReactions ?? true
+                onCheckedChanged: Config.setNestedValue("mascot.companion.shellReactions", checked)
+            }
+
+            WSettingsSwitch {
+                label: Translation.tr("Speech bubbles")
+                icon: "news"
+                checked: Config.options?.mascot?.companion?.dialogue ?? true
+                onCheckedChanged: Config.setNestedValue("mascot.companion.dialogue", checked)
+            }
+
+        WSettingsSpinBox {
             label: Translation.tr("Companion visit interval")
             icon: "timer"
             description: Translation.tr("Roughly how often she peeks on her own")
@@ -113,7 +163,7 @@ WSettingsPage {
             from: 3
             to: 60
             stepSize: 1
-            value: Config.options?.mascot?.companion?.visibleSeconds ?? 8
+            value: Config.options?.mascot?.companion?.visibleSeconds ?? 5
             onValueChanged: Config.setNestedValue("mascot.companion.visibleSeconds", value)
         }
 
@@ -201,10 +251,29 @@ WSettingsPage {
             onValueChanged: Config.setNestedValue("mascot.personality.idleMoodIntervalMinutes", value)
         }
 
+        WSettingsDropdown {
+            label: Translation.tr("Character art")
+            icon: "image"
+            currentValue: Config.options?.mascot?.chaos?.artStyle ?? "jrpg"
+            options: [
+                    { displayName: Translation.tr("JRPG"), value: "jrpg" },
+                    { displayName: Translation.tr("Codex sprites"), value: "codex" },
+                    { displayName: Translation.tr("Classic art"), value: "classic" }
+                ]
+            onSelected: newValue => Config.setNestedValue("mascot.chaos.artStyle", newValue)
+        }
+        WSettingsSpinBox {
+            label: Translation.tr("Minimum time between chaos visits")
+            icon: "timer"
+            suffix: " min"
+            from: 15; to: 180; stepSize: 5
+            value: Config.options?.mascot?.chaos?.intervalMinutes ?? 45
+            onValueChanged: Config.setNestedValue("mascot.chaos.intervalMinutes", value)
+        }
         WSettingsSwitch {
             label: Translation.tr("Chaos mode")
             icon: "flash-on"
-            description: Translation.tr("Rarely she runs across the desktop, bonks widgets around and rattles the taskbar")
+            description: Translation.tr("Occasional visits to widgets and panels. Mouse chase and hide-and-seek only start when you ask.")
             checked: Config.options?.mascot?.chaos?.enable ?? false
             enabled: Config.options?.mascot?.companion?.enable ?? true
             onCheckedChanged: Config.setNestedValue("mascot.chaos.enable", checked)
@@ -231,10 +300,19 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("React to system events")
             icon: "flash-on"
-            description: Translation.tr("Rare, reason-flavored romps for low battery, a notification pileup, or very late hours")
+            description: Translation.tr("Occasional reactions to real shell activity, sharing the same quiet time and visit limit")
             checked: Config.options?.mascot?.chaos?.systemEvents ?? true
             enabled: Config.options?.mascot?.chaos?.enable ?? false
             onCheckedChanged: Config.setNestedValue("mascot.chaos.systemEvents", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Calling-card notifications")
+            icon: "news"
+            description: Translation.tr("After a destructive prank, Kira may leave a playful desktop notification")
+            checked: Config.options?.mascot?.chaos?.callingCards ?? false
+            enabled: Config.options?.mascot?.chaos?.enable ?? false
+            onCheckedChanged: Config.setNestedValue("mascot.chaos.callingCards", checked)
         }
 
         WSettingsButton {
@@ -249,6 +327,22 @@ WSettingsPage {
             description: Translation.tr("Every displaced widget returns home")
             icon: "delete"
             onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "tidy"])
+        }
+
+        WSettingsButton {
+            label: Translation.tr("Play chase")
+            description: Translation.tr("Explicitly start the mouse chase game; it never starts on its own")
+            icon: "gamepad"
+            enabled: Config.options?.mascot?.chaos?.enable ?? false
+            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "chase"])
+        }
+
+        WSettingsButton {
+            label: Translation.tr("Hide and seek")
+            description: Translation.tr("Explicitly start hide-and-seek; find Kira before the timer expires")
+            icon: "search"
+            enabled: Config.options?.mascot?.chaos?.enable ?? false
+            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "hideSeek"])
         }
 
         WSettingsSwitch {

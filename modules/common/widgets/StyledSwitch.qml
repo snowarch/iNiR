@@ -15,9 +15,11 @@ Switch {
     property real scale: 0.6 // Default in m3 spec is huge af
     implicitHeight: Appearance.regaliaEverywhere ? 22 : 32 * root.scale
     implicitWidth: Appearance.regaliaEverywhere ? 40 : 52 * root.scale
-    property color activeColor: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
+    property color activeColor: Appearance.editorialEverywhere ? Appearance.editorial.accent
+        : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
         : Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimary
-    property color inactiveColor: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
+    property color inactiveColor: Appearance.editorialEverywhere ? Appearance.editorial.layer(2)
+        : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.zzzEverywhere ? Appearance.colors.colLayer2
         : Appearance.colors.colSurfaceContainerHighest
@@ -28,15 +30,19 @@ Switch {
     background: Rectangle {
         width: parent.width
         height: parent.height
-        radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
+        radius: Appearance.editorialEverywhere ? Appearance.rounding.small
+            : Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
             : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
             : (Appearance?.rounding.full ?? 9999)
         color: Appearance.regaliaEverywhere ? "transparent"
             : root.checked ? root.activeColor : root.inactiveColor
-        border.width: Appearance.regaliaEverywhere ? 0
+        border.width: Appearance.editorialEverywhere ? 1
+            : Appearance.regaliaEverywhere ? 0
             : Appearance.zzzEverywhere ? Appearance.zzz.hairlineThick : 2 * root.scale
-        border.color: Appearance.regaliaEverywhere ? "transparent"
+        border.color: Appearance.editorialEverywhere
+            ? (root.checked ? Appearance.editorial.accent : Appearance.editorial.rule)
+            : Appearance.regaliaEverywhere ? "transparent"
             : root.checked ? root.activeColor
             : (Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : Appearance.colors.colOutline)
 
@@ -76,7 +82,8 @@ Switch {
             : (root.pressed || root.down) ? (28 * root.scale) : root.checked ? (24 * root.scale) : (16 * root.scale)
         height: Appearance.regaliaEverywhere ? 16
             : (root.pressed || root.down) ? (28 * root.scale) : root.checked ? (24 * root.scale) : (16 * root.scale)
-        radius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
+        radius: Appearance.editorialEverywhere ? Appearance.rounding.verysmall
+            : Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
             : Appearance.zzzEverywhere ? Appearance.zzz.pillRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
             : Math.min(width, height) / 2
@@ -85,10 +92,11 @@ Switch {
                 ? Appearance.regalia.hardwarePrimary
                 : Appearance.regalia.onMuted)
             : root.checked
-                ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+                ? (Appearance.editorialEverywhere ? Appearance.editorial.accentInk
+                    : Appearance.zzzEverywhere ? Appearance.zzz.onSticker
                     : Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
                     : Appearance.colors.colOnPrimary)
-                : Appearance.colors.colOutline
+                : (Appearance.editorialEverywhere ? Appearance.editorial.muted : Appearance.colors.colOutline)
         border.width: Appearance.regaliaEverywhere ? 1 : 0
         border.color: Appearance.regaliaEverywhere
             ? ColorUtils.applyAlpha(root.checked ? Appearance.regalia.hardwarePrimaryInk : Appearance.regalia.onColor, 0.18)

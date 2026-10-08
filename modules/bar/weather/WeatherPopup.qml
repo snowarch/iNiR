@@ -104,7 +104,8 @@ StyledPopup {
         // Footer: last refresh
         StyledText {
             Layout.alignment: Qt.AlignHCenter
-            text: Translation.tr("Last refresh: %1").arg(Weather.data.lastRefresh)
+            text: Network.online ? Translation.tr("Last refresh: %1").arg(Weather.updatedLabel)
+                : Translation.tr("Offline · from %1").arg(Weather.updatedLabel)
             font {
                 weight: Font.Medium
                 pixelSize: Appearance.font.pixelSize.smaller

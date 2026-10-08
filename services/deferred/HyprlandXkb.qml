@@ -22,7 +22,12 @@ Singleton {
     property bool needsLayoutRefresh: false
 
     // Update the layout code according to the layout name (Hyprland gives the name not the code)
-    onCurrentLayoutNameChanged: root.updateLayoutCode()
+    onCurrentLayoutNameChanged: {
+        root.updateLayoutCode();
+        // The on-screen keyboard labels its keys from the full xkb description ("Spanish (Latin American)")
+        if (root.currentLayoutName.length > 0 && Config.options?.osk?.layout !== root.currentLayoutName)
+            Config.setNestedValue(["osk", "layout"], root.currentLayoutName);
+    }
     function updateLayoutCode() {
         if (cachedLayoutCodes.hasOwnProperty(currentLayoutName)) {
             root.currentLayoutCode = cachedLayoutCodes[currentLayoutName];
@@ -106,7 +111,7 @@ Singleton {
 
     // Update the layout name when it changes
     Connections {
-        target: Hyprland
+        target: CompositorService.isHyprland ? Hyprland : null
         enabled: CompositorService.isHyprland
         function onRawEvent(event) {
             if (event.name === "activelayout") {
@@ -121,9 +126,6 @@ Singleton {
                 // Update when layout might have changed
                 const dataString = event.data;
                 root.currentLayoutName = dataString.substring(dataString.indexOf(",") + 1);
-
-                // Update layout for on-screen keyboard (osk)
-                Config.setNestedValue(["osk", "layout"], root.currentLayoutName.split(" (")[0])
             } else if (event.name == "configreloaded") {
                 // Mark layout code list to be updated when config is reloaded
                 root.needsLayoutRefresh = true;

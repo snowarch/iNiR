@@ -25,11 +25,22 @@ if ! flock -w 15 9; then
 fi
 
 status=0
+bundled_fonts="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/assets/fonts"
+user_fonts="${XDG_DATA_HOME:-$HOME/.local/share}/fonts/inir"
+if [[ -d "$bundled_fonts" && "$(readlink "$user_fonts" 2>/dev/null)" != "$bundled_fonts" ]]; then
+    mkdir -p "$(dirname "$user_fonts")"
+    if [[ ! -e "$user_fonts" || -L "$user_fonts" ]]; then
+        ln -sfn "$bundled_fonts" "$user_fonts" && command -v fc-cache >/dev/null 2>&1 \
+            && fc-cache -f "$(dirname "$user_fonts")" >/dev/null 2>&1 || true
+    fi
+fi
+
 if command -v gsettings >/dev/null 2>&1; then
     gsettings set org.gnome.desktop.interface font-name "$main_font $font_size" || status=1
     gsettings set org.gnome.desktop.interface monospace-font-name "$mono_font $font_size" || status=1
 fi
 
+gtk_font_before="$(grep -s '^gtk-font-name=' "$config_home/gtk-3.0/settings.ini")"
 python3 - "$config_home" "$main_font" "$font_size" <<'PY' || status=1
 import os
 import re
@@ -79,12 +90,20 @@ replace_line(
 PY
 
 if command -v kwriteconfig6 >/dev/null 2>&1; then
-    main_kde="${main_font},${font_size},-1,5,50,0,0,0,0,0,0,0,0,0,0,1"
-    mono_kde="${mono_font},${font_size},-1,5,50,0,0,0,0,0,0,0,0,0,0,1"
+    main_kde="${main_font},${font_size},-1,5,50,0,0,0,0,0"
+    mono_kde="${mono_font},${font_size},-1,5,50,0,0,0,0,0"
     for key in font menuFont toolBarFont; do
         kwriteconfig6 --file kdeglobals --group General --key "$key" "$main_kde" || status=1
     done
     kwriteconfig6 --file kdeglobals --group General --key fixed "$mono_kde" || status=1
+fi
+
+# Steam, Pear and Spotify carry the face in their generated themes: a new face reaches them only by running them again.
+if [[ "$(grep -s '^gtk-font-name=' "$config_home/gtk-3.0/settings.ini")" != "$gtk_font_before" ]]; then
+    colors_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    for module in 70-steam.sh 80-pear-desktop.sh 50-spicetify.sh; do
+        bash "$colors_dir/modules/$module" >/dev/null 2>&1 || true
+    done
 fi
 
 exit "$status"

@@ -179,6 +179,12 @@ _bold() {
     fi
 }
 
+_tui_expand_newlines() {
+    local text="${1:-}"
+    text="${text//\\n/$'\n'}"
+    printf '%s' "$text"
+}
+
 _repeat_char() {
     local char="$1" count="$2" result="" i
     for ((i=0; i<count; i++)); do result+="$char"; done
@@ -442,31 +448,30 @@ tui_banner() {
             --align center \
             --width 50 \
             --padding "1 0" \
-            "██╗██╗      ███╗   ██╗██╗██████╗ ██╗" \
-            "██║██║      ████╗  ██║██║██╔══██╗██║" \
-            "██║██║█████╗██╔██╗ ██║██║██████╔╝██║" \
-            "██║██║╚════╝██║╚██╗██║██║██╔══██╗██║" \
-            "██║██║      ██║ ╚████║██║██║  ██║██║" \
-            "╚═╝╚═╝      ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝"
-        echo "iNiR — your niri shell" | gum style \
+            "██╗███╗   ██╗██╗██████╗ " \
+            "██║████╗  ██║██║██╔══██╗" \
+            "██║██╔██╗ ██║██║██████╔╝" \
+            "██║██║╚██╗██║██║██╔══██╗" \
+            "██║██║ ╚████║██║██║  ██║" \
+            "╚═╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝"
+        echo "iNiR · your niri shell" | gum style \
             --foreground "$(_tui_color_value muted)" \
             --align center \
             --width 50
     else
-        local tagline="iNiR — your niri shell"
-        # Banner art is 38 chars wide + 3 spaces indent = 41 visible cols
-        local art_width=41
+        local tagline="iNiR · your niri shell"
+        local art_width=27
         local tag_pad=$(( (art_width - ${#tagline}) / 2 ))
         (( tag_pad < 0 )) && tag_pad=0
 
         echo -e "${STY_PURPLE}${STY_BOLD}"
         cat << 'EOF'
-   ██╗██╗      ███╗   ██╗██╗██████╗ ██╗
-   ██║██║      ████╗  ██║██║██╔══██╗██║
-   ██║██║█████╗██╔██╗ ██║██║██████╔╝██║
-   ██║██║╚════╝██║╚██╗██║██║██╔══██╗██║
-   ██║██║      ██║ ╚████║██║██║  ██║██║
-   ╚═╝╚═╝      ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝
+   ██╗███╗   ██╗██╗██████╗ 
+   ██║████╗  ██║██║██╔══██╗
+   ██║██╔██╗ ██║██║██████╔╝
+   ██║██║╚██╗██║██║██╔══██╗
+   ██║██║ ╚████║██║██║  ██║
+   ╚═╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝
 EOF
         echo -e "${STY_RST}"
         printf "%*s%b%s%b\n" "$tag_pad" "" "$STY_FAINT" "$tagline" "$STY_RST"
@@ -995,7 +1000,8 @@ tui_task_finalize() {
 # Alert — icon + color, no border
 ###############################################################################
 tui_alert() {
-    local variant="${1:-info}" title="$2" message="${3:-}"
+    local variant="${1:-info}" title="$2" message
+    message="$(_tui_expand_newlines "${3:-}")"
     local icon color_name
     case "$variant" in
         success) icon="$ICON_CHECK"; color_name="success" ;;

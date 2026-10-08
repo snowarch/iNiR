@@ -138,6 +138,24 @@ parser.add_argument(
     help="file path to write material_colors.scss",
 )
 parser.add_argument(
+    "--surface-seed",
+    type=str,
+    default=None,
+    help="hex colour the neutral surfaces are anchored to (the shell's own material); accents stay from the source",
+)
+parser.add_argument(
+    "--accent-seed",
+    type=str,
+    default=None,
+    help="hex colour the accents are drawn from instead of the source (the shell's own accent)",
+)
+parser.add_argument(
+    "--washi-roles",
+    type=str,
+    default=None,
+    help="iris-surface.json whose 'roles' are iRiS's solved palette in Material role names: the apps wear them as they are",
+)
+parser.add_argument(
     "--render-templates",
     type=str,
     default=None,
@@ -369,8 +387,81 @@ def find_tone_for_contrast(
     return best_color, best_tone, False, best_ratio
 
 
+def apca_lc(text_argb: int, bg_argb: int) -> float:
+    """|Lc| of APCA-W3 0.0.98G: perceived contrast of text on a background, polarity-aware."""
+    def ys(argb: int) -> float:
+        r, g, b = ((argb >> 16) & 0xFF) / 255.0, ((argb >> 8) & 0xFF) / 255.0, (argb & 0xFF) / 255.0
+        y = 0.2126729 * r ** 2.4 + 0.7151522 * g ** 2.4 + 0.0721750 * b ** 2.4
+        return y + (0.022 - y) ** 1.414 if y < 0.022 else y
+    yt, yb = ys(text_argb), ys(bg_argb)
+    if yb > yt:
+        s = (yb ** 0.56 - yt ** 0.57) * 1.14
+        return 0.0 if s < 0.1 else (s - 0.027) * 100
+    s = (yb ** 0.65 - yt ** 0.62) * 1.14
+    return 0.0 if s > -0.1 else -(s + 0.027) * 100
+
+
+def tone_for_lc(hue: float, chroma: float, bg_argb: int, lc: float) -> float:
+    """The darkest tone, lighter than a dark background, whose text reaches `lc` on it."""
+    lo, hi = Hct.from_int(bg_argb).tone, 100.0
+    for _ in range(24):
+        mid = (lo + hi) / 2
+        if apca_lc(Hct.from_hct(hue, chroma, mid).to_int(), bg_argb) >= lc:
+            hi = mid
+        else:
+            lo = mid
+    return hi
+
+
+TERM_READING_LC = {"term15": 70.0, "term7": 56.0, "term8": 42.0}
+TERM_BG_TONE = (6.0, 16.0)
+TERM_BG_CHROMA = 8.0
+
+
+def solve_dark_terminal_reading(term_colors: dict, fg_boost: float) -> None:
+    """Background in the reading band; foreground, term7 and term8 solved for their Lc in the background's hue;
+    no colour slot lighter than the foreground (brights level with it, normals a step under)."""
+    bg = Hct.from_int(hex_to_argb(term_colors["term0"]))
+    bg_tone = max(TERM_BG_TONE[0], min(TERM_BG_TONE[1], bg.tone))
+    bg_argb = Hct.from_hct(bg.hue, min(bg.chroma, TERM_BG_CHROMA), bg_tone).to_int()
+    term_colors["term0"] = argb_to_hex(bg_argb)
+    ink_chroma = min(Hct.from_int(bg_argb).chroma, 6.0)
+    boost = max(-7.0, min(13.0, (fg_boost - 0.35) * 20.0))
+    tones = {}
+    for key, lc in TERM_READING_LC.items():
+        tones[key] = tone_for_lc(bg.hue, ink_chroma, bg_argb, lc + boost * (1.0 if key == "term15" else 0.5))
+        ink = Hct.from_hct(bg.hue, ink_chroma, tones[key]).to_int()
+        floor = {"term15": 7.0, "term7": 4.5, "term8": 3.5}[key]
+        term_colors[key] = argb_to_hex(ensure_contrast(ink, bg_argb, floor, True))
+    fg_tone = Hct.from_int(hex_to_argb(term_colors["term15"])).tone
+    # Every hue of a level carries the same colourfulness, or a highlight in blue reads grey beside a neon green.
+    # Normals and brights each take one chroma, the gamut permitting.
+    chromas = {}
+    for i in list(range(1, 7)) + list(range(9, 15)):
+        key = f"term{i}"
+        if key in term_colors:
+            chromas[key] = Hct.from_int(hex_to_argb(term_colors[key])).chroma
+    level_chroma = {
+        "normal": max(34.0, min(44.0, sorted(chromas.get(f"term{i}", 40.0) for i in range(1, 7))[3])),
+        "bright": max(30.0, min(38.0, sorted(chromas.get(f"term{i}", 34.0) for i in range(9, 15))[3])),
+    }
+    for i in list(range(1, 7)) + list(range(9, 15)):
+        key = f"term{i}"
+        if key not in term_colors:
+            continue
+        c = Hct.from_int(hex_to_argb(term_colors[key]))
+        cap = fg_tone if i >= 9 else fg_tone - 5.0
+        chroma = level_chroma["bright" if i >= 9 else "normal"]
+        evened = Hct.from_hct(c.hue, chroma, min(c.tone, cap)).to_int()
+        term_colors[key] = argb_to_hex(ensure_contrast(evened, bg_argb, 3.5 if i >= 9 else 4.5, True))
+
+
 def ensure_contrast(
-    fg_argb: int, bg_argb: int, min_ratio: float = 4.5, is_dark: bool = True
+    fg_argb: int,
+    bg_argb: int,
+    min_ratio: float = 4.5,
+    is_dark: bool = True,
+    tone_limit: float | None = None,
 ) -> int:
     """Adjust foreground tone to ensure minimum contrast ratio against background.
 
@@ -387,7 +478,8 @@ def ensure_contrast(
 
     # Tone limits to prevent colors from washing out to pure white/black.
     # If min ratio is unreachable inside limits, return highest-contrast option.
-    tone_limit = 88.0 if is_dark else 20.0
+    if tone_limit is None:
+        tone_limit = 88.0 if is_dark else 20.0
 
     best, best_tone, met_min, best_ratio = find_tone_for_contrast(
         hct.hue,
@@ -470,21 +562,49 @@ def build_app_palette(base_palette: dict[str, str]) -> dict[str, str]:
     outline_variant = base_palette.get("outline_variant") or mix_hex(layer1, outline, 0.72)
 
     on_layer0 = readable_hex(on_surface, layer0, 4.5)
-    on_layer1 = readable_hex(on_surface_variant, layer1, 4.5)
+    # Body text is onSurface on every layer; the variant is for secondary text (app_subtext), never the main ink.
+    on_layer1 = readable_hex(on_surface, layer1, 4.5)
     on_layer2 = readable_hex(on_surface, layer2, 4.5)
     on_layer3 = readable_hex(on_surface, layer3, 4.5)
     on_layer4 = readable_hex(on_surface, layer4, 4.5)
-    subtext = readable_hex(mix_hex(on_layer1, layer1, 0.75), layer1, 3.0)
-
     layer1_hover = mix_hex(layer1, on_layer1, 0.92)
     layer1_active = mix_hex(layer1, on_layer1, 0.85)
+    # Muted text on a light theme drops under 3:1 on hover and press fills, so
+    # it is solved against the pressed fill; dark themes keep the 3:1 floor.
+    if Hct.from_int(hex_to_argb(layer0)).tone >= 50:
+        subtext = readable_hex(mix_hex(on_layer1, layer1, 0.75), layer1_active, 4.5)
+    else:
+        subtext = readable_hex(mix_hex(on_layer1, layer1, 0.75), layer1, 3.0)
     layer2_hover = mix_hex(layer2, on_layer2, 0.90)
     layer2_active = mix_hex(layer2, on_layer2, 0.80)
     layer3_hover = mix_hex(layer3, on_layer3, 0.90)
     layer3_active = mix_hex(layer3, on_layer3, 0.80)
-    selection = mix_hex(layer3, primary, 0.82)
-    selection_hover = mix_hex(layer3, primary, 0.74)
+    # Where you are is the accent's quiet sibling, the same in every app: the container's hue and tone at the strength
+    # Material gives its secondary container. 18 % of the accent on grey read as no colour at all; 75 % of the container
+    # (chroma 36-43) made every selected row, tab and menu item as loud as a button.
+    # Its tone keeps a step from the window (12 dark, 10 light): over a frost-tinted paper the container's tone 90 was
+    # the background's own, and the row stood out by colour alone (1.1:1).
+    container_hct = Hct.from_int(hex_to_argb(primary_container))
+    layer0_tone = Hct.from_int(hex_to_argb(layer0)).tone
+    selection_tone = (max(container_hct.tone, layer0_tone + 12.0) if layer0_tone < 50
+                      else min(container_hct.tone, layer0_tone - 10.0))
+    selection = argb_to_hex(Hct.from_hct(container_hct.hue, min(container_hct.chroma, 20.0), selection_tone).to_int())
+    selection_hover = argb_to_hex(Hct.from_hct(container_hct.hue, min(container_hct.chroma, 26.0), selection_tone).to_int())
     on_selection = readable_hex(on_layer3, selection, 4.5)
+
+    is_dark = Hct.from_int(hex_to_argb(layer0)).tone < 50
+    accent_hue = Hct.from_int(hex_to_argb(primary)).hue
+
+    def status(hue: float, chroma: float) -> str:
+        delta = ((accent_hue - hue + 180.0) % 360.0) - 180.0
+        hue = (hue + max(-15.0, min(15.0, delta * 0.25))) % 360.0
+        seed = Hct.from_hct(hue, chroma, 80.0 if is_dark else 40.0).to_int()
+        return argb_to_hex(ensure_contrast(seed, hex_to_argb(layer0), 4.5, is_dark))
+
+    success = status(145.0, 48.0)
+    warning = status(75.0, 56.0)
+    error = readable_hex(base_palette.get("error") or status(25.0, 60.0), layer0, 4.5)
+    on_status = layer0
 
     app = dict(base_palette)
     app.update(
@@ -526,6 +646,10 @@ def build_app_palette(base_palette: dict[str, str]) -> dict[str, str]:
             "app_selection": selection,
             "app_selection_hover": selection_hover,
             "app_on_selection": on_selection,
+            "app_success": success,
+            "app_warning": warning,
+            "app_error": error,
+            "app_on_status": on_status,
             "app_window_bg": layer0,
             "app_view_bg": layer0,
             "app_headerbar_bg": layer0,
@@ -566,9 +690,13 @@ if args.path is not None:
     hct = Hct.from_int(argb)
     if args.smart:
         if hct.chroma < 20:
-            args.scheme = "neutral"
+            args.scheme = "scheme-neutral"
 elif args.color is not None:
     argb = hex_to_argb(args.color)
+    hct = Hct.from_int(argb)
+
+if args.accent_seed and re.fullmatch(r"#?[0-9A-Fa-f]{6}", args.accent_seed.strip()):
+    argb = hex_to_argb("#" + args.accent_seed.strip().lstrip("#"))
     hct = Hct.from_int(argb)
 
 # Complementary palette: rotate seed hue 180° before scheme generation.
@@ -630,6 +758,41 @@ for color in vars(MaterialDynamicColors).keys():
         rgba = generated_hct.to_rgba()
         material_colors[color] = rgba_to_hex(rgba)
 
+# Accents live in Material's band (tone 80 on dark, 40 on light). Fidelity and content schemes copy the seed's
+# tone, so a pale wallpaper gave a dark theme a primary at tone 97 (#E9FAFF): white, and every app and the shell
+# lost their colour. Out of band, an accent is read from its own palette at the standard tone, keeping its chroma.
+if args.scheme != "scheme-monochrome":
+    for key, palette_name in (("primary", "primary_palette"), ("secondary", "secondary_palette"), ("tertiary", "tertiary_palette")):
+        palette = getattr(scheme, palette_name, None)
+        if palette is None or key not in material_colors:
+            continue
+        tone = Hct.from_int(hex_to_argb(material_colors[key])).tone
+        if darkmode and not 70.0 <= tone <= 85.0:
+            material_colors[key] = argb_to_hex(palette.tone(80))
+        elif not darkmode and not 25.0 <= tone <= 50.0:
+            material_colors[key] = argb_to_hex(palette.tone(40))
+        container, on_container = key + "Container", "on" + key[0].upper() + key[1:] + "Container"
+        if container in material_colors:
+            ctone = Hct.from_int(hex_to_argb(material_colors[container])).tone
+            if darkmode and not 20.0 <= ctone <= 40.0:
+                material_colors[container] = argb_to_hex(palette.tone(30))
+                material_colors[on_container] = argb_to_hex(palette.tone(90))
+            elif not darkmode and not 80.0 <= ctone <= 95.0:
+                material_colors[container] = argb_to_hex(palette.tone(90))
+                material_colors[on_container] = argb_to_hex(palette.tone(10))
+        # A near-grey wallpaper still has a hue: the accent carries it at a chroma people read as colour, so no
+        # wallpaper leaves the shell and its apps without one (a night wallpaper gave a grey #C2C7CE).
+        # And a ceiling: a vivid green wallpaper gave #05E600 (chroma 102), a neon no text or fill sits well on.
+        hct = Hct.from_int(hex_to_argb(material_colors[key]))
+        if hct.chroma > 60.0:
+            material_colors[key] = argb_to_hex(Hct.from_hct(hct.hue, 60.0, hct.tone).to_int())
+        if key == "primary":
+            for role, floor in ((key, 36.0), (container, 24.0)):
+                if role in material_colors:
+                    hct = Hct.from_int(hex_to_argb(material_colors[role]))
+                    if 4.0 <= hct.chroma < floor:
+                        material_colors[role] = argb_to_hex(Hct.from_hct(hct.hue, floor, hct.tone).to_int())
+
 # Extended material
 if darkmode == True:
     material_colors["success"] = "#B5CCBA"
@@ -641,6 +804,91 @@ else:
     material_colors["onSuccess"] = "#FFFFFF"
     material_colors["successContainer"] = "#D1E8D5"
     material_colors["onSuccessContainer"] = "#0C1F13"
+
+# The shell's own material as the surface base: the ramp between surfaces keeps
+# its steps, the hue and chroma come from the seed, so apps read as the shell.
+SURFACE_RAMP = [
+    "background", "surface", "surfaceDim", "surfaceBright", "surfaceVariant",
+    "surfaceContainerLowest", "surfaceContainerLow", "surfaceContainer",
+    "surfaceContainerHigh", "surfaceContainerHighest",
+]
+# The scheme's own background before the shell's surface moves it: iRiS's "Theme" material is read from this, never
+# from the paper it handed over (each pass would carry the person's tone again).
+seed_background = material_colors.get("background", "")
+if args.surface_seed and re.fullmatch(r"#?[0-9A-Fa-f]{6}", args.surface_seed.strip()):
+    seed_hct = Hct.from_int(hex_to_argb("#" + args.surface_seed.strip().lstrip("#")))
+    # A seed of the other polarity is a scheme change still on its way: ignore it.
+    if (seed_hct.tone < 50) == bool(darkmode) and "background" in material_colors:
+        base_tone = Hct.from_int(hex_to_argb(material_colors["background"])).tone
+        # A paper stays a paper and a night a night: past these tones no role can be solved against the ramp.
+        seed_tone = max(64.0, seed_hct.tone) if not darkmode else min(30.0, seed_hct.tone)
+        # The body's hue at a neutral's strength. The seed is iRiS's frost over the wallpaper's average, and copying its
+        # chroma (26 on a red wallpaper) painted every app's window, sidebar and dialog the wallpaper's colour; Material
+        # keeps neutrals under ~10 (Vibrant 10, TonalSpot 6), dark and light alike.
+        seed_chroma = min(seed_hct.chroma, 10.0 if darkmode else 8.0)
+        for key in SURFACE_RAMP:
+            if key not in material_colors:
+                continue
+            tone = Hct.from_int(hex_to_argb(material_colors[key])).tone
+            shifted = max(0.0, min(100.0, seed_tone + (tone - base_tone)))
+            material_colors[key] = argb_to_hex(
+                Hct.from_hct(seed_hct.hue, seed_chroma, shifted).to_int()
+            )
+        # The ramp moved, and the text and accent roles were solved for the stock paper (or night). Solve them again against
+        # the surface they now sit farthest from (the darkest in light, the lightest in dark), keeping hue and chroma, so a
+        # seed that follows the shell's frost never costs legibility.
+        ramp = [hex_to_argb(material_colors[key]) for key in SURFACE_RAMP if key in material_colors]
+        worst = (min if not darkmode else max)(ramp, key=lambda argb: Hct.from_int(argb).tone)
+        for key, ratio in (
+            ("onSurface", 7.0), ("onBackground", 7.0), ("onSurfaceVariant", 4.5), ("error", 4.5), ("outline", 3.0),
+        ):
+            if key in material_colors:
+                material_colors[key] = argb_to_hex(
+                    ensure_contrast(
+                        hex_to_argb(material_colors[key]), worst, ratio, bool(darkmode), 94.0 if darkmode else 8.0
+                    )
+                )
+        # Accents are fills and marks first (buttons, progress, selection): 3:1 against the farthest surface, as
+        # WCAG asks of non-text, and 4.5:1 against the background, where they also set text. Solving them for text
+        # on the farthest surface pushed a dark theme's cyan to tone 94 (#E9FAFF) and every app lost its colour.
+        background = hex_to_argb(material_colors.get("background", material_colors.get("surface")))
+        for key in ("primary", "secondary", "tertiary"):
+            if key in material_colors:
+                argb = ensure_contrast(hex_to_argb(material_colors[key]), worst, 3.0, bool(darkmode), 94.0 if darkmode else 8.0)
+                argb = ensure_contrast(argb, background, 4.5, bool(darkmode), 94.0 if darkmode else 8.0)
+                material_colors[key] = argb_to_hex(argb)
+
+# iRiS: the shell's palette (scripts/colors/washi) already solved every role against every surface of its ramp. The apps
+# wear it as it is, so window, sidebar, text and accent are the shell's own colours, not a second reading of the seed.
+if args.washi_roles:
+    # The shell's "theme" and "wallpaper" colours are read from these, never from the roles it handed over (a loop
+    # that kept whatever accent once passed through).
+    try:
+        seeds_path = os.path.join(os.path.dirname(args.washi_roles), "iris-seeds.json")
+        seeds = {k: material_colors.get(k, "") for k in ("primary", "secondary", "tertiary")}
+        seeds["background"] = seed_background
+        seeds_text = json.dumps(seeds)
+        try:
+            with open(seeds_path) as f:
+                unchanged = f.read() == seeds_text
+        except OSError:
+            unchanged = False
+        if not unchanged:
+            with open(seeds_path + ".tmp", "w") as f:
+                f.write(seeds_text)
+            os.replace(seeds_path + ".tmp", seeds_path)
+    except OSError:
+        pass
+    try:
+        with open(args.washi_roles) as f:
+            washi_roles = json.load(f).get("roles") or {}
+        background = washi_roles.get("background", "")
+        if re.fullmatch(r"#[0-9A-Fa-f]{6}", background) and (Hct.from_int(hex_to_argb(background)).tone < 50) == bool(darkmode):
+            for key, value in washi_roles.items():
+                if re.fullmatch(r"#[0-9A-Fa-f]{6}", str(value)):
+                    material_colors[key] = value
+    except (OSError, ValueError):
+        pass
 
 # Terminal Colors
 if args.termscheme is not None:
@@ -700,17 +948,12 @@ if args.termscheme is not None:
         return material_colors.get("surfaceContainerLow", "#1a1a1a")
 
     for color, val in term_source_colors.items():
-        if args.scheme == "monochrome":
-            term_colors[color] = val
-            continue
-
         # Terminal background: Interpolate based on user_bg_brightness
         # 0.5 = surfaceContainerLow (matches shell surfaces perfectly)
         if color == "term0":
             term_colors[color] = get_interpolated_surface(user_bg_brightness)
             continue
 
-        # Terminal foreground: Use EXACT Material onSurface color
         if color == "term15":
             term_colors[color] = material_colors.get("onSurface", "#e0e0e0")
             continue
@@ -724,11 +967,8 @@ if args.termscheme is not None:
                 )
             else:
                 term_colors[color] = material_colors.get(
-                    "outline_variant",
-                    material_colors.get(
-                        "outlineVariant",
-                        get_interpolated_surface(max(0.0, user_bg_brightness - 0.45)),
-                    ),
+                    "outline",
+                    get_interpolated_surface(max(0.0, user_bg_brightness - 0.45)),
                 )
             continue
 
@@ -757,9 +997,21 @@ if args.termscheme is not None:
             # Keep this bounded so high values don't collapse colors to white/black.
             fg_boost_delta = args.term_fg_boost * 0.25 * (1 if darkmode else -1)
             tone_mult = max(0.60, min(1.45, tone_mult + fg_boost_delta))
-            harmonized = boost_chroma_tone(harmonized, user_saturation * 2.0, tone_mult)
+            # In dark the multiplier took every bright slot to tone 91-95 on all wallpapers (C10-33, the text's own tone) and the
+            # warm yellow to cream (C12): the syntax of Claude Code, git and every editor built on slots 10-14 read as plain
+            # text. Hold the normals at 76 and the brights at 84 so they keep their chroma and stay apart from the foreground.
+            tone_cap = 95.0
+            if darkmode:
+                tone_cap = 84.0 if color in ("term9", "term10", "term11", "term12", "term13", "term14") else 76.0
+            harmonized = boost_chroma_tone(harmonized, user_saturation * 2.0, tone_mult, tone_cap)
             # Ensure minimum chroma for visual distinctiveness
             harmonized = ensure_min_chroma(harmonized, 40)
+            # And a ceiling, so no hue shouts over the others: greens and cyans reach chroma 77 and 54 at a tone
+            # where reds and blues hold 40, and read as neon in the terminal and in every editor theme built on it.
+            ceiling = 24 + 36 * user_saturation
+            hct = Hct.from_int(harmonized)
+            if hct.chroma > ceiling:
+                harmonized = Hct.from_hct(hct.hue, ceiling, hct.tone).to_int()
 
         # Apply additional softening if requested
         if args.soften and args.scheme not in [
@@ -786,13 +1038,23 @@ if args.termscheme is not None:
                 adjusted = ensure_contrast(fg_argb, bg_argb, 4.5, darkmode)
                 term_colors[color] = argb_to_hex(adjusted)
 
-        # Bright semantic colors: lighter contrast requirement (3.5:1) to preserve vibrancy
+        bg_hct = Hct.from_int(bg_argb)
+        grey_chroma = min(bg_hct.chroma, 10.0)
+        for color, start_tone, ratio in (("term7", 75.0 if darkmode else 35.0, 4.5), ("term8", 60.0 if darkmode else 50.0, 3.5)):
+            if color in term_colors:
+                grey = Hct.from_hct(bg_hct.hue, grey_chroma, start_tone).to_int()
+                term_colors[color] = argb_to_hex(ensure_contrast(grey, bg_argb, ratio, darkmode))
+
+        # Brights: 3.5:1 in dark; on paper they are text (strings, types, ls) and need 4.5:1.
         bright_colors = ["term9", "term10", "term11", "term12", "term13", "term14"]
         for color in bright_colors:
             if color in term_colors:
                 fg_argb = hex_to_argb(term_colors[color])
-                adjusted = ensure_contrast(fg_argb, bg_argb, 3.5, darkmode)
+                adjusted = ensure_contrast(fg_argb, bg_argb, 3.5 if darkmode else 4.5, darkmode)
                 term_colors[color] = argb_to_hex(adjusted)
+
+    if darkmode and "term0" in term_colors and "term15" in term_colors:
+        solve_dark_terminal_reading(term_colors, args.term_fg_boost)
 
 # Fallback: derive term colors from material colors when no termscheme provided
 if not term_colors and material_colors:
@@ -915,6 +1177,10 @@ def build_palette_json():
         "success_container": material_colors.get("successContainer", ""),
         "on_success_container": material_colors.get("onSuccessContainer", ""),
     }
+    # iRiS's filled alert (badges): a pigment that is a shape, not text. Absent outside iRiS; readers fall back to error.
+    if material_colors.get("errorFill"):
+        palette["error_fill"] = material_colors["errorFill"]
+        palette["on_error_fill"] = material_colors.get("onErrorFill", "")
     return palette
 
 
@@ -944,6 +1210,12 @@ theme_meta = {
     "harmonize_threshold": args.harmonize_threshold,
     "color_strength": args.color_strength,
     "blend_bg_fg": args.blend_bg_fg,
+    "surface_seed": ("#" + args.surface_seed.strip().lstrip("#").lower())
+    if args.surface_seed and re.fullmatch(r"#?[0-9A-Fa-f]{6}", args.surface_seed.strip())
+    else "",
+    "accent_seed": ("#" + args.accent_seed.strip().lstrip("#").lower())
+    if args.accent_seed and re.fullmatch(r"#?[0-9A-Fa-f]{6}", args.accent_seed.strip())
+    else "",
     "generated_by": "generate_colors_material.py",
 }
 
@@ -1112,7 +1384,17 @@ if args.render_templates:
 
     dark_palette = _generate_palette(True)
     light_palette = _generate_palette(False)
-    default_palette = dark_palette if darkmode else light_palette
+    # The current mode is the palette the shell and every app module already use (accent band, chroma caps, surface seed, contrast);
+    # the raw templates drew colours nobody else showed. The opposite mode stays the raw scheme.
+    current = dict(_generate_palette(darkmode))
+    current.update(material_colors)
+    current["source_color"] = argb_to_hex(argb)
+    current.update(app_palette_json)
+    if darkmode:
+        dark_palette = current
+    else:
+        light_palette = current
+    default_palette = current
 
     # Build the nested `colors` namespace expected by the compatibility templates:
     #   colors.<token>.dark.hex          → "#rrggbb"
@@ -1228,16 +1510,4 @@ if args.render_templates:
     if rendered_count > 0:
         print(
             f"[render-templates] Rendered {rendered_count} template(s)", file=sys.stderr
-        )
-
-    # SDDM sync post-hook: run only if script and theme exist
-    sddm_sync = os.path.expanduser("~/.local/bin/sync-pixel-sddm.py")
-    sddm_theme = "/usr/share/sddm/themes/ii-pixel"
-    if os.path.isfile(sddm_sync) and os.path.isdir(sddm_theme):
-        import subprocess
-
-        subprocess.Popen(
-            ["python3", sddm_sync],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
         )

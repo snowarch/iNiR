@@ -86,6 +86,10 @@ ContentPage {
         summary: Translation.tr("Activation · layout · navigation · shelf · motion")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
+        searchAliases: ({
+            "workspace layout": "layout",
+            "material motion": "motion"
+        })
         options: [
             { displayName: Translation.tr("Activation"), icon: "ads_click", value: "activation" },
             { displayName: Translation.tr("Layout"), icon: "view_carousel", value: "layout" },
@@ -95,9 +99,11 @@ ContentPage {
         ]
     }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "activation"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "activation"
-        visible: root.activeSection === "activation"
         expanded: true
         icon: "ads_click"
         title: Translation.tr("Activation")
@@ -261,10 +267,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "layout"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "layout"
-        visible: root.activeSection === "layout"
         expanded: true
         icon: "view_carousel"
         title: Translation.tr("Workspace layout")
@@ -818,10 +828,14 @@ ContentPage {
 
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "navigation"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "navigation"
-        visible: root.activeSection === "navigation"
         expanded: true
         icon: "route"
         title: Translation.tr("Navigation")
@@ -907,10 +921,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "shelf"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "shelf"
-        visible: root.activeSection === "shelf"
         expanded: true
         icon: "shelf_auto_hide"
         title: Translation.tr("Orbit Shelf")
@@ -1208,10 +1226,14 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
+    SettingsTaskLoader {
+        requested: root.activeSection === "motion"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "motion"
-        visible: root.activeSection === "motion"
         expanded: true
         icon: "animation"
         title: Translation.tr("Material motion")
@@ -1482,6 +1504,8 @@ ContentPage {
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 wrapMode: Text.WordWrap
             }
+        }
+    }
         }
     }
 }

@@ -45,7 +45,7 @@ StyledFlickable {
                 anchors.centerIn: parent
                 visible: !YtMusic.searching && root.results.length === 0
                 text: Translation.tr("No results")
-                color: Appearance.colors.colOnSurfaceVariant
+                color: Appearance.colMetadataText
             }
         }
 

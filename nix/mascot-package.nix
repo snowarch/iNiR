@@ -4,10 +4,7 @@ pkgs.stdenvNoCC.mkDerivation {
   pname = "inir-mascot";
   version = "3";
 
-  src = pkgs.fetchurl {
-    url = "https://github.com/snowarch/inir-mascot/releases/download/v3/inir-mascot-pack.tar.gz";
-    hash = "sha256-DCkWHOVa/7N9FlGD+XdVBuyXRnlWf+3Kv3Lp9f9aw5s=";
-  };
+  src = import ./mascot-pack.nix { inherit pkgs; };
 
   dontUnpack = true;
 
@@ -17,7 +14,7 @@ pkgs.stdenvNoCC.mkDerivation {
   '';
 
   meta = {
-    description = "iNiR mascot art pack (354 poses/animations)";
+    description = "Optional Kira mascot art pack for iNiR";
     homepage = "https://github.com/snowarch/inir-mascot";
     license = pkgs.lib.licenses.mit;
     platforms = pkgs.lib.platforms.linux;

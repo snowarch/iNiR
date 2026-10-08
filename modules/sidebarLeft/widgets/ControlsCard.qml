@@ -96,11 +96,11 @@ Item {
         colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
             : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
-            : Appearance.colors.colLayer1Hover
+            : Appearance.colLayer1Hover
         colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
-            : Appearance.colors.colLayer1Active
+            : Appearance.colLayer1Active
 
         Behavior on colBackground {
             enabled: Appearance.animationsEnabled
@@ -144,10 +144,10 @@ Item {
         colBackground: "transparent"
         colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
             : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover 
-            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
+            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colLayer1Hover
         colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active 
-            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer1Active
+            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colLayer1Active
 
         contentItem: Item {
             MaterialSymbol {

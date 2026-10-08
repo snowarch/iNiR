@@ -102,7 +102,7 @@ Rectangle {
             RippleButton {
                 visible: root.canRemove
                 Layout.alignment: Qt.AlignTop
-                buttonRadius: Appearance.rounding.full
+                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                 colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1 
                     : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer2
@@ -113,7 +113,7 @@ Rectangle {
                     text: "close"
                     horizontalAlignment: Text.AlignHCenter
                     iconSize: Appearance.font.pixelSize.larger
-                    color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOnSurfaceVariant
+                    color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colSecondaryActionIcon
                 }
 
                 onClicked: root.remove()

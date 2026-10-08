@@ -13,6 +13,10 @@ DashCard {
     id: root
     title: Translation.tr("To Do")
     icon: "checklist"
+    headerActionIcon: "open_in_full"
+    headerActionTooltip: Translation.tr("Open full task list")
+    signal requestExpand()
+    onHeaderAction: requestExpand()
     Layout.fillHeight: true
 
     TodoWidget {

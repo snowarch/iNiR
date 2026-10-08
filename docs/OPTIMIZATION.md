@@ -292,6 +292,11 @@ for users who prefer matching visualizers on every output. M3 visualizer slots
 collapse while the shared service reports no audio signal, so an empty Cava
 frame does not reserve bar space.
 
+Game Mode can suspend audio visualizers independently from its other visual
+effects. When **Disable audio visualizers** is enabled, shared Cava consumers
+unsubscribe and visualizer render loops stop for both manual and fullscreen
+Game Mode activation; they resume from the same configuration afterward.
+
 
 ## Tools
 

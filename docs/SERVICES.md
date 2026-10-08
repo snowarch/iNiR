@@ -118,7 +118,7 @@
 | **ShellUpdates** | iNiR update checker. Git-based, tracks commits behind remote. IPC target: `shellUpdate`. |
 | **Ydotool** | Virtual keyboard input for on-screen keyboard. |
 | **LatexRenderer** | LaTeX math rendering via MicroTeX. |
-| **Translation** | i18n string lookup. Auto language detection, 15 languages. |
+| **Translation** | i18n string lookup. Auto language detection across 18 locale catalogs. |
 | **DevNavigation** | Deterministic development navigation for loading lazy surfaces and internal settings views. IPC target: `dev`. |
 | **CustomWidgets** | User-installed custom widget management (scan/create/list/remove from the widgets dir). IPC target: `customWidgets`. |
 | **MemoryPressureService** | Monitors JSGCHeap accumulation (Qt V4 memfd leak); notifies and offers a shell restart. IPC target: `memory`. |

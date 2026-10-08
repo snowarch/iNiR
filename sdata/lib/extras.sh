@@ -10,11 +10,51 @@ inir_get_user_wallpapers_dir() {
   printf '%s' "${_xdg_pictures}/Wallpapers"
 }
 
+extras_hybrid_nvidia() {
+  local dev vendor devices="" nvidia=false
+  for dev in "${INIR_DRM_SYSFS:-/sys/class/drm}"/card[0-9]*/device; do
+    [[ -r "$dev/vendor" ]] || continue
+    vendor="$(cat "$dev/vendor" 2>/dev/null)"
+    devices+="$(readlink -f "$dev")"$'\n'
+    [[ "$vendor" == "0x10de" ]] && nvidia=true
+  done
+  $nvidia && [[ "$(printf '%s' "$devices" | sort -u | grep -c .)" -ge 2 ]]
+}
+
+# Which display server the login screen should run on: niri|x11|keep.
+#   $1 auto apply mode (ask asks when there is a terminal; otherwise hybrid NVIDIA laptops get niri)
+extras_sddm_greeter_mode() {
+  local auto_apply_mode="${1:-ask}"
+  local hybrid=false
+  extras_hybrid_nvidia && hybrid=true
+  if [[ "$auto_apply_mode" == "ask" && -t 0 && -t 1 ]]; then
+    local niri_label="Wayland with Niri" x11_label="X11 (the distribution's default)" keep_label="Leave it as it is"
+    $hybrid && niri_label+=" (recommended: this machine has an NVIDIA GPU next to another one)"
+    local choice
+    if $hybrid; then
+      choice=$(tui_choose "Login screen runs on:" "$niri_label" "$x11_label" "$keep_label")
+    else
+      choice=$(tui_choose "Login screen runs on:" "$keep_label" "$niri_label" "$x11_label")
+    fi >&2
+    case "$choice" in
+      "$niri_label") echo niri ;;
+      "$x11_label") echo x11 ;;
+      *) echo keep ;;
+    esac
+    return 0
+  fi
+  if $hybrid; then echo niri; else echo keep; fi
+}
+
 # Install ii-pixel-sddm via the canonical installer script.
 # Args:
 #   $1 auto apply mode: ask|yes|no (default: ask)
+#   $2 make SDDM the login screen if it is not: yes|no (default: yes; updates pass no)
+#   $3 login screen display server: niri|x11|keep (default: ask or detect, extras_sddm_greeter_mode)
 extras_install_sddm_theme() {
   local auto_apply_mode="${1:-ask}"
+  local enable_service="${2:-yes}"
+  local greeter_mode="${3:-}"
 
   if ! command -v sddm &>/dev/null; then
     log_warning "SDDM not detected. Skipping ii-pixel-sddm setup."
@@ -29,7 +69,8 @@ extras_install_sddm_theme() {
 
   tui_info "Setting up ii-pixel-sddm login theme..."
   chmod +x "$sddm_script"
-  if ! INIR_SDDM_AUTO_APPLY="$auto_apply_mode" bash "$sddm_script"; then
+  [[ -n "$greeter_mode" ]] || greeter_mode="$(extras_sddm_greeter_mode "$auto_apply_mode")"
+  if ! INIR_SDDM_AUTO_APPLY="$auto_apply_mode" INIR_SDDM_ENABLE_SERVICE="$enable_service" INIR_SDDM_GREETER="$greeter_mode" bash "$sddm_script"; then
     log_warning "ii-pixel-sddm setup failed — SDDM config may need manual update"
     log_warning "Try: sudo bash ${sddm_script}"
     return 1
@@ -258,7 +299,7 @@ extras_install_mascot_pack() {
   local metadata_url="${base_url}/inir-mascot-pack.json"
   local checksum_url="${base_url}/inir-mascot-pack.sha256"
 
-  tui_info "Optional mascot art pack: 354 poses/animations, ~32 MiB download."
+  tui_info "Optional mascot art pack: downloading the latest published Kira release."
   tui_dim "Downloads and verifies the complete pack before updating the live assets."
 
   if [[ ! -d "$shell_dir" ]]; then

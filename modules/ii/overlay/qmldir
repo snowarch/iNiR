@@ -6,3 +6,6 @@ Overlay 1.0 Overlay.qml
 OverlayTaskbar 1.0 OverlayTaskbar.qml
 OverlayWidgetDelegateChooser 1.0 OverlayWidgetDelegateChooser.qml
 StyledOverlayWidget 1.0 StyledOverlayWidget.qml
+singleton OverlayLook 1.0 OverlayLook.qml
+OverlaySegments 1.0 OverlaySegments.qml
+OverlayPanel 1.0 OverlayPanel.qml

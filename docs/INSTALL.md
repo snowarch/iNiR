@@ -20,13 +20,19 @@ Add `-y` if you don't want to answer questions:
 ./setup install -y
 ```
 
-When it's done:
+When it's done, **restart the computer**. Not log out, restart: the new groups, the login screen and
+Niri's environment only apply after a reboot. Then pick Niri at the login screen.
+
+**Black screen instead of the login screen?** On laptops with an NVIDIA GPU next to the integrated one,
+SDDM's default X11 greeter can start on the GPU that has no screens. Setup already picks the Wayland login
+screen for those machines; to switch by hand, open `./setup` → Extras → Install ii-pixel-sddm and choose
+**Wayland with Niri**. If you already use another login screen (GDM, Plasma Login...), iNiR keeps it: a
+first install asks once, and updates or running install again never switch it. To move to SDDM later, use
+`./setup` → Extras → Install ii-pixel-sddm.
 
 ```bash
-niri msg action load-config-file
+systemctl reboot
 ```
-
-Log out and back in, or just restart Niri. Done.
 
 ---
 
@@ -64,7 +70,7 @@ For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by categor
 >
 > **Optional content packs** (`./setup` → Extras): the iNiR-Walls wallpaper
 > pack, the ii-pixel-sddm login theme, YAMIS icons, and the Kira mascot art
-> pack (354 poses and animations, about 32 MiB). The mascot feature ships
+> pack. The mascot feature ships
 > disabled and does nothing until you install the pack and enable her in
 > Settings › Mascot.
 >
@@ -76,6 +82,9 @@ For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by categor
 > verifies the complete archive before touching live assets, records the release
 > tag plus an installed-tree hash, and repairs missing or corrupt files during a
 > later `./setup update` without auto-installing the optional pack for new users.
+> iNiR must never publish a shell manifest that depends on mascot art which has
+> not been published by `snowarch/inir-mascot` yet. For Nix, bump the pinned
+> mascot release only after that art release exists.
 >
 > **Important for minimal installs (Arch base / netinstall):**
 > If shell startup fails with `module "org.kde.syntaxhighlighting" is not installed`, install:
@@ -97,7 +106,6 @@ This gives you:
 - Niri config wired to the `inir` launcher
 - Theming templates for Material You colors
 - GTK settings
-- Fuzzel config
 
 ### 4. Enable the iNiR user service
 

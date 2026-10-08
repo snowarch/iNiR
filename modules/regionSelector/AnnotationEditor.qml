@@ -25,7 +25,8 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell:annotationEditor"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-    screen: Quickshell.screens[0] ?? null
+    screen: Quickshell.screens.find(s => s.name === GlobalStates.annotationEditorScreenName)
+        ?? GlobalStates.primaryScreen ?? null
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
 
@@ -50,7 +51,10 @@ PanelWindow {
         "#000000"
     ]
 
-    function setCurrent(s) { root.current = s; }
+    function setCurrent(s) {
+        root.current = s;
+        liveCanvas.requestPaint();
+    }
 
     function commitShape(s) {
         const arr = root.strokes.slice(); arr.push(s); root.strokes = arr;
@@ -74,6 +78,7 @@ PanelWindow {
     function close() {
         GlobalStates.annotationEditorOpen = false;
         GlobalStates.annotationEditorPath = "";
+        GlobalStates.annotationEditorScreenName = "";
         root.finished();
     }
 
@@ -131,6 +136,7 @@ PanelWindow {
         // ── Canvas (image + annotations) — this is what gets exported ─────────
         Item {
             id: captureArea
+            clip: true
             Layout.alignment: Qt.AlignHCenter
             readonly property real maxW: root.width * 0.82
             readonly property real maxH: root.height * 0.74
@@ -518,10 +524,11 @@ PanelWindow {
                 /usr/bin/notify-send "Edit failed" "Could not copy to screenshots folder" -a "Screenshot" -i camera-photo -t 4000;
                 exit 2;
             fi;
-            # Clipboard is best-effort. wl-copy returns non-zero if the
-            # wl-clipboard manager isn't running — don't fail the whole chain.
+            # Clipboard ownership lives outside inir.service so editing/copying
+            # never leaves a wl-copy process behind when the shell restarts.
             _clip_msg="";
-            if command -v /usr/bin/wl-copy >/dev/null 2>&1 && /usr/bin/wl-copy < "$_ss" 2>/dev/null && echo -n "$_ss" | /usr/bin/wl-copy --primary 2>/dev/null; then
+            _clip_helper='${StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/clipboard-copy.sh"))}';
+            if "$_clip_helper" < "$_ss" 2>/dev/null && printf '%s' "$_ss" | "$_clip_helper" --primary 2>/dev/null; then
                 _clip_msg=" — copied to clipboard";
             else
                 _clip_msg=" — clipboard unavailable (is wl-clipboard running?)";

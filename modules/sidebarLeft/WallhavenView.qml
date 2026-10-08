@@ -300,11 +300,11 @@ Item {
         buttonRadius: Appearance.rounding.verysmall
         toggled: choice.selected
         colBackground: "transparent"
-        colBackgroundHover: Appearance.colors.colLayer1Hover
-        colBackgroundToggled: Appearance.colors.colLayer1Active
-        colBackgroundToggledHover: Appearance.colors.colLayer1Active
-        colRipple: Appearance.colors.colLayer1Active
-        colRippleToggled: Appearance.colors.colLayer1Active
+        colBackgroundHover: Appearance.colLayer1Hover
+        colBackgroundToggled: Appearance.colLayer1Active
+        colBackgroundToggledHover: Appearance.colLayer1Active
+        colRipple: Appearance.colLayer1Active
+        colRippleToggled: Appearance.colLayer1Active
         onClicked: choice.chosen()
 
         contentItem: StyledText {
@@ -335,12 +335,12 @@ Item {
         colBackground: Appearance.regaliaEverywhere
             ? Appearance.regalia.controlPlate : Appearance.colors.colLayer1
         colBackgroundHover: Appearance.regaliaEverywhere
-            ? Appearance.regalia.controlPlateHover : Appearance.colors.colLayer1Hover
+            ? Appearance.regalia.controlPlateHover : Appearance.colLayer1Hover
         colBackgroundToggled: Appearance.regaliaEverywhere
-            ? Appearance.regalia.controlPlateActive : Appearance.colors.colLayer1Active
+            ? Appearance.regalia.controlPlateActive : Appearance.colLayer1Active
         colBackgroundToggledHover: colBackgroundToggled
         colRipple: Appearance.regaliaEverywhere
-            ? Appearance.regalia.pressPlate : Appearance.colors.colLayer1Active
+            ? Appearance.regalia.pressPlate : Appearance.colLayer1Active
         colRippleToggled: colRipple
         onClicked: fitChoice.chosen()
 
@@ -380,9 +380,9 @@ Item {
 
         implicitHeight: 48
         buttonRadius: Appearance.rounding.small
-        colBackground: sourceRow.selected ? Appearance.colors.colLayer1Active : "transparent"
-        colBackgroundHover: Appearance.colors.colLayer1Hover
-        colRipple: Appearance.colors.colLayer1Active
+        colBackground: sourceRow.selected ? Appearance.colLayer1Active : "transparent"
+        colBackgroundHover: Appearance.colLayer1Hover
+        colRipple: Appearance.colLayer1Active
 
         contentItem: RowLayout {
             spacing: 10
@@ -440,13 +440,13 @@ Item {
         colBackground: Appearance.regaliaEverywhere
             ? Appearance.regalia.controlPlate : "transparent"
         colBackgroundHover: Appearance.regaliaEverywhere
-            ? Appearance.regalia.controlPlateHover : Appearance.colors.colLayer1Hover
+            ? Appearance.regalia.controlPlateHover : Appearance.colLayer1Hover
         colBackgroundToggled: Appearance.regaliaEverywhere
             ? Appearance.regalia.controlPlateActive : Appearance.colors.colPrimaryContainer
         colBackgroundToggledHover: Appearance.regaliaEverywhere
             ? Appearance.regalia.controlPlateActive : Appearance.colors.colPrimaryContainerHover
         colRipple: Appearance.regaliaEverywhere
-            ? Appearance.regalia.pressPlate : Appearance.colors.colLayer1Active
+            ? Appearance.regalia.pressPlate : Appearance.colLayer1Active
         onClicked: action.triggered()
 
         contentItem: MaterialSymbol {
@@ -738,9 +738,9 @@ Item {
                             colBackground: Appearance.regaliaEverywhere
                                 ? Appearance.regalia.controlPlate : Appearance.colors.colLayer1
                             colBackgroundHover: Appearance.regaliaEverywhere
-                                ? Appearance.regalia.controlPlateHover : Appearance.colors.colLayer1Hover
+                                ? Appearance.regalia.controlPlateHover : Appearance.colLayer1Hover
                             colRipple: Appearance.regaliaEverywhere
-                                ? Appearance.regalia.pressPlate : Appearance.colors.colLayer1Active
+                                ? Appearance.regalia.pressPlate : Appearance.colLayer1Active
                             onClicked: {
                                 root.providerPickerOpen = !root.providerPickerOpen
                                 if (root.providerPickerOpen)
@@ -792,7 +792,7 @@ Item {
                                             ? root.discoveryLabel() + " · " + root.rankingLabel() + " · " + root.fitSummary()
                                             : root.providerSummary() + " · " + root.fitSummary()
                                         font.pixelSize: Appearance.font.pixelSize.smallie
-                                        color: Appearance.colors.colSubtext
+                                        color: Appearance.colMetadataText
                                         elide: Text.ElideRight
                                     }
                                 }
@@ -800,7 +800,7 @@ Item {
                                 MaterialSymbol {
                                     text: root.providerPickerOpen ? "expand_less" : "expand_more"
                                     iconSize: 16
-                                    color: Appearance.colors.colSubtext
+                                    color: Appearance.colSecondaryActionIcon
                                 }
                             }
                         }
@@ -867,7 +867,7 @@ Item {
                                         text: modelData?.groupLabel ?? ""
                                         font.pixelSize: Appearance.font.pixelSize.smallie
                                         font.weight: Font.Medium
-                                        color: Appearance.colors.colSubtext
+                                        color: Appearance.colMetadataText
                                     }
 
                                     SourceRow {
@@ -1249,9 +1249,10 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
                 maximumWidth: 420
-                icon: "image"
+                icon: Network.online ? "image" : "cloud_off"
                 text: Translation.tr("%1 wallpapers").arg(root.providerLabel())
-                explanation: root.wallhavenControlsVisible
+                explanation: !Network.online ? Network.offlineReason
+                    : root.wallhavenControlsVisible
                     ? Translation.tr("Search Wallhaven by tags, or pick a collection above\nResults automatically match this monitor")
                     : root.providerSearchable
                         ? Translation.tr("Search %1 by tags\nDisplay fit follows this monitor automatically").arg(root.providerLabel())
@@ -1484,7 +1485,7 @@ Item {
                     wrapMode: TextArea.Wrap
                     Layout.fillWidth: true
                     padding: 10
-                    color: activeFocus ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
+                    color: activeFocus ? Appearance.colors.colOnSurface : Appearance.colMetadataText
                     renderType: Text.NativeRendering
                     placeholderText: !root.providerSearchable
                         ? Translation.tr('Browse %1 · use "%2" for commands').arg(root.providerLabel()).arg(root.commandPrefix)

@@ -1,0 +1,7 @@
+module qs.modules.iris.lock
+singleton IrisLockOptions 1.0 IrisLockOptions.qml
+IrisLockSurface 1.0 IrisLockSurface.qml
+IrisLockStage 1.0 IrisLockStage.qml
+IrisLockInspector 1.0 IrisLockInspector.qml
+IrisLockRehearsal 1.0 IrisLockRehearsal.qml
+IrisLockWidgets 1.0 IrisLockWidgets.qml

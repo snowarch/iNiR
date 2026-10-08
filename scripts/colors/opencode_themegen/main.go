@@ -92,6 +92,11 @@ func generateOpenCodeTheme(colors map[string]string) map[string]any {
 	for i := range 16 {
 		term[i] = common.Pick(colors, fmt.Sprintf("term%d", i), "#888888")
 	}
+	if _, ok := colors["term15"]; ok {
+		onSurface, onSurfaceVariant, surface = term[15], term[7], term[0]
+		surfaceContainer = common.Blend(term[0], term[15], 0.05)
+		surfaceContainerHigh = common.Blend(term[0], term[15], 0.10)
+	}
 
 	diffAddedBg := common.Blend(surfaceContainer, success, 0.15)
 	diffRemovedBg := common.Blend(surfaceContainer, errorCol, 0.15)

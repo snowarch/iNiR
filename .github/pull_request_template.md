@@ -13,6 +13,10 @@ Describe what you ran and what you observed, not just "it works".
 - [ ] Both panel families checked (if shared code changed)
 - [ ] Screenshots or a recording attached (if the change is visual)
 
+## Code
+
+- [ ] Comments only where a constraint needs one (no narration, no history), commits follow [CONTRIBUTING.md](../CONTRIBUTING.md#commit-conventions)
+
 ## AI usage
 
 Most of us use AI tools now, that's fine, just be upfront so review can

@@ -1,23 +1,24 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
+  <img src="../images/iris-2.32-principal.webp" alt="iNiR iRiS desktop" width="900">
 </p>
 
 <h1 align="center">iNiR</h1>
 
 <p align="center">
-  <b>Quickshell ベースの Niri 向け完全デスクトップシェル</b>
+  <b>Quickshell で作られた、Niri のための完全なデスクトップシェル</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.3-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.32.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="../../LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green?style=flat-square" alt="License"></a>
 </p>
 
 <p align="center">
-  <a href="../INSTALL.md">インストール</a> &bull;
-  <a href="../KEYBINDS.md">キーバインド</a> &bull;
-  <a href="../IPC.md">IPC リファレンス</a> &bull;
+  <a href="https://github.com/snowarch/inir/wiki/INSTALL">インストール</a> &bull;
+  <a href="https://github.com/snowarch/inir/wiki/KEYBINDS">キーバインド</a> &bull;
+  <a href="https://github.com/snowarch/inir/wiki/IPC">IPC リファレンス</a> &bull;
   <a href="https://discord.gg/pAPTfAhZUJ">Discord</a> &bull;
   <a href="../../CONTRIBUTING.md">コントリビュート</a>
 </p>
@@ -30,55 +31,55 @@
 
 ---
 
-> **翻訳について：** コミュニティ翻訳です。不明な点があれば[英語版](../../README.md)をご参照ください。
+> **翻訳について：** 分かりにくい点があれば、[英語版](../../README.md)を正としてください。
 
 ---
 
 <details>
-<summary><b>🤔 初めて？これが何か分からない人はここをクリック</b></summary>
+<summary><b>🤔 初めての方へ：これが何か分からなければクリック</b></summary>
 
 ### これは何？
 
-iNiR はデスクトップ全体です。上のバー、ドック、通知、設定、壁紙、全部。テーマじゃない、コピペする設定ファイルでもない。Linux で動く完全なシェルです。
+iNiR はデスクトップ全体です。上のバー、Dock、通知、設定、壁紙、そのすべて。テーマでも、貼り付けるだけの dotfiles でもありません。Linux で動く完全なシェルです。
 
 ### 動かすのに何が必要？
 
-コンポジター。ウィンドウを管理して画面にピクセルを描く部分。iNiR は [Niri](https://github.com/YaLTeR/niri)（タイリング Wayland コンポジター）向けに作られています。end-4 の dots からフォークした時の古い Hyprland コードもあるけど、実際にテストして使ってるのは Niri。
+コンポジターです。ウィンドウを管理して画面にピクセルを描くものです。iNiR は [Niri](https://github.com/YaLTeR/niri)（Wayland のタイル型コンポジター）向けに作られています。end-4 の dots のフォークだった頃の古い Hyprland のコードも残っていますが、実際に使ってテストしているのは Niri です。
 
-シェルは [Quickshell](https://quickshell.outfoxxed.me/) 上で動きます。QML（Qt の UI 言語）でシェルを作るフレームワーク。これを知らなくても使えます、設定は全部 GUI か JSON ファイルでできる。
+シェルは [Quickshell](https://quickshell.outfoxxed.me/) の上で動きます。QML（Qt の UI 言語）でシェルを作るためのフレームワークです。使うだけならこれを知る必要はありません。すべて GUI か JSON ファイルで設定できます。
 
-### どう繋がってるか
+### 全体のつながり
 
 ```
-あなたのアプリ
+your apps
    ↓
-iNiR（シェル：バー、サイドバー、ドック、通知、設定...）
+iNiR (shell: bar, sidebars, dock, notifications, settings...)
    ↓
-Quickshell（QML シェルを動かす）
+Quickshell (runs QML shells)
    ↓
-Niri（コンポジター：ウィンドウ、レンダリング）
+Niri (compositor: windows, rendering)
    ↓
 Wayland → GPU
 ```
 
 ### 安定してる？
 
-手に負えなくなった個人プロジェクトです。毎日使ってる、Discord の人たちも大勢使ってる。でも時々壊れる、コードは荒いところもある、やりながら学んでる。
+手に負えなくなった個人プロジェクトです。私は毎日使っていて、Discord の多くの人も使っています。でもときどき壊れるし、コードは散らかっているところもあるし、やりながら学んでいます。
 
-何か動かなかったら `inir doctor` で大体直る。それでダメなら Discord が活発。洗練されたソフトを期待しないで、これは一人の rice で、たまたま他の人も気に入っただけ。
+何かがおかしければ、`inir doctor` でほとんど直ります。それでもだめなら Discord が活発です。ただ、磨き上げられたソフトウェアは期待しないでください。一人の rice を、たまたま他の人も気に入ってくれているだけです。
 
-### なぜ存在する？
+### なぜ存在するの？
 
-デスクトップを特定の見た目と動作にしたくて、他に完全にそれをやるものがなかった。end-4 の Hyprland dots から始まって、Niri 向けの完全な書き直しになって機能もたくさん増えた。
+デスクトップをある見た目で、ある動きをするものにしたかったのに、ぴったりそうなるものがなかったからです。end-4 の Hyprland dots から始まり、ずっと多くの機能を持つ Niri 向けの完全な書き直しになりました。
 
-### 見かける用語
+### よく出てくる言葉
 
-- **Shell**：UI レイヤー（バー、パネル、オーバーレイ）
-- **Compositor**：ウィンドウ管理、画面描画（Niri、Hyprland、Sway...）
-- **Wayland**：Linux のディスプレイプロトコル（X11 の後継）
-- **QML**：Qt の宣言的 UI 言語、iNiR はこれで書かれてる
-- **Material You**：Google の配色システム、画像からパレットを生成（自動テーマの仕組み）
-- **ii / waffle**：2つのパネルスタイル。ii = Material Design 風、waffle = Windows 11 風。`Super+Shift+W` で切り替え
+- **シェル**：UI の層（バー、パネル、オーバーレイ）
+- **コンポジター**：ウィンドウを管理し画面に描く（Niri、Hyprland、Sway...）
+- **Wayland**：Linux の表示プロトコル（新しいほう、X11 の後継）
+- **QML**：Qt の宣言的 UI 言語。iNiR はこれで書かれています
+- **Material You**：画像からパレットを作る Google のカラーシステム（自動テーマの仕組み）
+- **ii / waffle / iRiS**：3 つのパネルファミリー。ii は Material Design 風、waffle は Windows 11 風、iRiS は開いたものに変形する Island。`Super+Shift+W` で切り替え
 
 </details>
 
@@ -87,7 +88,21 @@ Wayland → GPU
 ## スクリーンショット
 
 <details open>
-<summary><b>Material ii</b> — フローティングバー、サイドバー、Material Design 美学</summary>
+<summary><b>iRiS</b>：Island、Customize、メニューバー、カード、Dock</summary>
+
+<p align="center">
+  <img src="../images/iris-2.31-desktop.webp" alt="iRiS desktop layout" width="49%">
+  <img src="../images/iris-2.31-card.webp" alt="iRiS card surface" width="49%">
+</p>
+
+<p align="center">
+  <img src="../images/iris-2.31-dock.webp" alt="iRiS Dock and edge layout" width="99%">
+</p>
+
+</details>
+
+<details open>
+<summary><b>Material ii</b>：フローティングバー、サイドバー、Material Design の見た目</summary>
 
 | | |
 |:---:|:---:|
@@ -98,7 +113,7 @@ Wayland → GPU
 </details>
 
 <details>
-<summary><b>Waffle</b> — 下部タスクバー、アクションセンター、Windows 11 テイスト</summary>
+<summary><b>Waffle</b>：下部のタスクバー、アクションセンター、Windows 11 風</summary>
 
 | | |
 |:---:|:---:|
@@ -108,78 +123,109 @@ Wayland → GPU
 
 ---
 
+> [!WARNING]
+> 非力なマシン向けではありません。
+> とはいえ、かなり軽くできます。エフェクトを切る、パネルを減らす、デザインをシンプルにする。設定からでも `config.json` からでも。
+
 ## 機能
 
-**2つのパネルファミリー**、`Super+Shift+W` でオンザフライ切り替え：
-- **Material ii** — フローティングバー、サイドバー、ドック、5つのビジュアルスタイル（material、cards、aurora、inir、angel）
-- **Waffle** — Windows 11 スタイルのタスクバー、スタートメニュー、アクションセンター、通知センター
+**3 つのパネルファミリー**、`Super+Shift+W` でその場で切り替え：
+- **Material ii**：フローティングバー、サイドバー、Dock、9 つのグローバルスタイル（Material、Cards、Aurora、iNiR、Angel、Regalia、ZZZ、Cookie Shapes、Editorial）
+- **Waffle**：Windows 11 風のタスクバー、スタートメニュー、アクションセンター、通知センター
+- **iRiS**：フラッグシップ。画面のどの端にも置けて、ページ・カード・パネルへと広がる Island、持ち運べるピース、どの端にも置ける Dock、グラス、すべてを作り直す Themes、ライト・インク・ダーク、そしてシェルの上で直接できる Customize
 
-**自動テーマ** — 壁紙を選ぶだけですべてが適応：
-- Material You によるシェルカラー、GTK3/4、Qt、ターミナル、Firefox、Discord、SDDM に伝播
-- 10のターミナルツールが自動テーマ化（foot、kitty、alacritty、starship、fuzzel、btop、lazygit、yazi）
-- テーマプリセット：Gruvbox、Catppuccin、Rosé Pine、カスタム
+**自動テーマ**。壁紙を選ぶとすべてが合わせて変わります：
+- Material You によるシェルの色を GTK3/4、Qt、ターミナル、Firefox、Discord、SDDM に反映
+- 10 のテーマ対象：ターミナル、エディター、ブラウザー、Spicetify、Steam、Cava など
+- テーマプリセット：Regalia / Regalia Ivory、Gruvbox、Catppuccin、Rosé Pine、自作
 
-**コンポジター** — Niri 向けに構築。
+**Niri のために作られています。** Hyprland のコードはフォーク時代の名残で、テストされていません。
+
+**Kira** はマスコットで、望めばデスクトップに住みます。デフォルトではオフで、アートパックは別ダウンロードです。
 
 <details>
 <summary><b>全機能リスト</b></summary>
 
+### iRiS
+
+- **Island**：画面の端にある一つの形。「いま何が起きているか」を示し、開いたページ・カード・パネルに変わって、また元に戻ります。上下左右どこにでも（`inir iris edge <side>`、またはドラッグ）。横に置くと縦向きになり、時計は縦積み、バブルが上下に並びます
+- **メニューバー**：ワークスペース、ウィンドウ、ピースが並ぶ細い帯で、Island はノッチのようにそこから下がります（`inir iris layout menubar`）
+- **全幅バーモード**：開始・中央・終端のゾーンに Island、ワークスペース、フォーカス中のウィンドウ、時刻、任意のピースを配置（`inir iris zone start|center|end kinds+joined+with+plus`）
+- **ピース**：天気、サウンド、マイク、トレイ、通知、ツール、メディア、VPN、ビジュアライザー、アニメ（Airing と Continue）、自分のアプリを、Island の上、画面の輪郭、デスクトップの好きな場所に置けるバブルとして
+- **ピースは触れたものとつながる**：Dock や Island の縁に置くと、上に浮かぶのではなくその本体の一部になります
+- **Dock** はどの端にも（`inir iris dockEdge <side|auto>`）。auto では Island の反対側に置かれ、片方をもう片方の端に送ると入れ替わります
+- **グラス**：あらゆる面の下の壁紙をすりガラスにし、明るい壁紙や情報量の多い壁紙でも文字を読みやすく保ちます。コンポジターのブラーもありますが、まだ作業中なので評価はもう少し待ってください
+- **Themes**：20 の厳選リデザイン（Liquid Glass、Frost、Obsidian、Terminal、Neo Tokyo、Twilight、Lume、Sakura、Unit-01 など）と、共有できる JSON ファイルの自作テーマ（`inir iris theme`）
+- **ライト、インク、ダーク**：それぞれ独自のトーンとすりガラスを持ち、アプリにも適用されるカラーテーマ（Catppuccin、Nord、Rosé Pine、Tokyo Night…）も（`inir iris palette`）
+- **形**：Island と Dock をカプセル、丸、スクワークル、四角から
+- **シェル上での Customize**：Island、Dock、バブルをタップすると、その場から設定が広がり、Island の下に Themes、Look、Pieces、元に戻すが並びます（`inir iris edit`）。好みなら Studio がすべてを画面横の一つのパネルにまとめます
+- **自分で並べるコントロールセンター**：共有クイックトグル、プレイヤー、各スライダーがセルになり、ドラッグ、角からのリサイズ、横のライブラリからの追加ができます。開始レイアウトは 6 種類、右クリックでコントロールが展開します（`inir iris control edit`）
+- **リハーサルできるロック画面**：本物のロック画面が編集モードで開き、解除するものはありません。時計、プレイヤー、サインイン欄を動かし、背景に流すものを動画も含めて選べます（`inir iris lock edit`）
+
 ### テーマと外観
 
-壁紙を選ぶとシステム全体が追従 — シェル、GTK/Qt アプリ、ターミナル、Firefox、Discord、SDDM ログイン画面。すべて自動。
+- **9 つのグローバルスタイル**：Material（ソリッド）、Cards、Aurora（ガラスブラー）、iNiR（TUI 風）、Angel（ネオブルータリズム）、Regalia（黒いシャーシ、暖かいアイボリーのインク、控えめなシャンパンの金具）、ZZZ（ポスターのプレート）、Cookie Shapes（アニメーションする形）、Editorial（紙とインクのタイポグラフィ）
+- **壁紙からのダイナミックカラー**：Material You でシステム全体に
+- **10 のターミナル・TUI ツールを自動テーマ化**：foot、kitty、alacritty、ghostty、wezterm、starship、fuzzel、btop、lazygit、yazi
+- **アプリのテーマ**：GTK3/4、Qt（plasma-integration と darkly 経由）、Firefox、Discord/Vesktop（System24）、Zed、Spicetify、Steam、SDDM
+- **テーマプリセット**：Gruvbox、Catppuccin、Rosé Pine など、または自作
+- **動画壁紙**：mp4/webm/gif、ブラーは任意。パフォーマンス重視なら最初のフレームで静止
+- **デスクトップウィジェット**：すべてに共通の一つのデザイン（iRiS、Material、iNstrument、Readout）、iOS のようにめくれるスタック、下の壁紙に合わせて変わるインク
 
-- **5つのビジュアルスタイル** — Material（ソリッド）、Cards、Aurora（ガラスブラー）、iNiR（TUI 風）、Angel（ネオブルータリズム）
-- **壁紙からの動的カラー** — Material You でシステム全体に伝播
-- **10のターミナルツール自動テーマ化** — foot、kitty、alacritty、starship、fuzzel、pywalfox、btop、lazygit、yazi
-- **アプリテーマ化** — GTK3/4、Qt（plasma-integration + darkly）、Firefox（MaterialFox）、Discord/Vesktop（System24）
-- **テーマプリセット** — Gruvbox、Catppuccin、Rosé Pine など — または独自作成
-- **動画壁紙** — mp4/webm/gif、ブラー対応、またはパフォーマンス用にフレーム固定
-- **SDDM ログインテーマ** — 壁紙と同期した Material You カラー
-- **デスクトップウィジェット** — 時計（複数スタイル）、天気、壁紙レイヤー上のメディアコントロール
+### バー
+
+- **6 つのバースタイル**：classic、islands、scenic、frame、Material 3 カプセル、pill
+- **Pill バー**：形を変える中央のアイランドで、ホバーするとワークスペース、ランチャー、ミキサー、メディア、カレンダー、画面録画が開きます
+- **モジュール式レイアウト**：設定のドラッグエディターで、どのモジュールもどこにでも
+- **縦型バー**：画面の端を取り戻したい人向け
 
 ### サイドバーとウィジェット（Material ii）
 
 左サイドバー（アプリドロワー）：
-- **AI チャット** — Gemini、Mistral、OpenRouter、または Ollama 経由のローカルモデル
-- **YT Music** — 検索、キュー、コントロール付きフルプレーヤー
-- **Wallhaven ブラウザ** — 壁紙を直接検索・適用
-- **アニメトラッカー** — AniList 連携、放送スケジュール表示
-- **翻訳** — Gemini または translate-shell 経由
-- **ドラッグ可能ウィジェット** — 暗号通貨、メディアプレーヤー、クイックメモ、ステータスリング、週間カレンダー
+- **AI チャット**：Ollama、LM Studio、OpenRouter、Gemini、Groq、Mistral、Cerebras、Anthropic、OpenAI、OpenCode のライブモデル一覧
+- **YT Music**：Cookie 不要の InnerTube プレイヤー。検索、キュー、ラジオ、同期歌詞に対応
+- **Wallhaven ブラウザー**：壁紙を直接検索して適用
+- **アニメトラッカー**：AniList 連携と放送スケジュール
+- **翻訳**：Gemini または translate-shell 経由
+- **ドラッグできるウィジェット**：暗号資産、メディアプレイヤー、クイックメモ、ステータスリング、週間カレンダー
 
 右サイドバー：
-- **カレンダー** — イベント連携
+- **カレンダー**（予定の連携あり）
 - **通知センター**
-- **クイックトグル** — WiFi、Bluetooth、ナイトライト、DND、電力プロファイル、WARP VPN、EasyEffects
-- **ボリュームミキサー** — アプリごとの制御
-- **Bluetooth・WiFi** デバイス管理
-- **ポモドーロタイマー**、**TODO リスト**、**電卓**、**メモ帳**
-- **システムモニター** — CPU、RAM、温度
+- **クイックトグル**：WiFi、Bluetooth、夜間モード、おやすみモード、電源プロファイル、WARP VPN、EasyEffects
+- **音量ミキサー**（アプリごと）
+- **Bluetooth と WiFi** のデバイス管理
+- **ポモドーロタイマー**、**ToDo リスト**、**電卓**、**メモ帳**
+- **システムモニター**：CPU、RAM、温度
 
 ### ツール
 
-- **ワークスペース概要** — Niri のスクロールモデルに適応、アプリ検索と電卓付き
-- **ウィンドウスイッチャー** — 全ワークスペース横断の Alt+Tab
-- **クリップボードマネージャー** — 検索と画像プレビュー付き履歴
-- **リージョンツール** — スクリーンショット、画面録画、OCR、逆画像検索
-- **チートシート** — Niri 設定から抽出したキーバインドビューワー
-- **メディアコントロール** — 複数レイアウトプリセット付きフル MPRIS プレーヤー
-- **オンスクリーンディスプレイ** — 音量、輝度、メディア OSD
-- **楽曲認識** — SongRec 経由の Shazam スタイル識別
-- **音声検索** — 録音して Gemini で検索
+- **ワークスペース概要**：Niri のスクロールモデルに合わせ、アプリ検索と電卓付き
+- **ダッシュボード**：予定、通知、ToDo、メモ、メディア、天気を並べる設定可能な 3 列オーバーレイ
+- **画面端のワークスペースストリップ**：ホバーで出るレール。ライブプレビューとドラッグでの並べ替え
+- **ウィンドウスイッチャー**：全ワークスペースを横断するアニメーション付き Alt-Tab。Niri に標準搭載されたのでオプトイン
+- **クリップボード管理**：検索と画像プレビュー付きの履歴
+- **範囲ツール**：スクリーンショット、画面録画、OCR、画像の逆検索
+- **チートシート**：Niri の設定から読み取ったキーバインド
+- **メディアコントロール**：複数レイアウトの完全な MPRIS プレイヤー
+- **OSD**：音量、明るさ、メディア
+- **曲の認識**：SongRec による Shazam 風の識別
+- **音声入力**：インストールされていればローカルの whisper.cpp、または接続した Groq、Gemini、OpenAI
 
 ### システム
 
-- **GUI 設定** — ファイルを触らずにすべて設定可能
-- **GameMode** — フルスクリーンアプリでエフェクト自動無効化
-- **自動アップデート** — `inir update`、ロールバック・マイグレーション・ユーザー変更保持付き
-- **ロック画面** と **セッション画面**（ログアウト/再起動/シャットダウン/サスペンド）
-- **Polkit エージェント**、**オンスクリーンキーボード**、**自動起動マネージャー**
-- **9言語** — 自動検出、AI 支援翻訳生成
-- **ナイトライト** — スケジュールまたは手動
-- **天気** — Open-Meteo、GPS・手動座標・都市名に対応
-- **バッテリー管理** — 設定可能なしきい値、クリティカル時の自動サスペンド
-- **シェル更新チェッカー** — 新バージョン通知
+- **GUI 設定**：ファイルに触れずにすべて設定
+- **GameMode**：フルスクリーンアプリでエフェクトを自動オフ
+- **自動更新**：`inir update` はロールバック、マイグレーション、自分の変更の保持に対応
+- **ロック画面**と**セッション画面**（ログアウト/再起動/シャットダウン/サスペンド）
+- **Polkit エージェント**、**オンスクリーンキーボード**、niri 自身の起動ファイルを使う**自動起動マネージャー**
+- **Kira**：画面の端を歩き回り、あなたの操作に反応し、カオスモードもあるピクセルアートの猫娘。オプトインで、約 32 MiB のアートパックは `./setup` › Extras から別途
+- **18 の言語**を自動検出。インドネシア語（`id_ID`）とグリーンランド語（`kl_GL`）も含みます
+- **夜間モード**：スケジュールまたは手動
+- **天気**：Open-Meteo。GPS、手動座標、都市名に対応
+- **バッテリー管理**：しきい値を設定可能、残量が危険域で自動サスペンド
+- **イベントサウンド**：全体音量とイベントごとの音声ファイル
+- **更新チェック**：新しいバージョンが出たらお知らせ
 
 </details>
 
@@ -190,96 +236,110 @@ Wayland → GPU
 ```bash
 git clone https://github.com/snowarch/inir.git
 cd inir
-./setup install       # 対話式 — 各ステップで確認
-./setup install -y    # 自動 — 確認なし
+./setup install       # interactive, asks before each step
+./setup install -y    # automatic, no questions asked
 ```
 
-インストーラーが依存関係、システム設定、テーマ化 — すべて処理します。インストール後、`inir run` でシェルを起動するか、ログアウトして再ログインしてください。
+インストーラーが依存関係、システム設定、テーマを処理します。インストール後は `inir run` でシェルを起動するか、ログアウトして入り直してください。
 
 ```bash
-inir run                        # シェルを起動
-inir settings                   # 設定 GUI を開く
-inir logs                       # ランタイムログを確認
-inir doctor                     # 自動診断と修復
-inir update                     # pull + マイグレーション + 再起動
+inir run                        # launch the shell
+inir settings                   # open settings GUI
+inir logs                       # check runtime logs
+inir doctor                     # auto-diagnose and fix
+inir update                     # pull + migrate + restart
 ```
 
-**対応ディストリビューション：** Arch（自動インストーラー）。他のディストリビューションは手動インストール可能 — [PACKAGES.md](../PACKAGES.md) を参照。
+`./setup install` 以外の方法がよければ：
 
-| 方法 | コマンド |
-|--------|---------|
-| システムインストール | `sudo make install && inir run` |
-| TUI メニュー | `./setup` |
-| ロールバック | `./setup rollback` |
+```bash
+./setup                 # TUI menu, pick what you want
+sudo make install       # system-wide instead of your home
+./setup rollback        # undo the last update
+```
+
+**ディストリビューション：** Arch が主なターゲットです。Fedora と Debian/Ubuntu にも、ディストリビューションのリポジトリを優先する依存関係の自動インストールがあります。その他は[パッケージ一覧](https://github.com/snowarch/inir/wiki/PACKAGES)の一般的な手順に従ってください。iNiR には Qt 6.9 以降が必要です：Ubuntu 25.10、Fedora 43、Debian testing 以降。
 
 ---
 
 ## キーバインド
 
-| キー | アクション |
+| キー | 動作 |
 |-----|--------|
-| `Super+Space` | 概要 — アプリ検索、ワークスペースナビゲーション |
-| `Alt+Tab` | ウィンドウスイッチャー |
-| `Super+V` | クリップボード履歴 |
-| `Super+Shift+S` | リージョンスクリーンショット |
-| `Super+Shift+X` | リージョン OCR |
-| `Super+,` | 設定 |
-| `Super+Shift+W` | パネルファミリー切り替え |
+| <kbd>Super</kbd> + <kbd>Space</kbd> | 概要：アプリ検索、ワークスペース移動 |
+| <kbd>Super</kbd> + <kbd>V</kbd> | クリップボード履歴 |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> | 範囲のスクリーンショット |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>X</kbd> | 範囲の OCR |
+| <kbd>Super</kbd> + <kbd>,</kbd> | 設定 |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | パネルファミリーの切り替え |
+| <kbd>Super</kbd> + <kbd>/</kbd> | チートシート（ほかを忘れたときに） |
 
-全リスト：[KEYBINDS.md](../KEYBINDS.md)
+完全なリスト：[キーバインド](https://github.com/snowarch/inir/wiki/KEYBINDS)
 
 ---
 
 ## 壁紙
 
-15枚の壁紙が同梱されています。さらに欲しい場合は [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) をチェック — Material You パイプラインと相性の良いキュレーションコレクションです。
+15 枚の壁紙が同梱されています。もっと欲しければ、Material You と相性のいい厳選コレクション [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) をどうぞ。
 
 ---
 
 ## ドキュメント
 
-| | |
+ユーザー向けの情報はすべて [Wiki](https://github.com/snowarch/inir/wiki)（英語）にあります。
+
+| ページ | 内容 |
 |---|---|
-| [INSTALL.md](../INSTALL.md) | インストールガイド |
-| [SETUP.md](../SETUP.md) | Setup コマンド — アップデート、マイグレーション、ロールバック |
-| [KEYBINDS.md](../KEYBINDS.md) | すべてのキーボードショートカット |
-| [IPC.md](../IPC.md) | スクリプトとキーバインド用 IPC ターゲット |
-| [PACKAGES.md](../PACKAGES.md) | すべての依存関係とその理由 |
-| [LIMITATIONS.md](../LIMITATIONS.md) | 既知の制限と回避策 |
-| [ARCHITECTURE.md](../../ARCHITECTURE.md) | 技術アーキテクチャ概要 |
+| [Install](https://github.com/snowarch/inir/wiki/INSTALL) | 動かすまで |
+| [Setup](https://github.com/snowarch/inir/wiki/SETUP) | 更新、マイグレーション、ロールバック |
+| [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS) | すべてのショートカット |
+| [IPC](https://github.com/snowarch/inir/wiki/IPC) | キーバインドやスクリプトで使えるコマンド |
+| [Packages](https://github.com/snowarch/inir/wiki/PACKAGES) | 各依存関係とその理由 |
+| [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) | 既知の不具合と回避策 |
+| [Architecture](../../ARCHITECTURE.md) | コードの構成 |
 
 ---
 
 ## トラブルシューティング
 
 ```bash
-inir logs                       # 最近のランタイムログを確認
-inir restart                    # アクティブなランタイムを再起動
-inir repair                     # doctor + 再起動 + フィルタ済みログチェック
-./setup doctor                  # 一般的な問題の自動診断と修復
-./setup rollback                # 最後のアップデートを取り消し
+inir logs                       # check recent runtime logs
+inir restart                    # restart the active runtime
+inir repair                     # doctor + restart + filtered log check
+./setup doctor                  # auto-diagnose and fix common problems
+./setup rollback                # undo the last update
 ```
 
-issue を開く前に [LIMITATIONS.md](../LIMITATIONS.md) を確認してください。
+issue を開く前に [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) を確認してください。人に聞きたいなら Discord のほうが早いです。
 
 ---
 
 ## コントリビュート
 
-[CONTRIBUTING.md](../../CONTRIBUTING.md) を参照 — 開発環境のセットアップ、コードパターン、PR ガイドライン。
+開発環境、コードの書き方、プルリクエストの出し方は [CONTRIBUTING.md](../../CONTRIBUTING.md) を参照してください。
 
 ---
 
 ## クレジット
 
-- [**end-4**](https://github.com/end-4/dots-hyprland) — Hyprland 向けオリジナル illogical-impulse
-- [**Quickshell**](https://quickshell.outfoxxed.me/) — このシェルを動かすフレームワーク
-- [**Niri**](https://github.com/YaLTeR/niri) — スクロール式タイリング Wayland コンポジター
+- [**end-4**](https://github.com/end-4/dots-hyprland)：illogical-impulse。iNiR のフォーク元の Hyprland dots
+- [**pctrade/end4-pC**](https://github.com/pctrade/end4-pC)：ときどき本当にいいアイデアがあるフォーク
+- [**Gakuseei**](https://github.com/Gakuseei)：[Ricelin](https://github.com/Gakuseei/Ricelin)。pill バーと washi・flame の見た目はここから
+- [**Quickshell**](https://quickshell.outfoxxed.me/)：動作の土台となるフレームワーク
+- [**Niri**](https://github.com/YaLTeR/niri)：これが作られた対象のコンポジター
+
+GPL-3.0、end-4 の dots と同じです。Copyright (C) 2025-2026 snowarch.
+
+---
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/snowarch/inir-mascot/main/inir-mascot-hero-banner.png" alt="iNiR mascot leaning on the iNiR logotype" width="720">
+</p>
 
 ---
 
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">コントリビューター</a> &bull;
-  <a href="CHANGELOG.md">変更履歴</a> &bull;
-  <a href="LICENSE">GPL-3.0 ライセンス</a>
+  <a href="../../CHANGELOG.md">変更履歴</a> &bull;
+  <a href="../../LICENSE">GPL-3.0 ライセンス</a>
 </p>

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import qs
 import qs.modules.background
 import qs.modules.bar
 import qs.modules.barM3 as BarM3
@@ -28,8 +29,8 @@ Item {
 
     CriticalPanelLoader { identifier: "iiBackground"; component: Background {} }
     CriticalPanelLoader { identifier: "iiBar"; extraCondition: !root.barVertical && root.barStock; component: Bar {} }
-    CriticalPanelLoader { identifier: "iiBar"; extraCondition: !root.barVertical && root.barPill; component: PillBar {} }
-    CriticalPanelLoader { identifier: "iiBar"; extraCondition: !root.barVertical && root.barM3; component: BarM3.M3Bar {} }
+    CriticalPanelLoader { identifier: "iiBar"; extraCondition: !root.barVertical && root.barPill && !GlobalStates.widgetEditMode; component: PillBar {} }
+    CriticalPanelLoader { identifier: "iiBar"; extraCondition: !root.barVertical && root.barM3 && !GlobalStates.widgetEditMode; component: BarM3.M3Bar {} }
     CriticalPanelLoader { identifier: "iiVerticalBar"; extraCondition: root.barVertical; component: VerticalBar {} }
     CriticalPanelLoader { identifier: "iiDock"; extraCondition: Config.options?.dock?.enable ?? true; component: Dock {} }
 }

@@ -1,0 +1,6 @@
+module qs.modules.iris.control
+singleton IrisControlOptions 1.0 IrisControlOptions.qml
+IrisControlCenter 1.0 IrisControlCenter.qml
+IrisControlGrid 1.0 IrisControlGrid.qml
+IrisQuickPanel 1.0 IrisQuickPanel.qml
+IrisControlMark 1.0 IrisControlMark.qml

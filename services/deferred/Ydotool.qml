@@ -1,6 +1,8 @@
 pragma Singleton
 
+import qs
 import qs.modules.common
+import QtQuick
 import Quickshell
 import qs.services
 
@@ -10,6 +12,15 @@ Singleton {
     property list<int> shiftKeys: [42, 54] // Keycodes for Shift keys (left and right)
     property list<int> altKeys: [56, 100] // Keycodes for Alt keys (left and right) 
     property list<int> ctrlKeys: [29, 97] // Keycodes for Ctrl keys (left and right)
+
+    // Whichever family drew the keyboard, closing it must not leave Shift, Ctrl or Alt held system-wide.
+    Connections {
+        target: GlobalStates
+        function onOskOpenChanged(): void {
+            if (!GlobalStates.oskOpen)
+                root.releaseAllKeys();
+        }
+    }
 
     function releaseAllKeys() {
         const keycodes = Array.from(Array(249).keys());

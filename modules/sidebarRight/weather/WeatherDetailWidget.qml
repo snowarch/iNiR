@@ -28,7 +28,7 @@ Item {
         : zzz ? Appearance.zzz.ink : Appearance.colors.colOnSurface
     readonly property color colSub: angel ? Appearance.angel.colTextSecondary
         : inir ? Appearance.inir.colTextSecondary
-        : zzz ? Appearance.zzz.inkMuted : Appearance.colors.colOnSurfaceVariant
+        : zzz ? Appearance.zzz.inkMuted : Appearance.colMetadataText
     readonly property color colPrimary: angel ? Appearance.angel.colPrimary
         : inir ? Appearance.inir.colPrimary
         : zzz ? Appearance.zzz.accent : Appearance.colors.colPrimary
@@ -88,9 +88,10 @@ Item {
     }
 
     component Card: Rectangle {
+        property bool editorialFocus: false
         radius: root.cardRadius
-        color: root.colCard
-        border.width: (root.angel || root.inir) ? 1 : 0
+        color: editorialFocus && Appearance.editorialEverywhere ? Appearance.editorial.ink : root.colCard
+        border.width: editorialFocus && Appearance.editorialEverywhere ? 0 : ((root.angel || root.inir) ? 1 : 0)
         border.color: ColorUtils.transparentize(root.colSub, 0.82)
     }
 
@@ -183,8 +184,10 @@ Item {
 
         // ── Hero ─────────────────────────────────────────────────────────
         Card {
+            id: heroCard
             Layout.fillWidth: true
             implicitHeight: heroRow.implicitHeight + 28
+            editorialFocus: true
 
             RowLayout {
                 id: heroRow
@@ -198,9 +201,9 @@ Item {
                 MaterialSymbol {
                     Layout.alignment: Qt.AlignVCenter
                     text: root.weatherSymbol(root.w?.wCode, Weather.isNightNow())
-                    iconSize: 56
+                    iconSize: Appearance.editorialEverywhere ? 42 : 56
                     fill: 1
-                    color: root.colPrimary
+                    color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : root.colPrimary
                 }
 
                 ColumnLayout {
@@ -211,15 +214,21 @@ Item {
                     StyledText {
                         text: root.w?.description ?? Translation.tr("Weather")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.Medium
-                        color: root.colSub; elide: Text.ElideRight; Layout.fillWidth: true
+                        font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Medium
+                        font.letterSpacing: Appearance.editorialEverywhere ? 0.8 : 0
+                        color: Appearance.editorialEverywhere
+                            ? ColorUtils.applyAlpha(Appearance.editorial.paperOnInk, 0.7)
+                            : root.colSub
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
                     }
                     StyledText {
                         text: root.w?.temp ?? "--°"
-                        font.pixelSize: Appearance.font.pixelSize.huge * 1.45
-                        font.weight: Font.Light
+                        font.pixelSize: Appearance.font.pixelSize.huge * (Appearance.editorialEverywhere ? 1.75 : 1.45)
+                        font.weight: Appearance.editorialEverywhere ? Font.DemiBold : Font.Light
                         font.family: Appearance.font.family.numbers
-                        color: root.colText; lineHeight: 0.95
+                        color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : root.colText
+                        lineHeight: 0.95
                     }
                     RowLayout {
                         spacing: 8
@@ -228,7 +237,10 @@ Item {
                             text: Weather.visibleCity
                             visible: Weather.showVisibleCity
                             font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: root.colSub; elide: Text.ElideRight
+                            color: Appearance.editorialEverywhere
+                                ? ColorUtils.applyAlpha(Appearance.editorial.paperOnInk, 0.72)
+                                : root.colSub
+                            elide: Text.ElideRight
                             Layout.maximumWidth: 150
                         }
                         StyledText {
@@ -236,7 +248,9 @@ Item {
                             text: `↑${root.w?.tempMax ?? ""}  ↓${root.w?.tempMin ?? ""}`
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             font.family: Appearance.font.family.numbers
-                            color: root.colSub
+                            color: Appearance.editorialEverywhere
+                                ? ColorUtils.applyAlpha(Appearance.editorial.paperOnInk, 0.72)
+                                : root.colSub
                         }
                     }
                 }
@@ -252,7 +266,10 @@ Item {
                 text: "refresh"
                 iconSize: 20
                 fill: 0
-                color: refreshMA.containsMouse ? root.colPrimary : root.colSub
+                color: Appearance.editorialEverywhere
+                    ? (refreshMA.containsMouse ? Appearance.editorial.paperOnInk
+                        : ColorUtils.applyAlpha(Appearance.editorial.paperOnInk, 0.62))
+                    : (refreshMA.containsMouse ? root.colPrimary : root.colSub)
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
@@ -656,7 +673,8 @@ Item {
         // ── Footer ───────────────────────────────────────────────────────
         StyledText {
             Layout.alignment: Qt.AlignHCenter
-            text: Translation.tr("Updated %1").arg(root.w?.lastRefresh ?? "--:--")
+            text: Network.online ? Translation.tr("Updated %1").arg(Weather.updatedLabel)
+                : Translation.tr("Offline · from %1").arg(Weather.updatedLabel)
             font.pixelSize: Appearance.font.pixelSize.smaller
             color: root.colSub
         }

@@ -6,6 +6,7 @@ singleton Config 1.0 Config.qml
 singleton Directories 1.0 Directories.qml
 singleton Icons 1.0 Icons.qml
 singleton Images 1.0 Images.qml
+singleton MediaArtworkCache 1.0 MediaArtworkCache.qml
 singleton MascotCatalog 1.0 MascotCatalog.qml
 singleton NerdIconMap 1.0 NerdIconMap.qml
 singleton Persistent 1.0 Persistent.qml

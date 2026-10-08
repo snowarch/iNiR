@@ -24,6 +24,7 @@ import Qt5Compat.GraphicalEffects as GE
  */
 Item {
     id: root
+    readonly property bool editorial: Appearance.editorialEverywhere
 
     // ═══════════════════════════════════════════════════
     // PUBLIC API
@@ -84,31 +85,39 @@ Item {
         : previewMode
             ? Translation.tr("Preview mode")
             : Translation.tr("Arrows, wheel or click to navigate")
-    readonly property color surfaceColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    readonly property color surfaceColor: root.editorial ? Appearance.editorial.layer(1)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1
-    readonly property color elevatedColor: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
+    readonly property color elevatedColor: root.editorial ? Appearance.editorial.layer(2)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colOverlay
         : Appearance.colors.colLayer2
-    readonly property color baseColor: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
+    readonly property color baseColor: root.editorial ? Appearance.editorial.paper
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
         : Appearance.inirEverywhere ? Appearance.inir.colLayer0
         : Appearance.auroraEverywhere ? Appearance.aurora.colOverlay
         : Appearance.colors.colLayer0
-    readonly property color textColor: Appearance.angelEverywhere ? Appearance.angel.colText
+    readonly property color textColor: root.editorial ? Appearance.editorial.ink
+        : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.colors.colOnLayer1
-    readonly property color subtleTextColor: Appearance.angelEverywhere ? Appearance.angel.colTextMuted
+    readonly property color subtleTextColor: root.editorial ? Appearance.editorial.muted
+        : Appearance.angelEverywhere ? Appearance.angel.colTextMuted
         : Appearance.inirEverywhere ? Appearance.inir.colTextMuted
         : Appearance.colors.colSubtext
-    readonly property color borderColor: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
+    readonly property color borderColor: root.editorial ? Appearance.editorial.rule
+        : Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
         : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
         : ColorUtils.applyAlpha(Appearance.colors.colOutlineVariant, 0.45)
-    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+    readonly property real cardRadius: root.editorial ? Appearance.editorial.radius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
         : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
         : Appearance.rounding.large
-    readonly property real panelRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+    readonly property real panelRadius: root.editorial ? Appearance.rounding.small
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.normal
 
@@ -189,12 +198,14 @@ Item {
 
     ColorQuantizer {
         id: quantizer
-        source: root.activeQuantizerSource
+        source: root.editorial ? "" : root.activeQuantizerSource
         depth: 0
         rescaleSize: 10
     }
 
     readonly property color accentColor: {
+        if (root.editorial)
+            return Appearance.editorial.accent
         const c = quantizer?.colors?.[0]
         if (!c || root.activeIsDir || root.activePath.length === 0)
             return Appearance.colors.colPrimary
@@ -414,7 +425,7 @@ Item {
             GradientStop { position: 0.42; color: ColorUtils.applyAlpha(root._accent, 0.035) }
             GradientStop { position: 1.0; color: "transparent" }
         }
-        opacity: root.previewMode ? 0.08 : 0.42
+        opacity: root.editorial ? 0 : (root.previewMode ? 0.08 : 0.42)
     }
 
     Item {
@@ -450,8 +461,9 @@ Item {
                     Layout.preferredWidth: Math.min(parent.width, Math.max(360, headerRow.implicitWidth + 22))
                     screenX: { const m = headerChip.mapToGlobal(0, 0); return m.x }
                     screenY: { const m = headerChip.mapToGlobal(0, 0); return m.y }
-                    radius: Appearance.rounding.full
+                    radius: root.editorial ? Appearance.rounding.small : Appearance.rounding.full
                     fallbackColor: root.surfaceColor
+                    wallpaperBackdropEnabled: !root.editorial
                     inirColor: Appearance.inir.colLayer1
                     auroraTransparency: Appearance.aurora.popupTransparentize
                     border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
@@ -473,7 +485,9 @@ Item {
                             Layout.fillWidth: true
                             text: root.activeDisplayName.length > 0 ? root.activeDisplayName : Translation.tr("No wallpapers found")
                             font.pixelSize: Appearance.font.pixelSize.small
-                            font.weight: Font.DemiBold
+                            font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                            font.weight: root.editorial ? Appearance.editorial.titleWeight : Font.DemiBold
+                            font.letterSpacing: root.editorial ? Appearance.editorial.titleTracking * 0.45 : 0
                             color: root.textColor
                             elide: Text.ElideMiddle
                             maximumLineCount: 1
@@ -482,7 +496,8 @@ Item {
                         StyledText {
                             text: root.hasItems ? "%1 / %2".arg(root.currentIndex + 1).arg(root.totalCount) : "0 / 0"
                             font.pixelSize: Appearance.font.pixelSize.smaller
-                            font.family: Appearance.font.family.monospace
+                            font.family: root.editorial ? Appearance.font.family.numbers : Appearance.font.family.monospace
+                            font.weight: root.editorial ? Font.DemiBold : Font.Normal
                             color: root.subtleTextColor
                         }
                     }
@@ -876,7 +891,7 @@ Item {
                     }
                     implicitWidth: 52
                     implicitHeight: 52
-                    buttonRadius: 26
+                    buttonRadius: root.editorial ? Appearance.rounding.small : 26
                     visible: root.totalCount > 1 && !root.previewMode && (isLeft ? root.currentIndex > 0 : root.currentIndex < root.totalCount - 1)
                     opacity: visible ? 0.9 : 0.0
                     z: 100
@@ -894,7 +909,7 @@ Item {
 
                     StyledRectangularShadow {
                         target: parent
-                        visible: !Appearance.auroraEverywhere
+                        visible: !root.editorial && !Appearance.auroraEverywhere
                         radius: 26
                         opacity: 0.14
                     }
@@ -918,6 +933,7 @@ Item {
             screenY: { const m = infoOverlay.mapToGlobal(0, 0); return m.y }
             radius: root.panelRadius
             fallbackColor: root.surfaceColor
+            wallpaperBackdropEnabled: !root.editorial
             inirColor: Appearance.inir.colLayer1
             auroraTransparency: Appearance.aurora.popupTransparentize
             border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
@@ -943,7 +959,9 @@ Item {
                         Layout.fillWidth: true
                         text: Translation.tr("Selection")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.DemiBold
+                        font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                        font.weight: root.editorial ? Appearance.editorial.titleWeight : Font.DemiBold
+                        font.letterSpacing: root.editorial ? 0.4 : 0
                         color: root.textColor
                     }
                 }
@@ -959,7 +977,9 @@ Item {
                     Layout.fillWidth: true
                     text: root.activeDisplayName.length > 0 ? root.activeDisplayName : Translation.tr("Select a wallpaper")
                     font.pixelSize: Appearance.font.pixelSize.normal
-                    font.weight: Font.DemiBold
+                    font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                    font.weight: root.editorial ? Appearance.editorial.titleWeight : Font.DemiBold
+                    font.letterSpacing: root.editorial ? Appearance.editorial.titleTracking * 0.45 : 0
                     color: root.textColor
                     maximumLineCount: 2
                     wrapMode: Text.Wrap
@@ -995,7 +1015,8 @@ Item {
                         text: root.hasItems ? "%1 / %2".arg(root.currentIndex + 1).arg(root.totalCount) : "0 / 0"
                         color: root.textColor
                         font.pixelSize: Appearance.font.pixelSize.smaller
-                        font.family: Appearance.font.family.monospace
+                        font.family: root.editorial ? Appearance.font.family.numbers : Appearance.font.family.monospace
+                        font.weight: root.editorial ? Font.DemiBold : Font.Normal
                         horizontalAlignment: Text.AlignRight
                     }
                 }
@@ -1018,6 +1039,7 @@ Item {
             screenY: { const m = actionsOverlay.mapToGlobal(0, 0); return m.y }
             radius: root.panelRadius
             fallbackColor: root.surfaceColor
+            wallpaperBackdropEnabled: !root.editorial
             inirColor: Appearance.inir.colLayer1
             auroraTransparency: Appearance.aurora.popupTransparentize
             border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
@@ -1042,7 +1064,9 @@ Item {
                     StyledText {
                         text: Translation.tr("Quick actions")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.DemiBold
+                        font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                        font.weight: root.editorial ? Appearance.editorial.titleWeight : Font.DemiBold
+                        font.letterSpacing: root.editorial ? 0.4 : 0
                         color: root.textColor
                     }
                 }
@@ -1058,8 +1082,8 @@ Item {
                     Layout.fillWidth: true
                     implicitHeight: 38
                     buttonRadius: root.panelRadius
-                    colBackground: ColorUtils.applyAlpha(root._accent, 0.18)
-                    colBackgroundHover: ColorUtils.applyAlpha(root._accent, 0.26)
+                    colBackground: root.editorial ? Appearance.editorial.accent : ColorUtils.applyAlpha(root._accent, 0.18)
+                    colBackgroundHover: root.editorial ? Appearance.colors.colPrimaryHover : ColorUtils.applyAlpha(root._accent, 0.26)
                     onClicked: root.activateCurrent()
 
                     contentItem: RowLayout {
@@ -1069,12 +1093,12 @@ Item {
                         MaterialSymbol {
                             text: root.activeIsDir ? "folder_open" : "check_circle"
                             iconSize: Appearance.font.pixelSize.small
-                            color: root.textColor
+                            color: root.editorial ? Appearance.editorial.accentInk : root.textColor
                         }
 
                         StyledText {
                             text: root.activeIsDir ? Translation.tr("Open folder") : Translation.tr("Apply selected")
-                            color: root.textColor
+                            color: root.editorial ? Appearance.editorial.accentInk : root.textColor
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.DemiBold
                         }
@@ -1125,6 +1149,7 @@ Item {
             screenY: { const m = guideOverlay.mapToGlobal(0, 0); return m.y }
             radius: root.panelRadius
             fallbackColor: root.surfaceColor
+            wallpaperBackdropEnabled: !root.editorial
             inirColor: Appearance.inir.colLayer1
             auroraTransparency: Appearance.aurora.popupTransparentize
             border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
@@ -1139,7 +1164,9 @@ Item {
                 StyledText {
                     text: Translation.tr("How to use")
                     font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.DemiBold
+                    font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                    font.weight: root.editorial ? Appearance.editorial.titleWeight : Font.DemiBold
+                    font.letterSpacing: root.editorial ? 0.4 : 0
                     color: root.textColor
                 }
 
@@ -1166,6 +1193,7 @@ Item {
             screenY: { const m = statusOverlay.mapToGlobal(0, 0); return m.y }
             radius: root.panelRadius
             fallbackColor: root.surfaceColor
+            wallpaperBackdropEnabled: !root.editorial
             inirColor: Appearance.inir.colLayer1
             auroraTransparency: Appearance.aurora.popupTransparentize
             border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
@@ -1190,7 +1218,9 @@ Item {
                     StyledText {
                         text: Translation.tr("Selection details")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.DemiBold
+                        font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+                        font.weight: root.editorial ? Appearance.editorial.titleWeight : Font.DemiBold
+                        font.letterSpacing: root.editorial ? 0.4 : 0
                         color: root.textColor
                     }
                 }
@@ -1242,8 +1272,8 @@ Item {
         visible: root.previewMode || root.showKeyboardGuide
         opacity: visible ? 1.0 : 0.0
         z: 220
-        radius: height / 2
-        color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.72)
+        radius: root.editorial ? Appearance.rounding.small : height / 2
+        color: root.editorial ? Appearance.editorial.ink : ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.72)
         width: previewHint.implicitWidth + 24
         height: previewHint.implicitHeight + 10
         Behavior on opacity { enabled: Appearance.animationsEnabled; animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
@@ -1255,7 +1285,10 @@ Item {
                 ? Translation.tr("Space to exit preview  ·  Enter to apply")
                 : Translation.tr("/ Search  ·  Space Preview  ·  Enter Apply  ·  Esc Close")
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.colors.colOnLayer0
+            font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+            font.weight: root.editorial ? Font.DemiBold : Font.Normal
+            font.letterSpacing: root.editorial ? 0.55 : 0
+            color: root.editorial ? Appearance.editorial.paperOnInk : Appearance.colors.colOnLayer0
         }
     }
 
@@ -1295,6 +1328,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             Layout.maximumWidth: Math.min(root.width * 0.16, 200)
             font.pixelSize: Appearance.font.pixelSize.small
+            font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.main
+            font.weight: root.editorial ? Font.DemiBold : Font.Normal
             color: root.textColor
             text: root.currentFolderName
             elide: Text.ElideMiddle

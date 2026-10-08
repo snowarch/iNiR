@@ -20,7 +20,7 @@ Rectangle {
 
     radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    color: Appearance.editorialEverywhere ? Appearance.editorial.ink : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
          : inirEverywhere ? Appearance.inir.colLayer1
          : auroraEverywhere ? Appearance.aurora.colSubSurface
          : Appearance.colors.colLayer1
@@ -54,8 +54,8 @@ Rectangle {
             StyledText {
                 text: Qt.formatDateTime(root._currentDate, "dddd")
                 font.pixelSize: Appearance.font.pixelSize.small
-                font.weight: Font.Medium
-                color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Medium
+                color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                      : root.inirEverywhere ? Appearance.inir.colPrimary
                      : root.auroraEverywhere ? Appearance.colors.colPrimary
                      : Appearance.colors.colPrimary
@@ -64,8 +64,8 @@ Rectangle {
             StyledText {
                 text: Qt.formatDateTime(root._currentDate, "MMMM d, yyyy")
                 font.pixelSize: Appearance.font.pixelSize.larger
-                font.weight: Font.Medium
-                color: Appearance.angelEverywhere ? Appearance.angel.colText
+                font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Medium
+                color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : Appearance.angelEverywhere ? Appearance.angel.colText
                      : root.inirEverywhere ? Appearance.inir.colText
                      : root.auroraEverywhere ? Appearance.colors.colOnSurface
                      : Appearance.colors.colOnLayer1
@@ -74,7 +74,7 @@ Rectangle {
             StyledText {
                 text: Translation.tr("Uptime") + ": " + DateTime.uptime
                 font.pixelSize: Appearance.font.pixelSize.smallest
-                color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                      : root.inirEverywhere ? Appearance.inir.colTextSecondary
                      : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                      : Appearance.colors.colSubtext
@@ -84,9 +84,9 @@ Rectangle {
         StyledText {
             text: DateTime.time
             font.pixelSize: Appearance.font.pixelSize.huge * 1.5
-            font.weight: Font.Light
+            font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Light
             font.family: Appearance.font.family.numbers
-            color: Appearance.angelEverywhere ? Appearance.angel.colText
+            color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : Appearance.angelEverywhere ? Appearance.angel.colText
                  : root.inirEverywhere ? Appearance.inir.colText
                  : root.auroraEverywhere ? Appearance.colors.colOnSurface
                  : Appearance.colors.colOnLayer1

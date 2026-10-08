@@ -1,0 +1,32 @@
+iNiR
+Copyright (C) 2025-2026 snowarch
+https://github.com/snowarch/inir
+
+iNiR is free software under the GNU General Public License, version 3 (see LICENSE). It started as a
+fork of end-4's illogical-impulse (GPL-3.0). Code that came from there, and code contributors wrote
+under plain GPL-3.0, keeps its own authors and stays under plain GPL-3.0.
+
+
+Additional terms (GNU GPL version 3, section 7)
+
+These terms apply to all material in this repository authored by snowarch, including all of iRiS
+(modules/iris) and the rest of iNiR's own code, artwork and documentation. They add to the GPL; they
+take none of its freedoms away. You may still run, study, change and share this work under the GPL.
+
+1. Keep the credit (section 7(b)).
+   Every copy and every modified version must keep this NOTICE and the copyright lines, and must show
+   the attribution "Based on iNiR by snowarch (https://github.com/snowarch/inir)" in its README and in
+   any about, credits or welcome screen it has.
+
+2. Don't pass it off as yours (section 7(c)).
+   A modified version must be clearly marked as modified. It must not claim to be iNiR or iRiS, and
+   it must not present this work, or any part of it, as the original creation of anyone other than
+   its authors. Copying iRiS or other parts of iNiR into another project and calling them your own
+   work without the attribution in term 1 is not permitted.
+
+3. The names and identity are not licensed (section 7(e)).
+   No rights are granted to the names "iNiR" and "iRiS", their logos, the Kira mascot, or the
+   project's visual identity. A fork or derivative must use a different name and logo. Saying
+   truthfully that your work is "based on iNiR" is allowed and expected.
+
+Violating these terms ends your rights under the GPL for this material (GPL-3.0 section 8).

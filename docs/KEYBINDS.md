@@ -20,7 +20,7 @@ Change them. Break them. Make them yours. We won't judge.
 | `Mod+,` | Settings |
 | `Mod+Alt+L` | Lock screen |
 | `Ctrl+Alt+T` | Wallpaper selector |
-| `Mod+Shift+W` | Cycle panel family (ii ↔ waffle) |
+| `Mod+Shift+W` | Cycle panel family (ii → waffle → iRiS → ii) |
 | `Mod+Shift+Q` | Session / power dialog |
 
 ---
@@ -33,8 +33,9 @@ Change them. Break them. Make them yours. We won't judge.
 | `Mod+Shift+X` | Region OCR |
 | `Mod+Shift+A` | Region image search |
 | `Mod+Shift+R` | Region screen recording (with audio) |
-| `Print` | Full screenshot (Niri native) |
+| `Print` | Niri's screenshot tool: pick an area, a screen or a window |
 | `Ctrl+Print` | Screenshot current screen |
+| `Mod+Print` | Screenshot current screen (the Windows and GNOME key) |
 | `Alt+Print` | Screenshot current window |
 
 ---
@@ -160,6 +161,7 @@ All media/volume/brightness keys are routed through iNiR IPC for OSD feedback.
 | `Mod+Alt+N` / `Mod+Shift+N` | Next track (keyboard) |
 | `Mod+Alt+P` / `Mod+Shift+B` | Previous track (keyboard) |
 | `Mod+Shift+M` | Toggle mute (keyboard) |
+| `Ctrl+Alt+F` | EasyEffects Equalizer (enable it first in Settings → Modules → Optional) |
 
 ---
 
@@ -169,8 +171,9 @@ Keybinds live in `~/.config/niri/config.d/70-binds.kdl`. Add personal overrides 
 
 The distributed Alt-Tab uses Niri's native `recent-windows` surface. Its
 preview timing, highlight and size are tuned in `config.d/20-layout-and-overview.kdl`.
-The iNiR switcher remains available from Settings, but is disabled by default
-so two window switchers do not compete for the same keys.
+To use iNiR's switcher instead, pick it under Settings → Panels → Tools → Alt+Tab (Waffle: Waffle Style →
+Alt+Tab Switcher), or run `inir altSwitcher opens inir`. That adds a marked block at the end of
+`90-user-extra.kdl`; choosing Niri again, or `inir altSwitcher opens niri`, removes it.
 
 See [IPC.md](IPC.md) for all available iNiR targets you can bind.
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Inject CSS into Pear Desktop (YouTube Music) via Chrome DevTools Protocol.
 
-Pear Desktop must be launched with --remote-debugging-port=9222 for this to work.
+Pear Desktop must be launched with a --remote-debugging-port (iNiR uses 9223).
 The script reads a CSS file and injects it as a <style> element into every
 open page context, producing an instant live theme update.
 
 Usage: pear-css-inject.py <css-file> [--port PORT]
-Exit 0 on success (at least one context injected), 1 on failure.
+Prints injected/unchanged; exit 0 when every reachable page has the CSS, 1 on failure.
 """
 
 import json
@@ -14,7 +14,7 @@ import sys
 import asyncio
 import argparse
 
-DEFAULT_PORT = 9222
+DEFAULT_PORT = 9223
 STYLE_ID = "inir-pear-theme"
 
 
@@ -30,6 +30,7 @@ async def inject_into_page(ws_url: str, css: str) -> bool:
             js = (
                 "(function(){"
                 f"var e=document.getElementById('{STYLE_ID}');"
+                f"if(e&&e.textContent==={json.dumps(css)})return 'same';"
                 "if(e)e.remove();"
                 "var s=document.createElement('style');"
                 f"s.id='{STYLE_ID}';"
@@ -49,7 +50,7 @@ async def inject_into_page(ws_url: str, css: str) -> bool:
             )
             resp = json.loads(await asyncio.wait_for(ws.recv(), timeout=3))
             val = resp.get("result", {}).get("result", {}).get("value", False)
-            return bool(val)
+            return val if val == "same" else bool(val)
     except Exception:
         return False
 
@@ -96,8 +97,10 @@ async def main(css_file: str, port: int) -> int:
         return 1
 
     results = await asyncio.gather(*tasks)
-    injected = sum(1 for r in results if r)
-    return 0 if injected > 0 else 1
+    injected = sum(1 for r in results if r is True)
+    same = sum(1 for r in results if r == "same")
+    print("injected" if injected else "unchanged" if same else "failed")
+    return 0 if injected or same else 1
 
 
 if __name__ == "__main__":

@@ -23,17 +23,17 @@ ComboBox {
     hoverEnabled: true
     opacity: root.enabled ? 1 : 0.4
 
-    readonly property color _bgColor: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
+    readonly property color _bgColor: Appearance.editorialEverywhere ? Appearance.editorial.input : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer2
-    readonly property color _bgHoverColor: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
+    readonly property color _bgHoverColor: Appearance.editorialEverywhere ? Appearance.editorial.inputHover : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
         : Appearance.colors.colLayer2Hover
-    readonly property color _bgActiveColor: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateActive
+    readonly property color _bgActiveColor: Appearance.editorialEverywhere ? Appearance.editorial.inputFocus : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateActive
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
@@ -46,14 +46,16 @@ ComboBox {
         : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.colors.colSubtext
-    readonly property color _borderColor: Appearance.angelEverywhere ? Appearance.angel.colBorder
+    readonly property color _borderColor: Appearance.editorialEverywhere ? Appearance.editorial.rule
+        : Appearance.angelEverywhere ? Appearance.angel.colBorder
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : "transparent"
-    readonly property real _borderWidth: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
+    readonly property real _borderWidth: (Appearance.editorialEverywhere || Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
     readonly property color _popupColor: Appearance.regaliaEverywhere ? Appearance.regalia.bg2
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.colors.colLayer3Base
     readonly property color _popupBorderColor: Appearance.regaliaEverywhere ? "transparent"
+        : Appearance.editorialEverywhere ? Appearance.editorial.edge
         : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
@@ -61,10 +63,11 @@ ComboBox {
     // Dropdown row hover/selected — matched to _popupColor's own layer (Layer3, or
     // inir's Layer2). The angel/aurora "glass card" tokens used here previously were
     // tuned for card surfaces, not this opaque popup, and read as barely-there.
-    readonly property color _popupHoverColor: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
+    readonly property color _popupHoverColor: Appearance.editorialEverywhere ? Appearance.editorial.controlHover : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.colors.colLayer3Hover
-    readonly property color _selectedColor: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
+    readonly property color _selectedColor: Appearance.editorialEverywhere ? Appearance.editorial.field
+        : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
         : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
         : Appearance.colors.colPrimaryContainer
 
@@ -75,9 +78,10 @@ ComboBox {
             : root.down ? root._bgActiveColor
             : root.hovered ? root._bgHoverColor
             : root._bgColor
-        border.width: root._borderWidth
+        border.width: Appearance.editorialEverywhere && root.activeFocus ? 2 : root._borderWidth
         border.color: root.activeFocus
-            ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+            ? (Appearance.editorialEverywhere ? Appearance.editorial.focusRing
+                : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                 : Appearance.inirEverywhere ? Appearance.inir.colBorderFocus
                 : root._borderColor)
             : root._borderColor
@@ -226,12 +230,13 @@ ComboBox {
 
         background: Rectangle {
             radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
+                : Appearance.editorialEverywhere ? Appearance.rounding.small
                 : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                 : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
                 : Appearance.rounding.unsharpenmore
             color: Appearance.regaliaEverywhere ? "transparent"
                 : delegateItem.index === root.currentIndex ? root._selectedColor
-                : delegateItem.hovered ? root._popupHoverColor
+                : (delegateItem.hovered || (Appearance.editorialEverywhere && delegateItem.highlighted)) ? root._popupHoverColor
                 : "transparent"
 
             RegaliaControlFace {
@@ -266,7 +271,10 @@ ComboBox {
                     return delegateItem.modelData?.toString() ?? ""
                 }
                 font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.regaliaEverywhere && delegateItem.index === root.currentIndex
+                font.weight: Appearance.editorialEverywhere && delegateItem.index === root.currentIndex ? Appearance.editorial.labelWeight : Font.Normal
+                color: Appearance.editorialEverywhere && delegateItem.index === root.currentIndex
+                    ? Appearance.editorial.fieldInk
+                    : Appearance.regaliaEverywhere && delegateItem.index === root.currentIndex
                     ? Appearance.regalia.primaryPlateInk : root._textColor
                 elide: Text.ElideRight
                 verticalAlignment: Text.AlignVCenter
@@ -276,7 +284,9 @@ ComboBox {
                 Layout.rightMargin: Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal : 8
                 text: "check"
                 iconSize: Appearance.font.pixelSize.small
-                color: Appearance.regaliaEverywhere && delegateItem.index === root.currentIndex
+                color: Appearance.editorialEverywhere && delegateItem.index === root.currentIndex
+                    ? Appearance.editorial.fieldInk
+                    : Appearance.regaliaEverywhere && delegateItem.index === root.currentIndex
                     ? Appearance.regalia.primaryPlateInk : root._textColor
                 visible: delegateItem.index === root.currentIndex
             }
@@ -320,6 +330,8 @@ ComboBox {
         if (!enableSettingsSearch)
             return;
         if (typeof SettingsSearchRegistry === "undefined")
+            return;
+        if (!SettingsSearchRegistry.dynamicRegistrationEnabled)
             return;
 
         var ctx = _findSettingsContext();

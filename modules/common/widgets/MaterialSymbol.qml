@@ -1,5 +1,6 @@
 import qs.modules.common
 import QtQuick
+import Qt5Compat.GraphicalEffects as GE
 
 Item {
     id: root
@@ -9,6 +10,11 @@ Item {
     property color color: Appearance.colors.colOnSurface
     property int horizontalAlignment: Text.AlignHCenter
     property int verticalAlignment: Text.AlignVCenter
+
+    // Opt-in gradient down the glyph's own colour (the iRiS tile pack uses it so a
+    // glyph keeps its identity hue). Off, the glyph is one flat colour as always.
+    property bool glyphGradient: false
+    readonly property bool gradientActive: root.glyphGradient && !root.useJp && !root.useNerd && root.text.length > 0
     property alias font: iconText.font
     property alias style: iconText.style
     property alias styleColor: iconText.styleColor
@@ -67,6 +73,20 @@ Item {
                 "opsz": root.effectiveOpsz,
             })
         }
+    }
+
+    Rectangle {
+        id: gradientFill
+        anchors.fill: iconText
+        visible: root.gradientActive
+        gradient: Gradient {
+            orientation: Gradient.Vertical
+            GradientStop { position: 0.0; color: Qt.lighter(root.color, 1.45) }
+            GradientStop { position: 1.0; color: Qt.darker(root.color, 1.18) }
+        }
+        layer.enabled: root.gradientActive
+        layer.smooth: true
+        layer.effect: GE.OpacityMask { maskSource: iconText }
     }
 
     Behavior on fill {

@@ -91,7 +91,7 @@ StyledOverlayWidget {
 
     contentItem: OverlayBackground {
         id: bg
-        color: ColorUtils.transparentize(Appearance.colors.colSurfaceContainer, root.actuallyPinned ? 1 : 0)
+        color: ColorUtils.transparentize(OverlayLook.colSurfaceContainer, root.actuallyPinned ? 1 : 0)
         radius: root.contentRadius
 
         WheelHandler {
@@ -182,7 +182,7 @@ StyledOverlayWidget {
                     ? "progress_activity"
                     : root.imageFailed ? "broken_image" : "add_photo_alternate"
                 iconSize: 38
-                color: Appearance.colors.colOnLayer2
+                color: OverlayLook.colOnLayer2
             }
 
             StyledText {
@@ -193,7 +193,7 @@ StyledOverlayWidget {
                     : root.imageFailed
                         ? Translation.tr("Error")
                         : Translation.tr("Choose file")
-                color: Appearance.colors.colOnLayer2
+                color: OverlayLook.colOnLayer2
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
             }
@@ -203,15 +203,15 @@ StyledOverlayWidget {
                 visible: root.imageSource.trim().length === 0 || root.imageFailed
                 materialIcon: "folder_open"
                 mainText: Translation.tr("Choose file")
-                colBackground: Appearance.colors.colPrimaryContainer
+                colBackground: OverlayLook.colPrimaryContainer
                 colBackgroundHover: ColorUtils.mix(
-                    Appearance.colors.colPrimaryContainer,
-                    Appearance.colors.colOnPrimaryContainer, 0.90)
+                    OverlayLook.colPrimaryContainer,
+                    OverlayLook.colOnPrimaryContainer, 0.90)
                 colRipple: ColorUtils.mix(
-                    Appearance.colors.colPrimaryContainer,
-                    Appearance.colors.colOnPrimaryContainer, 0.78)
+                    OverlayLook.colPrimaryContainer,
+                    OverlayLook.colOnPrimaryContainer, 0.78)
                 contentColor: ColorUtils.ensureReadable(
-                    Appearance.colors.colOnPrimaryContainer,
+                    OverlayLook.colOnPrimaryContainer,
                     colBackground, 4.5)
                 onClicked: imageDialog.open()
             }
@@ -224,11 +224,11 @@ StyledOverlayWidget {
             visible: GlobalStates.overlayOpen && root.hasImage
             materialIcon: "image_search"
             mainText: Translation.tr("Change")
-            colBackground: ColorUtils.applyAlpha(Appearance.colors.colLayer2, 0.94)
-            colBackgroundHover: Appearance.colors.colLayer2Hover
-            colRipple: Appearance.colors.colLayer2Active
+            colBackground: ColorUtils.applyAlpha(OverlayLook.colLayer2, 0.94)
+            colBackgroundHover: OverlayLook.colLayer2Hover
+            colRipple: OverlayLook.colLayer2Active
             contentColor: ColorUtils.ensureReadable(
-                Appearance.colors.colOnLayer2, colBackground, 4.5)
+                OverlayLook.colOnLayer2, colBackground, 4.5)
             onClicked: imageDialog.open()
 
             StyledToolTip {

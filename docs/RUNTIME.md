@@ -7,11 +7,13 @@ What happens between "user logs in" and "shell is on screen", step by step.
 ```
 User logs in
   |
-Display manager starts Niri (or Hyprland)
+Display manager starts Niri through its managed session
   |
-Compositor reaches graphical-session.target
+Niri publishes DISPLAY, WAYLAND_DISPLAY and NIRI_SOCKET to the user manager
   |
-systemd starts inir.service (wants link from compositor)
+niri.service reports READY
+  |
+systemd starts inir.service (niri.service.wants link)
   |
 ExecStart calls: /usr/bin/inir run --session
   |
@@ -19,46 +21,51 @@ inir script (bash):
   - Validates QS/Qt ABI compatibility
   - Sets QT_SCALE_FACTOR=1
   - Suppresses noisy Qt log categories
-  - Bridges niri env vars to systemd session
+  - Inherits Niri's published session environment without guessing sockets
   - Launches: qs -c inir
   |
 Quickshell loads shell.qml
   |
 ShellRoot initialization:
-  1. Force-instantiate Idle and PowerProfilePersistence
+  1. Force-instantiate startup-critical singletons (Idle, PowerProfilePersistence,
+     DevNavigation, ShellEditSession, TrayService)
   2. Load FirstRunExperience (checks if first run)
   3. Load ConflictKiller (kills conflicting trays/notification daemons)
-  4. Wait for Config.ready
+  4. Materialize shell-wide action/IPC owners that must exist before heavy panels
+  5. Wait for Config.ready
   |
 Config.ready fires:
   1. Apply current theme (ThemeService.applyCurrentTheme)
   2. Initialize icon theme
   3. Migrate enabledPanels if needed
-  4. Start shell entry timer (200ms delay for animation)
-  5. Schedule deferred init (500ms for non-critical services)
+  4. Load the selected family's critical host
+  5. Start shell entry timer (200ms when animations are enabled)
   |
-Panel loading:
-  - Selects ShellIiPanels or ShellWafflePanels based on panelFamily
-  - Each PanelLoader activates when its conditions are met
-  - Immediate panels load first (bar, background, OSD)
-  - Deferred panels load after GlobalStates.deferredPanelsReady
+Critical panel loading:
+  - ii: background + selected bar/vertical bar + dock
+  - Waffle: taskbar + background + backdrop
   |
-Shell entry animation completes
+Shell entry frame completes
   |
-Deferred services load (GameMode, Weather, etc.)
+500ms deferred phase:
+  - GameMode, WindowPreviewService, Weather, VoiceSearch, FontSyncService,
+    CavaTheme, Hyprsunset
+  - GlobalStates.deferredPanelsReady = true
+  - ShellIiPanels/ShellWafflePanels wrapper loads its Shell*PanelsImpl tree
+  |
+~1500ms late phase:
+  - ShellUpdates, Autostart, CalendarSync, Todo, Notepad
   |
 Shell fully operational
 ```
 
 ## Service wiring
 
-The systemd service is the key piece. It does not use `systemctl enable` in the traditional sense because there's no `[Install]` section. Instead, iNiR creates a wants link from your compositor's service:
+The systemd service is the key piece. It does not use `systemctl enable` in the traditional sense because there's no `[Install]` section. iNiR is Niri-only, so it creates a wants link from `niri.service`:
 
-**Niri**: `~/.config/systemd/user/niri.service.wants/inir.service`
+`~/.config/systemd/user/niri.service.wants/inir.service`
 
-**Hyprland**: `~/.config/systemd/user/wayland-wm@Hyprland.service.wants/inir.service`
-
-This means iNiR starts when your compositor starts and stops when it stops. It will never accidentally start under KDE or GNOME.
+`inir.service` is ordered **after** the `Type=notify` Niri service and requires it to be active. This means iNiR starts only after Niri has published the authoritative graphical-session environment, and stops/restarts with Niri. It will never accidentally start under KDE, GNOME, or another compositor.
 
 Managing the link:
 
@@ -74,13 +81,13 @@ inir service status    # check current state
 
 | | `inir run` | `qs -c inir` |
 |---|---|---|
-| Environment setup | Sets QT_SCALE_FACTOR, suppresses warnings, bridges niri env | Raw environment |
+| Environment setup | Sets shell-only Qt policy and inherits Niri's session env | Raw environment |
 | Output | Backgrounded, logs to journal | Foreground, direct stdout |
 | Crash recovery | systemd restarts on failure (max 3 in 30s) | None |
 | ABI check | Validates Quickshell/Qt compatibility | None |
 | Orphan cleanup | ExecStopPost cleans stale runtime | None |
 
-For development and debugging, `qs -c inir` (direct mode) is usually better because you get stdout immediately. For daily use, the systemd service handles everything.
+Do not use raw `qs -c inir` as the normal development path: it bypasses iNiR's launcher/runtime ownership and can duplicate or desynchronize the supervised session. Use `inir logs`, `inir logs --full`, `inir logs --debug`, `inir restart`, and `inir doctor`/`inir repair` instead. `inir logs --debug` deliberately stops the supervised shell and launches the resolved runtime in foreground debug mode through the iNiR control path; after `Ctrl+C`, restore the normal service with `inir restart`.
 
 ## Environment variables
 
@@ -94,13 +101,13 @@ The launcher sets these before starting Quickshell:
 
 The launcher also unsets inherited DPI variables that would cause blur: `QT_WAYLAND_FORCE_DPI`, `QT_FONT_DPI`, `QT_AUTO_SCREEN_SCALE_FACTOR`, `QT_SCREEN_SCALE_FACTORS`, `GDK_SCALE`, `GDK_DPI_SCALE`.
 
-The `--session` flag (used by systemd) also runs `ensure_systemd_graphical_env` in the background, which bridges critical Niri environment variables to the systemd user session. Without this, apps launched from the shell wouldn't get `WAYLAND_DISPLAY`, `NIRI_SOCKET`, or `ELECTRON_OZONE_PLATFORM_HINT`.
+The `--session` flag (used by systemd) consumes the graphical environment that Niri has already published to the user manager. iNiR does not rewrite `DISPLAY`, `WAYLAND_DISPLAY`, or `NIRI_SOCKET`; manual recovery launches may copy missing values from the manager, but they never infer them from filesystem sockets.
 
 ## Config loading
 
 `Config.qml` uses Quickshell's `FileView` to read the user's JSON config file. The loading sequence:
 
-1. FileView reads `~/.config/illogical-impulse/config.json`
+1. The canonical user config is `~/.config/inir/config.json`. `Config.qml` reaches it through `Directories.shellConfigPath`; migrated installs expose the legacy `~/.config/illogical-impulse` path as a compatibility link, while the resolver still honors an older real legacy directory.
 2. JsonAdapter parses the content
 3. Schema properties bind to parsed values (with fallbacks)
 4. `Config.ready` becomes true
@@ -112,27 +119,39 @@ Hot-reload: if you edit config.json externally, FileView detects the change and 
 
 ## Panel loading
 
-Each panel is wrapped in a `PanelLoader`:
+Panel composition is split so startup-critical surfaces are not blocked by the full module tree.
+
+`shell.qml` loads one of:
+
+- `modules/ii/critical/ShellIiCriticalPanels.qml`
+- `modules/waffle/critical/ShellWaffleCriticalPanels.qml`
+
+After `GlobalStates.deferredPanelsReady`, it loads the thin family wrapper, which delegates to the ii, Waffle, or iRiS `Shell*PanelsImpl.qml` composition root.
+
+The family implementation then chooses between ordinary, deferred and on-demand loaders. A typical deferred/on-demand panel still uses the same identifier contract:
 
 ```qml
-PanelLoader {
-    identifier: "iiBar"
-    extraCondition: !(Config.options?.bar?.vertical ?? false)
-    component: Bar {}
+OnDemandPanelLoader {
+    identifier: "iiOverview"
+    open: GlobalStates.overviewOpen
+    source: "../overview/Overview.qml"
 }
 ```
 
-A panel loads when all three conditions are true:
+A panel's exact lifecycle depends on its loader, but common gates include:
 
 1. `Config.ready` is true
 2. The identifier exists in `Config.options.enabledPanels`
-3. `extraCondition` evaluates to true
+3. `extraCondition` evaluates to true when present
+4. The relevant startup/open-state gate is satisfied
 
-Panels are split into immediate (load at first frame) and deferred (load after `deferredPanelsReady`):
+The critical first-frame set is intentionally small:
 
-**Immediate**: bar, background, notification popup, OSD. These need to be visible right away.
+**ii**: background, selected horizontal/vertical bar, dock.
 
-**Deferred**: sidebars, overview, clipboard, lock screen, cheatsheet. These load after the shell is already on screen and responsive.
+**Waffle**: taskbar, background, backdrop.
+
+Notification/OSD feedback and the rest of the family tree are part of the deferred implementation phase; interaction-heavy surfaces such as overview, sidebars, launchers and dialogs can stay unloaded until opened.
 
 ## Crash recovery
 
@@ -145,36 +164,38 @@ The systemd service has:
 
 ## Deferred initialization
 
-Non-critical services load 500ms after the first frame to reduce boot contention:
+Display/interaction services load 500ms after the first frame to reduce boot contention:
 
 - GameMode (fullscreen detection)
 - WindowPreviewService (alt-tab previews)
 - Weather (API polling)
 - VoiceSearch (Gemini transcription)
 - FontSyncService (GTK/KDE font sync)
+- CavaTheme (audio visualizer theme state)
 - Hyprsunset (night light)
 
-This keeps the initial frame fast. The bar and background appear immediately, everything else fills in shortly after.
+A second late tier starts roughly 1000ms later and materializes ShellUpdates, Autostart, CalendarSync, Todo, and Notepad. This keeps network/file-I/O background work out of the first-frame contention window.
 
 ## Debugging startup
 
-If the shell won't start:
+If the shell won't start or you need foreground diagnostics:
 
 ```bash
-# Direct stdout (bypass systemd)
-qs -c inir
+# Normal recent runtime logs
+inir logs
 
-# Verbose internal logging
-qs -v -c inir
+# Decode all recorded log categories
+inir logs --full
 
-# Extra verbose
-qs -vv -c inir
+# Foreground debug run through iNiR's runtime resolver
+inir logs --debug
 
-# Debug-level service logging
-QS_DEBUG=1 qs -c inir
+# Automated health/repair flows
+inir doctor
+inir repair
 ```
 
-Check `inir logs` for recent journal output, or `inir doctor` for automated diagnostics.
+After leaving `inir logs --debug` with `Ctrl+C`, run `inir restart` to return to the normal supervised runtime.
 
 ## Performance diagnostics
 

@@ -21,11 +21,12 @@ PanelSurface {
     readonly property bool listMode: pocketOptions.layout === "list"
     readonly property bool showPreviews: pocketOptions.showPreviews ?? true
     readonly property int columns: listMode ? 1 : Math.max(1, Math.min(3, stashedIds.length))
+    readonly property real previewDpr: Math.max(1, root.QsWindow?.window?.devicePixelRatio ?? 1)
     property int keyboardIndex: stashedIds.length > 0 ? 0 : -1
 
     function requestPreviews(): void {
         if (root.showPreviews && root.stashedIds.length > 0)
-            WindowPreviewService.captureForTaskView(root.stashedIds)
+            WindowPreviewService.captureForTaskView(root.stashedIds, 30000)
     }
 
     function focusFirstKeyboard(): void {
@@ -169,12 +170,24 @@ PanelSurface {
                             Image {
                                 id: previewImage
                                 anchors.fill: parent
+                                property bool hadReadyFrame: false
                                 source: pocketCard.previewUrl
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
                                 smooth: true
-                                mipmap: true
-                                visible: status === Image.Ready
+                                mipmap: false
+                                retainWhileLoading: true
+                                sourceSize.width: Math.round((root.listMode ? 384 : 512) * root.previewDpr)
+                                sourceSize.height: Math.round((root.listMode ? 216 : 288) * root.previewDpr)
+                                visible: opacity > 0.001
+                                opacity: status === Image.Ready
+                                    || (status === Image.Loading && hadReadyFrame) ? 1 : 0
+                                onStatusChanged: {
+                                    if (status === Image.Ready)
+                                        hadReadyFrame = true
+                                    else if (status === Image.Error || status === Image.Null)
+                                        hadReadyFrame = false
+                                }
                             }
 
                             Image {
@@ -184,7 +197,7 @@ PanelSurface {
                                 source: AppSearch.getIconSource(pocketCard.windowData?.app_id
                                     || pocketCard.info?.appId || "")
                                 fillMode: Image.PreserveAspectFit
-                                visible: !previewImage.visible
+                                visible: previewImage.opacity <= 0.001
                             }
                         }
 

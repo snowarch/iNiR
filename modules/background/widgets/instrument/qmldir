@@ -1,0 +1,6 @@
+module qs.modules.background.widgets.instrument
+InstrumentRing 1.0 InstrumentRing.qml
+InstrumentScale 1.0 InstrumentScale.qml
+InstrumentLabel 1.0 InstrumentLabel.qml
+InstrumentField 1.0 InstrumentField.qml
+InstrumentBrackets 1.0 InstrumentBrackets.qml

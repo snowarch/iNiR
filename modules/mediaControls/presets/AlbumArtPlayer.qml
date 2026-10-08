@@ -18,6 +18,7 @@ import qs.modules.mediaControls.components
  */
 Item {
     id: root
+    property bool motion: true
     property MprisPlayer player: null
     property list<real> visualizerPoints: []
     property real radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
@@ -41,6 +42,8 @@ Item {
     // keeps that). Desktop host overrides it with the wallpaper seed for cohesion.
     property color themeSourceColor: playerBase.artDominantColor
     property QtObject blendedColors: AdaptedMaterialScheme { color: root.themeSourceColor }
+    readonly property QtObject effectiveColors: Appearance.editorialEverywhere && Appearance.colors
+        ? Appearance.colors : root.blendedColors
     
     StyledRectangularShadow { 
         target: card
@@ -56,7 +59,8 @@ Item {
         radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
         color: Appearance.zzzEverywhere ? Appearance.zzz.paper : "transparent"
-        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0
+        border.width: root.vizType === "organic" && root.vizPosition !== "none"
+            ? 0 : (Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0)
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
         // Organic morph on style/shape switch (organic-transitions)
         Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
@@ -98,7 +102,7 @@ Item {
             color: Appearance.inirEverywhere 
                 ? playerBase.inirLayer1
                 : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
-                : (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
+                : (effectiveColors?.colLayer0 ?? Appearance.colors.colLayer0)
             
             MaterialSymbol {
                 anchors.centerIn: parent
@@ -107,7 +111,7 @@ Item {
                 color: Appearance.inirEverywhere 
                     ? playerBase.inirTextSecondary 
                     : Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
-                    : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
+                    : (effectiveColors?.colSubtext ?? Appearance.colors.colSubtext)
             }
         }
 
@@ -116,7 +120,7 @@ Item {
             visible: Appearance.zzzEverywhere
             label: "NOW PLAYING"
             index: "ART"
-            accentColor: blendedColors?.colPrimary ?? Appearance.zzz.accent
+            accentColor: effectiveColors?.colPrimary ?? Appearance.zzz.accent
             margin: 12
             showTicks: false
         }
@@ -140,28 +144,12 @@ Item {
         }
         
         // Visualizer overlay
-        WaveVisualizer {
-            visible: root.vizType === "wave" && root.vizPosition !== "none"
-            anchors { left: parent.left; right: parent.right }
-            y: root.vizPosition === "top" ? 0 : (parent.height - height)
-            height: root.vizPosition === "fill" ? parent.height : 40
-            live: playerBase.effectiveIsPlaying
-            points: root.visualizerPoints
-            maxVisualizerValue: 1000; smoothing: 2
-            color: ColorUtils.transparentize(root.themeSourceColor, 0.3)
-        }
-        CavaVisualizer {
-            visible: root.vizType === "bars" && root.vizPosition !== "none"
-            anchors { left: parent.left; right: parent.right }
-            y: root.vizPosition === "top" ? 0 : (parent.height - height)
-            height: root.vizPosition === "fill" ? parent.height : 40
-            live: playerBase.effectiveIsPlaying
-            points: root.visualizerPoints
-            maxVisualizerValue: 1000; smoothing: 2
-            barCount: 32; barSpacing: 2; barRadius: 2; barMinHeight: 1
-            colorLow: ColorUtils.transparentize(root.themeSourceColor, 0.3)
-            colorMed: ColorUtils.transparentize(root.themeSourceColor, 0.1)
-            colorHigh: root.themeSourceColor
+        MediaVisualizerOverlay {
+            anchors.fill: parent
+            edgeHeight: 40
+            visualizerPoints: root.visualizerPoints
+            active: playerBase.effectiveIsPlaying
+            playerColor: root.themeSourceColor
         }
         
         // Controls overlay at bottom
@@ -186,13 +174,14 @@ Item {
             
             // Progress bar
             PlayerProgress {
+                motion: root.motion
                 Layout.fillWidth: true
                 implicitHeight: 18
                 position: playerBase.effectivePosition
                 length: playerBase.effectiveLength
                 canSeek: playerBase.effectiveCanSeek
                 isPlaying: playerBase.effectiveIsPlaying
-                highlightColor: Appearance.zzzEverywhere ? (blendedColors?.colPrimary ?? Appearance.zzz.accent) : "white"
+                highlightColor: Appearance.zzzEverywhere ? (effectiveColors?.colPrimary ?? Appearance.zzz.accent) : "white"
                 trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack : ColorUtils.transparentize("white", 0.6)
                 onSeekRequested: seconds => playerBase.seek(seconds)
             }
@@ -228,7 +217,7 @@ Item {
                     buttonHoverColor: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.paperAlt, Appearance.zzz.signal, 0.92) : ColorUtils.transparentize("black", 0.3)
                     buttonRippleColor: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.32) : ColorUtils.transparentize("white", 0.5)
                     iconColor: Appearance.zzzEverywhere ? Appearance.zzz.ink : "white"
-                    playIconColor: Appearance.zzzEverywhere ? (blendedColors?.colPrimary ?? Appearance.zzz.accent) : "white"
+                    playIconColor: Appearance.zzzEverywhere ? (effectiveColors?.colPrimary ?? Appearance.zzz.accent) : "white"
                     onPreviousClicked: playerBase.previous()
                     onPlayPauseClicked: playerBase.togglePlaying()
                     onNextClicked: playerBase.next()

@@ -19,7 +19,7 @@ Item {
             fill: parent
             margins: Appearance.sizes.elevationMargin
         }
-        radius: Appearance.rounding.full
+        radius: Appearance.editorialEverywhere ? Appearance.editorial.radius : Appearance.rounding.full
         color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
              : Appearance.inirEverywhere ? Appearance.inir.colLayer1
              : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface

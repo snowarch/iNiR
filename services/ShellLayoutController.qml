@@ -233,6 +233,8 @@ Singleton {
             barEdge: "",
             dockEdge: ""
         }
+        if (root.activeFamily === "iris")
+            return root._irisDesktopInsets(outputName, result)
         if (root.activeFamily !== "ii")
             return result
 
@@ -294,6 +296,29 @@ Singleton {
                 (Config.options?.dock?.height ?? 70)
                     + Appearance.sizes.elevationMargin
                     + Appearance.sizes.hyprlandGapsOut)
+        }
+        return result
+    }
+
+    // iRiS: the Island owns one horizontal edge and the Dock the opposite one.
+    // Mirrors the geometry in modules/iris/bar/IrisBar.qml and dock/IrisDock.qml.
+    function _irisDesktopInsets(outputName: string, result: var): var {
+        const iris = Config.options?.iris ?? {}
+        const density = Math.max(0.8, Math.min(1.35, Number(iris.appearance?.density ?? 1)))
+        const barEdge = String(iris.bar?.position ?? "top") === "bottom" ? "bottom" : "top"
+        result.barEdge = barEdge
+        if (root._panelEnabled("irisBar")
+                && root._outputEnabled(iris.bar?.screenList ?? [], outputName)
+                && (GlobalStates.barOpen ?? true)) {
+            const height = Math.max(32, Math.round(Number(iris.bar?.height ?? 42) * density))
+            const margin = (iris.bar?.notch ?? false) ? 0 : Math.round(Number(iris.bar?.margin ?? 8) * density)
+            root._applyInset(result, barEdge, height + margin * 2)
+        }
+        if (iris.dock?.enable ?? true) {
+            result.dockEdge = barEdge === "bottom" ? "top" : "bottom"
+            const icon = Math.max(28, Math.min(64, Number(iris.dock?.iconSize ?? 40))) * density
+            const gap = (iris.dock?.notch ?? false) ? 0 : 10 * density
+            root._applyInset(result, result.dockEdge, icon + 18 * density + gap * 2)
         }
         return result
     }

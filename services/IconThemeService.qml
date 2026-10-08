@@ -21,6 +21,11 @@ Singleton {
     property bool _initialized: false
     property bool _restartQueued: false
 
+    // The mode is known only once the colours load (it starts dark): pick the sibling again then and on every switch,
+    // or a light scheme keeps the dark variant's white icons.
+    readonly property bool _dark: Appearance.m3colors.darkmode
+    on_DarkChanged: if (root._initialized && root.currentTheme.length > 0) root._apply(root.currentTheme, true)
+
     // Smart icon resolution: preserve app-provided identity whenever possible.
     // Only repair the duplicated Electron resources path that is known-broken.
     function smartIconName(icon, appId) {
@@ -96,10 +101,7 @@ Singleton {
         if (savedTheme && String(savedTheme).trim().length > 0) {
             root.currentTheme = String(savedTheme).trim()
             _log("[IconThemeService] Restoring saved icon theme:", root.currentTheme)
-            gsettingsSetProc.themeName = root.currentTheme
-            gsettingsSetProc.skipRestart = true
-            gsettingsSetProc.running = false
-            gsettingsSetProc.running = true
+            root._apply(root.currentTheme, true)
         } else {
             currentThemeProc.running = false
             currentThemeProc.running = true
@@ -119,10 +121,7 @@ Singleton {
         // Update UI immediately; actual system change follows via gsettings.
         root.currentTheme = themeStr
 
-        gsettingsSetProc.themeName = themeStr
-        gsettingsSetProc.skipRestart = false
-        gsettingsSetProc.running = false
-        gsettingsSetProc.running = true
+        root._apply(themeStr, false)
         
         // Persist to config.json
         Config.setNestedValue('appearance.iconTheme', themeStr)
@@ -154,6 +153,35 @@ Singleton {
             return;
         root._restartQueued = true
         restartDelay.restart()
+    }
+
+    // `currentTheme` is the family the user chose; the system gets its sibling for the scheme's mode
+    // (WhiteSur-dark on a light scheme draws white icons), the same pick apply-gtk-theme.sh makes.
+    function _apply(themeName: string, skipRestart: bool): void {
+        variantProc.themeName = themeName
+        variantProc.skipRestart = skipRestart
+        variantProc.running = false
+        variantProc.running = true
+    }
+
+    Process {
+        id: variantProc
+        property string themeName: ""
+        property bool skipRestart: false
+        property string resolved: ""
+        command: ["/usr/bin/bash", Quickshell.shellPath("scripts/colors/icon-theme-for-mode.sh"),
+            variantProc.themeName, Appearance.m3colors.darkmode ? "dark" : "light"]
+        onStarted: variantProc.resolved = ""
+        stdout: SplitParser {
+            onRead: line => variantProc.resolved = line.trim()
+        }
+        onExited: (exitCode, exitStatus) => {
+            gsettingsSetProc.themeName = exitCode === 0 && variantProc.resolved.length > 0
+                ? variantProc.resolved : variantProc.themeName
+            gsettingsSetProc.skipRestart = variantProc.skipRestart
+            gsettingsSetProc.running = false
+            gsettingsSetProc.running = true
+        }
     }
 
     Process {

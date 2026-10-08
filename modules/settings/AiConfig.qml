@@ -22,6 +22,12 @@ ContentPage {
         summary: Translation.tr("Setup · providers · behavior · privacy · voice")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
+        searchAliases: ({
+            "get started": "setup",
+            "assistant behavior": "behavior",
+            "providers & models": "providers",
+            "voice input": "voice"
+        })
         options: [
             { displayName: Translation.tr("Setup"), icon: "rocket_launch", value: "setup" },
             { displayName: Translation.tr("Providers"), icon: "cloud", value: "providers" },
@@ -34,9 +40,11 @@ ContentPage {
     Component.onCompleted: Ai.ensureInitialized()
 
     // ── Setup status ─────────────────────────────────────────────
+    SettingsTaskLoader {
+        requested: root.activeSection === "setup"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "setup"
-        visible: root.activeSection === "setup"
         expanded: true
         icon: "rocket_launch"
         title: Translation.tr("Get started")
@@ -157,11 +165,15 @@ ContentPage {
 
         }
     }
+        }
+    }
 
     // ── Providers ────────────────────────────────────────────────
+    SettingsTaskLoader {
+        requested: root.activeSection === "providers"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "providers"
-        visible: root.activeSection === "providers"
         expanded: true
         icon: "cloud"
         title: Translation.tr("Providers & models")
@@ -891,11 +903,15 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // ── Assistant behavior ───────────────────────────────────────
+    SettingsTaskLoader {
+        requested: root.activeSection === "behavior"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "behavior"
-        visible: root.activeSection === "behavior"
         expanded: true
         icon: "psychology"
         title: Translation.tr("Assistant behavior")
@@ -981,11 +997,15 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // ── Privacy ──────────────────────────────────────────────────
+    SettingsTaskLoader {
+        requested: root.activeSection === "privacy"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "privacy"
-        visible: root.activeSection === "privacy"
         expanded: true
         icon: "policy"
         title: Translation.tr("Privacy & policy")
@@ -1010,11 +1030,15 @@ ContentPage {
             }
         }
     }
+        }
+    }
 
     // ── Voice input ──────────────────────────────────────────────
+    SettingsTaskLoader {
+        requested: root.activeSection === "voice"
+        sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "voice"
-        visible: root.activeSection === "voice"
         expanded: true
         icon: "mic"
         title: Translation.tr("Voice input")
@@ -1116,6 +1140,8 @@ ContentPage {
                 color: Appearance.colors.colSubtext
                 wrapMode: Text.WordWrap
             }
+        }
+    }
         }
     }
 }

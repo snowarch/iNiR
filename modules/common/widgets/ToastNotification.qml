@@ -34,7 +34,7 @@ Item {
         fallbackColor: Appearance.colors.colLayer1
         inirColor: Appearance.inir.colLayer2
         auroraTransparency: Appearance.aurora.popupTransparentize
-        border.width: 1
+        border.width: Appearance.editorialEverywhere && !root.isError ? 0 : 1
         border.color: root.isError ? (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError) : (Appearance.angelEverywhere ? Appearance.angel.colBorder : Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : Appearance.colors.colOutlineVariant)
         Component.onCompleted: progressAnim.start()
 
@@ -92,7 +92,9 @@ Item {
                 StyledText {
                     text: root.title
                     font.pixelSize: Appearance.font.pixelSize.normal
-                    font.weight: Font.Medium
+                    font.family: Appearance.editorialEverywhere ? Appearance.font.family.title : Appearance.font.family.main
+                    font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.Medium
+                    font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
                     color: Appearance.colors.colOnLayer1
                 }
 
@@ -115,7 +117,7 @@ Item {
                 implicitHeight: 28
                 buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Appearance.rounding.small
                 colBackground: "transparent"
-                colBackgroundHover: Appearance.colLayer2Hover
+                colBackgroundHover: Appearance.colors.colLayer2Hover
                 colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Qt.rgba(0, 0, 0, 0.15)
                 onClicked: {
                     if (Quickshell.env("QS_DEBUG") === "1") console.log("[Toast] Copying to clipboard:", root.message.substring(0, 50));
@@ -149,7 +151,7 @@ Item {
                 implicitHeight: 28
                 buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Appearance.rounding.small
                 colBackground: "transparent"
-                colBackgroundHover: Appearance.colLayer2Hover
+                colBackgroundHover: Appearance.colors.colLayer2Hover
                 colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Qt.rgba(0, 0, 0, 0.15)
                 onClicked: root.dismissed()
 

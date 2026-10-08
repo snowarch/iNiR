@@ -117,32 +117,46 @@ def make_thumbnail_imagemagick(fpath: str, size_name: str) -> bool:
 
 
 def make_thumbnail(fpath: str) -> bool:
-    global current_size
+    # One unreadable file must not abort the pool and leave the rest of the folder without thumbnails.
+    try:
+        return _make_thumbnail(fpath)
+    except Exception as e:
+        logger.debug("ERROR       {} - {}".format(fpath, e))
+        return False
 
-    # Try GnomeDesktop first if available
+
+def _make_thumbnail(fpath: str) -> bool:
     if GNOME_DESKTOP_AVAILABLE and factory is not None:
-        mtime = os.path.getmtime(fpath)
-        f = Gio.file_new_for_path(str(fpath))
-        uri = f.get_uri()
-        info = f.query_info("standard::content-type", Gio.FileQueryInfoFlags.NONE, None)
-        mime_type = info.get_content_type()
-
-        if factory.lookup(uri, mtime) is not None:
-            logger.debug("FRESH       {}".format(uri))
-            return False
-
-        if factory.can_thumbnail(uri, mime_type, mtime):
-            thumbnail = factory.generate_thumbnail(uri, mime_type)
-            if thumbnail is not None:
-                logger.debug("OK          {}".format(uri))
-                factory.save_thumbnail(thumbnail, uri, mtime)
-                return True
-
-        # GnomeDesktop failed, fall through to ImageMagick
-        logger.debug("FALLBACK    {} (GnomeDesktop unsupported)".format(uri))
-
-    # Fallback to ImageMagick
+        try:
+            result = _make_thumbnail_gnome(fpath)
+        except Exception as e:
+            logger.debug("FALLBACK    {} ({})".format(fpath, e))
+            result = None
+        if result is not None:
+            return result
     return make_thumbnail_imagemagick(fpath, current_size)
+
+
+def _make_thumbnail_gnome(fpath: str):
+    """True when made, False when already fresh, None when GnomeDesktop can't do this file."""
+    mtime = os.path.getmtime(fpath)
+    f = Gio.file_new_for_path(str(fpath))
+    uri = f.get_uri()
+    mime_type = f.query_info("standard::content-type", Gio.FileQueryInfoFlags.NONE, None).get_content_type()
+
+    if factory.lookup(uri, mtime) is not None:
+        logger.debug("FRESH       {}".format(uri))
+        return False
+
+    if factory.can_thumbnail(uri, mime_type, mtime):
+        thumbnail = factory.generate_thumbnail(uri, mime_type)
+        if thumbnail is not None:
+            logger.debug("OK          {}".format(uri))
+            factory.save_thumbnail(thumbnail, uri, mtime)
+            return True
+
+    logger.debug("FALLBACK    {} (GnomeDesktop unsupported)".format(uri))
+    return None
 
 
 @logger.catch()
@@ -256,7 +270,8 @@ def main(
     recursive: bool,
     machine_progress: bool,
 ) -> None:
-    img_dirs = [Path(img_dir) for img_dir in img_dirs.split()]
+    # A folder whose name has spaces is one folder, not several.
+    img_dirs = [Path(img_dirs)] if Path(img_dirs).is_dir() else [Path(img_dir) for img_dir in img_dirs.split()]
     global factory, current_size
     current_size = size
 
