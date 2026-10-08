@@ -105,6 +105,8 @@ case "${SKIP_QUICKSHELL}" in
     II_TARGET="${XDG_CONFIG_HOME}/quickshell/inir"
 
     v mkdir -p "$II_TARGET"
+    python3 "${II_SOURCE}/sdata/lib/runtime-payload.py" retire-checkout \
+      --root "$II_SOURCE" --target "$II_TARGET" || return 1
 
     # Create backup before update (if this is an update)
     if [[ "${IS_UPDATE}" == "true" ]]; then

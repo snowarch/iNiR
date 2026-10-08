@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOL = ROOT / 'sdata/lib/runtime-payload.py'
@@ -112,6 +113,32 @@ cleanup_orphans "$2/installed" "$2/installed/.inir-manifest"
         self.assertFalse((self.target / 'scripts/release.sh').exists())
         self.assertEqual((self.target / 'assets/images/mascot/inir-mascot-installed.png').read_text(), 'optional pack')
         self.assertEqual((self.target / 'modules/AGENTS.md').read_text(), 'user-owned local file')
+
+    def test_update_retires_stale_checkout(self):
+        # A clone that once ran in place keeps its old HEAD; synced over, it blocks every later pull.
+        (self.target / '.git').mkdir(parents=True)
+        (self.target / '.git/HEAD').write_text('ref: refs/heads/main\n')
+        state = self.base / 'state'
+        with mock.patch.dict(os.environ, {'XDG_STATE_HOME': str(state)}):
+            self.payload.sync(self.target, delete=True)
+        self.assertFalse((self.target / '.git').exists())
+        retired = list((state / 'quickshell/backups').glob('runtime-git-*'))
+        self.assertEqual(len(retired), 1)
+        self.assertEqual((retired[0] / 'HEAD').read_text(), 'ref: refs/heads/main\n')
+        self.assert_payload(self.target)
+
+    def test_install_retires_only_a_separate_checkout(self):
+        env = {**os.environ, 'XDG_STATE_HOME': str(self.base / 'state')}
+        command = ['python3', str(TOOL), 'retire-checkout', '--root', str(self.source), '--target', str(self.target)]
+        (self.source / '.git').mkdir()
+        self.target.symlink_to(self.source, target_is_directory=True)
+        self.run_command(command, env=env)
+        self.assertTrue((self.source / '.git').is_dir())
+        self.target.unlink()
+        (self.target / '.git').mkdir(parents=True)
+        self.run_command(command, env=env)
+        self.assertFalse((self.target / '.git').exists())
+        self.assertEqual(len(list((self.base / 'state/quickshell/backups').glob('runtime-git-*'))), 1)
 
     def test_actual_directory_sync_functions(self):
         self.run_command(['bash', '-c', '''

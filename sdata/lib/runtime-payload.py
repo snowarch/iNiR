@@ -5,8 +5,10 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
+import time
 
 
 class Payload:
@@ -109,13 +111,32 @@ class Payload:
             rules += ['/' + relative + '/*' + s for s in suffixes]
         return ['--exclude=' + rule for rule in rules]
 
+    def separate(self, target, source=None):
+        source = (source or self.root).resolve()
+        target = Path(target).absolute()
+        return not (target.is_symlink() or target.resolve() == source or
+                    source.is_relative_to(target.resolve()) or target.resolve().is_relative_to(source))
+
+    def retire_checkout(self, target):
+        # Synced files no longer match the copy's own HEAD, and setup would update from that checkout.
+        git = Path(target) / '.git'
+        if not (git.exists() or git.is_symlink()):
+            return
+        state = Path(os.environ.get('XDG_STATE_HOME') or Path.home() / '.local/state')
+        dest = state / 'quickshell/backups' / time.strftime('runtime-git-%Y%m%d-%H%M%S')
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(git), str(dest))
+        print(f"Moved the installed copy's old .git to {dest}; updates now come from {self.root}")
+
     def sync(self, target, *, subdir=None, delete=False, out_format=None):
         # Validate before writing; rsync preserves safe relative links, never dereferences them.
         list(self.paths())
         source = self.root / subdir if subdir else self.root
         target = Path(target).absolute()
-        if target.is_symlink() or target.resolve() == source.resolve() or source.resolve().is_relative_to(target.resolve()) or target.resolve().is_relative_to(source.resolve()):
+        if not self.separate(target, source):
             raise ValueError('destination must be a separate installed directory')
+        if subdir is None:
+            self.retire_checkout(target)
         args = ['rsync', '-a', *self.filters(subdir or '')]
         if delete:
             args += ['--delete']
@@ -132,7 +153,8 @@ class Payload:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['list', 'manifest', 'copy', 'sync-dir', 'filters', 'filter-installed'])
+    parser.add_argument('command', choices=['list', 'manifest', 'copy', 'sync-dir', 'filters', 'filter-installed',
+                                            'retire-checkout'])
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument('--target', type=Path)
     parser.add_argument('--subdir')
@@ -155,9 +177,14 @@ def main():
             if not payload.excluded(line.rstrip('\n')):
                 print(line.rstrip('\n'))
         return
+    if args.command in ('copy', 'sync-dir', 'retire-checkout') and args.target is None:
+        parser.error('--target is required')
+    if args.command == 'retire-checkout':
+        # Directory-by-directory installs never sync the root; a linked checkout stays untouched.
+        if payload.separate(args.target):
+            payload.retire_checkout(args.target)
+        return
     if args.command in ('copy', 'sync-dir'):
-        if args.target is None:
-            parser.error('--target is required')
         if args.command == 'sync-dir' and args.subdir not in payload.dirs:
             parser.error('--subdir must name a runtime payload directory')
         payload.sync(args.target, subdir=args.subdir if args.command == 'sync-dir' else None,
