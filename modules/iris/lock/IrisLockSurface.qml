@@ -52,9 +52,9 @@ Item {
     readonly property bool videoWallpaper: Wallpapers.isVideoFile(root.wallpaperPath.toLowerCase())
     readonly property bool gifWallpaper: root.wallpaperPath.toLowerCase().endsWith(".gif")
     readonly property string wallpaperSource: Wallpapers.stillUrlFor(root.wallpaperPath)
-    // Afterglow's "Grade the wallpaper": the whole screen matches, the lock included (the desktop's own filter).
-    readonly property bool graded: String(Config.options?.iris?.appearance?.texture ?? "solid") === "afterglow"
-        && (Config.options?.iris?.appearance?.afterglow?.wallpaper ?? true)
+    // Afterglow's "Grade the wallpaper" and Light leak's exposure: the whole screen matches, the lock included (the
+    // desktop's own filter).
+    readonly property bool graded: IrisStyle.afterglowWallpaper || IrisStyle.leakWallpaper
     readonly property int fillMode: String(root.scene?.fit ?? "cover") === "contain"
         ? Image.PreserveAspectFit : Image.PreserveAspectCrop
     readonly property real vignette: Math.max(0, Math.min(1, Number(root.scene?.vignette ?? 0) / 100))
@@ -162,8 +162,8 @@ Item {
             Translate { id: driftShift }
         ]
 
-        // What the picture is; Afterglow, when it grades the wallpaper, draws it graded over itself inside the
-        // scenery, so drift, blur and the washes still see one item.
+        // What the picture is; a texture that filters the wallpaper (Afterglow, Light leak) draws it filtered over itself
+        // inside the scenery, so drift, blur and the washes still see one item.
         Item {
             id: sceneryContent
             anchors.fill: parent
@@ -202,7 +202,18 @@ Item {
         Loader {
             anchors.fill: parent
             active: root.graded && root.painted
-            sourceComponent: IrisAfterglowWallpaper {
+            sourceComponent: IrisStyle.leak ? leakFilter : afterglowFilter
+        }
+        Component {
+            id: afterglowFilter
+            IrisAfterglowWallpaper {
+                source: sceneryContent
+                live: root.playsVideo || root.playsGif
+            }
+        }
+        Component {
+            id: leakFilter
+            IrisLeakWallpaper {
                 source: sceneryContent
                 live: root.playsVideo || root.playsGif
             }

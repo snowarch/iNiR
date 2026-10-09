@@ -493,8 +493,9 @@ Scope {
         id: bgRoot
 
         required property var modelData
-        // Afterglow draws the container graded (and hides it): glass copies what is seen.
-        readonly property Item wallpaperLayer: afterglowLoader.item ?? wallpaperContainer
+        // An iRiS texture filter (Afterglow's grade, Light leak's exposure) draws the container (and hides it): glass copies
+        // what is seen.
+        readonly property Item wallpaperLayer: textureLoader.item ?? wallpaperContainer
         // Bumped whenever what the wallpaper layer shows can change (picture, parallax, Afterglow arriving): iRiS glass
         // copies the layer only after a bump instead of every frame the desktop redraws.
         property int wallpaperLayerRevision: 0
@@ -862,7 +863,7 @@ Scope {
         readonly property int parallaxTransitionSettleMs: ParallaxMath.resolveTransitionSettle(bgRoot.parallaxOptions, 220)
         readonly property bool externalMainWallpaperEligible: !wallpaperSafetyTriggered
             && !bgRoot.webWallpaperActive
-            && !bgRoot.afterglowWallpaperActive
+            && !bgRoot.textureWallpaperActive
             && !((bgRoot.backgroundOptions.backdrop?.enable ?? false) && (bgRoot.backgroundOptions.backdrop?.hideWallpaper ?? false))
             && AwwwBackend.supportsVisibleMainWallpaper(
                 bgRoot.wallpaperPathRaw,
@@ -880,19 +881,23 @@ Scope {
         readonly property bool externalMainWallpaperActive: bgRoot.externalMainWallpaperEligible
             && !bgRoot.effectiveHasPan
             && !bgRoot.internalShaderTransitionRequested
-            && !afterglowHandoff.running
-        // iRiS Afterglow grades whatever is drawn here (still, transition, preview, video, GIF), so the picture is drawn
-        // here, not by awww; leaving it, the picture stays drawn here until awww shows it.
-        readonly property bool afterglowWallpaperActive: (Config.options?.panelFamily ?? "ii") === "iris"
-            && String(Config.options?.iris?.appearance?.texture ?? "solid") === "afterglow"
-            && (Config.options?.iris?.appearance?.afterglow?.wallpaper ?? true)
+            && !textureHandoff.running
+        // An iRiS texture over the wallpaper (Afterglow's grade, Light leak's exposure) filters whatever is drawn here
+        // (still, transition, preview, video, GIF), so the picture is drawn here, not by awww; leaving it, the picture
+        // stays drawn here until awww shows it.
+        readonly property string irisTexture: (Config.options?.panelFamily ?? "ii") === "iris"
+            ? String(Config.options?.iris?.appearance?.texture ?? "solid") : "solid"
+        readonly property bool textureWallpaperActive: (bgRoot.irisTexture === "afterglow"
+                ? (Config.options?.iris?.appearance?.afterglow?.wallpaper ?? true)
+                : bgRoot.irisTexture === "leak" && (Number(Config.options?.iris?.appearance?.leak?.wallpaper ?? 50) > 0
+                    || Config.options?.iris?.appearance?.leak?.backdrop === "light"))
             && bgRoot.wallpaperPathRaw.length > 0
             && !bgRoot.webWallpaperActive && !bgRoot.wallpaperSafetyTriggered && !bgRoot.backdropActive
         Timer {
-            id: afterglowHandoff
+            id: textureHandoff
             interval: AwwwBackend.transitionDurationMs + 1800
         }
-        onAfterglowWallpaperActiveChanged: if (!bgRoot.afterglowWallpaperActive) afterglowHandoff.restart()
+        onTextureWallpaperActiveChanged: if (!bgRoot.textureWallpaperActive) textureHandoff.restart()
         property real preferredWallpaperScale: ParallaxMath.resolveZoom(bgRoot.parallaxOptions, 1.0)
         property real _manualWallpaperScaleOverride: 0
         property int wallpaperWidth: modelData.width
@@ -1618,7 +1623,7 @@ Scope {
                     // A scaling awww does not draw (fit, stretch, tile, center, span) hides its transition: this one runs.
                     enableTransitions: (!AwwwBackend.active
                             || bgRoot.internalShaderTransitionRequested
-                            || bgRoot.afterglowWallpaperActive
+                            || bgRoot.textureWallpaperActive
                             || !AwwwBackend.supportsFillMode(bgRoot.fillMode))
                         && (Config.options?.background?.transition?.enable ?? true)
                     transitionType: Config.options?.background?.transition?.type ?? "crossfade"
@@ -1725,14 +1730,29 @@ Scope {
             }
 
             Loader {
-                id: afterglowLoader
+                id: textureLoader
                 z: 0.5
                 anchors.fill: wallpaperContainer
-                active: bgRoot.afterglowWallpaperActive && bgRoot._familyOwnsScreen
-                sourceComponent: IrisAfterglowWallpaper {
+                active: bgRoot.textureWallpaperActive && bgRoot._familyOwnsScreen
+                sourceComponent: bgRoot.irisTexture === "leak" ? leakFilter : afterglowFilter
+            }
+            Component {
+                id: afterglowFilter
+                IrisAfterglowWallpaper {
                     onShown: bgRoot.wallpaperLayerRevision++
                     source: wallpaperContainer
                     live: bgRoot.wallpaperIsVideo || bgRoot.wallpaperIsGif
+                }
+            }
+            Component {
+                id: leakFilter
+                IrisLeakWallpaper {
+                    onShown: bgRoot.wallpaperLayerRevision++
+                    source: wallpaperContainer
+                    picture: bgRoot.wallpaperPathRaw
+                    // The light alone never shows the picture: a video under it needs no redraw.
+                    live: (bgRoot.wallpaperIsVideo || bgRoot.wallpaperIsGif)
+                        && Config.options?.iris?.appearance?.leak?.backdrop !== "light"
                 }
             }
 
@@ -1758,7 +1778,7 @@ Scope {
 
                     GaussianBlur {
                         anchors.fill: parent
-                        source: afterglowLoader.item ?? (bgRoot.wallpaperIsVideo ? videoWallpaper
+                        source: textureLoader.item ?? (bgRoot.wallpaperIsVideo ? videoWallpaper
                             : bgRoot.wallpaperIsGif ? gifWallpaper : wallpaper)
                         radius: bgRoot.effectsOptions.blurRadius ?? 32
                         // See #159 — cap samples to bound fragment shader cost

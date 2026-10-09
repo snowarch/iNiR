@@ -45,7 +45,7 @@ RULES = [
 
 # Spacing sits on the 2·d grid. Odd or half steps that predate the rule are counted, never added to.
 SPACING = re.compile(r"\b\w*(?:spacing|[Mm]argins?|[Pp]adding)\w*\s*:\s*Math\.round\(\s*(\d+(?:\.\d+)?)\s*\*\s*(?:\w+\.)?(?:d|density)\b")
-SPACING_OFF_GRID_BASELINE = 29
+SPACING_OFF_GRID_BASELINE = 28
 
 
 # A property named on + Capital whose lowercase twin is declared in the same file (`onAccent` beside `accent`) is read

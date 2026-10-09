@@ -14,6 +14,13 @@ Item {
     property Item source: null
     // A video or GIF changes every frame: the cache would only add a pass, so the grade is drawn directly.
     property bool live: false
+    // The size the frame is captured and kept at (0: the item's own). A glass copy grades at its blur's half resolution.
+    property size textureSize: Qt.size(0, 0)
+    // The graded frame as a texture an effect reads (IrisGlassSource blurs it).
+    readonly property Item texture: cache
+    // Each mip level of a smaller texture covers twice the pixels: the halation (bloom) reads one level less per halving.
+    readonly property real mipLevel: Math.max(0, 3.8 - (root.textureSize.width > 0
+        ? Math.log(Math.max(1, root.width) / root.textureSize.width) / Math.LN2 : 0))
     // The grade changed (Background's glass copies follow it; a new picture already tells them).
     signal shown()
 
@@ -27,6 +34,7 @@ Item {
         mipmap: true
         smooth: true
         visible: false
+        textureSize: root.textureSize
     }
     ShaderEffect {
         id: graded
@@ -39,7 +47,7 @@ Item {
         readonly property vector4d glowBloom: IrisStyle.afterglowBloomInk
         // xy: the drawn size; z: one texel of the bloom's mip level in uv; w: that level.
         readonly property vector4d frame: Qt.vector4d(Math.max(1, root.width), Math.max(1, root.height),
-            1.6 * 14 / Math.max(16, root.width), 3.8)
+            1.6 * 14 / Math.max(16, root.width), root.mipLevel)
         onGlowMixChanged: root.shown()
         onGlowShadowChanged: root.shown()
         onGlowLightChanged: root.shown()
@@ -55,5 +63,6 @@ Item {
         hideSource: !root.live
         visible: !root.live
         live: !root.live
+        textureSize: root.textureSize
     }
 }

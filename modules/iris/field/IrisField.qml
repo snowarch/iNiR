@@ -24,7 +24,7 @@ Item {
     readonly property real shadowFall: Math.round(3 * IrisStyle.density)
     readonly property real shadowBlur: Math.round(16 * IrisStyle.density)
     readonly property bool casts: IrisStyle.shadow.a > 0.004
-    readonly property real reach: root.smoothing + 2 + IrisStyle.afterglowReach
+    readonly property real reach: root.smoothing + 2 + IrisStyle.afterglowReach + IrisStyle.leakReach
         + (root.casts ? root.shadowFall + 1.5 * root.shadowBlur : 0)
     property bool compositorAllowed: false
     // A field that does not cover its output: its window's position on the output and the output's size.
@@ -205,6 +205,24 @@ Item {
         readonly property vector4d glowLight: IrisStyle.afterglowLight
         readonly property vector4d glowBloom: IrisStyle.afterglowBloomInk
         readonly property vector4d glowShape: IrisStyle.afterglowShape
+        readonly property vector4d leakMix: IrisStyle.leakMix
+        readonly property vector4d leakGrain: IrisStyle.leakFilm
+        readonly property vector4d leakShape: IrisStyle.leakBody
+        readonly property vector4d leakStop0: IrisStyle.leakStop0
+        readonly property vector4d leakStop1: IrisStyle.leakStop1
+        readonly property vector4d leakStop2: IrisStyle.leakStop2
+        readonly property vector4d leakStop3: IrisStyle.leakStop3
+        readonly property vector4d leakStop4: IrisStyle.leakStop4
+        readonly property vector4d leakCore: IrisStyle.leakCore
+        readonly property vector4d leakAt0: IrisStyle.leakAt0
+        readonly property vector4d leakAt1: IrisStyle.leakAt1
+        readonly property vector4d leakAt2: IrisStyle.leakAt2
+        readonly property vector4d leakForm0: IrisStyle.leakForm0
+        readonly property vector4d leakForm1: IrisStyle.leakForm1
+        readonly property vector4d leakForm2: IrisStyle.leakForm2
+        readonly property vector4d leakHue0: IrisStyle.leakHue0
+        readonly property vector4d leakHue1: IrisStyle.leakHue1
+        readonly property vector4d leakHue2: IrisStyle.leakHue2
         readonly property vector4d shape0: pass.shapeAt(0)
         readonly property vector4d shape1: pass.shapeAt(1)
         readonly property vector4d shape2: pass.shapeAt(2)

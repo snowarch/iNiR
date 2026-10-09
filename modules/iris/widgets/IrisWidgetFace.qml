@@ -10,6 +10,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.iris.components
+import qs.modules.iris.field
 import qs.modules.iris.style
 
 Item {
@@ -200,6 +201,23 @@ Item {
         border.color: root.lightBackdrop ? root.hairline : root.clear || IrisStyle.rim.a === 0 ? IrisStyle.clearRim : IrisStyle.rim
         Behavior on color { ColorAnimation { duration: IrisStyle.revealDuration; easing.type: IrisStyle.feedbackEasing } }
         Behavior on border.width { NumberAnimation { duration: IrisStyle.revealDuration; easing.type: IrisStyle.feedbackEasing } }
+    }
+
+    // Light leak: the plate is film exposed by the shell's one light, as the field's bodies are. It replaces the plate's
+    // flat colour (and its outline: an edge the light reaches burns instead) and keeps its opacity.
+    Loader {
+        anchors.fill: parent
+        active: IrisStyle.leak && root.plated && !root.clear
+        sourceComponent: IrisLeakPlate {
+            strength: IrisStyle.leakWidgets
+            at: {
+                void (root.widget.x + root.widget.y + (root.widget.parent?.x ?? 0) + (root.widget.parent?.y ?? 0) + root.width + root.height)
+                return root.mapToItem(null, 0, 0)
+            }
+            output: Qt.size(root.widget.screenWidth, root.widget.screenHeight)
+            radius: root.radius
+            base: root.plateColor
+        }
     }
 
     IrisGlassEdge {

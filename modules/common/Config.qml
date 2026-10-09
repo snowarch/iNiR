@@ -4000,7 +4000,7 @@ Singleton {
                     property bool materialForApps: true // with the wallpaper colour theme, terminals and apps sit on the shell's material
                     property bool accentForApps: true // with the wallpaper colour theme, apps take the shell's own accent when it has one
                     property string controlPlate: "none" // rows of round controls: "none", "veil", "glass" or "solid" (IrisControlPlate)
-                    property string texture: "solid" // what the material is drawn as: "solid" or "afterglow" (IrisField.frag)
+                    property string texture: "solid" // what the material is drawn as: "solid", "afterglow" or "leak" (IrisField.frag)
                     // Afterglow: grade "dusk", "cyber", "fog" or "wallpaper"; the rest 0..100 %; wallpaper grades the desktop too.
                     property JsonObject afterglow: JsonObject {
                         property string grade: "dusk"
@@ -4009,6 +4009,29 @@ Singleton {
                         property int bloom: 50
                         property int signal: 35
                         property bool wallpaper: true
+                    }
+                    // Light leak: grade "prism", "ember", "orchid", "polaroid", "accent" or "wallpaper"; shape "lens", "burn",
+                    // "orbs" or "beam"; x/y move the light (-50..50 % of the output); the rest 0..100 %; wallpaper is how
+                    // strongly the desktop is exposed (0 off), frame the screen edge's band, widgets the desktop widgets;
+                    // grainSize in px (1..4), dust 0..200 %, gate the lens's corners and film edge, develop the Polaroid rise.
+                    property JsonObject leak: JsonObject {
+                        property string grade: "prism"
+                        property string shape: "lens"
+                        property int x: 0
+                        property int y: 0
+                        property int light: 60
+                        property int frame: 100
+                        property int widgets: 100
+                        property int spill: 55
+                        property int prism: 50
+                        property int grain: 55
+                        property real grainSize: 1.6
+                        property int streaks: 15
+                        property int dust: 100
+                        property bool gate: true
+                        property int wallpaper: 50
+                        property string backdrop: "picture"
+                        property bool develop: true
                     }
                     // Per scheme: tone lifts or dims the material (-30..30), colour is how strong accents read (0..100 %),
                     // widgets is how colourful the desktop widgets read (40..160 %), lume makes bodies frost the wallpaper

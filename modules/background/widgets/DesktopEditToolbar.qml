@@ -203,6 +203,13 @@ Item {
         height: root.height + irisNotchField.deep
         framed: false
         tint: IrisStyle.surface
+        // A texture's light is the output's (Light leak, Afterglow): placed where the toolbar sits on it, not stretched
+        // over the toolbar. Only iRiS draws this field.
+        sceneOrigin: {
+            void (root.x + root.y + (root.parent?.x ?? 0) + (root.parent?.y ?? 0) + irisNotchField.y)
+            return irisNotchField.mapToItem(null, 0, 0)
+        }
+        sceneSize: Qt.size(irisNotchField.QsWindow.window?.width ?? 0, irisNotchField.QsWindow.window?.height ?? 0)
         shapes: !root.iris ? [] : [
             { x: 0, y: root.attachedTopEdge ? 0 : root.height, width: irisNotchField.width, height: irisNotchField.deep,
                 radius: 0, paints: true, fuse: 0, id: "edge" },

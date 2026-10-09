@@ -2,3 +2,4 @@ module qs.modules.iris.background
 IrisBackground 1.0 IrisBackground.qml
 singleton IrisDesktopActions 1.0 IrisDesktopActions.qml
 IrisAfterglowWallpaper 1.0 IrisAfterglowWallpaper.qml
+IrisLeakWallpaper 1.0 IrisLeakWallpaper.qml

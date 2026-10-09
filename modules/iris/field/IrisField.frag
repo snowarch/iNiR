@@ -109,6 +109,25 @@ layout(std140, binding = 0) uniform buf {
     vec4 shade;
     // x: how far down it falls, y: its blur, in pixels; z: 1 while it is drawn.
     vec4 shadeShape;
+    // Light leak (IrisStyle.leak*): one light per output, the same IrisLeakWallpaper.frag lays over the wallpaper.
+    // x: on, y: light, z: spill, w: prism, each 0..1.
+    vec4 leakMix;
+    // x: grain, y: streaks, each 0..1; z: the grain's size, w: how far the spill reaches, in pixels.
+    vec4 leakGrain;
+    // x: how deep the rim that faces the light burns, in pixels, one for every body so a weld never steps; y: the
+    // band's share of the spill; z: how strongly the frame's band is exposed (Light leak › Frame), blended into the bodies
+    // welded to it by nearness, never cut at a shoulder.
+    vec4 leakShape;
+    // The grade, warm end to cool end. leakStop0.a: 1 on a paper scheme.
+    vec4 leakStop0; vec4 leakStop1; vec4 leakStop2; vec4 leakStop3; vec4 leakStop4;
+    // rgb: the white the grade's hottest light runs to.
+    vec4 leakCore;
+    // Three sources. At: centre in the output's uv, radii in output heights. Form: x rotation (radians), y intensity,
+    // z a ring's width in radii (0: a disc), w how much brighter its upper side is (-1..1). Hue: where on the grade,
+    // x + y·distance + z·up + w·across.
+    vec4 leakAt0; vec4 leakAt1; vec4 leakAt2;
+    vec4 leakForm0; vec4 leakForm1; vec4 leakForm2;
+    vec4 leakHue0; vec4 leakHue1; vec4 leakHue2;
 } u;
 layout(binding = 1) uniform sampler2D backdrop;
 
@@ -173,6 +192,95 @@ float blurredEdge(float x) {
 // a long shadow ramp leave, without a texture.
 float ign(vec2 p) {
     return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
+}
+
+// Light leak. IrisLeakWallpaper.frag and IrisLeakPlate.frag keep copies of leakHash, leakNoise, leakRamp and
+// leakLight, and IrisLeakPlate.frag of the bodies' film below: change all three.
+float leakHash(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float leakNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(leakHash(i), leakHash(i + vec2(1.0, 0.0)), f.x),
+               mix(leakHash(i + vec2(0.0, 1.0)), leakHash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+vec3 leakRamp(float t) {
+    float s = clamp(t, 0.0, 1.0) * 4.0;
+    vec3 a = s < 1.0 ? u.leakStop0.rgb : s < 2.0 ? u.leakStop1.rgb : s < 3.0 ? u.leakStop2.rgb : u.leakStop3.rgb;
+    vec3 b = s < 1.0 ? u.leakStop1.rgb : s < 2.0 ? u.leakStop2.rgb : s < 3.0 ? u.leakStop3.rgb : u.leakStop4.rgb;
+    float f = s - min(floor(s), 3.0);
+    return mix(a, b, f * f * (3.0 - 2.0 * f));
+}
+
+// The leak's exposure at a point of the output, in pixels: three soft shapes of light (a lens, an orb, a beam), each
+// spread per channel by the prism (red reaches furthest, as through a lens and a film's halation), their edges
+// scattered by the grain (the grain-gradient look of the textures it comes from), broken into streaks, then exposed
+// like film (1 - e^-x) so a hot core whitens instead of clipping. `wash` is the colour every point takes, lit or not;
+// `toward` the way the light comes from at that point (unit, y down), so an edge burns only where it faces it.
+vec3 leakLight(vec2 at, vec2 size, float scatter, out vec3 wash, out vec2 toward) {
+    float aspect = size.x / max(size.y, 1.0);
+    vec2 q = at / max(size.y, 1.0);
+    float prism = u.leakMix.w;
+    vec3 sum = vec3(0.0);
+    float tone = 0.0;
+    float weights = 0.0;
+    vec2 from = vec2(0.0);
+    for (int i = 0; i < 3; ++i) {
+        vec4 place = i == 0 ? u.leakAt0 : i == 1 ? u.leakAt1 : u.leakAt2;
+        vec4 form = i == 0 ? u.leakForm0 : i == 1 ? u.leakForm1 : u.leakForm2;
+        vec4 hue = i == 0 ? u.leakHue0 : i == 1 ? u.leakHue1 : u.leakHue2;
+        if (form.y <= 0.0)
+            continue;
+        vec2 d = q - vec2(place.x * aspect, place.y);
+        float c = cos(form.x);
+        float s = sin(form.x);
+        d = vec2(c * d.x + s * d.y, c * d.y - s * d.x) / max(place.zw, vec2(1e-3));
+        float rho = length(d);
+        float up = -d.y / max(rho, 1e-4);
+        float t = hue.x + hue.y * rho + hue.z * up * min(1.0, rho * 2.5) + hue.w * d.x;
+        float strength = form.y * max(0.0, 1.0 + form.w * up);
+        float weight = strength / (1.0 + 2.0 * rho * rho);
+        tone += weight * t;
+        weights += weight;
+        // Down the shape's own slope (its scaled, rotated distance taken back to the screen), so a thin horizon lights
+        // the edges that face it, not the ones that face its centre.
+        vec2 slope = d / max(place.zw, vec2(1e-3));
+        slope = vec2(c * slope.x - s * slope.y, s * slope.x + c * slope.y);
+        from -= slope / max(length(slope), 1e-4) * weight;
+        vec3 ramp = leakRamp(t) * strength;
+        for (int ch = 0; ch < 3; ++ch) {
+            float spread = float(ch - 1);
+            float r = rho * (1.0 + prism * 0.07 * spread);
+            // The grain scatters where the shape ends, so its edge dissolves into grain instead of ending.
+            float x = (form.z > 0.0 ? (r - 1.0) / form.z : r) * (1.0 + scatter);
+            float x2 = x * x;
+            // A body of light with a soft shoulder and a faint glow past it: light that leaks has no hard edge.
+            float fall = exp(-1.6 * x2 * (1.0 + x2)) + 0.1 / (1.0 + 5.0 * x2);
+            sum[ch] += ramp[ch] * fall;
+        }
+    }
+    float streak = 0.5 * leakNoise(vec2(at.x / 7.0, at.y / 260.0)) + 0.5 * leakNoise(vec2(at.x / 23.0, at.y / 140.0));
+    sum *= mix(1.0, 0.5 + streak, u.leakGrain.y);
+    // Exposed like film: the hue holds while the light rises.
+    float peak = max(sum.r, max(sum.g, sum.b));
+    float exposed = 1.0 - exp(-1.4 * peak);
+    vec3 hue = sum / max(peak, 1e-4);
+    // The colour every point takes, lit or not: the light's own hue where it is strong, the grade where it fades,
+    // at full saturation (max channel 1). It is what turns a body into a grain gradient.
+    // It drifts along the grade across the screen, so each body carries its own stretch of the gradient.
+    float drift = (0.6 * at.x / max(size.x, 1.0) + 0.4 * at.y / max(size.y, 1.0) - 0.5) * 0.5;
+    vec3 grade = leakRamp((weights > 1e-4 ? tone / weights : 0.0) + drift);
+    wash = mix(grade, hue, smoothstep(0.05, 0.6, exposed));
+    wash /= max(max(wash.r, max(wash.g, wash.b)), 1e-3);
+    toward = from / max(length(from), 1e-4);
+    // Its core runs to the grade's own white: the colour lives where the light fades, as on film.
+    return mix(hue * exposed, u.leakCore.rgb * exposed, 0.6 * smoothstep(0.5, 1.0, exposed));
 }
 
 void main() {
@@ -280,6 +388,50 @@ void main() {
         fragColor = vec4(0.0);
         return;
     }
+    // How deep a point sits in the material, for what a texture draws inside it (Afterglow's bevel and bloom, Light leak's
+    // burn). A body welded to the frame that only meets the band's inner line (the Island at rest, the widget bar) unites
+    // with it by a smooth minimum just k/4 deep along that line, and the bevel and the burn drew it as a crease across
+    // the body. For the depth alone that seam is filled: the silhouette stays as it is, the inside whole.
+    float inner = united;
+    if ((u.glowMix.x > 0.5 || u.leakMix.x > 0.5) && u.field.y > 0.5 && united < 0.0) {
+        vec2 lo = frameCentre - frameHalf - u.scene.xy;
+        vec2 hi = frameCentre + frameHalf - u.scene.xy;
+        float deeper = united;
+        for (int i = 0; i < 20; ++i) {
+            if (bodies[i] > FAR)
+                continue;
+            int block = i / 4;
+            int slot = i - block * 4;
+            if (blockValue(block, slot, u.joinA, u.joinB, u.joinC, u.joinD, u.joinE) > -0.5
+                && blockValue(block, slot, u.alsoA, u.alsoB, u.alsoC, u.alsoD, u.alsoE) > -0.5)
+                continue;
+            vec4 s = shapeAt(i);
+            float r = min(blockValue(block, slot, u.radiiA, u.radiiB, u.radiiC, u.radiiD, u.radiiE), min(s.z, s.w));
+            float under = u.field.z + 2.0;
+            vec2 a = s.xy - s.zw;
+            vec2 b = s.xy + s.zw;
+            // A strip over the run of each side that meets the band, from a radius inside the body to past the band. It runs
+            // on into the corners as far as their curve stays within the crease's depth of the band (k/4): beyond that the
+            // lobe a rounded corner leaves at the weld keeps its own edge.
+            float k = max(0.0, blockValue(block, slot, u.fuseA, u.fuseB, u.fuseC, u.fuseD, u.fuseE));
+            float c = min(r, 0.25 * k + 1.5);
+            float e = sqrt(max(0.0, r * r - (r - c) * (r - c)));
+            vec2 run = min(s.zw, s.zw - r + e);
+            if (s.w > r + 0.5) {
+                if (abs(a.x - lo.x) < 3.0)
+                    deeper = min(deeper, roundedBox(p, vec2((lo.x - under + a.x + r) * 0.5, s.y), vec2((a.x + r - lo.x + under) * 0.5, run.y), 0.0));
+                if (abs(b.x - hi.x) < 3.0)
+                    deeper = min(deeper, roundedBox(p, vec2((b.x - r + hi.x + under) * 0.5, s.y), vec2((hi.x + under - b.x + r) * 0.5, run.y), 0.0));
+            }
+            if (s.z > r + 0.5) {
+                if (abs(a.y - lo.y) < 3.0)
+                    deeper = min(deeper, roundedBox(p, vec2(s.x, (lo.y - under + a.y + r) * 0.5), vec2(run.x, (a.y + r - lo.y + under) * 0.5), 0.0));
+                if (abs(b.y - hi.y) < 3.0)
+                    deeper = min(deeper, roundedBox(p, vec2(s.x, (b.y - r + hi.y + under) * 0.5), vec2(run.x, (hi.y + under - b.y + r) * 0.5), 0.0));
+            }
+        }
+        inner = mix(united, deeper, smoothstep(2.0, 5.0, united - deeper));
+    }
     // Derivatives at the top level: inside a branch that differs between neighbours they are undefined.
     // The gradient in the item's own space (y down on every backend): screen derivatives run y up on OpenGL.
     vec2 dp = vec2(dFdx(p.x), dFdy(p.y));
@@ -303,9 +455,9 @@ void main() {
         if (u.glass.y > 0.5) share.y += given; else share.x += given;
     }
     if (u.glass.x < 0.5) { share.x += share.y; share.y = 0.0; }
+    vec3 behind = share.y > 0.0 ? texture(backdrop, clamp((p + u.scene.xy) / max(u.scene.zw, vec2(1.0)), 0.0, 1.0)).rgb : vec3(0.0);
     if (share.x < 0.999) {
         float a = coverage * u.qt_Opacity;
-        vec3 behind = share.y > 0.0 ? texture(backdrop, clamp((p + u.scene.xy) / max(u.scene.zw, vec2(1.0)), 0.0, 1.0)).rgb : vec3(0.0);
         vec4 solid = vec4(u.tint.rgb, 1.0) * u.tint.a;
         vec4 glassy = vec4(mix(behind, u.tint.rgb, u.glass.z), 1.0);
         vec4 blurred = vec4(u.tint.rgb * u.glass.z, u.glass.z);
@@ -317,32 +469,36 @@ void main() {
         bool paper = u.glowShadow.a > 0.5;
         float bevel = max(1.0, u.glowShape.x);
         float radiusBloom = max(1.0, u.glowBloom.a);
-        // Blended by nearness so a join shades from one body into the other instead of creasing.
+        // Blended by nearness so a join shades from one body into the other instead of creasing. The frame and the
+        // bodies welded to it are one chassis lit across the output: a Dock lit from its own top met the dark band at
+        // its shoulders as a second object. A floating body is lit across itself.
         float gouraudSum = 0.0;
+        float lipSum = 0.0;
         float weightSum = 0.0;
-        float nearest = frameDistance;
-        float nearestHalf = 1e4;
+        vec2 across = clamp(frameP / size, 0.0, 1.0);
+        float chassisLight = mix(mix(1.0, 0.82, across.x), mix(0.34, 0.22, across.x), across.y);
         if (u.field.y > 0.5) {
             float w = exp(-clamp(frameDistance - united, 0.0, 60.0) / 12.0);
-            vec2 t = clamp(frameP / size, 0.0, 1.0);
-            gouraudSum += w * mix(mix(1.0, 0.82, t.x), mix(0.34, 0.22, t.x), t.y);
+            gouraudSum += w * chassisLight;
+            lipSum += w * bevel;
             weightSum += w;
         }
         for (int i = 0; i < 20; ++i) {
             if (bodies[i] > FAR)
                 continue;
             vec4 s = shapeAt(i);
+            int block = i / 4;
+            int slot = i - block * 4;
+            bool welded = u.field.y > 0.5 && (blockValue(block, slot, u.joinA, u.joinB, u.joinC, u.joinD, u.joinE) < -0.5
+                || blockValue(block, slot, u.alsoA, u.alsoB, u.alsoC, u.alsoD, u.alsoE) < -0.5);
             float w = exp(-clamp(bodies[i] - united, 0.0, 60.0) / 12.0);
             vec2 t = clamp((p - s.xy + s.zw) / max(2.0 * s.zw, vec2(1.0)), 0.0, 1.0);
-            gouraudSum += w * mix(mix(1.0, 0.82, t.x), mix(0.34, 0.22, t.x), t.y);
+            gouraudSum += w * (welded ? chassisLight : mix(mix(1.0, 0.82, t.x), mix(0.34, 0.22, t.x), t.y));
+            // A small body wears a lip in proportion, never a panel's; blended like the light, so it never steps at a weld.
+            lipSum += w * min(bevel, max(2.0, 0.3 * min(s.z, s.w)));
             weightSum += w;
-            if (bodies[i] < nearest) {
-                nearest = bodies[i];
-                nearestHalf = min(s.z, s.w);
-            }
         }
-        // A small body wears a lip in proportion, never a panel's.
-        float lip = min(bevel, max(2.0, 0.3 * nearestHalf));
+        float lip = weightSum > 0.0 ? lipSum / weightSum : bevel;
         float gouraud = weightSum > 0.0 ? gouraudSum / weightSum : 0.6;
         // Normals from the joined field (central differences): per-body normals break at welds. Corners tighter than the
         // bevel are rounded for the normal only, or a box's gradient creases along its diagonal. Costly: near edges only.
@@ -396,7 +552,7 @@ void main() {
         vec2 n = grad / max(slopeLength, 1e-4);
         float facing = dot(n, vec2(-0.42, -0.91));
         // A smooth union is not a true distance inside its fillet: measured by its own slope the bevel keeps its width.
-        float depth = -united / clamp(slopeLength, 0.5, 1.0);
+        float depth = -inner / clamp(slopeLength, 0.5, 1.0);
         float atmosphere = u.glowLight.a;
         float chrome = u.glowMix.y;
         float bloom = u.glowMix.z;
@@ -436,8 +592,9 @@ void main() {
         // The band round the screen blooms at half: it is a frame, not a light. Paper never blooms: it read as a white cloud.
         if (united > 0.0 && !paper) {
             float halo = bloom * exp(-united / radiusBloom) * (0.45 + 0.55 * max(facing, 0.0)) * (1.0 - coverage) * u.qt_Opacity;
-            if (u.field.y > 0.5 && frameDistance - united < 0.5)
-                halo *= 0.5;
+            // By nearness, not by a threshold: a switch at the band drew a line out of every shoulder.
+            if (u.field.y > 0.5)
+                halo *= 1.0 - 0.5 * exp(-max(frameDistance - united, 0.0) / 24.0);
             colour += u.glowBloom.rgb * halo * 0.42;
         }
         float pitch = max(2.0, u.glowShape.y);
@@ -445,6 +602,121 @@ void main() {
         colour *= 1.0 - signal * (paper ? 0.1 : 0.3) * (1.0 - line);
         colour += bayer4(frameP) * (1.5 / 255.0) * alpha;
         colour = max(colour, vec3(0.0));
+    }
+    // Light leak: every body is film exposed by one light per output: a grain gradient of the grade inside (photo paper
+    // on a paper scheme), the edge that faces the light burnt and split, a halation spilling past the silhouette whose
+    // tail breaks into grain. Glass keeps its frost and the light scatters in it. Nothing here depends on which body a
+    // pixel belongs to, so the band, the Dock and a bubble are one material through every weld.
+    if (u.leakMix.x > 0.5) {
+        float reach = max(1.0, u.leakGrain.w);
+        if (united < 4.0 * reach) {
+            bool paper = u.leakStop0.a > 0.5;
+            // The frame's own exposure (Texture › Frame) shades into the bodies' over a weld instead of stepping at it.
+            float banded = u.field.y > 0.5 ? exp(-max(frameDistance - united, 0.0) / 24.0) : 0.0;
+            float exposure = mix(1.0, u.leakShape.z, banded);
+            float light = u.leakMix.y * exposure;
+            float spill = u.leakMix.z * exposure * mix(1.0, u.leakShape.y, banded);
+            float grain = u.leakGrain.x;
+            float prism = u.leakMix.w;
+            vec2 cell = floor(frameP);
+            float g = 0.6 * leakHash(cell) + 0.4 * leakNoise(frameP / max(1.0, u.leakGrain.z)) - 0.5;
+            vec3 wash;
+            vec2 toward;
+            vec3 leak = leakLight(frameP, size, g * grain, wash, toward);
+            vec3 chroma = vec3(leakHash(cell + 31.0), leakHash(cell + 57.0), leakHash(cell + 83.0)) - 0.5;
+            float lv = max(leak.r, max(leak.g, leak.b));
+            float grained = clamp(lv + g * grain * 0.12, 0.0, 1.0);
+            // One lip for every body, and an edge burns only where it faces the light, as the edge a leak enters film by:
+            // a lip sized per body stepped where the thin band met the Dock, and a burn on every side outlined each body.
+            float slope = length(unitedSlope);
+            vec2 outward = unitedSlope / max(slope, 1e-4);
+            float facing = smoothstep(-0.1, 0.8, dot(outward, toward));
+            float depth = max(0.0, -inner / clamp(slope, 0.5, 1.0));
+            float lip = max(1.0, u.leakShape.x);
+            float burn = light * lv * facing * exp(-depth / lip);
+            // A lit edge splits the light as a cut prism does: the grade's spectrum across the first pixels in, its warm end
+            // outermost. Only where the light is strong.
+            float band = clamp(depth / (1.5 + 4.0 * prism), 0.0, 1.0);
+            float split = smoothstep(0.3, 0.8, lv) * facing * light * prism * (1.0 - band) * (1.0 - band) * 1.6;
+            vec3 spectrum = leakRamp(band);
+            const vec3 lumaW = vec3(0.2126, 0.7152, 0.0722);
+            vec3 base = u.tint.rgb;
+            vec3 frost = mix(behind, u.tint.rgb, u.glass.z);
+            float a = coverage * u.qt_Opacity;
+            vec3 solidC = vec3(0.0);
+            vec3 glassC = vec3(0.0);
+            if (paper) {
+                // Photo paper toned by the light: the grade's pastel everywhere, the light's own colour where it lands, lifted
+                // toward white there, warmer at the edge it enters by. Never darker than dark ink reads on (4.5:1). Glass
+                // is the same paper over its own frost.
+                vec3 pastel = mix(vec3(1.0), wash, 0.6);
+                for (int k = 0; k < 2; ++k) {
+                    if ((k == 0 ? share.x : 1.0 - share.x) < 0.001)
+                        continue;
+                    vec3 m = k == 0 ? base : (share.y > share.z ? frost : base);
+                    m = mix(m, m * pastel * 1.05, min(1.0, light * (0.6 + 0.5 * grained)));
+                    m *= mix(vec3(1.0), leak / max(lv, 1e-3), 0.35 * lv * light);
+                    m += (vec3(1.0) - m) * leak * light * 0.45;
+                    m *= mix(vec3(1.0), wash, 0.5 * burn);
+                    m *= mix(vec3(1.0), spectrum * 1.15, min(1.0, split * 0.6));
+                    m *= 1.0 + g * grain * 0.2;
+                    m += chroma * grain * 0.035;
+                    float lum = dot(m * m, lumaW);
+                    m = mix(m, vec3(1.0), max(0.0, 0.24 - lum) / max(1.0 - lum, 1e-3));
+                    if (k == 0) solidC = m; else glassC = m;
+                }
+            } else {
+                if (share.x > 0.001) {
+                    // Smoked film over the light: its shapes show through, the grade tints what they miss, and it rolls off
+                    // toward the luminance light text reads on (4.5:1) slowly enough that the light keeps its shape.
+                    // What comes through is the light's own hue at full saturation (wash), never its white core: a
+                    // bright light behind smoked glass reads as deep amber, not as grey.
+                    vec3 m = base * 0.7 + u.leakStop4.rgb * 0.035 + vec3(0.014, 0.010, 0.008);
+                    m += wash * (0.75 * lv + 0.3 + 0.4 * grained) * light;
+                    float lum = dot(m * m, lumaW);
+                    float held = 0.16 * lum / (lum + 0.16);
+                    m *= sqrt(held / max(lum, 1e-5));
+                    m += (g * (0.06 + 0.9 * sqrt(held)) + 0.012) * grain + chroma * grain * 0.04;
+                    solidC = m;
+                }
+                if (share.x < 0.999) {
+                    // Glass keeps its frost and the light scatters in it: through the whole pane as in a diffuser, and
+                    // in from the edge that faces it as into an edge-lit pane, fading a few lips in. Screen-blended and
+                    // held to a small lift over what the frost already is, so the tint (and Lume) keep text readable.
+                    vec3 under = share.y > share.z ? frost : base;
+                    float edgeLit = facing * exp(-depth / (8.0 * lip));
+                    vec3 scatter = clamp((leak * (0.45 + 0.9 * edgeLit) + wash * (0.06 + 0.14 * grained)) * light, 0.0, 1.0);
+                    vec3 m = vec3(1.0) - (vec3(1.0) - under) * (vec3(1.0) - scatter);
+                    float lift = max(0.0, dot(m * m, lumaW) - dot(under * under, lumaW));
+                    m = mix(under, m, 0.12 / (0.12 + lift));
+                    m += (g * (0.05 + 0.5 * lv * light) + 0.006) * grain + chroma * grain * 0.025;
+                    glassC = m;
+                }
+            }
+            // What the edge facing the light adds, on every material.
+            vec3 edgeLight = paper ? vec3(0.0) : leak * burn + spectrum * split * 0.8;
+            vec3 dither = vec3((ign(cell) - 0.5) / 255.0);
+            vec4 solidOut = vec4(clamp(solidC + edgeLight + dither, 0.0, 1.0), 1.0) * u.tint.a;
+            vec4 glassOut = vec4(clamp(glassC + edgeLight + dither, 0.0, 1.0), 1.0);
+            // Compositor glass: the material at the glass tint, and the light lit in the blur under it too (a light layer
+            // over the compositor's blur, the only way to reach it).
+            vec4 heldOut = vec4(clamp(glassC + edgeLight + dither, 0.0, 1.0) * u.glass.z, u.glass.z);
+            heldOut.rgb += clamp((leak * (0.3 + 0.7 * facing * exp(-depth / (8.0 * lip))) + wash * 0.05 * grained) * light, 0.0, 1.0)
+                * (1.0 - u.glass.z) * 0.6;
+            vec4 body = (solidOut * share.x + glassOut * share.y + heldOut * share.z) * a;
+            colour = body.rgb;
+            alpha = body.a;
+            if (united > -0.7) {
+                vec3 fall = exp(-max(united, 0.0) / (reach * vec3(1.0 + 0.6 * prism, 1.0, 1.0 - 0.35 * prism)));
+                float tail = smoothstep(0.0, 2.5 * reach, united);
+                float dust = leakHash(floor(frameP * 0.5) + 17.0) - 0.5;
+                // Ends before the pass does (IrisStyle.leakReach), or its last level draws a seam.
+                float window = 1.0 - smoothstep(2.4 * reach, 3.8 * reach, united);
+                vec3 halo = leak * fall * window * spill * (paper ? 0.45 : 0.85) * (0.35 + 0.65 * facing)
+                    * max(0.0, 1.0 + grain * (0.6 + 1.4 * tail) * dust);
+                colour += halo * (1.0 - coverage) * u.qt_Opacity;
+            }
+        }
     }
     // Glass has a cut edge that catches the light from above, like Liquid Glass: bright where it faces up, a faint
     // line elsewhere, in the scene's own light. Without it wallpaper glass over a dimmed desktop has no edge at

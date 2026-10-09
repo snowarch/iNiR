@@ -363,6 +363,137 @@ QtObject {
     readonly property vector4d afterglowLight: root.colourVector(Qt.color(root.afterglowPalette.light), root.afterglowAtmosphere)
     readonly property vector4d afterglowBloomInk: root.colourVector(Qt.color(root.afterglowPalette.bloom), root.afterglowBloomRadius)
     readonly property vector4d afterglowShape: Qt.vector4d(Math.round(8 * root.density), 3, 1.25 * root.density, 0)
+    // Light leak (DESIGN §0.3): analog light on film. One light per output exposes the bodies (a grain gradient of the
+    // grade inside, a burn on the rim it enters by), the plates the field does not draw (IrisLeakPlate) and the wallpaper
+    // (IrisLeakWallpaper), so all of it is one exposure.
+    readonly property bool leak: String(root.appearance?.texture ?? "solid") === "leak"
+    // The field draws the material with a texture: groups and fills go sheer so it shows through them.
+    readonly property bool textured: root.afterglow || root.leak
+    readonly property var leakOptions: root.appearance?.leak ?? ({})
+    function leakPercent(name: string, fallback: real): real {
+        const value = Number(root.leakOptions?.[name] ?? fallback)
+        return Math.max(0, Math.min(100, isNaN(value) ? fallback : value)) / 100
+    }
+    // iris-literal: each grade is a fixed film colour: five stops from its warm end to its cool end, the white its
+    // hottest light runs to, and the glow that stands for it (wallpaperLight).
+    readonly property var leakGrades: ({
+        prism: { label: "Prism", core: "#fff6ea", glow: "#b48cff", stops: ["#ff5a3c", "#ffcf6b", "#d8fbff", "#4f86ff", "#a35dff"] },
+        ember: { label: "Ember", core: "#fff0d4", glow: "#ff9a3c", stops: ["#fff0d4", "#ffb25a", "#f2581f", "#a3241a", "#3d0f0f"] },
+        orchid: { label: "Orchid", core: "#ffe6f5", glow: "#ff5fb8", stops: ["#ffd0ee", "#ff6cc4", "#e0369c", "#7a3dff", "#2b2bd0"] },
+        polaroid: { label: "Polaroid", core: "#fff4dc", glow: "#ff9e7a", stops: ["#fff4dc", "#ffbf78", "#ff6aa0", "#55cfff", "#3567e0"] }
+    })
+    readonly property string leakGrade: ["prism", "ember", "orchid", "polaroid", "accent", "wallpaper"].includes(String(root.leakOptions?.grade ?? ""))
+        ? root.leakOptions.grade : "prism"
+    function leakColours(grade: string): var {
+        if (grade === "accent") {
+            // The highlight's hue at the warm end, the accent's at the cool end, the arc between them pale in the middle:
+            // the film takes the theme's two colours at fixed strengths, so it reads the same in every scheme.
+            const a = Qt.color(root.accent)
+            const h = Qt.color(root.secondaryAccent)
+            const cool = a.hslHue < 0 ? 0.62 : a.hslHue
+            const warm = h.hslHue < 0 ? (cool + 0.12) % 1 : h.hslHue
+            const arc = ((cool - warm + 1.5) % 1) - 0.5
+            const hue = (t, s, l) => Qt.hsla((warm + arc * t + 1) % 1, s, l, 1)
+            return { core: hue(0, 0.7, 0.95), glow: hue(1, 0.85, 0.66),
+                stops: [hue(0, 0.9, 0.62), hue(0.15, 0.9, 0.74), hue(0.5, 0.55, 0.88), hue(1, 0.82, 0.62), hue(1.1, 0.75, 0.46)] }
+        }
+        if (grade !== "wallpaper") return root.leakGrades[grade] ?? root.leakGrades.prism
+        // The wallpaper's hue spread into a spectrum: warmer and paler beside it, its complement at the cool end.
+        const seed = Qt.color(Appearance.wallpaperDominantColor)
+        const hue = seed.hslHue < 0 ? 0.08 : seed.hslHue
+        const at = (shift, s, l) => Qt.hsla((hue + shift + 1) % 1, s, l, 1)
+        return { core: at(0.02, 0.7, 0.95), glow: root.vividHighlight(seed, root.leakGrades.prism.glow),
+            stops: [at(-0.07, 0.9, 0.58), at(0, 0.9, 0.7), at(0.04, 0.6, 0.88), at(0.45, 0.8, 0.62), at(0.6, 0.7, 0.5)] }
+    }
+    readonly property var leakPalette: root.leakColours(root.leakGrade)
+    // iris-literal: where the light falls, as three soft shapes: centre in the output's uv and radii in output heights
+    // (`at`), rotation, intensity, a ring's width (0: filled) and how much brighter its top is (`form`), and where on the
+    // grade it sits: offset, by distance, by height, across (`hue`). Each is one of the textures it comes from: Lens the
+    // prismatic eye over a hot horizon, Burn a corner of film burnt by the light, Orbs grain-gradient spheres, Beam a
+    // spectrum falling down one side under a stroke of light.
+    readonly property var leakShapes: ({
+        lens: [{ at: [0.5, 0.47, 0.6, 0.3], form: [0, 0.95, 0, 0.2], hue: [0.22, 0.62, 0.18, 0] },
+            { at: [0.5, 0.53, 0.72, 0.022], form: [0, 1.4, 0, 0], hue: [0.06, 0.14, 0, 0] },
+            { at: [0.5, 0.5, 0.95, 0.55], form: [0, 0.22, 0, 0], hue: [0.85, 0, 0, 0] }],
+        burn: [{ at: [0.72, 0.85, 1.1, 0.32], form: [-0.45, 1.5, 0, 0], hue: [0, 0.62, 0, 0] },
+            { at: [0.95, 0.15, 0.5, 0.4], form: [0.3, 0.6, 0, 0], hue: [0.35, 0.4, 0, 0] },
+            { at: [0.1, 0, 0.7, 0.45], form: [0, 0.35, 0, 0], hue: [0.7, 0.25, 0, 0] }],
+        orbs: [{ at: [0.36, 0.48, 0.42, 0.42], form: [0, 1.15, 0, 0], hue: [0.18, 0.7, 0, 0] },
+            { at: [0.68, 0.66, 0.2, 0.2], form: [0, 0.95, 0, 0], hue: [0.15, 0.7, 0, 0] },
+            { at: [0.62, 0.18, 0.3, 0.22], form: [0, 0.45, 0, 0], hue: [0.55, 0.4, 0, 0] }],
+        beam: [{ at: [0.8, 0.45, 0.06, 1.0], form: [0.05, 1.3, 0, 0], hue: [0.3, 0.1, 0, 0.5] },
+            { at: [0.28, 0.09, 0.42, 0.05], form: [-0.06, 1.1, 0, 0], hue: [0.5, 0, 0, 0.45] },
+            { at: [0.22, 1.0, 0.6, 0.28], form: [0, 0.8, 0, 0], hue: [0.1, 0.5, 0, 0.25] }]
+    })
+    readonly property string leakShapeName: ["lens", "burn", "orbs", "beam"].includes(String(root.leakOptions?.shape ?? ""))
+        ? root.leakOptions.shape : "lens"
+    readonly property var leakSources: root.leakShapes[root.leakShapeName]
+    // Where the person moved the light (Light leak › Position, or a drag in its preview): the whole shape shifts, in
+    // fractions of the output, so a preset keeps its composition.
+    function leakAxis(name: string): real {
+        const value = Number(root.leakOptions?.[name] ?? 0)
+        return Math.max(-50, Math.min(50, isNaN(value) ? 0 : value)) / 100
+    }
+    // Transient, never persisted: the light where a drag in the Settings preview holds it, so the desktop follows the
+    // drag; the preview writes x/y once on release and clears it.
+    property var leakHeld: null
+    readonly property real leakOffsetX: root.leakHeld ? root.leakHeld.x : root.leakAxis("x")
+    readonly property real leakOffsetY: root.leakHeld ? root.leakHeld.y : root.leakAxis("y")
+    function leakSource(index: int, key: string): vector4d {
+        const v = root.leakSources[index][key]
+        return key === "at" ? Qt.vector4d(v[0] + root.leakOffsetX, v[1] + root.leakOffsetY, v[2], v[3])
+            : Qt.vector4d(v[0], v[1], v[2], v[3])
+    }
+    readonly property real leakLight: root.leakPercent("light", 60)
+    readonly property real leakSpill: root.leakPercent("spill", 55)
+    readonly property real leakPrism: root.leakPercent("prism", 50)
+    readonly property real leakGrain: root.leakPercent("grain", 55)
+    readonly property real leakStreaks: root.leakPercent("streaks", 15)
+    readonly property real leakWallpaperAmount: root.leakPercent("wallpaper", 50)
+    // How strongly the frame's band is exposed (blended into the bodies welded to it) and the desktop widgets' plates.
+    readonly property real leakFrame: root.leakPercent("frame", 100)
+    readonly property real leakWidgets: root.leakPercent("widgets", 100)
+    // The film's grain in pixels before density; dust and bokeh 0..2 (1 as designed); the lens's corners and the film
+    // gate on or off; a new picture developing as a Polaroid does.
+    readonly property real leakGrainSize: {
+        const value = Number(root.leakOptions?.grainSize ?? 1.6)
+        return Math.max(1, Math.min(4, isNaN(value) ? 1.6 : value))
+    }
+    readonly property real leakDust: {
+        const value = Number(root.leakOptions?.dust ?? 100)
+        return Math.max(0, Math.min(200, isNaN(value) ? 100 : value)) / 100
+    }
+    readonly property real leakGate: (root.leakOptions?.gate ?? true) ? 1 : 0
+    readonly property bool leakDevelop: root.leakOptions?.develop ?? true
+    // Picture: the wallpaper exposed by the leak. Light: the darkroom and the light alone, the texture itself.
+    readonly property string leakBackdrop: String(root.leakOptions?.backdrop ?? "picture") === "light" ? "light" : "picture"
+    readonly property bool leakWallpaper: root.leak && (root.leakBackdrop === "light" || root.leakWallpaperAmount > 0)
+    // IrisLeakWallpaper's leakMix: x how much of the picture shows, y how strongly it is exposed.
+    readonly property vector4d leakWallpaperMix: Qt.vector4d(root.leakBackdrop === "light" ? 0 : 1, root.leakWallpaperAmount,
+        root.leakSpill, root.leakPrism)
+    readonly property real leakSpillRadius: Math.round(14 * root.density)
+    // How far past a silhouette the field draws: where the spill's window ends (IrisField.frag).
+    readonly property real leakReach: root.leak && root.leakSpill > 0 ? Math.ceil(3.8 * root.leakSpillRadius) : 0
+    readonly property vector4d leakMix: Qt.vector4d(root.leak ? 1 : 0, root.leakLight, root.leakSpill, root.leakPrism)
+    readonly property vector4d leakFilm: Qt.vector4d(root.leakGrain, root.leakStreaks, Math.max(1, root.leakGrainSize * root.density), root.leakSpillRadius)
+    // IrisField's leakShape: x the burn's depth at the rim facing the light (one for every body), y the band's share of
+    // the spill, z the frame's exposure.
+    readonly property vector4d leakBody: Qt.vector4d(Math.round(6 * root.density), 0.6, root.leakFrame, 0)
+    readonly property vector4d leakStop0: root.colourVector(Qt.color(root.leakPalette.stops[0]), root.light ? 1 : 0)
+    readonly property vector4d leakStop1: root.colourVector(Qt.color(root.leakPalette.stops[1]), 0)
+    readonly property vector4d leakStop2: root.colourVector(Qt.color(root.leakPalette.stops[2]), 0)
+    readonly property vector4d leakStop3: root.colourVector(Qt.color(root.leakPalette.stops[3]), 0)
+    readonly property vector4d leakStop4: root.colourVector(Qt.color(root.leakPalette.stops[4]), 0)
+    readonly property vector4d leakCore: root.colourVector(Qt.color(root.leakPalette.core), 0)
+    readonly property vector4d leakAt0: root.leakSource(0, "at")
+    readonly property vector4d leakAt1: root.leakSource(1, "at")
+    readonly property vector4d leakAt2: root.leakSource(2, "at")
+    readonly property vector4d leakForm0: root.leakSource(0, "form")
+    readonly property vector4d leakForm1: root.leakSource(1, "form")
+    readonly property vector4d leakForm2: root.leakSource(2, "form")
+    readonly property vector4d leakHue0: root.leakSource(0, "hue")
+    readonly property vector4d leakHue1: root.leakSource(1, "hue")
+    readonly property vector4d leakHue2: root.leakSource(2, "hue")
     // The cut edge of Blur glass (IrisField.frag): lit where it faces up, a line elsewhere.
     readonly property real glassEdgeLight: Math.max(0, Math.min(1, Number(root.glassOptions?.edgeLight ?? 34) / 100))
     readonly property real glassEdgeLine: Math.max(0, Math.min(0.6, Number(root.glassOptions?.edgeLine ?? 10) / 100))
@@ -380,12 +511,12 @@ QtObject {
     // A lit layer on glass: on paper, lit is lighter than the frost (the bleached washi of Light), never a grey film over it.
     readonly property color litLayer: root.light ? ColorUtils.mix(root.surfaceOpaque, Qt.color(root.washiLight?.materials?.black ?? "#ffffff"), root.ink ? 0.45 : 0.25) : root.fillInk
     // On paper a group is a faint well of the ink, the same step the solid ramp takes (washi darkens, it never greys);
-    // at night a faint lift of the ink. Sheer over glass and over Afterglow's graded material.
+    // at night a faint lift of the ink. Sheer over glass and over a textured material (Afterglow, Light leak).
     readonly property bool paperWhite: root.light && root.surfaceOpaque.hslLightness > 0.93
-    readonly property color surfaceHigh: root.glassy || root.afterglow
+    readonly property color surfaceHigh: root.glassy || root.textured
         ? ColorUtils.applyAlpha(root.light ? root.text : root.fillInk, root.fillAlpha(root.light ? 0.06 : 0.07))
         : root.tinted(root.surfaceHighOpaque, 0.16)
-    readonly property color surfaceHighest: root.glassy || root.afterglow
+    readonly property color surfaceHighest: root.glassy || root.textured
         ? ColorUtils.applyAlpha(root.light ? root.text : root.fillInk, root.fillAlpha(root.light ? 0.1 : 0.12))
         : root.tinted(root.surfaceHighestOpaque, 0.2)
     // What sits raised on a group (a segmented thumb): the brighter step in the dark, a lit plate on paper.
@@ -498,6 +629,7 @@ QtObject {
         ? root.appearance.aura : "subtle"
     readonly property real auraStrength: ({ off: 0, subtle: 0.2, vivid: 0.36 })[root.auraName]
     readonly property color wallpaperLight: root.afterglow ? root.vividHighlight(Qt.color(root.afterglowPalette.bloom), root.accent)
+        : root.leak ? root.vividHighlight(Qt.color(root.leakPalette.glow), root.accent)
         : root.vividHighlight(Appearance.wallpaperDominantColor, root.vividHighlight(Appearance.colors.colPrimary, root.accent))
     function surfaceWidth(id: string, fallback: int): int {
         const width = Number(root.appearance?.surfaces?.[id]?.width ?? 0)
@@ -1091,7 +1223,7 @@ QtObject {
         for (const key in bodies) out[key] = bodies[key].toString()
         return {
             scheme: root.scheme, material: root.materialName, glass: root.glassy ? (root.glassCompositor ? "compositor" : "wallpaper") : "off",
-            texture: root.afterglow ? "afterglow:" + root.afterglowGrade : "solid", accent: String(root.appearance?.accent ?? "blue"),
+            texture: root.afterglow ? "afterglow:" + root.afterglowGrade : root.leak ? "leak:" + root.leakGrade + "/" + root.leakShapeName : "solid", accent: String(root.appearance?.accent ?? "blue"),
             preset: root.presetName, glassTint: Math.round(root.glassTint * 100) / 100, bodies: out, fails: fails, contrast: contrast,
             tokens: { surface: root.surfaceOpaque.toString(), surfaceHigh: root.surfaceHigh.toString(), accent: root.accent.toString(),
                 highlight: root.secondaryAccent.toString(), text: root.text.toString(), textSecondary: root.textSecondary.toString(),
