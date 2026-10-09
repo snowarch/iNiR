@@ -18,6 +18,10 @@ Singleton {
     property bool bootGreetingOpen: false
     property bool bootGreetingDone: false
     property bool startupLockDone: false
+    property bool sddmPickerOpen: false
+    property string sddmPickerSource: "community"
+    property string sddmPreviewMode: "lock"
+    property string sddmPickerStyle: "auto"
     property bool barOpen: true
     property bool crosshairOpen: false
     property bool sidebarLeftOpen: false

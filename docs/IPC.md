@@ -546,6 +546,25 @@ Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }
 
 ---
 
+### sddm
+
+SDDM theme picker and community hub.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close SDDM theme picker |
+| `open` | Open SDDM theme picker |
+| `close` | Close SDDM theme picker |
+| `setMode <mode>` | Set preview mode (`lock` or `login`) |
+| `setStyle <style>` | Set preview layout style override (`auto`, `center`, `left`, `right`, etc.) |
+| `source <name>` | Open picker on a source (`local`, `community`, `wallhaven`, `live`) |
+
+```kdl
+Mod+Shift+S { spawn "inir" "sddm" "toggle"; }
+```
+
+---
+
 ### wallpaperLauncher
 
 Navigation and apply controls for the compact wallpaper launcher.

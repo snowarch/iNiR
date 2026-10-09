@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: aa0cd9a9782a3c34
-# Targets: 73
+# IPC.md hash: 2e5b55b8a3d63810
+# Targets: 74
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -55,6 +55,7 @@ declare -gA IPC_TARGET_DESC=(
   [pill]="The pill bar's morphing surfaces (only registered while Bar appearance is set to Pill). Valid surface names: \`power\`, \`media\`, \`battery\`, \`calendar\`, \`link\`, \`mixer\`, \`sysmon\`, \`clipboard\`, \`glance\`, \`launcher\`, \`recorder\`."
   [recordingOsd]="Screen recording floating pill OSD. Shows elapsed time and stop button during active recording."
   [region]="Region selection tools. Screenshots, OCR, recording. Draw a box, get stuff done."
+  [sddm]="SDDM theme picker and community hub."
   [search]="Waffle start menu / search."
   [session]="Power menu. Logout, suspend, reboot, shutdown. The \"I'm done for today\" buttons."
   [settings]="Open or toggle the settings window. GUI config so you don't have to edit JSON by hand."
@@ -131,6 +132,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [pill]="shared"
   [recordingOsd]="waffle"
   [region]="shared"
+  [sddm]="shared"
   [search]="waffle"
   [session]="shared"
   [settings]="shared"
@@ -207,6 +209,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [pill]="open close toggle state"
   [recordingOsd]="toggle show hide"
   [region]="screenshot search googleLens ocr record recordWithSound menu dismiss current"
+  [sddm]="toggle close open setMode setStyle source"
   [search]="toggle close open"
   [session]="toggle close open"
   [settings]="open toggle openOverlay openOverlayAt openWindowAt setOverlayStyle"
@@ -531,6 +534,12 @@ declare -gA IPC_FUNCTION_DESC=(
   ["region:menu"]="Open the unified snip menu, optionally restoring its last toolbar choice"
   ["region:dismiss"]="Close the selector overlay"
   ["region:current"]="Return the selector state (open/action/mode) as JSON"
+  ["sddm:toggle"]="Open/close SDDM theme picker"
+  ["sddm:close"]="Close SDDM theme picker"
+  ["sddm:open"]="Open SDDM theme picker"
+  ["sddm:setMode"]="Set preview mode (\`lock\` or \`login\`)"
+  ["sddm:setStyle"]="Set preview layout style override (\`auto\`, \`center\`, \`left\`, \`right\`, etc.)"
+  ["sddm:source"]="Open picker on a source (\`local\`, \`community\`, \`wallhaven\`, \`live\`)"
   ["search:toggle"]="Open/close start menu"
   ["search:close"]="Close start menu"
   ["search:open"]="Open start menu"
@@ -782,6 +791,9 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["panelFamily:set"]="<family>"
   ["pill:open"]="<surface>"
   ["pill:toggle"]="<surface>"
+  ["sddm:setMode"]="<mode>"
+  ["sddm:setStyle"]="<style>"
+  ["sddm:source"]="<name>"
   ["settings:openOverlayAt"]="<index>"
   ["settings:openWindowAt"]="<index>"
   ["settings:setOverlayStyle"]="<style> <index>"
@@ -884,6 +896,9 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["niriAnimations:apply"]="snappy niri material bouncy gentle instant"
   ["osd:media"]="play pause next previous"
   ["overlay:tool"]="crosshair fpsLimiter floatingImage recorder resources notes discord volumeMixer notifications gamePerformance on off toggle"
+  ["sddm:setMode"]="lock login"
+  ["sddm:setStyle"]="auto center left right"
+  ["sddm:source"]="local community wallhaven live"
   ["settings:openOverlayAt"]="index"
   ["settings:openWindowAt"]="index"
   ["settings:setOverlayStyle"]="index"
@@ -928,6 +943,7 @@ Mod+Alt+P { spawn "inir" "mpris" "previous"; }'
 Super+Shift+X { spawn "inir" "region" "ocr"; }
 Super+Shift+A { spawn "inir" "region" "search"; }
 Ctrl+Shift+S { spawn "inir" "region" "menu"; }'
+  [sddm]='Mod+Shift+S { spawn "inir" "sddm" "toggle"; }'
   [session]='Super+Shift+E { spawn "inir" "session" "toggle"; }'
   [settings]='Super+Comma { spawn "inir" "settings"; }'
   [shellLayout]='Super+W { spawn "inir" "shellLayout" "toggle"; }'
@@ -940,8 +956,8 @@ Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }'
   [ytmusic]='Mod+M+Space { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector dashboard dev gamemode globalActions globalStyle iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region sddm search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector dashboard dev gamemode globalActions globalStyle iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill region sddm session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=(equalizer)
 IPC_WAFFLE_TARGETS=(autostart customWidgets recordingOsd search wactionCenter waffleAltSwitcher wbar widgetStacks widgetpower wnotificationCenter wwidgets)
 
