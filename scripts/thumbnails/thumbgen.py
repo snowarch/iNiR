@@ -55,7 +55,9 @@ logger.add(sys.stdout, level="INFO")
 # logger.add() then raises at import time, killing every thumbnail run.
 _log_dir = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "inir"
 _log_dir.mkdir(parents=True, exist_ok=True)
-logger.add(_log_dir / "thumbgen.log", level="DEBUG", rotation="100 MB")
+# Failures only, at most 1 MB, nothing kept on rotation: a line per file at DEBUG,
+# with rotated files kept, grows without bound.
+logger.add(_log_dir / "thumbgen.log", level="INFO", rotation="1 MB", retention=0)
 
 
 def _worker_init() -> None:
@@ -109,10 +111,10 @@ def make_thumbnail_imagemagick(fpath: str, size_name: str) -> bool:
             logger.debug("OK_MAGICK   {}".format(fpath))
             return True
         else:
-            logger.debug("ERROR_MAGICK {}".format(fpath))
+            logger.warning("ERROR_MAGICK {}".format(fpath))
             return False
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-        logger.debug("ERROR_MAGICK {} - {}".format(fpath, str(e)))
+        logger.warning("ERROR_MAGICK {} - {}".format(fpath, str(e)))
         return False
 
 
@@ -121,7 +123,7 @@ def make_thumbnail(fpath: str) -> bool:
     try:
         return _make_thumbnail(fpath)
     except Exception as e:
-        logger.debug("ERROR       {} - {}".format(fpath, e))
+        logger.warning("ERROR       {} - {}".format(fpath, e))
         return False
 
 
