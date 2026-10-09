@@ -1,0 +1,818 @@
+#!/usr/bin/env python3
+import sys
+import os
+import re
+import json
+import argparse
+import configparser
+import subprocess
+import urllib.request
+import urllib.parse
+from pathlib import Path
+
+SDDM_DIR = "/usr/share/sddm/themes/silent"
+CONFIGS_DIR = os.path.join(SDDM_DIR, "configs")
+BACKGROUNDS_DIR = os.path.join(SDDM_DIR, "backgrounds")
+PREVIEWS_DIR = os.path.join(SDDM_DIR, "previews")
+METADATA_FILE = os.path.join(SDDM_DIR, "metadata.desktop")
+CACHE_DIR = os.path.expanduser("~/.cache/sddm-picker")
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+REPO_CATALOG = REPO_ROOT / "dots" / "sddm" / "community-catalog.json"
+
+CATALOG_FILE = ""
+if REPO_CATALOG.exists():
+    CATALOG_FILE = str(REPO_CATALOG)
+elif os.path.exists(os.path.expanduser("~/.local/share/sddm-theme-hub/community-catalog.json")):
+    CATALOG_FILE = os.path.expanduser("~/.local/share/sddm-theme-hub/community-catalog.json")
+elif os.path.exists("/usr/share/quickshell/inir/dots/sddm/community-catalog.json"):
+    CATALOG_FILE = "/usr/share/quickshell/inir/dots/sddm/community-catalog.json"
+
+if CATALOG_FILE and os.path.exists(CATALOG_FILE):
+    try:
+        with open(CATALOG_FILE, "r", encoding="utf-8") as f:
+            DEFAULT_COMMUNITY_THEMES = json.load(f)
+    except Exception:
+        DEFAULT_COMMUNITY_THEMES = []
+else:
+    DEFAULT_COMMUNITY_THEMES = []
+
+
+def parse_sddm_conf(conf_path):
+    cp = configparser.ConfigParser(interpolation=None, strict=False)
+    try:
+        cp.read(conf_path, encoding="utf-8")
+    except Exception:
+        pass
+    
+    def get(section, key, default):
+        if cp.has_section(section) and cp.has_option(section, key):
+            val = cp.get(section, key).strip().strip('"').strip("'")
+            return val
+        return default
+
+    def get_int(section, key, default):
+        try:
+            return int(get(section, key, default))
+        except:
+            return default
+
+    def get_float(section, key, default):
+        try:
+            return float(get(section, key, default))
+        except:
+            return default
+
+    def get_bool(section, key, default):
+        val = str(get(section, key, str(default))).lower()
+        return val in ("true", "1", "yes")
+
+    bg_lock = get("LockScreen", "background", "")
+    bg_login = get("LoginScreen", "background", "")
+    bg = bg_lock or bg_login or ""
+
+    is_video = False
+    if any(bg.lower().endswith(ext) for ext in [".mp4", ".webm", ".mkv", ".avi", ".mov"]):
+        is_video = True
+
+    return {
+        "background": bg,
+        "is_video": is_video,
+        "lock_blur": get_int("LockScreen", "blur", 32),
+        "lock_brightness": get_float("LockScreen", "brightness", 0.0),
+        "lock_saturation": get_float("LockScreen", "saturation", 0.0),
+        "clock_position": get("LockScreen.Clock", "position", "top-center"),
+        "clock_align": get("LockScreen.Clock", "align", "center"),
+        "clock_font": get("LockScreen.Clock", "font-family", "Cracked Code"),
+        "clock_size": get_int("LockScreen.Clock", "font-size", 90),
+        "clock_weight": get_int("LockScreen.Clock", "font-weight", 900),
+        "clock_color": get("LockScreen.Clock", "color", "#FFFFFF"),
+        "date_font": get("LockScreen.Date", "font-family", "Oriental Chicken"),
+        "date_size": get_int("LockScreen.Date", "font-size", 20),
+        "date_weight": get_int("LockScreen.Date", "font-weight", 600),
+        "date_color": get("LockScreen.Date", "color", "#FFFFFF"),
+        "date_margin_top": get_int("LockScreen.Date", "margin-top", -15),
+        "message_display": get_bool("LockScreen.Message", "display", True),
+        "message_text": get("LockScreen.Message", "text", "Press any key or click to sign in"),
+        "message_color": get("LockScreen.Message", "color", "#FFFFFF"),
+        "login_blur": get_int("LoginScreen", "blur", 0),
+        "login_brightness": get_float("LoginScreen", "brightness", 0.0),
+        "login_saturation": get_float("LoginScreen", "saturation", 0.0),
+        "login_position": get("LoginScreen.LoginArea", "position", "center"),
+        "login_margin": get_int("LoginScreen.LoginArea", "margin", -1),
+        "avatar_shape": get("LoginScreen.LoginArea.Avatar", "shape", "circle"),
+        "avatar_border_color": get("LoginScreen.LoginArea.Avatar", "active-border-color", "#FFFFFF"),
+        "avatar_border_size": get_int("LoginScreen.LoginArea.Avatar", "active-border-size", 2),
+        "username_font": get("LoginScreen.LoginArea.Username", "font-family", "Oriental Chicken"),
+        "username_size": get_int("LoginScreen.LoginArea.Username", "font-size", 16),
+        "username_color": get("LoginScreen.LoginArea.Username", "color", "#FFFFFF"),
+        "password_width": get_int("LoginScreen.LoginArea.PasswordInput", "width", 160),
+        "password_height": get_int("LoginScreen.LoginArea.PasswordInput", "height", 32),
+        "password_bg": get("LoginScreen.LoginArea.PasswordInput", "background-color", "#000000"),
+        "password_color": get("LoginScreen.LoginArea.PasswordInput", "content-color", "#FFFFFF"),
+        "password_border_color": get("LoginScreen.LoginArea.PasswordInput", "border-color", "#000000"),
+        "password_radius_left": get_int("LoginScreen.LoginArea.PasswordInput", "border-radius-left", 12),
+        "password_radius_right": get_int("LoginScreen.LoginArea.PasswordInput", "border-radius-right", 0),
+        "button_bg": get("LoginScreen.LoginArea.LoginButton", "background-color", "#FFFFFF"),
+        "button_color": get("LoginScreen.LoginArea.LoginButton", "content-color", "#000000"),
+        "button_radius_left": get_int("LoginScreen.LoginArea.LoginButton", "border-radius-left", 0),
+        "button_radius_right": get_int("LoginScreen.LoginArea.LoginButton", "border-radius-right", 12)
+    }
+
+def build_default_config(item, is_video=False):
+    pos = item.get("position", "center")
+    clock_pos = "center-left" if pos in ("left", "center-left") else ("center-right" if pos in ("right", "center-right") else "top-center")
+    login_pos = "left" if pos in ("left", "center-left") else ("right" if pos in ("right", "center-right") else "center")
+    clock_col = item.get("clock_color", "#FFFFFF")
+    date_col = item.get("date_color", item.get("accent_color", "#FFFFFF"))
+    accent_col = item.get("accent_color", "#00F0FF")
+    
+    return {
+        "background": "",
+        "is_video": is_video,
+        "lock_blur": 0 if is_video else 20,
+        "lock_brightness": -0.05,
+        "lock_saturation": 0.0,
+        "clock_position": clock_pos,
+        "clock_align": "center",
+        "clock_font": "Cracked Code",
+        "clock_size": 110 if login_pos != "center" else 90,
+        "clock_weight": 900,
+        "clock_color": clock_col,
+        "date_font": "Oriental Chicken",
+        "date_size": 22,
+        "date_weight": 600,
+        "date_color": date_col,
+        "date_margin_top": -15,
+        "message_display": True,
+        "message_text": "Press any key or click to sign in",
+        "message_color": accent_col,
+        "login_blur": 0,
+        "login_brightness": 0.0,
+        "login_saturation": 0.0,
+        "login_position": login_pos,
+        "login_margin": 60 if login_pos != "center" else -1,
+        "avatar_shape": "circle",
+        "avatar_border_color": accent_col,
+        "avatar_border_size": 2,
+        "username_font": "Oriental Chicken",
+        "username_size": 18,
+        "username_color": clock_col,
+        "password_width": 170,
+        "password_height": 32,
+        "password_bg": "#11111B",
+        "password_color": "#FFFFFF",
+        "password_border_color": accent_col,
+        "password_radius_left": 12,
+        "password_radius_right": 0,
+        "button_bg": accent_col,
+        "button_color": "#000000",
+        "button_radius_left": 0,
+        "button_radius_right": 12
+    }
+
+def get_active_preset():
+    if not os.path.exists(METADATA_FILE):
+        return "default"
+    try:
+        with open(METADATA_FILE, "r") as f:
+            for line in f:
+                if line.startswith("ConfigFile="):
+                    val = line.strip().split("=")[1]
+                    name = os.path.basename(val).replace(".conf", "")
+                    return name
+    except Exception:
+        pass
+    return "default"
+
+def list_local_presets():
+    active = get_active_preset()
+    presets = []
+    if not os.path.exists(CONFIGS_DIR):
+        return {"active": active, "presets": []}
+
+    for fname in sorted(os.listdir(CONFIGS_DIR)):
+        if not fname.endswith(".conf"):
+            continue
+        pid = fname[:-5]
+        conf_path = os.path.join(CONFIGS_DIR, fname)
+        
+        conf_parsed = parse_sddm_conf(conf_path)
+        is_video = conf_parsed["is_video"]
+        bg_name = conf_parsed["background"]
+        clock_color = conf_parsed["clock_color"]
+        date_color = conf_parsed["date_color"]
+        pos = conf_parsed["login_position"]
+
+        # Check preview
+        preview_path = os.path.join(PREVIEWS_DIR, f"{pid}.png")
+        if not os.path.exists(preview_path):
+            preview_path = os.path.join(PREVIEWS_DIR, "default.png")
+
+        # Human-readable title
+        name = pid.replace("-", " ").replace("_", " ").title()
+        subtitle = "Local Preset Layout"
+        if is_video:
+            subtitle = "Animated 60fps Live Video Loop"
+            cat = "video"
+        elif "catppuccin" in pid:
+            subtitle = "Catppuccin Color Harmony"
+            cat = "catppuccin"
+        elif any(k in pid for k in ["silvia", "rei", "ken", "anime", "blue-blade"]):
+            subtitle = "Anime & JDM Styling"
+            cat = "anime"
+        else:
+            cat = "minimal"
+
+        video_path = ""
+        if is_video:
+            cand_video = os.path.join(SDDM_DIR, "backgrounds", bg_name)
+            if os.path.exists(cand_video):
+                video_path = cand_video
+
+        presets.append({
+            "id": pid,
+            "name": name,
+            "subtitle": subtitle,
+            "category": cat,
+            "tags": ["Local", "Installed", cat.title()],
+            "preview": f"file://{preview_path}",
+            "is_video": is_video,
+            "video_path": video_path,
+            "clock_color": clock_color,
+            "date_color": date_color,
+            "position": pos,
+            "installed": True,
+            "is_active": (pid == active),
+            "config": conf_parsed
+        })
+
+    return {
+        "active": active,
+        "presets": presets
+    }
+
+def list_community():
+    active = get_active_preset()
+    catalog = list(DEFAULT_COMMUNITY_THEMES)
+
+    # Allow extending catalog from cache if user downloaded an external index
+    cache_catalog = os.path.join(CACHE_DIR, "community-catalog.json")
+    try:
+        if os.path.exists(cache_catalog):
+            with open(cache_catalog, "r") as cf:
+                loaded = json.load(cf)
+                if isinstance(loaded, list) and len(loaded) > 0:
+                    catalog = loaded
+    except Exception:
+        pass
+
+    for item in catalog:
+        cid = item["id"]
+        conf_path = os.path.join(CONFIGS_DIR, f"{cid}.conf")
+        item["installed"] = os.path.exists(conf_path)
+        item["is_active"] = (cid == active)
+        local_preview = os.path.join(PREVIEWS_DIR, f"{cid}.png")
+        cache_preview_jpg = os.path.join(CACHE_DIR, "previews", f"{cid}.jpg")
+        cache_preview_png = os.path.join(CACHE_DIR, "previews", f"{cid}.png")
+        if os.path.exists(local_preview):
+            item["preview"] = f"file://{local_preview}"
+        elif os.path.exists(cache_preview_jpg):
+            item["preview"] = f"file://{cache_preview_jpg}"
+        elif os.path.exists(cache_preview_png):
+            item["preview"] = f"file://{cache_preview_png}"
+        else:
+            item["preview"] = item.get("preview_url", "")
+
+        cand_vid = os.path.join(SDDM_DIR, "backgrounds", f"{cid}.mp4")
+        if item.get("is_video") and os.path.exists(cand_vid):
+            item["video_path"] = cand_vid
+        else:
+            item["video_path"] = ""
+
+        if os.path.exists(conf_path):
+            item["config"] = parse_sddm_conf(conf_path)
+        else:
+            item["config"] = build_default_config(item, is_video=item.get("is_video", False))
+
+    return {
+        "active": active,
+        "presets": catalog
+    }
+
+def search_wallhaven(query, page=1, limit=24):
+    q = urllib.parse.quote(query.strip() or "cyberpunk")
+    url = f"https://wallhaven.cc/api/v1/search?q={q}&categories=111&purity=100&sorting=toplist&page={page}&limit={limit}"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"})
+    results = []
+    active = get_active_preset()
+    
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode())
+            for item in data.get("data", []):
+                wh_id = str(item.get("id", ""))
+                pid = f"wallhaven-{wh_id}"
+                conf_exists = os.path.exists(os.path.join(CONFIGS_DIR, f"{pid}.conf"))
+                
+                wh_item = {
+                    "id": pid,
+                    "wh_id": wh_id,
+                    "name": f"Wallhaven #{wh_id}",
+                    "subtitle": f"{item.get('dimension_x', 1920)}×{item.get('dimension_y', 1080)} {item.get('category', 'Anime').title()}",
+                    "category": "wallhaven",
+                    "tags": ["Wallhaven", item.get("category", "General"), f"{item.get('resolution', '')}"],
+                    "preview": item.get("thumbs", {}).get("large", ""),
+                    "bg_url": item.get("path", ""),
+                    "colors": item.get("colors", []),
+                    "is_video": False,
+                    "installed": conf_exists,
+                    "is_active": (pid == active)
+                }
+                conf_p = os.path.join(CONFIGS_DIR, f"{pid}.conf")
+                if conf_exists:
+                    wh_item["config"] = parse_sddm_conf(conf_p)
+                else:
+                    wh_item["config"] = build_default_config(wh_item, is_video=False)
+                results.append(wh_item)
+    except Exception as e:
+        return {"error": str(e), "presets": []}
+
+    return {"active": active, "presets": results, "page": page}
+
+def search_live(query, page=1):
+    q = query.strip()
+    if q:
+        url = f"https://motionbgs.com/search?q={urllib.parse.quote(q)}" + (f"&page={page}" if page > 1 else "")
+    else:
+        url = f"https://motionbgs.com/tag:anime/" + (f"{page}/" if page > 1 else "")
+        
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"})
+    results = []
+    active = get_active_preset()
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            raw = resp.read().decode("utf-8", errors="ignore")
+            pattern = r"<a title=\"([^\"]*)\" href=/([a-z0-9][a-z0-9-]*)>([\s\S]*?)</a>"
+            matches = re.findall(pattern, raw)
+            for title, slug, body in matches:
+                media = re.search(r"/i/c/\d+x\d+/media/(\d+)/([^ >\"]+?\.(?:jpg|jpeg|png))", body)
+                if not media:
+                    continue
+                vid_id, file = media.groups()
+                stem = re.sub(r"(\.\d+x\d+)?\.(jpg|jpeg|png)$", "", file)
+                preview = f"https://motionbgs.com/media/{vid_id}/{stem}.3840x2160.jpg"
+                dl_url = f"https://motionbgs.com/dl/hd/{vid_id}/"
+                pid = f"motionbgs-{vid_id}"
+                conf_exists = os.path.exists(os.path.join(CONFIGS_DIR, f"{pid}.conf"))
+
+                clean_title = re.sub(r"\s+live wallpaper$", "", title, flags=re.IGNORECASE).strip()
+
+                live_item = {
+                    "id": pid,
+                    "name": clean_title,
+                    "subtitle": "MotionBGs 60fps Live Video Loop",
+                    "category": "video",
+                    "tags": ["Live Video", "60fps", "MotionBGs"],
+                    "preview": preview,
+                    "bg_url": dl_url,
+                    "is_video": True,
+                    "installed": conf_exists,
+                    "is_active": (pid == active)
+                }
+                conf_p = os.path.join(CONFIGS_DIR, f"{pid}.conf")
+                if conf_exists:
+                    live_item["config"] = parse_sddm_conf(conf_p)
+                else:
+                    live_item["config"] = build_default_config(live_item, is_video=True)
+                results.append(live_item)
+    except Exception as e:
+        return {"error": str(e), "presets": []}
+
+    return {"active": active, "presets": results, "page": page}
+
+def generate_conf_content(preset_id, bg_filename, is_video=False, clock_color="#FFFFFF", date_color="#FFFFFF", accent_color="#FFFFFF", position="center", base_style="auto"):
+    style_aliases = {
+        "center": "default",
+        "left": "default-left",
+        "right": "default-right",
+        "silvia": "silvia",
+        "rei": "rei",
+        "blue-blade": "blue-blade-live",
+        "blue-blade-live": "blue-blade-live",
+        "catppuccin": "catppuccin-mocha",
+        "catppuccin-mocha": "catppuccin-mocha",
+        "cyberpunk": "cyberpunk-edge",
+        "cyberpunk-edge": "cyberpunk-edge",
+        "gruvbox": "gruvbox-retro",
+        "gruvbox-retro": "gruvbox-retro"
+    }
+    if base_style in style_aliases:
+        base_style = style_aliases[base_style]
+    elif base_style == "active":
+        base_style = get_active_preset()
+
+    base_conf_path = os.path.join(CONFIGS_DIR, f"{base_style}.conf") if base_style and base_style != "auto" else ""
+
+    if base_conf_path and os.path.exists(base_conf_path):
+        try:
+            with open(base_conf_path, "r", encoding="utf-8", errors="ignore") as bf:
+                base_text = bf.read()
+            
+            placeholder = f"{preset_id}.png" if is_video else '""'
+            
+            # Replace placeholder
+            new_conf = re.sub(r"animated-background-placeholder\s*=.*", f"animated-background-placeholder = {placeholder}", base_text)
+            
+            # Replace LockScreen background
+            new_conf = re.sub(r"(\[LockScreen\][\s\S]*?background\s*=).*?(\n)", rf"\g<1> {bg_filename}\2", new_conf, count=1)
+            
+            # Replace LoginScreen background
+            new_conf = re.sub(r"(\[LoginScreen\][\s\S]*?background\s*=).*?(\n)", rf"\g<1> {bg_filename}\2", new_conf, count=1)
+            
+            return new_conf
+        except Exception:
+            pass
+
+    # Otherwise generate standard clean adaptive layout
+    pos = base_style if base_style in ["center", "left", "right"] else position
+    pos_lock = "center" if pos == "center" else f"center-{pos}"
+    pos_login = pos
+
+    placeholder_line = f'animated-background-placeholder = {preset_id}.png' if is_video else 'animated-background-placeholder = ""'
+    blur_val = 32 if is_video else 20
+
+    return f"""; Generated by iNiR SDDM Theme Hub
+; https://github.com/uiriansan/SilentSDDM/wiki/Customizing
+
+[General]
+scale = 1.0
+enable-animations = true
+{placeholder_line}
+background-fill-mode = fill
+
+[LockScreen]
+display = true
+padding-top = 0
+padding-right = 0
+padding-bottom = 0
+padding-left = 0
+background = {bg_filename}
+use-background-color = false
+background-color = #000000
+blur = {blur_val}
+brightness = -0.05
+saturation = 0.0
+
+[LockScreen.Clock]
+display = true
+position = {pos_lock}
+align = center
+format = hh:mm
+font-family = Cracked Code
+font-size = 110
+font-weight = 900
+color = {clock_color}
+
+[LockScreen.Date]
+display = true
+format = dddd, MMMM dd, yyyy
+locale = "en_US"
+font-family = Oriental Chicken
+font-size = 22
+font-weight = 600
+color = {date_color}
+margin-top = -15
+
+[LockScreen.Message]
+display = true
+position = bottom-center
+align = center
+text = Press any key to unlock
+font-family = Oriental Chicken
+font-size = 13
+font-weight = 500
+display-icon = true
+icon = enter.svg
+icon-size = 16
+color = {accent_color}
+paint-icon = true
+spacing = 5
+
+[LoginScreen]
+background = {bg_filename}
+use-background-color = false
+background-color = #000000
+blur = 0
+brightness = 0.0
+saturation = 0.0
+
+[LoginScreen.LoginArea]
+position = {pos_login}
+margin = 80
+
+[LoginScreen.LoginArea.Avatar]
+shape = circle
+border-radius = 35
+active-size = 120
+inactive-size = 80
+inactive-opacity = 0.35
+active-border-size = 3
+inactive-border-size = 0
+active-border-color = {accent_color}
+inactive-border-color = {accent_color}
+
+[LoginScreen.LoginArea.Username]
+font-family = Oriental Chicken
+font-size = 18
+font-weight = 700
+color = {clock_color}
+margin = 12
+
+[LoginScreen.LoginArea.PasswordInput]
+width = 190
+height = 32
+display-icon = true
+font-family = Oriental Chicken
+font-size = 12
+icon = password.svg
+icon-size = 16
+content-color = #FFFFFF
+background-color = #11111B
+background-opacity = 0.75
+border-size = 1
+border-color = {accent_color}
+border-radius-left = 12
+border-radius-right = 0
+margin-top = 10
+
+[LoginScreen.LoginArea.LoginButton]
+background-color = {accent_color}
+background-opacity = 0.85
+active-background-color = {accent_color}
+active-background-opacity = 1.0
+icon = arrow-right.svg
+icon-size = 18
+content-color = #000000
+active-content-color = #000000
+border-size = 0
+border-color = {accent_color}
+border-radius-left = 0
+border-radius-right = 12
+margin-left = 0
+show-text-if-no-password = true
+hide-if-not-needed = false
+font-family = Oriental Chicken
+font-size = 12
+font-weight = 700
+
+[LoginScreen.LoginArea.Spinner]
+display-text = true
+text = "Authenticating..."
+font-family = Oriental Chicken
+font-weight = 600
+font-size = 14
+icon-size = 28
+icon = spinner.svg
+color = {accent_color}
+spacing = 6
+
+[LoginScreen.LoginArea.WarningMessage]
+font-family = Oriental Chicken
+font-size = 12
+font-weight = 600
+normal-color = #FFFFFF
+warning-color = #FFA500
+"""
+
+def install_theme(theme_id, bg_url, preview_url="", is_video=False, clock_color="#FFFFFF", date_color="#FFFFFF", accent_color="#FFFFFF", position="center", style="auto"):
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    staging_dir = os.path.join(CACHE_DIR, "staging")
+    os.makedirs(staging_dir, exist_ok=True)
+
+    ext = "mp4" if is_video else "jpg"
+    parsed_path = urllib.parse.urlparse(bg_url).path
+    if not is_video and "." in os.path.basename(parsed_path):
+        url_ext = os.path.basename(parsed_path).split(".")[-1].lower()
+        if url_ext in ["png", "jpg", "jpeg", "webp"]:
+            ext = url_ext
+
+    staged_bg = os.path.join(staging_dir, f"{theme_id}.{ext}")
+    staged_preview = os.path.join(staging_dir, f"{theme_id}-preview.png")
+    staged_conf = os.path.join(staging_dir, f"{theme_id}.conf")
+
+    dl_cmd = ["curl", "-fsSL", "-A", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36", bg_url, "-o", staged_bg]
+    ret = subprocess.run(dl_cmd)
+    if ret.returncode != 0:
+        return {"success": False, "error": f"Failed to download background from {bg_url}"}
+
+    if preview_url:
+        subprocess.run(["curl", "-fsSL", "-A", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36", preview_url, "-o", staged_preview])
+
+    conf_content = generate_conf_content(
+        preset_id=theme_id,
+        bg_filename=f"{theme_id}.{ext}",
+        is_video=is_video,
+        clock_color=clock_color,
+        date_color=date_color,
+        accent_color=accent_color,
+        position=position,
+        base_style=style
+    )
+    with open(staged_conf, "w", encoding="utf-8") as cf:
+        cf.write(conf_content)
+
+    ok, err = run_install_action(theme_id, staged_conf, staged_bg, staged_preview if os.path.exists(staged_preview) else "")
+    if not ok:
+        return {"success": False, "error": err or "Installation failed"}
+
+    return {"success": True, "preset": theme_id, "message": f"Theme {theme_id} installed and activated"}
+
+def apply_background(bg_url, is_video=False, preview_url="", target_preset=""):
+    if not target_preset or target_preset == "active":
+        target_preset = get_active_preset()
+
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    staging_dir = os.path.join(CACHE_DIR, "staging")
+    os.makedirs(staging_dir, exist_ok=True)
+
+    ext = "mp4" if is_video else "jpg"
+    parsed_path = urllib.parse.urlparse(bg_url).path
+    if not is_video and "." in os.path.basename(parsed_path):
+        url_ext = os.path.basename(parsed_path).split(".")[-1].lower()
+        if url_ext in ["png", "jpg", "jpeg", "webp"]:
+            ext = url_ext
+
+    staged_bg = os.path.join(staging_dir, f"{target_preset}.{ext}")
+    staged_preview = os.path.join(staging_dir, f"{target_preset}-preview.png")
+    staged_conf = os.path.join(staging_dir, f"{target_preset}.conf")
+
+    dl_cmd = ["curl", "-fsSL", "-A", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36", bg_url, "-o", staged_bg]
+    ret = subprocess.run(dl_cmd)
+    if ret.returncode != 0:
+        return {"success": False, "error": f"Failed to download background from {bg_url}"}
+
+    if preview_url:
+        subprocess.run(["curl", "-fsSL", "-A", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36", preview_url, "-o", staged_preview])
+
+    conf_content = generate_conf_content(
+        preset_id=target_preset,
+        bg_filename=f"{target_preset}.{ext}",
+        is_video=is_video,
+        base_style=target_preset
+    )
+    with open(staged_conf, "w", encoding="utf-8") as cf:
+        cf.write(conf_content)
+
+    ok, err = run_install_action(target_preset, staged_conf, staged_bg, staged_preview if os.path.exists(staged_preview) else "")
+    if not ok:
+        return {"success": False, "error": err or "Applying wallpaper failed"}
+
+    return {"success": True, "preset": target_preset, "message": f"Applied background to preset {target_preset}"}
+
+def run_install_action(preset_id, staged_conf, staged_bg, staged_preview=""):
+    if os.path.exists("/usr/local/bin/install-sddm-preset"):
+        args = ["/usr/local/bin/install-sddm-preset", preset_id, staged_conf, staged_bg, staged_preview]
+        res = subprocess.run(["sudo", "-n"] + args, capture_output=True, text=True)
+        if res.returncode == 0:
+            return True, ""
+        if os.path.exists("/usr/bin/pkexec"):
+            res = subprocess.run(["pkexec"] + args, capture_output=True, text=True)
+            if res.returncode == 0:
+                return True, ""
+        return False, res.stderr.strip()
+
+    bg_ext = os.path.splitext(staged_bg)[1].lower()
+    target_bg = os.path.join(BACKGROUNDS_DIR, f"{preset_id}{bg_ext}")
+    target_conf = os.path.join(CONFIGS_DIR, f"{preset_id}.conf")
+    target_preview = os.path.join(PREVIEWS_DIR, f"{preset_id}.png")
+
+    script = f"""
+    mkdir -p '{BACKGROUNDS_DIR}' '{CONFIGS_DIR}' '{PREVIEWS_DIR}'
+    cp -f '{staged_bg}' '{target_bg}'
+    chmod 644 '{target_bg}'
+    cp -f '{staged_conf}' '{target_conf}'
+    chmod 644 '{target_conf}'
+    if [ -f '{staged_preview}' ]; then
+        cp -f '{staged_preview}' '{target_preview}'
+        chmod 644 '{target_preview}'
+    fi
+    sed -i 's|^ConfigFile=.*|ConfigFile=configs/{preset_id}.conf|' '{METADATA_FILE}'
+    """
+    res = subprocess.run(["sudo", "-n", "bash", "-c", script], capture_output=True, text=True)
+    if res.returncode == 0:
+        return True, ""
+    if os.path.exists("/usr/bin/pkexec"):
+        res = subprocess.run(["pkexec", "bash", "-c", script], capture_output=True, text=True)
+        if res.returncode == 0:
+            return True, ""
+    return False, res.stderr.strip() or "Failed to install theme files"
+
+def apply_preset(preset_id):
+    conf_target = os.path.join(CONFIGS_DIR, f"{preset_id}.conf")
+    if not os.path.exists(conf_target):
+        return {"success": False, "error": f"Config {conf_target} not found"}
+
+    if os.access(METADATA_FILE, os.W_OK):
+        try:
+            with open(METADATA_FILE, "r") as f:
+                lines = f.readlines()
+            with open(METADATA_FILE, "w") as f:
+                for line in lines:
+                    if line.startswith("ConfigFile="):
+                        f.write(f"ConfigFile=configs/{preset_id}.conf\n")
+                    else:
+                        f.write(line)
+            return {"success": True, "preset": preset_id}
+        except Exception:
+            pass
+
+    if os.path.exists("/usr/local/bin/set-sddm-preset"):
+        cmd = ["/usr/local/bin/set-sddm-preset", preset_id]
+    else:
+        cmd = ["sed", "-i", f"s|^ConfigFile=.*|ConfigFile=configs/{preset_id}.conf|", METADATA_FILE]
+
+    res = subprocess.run(["sudo", "-n"] + cmd, capture_output=True, text=True)
+    if res.returncode == 0:
+        return {"success": True, "preset": preset_id}
+
+    if os.path.exists("/usr/bin/pkexec"):
+        res = subprocess.run(["pkexec"] + cmd, capture_output=True, text=True)
+        if res.returncode == 0:
+            return {"success": True, "preset": preset_id}
+
+    return {"success": False, "error": res.stderr.strip() or "Permission denied updating metadata.desktop"}
+
+def main():
+    parser = argparse.ArgumentParser(description="iNiR SDDM Theme Hub CLI & API Engine")
+    subparsers = parser.add_subparsers(dest="command")
+
+    subparsers.add_parser("list-local")
+    subparsers.add_parser("list-community")
+
+    p_wh = subparsers.add_parser("search-wallhaven")
+    p_wh.add_argument("query", nargs="?", default="cyberpunk")
+    p_wh.add_argument("--page", type=int, default=1)
+    p_wh.add_argument("--limit", type=int, default=24)
+
+    p_live = subparsers.add_parser("search-live")
+    p_live.add_argument("query", nargs="?", default="")
+    p_live.add_argument("--page", type=int, default=1)
+
+    p_apply = subparsers.add_parser("apply")
+    p_apply.add_argument("preset_id")
+
+    p_apply_bg = subparsers.add_parser("apply-bg")
+    p_apply_bg.add_argument("--bg-url", required=True)
+    p_apply_bg.add_argument("--preview-url", default="")
+    p_apply_bg.add_argument("--is-video", action="store_true")
+    p_apply_bg.add_argument("--target-preset", default="")
+
+    p_install = subparsers.add_parser("install")
+    p_install.add_argument("--id", required=True)
+    p_install.add_argument("--bg-url", required=True)
+    p_install.add_argument("--preview-url", default="")
+    p_install.add_argument("--is-video", action="store_true")
+    p_install.add_argument("--clock-color", default="#FFFFFF")
+    p_install.add_argument("--date-color", default="#FFFFFF")
+    p_install.add_argument("--accent-color", default="#00F0FF")
+    p_install.add_argument("--position", default="center")
+    p_install.add_argument("--style", default="auto")
+
+    args = parser.parse_args()
+
+    if args.command == "list-local":
+        print(json.dumps(list_local_presets(), indent=2))
+    elif args.command == "list-community":
+        print(json.dumps(list_community(), indent=2))
+    elif args.command == "search-wallhaven":
+        print(json.dumps(search_wallhaven(args.query, args.page, args.limit), indent=2))
+    elif args.command == "search-live":
+        print(json.dumps(search_live(args.query, args.page), indent=2))
+    elif args.command == "apply":
+        print(json.dumps(apply_preset(args.preset_id), indent=2))
+    elif args.command == "apply-bg":
+        print(json.dumps(apply_background(
+            bg_url=args.bg_url,
+            is_video=args.is_video,
+            preview_url=args.preview_url,
+            target_preset=args.target_preset
+        ), indent=2))
+    elif args.command == "install":
+        print(json.dumps(install_theme(
+            theme_id=args.id,
+            bg_url=args.bg_url,
+            preview_url=args.preview_url,
+            is_video=args.is_video,
+            clock_color=args.clock_color,
+            date_color=args.date_color,
+            accent_color=args.accent_color,
+            position=args.position,
+            style=args.style
+        ), indent=2))
+    else:
+        parser.print_help()
+
+if __name__ == "__main__":
+    main()

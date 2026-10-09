@@ -724,6 +724,20 @@ ShellRoot {
     LazyLoader { active: Config.ready; source: "modules/japaneseLookup/JapaneseLookup.qml" }
     LazyLoader { active: Config.ready; source: "modules/tilingOverlay/TilingOverlayRouter.qml" }
     LazyLoader { active: Config.ready; source: "modules/wallpaperSelector/WallpaperSelectorRouter.qml" }
+    LazyLoader { active: Config.ready; source: "modules/sddmPicker/SddmPicker.qml" }
+
+    IpcHandler {
+        target: "sddm"
+        function toggle(): void { GlobalStates.sddmPickerOpen = !GlobalStates.sddmPickerOpen }
+        function close(): void { GlobalStates.sddmPickerOpen = false }
+        function open(): void { GlobalStates.sddmPickerOpen = true }
+        function setMode(mode: string): void { GlobalStates.sddmPreviewMode = mode }
+        function setStyle(style: string): void { GlobalStates.sddmPickerStyle = style }
+        function source(name: string): void {
+            GlobalStates.sddmPickerSource = name
+            GlobalStates.sddmPickerOpen = true
+        }
+    }
 
     // Same reason as the routers: both panel files declared these, so every
     // family switch registered them twice and Quickshell kept whichever won the
