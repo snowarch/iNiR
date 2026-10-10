@@ -227,7 +227,7 @@ Scope {
             return name
         }
         function move(step: int): string {
-            if (!GlobalStates.wallpaperSelectorOpen) return "The picker is closed"
+            if (!GlobalStates.wallpaperSelectorOpen && !GlobalStates.coverflowSelectorOpen) return "The picker is closed"
             GlobalStates.wallpaperSelectorMoveRequested(step)
             return "moved " + step
         }

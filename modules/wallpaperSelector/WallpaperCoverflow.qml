@@ -216,6 +216,8 @@ Scope {
             Item {
                 id: scrim
                 anchors.fill: parent
+                // The skew view paints its own full-screen preview over everything
+                visible: root._viewMode !== "skew"
                 opacity: panelWindow._entryReady ? 1.0 : 0.0
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
@@ -229,9 +231,7 @@ Scope {
                 // so the source is oversized by blurOverflow on every side.
                 readonly property int blurOverflow: 64
 
-                // Skew view manages its own scrim; disable the expensive
-                // fullscreen blur pipeline to avoid GPU/CPU spike.
-                readonly property bool blurActive: root._viewMode !== "skew"
+                readonly property bool blurActive: visible
 
                 Item {
                     id: blurSource
