@@ -630,27 +630,17 @@ check_python_packages() {
     
     [[ ! -f "$req" ]] && { doctor_pass "Python (no requirements.txt)"; return; }
     
-    # Use uv to check packages
+    # Versions count, not just names: a package installed below its floor in requirements.txt breaks the
+    # scripts that rely on the newer API. The offline dry run answers without the network when all is met.
     if command -v uv &>/dev/null; then
-        local installed
-        installed=$(VIRTUAL_ENV="$venv" uv pip list 2>/dev/null | tail -n +3 | awk '{print $1}' | tr '[:upper:]' '[:lower:]')
-        local missing=0
-        
-        while IFS= read -r line || [[ -n "$line" ]]; do
-            [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
-            local pkg="${line%%[<>=]*}"
-            # PEP 508 extras describe dependencies of the same distribution;
-            # `uv pip list` reports `yt-dlp`, never `yt-dlp[secretstorage]`.
-            pkg="${pkg%%[*}"
-            pkg=$(echo "$pkg" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
-            echo "$installed" | grep -q "^${pkg}$" || ((missing++)) || true
-        done < "$req"
-        
-        if [[ $missing -gt 0 ]]; then
-            VIRTUAL_ENV="$venv" uv pip install -r "$req" 2>/dev/null
-            doctor_fix "Installed $missing Python package(s)"
-        else
+        local plan
+        plan=$(VIRTUAL_ENV="$venv" uv pip install --dry-run --offline -r "$req" 2>&1)
+        if [[ "$plan" == *"Would make no changes"* ]]; then
             doctor_pass "Python packages OK"
+        elif VIRTUAL_ENV="$venv" uv pip install -r "$req" &>/dev/null; then
+            doctor_fix "Python packages brought up to requirements"
+        else
+            doctor_fail "Python packages below requirements (uv pip install -r $req failed)"
         fi
     else
         doctor_fail "uv not installed, cannot check Python packages"

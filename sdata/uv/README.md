@@ -22,7 +22,12 @@ the file into a full resolved graph and can upgrade unrelated runtime packages.
 
 Packages are installed automatically by:
 - `./setup install` (full installation)
-- `./setup doctor` (fixes missing packages)
+- `./setup update` (upgrades any package below its minimum)
+- `./setup doctor` (fixes missing packages and ones below their minimum)
+
+When a script starts relying on a newer API of a package, raise that package's minimum
+here in the same change: an existing venv keeps whatever version it has until a floor
+says otherwise.
 
 Manual installation:
 ```bash

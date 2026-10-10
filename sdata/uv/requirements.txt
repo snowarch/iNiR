@@ -4,7 +4,7 @@
 pillow>=10.0.0
 opencv-contrib-python>=4.8.0
 material-color-utilities>=0.2.0
-materialyoucolor>=2.0.0
+materialyoucolor>=3.0.2
 numpy>=1.24.0
 psutil>=5.9.0
 tqdm>=4.65.0
@@ -12,7 +12,7 @@ loguru>=0.7.0
 click>=8.0.0
 pygobject>=3.50.0
 pycairo>=1.26.0
-kde-material-you-colors>=2.0.0
+kde-material-you-colors>=2.1.0
 websockets>=13.0
 ytmusicapi>=1.12.0
 yt-dlp[default,secretstorage]

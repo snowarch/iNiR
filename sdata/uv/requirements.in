@@ -8,7 +8,8 @@ pycairo
 # Color extraction and theming
 pillow
 material-color-utilities
-materialyoucolor
+# 3.x: TonalPalette.tone() returns an ARGB int (2.x returned an RGBA list)
+materialyoucolor>=3.0.2
 numpy
 opencv-contrib-python
 
@@ -27,7 +28,8 @@ loguru
 tqdm
 
 # KDE/Qt theming (for wallpaper-based colors)
-kde-material-you-colors
+# 2.1.0 is the first release built on materialyoucolor 3.x
+kde-material-you-colors>=2.1.0
 
 # Pear Desktop / YouTube Music live theme injection via CDP
 websockets>=13.0

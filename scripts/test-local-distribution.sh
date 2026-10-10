@@ -1303,8 +1303,8 @@ if grep -Eq '/usr/bin/(yt-dlp|mpv)|js-runtimes=node' "$ytmusic_service" \
     printf 'FAIL: YT Music runtime still assumes Arch paths or the obsolete Node JS contract\n' >&2
     exit 1
 fi
-grep -Fq 'pkg="${pkg%%[*}"' "$runtime_root/sdata/lib/doctor.sh" || {
-    printf 'FAIL: doctor does not normalize Python requirement extras\n' >&2
+grep -Fq 'uv pip install --dry-run --offline -r "$req"' "$runtime_root/sdata/lib/doctor.sh" || {
+    printf 'FAIL: doctor does not check Python packages against their minimum versions\n' >&2
     exit 1
 }
 grep -Fq 'yt-dlp-runtime.sh' "$ytmusic_service" || {
