@@ -366,7 +366,7 @@ Singleton {
             return "queued"
         }
         // Put an installed item to use in the family on screen: a widget on the Island or the
-        // desktop, a colour theme applied. iRiS themes apply with `inir iris theme apply <id>`.
+        // desktop, a colour theme applied. iRiS themes apply with `inir iris theme apply:<id>`.
         function use(id: string): string {
             const item = root.find(id)
             if (!item || !item.installed)
@@ -380,7 +380,7 @@ Singleton {
                 return `${id} applied`
             }
             if (item.kind === "iris-theme")
-                return `inir iris theme apply ${id}`
+                return `inir iris theme apply:${id}`
             return `${id} is in the left sidebar`
         }
         // Open one item's page in the Hub page that shows next (or is showing).
