@@ -16,6 +16,10 @@ Singleton {
     readonly property string widgetsDir: `${Directories.configPath}/inir/widgets`
 
     property bool _scanDone: false
+    // Raised by every reload. Qt keeps what it compiled per URL for the life of the engine, so a widget
+    // updated in its folder would keep running its old code; each reload loads widgets through a new
+    // folder of links (scan-widgets.sh), and the .qml, its .js and imports compile again.
+    property int _generation: 0
 
     Component.onCompleted: _scan()
     Connections {
@@ -29,6 +33,7 @@ Singleton {
     }
 
     function reload(): void {
+        root._generation += 1;
         root._scanDone = false;
         root.widgets = [];
         _scan();
@@ -41,7 +46,7 @@ Singleton {
     // Single process that finds and reads all manifests, outputs JSON array
     Process {
         id: _scanProcess
-        command: [Directories.scriptsPath + "/scan-widgets.sh", root.widgetsDir]
+        command: [Directories.scriptsPath + "/scan-widgets.sh", root.widgetsDir, String(root._generation)]
         running: false
 
         stdout: StdioCollector {
@@ -91,6 +96,7 @@ Singleton {
                 const irisFile = typeof iris.main === "string" ? iris.main.trim() : "";
                 const waffle = m.waffle && typeof m.waffle === "object" ? m.waffle : {};
                 const waffleFile = typeof waffle.main === "string" ? waffle.main.trim() : "";
+                const load = entry.load || entry.dir;
                 result.push({
                     id: entry.id,
                     name: m.name || entry.id,
@@ -99,10 +105,10 @@ Singleton {
                     author: m.author || "",
                     description: m.description || "",
                     category: m.category || "",
-                    qmlPath: `file://${entry.dir}/${qmlFile}`,
-                    irisQmlPath: irisFile.length > 0 ? `file://${entry.dir}/${irisFile}` : "",
+                    qmlPath: `file://${load}/${qmlFile}`,
+                    irisQmlPath: irisFile.length > 0 ? `file://${load}/${irisFile}` : "",
                     irisSlots: Array.isArray(iris.slots) ? iris.slots : [],
-                    waffleQmlPath: waffleFile.length > 0 ? `file://${entry.dir}/${waffleFile}` : "",
+                    waffleQmlPath: waffleFile.length > 0 ? `file://${load}/${waffleFile}` : "",
                     dirPath: entry.dir,
                     configKeys: m.configKeys || {},
                     resizableAxes: m.resizableAxes || {},
