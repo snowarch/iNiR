@@ -436,10 +436,8 @@ Item {
         // Position immediately if layout is ready
         if (skewView && skewView.width > 0) {
             root._positionAtIndex(target)
-            // Deferred re-position: one extra frame so delegates are created
-            Qt.callLater(() => {
-                root._positionAtIndex(target)
-            })
+            // Again once delegates exist; an owned timer dies with the view (Qt.callLater outlived it)
+            _repositionTimer.restart()
         } else {
             // Layout not ready — retry once after a short delay
             _syncRetryTimer.restart()
@@ -454,9 +452,7 @@ Item {
         onTriggered: {
             if (skewView && skewView.width > 0) {
                 root._positionAtIndex(root.currentImageIndex)
-                Qt.callLater(() => {
-                    root._positionAtIndex(root.currentImageIndex)
-                })
+                _repositionTimer.restart()
                 _retries = 0
             } else if (_retries < 10) {
                 _retries++
@@ -467,6 +463,18 @@ Item {
         }
     }
 
+    Timer {
+        id: _repositionTimer
+        interval: 0
+        onTriggered: root._positionAtIndex(root.currentImageIndex)
+    }
+
+    Timer {
+        id: _analyzeColorsTimer
+        interval: 0
+        onTriggered: root._analyzeUncachedColors()
+    }
+
     // ═══════════════════════════════════════════════════
     // PERSISTENCE — color cache + favourites
     // ═══════════════════════════════════════════════════
@@ -474,6 +482,7 @@ Item {
     // ─── Favourites persistence ───
     FileView {
         id: favouritesFileView
+        printErrors: false
         path: Qt.resolvedUrl("file://" + root._favouritesCachePath)
         watchChanges: false
         onLoaded: {
@@ -501,6 +510,7 @@ Item {
     // ─── Color cache persistence ───
     FileView {
         id: colorsFileView
+        printErrors: false
         path: Qt.resolvedUrl("file://" + root._colorsCachePath)
         watchChanges: false
         onLoaded: {
@@ -573,8 +583,9 @@ Item {
         _colorAnalysisProc._resultLines = []
         // One process for the whole batch, paths as arguments: name<TAB>hue sat lightness, or name<TAB>ERR
         _colorAnalysisProc.command = ["sh", "-c",
-            'for p do printf "%s\\t" "${p##*/}"; '
-            + 'convert "$p" -resize "1x1!" -colorspace HSL -format "%[fx:hue*360] %[fx:saturation] %[fx:lightness]" info: 2>/dev/null || printf ERR; '
+            'im=convert; command -v magick >/dev/null 2>&1 && im=magick; '
+            + 'for p do printf "%s\\t" "${p##*/}"; '
+            + '"$im" "$p" -resize "1x1!" -colorspace HSL -format "%[fx:hue*360] %[fx:saturation] %[fx:lightness]" info: 2>/dev/null || printf ERR; '
             + 'printf "\\n"; done', "sh"].concat(batch.map(item => item.path))
         _colorAnalysisProc.running = true
     }
@@ -637,7 +648,7 @@ Item {
             currentImageIndex = 0
         }
         if (totalCount > 0 && _colorsLoaded)
-            Qt.callLater(_analyzeUncachedColors)
+            _analyzeColorsTimer.restart()
     }
 
     Component.onCompleted: {
@@ -649,7 +660,7 @@ Item {
         updateThumbnails()
         contentShowTimer.restart()
         forceActiveFocus()
-        Qt.callLater(_analyzeUncachedColors)
+        _analyzeColorsTimer.restart()
     }
 
     Connections {
@@ -659,7 +670,7 @@ Item {
             root._rebuildIndexMaps()
             root._initialized = false
             root._syncToCurrentWallpaper(true)
-            Qt.callLater(root._analyzeUncachedColors)
+            _analyzeColorsTimer.restart()
         }
     }
 
@@ -1137,8 +1148,8 @@ Item {
                             }
                         }
                     }
-                    maskThresholdMin: 0.3
-                    maskSpreadAtMin: 0.3
+                    maskThresholdMin: 0.5
+                    maskSpreadAtMin: 1.0
                 }
             }
 
@@ -1273,9 +1284,11 @@ Item {
                             color: Appearance.colors.colSurfaceContainer
                         }
 
-                        // Faded thumbnail behind
-                        ThumbnailImage {
+                        // Faded thumbnail behind: decoded only for the flipped card
+                        Loader {
                             anchors.fill: parent
+                            active: delegateItem.isFlipped
+                            sourceComponent: ThumbnailImage {
                             fillMode: Image.PreserveAspectCrop
                             generateThumbnail: true
                             sourcePath: delegateItem.filePath
@@ -1285,6 +1298,7 @@ Item {
                             opacity: 0.12
                             sourceSize.width: Math.round(root.expandedCardWidth * 0.3 * root._dpr)
                             sourceSize.height: Math.round(root.cardHeight * 0.3 * root._dpr)
+                            }
                         }
 
                         // Action buttons column
@@ -1461,11 +1475,11 @@ Item {
                                 width: parent.width; height: 42; radius: 8
                                 property bool confirmMode: false
                                 color: backDeleteMouse.containsMouse
-                                    ? (confirmMode ? Qt.rgba(1, 0.2, 0.2, 0.35) : Qt.rgba(1, 0.3, 0.3, 0.25))
+                                    ? ColorUtils.applyAlpha(Appearance.colors.colError, confirmMode ? 0.35 : 0.22)
                                     : ColorUtils.applyAlpha(root.textColor, 0.06)
                                 border.width: 1
                                 border.color: backDeleteMouse.containsMouse
-                                    ? Qt.rgba(1, 0.3, 0.3, 0.4)
+                                    ? ColorUtils.applyAlpha(Appearance.colors.colError, 0.4)
                                     : ColorUtils.applyAlpha(root.textColor, 0.08)
                                 Behavior on color {
                                     enabled: Appearance.animationsEnabled
@@ -1479,8 +1493,8 @@ Item {
                                 StyledText {
                                     anchors.centerIn: parent
                                     text: deleteBtn.confirmMode
-                                        ? Translation.tr("CONFIRM DELETE")
-                                        : Translation.tr("DELETE")
+                                        ? Translation.tr("CONFIRM: MOVE TO TRASH")
+                                        : Translation.tr("MOVE TO TRASH")
                                     color: backDeleteMouse.containsMouse ? Appearance.colors.colError
                                         : Appearance.colors.colTertiary
                                     font.pixelSize: Appearance.font.pixelSize.smaller
@@ -1514,8 +1528,8 @@ Item {
                                         } else {
                                             deleteConfirmTimeout.stop()
                                             deleteBtn.confirmMode = false
-                                            // Delete the file
-                                            _deleteFileProc.command = ["rm", "-f",
+                                            // To the trash, never rm: a misclick must be recoverable
+                                            _deleteFileProc.command = ["gio", "trash", "--",
                                                 FileUtils.trimFileProtocol(delegateItem.filePath)]
                                             _deleteFileProc.running = true
                                             root._flippedImageIndex = -1
@@ -1608,8 +1622,8 @@ Item {
                                     }
                                 }
                             }
-                            maskThresholdMin: 0.3
-                            maskSpreadAtMin: 0.3
+                            maskThresholdMin: 0.5
+                            maskSpreadAtMin: 1.0
                         }
                     }
 
