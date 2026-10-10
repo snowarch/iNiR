@@ -248,13 +248,21 @@ Singleton {
             desc: Translation.tr("Apple-inspired Island shell and modules"),
             essential: true,
             component: "modules/settings/IrisConfig.qml"
+        },
+        {
+            key: "hub",
+            name: Translation.tr("Hub"),
+            icon: "storefront",
+            desc: Translation.tr("Widgets, themes and web apps from the community"),
+            essential: true,
+            component: "modules/settings/HubConfig.qml"
         }
     ]
 
     // Sidebar grouping shared by both modes. Page indices reference the
     // pages array above — order here defines the visual nav order.
     readonly property var defaultCategories: [
-        { label: Translation.tr("Essentials"), pages: [0] },
+        { label: Translation.tr("Essentials"), pages: [0, 29] },
         { label: Translation.tr("Appearance"), pages: [4, 25, 3, 14, 21] },
         { label: Translation.tr("Shell"), pages: [2, 28, 26, 27, 5, 22, 23, 16, 10, 11, 18, 19, 20] },
         { label: Translation.tr("System"), pages: [1, 24, 7, 6, 12, 15, 8, 17] },

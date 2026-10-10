@@ -1,7 +1,8 @@
 # iRiS Module SDK
 
 iRiS bar modules use the existing iNiR CustomWidgets registry. There is no second plugin format or
-scanner. A widget may provide its normal desktop component, an iRiS compact component, or both.
+scanner. A widget may provide its normal desktop component, an iRiS compact component, a Waffle card
+(`WIDGET-SDK.md` › Waffle card), or any mix of them.
 
 ## Create a module
 

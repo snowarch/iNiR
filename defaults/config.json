@@ -2265,6 +2265,9 @@
             "networkNameKeywords": []
         }
     },
+    "hub": {
+        "sources": []
+    },
     "idle": {
         "screenOffTimeout": 300,
         "lockTimeout": 600,
@@ -3056,6 +3059,7 @@
             "showWeather": true,
             "showSystem": false,
             "showMedia": true,
+            "showCustom": true,
             "showQuickActions": false,
             "quickActions": [
                 "files",

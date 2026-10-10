@@ -717,6 +717,39 @@ WBarAttachedPanelContent {
                 }
             }
 
+            // Installed widgets with a Waffle face (widget.json "waffle": { "main": … }), from the Hub or the
+            // user's own; each loads on its own, so one that fails leaves no gap and takes nothing else down.
+            Repeater {
+                model: CustomWidgets.ready && (Config.options?.waffles?.widgetsPanel?.showCustom ?? true)
+                    ? CustomWidgets.widgets.filter(widget => String(widget.waffleQmlPath ?? "").length > 0) : []
+
+                delegate: ColumnLayout {
+                    id: customCard
+                    required property var modelData
+                    readonly property bool shown: customFace.status === Loader.Ready
+                    Layout.fillWidth: true
+                    spacing: 0
+                    visible: customCard.shown
+
+                    WPanelSeparator {}
+                    BodyRectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: customFace.item?.implicitHeight ?? 0
+
+                        Loader {
+                            id: customFace
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            source: customCard.modelData.waffleQmlPath
+                            onLoaded: {
+                                if (item.hasOwnProperty("waffleSlot"))
+                                    item.waffleSlot = "widgets.panel"
+                            }
+                        }
+                    }
+                }
+            }
+
             WPanelSeparator { visible: Config.options?.waffles?.widgetsPanel?.showQuickActions ?? true }
 
             // Quick actions — use Loader to fully unload when disabled

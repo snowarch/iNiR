@@ -179,6 +179,7 @@ Item {
     function irisPageFor(key: string): string {
         if (key === "about") return "modules/iris/settings/IrisAboutPage.qml"
         if (key === "shortcuts") return "modules/iris/settings/IrisShortcutsPage.qml"
+        if (key === "hub") return "modules/iris/settings/IrisHubPage.qml"
         return ""
     }
     property var unfolded: ({})

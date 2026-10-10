@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: aa0cd9a9782a3c34
-# Targets: 73
+# IPC.md hash: 0d6c3f7cd89fa87b
+# Targets: 74
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -31,6 +31,7 @@ declare -gA IPC_TARGET_DESC=(
   [gamemode]="Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects. Can also be toggled manually for those stubborn games that don't go fullscreen properly."
   [globalActions]="Command palette / action registry. Search and execute shell actions from scripts or keybinds."
   [globalStyle]="The Global Style every Material surface and desktop widget follows: material, cards, aurora, inir, angel, regalia, zzz, cookie or editorial."
+  [hub]="The community hub (widgets, colour themes, iRiS themes, web apps from [inir-hub](https://github.com/snowarch/inir-hub)) as the running shell sees it. \`inir hub list|search|info|install|update|remove|sync\` works with or without the shell running and tells it afterwards; these functions queue the same actions inside the shell, so its Hub page shows them happening. All families."
   [iris]="iRiS bar and Island design. Available while the iRiS bar is enabled."
   [keyboard]="Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info."
   [lock]="Lock screen. For when you need to pretend you're working."
@@ -107,6 +108,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [gamemode]="shared"
   [globalActions]="shared"
   [globalStyle]="shared"
+  [hub]="shared"
   [iris]="shared"
   [keyboard]="shared"
   [lock]="shared"
@@ -183,6 +185,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [gamemode]="toggle activate deactivate status"
   [globalActions]="run runWithArgs list search open"
   [globalStyle]="set get list"
+  [hub]="refresh install remove update use openItem status changed"
   [iris]="open page close toggle card theme settings bubble dock dockApp dockMove appBubble focus today controlCenter pin layout strip edge dockEdge zone barPiece arrange edit studio notch surround accent spotlight gallerySource orbit orbitCorner orbitClose spotlightClose bubbleCard tap bubbleMenu morph activity activities set adaptive tokens palette preset icon control lock utility watch watchPick desktopAction desktopMenu menuClose watchSubs watchSeek watchSkip motion motioned status"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
   [lock]="activate prepareSleep deactivate status focus"
@@ -210,7 +213,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [search]="toggle close open"
   [session]="toggle close open"
   [settings]="open toggle openOverlay openOverlayAt openWindowAt setOverlayStyle"
-  [settingsNav]="page section count current"
+  [settingsNav]="page section open count current"
   [shellLayout]="toggle open openOn close select lift preview place cancel dragStart dragUpdate dragEnd reset setProperty handleEscape status validate"
   [shellUpdate]="toggle open close check performUpdate dismiss undismiss diagnose simulate"
   [sidebarLeft]="toggle close open expand compact status detach attach"
@@ -364,6 +367,14 @@ declare -gA IPC_FUNCTION_DESC=(
   ["globalStyle:set"]="Switch to a style by name, with its bar corner and card defaults"
   ["globalStyle:get"]="Return the active style"
   ["globalStyle:list"]="List the styles"
+  ["hub:refresh"]="Read every source again now"
+  ["hub:install"]=""
+  ["hub:remove"]=""
+  ["hub:update"]=""
+  ["hub:use"]=""
+  ["hub:openItem"]=""
+  ["hub:status"]="JSON: loaded, item count, installed ids, updates, what is running, failures, last error"
+  ["hub:changed"]=""
   ["iris:open"]="Expand the island on the focused output"
   ["iris:page"]="Expand the island on a page: \`media\`, \`activity\`, \`desktop\`, \`tray\` or \`tools\`, or step through its navigation with \`next\` / \`prev\` (the same path as scrolling over the navigation row)"
   ["iris:close"]="Collapse the island"
@@ -545,6 +556,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["settings:setOverlayStyle"]="Switch overlay chrome while preserving page \`index\`"
   ["settingsNav:page"]=""
   ["settingsNav:section"]=""
+  ["settingsNav:open"]=""
   ["settingsNav:count"]="Number of settings pages"
   ["settingsNav:current"]="Current page index, or \`-1\` when no page is open"
   ["shellLayout:toggle"]="Enter or leave shell edit mode"
@@ -710,6 +722,12 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["globalActions:list"]="<category>"
   ["globalActions:search"]="<query>"
   ["globalStyle:set"]="<style>"
+  ["hub:install"]="<id>"
+  ["hub:remove"]="<id>"
+  ["hub:update"]="<id>"
+  ["hub:use"]="<id>"
+  ["hub:openItem"]="<id>"
+  ["hub:changed"]="<kind>"
   ["iris:page"]="<name>"
   ["iris:card"]="<action>"
   ["iris:theme"]="<action>"
@@ -787,6 +805,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["settings:setOverlayStyle"]="<style> <index>"
   ["settingsNav:page"]="<index>"
   ["settingsNav:section"]="<index> <name>"
+  ["settingsNav:open"]="<key>"
   ["shellLayout:openOn"]="<outputName>"
   ["shellLayout:select"]="<surfaceId>"
   ["shellLayout:lift"]="<surfaceId>"
@@ -940,8 +959,8 @@ Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }'
   [ytmusic]='Mod+M+Space { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector dashboard dev gamemode globalActions globalStyle iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector dashboard dev gamemode globalActions globalStyle hub iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=(equalizer)
 IPC_WAFFLE_TARGETS=(autostart customWidgets recordingOsd search wactionCenter waffleAltSwitcher wbar widgetStacks widgetpower wnotificationCenter wwidgets)
 

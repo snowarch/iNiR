@@ -116,6 +116,15 @@ Item {
 
     Component.onCompleted: scanPlugins()
 
+    // Web apps installed or removed from the community hub show up at once.
+    Connections {
+        target: Hub
+        function onChanged(kind: string, id: string): void {
+            if (kind === "webapp")
+                root.scanPlugins()
+        }
+    }
+
     Timer {
         id: rescanTimer
         interval: 30000

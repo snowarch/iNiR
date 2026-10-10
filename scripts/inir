@@ -133,6 +133,7 @@ Maintenance (delegates to setup):
 Other:
   version [--json]
   theme <list-targets|inspect|doctor|apply|scaffold> [args...]
+  hub <list|search|info|install|update|remove|sync|open> [args...]
   completions <bash|zsh|fish|install>
   bind [--add|--remove|--list|--examples] <keys> <call…>   Niri keybinds for any inir call
   service <install|uninstall|enable|disable|start|stop|restart|status|logs>
@@ -371,6 +372,9 @@ Most people only need:
   inir theme doctor
   inir theme scaffold myapp
   inir theme apply terminals
+  inir hub list
+  inir hub install countdown
+  inir hub open
   ./setup
 EOF
 }
@@ -3713,6 +3717,46 @@ USAGE
     printf 'Saved in %s. Niri picks it up now.\n' "$file"
 }
 
+# The community hub: scripts/inir-hub.py reads the catalogue and installs, with or without the shell
+# running; a running shell is told afterwards so its registries and Hub pages read again. Verbs the
+# client does not know go to the shell's `hub` IPC target.
+run_hub_command() {
+    local verb="${1:-}"
+    resolve_config_dir
+    local client="$config_dir/scripts/inir-hub.py"
+    case "$verb" in
+        ""|-h|--help|help)
+            python3 "$client" --help
+            printf '\n%s\n%s\n%s\n' \
+                "  open [id]                 the Hub page in your family's Settings, at one item if given" \
+                "  sources                   where the catalogue comes from (hub.sources in config adds more)" \
+                "  refresh | changed <kind>  ask the running shell to read the hub again"
+            ;;
+        open)
+            if [[ -n "${2:-}" ]]; then
+                require_qs
+                "$qs_bin" -p "$config_dir" ipc call hub openItem "$2" >/dev/null 2>&1 || true
+            fi
+            run_ipc_target_command settingsNav open hub
+            ;;
+        sources)
+            python3 "$client" status "${@:2}"
+            ;;
+        status|sync|list|search|info|install|update|remove|--json)
+            local code=0
+            python3 "$client" "$@" || code=$?
+            if [[ $code -eq 0 && " install update remove " == *" ${verb} "* ]]; then
+                require_qs
+                "$qs_bin" -p "$config_dir" ipc call hub changed all >/dev/null 2>&1 || true
+            fi
+            return $code
+            ;;
+        *)
+            run_ipc_target_command hub "$@"
+            ;;
+    esac
+}
+
 run_theme_command() {
     local action="${1:-}"
     shift || true
@@ -4781,6 +4825,9 @@ case "$command_name" in
         ;;
     theme)
         run_theme_command "$@"
+        ;;
+    hub)
+        run_hub_command "$@"
         ;;
     bind)
         run_bind_command "$@"

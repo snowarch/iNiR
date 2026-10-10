@@ -5,8 +5,12 @@ Custom desktop widgets that run on the iNiR shell. Full QML access to 100+ servi
 
 Widgets live in `~/.config/inir/widgets/<name>/` and are loaded automatically.
 
-Widgets may also expose a compact iRiS module, which sits on the Island's Desktop page. See
-`IRIS-SDK.md` for its manifest and tokens.
+A widget can have up to three faces: the desktop card (this file), a compact iRiS module on the
+Island's Desktop page (`IRIS-SDK.md`) and a card in Waffle's Widgets panel ([Waffle card](#waffle-card)).
+Give it the faces you can make well.
+
+To share one, publish it on the [Community Hub](https://github.com/snowarch/inir-hub): people install
+it with `inir hub install <id>` or from Settings › Hub.
 
 ## Quick Start
 
@@ -24,6 +28,8 @@ Or copy the reference widget from `defaults/widgets/example-widget/`.
 ~/.config/inir/widgets/my-widget/
   widget.json       # manifest (name, icon, configKeys, resize behavior)
   MyWidget.qml      # main component — extends AbstractBackgroundWidget
+  IrisCompact.qml   # optional: the iRiS Island face (IRIS-SDK.md)
+  WaffleCard.qml    # optional: the Waffle Widgets panel face
   (any other .qml files, images, scripts)
 ```
 
@@ -60,6 +66,13 @@ Or copy the reference widget from `defaults/widgets/example-widget/`.
 ```
 
 Supported configKey types: `bool`, `int`, `real`, `string`.
+
+Optional faces for the other families:
+
+```json
+    "iris": { "main": "IrisCompact.qml", "slots": ["island.desktop"] },
+    "waffle": { "main": "WaffleCard.qml" }
+```
 
 ## Minimal Widget
 
@@ -519,6 +532,54 @@ editPopoverContent: Component {
     }
 }
 ```
+
+---
+
+## Waffle card
+
+`waffle.main` in `widget.json` gives the widget a card in Waffle's Widgets panel, under the built-in
+ones. The panel draws the card's body and the separator; the file lays out what is inside. Waffle
+Settings › Waffle Style › Show your widgets turns these cards off.
+
+```qml
+import QtQuick
+import QtQuick.Layouts
+import qs.services
+import qs.modules.waffle.looks
+
+Item {
+    id: root
+
+    property string waffleSlot: ""   // set by the panel
+
+    readonly property string message: String(CustomWidgets.getConfigValue("my-widget", "message", "Hello"))
+
+    implicitHeight: content.implicitHeight + Looks.dp(32)
+
+    RowLayout {
+        id: content
+        anchors.fill: parent
+        anchors.margins: Looks.dp(16)
+        spacing: Looks.dp(16)
+
+        WText {
+            Layout.fillWidth: true
+            text: root.message
+            font.pixelSize: Looks.font.pixelSize.large
+        }
+        FluentIcon {
+            icon: "apps"
+            implicitSize: Looks.dp(24)
+            color: Looks.colors.accent
+        }
+    }
+}
+```
+
+Waffle faces use `Looks.*` tokens, the `W*` components (`WText`, `WButton`, `WSlider`…) and Fluent
+icons from `assets/icons/fluent`, never `Appearance.*`. Sizes go through `Looks.dp()`. Settings are
+the same `configKeys` the desktop face reads, through `CustomWidgets.getConfigValue(id, key, fallback)`.
+The card only exists while the panel is open, so it costs nothing the rest of the time.
 
 ---
 

@@ -12,9 +12,8 @@ TextField {
     verticalAlignment: Text.AlignVCenter
     color: Looks.colors.fg
 
-    palette {
-        active: Looks.colors.accent
-    }
+    // The focus line FluentWinUI3 draws under the field.
+    palette.accent: Looks.colors.accent
 
     font {
         hintingPreference: Font.PreferDefaultHinting

@@ -12,6 +12,7 @@
 - [Panel families](PANEL_FAMILIES)
 - [iRiS](IRIS)
 - [Configuration](CONFIG_SYSTEM)
+- [Community Hub](HUB)
 - [Wallpaper](WALLPAPER)
 - [Notifications](NOTIFICATIONS)
 - [Calendar](CALENDAR)

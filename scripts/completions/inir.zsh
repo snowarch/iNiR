@@ -60,6 +60,7 @@ _inir() {
         'backup:Create backup'
         'version:Show version'
         'theme:Theme management'
+        'hub:Community hub: widgets, themes, web apps'
         'help:Show help'
         'completions:Generate or install shell completions'
         'bind:Make a Niri keybind for any inir call'
@@ -115,6 +116,9 @@ _inir() {
             theme)
                 local -a theme_cmds=(list-targets inspect doctor scaffold apply)
                 _describe 'theme command' theme_cmds; return ;;
+            hub)
+                local -a hub_cmds=(list search info install update remove sync status sources open refresh changed)
+                _describe 'hub command' hub_cmds; return ;;
             completions)
                 local -a shells=('bash' 'zsh' 'fish' 'install:Install them where your shell looks')
                 _describe 'shell' shells; return ;;

@@ -257,6 +257,7 @@ Item {
         { pageIndex: 8, pageName: "Waffle Style", section: "Widgets Panel", label: "Show weather", targetLabel: "Show weather", keywords: ["widgets", "weather", "temperature", "forecast"] },
         { pageIndex: 8, pageName: "Waffle Style", section: "Widgets Panel", label: "Show system info", targetLabel: "Show system info", keywords: ["widgets", "system", "info", "cpu", "ram", "memory"] },
         { pageIndex: 8, pageName: "Waffle Style", section: "Widgets Panel", label: "Show media controls", targetLabel: "Show media controls", keywords: ["widgets", "media", "controls", "music", "player"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Widgets Panel", label: "Show your widgets", targetLabel: "Show your widgets", keywords: ["widgets", "custom", "hub", "community", "installed", "cards", "countdown"] },
         { pageIndex: 8, pageName: "Waffle Style", section: "Widgets Panel", label: "Show quick actions", targetLabel: "Show quick actions", keywords: ["widgets", "quick", "actions", "buttons"] },
         { pageIndex: 8, pageName: "Waffle Style", section: "Calendar", label: "Force 2-char day names", targetLabel: "Force 2-char day names", keywords: ["calendar", "day", "names", "short", "2char"] },
         

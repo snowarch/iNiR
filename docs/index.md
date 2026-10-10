@@ -13,6 +13,7 @@ It provides the bar, dock, sidebars, notifications, settings, wallpapers, overvi
 - [Panel families](PANEL_FAMILIES)
 - [iRiS](IRIS)
 - [Configuration](CONFIG_SYSTEM)
+- [Community Hub](HUB)
 - [Known limitations](LIMITATIONS)
 - [Managed desktop items](DESKTOP_ITEMS)
 - [Void Linux](VOID)
@@ -58,6 +59,7 @@ The shell is configurable through Settings and `config.json`. Persistent writes 
 | Services and modules | [Services](SERVICES), [Modules](MODULES) |
 | Wallpapers and theming | [Wallpaper](WALLPAPER), [Theming](THEMING_ARCHITECTURE) |
 | Desktop references | [Managed desktop items](DESKTOP_ITEMS) |
+| Widgets, themes and web apps from others | [Community Hub](HUB) |
 | Compositor support | [Compositors](COMPOSITORS) |
 | Performance | [Optimization](OPTIMIZATION) |
 

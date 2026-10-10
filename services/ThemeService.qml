@@ -112,6 +112,21 @@ Singleton {
         root._log("[ThemeService] setTheme completed");
     }
 
+    // A saved or Hub colour theme: its colours become the custom theme. ThemesConfig and the Hub
+    // pages of every family apply through here, so a theme looks the same wherever it was chosen.
+    function applyCustomColors(colors: var): void {
+        const current = Config.options?.appearance?.customTheme ?? ({})
+        const updates = ({})
+        for (const key in colors) {
+            if (current.hasOwnProperty(key))
+                updates[`appearance.customTheme.${key}`] = colors[key]
+        }
+        Config.setNestedValues(updates)
+        ThemePresets.applyPreset("custom")
+        if (root.currentTheme !== "custom")
+            root.setTheme("custom")
+    }
+
     // ── Global style ────────────────────────────────────────────────────
     // Single owner of "what does selecting style X write to config". This
     // lived in three places (both settings families and the action registry)

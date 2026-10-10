@@ -389,11 +389,34 @@ Navigate the settings overlay to a specific page (same as clicking the nav rail)
 |----------|-------------|
 | `page(index)` | Open the overlay and jump to page `index` |
 | `section(index, name)` | Open a page at its named section; for example `inir settingsNav section 28 sidebars` |
+| `open(key)` | Open a page by its name in the family's own Settings, for example `inir settingsNav open hub` |
 | `count` | Number of settings pages |
 | `current` | Current page index, or `-1` when no page is open |
 
 ```sh
 inir ipc settingsNav page 5
+```
+
+---
+
+### hub
+
+The community hub (widgets, colour themes, iRiS themes, web apps from [inir-hub](https://github.com/snowarch/inir-hub)) as the running shell sees it. `inir hub list|search|info|install|update|remove|sync` works with or without the shell running and tells it afterwards; these functions queue the same actions inside the shell, so its Hub page shows them happening. All families.
+
+| Function | Description |
+|----------|-------------|
+| `refresh` | Read every source again now |
+| `install(id)` | Queue an install |
+| `update(id)` | Queue an update; `all` (or nothing) updates everything that has one |
+| `remove(id)` | Queue a removal (only things the hub installed) |
+| `status` | JSON: loaded, item count, installed ids, updates, what is running, failures, last error |
+| `use(id)` | Put an installed item to use here: a widget on the Island (iRiS) or the desktop, a colour theme applied |
+| `openItem(id)` | Open that item's page in the Hub page (`inir hub open <id>` also opens Settings there) |
+| `changed(kind)` | Something was installed outside the shell: reload `widget`, `theme`, `iris-theme`, `webapp` or `all` |
+
+```sh
+inir hub install countdown
+inir hub open
 ```
 
 ---

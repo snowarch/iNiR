@@ -112,6 +112,12 @@ ApplicationWindow {
             name: Translation.tr("Shell Layout"),
             icon: "desktop",
             component: Qt.resolvedUrl("modules/waffle/settings/pages/WShellLayoutPage.qml")
+        },
+        {
+            key: "hub",
+            name: Translation.tr("Hub"),
+            icon: "store-microsoft",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WHubPage.qml")
         }
     ]
     
@@ -158,8 +164,11 @@ ApplicationWindow {
     Component.onCompleted: {
         Quickshell.watchFiles = false
         Config.readWriteDelay = 0
-        const startPage = parseInt(Quickshell.env("QS_SETTINGS_PAGE"));
+        // A number, or a page's key (`inir settingsNav open hub`).
+        const startEnv = Quickshell.env("QS_SETTINGS_PAGE") ?? "";
+        const startPage = parseInt(startEnv);
         if (!isNaN(startPage)) root._requestedStartPage = startPage;
+        else if (startEnv.length > 0) root._requestedStartPage = root.pages.findIndex(page => page.key === startEnv);
 
         const startSection = Quickshell.env("QS_SETTINGS_SECTION");
         if (startSection)

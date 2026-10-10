@@ -1221,6 +1221,11 @@ Singleton {
                 property string preferredProfile: "" // "power-saver" | "balanced" | "performance"
             }
 
+            property JsonObject hub: JsonObject {
+                // Extra community hub indexes (URLs or local paths to an index.json); the official hub is always read.
+                property list<string> sources: []
+            }
+
             property JsonObject idle: JsonObject {
                 property int screenOffTimeout: 300 // seconds, 0 = disabled
                 property int lockTimeout: 600 // seconds, 0 = disabled
@@ -4784,6 +4789,7 @@ Singleton {
                     property bool showWeather: true
                     property bool showSystem: true
                     property bool showMedia: true
+                    property bool showCustom: true // cards of custom widgets with a waffle face
                     property bool showQuickActions: true
                     property list<string> quickActions: ["files", "terminal", "settings", "wallpaper", "screenshot", "screenRecord", "session"]
                     property bool weatherHideLocation: false // Privacy: hide city name

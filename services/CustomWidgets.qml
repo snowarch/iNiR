@@ -89,6 +89,8 @@ Singleton {
                 const qmlFile = m.main || (entry.id.charAt(0).toUpperCase() + entry.id.slice(1) + ".qml");
                 const iris = m.iris && typeof m.iris === "object" ? m.iris : {};
                 const irisFile = typeof iris.main === "string" ? iris.main.trim() : "";
+                const waffle = m.waffle && typeof m.waffle === "object" ? m.waffle : {};
+                const waffleFile = typeof waffle.main === "string" ? waffle.main.trim() : "";
                 result.push({
                     id: entry.id,
                     name: m.name || entry.id,
@@ -100,6 +102,7 @@ Singleton {
                     qmlPath: `file://${entry.dir}/${qmlFile}`,
                     irisQmlPath: irisFile.length > 0 ? `file://${entry.dir}/${irisFile}` : "",
                     irisSlots: Array.isArray(iris.slots) ? iris.slots : [],
+                    waffleQmlPath: waffleFile.length > 0 ? `file://${entry.dir}/${waffleFile}` : "",
                     dirPath: entry.dir,
                     configKeys: m.configKeys || {},
                     resizableAxes: m.resizableAxes || {},
@@ -238,6 +241,9 @@ Singleton {
     "iris": {
         "main": "IrisCompact.qml",
         "slots": ["island.desktop"]
+    },
+    "waffle": {
+        "main": "WaffleCard.qml"
     },
     "defaultConfig": {
         "placementStrategy": "free",
@@ -388,6 +394,33 @@ Item {
     }
 }
 IRIS_QML
+            cat > "$dir/WaffleCard.qml" << 'WAFFLE_QML'
+import QtQuick
+import QtQuick.Layouts
+import qs.services
+import qs.modules.waffle.looks
+
+// A card in Waffle's Widgets panel: Looks tokens and W* primitives, sizes through Looks.dp().
+Item {
+    id: root
+    property string waffleSlot: ""
+    implicitHeight: row.implicitHeight + Looks.dp(32)
+
+    RowLayout {
+        id: row
+        anchors.fill: parent
+        anchors.margins: Looks.dp(16)
+        spacing: Looks.dp(12)
+        FluentIcon { icon: "apps"; implicitSize: Looks.dp(24); color: Looks.colors.accent }
+        WText {
+            Layout.fillWidth: true
+            text: DateTime.time
+            font.pixelSize: Looks.font.pixelSize.xlarger
+            font.weight: Font.DemiBold
+        }
+    }
+}
+WAFFLE_QML
             echo "done"
         `]
         stdout: StdioCollector {

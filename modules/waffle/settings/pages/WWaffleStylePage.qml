@@ -354,6 +354,14 @@ WSettingsPage {
         }
         
         WSettingsSwitch {
+            label: Translation.tr("Show your widgets")
+            icon: "apps"
+            description: Translation.tr("Cards from widgets you installed, from the Hub or your own")
+            checked: Config.options?.waffles?.widgetsPanel?.showCustom ?? true
+            onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showCustom", checked)
+        }
+
+        WSettingsSwitch {
             label: Translation.tr("Show quick actions")
             icon: "flash-on"
             description: Translation.tr("Display quick action buttons")

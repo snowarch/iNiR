@@ -26,22 +26,21 @@ ContentPage {
             ThemeService.setTheme(preset.id)
             return
         }
-        const current = Config.options?.appearance?.customTheme ?? ({})
-        const updates = ({})
-        for (const key in preset.colors) {
-            if (current.hasOwnProperty(key))
-                updates[`appearance.customTheme.${key}`] = preset.colors[key]
-        }
-        Config.setNestedValues(updates)
+        ThemeService.applyCustomColors(preset.colors)
         root.activeSavedTheme = preset.id
-        ThemePresets.applyPreset("custom")
-        if (ThemeService.currentTheme !== "custom")
-            ThemeService.setTheme("custom")
+    }
+
+    Connections {
+        target: Hub
+        function onChanged(kind: string, id: string): void {
+            if (kind === "theme")
+                root.refreshSavedThemes()
+        }
     }
 
     Process {
         id: savedThemesProcess
-        command: ["/usr/bin/bash", "-lc", `for f in "${root.savedThemesDir}"/*.json; do [ -f "$f" ] || continue; /usr/bin/jq -c --arg name "$(/usr/bin/basename "$f" .json)" '{id:("saved:" + $name),name:$name,description:"Saved custom theme",tags:["saved"],saved:true,colors:.}' "$f"; done`]
+        command: ["/usr/bin/bash", "-lc", `for f in "${root.savedThemesDir}"/*.json; do [ -f "$f" ] || continue; /usr/bin/jq -c --arg name "$(/usr/bin/basename "$f" .json)" '{id:("saved:" + $name),name:(.name // $name),description:(.description // "Saved custom theme"),tags:["saved"],saved:true,colors:.}' "$f"; done`]
         stdout: SplitParser {
             onRead: data => {
                 try {

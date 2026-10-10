@@ -85,6 +85,9 @@ complete -c inir -n '__fish_seen_subcommand_from service' -a 'install uninstall 
 # Subcommand completions: theme
 complete -c inir -n '__fish_seen_subcommand_from theme' -a 'list-targets inspect doctor scaffold apply'
 
+# Subcommand completions: hub (the client's verbs; the shell's IPC functions are generated below)
+complete -c inir -n '__fish_seen_subcommand_from hub; and test (count (commandline -opc)) -eq 2' -a 'list search info install update remove sync status sources open' -d 'community hub'
+
 # Subcommand completions: completions
 complete -c inir -n '__fish_seen_subcommand_from completions' -a 'bash zsh fish install'
 
@@ -268,6 +271,15 @@ complete -c inir -n '__inir_at_target' -a global-style -d 'The Global Style ever
 complete -c inir -n '__inir_at_function globalStyle global-style' -a set -d 'Switch to a style by name, with its bar corner and card def…'
 complete -c inir -n '__inir_at_function globalStyle global-style' -a get -d 'Return the active style'
 complete -c inir -n '__inir_at_function globalStyle global-style' -a list -d 'List the styles'
+complete -c inir -n '__inir_at_target' -a hub -d 'The community hub (widgets, colour themes, iRiS themes, web…'
+complete -c inir -n '__inir_at_function hub' -a refresh -d 'Read every source again now'
+complete -c inir -n '__inir_at_function hub' -a install -d 'install'
+complete -c inir -n '__inir_at_function hub' -a remove -d 'remove'
+complete -c inir -n '__inir_at_function hub' -a update -d 'update'
+complete -c inir -n '__inir_at_function hub' -a use -d 'use'
+complete -c inir -n '__inir_at_function hub' -a openItem -d 'openItem'
+complete -c inir -n '__inir_at_function hub' -a status -d 'JSON: loaded, item count, installed ids, updates, what is r…'
+complete -c inir -n '__inir_at_function hub' -a changed -d 'changed'
 complete -c inir -n '__inir_at_target' -a iris -d 'iRiS bar and Island design'
 complete -c inir -n '__inir_at_function iris' -a open -d 'Expand the island on the focused output'
 complete -c inir -n '__inir_at_function iris' -a page -d 'Expand the island on a page: media, activity, desktop, tray…'
@@ -542,6 +554,7 @@ complete -c inir -n '__inir_at_target' -a settingsNav -d 'Navigate the settings 
 complete -c inir -n '__inir_at_target' -a settings-nav -d 'Navigate the settings overlay to a specific page (same as c…'
 complete -c inir -n '__inir_at_function settingsNav settings-nav' -a page -d 'page'
 complete -c inir -n '__inir_at_function settingsNav settings-nav' -a section -d 'section'
+complete -c inir -n '__inir_at_function settingsNav settings-nav' -a open -d 'open'
 complete -c inir -n '__inir_at_function settingsNav settings-nav' -a count -d 'Number of settings pages'
 complete -c inir -n '__inir_at_function settingsNav settings-nav' -a current -d 'Current page index, or -1 when no page is open'
 complete -c inir -n '__inir_at_target' -a shellLayout -d 'Dedicated persistent-shell layout editing and diagnostics'

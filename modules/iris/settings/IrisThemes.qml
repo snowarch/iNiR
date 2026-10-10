@@ -6,6 +6,7 @@ import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
 import qs.modules.common
+import qs.services
 import qs.modules.common.functions
 import qs.modules.iris.style
 import qs.modules.background.widgets
@@ -179,6 +180,15 @@ Singleton {
     Process {
         id: writer
         onExited: root.reload()
+    }
+
+    // A theme installed or removed from the community hub is one more user theme.
+    Connections {
+        target: Hub
+        function onChanged(kind: string, id: string): void {
+            if (kind === "iris-theme")
+                root.reload()
+        }
     }
 
     property var user: []

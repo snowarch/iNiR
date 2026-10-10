@@ -10,7 +10,7 @@ _inir_completions() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # Top-level CLI commands
-    local cli_commands="bind install start stop run restart kill logs terminal browser close-window ipc settings settings-window waffle-settings-window repair path test-local setup service doctor migrate status update rollback my-changes uninstall config info backup version theme help completions"
+    local cli_commands="bind install start stop run restart kill logs terminal browser close-window ipc settings settings-window waffle-settings-window repair path test-local setup service doctor migrate status update rollback my-changes uninstall config info backup version theme hub help completions"
 
     # Source IPC registry for target/function completion
     local script_dir inir_bin
@@ -69,6 +69,7 @@ _inir_completions() {
         case "$first" in
             service) COMPREPLY=( $(compgen -W "install uninstall enable disable start stop restart status logs" -- "$cur") ); return 0 ;;
             theme) COMPREPLY=( $(compgen -W "list-targets inspect doctor scaffold apply" -- "$cur") ); return 0 ;;
+            hub) COMPREPLY=( $(compgen -W "list search info install update remove sync status sources open refresh changed" -- "$cur") ); return 0 ;;
             completions) COMPREPLY=( $(compgen -W "bash zsh fish install" -- "$cur") ); return 0 ;;
         esac
     fi

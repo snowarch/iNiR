@@ -62,6 +62,8 @@ ShellRoot {
     // Tier 4: T+1500ms (background features - updates, sync, content services)
     property var _shellUpdatesService
     property var _autostartService
+    // The community hub answers `inir hub …` from any family; it does nothing until asked.
+    property var _hubService
     property var _niriAnimationPresetsService
     property var _calendarSyncService
     property var _todoService
@@ -83,6 +85,7 @@ ShellRoot {
         const family = Config.options?.panelFamily ?? "ii"
         root._shellUpdatesService = ShellUpdates
         root._autostartService = Autostart
+        root._hubService = Hub
         root._niriAnimationPresetsService = NiriAnimationPresets
         if (family !== "iris") {
             root._calendarSyncService = CalendarSync
@@ -664,6 +667,19 @@ ShellRoot {
         }
         function section(index: int, name: string): void {
             GlobalStates.openSettingsPage(index, name)
+        }
+        // A page by its registry key ("hub", "themes"…) in the family's own Settings.
+        function open(key: string): string {
+            const fluent = Config.options?.panelFamily === "waffle" && Config.options?.waffles?.settings?.useMaterialStyle !== true
+            if (fluent) {
+                Quickshell.execDetached(["/usr/bin/env", `QS_SETTINGS_PAGE=${key}`, Quickshell.shellPath("scripts/inir"), "waffle-settings-window"])
+                return key
+            }
+            const index = SettingsPageRegistry.pages.findIndex(page => page.key === key)
+            if (index < 0)
+                return `no page ${key}`
+            GlobalStates.openSettingsPage(index, "")
+            return key
         }
         function count(): int { return SettingsPageRegistry.pages.length }
         function current(): int { return GlobalStates.settingsOverlayCurrentPage }
