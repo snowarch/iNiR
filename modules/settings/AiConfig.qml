@@ -214,21 +214,26 @@ ContentPage {
                         providerForm.expanded = true
                     }
 
-                    contentItem: RowLayout {
-                        id: addProviderBtnRow
-                        anchors.centerIn: parent
-                        spacing: 4
+                    contentItem: Item {
+                        implicitWidth: addProviderBtnRow.implicitWidth
+                        implicitHeight: addProviderBtnRow.implicitHeight
+                        RowLayout {
+                            id: addProviderBtnRow
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 4
 
-                        MaterialSymbol {
-                            text: "add"
-                            iconSize: 16
-                            color: Appearance.colors.colPrimary
-                        }
-                        StyledText {
-                            text: Translation.tr("Custom endpoint")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            font.weight: Font.Medium
-                            color: Appearance.colors.colPrimary
+                            MaterialSymbol {
+                                text: "add"
+                                iconSize: 16
+                                color: Appearance.colors.colPrimary
+                            }
+                            StyledText {
+                                text: Translation.tr("Custom endpoint")
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colPrimary
+                            }
                         }
                     }
                 }

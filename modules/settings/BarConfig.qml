@@ -911,19 +911,25 @@ ContentPage {
                             "bar.m3.clock.datePixelSize": 0
                         })
 
-                        contentItem: RowLayout {
-                            anchors.centerIn: parent
-                            spacing: 5
+                        contentItem: Item {
+                            implicitWidth: centredRow1.implicitWidth
+                            implicitHeight: centredRow1.implicitHeight
+                            RowLayout {
+                                id: centredRow1
+                                width: Math.min(implicitWidth, parent.width)
+                                anchors.centerIn: parent
+                                spacing: 5
 
-                            MaterialSymbol {
-                                text: "restart_alt"
-                                iconSize: 15
-                                color: Appearance.colors.colOnLayer1
-                            }
-                            StyledText {
-                                text: Translation.tr("Reset to default")
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: Appearance.colors.colOnLayer1
+                                MaterialSymbol {
+                                    text: "restart_alt"
+                                    iconSize: 15
+                                    color: Appearance.colors.colOnLayer1
+                                }
+                                StyledText {
+                                    text: Translation.tr("Reset to default")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: Appearance.colors.colOnLayer1
+                                }
                             }
                         }
                     }
@@ -1915,19 +1921,25 @@ ContentPage {
                     colBackgroundHover: Appearance.colors.colLayer2Hover
                     onClicked: root.resetSpectrumDefaults()
 
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 5
+                    contentItem: Item {
+                        implicitWidth: centredRow2.implicitWidth
+                        implicitHeight: centredRow2.implicitHeight
+                        RowLayout {
+                            id: centredRow2
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 5
 
-                        MaterialSymbol {
-                            text: "restart_alt"
-                            iconSize: 15
-                            color: Appearance.colors.colOnLayer1
-                        }
-                        StyledText {
-                            text: Translation.tr("Reset spectrum defaults")
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colOnLayer1
+                            MaterialSymbol {
+                                text: "restart_alt"
+                                iconSize: 15
+                                color: Appearance.colors.colOnLayer1
+                            }
+                            StyledText {
+                                text: Translation.tr("Reset spectrum defaults")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.colors.colOnLayer1
+                            }
                         }
                     }
                 }
@@ -2193,19 +2205,25 @@ ContentPage {
                         "bar.clock.datePixelSize": 0
                     })
 
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 5
+                    contentItem: Item {
+                        implicitWidth: centredRow3.implicitWidth
+                        implicitHeight: centredRow3.implicitHeight
+                        RowLayout {
+                            id: centredRow3
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 5
 
-                        MaterialSymbol {
-                            text: "restart_alt"
-                            iconSize: 15
-                            color: Appearance.colors.colOnLayer1
-                        }
-                        StyledText {
-                            text: Translation.tr("Reset to default")
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colOnLayer1
+                            MaterialSymbol {
+                                text: "restart_alt"
+                                iconSize: 15
+                                color: Appearance.colors.colOnLayer1
+                            }
+                            StyledText {
+                                text: Translation.tr("Reset to default")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.colors.colOnLayer1
+                            }
                         }
                     }
                 }

@@ -403,19 +403,25 @@ ContentPage {
                 colBackgroundHover: Appearance.colors.colLayer1Hover
                 colRipple: Appearance.colors.colLayer1Active
 
-                contentItem: RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 8
+                contentItem: Item {
+                    implicitWidth: centredRow1.implicitWidth
+                    implicitHeight: centredRow1.implicitHeight
+                    RowLayout {
+                        id: centredRow1
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 8
 
-                    MaterialSymbol {
-                        text: "restart_alt"
-                        iconSize: Appearance.font.pixelSize.normal
-                        color: Appearance.colors.colOnSurface
-                    }
-                    StyledText {
-                        text: Translation.tr("Reset to defaults")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSurface
+                        MaterialSymbol {
+                            text: "restart_alt"
+                            iconSize: Appearance.font.pixelSize.normal
+                            color: Appearance.colors.colOnSurface
+                        }
+                        StyledText {
+                            text: Translation.tr("Reset to defaults")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colOnSurface
+                        }
                     }
                 }
 

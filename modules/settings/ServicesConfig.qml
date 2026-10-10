@@ -823,18 +823,24 @@ ContentPage {
                     opacity: enabled ? 1.0 : 0.5
                     onClicked: ShellUpdates.check()
 
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 6
-                        MaterialSymbol {
-                            text: "refresh"
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colOnSurface
-                        }
-                        StyledText {
-                            text: ShellUpdates.isChecking ? Translation.tr("Checking…") : Translation.tr("Check Now")
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colOnSurface
+                    contentItem: Item {
+                        implicitWidth: centredRow1.implicitWidth
+                        implicitHeight: centredRow1.implicitHeight
+                        RowLayout {
+                            id: centredRow1
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 6
+                            MaterialSymbol {
+                                text: "refresh"
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnSurface
+                            }
+                            StyledText {
+                                text: ShellUpdates.isChecking ? Translation.tr("Checking…") : Translation.tr("Check Now")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.colors.colOnSurface
+                            }
                         }
                     }
                 }
@@ -858,18 +864,24 @@ ContentPage {
                         }
                     }
 
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 6
-                        MaterialSymbol {
-                            text: "open_in_new"
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colOnSurface
-                        }
-                        StyledText {
-                            text: Translation.tr("Open Details")
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colOnSurface
+                    contentItem: Item {
+                        implicitWidth: centredRow2.implicitWidth
+                        implicitHeight: centredRow2.implicitHeight
+                        RowLayout {
+                            id: centredRow2
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 6
+                            MaterialSymbol {
+                                text: "open_in_new"
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnSurface
+                            }
+                            StyledText {
+                                text: Translation.tr("Open Details")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.colors.colOnSurface
+                            }
                         }
                     }
                 }
@@ -886,25 +898,31 @@ ContentPage {
                     opacity: enabled ? 1.0 : 0.5
                     onClicked: ShellUpdates.performUpdate()
 
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 6
-                        MaterialSymbol {
-                            text: ShellUpdates.isUpdating ? "hourglass_top" : "upgrade"
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colOnPrimary
-                        }
-                        StyledText {
-                            text: ShellUpdates.isUpdating
-                                ? (ShellUpdates.updateStepMessage.length > 0
-                                    ? Translation.tr(ShellUpdates.updateStepMessage) + "…"
-                                    : Translation.tr("Updating…"))
-                                : (ShellUpdates.repoDiverged ? Translation.tr("Repair & Update") : Translation.tr("Update Now"))
-                            font {
-                                pixelSize: Appearance.font.pixelSize.smaller
-                                weight: Font.DemiBold
+                    contentItem: Item {
+                        implicitWidth: centredRow3.implicitWidth
+                        implicitHeight: centredRow3.implicitHeight
+                        RowLayout {
+                            id: centredRow3
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 6
+                            MaterialSymbol {
+                                text: ShellUpdates.isUpdating ? "hourglass_top" : "upgrade"
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnPrimary
                             }
-                            color: Appearance.colors.colOnPrimary
+                            StyledText {
+                                text: ShellUpdates.isUpdating
+                                    ? (ShellUpdates.updateStepMessage.length > 0
+                                        ? Translation.tr(ShellUpdates.updateStepMessage) + "…"
+                                        : Translation.tr("Updating…"))
+                                    : (ShellUpdates.repoDiverged ? Translation.tr("Repair & Update") : Translation.tr("Update Now"))
+                                font {
+                                    pixelSize: Appearance.font.pixelSize.smaller
+                                    weight: Font.DemiBold
+                                }
+                                color: Appearance.colors.colOnPrimary
+                            }
                         }
                     }
                 }
@@ -1210,21 +1228,26 @@ ContentPage {
                     colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.80)
                     onClicked: addSourceForm.expanded = true
 
-                    contentItem: RowLayout {
-                        id: addRow
-                        anchors.centerIn: parent
-                        spacing: 4
+                    contentItem: Item {
+                        implicitWidth: addRow.implicitWidth
+                        implicitHeight: addRow.implicitHeight
+                        RowLayout {
+                            id: addRow
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 4
 
-                        MaterialSymbol {
-                            text: "add"
-                            iconSize: 16
-                            color: Appearance.colors.colPrimary
-                        }
-                        StyledText {
-                            text: Translation.tr("Add")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            font.weight: Font.Medium
-                            color: Appearance.colors.colPrimary
+                            MaterialSymbol {
+                                text: "add"
+                                iconSize: 16
+                                color: Appearance.colors.colPrimary
+                            }
+                            StyledText {
+                                text: Translation.tr("Add")
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colPrimary
+                            }
                         }
                     }
                 }

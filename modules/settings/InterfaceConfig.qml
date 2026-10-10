@@ -1050,18 +1050,24 @@ ContentPage {
                         colRipple: Appearance.colors.colPrimaryContainer
                         onClicked: quickLaunchEditor.addShortcut()
 
-                        contentItem: RowLayout {
-                            anchors.centerIn: parent
-                            spacing: 6
-                            MaterialSymbol {
-                                text: "add"
-                                iconSize: 18
-                                color: Appearance.colors.colPrimary
-                            }
-                            StyledText {
-                                text: Translation.tr("Add shortcut")
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                color: Appearance.colors.colPrimary
+                        contentItem: Item {
+                            implicitWidth: centredRow1.implicitWidth
+                            implicitHeight: centredRow1.implicitHeight
+                            RowLayout {
+                                id: centredRow1
+                                width: Math.min(implicitWidth, parent.width)
+                                anchors.centerIn: parent
+                                spacing: 6
+                                MaterialSymbol {
+                                    text: "add"
+                                    iconSize: 18
+                                    color: Appearance.colors.colPrimary
+                                }
+                                StyledText {
+                                    text: Translation.tr("Add shortcut")
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    color: Appearance.colors.colPrimary
+                                }
                             }
                         }
                     }
@@ -1859,26 +1865,32 @@ ContentPage {
                             colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimary
                             onClicked: worldClockSection.adoptSuggestions()
 
-                            contentItem: RowLayout {
-                                anchors.centerIn: parent
-                                spacing: 6
-                                MaterialSymbol {
-                                    text: "playlist_add"
-                                    iconSize: 16
-                                    color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
-                                    Behavior on color {
-                                        enabled: Appearance.animationsEnabled
-                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            contentItem: Item {
+                                implicitWidth: centredRow2.implicitWidth
+                                implicitHeight: centredRow2.implicitHeight
+                                RowLayout {
+                                    id: centredRow2
+                                    width: Math.min(implicitWidth, parent.width)
+                                    anchors.centerIn: parent
+                                    spacing: 6
+                                    MaterialSymbol {
+                                        text: "playlist_add"
+                                        iconSize: 16
+                                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                        }
                                     }
-                                }
-                                StyledText {
-                                    text: Translation.tr("Add suggested timezones")
-                                    font.pixelSize: Appearance.font.pixelSize.small
-                                    font.weight: Font.Medium
-                                    color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
-                                    Behavior on color {
-                                        enabled: Appearance.animationsEnabled
-                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                    StyledText {
+                                        text: Translation.tr("Add suggested timezones")
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                        font.weight: Font.Medium
+                                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                        }
                                     }
                                 }
                             }

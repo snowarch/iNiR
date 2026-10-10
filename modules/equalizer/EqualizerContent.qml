@@ -460,29 +460,34 @@ Item {
                             : Appearance.colors.colPrimaryContainerActive
                         onClicked: EasyEffects.openWindow()
 
-                        contentItem: RowLayout {
-                            id: openEasyEffectsContent
-                            anchors.centerIn: parent
-                            spacing: 7
+                        contentItem: Item {
+                            implicitWidth: openEasyEffectsContent.implicitWidth
+                            implicitHeight: openEasyEffectsContent.implicitHeight
+                            RowLayout {
+                                id: openEasyEffectsContent
+                                width: Math.min(implicitWidth, parent.width)
+                                anchors.centerIn: parent
+                                spacing: 7
 
-                            MaterialSymbol {
-                                text: "open_in_new"
-                                iconSize: 17
-                                color: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
-                                    : Appearance.zzzEverywhere ? Appearance.zzz.onSticker
-                                    : Appearance.inirEverywhere ? Appearance.inir.colOnPrimaryContainer
-                                    : Appearance.colors.colOnPrimaryContainer
-                            }
-                            StyledText {
-                                text: Services.Translation.tr("Open EasyEffects")
-                                font.family: Appearance.font.family.main
-                                font.variableAxes: Appearance.font.variableAxes.main
-                                font.pixelSize: Appearance.font.pixelSize.smallie
-                                font.weight: Font.DemiBold
-                                color: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
-                                    : Appearance.zzzEverywhere ? Appearance.zzz.onSticker
-                                    : Appearance.inirEverywhere ? Appearance.inir.colOnPrimaryContainer
-                                    : Appearance.colors.colOnPrimaryContainer
+                                MaterialSymbol {
+                                    text: "open_in_new"
+                                    iconSize: 17
+                                    color: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
+                                        : Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+                                        : Appearance.inirEverywhere ? Appearance.inir.colOnPrimaryContainer
+                                        : Appearance.colors.colOnPrimaryContainer
+                                }
+                                StyledText {
+                                    text: Services.Translation.tr("Open EasyEffects")
+                                    font.family: Appearance.font.family.main
+                                    font.variableAxes: Appearance.font.variableAxes.main
+                                    font.pixelSize: Appearance.font.pixelSize.smallie
+                                    font.weight: Font.DemiBold
+                                    color: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
+                                        : Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+                                        : Appearance.inirEverywhere ? Appearance.inir.colOnPrimaryContainer
+                                        : Appearance.colors.colOnPrimaryContainer
+                                }
                             }
                         }
                     }
@@ -503,22 +508,27 @@ Item {
                         colRipple: Appearance.colLayer1Active
                         onClicked: EasyEffects.configureTenBandEqualizer()
 
-                        contentItem: RowLayout {
-                            id: configureContent
-                            anchors.centerIn: parent
-                            spacing: 7
-                            MaterialSymbol {
-                                text: "tune"
-                                iconSize: 17
-                                color: root.cardInk
-                            }
-                            StyledText {
-                                text: Services.Translation.tr("Configure 10 bands")
-                                font.family: Appearance.font.family.main
-                                font.variableAxes: Appearance.font.variableAxes.main
-                                font.pixelSize: Appearance.font.pixelSize.smallie
-                                font.weight: Font.DemiBold
-                                color: root.cardInk
+                        contentItem: Item {
+                            implicitWidth: configureContent.implicitWidth
+                            implicitHeight: configureContent.implicitHeight
+                            RowLayout {
+                                id: configureContent
+                                width: Math.min(implicitWidth, parent.width)
+                                anchors.centerIn: parent
+                                spacing: 7
+                                MaterialSymbol {
+                                    text: "tune"
+                                    iconSize: 17
+                                    color: root.cardInk
+                                }
+                                StyledText {
+                                    text: Services.Translation.tr("Configure 10 bands")
+                                    font.family: Appearance.font.family.main
+                                    font.variableAxes: Appearance.font.variableAxes.main
+                                    font.pixelSize: Appearance.font.pixelSize.smallie
+                                    font.weight: Font.DemiBold
+                                    color: root.cardInk
+                                }
                             }
                         }
                     }

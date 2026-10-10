@@ -1320,22 +1320,27 @@ ContentPage {
                 colBackground: Appearance.colors.colLayer1
                 colBackgroundHover: Appearance.colors.colLayer1Hover
 
-                contentItem: RowLayout {
-                    id: detectRow
-                    anchors.centerIn: parent
-                    spacing: 6
+                contentItem: Item {
+                    implicitWidth: detectRow.implicitWidth
+                    implicitHeight: detectRow.implicitHeight
+                    RowLayout {
+                        id: detectRow
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 6
 
-                    MaterialSymbol {
-                        text: "search"
-                        iconSize: 14
-                        color: Appearance.colors.colOnLayer1
-                    }
+                        MaterialSymbol {
+                            text: "search"
+                            iconSize: 14
+                            color: Appearance.colors.colOnLayer1
+                        }
 
-                    StyledText {
-                        text: terminalColorsSection.detectionDone
-                            ? Translation.tr("Re-detect installed")
-                            : Translation.tr("Auto-detect installed")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        StyledText {
+                            text: terminalColorsSection.detectionDone
+                                ? Translation.tr("Re-detect installed")
+                                : Translation.tr("Auto-detect installed")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                        }
                     }
                 }
 
@@ -1524,20 +1529,25 @@ ContentPage {
                 colBackground: Appearance.colors.colLayer1
                 colBackgroundHover: Appearance.colors.colLayer1Hover
 
-                contentItem: RowLayout {
-                    id: resetRow
-                    anchors.centerIn: parent
-                    spacing: 6
+                contentItem: Item {
+                    implicitWidth: resetRow.implicitWidth
+                    implicitHeight: resetRow.implicitHeight
+                    RowLayout {
+                        id: resetRow
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 6
 
-                    MaterialSymbol {
-                        text: "restart_alt"
-                        iconSize: 14
-                        color: Appearance.colors.colOnLayer1
-                    }
+                        MaterialSymbol {
+                            text: "restart_alt"
+                            iconSize: 14
+                            color: Appearance.colors.colOnLayer1
+                        }
 
-                    StyledText {
-                        text: Translation.tr("Reset to defaults")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        StyledText {
+                            text: Translation.tr("Reset to defaults")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                        }
                     }
                 }
 
@@ -1563,28 +1573,33 @@ ContentPage {
                 colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover
                 colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
 
-                contentItem: RowLayout {
-                    id: applyNowRow
-                    anchors.centerIn: parent
-                    spacing: 8
+                contentItem: Item {
+                    implicitWidth: applyNowRow.implicitWidth
+                    implicitHeight: applyNowRow.implicitHeight
+                    RowLayout {
+                        id: applyNowRow
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 8
 
-                    MaterialSymbol {
-                        text: "sync"
-                        iconSize: 16
-                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
-                        Behavior on color {
-                            enabled: Appearance.animationsEnabled
-                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        MaterialSymbol {
+                            text: "sync"
+                            iconSize: 16
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
-                    }
 
-                    StyledText {
-                        text: Translation.tr("Apply to open terminals")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
-                        Behavior on color {
-                            enabled: Appearance.animationsEnabled
-                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        StyledText {
+                            text: Translation.tr("Apply to open terminals")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                     }
                 }

@@ -164,11 +164,17 @@ ColumnLayout {
                     const resolved = root.resolveDefaultSourcePath()
                     if (resolved.length > 0) root.sourcePath = resolved
                 }
-                contentItem: RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 6
-                    MaterialSymbol { text: "wallpaper"; iconSize: 16; color: Appearance.colors.colOnLayer1 }
-                    StyledText { text: Translation.tr("Use current wallpaper"); font.pixelSize: Appearance.font.pixelSize.small; color: Appearance.colors.colOnLayer1 }
+                contentItem: Item {
+                    implicitWidth: centredRow1.implicitWidth
+                    implicitHeight: centredRow1.implicitHeight
+                    RowLayout {
+                        id: centredRow1
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 6
+                        MaterialSymbol { text: "wallpaper"; iconSize: 16; color: Appearance.colors.colOnLayer1 }
+                        StyledText { text: Translation.tr("Use current wallpaper"); font.pixelSize: Appearance.font.pixelSize.small; color: Appearance.colors.colOnLayer1 }
+                    }
                 }
             }
 
@@ -179,12 +185,17 @@ ColumnLayout {
                 colBackground: SettingsMaterialPreset.groupColor
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 onClicked: imageDialog.open()
-                contentItem: RowLayout {
-                    id: browseRow
-                    anchors.centerIn: parent
-                    spacing: 6
-                    MaterialSymbol { text: "folder_open"; iconSize: 16; color: Appearance.colors.colOnLayer1 }
-                    StyledText { text: Translation.tr("Browse"); font.pixelSize: Appearance.font.pixelSize.small; color: Appearance.colors.colOnLayer1 }
+                contentItem: Item {
+                    implicitWidth: browseRow.implicitWidth
+                    implicitHeight: browseRow.implicitHeight
+                    RowLayout {
+                        id: browseRow
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 6
+                        MaterialSymbol { text: "folder_open"; iconSize: 16; color: Appearance.colors.colOnLayer1 }
+                        StyledText { text: Translation.tr("Browse"); font.pixelSize: Appearance.font.pixelSize.small; color: Appearance.colors.colOnLayer1 }
+                    }
                 }
             }
         }
@@ -616,18 +627,24 @@ ColumnLayout {
                 colBackground: SettingsMaterialPreset.groupColor
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 onClicked: root.runPreview()
-                contentItem: RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 6
-                    MaterialSymbol {
-                        text: GowallService.busy ? "progress_activity" : "visibility"
-                        iconSize: 16
-                        color: Appearance.colors.colOnLayer1
-                    }
-                    StyledText {
-                        text: GowallService.busy ? Translation.tr("Processing...") : Translation.tr("Preview")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnLayer1
+                contentItem: Item {
+                    implicitWidth: centredRow2.implicitWidth
+                    implicitHeight: centredRow2.implicitHeight
+                    RowLayout {
+                        id: centredRow2
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 6
+                        MaterialSymbol {
+                            text: GowallService.busy ? "progress_activity" : "visibility"
+                            iconSize: 16
+                            color: Appearance.colors.colOnLayer1
+                        }
+                        StyledText {
+                            text: GowallService.busy ? Translation.tr("Processing...") : Translation.tr("Preview")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colOnLayer1
+                        }
                     }
                 }
             }
@@ -641,25 +658,31 @@ ColumnLayout {
                 colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover
                 colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
                 onClicked: GowallService.applyPreview()
-                contentItem: RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 6
-                    MaterialSymbol {
-                        text: "check_circle"
-                        iconSize: 16
-                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
-                        Behavior on color {
-                            enabled: Appearance.animationsEnabled
-                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                contentItem: Item {
+                    implicitWidth: centredRow3.implicitWidth
+                    implicitHeight: centredRow3.implicitHeight
+                    RowLayout {
+                        id: centredRow3
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 6
+                        MaterialSymbol {
+                            text: "check_circle"
+                            iconSize: 16
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
-                    }
-                    StyledText {
-                        text: Translation.tr("Apply as wallpaper")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
-                        Behavior on color {
-                            enabled: Appearance.animationsEnabled
-                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        StyledText {
+                            text: Translation.tr("Apply as wallpaper")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                     }
                 }
@@ -784,12 +807,17 @@ ColumnLayout {
                 colBackground: SettingsMaterialPreset.groupColor
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 onClicked: GowallService.extract(root.sourcePath, 8)
-                contentItem: RowLayout {
-                    id: extractRow
-                    anchors.centerIn: parent
-                    spacing: 6
-                    MaterialSymbol { text: "colorize"; iconSize: 14; color: Appearance.colors.colOnLayer1 }
-                    StyledText { text: Translation.tr("Extract colors"); font.pixelSize: Appearance.font.pixelSize.small; color: Appearance.colors.colOnLayer1 }
+                contentItem: Item {
+                    implicitWidth: extractRow.implicitWidth
+                    implicitHeight: extractRow.implicitHeight
+                    RowLayout {
+                        id: extractRow
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 6
+                        MaterialSymbol { text: "colorize"; iconSize: 14; color: Appearance.colors.colOnLayer1 }
+                        StyledText { text: Translation.tr("Extract colors"); font.pixelSize: Appearance.font.pixelSize.small; color: Appearance.colors.colOnLayer1 }
+                    }
                 }
             }
 

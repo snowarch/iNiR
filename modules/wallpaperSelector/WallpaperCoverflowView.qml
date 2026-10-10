@@ -1086,21 +1086,27 @@ Item {
                     colBackgroundHover: root.editorial ? Appearance.colors.colPrimaryHover : ColorUtils.applyAlpha(root._accent, 0.26)
                     onClicked: root.activateCurrent()
 
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 6
+                    contentItem: Item {
+                        implicitWidth: centredRow1.implicitWidth
+                        implicitHeight: centredRow1.implicitHeight
+                        RowLayout {
+                            id: centredRow1
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 6
 
-                        MaterialSymbol {
-                            text: root.activeIsDir ? "folder_open" : "check_circle"
-                            iconSize: Appearance.font.pixelSize.small
-                            color: root.editorial ? Appearance.editorial.accentInk : root.textColor
-                        }
+                            MaterialSymbol {
+                                text: root.activeIsDir ? "folder_open" : "check_circle"
+                                iconSize: Appearance.font.pixelSize.small
+                                color: root.editorial ? Appearance.editorial.accentInk : root.textColor
+                            }
 
-                        StyledText {
-                            text: root.activeIsDir ? Translation.tr("Open folder") : Translation.tr("Apply selected")
-                            color: root.editorial ? Appearance.editorial.accentInk : root.textColor
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            font.weight: Font.DemiBold
+                            StyledText {
+                                text: root.activeIsDir ? Translation.tr("Open folder") : Translation.tr("Apply selected")
+                                color: root.editorial ? Appearance.editorial.accentInk : root.textColor
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: Font.DemiBold
+                            }
                         }
                     }
                 }
@@ -1113,20 +1119,26 @@ Item {
                     colBackgroundHover: ColorUtils.applyAlpha(root.elevatedColor, 0.72)
                     onClicked: root.previewMode = !root.previewMode
 
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 6
+                    contentItem: Item {
+                        implicitWidth: centredRow2.implicitWidth
+                        implicitHeight: centredRow2.implicitHeight
+                        RowLayout {
+                            id: centredRow2
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 6
 
-                        MaterialSymbol {
-                            text: root.previewMode ? "close_fullscreen" : "open_in_full"
-                            iconSize: Appearance.font.pixelSize.small
-                            color: root.textColor
-                        }
+                            MaterialSymbol {
+                                text: root.previewMode ? "close_fullscreen" : "open_in_full"
+                                iconSize: Appearance.font.pixelSize.small
+                                color: root.textColor
+                            }
 
-                        StyledText {
-                            text: root.previewMode ? Translation.tr("Exit preview") : Translation.tr("Preview")
-                            color: root.textColor
-                            font.pixelSize: Appearance.font.pixelSize.small
+                            StyledText {
+                                text: root.previewMode ? Translation.tr("Exit preview") : Translation.tr("Preview")
+                                color: root.textColor
+                                font.pixelSize: Appearance.font.pixelSize.small
+                            }
                         }
                     }
                 }

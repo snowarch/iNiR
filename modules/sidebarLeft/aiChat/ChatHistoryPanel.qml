@@ -65,19 +65,24 @@ Rectangle {
                     Ai.newChat();
                     root.requestClose();
                 }
-                contentItem: RowLayout {
-                    id: newChatRow
-                    anchors.centerIn: parent
-                    spacing: 4
-                    MaterialSymbol {
-                        text: "add"
-                        iconSize: Appearance.font.pixelSize.large
-                        color: Appearance.colors.colOnSecondaryContainer
-                    }
-                    StyledText {
-                        text: Translation.tr("New chat")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colOnSecondaryContainer
+                contentItem: Item {
+                    implicitWidth: newChatRow.implicitWidth
+                    implicitHeight: newChatRow.implicitHeight
+                    RowLayout {
+                        id: newChatRow
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 4
+                        MaterialSymbol {
+                            text: "add"
+                            iconSize: Appearance.font.pixelSize.large
+                            color: Appearance.colors.colOnSecondaryContainer
+                        }
+                        StyledText {
+                            text: Translation.tr("New chat")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colOnSecondaryContainer
+                        }
                     }
                 }
                 StyledToolTip { text: Translation.tr("Saves the current conversation and starts fresh") }

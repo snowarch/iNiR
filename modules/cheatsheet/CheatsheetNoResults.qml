@@ -62,21 +62,26 @@ Item {
             colRipple: Appearance.colors.colSurfaceContainerHighest
             onClicked: root.clearSearchRequested()
             
-            contentItem: RowLayout {
-                id: clearContent
-                anchors.centerIn: parent
-                spacing: 4
+            contentItem: Item {
+                implicitWidth: clearContent.implicitWidth
+                implicitHeight: clearContent.implicitHeight
+                RowLayout {
+                    id: clearContent
+                    width: Math.min(implicitWidth, parent.width)
+                    anchors.centerIn: parent
+                    spacing: 4
                 
-                MaterialSymbol {
-                    text: "backspace"
-                    iconSize: Appearance.font.pixelSize.small
-                    color: Appearance.colors.colOnSurface
-                }
+                    MaterialSymbol {
+                        text: "backspace"
+                        iconSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colOnSurface
+                    }
                 
-                StyledText {
-                    text: Translation.tr("Clear search")
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colOnSurface
+                    StyledText {
+                        text: Translation.tr("Clear search")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.colors.colOnSurface
+                    }
                 }
             }
         }

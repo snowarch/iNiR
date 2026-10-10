@@ -307,25 +307,31 @@ Item {
                         ? (tagSuggestions.selectedIndex === index ? Appearance.zzz.sticker : "transparent")
                         : (tagSuggestions.selectedIndex === index ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
                     bounce: false
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 5
-                        StyledText {
-                            Layout.fillWidth: false
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.zzzEverywhere && tagSuggestions.selectedIndex === index
-                                ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
-                            horizontalAlignment: Text.AlignRight
-                            text: modelData.displayName ?? modelData.name
-                        }
-                        StyledText {
-                            Layout.fillWidth: false
-                            visible: modelData.count !== undefined
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.zzzEverywhere && tagSuggestions.selectedIndex === index
-                                ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
-                            horizontalAlignment: Text.AlignLeft
-                            text: modelData.count ?? ""
+                    contentItem: Item {
+                        implicitWidth: centredRow1.implicitWidth
+                        implicitHeight: centredRow1.implicitHeight
+                        RowLayout {
+                            id: centredRow1
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 5
+                            StyledText {
+                                Layout.fillWidth: false
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                color: Appearance.zzzEverywhere && tagSuggestions.selectedIndex === index
+                                    ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
+                                horizontalAlignment: Text.AlignRight
+                                text: modelData.displayName ?? modelData.name
+                            }
+                            StyledText {
+                                Layout.fillWidth: false
+                                visible: modelData.count !== undefined
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.zzzEverywhere && tagSuggestions.selectedIndex === index
+                                    ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
+                                horizontalAlignment: Text.AlignLeft
+                                text: modelData.count ?? ""
+                            }
                         }
                     }
 

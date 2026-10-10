@@ -374,24 +374,29 @@ StyledOverlayWidget {
         colRipple: modeSelected ? OverlayLook.colPrimaryContainerActive : OverlayLook.colLayer3Active
         onClicked: root.setAudioMode(audioModeValue)
 
-        contentItem: Row {
-            anchors.centerIn: parent
-            spacing: 4
+        contentItem: Item {
+            implicitWidth: centredRow1.implicitWidth
+            implicitHeight: centredRow1.implicitHeight
+            Row {
+                id: centredRow1
+                anchors.centerIn: parent
+                spacing: 4
 
-            MaterialSymbol {
-                anchors.verticalCenter: parent.verticalCenter
-                text: audioButton.materialSymbol
-                iconSize: 15
-                color: audioButton.modeSelected ? OverlayLook.colOnPrimaryContainer : OverlayLook.colOnLayer3
-            }
-            StyledText {
-                anchors.verticalCenter: parent.verticalCenter
-                text: audioButton.audioModeValue === "both" ? Translation.tr("Both")
-                    : audioButton.audioModeValue === "microphone" ? Translation.tr("Mic")
-                    : audioButton.audioModeValue === "system" ? Translation.tr("System")
-                    : Translation.tr("None")
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: audioButton.modeSelected ? OverlayLook.colOnPrimaryContainer : OverlayLook.colOnLayer3
+                MaterialSymbol {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: audioButton.materialSymbol
+                    iconSize: 15
+                    color: audioButton.modeSelected ? OverlayLook.colOnPrimaryContainer : OverlayLook.colOnLayer3
+                }
+                StyledText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: audioButton.audioModeValue === "both" ? Translation.tr("Both")
+                        : audioButton.audioModeValue === "microphone" ? Translation.tr("Mic")
+                        : audioButton.audioModeValue === "system" ? Translation.tr("System")
+                        : Translation.tr("None")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: audioButton.modeSelected ? OverlayLook.colOnPrimaryContainer : OverlayLook.colOnLayer3
+                }
             }
         }
 

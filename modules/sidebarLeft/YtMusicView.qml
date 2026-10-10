@@ -79,24 +79,31 @@ Item {
             }
         }
 
-        contentItem: RowLayout {
-            id: chipContent
-            anchors.centerIn: parent
-            spacing: compact ? 4 : 6
+        contentItem: Item {
+            implicitWidth: chipContent.implicitWidth
+            implicitHeight: chipContent.implicitHeight
+            RowLayout {
+                id: chipContent
+                width: Math.min(implicitWidth, parent.width)
+                anchors.centerIn: parent
+                spacing: compact ? 4 : 6
 
-            MaterialSymbol {
-                visible: chipRoot.iconName.length > 0
-                text: chipRoot.iconName
-                iconSize: compact ? 14 : 16
-                color: chipRoot.chipForeground
-            }
+                MaterialSymbol {
+                    visible: chipRoot.iconName.length > 0
+                    text: chipRoot.iconName
+                    iconSize: compact ? 14 : 16
+                    color: chipRoot.chipForeground
+                }
 
-            StyledText {
-                visible: chipRoot.label.length > 0
-                text: chipRoot.label
-                color: chipRoot.chipForeground
-                font.pixelSize: compact ? Appearance.font.pixelSize.smallest : Appearance.font.pixelSize.smaller
-                font.weight: Font.Medium
+                StyledText {
+                    Layout.fillWidth: true
+                    visible: chipRoot.label.length > 0
+                    elide: Text.ElideRight
+                    text: chipRoot.label
+                    color: chipRoot.chipForeground
+                    font.pixelSize: compact ? Appearance.font.pixelSize.smallest : Appearance.font.pixelSize.smaller
+                    font.weight: Font.Medium
+                }
             }
         }
     }
@@ -696,10 +703,16 @@ Item {
                         implicitWidth: 160; implicitHeight: 28; buttonRadius: 14
                         colBackground: root.colLayer2; colBackgroundHover: root.colLayer2Hover
                         onClicked: Qt.openUrlExternally("https://console.cloud.google.com/apis/credentials")
-                        contentItem: RowLayout {
-                            anchors.centerIn: parent; spacing: 4
-                            MaterialSymbol { text: "open_in_new"; iconSize: 14; color: root.colPrimary }
-                            StyledText { text: Translation.tr("Google Cloud Console"); font.pixelSize: Appearance.font.pixelSize.smallest; color: root.colPrimary }
+                        contentItem: Item {
+                            implicitWidth: centredRow1.implicitWidth
+                            implicitHeight: centredRow1.implicitHeight
+                            RowLayout {
+                                id: centredRow1
+                                width: Math.min(implicitWidth, parent.width)
+                                anchors.centerIn: parent; spacing: 4
+                                MaterialSymbol { text: "open_in_new"; iconSize: 14; color: root.colPrimary }
+                                StyledText { text: Translation.tr("Google Cloud Console"); font.pixelSize: Appearance.font.pixelSize.smallest; color: root.colPrimary }
+                            }
                         }
                     }
 
@@ -790,10 +803,16 @@ Item {
                         Layout.fillWidth: true; implicitHeight: 34; buttonRadius: root.radiusSmall
                         colBackground: root.colPrimary
                         onClicked: Qt.openUrlExternally(YtMusic.oauthVerificationUrl || "https://www.google.com/device")
-                        contentItem: RowLayout {
-                            anchors.centerIn: parent; spacing: 6
-                            MaterialSymbol { text: "open_in_new"; iconSize: 16; color: Appearance.colors.colOnPrimary }
-                            StyledText { text: Translation.tr("Open Google"); color: Appearance.colors.colOnPrimary; font.weight: Font.Medium }
+                        contentItem: Item {
+                            implicitWidth: centredRow2.implicitWidth
+                            implicitHeight: centredRow2.implicitHeight
+                            RowLayout {
+                                id: centredRow2
+                                width: Math.min(implicitWidth, parent.width)
+                                anchors.centerIn: parent; spacing: 6
+                                MaterialSymbol { text: "open_in_new"; iconSize: 16; color: Appearance.colors.colOnPrimary }
+                                StyledText { text: Translation.tr("Open Google"); color: Appearance.colors.colOnPrimary; font.weight: Font.Medium }
+                            }
                         }
                     }
 
@@ -904,11 +923,17 @@ Item {
                     addToPlaylistPopup.close()
                     createPlaylistPopup.open() 
                 }
-                contentItem: RowLayout { 
-                    anchors.centerIn: parent
-                    spacing: 4
-                    MaterialSymbol { text: "add"; iconSize: 18; color: root.colPrimary }
-                    StyledText { text: Translation.tr("New Playlist"); color: root.colPrimary } 
+                contentItem: Item {
+                    implicitWidth: centredRow3.implicitWidth
+                    implicitHeight: centredRow3.implicitHeight
+                    RowLayout {
+                        id: centredRow3
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 4
+                        MaterialSymbol { text: "add"; iconSize: 18; color: root.colPrimary }
+                        StyledText { text: Translation.tr("New Playlist"); color: root.colPrimary } 
+                    }
                 }
             }
         }
@@ -1756,11 +1781,17 @@ Item {
             colBackground: "transparent"
             colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colError, 0.85)
             onClicked: { YtMusic.deletePlaylist(expandedPlaylist); expandedPlaylist = -1 }
-            contentItem: RowLayout { 
-                anchors.centerIn: parent
-                spacing: 8
-                MaterialSymbol { text: "delete"; iconSize: 18; color: Appearance.colors.colError }
-                StyledText { text: Translation.tr("Delete playlist"); color: Appearance.colors.colError } 
+            contentItem: Item {
+                implicitWidth: centredRow4.implicitWidth
+                implicitHeight: centredRow4.implicitHeight
+                RowLayout {
+                    id: centredRow4
+                    width: Math.min(implicitWidth, parent.width)
+                    anchors.centerIn: parent
+                    spacing: 8
+                    MaterialSymbol { text: "delete"; iconSize: 18; color: Appearance.colors.colError }
+                    StyledText { text: Translation.tr("Delete playlist"); color: Appearance.colors.colError } 
+                }
             }
         }
     }

@@ -2046,39 +2046,44 @@ Item {
                         : bg.colDarkSurfaceActive)
                 onClicked: Notifications.silent = !Notifications.silent
 
-                contentItem: RowLayout {
-                    id: dndChipContent
-                    anchors.centerIn: parent
-                    spacing: 6
+                contentItem: Item {
+                    implicitWidth: dndChipContent.implicitWidth
+                    implicitHeight: dndChipContent.implicitHeight
+                    RowLayout {
+                        id: dndChipContent
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 6
 
-                    MaterialSymbol {
-                        text: Notifications.silent ? "notifications_active" : "notifications_off"
-                        iconSize: 16
-                        color: Notifications.silent
-                            ? (bg.zzzEverywhere ? Appearance.zzz.onSticker
-                                : bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
-                                : bg.angelEverywhere ? Appearance.angel.colOnPrimary
-                                : Appearance.colors.colOnSecondaryContainer)
-                            : (bg.zzzEverywhere ? Appearance.colors.colSubtext
-                                : bg.inirEverywhere ? Appearance.inir.colTextSecondary
-                                : bg.angelEverywhere ? Appearance.angel.colTextSecondary
-                                : Appearance.colors.colSubtext)
-                    }
+                        MaterialSymbol {
+                            text: Notifications.silent ? "notifications_active" : "notifications_off"
+                            iconSize: 16
+                            color: Notifications.silent
+                                ? (bg.zzzEverywhere ? Appearance.zzz.onSticker
+                                    : bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
+                                    : bg.angelEverywhere ? Appearance.angel.colOnPrimary
+                                    : Appearance.colors.colOnSecondaryContainer)
+                                : (bg.zzzEverywhere ? Appearance.colors.colSubtext
+                                    : bg.inirEverywhere ? Appearance.inir.colTextSecondary
+                                    : bg.angelEverywhere ? Appearance.angel.colTextSecondary
+                                    : Appearance.colors.colSubtext)
+                        }
 
-                    StyledText {
-                        text: Notifications.silent
-                            ? Translation.tr("Enable notifications")
-                            : Translation.tr("Enable DND")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Notifications.silent
-                            ? (bg.zzzEverywhere ? Appearance.zzz.onSticker
-                                : bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
-                                : bg.angelEverywhere ? Appearance.angel.colOnPrimary
-                                : Appearance.colors.colOnSecondaryContainer)
-                            : (bg.zzzEverywhere ? Appearance.colors.colOnLayer1
-                                : bg.inirEverywhere ? Appearance.inir.colText
-                                : bg.angelEverywhere ? Appearance.angel.colText
-                                : Appearance.colors.colOnLayer1)
+                        StyledText {
+                            text: Notifications.silent
+                                ? Translation.tr("Enable notifications")
+                                : Translation.tr("Enable DND")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Notifications.silent
+                                ? (bg.zzzEverywhere ? Appearance.zzz.onSticker
+                                    : bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
+                                    : bg.angelEverywhere ? Appearance.angel.colOnPrimary
+                                    : Appearance.colors.colOnSecondaryContainer)
+                                : (bg.zzzEverywhere ? Appearance.colors.colOnLayer1
+                                    : bg.inirEverywhere ? Appearance.inir.colText
+                                    : bg.angelEverywhere ? Appearance.angel.colText
+                                    : Appearance.colors.colOnLayer1)
+                        }
                     }
                 }
             }

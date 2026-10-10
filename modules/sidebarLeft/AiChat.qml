@@ -640,22 +640,28 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     colBackground: Appearance.colors.colErrorContainer
                     colBackgroundHover: Appearance.colors.colErrorContainerHover
                     onClicked: GlobalStates.openSettingsPage(24)
-                    contentItem: RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 4
-                        MaterialSymbol {
-                            visible: root.compactLayout
-                            text: "key"
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colOnErrorContainer
-                        }
-                        StyledText {
-                            id: connectionButtonLabel
-                            visible: !root.compactLayout
-                            text: Translation.tr("Connect")
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.weight: Font.Medium
-                            color: Appearance.colors.colOnErrorContainer
+                    contentItem: Item {
+                        implicitWidth: centredRow1.implicitWidth
+                        implicitHeight: centredRow1.implicitHeight
+                        RowLayout {
+                            id: centredRow1
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 4
+                            MaterialSymbol {
+                                visible: root.compactLayout
+                                text: "key"
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnErrorContainer
+                            }
+                            StyledText {
+                                id: connectionButtonLabel
+                                visible: !root.compactLayout
+                                text: Translation.tr("Connect")
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colOnErrorContainer
+                            }
                         }
                     }
                 }

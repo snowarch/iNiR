@@ -724,12 +724,17 @@ ColumnLayout {
         colBackground: Appearance.editorial.layer(1)
         colBackgroundHover: Appearance.editorial.controlHover
         onClicked: root.resetEditorial()
-        contentItem: RowLayout {
-            id: resetLabel
-            anchors.centerIn: parent
-            spacing: 6
-            MaterialSymbol { text: "restart_alt"; iconSize: 15; color: Appearance.editorial.accent }
-            StyledText { text: Translation.tr("Reset Editorial"); font.pixelSize: Appearance.font.pixelSize.small; color: Appearance.editorial.ink }
+        contentItem: Item {
+            implicitWidth: resetLabel.implicitWidth
+            implicitHeight: resetLabel.implicitHeight
+            RowLayout {
+                id: resetLabel
+                width: Math.min(implicitWidth, parent.width)
+                anchors.centerIn: parent
+                spacing: 6
+                MaterialSymbol { text: "restart_alt"; iconSize: 15; color: Appearance.editorial.accent }
+                StyledText { text: Translation.tr("Reset Editorial"); font.pixelSize: Appearance.font.pixelSize.small; color: Appearance.editorial.ink }
+            }
         }
     }
 }

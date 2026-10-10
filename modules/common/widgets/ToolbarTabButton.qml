@@ -41,74 +41,78 @@ RippleButton {
     colBackgroundHover: current ? "transparent" : Appearance.colLayer1Hover
     colRipple: current ? "transparent" : Appearance.colLayer1Active
 
-    contentItem: Row {
-        id: contentRow
-        anchors.centerIn: parent
-        spacing: root.showLabel ? 6 : 0
+    contentItem: Item {
+        implicitWidth: contentRow.implicitWidth
+        implicitHeight: contentRow.implicitHeight
+        Row {
+            id: contentRow
+            anchors.centerIn: parent
+            spacing: root.showLabel ? 6 : 0
 
-        Behavior on spacing {
-            enabled: Appearance.animationsEnabled
-            animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
-        }
-
-        MaterialSymbol {
-            id: icon
-            anchors.verticalCenter: parent.verticalCenter
-            iconSize: 22
-            text: root.materialSymbol
-
-            color: root.current
-                ? (Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
-                    : Appearance.zzzEverywhere ? Appearance.zzz.accent
-                    : Appearance.cookieEverywhere ? Appearance.colors.colOnPrimaryContainer
-                    : Appearance.editorialEverywhere ? Appearance.editorial.accent
-                    : Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
-                    : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
-                    : Appearance.colors.colOnSurface)
-                : Appearance.colSecondaryActionIcon
-        }
-        Item {
-            id: labelReveal
-            anchors.verticalCenter: parent.verticalCenter
-            width: root.showLabel ? labelText.implicitWidth : 0
-            implicitWidth: width
-            implicitHeight: labelText.implicitHeight
-            opacity: root.showLabel ? 1 : 0
-            visible: opacity > 0
-            clip: true
-
-            Behavior on width {
+            Behavior on spacing {
                 enabled: Appearance.animationsEnabled
                 animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
             }
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-            }
 
-            StyledText {
-                id: labelText
-                anchors.left: parent.left
+            MaterialSymbol {
+                id: icon
                 anchors.verticalCenter: parent.verticalCenter
-                text: Appearance.zzzEverywhere ? root.text.toUpperCase() : root.text
-                font.family: Appearance.zzzEverywhere ? Appearance.font.family.title : Appearance.font.family.main
-                font.weight: Appearance.zzzEverywhere ? (root.current ? Font.Black : Font.Bold) : Appearance.editorialEverywhere ? Appearance.editorial.labelWeight : Font.Normal
-                color: Appearance.regaliaEverywhere
-                    ? (root.current ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onMuted)
-                    : Appearance.zzzEverywhere
-                    ? (root.current ? Appearance.zzz.accent : Appearance.zzz.inkMuted)
-                    // The label sits on the face too, so it takes the face's ink.
-                    // It used to stay colOnSurface and read as unselected text on a
-                    // selected tab.
-                    : Appearance.cookieEverywhere && root.current
-                    ? Appearance.colors.colOnPrimaryContainer
-                    : Appearance.editorialEverywhere
-                    ? (root.current ? Appearance.editorial.accent : Appearance.editorial.ink)
-                    : Appearance.angelEverywhere
-                    ? (root.current ? Appearance.angel.colOnPrimary : Appearance.angel.colText)
-                    : Appearance.inirEverywhere
-                    ? (root.current ? Appearance.inir.colOnPrimary : Appearance.inir.colText)
-                    : Appearance.colors.colOnSurface
+                iconSize: 22
+                text: root.materialSymbol
+
+                color: root.current
+                    ? (Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
+                        : Appearance.zzzEverywhere ? Appearance.zzz.accent
+                        : Appearance.cookieEverywhere ? Appearance.colors.colOnPrimaryContainer
+                        : Appearance.editorialEverywhere ? Appearance.editorial.accent
+                        : Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
+                        : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
+                        : Appearance.colors.colOnSurface)
+                    : Appearance.colSecondaryActionIcon
+            }
+            Item {
+                id: labelReveal
+                anchors.verticalCenter: parent.verticalCenter
+                width: root.showLabel ? labelText.implicitWidth : 0
+                implicitWidth: width
+                implicitHeight: labelText.implicitHeight
+                opacity: root.showLabel ? 1 : 0
+                visible: opacity > 0
+                clip: true
+
+                Behavior on width {
+                    enabled: Appearance.animationsEnabled
+                    animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+                }
+                Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
+                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+
+                StyledText {
+                    id: labelText
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: Appearance.zzzEverywhere ? root.text.toUpperCase() : root.text
+                    font.family: Appearance.zzzEverywhere ? Appearance.font.family.title : Appearance.font.family.main
+                    font.weight: Appearance.zzzEverywhere ? (root.current ? Font.Black : Font.Bold) : Appearance.editorialEverywhere ? Appearance.editorial.labelWeight : Font.Normal
+                    color: Appearance.regaliaEverywhere
+                        ? (root.current ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onMuted)
+                        : Appearance.zzzEverywhere
+                        ? (root.current ? Appearance.zzz.accent : Appearance.zzz.inkMuted)
+                        // The label sits on the face too, so it takes the face's ink.
+                        // It used to stay colOnSurface and read as unselected text on a
+                        // selected tab.
+                        : Appearance.cookieEverywhere && root.current
+                        ? Appearance.colors.colOnPrimaryContainer
+                        : Appearance.editorialEverywhere
+                        ? (root.current ? Appearance.editorial.accent : Appearance.editorial.ink)
+                        : Appearance.angelEverywhere
+                        ? (root.current ? Appearance.angel.colOnPrimary : Appearance.angel.colText)
+                        : Appearance.inirEverywhere
+                        ? (root.current ? Appearance.inir.colOnPrimary : Appearance.inir.colText)
+                        : Appearance.colors.colOnSurface
+                }
             }
         }
     }

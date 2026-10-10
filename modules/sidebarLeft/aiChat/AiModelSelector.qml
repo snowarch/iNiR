@@ -334,23 +334,28 @@ Item {
                                 : Appearance.colLayer2Hover
                             onClicked: root.catalogFilter = modelData.id
 
-                            contentItem: RowLayout {
-                                id: filterButtonContent
-                                anchors.centerIn: parent
-                                spacing: 4
-                                MaterialSymbol {
-                                    text: filterButton.modelData.icon
-                                    iconSize: Appearance.font.pixelSize.normal
-                        color: filterButton.selected
-                            ? Appearance.colors.colOnSecondaryContainer
-                            : Appearance.colSecondaryActionIcon
-                                }
-                                StyledText {
-                                    text: filterButton.modelData.label
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: filterButton.selected
-                                        ? Appearance.colors.colOnSecondaryContainer
-                                        : Appearance.colors.colOnLayer2
+                            contentItem: Item {
+                                implicitWidth: filterButtonContent.implicitWidth
+                                implicitHeight: filterButtonContent.implicitHeight
+                                RowLayout {
+                                    id: filterButtonContent
+                                    width: Math.min(implicitWidth, parent.width)
+                                    anchors.centerIn: parent
+                                    spacing: 4
+                                    MaterialSymbol {
+                                        text: filterButton.modelData.icon
+                                        iconSize: Appearance.font.pixelSize.normal
+                            color: filterButton.selected
+                                ? Appearance.colors.colOnSecondaryContainer
+                                : Appearance.colSecondaryActionIcon
+                                    }
+                                    StyledText {
+                                        text: filterButton.modelData.label
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        color: filterButton.selected
+                                            ? Appearance.colors.colOnSecondaryContainer
+                                            : Appearance.colors.colOnLayer2
+                                    }
                                 }
                             }
                         }

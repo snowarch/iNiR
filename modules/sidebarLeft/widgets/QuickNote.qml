@@ -212,21 +212,26 @@ Item {
                         textArea.focus = false
                     }
 
-                    contentItem: RowLayout {
-                        id: saveRow
-                        anchors.centerIn: parent
-                        spacing: 4
+                    contentItem: Item {
+                        implicitWidth: saveRow.implicitWidth
+                        implicitHeight: saveRow.implicitHeight
+                        RowLayout {
+                            id: saveRow
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 4
 
-                        MaterialSymbol {
-                            text: "check"
-                            iconSize: 12
-                            color: Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary
-                        }
+                            MaterialSymbol {
+                                text: "check"
+                                iconSize: 12
+                                color: Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary
+                            }
 
-                        StyledText {
-                            text: Translation.tr("Save")
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            color: Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary
+                            StyledText {
+                                text: Translation.tr("Save")
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                color: Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary
+                            }
                         }
                     }
                 }

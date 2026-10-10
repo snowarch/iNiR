@@ -180,18 +180,24 @@ Rectangle {
                 buttonRadius: Appearance.rounding.full
                 toggled: chooser.open
                 onClicked: chooser.open = !chooser.open
-                contentItem: RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 4
-                    MaterialSymbol {
-                        text: chooser.open ? "close" : "add"
-                        iconSize: Appearance.font.pixelSize.small
-                        color: chooser.open ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer0
-                    }
-                    StyledText {
-                        text: chooser.open ? Translation.tr("Close") : Translation.tr("Add")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: chooser.open ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer0
+                contentItem: Item {
+                    implicitWidth: centredRow1.implicitWidth
+                    implicitHeight: centredRow1.implicitHeight
+                    RowLayout {
+                        id: centredRow1
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 4
+                        MaterialSymbol {
+                            text: chooser.open ? "close" : "add"
+                            iconSize: Appearance.font.pixelSize.small
+                            color: chooser.open ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer0
+                        }
+                        StyledText {
+                            text: chooser.open ? Translation.tr("Close") : Translation.tr("Add")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: chooser.open ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer0
+                        }
                     }
                 }
             }
@@ -428,19 +434,25 @@ Rectangle {
                                     chooser.open = false
                             }
 
-                            contentItem: RowLayout {
-                                anchors.centerIn: parent
-                                spacing: 5
-                                MaterialSymbol {
-                                    text: option.modelData.icon ?? "widgets"
-                                    iconSize: Appearance.font.pixelSize.small
-                                    color: Appearance.colors.colOnLayer1
-                                }
-                                StyledText {
-                                    id: optionLabel
-                                    text: option.modelData.name
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    color: Appearance.colors.colOnLayer1
+                            contentItem: Item {
+                                implicitWidth: centredRow2.implicitWidth
+                                implicitHeight: centredRow2.implicitHeight
+                                RowLayout {
+                                    id: centredRow2
+                                    width: Math.min(implicitWidth, parent.width)
+                                    anchors.centerIn: parent
+                                    spacing: 5
+                                    MaterialSymbol {
+                                        text: option.modelData.icon ?? "widgets"
+                                        iconSize: Appearance.font.pixelSize.small
+                                        color: Appearance.colors.colOnLayer1
+                                    }
+                                    StyledText {
+                                        id: optionLabel
+                                        text: option.modelData.name
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        color: Appearance.colors.colOnLayer1
+                                    }
                                 }
                             }
 

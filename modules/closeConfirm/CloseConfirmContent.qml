@@ -84,34 +84,39 @@ Item {
         colRipple: destructive
             ? Appearance.colors.colErrorActive : Appearance.colLayer1Active
 
-        contentItem: RowLayout {
-            id: actionRow
-            anchors.centerIn: parent
-            spacing: Appearance.sizes.spacingSmall
+        contentItem: Item {
+            implicitWidth: actionRow.implicitWidth
+            implicitHeight: actionRow.implicitHeight
+            RowLayout {
+                id: actionRow
+                width: Math.min(implicitWidth, parent.width)
+                anchors.centerIn: parent
+                spacing: Appearance.sizes.spacingSmall
 
-            MaterialSymbol {
-                visible: actionButton.iconName.length > 0
-                text: actionButton.iconName
-                iconSize: Appearance.font.pixelSize.larger
-                fill: actionButton.destructive ? 1 : 0
-                color: actionButton.destructive
-                    ? root.dangerForeground
-                    : Appearance.colors.colOnLayer2
-            }
+                MaterialSymbol {
+                    visible: actionButton.iconName.length > 0
+                    text: actionButton.iconName
+                    iconSize: Appearance.font.pixelSize.larger
+                    fill: actionButton.destructive ? 1 : 0
+                    color: actionButton.destructive
+                        ? root.dangerForeground
+                        : Appearance.colors.colOnLayer2
+                }
 
-            StyledText {
-                text: Appearance.zzzEverywhere
-                    ? actionButton.label.toUpperCase() : actionButton.label
-                font.family: Appearance.zzzEverywhere
-                    ? Appearance.font.family.title
-                    : root.editorial ? Appearance.editorial.displayFamily
-                    : Appearance.font.family.main
-                font.pixelSize: Appearance.font.pixelSize.small
-                font.weight: Appearance.zzzEverywhere ? Font.Black : Font.DemiBold
-                font.letterSpacing: root.editorial ? 0.35 : 0
-                color: actionButton.destructive
-                    ? root.dangerForeground
-                    : Appearance.colors.colOnLayer2
+                StyledText {
+                    text: Appearance.zzzEverywhere
+                        ? actionButton.label.toUpperCase() : actionButton.label
+                    font.family: Appearance.zzzEverywhere
+                        ? Appearance.font.family.title
+                        : root.editorial ? Appearance.editorial.displayFamily
+                        : Appearance.font.family.main
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    font.weight: Appearance.zzzEverywhere ? Font.Black : Font.DemiBold
+                    font.letterSpacing: root.editorial ? 0.35 : 0
+                    color: actionButton.destructive
+                        ? root.dangerForeground
+                        : Appearance.colors.colOnLayer2
+                }
             }
         }
     }

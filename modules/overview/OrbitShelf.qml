@@ -649,26 +649,32 @@ Item {
             pressScaleEnabled: false
             onClicked: if (latestId >= 0) root.pocketRequested()
 
-            contentItem: RowLayout {
-                anchors.centerIn: parent
-                spacing: 4
-                MaterialSymbol {
-                    text: "inventory_2"
-                    iconSize: root.huge ? 24 : 18
-                    textRenderType: Text.QtRendering
-                    color: stashButton.toggled
-                        ? Appearance.colors.colOnPrimaryContainer : root.mutedForeground
-                }
-                StyledText {
-                    visible: root.labelsVisible
-                    text: root.stashedIds.length.toString()
-                    renderType: Text.QtRendering
-                    font.pixelSize: root.huge
-                        ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smaller
-                    font.hintingPreference: Font.PreferNoHinting
-                    font.weight: Font.DemiBold
-                    color: stashButton.toggled
-                        ? Appearance.colors.colOnPrimaryContainer : root.foreground
+            contentItem: Item {
+                implicitWidth: centredRow1.implicitWidth
+                implicitHeight: centredRow1.implicitHeight
+                RowLayout {
+                    id: centredRow1
+                    width: Math.min(implicitWidth, parent.width)
+                    anchors.centerIn: parent
+                    spacing: 4
+                    MaterialSymbol {
+                        text: "inventory_2"
+                        iconSize: root.huge ? 24 : 18
+                        textRenderType: Text.QtRendering
+                        color: stashButton.toggled
+                            ? Appearance.colors.colOnPrimaryContainer : root.mutedForeground
+                    }
+                    StyledText {
+                        visible: root.labelsVisible
+                        text: root.stashedIds.length.toString()
+                        renderType: Text.QtRendering
+                        font.pixelSize: root.huge
+                            ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smaller
+                        font.hintingPreference: Font.PreferNoHinting
+                        font.weight: Font.DemiBold
+                        color: stashButton.toggled
+                            ? Appearance.colors.colOnPrimaryContainer : root.foreground
+                    }
                 }
             }
             M3ToolTip {

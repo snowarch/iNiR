@@ -438,11 +438,17 @@ ColumnLayout {
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : Appearance.colors.colLayer2Hover
                 onClicked: root._saveCustom()
 
-                contentItem: RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 5
-                    MaterialSymbol { text: "save"; iconSize: 15; color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
-                    StyledText { text: Translation.tr("Quick Save"); font.pixelSize: Appearance.font.pixelSize.smaller; color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                contentItem: Item {
+                    implicitWidth: centredRow1.implicitWidth
+                    implicitHeight: centredRow1.implicitHeight
+                    RowLayout {
+                        id: centredRow1
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 5
+                        MaterialSymbol { text: "save"; iconSize: 15; color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                        StyledText { text: Translation.tr("Quick Save"); font.pixelSize: Appearance.font.pixelSize.smaller; color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                    }
                 }
             }
             RippleButton {
@@ -455,11 +461,17 @@ ColumnLayout {
                 opacity: enabled ? 1.0 : 0.4
                 onClicked: root._loadCustom()
 
-                contentItem: RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 5
-                    MaterialSymbol { text: "restore"; iconSize: 15; color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
-                    StyledText { text: Translation.tr("Quick Load"); font.pixelSize: Appearance.font.pixelSize.smaller; color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                contentItem: Item {
+                    implicitWidth: centredRow2.implicitWidth
+                    implicitHeight: centredRow2.implicitHeight
+                    RowLayout {
+                        id: centredRow2
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 5
+                        MaterialSymbol { text: "restore"; iconSize: 15; color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                        StyledText { text: Translation.tr("Quick Load"); font.pixelSize: Appearance.font.pixelSize.smaller; color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                    }
                 }
             }
             RippleButton {
@@ -470,11 +482,17 @@ ColumnLayout {
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : Appearance.colors.colLayer2Hover
                 onClicked: root._applyPreset(root._presets["default"])
 
-                contentItem: RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 5
-                    MaterialSymbol { text: "restart_alt"; iconSize: 15; color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
-                    StyledText { text: Translation.tr("Reset"); font.pixelSize: Appearance.font.pixelSize.smaller; color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                contentItem: Item {
+                    implicitWidth: centredRow3.implicitWidth
+                    implicitHeight: centredRow3.implicitHeight
+                    RowLayout {
+                        id: centredRow3
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 5
+                        MaterialSymbol { text: "restart_alt"; iconSize: 15; color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                        StyledText { text: Translation.tr("Reset"); font.pixelSize: Appearance.font.pixelSize.smaller; color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                    }
                 }
             }
         }
@@ -531,11 +549,17 @@ ColumnLayout {
                     profileNameField.text = ""
                 }
 
-                contentItem: RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 4
-                    MaterialSymbol { text: "bookmark_add"; iconSize: 15; color: Appearance.angelEverywhere ? Appearance.angel.colOnPrimary : Appearance.colors.colOnPrimary }
-                    StyledText { text: Translation.tr("Save"); font.pixelSize: Appearance.font.pixelSize.smaller; font.weight: Font.Medium; color: Appearance.angelEverywhere ? Appearance.angel.colOnPrimary : Appearance.colors.colOnPrimary }
+                contentItem: Item {
+                    implicitWidth: centredRow4.implicitWidth
+                    implicitHeight: centredRow4.implicitHeight
+                    RowLayout {
+                        id: centredRow4
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 4
+                        MaterialSymbol { text: "bookmark_add"; iconSize: 15; color: Appearance.angelEverywhere ? Appearance.angel.colOnPrimary : Appearance.colors.colOnPrimary }
+                        StyledText { text: Translation.tr("Save"); font.pixelSize: Appearance.font.pixelSize.smaller; font.weight: Font.Medium; color: Appearance.angelEverywhere ? Appearance.angel.colOnPrimary : Appearance.colors.colOnPrimary }
+                    }
                 }
             }
         }

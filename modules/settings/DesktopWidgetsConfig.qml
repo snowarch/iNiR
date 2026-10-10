@@ -803,19 +803,24 @@ ContentPage {
             interval: 3000
             onTriggered: wrb.armed = false
         }
-        contentItem: RowLayout {
-            id: wrbRow
-            anchors.centerIn: parent
-            spacing: 6
-            MaterialSymbol {
-                text: wrb.armed ? "warning" : "restart_alt"
-                iconSize: 18
-                color: wrb.armed ? Appearance.colors.colError : Appearance.colors.colSubtext
-            }
-            StyledText {
-                text: wrb.armed ? Translation.tr("Confirm reset") : Translation.tr("Reset to defaults")
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: wrb.armed ? Appearance.colors.colError : Appearance.colors.colSubtext
+        contentItem: Item {
+            implicitWidth: wrbRow.implicitWidth
+            implicitHeight: wrbRow.implicitHeight
+            RowLayout {
+                id: wrbRow
+                width: Math.min(implicitWidth, parent.width)
+                anchors.centerIn: parent
+                spacing: 6
+                MaterialSymbol {
+                    text: wrb.armed ? "warning" : "restart_alt"
+                    iconSize: 18
+                    color: wrb.armed ? Appearance.colors.colError : Appearance.colors.colSubtext
+                }
+                StyledText {
+                    text: wrb.armed ? Translation.tr("Confirm reset") : Translation.tr("Reset to defaults")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: wrb.armed ? Appearance.colors.colError : Appearance.colors.colSubtext
+                }
             }
         }
         StyledToolTip {
@@ -1121,21 +1126,26 @@ ContentPage {
                 colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.10)
                 downAction: () => wac.paletteDetailsOpen = !wac.paletteDetailsOpen
 
-                contentItem: RowLayout {
-                    id: paletteDetailsRow
-                    anchors.centerIn: parent
-                    spacing: 5
-                    MaterialSymbol {
-                        text: wac.paletteDetailsOpen ? "expand_less" : "tune"
-                        iconSize: 16
-                        color: wac.paletteDetailsOpen
-                            ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
-                    }
-                    StyledText {
-                        text: Translation.tr("Customize roles")
-                        color: wac.paletteDetailsOpen
-                            ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.smaller
+                contentItem: Item {
+                    implicitWidth: paletteDetailsRow.implicitWidth
+                    implicitHeight: paletteDetailsRow.implicitHeight
+                    RowLayout {
+                        id: paletteDetailsRow
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 5
+                        MaterialSymbol {
+                            text: wac.paletteDetailsOpen ? "expand_less" : "tune"
+                            iconSize: 16
+                            color: wac.paletteDetailsOpen
+                                ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                        }
+                        StyledText {
+                            text: Translation.tr("Customize roles")
+                            color: wac.paletteDetailsOpen
+                                ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                        }
                     }
                 }
             }

@@ -1072,21 +1072,26 @@ ColumnLayout {
 
                     onClicked: root.applyHarmonyColors()
 
-                    contentItem: RowLayout {
-                        id: applyRow
-                        anchors.centerIn: parent
-                        spacing: 4
+                    contentItem: Item {
+                        implicitWidth: applyRow.implicitWidth
+                        implicitHeight: applyRow.implicitHeight
+                        RowLayout {
+                            id: applyRow
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 4
 
-                        MaterialSymbol {
-                            text: "auto_awesome"
-                            iconSize: 14
-                            color: Appearance.colors.colOnPrimary
-                        }
+                            MaterialSymbol {
+                                text: "auto_awesome"
+                                iconSize: 14
+                                color: Appearance.colors.colOnPrimary
+                            }
 
-                        StyledText {
-                            text: Translation.tr("Apply")
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            color: Appearance.colors.colOnPrimary
+                            StyledText {
+                                text: Translation.tr("Apply")
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                color: Appearance.colors.colOnPrimary
+                            }
                         }
                     }
                 }
