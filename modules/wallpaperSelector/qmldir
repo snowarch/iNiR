@@ -8,4 +8,6 @@ WallpaperSelector 1.0 WallpaperSelector.qml
 WallpaperSelectorContent 1.0 WallpaperSelectorContent.qml
 WallpaperSelectorRouter 1.0 WallpaperSelectorRouter.qml
 WallpaperSkewView 1.0 WallpaperSkewView.qml
-WallpaperSkewChip 1.0 WallpaperSkewChip.qml
+WallpaperPickerChip 1.0 WallpaperPickerChip.qml
+WallpaperPickerChrome 1.0 WallpaperPickerChrome.qml
+WallpaperPickerBackdrop 1.0 WallpaperPickerBackdrop.qml

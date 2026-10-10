@@ -62,8 +62,7 @@ Item {
             else
                 imgMap.push(i)
         }
-        // FolderListModel.Time yields oldest-first: newest wallpapers lead the deck
-        imgMap.reverse()
+        // FolderListModel.Time already lists the newest first
         _imageIndexMap = imgMap
         _folderItems = folders
     }
@@ -93,7 +92,6 @@ Item {
     property bool _contentVisible: false
     // Bound by parent (WallpaperCoverflow) to its _contentReady — drives close animation.
     property bool contentReady: false
-    property bool _searchOpen: false
 
     onCurrentWallpaperPathChanged: {
         _initialized = false
@@ -187,9 +185,6 @@ Item {
     readonly property color badgeTextColor: root.editorial ? Appearance.editorial.paperOnInk
         : Appearance.colors.colOnLayer2
     readonly property color accentColor: root.editorial ? Appearance.editorial.accent : Appearance.colors.colPrimary
-    readonly property color separatorColor: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
-        : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
-        : ColorUtils.applyAlpha(Appearance.colors.colOnSurfaceVariant, 0.2)
 
     // ═══════════════════════════════════════════════════
     // NAVIGATION
@@ -220,13 +215,6 @@ Item {
     function navigateIntoFolder(path: string): void {
         if (path && path.length > 0)
             directorySelected(path)
-    }
-
-    function _closeSearch(): void {
-        Wallpapers.searchQuery = ""
-        searchField.text = ""
-        root._searchOpen = false
-        root.forceActiveFocus()
     }
 
     function _wheelStep(angleDelta: point): void {
@@ -337,7 +325,6 @@ Item {
         _rebuildIndexMaps()
         _syncToCurrentWallpaper(true)
         updateThumbnails()
-        backdrop.show(root.activePath)
         contentShowTimer.restart()
         forceActiveFocus()
     }
@@ -365,15 +352,14 @@ Item {
         const ctrl = (event.modifiers & Qt.ControlModifier) !== 0
         const shift = (event.modifiers & Qt.ShiftModifier) !== 0
 
-        if (!searchField.activeFocus && (ctrl && event.key === Qt.Key_F || event.key === Qt.Key_Slash)) {
-            root._searchOpen = true
-            searchField.forceActiveFocus(); event.accepted = true; return
+        if (ctrl && event.key === Qt.Key_F || event.key === Qt.Key_Slash) {
+            chrome.openSearch(); event.accepted = true; return
         }
 
 
         switch (event.key) {
         case Qt.Key_Escape:
-            if ((Wallpapers.searchQuery ?? "").length > 0) root._closeSearch()
+            if (chrome.searching) chrome.closeSearch()
             else root.closeRequested()
             break
         case Qt.Key_Left:
@@ -429,12 +415,12 @@ Item {
     // ═══════════════════════════════════════════════════
     // LIVE PREVIEW — the focused wallpaper, full screen
     // ═══════════════════════════════════════════════════
-    // Painted inside the picker (the desktop wallpaper is untouched until apply) so
-    // windows never show through. Two slots crossfade; each decodes at screen size.
-    Item {
+    WallpaperPickerBackdrop {
         id: backdrop
         anchors.fill: parent
         z: -1
+        path: root.activePath
+        rapid: root._rapidNavigation
         opacity: root._contentVisible ? 1 : 0
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
@@ -442,118 +428,6 @@ Item {
                 duration: Appearance.animation.elementMoveEnter.duration
                 easing.type: Appearance.animation.elementMoveEnter.type
                 easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
-            }
-        }
-
-        property Image front: slotA
-        property string pendingUrl: ""
-        readonly property int decodeWidth: Math.round(width * root._dpr)
-        readonly property int decodeHeight: Math.round(height * root._dpr)
-
-        function urlFor(path: string): string {
-            const p = root._normalizedFilePath(path)
-            if (p.length === 0) return ""
-            if (root._mediaKind(p) !== "video") return "file://" + p
-            // A video previews by its first frame
-            const ff = Wallpapers.videoFirstFrames[p] ?? Wallpapers.videoFirstFrames[path] ?? ""
-            if (!ff) {
-                Wallpapers.ensureVideoFirstFrame(p)
-                return ""
-            }
-            return ff.startsWith("file://") ? ff : "file://" + ff
-        }
-
-        function show(path: string): void {
-            const url = urlFor(path)
-            if (url.length === 0 || String(front.source) === url) return
-            pendingUrl = url
-            const back = front === slotA ? slotB : slotA
-            if (String(back.source) === url && back.status === Image.Ready)
-                front = back
-            else
-                back.source = url
-        }
-
-        function adopt(slot: Image): void {
-            if (slot.status === Image.Ready && String(slot.source) === pendingUrl)
-                front = slot
-        }
-
-        // Settles before decoding, so holding an arrow does not decode every wallpaper it passes
-        Timer {
-            id: previewSettle
-            interval: root._rapidNavigation ? 160 : 40
-            onTriggered: backdrop.show(root.activePath)
-        }
-
-        Connections {
-            target: root
-            function onActivePathChanged() { previewSettle.restart() }
-        }
-
-        Connections {
-            target: Wallpapers
-            function onVideoFirstFramesChanged() {
-                if (root._mediaKind(root.activePath) === "video") previewSettle.restart()
-            }
-        }
-
-        // Black base: no window shows through while the first decode lands
-        Rectangle {
-            anchors.fill: parent
-            color: Appearance.colors.colScrim
-        }
-
-        Image {
-            id: slotA
-            anchors.fill: parent
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
-            cache: false
-            smooth: true
-            sourceSize.width: backdrop.decodeWidth
-            sourceSize.height: backdrop.decodeHeight
-            opacity: backdrop.front === slotA ? 1 : 0
-            onStatusChanged: backdrop.adopt(slotA)
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-                }
-            }
-        }
-
-        Image {
-            id: slotB
-            anchors.fill: parent
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
-            cache: false
-            smooth: true
-            sourceSize.width: backdrop.decodeWidth
-            sourceSize.height: backdrop.decodeHeight
-            opacity: backdrop.front === slotB ? 1 : 0
-            onStatusChanged: backdrop.adopt(slotB)
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-                }
-            }
-        }
-
-        // Shade only under the deck and the toolbar; the top of the preview stays clean
-        Rectangle {
-            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-            height: Math.round(parent.height * 0.62)
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0) }
-                GradientStop { position: 0.45; color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.32) }
-                GradientStop { position: 1.0; color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.62) }
             }
         }
     }
@@ -976,37 +850,22 @@ Item {
     }
 
     // ═══════════════════════════════════════════════════
-    // CHROME — slanted plates in the deck's own language:
-    // where you are (crumbs), where you can go (subfolders), search, picker switch
+    // CHROME — slanted plates in the deck's own language
     // ═══════════════════════════════════════════════════
-    readonly property string _wallpapersDir: `${Directories.picturesPath}/Wallpapers`
-    readonly property string _folderPathClean: root._normalizedFilePath(root.currentFolderPath).replace(/\/+$/, "") || "/"
-
-    // Home (or /), at most the last three folders, the current one last
-    readonly property var _crumbs: {
-        const p = root._folderPathClean
-        const home = Directories.homePath.replace(/\/+$/, "")
-        const underHome = p === home || p.startsWith(home + "/")
-        const base = underHome ? home : ""
-        const parts = p.substring(base.length).split("/").filter(s => s.length > 0)
-        const out = [{ name: "", icon: underHome ? "home" : "hard_drive", path: base || "/" }]
-        const start = Math.max(0, parts.length - 3)
-        let acc = base
-        for (let i = 0; i < parts.length; i++) {
-            acc += "/" + parts[i]
-            if (i === start - 1)
-                out.push({ name: "…", icon: "", path: acc })
-            else if (i >= start)
-                out.push({ name: parts[i], icon: "", path: acc })
-        }
-        return out
-    }
-
-    Item {
+    WallpaperPickerChrome {
         id: chrome
         anchors { bottom: parent.bottom; bottomMargin: 28; horizontalCenter: parent.horizontalCenter }
         width: Math.min(root.width - 64, Math.max(root.expandedCardWidth + root.sliceWidth * 2, root.deckWidth - root.sliceWidth * 3))
-        height: 36
+        slanted: true
+        currentView: "skew"
+        folderPath: root.currentFolderPath
+        folderItems: root._folderItems
+        onFolderRequested: path => Wallpapers.setDirectory(path)
+        onFocusReturned: root.forceActiveFocus()
+        onViewRequested: view => {
+            if (view === "gallery") root.switchToGalleryRequested()
+            else if (view === "grid") root.switchToGridRequested()
+        }
 
         opacity: root._contentVisible ? 1 : 0
         transform: Translate {
@@ -1026,183 +885,6 @@ Item {
                 duration: Appearance.animation.elementMoveEnter.duration
                 easing.type: Appearance.animation.elementMoveEnter.type
                 easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
-            }
-        }
-
-        // ─ Where you are ─
-        Row {
-            id: crumbRow
-            anchors { left: parent.left; verticalCenter: parent.verticalCenter }
-            spacing: 4
-
-            WallpaperSkewChip {
-                visible: root._folderPathClean !== root._wallpapersDir
-                icon: "wallpaper"
-                onClicked: Wallpapers.setDirectory(root._wallpapersDir)
-                StyledToolTip { text: Translation.tr("Wallpapers folder") }
-            }
-
-            Repeater {
-                model: root._crumbs
-                delegate: WallpaperSkewChip {
-                    required property var modelData
-                    required property int index
-                    label: modelData.name
-                    icon: modelData.icon
-                    active: index === root._crumbs.length - 1
-                    onClicked: if (!active) Wallpapers.setDirectory(modelData.path)
-                }
-            }
-        }
-
-        // ─ Where you can go: the subfolders, scrolled sideways ─
-        MaterialSymbol {
-            id: subfolderMark
-            visible: root.hasFolders
-            anchors { left: crumbRow.right; leftMargin: 10; verticalCenter: parent.verticalCenter }
-            text: "subdirectory_arrow_right"
-            iconSize: Appearance.font.pixelSize.larger
-            color: Appearance.colors.colOnSurface
-            opacity: 0.7
-        }
-
-        ListView {
-            id: subfolderList
-            visible: root.hasFolders
-            anchors {
-                left: subfolderMark.right; leftMargin: 6
-                right: rightRow.left; rightMargin: 16
-                verticalCenter: parent.verticalCenter
-            }
-            height: parent.height
-            orientation: ListView.Horizontal
-            spacing: 4
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-            model: root._folderItems
-            delegate: WallpaperSkewChip {
-                required property var modelData
-                muted: true
-                icon: "folder"
-                label: modelData.name
-                onClicked: root.navigateIntoFolder(modelData.path)
-            }
-
-            // Sideways scroll here; the deck keeps the wheel everywhere else
-            MouseArea {
-                anchors.fill: parent
-                z: 10
-                acceptedButtons: Qt.NoButton
-                onWheel: event => {
-                    const d = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
-                    subfolderList.contentX = Math.max(0, Math.min(subfolderList.contentWidth - subfolderList.width,
-                        subfolderList.contentX - d))
-                }
-            }
-        }
-
-        // ─ Search and the picker switch ─
-        Row {
-            id: rightRow
-            anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-            spacing: 4
-
-            WallpaperSkewChip {
-                id: searchChip
-                readonly property bool open: root._searchOpen || (Wallpapers.searchQuery ?? "").length > 0
-                readonly property int closedWidth: 36 + slant
-                readonly property int openWidth: 280
-                // 0 → 1 as the plate grows: the glyph slides left and the field fades in behind it
-                readonly property real reveal: Math.max(0, Math.min(1, (width - closedWidth) / (openWidth - closedWidth)))
-                active: (Wallpapers.searchQuery ?? "").length > 0 && !searchField.activeFocus
-                implicitWidth: open ? openWidth : closedWidth
-                Behavior on implicitWidth {
-                    enabled: Appearance.animationsEnabled
-                    NumberAnimation {
-                        duration: Appearance.animation.elementResize.duration
-                        easing.type: Appearance.animation.elementResize.type
-                        easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
-                    }
-                }
-                onClicked: {
-                    root._searchOpen = true
-                    searchField.forceActiveFocus()
-                }
-                StyledToolTip {
-                    text: Translation.tr("Search (/)")
-                    extraVisibleCondition: !searchChip.open
-                }
-
-                // Own glyph: centred while closed, at the start of the field while open
-                MaterialSymbol {
-                    id: searchGlyph
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: Math.round((parent.width - width) / 2 * (1 - searchChip.reveal)
-                        + (searchChip.slant + 12) * searchChip.reveal)
-                    text: "search"
-                    iconSize: Appearance.font.pixelSize.larger
-                    color: searchChip.ink
-                }
-
-                TextInput {
-                    id: searchField
-                    visible: searchChip.reveal > 0
-                    opacity: searchChip.reveal
-                    anchors {
-                        left: searchGlyph.right; leftMargin: 8
-                        right: parent.right; rightMargin: searchChip.slant + 12
-                        verticalCenter: parent.verticalCenter
-                    }
-                    clip: true
-                    color: searchChip.ink
-                    selectionColor: Appearance.colors.colPrimary
-                    selectedTextColor: Appearance.colors.colOnPrimary
-                    font.family: Appearance.font.family.main
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    text: Wallpapers.searchQuery
-                    onTextChanged: Wallpapers.searchQuery = text
-                    onActiveFocusChanged: if (!activeFocus && text.length === 0) root._searchOpen = false
-                    Keys.onPressed: event => {
-                        if (event.key === Qt.Key_Escape) {
-                            root._closeSearch()
-                            event.accepted = true
-                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
-                                || event.key === Qt.Key_Down || event.key === Qt.Key_Tab) {
-                            // Back to the deck with the results; the query stays
-                            root.forceActiveFocus()
-                            event.accepted = true
-                        }
-                    }
-
-                    StyledText {
-                        visible: searchField.text.length === 0
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Translation.tr("Search wallpapers")
-                        color: searchChip.ink
-                        opacity: 0.6
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-                }
-            }
-
-            Item { width: 12; height: 1 }
-
-            Repeater {
-                model: [
-                    { name: Translation.tr("Skew"), icon: "view_week", view: "skew" },
-                    { name: Translation.tr("Gallery"), icon: "view_carousel", view: "gallery" },
-                    { name: Translation.tr("Grid"), icon: "grid_view", view: "grid" }
-                ]
-                delegate: WallpaperSkewChip {
-                    required property var modelData
-                    icon: modelData.icon
-                    label: modelData.name
-                    active: modelData.view === "skew"
-                    onClicked: {
-                        if (modelData.view === "gallery") root.switchToGalleryRequested()
-                        else if (modelData.view === "grid") root.switchToGridRequested()
-                    }
-                }
             }
         }
     }

@@ -4,16 +4,18 @@ import qs.modules.common.functions
 import QtQuick
 import QtQuick.Shapes
 
-// A slanted plate: the skew deck's control. Leans like the cards; accent when active.
+// A picker control plate: slanted like the skew deck's cards, or rounded for the gallery.
+// Accent when active.
 Item {
     id: root
 
+    property bool slanted: true
     property string label: ""
     property string icon: ""
     property bool active: false
     // Secondary entries (subfolders) sit lighter on the preview
     property bool muted: false
-    property int slant: Math.round(height * 0.3)
+    property int slant: slanted ? Math.round(height * 0.3) : 0
     readonly property bool hovered: chipMouse.containsMouse
     signal clicked()
 
@@ -26,17 +28,34 @@ Item {
     readonly property color accentColor: editorial ? Appearance.editorial.accent : Appearance.colors.colPrimary
     readonly property color accentInk: editorial ? Appearance.editorial.accentInk : Appearance.colors.colOnPrimary
     readonly property color ink: active ? accentInk : plateInk
+    readonly property color fillColor: active ? accentColor : hovered ? plateHoverColor : plateColor
 
     implicitHeight: 36
     implicitWidth: contentRow.implicitWidth + slant + 28
 
+    Rectangle {
+        visible: !root.slanted
+        anchors.fill: parent
+        radius: root.editorial ? Appearance.rounding.small : height / 2
+        color: root.fillColor
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
+    }
+
     Shape {
+        visible: root.slanted
         anchors.fill: parent
         antialiasing: true
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {
-            fillColor: root.active ? root.accentColor : root.hovered ? root.plateHoverColor : root.plateColor
+            fillColor: root.fillColor
             strokeColor: "transparent"
             Behavior on fillColor {
                 enabled: Appearance.animationsEnabled
