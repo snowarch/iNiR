@@ -69,7 +69,9 @@ Item {
                     }
                 }
 
+                HoverHandler { id: contrastHover }
                 StyledToolTip {
+                    extraVisibleCondition: contrastHover.hovered
                     text: root.ratio >= 4.5 ? Translation.tr("WCAG AA ✓")
                         : root.ratio >= 3 ? Translation.tr("Low contrast")
                         : Translation.tr("Poor contrast - hard to read")

@@ -1316,7 +1316,9 @@ ContentPage {
                                 iconSize: 16
                                 color: Appearance.colors.colError
 
+                                HoverHandler { id: sourceErrorHover }
                                 StyledToolTip {
+                                    extraVisibleCondition: sourceErrorHover.hovered
                                     text: CalendarSync.sourceStatuses?.[sourceItem.modelData?.id]?.error ?? ""
                                 }
                             }

@@ -16,7 +16,8 @@ And three that load but misbehave: `Connections { target: Hyprland }` is evaluat
 Connections is disabled, so it connects to the Hyprland socket on Niri; `Notifications.notify(…)` emits the
 arrived-notification signal and shows nothing (post with `Notifications.send`); a child of a `ClippingRectangle`
 sits in its content item, a plain Item, so `parent.radius`, `parent.color` or `parent.border` there read undefined
-(name the rectangle by its id).
+(name the rectangle by its id); a `StyledToolTip`/`PopupToolTip` inside an object with no `hovered` (a Rectangle,
+Item, icon or text) takes its parent's hover as always true and floats on screen for as long as it exists.
 """
 
 import re
@@ -42,6 +43,9 @@ ESCAPE_METHOD = re.compile(r"\bfunction\s+escape\s*\(")
 HYPRLAND_TARGET = re.compile(r"^\s*target\s*:\s*Hyprland\w*\s*$")
 NOTIFY_CALL = re.compile(r"\bNotifications\.notify\s*\(")
 CLIP_PARENT = re.compile(r"(?<!\.)\bparent\.(radius|color|border)\b")
+TOOLTIP = re.compile(r"\b(?:StyledToolTip|PopupToolTip)\s*\{")
+NO_HOVER = {"Rectangle", "Item", "MaterialSymbol", "StyledText", "Text", "Row", "Column", "RowLayout", "ColumnLayout",
+            "Image", "StyledImage", "Shape", "Flow", "GridLayout"}
 ONE_LINE_OBJECT = re.compile(r"^\s*[A-Z][\w.]*\s*\{.*\}\s*$")
 
 
@@ -50,12 +54,24 @@ def blank(text: str) -> str:
     return STRING_OR_COMMENT.sub(lambda m: re.sub(r"[^\n]", " ", m.group(0)), text)
 
 
+def tooltip_gated(lines: list, start: int) -> bool:
+    """Whether the tooltip block opening on lines[start] sets its own visibility."""
+    depth, body = 0, []
+    for line in lines[start:start + 40]:
+        body.append(line)
+        depth += line.count("{") - line.count("}")
+        if depth <= 0:
+            break
+    return bool(re.search(r"\b(?:extraVisibleCondition|alternativeVisibleCondition|visible)\s*:", "\n".join(body)))
+
+
 def scan(rel: str, text: str) -> list:
     out = []
     # Open blocks: an object block holds its handlers, readonly properties and whether it is an inline component's body;
     # JS blocks are None, so a handler-like key inside a JS object literal does not count.
     stack = []
-    for number, line in enumerate(blank(text).splitlines(), 1):
+    lines = blank(text).splitlines()
+    for number, line in enumerate(lines, 1):
         obj = stack[-1] if stack and stack[-1] is not None else None
         handler = HANDLER.match(line)
         if handler and obj is not None:
@@ -65,6 +81,7 @@ def scan(rel: str, text: str) -> list:
                            f"{first}): the component fails to load")
         if obj is not None:
             obj["readonly"].update(READONLY.findall(line))
+            obj["props"].update(PROPERTY.findall(line))
             if obj["item"]:
                 for name in PROPERTY.findall(line):
                     if name in ITEM_FINAL:
@@ -91,11 +108,15 @@ def scan(rel: str, text: str) -> list:
             if (one_line and obj["kind"] == "ClippingRectangle") or (not one_line and obj["parent"] == "ClippingRectangle"):
                 out.append(f"{rel}:{number}: `parent.{CLIP_PARENT.search(line).group(1)}` in a child of a ClippingRectangle "
                            "reads its content item (undefined): name the rectangle by its id")
+        if obj is not None and TOOLTIP.search(line) and not component and obj["kind"] in NO_HOVER \
+                and not obj["props"] & {"hovered", "buttonHovered"} and not tooltip_gated(lines, number - 1):
+            out.append(f"{rel}:{number}: tooltip inside a {obj['kind']}, which has no `hovered`: it shows all the time; "
+                       "put it in the hoverable control (a button, a MouseArea's parent with `hovered`) or drop it")
         opens, closes = line.count("{"), line.count("}")
         opened = OBJECT_OPEN.search(line) if opens == 1 and closes == 0 else None
         if opened:
             kind = opened.group(1).split(".")[-1]
-            stack.append({"handlers": {}, "readonly": set(), "component": bool(component),
+            stack.append({"handlers": {}, "readonly": set(), "props": set(), "component": bool(component),
                           "item": not NOT_ITEM.match(kind), "kind": kind, "parent": obj["kind"] if obj else ""})
         else:
             stack.extend([None] * max(0, opens - closes))

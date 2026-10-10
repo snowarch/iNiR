@@ -834,7 +834,8 @@ ColumnLayout {
                     }
                     border.width: 1
                     border.color: Appearance.colors.colOutline
-                    StyledToolTip { text: String(modelData) }
+                    HoverHandler { id: swatchHover }
+                    StyledToolTip { extraVisibleCondition: swatchHover.hovered; text: String(modelData) }
                     MouseArea {
                         anchors.fill: parent
                         hoverEnabled: true
