@@ -12,7 +12,8 @@ Singleton {
     property string currentMood: _initialMood()
     readonly property var moods: ["neutral", "sleepy", "hyper", "snarky", "contemplative"]
     readonly property var moodLines: ({})  // loaded by consumer from manifest
-    readonly property bool enabled: Config.options?.mascot?.personality?.enabled ?? true
+    readonly property bool enabled: (Config.options?.mascot?.enable ?? false)
+        && (Config.options?.mascot?.personality?.enabled ?? true)
     readonly property int intervalMinutes: Math.max(5, Config.options?.mascot?.personality?.idleMoodIntervalMinutes ?? 30)
 
     // Initial mood from time of day
