@@ -768,18 +768,18 @@ if args.scheme != "scheme-monochrome":
             continue
         tone = Hct.from_int(hex_to_argb(material_colors[key])).tone
         if darkmode and not 70.0 <= tone <= 85.0:
-            material_colors[key] = argb_to_hex(palette.tone(80))
+            material_colors[key] = argb_to_hex(palette.get_hct(80).to_int())
         elif not darkmode and not 25.0 <= tone <= 50.0:
-            material_colors[key] = argb_to_hex(palette.tone(40))
+            material_colors[key] = argb_to_hex(palette.get_hct(40).to_int())
         container, on_container = key + "Container", "on" + key[0].upper() + key[1:] + "Container"
         if container in material_colors:
             ctone = Hct.from_int(hex_to_argb(material_colors[container])).tone
             if darkmode and not 20.0 <= ctone <= 40.0:
-                material_colors[container] = argb_to_hex(palette.tone(30))
-                material_colors[on_container] = argb_to_hex(palette.tone(90))
+                material_colors[container] = argb_to_hex(palette.get_hct(30).to_int())
+                material_colors[on_container] = argb_to_hex(palette.get_hct(90).to_int())
             elif not darkmode and not 80.0 <= ctone <= 95.0:
-                material_colors[container] = argb_to_hex(palette.tone(90))
-                material_colors[on_container] = argb_to_hex(palette.tone(10))
+                material_colors[container] = argb_to_hex(palette.get_hct(90).to_int())
+                material_colors[on_container] = argb_to_hex(palette.get_hct(10).to_int())
         # A near-grey wallpaper still has a hue: the accent carries it at a chroma people read as colour, so no
         # wallpaper leaves the shell and its apps without one (a night wallpaper gave a grey #C2C7CE).
         # And a ceiling: a vivid green wallpaper gave #05E600 (chroma 102), a neon no text or fill sits well on.
