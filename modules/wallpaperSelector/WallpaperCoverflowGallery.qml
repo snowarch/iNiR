@@ -450,7 +450,6 @@ Item {
                 iconSize: Appearance.font.pixelSize.larger
                 color: root.accentInk
             }
-            StyledToolTip { text: Translation.tr("Current wallpaper") }
         }
     }
 
@@ -632,6 +631,14 @@ Item {
                     border.color: root.accentColor
                 }
 
+            }
+
+            // Glyphs outside the scaled face (text under a resting scale goes soft), on its scaled bounds
+            Item {
+                anchors.centerIn: parent
+                width: Math.round(root.thumbWidth * thumbFace.scale)
+                height: Math.round(root.thumbHeight * thumbFace.scale)
+
                 MaterialSymbol {
                     visible: thumb.mediaKind !== "image"
                     anchors { left: parent.left; top: parent.top; margins: 6 }
@@ -644,13 +651,13 @@ Item {
                 Rectangle {
                     visible: thumb.isActive
                     anchors { right: parent.right; bottom: parent.bottom; margins: 6 }
-                    width: 20; height: 20
+                    width: 22; height: 22
                     radius: root.editorial ? Appearance.rounding.small : height / 2
                     color: root.accentColor
                     MaterialSymbol {
                         anchors.centerIn: parent
                         text: "check"
-                        iconSize: Appearance.font.pixelSize.small
+                        iconSize: Appearance.font.pixelSize.normal
                         color: root.accentInk
                     }
                 }

@@ -743,7 +743,6 @@ Item {
                     fill: 1
                     color: root.editorial ? Appearance.editorial.accentInk : ColorUtils.contrastColor(root.accentColor)
                 }
-                StyledToolTip { text: Translation.tr("Current wallpaper") }
             }
 
             // ── Edge: accent on the current card, a hairline between slices ──
