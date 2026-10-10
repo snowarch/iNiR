@@ -783,11 +783,16 @@ if args.scheme != "scheme-monochrome":
         # A near-grey wallpaper still has a hue: the accent carries it at a chroma people read as colour, so no
         # wallpaper leaves the shell and its apps without one (a night wallpaper gave a grey #C2C7CE).
         # And a ceiling: a vivid green wallpaper gave #05E600 (chroma 102), a neon no text or fill sits well on.
+        # Both follow the person's colour strength and scheme: floors of 36/24 for every scheme made Neutral the
+        # twin of Tonal Spot and left the strength slider without effect below 140 %.
+        strength = max(0.3, args.color_strength)
+        ceiling = min(90.0, 60.0 * max(1.0, strength))
         hct = Hct.from_int(hex_to_argb(material_colors[key]))
-        if hct.chroma > 60.0:
-            material_colors[key] = argb_to_hex(Hct.from_hct(hct.hue, 60.0, hct.tone).to_int())
+        if hct.chroma > ceiling:
+            material_colors[key] = argb_to_hex(Hct.from_hct(hct.hue, ceiling, hct.tone).to_int())
         if key == "primary":
-            for role, floor in ((key, 36.0), (container, 24.0)):
+            base_floors = (16.0, 10.0) if args.scheme == "scheme-neutral" else (26.0, 18.0)
+            for role, floor in ((key, base_floors[0] * strength), (container, base_floors[1] * strength)):
                 if role in material_colors:
                     hct = Hct.from_int(hex_to_argb(material_colors[role]))
                     if 4.0 <= hct.chroma < floor:
