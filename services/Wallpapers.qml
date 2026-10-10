@@ -213,6 +213,53 @@ Singleton {
         }
     }
 
+    // A wallpaper moved or deleted outside iNiR left every surface reading a missing file: no colours, hundreds of
+    // "Cannot open" warnings. The main path is checked when it changes; a missing one is replaced by the first image
+    // of the wallpapers folder (else a bundled one) and the person is told once.
+    readonly property string _mainWallpaperPathSetting: Config.ready ? (Config.options?.background?.wallpaperPath ?? "") : ""
+    property string _missingWallpaperNotified: ""
+    on_MainWallpaperPathSettingChanged: _missingWallpaperCheckTimer.restart()
+
+    Timer {
+        id: _missingWallpaperCheckTimer
+        interval: 400
+        onTriggered: {
+            const path = FileUtils.trimFileProtocol(root._mainWallpaperPathSetting)
+            if (path.length === 0 || _missingWallpaperProc.running)
+                return
+            _missingWallpaperProc.checkedPath = path
+            // exit 0: present; 1: missing, stdout = replacement (may be empty)
+            _missingWallpaperProc.exec(["sh", "-c",
+                '[ -e "$1" ] && exit 0; shift; for d do '
+                + 'find "$d" -maxdepth 1 -type f \\( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \\) '
+                + '2>/dev/null | sort | head -n 1 | grep . && exit 1; done; exit 1',
+                "sh", path, FileUtils.trimFileProtocol(Directories.wallpapersPath),
+                FileUtils.trimFileProtocol(Directories.assetsPath) + "/wallpapers"])
+        }
+    }
+
+    Process {
+        id: _missingWallpaperProc
+        property string checkedPath: ""
+        stdout: StdioCollector { id: _missingWallpaperOut }
+        onExited: (exitCode) => {
+            const current = FileUtils.trimFileProtocol(root._mainWallpaperPathSetting)
+            if (exitCode !== 1 || checkedPath !== current)
+                return
+            const replacement = (_missingWallpaperOut.text ?? "").trim()
+            console.warn(`[Wallpapers] wallpaper not found: ${checkedPath}` + (replacement ? `, using ${replacement}` : ""))
+            if (root._missingWallpaperNotified !== checkedPath) {
+                root._missingWallpaperNotified = checkedPath
+                Quickshell.execDetached(["notify-send", "-a", "iNiR", "-i", "image-missing",
+                    Translation.tr("Wallpaper not found"),
+                    Translation.tr("%1 was moved or deleted. Pick another one in the wallpaper selector.")
+                        .arg(FileUtils.fileNameForPath(checkedPath))])
+            }
+            if (replacement.length > 0)
+                root.select(replacement)
+        }
+    }
+
     // Resolve the "main" wallpaper path — multi-monitor aware
     // When multi-monitor is enabled, uses the focused monitor's wallpaper
     // so Aurora blur/glass on all panels matches what's actually on screen.
