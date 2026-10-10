@@ -1041,10 +1041,8 @@ Item {
                     asynchronous: true
                     retainWhileLoading: true
                     smooth: true
-                    property bool _everReady: false
-                    onStatusChanged: if (status === Image.Ready) _everReady = true
-                    onSourceChanged: _everReady = false
-                    mipmap: delegateItem.isCurrent && _everReady
+                    // Fixed from creation: flipping mipmap on an uploaded texture warns (QSGPlainTexture) and is ignored
+                    mipmap: true
                     sourceSize.width: delegateItem._sourceW
                     sourceSize.height: delegateItem._sourceH
                 }
@@ -1069,10 +1067,8 @@ Item {
                     asynchronous: true
                     cache: true
                     smooth: true
-                    property bool _everReady: false
-                    onStatusChanged: if (status === Image.Ready) _everReady = true
-                    onSourceChanged: _everReady = false
-                    mipmap: delegateItem.isCurrent && _everReady
+                    // Fixed from creation: flipping mipmap on an uploaded texture warns (QSGPlainTexture) and is ignored
+                    mipmap: true
                     sourceSize.width: delegateItem._sourceW
                     sourceSize.height: delegateItem._sourceH
                     source: {
