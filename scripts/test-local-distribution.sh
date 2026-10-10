@@ -1541,8 +1541,9 @@ if ! grep -Fq 'enabled: MascotCatalog.packAvailable' "$mascot_ii_settings" \
     printf 'FAIL: mascot master switches remain interactive without the optional art pack\n' >&2
     exit 1
 fi
-if ! grep -Fq 'identifier: "iiMascotCompanion"; extraCondition: true; component: MascotCompanion {}' "$mascot_ii_panels" \
-        || ! grep -Fq 'identifier: "iiMascotCompanion"; extraCondition: true; component: MascotCompanion {}' "$mascot_waffle_panels"; then
+mascot_companion_loader='identifier: "iiMascotCompanion"; extraCondition: (Config.options?.mascot?.enable ?? false) && (Config.options?.mascot?.companion?.enable ?? true); component: MascotCompanion {}'
+if ! grep -Fq "$mascot_companion_loader" "$mascot_ii_panels" \
+        || ! grep -Fq "$mascot_companion_loader" "$mascot_waffle_panels"; then
     printf 'FAIL: mascot companion controller is not available independently of optional art-pack timing\n' >&2
     exit 1
 fi
