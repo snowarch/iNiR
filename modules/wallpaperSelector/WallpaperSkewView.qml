@@ -806,7 +806,8 @@ Item {
         anchors.fill: parent
         visible: root.hasImages
         z: -1
-        color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.25)
+        // No blur behind the skew deck (cost): the scrim alone must push windows back so the slices read
+        color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.7)
         opacity: root._contentVisible ? 1 : 0
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
