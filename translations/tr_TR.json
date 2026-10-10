@@ -9162,5 +9162,22 @@
   "Reads or writes files outside its own folder": "Klasörünün dışındaki dosyaları okur ya da yazar",
   "Injects scripts into the site it opens": "Açtığı siteye betik ekler",
   "Community Hub": "Topluluk Hub'ı",
-  "Widgets, themes and web apps from other people": "Başkalarından widget'lar, temalar ve web uygulamaları"
+  "Widgets, themes and web apps from other people": "Başkalarından widget'lar, temalar ve web uygulamaları",
+  "Add to desktop": "Masaüstüne ekle",
+  "Back to the hub": "Hub'a dön",
+  "Checked %1 · check again": "Kontrol edildi %1 · yeniden kontrol et",
+  "For other families": "Diğer aileler için",
+  "New in the hub": "Hub'da yeni",
+  "On your desktop": "Masaüstünde",
+  "Search %1 widgets, themes and web apps": "%1 widget, tema ve web uygulamalarında ara",
+  "See everything": "Tümünü gör",
+  "Source and setup guide": "Kaynak kodu ve kurulum rehberi",
+  "The hub didn't answer": "Hub yanıt vermedi",
+  "They do their part once you switch to the family they were made for": "Yapıldıkları aileye geçtiğinde işe yararlar",
+  "Try a shorter word, or look through everything": "Daha kısa bir kelime dene ya da tümüne göz at",
+  "What you get from the hub shows up here, with its updates": "Hub'dan aldıkların güncellemeleriyle burada görünür",
+  "Where it shows": "Nerede görünür",
+  "you have %1": "%1 var",
+  "iRiS theme": "iRiS teması",
+  "Web app": "Web uygulaması"
 }

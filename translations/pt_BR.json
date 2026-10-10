@@ -9162,5 +9162,22 @@
   "Reads or writes files outside its own folder": "Lê ou grava arquivos fora da própria pasta",
   "Injects scripts into the site it opens": "Injeta scripts no site que abre",
   "Community Hub": "Hub da comunidade",
-  "Widgets, themes and web apps from other people": "Widgets, temas e apps web de outras pessoas"
+  "Widgets, themes and web apps from other people": "Widgets, temas e apps web de outras pessoas",
+  "Add to desktop": "Adicionar à área de trabalho",
+  "Back to the hub": "Voltar ao hub",
+  "Checked %1 · check again": "Verificado %1 · verificar de novo",
+  "For other families": "Para outras famílias",
+  "New in the hub": "Novo no hub",
+  "On your desktop": "Na sua área de trabalho",
+  "Search %1 widgets, themes and web apps": "Buscar widgets, temas e apps web do %1",
+  "See everything": "Ver tudo",
+  "Source and setup guide": "Código e guia de configuração",
+  "The hub didn't answer": "O hub não respondeu",
+  "They do their part once you switch to the family they were made for": "Funcionam quando você muda para a família para a qual foram feitos",
+  "Try a shorter word, or look through everything": "Tente uma palavra mais curta ou veja tudo",
+  "What you get from the hub shows up here, with its updates": "O que você pegar do hub aparece aqui, com as atualizações",
+  "Where it shows": "Onde aparece",
+  "you have %1": "você tem %1",
+  "iRiS theme": "Tema do iRiS",
+  "Web app": "App web"
 }

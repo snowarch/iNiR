@@ -9162,5 +9162,22 @@
   "Reads or writes files outside its own folder": "Читает или пишет файлы вне своей папки",
   "Injects scripts into the site it opens": "Встраивает скрипты в открываемый сайт",
   "Community Hub": "Хаб сообщества",
-  "Widgets, themes and web apps from other people": "Виджеты, темы и веб-приложения от других людей"
+  "Widgets, themes and web apps from other people": "Виджеты, темы и веб-приложения от других людей",
+  "Add to desktop": "Добавить на рабочий стол",
+  "Back to the hub": "Назад в хаб",
+  "Checked %1 · check again": "Проверено %1 · проверить снова",
+  "For other families": "Для других семейств",
+  "New in the hub": "Новое в хабе",
+  "On your desktop": "На вашем рабочем столе",
+  "Search %1 widgets, themes and web apps": "Искать виджеты, темы и веб-приложения для %1",
+  "See everything": "Смотреть всё",
+  "Source and setup guide": "Исходный код и инструкция",
+  "The hub didn't answer": "Хаб не ответил",
+  "They do their part once you switch to the family they were made for": "Они заработают, когда вы переключитесь на семейство, для которого сделаны",
+  "Try a shorter word, or look through everything": "Попробуйте слово короче или посмотрите всё",
+  "What you get from the hub shows up here, with its updates": "Всё, что вы возьмёте из хаба, появится здесь вместе с обновлениями",
+  "Where it shows": "Где отображается",
+  "you have %1": "у вас %1",
+  "iRiS theme": "Тема iRiS",
+  "Web app": "Веб-приложение"
 }

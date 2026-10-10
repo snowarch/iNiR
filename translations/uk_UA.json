@@ -9162,5 +9162,22 @@
   "Reads or writes files outside its own folder": "Читає або пише файли поза своєю текою",
   "Injects scripts into the site it opens": "Вбудовує скрипти в сайт, який відкриває",
   "Community Hub": "Хаб спільноти",
-  "Widgets, themes and web apps from other people": "Віджети, теми та вебзастосунки від інших людей"
+  "Widgets, themes and web apps from other people": "Віджети, теми та вебзастосунки від інших людей",
+  "Add to desktop": "Додати на робочий стіл",
+  "Back to the hub": "Назад до хабу",
+  "Checked %1 · check again": "Перевірено %1 · перевірити знову",
+  "For other families": "Для інших сімейств",
+  "New in the hub": "Нове в хабі",
+  "On your desktop": "На вашому робочому столі",
+  "Search %1 widgets, themes and web apps": "Шукати віджети, теми й вебзастосунки для %1",
+  "See everything": "Переглянути все",
+  "Source and setup guide": "Вихідний код і інструкція",
+  "The hub didn't answer": "Хаб не відповів",
+  "They do their part once you switch to the family they were made for": "Вони запрацюють, коли ви перейдете на сімейство, для якого їх зроблено",
+  "Try a shorter word, or look through everything": "Спробуйте коротше слово або перегляньте все",
+  "What you get from the hub shows up here, with its updates": "Усе, що ви візьмете з хабу, з'явиться тут разом з оновленнями",
+  "Where it shows": "Де показується",
+  "you have %1": "у вас %1",
+  "iRiS theme": "Тема iRiS",
+  "Web app": "Вебзастосунок"
 }

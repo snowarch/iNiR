@@ -9162,5 +9162,22 @@
   "Reads or writes files outside its own folder": "अपने फ़ोल्डर के बाहर फ़ाइलें पढ़ता या लिखता है",
   "Injects scripts into the site it opens": "खोली गई साइट में स्क्रिप्ट डालता है",
   "Community Hub": "समुदाय हब",
-  "Widgets, themes and web apps from other people": "दूसरे लोगों के विजेट, थीम और वेब ऐप"
+  "Widgets, themes and web apps from other people": "दूसरे लोगों के विजेट, थीम और वेब ऐप",
+  "Add to desktop": "डेस्कटॉप में जोड़ें",
+  "Back to the hub": "हब पर वापस जाएँ",
+  "Checked %1 · check again": "%1 जाँचा गया · फिर से जाँचें",
+  "For other families": "अन्य परिवारों के लिए",
+  "New in the hub": "हब में नया",
+  "On your desktop": "आपके डेस्कटॉप पर",
+  "Search %1 widgets, themes and web apps": "%1 विजेट, थीम और वेब ऐप खोजें",
+  "See everything": "सब देखें",
+  "Source and setup guide": "स्रोत और सेटअप गाइड",
+  "The hub didn't answer": "हब ने जवाब नहीं दिया",
+  "They do their part once you switch to the family they were made for": "जिस परिवार के लिए बने हैं, उस पर जाने पर काम करते हैं",
+  "Try a shorter word, or look through everything": "छोटा शब्द आज़माएँ या सब देखें",
+  "What you get from the hub shows up here, with its updates": "हब से जो लेंगे वह अपडेट के साथ यहाँ दिखेगा",
+  "Where it shows": "कहाँ दिखता है",
+  "you have %1": "आपके पास %1",
+  "iRiS theme": "iRiS थीम",
+  "Web app": "वेब ऐप"
 }

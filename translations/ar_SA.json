@@ -9162,5 +9162,22 @@
   "Reads or writes files outside its own folder": "يقرأ أو يكتب ملفات خارج مجلده",
   "Injects scripts into the site it opens": "يحقن نصوصًا برمجية في الموقع الذي يفتحه",
   "Community Hub": "مركز المجتمع",
-  "Widgets, themes and web apps from other people": "أدوات وسمات وتطبيقات ويب من أشخاص آخرين"
+  "Widgets, themes and web apps from other people": "أدوات وسمات وتطبيقات ويب من أشخاص آخرين",
+  "Add to desktop": "إضافة إلى سطح المكتب",
+  "Back to the hub": "العودة إلى المركز",
+  "Checked %1 · check again": "تم الفحص %1 · افحص مجددًا",
+  "For other families": "لعائلات أخرى",
+  "New in the hub": "جديد في المركز",
+  "On your desktop": "على سطح مكتبك",
+  "Search %1 widgets, themes and web apps": "ابحث في أدوات وسمات وتطبيقات ويب %1",
+  "See everything": "عرض الكل",
+  "Source and setup guide": "الشفرة المصدرية ودليل الإعداد",
+  "The hub didn't answer": "لم يستجب المركز",
+  "They do their part once you switch to the family they were made for": "تعمل عندما تنتقل إلى العائلة التي صُنعت لها",
+  "Try a shorter word, or look through everything": "جرّب كلمة أقصر، أو تصفّح الكل",
+  "What you get from the hub shows up here, with its updates": "ما تحصل عليه من المركز يظهر هنا مع تحديثاته",
+  "Where it shows": "مكان الظهور",
+  "you have %1": "لديك %1",
+  "iRiS theme": "سمة iRiS",
+  "Web app": "تطبيق ويب"
 }

@@ -9162,5 +9162,22 @@
   "Reads or writes files outside its own folder": "读写其文件夹之外的文件",
   "Injects scripts into the site it opens": "向打开的网站注入脚本",
   "Community Hub": "社区中心",
-  "Widgets, themes and web apps from other people": "来自其他人的小组件、主题和网页应用"
+  "Widgets, themes and web apps from other people": "来自其他人的小组件、主题和网页应用",
+  "Add to desktop": "添加到桌面",
+  "Back to the hub": "返回 Hub",
+  "Checked %1 · check again": "已于 %1 检查 · 再次检查",
+  "For other families": "适用于其他系列",
+  "New in the hub": "Hub 新内容",
+  "On your desktop": "已在桌面上",
+  "Search %1 widgets, themes and web apps": "搜索 %1 小部件、主题和网页应用",
+  "See everything": "查看全部",
+  "Source and setup guide": "源代码与设置指南",
+  "The hub didn't answer": "Hub 没有响应",
+  "They do their part once you switch to the family they were made for": "切换到它们所属的系列后即可生效",
+  "Try a shorter word, or look through everything": "试试更短的词，或浏览全部",
+  "What you get from the hub shows up here, with its updates": "从 Hub 获取的内容会显示在这里，并附带更新",
+  "Where it shows": "显示位置",
+  "you have %1": "已有 %1 个",
+  "iRiS theme": "iRiS 主题",
+  "Web app": "网页应用"
 }

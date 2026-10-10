@@ -41,10 +41,10 @@ Singleton {
     }
 
     readonly property var kinds: [
-        { id: "widget", label: "Widgets", icon: "widgets" },
-        { id: "theme", label: "Colour themes", icon: "palette" },
-        { id: "iris-theme", label: "iRiS themes", icon: "style" },
-        { id: "webapp", label: "Web apps", icon: "language" }
+        { id: "widget", label: "Widgets", one: "Widget", icon: "widgets" },
+        { id: "theme", label: "Colour themes", one: "Colour theme", icon: "palette" },
+        { id: "iris-theme", label: "iRiS themes", one: "iRiS theme", icon: "style" },
+        { id: "webapp", label: "Web apps", one: "Web app", icon: "language" }
     ]
     readonly property var permissionText: ({
         process: "Runs commands on your computer",
@@ -60,6 +60,20 @@ Singleton {
 
     function kindLabel(kind: string): string {
         return root.kinds.find(entry => entry.id === kind)?.label ?? kind
+    }
+    // One item of a kind ("Widget"), for a card's line; kindLabel names the shelf.
+    function kindName(kind: string): string {
+        return root.kinds.find(entry => entry.id === kind)?.one ?? kind
+    }
+    // The item a family's page puts first: one the hub marks as featured, else the newest,
+    // among those that work in that family and on this iNiR.
+    function featuredFor(family: string): var {
+        const usable = root.items.filter(item => root.fits(item, family) && item.compatible !== false)
+        if (usable.length === 0)
+            return null
+        const newest = (a, b) => String(b.updated ?? "").localeCompare(String(a.updated ?? ""))
+        const picked = usable.filter(item => item.featured === true).sort(newest)
+        return (picked.length > 0 ? picked : usable.slice().sort(newest))[0]
     }
     function find(id: string): var {
         return root.items.find(item => item.id === id) ?? null

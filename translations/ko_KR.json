@@ -9162,5 +9162,22 @@
   "Reads or writes files outside its own folder": "자기 폴더 밖의 파일을 읽거나 씀",
   "Injects scripts into the site it opens": "여는 사이트에 스크립트 삽입",
   "Community Hub": "커뮤니티 허브",
-  "Widgets, themes and web apps from other people": "다른 사람들이 만든 위젯, 테마, 웹 앱"
+  "Widgets, themes and web apps from other people": "다른 사람들이 만든 위젯, 테마, 웹 앱",
+  "Add to desktop": "데스크톱에 추가",
+  "Back to the hub": "허브로 돌아가기",
+  "Checked %1 · check again": "%1에 확인함 · 다시 확인",
+  "For other families": "다른 패밀리용",
+  "New in the hub": "허브의 새 항목",
+  "On your desktop": "데스크톱에 있음",
+  "Search %1 widgets, themes and web apps": "%1 위젯, 테마, 웹 앱 검색",
+  "See everything": "모두 보기",
+  "Source and setup guide": "소스 및 설정 가이드",
+  "The hub didn't answer": "허브가 응답하지 않았습니다",
+  "They do their part once you switch to the family they were made for": "만들어진 패밀리로 전환하면 작동합니다",
+  "Try a shorter word, or look through everything": "더 짧은 단어로 찾거나 전체를 둘러보세요",
+  "What you get from the hub shows up here, with its updates": "허브에서 받은 항목이 업데이트와 함께 여기에 표시됩니다",
+  "Where it shows": "표시 위치",
+  "you have %1": "%1개 있음",
+  "iRiS theme": "iRiS 테마",
+  "Web app": "웹 앱"
 }
