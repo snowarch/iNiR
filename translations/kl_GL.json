@@ -7573,5 +7573,7 @@
   "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "Tunngavik qinersivik. Imaqanngippat tunuliaqutaasup quppersagaa.",
   "The current wallpaper's folder": "Tunuliaqutaasup quppersagaa",
   "Read the GPU": "GPU atuaruk",
-  "Adds the graphics card to what Vitals shows. Off saves a little power on laptops.": "Vitals-imut GPU ilanngussaaq."
+  "Adds the graphics card to what Vitals shows. Off saves a little power on laptops.": "Vitals-imut GPU ilanngussaaq.",
+  "Top edge": "Killeqarfik qulaani",
+  "Bottom edge": "Killeqarfik ataani"
 }

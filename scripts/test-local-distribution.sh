@@ -4299,6 +4299,9 @@ if command -v python3 &>/dev/null && [[ -f "$runtime_root/scripts/lib/generate-i
     step "iRiS defaults"
     python3 "$runtime_root/scripts/test-iris-defaults.py"
 
+    step "iRiS Settings strings in every catalogue"
+    python3 "$runtime_root/scripts/test-iris-settings-strings.py"
+
     step "iRiS anime layer"
     python3 "$runtime_root/scripts/test-iris-anime-layer.py"
 
