@@ -19,6 +19,9 @@ ClippingRectangle {
     property bool playing: true
     property bool compact: false
     property string caption: ""
+    // Niri's values for the scenes that draw them (windows, keyboard, the screen); Settings passes its reader in.
+    property var niriValue: null
+    property int niriRevision: 0
     readonly property real d: IrisStyle.density
     readonly property string scene: root.sceneFor(root.section, root.group)
     readonly property bool available: (Config.options?.iris?.appearance?.previews ?? true) && root.scene.length > 0
@@ -29,7 +32,9 @@ ClippingRectangle {
     function sceneFor(section: string, group: string): string {
         if (group.length === 0)
             return ({ dock: "dock", player: "player", desktop: "widgets", sidebars: "panels", controlCenter: "controlCenter", spotlight: "spotlight", bubbles: "bubbles",
-                bar: "islandEdge", appearance: "fusion", colour: "palette", wallpaper: "gallery", login: "login", motion: "motion", lock: "lock", notifications: "feedback", sound: "feedback" })[section] ?? ""
+                bar: "islandEdge", appearance: "fusion", colour: "palette", wallpaper: "gallery", login: "login", motion: "motion", lock: "lock", notifications: "feedback", sound: "feedback",
+                windows: "windows", display: "display", keyboard: "keyboard", orbit: "orbit", capture: "capture", anime: "anime",
+                sources: "sources", battery: "battery" })[section] ?? ""
         const key = section + "/" + group
         return ({
             "bar/Visibility": "islandReserve", "bar/Interaction": "islandInteraction",
@@ -101,7 +106,9 @@ ClippingRectangle {
                 tray: trayScene, player: playerScene, islandReserve: islandReserveScene, islandEdge: islandEdgeScene, barZones: barZonesScene,
                 light: lightScene, palette: paletteScene, fusion: fusionScene, shapes: shapesScene, glass: glassScene,
                 islandInteraction: islandInteractionScene, islandPage: islandPageScene, bubbles: bubblesScene,
-                highlight: highlightScene, login: loginScene, material: materialScene, surfaces: surfacesScene
+                highlight: highlightScene, login: loginScene, material: materialScene, surfaces: surfacesScene,
+                windows: windowsScene, display: displayScene, keyboard: keyboardScene, orbit: orbitScene, capture: captureScene,
+                anime: animeScene, sources: sourcesScene, battery: batteryScene
             })[root.scene] ?? null
         }
     }
@@ -115,6 +122,14 @@ ClippingRectangle {
     }
 
     Component { id: backdropScene; BackdropScene { preview: root } }
+    Component { id: windowsScene; WindowsScene { preview: root } }
+    Component { id: displayScene; DisplayScene { preview: root } }
+    Component { id: keyboardScene; KeyboardScene { preview: root } }
+    Component { id: orbitScene; OrbitScene { preview: root } }
+    Component { id: captureScene; CaptureScene { preview: root } }
+    Component { id: animeScene; AnimeScene { preview: root } }
+    Component { id: sourcesScene; SourcesScene { preview: root } }
+    Component { id: batteryScene; BatteryScene { preview: root } }
     Component { id: barZonesScene; BarZonesScene { preview: root } }
     Component { id: bubblesScene; BubblesScene { preview: root } }
     Component { id: cardsScene; CardsScene { preview: root } }

@@ -23,4 +23,12 @@ Item {
         scene.rev
         return Config.getNestedValue(path, fallback)
     }
+    // What Niri holds (gaps, borders, keyboard, the screen), handed in by the host: Settings reads it, scenes cannot.
+    readonly property int niriRev: scene.preview.niriRevision ?? 0
+    function niri(section: string, key: string, fallback: var): var {
+        scene.niriRev
+        const read = scene.preview.niriValue
+        const value = read ? read(section, key) : undefined
+        return value === undefined || value === null || value === "" ? fallback : value
+    }
 }

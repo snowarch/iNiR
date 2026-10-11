@@ -20,7 +20,8 @@ Rectangle {
         id: offRow
         anchors.centerIn: parent
         spacing: Math.round(8 * IrisStyle.density)
-        MaterialSymbol { text: "visibility_off"; iconSize: Math.round(16 * IrisStyle.density); color: IrisStyle.subtext }
-        IrisText { text: off.text; font.weight: IrisStyle.weight(Font.DemiBold) }
+        // The veil is dark in every scheme: its ink is the one made for imagery, never the page's.
+        MaterialSymbol { text: "visibility_off"; iconSize: Math.round(16 * IrisStyle.density); color: IrisStyle.onMediaSecondary }
+        IrisText { text: off.text; color: IrisStyle.onMedia; font.weight: IrisStyle.weight(Font.DemiBold) }
     }
 }
