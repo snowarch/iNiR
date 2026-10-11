@@ -9215,5 +9215,6 @@
   "Lock with Hyprlock": "Lock with Hyprlock",
   "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Hyprlock and its own look lock the screen instead of iRiS's lock screen.",
   "From the folder": "From the folder",
-  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "Where shuffle picks from. Empty uses the folder of the wallpaper you have now."
+  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.",
+  "The current wallpaper's folder": "The current wallpaper's folder"
 }

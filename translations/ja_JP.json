@@ -9215,5 +9215,6 @@
   "Lock with Hyprlock": "Hyprlock でロック",
   "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "iRiS のロック画面の代わりに、Hyprlock が独自の見た目でロックします。",
   "From the folder": "フォルダーから",
-  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "シャッフルが選ぶ場所。空なら今の壁紙のフォルダー。"
+  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "シャッフルが選ぶ場所。空なら今の壁紙のフォルダー。",
+  "The current wallpaper's folder": "今の壁紙のフォルダー"
 }

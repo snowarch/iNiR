@@ -9215,5 +9215,6 @@
   "Lock with Hyprlock": "使用 Hyprlock 锁定",
   "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "由 Hyprlock 以自己的外观锁屏，而不是 iRiS 的锁屏。",
   "From the folder": "来自文件夹",
-  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "随机切换的来源。留空则使用当前壁纸所在的文件夹。"
+  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "随机切换的来源。留空则使用当前壁纸所在的文件夹。",
+  "The current wallpaper's folder": "当前壁纸所在文件夹"
 }

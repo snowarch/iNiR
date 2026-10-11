@@ -9215,5 +9215,6 @@
   "Lock with Hyprlock": "Bloquear con Hyprlock",
   "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Hyprlock y su propio aspecto bloquean la pantalla en lugar de la pantalla de bloqueo de iRiS.",
   "From the folder": "De la carpeta",
-  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "De dónde elige el aleatorio. Vacío usa la carpeta del fondo que tenés ahora."
+  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "De dónde elige el aleatorio. Vacío usa la carpeta del fondo que tenés ahora.",
+  "The current wallpaper's folder": "La carpeta del fondo actual"
 }

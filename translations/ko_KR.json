@@ -9215,5 +9215,6 @@
   "Lock with Hyprlock": "Hyprlock으로 잠금",
   "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "iRiS 잠금 화면 대신 Hyprlock이 자체 모양으로 잠급니다.",
   "From the folder": "폴더에서",
-  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "무작위가 고르는 곳. 비우면 현재 배경화면의 폴더."
+  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "무작위가 고르는 곳. 비우면 현재 배경화면의 폴더.",
+  "The current wallpaper's folder": "현재 배경화면 폴더"
 }

@@ -9215,5 +9215,6 @@
   "Lock with Hyprlock": "Блокувати через Hyprlock",
   "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Екран блокує Hyprlock зі своїм виглядом замість екрана блокування iRiS.",
   "From the folder": "З теки",
-  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "Звідки беруться шпалери для зміни. Порожньо — тека поточних шпалер."
+  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "Звідки беруться шпалери для зміни. Порожньо — тека поточних шпалер.",
+  "The current wallpaper's folder": "Тека поточних шпалер"
 }
