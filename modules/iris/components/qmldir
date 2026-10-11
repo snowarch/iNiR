@@ -22,6 +22,7 @@ IrisBubbleGrip 1.0 IrisBubbleGrip.qml
 IrisDesktopMenu 1.0 IrisDesktopMenu.qml
 IrisDeviceList 1.0 IrisDeviceList.qml
 IrisPlacePicker 1.0 IrisPlacePicker.qml
+IrisPopupButton 1.0 IrisPopupButton.qml
 IrisOutputHold 1.0 IrisOutputHold.qml
 IrisBadge 1.0 IrisBadge.qml
 IrisWallpaperView 1.0 IrisWallpaperView.qml

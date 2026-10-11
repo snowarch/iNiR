@@ -21,7 +21,17 @@ Loader {
     // mapped, the popup resized, and its input landed rows away from what was drawn.
     property var shown: []
     property Item anchorItem: parent
+    // "" opens at the point, up/down/left/right beside the anchor, "over" lays entry `overIndex` on the anchor (a pop-up
+    // button: what is chosen opens under the pointer, its text where the button's text was, `overTextX` into the anchor).
     property string opensToward: ""
+    property int overIndex: -1
+    property real overTextX: 0
+    // Where the opening click landed, in the anchor's coordinates. A Niri window cannot know where it sits on screen, so
+    // a menu anchored in one places itself from the pointer: the screen position under it, less this point.
+    property point pointerAt: Qt.point(-1, -1)
+    // A menu where no entry carries a mark gives its text the whole row instead of an empty column.
+    readonly property bool marked: (root.shown ?? []).some(entry => String(entry?.iconName ?? "").length > 0
+        || String(entry?.image ?? "").length > 0 || String(entry?.tint ?? "").length > 0)
     readonly property real d: IrisStyle.density
     readonly property bool compact: IrisStyle.menuCompact
     readonly property real rowHeight: Math.round((root.compact ? 28 : 34) * root.d)
@@ -39,6 +49,8 @@ Loader {
         }
         openAfterOther.waited = false
         closeFallback.stop()
+        // The rows exist before the window does, so its first frame (and the entry it lights) is the right one.
+        root.shown = root.model
         // The click that asks again has usually already ended this popup's grab; moving a popup the
         // compositor dismissed left a ghost that opened anywhere and could not be closed.
         if (root.active) {
@@ -102,9 +114,20 @@ Loader {
         readonly property real edge: Math.round(8 * root.d)
         readonly property real gap: Math.round(6 * root.d)
 
-        // Where a layer window sits on its output follows from its anchors, size and margins.
+        // Where a layer window sits on its output follows from its anchors, size and margins; a Niri window's from the
+        // pointer (`pointerAt`), once it is over this layer.
+        readonly property bool anchorPlaced: popup.anchorWindow?.anchors !== undefined
+        property point pointerOrigin: Qt.point(NaN, NaN)
+        readonly property bool placed: popup.anchorPlaced || Number.isFinite(popup.pointerOrigin.x) || pointerWait.expired
+        Timer { id: pointerWait; property bool expired: false; interval: 250; running: !popup.anchorPlaced; onTriggered: expired = true }
+        function takePointer(px: real, py: real): void {
+            if (popup.anchorPlaced || Number.isFinite(popup.pointerOrigin.x) || root.pointerAt.x < 0 || !root.anchorItem) return
+            const at = root.anchorItem.mapToItem(null, root.pointerAt.x, root.pointerAt.y)
+            popup.pointerOrigin = Qt.point(Math.round(px - at.x), Math.round(py - at.y))
+        }
         function originOf(w: var): point {
             if (!w || !w.screen) return Qt.point(0, 0)
+            if (w === popup.anchorWindow && Number.isFinite(popup.pointerOrigin.x)) return popup.pointerOrigin
             const a = w.anchors ?? ({})
             const m = w.margins ?? ({})
             const x = a.left ? Number(m.left ?? 0) : a.right ? w.screen.width - w.width - Number(m.right ?? 0) : (w.screen.width - w.width) / 2
@@ -127,8 +150,25 @@ Loader {
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+            hoverEnabled: !popup.anchorPlaced
+            // The layer maps under a pointer that has not moved: its entry already says where it is.
+            onEntered: popup.takePointer(mouseX, mouseY)
+            onPositionChanged: mouse => popup.takePointer(mouse.x, mouse.y)
             onPressed: root.close()
         }
+        // The entry laid over the anchor, measured from the menu's top: rows, separators and headers above it.
+        readonly property real overTop: {
+            let top = root.pad
+            const list = root.shown ?? []
+            for (let i = 0; i < Math.min(root.overIndex, list.length); i++) {
+                const type = list[i]?.type
+                top += (type === "separator" ? Math.round((root.compact ? 9 : 13) * root.d)
+                    : type === "header" ? Math.round((root.compact ? 34 : 42) * root.d) : root.rowHeight) + column.spacing
+            }
+            return top
+        }
+        readonly property real textInset: Math.round((root.compact ? 8 : 10) * root.d)
+            + (root.marked ? Math.round((root.compact ? 18 : 20) * root.d) + Math.round((root.compact ? 8 : 10) * root.d) : 0)
 
         readonly property var stops: {
             const list = []
@@ -173,7 +213,10 @@ Loader {
             id: keys
             anchors.fill: parent
             focus: true
-            Component.onCompleted: Qt.callLater(() => keys.forceActiveFocus())
+            Component.onCompleted: {
+                Qt.callLater(() => keys.forceActiveFocus())
+                if (root.opensToward === "over" && root.overIndex >= 0) popup.focusStop(root.overIndex, -1)
+            }
 
             Keys.onPressed: event => {
                 const count = popup.stops.length
@@ -195,7 +238,7 @@ Loader {
             blurWhileReceding: false
             ownField: true
             MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons; z: -1 }
-            open: true
+            open: popup.placed
             readonly property real seed: Math.round(28 * root.d)
             origin: ({ x: root.opensToward === "left" ? menu.x + menu.width - menu.seed
                     : root.opensToward === "right" ? menu.x
@@ -210,17 +253,21 @@ Loader {
             radius: IrisStyle.surfaceRadius("menus", root.compact ? IrisStyle.radiusTile : IrisStyle.radiusCard)
             light: IrisStyle.surfaceLight("menus", IrisStyle.wallpaperLight)
             lightFrom: root.opensToward === "up" ? "bottom" : root.opensToward === "left" ? "right" : root.opensToward === "right" ? "left" : "top"
-            x: root.opensToward === "left" ? popup.clampX(popup.target.x - menu.width - popup.gap)
+            x: root.opensToward === "over" ? popup.clampX(popup.target.x + root.overTextX - root.pad - popup.textInset)
+                : root.opensToward === "left" ? popup.clampX(popup.target.x - menu.width - popup.gap)
                 : root.opensToward === "right" ? popup.clampX(popup.target.x + popup.target.width + popup.gap)
                 : root.opensToward.length > 0 ? popup.clampX(popup.target.x + popup.target.width / 2 - menu.width / 2)
                 : popup.clampX(popup.flipX ? popup.target.x - menu.width : popup.target.x)
-            y: root.opensToward === "up" ? popup.clampY(popup.target.y - menu.height - popup.gap)
+            y: root.opensToward === "over" ? popup.clampY(popup.target.y + popup.target.height / 2 - popup.overTop - root.rowHeight / 2)
+                : root.opensToward === "up" ? popup.clampY(popup.target.y - menu.height - popup.gap)
                 : root.opensToward === "down" ? popup.clampY(popup.target.y + popup.target.height + popup.gap)
                 : root.opensToward.length > 0 ? popup.clampY(popup.target.y + popup.target.height / 2 - menu.height / 2)
                 : popup.clampY(popup.flipY ? popup.target.y - menu.height : popup.target.y)
             // Long labels (a file name, a tray item) elide inside the cap instead of stretching the menu.
+            // Over a pop-up button it is at least as wide as the button, so the button never shows past it.
             width: Math.round(Math.min((root.compact ? 300 : 360) * root.d,
-                Math.max((root.compact ? 176 : 236) * root.d, column.implicitWidth + 2 * root.pad)))
+                Math.max((root.compact ? 176 : 236) * root.d, column.implicitWidth + 2 * root.pad,
+                    root.opensToward === "over" ? popup.target.width - root.overTextX + root.pad + popup.textInset : 0)))
             height: Math.round(column.implicitHeight + 2 * root.pad)
             onClosed: if (!menu.open) root.active = false
 
@@ -455,6 +502,7 @@ Loader {
                                     anchors.rightMargin: Math.round((root.compact ? 10 : 12) * root.d)
                                     spacing: Math.round((root.compact ? 8 : 10) * root.d)
                                     Item {
+                                        visible: root.marked
                                         Layout.preferredWidth: Math.round((root.compact ? 18 : 20) * root.d)
                                         Layout.preferredHeight: Layout.preferredWidth
                                         Rectangle {
@@ -488,6 +536,8 @@ Loader {
                                         Layout.fillWidth: true
                                         text: row.modelData?.text ?? ""
                                         color: menuItem.danger ? IrisStyle.danger : IrisStyle.text
+                                        // A choice of typeface reads in its own face.
+                                        font.family: String(row.modelData?.family ?? "").length > 0 ? row.modelData.family : IrisStyle.fontMain
                                         font.pixelSize: root.textSize
                                         font.weight: IrisStyle.weight(Font.Medium)
                                         elide: Text.ElideRight

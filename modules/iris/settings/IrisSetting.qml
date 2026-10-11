@@ -74,7 +74,8 @@ Item {
     // the left and answers on the right. What needs more room (pictures, four or more choices, galleries) sits under the
     // text at full width.
     readonly property bool roomy: layout.width >= 480 * root.d
-    readonly property real controlWidth: Math.round(Math.min(300 * root.d, Math.max(200 * root.d, layout.width * 0.4)))
+    // 43 %: in the Settings pane (about 700·d of row) the column still reaches its 300·d, so a three-way choice keeps it.
+    readonly property real controlWidth: Math.round(Math.min(300 * root.d, Math.max(200 * root.d, layout.width * 0.43)))
     FontMetrics {
         id: choiceMetrics
         font.family: IrisStyle.fontMain
@@ -89,8 +90,14 @@ Item {
     // Segments share the track evenly, so the widest name sets every slot.
     readonly property real segmentNatural: root.spec.kind !== "choice" || root.choices.length === 0 ? 0
         : root.choices.length * (Math.max(...root.choices.map(choice => choiceMetrics.advanceWidth(Translation.tr(String(choice.label ?? ""))))) + 26 * root.d) + 4
-    readonly property bool inlineChoice: root.spec.kind === "choice" && root.roomy && root.choices.length >= 2 && root.choices.length <= 3
+    readonly property bool inlineChoice: root.spec.kind === "choice" && root.roomy && root.choices.length >= 2 && root.choices.length <= 4
         && !root.swatched && !root.tiled && !root.carded && root.segmentNatural <= root.controlWidth
+    // A flat list the column's track cannot hold (HIG: past a few choices, or names too long to share it) answers as a
+    // pop-up button in the same column. Pictures stay pictures: up to five glyph choices keep their track under the text.
+    readonly property bool menuChoice: root.spec.kind === "choice" && root.choices.length > 0 && !root.inlineChoice
+        && !root.swatched && !root.tiled && !root.carded && !(root.pictured && root.choices.length <= 5)
+    // A typeface from the installed ones: the pop-up's last entry opens a search under the row.
+    property bool fontSearch: false
     readonly property bool inlineRange: root.spec.kind === "range" && root.roomy
     // A text answer sits in the column too: a prefix (`short`) in a small field, anything longer at the column's width.
     readonly property bool inlineText: root.spec.kind === "text" && root.roomy
@@ -274,6 +281,14 @@ Item {
 
             Loader {
                 opacity: root.controlOpacity
+                active: root.menuChoice
+                visible: active
+                Layout.alignment: Qt.AlignVCenter
+                sourceComponent: popupComponent
+            }
+
+            Loader {
+                opacity: root.controlOpacity
                 active: root.inlineSwatch
                 visible: active
                 Layout.preferredWidth: Math.round((root.choices.length * 40 - 10) * root.d)
@@ -301,14 +316,82 @@ Item {
                     implicitHeight: Math.round(22 * root.d)
                 }
                 // One figure column on every row (wider only for a longer word), so the tracks of a page start on one line.
-                IrisText {
+                // The figure is also a field: a click types an exact value, ↑ ↓ step it, Return sets it, Escape leaves it.
+                Item {
+                    id: figure
+                    property bool editing: false
+                    readonly property real scale: Number(root.spec.scale ?? 1)
+                    readonly property real shownStep: Math.abs(Number(root.spec.step ?? 1) * figure.scale)
+                    readonly property int decimals: figure.shownStep > 0 && figure.shownStep < 1
+                        ? Math.min(2, Math.ceil(-Math.log10(figure.shownStep) - 1e-9)) : 0
+                    function plain(value: real): string {
+                        return Number(value * figure.scale).toFixed(figure.decimals).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "")
+                    }
+                    function begin(): void {
+                        figureInput.text = figure.plain(Number(root.value))
+                        figure.editing = true
+                        figureInput.forceActiveFocus()
+                        figureInput.selectAll()
+                    }
+                    function settle(text: string): void {
+                        figure.editing = false
+                        const typed = Number(String(text).trim().replace(",", "."))
+                        if (!Number.isFinite(typed)) return
+                        const step = Number(root.spec.step ?? 1)
+                        const raw = Math.max(root.spec.min, Math.min(root.spec.max, typed / figure.scale))
+                        const value = Number((Math.round(raw / step) * step).toFixed(4))
+                        if (value !== Number(root.value)) root.commit(value)
+                    }
                     Layout.preferredWidth: Math.max(root.figureWidth, Math.round(60 * root.d))
+                    implicitHeight: Math.round(24 * root.d)
                     opacity: root.controlOpacity
-                    horizontalAlignment: Text.AlignRight
-                    text: Translation.tr(IrisOptions.rangeText(root.spec, root.shownValue))
-                    color: IrisStyle.subtext
-                    font.features: ({ "tnum": 1 })
-                    font.pixelSize: IrisStyle.typeLabel
+                    Rectangle {
+                        anchors.right: parent.right
+                        anchors.rightMargin: -Math.round(6 * root.d)
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.min(parent.width, (figure.editing ? parent.width : figureText.contentWidth)) + Math.round(12 * root.d)
+                        height: parent.height
+                        radius: IrisStyle.radiusChip
+                        color: figure.editing ? IrisStyle.fill : figureHover.hovered ? IrisStyle.fillQuiet : "transparent"
+                        border.width: figure.editing ? 1 : 0
+                        border.color: IrisStyle.tintBorder(IrisStyle.accent)
+                        Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+                    }
+                    IrisText {
+                        id: figureText
+                        anchors.fill: parent
+                        visible: !figure.editing
+                        horizontalAlignment: Text.AlignRight
+                        verticalAlignment: Text.AlignVCenter
+                        text: Translation.tr(IrisOptions.rangeText(root.spec, root.shownValue))
+                        color: figureHover.hovered ? IrisStyle.text : IrisStyle.subtext
+                        font.features: ({ "tnum": 1 })
+                        font.pixelSize: IrisStyle.typeLabel
+                    }
+                    TextInput {
+                        id: figureInput
+                        anchors.fill: parent
+                        visible: figure.editing
+                        horizontalAlignment: Text.AlignRight
+                        verticalAlignment: Text.AlignVCenter
+                        color: IrisStyle.text
+                        selectionColor: IrisStyle.accentContainer
+                        selectedTextColor: IrisStyle.inkOnAccentContainer
+                        font.family: IrisStyle.fontMain
+                        font.features: ({ "tnum": 1 })
+                        font.pixelSize: IrisStyle.typeLabel
+                        inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        Accessible.name: Translation.tr(root.spec.label)
+                        onEditingFinished: if (figure.editing) figure.settle(figureInput.text)
+                        onActiveFocusChanged: if (!activeFocus && figure.editing) figure.settle(figureInput.text)
+                        // Escape leaves the field without a change, before it closes anything else.
+                        Keys.onShortcutOverride: event => { if (event.key === Qt.Key_Escape) event.accepted = true }
+                        Keys.onEscapePressed: { figure.editing = false; figureInput.focus = false }
+                        Keys.onUpPressed: figureInput.text = figure.plain(Math.min(root.spec.max, Number(figureInput.text.replace(",", ".")) / figure.scale + Number(root.spec.step ?? 1)))
+                        Keys.onDownPressed: figureInput.text = figure.plain(Math.max(root.spec.min, Number(figureInput.text.replace(",", ".")) / figure.scale - Number(root.spec.step ?? 1)))
+                    }
+                    HoverHandler { id: figureHover; enabled: !figure.editing; cursorShape: Qt.IBeamCursor }
+                    TapHandler { enabled: !figure.editing; onTapped: figure.begin() }
                 }
             }
 
@@ -363,15 +446,15 @@ Item {
         Loader {
             opacity: root.controlOpacity
             Layout.fillWidth: true
-            active: root.spec.kind === "choice" && !root.inlineChoice && !root.swatched
+            active: root.spec.kind === "choice" && !root.inlineChoice && !root.swatched && !root.menuChoice && !root.tiled && !root.carded
             visible: active
-            sourceComponent: !root.pictured && labelMeasure.implicitWidth > layout.width ? chipsComponent : segmentedComponent
+            sourceComponent: segmentedComponent
         }
 
         Loader {
             opacity: root.controlOpacity
             Layout.fillWidth: true
-            active: root.spec.installedFonts === true
+            active: root.spec.installedFonts === true && root.fontSearch
             visible: active
             sourceComponent: installedFontsComponent
         }
@@ -1226,65 +1309,6 @@ Item {
         }
     }
 
-    Row {
-        id: labelMeasure
-        visible: false
-        spacing: Math.round(22 * root.d)
-        Repeater {
-            model: root.spec.kind === "choice" ? root.choices : []
-            IrisText {
-                required property var modelData
-                text: Translation.tr(modelData.label)
-                font.pixelSize: IrisStyle.typeMeta
-                font.weight: IrisStyle.weight(Font.DemiBold)
-            }
-        }
-    }
-
-    Component {
-        id: chipsComponent
-
-        Flow {
-            spacing: Math.round(6 * root.d)
-            Repeater {
-                model: root.choices
-                MouseArea {
-                    id: chip
-                    required property var modelData
-                    readonly property bool selected: chip.modelData.value === root.value
-                    width: chipLabel.implicitWidth + Math.round(24 * root.d)
-                    height: Math.round(28 * root.d)
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    activeFocusOnTab: true
-                    Accessible.role: Accessible.RadioButton
-                    Accessible.name: Translation.tr(root.spec.label) + ": " + Translation.tr(chip.modelData.label)
-                    Accessible.checked: chip.selected
-                    Keys.onSpacePressed: root.commit(chip.modelData.value)
-                    Keys.onReturnPressed: root.commit(chip.modelData.value)
-                    onClicked: root.commit(chip.modelData.value)
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: height / 2
-                        color: chip.selected ? IrisStyle.fillActive : chip.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
-                        border.width: chip.activeFocus ? 1 : 0
-                        border.color: IrisStyle.accent
-                        Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
-                    }
-                    IrisText {
-                        id: chipLabel
-                        anchors.centerIn: parent
-                        text: Translation.tr(chip.modelData.label)
-                        font.family: root.previewFace(chip.modelData)
-                        font.pixelSize: IrisStyle.typeMeta
-                        font.weight: chip.selected ? Font.DemiBold : Font.Normal
-                        color: chip.selected ? IrisStyle.text : IrisStyle.subtext
-                    }
-                }
-            }
-        }
-    }
-
     component FaceChip: IrisChip {
         implicitHeight: Math.round(28 * root.d)
         colBackground: IrisStyle.fillQuiet
@@ -1299,12 +1323,9 @@ Item {
 
         ColumnLayout {
             id: fonts
-            property bool open: false
             property string query: ""
             readonly property string current: String(root.value ?? "")
-            readonly property bool custom: fonts.current.length > 0 && !root.choices.some(choice => choice.value === fonts.current)
             readonly property var families: {
-                if (!fonts.open) return []
                 const seen = {}
                 return Qt.fontFamilies().filter(family => {
                     if (family.startsWith(".") || seen[family]) return false
@@ -1319,25 +1340,21 @@ Item {
             }
             spacing: Math.round(8 * root.d)
 
-            FaceChip {
-                glyph: fonts.custom ? "" : "search"
-                label: fonts.custom ? fonts.current : Translation.tr("Other font…")
-                labelFamily: fonts.custom ? fonts.current : ""
-                selected: fonts.custom
-                onClicked: fonts.open = !fonts.open
-            }
             IrisField {
                 id: search
-                visible: fonts.open
                 Layout.fillWidth: true
                 implicitHeight: Math.round(36 * root.d)
                 font.pixelSize: IrisStyle.typeLabel
                 placeholderText: Translation.tr("Search installed fonts")
                 onTextChanged: fonts.query = search.text
-                onVisibleChanged: if (visible) search.forceActiveFocus()
+                Component.onCompleted: search.forceActiveFocus()
+                onAccepted: if (fonts.matches.length > 0) { root.commit(fonts.matches[0]); root.fontSearch = false }
+                // Escape closes the search before it closes anything else.
+                Keys.onShortcutOverride: event => { if (event.key === Qt.Key_Escape) event.accepted = true }
+                Keys.onEscapePressed: root.fontSearch = false
             }
             Flow {
-                visible: fonts.open && fonts.matches.length > 0
+                visible: fonts.matches.length > 0
                 Layout.fillWidth: true
                 spacing: Math.round(6 * root.d)
                 Repeater {
@@ -1348,12 +1365,12 @@ Item {
                         labelFamily: modelData
                         labelCap: Math.round(220 * root.d)
                         selected: modelData === fonts.current
-                        onClicked: { root.commit(modelData); fonts.open = false }
+                        onClicked: { root.commit(modelData); root.fontSearch = false }
                     }
                 }
             }
             IrisText {
-                visible: fonts.open && fonts.matches.length === 0
+                visible: fonts.matches.length === 0
                 text: Translation.tr("No installed font matches")
                 color: IrisStyle.subtext
                 font.pixelSize: IrisStyle.typeMeta
@@ -1440,6 +1457,24 @@ Item {
                     }
                 }
             }
+        }
+    }
+
+    Component {
+        id: popupComponent
+
+        IrisPopupButton {
+            readonly property string chosenFace: String(root.value ?? "")
+            options: root.choices
+            current: root.value
+            maxWidth: root.controlWidth
+            accessibleName: Translation.tr(root.spec.label)
+            fontFor: root.spec.previewFont ? (choice => root.previewFace(choice)) : null
+            otherText: root.spec.installedFonts === true && chosenFace.length > 0 ? chosenFace : Translation.tr("Custom")
+            otherFamily: root.spec.installedFonts === true ? chosenFace : ""
+            extra: root.spec.installedFonts === true
+                ? [{ text: Translation.tr("Other font…"), action: () => { root.fontSearch = true } }] : []
+            onPicked: value => root.commit(value)
         }
     }
 
