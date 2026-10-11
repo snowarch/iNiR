@@ -9216,5 +9216,7 @@
   "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "iRiS 잠금 화면 대신 Hyprlock이 자체 모양으로 잠급니다.",
   "From the folder": "폴더에서",
   "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "무작위가 고르는 곳. 비우면 현재 배경화면의 폴더.",
-  "The current wallpaper's folder": "현재 배경화면 폴더"
+  "The current wallpaper's folder": "현재 배경화면 폴더",
+  "Read the GPU": "GPU 읽기",
+  "Adds the graphics card to what Vitals shows. Off saves a little power on laptops.": "Vitals에 그래픽 카드를 추가합니다. 끄면 노트북 전력을 조금 아낍니다."
 }

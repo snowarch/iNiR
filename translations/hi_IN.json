@@ -9216,5 +9216,7 @@
   "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "iRiS लॉक स्क्रीन की जगह Hyprlock अपने रूप में स्क्रीन लॉक करता है।",
   "From the folder": "फ़ोल्डर से",
   "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "शफ़ल कहाँ से चुनता है। खाली हो तो मौजूदा वॉलपेपर का फ़ोल्डर।",
-  "The current wallpaper's folder": "मौजूदा वॉलपेपर का फ़ोल्डर"
+  "The current wallpaper's folder": "मौजूदा वॉलपेपर का फ़ोल्डर",
+  "Read the GPU": "GPU पढ़ें",
+  "Adds the graphics card to what Vitals shows. Off saves a little power on laptops.": "Vitals में ग्राफ़िक्स कार्ड जोड़ता है। बंद रखने पर लैपटॉप पर थोड़ी बिजली बचती है।"
 }

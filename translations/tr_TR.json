@@ -9216,5 +9216,7 @@
   "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Ekranı iRiS kilit ekranı yerine kendi görünümüyle Hyprlock kilitler.",
   "From the folder": "Klasörden",
   "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "Karıştırmanın seçtiği yer. Boşsa şu anki duvar kağıdının klasörü.",
-  "The current wallpaper's folder": "Şu anki duvar kağıdının klasörü"
+  "The current wallpaper's folder": "Şu anki duvar kağıdının klasörü",
+  "Read the GPU": "GPU’yu oku",
+  "Adds the graphics card to what Vitals shows. Off saves a little power on laptops.": "Ekran kartını Vitals’a ekler. Kapalıyken dizüstünde biraz enerji tasarrufu sağlar."
 }

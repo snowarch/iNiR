@@ -230,9 +230,12 @@ Item {
             return terms.every(term => text.includes(term))
         })
     }
-    // A page leads when a word of its name starts with what was typed ("shortcuts" → Keyboard shortcuts).
-    readonly property bool pagesFirst: root.pageMatches.some(entry => [Translation.tr(entry.label), entry.label]
-        .some(name => name.toLowerCase().split(/\s+/).some(word => word.startsWith(root.query.trim().toLowerCase()))))
+    // A page leads when every word typed starts a word of its name ("shortcuts" → Keyboard shortcuts, "colour themes").
+    readonly property bool pagesFirst: {
+        const terms = root.query.trim().toLowerCase().split(/\s+/).filter(term => term.length > 0)
+        return terms.length > 0 && root.pageMatches.some(entry => [Translation.tr(entry.label), entry.label]
+            .some(name => { const words = name.toLowerCase().split(/\s+/); return terms.every(term => words.some(word => word.startsWith(term))) }))
+    }
     function openFirstResult(): void {
         if (root.pageMatches.length > 0 && (root.pagesFirst || root.matches.length === 0)) {
             root.moreLink(root.pageMatches[0]).action()

@@ -9216,5 +9216,7 @@
   "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Hyprlock e il suo aspetto bloccano lo schermo al posto della schermata di blocco di iRiS.",
   "From the folder": "Dalla cartella",
   "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "Da dove pesca il casuale. Vuoto usa la cartella dello sfondo attuale.",
-  "The current wallpaper's folder": "La cartella dello sfondo attuale"
+  "The current wallpaper's folder": "La cartella dello sfondo attuale",
+  "Read the GPU": "Leggi la GPU",
+  "Adds the graphics card to what Vitals shows. Off saves a little power on laptops.": "Aggiunge la scheda grafica a ciò che mostra Vitals. Spento risparmia un po’ di energia sui portatili."
 }

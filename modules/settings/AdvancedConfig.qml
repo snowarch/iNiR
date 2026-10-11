@@ -12,6 +12,9 @@ ContentPage {
     settingsPageName: Translation.tr("Advanced")
 
     property bool cavaControlsReady: false
+    // Under iRiS, every generator that iRiS Settings › Appearance › App colours switches is not shown twice, nor the GPU
+    // reading (Sources › System readings): what stays is the fine tuning iRiS has no row for (Cava, terminal harmony).
+    readonly property bool irisFamily: (Config.options?.panelFamily ?? "ii") === "iris"
     property string activeSection: "color"
     Component.onCompleted: Qt.callLater(() => root.cavaControlsReady = true)
 
@@ -30,7 +33,7 @@ ContentPage {
         options: [
             { displayName: Translation.tr("Color"), icon: "colors", value: "color" },
             { displayName: Translation.tr("Resources"), icon: "memory_alt", value: "resources" }
-        ]
+        ].filter(option => !root.irisFamily || option.value !== "resources")
     }
 
     function setCavaValue(path, value, regenerateStandalone): void {
@@ -74,6 +77,7 @@ ContentPage {
 
         SettingsGroup {
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "hardware"
                 text: Translation.tr("Shell & utilities")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableAppsAndShell ?? true
@@ -86,6 +90,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "tv_options_input_settings"
                 text: Translation.tr("Qt apps")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableQtApps ?? true
@@ -98,6 +103,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "terminal"
                 text: Translation.tr("Terminal")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
@@ -110,6 +116,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "chat"
                 text: Translation.tr("Vesktop/Discord")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true
@@ -122,6 +129,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "music_note"
                 text: Translation.tr("Spotify (Spicetify)")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? true
@@ -135,11 +143,12 @@ ContentPage {
             }
 
             ContentSubsection {
-                visible: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? true
+                visible: !root.irisFamily && (Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? true)
                 title: Translation.tr("Spotify theme")
                 tooltip: Translation.tr("Choose the Spicetify layout while keeping iNiR wallpaper colors")
 
                 ConfigSelectionArray {
+                    visible: !root.irisFamily
                     currentValue: Config.options?.appearance?.wallpaperTheming?.spicetifyTheme ?? "Inir"
                     onSelected: newValue => {
                         Config.setNestedValue("appearance.wallpaperTheming.spicetifyTheme", newValue)
@@ -152,6 +161,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "sports_esports"
                 text: Translation.tr("Steam (Millennium)")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableSteam ?? true
@@ -164,6 +174,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "music_note"
                 text: Translation.tr("Pear Desktop (YouTube Music)")
                 checked: Config.options?.appearance?.wallpaperTheming?.enablePearDesktop ?? true
@@ -176,6 +187,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "music_note"
                 text: Translation.tr("LiMusic")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableLimusic ?? false
@@ -188,6 +200,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "terminal"
                 text: Translation.tr("Claude Code")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableClaudeCode ?? false
@@ -200,6 +213,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "code"
                 text: Translation.tr("Zed editor")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableZed ?? true
@@ -212,6 +226,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "code"
                 text: Translation.tr("VSCode editors")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableVSCode ?? true
@@ -224,6 +239,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "language"
                 text: Translation.tr("Chrome / Chromium")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableChrome ?? true
@@ -236,6 +252,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "public"
                 text: Translation.tr("Firefox")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableFirefox ?? true
@@ -248,6 +265,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "code"
                 text: Translation.tr("OpenCode")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableOpenCode ?? false
@@ -260,6 +278,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "code"
                 text: Translation.tr("Neovim / LazyVim")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableNeovim ?? false
@@ -272,6 +291,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                visible: !root.irisFamily
                 id: cavaSwitch
                 buttonIcon: "equalizer"
                 text: Translation.tr("Theme standalone Cava")
@@ -430,6 +450,7 @@ ContentPage {
             ConfigRow {
                 uniform: true
                 SettingsSwitch {
+                    visible: !root.irisFamily
                     buttonIcon: "dark_mode"
                     text: Translation.tr("Force dark mode in terminal")
                     checked: Config.options?.appearance?.wallpaperTheming?.terminalGenerationProps?.forceDarkMode ?? false
@@ -498,7 +519,7 @@ ContentPage {
     }
 
     SettingsTaskLoader {
-        requested: root.activeSection === "resources"
+        requested: root.activeSection === "resources" && !root.irisFamily
         sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "resources"

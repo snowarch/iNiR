@@ -9216,5 +9216,7 @@
   "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Hyprlock khóa màn hình với giao diện riêng thay cho màn hình khóa iRiS.",
   "From the folder": "Từ thư mục",
   "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "Nơi trộn chọn hình. Để trống dùng thư mục của hình nền hiện tại.",
-  "The current wallpaper's folder": "Thư mục hình nền hiện tại"
+  "The current wallpaper's folder": "Thư mục hình nền hiện tại",
+  "Read the GPU": "Đọc GPU",
+  "Adds the graphics card to what Vitals shows. Off saves a little power on laptops.": "Thêm card đồ họa vào Vitals. Tắt giúp laptop tiết kiệm chút điện."
 }

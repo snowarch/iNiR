@@ -9216,5 +9216,7 @@
   "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Екран блокує Hyprlock зі своїм виглядом замість екрана блокування iRiS.",
   "From the folder": "З теки",
   "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "Звідки беруться шпалери для зміни. Порожньо — тека поточних шпалер.",
-  "The current wallpaper's folder": "Тека поточних шпалер"
+  "The current wallpaper's folder": "Тека поточних шпалер",
+  "Read the GPU": "Читати GPU",
+  "Adds the graphics card to what Vitals shows. Off saves a little power on laptops.": "Додає відеокарту до Vitals. Вимкнено — трохи економніше на ноутбуках."
 }

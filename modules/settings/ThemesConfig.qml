@@ -70,6 +70,8 @@ ContentPage {
 
     settingsPageIndex: 4
     settingsPageName: Translation.tr("Themes")
+    // Global Style and its editors restyle Material; iRiS has its own looks (Appearance › Look), so under iRiS they are not offered.
+    readonly property bool irisFamily: (Config.options?.panelFamily ?? "ii") === "iris"
     property string activeSection: "colors"
 
     function activateSettingsSearchSection(section: string): bool {
@@ -107,7 +109,7 @@ ContentPage {
             { displayName: Translation.tr("Type"), icon: "text_format", value: "type" },
             { displayName: Translation.tr("Motion"), icon: "animation", value: "motion" },
             { displayName: Translation.tr("Advanced"), icon: "construction", value: "advanced" }
-        ]
+        ].filter(option => !root.irisFamily || option.value !== "style")
     }
 
     function isFontInstalled(fontName) {
@@ -1621,7 +1623,7 @@ ContentPage {
     }
 
     SettingsTaskLoader {
-        requested: root.activeSection === "style"
+        requested: root.activeSection === "style" && !root.irisFamily
         sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "style"
@@ -1672,7 +1674,7 @@ ContentPage {
     }
 
     SettingsTaskLoader {
-        requested: root.activeSection === "style" && Appearance.editorialEverywhere
+        requested: root.activeSection === "style" && Appearance.editorialEverywhere && !root.irisFamily
         sourceComponent: Component {
     SettingsCardSection {
         id: editorialStyleEditorSection
@@ -1693,7 +1695,7 @@ ContentPage {
     }
 
     SettingsTaskLoader {
-        requested: root.activeSection === "style" && Appearance.auroraEverywhere && !Appearance.angelEverywhere
+        requested: root.activeSection === "style" && Appearance.auroraEverywhere && !Appearance.angelEverywhere && !root.irisFamily
         sourceComponent: Component {
     SettingsCardSection {
         id: auroraStyleEditorSection
@@ -1714,7 +1716,7 @@ ContentPage {
     }
 
     SettingsTaskLoader {
-        requested: root.activeSection === "style" && Appearance.angelEverywhere
+        requested: root.activeSection === "style" && Appearance.angelEverywhere && !root.irisFamily
         sourceComponent: Component {
     SettingsCardSection {
         id: angelStyleEditorSection
@@ -1735,7 +1737,7 @@ ContentPage {
     }
 
     SettingsTaskLoader {
-        requested: root.activeSection === "style" && Appearance.regaliaEverywhere
+        requested: root.activeSection === "style" && Appearance.regaliaEverywhere && !root.irisFamily
         sourceComponent: Component {
     SettingsCardSection {
         id: regaliaStyleEditorSection
