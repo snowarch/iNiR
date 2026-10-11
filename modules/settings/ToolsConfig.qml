@@ -13,6 +13,9 @@ ContentPage {
     id: root
     settingsPageIndex: 6
     settingsPageName: Translation.tr("Tools")
+    // Under iRiS, what iRiS Settings › Screenshots & Recording already sets (notifications, text language, Japanese
+    // lookup, Anki and its deck, snapping to windows) is not shown twice.
+    readonly property bool irisFamily: (Config.options?.panelFamily ?? "ii") === "iris"
     property string activeSection: "recording"
 
     function activateSettingsSearchSection(section: string): bool {
@@ -462,6 +465,7 @@ ContentPage {
             }
 
             SettingsSwitch {
+                visible: !root.irisFamily
                 buttonIcon: "notifications"
                 text: Translation.tr("Recording notifications")
                 checked: Config.options?.screenRecord?.showNotifications ?? true
@@ -831,6 +835,7 @@ ContentPage {
                 title: Translation.tr("Text recognition (OCR)")
 
                 RecordingDropdownField {
+                    visible: !root.irisFamily
                     title: Translation.tr("Text language")
                     description: Translation.tr("Pick the language you expect to capture. Auto follows the system language. Use the vertical Japanese/Chinese choices for vertical writing.")
                     readonly property string configuredLanguage: Config.options?.regionSelector?.ocrLanguage ?? "auto"
@@ -906,6 +911,7 @@ ContentPage {
                 title: Translation.tr("Japanese study assistant")
 
                 SettingsSwitch {
+                    visible: !root.irisFamily
                     buttonIcon: "dictionary"
                     text: Translation.tr("Open study card after Japanese OCR")
                     checked: Config.options?.regionSelector?.japaneseLookup?.enabled ?? true
@@ -1029,6 +1035,7 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    visible: !root.irisFamily
                     buttonIcon: "school"
                     text: Translation.tr("Show Anki actions in the study card")
                     checked: Config.options?.regionSelector?.japaneseLookup?.anki?.enabled ?? false
@@ -1117,6 +1124,7 @@ ContentPage {
                     }
                     ContentSubsectionLabel { text: Translation.tr("Deck name") }
                     Item {
+                        visible: !root.irisFamily
                         Layout.fillWidth: true; implicitHeight: ankiDeckField.implicitHeight
                         MaterialTextField { id: ankiDeckField; anchors.left: parent.left; anchors.right: parent.right; text: Config.options?.regionSelector?.japaneseLookup?.anki?.deck ?? "Default"; onEditingFinished: Config.setNestedValue("regionSelector.japaneseLookup.anki.deck", text.trim()) }
                     }
@@ -1217,6 +1225,7 @@ ContentPage {
                 ConfigRow {
                     uniform: true
                     SettingsSwitch {
+                        visible: !root.irisFamily
                         buttonIcon: "select_window"
                         text: Translation.tr('Windows')
                         checked: Config.options?.regionSelector?.targetRegions?.windows ?? true

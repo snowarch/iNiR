@@ -9213,5 +9213,7 @@
   "Lock when the session starts": "Bloquear ao iniciar a sessão",
   "Locks right after you sign in, for computers that log in on their own.": "Bloqueia logo após entrar, para computadores que entram sozinhos.",
   "Lock with Hyprlock": "Bloquear com Hyprlock",
-  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "O Hyprlock e seu próprio visual bloqueiam a tela em vez da tela de bloqueio do iRiS."
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "O Hyprlock e seu próprio visual bloqueiam a tela em vez da tela de bloqueio do iRiS.",
+  "From the folder": "Da pasta",
+  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "De onde o aleatório escolhe. Vazio usa a pasta do papel de parede atual."
 }

@@ -9213,5 +9213,7 @@
   "Lock when the session starts": "Blocca all’avvio della sessione",
   "Locks right after you sign in, for computers that log in on their own.": "Blocca subito dopo l’accesso, per i computer che accedono da soli.",
   "Lock with Hyprlock": "Blocca con Hyprlock",
-  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Hyprlock e il suo aspetto bloccano lo schermo al posto della schermata di blocco di iRiS."
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Hyprlock e il suo aspetto bloccano lo schermo al posto della schermata di blocco di iRiS.",
+  "From the folder": "Dalla cartella",
+  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "Da dove pesca il casuale. Vuoto usa la cartella dello sfondo attuale."
 }

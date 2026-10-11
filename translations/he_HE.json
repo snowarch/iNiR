@@ -9213,5 +9213,7 @@
   "Lock when the session starts": "לנעול בתחילת ההפעלה",
   "Locks right after you sign in, for computers that log in on their own.": "נועל מיד אחרי הכניסה, למחשבים שנכנסים לבד.",
   "Lock with Hyprlock": "לנעול עם Hyprlock",
-  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Hyprlock נועל את המסך במראה שלו במקום מסך הנעילה של iRiS."
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Hyprlock נועל את המסך במראה שלו במקום מסך הנעילה של iRiS.",
+  "From the folder": "מהתיקייה",
+  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "מאיפה הערבוב בוחר. ריק משתמש בתיקיית הרקע הנוכחי."
 }

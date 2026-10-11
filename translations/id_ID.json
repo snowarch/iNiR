@@ -9213,5 +9213,7 @@
   "Lock when the session starts": "Kunci saat sesi dimulai",
   "Locks right after you sign in, for computers that log in on their own.": "Mengunci tepat setelah masuk, untuk komputer yang masuk sendiri.",
   "Lock with Hyprlock": "Kunci dengan Hyprlock",
-  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Hyprlock dengan tampilannya sendiri mengunci layar, bukan layar kunci iRiS."
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Hyprlock dengan tampilannya sendiri mengunci layar, bukan layar kunci iRiS.",
+  "From the folder": "Dari folder",
+  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "Tempat acak memilih. Kosong memakai folder wallpaper saat ini."
 }

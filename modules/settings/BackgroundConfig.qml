@@ -1266,8 +1266,9 @@ ContentPage {
         }
     }
 
+    // iRiS sets shuffle in its own Settings › Wallpaper: under iRiS this card is not shown twice.
     SettingsTaskLoader {
-        requested: !root.isIiActive || root.activeSection === "source"
+        requested: (!root.isIiActive || root.activeSection === "source") && (Config.options?.panelFamily ?? "ii") !== "iris"
         sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "source"

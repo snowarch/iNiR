@@ -9213,5 +9213,7 @@
   "Lock when the session starts": "Oturum başlarken kilitle",
   "Locks right after you sign in, for computers that log in on their own.": "Girişten hemen sonra kilitler; kendiliğinden oturum açan bilgisayarlar için.",
   "Lock with Hyprlock": "Hyprlock ile kilitle",
-  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Ekranı iRiS kilit ekranı yerine kendi görünümüyle Hyprlock kilitler."
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Ekranı iRiS kilit ekranı yerine kendi görünümüyle Hyprlock kilitler.",
+  "From the folder": "Klasörden",
+  "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.": "Karıştırmanın seçtiği yer. Boşsa şu anki duvar kağıdının klasörü."
 }
