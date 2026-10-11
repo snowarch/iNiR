@@ -9204,5 +9204,8 @@
   "Opens a terminal for the update, so you can watch it run.": "Mở terminal cho bản cập nhật để bạn xem nó chạy.",
   "System readings": "Số liệu hệ thống",
   "Read every": "Đọc mỗi",
-  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "Bao lâu CPU, bộ nhớ, ổ đĩa và nhiệt độ được làm mới ở nơi iRiS hiển thị."
+  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "Bao lâu CPU, bộ nhớ, ổ đĩa và nhiệt độ được làm mới ở nơi iRiS hiển thị.",
+  "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "Nghỉ, nhận diện bài hát, số liệu, tìm kiếm và thời tiết nằm trong cài đặt iRiS, cạnh thứ chúng thay đổi.",
+  "Network · updates · data": "Mạng · cập nhật · dữ liệu",
+  "Network, hotspot, updates and calendar accounts": "Mạng, điểm phát sóng, cập nhật và tài khoản lịch"
 }

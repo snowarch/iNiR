@@ -12,13 +12,17 @@ ContentPage {
     id: root
     settingsPageIndex: 7
     settingsPageName: Translation.tr("Services")
-    property string activeSection: "system"
+    // iRiS keeps idle, song recognition, readings, search and weather in its own Settings (Lock Screen, Now Playing,
+    // Sources, Spotlight): under iRiS this page shows only what iRiS has no row for.
+    readonly property bool irisFamily: (Config.options?.panelFamily ?? "ii") === "iris"
+    property string activeSection: root.irisFamily ? "network" : "system"
 
     SettingsTaskNavigator {
         icon: "settings"
         title: Translation.tr("Services")
-        description: Translation.tr("Service controls are grouped by responsibility: local system behavior, networking, search, updates and external data sources.")
-        summary: Translation.tr("System · network · search · updates · data")
+        description: root.irisFamily ? Translation.tr("Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.")
+            : Translation.tr("Service controls are grouped by responsibility: local system behavior, networking, search, updates and external data sources.")
+        summary: root.irisFamily ? Translation.tr("Network · updates · data") : Translation.tr("System · network · search · updates · data")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         searchAliases: ({
@@ -34,11 +38,11 @@ ContentPage {
             { displayName: Translation.tr("Search"), icon: "search", value: "search" },
             { displayName: Translation.tr("Updates"), icon: "system_update_alt", value: "updates" },
             { displayName: Translation.tr("Data"), icon: "cloud", value: "data" }
-        ]
+        ].filter(option => !root.irisFamily || (option.value !== "system" && option.value !== "search"))
     }
 
     SettingsTaskLoader {
-        requested: root.activeSection === "system"
+        requested: root.activeSection === "system" && !root.irisFamily
         sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "system"
@@ -161,7 +165,7 @@ ContentPage {
     }
 
     SettingsTaskLoader {
-        requested: root.activeSection === "system"
+        requested: root.activeSection === "system" && !root.irisFamily
         sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "system"
@@ -273,7 +277,7 @@ ContentPage {
     }
 
     SettingsTaskLoader {
-        requested: root.activeSection === "system"
+        requested: root.activeSection === "system" && !root.irisFamily
         sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "system"
@@ -302,7 +306,7 @@ ContentPage {
     }
 
     SettingsTaskLoader {
-        requested: root.activeSection === "search"
+        requested: root.activeSection === "search" && !root.irisFamily
         sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "search"
@@ -977,7 +981,7 @@ ContentPage {
     }
 
     SettingsTaskLoader {
-        requested: root.activeSection === "data"
+        requested: root.activeSection === "data" && !root.irisFamily
         sourceComponent: Component {
     SettingsCardSection {
         settingsTaskSection: "data"

@@ -9204,5 +9204,8 @@
   "Opens a terminal for the update, so you can watch it run.": "פותח מסוף לעדכון כדי שתוכל לצפות בו.",
   "System readings": "קריאות מערכת",
   "Read every": "לקרוא כל",
-  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "כל כמה זמן מתרעננים המעבד, הזיכרון, הדיסק והטמפרטורות היכן ש־iRiS מציג אותם."
+  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "כל כמה זמן מתרעננים המעבד, הזיכרון, הדיסק והטמפרטורות היכן ש־iRiS מציג אותם.",
+  "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "המתנה, זיהוי שירים, קריאות, חיפוש ומזג אוויר נמצאים בהגדרות iRiS, ליד מה שהם משנים.",
+  "Network · updates · data": "רשת · עדכונים · נתונים",
+  "Network, hotspot, updates and calendar accounts": "רשת, נקודה חמה, עדכונים וחשבונות לוח שנה"
 }

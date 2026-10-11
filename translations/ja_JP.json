@@ -9204,5 +9204,8 @@
   "Opens a terminal for the update, so you can watch it run.": "更新用にターミナルを開き、進み具合を見られます。",
   "System readings": "システムの読み取り",
   "Read every": "読み取り間隔",
-  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "iRiS が表示する CPU・メモリ・ディスク・温度の更新頻度。"
+  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "iRiS が表示する CPU・メモリ・ディスク・温度の更新頻度。",
+  "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "アイドル、曲の認識、読み取り、検索、天気は iRiS の設定の、変える対象のそばにあります。",
+  "Network · updates · data": "ネットワーク · 更新 · データ",
+  "Network, hotspot, updates and calendar accounts": "ネットワーク、ホットスポット、更新、カレンダーアカウント"
 }

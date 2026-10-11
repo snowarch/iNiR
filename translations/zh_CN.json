@@ -9204,5 +9204,8 @@
   "Opens a terminal for the update, so you can watch it run.": "为更新打开终端，方便你查看进度。",
   "System readings": "系统读数",
   "Read every": "读取间隔",
-  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "iRiS 显示的 CPU、内存、磁盘和温度的刷新频率。"
+  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "iRiS 显示的 CPU、内存、磁盘和温度的刷新频率。",
+  "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "空闲、识别歌曲、系统读数、搜索和天气都在 iRiS 设置中，就在它们改变的内容旁边。",
+  "Network · updates · data": "网络 · 更新 · 数据",
+  "Network, hotspot, updates and calendar accounts": "网络、热点、更新和日历账户"
 }

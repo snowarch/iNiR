@@ -9204,5 +9204,8 @@
   "Opens a terminal for the update, so you can watch it run.": "Opens a terminal for the update, so you can watch it run.",
   "System readings": "System readings",
   "Read every": "Read every",
-  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them."
+  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.",
+  "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.",
+  "Network · updates · data": "Network · updates · data",
+  "Network, hotspot, updates and calendar accounts": "Network, hotspot, updates and calendar accounts"
 }

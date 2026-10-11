@@ -9204,5 +9204,8 @@
   "Opens a terminal for the update, so you can watch it run.": "يفتح طرفية للتحديث لتتابعه.",
   "System readings": "قراءات النظام",
   "Read every": "القراءة كل",
-  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "كم مرة تتحدث المعالج والذاكرة والقرص والحرارة حيث يعرضها iRiS."
+  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "كم مرة تتحدث المعالج والذاكرة والقرص والحرارة حيث يعرضها iRiS.",
+  "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "الخمول وتعرّف الأغاني والقراءات والبحث والطقس موجودة في إعدادات iRiS بجانب ما تغيّره.",
+  "Network · updates · data": "الشبكة · التحديثات · البيانات",
+  "Network, hotspot, updates and calendar accounts": "الشبكة ونقطة الاتصال والتحديثات وحسابات التقويم"
 }

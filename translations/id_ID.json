@@ -9204,5 +9204,8 @@
   "Opens a terminal for the update, so you can watch it run.": "Membuka terminal untuk pembaruan, agar kamu bisa melihatnya.",
   "System readings": "Bacaan sistem",
   "Read every": "Baca setiap",
-  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "Seberapa sering CPU, memori, disk, dan suhu disegarkan di tempat iRiS menampilkannya."
+  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "Seberapa sering CPU, memori, disk, dan suhu disegarkan di tempat iRiS menampilkannya.",
+  "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "Diam, pengenalan lagu, bacaan, pencarian, dan cuaca ada di pengaturan iRiS, di samping yang diubahnya.",
+  "Network · updates · data": "Jaringan · pembaruan · data",
+  "Network, hotspot, updates and calendar accounts": "Jaringan, hotspot, pembaruan, dan akun kalender"
 }

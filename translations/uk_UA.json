@@ -9204,5 +9204,8 @@
   "Opens a terminal for the update, so you can watch it run.": "Відкриває термінал для оновлення, щоб бачити перебіг.",
   "System readings": "Показники системи",
   "Read every": "Читати кожні",
-  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "Як часто оновлюються ЦП, пам’ять, диск і температури там, де їх показує iRiS."
+  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "Як часто оновлюються ЦП, пам’ять, диск і температури там, де їх показує iRiS.",
+  "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "Бездіяльність, розпізнавання пісень, показники, пошук і погода — у налаштуваннях iRiS, поруч із тим, що вони змінюють.",
+  "Network · updates · data": "Мережа · оновлення · дані",
+  "Network, hotspot, updates and calendar accounts": "Мережа, точка доступу, оновлення й облікові записи календаря"
 }

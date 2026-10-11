@@ -7559,5 +7559,8 @@
   "Opens a terminal for the update, so you can watch it run.": "Nutarterinermut terminali ammassaaq.",
   "System readings": "Qarasaasiap uuttuutai",
   "Read every": "Atuaruk tamaasa",
-  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "CPU, eqqaamasaq, disk kissassusillu qanoq akulikitsigisumik nutarterneqartarnersut."
+  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "CPU, eqqaamasaq, disk kissassusillu qanoq akulikitsigisumik nutarterneqartarnersut.",
+  "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "Unittarneq, erinarsuutit ilisarinerat, uuttuutit, ujarlerneq silallu iRiS-ip aaqqissuussaani pissarsiarineqarsinnaapput.",
+  "Network · updates · data": "Attaveqaat · nutarterinerit · paasissutissat",
+  "Network, hotspot, updates and calendar accounts": "Attaveqaat, hotspot, nutarterinerit ullorsiutillu kontui"
 }

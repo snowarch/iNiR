@@ -9204,5 +9204,8 @@
   "Opens a terminal for the update, so you can watch it run.": "Ouvre un terminal pour la mise à jour, pour la voir se dérouler.",
   "System readings": "Relevés du système",
   "Read every": "Relever toutes les",
-  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "À quelle fréquence CPU, mémoire, disque et températures se rafraîchissent là où iRiS les montre."
+  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "À quelle fréquence CPU, mémoire, disque et températures se rafraîchissent là où iRiS les montre.",
+  "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "Veille, reconnaissance musicale, relevés, recherche et météo sont dans les réglages d’iRiS, à côté de ce qu’ils changent.",
+  "Network · updates · data": "Réseau · mises à jour · données",
+  "Network, hotspot, updates and calendar accounts": "Réseau, point d’accès, mises à jour et comptes d’agenda"
 }

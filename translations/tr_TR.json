@@ -9204,5 +9204,8 @@
   "Opens a terminal for the update, so you can watch it run.": "Güncelleme için bir terminal açar, böylece izleyebilirsin.",
   "System readings": "Sistem ölçümleri",
   "Read every": "Şu aralıkla oku",
-  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "CPU, bellek, disk ve sıcaklıkların iRiS’in gösterdiği yerlerde ne sıklıkla yenilendiği."
+  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "CPU, bellek, disk ve sıcaklıkların iRiS’in gösterdiği yerlerde ne sıklıkla yenilendiği.",
+  "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "Boşta kalma, şarkı tanıma, ölçümler, arama ve hava durumu iRiS ayarlarında, değiştirdikleri şeyin yanında.",
+  "Network · updates · data": "Ağ · güncellemeler · veriler",
+  "Network, hotspot, updates and calendar accounts": "Ağ, erişim noktası, güncellemeler ve takvim hesapları"
 }

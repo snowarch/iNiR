@@ -9204,5 +9204,8 @@
   "Opens a terminal for the update, so you can watch it run.": "업데이트용 터미널을 열어 진행을 볼 수 있습니다.",
   "System readings": "시스템 측정",
   "Read every": "읽기 간격",
-  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "iRiS가 보여주는 CPU, 메모리, 디스크, 온도가 새로 고쳐지는 주기."
+  "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "iRiS가 보여주는 CPU, 메모리, 디스크, 온도가 새로 고쳐지는 주기.",
+  "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "유휴, 노래 인식, 측정, 검색, 날씨는 iRiS 설정에서 바꾸는 대상 옆에 있습니다.",
+  "Network · updates · data": "네트워크 · 업데이트 · 데이터",
+  "Network, hotspot, updates and calendar accounts": "네트워크, 핫스팟, 업데이트, 캘린더 계정"
 }
