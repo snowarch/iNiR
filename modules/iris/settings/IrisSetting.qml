@@ -92,6 +92,8 @@ Item {
     readonly property bool inlineChoice: root.spec.kind === "choice" && root.roomy && root.choices.length >= 2 && root.choices.length <= 3
         && !root.swatched && !root.tiled && !root.carded && root.segmentNatural <= root.controlWidth
     readonly property bool inlineRange: root.spec.kind === "range" && root.roomy
+    // A text answer sits in the column too: a prefix (`short`) in a small field, anything longer at the column's width.
+    readonly property bool inlineText: root.spec.kind === "text" && root.roomy
     // A few fixed colours answer beside their name; sources (wallpaper, theme, your own hue) stay pictured as cards.
     readonly property bool inlineSwatch: root.swatched && root.spec.sources !== true && !root.carded && !root.tiled && root.roomy
         && root.choices.length * 40 * root.d <= root.controlWidth + 10 * root.d
@@ -278,6 +280,14 @@ Item {
                 sourceComponent: swatchComponent
             }
 
+            Loader {
+                opacity: root.controlOpacity
+                active: root.inlineText
+                visible: active
+                Layout.preferredWidth: root.spec.short ? Math.round(64 * root.d) : root.controlWidth
+                sourceComponent: textComponent
+            }
+
             RowLayout {
                 visible: root.inlineRange
                 // Fixed: the track's fillWidth would otherwise spread to the row and eat the label's column.
@@ -419,7 +429,7 @@ Item {
             Layout.fillWidth: true
             // A field sized by its text feeds its width back through fillWidth: a loop.
             Layout.preferredWidth: 0
-            active: root.spec.kind === "text"
+            active: root.spec.kind === "text" && !root.inlineText
             visible: active
             sourceComponent: textComponent
         }
@@ -1360,6 +1370,8 @@ Item {
             implicitHeight: Math.round(36 * root.d)
             font.pixelSize: IrisStyle.typeLabel
             placeholderText: Translation.tr(String(root.spec.placeholder ?? ""))
+            horizontalAlignment: root.spec.short ? Text.AlignHCenter : Text.AlignLeft
+            echoMode: root.spec.secret ? TextInput.Password : TextInput.Normal
             text: String(root.value ?? "")
             Accessible.name: Translation.tr(root.spec.label)
             onTextChanged: if (field.text !== String(root.value ?? "")) commitDelay.restart()
