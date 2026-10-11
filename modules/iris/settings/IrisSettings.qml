@@ -482,7 +482,9 @@ Item {
         width: root.windowed ? parent.width
             : Math.min(parent.width - 32 - IrisFrame.musicReach("left") - IrisFrame.musicReach("right"), 1180 * root.d)
         height: root.windowed ? parent.height
-            : Math.min(parent.height - 48 - IrisFrame.musicReach("top") - IrisFrame.musicReach("bottom"), 820 * root.d)
+            // Tall enough that every section fits the sidebar without scrolling on a 1080p screen: an area under the fold
+            // is an area nobody finds.
+            : Math.min(parent.height - 48 - IrisFrame.musicReach("top") - IrisFrame.musicReach("bottom"), 900 * root.d)
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.BackButton | Qt.ForwardButton

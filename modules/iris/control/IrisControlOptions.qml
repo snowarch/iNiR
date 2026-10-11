@@ -30,7 +30,7 @@ QtObject {
         { id: "volume", label: "Volume", glyph: "volume_up", category: "sound", description: "The output level; its glyph mutes.", kind: "level", shapes: ["1x2", "2x1", "Fx1"] },
         { id: "microphone", label: "Microphone", glyph: "mic", category: "sound", description: "The input level; its glyph mutes.", kind: "level", shapes: ["1x2", "2x1", "Fx1"] },
         { id: "audio", label: "Output", glyph: "volume_off", category: "sound", description: "Mute the speakers.", kind: "toggle", shapes: ["1x1", "2x1"] },
-        { id: "mic", label: "Mic", glyph: "mic_off", category: "sound", description: "Mute the input.", kind: "toggle", shapes: ["1x1", "2x1"] },
+        { id: "mic", label: "Mute mic", glyph: "mic_off", category: "sound", description: "Mute the input.", kind: "toggle", shapes: ["1x1", "2x1"] },
         { id: "devices", label: "Devices", glyph: "speaker", category: "sound", description: "The output and input list.", kind: "action", shapes: ["1x1", "2x1"] },
         { id: "easyEffects", label: "Effects", glyph: "graphic_eq", category: "sound", description: "The audio effects chain.", kind: "toggle", shapes: ["1x1", "2x1"] },
         { id: "musicRecognition", label: "Name song", glyph: "music_cast", category: "sound", description: "Listens and tells you what is playing.", kind: "toggle", shapes: ["1x1", "2x1"] },
