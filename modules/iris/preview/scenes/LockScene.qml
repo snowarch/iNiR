@@ -70,7 +70,7 @@ PreviewScene {
             spacing: Math.round(16 * lockPreview.d)
             MaterialSymbol { visible: lockPreview.opt("iris.lock.blocks.glance.weather", true); text: "partly_cloudy_day"; color: IrisStyle.onMedia; iconSize: Math.round(22 * lockPreview.d) }
             MaterialSymbol { visible: lockPreview.opt("iris.lock.blocks.glance.events", true); text: "event"; color: IrisStyle.onMedia; iconSize: Math.round(22 * lockPreview.d) }
-            IrisBatteryMark { visible: lockPreview.opt("iris.lock.blocks.glance.battery", true); anchors.verticalCenter: parent.verticalCenter; markHeight: Math.round(11 * lockPreview.d); level: 0.8; tint: IrisStyle.onMedia; frame: IrisStyle.onMediaTertiary }
+            IrisBatteryMark { visible: lockPreview.opt("iris.lock.blocks.glance.battery", true); Layout.alignment: Qt.AlignVCenter; markHeight: Math.round(11 * lockPreview.d); level: 0.8; tint: IrisStyle.onMedia; frame: IrisStyle.onMediaTertiary }
         }
         Rectangle {
             visible: lockPreview.opt("iris.lock.blocks.session.enable", true)

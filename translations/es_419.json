@@ -464,7 +464,7 @@
   "Bottom Right": "Abajo a la derecha",
   "Bottom overlay": "Superposición inferior",
   "Bottom position": "Posición inferior",
-  "Branch": "Sucursal",
+  "Branch": "Rama",
   "Branch:": "Rama:",
   "Branch: %1": "Rama: %1",
   "Break": "Descanso",
@@ -9179,5 +9179,10 @@
   "Where it shows": "Dónde aparece",
   "you have %1": "tienes %1",
   "iRiS theme": "Tema de iRiS",
-  "Web app": "App web"
+  "Web app": "App web",
+  "Music in the Island, on the lock screen and on the frame": "Música en la Isla, en la pantalla de bloqueo y en el marco",
+  "Frame music": "Música en el marco",
+  "Frame finish": "Acabado del marco",
+  "Version, updates and the people behind it": "Versión, actualizaciones y la gente detrás",
+  "Every keybind, searchable": "Todos los atajos, con búsqueda"
 }

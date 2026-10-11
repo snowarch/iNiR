@@ -38,7 +38,8 @@ Item {
     property int travel: 1
     property string requestedSection: ""
     readonly property real d: IrisStyle.density
-    readonly property var sections: IrisOptions.sections
+    // A section about hardware this machine lacks is not offered (Battery on a desktop); `inir battery simulate` brings it back.
+    readonly property var sections: IrisOptions.sections.filter(section => section.id !== "battery" || Battery.available)
     // Sources and More Settings sit in a footer under the list, always in view.
     readonly property int footerCluster: 6
     readonly property var specifications: IrisOptions.settings
@@ -88,7 +89,7 @@ Item {
         if (terms.length === 0) return []
         return root.searchIndex
             .map((entry, order) => ({ spec: entry.spec, order: order, score: root.searchScore(entry, terms) }))
-            .filter(hit => hit.score < 99 && root.shown(hit.spec))
+            .filter(hit => hit.score < 99 && root.shown(hit.spec) && root.sections.some(section => section.id === hit.spec.section))
             .sort((a, b) => a.score - b.score || a.order - b.order)
             .map(hit => hit.spec)
     }
@@ -104,17 +105,37 @@ Item {
     readonly property var groups: {
         const out = []
         for (const spec of root.entries) {
-            const title = root.searching
-                ? Translation.tr(IrisOptions.sectionById(spec.section).title)
-                : Translation.tr(spec.group ?? "")
+            // A result names where it lives, section and group, so the path is learned while searching.
+            const sectionTitle = Translation.tr(IrisOptions.sectionById(spec.section).title)
+            const groupTitle = Translation.tr(spec.group ?? "")
+            const title = !root.searching ? groupTitle
+                : groupTitle.length > 0 && groupTitle !== sectionTitle ? sectionTitle + "  ›  " + groupTitle : sectionTitle
             let group = out.find(entry => entry.title === title)
             if (!group) { group = { title: title, key: String(spec.group ?? ""), rows: [] }; out.push(group) }
             group.rows.push(spec)
         }
         return out
     }
+    // A small section shows every row at once (Android's rule: a sub-page from about fifteen settings): its groups read as
+    // captioned cards and nothing is behind a click. Galleries and editors keep the larger sections' group pages.
+    readonly property bool flatSection: !root.searching && root.advancedPage < 0 && root.group.length === 0 && root.groups.length > 1
+        && root.section !== "system" && root.section !== "home" && root.entries.length <= 15
+        && !root.entries.some(spec => ["widgets", "pieces", "niriMotion"].includes(spec.kind))
+    // Groups of one row would each be a card under a caption that repeats the row's name: neighbours share one card.
+    readonly property var flatBlocks: {
+        if (!root.flatSection) return []
+        const out = []
+        for (const group of root.groups) {
+            const single = group.rows.length === 1
+            const previous = out[out.length - 1]
+            if (single && previous?.loose) { previous.rows = previous.rows.concat(group.rows); continue }
+            out.push({ title: single ? "\u200b" + group.key : group.title, caption: single ? "" : group.title, key: group.key, rows: group.rows.slice(), loose: single })
+        }
+        return out
+    }
     readonly property var shownGroups: root.searching ? root.groups
-        : root.openGroup.length > 0 ? root.groups.filter(entry => entry.title === root.openGroup) : []
+        : root.openGroup.length > 0 ? root.groups.filter(entry => entry.title === root.openGroup)
+        : root.flatBlocks
     // A section's groups in named blocks, by what someone came to change (IrisOptions.groupClusters); a section without
     // blocks is cut into even cards. Groups a block does not name close the page in a last block of their own.
     readonly property var groupChunks: {
@@ -169,7 +190,8 @@ Item {
         const rows = entry.rows.filter(spec => root.shown(spec))
         const parts = [...new Set(rows.map(spec => root.valueText(spec)).filter(text => text.length > 0))]
         if (parts.length === 0 && rows.length > 0 && rows.every(spec => spec.kind === "switch")) return Translation.tr("Off")
-        return parts.slice(0, 2).join(", ")
+        // One answer, the group's first: two read as a list of unrelated words ("Off, Own", "iRiS, iRiS, Material").
+        return parts[0] ?? ""
     }
     function modifiedIn(entry: var): bool {
         Config.revision
@@ -192,29 +214,78 @@ Item {
     readonly property int irisPageIndex: root.pages.findIndex(page => page.key === "iris")
     readonly property var morePages: IrisOptions.morePages.filter(entry => root.pages.some(page => page.key === entry.key))
     readonly property var moreGroups: [...new Set(root.morePages.map(entry => Translation.tr(entry.group)))]
+    // iRiS's own pages (General's links) are found by search as the shared ones are.
+    readonly property var ownPages: [
+        { key: "about", home: "general", label: "About iNiR", detail: "Version, updates and the people behind it", icon: "info",
+            get tint() { return IrisStyle.identity.lavender }, keywords: ["about", "version", "update", "credits", "acerca"] },
+        { key: "shortcuts", home: "general", label: "Keyboard shortcuts", detail: "Every keybind, searchable", icon: "keyboard",
+            get tint() { return IrisStyle.identity.indigo }, keywords: ["shortcuts", "keybinds", "hotkeys", "binds", "atajos"] }
+    ].filter(entry => root.pages.some(page => page.key === entry.key))
     readonly property var pageMatches: {
         const terms = root.query.toLowerCase().split(/\s+/).filter(term => term.length > 0)
         if (terms.length === 0) return []
-        return root.morePages.filter(entry => {
-            const text = [Translation.tr(entry.label), Translation.tr(entry.detail), ...(entry.keywords ?? [])].join(" ").toLowerCase()
+        return root.ownPages.concat(root.morePages).filter(entry => {
+            // The English names too: "about" finds Acerca de in any language, as rows do through `english`.
+            const text = [Translation.tr(entry.label), Translation.tr(entry.detail), entry.label, entry.detail, ...(entry.keywords ?? [])].join(" ").toLowerCase()
             return terms.every(term => text.includes(term))
         })
     }
-    readonly property bool pagesFirst: root.pageMatches.some(entry => Translation.tr(entry.label).toLowerCase().startsWith(root.query.trim().toLowerCase()))
+    // A page leads when a word of its name starts with what was typed ("shortcuts" → Keyboard shortcuts).
+    readonly property bool pagesFirst: root.pageMatches.some(entry => [Translation.tr(entry.label), entry.label]
+        .some(name => name.toLowerCase().split(/\s+/).some(word => word.startsWith(root.query.trim().toLowerCase()))))
     function openFirstResult(): void {
         if (root.pageMatches.length > 0 && (root.pagesFirst || root.matches.length === 0)) {
             root.moreLink(root.pageMatches[0]).action()
             return
         }
         const spec = root.matches[0]
-        if (!spec) return
-        searchField.text = ""
-        root.go({ section: spec.section, group: Translation.tr(spec.group ?? ""), advancedPage: -1 })
+        if (spec) root.openResult(spec, true)
     }
+    // Where a result is shown: a small section (shown whole, see flatSection) opens on itself, a larger one on the
+    // group; the row then scrolls into view and glows once, so the eye lands on it.
+    property string landingPath: ""
+    // On a page shown whole, the pinned head follows the group being read: its scene, mark and caption, as a group page
+    // would show them, while the rows scroll under it. Groups without a scene leave the section's own.
+    property string spyGroup: ""
+    function spy(): void {
+        // Only where the head already carries a scene: one appearing mid-scroll would pin the head and move the rows.
+        if (!root.flatSection || sceneProbe.sceneFor(root.section, "").length === 0) { root.spyGroup = ""; return }
+        let found = ""
+        // At the foot of the page the last groups can never rise to the reading line: the last one in view wins.
+        const atEnd = settingsFlick.contentY >= settingsFlick.contentHeight - settingsFlick.height - 2 && settingsFlick.contentY > 0
+        for (let i = 0; i < blockRepeater.count; i++) {
+            const block = blockRepeater.itemAt(i)
+            if (!block || !block.visible) continue
+            const top = block.mapToItem(settingsFlick.contentItem, 0, 0).y - settingsFlick.contentY
+            if (top > settingsFlick.height * (atEnd ? 0.92 : 0.4)) break
+            found = String(block.modelData.key ?? "")
+        }
+        root.spyGroup = found.length > 0 && sceneProbe.sceneFor(root.section, found).length > 0 ? found : ""
+    }
+    Timer { id: spyPace; interval: 90; onTriggered: root.spy() }
+    onFlatSectionChanged: spyPace.restart()
+    function sectionIsFlat(id: string): bool {
+        const rows = root.specifications.filter(spec => spec.section === id && root.shown(spec))
+        const groups = new Set(rows.map(spec => String(spec.group ?? "")))
+        return id !== "system" && groups.size > 1 && rows.length <= 15 && !rows.some(spec => ["widgets", "pieces", "niriMotion"].includes(spec.kind))
+    }
+    function openResult(spec: var, land: bool): void {
+        searchField.text = ""
+        root.landingPath = land ? String(spec.path ?? "") : ""
+        landingClear.restart()
+        root.go({ section: spec.section, group: root.sectionIsFlat(spec.section) ? "" : Translation.tr(spec.group ?? ""), advancedPage: -1 })
+    }
+    function reveal(row: Item): void {
+        const top = row.mapToItem(settingsRows, 0, 0).y
+        const end = Math.max(0, settingsFlick.contentHeight - settingsFlick.height)
+        revealMotion.to = Math.max(0, Math.min(end, top - settingsFlick.height * 0.3))
+        revealMotion.restart()
+    }
+    Timer { id: landingClear; interval: 2400; onTriggered: root.landingPath = "" }
     function pageIndexOf(key: string): int { return root.pages.findIndex(page => page.key === key) }
     function moreLink(entry: var): var {
         return { label: Translation.tr(entry.label), value: Translation.tr(entry.detail), icon: entry.icon, tint: entry.tint,
-            action: () => { searchField.text = ""; root.go({ section: "system", group: "", advancedPage: root.pageIndexOf(entry.key) }) } }
+            action: () => { searchField.text = ""; root.go({ section: entry.home ?? "system", group: "", advancedPage: root.pageIndexOf(entry.key) }) } }
     }
     function pageTitle(index: int): string {
         const page = root.pages[index]
@@ -281,7 +352,9 @@ Item {
     }
     // A link written before a topic got its own section (appearance/Accent, lock/Login screen, desktop/Wallpaper gallery)
     // still lands: a group asked for where it no longer is opens in the section that holds it now.
-    readonly property var renamedGroups: ({ "appearance/wallpaper": "Wallpaper tint" })
+    readonly property var renamedGroups: ({ "appearance/wallpaper": "Wallpaper tint", "player/on the edges": "Frame music", "player/finish": "Frame finish" })
+    // A section folded into a sister keeps its old links: Frame Music lives in Now Playing.
+    readonly property var renamedSections: ({ frameMusic: "player" })
     function followMovedGroup(): void {
         let wanted = root.requestedGroup.toLowerCase()
         if (wanted.length === 0) return
@@ -312,7 +385,7 @@ Item {
         }
         if (GlobalStates.settingsOverlayRequestedPage >= 0) root.group = ""
         const request = String(GlobalStates.settingsOverlayRequestedSection ?? "").split("/")
-        root.requestedSection = request[0] ?? ""
+        root.requestedSection = root.renamedSections[request[0] ?? ""] ?? (request[0] ?? "")
         if (request.length > 1) {
             root.requestedGroup = request.slice(1).join("/")
             groupRequest.restart()
@@ -349,7 +422,7 @@ Item {
             root.applyRequest()
         }
     }
-    onSectionChanged: { settingsFlick.contentY = 0; pageEnter.restart() }
+    onSectionChanged: { settingsFlick.contentY = 0; pageEnter.restart(); spyPace.restart() }
     onOpenGroupChanged: { settingsFlick.contentY = 0; pageEnter.restart() }
     onAdvancedPageChanged: pageEnter.restart()
 
@@ -859,21 +932,30 @@ Item {
                         id: pageHero
                         readonly property bool groupPage: !root.searching && root.openGroup.length > 0 && root.advancedPage < 0
                         readonly property bool sectionPage: root.browsing && root.section !== "system" && root.section !== "general" && root.section !== "gaming"
-                        readonly property string key: String(root.shownGroups[0]?.key ?? "")
+                        readonly property bool spying: !pageHero.groupPage && root.spyGroup.length > 0
+                        readonly property string key: pageHero.spying ? root.spyGroup : String(root.shownGroups[0]?.key ?? "")
                         // A group with no scene has no head: the toolbar already names it.
                         readonly property bool shown: pageHero.sectionPage || (pageHero.groupPage && pageHero.stageAvailable)
                         parent: root.heroPinned ? heroPinSlot : heroFlowSlot
                         width: settingsRows.width
                         visible: pageHero.shown
-                        tint: pageHero.groupPage ? (IrisOptions.groupTints[pageHero.key] ?? root.currentSection.tint) : root.currentSection.tint
-                        glyph: pageHero.groupPage ? (IrisOptions.groupGlyphs[pageHero.key] ?? root.currentSection.icon) : root.currentSection.icon
-                        title: !pageHero.groupPage ? Translation.tr(root.currentSection.subtitle)
-                            : pageHero.caption.length > 0 ? pageHero.caption : root.openGroup
+                        tint: pageHero.groupPage || pageHero.spying ? (IrisOptions.groupTints[pageHero.key] ?? root.currentSection.tint) : root.currentSection.tint
+                        glyph: pageHero.groupPage || pageHero.spying ? (IrisOptions.groupGlyphs[pageHero.key] ?? root.currentSection.icon) : root.currentSection.icon
+                        title: !pageHero.groupPage && !pageHero.spying ? Translation.tr(root.currentSection.subtitle)
+                            : pageHero.caption.length > 0 ? pageHero.caption : pageHero.spying ? Translation.tr(root.spyGroup) : root.openGroup
                         text: Translation.tr(root.currentSection.tip ?? "")
                         sceneSection: pageHero.sectionPage || pageHero.groupPage ? root.section : ""
-                        sceneGroup: pageHero.groupPage ? pageHero.key : ""
+                        sceneGroup: pageHero.groupPage || pageHero.spying ? pageHero.key : ""
                     }
 
+                    NumberAnimation {
+                        id: revealMotion
+                        target: settingsFlick
+                        property: "contentY"
+                        duration: IrisStyle.morphDuration
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: IrisStyle.morphCurve
+                    }
                     Flickable {
                         id: settingsFlick
                         anchors.fill: parent
@@ -904,6 +986,7 @@ Item {
                             }
                         }
                         visible: root.advancedPage < 0 && !root.atHome
+                        onContentYChanged: if (root.flatSection) spyPace.start()
                         contentHeight: settingsRows.implicitHeight + 32 * root.d
                         boundsBehavior: Flickable.StopAtBounds
                         ScrollBar.vertical: IrisScrollBar {}
@@ -941,7 +1024,7 @@ Item {
                             }
 
                             Repeater {
-                                model: ScriptModel { values: root.browsing && root.section !== "system" ? root.groupChunks : [] }
+                                model: ScriptModel { values: root.browsing && !root.flatSection && root.section !== "system" ? root.groupChunks : [] }
                                 GroupList {}
                             }
 
@@ -951,6 +1034,7 @@ Item {
                             }
 
                             Repeater {
+                                id: blockRepeater
                                 model: ScriptModel { objectProp: "title"; values: root.shownGroups }
                                 GroupBlock {}
                             }
@@ -967,8 +1051,8 @@ Item {
                             IrisLinkCard {
                                 visible: root.section === "sidebars" && root.browsing
                                 links: [
-                                    { label: Translation.tr("Open Focus"), icon: "dock_to_left", action: () => { GlobalStates.settingsOverlayOpen = false; GlobalStates.openSidebarLeft("") } },
-                                    { label: Translation.tr("Open Today"), icon: "dock_to_right", action: () => { GlobalStates.settingsOverlayOpen = false; GlobalStates.openSidebarRight("") } }
+                                    { label: Translation.tr("Open Focus"), icon: "dock_to_left", tint: IrisStyle.identity.green, action: () => { GlobalStates.settingsOverlayOpen = false; GlobalStates.openSidebarLeft("") } },
+                                    { label: Translation.tr("Open Today"), icon: "dock_to_right", tint: IrisStyle.identity.orange, action: () => { GlobalStates.settingsOverlayOpen = false; GlobalStates.openSidebarRight("") } }
                                 ]
                             }
 
@@ -978,8 +1062,15 @@ Item {
                                     id: panelEditor
                                     required property string modelData
                                     Layout.fillWidth: true
-                                    spacing: 8 * root.d
-                                    IrisText { text: panelEditor.modelData === "left" ? Translation.tr("Focus sections") : Translation.tr("Today sections"); color: IrisStyle.label; font.weight: IrisStyle.weight(Font.DemiBold) }
+                                    spacing: 6 * root.d
+                                    IrisText {
+                                        Layout.leftMargin: 16 * root.d
+                                        text: panelEditor.modelData === "left" ? Translation.tr("Focus sections") : Translation.tr("Today sections")
+                                        color: IrisStyle.label
+                                        font.family: IrisStyle.fontTitle
+                                        font.pixelSize: IrisStyle.typeMeta
+                                        font.weight: IrisStyle.weight(Font.DemiBold)
+                                    }
                                     IrisSidebarEditor { Layout.fillWidth: true; side: panelEditor.modelData }
                                 }
                             }
@@ -998,7 +1089,7 @@ Item {
 
                             IrisLinkCard {
                                 visible: root.section === "desktop" && root.browsing
-                                links: [{ label: Translation.tr("Edit desktop widgets"), icon: "edit", action: () => { GlobalStates.settingsOverlayOpen = false; GlobalStates.setWidgetEditMode(true) } }]
+                                links: [{ label: Translation.tr("Edit desktop widgets"), icon: "edit", tint: IrisStyle.identity.yellow, action: () => { GlobalStates.settingsOverlayOpen = false; GlobalStates.setWidgetEditMode(true) } }]
                             }
 
                             Repeater {
@@ -1505,7 +1596,7 @@ Item {
             cursorShape: Qt.PointingHandCursor
             Accessible.role: Accessible.Link
             Accessible.name: group.modelData.title
-            onClicked: root.selectSection(resultSection.section.id)
+            onClicked: root.openResult(group.modelData.rows[0], false)
             Row {
                 id: resultCaption
                 spacing: 8 * root.d
@@ -1532,6 +1623,15 @@ Item {
                     opacity: resultSection.containsMouse ? 1 : 0
                 }
             }
+        }
+        IrisText {
+            visible: root.flatSection && text.length > 0
+            Layout.leftMargin: 16 * root.d
+            text: String(group.modelData.caption ?? "")
+            color: IrisStyle.label
+            font.family: IrisStyle.fontTitle
+            font.pixelSize: IrisStyle.typeMeta
+            font.weight: IrisStyle.weight(Font.DemiBold)
         }
         // A long group reads as captioned cards, one per `part` its rows name; search shows one card. Keyed by caption,
         // so a write (a slider mid-drag) never rebuilds a card under the pointer.
@@ -1569,12 +1669,16 @@ Item {
                         Repeater {
                             model: ScriptModel { objectProp: "modelKey"; values: part.rows }
                             IrisSetting {
+                                id: settingRow
                                 required property var modelData
                                 required property int index
                                 Layout.fillWidth: true
                                 spec: modelData
                                 highlight: root.query
                                 last: index === part.rows.length - 1
+                                landing: root.landingPath.length > 0 && String(modelData.path ?? "") === root.landingPath
+                                onLandingChanged: if (landing) landingReveal.restart()
+                                Timer { id: landingReveal; interval: 120; onTriggered: root.reveal(settingRow) }
                             }
                         }
                     }

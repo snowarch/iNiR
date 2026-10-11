@@ -86,7 +86,7 @@ PreviewScene {
             anchors.centerIn: parent
             visible: actRoot.step === 3 && actRoot.events && !actRoot.expanded
             spacing: Math.round(8 * actRoot.d)
-            IrisBatteryMark { anchors.verticalCenter: parent.verticalCenter; markHeight: Math.round(9 * actRoot.d); level: 0.64; tint: IrisStyle.identity.green; frame: IrisStyle.trackOf(IrisStyle.identity.green) }
+            IrisBatteryMark { Layout.alignment: Qt.AlignVCenter; markHeight: Math.round(9 * actRoot.d); level: 0.64; tint: IrisStyle.identity.green; frame: IrisStyle.trackOf(IrisStyle.identity.green) }
             IrisText { text: Translation.tr("Charger connected"); font.weight: IrisStyle.weight(Font.DemiBold) }
         }
         ColumnLayout {

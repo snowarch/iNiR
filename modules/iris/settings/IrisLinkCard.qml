@@ -8,7 +8,8 @@ Rectangle {
     id: root
 
     property var links: []
-    property bool tinted: false
+    // Every link opens on its identity mark, as every group row does: one grammar on the page.
+    property bool tinted: true
 
     Layout.fillWidth: true
     implicitHeight: linkColumn.implicitHeight

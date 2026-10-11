@@ -17,6 +17,9 @@ Item {
     required property var spec
     property bool last: false
     property string highlight: ""
+    // Arrived at from a search: the row glows once in the accent, then settles.
+    property bool landing: false
+    onLandingChanged: if (root.landing) landingGlow.restart()
     function marked(text: string): string {
         const plain = part => part.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
         const terms = root.highlight.trim().split(/\s+/).filter(term => term.length > 1)
@@ -67,11 +70,54 @@ Item {
         && root.choices.some(choice => choice.swatch !== undefined)
     readonly property bool tiled: root.spec.kind === "choice" && root.spec.tiles === true && root.choices.length > 0
     readonly property bool carded: root.spec.kind === "choice" && root.spec.cards === "material" && root.choices.length > 0
-    readonly property bool inlineChoice: root.spec.kind === "choice" && root.choices.length <= 3 && !root.pictured && !root.swatched
-        && root.choices.every(choice => String(choice.label).length <= 11)
+    // Every control that fits answers in one right-hand column, the same width on every row, so a page reads as names on
+    // the left and answers on the right. What needs more room (pictures, four or more choices, galleries) sits under the
+    // text at full width.
+    readonly property bool roomy: layout.width >= 480 * root.d
+    readonly property real controlWidth: Math.round(Math.min(300 * root.d, Math.max(200 * root.d, layout.width * 0.4)))
+    FontMetrics {
+        id: choiceMetrics
+        font.family: IrisStyle.fontMain
+        font.pixelSize: IrisStyle.typeMeta
+        font.weight: IrisStyle.weight(Font.DemiBold)
+    }
+    FontMetrics {
+        id: figureMetrics
+        font.family: IrisStyle.fontMain
+        font.pixelSize: IrisStyle.typeLabel
+    }
+    // Segments share the track evenly, so the widest name sets every slot.
+    readonly property real segmentNatural: root.spec.kind !== "choice" || root.choices.length === 0 ? 0
+        : root.choices.length * (Math.max(...root.choices.map(choice => choiceMetrics.advanceWidth(Translation.tr(String(choice.label ?? ""))))) + 26 * root.d) + 4
+    readonly property bool inlineChoice: root.spec.kind === "choice" && root.roomy && root.choices.length >= 2 && root.choices.length <= 3
+        && !root.swatched && !root.tiled && !root.carded && root.segmentNatural <= root.controlWidth
+    readonly property bool inlineRange: root.spec.kind === "range" && root.roomy
+    // A few fixed colours answer beside their name; sources (wallpaper, theme, your own hue) stay pictured as cards.
+    readonly property bool inlineSwatch: root.swatched && root.spec.sources !== true && !root.carded && !root.tiled && root.roomy
+        && root.choices.length * 40 * root.d <= root.controlWidth + 10 * root.d
+    // The figure keeps one width from end to end of its range, so the track never shifts while it moves.
+    readonly property real figureWidth: root.spec.kind !== "range" ? 0
+        : Math.ceil(Math.max(...[root.spec.min, root.spec.max, root.spec.fallback, root.value].filter(value => value !== undefined)
+            .map(value => figureMetrics.advanceWidth(Translation.tr(IrisOptions.rangeText(root.spec, value)))))) + Math.round(4 * root.d)
 
-    implicitHeight: layout.implicitHeight + Math.round(22 * root.d)
+    implicitHeight: Math.max(Math.round(50 * root.d), layout.implicitHeight + Math.round(22 * root.d))
     enabled: !root.locked
+
+    Rectangle {
+        id: glow
+        anchors.fill: parent
+        anchors.margins: Math.round(4 * root.d)
+        radius: IrisStyle.radiusRow
+        color: IrisStyle.tintFillHover(IrisStyle.accent)
+        opacity: 0
+        SequentialAnimation {
+            id: landingGlow
+            PauseAnimation { duration: IrisStyle.duration(260) }
+            NumberAnimation { target: glow; property: "opacity"; to: 1; duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing }
+            PauseAnimation { duration: IrisStyle.duration(900) }
+            NumberAnimation { target: glow; property: "opacity"; to: 0; duration: IrisStyle.duration(700); easing.type: IrisStyle.feedbackEasing }
+        }
+    }
 
     ColumnLayout {
         id: layout
@@ -178,8 +224,8 @@ Item {
             // A trailing value reads on the title's line, in the interface face: the title leads, the value answers.
             IrisText {
                 visible: root.swatched
-                Layout.alignment: Qt.AlignTop
-                Layout.preferredHeight: label.implicitHeight
+                Layout.alignment: root.inlineSwatch ? Qt.AlignVCenter : Qt.AlignTop
+                Layout.preferredHeight: root.inlineSwatch ? -1 : label.implicitHeight
                 verticalAlignment: Text.AlignVCenter
                 text: Translation.tr(String(root.choices.find(choice => choice.value === root.value)?.label ?? ""))
                 color: IrisStyle.subtext
@@ -187,7 +233,7 @@ Item {
             }
 
             IrisText {
-                visible: root.spec.kind === "range"
+                visible: root.spec.kind === "range" && !root.inlineRange
                 Layout.alignment: Qt.AlignTop
                 Layout.preferredHeight: label.implicitHeight
                 verticalAlignment: Text.AlignVCenter
@@ -220,8 +266,40 @@ Item {
                 opacity: root.controlOpacity
                 active: root.inlineChoice
                 visible: active
-                Layout.preferredWidth: Math.round(Math.min(90 * root.choices.length, 270) * root.d)
+                Layout.preferredWidth: Math.round(Math.max(root.segmentNatural, root.controlWidth * 0.66))
                 sourceComponent: segmentedComponent
+            }
+
+            Loader {
+                opacity: root.controlOpacity
+                active: root.inlineSwatch
+                visible: active
+                Layout.preferredWidth: Math.round((root.choices.length * 40 - 10) * root.d)
+                sourceComponent: swatchComponent
+            }
+
+            RowLayout {
+                visible: root.inlineRange
+                // Fixed: the track's fillWidth would otherwise spread to the row and eat the label's column.
+                Layout.fillWidth: false
+                Layout.minimumWidth: root.controlWidth
+                Layout.maximumWidth: root.controlWidth
+                spacing: Math.round(12 * root.d)
+                Item {
+                    id: inlineRangeSlot
+                    Layout.fillWidth: true
+                    implicitHeight: Math.round(22 * root.d)
+                }
+                // One figure column on every row (wider only for a longer word), so the tracks of a page start on one line.
+                IrisText {
+                    Layout.preferredWidth: Math.max(root.figureWidth, Math.round(60 * root.d))
+                    opacity: root.controlOpacity
+                    horizontalAlignment: Text.AlignRight
+                    text: Translation.tr(IrisOptions.rangeText(root.spec, root.shownValue))
+                    color: IrisStyle.subtext
+                    font.features: ({ "tnum": 1 })
+                    font.pixelSize: IrisStyle.typeLabel
+                }
             }
 
             Loader {
@@ -232,10 +310,16 @@ Item {
             }
         }
 
-        IrisScrubber {
-            id: rangeScrubber
+        Item {
+            id: belowRangeSlot
             Layout.fillWidth: true
             Layout.preferredHeight: Math.round(22 * root.d)
+            visible: root.spec.kind === "range" && !root.inlineRange
+        }
+        IrisScrubber {
+            id: rangeScrubber
+            parent: root.inlineRange ? inlineRangeSlot : belowRangeSlot
+            anchors.fill: parent
             visible: root.spec.kind === "range"
             opacity: root.controlOpacity
             knob: true
@@ -285,7 +369,7 @@ Item {
         Loader {
             opacity: root.controlOpacity
             Layout.fillWidth: true
-            active: root.swatched && !root.tiled && !root.carded
+            active: root.swatched && !root.tiled && !root.carded && !root.inlineSwatch
             visible: active
             sourceComponent: swatchComponent
         }
@@ -1353,7 +1437,8 @@ Item {
         IrisSegmented {
             options: root.choices
             current: root.value
-            pictured: root.pictured
+            // In the row's column the names carry the choice; glyphs stack only in the full-width track.
+            pictured: root.pictured && !root.inlineChoice
             accessibleName: Translation.tr(root.spec.label)
             fontFor: choice => root.previewFace(choice)
             onPicked: value => root.commit(value)

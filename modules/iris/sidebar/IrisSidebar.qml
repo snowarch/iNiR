@@ -336,7 +336,7 @@ PanelWindow {
                         visible: active
                         sourceComponent: ColumnLayout {
                             spacing: 16 * root.d
-                            IrisSidebarEditor { Layout.fillWidth: true; side: root.side }
+                            IrisSidebarEditor { Layout.fillWidth: true; side: root.side; plate: IrisStyle.fillQuiet }
                             IrisButton {
                                 id: layoutButton
                                 Layout.fillWidth: true

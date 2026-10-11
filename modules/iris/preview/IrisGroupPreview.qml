@@ -29,7 +29,7 @@ ClippingRectangle {
     function sceneFor(section: string, group: string): string {
         if (group.length === 0)
             return ({ dock: "dock", player: "player", desktop: "widgets", sidebars: "panels", controlCenter: "controlCenter", spotlight: "spotlight", bubbles: "bubbles",
-                bar: "islandEdge", appearance: "fusion", colour: "palette", wallpaper: "gallery", login: "login", motion: "motion", lock: "lock", frameMusic: "frame", notifications: "feedback", sound: "feedback" })[section] ?? ""
+                bar: "islandEdge", appearance: "fusion", colour: "palette", wallpaper: "gallery", login: "login", motion: "motion", lock: "lock", notifications: "feedback", sound: "feedback" })[section] ?? ""
         const key = section + "/" + group
         return ({
             "bar/Visibility": "islandReserve", "bar/Interaction": "islandInteraction",
@@ -46,7 +46,7 @@ ClippingRectangle {
             "desktop/Desktop menu": "menus",
             "motion/Motion": "motion", "motion/Curve": "motion", "motion/Timing": "motion",
             "motion/Per surface": "motion", "motion/Style per surface": "motion", "motion/Touch": "motion",
-            "frameMusic/On the edges": "frame", "frameMusic/Frame response": "frame", "frameMusic/Finish": "frame",
+            "player/Frame music": "frame", "player/Frame response": "frame", "player/Frame finish": "frame",
             "lock/Scene": "lock", "lock/Type": "lock", "lock/Clock": "lock", "lock/At a glance": "lock",
             "lock/Now playing": "lock", "lock/Activity": "lock", "lock/Sign in": "lock", "lock/Status": "lock",
             "bar/Desktop page": "islandPage", "bar/Pages": "islandPage", "bar/Player page": "islandPage",

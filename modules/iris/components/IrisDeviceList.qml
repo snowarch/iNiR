@@ -40,7 +40,7 @@ ColumnLayout {
                     id: deviceRow
                     required property var modelData
                     readonly property bool input: deviceGroup.modelData.input
-                    readonly property bool current: (deviceRow.input ? Audio.source?.id : Audio.defaultSink?.id) === modelData.id
+                    readonly property bool current: (deviceRow.input ? Audio.source?.id : Audio.defaultSink?.id) === deviceRow.modelData?.id
                     Layout.fillWidth: true
                     quiet: true
                     implicitHeight: Math.round(36 * root.d)
@@ -56,7 +56,7 @@ ColumnLayout {
                         spacing: 10 * root.d
                         MaterialSymbol {
                             text: deviceRow.input ? "mic"
-                                : /head|bluez|airpod|buds/i.test(String(deviceRow.modelData.name ?? "") + String(deviceRow.modelData.description ?? "")) ? "headphones" : "speaker"
+                                : /head|bluez|airpod|buds/i.test(String(deviceRow.modelData?.name ?? "") + String(deviceRow.modelData?.description ?? "")) ? "headphones" : "speaker"
                             iconSize: Math.round(18 * root.d)
                             color: deviceRow.current ? IrisStyle.accent : IrisStyle.subtext
                         }
