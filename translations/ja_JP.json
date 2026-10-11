@@ -9207,5 +9207,11 @@
   "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "iRiS が表示する CPU・メモリ・ディスク・温度の更新頻度。",
   "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "アイドル、曲の認識、読み取り、検索、天気は iRiS の設定の、変える対象のそばにあります。",
   "Network · updates · data": "ネットワーク · 更新 · データ",
-  "Network, hotspot, updates and calendar accounts": "ネットワーク、ホットスポット、更新、カレンダーアカウント"
+  "Network, hotspot, updates and calendar accounts": "ネットワーク、ホットスポット、更新、カレンダーアカウント",
+  "Charged notice": "充電の通知",
+  "Says when the battery reaches this level, so you can unplug.": "バッテリーがこの残量になったら知らせ、電源を抜けます。",
+  "Lock when the session starts": "セッション開始時にロック",
+  "Locks right after you sign in, for computers that log in on their own.": "ログイン直後にロックします。自動ログインの PC 向け。",
+  "Lock with Hyprlock": "Hyprlock でロック",
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "iRiS のロック画面の代わりに、Hyprlock が独自の見た目でロックします。"
 }

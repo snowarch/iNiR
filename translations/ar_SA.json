@@ -9207,5 +9207,11 @@
   "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "كم مرة تتحدث المعالج والذاكرة والقرص والحرارة حيث يعرضها iRiS.",
   "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "الخمول وتعرّف الأغاني والقراءات والبحث والطقس موجودة في إعدادات iRiS بجانب ما تغيّره.",
   "Network · updates · data": "الشبكة · التحديثات · البيانات",
-  "Network, hotspot, updates and calendar accounts": "الشبكة ونقطة الاتصال والتحديثات وحسابات التقويم"
+  "Network, hotspot, updates and calendar accounts": "الشبكة ونقطة الاتصال والتحديثات وحسابات التقويم",
+  "Charged notice": "تنبيه الشحن",
+  "Says when the battery reaches this level, so you can unplug.": "ينبهك عند وصول البطارية لهذا المستوى لتفصل الشاحن.",
+  "Lock when the session starts": "القفل عند بدء الجلسة",
+  "Locks right after you sign in, for computers that log in on their own.": "يقفل مباشرة بعد تسجيل الدخول، للأجهزة التي تدخل تلقائيًا.",
+  "Lock with Hyprlock": "القفل بـ Hyprlock",
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "يقفل Hyprlock الشاشة بمظهره بدلًا من شاشة قفل iRiS."
 }

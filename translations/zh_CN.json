@@ -9207,5 +9207,11 @@
   "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "iRiS 显示的 CPU、内存、磁盘和温度的刷新频率。",
   "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "空闲、识别歌曲、系统读数、搜索和天气都在 iRiS 设置中，就在它们改变的内容旁边。",
   "Network · updates · data": "网络 · 更新 · 数据",
-  "Network, hotspot, updates and calendar accounts": "网络、热点、更新和日历账户"
+  "Network, hotspot, updates and calendar accounts": "网络、热点、更新和日历账户",
+  "Charged notice": "充电提醒",
+  "Says when the battery reaches this level, so you can unplug.": "电池达到此电量时提醒你拔掉电源。",
+  "Lock when the session starts": "会话开始时锁定",
+  "Locks right after you sign in, for computers that log in on their own.": "登录后立即锁定，适合自动登录的电脑。",
+  "Lock with Hyprlock": "使用 Hyprlock 锁定",
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "由 Hyprlock 以自己的外观锁屏，而不是 iRiS 的锁屏。"
 }

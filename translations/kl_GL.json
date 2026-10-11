@@ -7562,5 +7562,11 @@
   "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "CPU, eqqaamasaq, disk kissassusillu qanoq akulikitsigisumik nutarterneqartarnersut.",
   "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "Unittarneq, erinarsuutit ilisarinerat, uuttuutit, ujarlerneq silallu iRiS-ip aaqqissuussaani pissarsiarineqarsinnaapput.",
   "Network · updates · data": "Attaveqaat · nutarterinerit · paasissutissat",
-  "Network, hotspot, updates and calendar accounts": "Attaveqaat, hotspot, nutarterinerit ullorsiutillu kontui"
+  "Network, hotspot, updates and calendar accounts": "Attaveqaat, hotspot, nutarterinerit ullorsiutillu kontui",
+  "Charged notice": "Imerneq pillugu ilisimatitsissut",
+  "Says when the battery reaches this level, so you can unplug.": "Batteri taama annertutigilerpat ilisimatitsissaaq.",
+  "Lock when the session starts": "Iserfimmi parnaaruk",
+  "Locks right after you sign in, for computers that log in on their own.": "Iserunnermit parnaarussaaq.",
+  "Lock with Hyprlock": "Hyprlock atorlugu parnaaruk",
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Hyprlock-ip saqqaa iRiS-ip parnaarussiviata taarsigaa."
 }

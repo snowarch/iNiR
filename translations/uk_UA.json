@@ -9207,5 +9207,11 @@
   "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "Як часто оновлюються ЦП, пам’ять, диск і температури там, де їх показує iRiS.",
   "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "Бездіяльність, розпізнавання пісень, показники, пошук і погода — у налаштуваннях iRiS, поруч із тим, що вони змінюють.",
   "Network · updates · data": "Мережа · оновлення · дані",
-  "Network, hotspot, updates and calendar accounts": "Мережа, точка доступу, оновлення й облікові записи календаря"
+  "Network, hotspot, updates and calendar accounts": "Мережа, точка доступу, оновлення й облікові записи календаря",
+  "Charged notice": "Сповіщення про заряд",
+  "Says when the battery reaches this level, so you can unplug.": "Повідомляє, коли батарея досягає цього рівня, щоб відключити зарядку.",
+  "Lock when the session starts": "Блокувати під час входу",
+  "Locks right after you sign in, for computers that log in on their own.": "Блокує одразу після входу — для комп’ютерів з автовходом.",
+  "Lock with Hyprlock": "Блокувати через Hyprlock",
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Екран блокує Hyprlock зі своїм виглядом замість екрана блокування iRiS."
 }

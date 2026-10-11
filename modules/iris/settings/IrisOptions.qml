@@ -843,6 +843,9 @@ QtObject {
     // Waffle read the same keys; nothing here is copied.
     readonly property var shared: [
         // Ported from More Settings › Services (2026-10-11): what an iRiS surface really reads, said where it shows.
+        { section: "battery", group: "Warnings", label: "Charged notice", description: "Says when the battery reaches this level, so you can unplug.", path: "battery.full", kind: "choice", fallback: 101, choices: [{label:"Never",value:101},{label:"80%",value:80},{label:"90%",value:90},{label:"Full",value:100}], keywords: ["full", "charged", "unplug", "battery"] },
+        { section: "lock", group: "Security", label: "Lock when the session starts", description: "Locks right after you sign in, for computers that log in on their own.", path: "lock.launchOnStartup", kind: "switch", fallback: false, keywords: ["autologin", "startup", "boot", "lock"] },
+        { section: "lock", group: "Security", label: "Lock with Hyprlock", description: "Hyprlock and its own look lock the screen instead of iRiS's lock screen.", path: "lock.useHyprlock", kind: "switch", fallback: false, keywords: ["hyprlock", "lock"] },
         { section: "spotlight", group: "Spotlight", label: "Forgive typos", description: "Ranks apps by how few letters differ, so “firefx” still finds Firefox.", path: "search.sloppy", kind: "switch", fallback: false, keywords: ["fuzzy", "typo", "levenshtein", "search"] },
         { section: "spotlight", group: "Prefixes", label: "Clipboard", description: "Typed first, searches what you copied.", path: "search.prefix.clipboard", kind: "text", short: true, placeholder: ";", fallback: ";", keywords: ["prefix", "clipboard"] },
         { section: "spotlight", group: "Prefixes", label: "Calculator", description: "Typed first, works out the rest.", path: "search.prefix.math", kind: "text", short: true, placeholder: "=", fallback: "=", keywords: ["prefix", "math", "calculator"] },
@@ -1113,7 +1116,6 @@ QtObject {
         { group: "System", key: "tools", label: "Tools", detail: "Recording codecs and snip details", icon: "build", get tint() { return IrisStyle.identity.red }, keywords: ["tools", "codec", "ffmpeg", "vaapi", "discord", "crosshair"] },
         { group: "Shell", key: "hub", label: "Community Hub", detail: "Widgets, themes and web apps from other people", icon: "storefront", get tint() { return IrisStyle.identity.pink }, keywords: ["hub", "community", "plugins", "extensions", "widgets", "themes", "store", "download", "install", "comunidad"] },
         { group: "Shell", key: "themes", label: "Colour themes", detail: "Every palette, with previews; app icon theme", icon: "palette", get tint() { return IrisStyle.identity.purple }, keywords: ["theme", "palette", "colours", "catppuccin", "apps", "icons", "icon theme", "icon pack", "papirus", "tray icons", "iconos"] },
-        { group: "Shell", key: "system", label: "System", detail: "Keyboard indicators, work safety", icon: "browse", get tint() { return IrisStyle.identity.green }, keywords: ["system", "keyboard", "caps lock", "safety"] },
         { group: "Shell", key: "advanced", label: "Advanced", detail: "Visualizer and colour generation", icon: "construction", get tint() { return IrisStyle.identity.gray }, keywords: ["advanced", "cava", "visualizer", "matugen"] }
     ]
     readonly property var sectionOrder: root.sections.map(section => section.id)

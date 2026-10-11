@@ -9207,5 +9207,11 @@
   "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "Seberapa sering CPU, memori, disk, dan suhu disegarkan di tempat iRiS menampilkannya.",
   "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "Diam, pengenalan lagu, bacaan, pencarian, dan cuaca ada di pengaturan iRiS, di samping yang diubahnya.",
   "Network · updates · data": "Jaringan · pembaruan · data",
-  "Network, hotspot, updates and calendar accounts": "Jaringan, hotspot, pembaruan, dan akun kalender"
+  "Network, hotspot, updates and calendar accounts": "Jaringan, hotspot, pembaruan, dan akun kalender",
+  "Charged notice": "Pemberitahuan isi daya",
+  "Says when the battery reaches this level, so you can unplug.": "Memberi tahu saat baterai mencapai level ini, agar kamu bisa mencabut.",
+  "Lock when the session starts": "Kunci saat sesi dimulai",
+  "Locks right after you sign in, for computers that log in on their own.": "Mengunci tepat setelah masuk, untuk komputer yang masuk sendiri.",
+  "Lock with Hyprlock": "Kunci dengan Hyprlock",
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Hyprlock dengan tampilannya sendiri mengunci layar, bukan layar kunci iRiS."
 }

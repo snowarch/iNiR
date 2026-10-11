@@ -9207,5 +9207,11 @@
   "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "CPU, bellek, disk ve sıcaklıkların iRiS’in gösterdiği yerlerde ne sıklıkla yenilendiği.",
   "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "Boşta kalma, şarkı tanıma, ölçümler, arama ve hava durumu iRiS ayarlarında, değiştirdikleri şeyin yanında.",
   "Network · updates · data": "Ağ · güncellemeler · veriler",
-  "Network, hotspot, updates and calendar accounts": "Ağ, erişim noktası, güncellemeler ve takvim hesapları"
+  "Network, hotspot, updates and calendar accounts": "Ağ, erişim noktası, güncellemeler ve takvim hesapları",
+  "Charged notice": "Şarj bildirimi",
+  "Says when the battery reaches this level, so you can unplug.": "Pil bu seviyeye ulaşınca haber verir, fişten çekebilirsin.",
+  "Lock when the session starts": "Oturum başlarken kilitle",
+  "Locks right after you sign in, for computers that log in on their own.": "Girişten hemen sonra kilitler; kendiliğinden oturum açan bilgisayarlar için.",
+  "Lock with Hyprlock": "Hyprlock ile kilitle",
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "Ekranı iRiS kilit ekranı yerine kendi görünümüyle Hyprlock kilitler."
 }

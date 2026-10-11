@@ -9207,5 +9207,11 @@
   "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.": "iRiS जहाँ दिखाता है वहाँ CPU, मेमोरी, डिस्क और तापमान कितनी बार ताज़ा होते हैं।",
   "Idle, song recognition, readings, search and weather are in iRiS Settings, beside what they change.": "निष्क्रियता, गाना पहचान, रीडिंग, खोज और मौसम iRiS सेटिंग्स में हैं, जो वे बदलते हैं उसके पास।",
   "Network · updates · data": "नेटवर्क · अपडेट · डेटा",
-  "Network, hotspot, updates and calendar accounts": "नेटवर्क, हॉटस्पॉट, अपडेट और कैलेंडर खाते"
+  "Network, hotspot, updates and calendar accounts": "नेटवर्क, हॉटस्पॉट, अपडेट और कैलेंडर खाते",
+  "Charged notice": "चार्ज सूचना",
+  "Says when the battery reaches this level, so you can unplug.": "बैटरी इस स्तर पर पहुँचने पर बताता है, ताकि आप प्लग निकाल सकें।",
+  "Lock when the session starts": "सत्र शुरू होने पर लॉक करें",
+  "Locks right after you sign in, for computers that log in on their own.": "साइन इन के तुरंत बाद लॉक करता है, अपने आप लॉग इन होने वाले कंप्यूटरों के लिए।",
+  "Lock with Hyprlock": "Hyprlock से लॉक करें",
+  "Hyprlock and its own look lock the screen instead of iRiS's lock screen.": "iRiS लॉक स्क्रीन की जगह Hyprlock अपने रूप में स्क्रीन लॉक करता है।"
 }
