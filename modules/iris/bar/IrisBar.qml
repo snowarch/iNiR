@@ -1068,27 +1068,9 @@ Scope {
                     y: Math.round((windowLoader.loadedVertical ? islandLoader.inset + islandLoader.along
                         : windowLoader.loadedBottom ? parent.height - islandLoader.height - islandLoader.edgeMargin : islandLoader.edgeMargin)
                         + islandLoader.tuckY)
-                    // A Design that brings its own bar stands it here instead of the Island (horizontal edges).
-                    readonly property string designBar: windowLoader.loadedVertical ? "" : IrisDesign.skin("bar")
                     width: item?.implicitWidth ?? (windowLoader.loadedVertical ? root.barHeight : 240)
                     height: item?.implicitHeight ?? (windowLoader.loadedVertical ? 240 : root.barHeight)
-                    sourceComponent: islandLoader.designBar.length > 0 ? designBarComponent : irisIslandComponent
-                    Component {
-                        id: designBarComponent
-                        Loader {
-                            readonly property real notchness: 0
-                            source: islandLoader.designBar
-                            onLoaded: {
-                                item.targetScreen = Qt.binding(() => barWindow.screen)
-                                item.availableWidth = Qt.binding(() => barWindow.width - (IrisFrame.band + root.outerMargin) * 2)
-                                item.compactHeight = Qt.binding(() => root.barHeight)
-                                item.edge = Qt.binding(() => windowLoader.loadedEdge)
-                            }
-                        }
-                    }
-                    Component {
-                        id: irisIslandComponent
-                    IrisIsland {
+                    sourceComponent: IrisIsland {
                         id: island
                         targetScreen: barWindow.screen
                         onPieceActivated: (slot, kind, rect) => stage.activate(slot, kind, rect)
@@ -1119,7 +1101,6 @@ Scope {
                                 }
                             }
                         }
-                    }
                     }
                 }
 

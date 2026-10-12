@@ -4311,6 +4311,9 @@ if command -v python3 &>/dev/null && [[ -f "$runtime_root/scripts/lib/generate-i
     step "iRiS Settings preview scenes"
     python3 "$runtime_root/scripts/test-iris-preview-scenes.py"
 
+    step "iRiS Designs dress the engine"
+    python3 "$runtime_root/scripts/test-iris-designs.py"
+
     step "niri config rules and flags"
     python3 "$runtime_root/scripts/test-niri-config-rules.py"
 

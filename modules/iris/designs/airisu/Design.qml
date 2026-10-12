@@ -11,7 +11,6 @@ QtObject {
     readonly property var parts: ({
         insignia: "parts/Insignia.qml",
         controlCenter: "scenes/ControlCenter.qml",
-        bar: "scenes/Bar.qml",
         spotlight: "scenes/Spotlight.qml",
         osd: "scenes/Osd.qml",
         banner: "scenes/Banner.qml",
