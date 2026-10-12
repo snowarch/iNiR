@@ -116,7 +116,7 @@ Scope {
         anchors.leftMargin: 13 * IrisStyle.density
         anchors.rightMargin: 16 * IrisStyle.density
         spacing: 11 * IrisStyle.density
-        opacity: osdRow.current ? 1 : 0
+        opacity: osdRow.current && IrisDesign.skin("osd").length === 0 ? 1 : 0
         scale: osdRow.current ? 1 : 0.96
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
@@ -245,8 +245,10 @@ Scope {
         readonly property real restWidth: Math.max(260, Math.min(520,
             Number(Config.options?.iris?.osd?.width ?? 320))) * osdWindow.d
         readonly property real pad: 29 * osdWindow.d
-        readonly property real targetHeight: Math.round((root.kind === "media" || root.kind === "connection" ? 64 : root.level && root.levelStyle === "minimal" ? 48 : 54) * osdWindow.d)
-        readonly property real targetWidth: Math.round(Math.min(osdWindow.width - 24,
+        // A Design that brings its own OSD sizes the body from its scene.
+        readonly property string scene: IrisDesign.skin("osd")
+        readonly property real targetHeight: osdWindow.scene.length > 0 && designOsd.item ? designOsd.item.implicitHeight : Math.round((root.kind === "media" || root.kind === "connection" ? 64 : root.level && root.levelStyle === "minimal" ? 48 : 54) * osdWindow.d)
+        readonly property real targetWidth: osdWindow.scene.length > 0 && designOsd.item ? Math.min(osdWindow.width - 24, designOsd.item.implicitWidth) : Math.round(Math.min(osdWindow.width - 24,
             root.level && root.levelStyle !== "minimal" ? osdWindow.restWidth
                 : Math.max(osdWindow.targetHeight * 2.2, Math.min(osdWindow.restWidth * 1.2,
                     osdWindow.activeRow.implicitWidth + osdWindow.pad))))
@@ -288,6 +290,14 @@ Scope {
             x: Math.round((osdWindow.width - width) / 2)
             y: Math.round(root.atTop ? root.edgeMargin : osdWindow.height - height - root.edgeMargin)
             onClosed: root.presentationVisible = false
+
+            Loader {
+                id: designOsd
+                anchors.fill: parent
+                active: osdWindow.scene.length > 0
+                source: osdWindow.scene
+                onLoaded: item.osd = root
+            }
 
             OsdRow {
                 id: levelRow

@@ -159,8 +159,9 @@ Item {
 
     PanelLoader {
         identifier: "irisOnScreenDisplay"
+        // The Island shows levels itself; a Design's own bar does not, so this window does.
         extraCondition: (Config.options?.iris?.modules?.osd ?? true)
-            && (!GlobalStates.barOpen
+            && (!GlobalStates.barOpen || IrisDesign.has("bar")
                 || (CompositorService.isNiri && GameMode.hasFullscreenOnOutput(GlobalStates.focusedScreen?.name ?? "") && !NiriService.inOverview)
                 || !(Config.options?.enabledPanels ?? []).includes("irisBar")
                 || ((Config.options?.iris?.bar?.screenList ?? []).length > 0
@@ -243,7 +244,7 @@ Item {
         identifier: "irisRecordingOsd"
         open: RecorderStatus.isRecording
         requireEnabledPanel: false
-        extraCondition: !(GlobalStates.barOpen
+        extraCondition: IrisDesign.has("bar") || !(GlobalStates.barOpen
             && (Config.options?.enabledPanels ?? []).includes("irisBar"))
         source: "../recordingOsd/RecordingOsd.qml"
     }
