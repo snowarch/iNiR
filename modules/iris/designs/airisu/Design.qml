@@ -36,6 +36,7 @@ QtObject {
         notificationIcon: "skins/NotificationIcon.qml",
         badge: "skins/Badge.qml",
         dockSlot: "skins/DockSlot.qml",
+        toolDial: "skins/ToolDial.qml",
         controlTile: "skins/ControlTile.qml",
         controlHeader: "skins/ControlHeader.qml",
         controlPreset: "skins/ControlPreset.qml",

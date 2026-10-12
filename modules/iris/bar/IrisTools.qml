@@ -49,7 +49,8 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredWidth: 1
         implicitHeight: face.height + label.implicitHeight + 6 * root.d
-        opacity: dial.enabled ? 1 : 0.45
+        // A Design that draws the dial (`toolDial`) prints an unavailable one its own way.
+        opacity: dial.enabled || face.skinned ? 1 : 0.45
         Accessible.role: Accessible.Button
         Accessible.name: dial.caption
 
@@ -60,14 +61,19 @@ ColumnLayout {
             height: width
             buttonRadius: IrisStyle.capsule(width)
             buttonRadiusPressed: IrisStyle.capsule(width)
-            colBackground: dial.running ? IrisStyle.tintFill(IrisStyle.secondaryAccent) : IrisStyle.fillQuiet
-            colBackgroundHover: dial.running ? IrisStyle.tintFillHover(IrisStyle.secondaryAccent) : IrisStyle.fillHover
+            skinPart: "toolDial"
+            skinData: ({ figure: dial.figure, glyph: dial.glyph, running: dial.running, share: dial.share,
+                available: dial.enabled, hovered: face.hovered || presetPointer.containsMouse,
+                pressed: face.down || (presetPointer.pressed && !presetPointer.dragging) })
+            colBackground: face.skinned ? "transparent" : dial.running ? IrisStyle.tintFill(IrisStyle.secondaryAccent) : IrisStyle.fillQuiet
+            colBackgroundHover: face.skinned ? "transparent" : dial.running ? IrisStyle.tintFillHover(IrisStyle.secondaryAccent) : IrisStyle.fillHover
             onClicked: dial.clicked()
-            scale: presetPointer.pressed && !presetPointer.dragging ? IrisStyle.pressScale(0.94) : 1
+            scale: presetPointer.pressed && !presetPointer.dragging && !face.skinned ? IrisStyle.pressScale(0.94) : 1
             Behavior on scale { NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
 
             Shape {
                 id: arc
+                visible: !face.skinned
                 anchors.fill: parent
                 anchors.margins: 3 * root.d
                 preferredRendererType: Shape.CurveRenderer
@@ -97,7 +103,7 @@ ColumnLayout {
             }
             IrisText {
                 anchors.centerIn: parent
-                visible: dial.figure.length > 0
+                visible: dial.figure.length > 0 && !face.skinned
                 text: dial.figure
                 color: IrisStyle.secondaryAccent
                 font.family: IrisStyle.fontNumbers
@@ -107,7 +113,7 @@ ColumnLayout {
             }
             MaterialSymbol {
                 anchors.centerIn: parent
-                visible: dial.glyph.length > 0
+                visible: dial.glyph.length > 0 && !face.skinned
                 text: dial.glyph
                 fill: dial.running ? 1 : 0
                 iconSize: 22 * root.d
