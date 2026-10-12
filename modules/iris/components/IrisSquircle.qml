@@ -27,7 +27,10 @@ Rectangle {
 
     // A Design whose marks are glyphs alone (AIRISU) draws no plate: the glyph in its line weight, in the ink.
     readonly property bool plain: IrisStyle.plainMarks
-    property color ink: root.plain ? IrisStyle.textSecondary : root.tiled && root.plate !== "tint" ? root.tint : IrisStyle.onTint
+    // On a chosen row's plate (a plate Design): the plain glyph in the plate's own ink.
+    property bool reversed: false
+    property color ink: root.plain ? (root.reversed ? IrisStyle.selectionLabel : IrisStyle.textSecondary)
+        : root.tiled && root.plate !== "tint" ? root.tint : IrisStyle.onTint
     radius: root.plain ? 0 : IrisStyle.iconRadius(width)
     color: "transparent"
     // The plate is its own child: a Rectangle's gradient cannot be bound back to none (Qt 6 keeps the last one).

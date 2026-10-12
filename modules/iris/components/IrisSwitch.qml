@@ -14,6 +14,8 @@ Rectangle {
     readonly property bool hovered: area.containsMouse
     readonly property bool pressed: area.pressed
     readonly property bool keyed: root.activeFocus
+    // Set on a chosen row's plate in a plate Design: the skin prints it in the plate's reverse ink.
+    property bool reversed: false
     signal toggled()
 
     implicitWidth: Math.round((root.skinned ? Number(IrisDesign.surface("switch", "width", 76)) : 40) * root.d)

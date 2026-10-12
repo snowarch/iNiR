@@ -1001,6 +1001,8 @@ QtObject {
     readonly property color selectionFill: root.plateSelection ? root.text : root.tintFill(root.accent)
     readonly property color selectionInk: root.plateSelection ? root.bodySurface : root.accent
     readonly property color selectionLabel: root.plateSelection ? root.bodySurface : root.text
+    // A detail on the chosen row (its comment, its verb): the second tone of the plate's ink in a plate Design.
+    readonly property color selectionDetail: root.plateSelection ? ColorUtils.mix(root.bodySurface, root.text, 0.7) : root.subtext
     // A list's place as a part number: 01, 02… (indexed Designs).
     function indexLabel(i: int): string { return (i + 1 < 10 ? "0" : "") + (i + 1) }
     readonly property int chamferCut: Math.round(10 * root.density)

@@ -269,6 +269,12 @@ Item {
             root.moveSelection(-1)
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             root.executeSelected()
+        } else if ((event.modifiers & Qt.AltModifier) && event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
+            // Alt and a figure open that place in the list (an indexed Design prints the numbers).
+            const index = event.key - Qt.Key_1
+            if (index >= root.visibleResults.length) return
+            root.selectedIndex = index
+            root.executeSelected()
         } else if (root.clipboardMode && event.key === Qt.Key_Delete) {
             const entry = root.visibleResults[root.selectedIndex]?.rawValue
             if (!entry) return
@@ -339,10 +345,10 @@ Item {
             function escapeHtml(value: string): string {
                 return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
             }
-            function emphasised(name: string): string {
+            // The part of a name that matches in full ink, the rest in `dim` (the chosen row passes its plate's second tone).
+            function emphasised(name: string, dim: color): string {
                 const query = root.settled.trim()
                 const at = query.length > 0 ? name.toLowerCase().indexOf(query.toLowerCase()) : -1
-                const dim = IrisStyle.textSecondary
                 if (at < 0) return stage.escapeHtml(name)
                 return "<font color='" + dim + "'>" + stage.escapeHtml(name.slice(0, at)) + "</font>"
                     + "<b>" + stage.escapeHtml(name.slice(at, at + query.length)) + "</b>"
@@ -369,6 +375,7 @@ Item {
                 if (type === Translation.tr("Web")) return IrisStyle.identity.blue
                 if (type === Translation.tr("Math")) return IrisStyle.identity.orange
                 if (type === Translation.tr("Action")) return IrisStyle.identity.purple
+                if (type === Translation.tr("Settings")) return IrisStyle.identity.indigo
                 if (type === Translation.tr("Emoji")) return IrisStyle.identity.pink
                 return IrisStyle.identity.teal
             }
@@ -455,12 +462,32 @@ Item {
                     columnSpacing: 0
 
                     Item {
+                        id: head
                         Layout.row: body.fieldLast ? 3 : 0
                         Layout.fillWidth: true
-                        implicitHeight: Math.round(68 * stage.d)
+                        implicitHeight: headSkin.active ? Number(headSkin.item?.implicitHeight ?? 0) : Math.round(68 * stage.d)
+                        // What a Design reads to draw the head its own way (the `spotlightHead` part). It draws around
+                        // the query; the field, its keys and its focus stay here, placed and set in type by what the
+                        // part answers (inputLeft, inputRight, inputOffset, inputSize, inputFamily, inputWeight,
+                        // inputSpacing, inputColour, placeholderColour, selectionColour, selectedTextColour, rule*).
+                        readonly property string query: LauncherSearch.query
+                        readonly property var mode: modeToken.mode
+                        readonly property bool browsing: root.browsing
+                        readonly property bool actionMode: root.actionMode
+                        readonly property bool clipboardMode: root.clipboardMode
+                        readonly property int count: root.clipboardMode ? root.clipboardTotal : root.visibleResults.length
+                        readonly property bool last: body.fieldLast
+                        readonly property var look: headSkin.item
+
+                        IrisSkin {
+                            id: headSkin
+                            part: "spotlightHead"
+                            host: head
+                        }
 
                         MaterialSymbol {
                             id: searchGlyph
+                            visible: !headSkin.active
                             anchors.left: parent.left
                             anchors.leftMargin: 24 * stage.d
                             anchors.verticalCenter: parent.verticalCenter
@@ -483,7 +510,7 @@ Item {
                                 ]
                             }
                             readonly property var mode: modeToken.modes.find(m => String(m.key).length > 0 && LauncherSearch.query.startsWith(m.key)) ?? null
-                            visible: modeToken.mode !== null
+                            visible: modeToken.mode !== null && !headSkin.active
                             anchors.right: parent.right
                             anchors.rightMargin: 16 * stage.d
                             anchors.verticalCenter: parent.verticalCenter
@@ -513,17 +540,21 @@ Item {
                         }
                         TextInput {
                             id: input
-                            anchors.left: searchGlyph.right
-                            anchors.leftMargin: 12 * stage.d
-                            anchors.right: modeToken.visible ? modeToken.left : parent.right
-                            anchors.rightMargin: 20 * stage.d
+                            anchors.left: parent.left
+                            anchors.leftMargin: head.look ? Number(head.look.inputLeft ?? 0) : searchGlyph.x + searchGlyph.width + 12 * stage.d
+                            anchors.right: parent.right
+                            anchors.rightMargin: head.look ? Number(head.look.inputRight ?? 0)
+                                : modeToken.visible ? modeToken.width + 36 * stage.d : 20 * stage.d
                             anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenterOffset: head.look ? Number(head.look.inputOffset ?? 0) : 0
                             text: LauncherSearch.query
-                            color: IrisStyle.text
-                            selectionColor: IrisStyle.accentContainer
-                            selectedTextColor: IrisStyle.inkOnAccentContainer
-                            font.family: IrisStyle.fontMain
-                            font.pixelSize: IrisStyle.typeTitleLarge
+                            color: head.look?.inputColour ?? IrisStyle.text
+                            selectionColor: head.look?.selectionColour ?? IrisStyle.accentContainer
+                            selectedTextColor: head.look?.selectedTextColour ?? IrisStyle.inkOnAccentContainer
+                            font.family: head.look?.inputFamily ?? IrisStyle.fontMain
+                            font.pixelSize: head.look?.inputSize ?? IrisStyle.typeTitleLarge
+                            font.weight: head.look?.inputWeight ?? Font.Normal
+                            font.letterSpacing: head.look?.inputSpacing ?? 0
                             clip: true
                             focus: true
                             onTextChanged: if (LauncherSearch.query !== text) LauncherSearch.query = text
@@ -533,9 +564,11 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 visible: input.text.length === 0
                                 text: Translation.tr("Apps, settings, actions…")
-                                color: IrisStyle.muted
+                                color: head.look?.placeholderColour ?? IrisStyle.muted
+                                font.family: input.font.family
                                 font.pixelSize: input.font.pixelSize
-                                font.weight: IrisStyle.weight(Font.Normal)
+                                font.weight: head.look ? input.font.weight : IrisStyle.weight(Font.Normal)
+                                font.letterSpacing: input.font.letterSpacing
                             }
                         }
                     }
@@ -543,11 +576,11 @@ Item {
                     Rectangle {
                         Layout.row: body.fieldLast ? 2 : 1
                         Layout.fillWidth: true
-                        Layout.leftMargin: 24 * stage.d
-                        Layout.rightMargin: 24 * stage.d
-                        implicitHeight: 1
+                        Layout.leftMargin: head.look ? Number(head.look.ruleInset ?? 0) : 24 * stage.d
+                        Layout.rightMargin: Layout.leftMargin
+                        implicitHeight: head.look ? Number(head.look.ruleWeight ?? 1) : 1
                         visible: results.visible || browse.visible
-                        color: IrisStyle.hairline
+                        color: head.look?.ruleColour ?? IrisStyle.hairline
                     }
 
                     ColumnLayout {
@@ -557,14 +590,30 @@ Item {
                         visible: root.browsing && (root.suggestions.length > 0 || hints.visible)
                         spacing: 0
 
-                        IrisText {
+                        Item {
+                            id: suggestionsHead
                             visible: root.suggestions.length > 0
-                            Layout.leftMargin: 24 * stage.d
+                            Layout.fillWidth: true
                             Layout.topMargin: 16 * stage.d
-                            text: Translation.tr("Suggestions")
-                            color: IrisStyle.muted
-                            font.pixelSize: IrisStyle.typeMeta
-                            font.weight: IrisStyle.weight(Font.DemiBold)
+                            implicitHeight: suggestionsTab.active ? Number(suggestionsTab.item?.implicitHeight ?? 0) : suggestionsLabel.implicitHeight
+                            // A section's name, which a Design may set as its own mark (the `sectionTab` part).
+                            readonly property string title: Translation.tr("Suggestions")
+                            readonly property var tint: null
+                            readonly property bool first: true
+                            IrisSkin {
+                                id: suggestionsTab
+                                part: "sectionTab"
+                                host: suggestionsHead
+                            }
+                            IrisText {
+                                id: suggestionsLabel
+                                visible: !suggestionsTab.active
+                                x: 24 * stage.d
+                                text: suggestionsHead.title
+                                color: IrisStyle.muted
+                                font.pixelSize: IrisStyle.typeMeta
+                                font.weight: IrisStyle.weight(Font.DemiBold)
+                            }
                         }
 
                         Item {
@@ -593,7 +642,7 @@ Item {
                                 width: tiles.tileWidth - 4 * stage.d
                                 height: tiles.height
                                 radius: IrisStyle.radiusTile
-                                color: IrisStyle.tintFill(IrisStyle.accent)
+                                color: IrisStyle.selectionFill
                                 Behavior on x { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                             }
 
@@ -642,6 +691,19 @@ Item {
                                             scale: tile.pressed ? IrisStyle.pressScale(0.92) : 1
                                             Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
                                         }
+                                        readonly property bool chosen: root.selectedIndex === tile.index
+                                        // Its place as a part number (an indexed Design): Alt and the figure open it.
+                                        IrisText {
+                                            visible: IrisStyle.indexed && tile.index < 9
+                                            x: 8 * stage.d
+                                            y: 6 * stage.d
+                                            text: IrisStyle.indexLabel(tile.index)
+                                            defaultFont: IrisStyle.fontNumbers
+                                            font.pixelSize: IrisStyle.typeFootnote
+                                            font.weight: IrisStyle.weight(Font.Bold)
+                                            font.features: { "tnum": 1 }
+                                            color: tile.chosen ? IrisStyle.selectionDetail : IrisStyle.textTertiary
+                                        }
                                         Rectangle {
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             anchors.top: tileIcon.bottom
@@ -650,7 +712,7 @@ Item {
                                             width: 4 * stage.d
                                             height: width
                                             radius: IrisStyle.capsule(width)
-                                            color: IrisStyle.textTertiary
+                                            color: tile.chosen ? IrisStyle.selectionDetail : IrisStyle.textTertiary
                                         }
                                         IrisText {
                                             id: tileLabel
@@ -668,7 +730,7 @@ Item {
                                             maximumLineCount: 2
                                             elide: Text.ElideRight
                                             font.pixelSize: IrisStyle.typeFootnote
-                                            color: root.selectedIndex === tile.index ? IrisStyle.text : IrisStyle.subtext
+                                            color: tile.chosen ? IrisStyle.selectionLabel : IrisStyle.subtext
                                         }
                                     }
                                 }
@@ -716,8 +778,10 @@ Item {
                                     implicitHeight: Math.round(34 * stage.d)
                                     buttonRadius: IrisStyle.radiusRow
                                     buttonRadiusPressed: IrisStyle.radiusRow
+                                    // A Design's skin draws it as its quiet button (its own pointer marks).
+                                    quiet: hint.skinned
                                     colBackground: "transparent"
-                                    colBackgroundHover: IrisStyle.fillHover
+                                    colBackgroundHover: hint.skinned ? "transparent" : IrisStyle.fillHover
                                     Accessible.name: hint.modelData.label
                                     onClicked: { LauncherSearch.query = hint.modelData.key; stage.focusInput() }
                                     RowLayout {
@@ -726,18 +790,21 @@ Item {
                                         anchors.leftMargin: 10 * stage.d
                                         anchors.rightMargin: 10 * stage.d
                                         spacing: 8 * stage.d
+                                        // The key: a keycap; in a Design of plain marks, the key's outline.
                                         Rectangle {
                                             Layout.alignment: Qt.AlignVCenter
                                             Layout.preferredWidth: Math.max(20 * stage.d, keyText.implicitWidth + 8 * stage.d)
                                             Layout.preferredHeight: Math.round(20 * stage.d)
                                             radius: IrisStyle.radiusMicro
-                                            color: hint.buttonHovered ? IrisStyle.tintFillHover(IrisStyle.accent) : IrisStyle.fill
+                                            color: IrisStyle.plainMarks ? "transparent" : hint.buttonHovered ? IrisStyle.tintFillHover(IrisStyle.accent) : IrisStyle.fill
+                                            border.width: IrisStyle.plainMarks ? Math.max(1, Math.round(stage.d)) : 0
+                                            border.color: hint.buttonHovered ? IrisStyle.text : IrisStyle.textTertiary
                                             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
                                             IrisText {
                                                 id: keyText
                                                 anchors.centerIn: parent
                                                 text: hint.modelData.key
-                                                color: hint.buttonHovered ? IrisStyle.accent : IrisStyle.subtext
+                                                color: hint.buttonHovered ? (IrisStyle.plainMarks ? IrisStyle.text : IrisStyle.accent) : IrisStyle.subtext
                                                 font.family: Appearance.font.family.monospace
                                                 font.pixelSize: IrisStyle.typeMeta
                                                 font.weight: IrisStyle.weight(Font.Bold)
@@ -816,7 +883,7 @@ Item {
                                 y: resultColumn.y + (target ? target.y + target.rowY : 0)
                                 height: target?.rowHeight ?? 0
                                 radius: IrisStyle.radiusTile
-                                color: IrisStyle.tintFill(IrisStyle.accent)
+                                color: IrisStyle.selectionFill
                                 Behavior on y { NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
                                 Behavior on height { NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
                             }
@@ -863,10 +930,25 @@ Item {
                                         width: resultColumn.width
 
                                         Item {
+                                            id: sectionHead
                                             visible: result.showHeader
                                             width: parent.width
                                             height: Math.round((result.index === 0 ? 24 : 30) * stage.d)
+                                            // A section's name, which a Design may set as its own mark (the `sectionTab`
+                                            // part): its line colour is the area's in "/", the kind's elsewhere, none
+                                            // for the top hit and the clipboard.
+                                            readonly property string title: stage.sectionAt(result.index)
+                                            readonly property var tint: root.clipboardMode || result.topHit ? null
+                                                : root.actionMode ? (result.modelData?.areaTint ?? null)
+                                                : stage.kindTint(String(result.modelData?.type ?? ""))
+                                            readonly property bool first: result.index === 0
+                                            IrisSkin {
+                                                id: sectionTab
+                                                part: "sectionTab"
+                                                host: sectionHead
+                                            }
                                             IrisText {
+                                                visible: !sectionTab.active
                                                 x: 20 * stage.d
                                                 height: parent.height
                                                 verticalAlignment: Text.AlignBottom
@@ -927,6 +1009,27 @@ Item {
                                                 anchors.rightMargin: 14 * stage.d
                                                 spacing: 12 * stage.d
 
+                                                // Its place as a part number (an indexed Design): Alt and the figure open it.
+                                                IrisText {
+                                                    visible: IrisStyle.indexed
+                                                    Layout.alignment: Qt.AlignVCenter
+                                                    Layout.preferredWidth: codeWidth.advanceWidth
+                                                    Layout.rightMargin: -4 * stage.d
+                                                    text: IrisStyle.indexLabel(result.index)
+                                                    defaultFont: IrisStyle.fontNumbers
+                                                    font.pixelSize: IrisStyle.typeMeta
+                                                    font.weight: IrisStyle.weight(Font.Bold)
+                                                    font.features: { "tnum": 1 }
+                                                    color: result.selected ? IrisStyle.selectionDetail : IrisStyle.textTertiary
+                                                    TextMetrics {
+                                                        id: codeWidth
+                                                        font.family: IrisStyle.fontNumbers
+                                                        font.pixelSize: IrisStyle.typeMeta
+                                                        font.weight: Font.Bold
+                                                        text: "00"
+                                                    }
+                                                }
+
                                                 Item {
                                                     id: lead
                                                     readonly property real size: Math.round((result.topHit ? 34 : 26) * stage.d)
@@ -983,22 +1086,14 @@ Item {
                                                                 font.pixelSize: Math.round((result.topHit ? 26 : 19) * IrisStyle.typeScale)
                                                             }
                                                         }
-                                                        Rectangle {
+                                                        IrisSquircle {
                                                             anchors.fill: parent
                                                             visible: result.modelData?.iconType !== LauncherSearchResult.IconType.System
                                                                 && result.modelData?.iconType !== LauncherSearchResult.IconType.Text
-                                                            radius: IrisStyle.iconRadius(width)
-                                                            gradient: Gradient {
-                                                                GradientStop { position: 0; color: IrisStyle.tileTop(result.mark.tint) }
-                                                                GradientStop { position: 1; color: result.mark.tint }
-                                                            }
-                                                            MaterialSymbol {
-                                                                anchors.centerIn: parent
-                                                                text: result.modelData?.iconName || "search"
-                                                                fill: 1
-                                                                iconSize: Math.round(parent.width * 0.58)
-                                                                color: IrisStyle.onTint
-                                                            }
+                                                            tint: result.mark.tint
+                                                            glyph: result.modelData?.iconName || "search"
+                                                            glyphShare: 0.58
+                                                            reversed: result.selected && IrisStyle.plateSelection
                                                         }
                                                     }
                                                 }
@@ -1011,10 +1106,15 @@ Item {
                                                         readonly property bool emphasise: !root.clipboardMode && !result.mathHit
                                                             && result.modelData?.fontType !== LauncherSearchResult.FontType.Monospace
                                                         textFormat: emphasise || result.mathHit ? Text.StyledText : Text.PlainText
+                                                        color: result.selected ? IrisStyle.selectionLabel : IrisStyle.text
+                                                        // A Design of plain marks keeps its caution colour for caution: the sign is set in the ink.
+                                                        readonly property color equals: !IrisStyle.plainMarks ? IrisStyle.secondaryAccent
+                                                            : result.selected ? IrisStyle.selectionDetail : IrisStyle.textTertiary
                                                         text: result.clipImage ? Translation.tr("Image")
                                                             : result.mathHit
-                                                                ? "<font color='" + IrisStyle.secondaryAccent + "'>=</font> " + stage.escapeHtml(String(result.modelData?.name ?? ""))
-                                                            : emphasise ? stage.emphasised(String(result.modelData?.name ?? ""))
+                                                                ? "<font color='" + equals + "'>=</font> " + stage.escapeHtml(String(result.modelData?.name ?? ""))
+                                                            : emphasise ? stage.emphasised(String(result.modelData?.name ?? ""),
+                                                                result.selected ? IrisStyle.selectionDetail : IrisStyle.textSecondary)
                                                             : String(result.modelData?.name ?? "")
                                                         font.family: result.mathHit ? IrisStyle.fontMain
                                                             : result.modelData?.fontType === LauncherSearchResult.FontType.Monospace
@@ -1030,7 +1130,7 @@ Item {
                                                         visible: (result.topHit || root.actionMode || Boolean(result.modelData?.fuzzy)) && text.length > 0
                                                         text: result.mathHit ? root.settled
                                                             : result.modelData?.comment || result.modelData?.genericName || result.modelData?.type || ""
-                                                        color: IrisStyle.subtext
+                                                        color: result.selected ? IrisStyle.selectionDetail : IrisStyle.subtext
                                                         font.pixelSize: IrisStyle.typeMeta
                                                         elide: Text.ElideRight
                                                     }
@@ -1050,6 +1150,7 @@ Item {
                                                     Layout.preferredHeight: Math.round(26 * stage.d)
                                                     materialIcon: "delete"
                                                     iconSize: Math.round(16 * stage.d)
+                                                    foreground: result.selected ? IrisStyle.selectionLabel : IrisStyle.text
                                                     Accessible.name: Translation.tr("Delete from history")
                                                     onClicked: {
                                                         Cliphist.deleteEntry(String(result.modelData?.rawValue ?? ""))
@@ -1060,12 +1161,13 @@ Item {
                                                     visible: Boolean(result.modelData?.pick) && result.modelData.isOn()
                                                     text: "check"
                                                     iconSize: Math.round(18 * stage.d)
-                                                    color: IrisStyle.accent
+                                                    color: result.selected ? IrisStyle.selectionInk : IrisStyle.accent
                                                 }
                                                 IrisSwitch {
                                                     visible: typeof result.modelData?.isOn === "function" && !result.modelData?.pick
                                                     on: visible && result.modelData.isOn()
                                                     name: String(result.modelData?.name ?? "")
+                                                    reversed: result.selected && IrisStyle.plateSelection
                                                     onToggled: {
                                                         root.selectedIndex = result.index
                                                         root.executeSelected()
@@ -1074,7 +1176,7 @@ Item {
                                                 IrisText {
                                                     visible: result.selected && text.length > 0 && typeof result.modelData?.isOn !== "function"
                                                     text: String(result.modelData?.verb ?? "")
-                                                    color: IrisStyle.subtext
+                                                    color: IrisStyle.selectionDetail
                                                     font.pixelSize: IrisStyle.typeMeta
                                                 }
                                                 Rectangle {
@@ -1082,12 +1184,14 @@ Item {
                                                     Layout.preferredWidth: Math.round(24 * stage.d)
                                                     Layout.preferredHeight: Math.round(20 * stage.d)
                                                     radius: IrisStyle.radiusChip
-                                                    color: IrisStyle.fill
+                                                    color: IrisStyle.plainMarks ? "transparent" : IrisStyle.fill
+                                                    border.width: IrisStyle.plainMarks ? Math.max(1, Math.round(stage.d)) : 0
+                                                    border.color: IrisStyle.selectionLabel
                                                     MaterialSymbol {
                                                         anchors.centerIn: parent
                                                         text: "keyboard_return"
                                                         iconSize: Math.round(14 * stage.d)
-                                                        color: IrisStyle.text
+                                                        color: IrisStyle.selectionLabel
                                                     }
                                                 }
                                             }
