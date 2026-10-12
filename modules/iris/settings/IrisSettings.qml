@@ -41,7 +41,7 @@ Item {
     readonly property real d: IrisStyle.settingsDensity
     // A section about hardware this machine lacks is not offered (Battery on a desktop); `inir battery simulate` brings it back.
     readonly property var sections: IrisOptions.sections.filter(section => section.id !== "battery" || Battery.available)
-    // Sources and More Settings sit in a footer under the list, always in view.
+    // Sources and the Community Hub sit in a footer under the list, always in view.
     readonly property int footerCluster: 6
     readonly property var specifications: IrisOptions.settings
     readonly property var currentSection: IrisOptions.sectionById(root.section)
@@ -61,11 +61,11 @@ Item {
     // Columns (2026-10-11, the maintainer: "que todo se abra hacia el lado que tenga espacio y aprovechar el espacio que hoy
     // no se usa … que no quede vacío"): a section reads whole in one pane, its groups down a column beside it as the index;
     // the row of the group being read is the pane reaching into the column, melting into it as the Island's bodies meet
-    // it. Search, More Settings, Home, the shared pages and a window too narrow for it keep the full width.
+    // it. Search, the Hub, Home, the shared pages and a window too narrow for it keep the full width.
     readonly property real pageWidth: pageArea.width
     readonly property real sidebarNeed: sidebarLayout.implicitHeight + 2 * sidebar.pad + Math.round(4 * root.d)
     readonly property bool wideEnough: root.pageWidth >= Math.round(720 * root.d)
-    // A shared page the column lists (More Settings' pages, General's About and Shortcuts) reads in the pane beside it,
+    // A shared page the column lists (the Hub, General's About and Shortcuts) reads in the pane beside it,
     // its row the tab; any other shared page keeps the full width.
     readonly property bool pageInPane: root.advancedPage >= 0 && root.wideEnough
         && root.navLinks.some(link => link.page && root.pageIndexOf(link.page) === root.advancedPage)
@@ -390,7 +390,7 @@ Item {
         }
         const links = root.navLinks
         if (root.section === "system") {
-            // More Settings is its pages, in their blocks.
+            // The Hub entry is its pages, in their blocks.
             for (const block of root.moreGroups) {
                 out.push({ type: "caption", key: "caption:" + block, text: block })
                 for (const link of links.filter(candidate => candidate.block === block))
@@ -436,7 +436,7 @@ Item {
         const rows = root.specifications.filter(spec => spec.section === id && root.shown(spec))
         const groups = new Set(rows.map(spec => String(spec.group ?? "")))
         return id !== "system" && groups.size > 1 && (root.paneable
-            || (rows.length <= 15 && !rows.some(spec => ["widgets", "pieces", "niriMotion"].includes(spec.kind))))
+            || (rows.length <= 15 && !rows.some(spec => ["widgets", "pieces", "niriMotion", "list"].includes(spec.kind))))
     }
     function openResult(spec: var, land: bool): void {
         searchField.text = ""
@@ -475,7 +475,7 @@ Item {
         root.showGroup(place.group)
         if (searchField.text.length > 0) searchField.text = ""
     }
-    // More Settings in columns opens on its first page: the pane never stands empty beside its index.
+    // The Hub entry in columns opens on its first page: the pane never stands empty beside its index.
     function landingPage(section: string, page: int): int {
         return section === "system" && page < 0 && root.wideEnough && root.morePages.length > 0 ? root.pageIndexOf(root.morePages[0].key) : page
     }
@@ -562,7 +562,9 @@ Item {
         tools: () => "capture",
         advanced: () => "colour/App colours",
         monitors: () => "display/Screens",
-        themes: () => "colour/Colour theme"
+        themes: () => "colour/Colour theme",
+        autostart: () => "general/At login",
+        services: () => "sources/Calendar"
     })
     function applyRequest(): void {
         const landing = root.nativePages[String(root.pages[GlobalStates.settingsOverlayRequestedPage]?.key ?? "")]

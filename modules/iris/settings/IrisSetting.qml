@@ -530,6 +530,15 @@ Item {
             sourceComponent: piecesComponent
         }
 
+        // A list the row edits in place (Autostart, calendar accounts): its own view, the row only frames it.
+        Loader {
+            opacity: root.controlOpacity
+            Layout.fillWidth: true
+            active: root.spec.kind === "list"
+            visible: active
+            source: active ? root.spec.view : ""
+        }
+
         Loader {
             opacity: root.controlOpacity
             Layout.fillWidth: true
