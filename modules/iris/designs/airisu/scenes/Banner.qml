@@ -79,7 +79,7 @@ Item {
         x: Math.round(18 * root.d) + (root.critical ? tape.width : 0)
         y: Math.round(20 * root.d)
         width: parent.width - x - Math.round(18 * root.d)
-        spacing: Math.round(3 * root.d)
+        spacing: Math.round(4 * root.d)
 
         Item {
             width: parent.width
