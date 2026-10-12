@@ -2235,6 +2235,14 @@ Item {
                 font.weight: IrisStyle.weight(Font.DemiBold)
                 elide: Text.ElideRight
             }
+            IrisSwitch {
+                visible: group.loneSwitch
+                // On the rows' column: a row's switch sits 16·d in from the card's edge.
+                Layout.rightMargin: 16 * root.d
+                on: group.loneSwitch && (group.shownRows[0].invert ? !Boolean(IrisOptions.currentValue(group.shownRows[0])) : Boolean(IrisOptions.currentValue(group.shownRows[0])))
+                name: String(group.modelData.caption ?? "")
+                onToggled: IrisOptions.commit(group.shownRows[0], group.shownRows[0].invert ? on : !on)
+            }
         }
         // A long group reads as captioned cards, one per `part` its rows name; search shows one card. Keyed by caption,
         // so a write (a slider mid-drag) never rebuilds a card under the pointer.
@@ -2256,8 +2264,14 @@ Item {
         onLandsInFoldChanged: if (group.landsInFold && !group.tuneOpen) root.fold(group.tuneKey)
         // A group that is all fine-tuning still has one card: its Fine-tune row.
         readonly property var parts: group.shownRows.length === 0 ? [""] : [...new Set(group.shownRows.map(spec => group.partOf(spec)))]
+        // A group that is only a switch (a widget not on the desktop) is its head: the name and its switch, no card.
+        readonly property bool loneSwitch: {
+            Config.revision
+            return root.flatSection && String(group.modelData.caption ?? "").length > 0 && !group.folds
+                && group.shownRows.length === 1 && group.shownRows[0].kind === "switch"
+        }
         Repeater {
-            model: ScriptModel { values: group.parts }
+            model: ScriptModel { values: group.loneSwitch ? [] : group.parts }
             ColumnLayout {
                 id: part
                 required property string modelData
