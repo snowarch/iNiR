@@ -43,8 +43,8 @@ GridLayout {
         }
         return groups
     }
-    readonly property color obi: Airisu.gofun
-    readonly property color obiInk: Airisu.inkOnGofun
+    readonly property color obi: Airisu.ink
+    readonly property color obiInk: Airisu.reverse
     readonly property string album: String(page.island?.player?.trackAlbum ?? "")
 
     PlayerBase {
@@ -102,21 +102,19 @@ GridLayout {
                 x: Math.round((band.width - width) / 2)
                 y: Math.round(band.height - Math.round(10 * page.d) - room / 2 - height / 2 + (room - width) / 2)
                 rotation: -90
-                voice: "wide"
+                voice: "text"
                 size: IrisStyle.typeLabel
-                font.capitalization: Font.AllUppercase
-                font.letterSpacing: Math.round(IrisStyle.typeLabel * 0.06)
+                font.weight: Font.Bold
                 text: media.effectiveArtist
                 color: page.obiInk
             }
         }
-        // A fold's shadow where the band leaves the cover.
+        // The fold where the band leaves the cover: a rule, not a shadow.
         Rectangle {
             x: band.width
-            width: Math.max(1, Math.round(page.d))
+            width: Airisu.hair
             height: cover.height
-            color: IrisStyle.scrim
-            opacity: 0.35
+            color: Airisu.rule
         }
 
         ColumnLayout {
@@ -126,7 +124,7 @@ GridLayout {
             spacing: Math.round(4 * page.d)
             AText {
                 Layout.fillWidth: true
-                voice: "wide"
+                voice: "figure"
                 size: IrisStyle.typeTitleLarge
                 text: media.effectiveTitle
                 wrapMode: Text.Wrap
@@ -139,7 +137,7 @@ GridLayout {
                 size: IrisStyle.typeLabel
                 font.weight: Font.Medium
                 text: page.album
-                color: Airisu.data
+                color: Airisu.inkSecond
                 visible: text.length > 0 && text !== media.effectiveTitle
             }
             Item { Layout.fillHeight: true }
@@ -148,23 +146,24 @@ GridLayout {
                 Layout.bottomMargin: Math.round(8 * page.d)
                 running: media.effectiveIsPlaying && page.current && (page.island?.visualExpanded ?? false)
                 visible: media.effectiveIsPlaying
-                tint: Airisu.gofun
+                tint: Airisu.ink
                 barHeight: Math.round(22 * page.d)
             }
             Row {
                 visible: media.effectiveLength > 0
                 spacing: Math.round(6 * page.d)
                 AText {
-                    voice: "wide"
+                    id: position
+                    voice: "figure"
                     size: IrisStyle.typeDisplay
                     text: page.island?.clockText(media.effectivePosition) ?? ""
                 }
                 AText {
-                    anchors.baseline: parent.children[0].baseline
-                    voice: "wide"
+                    anchors.baseline: position.baseline
+                    voice: "figure"
                     size: IrisStyle.typeLabel
                     text: "/ " + (page.island?.clockText(media.effectiveLength) ?? "")
-                    color: Airisu.quiet
+                    color: Airisu.inkThird
                 }
             }
         }
@@ -176,43 +175,47 @@ GridLayout {
         visible: page.rowOf("timeline") >= 0 && media.effectiveLength > 0 && !page.anime
         seekable: media.effectiveCanSeek
         value: media.effectiveLength > 0 ? media.effectivePosition / media.effectiveLength : 0
-        fillColor: Airisu.gofun
+        live: media.effectiveIsPlaying
         onSeekRequested: next => media.seek(next * media.effectiveLength)
     }
 
-    // Three keys edge to edge: back, the live one, forward.
+    // Transport: back and forward are marks alone; the main key is the seal (SYSTEM.md §7: the player's main action).
     Row {
         id: keys
         Layout.row: Math.max(0, page.rowOf("transport"))
         Layout.fillWidth: true
         visible: page.rowOf("transport") >= 0 && !page.anime
-        spacing: Math.round(6 * page.d)
+        spacing: Airisu.u(2)
         readonly property real side: Math.round((page.width - 2 * keys.spacing) / 4)
-        ASeal {
-            kind: "line"
-            glyph: "skip_previous"
+        readonly property real tall: Math.round(40 * page.d)
+        IrisButton {
+            id: previousKey
+            quiet: true
             width: keys.side
-            height: Math.round(40 * page.d)
-            opacity: media.effectiveCanGoPrevious ? 1 : 0.4
+            height: keys.tall
+            enabled: media.effectiveCanGoPrevious
             Accessible.name: Translation.tr("Previous track")
             onClicked: media.previous()
+            MaterialSymbol { anchors.centerIn: parent; text: "skip_previous"; fill: 1; iconSize: Math.round(22 * page.d); color: previousKey.enabled ? Airisu.ink : Airisu.inkThird }
         }
-        ASeal {
-            kind: media.effectiveIsPlaying ? "seal" : "gofun"
-            glyph: media.effectiveIsPlaying ? "pause" : "play_arrow"
+        IrisButton {
+            id: playKey
+            emphasized: true
             width: page.width - 2 * keys.side - 2 * keys.spacing
-            height: Math.round(40 * page.d)
+            height: keys.tall
             Accessible.name: media.effectiveIsPlaying ? Translation.tr("Pause") : Translation.tr("Play")
             onClicked: media.togglePlaying()
+            MaterialSymbol { anchors.centerIn: parent; text: media.effectiveIsPlaying ? "pause" : "play_arrow"; fill: 1; iconSize: Math.round(24 * page.d); color: Airisu.inkOnSeal }
         }
-        ASeal {
-            kind: "line"
-            glyph: "skip_next"
+        IrisButton {
+            id: nextKey
+            quiet: true
             width: keys.side
-            height: Math.round(40 * page.d)
-            opacity: media.effectiveCanGoNext ? 1 : 0.4
+            height: keys.tall
+            enabled: media.effectiveCanGoNext
             Accessible.name: Translation.tr("Next track")
             onClicked: media.next()
+            MaterialSymbol { anchors.centerIn: parent; text: "skip_next"; fill: 1; iconSize: Math.round(22 * page.d); color: nextKey.enabled ? Airisu.ink : Airisu.inkThird }
         }
     }
 
@@ -221,11 +224,11 @@ GridLayout {
         Layout.fillWidth: true
         visible: page.rowOf("players") >= 0 && page.otherPlayers.length > 0 && !page.anime
         spacing: Math.round(10 * page.d)
-        Rectangle { Layout.fillWidth: true; implicitHeight: Airisu.line; color: Airisu.fillet }
+        Rectangle { Layout.fillWidth: true; implicitHeight: Airisu.hair; color: Airisu.rule }
         IrisPlayerChips {
             Layout.fillWidth: true
             player: page.island?.player ?? null
-            accent: page.obi
+            accent: Airisu.ink
         }
     }
 
@@ -234,7 +237,7 @@ GridLayout {
         Layout.fillWidth: true
         visible: page.rowOf("levels") >= 0 && page.streams.length > 0 && !page.anime
         spacing: Math.round(8 * page.d)
-        Rectangle { Layout.fillWidth: true; implicitHeight: Airisu.line; color: Airisu.fillet }
+        Rectangle { Layout.fillWidth: true; implicitHeight: Airisu.hair; color: Airisu.rule }
         Repeater {
             model: page.streams.slice(0, 4)
             RowLayout {
@@ -250,11 +253,12 @@ GridLayout {
                     Layout.preferredWidth: Math.round(110 * page.d)
                     size: IrisStyle.typeMeta
                     text: level.nodes.length > 1 ? level.modelData.name + " · " + level.nodes.length : level.modelData.name
-                    color: level.muted ? Airisu.quiet : Airisu.gofun
+                    color: level.muted ? Airisu.inkThird : Airisu.ink
                 }
+                // A stream's volume is a setting's range: the graduated rule.
                 IrisScrubber {
                     Layout.fillWidth: true
-                    fillColor: level.muted ? Airisu.quiet : Airisu.gofun
+                    knob: true
                     Binding on value {
                         when: level.live
                         restoreMode: Binding.RestoreNone
@@ -262,9 +266,9 @@ GridLayout {
                     }
                     onMoved: next => level.nodes.forEach(node => { if (node?.audio) node.audio.volume = next })
                 }
-                ASeal {
-                    kind: level.muted ? "amber" : "line"
-                    glyph: level.muted ? "volume_off" : "volume_up"
+                IrisButton {
+                    quiet: true
+                    danger: level.muted
                     implicitWidth: Math.round(30 * page.d)
                     implicitHeight: Math.round(26 * page.d)
                     Accessible.name: level.muted ? Translation.tr("Unmute") : Translation.tr("Mute")
@@ -272,6 +276,7 @@ GridLayout {
                         const mute = !level.muted
                         level.nodes.forEach(node => { if (node?.audio) node.audio.muted = mute })
                     }
+                    MaterialSymbol { anchors.centerIn: parent; text: level.muted ? "volume_off" : "volume_up"; fill: 1; iconSize: Math.round(16 * page.d); color: level.muted ? Airisu.caution : Airisu.inkSecond }
                 }
             }
         }

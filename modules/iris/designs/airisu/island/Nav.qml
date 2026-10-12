@@ -1,73 +1,78 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's page nav: unlit marks on the lacquer and the page you are on lit, with the seal under it like the lamp of a
-// selector. No plate, no buttons drawn at rest; the engine (IrisIsland) owns the entries and what each one does.
+// AIRISU's page nav: the pages as marks on the sheet, the one you are on printed as a solid ink plate with its mark
+// reversed out (the chosen box of a form), the one under the pointer with its crop marks. The plate stops on the next
+// page in a detent; it never slides through the others. The engine (IrisIsland) owns the entries and what each does.
 Item {
     id: root
     property var island: null
     readonly property real d: Airisu.d
+    readonly property real slot: root.island?.navSlot ?? Math.round(34 * root.d)
+    readonly property real plate: Math.min(root.slot - Airisu.u(1), Airisu.u(7))
     implicitHeight: Math.round(34 * root.d)
 
     Row {
         id: row
         anchors.centerIn: parent
-        spacing: Math.round(2 * root.d)
         Repeater {
             model: root.island?.navEntries ?? []
             delegate: Item {
-                id: slot
+                id: entry
                 required property var modelData
-                readonly property bool divider: slot.modelData.kind === "|"
-                readonly property string page: slot.modelData.page ?? ""
-                readonly property bool lit: !slot.divider && slot.page.length > 0 && root.island?.effectivePage === slot.page
-                width: slot.divider ? Math.round(13 * root.d) : Math.round(38 * root.d)
+                readonly property bool divider: entry.modelData.kind === "|"
+                readonly property string page: entry.modelData.page ?? ""
+                readonly property bool lit: !entry.divider && entry.page.length > 0 && root.island?.effectivePage === entry.page
+                width: entry.divider ? Airisu.u(3) : root.slot
                 height: root.height
 
                 Rectangle {
-                    visible: slot.divider
+                    visible: entry.divider
                     anchors.centerIn: parent
-                    width: Airisu.line
-                    height: Math.round(14 * root.d)
-                    color: Airisu.fillet
+                    width: Airisu.hair
+                    height: Airisu.u(3.5)
+                    color: Airisu.rule
                 }
-                MaterialSymbol {
-                    visible: !slot.divider
+                APrint {
+                    id: key
+                    visible: !entry.divider
                     anchors.centerIn: parent
-                    anchors.verticalCenterOffset: -Math.round(2 * root.d)
-                    text: slot.modelData.glyph ?? ""
-                    iconSize: Math.round(19 * root.d)
-                    fill: 0
-                    color: slot.lit ? Airisu.gofun : hover.hovered ? Airisu.data : Airisu.quiet
-                    Behavior on color { enabled: IrisStyle.motionEnabled; ColorAnimation { duration: Airisu.shift } }
+                    width: root.plate
+                    height: root.plate
+                    die: "rect"
+                    pressed: tap.pressed
+                    fill: entry.lit ? Airisu.ink : "transparent"
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: entry.modelData.glyph ?? ""
+                        iconSize: Math.round(18 * root.d)
+                        fill: entry.lit ? 1 : 0
+                        color: entry.lit ? Airisu.reverse : hover.hovered ? Airisu.ink : Airisu.inkSecond
+                    }
                 }
-                Rectangle {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    width: slot.lit ? Math.round(16 * root.d) : 0
-                    height: Math.max(2, Math.round(2 * root.d))
-                    color: Airisu.seal
-                    Behavior on width { enabled: IrisStyle.motionEnabled; NumberAnimation { duration: Airisu.shift; easing.type: Easing.BezierSpline; easing.bezierCurve: Airisu.curve } }
+                ATombo {
+                    anchors.fill: key
+                    shown: hover.hovered && !entry.lit && !tap.pressed
                 }
                 HoverHandler {
                     id: hover
-                    enabled: !slot.divider
+                    enabled: !entry.divider
                     cursorShape: Qt.PointingHandCursor
-                    onHoveredChanged: root.island?.hoverNav(slot.modelData.kind, slot.page, hover.hovered)
+                    onHoveredChanged: root.island?.hoverNav(entry.modelData.kind, entry.page, hover.hovered)
                 }
                 TapHandler {
-                    enabled: !slot.divider
-                    onTapped: root.island?.activateNav(slot.modelData.kind)
+                    id: tap
+                    enabled: !entry.divider
+                    onTapped: root.island?.activateNav(entry.modelData.kind)
                 }
                 Accessible.role: Accessible.Button
-                Accessible.name: Translation.tr(slot.modelData.label ?? "")
+                Accessible.name: Translation.tr(entry.modelData.label ?? "")
             }
         }
     }
