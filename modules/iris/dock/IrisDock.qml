@@ -620,10 +620,17 @@ Item {
                                 y: root.edgeY(parent.height, height, 7 * root.d + (root.iconSize - root.iconSize * 0.9) / 2)
                                 width: Math.round(root.iconSize * 0.9 * launcherSlot.iconScale * (launcherArea.pressed ? IrisStyle.pressScale(0.92) : 1))
                                 height: width
+                                // A Design with its own insignia (AIRISU's kamon) opens the apps from it: the dock wears the mark.
+                                IrisMark {
+                                    anchors.centerIn: parent
+                                    visible: !window.spotlightHere && IrisDesign.has("insignia")
+                                    implicitSize: launcherGlyph.width * 0.92
+                                    color: IrisStyle.accent
+                                }
                                 Grid {
                                     id: launcherDots
                                     anchors.centerIn: parent
-                                    visible: !window.spotlightHere
+                                    visible: !window.spotlightHere && !IrisDesign.has("insignia")
                                     readonly property real dot: Math.max(3, Math.round(launcherGlyph.width * 0.11))
                                     columns: 3
                                     spacing: Math.round(launcherGlyph.width * 0.1)
@@ -692,7 +699,7 @@ Item {
                                 anchors.centerIn: parent
                                 width: root.vertical ? Math.round(root.iconSize * 0.56) : Math.max(1, Math.round(IrisStyle.density))
                                 height: root.vertical ? Math.max(1, Math.round(IrisStyle.density)) : Math.round(root.iconSize * 0.56)
-                                radius: width / 2
+                                radius: IrisStyle.fieldChamfer ? 0 : width / 2
                                 color: IrisStyle.borderStrong
                             }
 
@@ -910,10 +917,13 @@ Item {
                                             property real along: indicator.lead ? 2 * Math.round(6 * root.d) : indicator.dot
                                             height: root.vertical ? Math.round(indicator.along) : indicator.dot
                                             width: root.vertical ? indicator.dot : Math.round(indicator.along)
-                                            radius: Math.min(width, height) / 2
+                                            // A plate Design (AIRISU) cuts them square and lights the focused window in the seal:
+                                            // the only live thing in the dock.
+                                            radius: IrisStyle.plateSelection ? 0 : Math.min(width, height) / 2
                                             color: indicators.minimizedOnly ? "transparent"
                                                 : indicators.urgent ? IrisStyle.secondaryAccent
-                                                : indicator.lead ? IrisStyle.text : (appSlot.focused ? IrisStyle.textSecondary : IrisStyle.textTertiary)
+                                                : indicator.lead ? (IrisStyle.plateSelection ? IrisStyle.accentFill : IrisStyle.text)
+                                                : (appSlot.focused ? IrisStyle.textSecondary : IrisStyle.textTertiary)
                                             borderWidth: indicators.minimizedOnly ? Math.max(1, Math.round(1.2 * root.d)) : 0
                                             borderColor: IrisStyle.textSecondary
                                             Behavior on along { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
@@ -1042,7 +1052,7 @@ Item {
                 Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                 width: labelText.implicitWidth + 22 * root.d
                 height: Math.round(28 * root.d)
-                radius: height / 2
+                radius: IrisStyle.plateSelection ? 0 : height / 2
                 readonly property real targetLift: root.iconSize * root.magnifyGain * (nameLabel.target?.grow ?? 0)
                 x: root.atLeft ? dock.x + dock.width + 8 * root.d + nameLabel.targetLift
                     : root.atRight ? dock.x - width - 8 * root.d - nameLabel.targetLift
@@ -1060,14 +1070,18 @@ Item {
                         text: nameLabel.label
                         width: Math.min(implicitWidth, Math.round(260 * root.d))
                         elide: Text.ElideRight
-                        font.pixelSize: IrisStyle.typeLabel
+                        // A mono-caption Design labels the slot like a part: mono capitals.
+                        font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontMain
+                        font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
+                        font.letterSpacing: IrisStyle.monoCaptions ? Math.round(IrisStyle.typeFootnote * 0.14) : 0
+                        font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeFootnote : IrisStyle.typeLabel
                         font.weight: IrisStyle.weight(Font.DemiBold)
                     }
                     IrisText {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: nameLabel.windowCount > 1
-                        text: nameLabel.windowCount
-                        color: IrisStyle.secondaryAccent
+                        text: IrisStyle.monoCaptions ? "×" + nameLabel.windowCount : nameLabel.windowCount
+                        color: IrisStyle.plateSelection ? IrisStyle.accent : IrisStyle.secondaryAccent
                         font.pixelSize: IrisStyle.typeMeta
                         font.weight: IrisStyle.weight(Font.Bold)
                         font.family: IrisStyle.fontNumbers
@@ -1523,7 +1537,7 @@ Item {
         visible: !root.magnify
         width: root.plateSize
         height: plate.width
-        radius: IrisStyle.iconRadius(plate.width)
+        radius: IrisStyle.plainMarks ? 0 : IrisStyle.iconRadius(plate.width)
         x: root.edgeX(parent.width, plate.width, 4 * root.d + plate.lift)
         y: root.edgeY(parent.height, plate.height, 4 * root.d + plate.lift)
         color: plate.lit ? IrisStyle.fill : ColorUtils.applyAlpha(IrisStyle.text, 0)
