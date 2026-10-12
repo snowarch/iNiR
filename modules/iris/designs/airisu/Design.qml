@@ -17,6 +17,7 @@ QtObject {
         islandMedia: "island/Media.qml",
         islandArtBackdrop: "island/ArtBackdrop.qml",
         spotlight: "scenes/Spotlight.qml",
+        banner: "scenes/Banner.qml",
         // Skins of iRiS's primitives: every surface that uses them (Settings, the dock, menus, the sidebars) wears them.
         switch: "skins/Switch.qml",
         segmented: "skins/Segmented.qml",
@@ -26,10 +27,11 @@ QtObject {
         groupHeader: "skins/GroupHeader.qml",
         cardHeader: "skins/CardHeader.qml",
         slider: "skins/Slider.qml",
-        scrubber: "skins/Scrubber.qml"
+        scrubber: "skins/Scrubber.qml",
+        notificationIcon: "skins/NotificationIcon.qml"
     })
     // What a primitive needs to hold this Design's skin, and how a surface's body holds a scene.
-    readonly property var surfaces: ({ switch: { width: 52, height: 24 } })
+    readonly property var surfaces: ({ switch: { width: 52, height: 24 }, banners: { width: 380, margin: 24 } })
     readonly property var field: ({ corner: "chamfer" }) // a sticker cut with a blade (IrisField.frag bodyBox)
     readonly property string preset: "night"
     readonly property var fonts: ({ text: "Archivo", title: "Archivo SemiExpanded", numbers: "Archivo SemiExpanded",

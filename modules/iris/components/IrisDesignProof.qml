@@ -42,6 +42,25 @@ PanelWindow {
         { part: "cardHeader", name: "card head", w: 150, h: 46, look: ({ title: "Bluetooth", detail: "2 connected" }) },
         { part: "groupHeader", name: "group head", w: 150, h: 30, look: ({ title: "Notifications" }) }
     ]
+    // The scenes a Design draws on the engine's model, each sample in the states a person brings it to. A stand-in
+    // model only: nothing here reaches a service.
+    readonly property real minute: 60000
+    readonly property var scenes: [
+        { part: "banner", name: "banner", w: Number(IrisDesign.surface("banners", "width", 380)),
+            states: [{ name: "rest", look: ({}) }, { name: "pointer", look: ({ hovered: true }) }],
+            samples: [
+                { name: "actions", look: ({ notification: ({ notificationId: -1, appName: "Discord", appIcon: "discord", image: "",
+                    summary: "Kai", urgency: "1", time: Date.now() - 1500, timer: ({ interval: 4000 }),
+                    body: "are you around tonight? I pushed the new build and would love a second pair of eyes on the Island before it goes out",
+                    actions: [{ identifier: "reply", text: "Reply" }, { identifier: "read", text: "Mark as read" }] }) }) },
+                { name: "critical", look: ({ notification: ({ notificationId: -1, appName: "iNiR", appIcon: "", image: "",
+                    summary: "Battery critically low", urgency: "2", time: Date.now() - 4 * root.minute, timer: null,
+                    body: "6% left. Plug in the charger or the session will suspend.", actions: [] }) }) },
+                { name: "unplaced", look: ({ notification: ({ notificationId: -1, appName: "", appIcon: "", image: "",
+                    summary: "Backup finished", urgency: "0", time: Date.now() - 2 * root.minute, timer: null,
+                    body: "", actions: [] }) }) }
+            ] }
+    ]
 
     WlrLayershell.layer: WlrLayer.Background
     WlrLayershell.namespace: "quickshell:irisProof"
@@ -152,6 +171,70 @@ PanelWindow {
                                     anchors.fill: parent
                                     source: IrisDesign.skin(row.modelData.part)
                                     onLoaded: item.host = host
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Repeater {
+                model: root.scenes.filter(scene => IrisDesign.skin(scene.part).length > 0)
+                Column {
+                    id: scene
+                    required property var modelData
+                    spacing: Math.round(18 * root.d)
+                    Row {
+                        Item { width: root.labelWidth; height: 1 }
+                        Repeater {
+                            model: scene.modelData.states
+                            Text {
+                                required property var modelData
+                                width: Math.round((scene.modelData.w + 24) * root.d)
+                                text: modelData.name
+                                color: IrisStyle.textSecondary
+                                font.family: IrisStyle.fontMono
+                                font.pixelSize: IrisStyle.typeMeta
+                            }
+                        }
+                    }
+                    Repeater {
+                        model: scene.modelData.samples
+                        Row {
+                            id: sample
+                            required property var modelData
+                            Text {
+                                width: root.labelWidth
+                                text: scene.modelData.name + " · " + sample.modelData.name
+                                color: IrisStyle.textSecondary
+                                font.family: IrisStyle.fontMono
+                                font.pixelSize: IrisStyle.typeMeta
+                            }
+                            Repeater {
+                                model: scene.modelData.states
+                                Item {
+                                    id: sceneCell
+                                    required property var modelData
+                                    width: Math.round((scene.modelData.w + 24) * root.d)
+                                    height: (stage.item?.implicitHeight ?? 0) + Math.round(24 * root.d)
+                                    // The body the engine would give it, outlined so its bounds read.
+                                    Rectangle {
+                                        x: stage.x
+                                        y: stage.y
+                                        width: stage.width
+                                        height: stage.item?.implicitHeight ?? 0
+                                        color: IrisStyle.bodySurface
+                                        border.width: 1
+                                        border.color: IrisStyle.hairline
+                                    }
+                                    Loader {
+                                        id: stage
+                                        width: Math.round(scene.modelData.w * root.d)
+                                        source: IrisDesign.skin(scene.modelData.part)
+                                        onLoaded: {
+                                            for (const key in sample.modelData.look) item[key] = sample.modelData.look[key]
+                                            for (const key in sceneCell.modelData.look) item[key] = sceneCell.modelData.look[key]
+                                        }
+                                    }
                                 }
                             }
                         }

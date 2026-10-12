@@ -99,9 +99,16 @@ Item {
             source: root.iconFile ? (root.resolvedIcon.startsWith("/") ? "file://" + root.resolvedIcon : root.resolvedIcon) : ""
             fillMode: Image.PreserveAspectFit
         }
+        // A Design may print the notice's own mark (AIRISU: a pictogram plate); what it stands for stays the engine's.
+        IrisSkin {
+            id: markSkin
+            part: "notificationIcon"
+            host: root
+            visible: root.resolvedIcon.length === 0 || root.iconFile && iconFileImage.status !== Image.Ready
+        }
         Rectangle {
             anchors.fill: parent
-            visible: root.resolvedIcon.length === 0 || root.iconFile && iconFileImage.status !== Image.Ready
+            visible: !markSkin.active && (root.resolvedIcon.length === 0 || root.iconFile && iconFileImage.status !== Image.Ready)
             id: tile
             radius: IrisStyle.iconRadius(width)
             readonly property bool insignia: root.fromShell && !root.critical
