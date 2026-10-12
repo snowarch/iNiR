@@ -357,6 +357,7 @@ complete -c inir -n '__inir_at_function iris' -a activities -d 'Return the live 
 complete -c inir -n '__inir_at_function iris' -a set -d 'Set any iRiS option by path, e.g'
 complete -c inir -n '__inir_at_function iris' -a adaptive -d 'How much the wallpaper shapes iRiS, 0-100; any other word p…'
 complete -c inir -n '__inir_at_function iris' -a tokens -d 'JSON with the colours iRiS resolved for the current look an…'
+complete -c inir -n '__inir_at_function iris' -a proof -d 'Draw every control the active Design skins, in each state a…'
 complete -c inir -n '__inir_at_function iris' -a palette -d 'The colour theme the shell and your apps wear: an id such a…'
 complete -c inir -n '__inir_at_value 1 palette iris' -a 'catppuccin-mocha iris-ink auto list current'
 complete -c inir -n '__inir_at_function iris' -a preset -d 'Set the iRiS appearance preset: iris, soft, round, crisp, a…'

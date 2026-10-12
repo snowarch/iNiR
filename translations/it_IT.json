@@ -9491,5 +9491,14 @@
   "Session locked": "Sessione bloccata",
   "Type your password": "Digita la password",
   "What iRiS is made of: its shapes, type, controls and motion. Your settings stay; a Design draws them its own way.": "Di cosa è fatto iRiS: forme, caratteri, controlli e movimento. Le tue impostazioni restano; un Design le disegna a modo suo.",
-  "%1 brings its own.": "%1 porta il suo."
+  "%1 brings its own.": "%1 porta il suo.",
+  "1 app": "1 app",
+  "Full effects": "Tutti gli effetti",
+  "Every label in the shell": "Ogni etichetta della shell",
+  "Start with you, in order": "Partono con te, in ordine",
+  "Settings opens here": "Le impostazioni si aprono qui",
+  "Glass and blur are off": "Vetro e sfocatura disattivati",
+  "Glass, blur and motion on": "Vetro, sfocatura e movimento attivi",
+  "The whole shell's look": "L'aspetto di tutta la shell",
+  "Every key, by what it does": "Ogni tasto, per quello che fa"
 }

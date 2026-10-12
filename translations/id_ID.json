@@ -9491,5 +9491,14 @@
   "Session locked": "Sesi terkunci",
   "Type your password": "Ketik kata sandi",
   "What iRiS is made of: its shapes, type, controls and motion. Your settings stay; a Design draws them its own way.": "Dari apa iRiS dibuat: bentuk, huruf, kontrol, dan gerak. Pengaturanmu tetap; sebuah Desain menggambarnya dengan caranya.",
-  "%1 brings its own.": "%1 membawa miliknya sendiri."
+  "%1 brings its own.": "%1 membawa miliknya sendiri.",
+  "1 app": "1 aplikasi",
+  "Full effects": "Semua efek",
+  "Every label in the shell": "Setiap label di shell",
+  "Start with you, in order": "Mulai bersamamu, berurutan",
+  "Settings opens here": "Pengaturan terbuka di sini",
+  "Glass and blur are off": "Kaca dan buram nonaktif",
+  "Glass, blur and motion on": "Kaca, buram, dan gerakan aktif",
+  "The whole shell's look": "Tampilan seluruh shell",
+  "Every key, by what it does": "Setiap tombol, menurut fungsinya"
 }

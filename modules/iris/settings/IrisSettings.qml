@@ -2362,6 +2362,9 @@ Item {
             id: groupHead
             readonly property string title: String(group.modelData.caption ?? "")
             readonly property int count: group.modelData.rows.length
+            // The head holds the group's one switch: the skin makes room for it on its line.
+            readonly property bool lone: group.loneSwitch
+            readonly property real switchHeight: headSwitch.implicitHeight
             visible: root.flatSection && groupHead.title.length > 0 && headSkin.active
             Layout.fillWidth: true
             Layout.leftMargin: 14 * root.d
@@ -2371,6 +2374,7 @@ Item {
             implicitHeight: headSkin.item?.implicitHeight ?? 0
             IrisSkin { id: headSkin; part: "groupHeader"; host: groupHead }
             IrisSwitch {
+                id: headSwitch
                 visible: group.loneSwitch && headSkin.active
                 anchors.right: parent.right
                 anchors.top: parent.top

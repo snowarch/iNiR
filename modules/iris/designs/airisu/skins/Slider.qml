@@ -1,18 +1,24 @@
 import QtQuick
 import "../components"
 
-// AIRISU's row slider (board Components › MEDIDOR): the level as twenty segments, the last 15 % the red line. The host
-// (IrisSlider) keeps the drag, the steps and the wheel; this only draws.
+// AIRISU's row slider (SYSTEM.md §6): the graduated rule. The host (IrisSlider) keeps the drag, the steps and the
+// wheel; the pointer over it brings the crop marks.
 Item {
     id: root
     property Item host
-    AMeter {
+    ARuler {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        height: Math.round(10 * Airisu.d)
-        interactive: false
+        height: Math.round(16 * Airisu.d)
         value: root.host?.value ?? 0
-        opacity: root.host?.enabled ?? true ? 1 : 0.4
+        held: root.host?.pressed ?? false
+        available: root.host?.enabled ?? true
+    }
+    ATombo {
+        anchors.fill: parent
+        anchors.topMargin: Math.round((root.height - 16 * Airisu.d) / 2)
+        anchors.bottomMargin: anchors.topMargin
+        shown: (root.host?.hovered ?? false) && !(root.host?.pressed ?? false)
     }
 }

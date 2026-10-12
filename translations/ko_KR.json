@@ -9491,5 +9491,14 @@
   "Session locked": "세션 잠김",
   "Type your password": "비밀번호 입력",
   "What iRiS is made of: its shapes, type, controls and motion. Your settings stay; a Design draws them its own way.": "iRiS를 이루는 것: 모양, 글꼴, 컨트롤, 움직임. 설정은 그대로이고 디자인이 자기 방식으로 그립니다.",
-  "%1 brings its own.": "%1에는 자체 설정이 있습니다."
+  "%1 brings its own.": "%1에는 자체 설정이 있습니다.",
+  "1 app": "앱 1개",
+  "Full effects": "모든 효과",
+  "Every label in the shell": "셸의 모든 문구",
+  "Start with you, in order": "로그인과 함께 순서대로 시작",
+  "Settings opens here": "설정이 여기에서 열립니다",
+  "Glass and blur are off": "유리와 흐림 꺼짐",
+  "Glass, blur and motion on": "유리, 흐림, 모션 켜짐",
+  "The whole shell's look": "셸 전체의 모습",
+  "Every key, by what it does": "모든 키를 기능별로"
 }

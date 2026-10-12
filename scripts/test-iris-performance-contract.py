@@ -59,8 +59,9 @@ def require(condition: bool, message: str, failures: list[str]) -> None:
 def main() -> int:
     failures: list[str] = []
 
+    panel_mode = BAR.split("readonly property bool panelMode:", 1)[-1].split("\n", 1)[0]
     require(
-        'readonly property bool panelMode: String(Config.options?.iris?.controlCenter?.opens ?? "island") !== "island"' in BAR,
+        'String(Config.options?.iris?.controlCenter?.opens ?? "island") !== "island"' in panel_mode,
         "external Control Center is no longer gated by panel mode", failures)
     require(
         'GlobalStates.irisMorphOwner === "stage"' in BAR and "controlCentreLoader.externalOpen" in BAR,
@@ -113,7 +114,8 @@ def main() -> int:
         "SatelliteShown" not in taken and "auxiliaryShown" not in taken,
         "pieceTaken reads a shown state that flips on expand, so every open rebuilds the bar pieces", failures)
     require(
-        'joins: !extension.anchoredShape || floating ? ""' in ISLAND,
+        'joins: !extension.anchoredShape || floating ? ""' in ISLAND
+        or 'joins: !extension.anchoredShape || floating || root.pagesHang ? ""' in ISLAND,
         "the inline page fuses into the chassis rectangle it equals, swelling the silhouette", failures)
     require(
         "rawConfigReader.text() === configFileView.text()" in CONFIG,

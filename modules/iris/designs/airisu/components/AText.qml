@@ -1,19 +1,27 @@
 import QtQuick
 import qs.modules.iris.style
 
-// AIRISU's three voices. `wide`: Archivo SemiExpanded ExtraBold for titles and figures (tracking −4 %); `mono`: data and
-// labels in capitals with wide tracking; `body`: Archivo to read. Size from the iRiS ladder.
+// AIRISU's voices (SYSTEM.md §5). `figure`: Archivo SemiExpanded ExtraBold, −3 %, tabular, for figures and page heads
+// (only from typeTitle up); `text`: Archivo, everything that is read; `ruby`: the small datum set over the main one
+// (Archivo Medium, the second ink), AIRISU's label; `data`: mono, only for values compared column by column; `kana`:
+// the bundled Japanese layer, always beside the person's own words. Sizes come from iRiS's ladder.
 Text {
     id: root
-    property string voice: "body"
-    property int size: root.voice === "mono" ? IrisStyle.typeCaption : IrisStyle.typeBody
-    color: Airisu.gofun
-    font.family: root.voice === "wide" ? Airisu.wide : root.voice === "mono" ? Airisu.mono : Airisu.body
+    property string voice: "text"
+    readonly property string v: root.voice === "wide" ? "figure" : root.voice === "body" ? "text" : root.voice
+    property int size: root.v === "ruby" ? IrisStyle.typeFootnote : root.v === "data" || root.v === "mono" ? IrisStyle.typeMeta
+        : root.v === "figure" ? IrisStyle.typeTitle : IrisStyle.typeBody
+    color: root.v === "ruby" ? Airisu.inkSecond : Airisu.ink
+    font.family: root.v === "figure" ? Airisu.figureFace : root.v === "data" || root.v === "mono" ? Airisu.dataFace
+        : root.v === "kana" ? Airisu.kanaFace : Airisu.textFace
     font.pixelSize: root.size
-    font.weight: root.voice === "wide" ? Font.ExtraBold : root.voice === "mono" ? Font.Medium : Font.DemiBold
-    font.letterSpacing: root.voice === "mono" ? Math.round(root.size * 0.16) : root.voice === "wide" ? -Math.round(root.size * 0.04) : 0
-    font.capitalization: root.voice === "mono" ? Font.AllUppercase : Font.MixedCase
-    font.features: root.voice === "wide" ? { "tnum": 1 } : ({})
+    font.weight: root.v === "figure" ? Font.ExtraBold : root.v === "ruby" ? Font.Medium
+        : root.v === "mono" ? Font.Medium : root.v === "kana" ? Font.Bold : Font.DemiBold
+    font.letterSpacing: root.v === "figure" ? -Math.round(root.size * 0.03)
+        : root.v === "mono" ? Math.round(root.size * 0.16) : 0
+    // `mono` is the first pass's capitals, kept only until its last consumer is rebuilt.
+    font.capitalization: root.v === "mono" ? Font.AllUppercase : Font.MixedCase
+    font.features: root.v === "figure" || root.v === "data" ? { "tnum": 1 } : ({})
     elide: Text.ElideRight
     maximumLineCount: 1
     renderType: Text.NativeRendering

@@ -24,6 +24,10 @@ Rectangle {
     readonly property int selectedIndex: root.options.findIndex(option => option.value === root.current)
     readonly property real slot: (root.width - 2 * root.inset) / root.count
     signal picked(var value)
+    // Which segment the pointer is over and which is held, for a skin that answers them per segment.
+    property int hoveredIndex: -1
+    property int pressedIndex: -1
+    property int focusedIndex: -1
     // A Design may draw it its own way (AIRISU: positions that click into place); the picking stays here.
     readonly property bool skinned: skin.active
     // The width that holds the longest label in every language with its air: a caller with a fixed slot takes at least
@@ -102,12 +106,19 @@ Rectangle {
             Keys.onSpacePressed: root.picked(segment.modelData.value)
             Keys.onReturnPressed: root.picked(segment.modelData.value)
             onClicked: root.picked(segment.modelData.value)
+            onContainsMouseChanged: if (segment.containsMouse) root.hoveredIndex = segment.index
+                else if (root.hoveredIndex === segment.index) root.hoveredIndex = -1
+            onPressedChanged: if (segment.pressed) root.pressedIndex = segment.index
+                else if (root.pressedIndex === segment.index) root.pressedIndex = -1
+            onActiveFocusChanged: if (segment.activeFocus) root.focusedIndex = segment.index
+                else if (root.focusedIndex === segment.index) root.focusedIndex = -1
 
             Rectangle {
                 anchors.fill: parent
                 radius: thumb.radius
-                color: !segment.selected && segment.containsMouse ? (root.skinned ? IrisStyle.fillQuiet : IrisStyle.fillQuiet) : "transparent"
-                border.width: segment.activeFocus ? 1 : 0
+                // Under a skin the hover and the focus are the skin's to draw.
+                color: !segment.selected && segment.containsMouse && !root.skinned ? IrisStyle.fillQuiet : "transparent"
+                border.width: segment.activeFocus && !root.skinned ? 1 : 0
                 border.color: IrisStyle.accent
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
             }

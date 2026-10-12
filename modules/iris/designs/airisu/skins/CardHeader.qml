@@ -1,59 +1,38 @@
 import QtQuick
-import qs.modules.common.widgets
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's card head (board Components › CABECERA DE TARJETA, small): the glyph in its line weight, the name wide in
-// capitals with the body stripe after it, the live detail in mono under. The host is a CardHeader.
+// AIRISU's card head (SYSTEM.md §4, Body = 切符, a ticket torn from its origin): the stub. Where it came from is the
+// ruby over what it is now, the live state in full ink; under them the perforation it was torn along. A card with no
+// live line is its name alone. The host is a CardHeader and keeps its actions at the right.
 Item {
     id: root
     property Item host
+    readonly property string title: String(root.host?.title ?? "")
     readonly property string detail: String(root.host?.detail ?? "")
-    implicitHeight: Math.max(glyph.height, column.implicitHeight)
+    readonly property bool twoLines: root.detail.length > 0
+    implicitHeight: column.implicitHeight + Airisu.u(2.5) + perforation.height
 
-    MaterialSymbol {
-        id: glyph
-        anchors.verticalCenter: parent.verticalCenter
-        text: root.host?.glyph ?? ""
-        iconSize: Math.round(18 * Airisu.d)
-        fill: 0
-        color: Airisu.data
-    }
     Column {
         id: column
-        anchors.left: glyph.right
-        anchors.leftMargin: Math.round(10 * Airisu.d)
-        anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: Math.round(2 * Airisu.d)
-        Row {
-            spacing: Math.round(10 * Airisu.d)
+        width: parent.width
+        spacing: Airisu.u(0.5)
+        AText {
+            visible: root.twoLines
             width: parent.width
-            AText {
-                id: name
-                width: Math.min(implicitWidth, parent.width - stripe.width - parent.spacing)
-                voice: "wide"
-                size: IrisStyle.typeLabel
-                font.capitalization: Font.AllUppercase
-                font.letterSpacing: 0
-                elide: Text.ElideRight
-                text: root.host?.title ?? ""
-            }
-            AStripe {
-                id: stripe
-                anchors.verticalCenter: name.verticalCenter
-                width: Math.round(22 * Airisu.d)
-                height: Math.round(5 * Airisu.d)
-                single: true
-            }
+            voice: "ruby"
+            text: root.title
         }
         AText {
-            visible: root.detail.length > 0
             width: parent.width
-            voice: "mono"
-            color: Airisu.quiet
-            elide: Text.ElideRight
-            text: root.detail
+            size: IrisStyle.typeHeadline
+            font.weight: Font.Bold
+            text: root.twoLines ? root.detail : root.title
         }
+    }
+    APerforation {
+        id: perforation
+        anchors.bottom: parent.bottom
+        width: parent.width
     }
 }

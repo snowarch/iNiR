@@ -9491,5 +9491,14 @@
   "Session locked": "会话已锁定",
   "Type your password": "输入密码",
   "What iRiS is made of: its shapes, type, controls and motion. Your settings stay; a Design draws them its own way.": "iRiS 由什么构成：形状、字体、控件与动效。你的设置保持不变；每种设计以自己的方式呈现它们。",
-  "%1 brings its own.": "%1 自带。"
+  "%1 brings its own.": "%1 自带。",
+  "1 app": "1 个应用",
+  "Full effects": "全部效果",
+  "Every label in the shell": "界面中的所有文字",
+  "Start with you, in order": "随你登录，依次启动",
+  "Settings opens here": "设置在这里打开",
+  "Glass and blur are off": "玻璃与模糊已关闭",
+  "Glass, blur and motion on": "玻璃、模糊与动效已开启",
+  "The whole shell's look": "整个界面的外观",
+  "Every key, by what it does": "按功能列出的所有按键"
 }

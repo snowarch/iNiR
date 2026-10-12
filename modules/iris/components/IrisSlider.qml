@@ -7,6 +7,8 @@ Item {
 
     property alias value: slider.value
     readonly property alias pressed: slider.pressed
+    // What a skin draws from: the pointer over it.
+    readonly property bool hovered: hover.hovered
     signal moved(real value)
 
     implicitWidth: 220
@@ -35,5 +37,6 @@ Item {
         scrollable: true
         onMoved: root.moved(slider.value)
     }
+    HoverHandler { id: hover; enabled: skin.active }
     IrisSkin { id: skin; part: "slider"; host: root }
 }

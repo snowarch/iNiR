@@ -9491,5 +9491,14 @@
   "Session locked": "الجلسة مقفلة",
   "Type your password": "اكتب كلمة المرور",
   "What iRiS is made of: its shapes, type, controls and motion. Your settings stay; a Design draws them its own way.": "ممّ يتكوّن iRiS: الأشكال والخط وعناصر التحكم والحركة. تبقى إعداداتك؛ ويرسمها كل تصميم بطريقته.",
-  "%1 brings its own.": "%1 يأتي بخاصته."
+  "%1 brings its own.": "%1 يأتي بخاصته.",
+  "1 app": "تطبيق واحد",
+  "Full effects": "كل التأثيرات",
+  "Every label in the shell": "كل نص في الواجهة",
+  "Start with you, in order": "تبدأ معك، بالترتيب",
+  "Settings opens here": "تُفتح الإعدادات هنا",
+  "Glass and blur are off": "الزجاج والتمويه متوقفان",
+  "Glass, blur and motion on": "الزجاج والتمويه والحركة مفعّلة",
+  "The whole shell's look": "مظهر الواجهة بالكامل",
+  "Every key, by what it does": "كل اختصار، حسب ما يفعله"
 }

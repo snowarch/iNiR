@@ -1,7 +1,9 @@
 import QtQuick
 
-// AIRISU (modules/iris/AIRISU.md): the Japanese look around tuning, stickers and seals. Its values are the curated
-// Theme `airisu`; its anatomy is the skins below. Coverage is tracked part by part in AIRISU.md.
+// AIRISU (designs/airisu/SYSTEM.md): printed, not painted. The shell as the work of a night print shop: die-cut stickers,
+// seals, tickets, spec labels and parts catalogues, each surface a printed object with its own technique. Its values
+// are the curated Theme `airisu` and the solver's `airisu` palette; its anatomy is the parts below, which draw the
+// engine's own state and keep every Settings row's meaning.
 QtObject {
     readonly property string id: "airisu"
     readonly property string name: "AIRISU"
@@ -12,13 +14,9 @@ QtObject {
         insignia: "parts/Insignia.qml",
         islandFace: "island/Face.qml",
         islandNav: "island/Nav.qml",
-        controlCenter: "scenes/ControlCenter.qml",
+        islandMedia: "island/Media.qml",
+        islandArtBackdrop: "island/ArtBackdrop.qml",
         spotlight: "scenes/Spotlight.qml",
-        osd: "scenes/Osd.qml",
-        banner: "scenes/Banner.qml",
-        lock: "scenes/Lock.qml",
-        session: "scenes/Session.qml",
-        clockFace: "parts/ClockFace.qml",
         // Skins of iRiS's primitives: every surface that uses them (Settings, the dock, menus, the sidebars) wears them.
         switch: "skins/Switch.qml",
         segmented: "skins/Segmented.qml",
@@ -30,17 +28,16 @@ QtObject {
         slider: "skins/Slider.qml",
         scrubber: "skins/Scrubber.qml"
     })
-    // How a surface's body holds this Design's scene: its width and its inner padding (0: laid edge to edge).
-    readonly property var surfaces: ({ controlCenter: { width: 440, padding: 0, gap: 12 },
-        banners: { width: 400, corner: "bottomLeft", margin: 24 } })
+    // What a primitive needs to hold this Design's skin, and how a surface's body holds a scene.
+    readonly property var surfaces: ({ switch: { width: 52, height: 24 } })
     readonly property var field: ({ corner: "chamfer" }) // a sticker cut with a blade (IrisField.frag bodyBox)
     readonly property string preset: "night"
     readonly property var fonts: ({ text: "Archivo", title: "Archivo SemiExpanded", numbers: "Archivo SemiExpanded",
         mono: "JetBrainsMono Nerd Font" })
     readonly property var motion: ({ morph: "tuned", duration: 220 })
-    // A parts catalogue, not an app grid: glyphs without tinted plates, the chosen row on the gofun plate, lists numbered,
-    // labels in mono capitals, titles in lower case. Island pages hang under the strip as a plate of their own; a level runs
-    // along a piece's cut edge; the pointer lights a solid 墨 plate, square like everything it touches.
-    readonly property var traits: ({ marks: "glyph", selection: "plate", index: true, captions: "mono", titles: "lower",
+    // How it reads: glyphs without tinted plates; the chosen row a solid ink plate; lists that can be typed numbered;
+    // Island pages hang under the strip as a plate of their own; a level runs along a piece's cut edge; the pointer
+    // lights an opaque plate where a surface has no crop marks of its own yet.
+    readonly property var traits: ({ marks: "glyph", selection: "plate", index: true,
         pages: "hang", rings: "edge", hover: "plate" })
 }

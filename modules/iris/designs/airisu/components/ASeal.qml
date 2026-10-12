@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
+import qs.modules.common.widgets
 import qs.modules.iris.style
 
 // A sealed button: a plate cut at its upper-right and lower-left corners like the field's bodies. `kind` "seal" is
@@ -40,13 +41,12 @@ Item {
             PathLine { x: 0; y: 0 }
         }
     }
-    Text {
+    MaterialSymbol {
         anchors.centerIn: parent
         visible: root.glyph.length > 0 && root.text.length === 0
         text: root.glyph
-        font.family: "Material Symbols Rounded"
-        font.pixelSize: Math.round(root.height * 0.46)
-        font.variableAxes: { "FILL": 1, "wght": 600 }
+        iconSize: Math.round(Math.min(root.height * 0.6, 26 * Airisu.d))
+        fill: 1
         color: root.ink
     }
     AText {

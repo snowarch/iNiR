@@ -1,51 +1,52 @@
 import QtQuick
 import "../components"
 
-// AIRISU's scrubber. A level (the host has a knob: Settings' ranges) is the twenty-segment meter; a position in time
-// (media) is a light trail (board Movimiento › estela): a fillet of track, the played part in gofun, and the head a
-// streak of the seal that fades back along the line, a tail light at speed. The host keeps the drag, keys and wheel.
+// AIRISU's scrubber. A setting's range (the host has a knob) is the graduated rule. A position in time is punched tape:
+// the time still to come is a line of holes, the time played a solid rule of ink, and the head is a small seal square
+// while it plays (a rule end when paused). Engaged, the head grows to be taken. The host keeps the drag, keys and wheel.
 Item {
     id: root
     property Item host
     readonly property real value: root.host?.shownValue ?? 0
     readonly property bool engaged: root.host?.engaged ?? false
+    readonly property bool knob: root.host?.knob ?? false
 
-    AMeter {
-        visible: root.host?.knob ?? false
+    ARuler {
+        visible: root.knob
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        height: Math.round(10 * Airisu.d)
-        interactive: false
+        height: Math.round(16 * Airisu.d)
         value: root.value
+        held: root.host?.dragging ?? false
+        available: root.host?.enabled ?? true
     }
 
     Item {
-        visible: !(root.host?.knob ?? false)
+        id: tape
+        visible: !root.knob
         anchors.fill: parent
-        readonly property real thick: Math.max(1, Math.round((root.engaged ? 4 : 2) * Airisu.d))
-        readonly property real head: Math.round(parent.width * root.value)
-        Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: parent.thick; color: Airisu.socket }
-        Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.head; height: parent.thick; color: Airisu.gofun }
-        // The trail: the seal, strongest at the head, gone over 56 px.
-        Rectangle {
-            readonly property real length: Math.min(parent.head, Math.round(56 * Airisu.d))
-            x: parent.head - length
+        readonly property real head: Math.round(tape.width * root.value)
+        APerforation {
+            x: tape.head
+            width: tape.width - tape.head
             anchors.verticalCenter: parent.verticalCenter
-            width: length
-            height: parent.thick
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: "transparent" }
-                GradientStop { position: 1; color: Airisu.seal }
-            }
+            colour: Airisu.inkThird
         }
         Rectangle {
-            x: Math.max(0, Math.min(parent.width - width, parent.head - width / 2))
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.max(2, Math.round(3 * Airisu.d))
-            height: Math.round((root.engaged ? 14 : 10) * Airisu.d)
-            color: Airisu.seal
+            width: tape.head
+            height: Airisu.strong
+            color: root.host?.enabled ?? true ? Airisu.ink : Airisu.inkThird
+        }
+        Rectangle {
+            property int side: Math.round((root.engaged ? 10 : 6) * Airisu.d)
+            x: Math.round(Math.max(0, Math.min(tape.width - width, tape.head - width / 2)))
+            anchors.verticalCenter: parent.verticalCenter
+            width: side
+            height: side
+            color: !(root.host?.enabled ?? true) ? Airisu.inkThird : root.host?.live ?? true ? Airisu.seal : Airisu.ink
+            Behavior on side { enabled: Airisu.moving; NumberAnimation { duration: Airisu.detent } }
         }
     }
 }

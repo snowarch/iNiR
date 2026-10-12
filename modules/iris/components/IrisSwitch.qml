@@ -10,10 +10,14 @@ Rectangle {
     readonly property real d: IrisStyle.density
     // A Design may draw it its own way (AIRISU: OFF│ON); the switch keeps the toggle, the keys and the name.
     readonly property bool skinned: skin.active
+    // What a skin draws from: the pointer over it and the press.
+    readonly property bool hovered: area.containsMouse
+    readonly property bool pressed: area.pressed
+    readonly property bool keyed: root.activeFocus
     signal toggled()
 
-    implicitWidth: Math.round((root.skinned ? 76 : 40) * root.d)
-    implicitHeight: Math.round((root.skinned ? 26 : 24) * root.d)
+    implicitWidth: Math.round((root.skinned ? Number(IrisDesign.surface("switch", "width", 76)) : 40) * root.d)
+    implicitHeight: Math.round((root.skinned ? Number(IrisDesign.surface("switch", "height", 26)) : 24) * root.d)
     radius: root.skinned ? 0 : height / 2
     color: root.skinned ? "transparent" : root.on ? IrisStyle.accent : IrisStyle.fillHover
     Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
@@ -53,6 +57,7 @@ Rectangle {
         id: area
         anchors.fill: parent
         anchors.margins: -6 * root.d
+        hoverEnabled: root.skinned
         cursorShape: Qt.PointingHandCursor
         onClicked: root.toggled()
     }

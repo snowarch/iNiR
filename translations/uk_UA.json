@@ -9491,5 +9491,14 @@
   "Session locked": "Сеанс заблоковано",
   "Type your password": "Введіть пароль",
   "What iRiS is made of: its shapes, type, controls and motion. Your settings stay; a Design draws them its own way.": "З чого складається iRiS: форми, шрифти, елементи керування й рух. Ваші налаштування лишаються; дизайн малює їх по-своєму.",
-  "%1 brings its own.": "У %1 свій."
+  "%1 brings its own.": "У %1 свій.",
+  "1 app": "1 застосунок",
+  "Full effects": "Усі ефекти",
+  "Every label in the shell": "Усі написи оболонки",
+  "Start with you, in order": "Запускаються разом із вами, по черзі",
+  "Settings opens here": "Налаштування відкриваються тут",
+  "Glass and blur are off": "Скло й розмиття вимкнено",
+  "Glass, blur and motion on": "Скло, розмиття й анімацію ввімкнено",
+  "The whole shell's look": "Вигляд усієї оболонки",
+  "Every key, by what it does": "Усі клавіші за призначенням"
 }

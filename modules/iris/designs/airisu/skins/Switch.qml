@@ -1,47 +1,72 @@
 import QtQuick
-import qs.services
+import QtQuick.Shapes
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's switch (board Components): a mechanical selector, OFF│ON in mono, never a sliding knob. The lit cell is the
-// state: ON in the vermilion seal, OFF on the gofun plate. It snaps across in 90 ms with one pixel of throw.
+// AIRISU's switch (SYSTEM.md §6): a printed rocker, two cells marked with the marks every power switch carries, a ring
+// for off and a bar for on (IEC 60417), drawn with compass and rule. On, the bar's cell is a solid ink plate with the bar
+// reversed out; off, the ring's cell is the next sheet. The plate does not slide: it stops in the other cell (a 90 ms
+// detent). The host keeps the toggle, the keys and the name.
 Item {
     id: root
     property Item host
     readonly property bool on: root.host?.on ?? false
-    readonly property real cell: Math.round(width / 2)
+    readonly property bool hovered: root.host?.hovered ?? false
+    readonly property bool pressed: root.host?.pressed ?? false
+    readonly property bool available: root.host?.enabled ?? true
+    readonly property real cell: Math.round(root.width / 2)
+    readonly property real mark: Math.round(Math.min(root.cell, root.height) * 0.42)
+    readonly property int stroke: Math.max(2, Math.round(2 * Airisu.d))
 
-    Rectangle { anchors.fill: parent; color: Airisu.sumi }
-    Rectangle {
-        id: lit
+    APrint {
+        id: plate
         width: root.cell
         height: root.height
-        x: root.on ? root.width - width : 0
-        color: root.on ? Airisu.seal : Airisu.gofun
-        Behavior on x { enabled: IrisStyle.motionEnabled; NumberAnimation { duration: Airisu.shift; easing.type: Easing.OutBack; easing.overshoot: 0.6 } }
-        Behavior on color { enabled: IrisStyle.motionEnabled; ColorAnimation { duration: Airisu.shift } }
+        x: root.on ? root.width - root.cell : 0
+        Behavior on x { enabled: Airisu.moving; NumberAnimation { duration: Airisu.detent; easing.type: Easing.BezierSpline; easing.bezierCurve: Airisu.curve } }
+        die: "rect"
+        pressed: root.pressed
+        // Only "on" is inked; off is the bare cell with its ring in full ink, so the cell never sits on its own colour.
+        fill: root.available && root.on ? Airisu.ink : "transparent"
+        under: Airisu.inkUnder
+        AScreen { anchors.fill: parent; visible: !root.available; pigment: Airisu.inkThird; density: 25 }
     }
-    Repeater {
-        model: ["OFF", "ON"]
-        AText {
-            required property string modelData
-            required property int index
-            readonly property bool lit: (index === 1) === root.on
-            x: index * root.cell
-            width: root.cell
-            height: root.height
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            voice: "mono"
-            font.weight: Font.Bold
-            text: modelData
-            color: lit ? (root.on ? Airisu.inkOnSeal : Airisu.inkOnGofun) : Airisu.quiet
+    // The die's rule is printed last, over the plate, so the cell never eats the frame.
+    ADie {
+        anchors.fill: parent
+        stroke: root.available ? Airisu.inkSecond : Airisu.inkThird
+        strokeWidth: Airisu.hair
+        dashed: !root.available
+    }
+    // The ring, off.
+    Shape {
+        x: Math.round((root.cell - root.mark) / 2)
+        y: Math.round((root.height - root.mark) / 2)
+        width: root.mark
+        height: root.mark
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+            fillColor: "transparent"
+            strokeColor: !root.on && root.available ? Airisu.ink : Airisu.inkThird
+            strokeWidth: root.stroke
+            PathAngleArc {
+                centerX: root.mark / 2; centerY: root.mark / 2
+                radiusX: (root.mark - root.stroke) / 2; radiusY: radiusX
+                startAngle: 0; sweepAngle: 360
+            }
         }
     }
+    // The bar, on.
     Rectangle {
+        x: Math.round(root.width - root.cell + (root.cell - width) / 2)
+        y: Math.round((root.height - height) / 2)
+        width: root.stroke
+        height: root.mark
+        color: root.on && root.available ? Airisu.reverse : Airisu.inkThird
+    }
+    ATombo {
         anchors.fill: parent
-        color: "transparent"
-        border.width: root.host?.activeFocus ? 2 : 0
-        border.color: Airisu.gofun
+        shown: root.hovered && root.available
+        focusMarks: root.host?.keyed ?? false
     }
 }

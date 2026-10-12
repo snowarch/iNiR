@@ -1,13 +1,14 @@
 module airisu
 singleton Airisu 1.0 Airisu.qml
 AText 1.0 AText.qml
+ADie 1.0 ADie.qml
+APrint 1.0 APrint.qml
+ATombo 1.0 ATombo.qml
+AScreen 1.0 AScreen.qml
+APerforation 1.0 APerforation.qml
+ARuler 1.0 ARuler.qml
+ALed 1.0 ALed.qml
 AMeter 1.0 AMeter.qml
-ATile 1.0 ATile.qml
 ASeal 1.0 ASeal.qml
-ASpec 1.0 ASpec.qml
-AHeader 1.0 AHeader.qml
 ARule 1.0 ARule.qml
 APlate 1.0 APlate.qml
-AChevrons 1.0 AChevrons.qml
-ALicense 1.0 ALicense.qml
-AStripe 1.0 AStripe.qml

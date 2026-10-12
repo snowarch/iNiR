@@ -15,6 +15,8 @@ Item {
     signal seekRequested(real value)
     signal moved(real value)
     property bool knob: false
+    // Whether what it scrubs is running now (a playing track): a Design may mark the head with it.
+    property bool live: true
     property real stepSize: 0.05
     activeFocusOnTab: root.seekable
 

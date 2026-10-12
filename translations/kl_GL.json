@@ -7575,5 +7575,14 @@
   "Read the GPU": "GPU atuaruk",
   "Adds the graphics card to what Vitals shows. Off saves a little power on laptops.": "Vitals-imut GPU ilanngussaaq.",
   "Top edge": "Killeqarfik qulaani",
-  "Bottom edge": "Killeqarfik ataani"
+  "Bottom edge": "Killeqarfik ataani",
+  "1 app": "1 app",
+  "Full effects": "Effektit tamarmik",
+  "Every label in the shell": "Shellimi allannguutit tamarmik",
+  "Start with you, in order": "Ilinnut aallartittarput, tulleriiaarlutik",
+  "Settings opens here": "Aaqqissuussinerit maani ammartarput",
+  "Glass and blur are off": "Glasi aamma blur matuneqarput",
+  "Glass, blur and motion on": "Glasi, blur aamma aalaneq ammaqqapput",
+  "The whole shell's look": "Shellip tamarmi isikkua",
+  "Every key, by what it does": "Tasti tamarmik, suliaat malillugu"
 }

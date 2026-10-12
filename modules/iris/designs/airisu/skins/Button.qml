@@ -1,11 +1,11 @@
 import QtQuick
-import QtQuick.Shapes
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's button (board Components): a plate cut with a blade at its upper-right and lower-left corners. Emphasized
-// is the vermilion seal (ACEPTAR), chosen the gofun plate, danger kerria amber, a resting one a 1 px iron outline that
-// fills with sumi under the pointer, a quiet one nothing until hovered. Text in the wide face, capitals on a seal.
+// AIRISU's button (SYSTEM.md §6, board Piezas). The primary action is the seal: the chamfer die in 朱, its label in the
+// seal's ink. The chosen one is a solid ink plate with the label reversed out. Any other is a tag, a rule round a
+// rectangle; a quiet one is its label alone. The pointer brings the crop marks, the keyboard the seal's marks, a press
+// runs the plate out of register, and an inactive button is printed as a screen, never faded.
 Item {
     id: root
     property Item host
@@ -14,53 +14,69 @@ Item {
     readonly property bool selected: root.host?.selected ?? false
     readonly property bool quiet: root.host?.quiet ?? false
     readonly property bool hovered: root.host?.hovered ?? false
-    readonly property bool pressed: root.host?.down ?? root.host?.pressed ?? false
-    readonly property string kind: root.danger && root.emphasized ? "amber" : root.emphasized ? "seal"
-        : root.selected ? "gofun" : root.quiet ? "quiet" : "line"
-    readonly property color plate: root.kind === "amber" ? Airisu.amber : root.kind === "seal" ? Airisu.seal
-        : root.kind === "gofun" ? Airisu.gofun : root.hovered || root.pressed ? Airisu.sumi : "transparent"
-    readonly property color ink: root.kind === "amber" ? Airisu.inkOnAmber : root.kind === "seal" ? Airisu.inkOnSeal
-        : root.kind === "gofun" ? Airisu.inkOnGofun : root.danger ? Airisu.amber : Airisu.gofun
-    // A chip is a sticker label, square; small square buttons (a glyph) take a smaller cut, so the blade never eats it.
-    readonly property bool chip: root.host?.labelCap !== undefined
-    readonly property real cut: root.chip ? 0 : Math.min(Airisu.cut, Math.round(Math.min(width, height) / 4))
+    readonly property bool pressed: root.host?.down ?? false
+    readonly property bool available: root.host?.enabled ?? true
+    readonly property bool keyed: root.host?.visualFocus ?? false
     readonly property string text: String(root.host?.text ?? "")
+    readonly property string kind: root.emphasized ? "seal" : root.selected ? "plate" : root.quiet ? "quiet" : "tag"
+    readonly property color ink: root.kind === "seal" ? Airisu.inkOnSeal : root.kind === "plate" ? Airisu.reverse
+        : root.danger ? Airisu.danger : root.available ? Airisu.ink : Airisu.inkThird
+    // How far the top plate runs out of register while pressed; the host carries its own content by it.
+    readonly property int shift: root.pressed && root.available ? Airisu.registration : 0
 
-    Shape {
+    APrint {
+        id: plate
         anchors.fill: parent
-        preferredRendererType: Shape.CurveRenderer
-        ShapePath {
-            fillColor: root.pressed && root.kind !== "line" && root.kind !== "quiet" ? Qt.darker(root.plate, 1.08) : root.plate // iris-literal: pressed is a step of the pigment
-            strokeColor: root.kind === "line" ? (root.hovered ? Airisu.gofun : Airisu.fillet) : "transparent"
-            strokeWidth: root.kind === "line" ? Airisu.line : 0
-            startX: 0; startY: 0
-            PathLine { x: root.width - root.cut; y: 0 }
-            PathLine { x: root.width; y: root.cut }
-            PathLine { x: root.width; y: root.height }
-            PathLine { x: root.cut; y: root.height }
-            PathLine { x: 0; y: root.height - root.cut }
-            PathLine { x: 0; y: 0 }
+        visible: root.kind !== "quiet"
+        die: root.kind === "seal" ? "chamfer" : "rect"
+        pressed: root.pressed && root.available
+        fill: !root.available ? "transparent" : root.kind === "seal" ? Airisu.seal : root.kind === "plate" ? Airisu.ink : "transparent"
+        under: root.kind === "seal" ? Airisu.sealUnder : Airisu.inkUnder
+        stroke: root.kind === "tag" ? (root.danger ? Airisu.danger : root.available ? Airisu.ink : Airisu.inkThird) : "transparent"
+        strokeWidth: root.kind === "tag" ? Airisu.hair : 0
+        dashed: !root.available && root.kind === "tag"
+        // An inactive plate is its pigment as a screen.
+        AScreen {
+            anchors.fill: parent
+            visible: !root.available && root.kind !== "tag"
+            pigment: root.kind === "seal" ? Airisu.seal : Airisu.ink
+            density: 25
+        }
+        AText {
+            anchors.centerIn: parent
+            width: Math.min(implicitWidth, root.width - 4 * Airisu.m)
+            horizontalAlignment: Text.AlignHCenter
+            visible: root.text.length > 0
+            size: IrisStyle.typeLabel
+            font.weight: root.kind === "seal" || root.kind === "plate" ? Font.Bold : Font.DemiBold
+            text: root.text
+            color: root.ink
         }
     }
+    // A quiet button is its words alone, with the dotted rule of a printed form under them.
     AText {
+        id: quietLabel
         anchors.centerIn: parent
-        width: Math.min(implicitWidth, root.width - Math.round(16 * Airisu.d))
+        anchors.horizontalCenterOffset: root.pressed ? Airisu.registration : 0
+        anchors.verticalCenterOffset: root.pressed ? Airisu.registration : 0
+        width: Math.min(implicitWidth, root.width - 2 * Airisu.m)
         horizontalAlignment: Text.AlignHCenter
-        visible: root.text.length > 0
-        // A plate (seal, amber, gofun) speaks in wide capitals; an outline or a quiet button in Archivo.
-        readonly property bool plated: root.kind === "seal" || root.kind === "amber" || root.kind === "gofun"
-        voice: plated ? "wide" : "body"
+        visible: root.kind === "quiet" && root.text.length > 0
         size: IrisStyle.typeLabel
-        font.capitalization: plated ? Font.AllUppercase : Font.MixedCase
-        font.letterSpacing: plated ? Math.round(IrisStyle.typeLabel * 0.08) : 0
         text: root.text
         color: root.ink
     }
-    Rectangle {
+    APerforation {
+        visible: quietLabel.visible && root.hovered
+        anchors.top: quietLabel.baseline
+        anchors.topMargin: Airisu.u(1)
+        anchors.left: quietLabel.left
+        width: quietLabel.width
+        colour: root.ink
+    }
+    ATombo {
         anchors.fill: parent
-        anchors.margins: -Math.round(3 * Airisu.d)
-        color: "transparent"
-        border.width: root.host?.visualFocus ? 2 : 0
-        border.color: Airisu.gofun
+        shown: root.hovered && root.available && !root.pressed
+        focusMarks: root.keyed
     }
 }

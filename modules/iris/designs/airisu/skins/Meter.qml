@@ -1,73 +1,83 @@
 import QtQuick
+import qs.services
 import qs.modules.common.widgets
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's level slider (board Components › MEDIDOR): never a capsule. The glyph and the figure in the wide face over
-// twenty segments, the last 15 % the red line. It is a gauge: dark until it is touched, it lights segment by segment.
-// The host (IrisCapsuleSlider) keeps the drag, the wheel and the pocket; this only draws.
+// AIRISU's level (the Control Center's volume, brightness, microphone; SYSTEM.md §6): a graduated rule with its name
+// and its figure over it, as a gauge's face sets them. Upright, the rule stands up the cell with the figure at its head
+// and the glyph at its foot. Muted, the rule goes to the third ink and the figure says so. The host (IrisCapsuleSlider)
+// keeps the drag, the wheel and the pocket under the glyph that mutes.
 Item {
     id: root
     property Item host
     readonly property real value: root.host?.shownValue ?? 0
     readonly property bool vertical: root.host?.vertical ?? false
     readonly property bool muted: root.host?.muted ?? false
+    readonly property bool held: root.host?.held ?? false
+    readonly property string label: String(root.host?.label ?? "")
+    readonly property string figure: root.muted ? Translation.tr("Muted") : String(Math.round(root.value * 100))
+    readonly property int rule: Math.round(16 * Airisu.d)
 
-    Rectangle { anchors.fill: parent; color: Airisu.sumi }
     MaterialSymbol {
         id: glyph
-        x: root.vertical ? (root.width - width) / 2 : Math.round(12 * Airisu.d)
-        y: root.vertical ? root.height - height - Math.round(10 * Airisu.d) : (root.height - height) / 2
+        x: root.vertical ? Math.round((root.width - width) / 2) : 0
+        y: root.vertical ? root.height - height - Airisu.u(1) : 0
         text: root.host?.icon ?? ""
         fill: 1
-        iconSize: Math.round(18 * Airisu.d)
-        color: root.muted ? Airisu.quiet : Airisu.gofun
+        iconSize: Math.round(16 * Airisu.d)
+        color: root.muted ? Airisu.inkThird : Airisu.ink
     }
     AText {
-        id: figure
-        visible: !root.vertical
-        anchors.right: parent.right
-        anchors.rightMargin: Math.round(12 * Airisu.d)
-        anchors.verticalCenter: parent.verticalCenter
-        width: Math.round(34 * Airisu.d)
-        horizontalAlignment: Text.AlignRight
-        voice: "wide"
-        size: IrisStyle.typeHeadline
-        text: Math.round(root.value * 100)
-        color: root.muted ? Airisu.quiet : Airisu.gofun
-    }
-    AMeter {
-        visible: !root.vertical
-        interactive: false
+        id: name
+        visible: !root.vertical && root.label.length > 0
         anchors.left: glyph.right
-        anchors.leftMargin: Math.round(12 * Airisu.d)
-        anchors.right: figure.left
-        anchors.rightMargin: Math.round(12 * Airisu.d)
-        anchors.verticalCenter: parent.verticalCenter
-        height: Math.round(Math.min(14, root.height * 0.32) * Airisu.d)
-        value: root.muted ? 0 : root.value
+        anchors.leftMargin: Airisu.u(1.5)
+        anchors.verticalCenter: glyph.verticalCenter
+        width: Math.min(implicitWidth, root.width - glyph.width - figureText.width - Airisu.u(5))
+        size: IrisStyle.typeLabel
+        font.weight: Font.DemiBold
+        text: root.label
     }
-    // Upright: the segments stack from the glyph up, the red line at the top.
-    Column {
+    AText {
+        id: figureText
+        x: root.vertical ? Math.round((root.width - width) / 2) : root.width - width
+        y: root.vertical ? Airisu.u(1) : Math.round(glyph.y + (glyph.height - height) / 2)
+        size: root.muted ? IrisStyle.typeMeta : IrisStyle.typeHeadline
+        font.weight: root.muted ? Font.Medium : Font.Bold
+        font.features: { "tnum": 1 }
+        text: root.figure
+        color: root.muted ? Airisu.inkSecond : Airisu.ink
+    }
+    ARuler {
+        visible: !root.vertical
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: root.rule
+        value: root.value
+        held: root.held
+        available: !root.muted && (root.host?.enabled ?? true)
+    }
+    // Upright: the same rule turned to stand, between the figure and the glyph.
+    Item {
         visible: root.vertical
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
-        anchors.topMargin: Math.round(10 * Airisu.d)
-        anchors.bottom: glyph.top
-        anchors.bottomMargin: Math.round(8 * Airisu.d)
-        width: Math.round(root.width * 0.46)
-        spacing: Math.max(2, Math.round(3 * Airisu.d))
-        readonly property int lit: Math.round(root.value * 20)
-        Repeater {
-            model: 20
-            Rectangle {
-                required property int index
-                readonly property int step: 19 - index
-                readonly property bool on: !root.muted && step < parent.lit
-                width: parent.width
-                height: (parent.height - parent.spacing * 19) / 20
-                color: step >= 17 ? (on ? Airisu.seal : Airisu.sealDim) : on ? Airisu.gofun : Airisu.socket
-            }
+        y: figureText.y + figureText.height + Airisu.u(1.5)
+        width: root.rule
+        height: Math.max(0, glyph.y - y - Airisu.u(1.5))
+        ARuler {
+            width: parent.height
+            height: parent.width
+            anchors.centerIn: parent
+            rotation: -90
+            value: root.value
+            held: root.held
+            available: !root.muted && (root.host?.enabled ?? true)
         }
+    }
+    ATombo {
+        anchors.fill: parent
+        shown: (root.host?.hovered ?? false) && !root.held
     }
 }

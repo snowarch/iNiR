@@ -672,7 +672,8 @@ Item {
             : level.muted ? "volume_off" : (Audio.value ?? 0) < 0.34 ? "volume_mute" : (Audio.value ?? 0) < 0.67 ? "volume_down" : "volume_up"
         value: !level.ready ? 0 : level.moduleId === "brightness" ? level.brightness
             : level.moduleId === "microphone" ? Math.min(1, Audio.micVolume ?? 0) : Math.min(1, Audio.value ?? 0)
-        Accessible.name: Translation.tr(IrisControlOptions.labelOf(level.moduleId))
+        label: Translation.tr(IrisControlOptions.labelOf(level.moduleId))
+        Accessible.name: level.label
         onMoved: next => {
             if (level.moduleId === "brightness") root.monitor?.setBrightness(next)
             else if (level.moduleId === "microphone") Audio.setSourceVolume(next)

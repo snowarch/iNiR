@@ -9491,5 +9491,14 @@
   "Session locked": "Oturum kilitli",
   "Type your password": "Parolanızı yazın",
   "What iRiS is made of: its shapes, type, controls and motion. Your settings stay; a Design draws them its own way.": "iRiS'in neden yapıldığı: şekiller, yazı, denetimler ve hareket. Ayarlarınız kalır; bir Tasarım onları kendi yoluyla çizer.",
-  "%1 brings its own.": "%1 kendisininkini getirir."
+  "%1 brings its own.": "%1 kendisininkini getirir.",
+  "1 app": "1 uygulama",
+  "Full effects": "Tüm efektler",
+  "Every label in the shell": "Kabuktaki her etiket",
+  "Start with you, in order": "Seninle, sırayla başlar",
+  "Settings opens here": "Ayarlar burada açılır",
+  "Glass and blur are off": "Cam ve bulanıklık kapalı",
+  "Glass, blur and motion on": "Cam, bulanıklık ve hareket açık",
+  "The whole shell's look": "Tüm kabuğun görünümü",
+  "Every key, by what it does": "Her tuş, ne yaptığına göre"
 }

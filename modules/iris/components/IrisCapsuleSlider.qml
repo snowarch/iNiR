@@ -15,6 +15,10 @@ Item {
     property bool vertical: false
     property color fillColor: IrisStyle.fillStrong
     property bool readout: false
+    // The level's name, for a Design that sets it in words beside the level (AIRISU's rule).
+    property string label: ""
+    readonly property bool hovered: pointer.containsMouse
+    readonly property bool held: root.dragValue >= 0
     property real cornerCap: IrisStyle.radiusSheet
     signal moved(real value)
     signal iconClicked()

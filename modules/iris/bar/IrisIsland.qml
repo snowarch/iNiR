@@ -2328,10 +2328,17 @@ Item {
                 && MediaArtwork.displaySource.length > 0
             opacity: details.opacity * artBackdrop.shown
             layer.enabled: true
-            sourceComponent: IrisMediaBackdrop {
-                source: MediaArtwork.displaySource
-                edgeTop: !root.anchored && chassis.topInset > 0 ? (chassis.topInset + root.fillet + 4 * root.d) / 0.45 : 0
-                edgeBottom: !root.anchored && chassis.bottomInset > 0 ? (chassis.bottomInset + root.fillet + 4 * root.d) / 0.45 : 0
+            // A Design may lay the record under its page its own way (`islandArtBackdrop`); the setting still decides whether.
+            readonly property string designUrl: IrisDesign.skin("islandArtBackdrop")
+            source: artBackdrop.designUrl
+            sourceComponent: artBackdrop.designUrl.length > 0 ? null : engineArtBackdrop
+            Component {
+                id: engineArtBackdrop
+                IrisMediaBackdrop {
+                    source: MediaArtwork.displaySource
+                    edgeTop: !root.anchored && chassis.topInset > 0 ? (chassis.topInset + root.fillet + 4 * root.d) / 0.45 : 0
+                    edgeBottom: !root.anchored && chassis.bottomInset > 0 ? (chassis.bottomInset + root.fillet + 4 * root.d) / 0.45 : 0
+                }
             }
         }
         Loader {
@@ -2484,7 +2491,15 @@ Item {
                             Layout.preferredHeight: item?.implicitHeight ?? 0
                             active: mediaPage.resident
                             asynchronous: !mediaPage.current
-                            sourceComponent: IslandMediaPage { width: mediaLoader.width; island: root }
+                            // A Design may set the record its own way (`islandMedia`, which keeps every block the engine's page has).
+                            readonly property string designUrl: IrisDesign.skin("islandMedia")
+                            source: mediaLoader.designUrl
+                            sourceComponent: mediaLoader.designUrl.length > 0 ? null : engineMediaPage
+                            onLoaded: if (mediaLoader.designUrl.length > 0) item.island = root
+                            Component {
+                                id: engineMediaPage
+                                IslandMediaPage { width: mediaLoader.width; island: root }
+                            }
                         }
                     }
 

@@ -38,7 +38,8 @@ RippleButton {
     rippleEnabled: false
     rippleDuration: IrisStyle.duration(420)
     stateTransitionsEnabled: IrisStyle.motionEnabled
-    pressScaleEnabled: true
+    // A skin answers the press its own way (AIRISU runs the plate out of register); it never also scales.
+    pressScaleEnabled: !root.skinned
     cookieMorphing: false
 
     colBackground: root.skinned ? "transparent" : root.danger && root.emphasized ? IrisStyle.danger
@@ -109,6 +110,8 @@ RippleButton {
         Item {
             id: customContent
             anchors.fill: parent
+            // A skin that runs its plate out of register on a press carries the content with it.
+            transform: Translate { x: buttonSkin.item?.shift ?? 0; y: buttonSkin.item?.shift ?? 0 }
         }
     }
 }

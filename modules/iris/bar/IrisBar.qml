@@ -401,6 +401,13 @@ Scope {
             return String(Math.max(0, Math.min(100, value)))
         }
         function tokens(): string { return JSON.stringify(IrisStyle.audit()) }
+        // The active Design's control parts in every state, saved as one image (an absolute .png path).
+        function proof(path: string): string {
+            if (!path.startsWith("/") || !path.endsWith(".png")) return "needs an absolute .png path"
+            proofLoader.target = path
+            proofLoader.active = true
+            return "rendering " + path
+        }
         function palette(id: string): string {
             const known = IrisOptions.colourThemeIds
             if (id === "list") return JSON.stringify(known)
@@ -629,6 +636,20 @@ Scope {
         const matched = Quickshell.screens.filter(s => list.includes(s?.name ?? ""))
         return matched.length === 0 || list.includes(screen?.name ?? "")
     }
+
+    LazyLoader {
+        id: proofLoader
+        property string target: ""
+        active: false
+        IrisParts.IrisDesignProof {
+            target: proofLoader.target
+            onDone: result => {
+                console.info("[iris] proof: " + result)
+                proofClose.start()
+            }
+        }
+    }
+    Timer { id: proofClose; interval: 0; onTriggered: proofLoader.active = false }
 
     Variants {
         model: Quickshell.screens

@@ -9491,5 +9491,14 @@
   "Session locked": "Сеанс заблокирован",
   "Type your password": "Введите пароль",
   "What iRiS is made of: its shapes, type, controls and motion. Your settings stay; a Design draws them its own way.": "Из чего состоит iRiS: формы, шрифты, элементы управления и движение. Ваши настройки остаются; дизайн рисует их по-своему.",
-  "%1 brings its own.": "У %1 свой."
+  "%1 brings its own.": "У %1 свой.",
+  "1 app": "1 приложение",
+  "Full effects": "Все эффекты",
+  "Every label in the shell": "Все надписи оболочки",
+  "Start with you, in order": "Запускаются вместе с вами, по порядку",
+  "Settings opens here": "Настройки открываются здесь",
+  "Glass and blur are off": "Стекло и размытие выключены",
+  "Glass, blur and motion on": "Стекло, размытие и анимация включены",
+  "The whole shell's look": "Внешний вид всей оболочки",
+  "Every key, by what it does": "Все клавиши по назначению"
 }
