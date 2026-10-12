@@ -11,7 +11,8 @@ QtObject {
     readonly property var parts: ({
         insignia: "parts/Insignia.qml",
         controlCenter: "scenes/ControlCenter.qml",
-        bar: "scenes/Bar.qml"
+        bar: "scenes/Bar.qml",
+        spotlight: "scenes/Spotlight.qml"
     })
     // How a surface's body holds this Design's scene: its width and its inner padding (0: laid edge to edge).
     readonly property var surfaces: ({ controlCenter: { width: 440, padding: 0, gap: 12 } })

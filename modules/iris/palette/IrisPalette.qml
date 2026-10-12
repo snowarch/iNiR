@@ -300,7 +300,22 @@ Item {
         id: content
         anchors.fill: parent
         focus: true
-        sourceComponent: spotlightComponent
+        // A Design that brings its own Spotlight shows it here; the search, keys and selection stay this file's.
+        readonly property string scene: IrisDesign.skin("spotlight")
+        sourceComponent: content.scene.length > 0 ? designSpotlight : spotlightComponent
+    }
+
+    Component {
+        id: designSpotlight
+        Loader {
+            readonly property real progress: item?.progress ?? 0
+            readonly property bool armed: item?.armed ?? false
+            readonly property Item surfaceItem: item?.surfaceItem ?? null
+            function focusInput(): void { item?.focusInput() }
+            focus: true
+            source: content.scene
+            onLoaded: item.palette = root
+        }
     }
 
     Component {
