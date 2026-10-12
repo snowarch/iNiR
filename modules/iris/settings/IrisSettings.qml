@@ -560,9 +560,9 @@ Item {
         widgets: asked => asked === "Organic edge" ? "player/Edge wave" : "widgets"
     })
     function applyRequest(): void {
-        const native = root.nativePages[String(root.pages[GlobalStates.settingsOverlayRequestedPage]?.key ?? "")]
-        if (native) {
-            GlobalStates.settingsOverlayRequestedSection = native(String(GlobalStates.settingsOverlayRequestedSection ?? ""))
+        const landing = root.nativePages[String(root.pages[GlobalStates.settingsOverlayRequestedPage]?.key ?? "")]
+        if (landing) {
+            GlobalStates.settingsOverlayRequestedSection = landing(String(GlobalStates.settingsOverlayRequestedSection ?? ""))
             GlobalStates.settingsOverlayRequestedPage = root.irisPageIndex
             return
         }
@@ -2212,14 +2212,29 @@ Item {
                 }
             }
         }
-        IrisText {
-            visible: root.flatSection && text.length > 0
-            Layout.leftMargin: 16 * root.d
-            text: String(group.modelData.caption ?? "")
-            color: IrisStyle.label
-            font.family: IrisStyle.fontTitle
-            font.pixelSize: IrisStyle.typeMeta
-            font.weight: IrisStyle.weight(Font.DemiBold)
+        // A page read whole opens each group on its identity: the mark the column shows and a title a step above its
+        // rows, so the eye finds where a block starts (a 12 px caption read smaller than the rows under it).
+        RowLayout {
+            visible: root.flatSection && String(group.modelData.caption ?? "").length > 0
+            Layout.leftMargin: 14 * root.d
+            Layout.topMargin: 14 * root.d
+            Layout.bottomMargin: 2 * root.d
+            spacing: 10 * root.d
+            IrisSquircle {
+                Layout.preferredWidth: Math.round(28 * root.d)
+                Layout.preferredHeight: Math.round(28 * root.d)
+                tint: IrisOptions.groupTints[group.modelData.key] ?? root.currentSection.tint
+                glyph: IrisOptions.groupGlyphs[group.modelData.key] ?? root.currentSection.icon
+            }
+            IrisText {
+                Layout.fillWidth: true
+                text: String(group.modelData.caption ?? "")
+                color: IrisStyle.text
+                font.family: IrisStyle.fontTitle
+                font.pixelSize: IrisStyle.typeTitle
+                font.weight: IrisStyle.weight(Font.DemiBold)
+                elide: Text.ElideRight
+            }
         }
         // A long group reads as captioned cards, one per `part` its rows name; search shows one card. Keyed by caption,
         // so a write (a slider mid-drag) never rebuilds a card under the pointer.

@@ -160,7 +160,7 @@ Item {
                         width: Math.min(implicitWidth, parent.width - resetMark.width - Math.round(6 * root.d))
                         text: root.highlight.length > 0 ? root.marked(Translation.tr(root.spec.label)) : Translation.tr(root.spec.label)
                         textFormat: root.highlight.length > 0 ? Text.StyledText : Text.PlainText
-                        font.pixelSize: IrisStyle.typeLabel
+                        font.pixelSize: IrisStyle.typeBody
                         font.weight: IrisStyle.weight(Font.Medium)
                         wrapMode: Text.WordWrap
                     }
@@ -206,7 +206,7 @@ Item {
                     Layout.fillWidth: true
                     visible: text.length > 0
                     text: root.spec.description ? Translation.tr(root.spec.description) : ""
-                    color: IrisStyle.muted
+                    color: IrisStyle.subtext
                     font.pixelSize: IrisStyle.typeMeta
                     wrapMode: Text.WordWrap
                     maximumLineCount: description.full ? 12 : 2

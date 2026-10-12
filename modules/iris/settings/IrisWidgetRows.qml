@@ -83,6 +83,9 @@ QtObject {
     function row(widget: string, key: string, label: string, kind: string, fallback: var, extra: var): var {
         const spec = Object.assign({ section: "widgets", group: root.groups[widget], widget: widget, key: key,
             path: "background.widgets." + widget + "." + key, label: label, kind: kind, fallback: fallback }, extra ?? {})
+        // A run of switches is the wall the page must not be: a widget's switches refine it, so they wait behind its
+        // Fine-tune unless a row says `tune: false` (the plate, which people come to turn off).
+        if (spec.tune === undefined && kind === "switch") spec.tune = true
         const when = spec.when
         spec.showIf = () => root.on(widget) && root.overlay(widget)[key] === undefined && (when === undefined || when())
         delete spec.when
@@ -111,7 +114,7 @@ QtObject {
                 keywords: ["glass", "transparent", "background", "plate", "fondo", "vidrio"] })
         ]
         if (plate) out.push(
-            root.row(widget, "showBackground", "Background", "switch", root.plateDefault(widget), { when: () => root.plain(widget),
+            root.row(widget, "showBackground", "Background", "switch", root.plateDefault(widget), { tune: false, when: () => root.plain(widget),
                 description: "The plate behind the widget.", keywords: ["background", "plate", "card", "surface", "fondo", "superficie"] }),
             root.row(widget, "showBorder", "Outline", "switch", root.plateDefault(widget), { when: () => root.plain(widget),
                 keywords: ["outline", "border", "line", "borde"] }),
@@ -601,9 +604,9 @@ QtObject {
         { section: "widgets", group: "Arranging", label: "Fade with windows", description: "Widgets fade when windows are open on the workspace.", path: "background.widgets.dynamicOpacity", kind: "range", fallback: 0, min: 0, max: 100, step: 10, unit: " %", zeroLabel: "Off",
             keywords: ["fade", "windows", "opacity", "hide"] },
         { section: "widgets", group: "Power saving", label: "Enable power saving", path: "background.widgets.powerSaving.enable", kind: "switch", fallback: true, keywords: ["power", "battery", "pause", "energía"] },
-        { section: "widgets", group: "Power saving", label: "Pause on GameMode", path: "background.widgets.powerSaving.pauseOnGameMode", visibleWhen: "background.widgets.powerSaving.enable", kind: "switch", fallback: true },
-        { section: "widgets", group: "Power saving", label: "Pause on fullscreen", path: "background.widgets.powerSaving.pauseOnFullscreen", visibleWhen: "background.widgets.powerSaving.enable", kind: "switch", fallback: true },
-        { section: "widgets", group: "Power saving", label: "Pause when windows present", path: "background.widgets.powerSaving.pauseWhenWindowsPresent", visibleWhen: "background.widgets.powerSaving.enable", kind: "switch", fallback: false },
+        { section: "widgets", group: "Power saving", label: "Pause on GameMode", tune: true, path: "background.widgets.powerSaving.pauseOnGameMode", visibleWhen: "background.widgets.powerSaving.enable", kind: "switch", fallback: true },
+        { section: "widgets", group: "Power saving", label: "Pause on fullscreen", tune: true, path: "background.widgets.powerSaving.pauseOnFullscreen", visibleWhen: "background.widgets.powerSaving.enable", kind: "switch", fallback: true },
+        { section: "widgets", group: "Power saving", label: "Pause when windows present", tune: true, path: "background.widgets.powerSaving.pauseWhenWindowsPresent", visibleWhen: "background.widgets.powerSaving.enable", kind: "switch", fallback: false },
         { section: "widgets", group: "Power saving", label: "Show paused effect", path: "background.widgets.powerSaving.showPausedEffect", visibleWhen: "background.widgets.powerSaving.enable", kind: "switch", fallback: false, tune: true }
     ]
     readonly property var rows: root.sharedRows.concat(root.widgetRows)
