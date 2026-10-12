@@ -16,3 +16,4 @@ IrisGameModeCard 1.0 IrisGameModeCard.qml
 IrisNiriMotionGallery 1.0 IrisNiriMotionGallery.qml
 IrisChoiceGrid 1.0 IrisChoiceGrid.qml
 singleton IrisWidgetRows 1.0 IrisWidgetRows.qml
+IrisGeneralHome 1.0 IrisGeneralHome.qml

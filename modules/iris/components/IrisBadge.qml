@@ -12,9 +12,10 @@ Rectangle {
     visible: root.count > 0
     height: root.size
     width: Math.max(root.size, label.implicitWidth + root.size * 0.7)
-    radius: height / 2
+    // A Design that cuts its bodies (AIRISU) makes the count a square sticker: no ring, the number in its wide face.
+    radius: IrisStyle.fieldChamfer ? 0 : height / 2
     color: IrisStyle.badge
-    border.width: Math.max(1, root.size * 0.07)
+    border.width: IrisStyle.fieldChamfer ? 0 : Math.max(1, root.size * 0.07)
     border.color: IrisStyle.bodySurface
 
     IrisText {

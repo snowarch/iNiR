@@ -62,8 +62,29 @@ Item {
     // no se usa … que no quede vacío"): a section reads whole in one pane, its groups down a column beside it as the index;
     // the row of the group being read is the pane reaching into the column, melting into it as the Island's bodies meet
     // it. Search, the Hub, Home, the shared pages and a window too narrow for it keep the full width.
-    readonly property real pageWidth: pageArea.width
+    // Measured beside a full sidebar, never from the page itself: the sidebar narrows when the columns show, and a width
+    // that decided the columns from the room they make would flip between the two.
+    readonly property real pageWidth: frame.width - (root.homeLayout ? 0 : root.railLayout ? Math.round(76 * root.d) : root.sidebarFull)
     readonly property real sidebarNeed: sidebarLayout.implicitHeight + 2 * sidebar.pad + Math.round(4 * root.d)
+    // Depth (2026-10-12, the maintainer: "la nueva distribucion de navegacion ocupa demasiado lugar sin aprovechar
+    // superficies"): while a section's column shows, the sidebar stands as a rail of its marks and the column is the
+    // navigation; resting the pointer on the rail (or searching) opens the whole list over the column, which steps
+    // back under it. The page never moves: the sidebar reveals, it does not push.
+    readonly property real sidebarFull: Math.round(Math.min(272 * root.d, frame.width * 0.3))
+    readonly property real sidebarPlate: Math.round(32 * root.d)
+    readonly property real sidebarRail: root.sidebarPlate + 2 * sidebar.pad
+    readonly property bool sidebarCondensed: root.layoutStyle === "sidebar" && root.columns
+    property bool sidebarPeek: false
+    property real sidebarOpen: !root.sidebarCondensed || root.sidebarPeek || searchField.activeFocus ? 1 : 0
+    Behavior on sidebarOpen {
+        enabled: IrisStyle.motionEnabled
+        NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
+    }
+    // A width inside the sidebar as it opens: the plate around a mark when shut, `full` when open.
+    function sidebarReveal(full: real): real { return Math.round(root.sidebarPlate + (full - root.sidebarPlate) * root.sidebarOpen) }
+    Timer { id: peekOpen; interval: 180; onTriggered: root.sidebarPeek = true }
+    Timer { id: peekShut; interval: 240; onTriggered: root.sidebarPeek = false }
+    onSidebarCondensedChanged: if (!root.sidebarCondensed) { peekOpen.stop(); root.sidebarPeek = false }
     readonly property bool wideEnough: root.pageWidth >= Math.round(720 * root.d)
     // A shared page the column lists (the Hub, General's About and Shortcuts) reads in the pane beside it,
     // its row the tab; any other shared page keeps the full width.
@@ -79,7 +100,7 @@ Item {
     property string pendingGroup: ""
     Timer { id: pendingScroll; interval: 140; onTriggered: { if (root.pendingGroup.length > 0) root.scrollToGroup(root.pendingGroup); root.pendingGroup = "" } }
     function showGroup(title: string): void {
-        if (root.paneable && root.groups.length > 1) { root.group = ""; root.pendingGroup = title; pendingScroll.restart() }
+        if (root.paneable && root.groups.length > 1 && root.section !== "general") { root.group = ""; root.pendingGroup = title; pendingScroll.restart() }
         else root.group = title
     }
     // In a section shown whole, the group being read: the column follows it; a click holds its pick until you scroll.
@@ -175,8 +196,11 @@ Item {
         }
         return count
     }
+    // General beside its column opens on its welcome (IrisGeneralHome) and each group alone: read whole it mixed the hero
+    // with every row under it.
+    readonly property bool generalHome: root.section === "general" && root.split
     readonly property bool flatSection: !root.searching && root.advancedPage < 0 && root.group.length === 0 && root.groups.length > 1
-        && root.section !== "system" && root.section !== "home"
+        && root.section !== "system" && root.section !== "home" && !root.generalHome
         && (root.split || root.essentialCount <= 15 || (root.groups.length <= 6 && root.essentialCount <= 30))
     // Groups of one row would each be a card under a caption that repeats the row's name: neighbours share one card.
     readonly property var flatBlocks: {
@@ -427,6 +451,10 @@ Item {
             else if (entry.run === "widgets") GlobalStates.setWidgetEditMode(true)
             return
         }
+        if (root.generalHome) {
+            root.go({ section: "general", group: entry.type === "you" ? "" : String(entry.title), advancedPage: -1 })
+            return
+        }
         if (root.advancedPage >= 0) {
             root.go({ section: root.section, group: "", advancedPage: -1 })
             root.pendingGroup = String(entry.key)
@@ -637,7 +665,7 @@ Item {
         enabled: GlobalStates.settingsOverlayOpen
         onActivated: {
             if (root.searching) searchField.text = ""
-            else if (root.group.length > 0 && !root.split) root.leaveGroup()
+            else if (root.group.length > 0 && (!root.split || root.generalHome)) root.leaveGroup()
             else if (root.advancedPage >= 0 && !root.pageInPane) root.go({ section: root.section, group: "", advancedPage: -1 })
             else if (!root.windowed) GlobalStates.settingsOverlayOpen = false
         }
@@ -728,15 +756,30 @@ Item {
             anchors.fill: parent
             spacing: 0
 
+            // The sidebar's place in the row: a rail while the columns show. The sidebar itself is drawn over the row from
+            // here, so it can open across the column without moving the page.
+            Item {
+                id: sidebarSlot
+                z: 2
+                visible: !root.homeLayout
+                Layout.fillHeight: true
+                Layout.preferredWidth: root.railLayout ? Math.round(76 * root.d) : root.sidebarCondensed ? root.sidebarRail : root.sidebarFull
             Rectangle {
                 id: sidebar
                 readonly property int pad: IrisStyle.concentricPad(frame.radius, 12 * root.d)
-                visible: !root.homeLayout
-                Layout.fillHeight: true
-                Layout.preferredWidth: root.railLayout ? Math.round(76 * root.d) : Math.min(272 * root.d, frame.width * 0.3)
+                height: parent.height
+                width: root.railLayout ? sidebarSlot.width : Math.round(root.sidebarRail + (root.sidebarFull - root.sidebarRail) * root.sidebarOpen)
+                clip: true
                 topLeftRadius: frame.radius
                 bottomLeftRadius: frame.radius
                 color: IrisStyle.readingSidebar
+                HoverHandler {
+                    enabled: root.sidebarCondensed
+                    onHoveredChanged: {
+                        if (hovered) { peekShut.stop(); peekOpen.restart() }
+                        else { peekOpen.stop(); peekShut.restart() }
+                    }
+                }
                 Rectangle {
                     anchors.right: parent.right
                     anchors.top: parent.top
@@ -746,10 +789,14 @@ Item {
                 }
                 ColumnLayout {
                     id: sidebarLayout
-                    anchors.fill: parent
-                    anchors.margins: sidebar.pad
+                    // Laid at the open width and revealed: nothing reflows or elides while the sidebar opens.
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.leftMargin: sidebar.pad
                     anchors.topMargin: sidebar.pad + 4 * root.d
-                    anchors.rightMargin: sidebar.pad - 4 * root.d
+                    anchors.bottomMargin: sidebar.pad
+                    width: (root.railLayout ? sidebar.width : root.sidebarFull) - 2 * sidebar.pad + 4 * root.d
                     spacing: 0
 
                     Item {
@@ -763,7 +810,11 @@ Item {
                     // One search field: in the sidebar when there is one, in the header otherwise.
                     Rectangle {
                         parent: root.layoutStyle === "sidebar" ? sideSearchSlot : headSearchSlot
-                        anchors.fill: parent
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        // On the rail it is its glyph's plate, and opens with the sidebar.
+                        width: parent === sideSearchSlot ? root.sidebarReveal(parent.width) : parent.width
                         radius: Math.min(height / 2, Math.max(IrisStyle.radiusRow, frame.radius - sidebar.pad))
                         color: searchField.activeFocus ? IrisStyle.fill : IrisStyle.fillQuiet
                         border.width: searchField.activeFocus ? 1 : 0
@@ -848,7 +899,7 @@ Item {
                             readonly property bool shown: travelWash.row !== null && travelWash.row.selected
                             property bool travels: false
                             x: sidebarColumn.x
-                            width: sidebarColumn.width
+                            width: root.railLayout ? sidebarColumn.width : root.sidebarReveal(sidebarColumn.width)
                             y: travelWash.row ? sidebarColumn.y + travelWash.row.y + travelWash.row.height - travelWash.row.rowHeight : 0
                             height: travelWash.row ? travelWash.row.rowHeight : 0
                             radius: IrisStyle.plateSelection ? 0 : travelWash.row ? travelWash.row.washRadius : 0
@@ -890,24 +941,26 @@ Item {
                                 Accessible.name: Translation.tr("General")
                                 onClicked: root.selectSection("general")
                                 Rectangle {
-                                    anchors.fill: parent
+                                    height: parent.height
+                                    width: root.sidebarReveal(parent.width)
                                     radius: IrisStyle.radiusRow
                                     color: profile.containsMouse ? IrisStyle.fillHover : "transparent"
                                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
                                 }
+                                // On the rail the face shrinks to a mark's size, centred on the marks below it.
                                 FaceAvatar {
                                     id: profileAvatar
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 6 * root.d
+                                    readonly property real full: Math.round(40 * root.d)
+                                    readonly property real shut: Math.round(24 * root.d)
+                                    x: Math.round(6 * root.d + (root.sidebarPlate - profileAvatar.shut) / 2 * (1 - root.sidebarOpen) - 6 * root.d * (1 - root.sidebarOpen))
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: Math.round(40 * root.d)
+                                    width: Math.round(profileAvatar.shut + (profileAvatar.full - profileAvatar.shut) * root.sidebarOpen)
                                     height: width
                                 }
                                 Column {
-                                    anchors.left: profileAvatar.right
-                                    anchors.leftMargin: 10 * root.d
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 6 * root.d
+                                    x: Math.round(6 * root.d + profileAvatar.full + 10 * root.d)
+                                    width: parent.width - x - Math.round(6 * root.d)
+                                    opacity: root.sidebarOpen
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: 1
                                     IrisText {
@@ -957,8 +1010,7 @@ Item {
                     }
 
                     Rectangle {
-                        Layout.fillWidth: true
-                        Layout.rightMargin: 4 * root.d
+                        Layout.preferredWidth: root.sidebarReveal(sidebarLayout.width - 4 * root.d)
                         Layout.topMargin: 6 * root.d
                         Layout.bottomMargin: 6 * root.d
                         implicitHeight: 1
@@ -975,6 +1027,7 @@ Item {
                         }
                     }
                 }
+            }
             }
 
             ColumnLayout {
@@ -1176,6 +1229,9 @@ Item {
                         property Item current: null
                         readonly property real rowHeight: Math.round(44 * root.d)
                         visible: root.columns
+                        // Steps back under the sidebar while it opens over it.
+                        opacity: root.sidebarCondensed ? 1 - root.sidebarOpen : 1
+                        enabled: opacity > 0.5
                         y: detailPane.y + detailPane.radius
                         width: root.navWidth
                         height: Math.max(0, detailPane.height - 2 * detailPane.radius)
@@ -1377,7 +1433,23 @@ Item {
 
                                     IrisWallpaperCard {
                                         screen: root.screen
-                                        visible: root.section === "general" && (root.split || root.browsing)
+                                        visible: root.section === "general" && !root.generalHome && root.browsing
+                                    }
+
+                                    IrisGeneralHome {
+                                        Layout.fillWidth: true
+                                        Layout.topMargin: Math.round(2 * root.d)
+                                        screen: root.screen
+                                        visible: root.generalHome && (root.browsing || root.openGroup.length > 0) && root.advancedPage < 0 && !root.searching
+                                        only: root.browsing ? "" : String(root.shownGroups[0]?.key ?? "")
+                                        entries: !visible ? [] : root.groupChunks.reduce((all, chunk) => all.concat(chunk.groups), []).map(group => ({
+                                            key: group.key, title: group.title, detail: root.summaryOf(group),
+                                            glyph: IrisOptions.groupGlyphs[group.key] ?? "settings", tint: IrisOptions.groupTints[group.key] ?? root.currentSection.tint,
+                                            action: () => root.go({ section: "general", group: group.title, advancedPage: -1 })
+                                        })).concat(root.navLinks.map(link => ({
+                                            key: "@" + link.page, title: link.label, detail: "", glyph: link.glyph, tint: IrisStyle.identity[link.tintName],
+                                            action: () => root.go({ section: "general", group: "", advancedPage: root.pageIndexOf(link.page) })
+                                        })))
                                     }
 
                                     IrisText {
@@ -1389,7 +1461,7 @@ Item {
                                     }
 
                                     Repeater {
-                                        model: ScriptModel { values: root.browsing && !root.flatSection && root.section !== "system" ? root.groupChunks : [] }
+                                        model: ScriptModel { values: root.browsing && !root.flatSection && root.section !== "system" && !root.generalHome ? root.groupChunks : [] }
                                         GroupList {}
                                     }
 
@@ -1593,8 +1665,11 @@ Item {
     // wears the accent; a change in Settings applies as it is made.
     FontMetrics {
         id: toolbarMetrics
-        font.family: IrisStyle.fontMain
-        font.pixelSize: IrisStyle.typeLabel
+        // Measures the label as it is drawn: a mono-captions Design sets it in spaced capitals.
+        font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontMain
+        font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
+        font.letterSpacing: IrisStyle.monoCaptions ? Math.round(IrisStyle.typeMeta * 0.12) : 0
+        font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeMeta : IrisStyle.typeLabel
         font.weight: IrisStyle.weight(Font.Medium)
     }
     component ToolbarAction: IrisButton {
@@ -1605,8 +1680,9 @@ Item {
         readonly property bool folded: toolbarActions.folded.includes(action)
         readonly property real fullWidth: Math.ceil(toolbarMetrics.advanceWidth(action.label)) + Math.round((16 + 6 + 24) * root.d)
         buttonRadius: height / 2
-        colBackground: IrisStyle.controlPlated ? IrisStyle.plateFillFor(IrisStyle.controlPlate) : IrisStyle.fill
-        colBackgroundHover: IrisStyle.fillHover
+        // Under a Design's skin the plate is the skin's (AIRISU: a blade-cut outline): no capsule under it.
+        colBackground: action.skinned ? "transparent" : IrisStyle.controlPlated ? IrisStyle.plateFillFor(IrisStyle.controlPlate) : IrisStyle.fill
+        colBackgroundHover: action.skinned ? "transparent" : IrisStyle.fillHover
         implicitHeight: Math.round(30 * root.d)
         implicitWidth: action.folded ? implicitHeight : actionRow.implicitWidth + Math.round(24 * root.d)
         Accessible.name: action.label
@@ -1624,7 +1700,10 @@ Item {
                 visible: !action.folded
                 anchors.verticalCenter: parent.verticalCenter
                 text: action.label
-                font.pixelSize: IrisStyle.typeLabel
+                font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontMain
+                font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
+                font.letterSpacing: IrisStyle.monoCaptions ? Math.round(IrisStyle.typeMeta * 0.12) : 0
+                font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeMeta : IrisStyle.typeLabel
                 font.weight: IrisStyle.weight(Font.Medium)
             }
         }
@@ -1640,6 +1719,8 @@ Item {
         // A page the pane can hold is a place, not a way out: it is chosen like a group and carries no arrow.
         readonly property bool holdsPage: entry.type === "link" && entry.modelData.page !== undefined && root.wideEnough
         readonly property bool selected: entry.holdsPage ? root.advancedPage >= 0 && root.pageIndexOf(String(entry.modelData.page)) === root.advancedPage
+            : root.generalHome ? entry.row && entry.type !== "link" && root.advancedPage < 0
+                && (entry.type === "you" ? root.group.length === 0 : root.group === String(entry.modelData.title))
             : entry.row && entry.type !== "link" && root.advancedPage < 0 && root.readGroup === String(entry.modelData.key)
         readonly property bool real: entry.type === "group" && entry.modelData.rows !== undefined
         readonly property string detail: entry.real ? root.summaryOf(entry.modelData)
@@ -1818,8 +1899,8 @@ Item {
         Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
         Rectangle {
             anchors.left: parent.left
-            anchors.right: parent.right
             anchors.bottom: parent.bottom
+            width: sectionRow.compact ? parent.width : root.sidebarReveal(parent.width)
             height: sectionRow.rowHeight
             // Concentric with the mark it holds; where you are is a wash of the accent, as light as a hover, never a
             // solid block heavier than the buttons around it.
@@ -1831,8 +1912,10 @@ Item {
             IrisSquircle {
                 id: sectionMark
                 // An indexed Design numbers the areas instead (a parts catalogue); the rail keeps its glyphs.
+                // A shut sidebar is a rail of glyphs: numbers alone name nothing, so they cross with the glyphs as it opens.
                 readonly property bool numbered: IrisStyle.indexed && !sectionRow.compact
-                visible: !sectionMark.numbered
+                opacity: sectionMark.numbered ? 1 - root.sidebarOpen : 1
+                visible: opacity > 0
                 x: sectionRow.compact ? Math.round((parent.width - width) / 2) : Math.round(6 * root.d)
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.round((sectionRow.compact ? 24 : 20) * root.d)
@@ -1842,7 +1925,8 @@ Item {
                 ink: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.bodySurface : IrisStyle.plainMarks ? IrisStyle.textSecondary : IrisStyle.onTint
             }
             IrisText {
-                visible: sectionMark.numbered
+                visible: sectionMark.numbered && opacity > 0
+                opacity: root.sidebarOpen
                 anchors.centerIn: sectionMark
                 text: IrisStyle.indexLabel(sectionRow.index + (sectionRow.travels ? 0 : root.footerCluster * 0))
                 color: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.bodySurface : IrisStyle.textTertiary
@@ -1852,9 +1936,9 @@ Item {
             }
             IrisText {
                 visible: !sectionRow.compact
-                anchors.left: sectionMark.right
-                anchors.leftMargin: 10 * root.d
-                anchors.right: parent.right
+                opacity: root.sidebarOpen
+                x: sectionMark.x + sectionMark.width + Math.round(10 * root.d)
+                width: sectionRow.width - x - Math.round(8 * root.d)
                 anchors.rightMargin: 8 * root.d
                 anchors.verticalCenter: parent.verticalCenter
                 text: Translation.tr(sectionRow.modelData.title)

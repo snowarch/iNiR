@@ -355,9 +355,10 @@ ClippingRectangle {
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
         Accessible.name: glass.label.length > 0 ? glass.label : glass.hint.length > 0 ? glass.hint : Translation.tr("Random wallpaper")
+        // A Design that cuts its bodies (AIRISU) squares the plate over the art and reads it in mono capitals.
         Rectangle {
             anchors.fill: parent
-            radius: height / 2
+            radius: IrisStyle.fieldChamfer ? 0 : height / 2
             color: glass.containsMouse ? IrisStyle.onMediaFillHover : IrisStyle.onMediaFill
             scale: glass.pressed ? IrisStyle.pressScale(0.94) : 1
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
@@ -378,7 +379,10 @@ ClippingRectangle {
                 visible: glass.label.length > 0
                 text: glass.label
                 color: IrisStyle.onMedia
-                font.pixelSize: IrisStyle.typeLabel
+                font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontMain
+                font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
+                font.letterSpacing: IrisStyle.monoCaptions ? Math.round(IrisStyle.typeMeta * 0.12) : 0
+                font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeMeta : IrisStyle.typeLabel
                 font.weight: IrisStyle.weight(Font.Medium)
             }
         }
