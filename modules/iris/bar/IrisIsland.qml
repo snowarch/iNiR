@@ -1610,7 +1610,9 @@ Item {
         height: root.vertical ? Math.round(chassis.lerp(chassis.restW, chassis.openH)) : chassis.bodyHeight + chassis.topInset + chassis.bottomInset + chassis.swellInset
         // Opaque: a transparent ClippingRectangle past the screen edge stops painting its children.
         color: IrisStyle.bodyClip
-        radius: Math.min((root.vertical ? Math.min(chassis.across, chassis.height) : chassis.width) / 2, chassis.restRadius
+        // A chamfered Design's body is the field's die (square corners and two 45° cuts): a round clip would bite the
+        // square corners of what it holds, so it clips square and the content keeps its own cut.
+        radius: IrisDesign.fieldCorner === "chamfer" ? 0 : Math.min((root.vertical ? Math.min(chassis.across, chassis.height) : chassis.width) / 2, chassis.restRadius
             + (chassis.openRadius - chassis.restRadius) * Math.min(1, chassis.presentation))
 
         HoverHandler {

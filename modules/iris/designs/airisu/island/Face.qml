@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Shapes
 import qs
 import qs.services
 import qs.modules.common
@@ -42,16 +43,33 @@ Item {
     readonly property color live: root.paper ? Airisu.seal : Airisu.sealText
     readonly property int kiss: Math.max(2, Math.round(3 * root.d))
 
-    ADie {
+    // The sticker keeps only the cuts its body shows: welded to the band (the notch), the body hangs square from it and
+    // only its far corner is cut, so the sticker is cut there alone and stays concentric; floating, both.
+    readonly property bool welded: root.island?.notch ?? false
+    readonly property bool atFoot: root.island?.bottomEdge ?? false
+    Shape {
         id: sticker
         anchors.fill: parent
         anchors.margins: root.kiss
-        kind: "chamfer"
-        cut: Math.max(2, Airisu.chamfer - root.kiss)
-        fill: Airisu.sticker
+        preferredRendererType: Shape.CurveRenderer
+        readonly property real c: Math.min(Math.max(2, Airisu.chamfer - root.kiss), height / 2)
+        readonly property real cutTop: !root.welded || root.atFoot ? sticker.c : 0
+        readonly property real cutFoot: !root.welded || !root.atFoot ? sticker.c : 0
         opacity: root.paper ? 1 : 0
         visible: opacity > 0
         Behavior on opacity { enabled: Airisu.moving; NumberAnimation { duration: Airisu.detent } }
+        ShapePath {
+            fillColor: Airisu.sticker
+            strokeColor: "transparent"
+            strokeWidth: 0
+            startX: 0; startY: 0
+            PathLine { x: sticker.width - sticker.cutTop; y: 0 }
+            PathLine { x: sticker.width; y: sticker.cutTop }
+            PathLine { x: sticker.width; y: sticker.height }
+            PathLine { x: sticker.cutFoot; y: sticker.height }
+            PathLine { x: 0; y: sticker.height - sticker.cutFoot }
+            PathLine { x: 0; y: 0 }
+        }
     }
 
     // The time in the figures' face; the colon is two seal squares.
