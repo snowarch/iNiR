@@ -164,6 +164,14 @@ Item {
     readonly property var flatBlocks: {
         if (!root.flatSection) return []
         const out = []
+        // In columns the pane reads in the column's order, and every group is a place with its name: the column points at
+        // each one, so none hides inside a neighbour's card.
+        if (root.split) {
+            for (const chunk of root.groupChunks)
+                for (const group of chunk.groups)
+                    out.push({ title: group.title, caption: group.title, key: group.key, rows: group.rows.slice(), loose: false })
+            return out
+        }
         for (const group of root.groups) {
             const single = group.rows.length === 1
             const previous = out[out.length - 1]
@@ -296,11 +304,14 @@ Item {
         let found = ""
         // At the foot of the page the last groups can never rise to the reading line: the last one in view wins.
         const atEnd = settingsFlick.contentY >= settingsFlick.contentHeight - settingsFlick.height - 2 && settingsFlick.contentY > 0
-        for (const target of root.spyTargets()) {
+        const targets = root.spyTargets()
+        // Before any head reaches the line, the first block on the page is the one being read (the column's order).
+        if (root.section !== "general" && targets.length > 0) found = targets[0].key
+        for (const target of targets) {
             const top = target.item.mapToItem(settingsFlick.contentItem, 0, 0).y - settingsFlick.contentY
             // The group whose head has reached the upper fifth is the one being read; at the foot, the last one in view.
             if (top > settingsFlick.height * (atEnd ? 0.92 : 0.2)) break
-            found = target.key
+            if (target.key.length > 0) found = target.key
         }
         if (found.length === 0) found = root.section === "general" ? "@welcome" : String(root.groups[0]?.key ?? "")
         if (root.heldGroup.length === 0) root.readGroup = found
@@ -1069,7 +1080,23 @@ Item {
                         contentHeight: navColumn.y + navColumn.implicitHeight + Math.round(12 * root.d)
                         boundsBehavior: Flickable.StopAtBounds
                         ScrollBar.vertical: IrisScrollBar {}
-                        onCurrentChanged: navArm.restart()
+                        onCurrentChanged: { navArm.restart(); navFollow.restart() }
+                        // The entry being read never sits outside the column: it scrolls into view with a row of air.
+                        Timer {
+                            id: navFollow
+                            interval: 0
+                            onTriggered: {
+                                const entry = groupNav.current
+                                if (!entry) return
+                                const top = navColumn.y + entry.y - groupNav.rowHeight
+                                const bottom = navColumn.y + entry.y + entry.height + groupNav.rowHeight
+                                const end = Math.max(0, groupNav.contentHeight - groupNav.height)
+                                const to = top < groupNav.contentY ? top : bottom > groupNav.contentY + groupNav.height ? bottom - groupNav.height : groupNav.contentY
+                                navScroll.to = Math.max(0, Math.min(end, to))
+                                if (navScroll.to !== groupNav.contentY) navScroll.restart()
+                            }
+                        }
+                        NumberAnimation { id: navScroll; target: groupNav; property: "contentY"; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
                         Timer { id: navArm; interval: 0; onTriggered: { navTab.placedIn = root.section; navTab.travels = IrisStyle.motionEnabled } }
 
                         Shape {
@@ -1576,6 +1603,8 @@ Item {
                 text: entry.type === "you" ? (SystemInfo.displayName || SystemInfo.username)
                     : entry.type === "link" ? String(entry.modelData.label ?? "")
                     : String(entry.modelData.label ?? entry.modelData.title ?? "")
+                color: entry.selected ? IrisStyle.accent : IrisStyle.text
+                Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                 font.pixelSize: IrisStyle.typeLabel
                 font.weight: IrisStyle.weight(entry.selected ? Font.DemiBold : Font.Medium)
                 elide: Text.ElideRight
@@ -1678,7 +1707,9 @@ Item {
                 anchors.rightMargin: 8 * root.d
                 anchors.verticalCenter: parent.verticalCenter
                 text: Translation.tr(sectionRow.modelData.title)
-                color: IrisStyle.text
+                // Where you are reads in the accent and a step heavier; the wash under it only supports that.
+                color: sectionRow.selected ? IrisStyle.accent : IrisStyle.text
+                Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                 font.pixelSize: IrisStyle.typeLabel
                 font.weight: IrisStyle.weight(sectionRow.selected ? Font.DemiBold : Font.Medium)
                 elide: Text.ElideRight
