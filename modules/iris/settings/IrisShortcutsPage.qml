@@ -131,7 +131,7 @@ Flickable {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: Math.round(36 * root.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: filter.activeFocus ? IrisStyle.fill : IrisStyle.readingCard
             border.width: filter.activeFocus ? 1 : 0
             border.color: IrisStyle.tintBorder(IrisStyle.accent)

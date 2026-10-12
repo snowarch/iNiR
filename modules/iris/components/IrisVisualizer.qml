@@ -101,7 +101,7 @@ Item {
                         required property int index
                         width: root.dot
                         height: width
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         color: root.tint
                         scale: 0.4 + 0.6 * (face.levels[index] ?? 0)
                         opacity: 0.55 + 0.45 * (face.levels[index] ?? 0)
@@ -173,7 +173,7 @@ Item {
                         Rectangle {
                             x: Math.round((parent.width - width) / 2)
                             width: Math.max(1.5, 1.8 * root.d)
-                            radius: width / 2
+                            radius: IrisStyle.capsule(width)
                             color: root.tint
                             height: Math.max(width, ring.reach * (0.25 + 0.75 * spoke.level))
                             y: parent.height / 2 - ring.inner - height

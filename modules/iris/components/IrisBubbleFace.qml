@@ -46,6 +46,9 @@ Item {
     readonly property color alertInk: root.legible(IrisStyle.badgeInk, 4.5)
     readonly property color dangerInk: root.legible(IrisStyle.danger, 3)
     readonly property bool radialVisualizer: IrisStyle.visualizerStyle === "ring"
+    // A Design whose rings run on the edge (AIRISU) traces a level along the cut outline of the piece, from its upper
+    // left corner clockwise, instead of a circle; its covers stay square.
+    readonly property bool edgeRings: IrisDesign.trait("rings") === "edge"
     // In a bar's lane a face with a figure reads on one line, glyph then figure, and sizes from both.
     property bool lane: false
     // A bar cell is its touch target; what it draws keeps the size of the bar's other marks.
@@ -102,10 +105,47 @@ Item {
         id: ring
         property real progress: 0
         property color tint: root.ink
-        property real stroke: Math.max(2, 2.5 * root.d)
+        property real stroke: Math.max(2, (root.edgeRings ? 2 : 2.5) * root.d)
+        // The cut outline, inset by half the stroke: upper left → right → cut → down → cut → left → up.
+        readonly property real cut: Math.min(IrisStyle.chamferCut, ring.width / 4)
+        readonly property var outline: {
+            const h = ring.stroke / 2, w = ring.width - h, b = ring.height - h, c = ring.cut
+            return [Qt.point(h, h), Qt.point(w - c, h), Qt.point(w, h + c), Qt.point(w, b),
+                Qt.point(h + c, b), Qt.point(h, b - c), Qt.point(h, h)]
+        }
+        function traced(progress: real): var {
+            const pts = ring.outline
+            let total = 0
+            for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y)
+            let left = total * Math.max(0, Math.min(1, progress))
+            const out = [pts[0]]
+            for (let i = 1; i < pts.length && left > 0; i++) {
+                const a = pts[i - 1], b = pts[i]
+                const len = Math.hypot(b.x - a.x, b.y - a.y)
+                if (len <= left) { out.push(b); left -= len; continue }
+                out.push(Qt.point(a.x + (b.x - a.x) * left / len, a.y + (b.y - a.y) * left / len))
+                left = 0
+            }
+            return out
+        }
         preferredRendererType: Shape.CurveRenderer
         ShapePath {
-            strokeColor: IrisStyle.trackOf(ring.tint)
+            strokeColor: root.edgeRings ? IrisStyle.trackOf(ring.tint) : "transparent"
+            strokeWidth: root.edgeRings ? ring.stroke : 0
+            fillColor: "transparent"
+            joinStyle: ShapePath.MiterJoin
+            PathPolyline { path: root.edgeRings ? ring.outline : [] }
+        }
+        ShapePath {
+            strokeColor: root.edgeRings && ring.progress > 0 ? ring.tint : "transparent"
+            strokeWidth: root.edgeRings ? ring.stroke : 0
+            fillColor: "transparent"
+            joinStyle: ShapePath.MiterJoin
+            capStyle: ShapePath.FlatCap
+            PathPolyline { path: root.edgeRings && ring.progress > 0 ? ring.traced(ring.progress) : [] }
+        }
+        ShapePath {
+            strokeColor: root.edgeRings ? "transparent" : IrisStyle.trackOf(ring.tint)
             strokeWidth: ring.stroke
             fillColor: "transparent"
             PathAngleArc {
@@ -115,7 +155,7 @@ Item {
             }
         }
         ShapePath {
-            strokeColor: ring.tint
+            strokeColor: root.edgeRings ? "transparent" : ring.tint
             strokeWidth: ring.stroke
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
@@ -164,14 +204,21 @@ Item {
         }
     }
 
+    readonly property color plateColor: root.pressed || root.open ? IrisStyle.fillActiveOf(root.ink)
+        : root.hovered ? IrisStyle.fillHoverOf(root.ink)
+        : ColorUtils.applyAlpha(root.ink, 0)
     Rectangle {
-        visible: root.plated || root.bodyless
+        visible: (root.plated || root.bodyless) && !IrisStyle.fieldChamfer
         anchors.fill: parent
         radius: root.inline ? height / 2 : IrisStyle.pieceRadius(width)
-        color: root.pressed || root.open ? IrisStyle.fillActiveOf(root.ink)
-            : root.hovered ? IrisStyle.fillHoverOf(root.ink)
-            : ColorUtils.applyAlpha(root.ink, 0)
+        color: root.plateColor
         Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
+    }
+    // In a chamfered Design the plate under the pointer is cut like the piece it lights.
+    IrisCutPlate {
+        visible: (root.plated || root.bodyless) && IrisStyle.fieldChamfer
+        anchors.fill: parent
+        color: root.plateColor
     }
     Rectangle {
         anchors.fill: parent
@@ -196,12 +243,13 @@ Item {
             width: parent.width - 12 * root.d - 2 * root.platedInset
             height: width
             source: MediaArtwork.displaySource
-            circular: true
+            circular: !root.edgeRings
+            radius: root.edgeRings ? 0 : width / 2
         }
         Rectangle {
             visible: root.kind === "media" && opacity > 0
             anchors.fill: cover
-            radius: width / 2
+            radius: root.edgeRings ? 0 : width / 2
             color: IrisStyle.veilStrong
             opacity: !root.playing && !root.coverHidden ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
@@ -472,7 +520,7 @@ Item {
                 y: clockFace.cy - height / 2
                 width: Math.max(3, 3 * root.d)
                 height: width
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: root.legible(IrisStyle.identity.orange, 3)
             }
         }
@@ -624,7 +672,7 @@ Item {
                         readonly property var entry: workspacesFace.list[index]
                         width: Math.max(2, 3 * root.d)
                         height: width
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         color: entry?.is_active ? root.faceAccent : root.inkFaint
                     }
                 }

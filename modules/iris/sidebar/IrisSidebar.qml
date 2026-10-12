@@ -239,7 +239,7 @@ PanelWindow {
                     Layout.preferredWidth: Math.round(42 * root.d)
                     Layout.preferredHeight: Layout.preferredWidth
                     Layout.rightMargin: 8 * root.d
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     color: IrisStyle.fill
                     IrisImage {
                         id: headerAvatarImage

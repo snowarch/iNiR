@@ -88,7 +88,7 @@ PreviewScene {
                                     required property int index
                                     width: Math.round(38 * ccRoot.d)
                                     height: width
-                                    radius: width / 2
+                                    radius: IrisStyle.capsule(width)
                                     color: index === 0 ? IrisStyle.accent : IrisStyle.fill
                                     MaterialSymbol { anchors.centerIn: parent; text: IrisControlOptions.glyphOf(parent.modelData); iconSize: Math.round(17 * ccRoot.d); color: parent.index === 0 ? IrisStyle.inkOnAccent : IrisStyle.text }
                                 }
@@ -104,7 +104,7 @@ PreviewScene {
                                     required property string modelData
                                     width: Math.round(Math.min(46 * ccRoot.d, (block.width - 20 * ccRoot.d) / 3))
                                     height: block.height
-                                    radius: width / 2
+                                    radius: IrisStyle.capsule(width)
                                     color: IrisStyle.fill
                                     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: parent.height * 0.6; radius: parent.radius; color: IrisStyle.fillStrong }
                                     MaterialSymbol { anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: Math.round(10 * ccRoot.d); text: IrisControlOptions.glyphOf(parent.modelData); iconSize: Math.round(15 * ccRoot.d); color: IrisStyle.surface }
@@ -136,7 +136,7 @@ PreviewScene {
                                 Layout.alignment: block.kind === "media" && block.spot.h > 1 && !(block.spot.w > 2) ? Qt.AlignTop : Qt.AlignVCenter
                                 implicitWidth: Math.round(30 * ccRoot.d)
                                 implicitHeight: implicitWidth
-                                radius: width / 2
+                                radius: IrisStyle.capsule(width)
                                 color: block.kind === "media" ? IrisStyle.fillActive : IrisStyle.accent
                                 MaterialSymbol {
                                     anchors.centerIn: parent

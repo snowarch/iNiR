@@ -164,7 +164,7 @@ ColumnLayout {
             visible: root.editing
             emphasized: true
             text: Translation.tr("Done")
-            buttonRadius: height / 2
+            buttonRadius: IrisStyle.capsule(height)
             onClicked: GlobalStates.irisControlEdit = false
         }
         IrisControlPlate {
@@ -303,7 +303,7 @@ ColumnLayout {
                             visible: !notificationColumn.empty
                             implicitWidth: Math.max(implicitHeight, totalLabel.implicitWidth + Math.round(10 * root.d))
                             implicitHeight: Math.round(17 * root.d)
-                            radius: height / 2
+                            radius: IrisStyle.capsule(height)
                             color: IrisStyle.tintFill(IrisStyle.secondaryAccent)
                             IrisText {
                                 id: totalLabel
@@ -328,7 +328,7 @@ ColumnLayout {
                             quiet: true
                             text: Translation.tr("Clear")
                             implicitHeight: Math.round(24 * root.d)
-                            buttonRadius: height / 2
+                            buttonRadius: IrisStyle.capsule(height)
                             onClicked: Notifications.discardAllNotifications()
                         }
                     }
@@ -400,7 +400,7 @@ ColumnLayout {
                                             visible: groupRow.count > 1 && !rowHover.hovered
                                             implicitWidth: Math.max(implicitHeight, countLabel.implicitWidth + Math.round(10 * root.d))
                                             implicitHeight: Math.round(16 * root.d)
-                                            radius: height / 2
+                                            radius: IrisStyle.capsule(height)
                                             color: IrisStyle.fill
                                             IrisText {
                                                 id: countLabel
@@ -442,7 +442,7 @@ ColumnLayout {
                         Layout.topMargin: Math.round(4 * root.d)
                         quiet: true
                         implicitHeight: Math.round(28 * root.d)
-                        buttonRadius: height / 2
+                        buttonRadius: IrisStyle.capsule(height)
                         text: Translation.tr("+%1 more in Today").arg(notificationColumn.total - notificationColumn.shown.length)
                         onClicked: GlobalStates.openSidebarRight(root.targetScreen?.name ?? "")
                     }
@@ -585,7 +585,7 @@ ColumnLayout {
                                         quiet: !pick.on
                                         selected: pick.on
                                         implicitHeight: Math.round(28 * root.d)
-                                        buttonRadius: height / 2
+                                        buttonRadius: IrisStyle.capsule(height)
                                         onClicked: IrisControlOptions.toggleIn(pickRow.modelData.key, pick.modelData, pickRow.modelData.limit)
                                     }
                                 }
@@ -762,7 +762,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         width: miniCell.dot
                         height: width
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         color: IrisStyle.fill
                     }
                     Grid {
@@ -775,7 +775,7 @@ ColumnLayout {
                             Rectangle {
                                 width: Math.round(Math.min(miniCell.width, miniCell.height) * 0.3)
                                 height: width
-                                radius: width / 2
+                                radius: IrisStyle.capsule(width)
                                 color: IrisStyle.textTertiary
                             }
                         }
@@ -820,7 +820,7 @@ ColumnLayout {
                         y: miniCell.height < card.miniUnit * 1.5 ? Math.round((parent.height - height) / 2) : Math.round(3 * root.d)
                         width: Math.min(parent.height - 6 * root.d, Math.round(10 * root.d))
                         height: width
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         color: IrisStyle.textTertiary
                     }
                 }

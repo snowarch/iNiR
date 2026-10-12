@@ -66,7 +66,7 @@ PreviewScene {
                             required property var modelData
                             readonly property bool isToday: modelData.getDate() === hl.today.getDate() && modelData.getMonth() === hl.today.getMonth()
                             width: Math.round(26 * hl.d); height: width
-                            radius: width / 2
+                            radius: IrisStyle.capsule(width)
                             color: hlDay.isToday ? IrisStyle.tintFill(IrisStyle.secondaryAccent) : "transparent"
                             IrisText {
                                 anchors.centerIn: parent

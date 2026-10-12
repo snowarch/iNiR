@@ -15,7 +15,7 @@ ClippingRectangle {
     readonly property string primarySource: Directories.userAvatarSourcePrimary
     onPrimarySourceChanged: root.sourceIndex = 0
 
-    radius: width / 2
+    radius: IrisStyle.capsule(width)
     color: IrisStyle.fill
 
     IrisImage {

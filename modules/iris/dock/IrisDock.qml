@@ -639,7 +639,7 @@ Item {
                                         Rectangle {
                                             width: launcherDots.dot
                                             height: width
-                                            radius: width / 2
+                                            radius: IrisStyle.capsule(width)
                                             color: (launcherArea.containsMouse ? IrisStyle.text : IrisStyle.textStrong)
                                             Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                                         }
@@ -1300,7 +1300,7 @@ Item {
                                                 Rectangle {
                                                     width: Math.max(3, Math.round(3 * root.d))
                                                     height: width
-                                                    radius: width / 2
+                                                    radius: IrisStyle.capsule(width)
                                                     color: IrisStyle.textTertiary
                                                 }
                                             }
@@ -1334,7 +1334,7 @@ Item {
                                                 anchors.verticalCenter: parent ? parent.verticalCenter : undefined
                                                 width: Math.round((own ? 10 : 5) * root.d)
                                                 height: Math.max(3, Math.round(4 * root.d))
-                                                radius: height / 2
+                                                radius: IrisStyle.capsule(height)
                                                 color: own ? (card.focusedWindow ? IrisStyle.accent : IrisStyle.text) : IrisStyle.fillActive
                                             }
                                         }
@@ -1343,7 +1343,7 @@ Item {
                                             anchors.verticalCenter: parent.verticalCenter
                                             width: Math.round(6 * root.d)
                                             height: width
-                                            radius: width / 2
+                                            radius: IrisStyle.capsule(width)
                                             color: IrisStyle.secondaryAccent
                                         }
                                     }
@@ -1352,7 +1352,7 @@ Item {
                                         y: Math.round(6 * root.d)
                                         width: Math.round(22 * root.d)
                                         height: width
-                                        radius: width / 2
+                                        radius: IrisStyle.capsule(width)
                                         color: closeHover.hovered ? IrisStyle.danger : IrisStyle.veilHeavy
                                         opacity: card.containsMouse && CompositorService.isNiri ? 1 : 0
                                         visible: opacity > 0

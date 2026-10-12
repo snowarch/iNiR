@@ -16,7 +16,7 @@ Rectangle {
 
     implicitWidth: root.face.dp(32)
     implicitHeight: implicitWidth
-    radius: height / 2
+    radius: IrisStyle.capsule(height)
     color: hover.hovered ? (root.danger ? IrisStyle.tintFill(root.face.danger) : root.face.fillHover) : root.face.fill
     scale: tap.pressed ? IrisStyle.pressScale(0.94) : 1
     Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }

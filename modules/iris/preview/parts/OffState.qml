@@ -12,7 +12,7 @@ Rectangle {
     anchors.centerIn: parent
     implicitWidth: offRow.implicitWidth + Math.round(28 * IrisStyle.density)
     implicitHeight: Math.round(36 * IrisStyle.density)
-    radius: height / 2
+    radius: IrisStyle.capsule(height)
     color: IrisStyle.veilHeavy
     border.width: 1
     border.color: IrisStyle.border

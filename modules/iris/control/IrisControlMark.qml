@@ -20,7 +20,7 @@ Rectangle {
     z: 30
     width: Math.round(22 * root.d)
     height: width
-    radius: width / 2
+    radius: IrisStyle.capsule(width)
     color: root.active ? (root.danger ? IrisStyle.danger : IrisStyle.accent) : IrisStyle.surfaceHighestOpaque
     border.width: 1
     border.color: IrisStyle.border

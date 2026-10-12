@@ -126,7 +126,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         width: Math.round((dot.containsMouse ? 18 : 14) * root.d)
                         height: width
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         color: feed.modelData.color ?? IrisStyle.accent
                         Behavior on width {
                             enabled: IrisStyle.motionEnabled
@@ -177,7 +177,7 @@ ColumnLayout {
                                 anchors.bottom: parent.bottom
                                 width: parent.width
                                 height: modelData > 0 ? Math.round(Math.min(22, 6 + modelData * 4) * root.d) : width
-                                radius: width / 2
+                                radius: IrisStyle.capsule(width)
                                 color: modelData > 0 ? feed.tone : IrisStyle.fill
                             }
                         }

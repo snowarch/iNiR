@@ -237,7 +237,7 @@ ColumnLayout {
             y: mark.y + mark.height - height + Math.round(4 * root.d)
             width: Math.round(18 * root.d)
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: IrisStyle.bodySurface
             MaterialSymbol {
                 anchors.centerIn: parent
@@ -252,7 +252,7 @@ ColumnLayout {
             y: mark.y + mark.height - height + Math.round(4 * root.d)
             width: Math.round(18 * root.d)
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: IrisStyle.bodySurface
             MaterialSymbol {
                 anchors.centerIn: parent
@@ -274,7 +274,7 @@ ColumnLayout {
             onClicked: { root.hovered = null; Autostart.removeEntry(piece.modelData.index) }
             Rectangle {
                 anchors.fill: parent
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: parent.containsMouse ? IrisStyle.danger : IrisStyle.raised
                 MaterialSymbol {
                     anchors.centerIn: parent

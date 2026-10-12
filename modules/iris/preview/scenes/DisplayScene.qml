@@ -41,7 +41,7 @@ PreviewScene {
         anchors.margins: Math.round(18 * displayRoot.d)
         width: modeRow.implicitWidth + Math.round(28 * displayRoot.d)
         height: Math.round(44 * displayRoot.d)
-        radius: height / 2
+        radius: IrisStyle.capsule(height)
         RowLayout {
             id: modeRow
             anchors.centerIn: parent

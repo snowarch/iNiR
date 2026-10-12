@@ -22,8 +22,8 @@ Flow {
             required property var modelData
             implicitHeight: Math.round(32 * IrisStyle.density)
             implicitWidth: chipRow.implicitWidth + Math.round(20 * IrisStyle.density)
-            buttonRadius: height / 2
-            buttonRadiusPressed: height / 2
+            buttonRadius: IrisStyle.capsule(height)
+            buttonRadiusPressed: IrisStyle.capsule(height)
             colBackground: root.overMedia ? IrisStyle.onMediaFill : IrisStyle.fillQuiet
             colBackgroundHover: root.overMedia ? IrisStyle.onMediaFillHover : IrisStyle.fillHover
             Accessible.name: Translation.tr("Control %1").arg(chip.modelData?.identity ?? "")

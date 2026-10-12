@@ -83,7 +83,7 @@ IrisWidgetFace {
                         anchors.centerIn: parent
                         width: Math.min(parent.width, parent.height) * 0.9
                         height: width
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         visible: cell.modelData.isToday
                         color: root.highlight
                     }
@@ -105,7 +105,7 @@ IrisWidgetFace {
                         anchors.bottom: parent.bottom
                         width: root.dp(4)
                         height: width
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         color: root.accent
                     }
                 }
@@ -120,7 +120,7 @@ IrisWidgetFace {
         Rectangle {
             Layout.preferredWidth: root.dp(3)
             Layout.fillHeight: true
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: IrisFaceData.eventTint(line.event, root.accent)
         }
         ColumnLayout {
@@ -234,7 +234,7 @@ IrisWidgetFace {
                     visible: navButton.modelData.shown
                     Layout.preferredWidth: root.dp(28)
                     Layout.preferredHeight: root.dp(28)
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     color: navHover.hovered ? root.fillHover : root.fillQuiet
                     MaterialSymbol {
                         anchors.centerIn: parent

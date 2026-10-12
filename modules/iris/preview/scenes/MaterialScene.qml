@@ -112,7 +112,7 @@ PreviewScene {
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: Math.max(2, Math.round(4 * mat.d))
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: IrisStyle.fill
                 Rectangle { width: parent.width * 0.42; height: parent.height; radius: parent.radius; color: IrisStyle.accent }
             }

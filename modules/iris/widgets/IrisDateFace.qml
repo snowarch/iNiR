@@ -47,12 +47,12 @@ IrisWidgetFace {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: root.dp(4)
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: root.fill
                 Rectangle {
                     width: Math.max(parent.height, parent.width * root.yearShare)
                     height: parent.height
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: root.highlight
                 }
             }

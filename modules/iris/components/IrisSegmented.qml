@@ -150,7 +150,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.round(12 * root.d)
                     height: width
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     color: segment.modelData.swatch ?? "transparent"
                     border.width: 1
                     border.color: IrisStyle.borderStrong

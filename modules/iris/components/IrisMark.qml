@@ -26,7 +26,7 @@ Item {
             anchors.centerIn: parent
             width: root.implicitSize * 0.72
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: "transparent"
             border.width: Math.max(1, root.implicitSize * 0.07)
             border.color: root.color
@@ -36,7 +36,7 @@ Item {
             anchors.centerIn: parent
             width: root.implicitSize * 0.18
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: root.color
         }
 
@@ -47,7 +47,7 @@ Item {
                 y: root.height * 0.08
                 width: root.implicitSize * 0.13
                 height: width
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: IrisStyle.secondaryAccent
             }
             RotationAnimator on rotation {

@@ -309,7 +309,7 @@ Item {
                 emphasized: true
                 text: Translation.tr("Done")
                 implicitHeight: Math.round(32 * root.d)
-                buttonRadius: height / 2
+                buttonRadius: IrisStyle.capsule(height)
                 onClicked: GlobalStates.irisEdit = false
             }
         }
@@ -437,7 +437,7 @@ Item {
                 IrisButton {
                     quiet: true
                     text: Translation.tr("Paste")
-                    buttonRadius: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
                     onClicked: {
                         const theme = IrisThemes.importText(String(Quickshell.clipboardText ?? ""))
                         IrisEditHistory.say(theme ? Translation.tr("Imported “%1”").arg(theme.name) : Translation.tr("The clipboard does not hold an iRiS theme"))
@@ -445,7 +445,7 @@ Item {
                 }
                 IrisButton {
                     text: Translation.tr("Save current")
-                    buttonRadius: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
                     onClicked: {
                         IrisThemes.save(Translation.tr("My theme %1").arg(IrisThemes.all.filter(theme => theme.user).length + 1), "")
                         IrisEditHistory.say(Translation.tr("Saved as a theme"))
@@ -570,7 +570,7 @@ Item {
         onClicked: chip.activated()
         Rectangle {
             anchors.fill: parent
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: chip.on ? IrisStyle.tintFill(IrisStyle.accent) : chip.containsMouse ? IrisStyle.fillHover : "transparent"
             Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
         }
@@ -695,7 +695,7 @@ Item {
                 : outline.below ? outline.height + outline.gap : -height - outline.gap
             width: Math.round(caption.implicitWidth + 20 * root.d)
             height: Math.round(24 * root.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: IrisStyle.bodySurface
             IrisText {
                 id: caption
@@ -732,7 +732,7 @@ Item {
         y: Math.round(knob.cornerY - knob.size / 2)
         Rectangle {
             anchors.fill: parent
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: IrisStyle.accent
             border.width: Math.max(1, Math.round(2 * root.d))
             border.color: IrisStyle.bodySurface
@@ -766,7 +766,7 @@ Item {
             y: Math.round((knob.height - height) / 2)
             width: Math.round(figure.implicitWidth + 16 * root.d)
             height: Math.round(22 * root.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: IrisStyle.accent
             IrisText {
                 id: figure

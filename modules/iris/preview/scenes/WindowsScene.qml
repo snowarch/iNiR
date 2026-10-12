@@ -85,7 +85,7 @@ PreviewScene {
                             required property real modelData
                             width: Math.round(parent.width * modelData)
                             height: Math.round(6 * winRoot.d)
-                            radius: height / 2
+                            radius: IrisStyle.capsule(height)
                             color: IrisStyle.fill
                         }
                     }

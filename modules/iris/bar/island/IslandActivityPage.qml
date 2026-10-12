@@ -33,7 +33,7 @@ ColumnLayout {
             Layout.preferredHeight: 40 * IrisStyle.density
             Rectangle {
                 anchors.fill: parent
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: IrisStyle.tintFill(IrisStyle.danger)
             }
             RecordDot { anchors.centerIn: parent; width: 14 * IrisStyle.density; height: width }
@@ -183,7 +183,7 @@ ColumnLayout {
                     Layout.preferredHeight: 40 * IrisStyle.density
                     Rectangle {
                         anchors.fill: parent
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         color: IrisStyle.tintFill(taskEntry.tint)
                         visible: taskEntry.progress < 0
                     }

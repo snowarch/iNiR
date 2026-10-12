@@ -182,7 +182,7 @@ ClippingRectangle {
                     onClicked: card.chooseAvatar()
                     Rectangle {
                         anchors.fill: parent
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         color: "transparent"
                         border.width: avatar.ring
                         border.color: IrisStyle.accentOnMedia
@@ -200,7 +200,7 @@ ClippingRectangle {
                         anchors.bottom: parent.bottom
                         width: Math.round(22 * card.d)
                         height: width
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         color: IrisStyle.accent
                         border.width: avatar.ring
                         border.color: IrisStyle.bodySurface

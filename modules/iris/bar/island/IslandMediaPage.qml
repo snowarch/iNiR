@@ -373,7 +373,7 @@ GridLayout {
         Accessible.name: chip.text
         Rectangle {
             anchors.fill: parent
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: chip.active ? IrisStyle.tintFill(page.island.artTint)
                 : chip.pressed ? IrisStyle.fillActive : chip.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }

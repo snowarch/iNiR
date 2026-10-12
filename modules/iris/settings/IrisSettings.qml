@@ -741,7 +741,7 @@ Item {
             y: Math.round((root.railHint?.y ?? 0) - height / 2)
             width: Math.round(railCaption.implicitWidth + 20 * root.d)
             height: Math.round(26 * root.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: IrisStyle.bodySurface
             IrisText {
                 id: railCaption
@@ -1679,7 +1679,7 @@ Item {
         // When the page's name would lose its room, actions fold to their glyphs one at a time (toolbarActions.folded).
         readonly property bool folded: toolbarActions.folded.includes(action)
         readonly property real fullWidth: Math.ceil(toolbarMetrics.advanceWidth(action.label)) + Math.round((16 + 6 + 24) * root.d)
-        buttonRadius: height / 2
+        buttonRadius: IrisStyle.capsule(height)
         // Under a Design's skin the plate is the skin's (AIRISU: a blade-cut outline): no capsule under it.
         colBackground: action.skinned ? "transparent" : IrisStyle.controlPlated ? IrisStyle.plateFillFor(IrisStyle.controlPlate) : IrisStyle.fill
         colBackgroundHover: action.skinned ? "transparent" : IrisStyle.fillHover
@@ -1850,7 +1850,7 @@ Item {
                 anchors.centerIn: parent
                 width: Math.round(6 * root.d)
                 height: width
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: IrisStyle.accent
             }
             MaterialSymbol {
@@ -2067,7 +2067,7 @@ Item {
                 y: Math.round(23 * root.d)
                 width: Math.max(1, Math.round(2 * root.d))
                 height: Math.max(0, parent.height - 46 * root.d)
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: IrisStyle.hairlineStrong
             }
             Column {
@@ -2172,7 +2172,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: groupRow.modified ? Math.round(6 * root.d) : 0
                 height: width
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: IrisStyle.accent
                 Accessible.name: Translation.tr("Changed")
             }

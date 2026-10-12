@@ -201,7 +201,7 @@ PanelWindow {
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: Math.round(36 * root.d)
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: searchField.activeFocus ? IrisStyle.fill : IrisStyle.fillQuiet
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                 RowLayout {
@@ -332,7 +332,7 @@ PanelWindow {
                             visible: root.target !== "themes" && changed > 0
                             Layout.alignment: Qt.AlignTop
                             quiet: true
-                            buttonRadius: height / 2
+                            buttonRadius: IrisStyle.capsule(height)
                             text: Translation.tr("Reset %1").arg(changed)
                             Accessible.name: Translation.tr("Reset what changed here")
                             onClicked: root.resetArea()
@@ -533,7 +533,7 @@ PanelWindow {
             y: Math.round(2 * root.d)
             width: Math.round(40 * root.d)
             height: Math.round(30 * root.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: railButton.selected ? IrisStyle.tintFill(railButton.area.tint)
                 : railButton.containsMouse ? IrisStyle.fillHover : "transparent"
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
@@ -553,7 +553,7 @@ PanelWindow {
                 anchors.topMargin: Math.round(4 * root.d)
                 width: Math.round(6 * root.d)
                 height: width
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: railButton.area.tint
             }
         }
@@ -634,7 +634,7 @@ PanelWindow {
                 IrisButton {
                     quiet: true
                     text: Translation.tr("Paste")
-                    buttonRadius: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
                     onClicked: {
                         const theme = IrisThemes.importText(String(Quickshell.clipboardText ?? ""))
                         IrisEditHistory.say(theme ? Translation.tr("Imported “%1”").arg(theme.name) : Translation.tr("The clipboard does not hold an iRiS theme"))
@@ -642,7 +642,7 @@ PanelWindow {
                 }
                 IrisButton {
                     text: Translation.tr("Save current")
-                    buttonRadius: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
                     onClicked: {
                         IrisThemes.save(Translation.tr("My theme %1").arg(IrisThemes.all.filter(theme => theme.user).length + 1), "")
                         IrisEditHistory.say(Translation.tr("Saved as a theme"))

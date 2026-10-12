@@ -86,7 +86,7 @@ PreviewScene {
                         anchors.margins: Math.round(8 * orbitRoot.d)
                         width: workspaceName.implicitWidth + Math.round(16 * orbitRoot.d)
                         height: Math.round(22 * orbitRoot.d)
-                        radius: height / 2
+                        radius: IrisStyle.capsule(height)
                         color: IrisStyle.veilHeavy
                         IrisText {
                             id: workspaceName

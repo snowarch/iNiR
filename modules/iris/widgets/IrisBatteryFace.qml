@@ -169,12 +169,12 @@ IrisWidgetFace {
             Layout.fillWidth: true
             Layout.topMargin: root.dp(8)
             Layout.preferredHeight: root.dp(9)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: root.fill
             Rectangle {
                 width: parent.width * (root.devices[0]?.level ?? 0)
                 height: parent.height
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: root.devices.length > 0 ? root.tint(root.devices[0]) : "transparent"
             }
         }

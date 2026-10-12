@@ -86,7 +86,7 @@ PreviewScene {
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: Math.round(26 * lightRoot.d)
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: IrisStyle.fill
                 Rectangle { width: parent.width * 0.62; height: parent.height; radius: height / 2; color: IrisStyle.fillActive }
             }

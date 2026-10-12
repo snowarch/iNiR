@@ -122,7 +122,7 @@ ColumnLayout {
                     onAccepted: parent.submit()
                     Keys.onEscapePressed: networkEntry.modelData.askingPassword = false
                     background: Rectangle {
-                        radius: height / 2
+                        radius: IrisStyle.capsule(height)
                         color: password.activeFocus ? IrisStyle.fill : IrisStyle.fillQuiet
                         border.width: password.activeFocus ? Math.max(1, Math.round(1.5 * root.d)) : 0
                         border.color: IrisStyle.tintBorder(IrisStyle.accent)
@@ -130,8 +130,8 @@ ColumnLayout {
                 }
                 IrisButton {
                     implicitHeight: Math.round(34 * root.d)
-                    buttonRadius: height / 2
-                    buttonRadiusPressed: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
+                    buttonRadiusPressed: IrisStyle.capsule(height)
                     colBackground: IrisStyle.fill
                     colBackgroundHover: IrisStyle.fillHover
                     text: Translation.tr("Cancel")
@@ -139,8 +139,8 @@ ColumnLayout {
                 }
                 IrisButton {
                     implicitHeight: Math.round(34 * root.d)
-                    buttonRadius: height / 2
-                    buttonRadiusPressed: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
+                    buttonRadiusPressed: IrisStyle.capsule(height)
                     emphasized: true
                     text: Translation.tr("Connect")
                     onClicked: parent.submit()
@@ -154,8 +154,8 @@ ColumnLayout {
                 Layout.rightMargin: 4 * root.d
                 Layout.bottomMargin: 4 * root.d
                 implicitHeight: Math.round(34 * root.d)
-                buttonRadius: height / 2
-                buttonRadiusPressed: height / 2
+                buttonRadius: IrisStyle.capsule(height)
+                buttonRadiusPressed: IrisStyle.capsule(height)
                 colBackground: IrisStyle.fill
                 colBackgroundHover: IrisStyle.fillHover
                 text: Translation.tr("Open network portal")

@@ -74,7 +74,7 @@ ColumnLayout {
                         anchors.margins: -Math.round(5 * root.d)
                         width: Math.round(18 * root.d)
                         height: width
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         color: entry.on ? IrisStyle.surfaceHighest : IrisStyle.accent
                         border.width: 1
                         border.color: IrisStyle.surface

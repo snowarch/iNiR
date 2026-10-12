@@ -125,7 +125,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 width: Math.round(9 * IrisStyle.density)
                 height: Math.max(2, Math.round(2 * IrisStyle.density))
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: IrisStyle.inkOnDanger
             }
         }
@@ -474,7 +474,7 @@ ColumnLayout {
 
                 ClippingRectangle {
                     anchors.fill: parent
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     color: IrisStyle.fill
                     scale: avatarHover.hovered ? 1.05 : 1
                     Behavior on scale { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
@@ -639,7 +639,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             width: dot.active ? 20 * IrisStyle.density : 7 * IrisStyle.density
                             height: 7 * IrisStyle.density
-                            radius: height / 2
+                            radius: IrisStyle.capsule(height)
                             color: dot.active ? IrisStyle.accent
                                 : (dot.containsMouse ? IrisStyle.textStrong : dot.occupied ? IrisStyle.textTertiary : IrisStyle.fillHover)
                             Behavior on width { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
@@ -795,8 +795,8 @@ ColumnLayout {
                 visible: page.pendingTasks > 0
                 implicitHeight: Math.round(30 * IrisStyle.density)
                 implicitWidth: tasksRow.implicitWidth + Math.round(20 * IrisStyle.density)
-                buttonRadius: height / 2
-                buttonRadiusPressed: height / 2
+                buttonRadius: IrisStyle.capsule(height)
+                buttonRadiusPressed: IrisStyle.capsule(height)
                 colBackground: IrisStyle.fillQuiet
                 colBackgroundHover: IrisStyle.fillHover
                 Accessible.name: Translation.tr("%1 open tasks").arg(page.pendingTasks)

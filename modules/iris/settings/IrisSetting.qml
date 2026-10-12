@@ -177,7 +177,7 @@ Item {
                             anchors.centerIn: parent
                             width: resetArea.containsMouse ? resetMark.width : Math.round(7 * root.d)
                             height: width
-                            radius: width / 2
+                            radius: IrisStyle.capsule(width)
                             color: resetArea.containsMouse ? IrisStyle.tintFill(IrisStyle.accent) : IrisStyle.accent
                             Behavior on width { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                             MaterialSymbol {
@@ -740,7 +740,7 @@ Item {
                                                             required property real modelData
                                                             width: Math.max(2, Math.round((half.width - 2 * half.pad) * modelData / 0.62))
                                                             height: Math.max(2, Math.round(2.5 * root.d))
-                                                            radius: height / 2
+                                                            radius: IrisStyle.capsule(height)
                                                             color: half.modelData.fg ?? IrisStyle.text
                                                             opacity: 0.8
                                                         }
@@ -930,7 +930,7 @@ Item {
                                 height: Math.round(18 * root.d)
                                 x: Math.round((desk.width - width) / 2)
                                 y: scene.framed ? -Math.round(height / 2) : Math.round(3 * root.d)
-                                radius: height / 2
+                                radius: IrisStyle.capsule(height)
                                 color: card.stuff
                             }
                         }
@@ -956,7 +956,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: Math.round(10 * root.d)
                                 height: width
-                                radius: width / 2
+                                radius: IrisStyle.capsule(width)
                                 color: IrisStyle.accent
                             }
                         }
@@ -1107,7 +1107,7 @@ Item {
                                 visible: source.kind === "wallpaper" || (source.kind === "custom" && source.selected)
                                 width: Math.round(16 * root.d)
                                 height: width
-                                radius: width / 2
+                                radius: IrisStyle.capsule(width)
                                 x: source.kind === "custom" ? Math.round(hueAt * (parent.width - width))
                                     : parent.width - width - Math.round(6 * root.d)
                                 y: source.kind === "custom" ? Math.round((parent.height - height) / 2) : parent.height - height - Math.round(6 * root.d)
@@ -1185,7 +1185,7 @@ Item {
                         onClicked: root.commit(swatch.modelData.value)
                         Rectangle {
                             anchors.fill: parent
-                            radius: width / 2
+                            radius: IrisStyle.capsule(width)
                             color: "transparent"
                             border.width: Math.max(2, Math.round(2 * root.d))
                             border.color: swatch.selected ? IrisStyle.text : swatch.containsMouse ? IrisStyle.borderStrong : "transparent"
@@ -1195,7 +1195,7 @@ Item {
                             anchors.centerIn: parent
                             width: parent.width - Math.round(8 * root.d)
                             height: width
-                            radius: width / 2
+                            radius: IrisStyle.capsule(width)
                             border.width: 1
                             border.color: IrisStyle.borderStrong
                             color: swatch.special === "wallpaper" ? IrisStyle.wallpaperLight
@@ -1283,7 +1283,7 @@ Item {
                     required property int index
                     width: Math.round(16 * root.d)
                     height: width
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     x: curve.px(curve.points[handle.index * 2]) - width / 2
                     y: curve.py(curve.points[handle.index * 2 + 1]) - height / 2
                     color: IrisStyle.text
@@ -1347,7 +1347,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width
                 height: Math.round(10 * root.d)
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
                     GradientStop { position: 0; color: Qt.hsla(0, 0.8, 0.62, 1) } // iris-literal: hue ramp
@@ -1363,7 +1363,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.round(20 * root.d)
                 height: width
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 x: hue.fraction * (parent.width - width)
                 color: Qt.hsla(hue.fraction, 0.8, 0.62, 1) // iris-literal: the hue itself
                 border.width: Math.max(2, Math.round(2.5 * root.d))
@@ -1540,7 +1540,7 @@ Item {
                         anchors.bottomMargin: Math.round(4 * root.d)
                         width: Math.round(10 * root.d)
                         height: Math.max(1, Math.round(1.5 * root.d))
-                        radius: height / 2
+                        radius: IrisStyle.capsule(height)
                         color: iconTile.selected ? IrisStyle.accent : IrisStyle.muted
                     }
                 }

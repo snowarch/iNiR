@@ -95,7 +95,7 @@ MouseArea {
             y: tile.y + Math.round(6 * root.d)
             height: Math.round(20 * root.d)
             width: liveRow.implicitWidth + Math.round(12 * root.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: IrisStyle.veilStrong
             Row {
                 id: liveRow
@@ -126,7 +126,7 @@ MouseArea {
             y: tile.y + Math.round(6 * root.d)
             width: Math.round(22 * root.d)
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: root.busy ? IrisStyle.surface : IrisStyle.accent
             MaterialSymbol {
                 anchors.centerIn: parent

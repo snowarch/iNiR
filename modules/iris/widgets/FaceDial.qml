@@ -52,7 +52,7 @@ Item {
         anchors.centerIn: parent
         width: root.r * 2
         height: width
-        radius: width / 2
+        radius: IrisStyle.capsule(width)
         color: root.daylight ? IrisStyle.text : root.face.fill
     }
 
@@ -161,13 +161,13 @@ Item {
         anchors.centerIn: parent
         width: Math.max(4, root.r * 0.1)
         height: width
-        radius: width / 2
+        radius: IrisStyle.capsule(width)
         color: root.seconds ? root.hand : root.ink
         Rectangle {
             anchors.centerIn: parent
             width: Math.max(1.5, parent.width * 0.4)
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: root.disc && root.daylight ? IrisStyle.text : root.face.knockout
         }
     }

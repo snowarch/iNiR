@@ -146,7 +146,7 @@ Flickable {
             Layout.fillWidth: true
             visible: root.opened === null
             implicitHeight: Math.round(34 * root.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: searchField.activeFocus ? IrisStyle.fill : IrisStyle.fillQuiet
             border.width: searchField.activeFocus ? 1 : 0
             border.color: IrisStyle.tintBorder(IrisStyle.accent)

@@ -9,7 +9,7 @@ Rectangle {
     property color tint: IrisStyle.fillStrong
     Layout.fillWidth: true
     implicitHeight: Math.round(6 * IrisStyle.density)
-    radius: height / 2
+    radius: IrisStyle.capsule(height)
     color: IrisStyle.fill
     Rectangle { width: parent.width * parent.value; height: parent.height; radius: height / 2; color: parent.tint }
 }

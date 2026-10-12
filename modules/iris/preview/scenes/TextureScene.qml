@@ -198,7 +198,7 @@ PreviewScene {
             anchors.centerIn: parent
             width: Math.round(parent.width / 3)
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: IrisStyle.onMedia
         }
     }

@@ -87,12 +87,12 @@ IrisWidgetFace {
 
     component Progress: Rectangle {
         implicitHeight: root.dp(4)
-        radius: height / 2
+        radius: IrisStyle.capsule(height)
         color: root.fill
         Rectangle {
             width: parent.width * root.progress
             height: parent.height
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: root.ink
         }
     }

@@ -117,14 +117,14 @@ Item {
                     Rectangle {
                         implicitWidth: accentLabel.implicitWidth + Math.round(26 * root.d)
                         implicitHeight: Math.round(32 * root.d)
-                        radius: height / 2
+                        radius: IrisStyle.capsule(height)
                         color: IrisStyle.accent
                         IrisText { id: accentLabel; anchors.centerIn: parent; text: Translation.tr("Accent"); color: IrisStyle.inkOnAccent; font.weight: Font.DemiBold }
                     }
                     Rectangle {
                         implicitWidth: highlightLabel.implicitWidth + Math.round(26 * root.d)
                         implicitHeight: Math.round(32 * root.d)
-                        radius: height / 2
+                        radius: IrisStyle.capsule(height)
                         color: IrisStyle.tintFill(IrisStyle.secondaryAccent)
                         IrisText { id: highlightLabel; anchors.centerIn: parent; text: Translation.tr("Highlight"); color: IrisStyle.secondaryAccent; font.weight: Font.DemiBold }
                     }
@@ -132,7 +132,7 @@ Item {
                     Rectangle {
                         implicitWidth: Math.round(22 * root.d)
                         implicitHeight: implicitWidth
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         color: IrisStyle.badge
                         IrisText { anchors.centerIn: parent; text: "3"; color: IrisStyle.inkOnBadge; font.family: IrisStyle.fontNumbers; font.weight: Font.Bold; font.pixelSize: IrisStyle.typeMeta }
                     }
@@ -196,7 +196,7 @@ Item {
             anchors.topMargin: Math.round(28 * root.d)
             width: Math.round(250 * root.d)
             height: Math.round(42 * root.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: IrisStyle.bodySurface
             RowLayout {
                 anchors.fill: parent
@@ -207,7 +207,7 @@ Item {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: Math.round(6 * root.d)
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: IrisStyle.fill
                     Rectangle { width: parent.width * 0.7; height: parent.height; radius: height / 2; color: IrisStyle.fillStrong }
                 }

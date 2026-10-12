@@ -15,8 +15,8 @@ IrisButton {
     quiet: !glyphButton.emphasized
     implicitWidth: Math.round(38 * IrisStyle.density)
     implicitHeight: implicitWidth
-    buttonRadius: height / 2
-    buttonRadiusPressed: height / 2
+    buttonRadius: IrisStyle.capsule(height)
+    buttonRadiusPressed: IrisStyle.capsule(height)
     Glyph {
         anchors.centerIn: parent
         text: glyphButton.glyph

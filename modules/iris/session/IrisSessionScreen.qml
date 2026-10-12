@@ -246,7 +246,7 @@ Variants {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: parent.width
                                     height: width
-                                    radius: width / 2
+                                    radius: IrisStyle.capsule(width)
                                     color: action.armed ? IrisStyle.dangerOnMedia
                                         : pointer.containsMouse || action.focused ? IrisStyle.onMediaFillHover
                                         : IrisStyle.onMediaFill
@@ -258,7 +258,7 @@ Variants {
                                         anchors.centerIn: parent
                                         width: parent.width + 8 * stage.d
                                         height: width
-                                        radius: width / 2
+                                        radius: IrisStyle.capsule(width)
                                         color: "transparent"
                                         border.width: 2
                                         border.color: action.armed ? IrisStyle.dangerOnMedia : IrisStyle.accentOnMedia

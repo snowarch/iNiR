@@ -19,7 +19,7 @@ Item {
         anchors.centerIn: parent
         width: 0
         height: width
-        radius: width / 2
+        radius: IrisStyle.capsule(width)
         color: "transparent"
         border.width: 2
         border.color: IrisStyle.accent

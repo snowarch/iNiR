@@ -171,7 +171,7 @@ Item {
             Rectangle {
                 Layout.preferredWidth: Math.round(40 * root.d)
                 Layout.preferredHeight: Layout.preferredWidth
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: IrisStyle.tintFill(plate.tint)
                 MaterialSymbol {
                     anchors.centerIn: parent
@@ -206,7 +206,7 @@ Item {
             anchors.bottomMargin: 7 * root.d
             width: (parent.width - 44 * root.d) * Math.max(0, Math.min(1, plate.progress))
             height: Math.max(2, 2 * root.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: plate.tint
         }
     }
@@ -265,7 +265,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: chromeLabel.implicitWidth + Math.round(16 * root.d)
                 height: Math.round(24 * root.d)
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: body.picked ? IrisStyle.accentOnMedia : IrisStyle.mediaScrim
                 IrisText {
                     id: chromeLabel
@@ -280,7 +280,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.round(24 * root.d)
                 height: width
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: powerArea.containsMouse ? IrisStyle.onMediaFillHover : IrisStyle.mediaScrim
                 MaterialSymbol {
                     anchors.centerIn: parent
@@ -453,7 +453,7 @@ Item {
                 root.selectedRect.y + root.selectedRect.height / 2) === seatRing.modelData
             width: Math.round((seatRing.hot ? 34 : 18) * root.d)
             height: seatRing.width
-            radius: seatRing.width / 2
+            radius: IrisStyle.capsule(seatRing.width)
             x: Math.round(seatRing.seat.x - seatRing.width / 2)
             y: Math.round(seatRing.seat.y - seatRing.height / 2)
             color: seatRing.hot ? IrisStyle.tintFill(IrisStyle.accentOnMedia) : "transparent"
@@ -527,7 +527,7 @@ Item {
         implicitHeight: Math.round(40 * root.d)
         Glass {
             anchors.fill: parent
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
         }
         Row {
             id: chipRow
@@ -729,7 +729,7 @@ Item {
                 visible: avatar.visible
                 width: avatar.width + Math.round(8 * IrisStyle.density)
                 height: width
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: IrisStyle.mediaGlass
                 border.width: Math.max(1, Math.round(1.5 * root.d))
                 border.color: IrisStyle.mediaHairline
@@ -739,7 +739,7 @@ Item {
                 visible: Boolean(session.entry?.avatar ?? true)
                 width: avatar.visible ? Math.round(84 * root.d) : 0
                 height: avatar.width
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: IrisStyle.onMediaFill
                 property int sourceIndex: 0
                 IrisImage {
@@ -784,12 +784,12 @@ Item {
                 height: Math.round(44 * root.d)
                 Glass {
                     anchors.fill: parent
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     outline: true
                 }
                 Rectangle {
                     anchors.fill: parent
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: passwordInput.activeFocus ? IrisStyle.onMediaFill : "transparent"
                     border.width: root.context.showFailure ? Math.max(1, Math.round(1.5 * root.d)) : 0
                     border.color: IrisStyle.tintBorder(IrisStyle.dangerOnMedia)
@@ -816,7 +816,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.round(32 * root.d)
                     height: width
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     color: root.oskVisible || keyboardArea.containsMouse ? IrisStyle.onMediaFillHover : IrisStyle.onMediaFill
                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                     MaterialSymbol {
@@ -878,7 +878,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.round(32 * root.d)
                     height: width
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     color: submitArea.containsMouse ? IrisStyle.onMediaFillHover : IrisStyle.onMediaFill
                     opacity: root.context.currentText.length > 0 || root.context.unlockInProgress ? 1 : 0
                     visible: submitButton.opacity > 0

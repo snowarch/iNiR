@@ -73,7 +73,7 @@ Item {
                 implicitWidth: Math.round(52 * root.d)
                 implicitHeight: implicitWidth
                 // A glyph-mark Design (AIRISU) shows the key alone, in the seal, on no disc.
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: IrisStyle.plainMarks ? "transparent" : IrisStyle.tintFill(IrisStyle.accent)
                 MaterialSymbol {
                     anchors.centerIn: parent
@@ -136,8 +136,8 @@ Item {
                 IrisButton {
                     Layout.fillWidth: true
                     implicitHeight: Math.round(34 * root.d)
-                    buttonRadius: height / 2
-                    buttonRadiusPressed: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
+                    buttonRadiusPressed: IrisStyle.capsule(height)
                     colBackground: IrisStyle.fill
                     colBackgroundHover: IrisStyle.fillHover
                     text: Translation.tr("Cancel")
@@ -146,8 +146,8 @@ Item {
                 IrisButton {
                     Layout.fillWidth: true
                     implicitHeight: Math.round(34 * root.d)
-                    buttonRadius: height / 2
-                    buttonRadiusPressed: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
+                    buttonRadiusPressed: IrisStyle.capsule(height)
                     emphasized: true
                     enabled: PolkitService.interactionAvailable
                     text: Translation.tr("Authenticate")

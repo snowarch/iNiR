@@ -171,10 +171,13 @@ float bayer4(vec2 p) {
 }
 
 // Polynomial smooth minimum: the join is a fillet `k` pixels deep, which is what
-// makes two bodies read as one that swelled rather than two that overlap.
+// makes two bodies read as one that swelled rather than two that overlap. A chamfered Design joins with a straight
+// 45° cut instead (the chamfer minimum): its bodies meet like two plates welded with a gusset, never like liquid.
 float smoothUnion(float a, float b, float k) {
     if (k <= 0.001)
         return min(a, b);
+    if (u.options.y >= 0.5)
+        return min(min(a, b), (a + b - k * 0.5) * 0.70710678);
     float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
     return mix(b, a, h) - k * h * (1.0 - h);
 }

@@ -138,12 +138,12 @@ IrisWidgetFace {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 height: root.dp(8)
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: root.fill
                 Rectangle {
                     width: parent.width * root.fraction
                     height: parent.height
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: root.warm
                 }
             }
@@ -164,7 +164,7 @@ IrisWidgetFace {
                 anchors.verticalCenter: parent.verticalCenter
                 width: root.dp(4)
                 height: root.dp(18)
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: root.ink
             }
         }

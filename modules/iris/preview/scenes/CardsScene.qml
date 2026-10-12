@@ -71,7 +71,7 @@ PreviewScene {
                         required property string modelData
                         required property int index
                         width: devLabel.implicitWidth + Math.round(20 * cardRoot.d); height: Math.round(26 * cardRoot.d)
-                        radius: height / 2
+                        radius: IrisStyle.capsule(height)
                         color: index === 0 ? IrisStyle.tintFill(IrisStyle.accent) : IrisStyle.fillQuiet
                         IrisText { id: devLabel; anchors.centerIn: parent; text: parent.modelData; color: parent.index === 0 ? IrisStyle.accent : IrisStyle.subtext; font.pixelSize: IrisStyle.typeMeta }
                     }

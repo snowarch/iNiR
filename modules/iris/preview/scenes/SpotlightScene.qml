@@ -44,7 +44,7 @@ PreviewScene {
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: Math.round(40 * spotRoot.d)
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: IrisStyle.fillQuiet
                 RowLayout {
                     anchors.fill: parent
@@ -63,7 +63,7 @@ PreviewScene {
                         required property string modelData
                         width: hintLabel.implicitWidth + Math.round(18 * spotRoot.d)
                         height: Math.round(24 * spotRoot.d)
-                        radius: height / 2
+                        radius: IrisStyle.capsule(height)
                         color: IrisStyle.fillQuiet
                         IrisText { id: hintLabel; anchors.centerIn: parent; text: parent.modelData; color: IrisStyle.subtext; font.pixelSize: IrisStyle.typeFootnote }
                     }

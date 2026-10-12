@@ -120,7 +120,7 @@ RowLayout {
                 readonly property point at: dial.pointOf(index * 60, dial.radius - dial.band / 2 - Math.round(8 * root.d))
                 width: Math.round((quarter ? 4 : 2) * root.d)
                 height: width
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 x: Math.round(at.x - width / 2)
                 y: Math.round(at.y - height / 2)
                 color: quarter ? IrisStyle.textSecondary : IrisStyle.textTertiary
@@ -145,7 +145,7 @@ RowLayout {
             readonly property point at: dial.pointOf(root.nowMinutes, dial.radius + dial.band / 2 + Math.round(8 * root.d))
             width: Math.round(6 * root.d)
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             x: Math.round(at.x - width / 2)
             y: Math.round(at.y - height / 2)
             color: IrisStyle.secondaryAccent
@@ -191,7 +191,7 @@ RowLayout {
                 readonly property point at: dial.pointOf(handle.minutes, dial.radius)
                 width: Math.round((handle.held ? 34 : 30) * root.d)
                 height: width
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 x: Math.round(at.x - width / 2)
                 y: Math.round(at.y - height / 2)
                 color: IrisStyle.text
@@ -273,7 +273,7 @@ RowLayout {
                                 required property color modelData
                                 width: Math.round(8 * root.d)
                                 height: width
-                                radius: width / 2
+                                radius: IrisStyle.capsule(width)
                                 color: modelData
                             }
                         }

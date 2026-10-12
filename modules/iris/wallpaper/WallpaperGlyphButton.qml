@@ -12,8 +12,8 @@ IrisButton {
     quiet: true
     implicitWidth: Math.round(34 * root.d)
     implicitHeight: implicitWidth
-    buttonRadius: height / 2
-    buttonRadiusPressed: height / 2
+    buttonRadius: IrisStyle.capsule(height)
+    buttonRadiusPressed: IrisStyle.capsule(height)
     colBackground: IrisStyle.fillQuiet
     colBackgroundHover: IrisStyle.fillHover
     MaterialSymbol {

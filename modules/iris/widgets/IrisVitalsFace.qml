@@ -121,7 +121,7 @@ IrisWidgetFace {
         required property string key
         implicitWidth: root.dp(root.small ? 6 : 8)
         implicitHeight: implicitWidth
-        radius: width / 2
+        radius: IrisStyle.capsule(width)
         color: root.tint(key)
     }
 
@@ -258,12 +258,12 @@ IrisWidgetFace {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             height: capacity.trackHeight
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: root.fill
             Rectangle {
                 width: parent.width * root.level("disk")
                 height: parent.height
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: root.tint("disk")
             }
         }

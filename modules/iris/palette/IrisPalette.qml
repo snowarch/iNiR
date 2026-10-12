@@ -489,7 +489,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             height: Math.round(26 * stage.d)
                             width: modeRow.implicitWidth + Math.round(20 * stage.d)
-                            radius: height / 2
+                            radius: IrisStyle.capsule(height)
                             color: IrisStyle.tintFill(IrisStyle.accent)
                             Row {
                                 id: modeRow
@@ -649,7 +649,7 @@ Item {
                                             visible: tile.live.running
                                             width: 4 * stage.d
                                             height: width
-                                            radius: width / 2
+                                            radius: IrisStyle.capsule(width)
                                             color: IrisStyle.textTertiary
                                         }
                                         IrisText {

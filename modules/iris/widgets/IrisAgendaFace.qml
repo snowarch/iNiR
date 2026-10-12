@@ -50,7 +50,7 @@ IrisWidgetFace {
         Rectangle {
             Layout.preferredWidth: root.dp(3)
             Layout.fillHeight: true
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: IrisFaceData.eventTint(row.event, root.accent)
         }
         ColumnLayout {
@@ -123,7 +123,7 @@ IrisWidgetFace {
                     Layout.alignment: Qt.AlignHCenter
                     implicitWidth: root.dp(26)
                     implicitHeight: implicitWidth
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     color: day.current ? root.accent : "transparent"
                     FaceText {
                         face: root

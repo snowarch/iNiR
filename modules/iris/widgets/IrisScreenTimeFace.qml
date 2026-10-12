@@ -255,12 +255,12 @@ IrisWidgetFace {
                             Rectangle {
                                 Layout.fillWidth: true
                                 implicitHeight: root.dp(4)
-                                radius: height / 2
+                                radius: IrisStyle.capsule(height)
                                 color: root.fill
                                 Rectangle {
                                     width: parent.width * Math.min(1, appRow.modelData.seconds / Math.max(1, root.topApps[0]?.seconds ?? 1))
                                     height: parent.height
-                                    radius: height / 2
+                                    radius: IrisStyle.capsule(height)
                                     color: root.accent
                                 }
                             }

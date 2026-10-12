@@ -58,8 +58,8 @@ ColumnLayout {
             anchors.horizontalCenter: parent.horizontalCenter
             width: Math.round(56 * root.d)
             height: width
-            buttonRadius: width / 2
-            buttonRadiusPressed: width / 2
+            buttonRadius: IrisStyle.capsule(width)
+            buttonRadiusPressed: IrisStyle.capsule(width)
             colBackground: dial.running ? IrisStyle.tintFill(IrisStyle.secondaryAccent) : IrisStyle.fillQuiet
             colBackgroundHover: dial.running ? IrisStyle.tintFillHover(IrisStyle.secondaryAccent) : IrisStyle.fillHover
             onClicked: dial.clicked()
@@ -232,8 +232,8 @@ ColumnLayout {
                 enabled: !TimerService.countdownRunning
                 text: custom.open ? Translation.tr("Cancel") : Translation.tr("Set a time")
                 implicitHeight: Math.round(30 * root.d)
-                buttonRadius: height / 2
-                buttonRadiusPressed: height / 2
+                buttonRadius: IrisStyle.capsule(height)
+                buttonRadiusPressed: IrisStyle.capsule(height)
                 onClicked: custom.open = !custom.open
             }
             IrisButton {
@@ -242,8 +242,8 @@ ColumnLayout {
                 enabled: custom.total >= 5
                 text: Translation.tr("Start")
                 implicitHeight: Math.round(30 * root.d)
-                buttonRadius: height / 2
-                buttonRadiusPressed: height / 2
+                buttonRadius: IrisStyle.capsule(height)
+                buttonRadiusPressed: IrisStyle.capsule(height)
                 onClicked: {
                     TimerService.setCountdownDuration(custom.total)
                     TimerService.toggleCountdown()

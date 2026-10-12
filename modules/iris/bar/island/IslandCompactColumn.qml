@@ -141,7 +141,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             width: Math.round(26 * column.d)
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: IrisStyle.tintFill(IrisStyle.accent)
             Glyph {
                 anchors.centerIn: parent
@@ -154,7 +154,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             width: Math.round(26 * column.d)
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: IrisStyle.accent
             Glyph {
                 anchors.centerIn: parent

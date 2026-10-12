@@ -210,7 +210,7 @@ Loader {
                     visible: notice.hidden > 0
                     implicitHeight: Math.round(20 * root.d)
                     implicitWidth: Math.max(implicitHeight, moreLabel.implicitWidth + Math.round(12 * root.d))
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: IrisStyle.fillHover
                     IrisText {
                         id: moreLabel
@@ -418,7 +418,7 @@ Loader {
                         Rectangle {
                             implicitWidth: Math.round(12 * root.d)
                             implicitHeight: implicitWidth
-                            radius: width / 2
+                            radius: IrisStyle.capsule(width)
                             color: "transparent"
                             border.width: Math.max(1, Math.round(1.5 * root.d))
                             border.color: IrisStyle.identity.orange
@@ -679,7 +679,7 @@ Loader {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: Math.round(28 * root.d)
                                 height: width
-                                radius: width / 2
+                                radius: IrisStyle.capsule(width)
                                 color: stripDay.today ? IrisStyle.identity.red : "transparent"
                                 IrisText {
                                     anchors.centerIn: parent
@@ -694,7 +694,7 @@ Loader {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: Math.round(4 * root.d)
                                 height: width
-                                radius: width / 2
+                                radius: IrisStyle.capsule(width)
                                 color: calendar.eventsOn(stripDay.date).length > 0 ? IrisStyle.secondaryAccent : "transparent"
                             }
                         }
@@ -755,7 +755,7 @@ Loader {
                             anchors.centerIn: parent
                             width: Math.round(30 * root.d)
                             height: width
-                            radius: width / 2
+                            radius: IrisStyle.capsule(width)
                             color: day.today ? IrisStyle.identity.red
                                 : day.chosen ? IrisStyle.tintFillHover(IrisStyle.accent)
                                 : day.containsMouse ? IrisStyle.fillHover : "transparent"
@@ -776,7 +776,7 @@ Loader {
                             anchors.bottom: parent.bottom
                             width: Math.round(4 * root.d)
                             height: width
-                            radius: width / 2
+                            radius: IrisStyle.capsule(width)
                             color: IrisStyle.secondaryAccent
                         }
                     }
@@ -803,8 +803,8 @@ Loader {
                     visible: !calendar.composing
                     text: Translation.tr("New event")
                     implicitHeight: Math.round(28 * root.d)
-                    buttonRadius: height / 2
-                    buttonRadiusPressed: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
+                    buttonRadiusPressed: IrisStyle.capsule(height)
                     onClicked: { calendar.composing = true; eventTitle.forceActiveFocus() }
                 }
             }
@@ -906,8 +906,8 @@ Loader {
                             selected: eventSheet.reminder === modelData.minutes
                             quiet: !selected
                             implicitHeight: Math.round(28 * root.d)
-                            buttonRadius: height / 2
-                            buttonRadiusPressed: height / 2
+                            buttonRadius: IrisStyle.capsule(height)
+                            buttonRadiusPressed: IrisStyle.capsule(height)
                             onClicked: eventSheet.reminder = modelData.minutes
                         }
                     }
@@ -920,8 +920,8 @@ Loader {
                         Layout.fillWidth: true
                         text: Translation.tr("Cancel")
                         implicitHeight: Math.round(36 * root.d)
-                        buttonRadius: height / 2
-                        buttonRadiusPressed: height / 2
+                        buttonRadius: IrisStyle.capsule(height)
+                        buttonRadiusPressed: IrisStyle.capsule(height)
                         onClicked: calendar.composing = false
                     }
                     IrisButton {
@@ -930,8 +930,8 @@ Loader {
                         emphasized: true
                         enabled: eventTitle.text.trim().length > 0
                         implicitHeight: Math.round(36 * root.d)
-                        buttonRadius: height / 2
-                        buttonRadiusPressed: height / 2
+                        buttonRadius: IrisStyle.capsule(height)
+                        buttonRadiusPressed: IrisStyle.capsule(height)
                         onClicked: eventSheet.add()
                     }
                 }
@@ -1131,7 +1131,7 @@ Loader {
                         required property int index
                         width: Math.round(6 * root.d)
                         height: width
-                        radius: width / 2
+                        radius: IrisStyle.capsule(width)
                         color: index < TimerService.pomodoroCycle % TimerService.cyclesBeforeLongBreak ? IrisStyle.secondaryAccent : IrisStyle.fillHover
                     }
                 }
@@ -1143,8 +1143,8 @@ Loader {
                     Layout.fillWidth: true
                     text: Translation.tr("Reset")
                     implicitHeight: Math.round(36 * root.d)
-                    buttonRadius: height / 2
-                    buttonRadiusPressed: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
+                    buttonRadiusPressed: IrisStyle.capsule(height)
                     onClicked: TimerService.resetPomodoro()
                 }
                 IrisButton {
@@ -1152,8 +1152,8 @@ Loader {
                     emphasized: true
                     text: focusTimer.ticking ? Translation.tr("Pause") : Translation.tr("Start")
                     implicitHeight: Math.round(36 * root.d)
-                    buttonRadius: height / 2
-                    buttonRadiusPressed: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
+                    buttonRadiusPressed: IrisStyle.capsule(height)
                     onClicked: TimerService.togglePomodoro()
                 }
             }

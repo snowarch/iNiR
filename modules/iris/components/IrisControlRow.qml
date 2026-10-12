@@ -36,7 +36,7 @@ Item {
         Rectangle {
             implicitWidth: Math.round(28 * row.d)
             implicitHeight: implicitWidth
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: row.on ? row.tint : IrisStyle.fill
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
             MaterialSymbol {

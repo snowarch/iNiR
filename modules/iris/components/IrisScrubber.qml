@@ -54,7 +54,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: root.trackColor
         }
         Item {
@@ -64,7 +64,7 @@ Item {
             Rectangle {
                 width: track.width
                 height: track.height
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: root.fillColor
             }
         }
@@ -84,7 +84,7 @@ Item {
         visible: root.knob && !skin.active
         width: Math.round((root.engaged ? 20 : 18) * IrisStyle.density)
         height: width
-        radius: width / 2
+        radius: IrisStyle.capsule(width)
         x: Math.max(0, Math.min(root.width - width, root.width * root.shownValue - width / 2))
         anchors.verticalCenter: parent.verticalCenter
         color: IrisStyle.onTint

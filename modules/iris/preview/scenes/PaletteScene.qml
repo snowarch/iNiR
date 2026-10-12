@@ -67,7 +67,7 @@ PreviewScene {
                 Rectangle {
                     implicitWidth: palButton.implicitWidth + Math.round(24 * pal.d)
                     implicitHeight: Math.round(28 * pal.d)
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: IrisStyle.accent
                     IrisText { id: palButton; anchors.centerIn: parent; text: Translation.tr("Accent"); color: IrisStyle.inkOnAccent; font.weight: IrisStyle.weight(Font.DemiBold); font.pixelSize: IrisStyle.typeMeta }
                 }
@@ -127,7 +127,7 @@ PreviewScene {
             Rectangle {
                 width: palAppButton.implicitWidth + Math.round(22 * pal.d)
                 height: Math.round(26 * pal.d)
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: pal.app("primary", IrisStyle.accent)
                 IrisText { id: palAppButton; anchors.centerIn: parent; text: Translation.tr("OK"); color: pal.app("onPrimary", IrisStyle.inkOnAccent); font.weight: IrisStyle.weight(Font.DemiBold); font.pixelSize: IrisStyle.typeMeta }
             }

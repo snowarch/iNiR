@@ -65,7 +65,7 @@ PreviewScene {
         opacity: feedRoot.osd ? 1 : 0.3
         width: feedRoot.osdWidth
         height: Math.round(44 * feedRoot.d)
-        radius: height / 2
+        radius: IrisStyle.capsule(height)
         color: IrisStyle.bodySurface
         border.width: IrisStyle.rim.a > 0 ? 1 : 0
         border.color: IrisStyle.rim

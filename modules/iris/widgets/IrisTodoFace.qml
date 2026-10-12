@@ -41,7 +41,7 @@ IrisWidgetFace {
         Rectangle {
             Layout.preferredWidth: root.dp(18)
             Layout.preferredHeight: root.dp(18)
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: task.modelData.done ? root.accent : "transparent"
             border.width: task.modelData.done ? 0 : Math.max(1.5, root.dp(1.6))
             border.color: checkHover.hovered ? root.accent : root.fillActive

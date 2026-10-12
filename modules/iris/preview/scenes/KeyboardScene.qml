@@ -73,7 +73,7 @@ PreviewScene {
                     required property int index
                     width: layoutText.implicitWidth + Math.round(24 * keysRoot.d)
                     height: Math.round(30 * keysRoot.d)
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: layoutChip.index === 0 ? IrisStyle.tintFill(IrisStyle.accent) : IrisStyle.fillQuiet
                     IrisText {
                         id: layoutText
@@ -100,7 +100,7 @@ PreviewScene {
             anchors.horizontalCenter: parent.horizontalCenter
             width: Math.round(320 * keysRoot.d)
             height: Math.round(40 * keysRoot.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: IrisStyle.fillQuiet
             clip: true
             IrisText {

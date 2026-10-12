@@ -18,7 +18,7 @@ Rectangle {
     anchors.margins: Math.round(14 * IrisStyle.density)
     implicitWidth: captionRow.implicitWidth + Math.round(22 * IrisStyle.density)
     implicitHeight: Math.round(28 * IrisStyle.density)
-    radius: height / 2
+    radius: IrisStyle.capsule(height)
     color: IrisStyle.veilHeavy
     visible: caption.text.length > 0 && !(caption.preview?.compact ?? false)
     Binding { target: caption.preview; property: "caption"; value: caption.text }

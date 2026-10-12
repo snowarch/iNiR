@@ -10,6 +10,8 @@ QtObject {
     readonly property string palette: "airisu"
     readonly property var parts: ({
         insignia: "parts/Insignia.qml",
+        islandFace: "island/Face.qml",
+        islandNav: "island/Nav.qml",
         controlCenter: "scenes/ControlCenter.qml",
         spotlight: "scenes/Spotlight.qml",
         osd: "scenes/Osd.qml",
@@ -37,6 +39,8 @@ QtObject {
         mono: "JetBrainsMono Nerd Font" })
     readonly property var motion: ({ morph: "tuned", duration: 220 })
     // A parts catalogue, not an app grid: glyphs without tinted plates, the chosen row on the gofun plate, lists numbered,
-    // labels in mono capitals, titles in lower case.
-    readonly property var traits: ({ marks: "glyph", selection: "plate", index: true, captions: "mono", titles: "lower" })
+    // labels in mono capitals, titles in lower case. Island pages hang under the strip as a plate of their own; a level runs
+    // along a piece's cut edge; the pointer lights a solid 墨 plate, square like everything it touches.
+    readonly property var traits: ({ marks: "glyph", selection: "plate", index: true, captions: "mono", titles: "lower",
+        pages: "hang", rings: "edge", hover: "plate" })
 }

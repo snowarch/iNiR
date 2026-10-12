@@ -324,8 +324,8 @@ Item {
                                     required property var modelData
                                     implicitHeight: Math.round(28 * root.d)
                                     implicitWidth: actionLabel.implicitWidth + 24 * root.d
-                                    buttonRadius: height / 2
-                                    buttonRadiusPressed: height / 2
+                                    buttonRadius: IrisStyle.capsule(height)
+                                    buttonRadiusPressed: IrisStyle.capsule(height)
                                     colBackground: IrisStyle.fill
                                     colBackgroundHover: IrisStyle.fillHover
                                     Accessible.name: String(actionButton.modelData.text ?? "")
@@ -348,7 +348,7 @@ Item {
                     y: 5 * root.d
                     width: Math.round(22 * root.d)
                     height: width
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     color: closeArea.containsMouse ? IrisStyle.surfaceHighest : IrisStyle.surfaceHigh
                     border.width: 1
                     border.color: IrisStyle.hairlineStrong

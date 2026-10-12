@@ -119,7 +119,7 @@ Item {
                 IrisButton {
                     text: Translation.tr("Done")
                     emphasized: true
-                    buttonRadius: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
                     onClicked: GlobalStates.irisLockEdit = false
                 }
             }
@@ -145,7 +145,7 @@ Item {
                         quiet: chip.off && !chip.current
                         emphasized: chip.current
                         implicitHeight: Math.round(30 * root.d)
-                        buttonRadius: height / 2
+                        buttonRadius: IrisStyle.capsule(height)
                         opacity: chip.off && !chip.current ? 0.55 : 1
                         onClicked: {
                             GlobalStates.irisLockPage = chip.modelData
@@ -369,7 +369,7 @@ Item {
             anchors.topMargin: -Math.round(4 * root.d)
             width: Math.round(15 * root.d)
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: tile.on ? (tileArea.containsMouse ? IrisStyle.danger : IrisStyle.surfaceHighestOpaque)
                 : (tileArea.containsMouse ? IrisStyle.accent : IrisStyle.surfaceHighestOpaque)
             MaterialSymbol {

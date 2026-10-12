@@ -86,6 +86,13 @@ Item {
         function onVisualExpandedChanged(): void { if (!root.visualExpanded && root.focusedOutput) GlobalStates.irisArrange = false }
     }
     readonly property bool notch: root.options?.notch ?? false
+    // A Design draws the Island's faces and its page nav itself (DESIGNS.md › Island); the engine keeps the modes,
+    // events, pages, pieces and geometry. A Design whose pages "hang" opens them as a second body under the strip,
+    // apart from it by a seam, instead of growing the strip into the page.
+    readonly property string faceUrl: root.vertical ? "" : IrisDesign.skin("islandFace")
+    readonly property string navUrl: IrisDesign.skin("islandNav")
+    readonly property bool pagesHang: IrisDesign.trait("pages") === "hang" && !root.fullWidth && !root.vertical
+    readonly property real seam: root.pagesHang ? Math.round(3 * root.d) : 0
     readonly property string pagePlate: {
         const value = String(root.options?.navFrame ?? "auto")
         return ["none", "veil", "glass", "solid"].includes(value) ? value : IrisStyle.controlPlate
@@ -202,6 +209,14 @@ Item {
         if (kind === "focus") { root.expanded = false; GlobalStates.openSidebarLeft(root.targetScreen?.name ?? "") }
         else if (kind === "today") { root.expanded = false; GlobalStates.openSidebarRight(root.targetScreen?.name ?? "") }
         else if (kind === "settings") root.openSettingsFrom(chassis)
+    }
+    // A nav entry under the pointer warms its page, and the Settings entry warms Settings.
+    function hoverNav(kind: string, page: string, on: bool): void {
+        if (page.length > 0) {
+            if (on) { pageIntentExpiry.stop(); root.pageIntent = page }
+            else if (root.pageIntent === page) pageIntentExpiry.restart()
+        }
+        if (kind === "settings" && root.focusedOutput) root.settingsIntent = on
     }
     function stepPage(steps: int): bool {
         const cycle = root.pageCycle
@@ -599,7 +614,7 @@ Item {
     readonly property bool anchored: root.fullWidth || root.vertical
     // A page is the Island itself growing, on every edge; only a full bar hangs its page beside the strip. On a
     // side edge compact activities (a level, an event) still ride beside the upright capsule.
-    readonly property bool inlinePages: !root.fullWidth
+    readonly property bool inlinePages: !root.fullWidth && !root.pagesHang
     // The page is built synchronously (~90 ms): starting the shape before it is
     // ready spends the first frames of the morph inside that build.
     readonly property bool pageReady: !root.expanded || details.status === Loader.Ready
@@ -609,6 +624,7 @@ Item {
     readonly property var compactRows: ({ idle: idleRow, media: mediaRow, record: recordRow,
         timer: timerRow, task: taskRow, clock: clockRow, edit: editRow, event: eventRow, feedback: feedbackRow })
     readonly property real compactContentWidth: root.vertical ? compactColumn.implicitHeight
+        : root.faceUrl.length > 0 ? (designFace.item?.contentWidth ?? 0)
         : root.compactRows[root.compactMode]?.implicitWidth ?? 0
     readonly property real compactFloor: root.compactHeight * 2.1
     readonly property real compactCeiling: Math.min(root.availableWidth,
@@ -694,15 +710,16 @@ Item {
         : root.feedback ? "feedback"
         : root.eventShown ? "event" : ""
     onWantedRoleChanged: if (root.wantedRole.length > 0) root.extensionRole = root.wantedRole
-    readonly property bool extensionOpen: root.anchored && root.wantedRole.length > 0
-        && !(root.inlinePages && root.wantedRole === "page")
+    readonly property bool extensionOpen: root.wantedRole.length > 0 && (root.anchored
+        ? !(root.inlinePages && root.wantedRole === "page") : root.pagesHang && root.wantedRole === "page")
     readonly property real joinFillet: Math.round(root.compactHeight * 0.6)
     readonly property real floatGap: Math.round(6 * root.d)
     readonly property Item extensionOrigin: root.extensionRole === "page" ? root.pageOrigin
         : root.extensionRole === "feedback"
             ? root.pieceItem(root.feedbackKind === "mic" ? "mic" : root.feedbackKind === "brightness" ? "tools" : "sound")
         : null
-    readonly property real originWidth: root.extensionOrigin?.visible
+    readonly property real originWidth: root.pagesHang ? extension.targetWidth
+        : root.extensionOrigin?.visible
         ? (root.vertical ? root.extensionOrigin.height : root.extensionOrigin.width)
         : root.fromHeart && root.heartLength > 1 ? root.heartLength
         : Math.round(40 * root.d)
@@ -739,10 +756,10 @@ Item {
     }
 
     implicitWidth: root.vertical ? chassis.across + (extension.anchoredShape ? extension.reach : 0)
-        : chassis.width + 2 * Math.max(root.sideReserve, root.fillet)
+        : Math.max(chassis.width + 2 * Math.max(root.sideReserve, root.fillet), root.pagesHang ? extension.width : 0)
     implicitHeight: root.vertical ? chassis.height + 2 * Math.max(root.sideReserve, root.fillet)
-        : chassis.bodyHeight + (root.anchored ? extension.reach : 0)
-    readonly property rect extensionArea: root.anchored && extension.reach > 0.5
+        : chassis.bodyHeight + (root.anchored || root.pagesHang ? extension.reach + root.seam * extension.presentation : 0)
+    readonly property rect extensionArea: (root.anchored || root.pagesHang) && extension.reach > 0.5
         ? Qt.rect(extension.x, extension.y, extension.width, extension.height)
         : Qt.rect(0, 0, 0, 0)
     // The input region is a Wayland commit: while a shape is under way it only
@@ -1401,7 +1418,7 @@ Item {
                 width: extension.width + (root.vertical ? sink : 0), height: extension.height + (root.vertical ? 0 : sink),
                 radius: extension.radius, paints: true, fuse: grown ? IrisStyle.fuseEdge : IrisStyle.fuseDeep,
                 // Inline, the page is the chassis rectangle itself: a smooth union of two equal shapes swells the contour by fuse / 4.
-                joins: !extension.anchoredShape || floating ? "" : grown && root.clearStrip ? (IrisFrame.framed ? "frame" : "edge")
+                joins: !extension.anchoredShape || floating || root.pagesHang ? "" : grown && root.clearStrip ? (IrisFrame.framed ? "frame" : "edge")
                     : root.clearStrip ? "islandnotch" : "island" })
         }
         if (badgePill.visible) {
@@ -1691,7 +1708,7 @@ Item {
                     + (root.piecesAtStart ? root.barPieceReserve : 0)
                 width: Math.max(0, compactRow.laidWidth - compactRow.leadMargin - 15 * root.d - root.barPieceReserve)
                 spacing: 9 * root.d
-                opacity: (root.compactMode === compactRow.mode && root.heartShown && !root.vertical ? 1 : 0) * root.heartUncovered
+                opacity: (root.compactMode === compactRow.mode && root.heartShown && !root.vertical && root.faceUrl.length === 0 ? 1 : 0) * root.heartUncovered
                 scale: root.zoned && compactPress.pressed ? IrisStyle.pressScale(0.93) : 1
                 Behavior on scale { NumberAnimation { duration: IrisStyle.duration(compactPress.pressed ? 80 : 200); easing.type: IrisStyle.feedbackEasing } }
                 visible: opacity > 0
@@ -1765,7 +1782,7 @@ Item {
                         Layout.fillWidth: true
                         visible: root.effectiveLength > 0
                         implicitHeight: (root.zoned ? 3 : 2.5) * root.d
-                        radius: height / 2
+                        radius: IrisStyle.capsule(height)
                         color: IrisStyle.fillHover
                         Rectangle {
                             height: parent.height
@@ -1902,7 +1919,7 @@ Item {
                 Rectangle {
                     Layout.preferredWidth: Math.round(26 * root.d)
                     Layout.preferredHeight: Layout.preferredWidth
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     color: IrisStyle.tintFill(IrisStyle.accent)
                     Glyph {
                         anchors.centerIn: parent
@@ -1932,7 +1949,7 @@ Item {
                 Rectangle {
                     Layout.preferredHeight: root.compactHeight - Math.round(10 * root.d)
                     Layout.preferredWidth: doneLabel.implicitWidth + Math.round(24 * root.d)
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: compactPress.containsMouse ? IrisStyle.accentHover : IrisStyle.accent
                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
                     IrisText {
@@ -1953,7 +1970,7 @@ Item {
                 Rectangle {
                     Layout.preferredWidth: root.compactHeight - Math.round(12 * root.d)
                     Layout.preferredHeight: Layout.preferredWidth
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     color: IrisStyle.tintFill(root.event.tint)
                     Glyph {
                         visible: !root.eventIsBattery
@@ -2020,6 +2037,22 @@ Item {
                     style: root.levelStyle
                     showValue: root.levelFigure
                 }
+            }
+
+            Loader {
+                id: designFace
+                active: root.faceUrl.length > 0
+                source: root.faceUrl
+                readonly property real laidWidth: root.zoned ? root.heartTarget : root.compactTargetWidth
+                readonly property real swellShift: Math.round(chassis.swellInset / 2 - root.bandLift) * (root.bottomEdge ? -1 : 1)
+                x: (root.zoned ? Math.round(barZones.heartAlong + (root.heartLength - designFace.laidWidth) / 2)
+                    : Math.round((parent.width - designFace.laidWidth) / 2)) + (root.piecesAtStart ? root.barPieceReserve : 0)
+                y: designFace.swellShift
+                width: Math.max(0, designFace.laidWidth - root.barPieceReserve)
+                height: parent.height
+                opacity: root.heartShown ? root.heartUncovered : 0
+                visible: opacity > 0
+                onLoaded: item.island = root
             }
 
             Grid {
@@ -2249,6 +2282,7 @@ Item {
         readonly property real liveWidth: Math.round(root.originWidth
             + ((root.vertical ? extension.targetHeight : extension.targetWidth) - root.originWidth) * extension.presentation)
         x: !extension.anchoredShape ? chassis.x
+            : root.pagesHang ? Math.round((root.width - extension.width) / 2)
             : root.grownPage && root.vertical ? (root.rightEdge ? root.width - extension.reach : -root.grownInset)
             : root.vertical ? (root.rightEdge ? chassis.x - extension.reach : chassis.x + chassis.width)
             : root.extensionX(root.originWidth) + (root.extensionX(extension.targetWidth)
@@ -2259,14 +2293,15 @@ Item {
             : root.zoned && !root.vertical && !root.fromHeart
                 ? (root.bottomEdge ? root.height - root.stripHeight - root.floatGap - extension.reach : root.stripHeight + root.floatGap)
             : root.grownPage ? (root.bottomEdge ? root.height - extension.reach : -root.grownInset)
-            : root.bottomEdge ? root.height - chassis.bodyHeight - extension.reach : chassis.bodyHeight
+            : root.bottomEdge ? root.height - chassis.bodyHeight - root.seam - extension.reach : chassis.bodyHeight + root.seam
         width: !extension.anchoredShape ? chassis.width : root.vertical ? extension.reach + root.grownInset : extension.liveWidth
         height: !extension.anchoredShape ? chassis.height : root.vertical ? extension.liveWidth : extension.reach + root.grownInset
-        radius: extension.anchoredShape
+        radius: root.pagesHang ? IrisStyle.corner(extension.targetRadius)
+            : extension.anchoredShape
             ? root.originWidth / 2 + (extension.targetRadius - root.originWidth / 2) * extension.presentation
             : chassis.radius
         color: IrisStyle.bodyClip
-        readonly property bool anchoredShape: root.anchored && !(root.inlinePages && root.extensionRole === "page")
+        readonly property bool anchoredShape: (root.anchored || root.pagesHang) && !(root.inlinePages && root.extensionRole === "page")
         HoverHandler { id: extensionHover }
         WheelHandler {
             enabled: root.expanded
@@ -2481,16 +2516,27 @@ Item {
                             sourceComponent: IslandDesktopPage {
                                 width: desktopLoader.width
                                 island: root
-                                navOffset: navFrame.height + expandedContent.rowSpacing
+                                navOffset: (root.navUrl.length > 0 ? designNav.height : navFrame.height) + expandedContent.rowSpacing
                             }
                         }
                     }
+                }
+
+                Loader {
+                    id: designNav
+                    Layout.row: root.bottomEdge ? 1 : 0
+                    Layout.fillWidth: true
+                    active: root.navUrl.length > 0
+                    visible: designNav.active
+                    source: root.navUrl
+                    onLoaded: item.island = root
                 }
 
                 IrisControlPlate {
                     id: navFrame
                     Layout.row: root.bottomEdge ? 1 : 0
                     Layout.alignment: Qt.AlignHCenter
+                    visible: root.navUrl.length === 0
                     material: root.pagePlate
 
                     RowLayout {
@@ -2528,18 +2574,7 @@ Item {
                                     buttonRadiusPressed: navFrame.controlRadius
                                     colBackgroundHover: IrisStyle.fillHover
                                     Accessible.name: Translation.tr(navSlot.modelData.label ?? "")
-                                    onHoveredChanged: {
-                                        if (navButton.target.length > 0) {
-                                            if (navButton.hovered) {
-                                                pageIntentExpiry.stop()
-                                                root.pageIntent = navButton.target
-                                            } else if (root.pageIntent === navButton.target) {
-                                                pageIntentExpiry.restart()
-                                            }
-                                        }
-                                        if (navSlot.modelData.kind === "settings" && root.focusedOutput)
-                                            root.settingsIntent = navButton.hovered
-                                    }
+                                    onHoveredChanged: root.hoverNav(navSlot.modelData.kind, navButton.target, navButton.hovered)
                                     onClicked: root.activateNav(navSlot.modelData.kind)
                                     Glyph {
                                         anchors.centerIn: parent
@@ -2589,7 +2624,7 @@ Item {
             Rectangle {
                 Layout.preferredWidth: root.compactHeight - Math.round(12 * root.d)
                 Layout.preferredHeight: Layout.preferredWidth
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: IrisStyle.tintFill(root.event.tint)
                 Glyph {
                     visible: !root.eventIsBattery

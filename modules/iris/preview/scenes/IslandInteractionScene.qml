@@ -108,7 +108,7 @@ PreviewScene {
         visible: actRoot.step === 3 && actRoot.caps
         width: capsLabel.implicitWidth + Math.round(24 * actRoot.d)
         height: Math.round(26 * actRoot.d)
-        radius: height / 2
+        radius: IrisStyle.capsule(height)
         color: IrisStyle.bodySurface
         IrisText { id: capsLabel; anchors.centerIn: parent; text: Translation.tr("Caps Lock on"); font.pixelSize: IrisStyle.typeMeta; font.weight: IrisStyle.weight(Font.DemiBold) }
     }
@@ -127,7 +127,7 @@ PreviewScene {
             anchors.centerIn: parent
             width: actRoot.clicked ? parent.width * 1.6 : 0
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: "transparent"
             border.width: 2
             border.color: IrisStyle.accent

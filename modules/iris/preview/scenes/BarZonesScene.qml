@@ -50,7 +50,7 @@ PreviewScene {
                         readonly property bool current: zonesRoot.lit === zone.index
                         implicitWidth: chipLabel.implicitWidth + Math.round(16 * zonesRoot.d)
                         implicitHeight: zonesRoot.thick - Math.round(10 * zonesRoot.d)
-                        radius: height / 2
+                        radius: IrisStyle.capsule(height)
                         color: current ? IrisStyle.tintFill(IrisStyle.accent) : IrisStyle.fill
                         Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
                         IrisText {

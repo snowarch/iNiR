@@ -423,8 +423,8 @@ Item {
         property real size: Math.round(46 * root.d)
         implicitWidth: discButton.size
         implicitHeight: discButton.size
-        buttonRadius: height / 2
-        buttonRadiusPressed: height / 2
+        buttonRadius: IrisStyle.capsule(height)
+        buttonRadiusPressed: IrisStyle.capsule(height)
         colBackground: discButton.control.lit ? discButton.control.tint : IrisStyle.fill
         colBackgroundHover: !discButton.control.ready ? discButton.colBackground
             : discButton.control.lit ? ColorUtils.mix(discButton.control.tint, IrisStyle.text, 0.85) : IrisStyle.fillHover
@@ -889,7 +889,7 @@ Item {
                 quiet: true
                 enabled: transport.live && !root.editing
                 implicitHeight: Math.round(30 * root.d)
-                buttonRadius: height / 2
+                buttonRadius: IrisStyle.capsule(height)
                 Accessible.name: transportButton.modelData.action
                 onClicked: transportButton.modelData.action === "previous" ? transport.player.previous()
                     : transportButton.modelData.action === "next" ? transport.player.next() : transport.player.togglePlaying()

@@ -43,7 +43,7 @@ IrisSurface {
     }
 
     raised: true
-    radius: height / 2
+    radius: IrisStyle.capsule(height)
     implicitWidth: strip.implicitWidth + Math.round(16 * root.d)
     implicitHeight: Math.round(52 * root.d)
 
@@ -66,7 +66,7 @@ IrisSurface {
             Layout.alignment: Qt.AlignVCenter
             implicitWidth: actionRow.implicitWidth + 4
             implicitHeight: Math.round(38 * root.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: IrisStyle.fillQuiet
 
             Rectangle {
@@ -76,7 +76,7 @@ IrisSurface {
                 y: 2
                 width: current?.width ?? 0
                 height: actions.height - 4
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: IrisStyle.fillActive
                 Behavior on x { NumberAnimation { duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve } }
                 Behavior on width { NumberAnimation { duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve } }
@@ -139,7 +139,7 @@ IrisSurface {
             Layout.alignment: Qt.AlignVCenter
             implicitWidth: shapeRow.implicitWidth + 4
             implicitHeight: Math.round(38 * root.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: IrisStyle.fillQuiet
             readonly property int current: root.selectionMode === RegionSelection.SelectionMode.Circle ? 1 : 0
 
@@ -148,7 +148,7 @@ IrisSurface {
                 y: 2
                 width: (shapes.width - 4) / 2
                 height: shapes.height - 4
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: IrisStyle.fillActive
                 Behavior on x { NumberAnimation { duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve } }
             }

@@ -38,7 +38,7 @@ IrisWidgetFace {
             anchors.horizontalCenter: parent.horizontalCenter
             width: root.disc
             height: root.disc
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: toggle.on ? toggle.tint : tap.pressed ? root.fillActive : hover.hovered ? root.fillHover : root.fill
             scale: tap.pressed ? IrisStyle.pressScale(0.94) : 1
             Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }

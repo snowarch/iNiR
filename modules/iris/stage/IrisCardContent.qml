@@ -132,7 +132,7 @@ Item {
             Rectangle {
                 implicitWidth: Math.round(38 * root.d)
                 implicitHeight: Math.round(22 * root.d)
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: vpnRow.on ? IrisStyle.identity.green : IrisStyle.fillHover
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                 Rectangle {
@@ -140,7 +140,7 @@ Item {
                     x: vpnRow.on ? parent.width - width - Math.round(3 * root.d) : Math.round(3 * root.d)
                     width: parent.height - Math.round(6 * root.d)
                     height: width
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     color: IrisStyle.onTint
                     Behavior on x { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                 }
@@ -684,7 +684,7 @@ Item {
                             Rectangle {
                                 implicitWidth: Math.round(8 * root.d)
                                 implicitHeight: implicitWidth
-                                radius: width / 2
+                                radius: IrisStyle.capsule(width)
                                 color: device.modelData.online ? IrisStyle.identity.green : IrisStyle.fillActive
                             }
                             ColumnLayout {

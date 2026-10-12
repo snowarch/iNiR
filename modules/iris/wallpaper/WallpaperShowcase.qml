@@ -132,7 +132,7 @@ ClippingRectangle {
                     required property var modelData
                     height: Math.round(24 * root.d)
                     width: factRow.implicitWidth + Math.round(18 * root.d)
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: IrisStyle.onMediaFill
                     Row {
                         id: factRow
@@ -170,7 +170,7 @@ ClippingRectangle {
         anchors.margins: Math.round(14 * root.d)
         height: Math.round(26 * root.d)
         width: inUse.implicitWidth + Math.round(20 * root.d)
-        radius: height / 2
+        radius: IrisStyle.capsule(height)
         color: IrisStyle.accent
         Row {
             id: inUse

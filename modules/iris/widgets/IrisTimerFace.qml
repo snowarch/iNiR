@@ -78,7 +78,7 @@ IrisWidgetFace {
             anchors.centerIn: parent
             width: parent.width * 0.62
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             scale: dialTap.pressed ? IrisStyle.pressScale(0.92) : 1
             color: root.live(dial.timer) ? IrisStyle.tintFill(dial.timer.tint)
                 : dialHover.hovered ? root.fillHover : root.fill

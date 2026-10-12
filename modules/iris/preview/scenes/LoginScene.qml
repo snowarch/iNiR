@@ -110,7 +110,7 @@ PreviewScene {
         id: face
         property int sourceIndex: 0
         color: IrisStyle.onMediaFill
-        radius: width / 2
+        radius: IrisStyle.capsule(width)
         IrisImage {
             id: faceImage
             anchors.fill: parent

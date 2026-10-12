@@ -44,7 +44,7 @@ Rectangle {
         x: root.on ? root.width - width - 2 * root.d : 2 * root.d
         width: thumb.size * (area.pressed ? 1.28 : 1)
         height: thumb.size
-        radius: height / 2
+        radius: IrisStyle.capsule(height)
         color: IrisStyle.onTint
         Behavior on x { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
         Behavior on width { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }

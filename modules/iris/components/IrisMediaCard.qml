@@ -143,7 +143,7 @@ Item {
             Rectangle {
                 implicitWidth: Math.round(7 * IrisStyle.density)
                 implicitHeight: implicitWidth
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: root.overMedia ? IrisStyle.dangerOnMedia : IrisStyle.danger
                 // Still: a pulse held its whole window at the display rate for as long as a stream played.
                 opacity: media.effectiveIsPlaying ? 1 : 0.5
@@ -230,7 +230,7 @@ Item {
                 Layout.topMargin: 5 * IrisStyle.density
                 visible: root.hasTimeline
                 implicitHeight: Math.max(2, Math.round(3 * IrisStyle.density))
-                radius: height / 2
+                radius: IrisStyle.capsule(height)
                 color: root.overMedia ? IrisStyle.onMediaFill : IrisStyle.fill
                 Rectangle {
                     height: parent.height

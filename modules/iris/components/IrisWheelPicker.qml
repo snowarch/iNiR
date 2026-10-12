@@ -25,7 +25,7 @@ Item {
         anchors.centerIn: parent
         width: row.implicitWidth + Math.round(28 * root.d)
         height: root.rowHeight + Math.round(2 * root.d)
-        radius: height / 2
+        radius: IrisStyle.capsule(height)
         color: IrisStyle.fillQuiet
     }
 

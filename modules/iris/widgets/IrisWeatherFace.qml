@@ -231,13 +231,13 @@ IrisWidgetFace {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: root.dp(5)
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: root.fill
                     Rectangle {
                         x: parent.width * (Number(day.modelData.loVal) - root.weekLow) / day.span
                         width: Math.max(parent.height, parent.width * (Number(day.modelData.hiVal) - Number(day.modelData.loVal)) / day.span)
                         height: parent.height
-                        radius: height / 2
+                        radius: IrisStyle.capsule(height)
                         gradient: Gradient {
                             orientation: Gradient.Horizontal
                             GradientStop { position: 0; color: IrisStyle.identity.sky }

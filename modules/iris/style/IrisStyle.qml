@@ -160,8 +160,11 @@ QtObject {
         return own === "auto" ? Boolean(root.cardDesign.grabber ?? false) : own === "on"
     }
     readonly property int radius: Math.round(Math.max(16, Math.min(40, Number(root.appearance?.expandedRadius ?? 28))) * root.density)
-    readonly property int radiusSmall: Math.max(4, Math.round(root.radius * 0.58))
-    readonly property int radiusTiny: Math.max(3, Math.round(root.radius * 0.36))
+    readonly property int radiusSmall: root.fieldChamfer ? 0 : Math.max(4, Math.round(root.radius * 0.58))
+    readonly property int radiusTiny: root.fieldChamfer ? 0 : Math.max(3, Math.round(root.radius * 0.36))
+    // A capsule's (or a disc's) corner: half its side, or square inside a chamfered Design, where a pill or a dot under
+    // the pointer would be the one round thing among cut plates.
+    function capsule(side: real): real { return root.fieldChamfer ? 0 : side / 2 }
     readonly property int gap: Math.max(4, Math.round(8 * root.density))
     readonly property int gapLarge: Math.max(8, Math.round(14 * root.density))
     readonly property int spaceSmall: Math.max(4, Math.round(6 * root.density))
@@ -717,8 +720,15 @@ QtObject {
         : root.tinted(Qt.color(root.washi?.fillInk ?? root.text), 0.22)
     readonly property color fillQuiet: ColorUtils.applyAlpha(root.fillInk, root.fillAlpha(0.08))
     readonly property color fill: ColorUtils.applyAlpha(root.fillInk, root.fillAlpha(0.12))
-    readonly property color fillHover: ColorUtils.applyAlpha(root.fillInk, root.fillAlpha(0.18))
-    readonly property color fillActive: ColorUtils.applyAlpha(root.fillInk, root.fillAlpha(0.26))
+    // A plate Design (AIRISU `hover: "plate"`) answers the pointer with an opaque plate of ink laid on the body, clearly
+    // above every resting fill and crisp at its cut, never a film the wallpaper shows through; pressed, a step brighter.
+    readonly property bool plateHover: IrisDesign.trait("hover") === "plate"
+    function hoverPlate(ink: color, level: real): color {
+        const base = Qt.color(root.bodySurface)
+        return ColorUtils.mix(Qt.rgba(Qt.color(ink).r, Qt.color(ink).g, Qt.color(ink).b, 1), Qt.rgba(base.r, base.g, base.b, 1), level)
+    }
+    readonly property color fillHover: root.plateHover ? root.hoverPlate(root.fillInk, 0.24) : ColorUtils.applyAlpha(root.fillInk, root.fillAlpha(0.18))
+    readonly property color fillActive: root.plateHover ? root.hoverPlate(root.fillInk, 0.34) : ColorUtils.applyAlpha(root.fillInk, root.fillAlpha(0.26))
     // A strong fill (a slider's level, a scrubber) is ink, not a film: the body's hue at 60 % turned paper's levels brown.
     // On paper the strong fill is ink: at the night's 0.6 it read as a dark grey slab beside the controls; 0.46 is a pencil line.
     // A level's fill (sliders, scrubbers, the Island's levels). Dark at 0.6 read as a disabled grey beside lit tiles.
@@ -780,8 +790,8 @@ QtObject {
     }
     function fillQuietOf(ink: color): color { return ColorUtils.applyAlpha(ink, root.fillAlpha(0.08)) }
     function fillOf(ink: color): color { return ColorUtils.applyAlpha(ink, root.fillAlpha(0.12)) }
-    function fillHoverOf(ink: color): color { return ColorUtils.applyAlpha(ink, root.fillAlpha(0.18)) }
-    function fillActiveOf(ink: color): color { return ColorUtils.applyAlpha(ink, root.fillAlpha(0.26)) }
+    function fillHoverOf(ink: color): color { return root.plateHover ? root.hoverPlate(ink, 0.24) : ColorUtils.applyAlpha(ink, root.fillAlpha(0.18)) }
+    function fillActiveOf(ink: color): color { return root.plateHover ? root.hoverPlate(ink, 0.34) : ColorUtils.applyAlpha(ink, root.fillAlpha(0.26)) }
     function hairlineOf(ink: color): color { return ColorUtils.applyAlpha(ink, Math.min(0.3, 0.14 * root.tweak("lines", 0, 2))) }
     // The frost a light-backdrop widget needs so its darkest patches still carry dark ink: the same
     // solve as legibleVeil, mirrored (4.5:1 glass, 3:1 transparent, floor scaled by the opacity).

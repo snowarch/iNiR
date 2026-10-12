@@ -41,7 +41,7 @@ Rectangle {
         visible: root.place === "free"
         width: Math.round(9 * root.d)
         height: width
-        radius: width / 2
+        radius: IrisStyle.capsule(width)
         x: Math.round(root.fx * root.width - width / 2)
         y: Math.round(root.fy * root.height - height / 2)
         color: IrisStyle.accent
@@ -67,7 +67,7 @@ Rectangle {
             anchors.centerIn: parent
             width: parent.width - 6 * root.d
             height: Math.round(6 * root.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: islandMark.selected ? IrisStyle.accent
                 : !islandMark.enabled ? IrisStyle.fillHover
                 : islandMark.containsMouse || islandMark.activeFocus ? IrisStyle.text : IrisStyle.textTertiary
@@ -99,7 +99,7 @@ Rectangle {
                 anchors.centerIn: parent
                 width: Math.round((marker.selected ? 9 : 6) * root.d)
                 height: width
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: marker.selected ? IrisStyle.accent : marker.containsMouse || marker.activeFocus ? IrisStyle.text : IrisStyle.textTertiary
                 Behavior on width { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }

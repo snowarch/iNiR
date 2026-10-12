@@ -77,7 +77,7 @@ PreviewScene {
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredWidth: Number(lockPreview.opt("iris.lock.blocks.session.width", 248)) * 0.65
             Layout.preferredHeight: Math.round(32 * lockPreview.d)
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: IrisStyle.onMediaFill
             MaterialSymbol { anchors.centerIn: parent; text: "lock"; color: IrisStyle.onMedia; iconSize: Math.round(18 * lockPreview.d) }
         }

@@ -62,12 +62,12 @@ PreviewScene {
                     id: track
                     width: parent.width
                     height: Math.round(6 * batteryRoot.d)
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: IrisStyle.trackOf(batteryRoot.state)
                     Rectangle {
                         width: Math.round(track.width * batteryRoot.level / 100)
                         height: parent.height
-                        radius: height / 2
+                        radius: IrisStyle.capsule(height)
                         color: batteryRoot.state
                     }
                 }

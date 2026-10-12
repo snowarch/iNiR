@@ -85,13 +85,13 @@ Item {
             : Math.max(capsule.height, Math.round(capsule.width * face.level))
         Rectangle {
             anchors.fill: parent
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: IrisStyle.fill
         }
         Rectangle {
             width: capsule.fillWidth
             height: capsule.height
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: IrisStyle.text
             visible: width > 0
         }

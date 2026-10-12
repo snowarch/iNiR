@@ -78,7 +78,7 @@ Rectangle {
             text: GameMode.manuallyActivated ? Translation.tr("Turn off") : GameMode.autoActivated ? Translation.tr("Keep it on") : Translation.tr("Turn on")
             emphasized: !GameMode.manuallyActivated
             quiet: GameMode.manuallyActivated
-            buttonRadius: height / 2
+            buttonRadius: IrisStyle.capsule(height)
             onClicked: GameMode.manuallyActivated ? GameMode.deactivate() : GameMode.activate()
         }
     }

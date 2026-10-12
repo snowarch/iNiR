@@ -799,7 +799,7 @@ Item {
                                     onClicked: root.openFolder(crumb.modelData.path)
                                     Rectangle {
                                         anchors.fill: parent
-                                        radius: height / 2
+                                        radius: IrisStyle.capsule(height)
                                         color: (crumb.last ? IrisStyle.fill : crumbArea.containsMouse ? IrisStyle.fillQuiet : ColorUtils.applyAlpha(IrisStyle.text, 0))
                                         Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
                                     }
@@ -877,7 +877,7 @@ Item {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: Math.round(34 * root.d)
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: (search.activeFocus ? IrisStyle.fill : IrisStyle.fillQuiet)
                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                     MaterialSymbol {
@@ -1175,7 +1175,7 @@ Item {
                     visible: root.multiMonitor
                     implicitHeight: Math.round(28 * root.d)
                     implicitWidth: targetRow.implicitWidth + Math.round(20 * root.d)
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: "transparent"
                     Row {
                         id: targetRow
@@ -1198,8 +1198,8 @@ Item {
                 IrisButton {
                     implicitHeight: Math.round(36 * root.d)
                     implicitWidth: Math.max(Math.round(88 * root.d), applyMetrics.advanceWidth + Math.round(36 * root.d))
-                    buttonRadius: height / 2
-                    buttonRadiusPressed: height / 2
+                    buttonRadius: IrisStyle.capsule(height)
+                    buttonRadiusPressed: IrisStyle.capsule(height)
                     emphasized: true
                     text: Translation.tr("Apply")
                     enabled: (root.online ? root.selectedImage !== null : root.libraryPath.length > 0) && root.downloadingId.length === 0

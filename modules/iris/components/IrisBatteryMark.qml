@@ -43,7 +43,7 @@ Item {
         anchors.verticalCenter: body.verticalCenter
         width: root.terminal
         height: Math.round(root.height * 0.4)
-        radius: width / 2
+        radius: IrisStyle.capsule(width)
         color: root.frame
     }
 }

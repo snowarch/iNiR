@@ -62,7 +62,7 @@ PreviewScene {
         y: snipRoot.region.y + snipRoot.region.height + Math.round(8 * snipRoot.d)
         width: sizeText.implicitWidth + Math.round(16 * snipRoot.d)
         height: Math.round(22 * snipRoot.d)
-        radius: height / 2
+        radius: IrisStyle.capsule(height)
         color: IrisStyle.veilHeavy
         IrisText {
             id: sizeText
@@ -82,7 +82,7 @@ PreviewScene {
         anchors.bottomMargin: Math.round(18 * snipRoot.d)
         width: tools.implicitWidth + Math.round(16 * snipRoot.d)
         height: Math.round(48 * snipRoot.d)
-        radius: height / 2
+        radius: IrisStyle.capsule(height)
         Row {
             id: tools
             anchors.centerIn: parent
@@ -95,7 +95,7 @@ PreviewScene {
                     required property var modelData
                     width: Math.round(36 * snipRoot.d)
                     height: width
-                    radius: width / 2
+                    radius: IrisStyle.capsule(width)
                     color: modelData.lit ? IrisStyle.tintFill(IrisStyle.accent) : "transparent"
                     MaterialSymbol {
                         anchors.centerIn: parent

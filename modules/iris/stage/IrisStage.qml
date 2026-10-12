@@ -913,7 +913,7 @@ Item {
             anchors.verticalCenter: parent.top
             width: Math.round(16 * root.d)
             height: width
-            radius: width / 2
+            radius: IrisStyle.capsule(width)
             color: IrisStyle.danger
             border.width: Math.max(1, Math.round(root.d))
             border.color: IrisStyle.bodySurface
@@ -1269,7 +1269,7 @@ Item {
         height: Math.round(root.size)
         x: (root.drag?.x ?? 0) - width / 2
         y: (root.drag?.y ?? 0) - height / 2
-        radius: height / 2
+        radius: IrisStyle.capsule(height)
         color: IrisStyle.bodySurface
         opacity: 0.9
         scale: 1.04
@@ -1485,7 +1485,7 @@ Item {
                 anchors.centerIn: parent
                 width: Math.max(2, Math.round(3 * root.d))
                 height: Math.round(26 * root.d)
-                radius: width / 2
+                radius: IrisStyle.capsule(width)
                 color: cardResizeHover.hovered || cardResizeDrag.active ? IrisStyle.accent : IrisStyle.textTertiary
             }
             HoverHandler { id: cardResizeHover; cursorShape: Qt.SizeHorCursor }

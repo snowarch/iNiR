@@ -27,7 +27,7 @@ PreviewScene {
         property color tint: IrisStyle.identity.blue
         implicitWidth: Math.max(implicitHeight, pieceRow.implicitWidth + Math.round(20 * sourcesRoot.d))
         implicitHeight: Math.round(IrisFrame.islandBand)
-        radius: height / 2
+        radius: IrisStyle.capsule(height)
         color: IrisStyle.bodySurface
         border.width: IrisStyle.rim.a > 0 ? 1 : 0
         border.color: IrisStyle.rim
