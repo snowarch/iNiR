@@ -20,7 +20,10 @@ AbstractWidget {
 
     required property string configEntryName
     readonly property bool widgetIrisFamily: (Config.options?.panelFamily ?? "ii") === "iris"
-    readonly property bool widgetIris: root.widgetIrisFamily && root.irisDesign === "iris"
+    // iRiS only: an iRiS Design (AIRISU) that brings this widget's face draws it whatever widget design is chosen.
+    property string designFaceKey: ""
+    readonly property bool widgetIris: root.widgetIrisFamily && (root.irisDesign === "iris"
+        || (root.designFaceKey.length > 0 && IrisDesign.has(root.designFaceKey)))
     required property int screenWidth
     required property int screenHeight
     required property int scaledScreenWidth
