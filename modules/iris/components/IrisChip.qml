@@ -17,7 +17,7 @@ IrisButton {
 
     implicitHeight: Math.max(Math.round(30 * chip.d), Math.round(chipLabel.implicitHeight + 10 * chip.d))
     implicitWidth: chipLabel.lead + Math.min(chipLabel.implicitWidth, chip.labelCap) + chip.inset * 2
-    buttonRadius: IrisStyle.controlPlated ? IrisStyle.pieceRadius(height) : height / 2
+    buttonRadius: chip.skinned ? 0 : IrisStyle.controlPlated ? IrisStyle.pieceRadius(height) : height / 2
     buttonRadiusPressed: buttonRadius
     Accessible.name: chip.label
 
@@ -65,8 +65,11 @@ IrisButton {
             elide: Text.ElideRight
             text: chip.label
             color: chip.foreground
-            font.family: chip.labelFamily.length > 0 ? chip.labelFamily : IrisStyle.fontMain
-            font.pixelSize: IrisStyle.typeLabel
+            // Under a Design's skin a chip is a sticker label: mono capitals (AIRISU's WI-FI │ BLUETOOTH).
+            font.family: chip.labelFamily.length > 0 ? chip.labelFamily : chip.skinned ? IrisStyle.fontMono : IrisStyle.fontMain
+            font.capitalization: chip.skinned && chip.labelFamily.length === 0 ? Font.AllUppercase : Font.MixedCase
+            font.letterSpacing: chip.skinned && chip.labelFamily.length === 0 ? Math.round(IrisStyle.typeFootnote * 0.12) : 0
+            font.pixelSize: chip.skinned ? IrisStyle.typeFootnote : IrisStyle.typeLabel
             font.weight: chip.selected || chip.emphasized ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Medium)
         }
     }

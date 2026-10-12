@@ -9489,5 +9489,7 @@
   "Build": "बिल्ड",
   "search": "खोजें",
   "Session locked": "सत्र लॉक है",
-  "Type your password": "अपना पासवर्ड लिखें"
+  "Type your password": "अपना पासवर्ड लिखें",
+  "What iRiS is made of: its shapes, type, controls and motion. Your settings stay; a Design draws them its own way.": "iRiS किससे बना है: आकार, अक्षर, नियंत्रण और गति। आपकी सेटिंग्स बनी रहती हैं; हर डिज़ाइन उन्हें अपने ढंग से बनाता है।",
+  "%1 brings its own.": "%1 अपना लाता है।"
 }

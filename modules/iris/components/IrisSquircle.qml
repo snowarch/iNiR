@@ -25,17 +25,22 @@ Rectangle {
         : root.plate === "surface" ? IrisStyle.surfaceHighestOpaque
         : IrisStyle.plateBlackBase
 
-    radius: IrisStyle.iconRadius(width)
-    gradient: Gradient {
+    // A Design whose marks are glyphs alone (AIRISU) draws no plate: the glyph in its line weight, in the ink.
+    readonly property bool plain: IrisStyle.plainMarks
+    property color ink: root.plain ? IrisStyle.textSecondary : root.tiled && root.plate !== "tint" ? root.tint : IrisStyle.onTint
+    property Gradient tintGradient: Gradient {
         GradientStop { position: 0; color: root.tiled ? root.tileTop : IrisStyle.tileTop(root.tint) }
         GradientStop { position: 1; color: root.tiled ? root.tileBase : root.tint }
     }
+    radius: root.plain ? 0 : IrisStyle.iconRadius(width)
+    color: "transparent"
+    gradient: root.plain ? null : root.tintGradient
     MaterialSymbol {
         anchors.centerIn: parent
         text: root.glyph
-        fill: 1
-        iconSize: Math.round(root.width * root.glyphShare)
-        color: root.tiled && root.plate !== "tint" ? root.tint : IrisStyle.onTint
-        glyphGradient: root.tiled
+        fill: root.plain ? 0 : 1
+        iconSize: Math.round(root.width * (root.plain ? Math.min(0.82, root.glyphShare + 0.14) : root.glyphShare))
+        color: root.ink
+        glyphGradient: root.tiled && !root.plain
     }
 }

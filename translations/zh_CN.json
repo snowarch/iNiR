@@ -9489,5 +9489,7 @@
   "Build": "构建",
   "search": "搜索",
   "Session locked": "会话已锁定",
-  "Type your password": "输入密码"
+  "Type your password": "输入密码",
+  "What iRiS is made of: its shapes, type, controls and motion. Your settings stay; a Design draws them its own way.": "iRiS 由什么构成：形状、字体、控件与动效。你的设置保持不变；每种设计以自己的方式呈现它们。",
+  "%1 brings its own.": "%1 自带。"
 }

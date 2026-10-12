@@ -14,7 +14,14 @@ RippleButton {
     property bool quiet: false
     property bool emphasized: false
     property bool danger: false
-    property color foreground: root.danger && root.emphasized ? IrisStyle.inkOnDanger
+    // A Design may draw the plate and the label its own way (AIRISU: a plate cut with a blade); the press, the toggle
+    // and the content stay the button's.
+    readonly property bool skinned: buttonSkin.active
+    // Under a Design's skin the ink follows the skin's plates: lacquer on the chosen gofun, the seal's ink on the seal.
+    property color foreground: root.skinned ? (root.danger && root.emphasized ? IrisStyle.onTintFor(IrisStyle.danger)
+            : root.emphasized ? IrisStyle.inkOnAccentFill : root.selected ? IrisStyle.bodySurface
+            : root.danger ? IrisStyle.danger : IrisStyle.text)
+        : root.danger && root.emphasized ? IrisStyle.inkOnDanger
         : root.emphasized ? IrisStyle.inkOnAccent
         : root.danger ? IrisStyle.danger
         : root.selected ? IrisStyle.accent : IrisStyle.text
@@ -34,12 +41,12 @@ RippleButton {
     pressScaleEnabled: true
     cookieMorphing: false
 
-    colBackground: root.danger && root.emphasized ? IrisStyle.danger
+    colBackground: root.skinned ? "transparent" : root.danger && root.emphasized ? IrisStyle.danger
         : root.emphasized ? IrisStyle.accent
         : root.quiet ? ColorUtils.applyAlpha(IrisStyle.surfaceHigh, 0)
         : IrisStyle.controlPlated ? IrisStyle.plateFillFor(IrisStyle.controlPlate)
         : IrisStyle.surfaceHigh
-    colBackgroundHover: root.danger && root.emphasized
+    colBackgroundHover: root.skinned ? "transparent" : root.danger && root.emphasized
         ? ColorUtils.mix(IrisStyle.danger, IrisStyle.inkOnDanger, 0.90)
         : root.danger
             ? IrisStyle.tintFill(IrisStyle.danger)
@@ -48,10 +55,10 @@ RippleButton {
             : root.quiet
                 ? IrisStyle.fillHover
             : IrisStyle.surfaceHighest
-    colBackgroundToggled: IrisStyle.tintFill(IrisStyle.accent)
-    colBackgroundToggledHover: IrisStyle.tintFillHover(IrisStyle.accent)
-    colRipple: IrisStyle.tintFill((root.danger ? IrisStyle.danger : IrisStyle.accent))
-    colRippleToggled: IrisStyle.tintFill(IrisStyle.accent)
+    colBackgroundToggled: root.skinned ? "transparent" : IrisStyle.tintFill(IrisStyle.accent)
+    colBackgroundToggledHover: root.skinned ? "transparent" : IrisStyle.tintFillHover(IrisStyle.accent)
+    colRipple: root.skinned ? "transparent" : IrisStyle.tintFill((root.danger ? IrisStyle.danger : IrisStyle.accent))
+    colRippleToggled: root.skinned ? "transparent" : IrisStyle.tintFill(IrisStyle.accent)
 
     Accessible.name: root.text
     Accessible.role: Accessible.Button
@@ -62,7 +69,7 @@ RippleButton {
         z: 2
         radius: root.buttonEffectiveRadius
         color: "transparent"
-        border.width: root.visualFocus ? 2 : 0
+        border.width: root.visualFocus && !root.skinned ? 2 : 0
         border.color: IrisStyle.accent
         visible: border.width > 0
         Behavior on border.color {
@@ -74,12 +81,24 @@ RippleButton {
     contentItem: Item {
         id: contentHost
 
+        IrisSkin {
+            id: buttonSkin
+            part: "button"
+            host: root
+            anchors.fill: undefined
+            x: -contentHost.x
+            y: -contentHost.y
+            width: root.width
+            height: root.height
+            z: -1
+        }
+
         IrisText {
             id: label
             anchors.centerIn: parent
             width: Math.min(implicitWidth, Math.max(0, contentHost.width - 16 * IrisStyle.density))
             elide: Text.ElideRight
-            visible: root.text.length > 0
+            visible: root.text.length > 0 && !root.skinned
             text: root.text
             color: root.foreground
             font.pixelSize: IrisStyle.typeLabel

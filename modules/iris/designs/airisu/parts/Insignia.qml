@@ -7,6 +7,9 @@ import qs.modules.iris.style
 Item {
     id: root
     property Item host: null
+    // Its pigments; the Settings picture draws them as AIRISU's own whatever Design is on.
+    property color ink: IrisStyle.text
+    property color sealColour: !root.host || Qt.colorEqual(root.host.color, IrisStyle.accent) ? IrisStyle.accentFill : root.host.color
     readonly property real size: Math.min(width, height)
     readonly property real unit: root.size / 100
 
@@ -19,7 +22,7 @@ Item {
         preferredRendererType: Shape.CurveRenderer
         ShapePath {
             strokeWidth: -1
-            fillColor: IrisStyle.text
+            fillColor: root.ink
             fillRule: ShapePath.OddEvenFill
             // The disc, then ア's two strokes as holes: the bar turning down at a mitred corner, and the falling
             // stroke that leaves the bar below it and sweeps left.
@@ -38,7 +41,7 @@ Item {
         x: Math.round((root.width - root.size) / 2 + 84 * root.unit)
         y: Math.round((root.height - root.size) / 2 + 80 * root.unit)
         // The seal's pigment, unless the host asks for another colour.
-        color: !root.host || Qt.colorEqual(root.host.color, IrisStyle.accent) ? IrisStyle.accentFill : root.host.color
+        color: root.sealColour
         visible: root.size >= 18
     }
 }

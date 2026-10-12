@@ -24,6 +24,20 @@ Singleton {
     readonly property string fieldCorner: String(root.manifest?.field?.corner ?? "round")
     // The solver language the Design paints with (scripts/colors/washi), or "" to keep the person's Style.
     readonly property string palette: String(root.manifest?.palette ?? "")
+    // What the Design wears whatever the person's rows say: its preset, its type, its camera.
+    readonly property string preset: String(root.manifest?.preset ?? "")
+    readonly property var fonts: root.manifest?.fonts ?? ({})
+    function font(role: string): string { return String(root.fonts?.[role] ?? "") }
+    readonly property string morph: String(root.manifest?.motion?.morph ?? "")
+    // How the Design reads, as traits any surface can honour (DESIGNS.md › rasgos): marks "glyph" (no tinted squircles),
+    // selection "plate" (the chosen row is a solid plate, not an accent wash), index (lists numbered 01, 02…),
+    // captions "mono" (labels in mono capitals), titles "lower" (page titles in lower case).
+    readonly property var traits: root.manifest?.traits ?? ({})
+    function trait(name: string): var { return root.traits?.[name] }
+    readonly property int motionDuration: Number(root.manifest?.motion?.duration ?? 0)
+    // Every Design shipped, with its name and its own picture for the Settings row (parts/Preview.qml in its folder).
+    readonly property var catalogue: root.known.map(id => ({ value: id, label: ({ iris: "iRiS", airisu: "AIRISU" })[id] ?? id,
+        preview: `${root.folder(id)}parts/Preview.qml` }))
 
     function folder(id: string): url {
         return Qt.resolvedUrl(`../designs/${id}/`)

@@ -180,9 +180,14 @@ QtObject {
         angular: { fill: 1.08, shape: 0.42, textStrong: 0.86, textSecondary: 0.64, textTertiary: 0.42,
             subtext: "#b0b0b5", muted: "#909095", hairline: "#2a2a2c", hairlineStrong: "#505052" },
         contrast: { fill: 1.6, shape: 1.0, textStrong: 0.94, textSecondary: 0.8, textTertiary: 0.6,
-            subtext: "#d1d1d6", muted: "#aeaeb2", hairline: "#3a3a3c", hairlineStrong: "#6c6c70" }
+            subtext: "#d1d1d6", muted: "#aeaeb2", hairline: "#3a3a3c", hairlineStrong: "#6c6c70" },
+        // AIRISU's (concept › Mapa A): fills a step up, no curve at all (the chamfer is the only corner), bone ink.
+        night: { fill: 1.15, shape: 0.0, textStrong: 0.90, textSecondary: 0.66, textTertiary: 0.44,
+            subtext: "#b8b5ae", muted: "#8c8a85", hairline: "#2a2b2e", hairlineStrong: "#48484a" }
     })
-    readonly property string presetName: root.presets[root.appearance?.preset ?? ""] ? root.appearance.preset : "iris"
+    // A Design that brings its own preset wears it whatever the Style row says (it is part of what the Design is).
+    readonly property string presetName: root.presets[IrisDesign.preset] ? IrisDesign.preset
+        : root.presets[root.appearance?.preset ?? ""] ? root.appearance.preset : "iris"
     readonly property var preset: root.presets[root.presetName]
 
     readonly property Instantiator bundledFaces: Instantiator {
@@ -209,8 +214,9 @@ QtObject {
         const configured = String(value ?? "")
         return configured.length > 0 ? configured : (root.defaultFaces[path] ?? root.faceText)
     }
-    readonly property string fontMain: root.face("iris.appearance.fontFamily", root.appearance?.fontFamily)
-    readonly property string fontTitle: root.face("iris.appearance.titleFontFamily", root.appearance?.titleFontFamily)
+    // A Design's type is part of it (AIRISU: Archivo to read, Archivo SemiExpanded for titles and figures).
+    readonly property string fontMain: IrisDesign.font("text") || root.face("iris.appearance.fontFamily", root.appearance?.fontFamily)
+    readonly property string fontTitle: IrisDesign.font("title") || root.face("iris.appearance.titleFontFamily", root.appearance?.titleFontFamily)
     // 220 font.weight bindings hang off this one. Read straight through `theme`, it is recomputed
     // every time Config is reloaded — which is every write of any key — and drags all 220 with it,
     // measured at six dropped frames per write. The name changes only when the weight really does.
@@ -223,7 +229,9 @@ QtObject {
         return steps[Math.max(0, Math.min(steps.length - 1, at + root.weightShift))]
     }
     readonly property int figureWeight: ({ light: Font.Light, regular: Font.Normal })[root.appearance?.figureWeight ?? "bold"] ?? Font.Bold
-    readonly property string fontNumbers: root.face("iris.appearance.numbersFontFamily", root.appearance?.numbersFontFamily)
+    readonly property string fontNumbers: IrisDesign.font("numbers") || root.face("iris.appearance.numbersFontFamily", root.appearance?.numbersFontFamily)
+    // Data and labels in capitals: a Design's mono voice, or the system's.
+    readonly property string fontMono: IrisDesign.font("mono") || "JetBrainsMono Nerd Font"
 
     readonly property color canvas: Appearance.colors.colLayer0Base
     // iRiS is dark by construction. The light scheme turns its material and ink over; Ink sits between them, washi
@@ -972,6 +980,14 @@ QtObject {
     // A Design that cuts corners (DESIGNS.md `field.corner: "chamfer"`): the field cuts two opposite corners of every
     // body at 45° by `chamferCut` and squares the other two; the plates inside go square (`corner`).
     readonly property bool fieldChamfer: IrisDesign.fieldCorner === "chamfer"
+    // The active Design's traits (IrisDesign.traits), as primitives the surfaces bind to.
+    readonly property bool plainMarks: IrisDesign.trait("marks") === "glyph"
+    readonly property bool plateSelection: IrisDesign.trait("selection") === "plate"
+    readonly property bool indexed: IrisDesign.trait("index") === true
+    readonly property bool monoCaptions: IrisDesign.trait("captions") === "mono"
+    readonly property bool lowerTitles: IrisDesign.trait("titles") === "lower"
+    // A list's place as a part number: 01, 02… (indexed Designs).
+    function indexLabel(i: int): string { return (i + 1 < 10 ? "0" : "") + (i + 1) }
     readonly property int chamferCut: Math.round(10 * root.density)
     // Auto is what the Island and the Dock always did: a capsule when melted into the edge, the bubbles' shape when floating.
     // Linked, both take the bubbles' shape whatever their own choice.
@@ -1056,9 +1072,14 @@ QtObject {
         elastic: { emerge: { response: 2.2, bounce: 0.34 }, recede: { response: 1.4, bounce: 0 }, move: { response: 1.5, bounce: 0.24 },
             rise: 0.36, span: 0.4, fall: 0.28, reveal: "inflate" },
         instant: { emerge: { response: 1, bounce: 0 }, recede: { response: 1, bounce: 0 }, move: { response: 1, bounce: 0 },
-            rise: 0.01, span: 0.01, fall: 0.01, reveal: "fade" }
+            rise: 0.01, span: 0.01, fall: 0.01, reveal: "fade" },
+        // AIRISU's camera (concept › Motion): fast out, short brake, nothing that bounces. Roll 220 to open, whip 140 to
+        // move, the content arriving a beat after the body (rolling shot).
+        tuned: { curve: true, emerge: { response: 1, curve: "standard" }, recede: { response: 0.64, curve: "standard" },
+            move: { response: 0.64, curve: "standard" }, rise: 0.18, span: 0.3, fall: 0.12, reveal: "drop" }
     })
-    readonly property string morphName: root.morphStyles[root.appearance?.morph ?? ""] ? root.appearance.morph : "direct"
+    readonly property string morphName: root.morphStyles[IrisDesign.morph] ? IrisDesign.morph
+        : root.morphStyles[root.appearance?.morph ?? ""] ? root.appearance.morph : "direct"
     readonly property var morph: root.morphStyles[root.morphName]
 
     readonly property string revealName: String(root.morph?.reveal ?? "curtain")
@@ -1070,7 +1091,8 @@ QtObject {
     readonly property bool revealInflates: root.revealName === "inflate" && root.motionEnabled
     readonly property bool revealFades: root.revealName === "fade" || !root.motionEnabled
 
-    readonly property int baseDuration: Math.max(100, Math.min(400, Number(root.appearance?.motionDuration ?? 220)))
+    readonly property int baseDuration: IrisDesign.motionDuration > 0 ? IrisDesign.motionDuration
+        : Math.max(100, Math.min(400, Number(root.appearance?.motionDuration ?? 220)))
     function resolveStyleSpring(style: var, entry: var, fallbackResponse: real, timeTweak: string): var {
         const response = Math.round(root.baseDuration * Math.max(0.2, Number(entry?.response ?? fallbackResponse)) * root.tweak(timeTweak, 0.4, 2.5))
         const bounce = Number(entry?.bounce ?? 0) * root.tweak("bounce", 0, 2)

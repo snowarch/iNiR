@@ -402,6 +402,11 @@ Item {
         for (const link of links) out.push(Object.assign({ type: "link", key: "link:" + link.label }, link))
         return out
     }
+    // An entry's part number in the column (indexed Designs): rows only, captions and air are not parts.
+    function navGroupIndex(entry: var): int {
+        const rows = root.navEntries.filter(candidate => ["group", "link"].includes(candidate.type))
+        return rows.findIndex(candidate => candidate.key === entry?.key)
+    }
     readonly property var navLinks: root.section === "system"
         ? root.morePages.map(entry => ({ label: Translation.tr(entry.label), detail: Translation.tr(entry.detail), glyph: entry.icon,
             tintName: entry.tintName, page: entry.key, block: Translation.tr(entry.group) }))
@@ -846,8 +851,16 @@ Item {
                             width: sidebarColumn.width
                             y: travelWash.row ? sidebarColumn.y + travelWash.row.y + travelWash.row.height - travelWash.row.rowHeight : 0
                             height: travelWash.row ? travelWash.row.rowHeight : 0
-                            radius: travelWash.row ? travelWash.row.washRadius : 0
-                            color: IrisStyle.tintFillHover(travelWash.row?.compact ? travelWash.row.modelData.tint : IrisStyle.accent)
+                            radius: IrisStyle.plateSelection ? 0 : travelWash.row ? travelWash.row.washRadius : 0
+                            // A plate-selection Design (AIRISU) puts where you are on the solid plate, the seal at its edge.
+                            color: IrisStyle.plateSelection ? IrisStyle.text
+                                : IrisStyle.tintFillHover(travelWash.row?.compact ? travelWash.row.modelData.tint : IrisStyle.accent)
+                            Rectangle {
+                                visible: IrisStyle.plateSelection
+                                width: Math.max(2, Math.round(3 * root.d))
+                                height: parent.height
+                                color: IrisStyle.accentFill
+                            }
                             opacity: travelWash.shown ? 1 : 0
                             // It lands where it first appears and travels from then on. Moving the selection hides it for a
                             // moment (the old row lets go before the new one takes it): only a hide that lasts stops the travel.
@@ -1019,8 +1032,10 @@ Item {
                                 : root.atHome ? Translation.tr("Settings")
                                 : Translation.tr(root.currentSection.title)
                             font.family: IrisStyle.fontTitle
-                            font.pixelSize: IrisStyle.typeTitleLarge
-                            font.weight: IrisStyle.weight(Font.Bold)
+                            font.pixelSize: IrisStyle.lowerTitles ? IrisStyle.typeDisplay : IrisStyle.typeTitleLarge
+                            font.weight: IrisStyle.lowerTitles ? Font.ExtraBold : IrisStyle.weight(Font.Bold)
+                            font.capitalization: IrisStyle.lowerTitles && !root.searching ? Font.AllLowercase : Font.MixedCase
+                            font.letterSpacing: IrisStyle.lowerTitles ? -Math.round(IrisStyle.typeDisplay * 0.03) : 0
                             elide: Text.ElideRight
                         }
                         IrisText {
@@ -1654,10 +1669,12 @@ Item {
             anchors.bottom: parent.bottom
             anchors.bottomMargin: Math.round(6 * root.d)
             text: String(entry.modelData.text ?? "")
-            color: IrisStyle.label
-            font.family: IrisStyle.fontTitle
-            font.pixelSize: IrisStyle.typeMeta
-            font.weight: IrisStyle.weight(Font.DemiBold)
+            color: IrisStyle.monoCaptions ? IrisStyle.textTertiary : IrisStyle.label
+            font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontTitle
+            font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeCaption : IrisStyle.typeMeta
+            font.weight: IrisStyle.monoCaptions ? Font.Medium : IrisStyle.weight(Font.DemiBold)
+            font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
+            font.letterSpacing: IrisStyle.monoCaptions ? Math.round(IrisStyle.typeCaption * 0.16) : 0
             elide: Text.ElideRight
         }
         // Hover is the fill step, kept off the pane's edge; the chosen row is the tab the column draws under it.
@@ -1679,9 +1696,27 @@ Item {
             width: Math.round(24 * root.d)
             height: width
         }
+        // The seal at the chosen entry's edge, where a plate-selection Design marks the group being read.
+        Rectangle {
+            visible: entry.selected && IrisStyle.plateSelection
+            x: Math.round(6 * root.d)
+            y: Math.round(2 * root.d)
+            width: Math.max(2, Math.round(3 * root.d))
+            height: parent.height - Math.round(4 * root.d)
+            color: IrisStyle.accentFill
+        }
+        IrisText {
+            visible: entry.row && entry.type !== "you" && IrisStyle.indexed
+            anchors.centerIn: mark
+            text: IrisStyle.indexLabel(Math.max(0, root.navGroupIndex(entry.modelData)))
+            color: entry.selected ? IrisStyle.text : IrisStyle.textTertiary
+            font.family: IrisStyle.fontMono
+            font.pixelSize: IrisStyle.typeFootnote
+            font.weight: Font.Medium
+        }
         IrisSquircle {
             id: mark
-            visible: entry.row && entry.type !== "you"
+            visible: entry.row && entry.type !== "you" && !IrisStyle.indexed
             x: Math.round(12 * root.d)
             anchors.verticalCenter: parent.verticalCenter
             width: Math.round(24 * root.d)
@@ -1703,10 +1738,10 @@ Item {
                 text: entry.type === "you" ? (SystemInfo.displayName || SystemInfo.username)
                     : entry.type === "link" ? String(entry.modelData.label ?? "")
                     : String(entry.modelData.label ?? entry.modelData.title ?? "")
-                color: entry.selected ? IrisStyle.accent : IrisStyle.text
+                color: entry.selected ? (IrisStyle.plateSelection ? IrisStyle.text : IrisStyle.accent) : IrisStyle.text
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                 font.pixelSize: IrisStyle.typeLabel
-                font.weight: IrisStyle.weight(entry.selected ? Font.DemiBold : Font.Medium)
+                font.weight: IrisStyle.weight(entry.selected ? (IrisStyle.plateSelection ? Font.Bold : Font.DemiBold) : Font.Medium)
                 elide: Text.ElideRight
             }
             IrisText {
@@ -1785,19 +1820,32 @@ Item {
             height: sectionRow.rowHeight
             // Concentric with the mark it holds; where you are is a wash of the accent, as light as a hover, never a
             // solid block heavier than the buttons around it.
-            radius: sectionRow.washRadius
-            color: sectionRow.selected && !sectionRow.travels ? IrisStyle.tintFillHover(sectionRow.compact ? sectionRow.modelData.tint : IrisStyle.accent)
+            radius: IrisStyle.plateSelection ? 0 : sectionRow.washRadius
+            color: sectionRow.selected && !sectionRow.travels ? (IrisStyle.plateSelection ? IrisStyle.text : IrisStyle.tintFillHover(sectionRow.compact ? sectionRow.modelData.tint : IrisStyle.accent))
                 : sectionRow.selected ? "transparent"
                 : sectionRow.containsMouse ? IrisStyle.fillHover : "transparent"
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
             IrisSquircle {
                 id: sectionMark
+                // An indexed Design numbers the areas instead (a parts catalogue); the rail keeps its glyphs.
+                readonly property bool numbered: IrisStyle.indexed && !sectionRow.compact
+                visible: !sectionMark.numbered
                 x: sectionRow.compact ? Math.round((parent.width - width) / 2) : Math.round(6 * root.d)
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.round((sectionRow.compact ? 24 : 20) * root.d)
                 height: width
                 tint: sectionRow.modelData.tint
                 glyph: sectionRow.modelData.icon
+                ink: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.bodySurface : IrisStyle.plainMarks ? IrisStyle.textSecondary : IrisStyle.onTint
+            }
+            IrisText {
+                visible: sectionMark.numbered
+                anchors.centerIn: sectionMark
+                text: IrisStyle.indexLabel(sectionRow.index + (sectionRow.travels ? 0 : root.footerCluster * 0))
+                color: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.bodySurface : IrisStyle.textTertiary
+                font.family: IrisStyle.fontMono
+                font.pixelSize: IrisStyle.typeFootnote
+                font.weight: Font.Medium
             }
             IrisText {
                 visible: !sectionRow.compact
@@ -1807,8 +1855,9 @@ Item {
                 anchors.rightMargin: 8 * root.d
                 anchors.verticalCenter: parent.verticalCenter
                 text: Translation.tr(sectionRow.modelData.title)
-                // Where you are reads in the accent and a step heavier; the wash under it only supports that.
-                color: sectionRow.selected ? IrisStyle.accent : IrisStyle.text
+                // Where you are reads in the accent and a step heavier; the wash under it only supports that. On a plate
+                // (AIRISU) it is the plate's own ink.
+                color: sectionRow.selected ? (IrisStyle.plateSelection ? IrisStyle.bodySurface : IrisStyle.accent) : IrisStyle.text
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                 font.pixelSize: IrisStyle.typeLabel
                 font.weight: IrisStyle.weight(sectionRow.selected ? Font.DemiBold : Font.Medium)
@@ -2221,8 +2270,30 @@ Item {
         }
         // A page read whole opens each group on its identity: the mark the column shows and a title a step above its
         // rows, so the eye finds where a block starts (a 12 px caption read smaller than the rows under it).
+        // A Design may open each group its own way (AIRISU: the name wide, the sticker stripe, the count in mono, a rule).
+        Item {
+            id: groupHead
+            readonly property string title: String(group.modelData.caption ?? "")
+            readonly property int count: group.modelData.rows.length
+            visible: root.flatSection && groupHead.title.length > 0 && headSkin.active
+            Layout.fillWidth: true
+            Layout.leftMargin: 14 * root.d
+            Layout.rightMargin: 14 * root.d
+            Layout.topMargin: 18 * root.d
+            Layout.bottomMargin: 4 * root.d
+            implicitHeight: headSkin.item?.implicitHeight ?? 0
+            IrisSkin { id: headSkin; part: "groupHeader"; host: groupHead }
+            IrisSwitch {
+                visible: group.loneSwitch && headSkin.active
+                anchors.right: parent.right
+                anchors.top: parent.top
+                on: group.loneSwitch && (group.shownRows[0].invert ? !Boolean(IrisOptions.currentValue(group.shownRows[0])) : Boolean(IrisOptions.currentValue(group.shownRows[0])))
+                name: groupHead.title
+                onToggled: IrisOptions.commit(group.shownRows[0], group.shownRows[0].invert ? on : !on)
+            }
+        }
         RowLayout {
-            visible: root.flatSection && String(group.modelData.caption ?? "").length > 0
+            visible: root.flatSection && String(group.modelData.caption ?? "").length > 0 && !headSkin.active
             Layout.leftMargin: 14 * root.d
             Layout.topMargin: 14 * root.d
             Layout.bottomMargin: 2 * root.d
@@ -2292,10 +2363,12 @@ Item {
                     visible: text.length > 0
                     Layout.leftMargin: 16 * root.d
                     text: part.modelData.length > 0 ? Translation.tr(part.modelData) : ""
-                    color: IrisStyle.label
-                    font.family: IrisStyle.fontTitle
-                    font.pixelSize: IrisStyle.typeMeta
-                    font.weight: IrisStyle.weight(Font.DemiBold)
+                    color: IrisStyle.monoCaptions ? IrisStyle.textTertiary : IrisStyle.label
+                    font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontTitle
+                    font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeCaption : IrisStyle.typeMeta
+                    font.weight: IrisStyle.monoCaptions ? Font.Medium : IrisStyle.weight(Font.DemiBold)
+                    font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
+                    font.letterSpacing: IrisStyle.monoCaptions ? Math.round(IrisStyle.typeCaption * 0.16) : 0
                 }
                 Rectangle {
                     Layout.fillWidth: true

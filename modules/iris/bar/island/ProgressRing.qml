@@ -17,7 +17,10 @@ Item {
     property real stroke: Math.max(2, 2.5 * IrisStyle.density)
     readonly property real radius: Math.max(0, Math.min(ring.width, ring.height) / 2 - ring.stroke / 2)
 
+    // A Design may draw it its own way (AIRISU: the needle gauge's 270° arc).
+    IrisSkin { id: ringSkin; part: "ring" }
     Shape {
+        visible: !ringSkin.active
         anchors.fill: parent
         preferredRendererType: Shape.CurveRenderer
         ShapePath {

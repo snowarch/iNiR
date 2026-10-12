@@ -24,6 +24,8 @@ Rectangle {
     readonly property int selectedIndex: root.options.findIndex(option => option.value === root.current)
     readonly property real slot: (root.width - 2 * root.inset) / root.count
     signal picked(var value)
+    // A Design may draw it its own way (AIRISU: positions that click into place); the picking stays here.
+    readonly property bool skinned: skin.active
     // The width that holds the longest label in every language with its air: a caller with a fixed slot takes at least
     // this, so a translated label never spills past its segment.
     readonly property real fitWidth: {
@@ -45,11 +47,12 @@ Rectangle {
     readonly property real thumbRadius: root.pictured ? IrisStyle.radiusTile - root.inset
         : IrisStyle.controlPlated ? IrisStyle.pieceRadius(root.height - 2 * root.inset) : (root.height - 2 * root.inset) / 2
     radius: root.pictured ? IrisStyle.radiusTile : IrisStyle.controlPlated ? root.thumbRadius + root.inset : height / 2
-    color: IrisStyle.controlPlated ? IrisStyle.plateFillFor(IrisStyle.controlPlate) : IrisStyle.fillQuiet
+    color: root.skinned ? "transparent" : IrisStyle.controlPlated ? IrisStyle.plateFillFor(IrisStyle.controlPlate) : IrisStyle.fillQuiet
 
+    IrisSkin { id: skin; part: "segmented" }
     IrisGlassEdge {
         anchors.fill: parent
-        visible: (IrisStyle.controlPlate === "glass" || (IrisStyle.controlPlated && IrisStyle.edgeLit)) && shown
+        visible: !root.skinned && (IrisStyle.controlPlate === "glass" || (IrisStyle.controlPlated && IrisStyle.edgeLit)) && shown
         radius: root.radius
     }
 
@@ -58,7 +61,7 @@ Rectangle {
     }
 
     RectangularShadow {
-        visible: thumb.visible
+        visible: thumb.visible && !root.skinned
         anchors.fill: thumb
         radius: thumb.radius
         offset.y: root.d
@@ -67,7 +70,7 @@ Rectangle {
     }
     Rectangle {
         id: thumb
-        visible: root.selectedIndex >= 0
+        visible: root.selectedIndex >= 0 && !root.skinned
         y: root.inset
         height: root.height - 2 * root.inset
         x: root.slotX(Math.max(0, root.selectedIndex))
@@ -103,13 +106,13 @@ Rectangle {
             Rectangle {
                 anchors.fill: parent
                 radius: thumb.radius
-                color: !segment.selected && segment.containsMouse ? IrisStyle.fillQuiet : "transparent"
+                color: !segment.selected && segment.containsMouse ? (root.skinned ? IrisStyle.fillQuiet : IrisStyle.fillQuiet) : "transparent"
                 border.width: segment.activeFocus ? 1 : 0
                 border.color: IrisStyle.accent
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
             }
             MaterialSymbol {
-                visible: root.glyphOnly
+                visible: root.glyphOnly && !root.skinned
                 anchors.centerIn: parent
                 text: String(segment.modelData.glyph ?? "")
                 fill: segment.selected ? 1 : 0
@@ -117,7 +120,7 @@ Rectangle {
                 color: segment.selected ? IrisStyle.accent : IrisStyle.subtext
             }
             Column {
-                visible: root.pictured
+                visible: root.pictured && !root.skinned
                 anchors.centerIn: parent
                 width: parent.width - Math.round(8 * root.d)
                 spacing: Math.round(2 * root.d)
@@ -139,7 +142,7 @@ Rectangle {
                 }
             }
             Row {
-                visible: !root.pictured && !root.glyphOnly
+                visible: !root.pictured && !root.glyphOnly && !root.skinned
                 anchors.centerIn: parent
                 spacing: Math.round(6 * root.d)
                 Rectangle {

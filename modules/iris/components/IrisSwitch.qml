@@ -8,24 +8,28 @@ Rectangle {
     property bool on: false
     property string name: ""
     readonly property real d: IrisStyle.density
+    // A Design may draw it its own way (AIRISU: OFF│ON); the switch keeps the toggle, the keys and the name.
+    readonly property bool skinned: skin.active
     signal toggled()
 
-    implicitWidth: Math.round(40 * root.d)
-    implicitHeight: Math.round(24 * root.d)
-    radius: height / 2
-    color: root.on ? IrisStyle.accent : IrisStyle.fillHover
+    implicitWidth: Math.round((root.skinned ? 76 : 40) * root.d)
+    implicitHeight: Math.round((root.skinned ? 26 : 24) * root.d)
+    radius: root.skinned ? 0 : height / 2
+    color: root.skinned ? "transparent" : root.on ? IrisStyle.accent : IrisStyle.fillHover
     Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
     Accessible.role: Accessible.CheckBox
     Accessible.name: root.name
     Accessible.checked: root.on
     activeFocusOnTab: visible
-    border.width: activeFocus ? 2 : 0
+    border.width: activeFocus && !root.skinned ? 2 : 0
     border.color: IrisStyle.text
     Keys.onSpacePressed: root.toggled()
     Keys.onReturnPressed: root.toggled()
 
     // Held, the thumb stretches toward where it will travel, as a finger pressing a capsule does.
+    IrisSkin { id: skin; part: "switch" }
     RectangularShadow {
+        visible: !root.skinned
         anchors.fill: thumb
         radius: thumb.radius
         offset.y: root.d
@@ -34,6 +38,7 @@ Rectangle {
     }
     Rectangle {
         id: thumb
+        visible: !root.skinned
         readonly property real size: root.height - 4 * root.d
         y: 2 * root.d
         x: root.on ? root.width - width - 2 * root.d : 2 * root.d

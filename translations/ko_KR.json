@@ -9489,5 +9489,7 @@
   "Build": "빌드",
   "search": "검색",
   "Session locked": "세션 잠김",
-  "Type your password": "비밀번호 입력"
+  "Type your password": "비밀번호 입력",
+  "What iRiS is made of: its shapes, type, controls and motion. Your settings stay; a Design draws them its own way.": "iRiS를 이루는 것: 모양, 글꼴, 컨트롤, 움직임. 설정은 그대로이고 디자인이 자기 방식으로 그립니다.",
+  "%1 brings its own.": "%1에는 자체 설정이 있습니다."
 }

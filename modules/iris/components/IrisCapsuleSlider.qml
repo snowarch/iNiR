@@ -18,6 +18,8 @@ Item {
     property real cornerCap: IrisStyle.radiusSheet
     signal moved(real value)
     signal iconClicked()
+    // A Design may draw the level its own way (AIRISU: the twenty-segment meter); drag, wheel and pocket stay here.
+    readonly property bool skinned: meterSkin.active
 
     property real dragValue: -1
     readonly property real shownValue: Math.max(0, Math.min(1, root.dragValue >= 0 ? root.dragValue : (Number.isFinite(root.value) ? root.value : 0)))
@@ -30,8 +32,10 @@ Item {
     implicitHeight: root.vertical ? 120 : Math.round(44 * IrisStyle.density)
     Accessible.role: Accessible.Slider
 
+    IrisSkin { id: meterSkin; part: "meter" }
     Rectangle {
         id: track
+        visible: !root.skinned
         anchors.fill: parent
         radius: root.corner
         color: IrisStyle.fill

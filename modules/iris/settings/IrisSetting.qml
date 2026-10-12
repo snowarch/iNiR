@@ -69,7 +69,7 @@ Item {
         && root.choices.every(choice => choice.swatch !== undefined || ["wallpaper", "accent", "custom", "theme"].includes(choice.value))
         && root.choices.some(choice => choice.swatch !== undefined)
     readonly property bool tiled: root.spec.kind === "choice" && root.spec.tiles === true && root.choices.length > 0
-    readonly property bool carded: root.spec.kind === "choice" && root.spec.cards === "material" && root.choices.length > 0
+    readonly property bool carded: root.spec.kind === "choice" && (root.spec.cards === "material" || root.spec.cards === "design") && root.choices.length > 0
     // Every control that fits answers in one right-hand column, the same width on every row, so a page reads as names on
     // the left and answers on the right. What needs more room (pictures, four or more choices, galleries) sits under the
     // text at full width.
@@ -495,7 +495,7 @@ Item {
             Layout.fillWidth: true
             active: root.carded
             visible: active
-            sourceComponent: materialCardsComponent
+            sourceComponent: root.spec.cards === "design" ? designCardsComponent : materialCardsComponent
         }
 
         Loader {
@@ -807,6 +807,58 @@ Item {
         if (kind === "theme") return Translation.tr("The colour theme's own")
         if (kind === "accent") return Translation.tr("Matches the accent")
         return Translation.tr("Any hue you choose")
+    }
+
+    // A Design is shown as itself: each draws its own picture (designs/<id>/parts/Preview.qml), large, side by side, so
+    // the choice reads as two products and not as two words.
+    Component {
+        id: designCardsComponent
+
+        Row {
+            id: designs
+            readonly property real gap: Math.round(10 * root.d)
+            readonly property real cardWidth: Math.floor((width - (root.choices.length - 1) * designs.gap) / Math.max(1, root.choices.length))
+            spacing: designs.gap
+
+            Repeater {
+                model: root.choices
+                Item {
+                    id: designCard
+                    required property var modelData
+                    readonly property bool selected: root.value === designCard.modelData.value
+                    width: designs.cardWidth
+                    height: Math.round(designCard.width * 0.56)
+                    scale: designTap.pressed ? IrisStyle.pressScale(0.98) : 1
+                    Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+                    Accessible.role: Accessible.RadioButton
+                    Accessible.name: Translation.tr(root.spec.label) + ": " + designCard.modelData.label
+                    Accessible.checked: designCard.selected
+
+                    ClippingRectangle {
+                        id: picture
+                        anchors.fill: parent
+                        radius: IrisStyle.radiusTile
+                        color: IrisStyle.fillQuiet
+                        Loader {
+                            anchors.fill: parent
+                            source: designCard.modelData.preview
+                            asynchronous: true
+                        }
+                    }
+                    // Chosen: the accent ring the material cards wear, outside the picture so it never covers it.
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: -Math.round(3 * root.d)
+                        radius: IrisStyle.radiusTile + Math.round(3 * root.d)
+                        color: "transparent"
+                        border.width: designCard.selected ? 2 : designHover.hovered ? 1 : 0
+                        border.color: designCard.selected ? IrisStyle.accent : IrisStyle.borderStrong
+                    }
+                    HoverHandler { id: designHover; cursorShape: Qt.PointingHandCursor }
+                    TapHandler { id: designTap; onTapped: root.commit(designCard.modelData.value) }
+                }
+            }
+        }
     }
 
     // A material is shown as what it is: a body made of it, over your own wallpaper, glass or solid as the shell draws it

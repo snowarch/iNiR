@@ -9489,5 +9489,7 @@
   "Build": "ビルド",
   "search": "検索",
   "Session locked": "セッションはロック中",
-  "Type your password": "パスワードを入力"
+  "Type your password": "パスワードを入力",
+  "What iRiS is made of: its shapes, type, controls and motion. Your settings stay; a Design draws them its own way.": "iRiS を形づくるもの：形、書体、コントロール、動き。設定はそのまま、デザインがそれぞれのやり方で描きます。",
+  "%1 brings its own.": "%1 は独自のものを持ちます。"
 }
