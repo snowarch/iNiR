@@ -9,6 +9,7 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.iris.style
 import qs.modules.iris.components
+import qs.modules.iris.bar.island
 import "../components"
 
 // AIRISU's Island face (SYSTEM.md §4: the Island is the sheet's main sticker). The engine (IrisIsland) decides the mode,
@@ -354,20 +355,37 @@ Item {
         }
     }
 
-    // A level, while it moves, is the LED board: the mark, the cells, the figure.
+    // A level, while it moves, is the LED board: the mark, the cells, the figure. Bar slims the board; Minimal drops
+    // it and prints the level as the postmark round the mark.
     Face {
         id: level
-        readonly property bool minimal: root.island?.levelStyle === "minimal"
+        readonly property string style: root.island?.levelStyle ?? "capsule"
+        readonly property bool minimal: level.style === "minimal"
         readonly property bool muted: root.island?.feedbackMuted ?? false
-        Mark {
-            visible: !level.minimal
-            text: root.island?.feedbackIcon ?? "volume_up"
-            color: level.muted ? Airisu.inkThird : Airisu.ink
+        readonly property color ink: level.muted ? Airisu.inkThird : Airisu.ink
+        Item {
+            implicitWidth: level.minimal ? Math.max(Airisu.u(6), Math.round(root.h * 0.66)) : mark.implicitWidth
+            implicitHeight: implicitWidth
+            ProgressRing {
+                anchors.fill: parent
+                visible: level.minimal
+                progress: root.island?.feedbackValue ?? 0
+                tint: level.ink
+                stroke: Math.round(2 * root.d)
+            }
+            Mark {
+                id: mark
+                anchors.centerIn: parent
+                iconSize: Math.round((level.minimal ? 13 : 17) * root.d)
+                text: root.island?.feedbackIcon ?? "volume_up"
+                color: level.ink
+            }
         }
         ALed {
+            visible: !level.minimal
             Layout.fillWidth: true
             Layout.preferredWidth: Math.round(156 * root.d)
-            Layout.preferredHeight: Airisu.u(2)
+            Layout.preferredHeight: level.style === "bar" ? Airisu.m : Airisu.u(2)
             value: root.island?.feedbackValue ?? 0
             dim: level.muted
         }
@@ -377,7 +395,7 @@ Item {
             horizontalAlignment: Text.AlignRight
             voice: "figure"
             size: root.figure
-            color: level.muted ? Airisu.inkThird : Airisu.ink
+            color: level.ink
             text: Math.round((root.island?.feedbackValue ?? 0) * 100)
         }
     }

@@ -18,6 +18,7 @@ QtObject {
         islandArtBackdrop: "island/ArtBackdrop.qml",
         spotlight: "scenes/Spotlight.qml",
         banner: "scenes/Banner.qml",
+        osd: "scenes/Osd.qml",
         // Skins of iRiS's primitives: every surface that uses them (Settings, the dock, menus, the sidebars) wears them.
         switch: "skins/Switch.qml",
         segmented: "skins/Segmented.qml",

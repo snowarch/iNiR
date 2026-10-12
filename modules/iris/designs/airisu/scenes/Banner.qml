@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.services
 import qs.modules.common
-import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.iris.style
 import qs.modules.iris.components
@@ -194,32 +193,11 @@ Item {
             color: root.semantic.tint ?? Airisu.rule
         }
         // A critical notice runs caution tape along the slip's foot instead, as wide as its words.
-        Item {
+        ACautionTape {
             visible: root.critical
             x: slip.x
             y: root.height - height
             width: slip.width
-            height: Math.round(1.5 * Airisu.m)
-            clip: true
-            Rectangle {
-                anchors.fill: parent
-                color: Airisu.caution
-            }
-            Image {
-                readonly property int cell: 2 * Airisu.m
-                readonly property int half: Math.round(cell / 2)
-                anchors.fill: parent
-                fillMode: Image.Tile
-                smooth: false
-                horizontalAlignment: Image.AlignLeft
-                verticalAlignment: Image.AlignTop
-                // Tiger tape is the caution plate and the darkest ink there is on this stock.
-                readonly property color stripe: ColorUtils.relativeLuminance(Airisu.ink) < ColorUtils.relativeLuminance(Airisu.inkOnCaution)
-                    ? Airisu.ink : Airisu.inkOnCaution
-                source: Airisu.svgCell(cell, cell,
-                    `<polygon points='0,${half} ${half},0 ${cell},0 0,${cell}'/><polygon points='${cell},${half} ${cell},${cell} ${half},${cell}'/>`,
-                    stripe)
-            }
         }
     }
 }

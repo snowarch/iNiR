@@ -59,8 +59,30 @@ PanelWindow {
                 { name: "unplaced", look: ({ notification: ({ notificationId: -1, appName: "", appIcon: "", image: "",
                     summary: "Backup finished", urgency: "0", time: Date.now() - 2 * root.minute, timer: null,
                     body: "", actions: [] }) }) }
+            ] },
+        { part: "osd", name: "osd", w: -1, cell: 420,
+            states: [{ name: "capsule", look: ({ osd: ({ levelStyle: "capsule" }) }) }, { name: "bar", look: ({ osd: ({ levelStyle: "bar" }) }) },
+                { name: "minimal", look: ({ osd: ({ levelStyle: "minimal" }) }) }],
+            samples: [
+                { name: "volume", look: ({ osd: ({ kind: "volume", level: true, value: 0.48, icon: "volume_down", levelFigure: true, open: true }) }) },
+                { name: "muted", look: ({ osd: ({ kind: "volume", level: true, value: 0.48, muted: true, icon: "volume_off", levelFigure: true, open: true }) }) },
+                { name: "brightness", look: ({ osd: ({ kind: "brightness", level: true, value: 0.8, icon: "light_mode", levelFigure: false, open: true }) }) },
+                { name: "lock", single: true, look: ({ osd: ({ kind: "keyboard", keyboardIcon: "keyboard_capslock", keyboardActive: true, keyboardText: "Caps Lock on", open: true }) }) },
+                { name: "layout", single: true, look: ({ osd: ({ kind: "keyboard", keyboardIcon: "language", keyboardActive: true, keyboardText: "ES", open: true }) }) },
+                { name: "song", single: true, look: ({ osd: ({ kind: "media", mediaTitle: "Blue Monday", mediaArtist: "New Order", mediaAction: "next", mediaIcon: "skip_next", open: true }) }) },
+                { name: "connection", single: true, look: ({ osd: ({ kind: "connection", connection: ({ icon: "headphones", title: "WH-1000XM4", detail: "Connected", tone: "", kind: "bluetooth", value: 80 }), connectionTint: IrisStyle.identity.blue, open: true }) }) },
+                { name: "held back", single: true, look: ({ osd: ({ kind: "warning", warningText: "The output was too loud", open: true }) }) }
             ] }
     ]
+    // A sample's look, with a state's look laid over it (one level deep, so a state can change one field of a model).
+    function lookOf(sample: var, state: var): var {
+        const out = Object.assign({}, sample)
+        for (const key in state) {
+            const a = out[key], b = state[key]
+            out[key] = a && b && typeof a === "object" && typeof b === "object" ? Object.assign({}, a, b) : b
+        }
+        return out
+    }
 
     WlrLayershell.layer: WlrLayer.Background
     WlrLayershell.namespace: "quickshell:irisProof"
@@ -114,7 +136,7 @@ PanelWindow {
     Rectangle {
         id: sheet
         readonly property int pad: Math.round(32 * root.d)
-        width: root.labelWidth + root.states.length * root.cellWidth + 2 * sheet.pad
+        width: grid.implicitWidth + 2 * sheet.pad
         height: grid.implicitHeight + 2 * sheet.pad
         color: IrisStyle.bodySurface
 
@@ -189,7 +211,7 @@ PanelWindow {
                             model: scene.modelData.states
                             Text {
                                 required property var modelData
-                                width: Math.round((scene.modelData.w + 24) * root.d)
+                                width: Math.round(((scene.modelData.cell ?? scene.modelData.w) + 24) * root.d)
                                 text: modelData.name
                                 color: IrisStyle.textSecondary
                                 font.family: IrisStyle.fontMono
@@ -210,11 +232,11 @@ PanelWindow {
                                 font.pixelSize: IrisStyle.typeMeta
                             }
                             Repeater {
-                                model: scene.modelData.states
+                                model: sample.modelData.single ? scene.modelData.states.slice(0, 1) : scene.modelData.states
                                 Item {
                                     id: sceneCell
                                     required property var modelData
-                                    width: Math.round((scene.modelData.w + 24) * root.d)
+                                    width: Math.round(((scene.modelData.cell ?? scene.modelData.w) + 24) * root.d)
                                     height: (stage.item?.implicitHeight ?? 0) + Math.round(24 * root.d)
                                     // The body the engine would give it, outlined so its bounds read.
                                     Rectangle {
@@ -228,11 +250,12 @@ PanelWindow {
                                     }
                                     Loader {
                                         id: stage
-                                        width: Math.round(scene.modelData.w * root.d)
+                                        width: scene.modelData.w > 0 ? Math.round(scene.modelData.w * root.d) : (item?.implicitWidth ?? 0)
+                                        height: item?.implicitHeight ?? 0
                                         source: IrisDesign.skin(scene.modelData.part)
                                         onLoaded: {
-                                            for (const key in sample.modelData.look) item[key] = sample.modelData.look[key]
-                                            for (const key in sceneCell.modelData.look) item[key] = sceneCell.modelData.look[key]
+                                            const look = root.lookOf(sample.modelData.look, sceneCell.modelData.look)
+                                            for (const key in look) item[key] = look[key]
                                         }
                                     }
                                 }
