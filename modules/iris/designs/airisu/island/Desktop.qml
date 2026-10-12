@@ -125,12 +125,16 @@ GridLayout {
             anchors.fill: parent
             visible: page.banner.length > 0
             source: page.live || ready ? page.banner : ""
-            ink: ColorUtils.mix(Airisu.ink, Airisu.ground, 0.34) // iris-literal: the poster's one ink, under the third
+            // iris-literal: the poster's one ink, under the third; on paper a breath of sumi, or the night is a slab
+            ink: ColorUtils.mix(Airisu.ink, Airisu.ground, ColorUtils.relativeLuminance(Airisu.ink) > ColorUtils.relativeLuminance(Airisu.ground) ? 0.34 : 0.14)
             cell: Math.max(4, Math.round(4 * page.d))
-            // A night picture is mostly shadow: the screen is opened up so its lights print as a picture, not as dust.
-            gain: 2.2
+            // A night picture is mostly shadow. On the lacquer the light ink prints its lights, so the screen is opened
+            // up until they read as a picture and not as dust; on paper the dark ink prints its shadows, so it is held
+            // back or the head becomes one grey block. Either way the ramp toward the time stays long enough for the dots
+            // to die out one by one instead of stopping at an edge.
+            gain: lightInk ? 2.2 : 0.55
             fadeFrom: 0.0
-            fadeTo: 0.55
+            fadeTo: 0.75
         }
         // The rule that closes a head, the full measure.
         Rectangle {
