@@ -9432,5 +9432,16 @@
   "Which side the pointer crosses to reach it.": "מאיזה צד הסמן חוצה כדי להגיע אליו.",
   "Widgets on": "וידג'טים על",
   "Above": "מעל",
-  "Below": "מתחת"
+  "Below": "מתחת",
+  "Softer colours": "צבעים רכים יותר",
+  "Takes the glare off a theme's brightest colours.": "מרכך את הצבעים הבוהקים ביותר של ערכת הנושא.",
+  "A theme for each": "ערכה לכל אחד",
+  "One theme by day, another at night, switched on the hour you set.": "ערכה אחת ביום ואחרת בלילה, מתחלפות בשעה שבחרת.",
+  "By day": "ביום",
+  "At night": "בלילה",
+  "Day starts": "היום מתחיל",
+  "Night starts": "הלילה מתחיל",
+  "The icon set apps and the tray draw.": "ערכת הסמלים שהיישומים והמגש מציירים.",
+  "Which ones": "אילו",
+  "Terminals and tools that take the colours.": "מסופים וכלים שמקבלים את הצבעים."
 }

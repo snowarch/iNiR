@@ -9432,5 +9432,16 @@
   "Which side the pointer crosses to reach it.": "İşaretçinin ona hangi taraftan geçtiği.",
   "Widgets on": "Widget'lar şurada",
   "Above": "Üstte",
-  "Below": "Altta"
+  "Below": "Altta",
+  "Softer colours": "Daha yumuşak renkler",
+  "Takes the glare off a theme's brightest colours.": "Temanın en parlak renklerini yumuşatır.",
+  "A theme for each": "Her biri için bir tema",
+  "One theme by day, another at night, switched on the hour you set.": "Gündüz bir tema, gece başka biri; seçtiğin saatte değişir.",
+  "By day": "Gündüz",
+  "At night": "Gece",
+  "Day starts": "Gün başlar",
+  "Night starts": "Gece başlar",
+  "The icon set apps and the tray draw.": "Uygulamaların ve tepsinin çizdiği simge seti.",
+  "Which ones": "Hangileri",
+  "Terminals and tools that take the colours.": "Renkleri alan terminaller ve araçlar."
 }

@@ -49,6 +49,8 @@ QtObject {
         if (spec.kind === "icon") return IrisPieces.chosenGlyph(String(spec.piece ?? ""))
         if (/^iris\.bubbles\.extras\.\w+\.enable$/.test(String(spec.path ?? "")) && IrisPieces.listedOnIsland(String(spec.path).split(".")[3]))
             return false
+        // A flags row lists the keys of one object that are on.
+        if (spec.flags) return Object.keys(Config.getNestedValue(spec.flags, ({})) ?? ({})).filter(key => Boolean(Config.getNestedValue(spec.flags + "." + key, true)))
         if (spec.bundle) {
             if (spec.keyed) return String(Config.getNestedValue(spec.bundle[0], "") ?? "")
             // A null in a choice's values is a key that choice leaves as it is (iRiS keeps whatever Material variant was set).
@@ -64,6 +66,13 @@ QtObject {
         else if (spec.widgetDesign) DesktopWidgetDesign.apply(String(next))
         else if (spec.niri) IrisNiri.set(spec, next)
         else if (spec.kind === "icon") IrisPieces.setGlyph(String(spec.piece ?? ""), String(next ?? ""))
+        else if (spec.set) spec.set(next)
+        else if (spec.flags) {
+            const on = Array.from(next ?? []).map(entry => String(entry))
+            const updates = ({})
+            root.choicesOf(spec).forEach(choice => updates[spec.flags + "." + choice.value] = on.includes(String(choice.value)))
+            Config.setNestedValues(updates)
+        }
         else if (spec.bundle) {
             const choice = (spec.choices ?? []).find(candidate => candidate.value === next)
             if (choice) {
@@ -109,6 +118,8 @@ QtObject {
         if (spec.choicesFrom === "primaryScreens") return [{ label: "Auto", value: "" }].concat(Quickshell.screens.map(screen => ({ label: String(screen.name), value: String(screen.name) })))
         if (spec.choicesFrom === "monitorSources") return [{ label: "Default output", value: "" }].concat(Audio.outputDevices.map(node => ({ label: Audio.friendlyDeviceName(node), value: String(node.name) + ".monitor" })))
         if (spec.choicesFrom === "microphones") return [{ label: "Default microphone", value: "" }].concat(Audio.inputDevices.map(node => ({ label: Audio.friendlyDeviceName(node), value: String(node.name) })))
+        if (spec.choicesFrom === "iconThemes") { IconThemeService.ensureInitialized(); return IconThemeService.availableThemes.map(name => ({ label: String(name).replace(/[_-]/g, " "), value: String(name) })) }
+        if (spec.choicesFrom === "colourThemes") return root.colourThemeIds.map(id => ({ label: id === "auto" ? "Wallpaper" : String(ThemePresets.getPreset(id).name), value: id }))
         if (spec.choicesFrom) return IrisWidgetRows.choicesFor(String(spec.choicesFrom))
         return spec.choices ?? []
     }
@@ -291,6 +302,12 @@ QtObject {
         { target: "material", group: "Colour theme", label: "Style", description: "iRiS is vivid, Washi is paper and pigment, Material You follows your wallpaper.", kind: "choice", tiles: true, flatTiles: true, fallback: "iris", bundle: ["iris.appearance.language", "iris.appearance.variant"], choices: root.styleChoices, keywords: ["style", "palette style", "iris", "washi", "paper", "pigment", "material you", "material", "android", "monet", "dynamic colour", "dynamic color", "tonal spot", "vibrant", "expressive", "fidelity", "monochrome", "preset", "estilo", "paleta"] },
         { target: "material", group: "Colour theme", label: "Colour theme", description: "The palette your shell and apps wear. Wallpaper makes one for each wallpaper.", path: "appearance.theme", kind: "choice", tiles: true, fallback: "auto", choices: root.colourThemeChoices, note: () => root.themeNote(), keywords: ["palette", "catppuccin", "nord", "gruvbox", "dracula", "rose pine", "tokyo night", "everforest", "kanagawa", "theme", "apps", "terminal", "colours", "colors", "tema", "paleta", "ink"] },
         { target: "material", group: "Colour theme", label: "Match the shell", description: "The shell takes the theme's accent, highlight and material too.", path: "iris.appearance.followTheme", visibleWhen: "!appearance.theme=auto", kind: "switch", fallback: true, keywords: ["sync", "match", "follow", "apps", "shell", "accent", "sincronizar"] },
+        { target: "material", group: "Colour theme", label: "Softer colours", description: "Takes the glare off a theme's brightest colours.", path: "appearance.softenColors", visibleWhen: "!appearance.theme=auto", kind: "switch", fallback: true, tune: true, keywords: ["soften", "soft", "muted", "pastel", "glare", "saturation", "suave", "suavizar"] },
+        { target: "material", group: "Day and night", label: "A theme for each", description: "One theme by day, another at night, switched on the hour you set.", path: "appearance.themeSchedule.enabled", kind: "switch", fallback: false, keywords: ["schedule", "day", "night", "time", "evening", "morning", "automatic", "horario", "día", "noche"] },
+        { target: "material", group: "Day and night", label: "By day", path: "appearance.themeSchedule.dayTheme", visibleWhen: "appearance.themeSchedule.enabled", kind: "choice", choicesFrom: "colourThemes", fallback: "auto", keywords: ["day", "morning", "light", "día"] },
+        { target: "material", group: "Day and night", label: "At night", path: "appearance.themeSchedule.nightTheme", visibleWhen: "appearance.themeSchedule.enabled", kind: "choice", choicesFrom: "colourThemes", fallback: "auto", keywords: ["night", "evening", "dark", "noche"] },
+        { target: "material", group: "Day and night", label: "Day starts", path: "appearance.themeSchedule.dayStart", visibleWhen: "appearance.themeSchedule.enabled", kind: "choice", fallback: "06:00", choices: [{label:"04:00",value:"04:00"},{label:"05:00",value:"05:00"},{label:"06:00",value:"06:00"},{label:"07:00",value:"07:00"},{label:"08:00",value:"08:00"},{label:"09:00",value:"09:00"},{label:"10:00",value:"10:00"},{label:"11:00",value:"11:00"}] },
+        { target: "material", group: "Day and night", label: "Night starts", path: "appearance.themeSchedule.nightStart", visibleWhen: "appearance.themeSchedule.enabled", kind: "choice", fallback: "18:00", choices: [{label:"16:00",value:"16:00"},{label:"17:00",value:"17:00"},{label:"18:00",value:"18:00"},{label:"19:00",value:"19:00"},{label:"20:00",value:"20:00"},{label:"21:00",value:"21:00"},{label:"22:00",value:"22:00"},{label:"23:00",value:"23:00"}] },
         { target: "material", group: "Scheme", label: "Scheme", description: "Ink sits between dark and light: paper and ink, easier on the eyes.", path: "iris.appearance.scheme", kind: "choice", fallback: "auto", choices: [{label:"Auto",value:"auto",glyph:"auto_awesome"},{label:"Dark mode",value:"dark",glyph:"dark_mode"},{label:"Ink",value:"ink",glyph:"ink_pen"},{label:"Light mode",value:"light",glyph:"light_mode"}], keywords: ["light", "dark", "ink", "sumi", "washi", "paper", "japanese", "day", "night", "mode", "theme", "bright", "white", "black", "claro", "oscuro", "tinta", "modo"] , note: () => root.schemeNote() },
         { target: "material", group: "Scheme", label: "Light or dark from the wallpaper", description: "With Auto, bright wallpapers pick light and dark ones pick dark.", path: "appearance.wallpaperTheming.autoDarkLightMode", visibleWhen: "iris.appearance.scheme=auto", kind: "switch", fallback: false, keywords: ["auto", "brightness", "night", "day", "wallpaper", "luminance", "claro", "oscuro"] },
         { target: "material", group: "Dark look", showIf: () => root.schemeShown("dark"), label: "Paper", description: "Night is your style's own. Kuro, Sumi and Usuzumi are ink at night: washi paper, gentle on the eyes.", kind: "choice", tiles: true, flatTiles: true, fallback: "night", bundle: ["iris.appearance.tune.dark.tone", "iris.appearance.tune.dark.warmth", "iris.appearance.darkStyle"], choices: root.paperChoices("dark"), keywords: ["paper", "washi", "ink", "sumi", "night", "eyes", "charcoal", "warm", "papel", "tinta", "noche"] },
@@ -1021,10 +1038,12 @@ QtObject {
         { section: "appearance", group: "App colours", part: "What your apps take", label: "The shell's accent", description: "Apps and terminals wear the accent you chose instead of one from the wallpaper.", path: "iris.appearance.accentForApps", showIf: () => !IrisStyle.followsTheme && ThemeService.isAutoTheme && !["theme", "wallpaper"].includes(String(Config.getNestedValue("iris.appearance.accent", "blue"))), kind: "switch", fallback: true, keywords: ["apps", "accent", "gtk", "terminal", "match", "sync", "same colour", "acento", "aplicaciones"] },
         { section: "appearance", group: "App colours", part: "What your apps take", label: "The shell's material", description: "Apps and terminals sit on the same paper as the shell.", path: "iris.appearance.materialForApps", visibleWhen: "appearance.theme=auto", kind: "switch", fallback: true, keywords: ["apps", "terminal", "gtk", "sync", "match", "surfaces", "background", "sincronizar", "aplicaciones"] },
         { section: "appearance", group: "App colours", part: "What your apps take", label: "The shell's font", description: "Apps read in the font the shell shows.", path: "appearance.typography.syncWithSystem", kind: "switch", fallback: true, keywords: ["apps", "gtk", "qt", "system font", "fuente del sistema", "aplicaciones"] },
+        { section: "appearance", group: "App colours", part: "What your apps take", label: "Icons", description: "The icon set apps and the tray draw.", path: "appearance.iconTheme", set: name => IconThemeService.setTheme(name), kind: "choice", choicesFrom: "iconThemes", fallback: "", keywords: ["icon theme", "icon pack", "papirus", "adwaita", "whitesur", "tray icons", "app icons", "iconos"] },
         { section: "appearance", group: "App colours", part: "Toolkits and terminals", label: "GTK and KDE apps", description: "They wear the shell's colours, made again for each wallpaper.", path: "appearance.wallpaperTheming.enableAppsAndShell", kind: "switch", fallback: true, keywords: ["matugen", "theme", "gtk", "kde", "colors", "colours", "apps", "wallpaper"] },
         { section: "appearance", group: "App colours", part: "Toolkits and terminals", label: "Qt apps", path: "appearance.wallpaperTheming.enableQtApps", visibleWhen: "appearance.wallpaperTheming.enableAppsAndShell", kind: "switch", fallback: true },
         { section: "appearance", group: "App colours", part: "Toolkits and terminals", label: "Terminals", path: "appearance.wallpaperTheming.enableTerminal", kind: "switch", fallback: true, keywords: ["kitty", "foot", "alacritty", "ghostty", "wezterm"] },
         { section: "appearance", group: "App colours", part: "Toolkits and terminals", label: "Terminals always dark", description: "Terminals keep a dark palette in Ink and Light mode too.", path: "appearance.wallpaperTheming.terminalGenerationProps.forceDarkMode", visibleWhen: "appearance.wallpaperTheming.enableTerminal", kind: "switch", fallback: false, keywords: ["kitty", "foot", "terminal", "dark", "light", "ink", "scheme", "oscuro", "claro", "tinta"] },
+        { section: "appearance", group: "App colours", part: "Toolkits and terminals", label: "Which ones", description: "Terminals and tools that take the colours.", flags: "appearance.wallpaperTheming.terminals", visibleWhen: "appearance.wallpaperTheming.enableTerminal", kind: "pieces", regen: true, tune: true, fallback: [], choices: [{label:"kitty",value:"kitty"},{label:"Alacritty",value:"alacritty"},{label:"foot",value:"foot"},{label:"WezTerm",value:"wezterm"},{label:"Ghostty",value:"ghostty"},{label:"Konsole",value:"konsole"},{label:"Starship",value:"starship"},{label:"Oh My Posh",value:"omp"},{label:"btop",value:"btop"},{label:"lazygit",value:"lazygit"},{label:"yazi",value:"yazi"}], keywords: ["kitty", "alacritty", "foot", "wezterm", "ghostty", "konsole", "starship", "oh my posh", "btop", "lazygit", "yazi", "terminales"] },
         { section: "appearance", group: "App colours", part: "Toolkits and terminals", label: "Terminal colour", description: "How saturated the sixteen colours are.", path: "appearance.wallpaperTheming.terminalColorAdjustments.saturation", visibleWhen: "appearance.wallpaperTheming.enableTerminal", kind: "range", fallback: 0.65, min: 0.1, max: 0.8, step: 0.05, scale: 100, unit: " %", keywords: ["saturation", "terminal", "kitty"] },
         { section: "appearance", group: "App colours", part: "Toolkits and terminals", label: "Terminal brightness", path: "appearance.wallpaperTheming.terminalColorAdjustments.brightness", visibleWhen: "appearance.wallpaperTheming.enableTerminal", kind: "range", fallback: 0.6, min: 0.35, max: 0.75, step: 0.05, scale: 100, unit: " %" },
         { section: "appearance", group: "App colours", part: "Toolkits and terminals", label: "Lean toward the accent", description: "0 keeps each colour's own hue; 100 pulls them all toward your accent.", path: "appearance.wallpaperTheming.terminalColorAdjustments.harmony", visibleWhen: "appearance.wallpaperTheming.enableTerminal", kind: "range", fallback: 0.4, min: 0, max: 1, step: 0.05, scale: 100, unit: " %", keywords: ["harmony", "terminal"] },
@@ -1223,7 +1242,6 @@ QtObject {
         { group: "System", key: "autostart", label: "Autostart", detail: "Apps that start with you", icon: "rocket_launch", tintName: "orange", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["autostart", "startup", "login", "inicio"] },
         { group: "System", key: "services", label: "Services", detail: "Network, hotspot, updates and calendar accounts", icon: "settings_suggest", tintName: "gray", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["services", "network", "search", "data"] },
         { group: "Shell", key: "hub", label: "Community Hub", detail: "Widgets, themes and web apps from other people", icon: "storefront", tintName: "pink", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["hub", "community", "plugins", "extensions", "widgets", "themes", "store", "download", "install", "comunidad"] },
-        { group: "Shell", key: "themes", label: "Colour themes", detail: "Every palette, with previews; app icon theme", icon: "palette", tintName: "purple", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["theme", "palette", "colours", "catppuccin", "apps", "icons", "icon theme", "icon pack", "papirus", "tray icons", "iconos"] },
     ]
     readonly property var sectionOrder: root.sections.map(section => section.id)
     // Customize's areas (Studio's rail, the capsule's sheets): identity, what each is, one line worth knowing.
@@ -1276,7 +1294,7 @@ QtObject {
         "Focus · left": "dock_to_left", "Frame": "crop_free", "Frame response": "graphic_eq", "Frame music": "border_outer", "Edge wave": "waves", "Frame finish": "flare", "Prefixes": "keyboard_command_key", "Name song": "music_cast", "System readings": "monitor_heart", "Fullscreen": "fullscreen", "Game mode": "sports_esports",
         "Glass": "blur_on", "Highlight": "highlight", "Icons": "emoji_symbols", "Interaction": "ads_click", "Joining": "join_inner",
         "Language": "language", "Layout": "view_quilt", "Light": "light_mode", "Live wallpapers": "motion_photos_on",
-        "Desktop menu": "menu_open", "Look": "visibility", "Material": "layers", "Material per surface": "layers", "Corners per surface": "rounded_corner", "Colour theme": "palette", "Scheme": "contrast", "Dark look": "dark_mode", "Ink look": "ink_pen", "Light look": "light_mode", "Menus": "menu", "Motion": "animation", "New iNiR": "rocket_launch",
+        "Desktop menu": "menu_open", "Look": "visibility", "Material": "layers", "Material per surface": "layers", "Corners per surface": "rounded_corner", "Colour theme": "palette", "Day and night": "routine", "Scheme": "contrast", "Dark look": "dark_mode", "Ink look": "ink_pen", "Light look": "light_mode", "Menus": "menu", "Motion": "animation", "New iNiR": "rocket_launch",
         "Night Light": "nightlight", "Notifications": "notifications", "Now playing": "music_note", "On the contour": "border_outer",
         "Opening bodies": "open_in_full", "Overview backdrop": "grid_view", "Pages": "view_carousel", "Per surface": "tune",
         "Panel look": "dock_to_right", "Placement": "location_on", "Player": "music_note", "Player page": "album", "Previews": "preview",
@@ -1293,6 +1311,7 @@ QtObject {
         "Arranging": "drag_pan", "Power saving": "energy_savings_leaf", "World clock": "public", "Month Calendar": "calendar_month", "Upcoming Events": "event_upcoming", "Date badge": "today", "Day progress": "wb_twilight", "Timers": "timer", "System uptime": "history", "Media Controls": "album", "System Monitor": "monitoring", "Battery": "battery_full", "Controls": "toggle_on", "Screen time": "hourglass_top", "News": "newspaper", "Notes": "sticky_note_2", "Todo": "checklist", "User card": "account_circle", "Custom image": "image", "Image converter": "transform", "Decorative shape": "interests", "Japanese Typography": "translate", "Editorial": "article", "Mascot": "pets", "Hotspot": "wifi_tethering", "Network": "language", "Screens": "desktop_windows"
     })
     readonly property var groupTints: ({
+        get "Day and night"() { return IrisStyle.identity.indigo },
         get "Shell family"() { return IrisStyle.identity.purple },
         get "Notch"() { return IrisStyle.identity.blue },
         get "About iNiR"() { return IrisStyle.identity.lavender },
@@ -1508,7 +1527,7 @@ QtObject {
     readonly property var groupOrder: ({
         appearance: ["Look", "Themes", "Material", "Glass", "Texture", "Edges", "Light", "Shape", "Corners per surface",
             "Frame", "Text", "Faces", "Icons", "Material per surface", "Menus", "Settings", "Badges", "Customize", "Previews"],
-        colour: ["Scheme", "Accent", "Highlight", "Colour theme", "App colours", "Dark look", "Ink look", "Light look", "Wallpaper tint"],
+        colour: ["Scheme", "Accent", "Highlight", "Colour theme", "Day and night", "App colours", "Dark look", "Ink look", "Light look", "Wallpaper tint"],
         bar: ["Notch", "Layout", "Shape", "At rest", "Resting Island", "Bar", "Pages", "Desktop page", "Player page", "Interaction", "Visibility", "Connections"],
         bubbles: ["Size", "Behaviour", "On the contour", "Floating", "Opening bodies", "Cards", "Card contents", "Joining", "Tray"],
         dock: ["Notch", "Look", "Icons", "Visibility"],
@@ -1538,7 +1557,7 @@ QtObject {
         ],
         colour: [
             { caption: "What you see first", groups: ["Scheme", "Accent", "Highlight"] },
-            { caption: "Where colour comes from, and where it goes", flow: true, groups: ["Colour theme", "App colours"] },
+            { caption: "Where colour comes from, and where it goes", flow: true, groups: ["Colour theme", "Day and night", "App colours"] },
             { caption: "Fine tuning", groups: ["Dark look", "Ink look", "Light look", "Wallpaper tint"] }
         ],
         wallpaper: [
@@ -1554,7 +1573,7 @@ QtObject {
     // Topics big enough to be looked for by name have a section of their own; their rows are declared where their
     // surface's other rows are (Customize reads them there) and are shown here.
     readonly property var movedGroups: ({
-        appearance: { to: "colour", groups: ["Colour theme", "Scheme", "Accent", "Highlight", "App colours", "Dark look", "Ink look", "Light look", "Wallpaper tint"] },
+        appearance: { to: "colour", groups: ["Colour theme", "Day and night", "Scheme", "Accent", "Highlight", "App colours", "Dark look", "Ink look", "Light look", "Wallpaper tint"] },
         desktop: { to: "wallpaper", groups: ["Wallpaper shuffle", "Scaling", "Live wallpapers", "Wallpaper gallery", "Behind windows", "Parallax", "Overview backdrop"] }
     })
     function placed(spec: var): var {

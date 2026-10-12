@@ -588,8 +588,10 @@ Item {
                 delegate: IrisChip {
                     id: chip
                     required property var modelData
-                    order: picker.picked.indexOf(String(chip.modelData.value))
-                    selected: chip.order >= 0
+                    readonly property int place: picker.picked.indexOf(String(chip.modelData.value))
+                    // A flags row is a set: no order to number.
+                    order: root.spec.flags ? -1 : chip.place
+                    selected: chip.place >= 0
                     label: Translation.tr(String(chip.modelData.label))
                     Accessible.role: Accessible.CheckBox
                     onClicked: {

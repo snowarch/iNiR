@@ -9432,5 +9432,16 @@
   "Which side the pointer crosses to reach it.": "指针从哪一侧移到它上面。",
   "Widgets on": "小部件所在屏幕",
   "Above": "上方",
-  "Below": "下方"
+  "Below": "下方",
+  "Softer colours": "更柔和的颜色",
+  "Takes the glare off a theme's brightest colours.": "压低主题中最刺眼的颜色。",
+  "A theme for each": "各用一个主题",
+  "One theme by day, another at night, switched on the hour you set.": "白天一个主题，夜晚另一个，在你设定的整点切换。",
+  "By day": "白天",
+  "At night": "夜晚",
+  "Day starts": "白天开始",
+  "Night starts": "夜晚开始",
+  "The icon set apps and the tray draw.": "应用和托盘使用的图标集。",
+  "Which ones": "哪些",
+  "Terminals and tools that take the colours.": "接收配色的终端和工具。"
 }

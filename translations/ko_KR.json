@@ -9432,5 +9432,16 @@
   "Which side the pointer crosses to reach it.": "포인터가 어느 쪽으로 넘어가는지입니다.",
   "Widgets on": "위젯 표시 화면",
   "Above": "위",
-  "Below": "아래"
+  "Below": "아래",
+  "Softer colours": "더 부드러운 색",
+  "Takes the glare off a theme's brightest colours.": "테마의 가장 강한 색을 누그러뜨립니다.",
+  "A theme for each": "각각 테마",
+  "One theme by day, another at night, switched on the hour you set.": "낮에는 한 테마, 밤에는 다른 테마, 정한 시각에 바뀝니다.",
+  "By day": "낮",
+  "At night": "밤",
+  "Day starts": "낮 시작",
+  "Night starts": "밤 시작",
+  "The icon set apps and the tray draw.": "앱과 트레이가 그리는 아이콘 세트입니다.",
+  "Which ones": "대상",
+  "Terminals and tools that take the colours.": "색을 받는 터미널과 도구."
 }

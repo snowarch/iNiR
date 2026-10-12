@@ -9432,5 +9432,16 @@
   "Which side the pointer crosses to reach it.": "ポインターがどちら側から移るか。",
   "Widgets on": "ウィジェットの表示先",
   "Above": "上",
-  "Below": "下"
+  "Below": "下",
+  "Softer colours": "やわらかい色",
+  "Takes the glare off a theme's brightest colours.": "テーマのいちばん強い色を抑えます。",
+  "A theme for each": "それぞれにテーマ",
+  "One theme by day, another at night, switched on the hour you set.": "昼と夜で別のテーマ。選んだ時刻に切り替わります。",
+  "By day": "昼",
+  "At night": "夜",
+  "Day starts": "昼の開始",
+  "Night starts": "夜の開始",
+  "The icon set apps and the tray draw.": "アプリとトレイが使うアイコンセット。",
+  "Which ones": "対象",
+  "Terminals and tools that take the colours.": "色を受け取るターミナルとツール。"
 }

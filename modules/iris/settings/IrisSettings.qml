@@ -561,7 +561,8 @@ Item {
         wallpaper: () => "wallpaper",
         tools: () => "capture",
         advanced: () => "colour/App colours",
-        monitors: () => "display/Screens"
+        monitors: () => "display/Screens",
+        themes: () => "colour/Colour theme"
     })
     function applyRequest(): void {
         const landing = root.nativePages[String(root.pages[GlobalStates.settingsOverlayRequestedPage]?.key ?? "")]

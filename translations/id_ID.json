@@ -9432,5 +9432,16 @@
   "Which side the pointer crosses to reach it.": "Dari sisi mana penunjuk menyeberang untuk mencapainya.",
   "Widgets on": "Widget di",
   "Above": "Atas",
-  "Below": "Bawah"
+  "Below": "Bawah",
+  "Softer colours": "Warna lebih lembut",
+  "Takes the glare off a theme's brightest colours.": "Meredam warna paling terang dari tema.",
+  "A theme for each": "Satu tema untuk masing-masing",
+  "One theme by day, another at night, switched on the hour you set.": "Satu tema di siang hari, lainnya di malam hari, berganti pada jam yang kamu pilih.",
+  "By day": "Siang",
+  "At night": "Malam",
+  "Day starts": "Siang mulai",
+  "Night starts": "Malam mulai",
+  "The icon set apps and the tray draw.": "Set ikon yang digambar aplikasi dan tray.",
+  "Which ones": "Yang mana",
+  "Terminals and tools that take the colours.": "Terminal dan alat yang mengambil warnanya."
 }

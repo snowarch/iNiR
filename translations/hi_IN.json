@@ -9432,5 +9432,16 @@
   "Which side the pointer crosses to reach it.": "पॉइंटर किस तरफ़ से उस तक पहुँचता है।",
   "Widgets on": "विजेट यहाँ",
   "Above": "ऊपर",
-  "Below": "नीचे"
+  "Below": "नीचे",
+  "Softer colours": "नरम रंग",
+  "Takes the glare off a theme's brightest colours.": "थीम के सबसे चटख रंगों को हल्का करता है।",
+  "A theme for each": "हर एक के लिए थीम",
+  "One theme by day, another at night, switched on the hour you set.": "दिन में एक थीम, रात में दूसरी, आपके चुने घंटे पर बदलती है।",
+  "By day": "दिन में",
+  "At night": "रात में",
+  "Day starts": "दिन शुरू",
+  "Night starts": "रात शुरू",
+  "The icon set apps and the tray draw.": "ऐप्स और ट्रे जो आइकन सेट दिखाते हैं।",
+  "Which ones": "कौन-से",
+  "Terminals and tools that take the colours.": "टर्मिनल और टूल जो रंग लेते हैं।"
 }

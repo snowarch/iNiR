@@ -9432,5 +9432,16 @@
   "Which side the pointer crosses to reach it.": "Da quale lato il puntatore passa per raggiungerlo.",
   "Widgets on": "Widget su",
   "Above": "Sopra",
-  "Below": "Sotto"
+  "Below": "Sotto",
+  "Softer colours": "Colori più morbidi",
+  "Takes the glare off a theme's brightest colours.": "Attenua i colori più accesi del tema.",
+  "A theme for each": "Un tema per ciascuno",
+  "One theme by day, another at night, switched on the hour you set.": "Un tema di giorno e un altro di notte, cambiati all'ora che scegli.",
+  "By day": "Di giorno",
+  "At night": "Di notte",
+  "Day starts": "Il giorno inizia",
+  "Night starts": "La notte inizia",
+  "The icon set apps and the tray draw.": "Il set di icone di app e area di notifica.",
+  "Which ones": "Quali",
+  "Terminals and tools that take the colours.": "Terminali e strumenti che prendono i colori."
 }

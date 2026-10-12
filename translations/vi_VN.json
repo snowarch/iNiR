@@ -9432,5 +9432,16 @@
   "Which side the pointer crosses to reach it.": "Con trỏ đi qua cạnh nào để tới nó.",
   "Widgets on": "Widget trên",
   "Above": "Phía trên",
-  "Below": "Phía dưới"
+  "Below": "Phía dưới",
+  "Softer colours": "Màu dịu hơn",
+  "Takes the glare off a theme's brightest colours.": "Làm dịu những màu chói nhất của chủ đề.",
+  "A theme for each": "Mỗi lúc một chủ đề",
+  "One theme by day, another at night, switched on the hour you set.": "Một chủ đề ban ngày, một chủ đề ban đêm, đổi vào giờ bạn chọn.",
+  "By day": "Ban ngày",
+  "At night": "Ban đêm",
+  "Day starts": "Ngày bắt đầu",
+  "Night starts": "Đêm bắt đầu",
+  "The icon set apps and the tray draw.": "Bộ biểu tượng mà ứng dụng và khay hệ thống dùng.",
+  "Which ones": "Những cái nào",
+  "Terminals and tools that take the colours.": "Terminal và công cụ nhận màu."
 }

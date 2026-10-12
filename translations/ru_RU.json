@@ -9432,5 +9432,16 @@
   "Which side the pointer crosses to reach it.": "С какой стороны указатель переходит на него.",
   "Widgets on": "Виджеты на",
   "Above": "Сверху",
-  "Below": "Снизу"
+  "Below": "Снизу",
+  "Softer colours": "Мягкие цвета",
+  "Takes the glare off a theme's brightest colours.": "Приглушает самые яркие цвета темы.",
+  "A theme for each": "Своя тема для каждого",
+  "One theme by day, another at night, switched on the hour you set.": "Одна тема днём, другая ночью, смена в выбранный час.",
+  "By day": "Днём",
+  "At night": "Ночью",
+  "Day starts": "День начинается",
+  "Night starts": "Ночь начинается",
+  "The icon set apps and the tray draw.": "Набор значков для приложений и трея.",
+  "Which ones": "Какие",
+  "Terminals and tools that take the colours.": "Терминалы и инструменты, которые берут цвета."
 }

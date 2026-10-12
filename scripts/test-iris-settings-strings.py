@@ -32,7 +32,7 @@ SURFACES = sorted((ROOT / "modules" / "iris" / "settings").glob("*.qml")) + [
     ROOT / "modules" / "iris" / "wallpaper" / "IrisWallpaperPicker.qml",
 ]
 # Literals that are names, not words (a font family shown in its own face).
-NAMES = {"Montserrat", "Space Grotesk", "PACIFIC DRIVE-IN", "iRiS", "PNG", "JPG", "WEBP", "AVIF", "BMP", "TIFF", "PDF", "GIF", "CPU", "GPU", "Kaishi 1.5k", "Manabi 2.7k", "Niponismo",
+NAMES = {"Alacritty", "btop", "foot", "Ghostty", "kitty", "Konsole", "lazygit", "Oh My Posh", "Starship", "WezTerm", "yazi", "Montserrat", "Space Grotesk", "PACIFIC DRIVE-IN", "iRiS", "PNG", "JPG", "WEBP", "AVIF", "BMP", "TIFF", "PDF", "GIF", "CPU", "GPU", "Kaishi 1.5k", "Manabi 2.7k", "Niponismo",
          "1080p", "720p", "480p", "2.4 GHz", "5 GHz", "5/5/26", "80%", "90%", "Bing", "Brave", "DuckDuckGo", "Startpage", "yande.re",
          "Gabarito", "Inter", "Inter Display", "Noto Sans", "Oxanium", "Rubik", "PipeWire", "PulseAudio", "Windows 11"}
 
@@ -43,14 +43,14 @@ def strings() -> dict[str, str]:
         text = path.read_text(encoding="utf-8")
         for match in LITERAL.finditer(text):
             value = json.loads('"' + match.group(1) + '"')
-            if value and value not in NAMES and not value.startswith("iris."):
+            if value and value not in NAMES and not re.fullmatch(r"\d\d:\d\d", value) and not value.startswith("iris."):
                 line = text.count("\n", 0, match.start()) + 1
                 found.setdefault(value, f"{path.relative_to(ROOT)}:{line}")
     for path in SURFACES:
         text = path.read_text(encoding="utf-8")
         for match in TR.finditer(text):
             value = json.loads('"' + match.group(1) + '"')
-            if value and value not in NAMES:
+            if value and value not in NAMES and not re.fullmatch(r"\d\d:\d\d", value):
                 line = text.count("\n", 0, match.start()) + 1
                 found.setdefault(value, f"{path.relative_to(ROOT)}:{line}")
     found.update({value: where for value, where in widget_rows().items() if value not in found})

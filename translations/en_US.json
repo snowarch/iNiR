@@ -9432,5 +9432,16 @@
   "Which side the pointer crosses to reach it.": "Which side the pointer crosses to reach it.",
   "Widgets on": "Widgets on",
   "Above": "Above",
-  "Below": "Below"
+  "Below": "Below",
+  "Softer colours": "Softer colours",
+  "Takes the glare off a theme's brightest colours.": "Takes the glare off a theme's brightest colours.",
+  "A theme for each": "A theme for each",
+  "One theme by day, another at night, switched on the hour you set.": "One theme by day, another at night, switched on the hour you set.",
+  "By day": "By day",
+  "At night": "At night",
+  "Day starts": "Day starts",
+  "Night starts": "Night starts",
+  "The icon set apps and the tray draw.": "The icon set apps and the tray draw.",
+  "Which ones": "Which ones",
+  "Terminals and tools that take the colours.": "Terminals and tools that take the colours."
 }
