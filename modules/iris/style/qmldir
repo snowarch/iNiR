@@ -5,3 +5,4 @@ singleton IrisMood 1.0 IrisMood.qml
 singleton IrisCompositorBlur 1.0 IrisCompositorBlur.qml
 IrisAppsSync 1.0 IrisAppsSync.qml
 singleton IrisWashi 1.0 IrisWashi.qml
+singleton IrisDesign 1.0 IrisDesign.qml

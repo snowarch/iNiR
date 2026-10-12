@@ -70,7 +70,7 @@ func TestPaperLevels(t *testing.T) {
 // Washi runs every accent; each Material variant every third, in parallel.
 func TestEveryCombinationReads(t *testing.T) {
 	type lang struct{ name, variant string }
-	langs := []lang{{"washi", ""}, {"iris", ""}}
+	langs := []lang{{"washi", ""}, {"iris", ""}, {"airisu", ""}}
 	for _, v := range variants {
 		langs = append(langs, lang{"material", v.name})
 	}
@@ -90,11 +90,11 @@ func everyCombinationReads(t *testing.T, language, variant string) {
 		{Wallpaper: "#20e030", Primary: "#006e1c", Secondary: "#52634f", Tertiary: "#38656a", Background: "#f7fbf1"},
 		{},
 	}
-	accents := []string{"blue", "mint", "rose", "lilac", "wallpaper", "theme"}
+	accents := []string{"blue", "mint", "rose", "lilac", "wallpaper", "theme", "design"}
 	for h := 0; h < 360; h += 30 {
 		accents = append(accents, fmt.Sprintf("custom:%d", h))
 	}
-	highlights := []string{"orange", "yellow", "red", "pink", "green", "accent", "wallpaper", "theme", "custom"}
+	highlights := []string{"orange", "yellow", "red", "pink", "green", "accent", "wallpaper", "theme", "custom", "design"}
 	f := func(v float64) *float64 { return &v }
 	ratio := func(a, b string) float64 {
 		x, _ := parseHex(a)
@@ -280,5 +280,27 @@ func TestRoundTrip(t *testing.T) {
 		if got := c.LCH().RGB().Hex(); got != hex {
 			t.Errorf("%s -> %s", hex, got)
 		}
+	}
+}
+
+// A Design's language keeps its pigments (AIRISU, modules/iris/AIRISU.md): at night the seal and the amber are the
+// colours themselves, the accent that is text stays the seal's hue, and every scheme wears the Design, Ink included.
+func TestDesignKeepsItsPigments(t *testing.T) {
+	req := Request{Language: "airisu", Material: "black", Accent: "design", Highlight: "design"}
+	night := build(req, "dark")
+	if night.Surface != "#0b0b0c" || night.AccentFill != "#e5341b" || night.HighlightFill != "#f8b500" || night.Highlight != "#f8b500" {
+		t.Errorf("night: surface %s, seal %s, amber fill %s, amber %s", night.Surface, night.AccentFill, night.HighlightFill, night.Highlight)
+	}
+	for _, name := range []string{"dark", "ink", "light"} {
+		p := build(req, name)
+		if d := hueDistance(hexLCH(p.Accent).H, hexLCH("#e5341b").H); d > 6 {
+			t.Errorf("%s: accent %s turned %.0f° off the seal", name, p.Accent, d)
+		}
+		if hexLCH(p.Accent).C < 0.14 {
+			t.Errorf("%s: accent %s faded to chroma %.3f", name, p.Accent, hexLCH(p.Accent).C)
+		}
+	}
+	if got := build(Request{Language: "airisu", Material: "black"}, "ink").Surface; got != "#e9e6df" {
+		t.Errorf("Ink under AIRISU wears %s, want gofun #e9e6df", got)
 	}
 }

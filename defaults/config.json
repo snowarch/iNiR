@@ -2482,6 +2482,7 @@
             "settingsHost": "overlay",
             "saved": [],
             "themeId": "iris",
+            "design": "iris",
             "glass": {
                 "mode": "off",
                 "tint": 58,

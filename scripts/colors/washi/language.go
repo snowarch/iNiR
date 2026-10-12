@@ -45,6 +45,12 @@ type Language struct {
 	ramp           func(s spec, p LCH) Ramp
 	container      func(s spec, paper, accent LCH) LCH // the accent's tonal container on this ground
 	inkChroma      func(s spec, paper LCH) float64     // how much of the paper's hue the ink keeps
+	// A Design's own language (modules/iris/DESIGNS.md) is whole: Ink and the night papers wear it too, never washi's.
+	whole bool
+	// pigments keeps each named colour where it already reads: a filled shape stays the pigment itself wherever it
+	// reads as a shape and carries one of the language's two inks (the hanko is vermilion, not the deeper red text on
+	// paper needs), and a mark starts from its own lightness instead of the scheme's band.
+	pigments bool
 }
 
 func (l *Language) specOf(name string) spec {

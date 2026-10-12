@@ -27,7 +27,7 @@ QtObject {
     // continuous, its contents are replaced.
     readonly property var structuralPaths: ["bar.composition", "bar.clockStyle", "bar.trailing",
         "bar.auxiliary", "bar.pieces", "bar.fullStart", "bar.fullCenter", "bar.fullEnd", "bar.navItems", "bar.desktopBlocks", "bar.mediaBlocks",
-        "controlCenter.sections", "controlCenter.controls"]
+        "controlCenter.sections", "controlCenter.controls", "appearance.design"]
     function readPath(path: string): var {
         let node = root.options
         for (const part of path.split(".")) {
@@ -190,6 +190,8 @@ QtObject {
             .concat(["Light", "Regular", "Medium", "SemiBold", "Bold"].map(weight => `inter/InterDisplay-${weight}`))
             .concat(["Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"].map(weight => `rubik/Rubik-${weight}`))
             .concat(["Light", "Regular", "Medium", "SemiBold", "Bold"].map(weight => `montserrat/Montserrat-${weight}`))
+            .concat(["Regular", "Medium", "SemiBold", "Bold"].map(weight => `archivo/Archivo-${weight}`))
+            .concat(["Medium", "SemiBold", "Bold", "ExtraBold"].map(weight => `archivo/ArchivoSemiExpanded-${weight}`))
         delegate: FontLoader {
             required property string modelData
             source: Quickshell.shellPath(`assets/fonts/${modelData}.ttf`)
@@ -677,6 +679,10 @@ QtObject {
     readonly property color dangerOnMedia: Qt.color(root.washiDark?.danger ?? "#ff6961")
     readonly property color inkOnDanger: root.role("onDanger", "#160000")
     // A filled alert (a badge): the shu pigment with its own ink; `danger` stays the red that reads as text.
+    // The accent as a filled shape (a seal, a lit plate): the solver's pigment, which a Design palette keeps exact
+    // (AIRISU's vermilion hanko) where the accent that is text has to move to read.
+    readonly property color accentFill: root.washi?.accentFill ? Qt.color(root.washi.accentFill) : root.accent
+    readonly property color inkOnAccentFill: root.washi?.onAccentFill ? Qt.color(root.washi.onAccentFill) : root.inkOnAccent
     readonly property color dangerFill: root.role("dangerFill", "#e57766")
     readonly property color inkOnDangerFill: root.role("onDangerFill", "#22110d")
     function line(base: color): color {

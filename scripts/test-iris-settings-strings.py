@@ -34,7 +34,7 @@ SURFACES = sorted((ROOT / "modules" / "iris" / "settings").glob("*.qml")) + [
 # Literals that are names, not words (a font family shown in its own face).
 NAMES = {"Alacritty", "btop", "foot", "Ghostty", "kitty", "Konsole", "lazygit", "Oh My Posh", "Starship", "WezTerm", "yazi", "Montserrat", "Space Grotesk", "PACIFIC DRIVE-IN", "iRiS", "PNG", "JPG", "WEBP", "AVIF", "BMP", "TIFF", "PDF", "GIF", "CPU", "GPU", "Kaishi 1.5k", "Manabi 2.7k", "Niponismo",
          "1080p", "720p", "480p", "2.4 GHz", "5 GHz", "5/5/26", "80%", "90%", "Bing", "Brave", "DuckDuckGo", "Startpage", "yande.re",
-         "Gabarito", "Inter", "Inter Display", "Noto Sans", "Oxanium", "Rubik", "PipeWire", "PulseAudio", "Windows 11"}
+         "Gabarito", "Inter", "Inter Display", "Archivo", "Archivo SemiExpanded", "AIRISU", "Noto Sans", "Oxanium", "Rubik", "PipeWire", "PulseAudio", "Windows 11"}
 
 
 def strings() -> dict[str, str]:

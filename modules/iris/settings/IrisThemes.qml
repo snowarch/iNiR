@@ -21,6 +21,8 @@ Singleton {
         "iris.bubbles.extras.anime.enable", "iris.anime.shows"]
     readonly property var extraPaths: [
         { path: "iris.appearance.preset", fallback: "iris" },
+        // A theme that names no Design draws with iRiS's own anatomy (DESIGNS.md).
+        { path: "iris.appearance.design", fallback: "iris" },
         { path: "iris.bar.composition", fallback: "cluster" },
         { path: "iris.appearance.motionDuration", fallback: 220 },
         { path: "iris.lock.material", fallback: "glass" },
@@ -458,6 +460,21 @@ Singleton {
                 "iris.appearance.titleFontFamily": "Gabarito", "iris.appearance.fontFamily": "Rubik", "iris.bubbles.scale": 115, "iris.bar.padding": 115,
                 "iris.bar.clockStyle": "weather", "iris.bar.height": 46, "iris.surround.thickness": 12, "iris.surround.radius": 32, "iris.widgets.material": "tinted", "iris.widgets.radius": 28,
                 "iris.widgets.tint": "system", "iris.dock.iconSize": 46, "iris.dock.magnification": false, "iris.controlCenter.controls": "round" }) },
+        // AIRISU (modules/iris/AIRISU.md): the Japanese look around tuning, stickers and seals, not racing. Lacquer
+        // black, a vermilion seal for what is live, kerria amber for the glanced detail, wide Archivo figures.
+        { id: "airisu", name: "AIRISU", author: "iNiR", tags: ["japanese", "sticker", "sharp", "vermilion"],
+            values: root.values({ "iris.appearance.design": "airisu",
+                "iris.lock.material": "tint", "iris.lock.type.clockWeight": 800, "iris.lock.type.clockTracking": -3, "iris.lock.type.accent": "plain",
+                "iris.controlCenter.accent": "accent", "iris.controlCenter.sliders": "neutral", "iris.controlCenter.controls": "tiles",
+                "iris.appearance.preset": "angular", "theme.shape": 40, "theme.pieceShape": "square", "theme.surface": "black",
+                "theme.lines": 140, "theme.rim": false, "theme.shadow": 120, "theme.fill": 110, "theme.glow": 0,
+                "iris.appearance.aura": "off", "iris.appearance.accent": "design", "iris.appearance.highlight": "design", "theme.badge": "accent",
+                "iris.appearance.morph": "snap", "theme.curve": "swift", "theme.openTime": 85, "theme.press": 60,
+                "iris.appearance.fontFamily": "Archivo", "iris.appearance.titleFontFamily": "Archivo SemiExpanded",
+                "iris.appearance.numbersFontFamily": "Archivo SemiExpanded", "iris.appearance.figureWeight": "bold",
+                "iris.bar.clockStyle": "time", "iris.bar.clockAccent": "plain", "iris.bar.notchCurve": 55, "iris.surround.radius": 6,
+                "iris.widgets.design": "instrument", "iris.widgets.material": "solid", "iris.widgets.radius": 4, "iris.widgets.weight": "bold",
+                "iris.dock.material": "solid", "iris.dock.magnification": false, "iris.dock.notch": false, "iris.appearance.expandedRadius": 16 }) },
         { id: "unit-01", name: "Unit-01", author: "iNiR", tags: ["anime", "mecha", "hard", "violet"],
             values: root.values({ "iris.lock.material": "tint", "iris.lock.type.clockWeight": 700, "iris.lock.type.clockTracking": -1, "iris.lock.type.accent": "highlight", "iris.controlCenter.accent": "accent", "iris.controlCenter.sliders": "accent", "theme.surface": "midnight", "iris.appearance.preset": "contrast", "theme.shape": 75,
                 "theme.pieceShape": "squircle", "iris.appearance.accent": "custom", "theme.accentHue": 275,

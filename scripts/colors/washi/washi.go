@@ -379,6 +379,12 @@ func (v solver) accent(seed LCH) RGB {
 // need is readText when the colour is also text (an app's primary), readShape for a shape (a badge).
 func (v solver) fill(seed LCH, need float64) RGB {
 	c := clampF(seed.C, v.lang.fillC[0], v.lang.fillC[1]) * math.Max(0.6, v.colour)
+	if v.lang.pigments {
+		ink := func(f RGB) bool {
+			return contrast(f, v.lang.onColour) >= readOn || contrast(f, LCH{v.lang.darkOn[0], v.lang.darkOn[1], seed.H}.RGB()) >= readOn
+		}
+		return solve(v.s, seed.H, c, seed.L, both(readsOn(readShape, v.ramp.all()...), ink))
+	}
 	if !v.s.dark {
 		// A filled shape on paper is the loudest thing on it: a pigment, never a screen's saturated blue.
 		c = math.Min(c, paperFillC)
@@ -400,7 +406,11 @@ func (v solver) mark(h, c, dl float64) RGB {
 }
 
 func (v solver) highlight(seed LCH) RGB {
-	return v.mark(seed.H, clampF(seed.C, v.s.markC*0.7, v.s.markC*1.15)*v.colour, 0)
+	c := clampF(seed.C, v.s.markC*0.7, v.s.markC*1.15) * v.colour
+	if v.lang.pigments {
+		return solve(v.s, seed.H, math.Max(c, math.Min(seed.C, v.s.markC*1.4)*v.colour), seed.L, readsOn(readMark, v.grounds...))
+	}
+	return v.mark(seed.H, c, 0)
 }
 
 // onContainer is the ink on a tonal container, in its hue, on whichever side of it reads: a dark container takes a
@@ -479,6 +489,9 @@ func hexes(cs ...RGB) []string {
 // schemeLanguage is the language one scheme is solved in: Ink is washi's paper unless the person lets it follow the
 // style, so choosing Ink never needs a second choice to look like Ink.
 func schemeLanguage(req Request, name string) *Language {
+	if languageOf(req).whole {
+		return languageOf(req)
+	}
 	if name == "ink" && req.InkStyle != "style" || name == "dark" && req.DarkStyle == "ink" {
 		return &washi
 	}
@@ -554,17 +567,21 @@ func build(req Request, name string) Palette {
 
 	highlightChoice := req.Highlight
 	var highlight RGB
+	var highlightSeed LCH
 	switch highlightChoice {
 	case "accent":
-		highlight = accent
+		highlight, highlightSeed = accent, accentSeed
 	case "wallpaper":
-		highlight = v.highlight(v.seedOf("wallpaperHighlight", 0, lang.highlightSeeds, "orange"))
+		highlightSeed = v.seedOf("wallpaperHighlight", 0, lang.highlightSeeds, "orange")
 	case "theme":
-		highlight = v.highlight(v.seedOf("themeHighlight", 0, lang.highlightSeeds, "orange"))
+		highlightSeed = v.seedOf("themeHighlight", 0, lang.highlightSeeds, "orange")
 	case "custom":
-		highlight = v.highlight(hsl(req.HighlightHue, 0.92, 0.58).LCH())
+		highlightSeed = hsl(req.HighlightHue, 0.92, 0.58).LCH()
 	default:
-		highlight = v.highlight(v.seedOf(highlightChoice, 0, lang.highlightSeeds, "orange"))
+		highlightSeed = v.seedOf(highlightChoice, 0, lang.highlightSeeds, "orange")
+	}
+	if highlightChoice != "accent" {
+		highlight = v.highlight(highlightSeed)
 	}
 	p.Highlight, p.OnHighlight = highlight.Hex(), v.onFill(highlight, readOn).Hex()
 
@@ -584,6 +601,9 @@ func build(req Request, name string) Palette {
 	accentFill := v.fill(accentSeed, readText)
 	dangerFill := v.fill(LCH{0.55, 0.15, 33}, readShape)
 	highlightFill := v.fill(LCH{0.6, math.Max(0.1, highlight.LCH().C), highlight.LCH().H}, readShape)
+	if lang.pigments {
+		highlightFill = v.fill(highlightSeed, readShape)
+	}
 	if highlightChoice == "accent" {
 		highlightFill = accentFill
 	}
@@ -849,7 +869,7 @@ func styleIDs() []string {
 
 // Version changes whenever a solve would give other colours for the same request; IrisWashi.qml asks again when it
 // differs (TestShellKnowsVersion keeps the two equal).
-const Version = 23
+const Version = 24
 
 // solveSchemes is the palette alone, without the other styles' swatches.
 func solveSchemes(req Request, key string) Output {

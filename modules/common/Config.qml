@@ -4126,6 +4126,9 @@ Singleton {
                     // Looks saved from iRiS Studio: [{ name, values: { "iris.…": value } }].
                     property list<var> saved: []
                     property string themeId: "iris" // the iRiS theme last applied (curated id or a file in ~/.config/inir/iris/themes)
+                    // The iRiS Design: the anatomy every part is drawn with (modules/iris/designs/<id>, DESIGNS.md).
+                    // "iris" draws the primitives as they are; a Theme may choose another when it is applied.
+                    property string design: "iris"
                     property JsonObject glass: JsonObject {
                         property string mode: "off" // "off", "wallpaper" (the output's wallpaper, blurred) or "compositor" (Niri blurs what is below)
                         property int tint: 58       // how much of the material stays over the glass, 0-100

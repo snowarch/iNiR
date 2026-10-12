@@ -29,6 +29,9 @@ session-*.md
 # Private design contracts (kept local by the maintainer)
 modules/iris/DESIGN.md
 modules/iris/DECISIONS.md
+modules/iris/AIRISU.md
+modules/iris/AIRISU-PROMPT.md
+modules/iris/DESIGNS.md
 modules/iris/SYSTEM.md
 ROADMAP.md
 STATUS.md
