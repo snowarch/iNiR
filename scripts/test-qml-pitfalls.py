@@ -9,6 +9,7 @@ declaration per line, as this codebase is formatted:
 - `Behavior on` a readonly property of the same object ("Invalid property assignment").
 - `component X: …` inside another inline component ("Nested inline components are not supported").
 - A JS method named `escape` ("Illegal method name").
+- A second `property <name>` in one object ("Duplicate property name").
 - A property of a visual object named like a FINAL member of `Item` (`top`, `left`, `width`, `visible`…:
   "Cannot override FINAL property"). The list is QQuickItem's `isFinal` set in Qt's qmltypes.
 
@@ -81,6 +82,11 @@ def scan(rel: str, text: str) -> list:
                            f"{first}): the component fails to load")
         if obj is not None:
             obj["readonly"].update(READONLY.findall(line))
+            # Only what this object declares: a one-line child (`JsonObject { property … }`) holds its own.
+            for name in PROPERTY.findall(line.split("{")[0]):
+                if name in obj["props"]:
+                    out.append(f"{rel}:{number}: second `property {name}` in one object: the component fails to load "
+                               "(a singleton like IrisStyle takes the whole shell with it)")
             obj["props"].update(PROPERTY.findall(line))
             if obj["item"]:
                 for name in PROPERTY.findall(line):

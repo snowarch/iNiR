@@ -38,7 +38,7 @@ Rectangle {
         StyledText {
             anchors.verticalCenter: parent.verticalCenter
             text: root.label
-            color: root.selected ? IrisStyle.selectionText : IrisStyle.textSecondary
+            color: root.selected ? IrisStyle.selectionLabel : IrisStyle.textSecondary
             font.family: IrisStyle.fontMain
             font.pixelSize: IrisStyle.typeLabel
             font.weight: root.selected ? Font.DemiBold : Font.Medium
