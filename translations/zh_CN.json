@@ -9487,5 +9487,7 @@
   "control": "控制",
   "Screen and sound": "屏幕和声音",
   "Build": "构建",
-  "search": "搜索"
+  "search": "搜索",
+  "Session locked": "会话已锁定",
+  "Type your password": "输入密码"
 }

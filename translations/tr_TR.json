@@ -9487,5 +9487,7 @@
   "control": "kontrol",
   "Screen and sound": "Ekran ve ses",
   "Build": "Sürüm",
-  "search": "ara"
+  "search": "ara",
+  "Session locked": "Oturum kilitli",
+  "Type your password": "Parolanızı yazın"
 }

@@ -42,6 +42,10 @@ Item {
     focus: true
 
     readonly property real d: IrisStyle.density
+    // A Design that brings its own lock shows it over the scene, in the rehearsal too: iRiS's blocks and widgets
+    // are not part of it, so there is nothing of them to edit.
+    readonly property string designScene: IrisDesign.skin("lock")
+    readonly property bool designed: root.designScene.length > 0
     readonly property var scene: {
         Config.revision
         return Config.options?.iris?.lock?.scene ?? ({})
@@ -82,7 +86,7 @@ Item {
 
     function focusPassword(): void {
         if (root.editing) return
-        Qt.callLater(() => stage.input?.forceActiveFocus())
+        Qt.callLater(() => (root.designed ? designLock.item?.input : stage.input)?.forceActiveFocus())
     }
 
     function submit(): void {
@@ -331,6 +335,7 @@ Item {
     IrisLockWidgets {
         id: lockWidgets
         anchors.fill: parent
+        visible: !root.designed
         screenName: root.screenName
         opacity: root.arrival
         transform: Translate { y: Math.round((1 - root.arrival) * 18 * root.d) }
@@ -339,11 +344,28 @@ Item {
     IrisLockStage {
         id: stage
         anchors.fill: parent
+        visible: !root.designed
         opacity: root.arrival
         transform: Translate { y: Math.round((1 - root.arrival) * 24 * root.d) }
         frost: root.frosted ? frost : null
         context: root.context
         editing: root.editing
         onSubmitted: root.submit()
+    }
+
+    Loader {
+        id: designLock
+        anchors.fill: parent
+        active: root.designed
+        source: root.designScene
+        opacity: root.arrival
+        onLoaded: {
+            item.context = Qt.binding(() => root.context)
+            root.focusPassword()
+        }
+        Connections {
+            target: designLock.item
+            function onSubmitted(): void { root.submit() }
+        }
     }
 }

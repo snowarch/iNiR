@@ -9487,5 +9487,7 @@
   "control": "steuerung",
   "Screen and sound": "Bildschirm und Ton",
   "Build": "Build",
-  "search": "suchen"
+  "search": "suchen",
+  "Session locked": "Sitzung gesperrt",
+  "Type your password": "Passwort eingeben"
 }

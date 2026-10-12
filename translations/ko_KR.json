@@ -9487,5 +9487,7 @@
   "control": "제어",
   "Screen and sound": "화면 및 소리",
   "Build": "빌드",
-  "search": "검색"
+  "search": "검색",
+  "Session locked": "세션 잠김",
+  "Type your password": "비밀번호 입력"
 }

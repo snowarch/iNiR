@@ -9487,5 +9487,7 @@
   "control": "操作",
   "Screen and sound": "画面と音声",
   "Build": "ビルド",
-  "search": "検索"
+  "search": "検索",
+  "Session locked": "セッションはロック中",
+  "Type your password": "パスワードを入力"
 }

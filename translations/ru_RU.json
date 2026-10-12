@@ -9487,5 +9487,7 @@
   "control": "управление",
   "Screen and sound": "Экран и звук",
   "Build": "Сборка",
-  "search": "поиск"
+  "search": "поиск",
+  "Session locked": "Сеанс заблокирован",
+  "Type your password": "Введите пароль"
 }

@@ -56,7 +56,7 @@ Scope {
             IrisField {
                 anchors.fill: parent
                 shapes: inspector.fieldShapes
-                opacity: inspector.peeking ? 0 : 1
+                opacity: inspector.peeking || IrisDesign.has("lock") ? 0 : 1
                 visible: opacity > 0.01
                 z: 1
                 Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
@@ -72,6 +72,7 @@ Scope {
             IrisLockInspector {
                 id: inspector
                 z: 2
+                visible: !IrisDesign.has("lock")
                 anchors.fill: parent
                 screenName: window.modelData?.name ?? ""
                 widget: surface.selectedWidget
