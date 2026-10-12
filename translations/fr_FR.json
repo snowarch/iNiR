@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "Si vous êtes sur un VPN, en bouclier qui se remplit quand c’est le cas. Sa carte liste vos profils NetworkManager et Tailscale, et active ou coupe chacun.",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "Apparaît d’elle-même quand un nouvel iNiR est publié, et disparaît une fois à jour. Sa carte dit ce qui a changé et met à jour depuis là.",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "Le prochain épisode d’anime diffusé, avec sa jaquette et le temps restant. Sa carte liste ce qui arrive et suit les séries que vous touchez.",
-  "Orbit off": "Orbite désactivée"
+  "Orbit off": "Orbite désactivée",
+  "Edge wave": "La vague",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "Où se place la vague, sa matière et sa réponse à la musique, d’un seul choix.",
+  "Rails": "Rails",
+  "Tide": "Marée",
+  "Colours": "Couleurs",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "Adaptatif suit le fond d’écran et la pochette ; Thème garde votre accent.",
+  "Iridescent": "Irisé",
+  "Moves with the music": "Bouge avec la musique",
+  "Off, it drifts on its own whatever plays.": "Désactivé, elle dérive seule quoi qu’il joue.",
+  "In silence": "En silence",
+  "Drifts": "Dérive",
+  "Rests": "Repose",
+  "Hides": "Se cache",
+  "How much of the wave shows over the desktop.": "Ce qui se voit de la vague sur le bureau.",
+  "Every wave setting": "Tous les réglages de la vague",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "Forme, coins, lumière et toute la réponse à la musique, sur la page Widgets du bureau."
 }

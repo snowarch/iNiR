@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "VPN’de olup olmadığınız, bağlıyken dolan bir kalkan olarak. Kartı NetworkManager profillerinizi ve Tailscale’i listeler, her birini açıp kapatır.",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "Yeni bir iNiR çıktığında kendiliğinden belirir, güncelleyince kaybolur. Kartı neyin değiştiğini söyler ve oradan günceller.",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "Sıradaki yayınlanacak anime bölümü, kapağı ve kalan süreyle. Kartı gelecekleri listeler ve dokunduğunuz dizileri takip eder.",
-  "Orbit off": "Orbit kapalı"
+  "Orbit off": "Orbit kapalı",
+  "Edge wave": "Kenar dalgası",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "Dalganın yeri, dokusu ve müziğe nasıl yanıt verdiği, hepsi birden.",
+  "Rails": "Raylar",
+  "Tide": "Gelgit",
+  "Colours": "Renkler",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "Uyarlanabilir duvar kâğıdını ve kapağı izler; Tema vurgu renginizde kalır.",
+  "Iridescent": "Yanardöner",
+  "Moves with the music": "Müzikle hareket eder",
+  "Off, it drifts on its own whatever plays.": "Kapalıyken ne çalarsa çalsın kendi kendine süzülür.",
+  "In silence": "Sessizlikte",
+  "Drifts": "Süzülür",
+  "Rests": "Durur",
+  "Hides": "Gizlenir",
+  "How much of the wave shows over the desktop.": "Dalganın masaüstünde ne kadar görüneceği.",
+  "Every wave setting": "Tüm dalga ayarları",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "Biçim, köşeler, ışık ve tüm müzik tepkisi Masaüstü araçları sayfasında."
 }

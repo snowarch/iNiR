@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "是否连接了 VPN，连接时盾牌会被填满。卡片列出你的 NetworkManager 配置和 Tailscale，并可开关其中任意一个。",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "有新的 iNiR 时自动出现，更新后消失。卡片会说明变更内容，并可直接更新。",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "下一集即将播出的动画，显示封面和剩余时间。卡片列出即将播出的内容，并关注你轻点的剧集。",
-  "Orbit off": "Orbit 已关闭"
+  "Orbit off": "Orbit 已关闭",
+  "Edge wave": "边缘波浪",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "一次设定波浪的位置、质感以及对音乐的反应。",
+  "Rails": "双轨",
+  "Tide": "潮汐",
+  "Colours": "颜色",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "自适应跟随壁纸和封面；主题保持你的强调色。",
+  "Iridescent": "虹彩",
+  "Moves with the music": "随音乐律动",
+  "Off, it drifts on its own whatever plays.": "关闭时，无论播放什么都自行漂动。",
+  "In silence": "静音时",
+  "Drifts": "漂动",
+  "Rests": "静止",
+  "Hides": "隐藏",
+  "How much of the wave shows over the desktop.": "波浪在桌面上的显示程度。",
+  "Every wave setting": "全部波浪设置",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "形状、圆角、光效和完整的音乐响应，在“桌面小组件”页面。"
 }

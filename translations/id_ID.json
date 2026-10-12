@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "Apakah Anda memakai VPN, sebagai perisai yang terisi saat terhubung. Kartunya mencantumkan profil NetworkManager dan Tailscale, dan menyalakan atau mematikan salah satunya.",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "Muncul sendiri saat ada iNiR baru, dan hilang setelah Anda memperbarui. Kartunya menjelaskan perubahannya dan memperbarui dari sana.",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "Episode anime berikutnya yang tayang, dengan sampul dan sisa waktunya. Kartunya mencantumkan yang akan datang dan mengikuti serial yang Anda ketuk.",
-  "Orbit off": "Orbit mati"
+  "Orbit off": "Orbit mati",
+  "Edge wave": "Gelombang tepi",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "Letak gelombang, bahannya, dan caranya menjawab musik, sekaligus.",
+  "Rails": "Rel",
+  "Tide": "Pasang",
+  "Colours": "Warna",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "Adaptif mengikuti wallpaper dan sampul; Tema tetap pada aksen Anda.",
+  "Iridescent": "Berkilau",
+  "Moves with the music": "Bergerak mengikuti musik",
+  "Off, it drifts on its own whatever plays.": "Jika mati, ia mengalir sendiri apa pun yang diputar.",
+  "In silence": "Saat hening",
+  "Drifts": "Mengalir",
+  "Rests": "Diam",
+  "Hides": "Sembunyi",
+  "How much of the wave shows over the desktop.": "Seberapa terlihat gelombang di atas desktop.",
+  "Every wave setting": "Semua pengaturan gelombang",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "Bentuk, sudut, cahaya, dan seluruh respons musik ada di halaman Widget desktop."
 }

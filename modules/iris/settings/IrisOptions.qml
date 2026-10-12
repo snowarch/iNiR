@@ -10,7 +10,10 @@ import qs.modules.iris.pieces
 import qs.modules.iris.frame
 import qs.modules.iris.control
 import qs.modules.iris.background
+import qs
+import qs.modules.settings
 import qs.modules.background.widgets
+import "../../background/widgets/OrganicEdgeConfig.js" as EdgeConfig
 
 QtObject {
     id: root
@@ -25,6 +28,18 @@ QtObject {
     function same(a: var, b: var): bool {
         return JSON.stringify(root.plain(a)) === JSON.stringify(root.plain(b))
     }
+    // The Organic wave's curated scenes, as one bundle over every key any of them sets (a key a scene leaves out is kept).
+    readonly property var waveKeys: {
+        const keys = []
+        for (const scene of EdgeConfig.scenePresets)
+            for (const key of Object.keys(scene.values)) if (!keys.includes(key)) keys.push(key)
+        return keys
+    }
+    function waveScene(name: string, label: string, glyph: string): var {
+        const scene = EdgeConfig.scenePresets.find(entry => entry.name === name)
+        return { label: label, value: name, glyph: glyph, values: root.waveKeys.map(key => scene?.values[key] !== undefined ? scene.values[key] : null) }
+    }
+    function waveShown(): bool { return Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) }
     // An icon row is keyed by its piece inside one shared list, not by its own path.
     function currentValue(spec: var): var {
         if (spec.widgetDesign) return DesktopWidgetDesign.current
@@ -343,6 +358,12 @@ QtObject {
         { target: "material", group: "Frame", label: "Screen corners", description: "How round the frame turns inward at the corners of the screen.", path: "iris.surround.radius", visibleWhen: "iris.surround.enable", kind: "range", fallback: 22, min: 0, max: 44, unit: " px" },
         { section: "player", group: "Frame music", label: "Music on the edges", description: "Let music animate an Organic Edge wave or swell the iRiS frame itself. The frame is enabled under Appearance.", path: "background.edgeWidgets.organic.enable", kind: "switch", fallback: false, keywords: ["music", "frame", "visualizer", "cava"] },
         { section: "player", group: "Frame music", label: "Music drives", path: "iris.surround.music", visibleWhen: "background.edgeWidgets.organic.enable", kind: "choice", fallback: "widget", choices: [{label:"The wave",value:"widget"},{label:"The frame",value:"frame"}] },
+        { section: "player", group: "Edge wave", label: "Look", description: "Where the wave sits, what it is made of and how it answers the music, at once.", bundle: root.waveKeys.map(key => EdgeConfig.path + "." + key), visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), kind: "choice", choices: [root.waveScene("Quiet Horizon", "Horizon", "water"), root.waveScene("Aurora Rails", "Rails", "flare"), root.waveScene("Album Tide", "Tide", "album"), root.waveScene("Pulse Gate", "Pulse", "graphic_eq"), root.waveScene("Contour Frame", "Contour", "select_all")], keywords: ["wave", "organic", "edge", "scene", "preset", "horizon", "rails", "tide", "pulse", "contour", "onda", "borde"] },
+        { section: "player", group: "Edge wave", label: "Colours", description: "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.", path: "background.edgeWidgets.organic.palette", visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), kind: "choice", fallback: "theme", choices: [{label:"Adaptive",value:"adaptive"},{label:"Theme",value:"theme"},{label:"Wallpaper",value:"wallpaper"},{label:"Album",value:"album"},{label:"Vivid",value:"vivid"},{label:"Iridescent",value:"iridescent"},{label:"Monochrome",value:"mono"},{label:"Cool",value:"cool"},{label:"Warm",value:"warm"}], keywords: ["colour", "color", "palette", "wave", "paleta", "colores"] },
+        { section: "player", group: "Edge wave", label: "Moves with the music", description: "Off, it drifts on its own whatever plays.", path: "background.edgeWidgets.organic.audioReactive", visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), kind: "switch", fallback: true, keywords: ["audio", "music", "react", "cava", "musica"] },
+        { section: "player", group: "Edge wave", label: "In silence", path: "background.edgeWidgets.organic.idleMode", visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), kind: "choice", fallback: "ambient", choices: [{label:"Drifts",value:"ambient"},{label:"Rests",value:"still"},{label:"Hides",value:"hidden"}], keywords: ["idle", "silence", "quiet", "hidden", "silencio"] },
+        { section: "player", group: "Edge wave", label: "Strength", description: "How much of the wave shows over the desktop.", path: "background.edgeWidgets.organic.opacity", visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), kind: "range", fallback: 100, min: 10, max: 100, step: 5, unit: " %", keywords: ["opacity", "strength", "visible", "opacidad"] },
+        { section: "player", group: "Edge wave", label: "Every wave setting", description: "Shape, corners, light and the full music response, on the Desktop widgets page.", visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), kind: "action", button: "Open", run: () => { GlobalStates.settingsOverlayRequestedSection = ""; GlobalStates.settingsOverlayRequestedPage = SettingsPageRegistry.pages.findIndex(page => page.key === "widgets") }, keywords: ["advanced", "more", "organic", "edge", "avanzado"] },
         { section: "player", group: "Frame response", label: "Edges", description: "Which sides of the frame move with the music.", path: "iris.surround.musicEdges", visibleWhen: "iris.surround.music=frame", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) && Boolean(Config.options?.iris?.surround?.enable), kind: "choice", fallback: "sides", choices: [{label:"Left and right",value:"sides"},{label:"Top and bottom",value:"horizontal"},{label:"All four",value:"all"}] },
         { section: "player", group: "Frame response", label: "Strength", description: "How far the frame swells into the screen. The default is more visible than before.", path: "iris.surround.musicStrength", visibleWhen: "iris.surround.music=frame", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) && Boolean(Config.options?.iris?.surround?.enable), kind: "range", fallback: 160, min: 50, max: 300, step: 10, unit: " %" },
         { section: "player", group: "Frame response", label: "Sensitivity", description: "How strongly quiet passages move the frame.", path: "iris.surround.musicSensitivity", visibleWhen: "iris.surround.music=frame", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) && Boolean(Config.options?.iris?.surround?.enable), kind: "range", fallback: 140, min: 50, max: 250, step: 10, unit: " %" },
@@ -1170,7 +1191,7 @@ QtObject {
         "Colour layer": "palette", "Comfort": "visibility", "Continue": "play_circle", "Control Center": "tune",
         "Curve": "show_chart", "Date & time": "calendar_clock", "Desktop page": "dashboard", "Do Not Disturb": "do_not_disturb_on",
         "Extra bubbles": "add_circle", "Faces": "font_download", "Feedback": "campaign", "Floating": "flight",
-        "Focus · left": "dock_to_left", "Frame": "crop_free", "Frame response": "graphic_eq", "Frame music": "border_outer", "Frame finish": "flare", "Prefixes": "keyboard_command_key", "Name song": "music_cast", "System readings": "monitor_heart", "Fullscreen": "fullscreen", "Game mode": "sports_esports",
+        "Focus · left": "dock_to_left", "Frame": "crop_free", "Frame response": "graphic_eq", "Frame music": "border_outer", "Edge wave": "waves", "Frame finish": "flare", "Prefixes": "keyboard_command_key", "Name song": "music_cast", "System readings": "monitor_heart", "Fullscreen": "fullscreen", "Game mode": "sports_esports",
         "Glass": "blur_on", "Highlight": "highlight", "Icons": "emoji_symbols", "Interaction": "ads_click", "Joining": "join_inner",
         "Language": "language", "Layout": "view_quilt", "Light": "light_mode", "Live wallpapers": "motion_photos_on",
         "Desktop menu": "menu_open", "Look": "visibility", "Material": "layers", "Material per surface": "layers", "Corners per surface": "rounded_corner", "Colour theme": "palette", "Scheme": "contrast", "Dark look": "dark_mode", "Ink look": "ink_pen", "Light look": "light_mode", "Menus": "menu", "Motion": "animation", "New iNiR": "rocket_launch",
@@ -1381,7 +1402,7 @@ QtObject {
         desktop: ["Widgets", "Desktop menu"],
         wallpaper: ["Wallpaper shuffle", "Live wallpapers", "Wallpaper gallery", "Scaling", "Behind windows", "Parallax", "Overview backdrop"],
         lock: ["When idle", "Security", "Scene", "Clock", "At a glance", "Now playing", "Activity", "Status", "Sign in", "Type"],
-        player: ["Bubble", "Visualizer", "Player", "Frame music", "Frame response", "Frame finish"]
+        player: ["Bubble", "Visualizer", "Player", "Frame music", "Edge wave", "Frame response", "Frame finish"]
     })
     // How a section's page reads: named blocks of groups, by what someone came to change.
     readonly property var groupClusters: ({

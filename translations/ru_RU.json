@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "Подключён ли VPN: щит, который заполняется, когда да. Карточка показывает профили NetworkManager и Tailscale и включает или выключает любой.",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "Появляется сам, когда выходит новый iNiR, и исчезает после обновления. Карточка рассказывает, что изменилось, и обновляет оттуда.",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "Следующая серия аниме в эфире: обложка и сколько осталось. Карточка показывает, что выходит, и следит за сериалами, которые вы отметите.",
-  "Orbit off": "Орбита выключена"
+  "Orbit off": "Орбита выключена",
+  "Edge wave": "Волна",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "Где проходит волна, из чего она сделана и как отвечает на музыку — сразу.",
+  "Rails": "Рельсы",
+  "Tide": "Прилив",
+  "Colours": "Цвета",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "Адаптивный следует за обоями и обложкой; Тема держится вашего акцента.",
+  "Iridescent": "Перламутр",
+  "Moves with the music": "Движется под музыку",
+  "Off, it drifts on its own whatever plays.": "Если выключено, плывёт сама, что бы ни играло.",
+  "In silence": "В тишине",
+  "Drifts": "Плывёт",
+  "Rests": "Замирает",
+  "Hides": "Скрывается",
+  "How much of the wave shows over the desktop.": "Насколько волна видна поверх рабочего стола.",
+  "Every wave setting": "Все настройки волны",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "Форма, углы, свет и вся реакция на музыку — на странице «Виджеты рабочего стола»."
 }

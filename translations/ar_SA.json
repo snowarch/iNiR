@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "ما إذا كنت على VPN، كدرع يمتلئ عندما تكون متصلًا. وبطاقتها تسرد ملفات NetworkManager وTailscale، وتشغّل أيًا منها أو توقفه.",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "تظهر تلقائيًا عند صدور iNiR جديد، وتختفي بعد التحديث. وبطاقتها تخبرك بما تغيّر وتحدّث من هناك.",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "حلقة الأنمي التالية التي ستُعرض، بغلافها والوقت المتبقي. وبطاقتها تسرد ما هو قادم وتتابع المسلسلات التي تلمسها.",
-  "Orbit off": "المدار متوقف"
+  "Orbit off": "المدار متوقف",
+  "Edge wave": "موجة الحافة",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "مكان الموجة ومادتها وكيف تستجيب للموسيقى، دفعة واحدة.",
+  "Rails": "قضبان",
+  "Tide": "المد",
+  "Colours": "الألوان",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "التكيّفي يتبع الخلفية والغلاف؛ والسمة تبقى على لونك المميز.",
+  "Iridescent": "قزحي",
+  "Moves with the music": "تتحرك مع الموسيقى",
+  "Off, it drifts on its own whatever plays.": "عند الإيقاف، تنساب وحدها مهما كان ما يُشغَّل.",
+  "In silence": "في الصمت",
+  "Drifts": "تنساب",
+  "Rests": "تهدأ",
+  "Hides": "تختفي",
+  "How much of the wave shows over the desktop.": "مقدار ظهور الموجة فوق سطح المكتب.",
+  "Every wave setting": "كل إعدادات الموجة",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "الشكل والزوايا والضوء وكل الاستجابة للموسيقى، في صفحة أدوات سطح المكتب."
 }

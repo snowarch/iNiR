@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "VPN에 연결되어 있는지를 연결 시 채워지는 방패로 표시합니다. 카드에 NetworkManager 프로필과 Tailscale이 있고, 각각 켜고 끌 수 있습니다.",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "새 iNiR이 나오면 저절로 나타나고, 업데이트하면 사라집니다. 카드에서 바뀐 점을 보고 바로 업데이트합니다.",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "다음에 방영할 애니메이션 에피소드를 커버와 남은 시간으로 보여 줍니다. 카드에 앞으로 방영할 것이 있고, 탭한 작품을 팔로우합니다.",
-  "Orbit off": "Orbit 끔"
+  "Orbit off": "Orbit 끔",
+  "Edge wave": "가장자리 물결",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "물결의 위치, 재질, 음악에 반응하는 방식을 한 번에 정합니다.",
+  "Rails": "레일",
+  "Tide": "물결",
+  "Colours": "색상",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "적응형은 배경화면과 커버를 따르고, 테마는 강조 색을 유지합니다.",
+  "Iridescent": "무지갯빛",
+  "Moves with the music": "음악에 맞춰 움직임",
+  "Off, it drifts on its own whatever plays.": "끄면 무엇이 재생되든 스스로 흘러갑니다.",
+  "In silence": "조용할 때",
+  "Drifts": "흐름",
+  "Rests": "멈춤",
+  "Hides": "숨김",
+  "How much of the wave shows over the desktop.": "바탕화면 위에 물결이 얼마나 보이는지.",
+  "Every wave setting": "물결의 모든 설정",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "모양, 모서리, 빛과 음악 반응 전체는 데스크톱 위젯 페이지에 있습니다."
 }

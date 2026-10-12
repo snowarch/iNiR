@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "אם אתם מחוברים ל-VPN, כמגן שמתמלא כשכן. הכרטיס מפרט את פרופילי NetworkManager ואת Tailscale, ומפעיל או מכבה כל אחד מהם.",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "מופיעה מעצמה כשיש iNiR חדש, ונעלמת אחרי שמעדכנים. הכרטיס מספר מה השתנה ומעדכן משם.",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "פרק האנימה הבא שמשודר, עם העטיפה והזמן שנותר. הכרטיס מפרט את מה שמגיע ועוקב אחרי הסדרות שנוגעים בהן.",
-  "Orbit off": "מסלול כבוי"
+  "Orbit off": "מסלול כבוי",
+  "Edge wave": "גל השוליים",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "איפה הגל יושב, ממה הוא עשוי ואיך הוא עונה למוזיקה, בבת אחת.",
+  "Rails": "מסילות",
+  "Tide": "גאות",
+  "Colours": "צבעים",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "מסתגל עוקב אחרי הטפט והעטיפה; ערכת נושא נשארת בצבע ההדגשה שלך.",
+  "Iridescent": "ססגוני",
+  "Moves with the music": "זז עם המוזיקה",
+  "Off, it drifts on its own whatever plays.": "כשכבוי, הוא נע לבד, לא משנה מה מתנגן.",
+  "In silence": "בשקט",
+  "Drifts": "נסחף",
+  "Rests": "נח",
+  "Hides": "נעלם",
+  "How much of the wave shows over the desktop.": "כמה מהגל נראה מעל שולחן העבודה.",
+  "Every wave setting": "כל הגדרות הגל",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "צורה, פינות, אור וכל התגובה למוזיקה, בעמוד הווידג׳טים של שולחן העבודה."
 }

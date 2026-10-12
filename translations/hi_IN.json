@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "आप VPN पर हैं या नहीं, एक ढाल के रूप में जो जुड़ने पर भर जाती है। इसका कार्ड आपके NetworkManager प्रोफ़ाइल और Tailscale दिखाता है, और किसी को भी चालू या बंद करता है।",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "नया iNiR आने पर अपने आप दिखता है, और अपडेट के बाद चला जाता है। इसका कार्ड बताता है कि क्या बदला और वहीं से अपडेट करता है।",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "अगला प्रसारित होने वाला एनीमे एपिसोड, उसके कवर और बचे समय के साथ। इसका कार्ड आने वाली चीज़ें दिखाता है और टैप की गई सीरीज़ को फ़ॉलो करता है।",
-  "Orbit off": "कक्षा बंद"
+  "Orbit off": "कक्षा बंद",
+  "Edge wave": "किनारे की लहर",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "लहर कहाँ बैठे, किससे बनी हो और संगीत पर कैसे चले, सब एक साथ।",
+  "Rails": "रेल",
+  "Tide": "ज्वार",
+  "Colours": "रंग",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "अनुकूली वॉलपेपर और कवर के साथ चलता है; थीम आपके एक्सेंट पर रहती है।",
+  "Iridescent": "इंद्रधनुषी",
+  "Moves with the music": "संगीत के साथ चले",
+  "Off, it drifts on its own whatever plays.": "बंद होने पर, जो भी बजे, यह अपने आप बहती है।",
+  "In silence": "ख़ामोशी में",
+  "Drifts": "बहती",
+  "Rests": "थमती",
+  "Hides": "छिपती",
+  "How much of the wave shows over the desktop.": "डेस्कटॉप पर लहर कितनी दिखे।",
+  "Every wave setting": "लहर की सभी सेटिंग्स",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "आकार, कोने, रोशनी और संगीत की पूरी प्रतिक्रिया, डेस्कटॉप विजेट पेज पर।"
 }

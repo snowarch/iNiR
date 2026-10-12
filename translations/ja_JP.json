@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "VPN に接続中かを、接続時に塗りつぶされる盾で表示。カードに NetworkManager のプロファイルと Tailscale が並び、それぞれオン・オフできます。",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "新しい iNiR が出ると自動で現れ、更新すると消えます。カードで変更点を確認してそのまま更新できます。",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "次に放送されるアニメのエピソードを、カバーと残り時間で表示。カードに今後の放送が並び、タップした作品をフォローします。",
-  "Orbit off": "オービット オフ"
+  "Orbit off": "オービット オフ",
+  "Edge wave": "ウェーブ",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "ウェーブの位置、質感、音楽への反応をまとめて選びます。",
+  "Rails": "レール",
+  "Tide": "潮",
+  "Colours": "色",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "アダプティブは壁紙とカバーに合わせ、テーマはアクセントカラーを保ちます。",
+  "Iridescent": "虹色",
+  "Moves with the music": "音楽に合わせて動く",
+  "Off, it drifts on its own whatever plays.": "オフでは、何が流れていても独自に漂います。",
+  "In silence": "無音のとき",
+  "Drifts": "漂う",
+  "Rests": "静止",
+  "Hides": "隠れる",
+  "How much of the wave shows over the desktop.": "デスクトップ上でウェーブがどれだけ見えるか。",
+  "Every wave setting": "ウェーブのすべての設定",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "形、角、光、音楽への反応のすべては「デスクトップウィジェット」ページにあります。"
 }

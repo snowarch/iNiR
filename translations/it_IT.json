@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "Se sei su una VPN, come uno scudo che si riempie quando lo sei. La scheda elenca i profili di NetworkManager e Tailscale, e attiva o disattiva ciascuno.",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "Compare da sola quando c’è un nuovo iNiR e sparisce dopo l’aggiornamento. La scheda dice cosa è cambiato e aggiorna da lì.",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "Il prossimo episodio anime in onda, con la copertina e il tempo che manca. La scheda elenca ciò che arriva e segue le serie che tocchi.",
-  "Orbit off": "Orbit disattivato"
+  "Orbit off": "Orbit disattivato",
+  "Edge wave": "L’onda",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "Dove sta l’onda, di cosa è fatta e come risponde alla musica, tutto insieme.",
+  "Rails": "Binari",
+  "Tide": "Marea",
+  "Colours": "Colori",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "Adattivo segue lo sfondo e la copertina; Tema resta sul tuo accento.",
+  "Iridescent": "Iridescente",
+  "Moves with the music": "Si muove con la musica",
+  "Off, it drifts on its own whatever plays.": "Spento, si muove da sola qualunque cosa suoni.",
+  "In silence": "In silenzio",
+  "Drifts": "Fluttua",
+  "Rests": "Riposa",
+  "Hides": "Si nasconde",
+  "How much of the wave shows over the desktop.": "Quanto si vede l’onda sopra la scrivania.",
+  "Every wave setting": "Tutte le impostazioni dell’onda",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "Forma, angoli, luce e tutta la risposta alla musica, nella pagina Widget della scrivania."
 }

@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.",
-  "Orbit off": "Orbit off"
+  "Orbit off": "Orbit off",
+  "Edge wave": "Edge wave",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "Where the wave sits, what it is made of and how it answers the music, at once.",
+  "Rails": "Rails",
+  "Tide": "Tide",
+  "Colours": "Colours",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.",
+  "Iridescent": "Iridescent",
+  "Moves with the music": "Moves with the music",
+  "Off, it drifts on its own whatever plays.": "Off, it drifts on its own whatever plays.",
+  "In silence": "In silence",
+  "Drifts": "Drifts",
+  "Rests": "Rests",
+  "Hides": "Hides",
+  "How much of the wave shows over the desktop.": "How much of the wave shows over the desktop.",
+  "Every wave setting": "Every wave setting",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "Shape, corners, light and the full music response, on the Desktop widgets page."
 }

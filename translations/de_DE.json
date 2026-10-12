@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "Ob du in einem VPN bist, als Schild, das sich dann füllt. Die Karte listet deine NetworkManager-Profile und Tailscale und schaltet jedes ein oder aus.",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "Erscheint von selbst, wenn es ein neues iNiR gibt, und verschwindet nach dem Update. Die Karte sagt, was sich geändert hat, und aktualisiert direkt.",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "Die nächste Anime-Folge, die läuft, mit Cover und verbleibender Zeit. Die Karte listet, was kommt, und folgt den Serien, die du antippst.",
-  "Orbit off": "Orbit aus"
+  "Orbit off": "Orbit aus",
+  "Edge wave": "Die Welle",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "Wo die Welle sitzt, woraus sie besteht und wie sie auf Musik reagiert, in einem.",
+  "Rails": "Schienen",
+  "Tide": "Gezeiten",
+  "Colours": "Farben",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "Adaptiv folgt Hintergrund und Cover; Design bleibt bei deiner Akzentfarbe.",
+  "Iridescent": "Schillernd",
+  "Moves with the music": "Bewegt sich mit der Musik",
+  "Off, it drifts on its own whatever plays.": "Aus treibt sie für sich, egal was läuft.",
+  "In silence": "In der Stille",
+  "Drifts": "Treibt",
+  "Rests": "Ruht",
+  "Hides": "Verschwindet",
+  "How much of the wave shows over the desktop.": "Wie stark die Welle über dem Desktop sichtbar ist.",
+  "Every wave setting": "Alle Wellen-Einstellungen",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "Form, Ecken, Licht und die ganze Musikreaktion auf der Seite Desktop-Widgets."
 }

@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "Чи під’єднано VPN: щит, що заповнюється, коли так. Картка показує профілі NetworkManager і Tailscale та вмикає чи вимикає будь-який.",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "З’являється сама, коли виходить новий iNiR, і зникає після оновлення. Картка каже, що змінилося, й оновлює звідти.",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "Наступна серія аніме в ефірі: обкладинка й скільки лишилося. Картка показує, що виходить, і стежить за серіалами, які ви торкнете.",
-  "Orbit off": "Orbit вимкнено"
+  "Orbit off": "Orbit вимкнено",
+  "Edge wave": "Хвиля",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "Де проходить хвиля, з чого вона зроблена і як відповідає на музику — одразу.",
+  "Rails": "Рейки",
+  "Tide": "Приплив",
+  "Colours": "Кольори",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "Адаптивний стежить за шпалерами й обкладинкою; Тема тримається вашого акценту.",
+  "Iridescent": "Перламутр",
+  "Moves with the music": "Рухається під музику",
+  "Off, it drifts on its own whatever plays.": "Якщо вимкнено, пливе сама, що б не грало.",
+  "In silence": "У тиші",
+  "Drifts": "Пливе",
+  "Rests": "Завмирає",
+  "Hides": "Ховається",
+  "How much of the wave shows over the desktop.": "Наскільки хвилю видно поверх стільниці.",
+  "Every wave setting": "Усі налаштування хвилі",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "Форма, кути, світло й уся реакція на музику — на сторінці «Віджети стільниці»."
 }

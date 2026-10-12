@@ -9247,5 +9247,21 @@
   "Whether you are on a VPN, as a shield that fills when you are. Its card lists your NetworkManager profiles and Tailscale, and turns any of them on or off.": "Bạn có đang dùng VPN không, dạng một tấm khiên được tô đầy khi có. Thẻ của nó liệt kê các hồ sơ NetworkManager và Tailscale, và bật hoặc tắt bất kỳ cái nào.",
   "Shows up on its own when there is a new iNiR upstream, and goes away once you update. Its card says what changed and updates from there.": "Tự hiện khi có iNiR mới và biến mất khi bạn cập nhật. Thẻ của nó cho biết điều gì đã thay đổi và cập nhật ngay từ đó.",
   "The anime episode airing next, as its cover art and the time left. Its card lists what is coming and follows the shows you tap.": "Tập anime sắp phát sóng tiếp theo, với ảnh bìa và thời gian còn lại. Thẻ của nó liệt kê những gì sắp tới và theo dõi các bộ bạn chạm vào.",
-  "Orbit off": "Tắt Orbit"
+  "Orbit off": "Tắt Orbit",
+  "Edge wave": "Sóng viền",
+  "Where the wave sits, what it is made of and how it answers the music, at once.": "Vị trí của sóng, chất liệu và cách nó đáp lại âm nhạc, cùng một lúc.",
+  "Rails": "Đường ray",
+  "Tide": "Thủy triều",
+  "Colours": "Màu sắc",
+  "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.": "Thích ứng theo hình nền và ảnh bìa; Chủ đề giữ màu nhấn của bạn.",
+  "Iridescent": "Óng ánh",
+  "Moves with the music": "Chuyển động theo nhạc",
+  "Off, it drifts on its own whatever plays.": "Khi tắt, sóng tự trôi bất kể đang phát gì.",
+  "In silence": "Khi im lặng",
+  "Drifts": "Trôi",
+  "Rests": "Nghỉ",
+  "Hides": "Ẩn",
+  "How much of the wave shows over the desktop.": "Mức độ sóng hiện trên màn hình nền.",
+  "Every wave setting": "Mọi cài đặt sóng",
+  "Shape, corners, light and the full music response, on the Desktop widgets page.": "Hình dạng, góc, ánh sáng và toàn bộ phản hồi âm nhạc, ở trang Tiện ích màn hình nền."
 }
