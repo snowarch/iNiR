@@ -156,14 +156,20 @@ Item {
         return out
     }
     // A small section shows every row at once (Android's rule: a sub-page from about fifteen settings): its groups read as
-    // captioned cards and nothing is behind a click. Galleries and editors keep the larger sections' group pages. What
+    // captioned cards and nothing is behind a click; galleries and editors read whole too, as they do in the pane. What
     // counts is what shows: rows folded behind a group's Fine-tune take no room (a modified one never folds). An index of
     // a few groups is a few rows over an empty page: those sections read whole up to twice as long.
-    readonly property int essentialCount: root.entries.filter(spec => !IrisOptions.fineTune(spec) || IrisOptions.changed(spec)).length
+    readonly property int essentialCount: {
+        let count = 0
+        for (const group of root.groups) {
+            const tuned = group.rows.filter(spec => IrisOptions.fineTune(spec) && !IrisOptions.changed(spec)).length
+            count += tuned >= 2 ? group.rows.length - tuned + 1 : group.rows.length
+        }
+        return count
+    }
     readonly property bool flatSection: !root.searching && root.advancedPage < 0 && root.group.length === 0 && root.groups.length > 1
         && root.section !== "system" && root.section !== "home"
-        && (root.split || ((root.essentialCount <= 15 || (root.groups.length <= 6 && root.essentialCount <= 30))
-            && !root.entries.some(spec => ["widgets", "pieces", "niriMotion"].includes(spec.kind))))
+        && (root.split || root.essentialCount <= 15 || (root.groups.length <= 6 && root.essentialCount <= 30))
     // Groups of one row would each be a card under a caption that repeats the row's name: neighbours share one card.
     readonly property var flatBlocks: {
         if (!root.flatSection) return []
@@ -2177,21 +2183,22 @@ Item {
         // so a write (a slider mid-drag) never rebuilds a card under the pointer.
         function partOf(spec: var): string { return root.searching ? "" : String(spec.part ?? "") }
         // Essentials first: the group's fine-tuning (IrisOptions.fineTune) waits behind one row at its foot that names
-        // what it holds. Only worth it with two or more such rows and something left to read; a search shows everything,
-        // and a row you changed stays out where you left it.
+        // what it holds. Only worth it with two or more such rows; a group that is all fine-tuning (Spotlight's prefixes)
+        // is its caption over that one row. A search shows everything, and a row you changed stays out where you left it.
         readonly property string tuneKey: "tune:" + root.section + "/" + String(group.modelData.key ?? group.modelData.title)
         readonly property var tuned: {
             Config.revision
             if (root.searching) return []
             return group.modelData.rows.filter(spec => IrisOptions.fineTune(spec) && !IrisOptions.changed(spec))
         }
-        readonly property bool folds: group.tuned.length >= 2 && group.tuned.length < group.modelData.rows.length
+        readonly property bool folds: group.tuned.length >= 2
         readonly property bool tuneOpen: group.folds && (root.tuneAll || (root.unfolded[group.tuneKey] ?? false))
         readonly property var shownRows: group.folds && !group.tuneOpen ? group.modelData.rows.filter(spec => !group.tuned.includes(spec)) : group.modelData.rows
         // A search result or a link to a folded row opens the fold first, so the row can glow where it lives.
         readonly property bool landsInFold: root.landingPath.length > 0 && group.tuned.some(spec => String(spec.path ?? "") === root.landingPath)
         onLandsInFoldChanged: if (group.landsInFold && !group.tuneOpen) root.fold(group.tuneKey)
-        readonly property var parts: [...new Set(group.shownRows.map(spec => group.partOf(spec)))]
+        // A group that is all fine-tuning still has one card: its Fine-tune row.
+        readonly property var parts: group.shownRows.length === 0 ? [""] : [...new Set(group.shownRows.map(spec => group.partOf(spec)))]
         Repeater {
             model: ScriptModel { values: group.parts }
             ColumnLayout {
