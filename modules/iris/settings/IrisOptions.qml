@@ -843,6 +843,20 @@ QtObject {
         { section: "desktop", group: "Wallpaper shuffle", label: "Every", path: "background.autoWallpaper.intervalMinutes", visibleWhen: "background.autoWallpaper.enable", kind: "range", fallback: 30, min: 1, max: 240, step: 1, unit: " min", keywords: ["interval", "minutes", "how often", "slideshow"] },
         { section: "desktop", group: "Wallpaper shuffle", label: "Colours follow", description: "Each new wallpaper recolours the shell and your apps. Off keeps the current colours.", path: "background.autoWallpaper.generateColors", visibleWhen: "background.autoWallpaper.enable", kind: "switch", fallback: true, keywords: ["colors", "theme", "recolor", "palette"] },
         { section: "desktop", group: "Wallpaper shuffle", label: "From the folder", description: "Where shuffle picks from. Empty uses the folder of the wallpaper you have now.", path: "background.autoWallpaper.folder", visibleWhen: "background.autoWallpaper.enable", kind: "text", placeholder: "The current wallpaper's folder", fallback: "", keywords: ["shuffle", "folder", "slideshow"] },
+        // Transition and Library run under iRiS too: awww draws every still wallpaper, and the shared desktop (widgets on) runs the shader ones.
+        { section: "wallpaper", group: "Transition", label: "Transition", description: "The next wallpaper arrives with a movement instead of a cut.", path: "background.transition.enable", kind: "switch", fallback: true, keywords: ["transition", "animation", "fade", "wipe", "shader", "transición"] },
+        { section: "wallpaper", group: "Transition", label: "Style", path: "background.transition.type", visibleWhen: "background.transition.enable", kind: "choice", fallback: "crossfade", choices: [{label:"None",value:"none",glyph:"block"},{label:"Fade",value:"crossfade",glyph:"motion_photos_on"},{label:"Simple",value:"simple",glyph:"transition_fade"},{label:"From left",value:"left",glyph:"west"},{label:"From right",value:"right",glyph:"east"},{label:"From top",value:"top",glyph:"north"},{label:"From bottom",value:"bottom",glyph:"south"},{label:"Wipe",value:"wipe",glyph:"left_panel_open"},{label:"Wave",value:"wave",glyph:"water"},{label:"Grow",value:"grow",glyph:"filter_center_focus"},{label:"Center",value:"center",glyph:"center_focus_strong"},{label:"Any",value:"any",glyph:"shuffle"},{label:"Outer",value:"outer",glyph:"blur_circular"},{label:"Random",value:"random",glyph:"casino"},{label:"Circle shader",value:"circleSelect",glyph:"circle"},{label:"Circle pit",value:"circlePit",glyph:"blur_circular"},{label:"Magic",value:"magic",glyph:"auto_awesome"},{label:"Doom",value:"Doom",glyph:"whatshot"},{label:"Peel",value:"Peel",glyph:"layers"},{label:"Shader fade",value:"transition",glyph:"gradient"},{label:"Pixelate",value:"pixelate",glyph:"grain"},{label:"Stripes",value:"stripes",glyph:"texture_minus"},{label:"CRT",value:"crt",glyph:"tv"},{label:"Dissolve",value:"dissolve",glyph:"blur_on"},{label:"Glitch",value:"glitch",glyph:"bug_report"},{label:"Ripple",value:"ripple",glyph:"water"},{label:"Shatter",value:"shatter",glyph:"broken_image"},{label:"iNiR Melt",value:"inirMelt",glyph:"waterfall_chart"},{label:"Chromatic Veil",value:"inirVeil",glyph:"gradient"},{label:"Glass Fracture",value:"inirFracture",glyph:"deployed_code"},{label:"Sumi Wash",value:"inirInk",glyph:"ink_highlighter"},{label:"Prism Slices",value:"inirPrism",glyph:"view_column_2"},{label:"Random shader",value:"shaderRandom",glyph:"shuffle"}], keywords: ["fade", "wipe", "wave", "grow", "shader", "melt", "glitch", "pixelate", "dissolve"] },
+        { section: "wallpaper", group: "Transition", label: "From", showIf: () => (Config.options?.background?.transition?.enable ?? true) && ["wipe", "wave"].includes(String(Config.options?.background?.transition?.type ?? "crossfade")), path: "background.transition.direction", kind: "choice", fallback: "right", choices: [{label:"Left",value:"left",glyph:"west"},{label:"Right",value:"right",glyph:"east"},{label:"Top",value:"top",glyph:"north"},{label:"Bottom",value:"bottom",glyph:"south"}] },
+        { section: "wallpaper", group: "Transition", label: "Duration", showIf: () => (Config.options?.background?.transition?.enable ?? true) && !["simple", "none"].includes(String(Config.options?.background?.transition?.type ?? "crossfade")), path: "background.transition.duration", kind: "range", fallback: 800, min: 200, max: 3000, step: 100, unit: " ms", tune: false },
+        { section: "wallpaper", group: "Transition", label: "Frames per second", description: "How smoothly awww draws the movement.", showIf: () => (Config.options?.background?.transition?.enable ?? true) && (Config.options?.background?.backend?.provider ?? "awww") === "awww" && AwwwBackend.available, path: "background.backend.awww.transitionFps", kind: "range", fallback: 60, min: 10, max: 240, step: 5 },
+        { section: "wallpaper", group: "Transition", label: "Dissolve step", description: "Higher finishes Simple sooner, in coarser steps.", showIf: () => (Config.options?.background?.transition?.enable ?? true) && String(Config.options?.background?.transition?.type ?? "") === "simple" && AwwwBackend.available, path: "background.backend.awww.simpleStep", kind: "range", fallback: 5, min: 1, max: 64, step: 1 },
+        { section: "wallpaper", group: "Transition", label: "Sweep step", description: "Higher moves wipes, waves and circles in coarser steps.", showIf: () => (Config.options?.background?.transition?.enable ?? true) && !AwwwBackend.isInternalShaderTransitionType(Config.options?.background?.transition?.type ?? "crossfade") && !["simple", "none"].includes(String(Config.options?.background?.transition?.type ?? "crossfade")) && AwwwBackend.available, path: "background.backend.awww.spatialStep", kind: "range", fallback: 30, min: 1, max: 128, step: 1 },
+        { section: "wallpaper", group: "Library", label: "Wallpapers folder", description: "Where the gallery and shuffle look first. Empty uses Pictures/Wallpapers.", path: "wallpapers.directory", kind: "text", placeholder: "~/Pictures/Wallpapers", fallback: "", keywords: ["folder", "directory", "path", "carpeta"] },
+        { section: "wallpaper", group: "Library", label: "A wallpaper per screen", description: "Each screen keeps its own; the gallery asks which screen it is for.", path: "background.multiMonitor.enable", kind: "switch", fallback: false, keywords: ["monitor", "screen", "multi", "per output", "pantalla"] },
+        { section: "wallpaper", group: "Library", label: "Small wallpaper notice", description: "A notification when a wallpaper is smaller than your screen, with a link to upscale it.", path: "background.hideUpscaleNotification", invert: true, summary: false, kind: "switch", fallback: false, keywords: ["upscale", "resolution", "upscayl"] },
+        { section: "wallpaper", group: "Library", label: "Renderer", description: "Interactive web plays a page or WebGL scene as the wallpaper.", path: "background.backend.provider", kind: "choice", fallback: "awww", tune: true, choices: [{label:"Standard",value:"awww",glyph:"image"},{label:"Interactive web",value:"web",glyph:"language"}], keywords: ["awww", "web", "html", "webgl", "backend", "renderer"] },
+        { section: "wallpaper", group: "Library", label: "Web page", description: "A local HTML file or a web address.", path: "background.backend.web.source", visibleWhen: "background.backend.provider=web", kind: "text", placeholder: "~/index.html  ·  https://…", fallback: "", tune: true },
+        { section: "wallpaper", group: "Library", label: "Takes clicks and keys", description: "Games and interactive pages get the pointer; the bar and dock stay above.", path: "background.backend.web.interactive", visibleWhen: "background.backend.provider=web", kind: "switch", fallback: false, tune: true },
         { section: "desktop", group: "Wallpaper gallery", label: "Preview on the desktop", description: "The highlighted wallpaper shows behind the gallery; closing without applying restores yours.", path: "iris.wallpaper.livePreview", kind: "switch", fallback: true },
         { section: "desktop", group: "Wallpaper gallery", label: "Play previews", description: "Live wallpapers play a muted preview while chosen or hovered in the gallery. Only one plays at a time.", path: "iris.wallpaper.motion", kind: "switch", fallback: true },
         { section: "desktop", group: "Wallpaper gallery", label: "Library order", description: "How your folders line up in the gallery.", path: "iris.wallpaper.sort", kind: "choice", fallback: "newest", choices: [{label:"Newest",value:"newest",glyph:"schedule"},{label:"Oldest",value:"oldest",glyph:"history"},{label:"Name",value:"name",glyph:"sort_by_alpha"}], keywords: ["sort", "order", "date", "recent", "newest", "oldest", "name", "alphabetical"] },
@@ -1155,7 +1169,6 @@ QtObject {
     ]
     // The shared iNiR pages that still act under iRiS, as "More Settings" lists them. Pages for other families stay out.
     readonly property var morePages: [
-        { group: "Desktop", key: "wallpaper", label: "Wallpaper engine", detail: "Backend, transitions, rotation", icon: "wallpaper", tintName: "teal", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["wallpaper", "awww", "transition", "slideshow", "fondo"] },
         { group: "Desktop", key: "monitors", label: "Monitors", detail: "What each screen shows", icon: "display_settings", tintName: "blue", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["monitor", "screen", "output", "display", "pantalla"] },
         { group: "System", key: "autostart", label: "Autostart", detail: "Apps that start with you", icon: "rocket_launch", tintName: "orange", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["autostart", "startup", "login", "inicio"] },
         { group: "System", key: "services", label: "Services", detail: "Network, hotspot, updates and calendar accounts", icon: "settings_suggest", tintName: "gray", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["services", "network", "search", "data"] },
@@ -1203,7 +1216,7 @@ QtObject {
     }
     readonly property var groupGlyphs: ({
         "Shell family": "swap_horiz", "Notch": "vertical_align_top",
-        "Wallpaper shuffle": "shuffle",
+        "Wallpaper shuffle": "shuffle", "Transition": "transition_fade", "Library": "photo_library",
         "Behind windows": "blur_on", "Japanese lookup": "translate", "Parallax": "3d_rotation", "Scaling": "aspect_ratio", "Recording": "screen_record", "Snip": "screenshot_region",
         "Accent": "palette", "Visualizer": "graphic_eq", "Customize": "brush", "Themes": "style", "Settings window": "settings_applications", "Activity": "timer", "Adaptive": "auto_awesome", "App colours": "format_paint", "Airing": "live_tv", "Alert sounds": "music_note",
         "At a glance": "visibility", "At rest": "schedule", "Badges": "notifications_unread", "Banners": "notifications",
@@ -1361,6 +1374,8 @@ QtObject {
         get "Workspaces"() { return IrisStyle.identity.indigo },
         get "Hotspot"() { return IrisStyle.identity.teal },
         get "Network"() { return IrisStyle.identity.indigo },
+        get "Transition"() { return IrisStyle.identity.purple },
+        get "Library"() { return IrisStyle.identity.teal },
         get "Arranging"() { return IrisStyle.identity.sky },
         get "Power saving"() { return IrisStyle.identity.green },
         get "World clock"() { return IrisStyle.identity.teal },
@@ -1450,7 +1465,7 @@ QtObject {
         dock: ["Notch", "Look", "Icons", "Visibility"],
         desktop: ["Widgets", "Desktop menu"],
         widgets: IrisWidgetRows.order,
-        wallpaper: ["Wallpaper shuffle", "Live wallpapers", "Wallpaper gallery", "Scaling", "Behind windows", "Parallax", "Overview backdrop"],
+        wallpaper: ["Wallpaper shuffle", "Transition", "Live wallpapers", "Wallpaper gallery", "Library", "Scaling", "Behind windows", "Parallax", "Overview backdrop"],
         lock: ["When idle", "Security", "Scene", "Clock", "At a glance", "Now playing", "Activity", "Status", "Sign in", "Type"],
         player: ["Bubble", "Visualizer", "Player", "Frame music", "Edge wave", "Frame response", "Frame finish"]
     })
@@ -1478,7 +1493,7 @@ QtObject {
             { caption: "Fine tuning", groups: ["Dark look", "Ink look", "Light look", "Wallpaper tint"] }
         ],
         wallpaper: [
-            { caption: "Changing it", groups: ["Wallpaper shuffle", "Live wallpapers", "Wallpaper gallery"] },
+            { caption: "Changing it", groups: ["Wallpaper shuffle", "Transition", "Live wallpapers", "Wallpaper gallery", "Library"] },
             { caption: "How it sits", groups: ["Scaling", "Behind windows", "Parallax", "Overview backdrop"] }
         ],
         lock: [
