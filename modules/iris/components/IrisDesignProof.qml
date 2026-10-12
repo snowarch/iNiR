@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.services
 import qs.modules.iris.style
 
 // A proof of the active Design (校正刷り): every control part it skins, in each state a person reaches (rest, pointer,
@@ -82,8 +83,29 @@ PanelWindow {
                 { name: "song", single: true, look: ({ osd: ({ kind: "media", mediaTitle: "Blue Monday", mediaArtist: "New Order", mediaAction: "next", mediaIcon: "skip_next", open: true }) }) },
                 { name: "connection", single: true, look: ({ osd: ({ kind: "connection", connection: ({ icon: "headphones", title: "WH-1000XM4", detail: "Connected", tone: "", kind: "bluetooth", value: 80 }), connectionTint: IrisStyle.identity.blue, open: true }) }) },
                 { name: "held back", single: true, look: ({ osd: ({ kind: "warning", warningText: "The output was too loud", open: true }) }) }
+            ] },
+        { part: "session", name: "session", w: -1, cell: 680,
+            states: [{ name: "rest", look: ({}) }],
+            samples: [
+                { name: "rest", look: ({ shown: true, host: root.sessionHost({}) }) },
+                { name: "keyboard", look: ({ shown: true, host: root.sessionHost({ focusIndex: 2, keyboardNavigation: true }) }) },
+                { name: "asks again", look: ({ shown: true, host: root.sessionHost({ focusIndex: 2, keyboardNavigation: true, pending: "poweroff" }) }) },
+                { name: "held", look: ({ shown: true, host: root.sessionHost({ held: ({ index: 1, ink: 0.55 }) }) }) }
             ] }
     ]
+    // A stand-in for the session screen's stage: its actions as the engine lists them, nothing that runs.
+    function sessionHost(state: var): var {
+        const actions = [
+            { id: "suspend", icon: "bedtime", label: Translation.tr("Sleep"), confirm: false },
+            { id: "reboot", icon: "restart_alt", label: Translation.tr("Restart"), confirm: true },
+            { id: "poweroff", icon: "power_settings_new", label: Translation.tr("Shut Down"), confirm: true },
+            { id: "lock", icon: "lock", label: Translation.tr("Lock"), confirm: false },
+            { id: "logout", icon: "logout", label: Translation.tr("Log Out"), confirm: true }
+        ]
+        const pending = state.pending ?? ""
+        return Object.assign({ actions: actions, focusIndex: 0, keyboardNavigation: false, pending: "", held: null,
+            pendingAction: actions.find(action => action.id === pending) ?? null, trigger: () => {}, commit: () => {} }, state)
+    }
     // A sample's look, with a state's look laid over it (one level deep, so a state can change one field of a model).
     function lookOf(sample: var, state: var): var {
         const out = Object.assign({}, sample)

@@ -20,6 +20,7 @@ QtObject {
         sectionTab: "skins/SectionTab.qml",
         banner: "scenes/Banner.qml",
         osd: "scenes/Osd.qml",
+        session: "scenes/Session.qml",
         // Skins of iRiS's primitives: every surface that uses them (Settings, the dock, menus, the sidebars) wears them.
         switch: "skins/Switch.qml",
         segmented: "skins/Segmented.qml",

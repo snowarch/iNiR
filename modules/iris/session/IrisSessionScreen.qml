@@ -73,8 +73,6 @@ Variants {
             sequences: [StandardKey.Cancel]
             onActivated: {
                 if ((sessionLoader.item?.pending ?? "").length > 0) sessionLoader.item.pending = ""
-                // A staged Design's lever goes back to neutral before the screen closes.
-                else if ((sessionLoader.item?.scene ?? "").length > 0 && sessionLoader.item.keyboardNavigation) sessionLoader.item.keyboardNavigation = false
                 else GlobalStates.sessionOpen = false
             }
         }
@@ -121,6 +119,12 @@ Variants {
                     window.runAction(action.id)
                 }
 
+                // A Design that confirms its own way (AIRISU seals by holding) runs the action once it has confirmed.
+                function commit(index: int): void {
+                    stage.focusIndex = index
+                    window.runAction(stage.actions[index].id)
+                }
+
                 Timer { id: pendingExpiry; interval: 5000; onTriggered: stage.pending = "" }
 
                 focus: true
@@ -135,10 +139,10 @@ Variants {
                         stage.keyboardNavigation = true
                         stage.pending = ""
                         stage.focusIndex = (stage.focusIndex + count - 1) % count
-                    } else if (stage.scene.length > 0 && ((event.key >= Qt.Key_1 && event.key <= Qt.Key_4) || event.key === Qt.Key_R)) {
-                        // A Design that numbers the actions (AIRISU's gears) takes their numbers straight.
+                    } else if (stage.scene.length > 0 && event.key >= Qt.Key_1 && event.key < Qt.Key_1 + count) {
+                        // A Design that numbers the actions (AIRISU's tickets) takes their numbers straight.
                         stage.keyboardNavigation = true
-                        stage.trigger(event.key === Qt.Key_R ? 4 : event.key - Qt.Key_1)
+                        stage.trigger(event.key - Qt.Key_1)
                     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
                         stage.keyboardNavigation = true
                         stage.trigger(stage.focusIndex)
