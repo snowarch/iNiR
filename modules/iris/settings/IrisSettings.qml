@@ -555,7 +555,17 @@ Item {
         else return false
         return true
     }
+    // Shared pages iRiS draws natively: a request for one (the desktop's "Widget settings") lands in its section.
+    readonly property var nativePages: ({
+        widgets: asked => asked === "Organic edge" ? "player/Edge wave" : "widgets"
+    })
     function applyRequest(): void {
+        const native = root.nativePages[String(root.pages[GlobalStates.settingsOverlayRequestedPage]?.key ?? "")]
+        if (native) {
+            GlobalStates.settingsOverlayRequestedSection = native(String(GlobalStates.settingsOverlayRequestedSection ?? ""))
+            GlobalStates.settingsOverlayRequestedPage = root.irisPageIndex
+            return
+        }
         const verb = String(GlobalStates.settingsOverlayRequestedSection ?? "")
         if (GlobalStates.settingsOverlayRequestedPage === root.irisPageIndex && root.runCommand(verb)) {
             GlobalStates.settingsOverlayRequestedSection = ""

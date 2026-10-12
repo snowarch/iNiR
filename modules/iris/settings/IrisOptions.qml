@@ -42,6 +42,7 @@ QtObject {
     function waveShown(): bool { return Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) }
     // An icon row is keyed by its piece inside one shared list, not by its own path.
     function currentValue(spec: var): var {
+        if (spec.widget) return IrisWidgetRows.read(spec)
         if (spec.widgetDesign) return DesktopWidgetDesign.current
         if (spec.niri) return IrisNiri.value(spec)
         if (spec.kind === "niriMotion") return NiriAnimationPresets.activeId
@@ -59,6 +60,7 @@ QtObject {
     function commit(spec: var, next: var): void {
         // A family switch goes through the shell's transition, never a bare config write.
         if (spec.path === "panelFamily") Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "panelFamily", "set", String(next)])
+        else if (spec.widget) IrisWidgetRows.write(spec, next)
         else if (spec.widgetDesign) DesktopWidgetDesign.apply(String(next))
         else if (spec.niri) IrisNiri.set(spec, next)
         else if (spec.kind === "icon") IrisPieces.setGlyph(String(spec.piece ?? ""), String(next ?? ""))
@@ -98,6 +100,7 @@ QtObject {
         if (spec.choicesFrom === "irisModules") return (CustomWidgets.widgets ?? [])
             .filter(widget => String(widget.irisQmlPath ?? "").length > 0)
             .map(widget => ({ label: String(widget.name ?? widget.id), value: "custom:" + widget.id }))
+        if (spec.choicesFrom) return IrisWidgetRows.choicesFor(String(spec.choicesFrom))
         return spec.choices ?? []
     }
     // A scheme's tuning is listed only when that scheme can be the one in use: the one chosen, or dark and light under Auto.
@@ -369,11 +372,10 @@ QtObject {
         { section: "player", group: "Frame music", label: "Music on the edges", description: "Let music animate an Organic Edge wave or swell the iRiS frame itself. The frame is enabled under Appearance.", path: "background.edgeWidgets.organic.enable", kind: "switch", fallback: false, keywords: ["music", "frame", "visualizer", "cava"] },
         { section: "player", group: "Frame music", label: "Music drives", path: "iris.surround.music", visibleWhen: "background.edgeWidgets.organic.enable", kind: "choice", fallback: "widget", choices: [{label:"The wave",value:"widget"},{label:"The frame",value:"frame"}] },
         { section: "player", group: "Edge wave", label: "Look", description: "Where the wave sits, what it is made of and how it answers the music, at once.", bundle: root.waveKeys.map(key => EdgeConfig.path + "." + key), visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), kind: "choice", choices: [root.waveScene("Quiet Horizon", "Horizon", "water"), root.waveScene("Aurora Rails", "Rails", "flare"), root.waveScene("Album Tide", "Tide", "album"), root.waveScene("Pulse Gate", "Pulse", "graphic_eq"), root.waveScene("Contour Frame", "Contour", "select_all")], keywords: ["wave", "organic", "edge", "scene", "preset", "horizon", "rails", "tide", "pulse", "contour", "onda", "borde"] },
-        { section: "player", group: "Edge wave", label: "Colours", description: "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.", path: "background.edgeWidgets.organic.palette", visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), tune: true, kind: "choice", fallback: "theme", choices: [{label:"Adaptive",value:"adaptive"},{label:"Theme",value:"theme"},{label:"Wallpaper",value:"wallpaper"},{label:"Album",value:"album"},{label:"Vivid",value:"vivid"},{label:"Iridescent",value:"iridescent"},{label:"Monochrome",value:"mono"},{label:"Cool",value:"cool"},{label:"Warm",value:"warm"}], keywords: ["colour", "color", "palette", "wave", "paleta", "colores"] },
+        { section: "player", group: "Edge wave", label: "Colours", description: "Adaptive follows the wallpaper and the cover; Theme keeps to your accent.", path: "background.edgeWidgets.organic.palette", visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), tune: true, kind: "choice", fallback: "theme", choices: [{label:"Adaptive",value:"adaptive"},{label:"Theme",value:"theme"},{label:"Wallpaper",value:"wallpaper"},{label:"Album",value:"album"},{label:"Vivid",value:"vivid"},{label:"Iridescent",value:"iridescent"},{label:"Monochrome",value:"mono"},{label:"Cool",value:"cool"},{label:"Warm",value:"warm"},{label:"Your colours",value:"custom"}], keywords: ["colour", "color", "palette", "wave", "paleta", "colores"] },
         { section: "player", group: "Edge wave", label: "Moves with the music", description: "Off, it drifts on its own whatever plays.", path: "background.edgeWidgets.organic.audioReactive", visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), kind: "switch", fallback: true, keywords: ["audio", "music", "react", "cava", "musica"] },
         { section: "player", group: "Edge wave", label: "In silence", path: "background.edgeWidgets.organic.idleMode", visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), tune: true, kind: "choice", fallback: "ambient", choices: [{label:"Drifts",value:"ambient"},{label:"Rests",value:"still"},{label:"Hides",value:"hidden"}], keywords: ["idle", "silence", "quiet", "hidden", "silencio"] },
         { section: "player", group: "Edge wave", label: "Strength", description: "How much of the wave shows over the desktop.", path: "background.edgeWidgets.organic.opacity", visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), kind: "range", fallback: 100, min: 10, max: 100, step: 5, unit: " %", keywords: ["opacity", "strength", "visible", "opacidad"] },
-        { section: "player", group: "Edge wave", label: "Every wave setting", description: "Shape, corners, light and the full music response, on the Desktop widgets page.", visibleWhen: "iris.surround.music=widget", showIf: () => root.waveShown(), kind: "action", button: "Open", run: () => { GlobalStates.settingsOverlayRequestedSection = ""; GlobalStates.settingsOverlayRequestedPage = SettingsPageRegistry.pages.findIndex(page => page.key === "widgets") }, keywords: ["advanced", "more", "organic", "edge", "avanzado"] },
         { section: "player", group: "Frame response", label: "Edges", description: "Which sides of the frame move with the music.", path: "iris.surround.musicEdges", visibleWhen: "iris.surround.music=frame", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) && Boolean(Config.options?.iris?.surround?.enable), kind: "choice", fallback: "sides", choices: [{label:"Left and right",value:"sides"},{label:"Top and bottom",value:"horizontal"},{label:"All four",value:"all"}] },
         { section: "player", group: "Frame response", label: "Strength", description: "How far the frame swells into the screen. The default is more visible than before.", path: "iris.surround.musicStrength", visibleWhen: "iris.surround.music=frame", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) && Boolean(Config.options?.iris?.surround?.enable), kind: "range", fallback: 160, min: 50, max: 300, step: 10, unit: " %" },
         { section: "player", group: "Frame response", label: "Sensitivity", description: "How strongly quiet passages move the frame.", path: "iris.surround.musicSensitivity", visibleWhen: "iris.surround.music=frame", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) && Boolean(Config.options?.iris?.surround?.enable), kind: "range", fallback: 140, min: 50, max: 250, step: 10, unit: " %" },
@@ -1122,6 +1124,7 @@ QtObject {
         { id: "bubbles", cluster: 1, title: "Bubbles & Cards", subtitle: "Pieces you carry and the cards they grow", icon: "bubble_chart", get tint() { return IrisStyle.identity.sky }, tip: "Hold a bubble to carry it; drop it beside the Island to bring it back." },
         { id: "dock", cluster: 1, title: "Dock", subtitle: "Visibility, material and app icons", icon: "dock_to_bottom", get tint() { return IrisStyle.identity.indigo }, tip: "Slide an icon along the Dock to move it. Right-click it for its windows or to float it as a bubble; middle-click opens a new one." },
         { id: "desktop", cluster: 1, title: "Desktop", subtitle: "Widgets and the desktop menu", icon: "widgets", get tint() { return IrisStyle.identity.yellow }, tip: "Right-click the desktop to edit widgets." },
+        { id: "widgets", cluster: 1, title: "Widgets", subtitle: "Every widget's own options, and how they arrange", icon: "dashboard_customize", get tint() { return IrisStyle.identity.sky }, tip: "Carry a widget near another and it lines up; hold Alt to place it freely." },
         { id: "windows", cluster: 1, title: "Windows", subtitle: "Gaps, borders, corners and how Niri moves them", icon: "select_window", get tint() { return IrisStyle.identity.orange }, tip: "Niri draws these; they change right away and live in your Niri config." },
         { id: "sidebars", cluster: 1, title: "Side Panels", subtitle: "Focus and Today, arranged around your workflow", icon: "dock_to_right", get tint() { return IrisStyle.identity.green }, tip: "Ctrl+E customizes a panel; Keep open makes room beside windows." },
         { id: "controlCenter", cluster: 2, title: "Control Center", subtitle: "What it carries and how it looks", icon: "toggle_on", get tint() { return IrisStyle.identity.gray }, tip: "Arrange it in place from the button beside the lock in its header." },
@@ -1139,12 +1142,11 @@ QtObject {
         { id: "player", cluster: 5, title: "Now Playing", subtitle: "Music in the Island, on the lock screen and on the frame", icon: "music_note", get tint() { return IrisStyle.identity.pink }, tip: "Middle-click the Island to play or pause." },
         { id: "anime", cluster: 5, title: "Anime", subtitle: "Airing, Continue and the anime colour layer", icon: "live_tv", get tint() { return IrisStyle.identity.purple }, tip: "Airing tracks what is coming; Continue resumes what you were watching." },
         { id: "sources", cluster: 6, title: "Sources", subtitle: "Where the Island gets what it shows", icon: "cloud_sync", get tint() { return IrisStyle.identity.yellow }, tip: "A setting belongs here when an iRiS surface puts its data on screen." },
-        { id: "system", cluster: 6, title: "More Settings", subtitle: "Wallpaper engine, Niri, widgets and services", icon: "tune", get tint() { return IrisStyle.identity.gray }, tip: "Pages iRiS shares with the other families." }
+        { id: "system", cluster: 6, title: "More Settings", subtitle: "Wallpaper engine, monitors and services", icon: "tune", get tint() { return IrisStyle.identity.gray }, tip: "Pages iRiS shares with the other families." }
     ]
     // The shared iNiR pages that still act under iRiS, as "More Settings" lists them. Pages for other families stay out.
     readonly property var morePages: [
         { group: "Desktop", key: "wallpaper", label: "Wallpaper engine", detail: "Backend, transitions, rotation", icon: "wallpaper", tintName: "teal", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["wallpaper", "awww", "transition", "slideshow", "fondo"] },
-        { group: "Desktop", key: "widgets", label: "Desktop widgets", detail: "Every widget's own options", icon: "widgets", tintName: "sky", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["widgets", "clock", "weather", "media"] },
         { group: "Desktop", key: "monitors", label: "Monitors", detail: "What each screen shows", icon: "display_settings", tintName: "blue", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["monitor", "screen", "output", "display", "pantalla"] },
         { group: "System", key: "autostart", label: "Autostart", detail: "Apps that start with you", icon: "rocket_launch", tintName: "orange", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["autostart", "startup", "login", "inicio"] },
         { group: "System", key: "services", label: "Services", detail: "Network, hotspot, updates and calendar accounts", icon: "settings_suggest", tintName: "gray", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["services", "network", "search", "data"] },
@@ -1217,7 +1219,8 @@ QtObject {
         "Warnings": "battery_alert", "Weather": "partly_cloudy_day", "When idle": "hourglass_empty", "Widgets": "widgets",
         "Windows": "select_window", "Workspaces": "view_column", "Apps": "apps", "Performance": "speed", "Web search": "travel_explore",
         "Read text": "document_scanner", "Texture": "texture", "Borders": "border_style", "Edges": "border_style", "Movement": "animation", "Closing": "close",
-        "Room for iRiS": "fit_screen", "Keyboard": "keyboard", "Mouse": "mouse", "Trackpad": "touch_app", "Pointer": "arrow_selector_tool", "Screen": "monitor"
+        "Room for iRiS": "fit_screen", "Keyboard": "keyboard", "Mouse": "mouse", "Trackpad": "touch_app", "Pointer": "arrow_selector_tool", "Screen": "monitor",
+        "Arranging": "drag_pan", "Power saving": "energy_savings_leaf", "World clock": "public", "Month Calendar": "calendar_month", "Upcoming Events": "event_upcoming", "Date badge": "today", "Day progress": "wb_twilight", "Timers": "timer", "System uptime": "history", "Media Controls": "album", "System Monitor": "monitoring", "Battery": "battery_full", "Controls": "toggle_on", "Screen time": "hourglass_top", "News": "newspaper", "Notes": "sticky_note_2", "Todo": "checklist", "User card": "account_circle", "Custom image": "image", "Image converter": "transform", "Decorative shape": "interests", "Japanese Typography": "translate", "Editorial": "article", "Mascot": "pets"
     })
     readonly property var groupTints: ({
         get "Shell family"() { return IrisStyle.identity.purple },
@@ -1346,7 +1349,32 @@ QtObject {
         get "When idle"() { return IrisStyle.identity.indigo },
         get "Widgets"() { return IrisStyle.identity.teal },
         get "Windows"() { return IrisStyle.identity.blue },
-        get "Workspaces"() { return IrisStyle.identity.indigo }
+        get "Workspaces"() { return IrisStyle.identity.indigo },
+        get "Arranging"() { return IrisStyle.identity.sky },
+        get "Power saving"() { return IrisStyle.identity.green },
+        get "World clock"() { return IrisStyle.identity.teal },
+        get "Month Calendar"() { return IrisStyle.identity.red },
+        get "Upcoming Events"() { return IrisStyle.identity.red },
+        get "Date badge"() { return IrisStyle.identity.orange },
+        get "Day progress"() { return IrisStyle.identity.yellow },
+        get "Timers"() { return IrisStyle.identity.orange },
+        get "System uptime"() { return IrisStyle.identity.gray },
+        get "Media Controls"() { return IrisStyle.identity.pink },
+        get "Visualizer"() { return IrisStyle.identity.pink },
+        get "System Monitor"() { return IrisStyle.identity.blue },
+        get "Battery"() { return IrisStyle.identity.green },
+        get "Controls"() { return IrisStyle.identity.gray },
+        get "Screen time"() { return IrisStyle.identity.indigo },
+        get "News"() { return IrisStyle.identity.red },
+        get "Notes"() { return IrisStyle.identity.yellow },
+        get "Todo"() { return IrisStyle.identity.blue },
+        get "User card"() { return IrisStyle.identity.purple },
+        get "Custom image"() { return IrisStyle.identity.teal },
+        get "Image converter"() { return IrisStyle.identity.lavender },
+        get "Decorative shape"() { return IrisStyle.identity.purple },
+        get "Japanese Typography"() { return IrisStyle.identity.red },
+        get "Editorial"() { return IrisStyle.identity.gray },
+        get "Mascot"() { return IrisStyle.identity.pink }
     })
     function sectionOf(spec: var): string {
         const path = String(spec.path ?? "")
@@ -1410,12 +1438,14 @@ QtObject {
         bubbles: ["Size", "Behaviour", "On the contour", "Floating", "Opening bodies", "Cards", "Card contents", "Joining", "Tray"],
         dock: ["Notch", "Look", "Icons", "Visibility"],
         desktop: ["Widgets", "Desktop menu"],
+        widgets: IrisWidgetRows.order,
         wallpaper: ["Wallpaper shuffle", "Live wallpapers", "Wallpaper gallery", "Scaling", "Behind windows", "Parallax", "Overview backdrop"],
         lock: ["When idle", "Security", "Scene", "Clock", "At a glance", "Now playing", "Activity", "Status", "Sign in", "Type"],
         player: ["Bubble", "Visualizer", "Player", "Frame music", "Edge wave", "Frame response", "Frame finish"]
     })
     // How a section's page reads: named blocks of groups, by what someone came to change.
     readonly property var groupClusters: ({
+        widgets: IrisWidgetRows.clusters,
         appearance: [
             { caption: "Look", groups: ["Look", "Themes"] },
             { caption: "Surfaces", groups: ["Material", "Glass", "Texture", "Edges", "Light", "Adaptive"] },
@@ -1457,7 +1487,7 @@ QtObject {
         return move && move.groups.indexOf(String(spec.group ?? "")) >= 0 ? Object.assign({}, spec, { section: move.to }) : spec
     }
     readonly property var settings: {
-        const rows = root.behaviour.concat(root.shared).concat(root.niriRows).map(spec => root.placed(spec))
+        const rows = root.behaviour.concat(root.shared).concat(root.niriRows).concat(IrisWidgetRows.rows).concat(IrisWidgetRows.edgeRows).map(spec => root.placed(spec))
         const known = new Set(rows.map(spec => spec.path))
         const look = []
         for (const spec of root.studio) {
@@ -1471,7 +1501,7 @@ QtObject {
             const own = rows.filter(spec => spec.section === section).concat(look.filter(spec => spec.section === section))
             const order = root.groupOrder[section] ?? []
             const rank = spec => { const at = order.indexOf(String(spec.group ?? "")); return at < 0 ? order.length : at }
-            const lookRank = spec => String(spec.path ?? "").startsWith("iris.appearance.surfaces.") ? 1 : 0
+            const lookRank = spec => spec.trail ? 2 : String(spec.path ?? "").startsWith("iris.appearance.surfaces.") ? 1 : 0
             own.map((spec, at) => ({ spec: spec, at: at })).sort((a, b) => rank(a.spec) - rank(b.spec) || lookRank(a.spec) - lookRank(b.spec) || a.at - b.at).forEach(item => out.push(item.spec))
         }
         return out.map((spec, index) => Object.assign({}, spec, { modelKey: "settings:" + index }))

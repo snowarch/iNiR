@@ -373,6 +373,38 @@ Singleton {
         return true
     }
 
+    // Settings' truth for a widget option: the base value, with those keys cleared from every screen's own record, so
+    // a value once set from the widget's quick controls cannot silently beat the Settings row. `values` maps key → value.
+    function setEverywhere(widgetKey, values): bool {
+        const path = root._basePath(widgetKey)
+        const widget = root._widgetKey(widgetKey)
+        const keys = values && typeof values === "object" ? Object.keys(values) : []
+        if (!path || keys.length === 0)
+            return false
+        const updates = ({})
+        for (const key of keys)
+            updates[path + "." + key] = values[key]
+        const list = root._normalizedRecords()
+        let cleared = false
+        for (const record of list) {
+            if (root.isLockScope(record.output) || !record.widgets[widget])
+                continue
+            for (const key of keys) {
+                if (Object.prototype.hasOwnProperty.call(record.widgets[widget], key)) {
+                    delete record.widgets[widget][key]
+                    cleared = true
+                }
+            }
+            if (Object.keys(record.widgets[widget]).length === 0)
+                delete record.widgets[widget]
+        }
+        if (cleared)
+            updates["background.widgets.outputOverrides"] = list.filter(record => Object.keys(record.widgets).length > 0
+                || Number(record.layoutVersion ?? 0) > 0)
+        Config.setNestedValues(updates)
+        return true
+    }
+
     function clearEnableOverrides(): bool {
         const list = root._normalizedRecords()
         let changed = false
