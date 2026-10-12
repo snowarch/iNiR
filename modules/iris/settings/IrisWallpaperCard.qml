@@ -21,7 +21,7 @@ import qs.modules.settings
 ClippingRectangle {
     id: card
 
-    readonly property real d: IrisStyle.density
+    readonly property real d: IrisStyle.settingsDensity
     readonly property int pad: Math.round(14 * card.d)
     readonly property int stageHeight: Math.round(228 * card.d)
     // The desk takes at most a third of a narrow card and leaves when the card cannot hold it beside a readable

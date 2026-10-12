@@ -134,6 +134,8 @@ QtObject {
     }
     // Fine-tuning folds behind a group's "Fine-tune" row: a range nudges what a choice already decided, so ranges fold
     // unless a row says `tune: false`; any row can join with `tune: true`. What differs from its default never folds.
+    // The one choice list open in place on the page (IrisSetting.listKey); a section change closes it.
+    property string openList: ""
     function fineTune(spec: var): bool {
         return spec.tune !== undefined ? Boolean(spec.tune) : spec.kind === "range"
     }

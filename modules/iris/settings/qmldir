@@ -14,3 +14,4 @@ IrisShortcutsPage 1.0 IrisShortcutsPage.qml
 singleton IrisNiri 1.0 IrisNiri.qml
 IrisGameModeCard 1.0 IrisGameModeCard.qml
 IrisNiriMotionGallery 1.0 IrisNiriMotionGallery.qml
+IrisChoiceGrid 1.0 IrisChoiceGrid.qml

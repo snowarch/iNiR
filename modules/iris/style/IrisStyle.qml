@@ -74,6 +74,13 @@ QtObject {
     readonly property bool cluster: String(root.structuralValue("bar.composition", "unified")) === "cluster"
 
     readonly property real density: Math.max(0.8, Math.min(1.35, Number(root.appearance?.density ?? 1.0)))
+    // How a Settings row offers a list too long for a segmented control: "inline" opens it in place under the row as a
+    // grid (2026-10-11), "menu" floats iRiS's menu over the button. One word switches every row.
+    readonly property string choiceList: "inline"
+    // Every measure of Settings' pages, rows and window comes from this one factor, so its scale changes in one place.
+    // Whole steps only: at 0.88 every 14·d and 16·d inset landed on a fraction of a pixel and the text went soft
+    // (2026-10-11, rejected: "hace que el texto se renderice feo").
+    readonly property real settingsDensity: root.density
     // Density scales geometry only; type has its own scale.
     readonly property real typeScale: Math.max(0.75, Math.min(1.6, (Appearance.fontSizeScale ?? 1.0) * root.tweak("text", 0.85, 1.25)))
     readonly property int typeCaption: Math.round(10 * root.typeScale)

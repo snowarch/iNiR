@@ -29,7 +29,7 @@ Item {
             .map((part, index) => index % 2 ? "<font color='" + IrisStyle.accent + "'><b>" + plain(part) + "</b></font>" : plain(part))
             .join("")
     }
-    readonly property real d: IrisStyle.density
+    readonly property real d: IrisStyle.settingsDensity
     readonly property var value: {
         Config.revision
         return IrisOptions.currentValue(root.spec)
@@ -96,8 +96,16 @@ Item {
     // pop-up button in the same column. Pictures stay pictures: up to five glyph choices keep their track under the text.
     readonly property bool menuChoice: root.spec.kind === "choice" && root.choices.length > 0 && !root.inlineChoice
         && !root.swatched && !root.tiled && !root.carded && !(root.pictured && root.choices.length <= 5)
-    // A typeface from the installed ones: the pop-up's last entry opens a search under the row.
+    // A typeface from the installed ones: the list's last entry opens a search under the row.
     property bool fontSearch: false
+    // The list a menu choice opens in place under the row (IrisStyle.choiceList); one open on the page at a time.
+    readonly property string listKey: String(root.spec.path ?? "") + "|" + String(root.spec.section ?? "") + "|" + String(root.spec.label ?? "")
+    readonly property bool listInline: IrisStyle.choiceList === "inline"
+    readonly property bool listOpen: root.menuChoice && root.listInline && IrisOptions.openList === root.listKey
+    function toggleList(): void { IrisOptions.openList = root.listOpen ? "" : root.listKey }
+    property real listProgress: root.listOpen ? 1 : 0
+    Behavior on listProgress { NumberAnimation { duration: IrisStyle.duration(240); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+    Timer { id: listClose; interval: 160; onTriggered: if (root.listOpen) IrisOptions.openList = "" }
     readonly property bool inlineRange: root.spec.kind === "range" && root.roomy
     // A text answer sits in the column too: a prefix (`short`) in a small field, anything longer at the column's width.
     readonly property bool inlineText: root.spec.kind === "text" && root.roomy
@@ -449,6 +457,21 @@ Item {
             active: root.spec.kind === "choice" && !root.inlineChoice && !root.swatched && !root.menuChoice && !root.tiled && !root.carded
             visible: active
             sourceComponent: segmentedComponent
+        }
+
+        // The list grows out of the row: one scalar opens it, the cells fade in behind the edge it pushes down.
+        Item {
+            Layout.fillWidth: true
+            visible: root.listProgress > 0
+            implicitHeight: Math.round((choiceGrid.item?.implicitHeight ?? 0) * root.listProgress)
+            clip: true
+            Loader {
+                id: choiceGrid
+                width: parent.width
+                active: root.listOpen || root.listProgress > 0
+                opacity: root.listProgress
+                sourceComponent: choiceGridComponent
+            }
         }
 
         Loader {
@@ -1474,7 +1497,26 @@ Item {
             otherFamily: root.spec.installedFonts === true ? chosenFace : ""
             extra: root.spec.installedFonts === true
                 ? [{ text: Translation.tr("Other font…"), action: () => { root.fontSearch = true } }] : []
+            discloses: root.listInline
+            expanded: root.listOpen
+            onDisclose: root.toggleList()
             onPicked: value => root.commit(value)
+        }
+    }
+
+    Component {
+        id: choiceGridComponent
+
+        IrisChoiceGrid {
+            options: root.choices
+            current: root.value
+            accessibleName: Translation.tr(root.spec.label)
+            fontFor: root.spec.previewFont ? (choice => root.previewFace(choice)) : null
+            extra: root.spec.installedFonts === true
+                ? [{ text: Translation.tr("Other font…"), glyph: "search", action: () => { IrisOptions.openList = ""; root.fontSearch = true } }] : []
+            // The pick lands, then the list folds back into its row.
+            onPicked: value => { root.commit(value); listClose.restart() }
+            onDismissed: IrisOptions.openList = ""
         }
     }
 

@@ -11,7 +11,7 @@ import qs.modules.iris.components
 ColumnLayout {
     id: root
 
-    readonly property real d: IrisStyle.density
+    readonly property real d: IrisStyle.settingsDensity
     readonly property var presets: NiriAnimationPresets.presets
     readonly property string activeId: NiriAnimationPresets.activeId
 

@@ -14,7 +14,7 @@ import qs.modules.iris.style
 Flickable {
     id: root
 
-    readonly property real d: IrisStyle.density
+    readonly property real d: IrisStyle.settingsDensity
     readonly property bool isNiri: CompositorService.isNiri
     readonly property bool hasEnriched: CompositorService.isNiri && NiriKeybinds.enrichedCategories.length > 0
     readonly property bool canEdit: root.hasEnriched

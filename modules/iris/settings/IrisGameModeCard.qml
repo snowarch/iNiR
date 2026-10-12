@@ -11,7 +11,7 @@ import qs.modules.iris.style
 Rectangle {
     id: card
 
-    readonly property real d: IrisStyle.density
+    readonly property real d: IrisStyle.settingsDensity
     readonly property bool on: GameMode.active
     readonly property var held: {
         Config.revision

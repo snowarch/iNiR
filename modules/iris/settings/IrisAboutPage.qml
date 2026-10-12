@@ -13,7 +13,7 @@ import qs.modules.iris.style
 Flickable {
     id: root
 
-    readonly property real d: IrisStyle.density
+    readonly property real d: IrisStyle.settingsDensity
     readonly property string version: versionFile.text().trim()
     boundsBehavior: Flickable.StopAtBounds
     clip: true

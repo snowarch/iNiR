@@ -38,7 +38,7 @@ Item {
     property var forwardStack: []
     property int travel: 1
     property string requestedSection: ""
-    readonly property real d: IrisStyle.density
+    readonly property real d: IrisStyle.settingsDensity
     // A section about hardware this machine lacks is not offered (Battery on a desktop); `inir battery simulate` brings it back.
     readonly property var sections: IrisOptions.sections.filter(section => section.id !== "battery" || Battery.available)
     // Sources and More Settings sit in a footer under the list, always in view.
@@ -63,6 +63,7 @@ Item {
     // the row of the group being read is the pane reaching into the column, melting into it as the Island's bodies meet
     // it. Search, More Settings, Home, the shared pages and a window too narrow for it keep the full width.
     readonly property real pageWidth: pageArea.width
+    readonly property real sidebarNeed: sidebarLayout.implicitHeight + 2 * sidebar.pad + Math.round(4 * root.d)
     readonly property bool wideEnough: root.pageWidth >= Math.round(720 * root.d)
     // A shared page the column lists (More Settings' pages, General's About and Shortcuts) reads in the pane beside it,
     // its row the tab; any other shared page keeps the full width.
@@ -87,7 +88,14 @@ Item {
     readonly property bool browsing: !root.searching && root.openGroup.length === 0 && root.advancedPage < 0
     // The page's head stays in view while its rows scroll when it shows a scene, unless the window is so short that the
     // rows would be left a sliver: then it scrolls with them.
-    readonly property bool heroPinned: pageHero.shown && pageHero.staged
+    // A section whose groups leave the column room shows its scene there, under the entries (2026-10-11, the maintainer:
+    // "ese espacio puede ser mejor aprovechado"): the pane opens on its rows, the column is index and picture at once.
+    readonly property real columnRoom: groupNav.height - navColumn.y - navColumn.implicitHeight - Math.round(20 * root.d)
+    readonly property real columnStageWidth: root.navWidth - Math.round(20 * root.d)
+    readonly property real columnStageHeight: Math.round(Math.min(root.columnStageWidth * 0.75, root.columnRoom - Math.round(110 * root.d)))
+    readonly property bool stageInColumn: root.columns && pageHero.shown && pageHero.stageAvailable
+        && root.columnStageHeight >= Math.round(root.columnStageWidth * 0.5)
+    readonly property bool heroPinned: !root.stageInColumn && pageHero.shown && pageHero.staged
         && detailBody.height >= (root.split ? root.stageMin + root.stageCaption : pageHero.implicitHeight) + Math.round(260 * root.d)
     // In the pane the scene is a stage across its width that takes the room the rows leave: a short group shows what it
     // makes large, a long one keeps it small and in view while the rows pass under it.
@@ -538,6 +546,12 @@ Item {
         else if (verb.startsWith("search:")) { searchField.text = verb.slice(7); root.query = searchField.text }
         else if (verb === "open") root.openFirstResult()
         else if (verb === "tune:open" || verb === "tune:close") root.tuneAll = verb === "tune:open"
+        // `list:<row label>` opens that row's choices in place on the current page; `list:` closes it.
+        else if (verb.startsWith("list:")) {
+            const name = verb.slice(5).toLowerCase()
+            const spec = root.entries.find(entry => String(entry.label ?? "").toLowerCase() === name)
+            IrisOptions.openList = spec ? String(spec.path ?? "") + "|" + String(spec.section ?? "") + "|" + String(spec.label ?? "") : ""
+        }
         else return false
         return true
     }
@@ -592,7 +606,7 @@ Item {
             root.applyRequest()
         }
     }
-    onSectionChanged: { settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; pageEnter.restart(); spyPace.restart() }
+    onSectionChanged: { settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; pageEnter.restart(); spyPace.restart() }
     onOpenGroupChanged: { settingsFlick.contentY = 0; pageEnter.restart() }
     onAdvancedPageChanged: pageEnter.restart()
 
@@ -647,15 +661,19 @@ Item {
         radius: root.windowField ? Number(IrisNiri.data["window-rules"]?.corner_radius ?? 16)
             : root.windowed ? 0 : IrisStyle.surfaceRadius("settings", IrisStyle.radiusPanel)
         onClosed: GlobalStates.irisMorphOwner = ""
-        x: root.windowed ? 0 : (parent.width - width) / 2
-        y: root.windowed ? 0 : (parent.height - height) / 2
+        // Whole pixels: a body centred on a half pixel draws every line of its text soft.
+        x: root.windowed ? 0 : Math.round((parent.width - width) / 2)
+        y: root.windowed ? 0 : Math.round((parent.height - height) / 2)
         width: root.windowed ? parent.width
-            // Wide enough for the columns to breathe: the group column and a pane where rows keep their answer column.
-            : Math.min(parent.width - 32 - IrisFrame.musicReach("left") - IrisFrame.musicReach("right"), 1320 * root.d)
+            // Wide enough for the columns to breathe (the group column and a pane where rows keep their answer column), never
+            // more than three quarters of the screen: Settings sits on the desktop, it does not replace it.
+            : Math.round(Math.min(parent.width - 32 - IrisFrame.musicReach("left") - IrisFrame.musicReach("right"),
+                Math.max(1000 * root.d, parent.width * 0.74), 1320 * root.d))
         height: root.windowed ? parent.height
-            // Tall enough that every section fits the sidebar without scrolling on a 1080p screen: an area under the fold
-            // is an area nobody finds.
-            : Math.min(parent.height - 48 - IrisFrame.musicReach("top") - IrisFrame.musicReach("bottom"), 900 * root.d)
+            // As tall as the sidebar's list of every section (an area under the fold is an area nobody finds): its text
+            // keeps its size at any density, so the height is measured, never a number; the screen is the limit.
+            : Math.round(Math.min(parent.height - 48 - IrisFrame.musicReach("top") - IrisFrame.musicReach("bottom"),
+                Math.max(640 * root.d, root.sidebarNeed)))
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.BackButton | Qt.ForwardButton
@@ -705,6 +723,7 @@ Item {
                     color: IrisStyle.hairline
                 }
                 ColumnLayout {
+                    id: sidebarLayout
                     anchors.fill: parent
                     anchors.margins: sidebar.pad
                     anchors.topMargin: sidebar.pad + 4 * root.d
@@ -784,6 +803,8 @@ Item {
                         Layout.fillHeight: true
                         clip: true
                         contentHeight: sidebarColumn.implicitHeight
+                        // What the list asks for: the window's height comes from it (`root.sidebarNeed`).
+                        implicitHeight: sidebarColumn.implicitHeight
                         boundsBehavior: Flickable.StopAtBounds
                         ScrollBar.vertical: IrisScrollBar {}
                         // The list itself fades under the footer: a gradient painted over it read as a square
@@ -1188,6 +1209,14 @@ Item {
                                 NavEntry {}
                             }
                         }
+                        Item {
+                            id: columnStageSlot
+                            visible: root.stageInColumn
+                            x: Math.round(10 * root.d)
+                            y: navColumn.y + navColumn.implicitHeight + Math.round(14 * root.d)
+                            width: root.columnStageWidth
+                            height: visible ? pageHero.implicitHeight : 0
+                        }
                     }
 
                     Rectangle {
@@ -1233,8 +1262,8 @@ Item {
                                 readonly property string key: pageHero.spying ? root.spyGroup : String(root.shownGroups[0]?.key ?? "")
                                 // A group with no scene has no head: the toolbar already names it.
                                 readonly property bool shown: pageHero.sectionPage || (pageHero.groupPage && pageHero.stageAvailable)
-                                parent: root.heroPinned ? heroPinSlot : heroFlowSlot
-                                width: root.split && root.heroPinned ? detailBody.width : settingsRows.width
+                                parent: root.stageInColumn ? columnStageSlot : root.heroPinned ? heroPinSlot : heroFlowSlot
+                                width: root.stageInColumn ? root.columnStageWidth : root.split && root.heroPinned ? detailBody.width : settingsRows.width
                                 visible: pageHero.shown
                                 tint: pageHero.groupPage || pageHero.spying ? (IrisOptions.groupTints[pageHero.key] ?? root.currentSection.tint) : root.currentSection.tint
                                 glyph: pageHero.groupPage || pageHero.spying ? (IrisOptions.groupGlyphs[pageHero.key] ?? root.currentSection.icon) : root.currentSection.icon
@@ -1303,7 +1332,7 @@ Item {
                                     Item {
                                         id: heroFlowSlot
                                         Layout.fillWidth: true
-                                        visible: pageHero.shown && !root.heroPinned
+                                        visible: pageHero.shown && !root.heroPinned && !root.stageInColumn
                                         implicitHeight: visible ? pageHero.implicitHeight : 0
                                     }
 
@@ -1782,21 +1811,24 @@ Item {
         readonly property int pad: Math.round(12 * root.d)
         readonly property bool stageAvailable: stageLoader.item?.available ?? false
         readonly property string caption: stageLoader.item?.caption ?? ""
+        // In the group column: the scene at the column's width, its line under it.
+        readonly property bool column: root.stageInColumn
         // Measured on the pane, not on itself: its width follows whether it is pinned, which follows this.
-        readonly property bool staged: hero.stageAvailable && (root.split ? detailBody.width : settingsRows.width) > 560 * root.d
-        // In the pane: the scene across the top, its line under it.
-        readonly property bool banner: root.split && hero.staged
+        readonly property bool staged: hero.stageAvailable && (hero.column || (root.split ? detailBody.width : settingsRows.width) > 560 * root.d)
+        // In the pane or the column: the scene across the top, its line under it.
+        readonly property bool banner: (root.split && hero.staged) || hero.column
+        readonly property real stageH: hero.column ? root.columnStageHeight : root.stageHeight
         Layout.fillWidth: true
-        implicitHeight: hero.banner ? hero.pad + root.stageHeight + Math.round(10 * root.d) + heroText.implicitHeight + Math.round(6 * root.d)
+        implicitHeight: hero.banner ? (hero.column ? 0 : hero.pad) + hero.stageH + Math.round(10 * root.d) + heroText.implicitHeight + Math.round(6 * root.d)
             // Beside the scene the words decide the height when they need more than the scene's: a head never cuts its line.
             : hero.staged ? Math.max(Math.round(150 * root.d) + 2 * hero.pad, heroText.implicitHeight + 2 * hero.pad) : heroText.implicitHeight + 28 * root.d
-        radius: root.split ? detailPane.radius : IrisStyle.radiusTile
-        color: root.split ? "transparent" : IrisStyle.readingCard
+        radius: hero.column ? IrisStyle.radiusTile : root.split ? detailPane.radius : IrisStyle.radiusTile
+        color: root.split || hero.column ? "transparent" : IrisStyle.readingCard
 
         RowLayout {
             id: heroText
             // The same inset as the rows below, so every mark on the page sits on one column.
-            x: hero.banner ? Math.round(24 * root.d) : Math.round(14 * root.d)
+            x: hero.column ? Math.round(4 * root.d) : hero.banner ? Math.round(24 * root.d) : Math.round(14 * root.d)
             y: hero.banner ? stageLoader.y + stageLoader.height + Math.round(10 * root.d) : Math.round((hero.height - height) / 2)
             width: hero.banner ? hero.width - x - Math.round(16 * root.d)
                 : (stageLoader.visible ? stageLoader.x : hero.width) - x - Math.round(16 * root.d)
@@ -1837,17 +1869,17 @@ Item {
         }
         Loader {
             id: stageLoader
-            x: hero.banner ? hero.pad : hero.width - hero.pad - width
-            y: hero.banner ? hero.pad : Math.round((hero.height - height) / 2)
-            width: hero.banner ? hero.width - 2 * hero.pad : Math.round(300 * root.d)
-            height: hero.banner ? root.stageHeight : Math.round(150 * root.d)
+            x: hero.column ? 0 : hero.banner ? hero.pad : hero.width - hero.pad - width
+            y: hero.column ? 0 : hero.banner ? hero.pad : Math.round((hero.height - height) / 2)
+            width: hero.column ? hero.width : hero.banner ? hero.width - 2 * hero.pad : Math.round(300 * root.d)
+            height: hero.banner ? hero.stageH : Math.round(150 * root.d)
             active: hero.sceneSection.length > 0
             visible: hero.staged
             sourceComponent: IrisGroupPreview {
                 compact: true
                 niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
                 niriRevision: IrisNiri.revision
-                radius: Math.max(IrisStyle.radiusMicro, hero.radius - hero.pad)
+                radius: hero.column ? IrisStyle.radiusTile : Math.max(IrisStyle.radiusMicro, hero.radius - hero.pad)
                 section: hero.sceneSection
                 group: hero.sceneGroup
                 playing: hero.visible && hero.staged && GlobalStates.settingsOverlayOpen

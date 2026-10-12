@@ -22,12 +22,16 @@ MouseArea {
     property string otherText: Translation.tr("Custom")
     property string otherFamily: ""
     property real maxWidth: Math.round(300 * root.d)
+    // Discloses: the click asks its owner to open the choices in place (Settings' rows) instead of the menu.
+    property bool discloses: false
+    property bool expanded: false
     signal picked(var value)
+    signal disclose()
 
     readonly property real d: IrisStyle.density
     readonly property int selectedIndex: root.options.findIndex(option => option.value === root.current)
     readonly property var chosen: root.selectedIndex >= 0 ? root.options[root.selectedIndex] : null
-    readonly property bool open: menu.active
+    readonly property bool open: menu.active || root.expanded
     readonly property bool plated: IrisStyle.controlPlated
     readonly property real lead: Math.round(10 * root.d)
     readonly property real glyphSlot: chosenGlyph.visible ? chosenGlyph.width + Math.round(6 * root.d) : 0
@@ -57,9 +61,10 @@ MouseArea {
         menu.model = root.entries()
         menu.requestOpen()
     }
-    onClicked: mouse => root.popUp(Qt.point(mouse.x, mouse.y))
-    Keys.onSpacePressed: root.popUp(Qt.point(root.width / 2, root.height / 2))
-    Keys.onReturnPressed: root.popUp(Qt.point(root.width / 2, root.height / 2))
+    function activate(at: point): void { if (root.discloses) root.disclose(); else root.popUp(at) }
+    onClicked: mouse => root.activate(Qt.point(mouse.x, mouse.y))
+    Keys.onSpacePressed: root.activate(Qt.point(root.width / 2, root.height / 2))
+    Keys.onReturnPressed: root.activate(Qt.point(root.width / 2, root.height / 2))
 
     Rectangle {
         anchors.fill: parent
@@ -103,7 +108,9 @@ MouseArea {
         anchors.right: parent.right
         anchors.rightMargin: Math.round(6 * root.d)
         anchors.verticalCenter: parent.verticalCenter
-        text: "unfold_more"
+        text: root.discloses ? "expand_more" : "unfold_more"
+        rotation: root.discloses && root.expanded ? 180 : 0
+        Behavior on rotation { NumberAnimation { duration: IrisStyle.duration(200); easing.type: IrisStyle.feedbackEasing } }
         iconSize: Math.round(16 * root.d)
         color: root.containsMouse || root.open ? IrisStyle.text : IrisStyle.subtext
     }
