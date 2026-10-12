@@ -41,8 +41,11 @@ Item {
         event.accepted = true
     }
 
+    // The active Design may draw it (AIRISU: a meter for a level, a light trail for time); input stays here.
+    IrisSkin { id: skin; part: "scrubber"; host: root }
     Item {
         id: track
+        visible: !skin.active
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
@@ -69,7 +72,7 @@ Item {
 
     // The same thumb as the switch: white, lifted by a soft shadow instead of an outline.
     RectangularShadow {
-        visible: root.knob
+        visible: root.knob && !skin.active
         anchors.fill: knobFace
         radius: knobFace.radius
         offset.y: IrisStyle.density
@@ -78,7 +81,7 @@ Item {
     }
     Rectangle {
         id: knobFace
-        visible: root.knob
+        visible: root.knob && !skin.active
         width: Math.round((root.engaged ? 20 : 18) * IrisStyle.density)
         height: width
         radius: width / 2

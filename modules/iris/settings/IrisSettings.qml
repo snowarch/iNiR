@@ -922,9 +922,12 @@ Item {
                                         IrisMark { implicitSize: Math.round(13 * root.d); anchors.verticalCenter: parent.verticalCenter }
                                         IrisText {
                                             anchors.verticalCenter: parent.verticalCenter
-                                            text: Translation.tr("iRiS · Island family")
+                                            // The family, or the Design it wears (AIRISU's spec line in mono).
+                                            text: IrisDesign.custom ? `iRiS · ${IrisDesign.name}` : Translation.tr("iRiS · Island family")
                                             color: IrisStyle.muted
-                                            font.pixelSize: IrisStyle.typeMeta
+                                            font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontMain
+                                            font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
+                                            font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeFootnote : IrisStyle.typeMeta
                                         }
                                     }
                                 }

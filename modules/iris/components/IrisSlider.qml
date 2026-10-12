@@ -15,6 +15,8 @@ Item {
     StyledSlider {
         id: slider
         anchors.fill: parent
+        // Under a Design's skin the slider keeps its input and draws nothing.
+        opacity: skin.active ? 0 : 1
         enabled: root.enabled
         enableSettingsSearch: false
         configuration: StyledSlider.Configuration.XS
@@ -33,4 +35,5 @@ Item {
         scrollable: true
         onMoved: root.moved(slider.value)
     }
+    IrisSkin { id: skin; part: "slider"; host: root }
 }

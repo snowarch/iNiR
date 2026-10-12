@@ -68,7 +68,7 @@ MouseArea {
 
     Rectangle {
         anchors.fill: parent
-        radius: root.plated ? IrisStyle.pieceRadius(height) : height / 2
+        radius: IrisStyle.fieldChamfer ? 0 : root.plated ? IrisStyle.pieceRadius(height) : height / 2
         color: root.open || root.pressed ? IrisStyle.fillActive
             : root.containsMouse ? IrisStyle.fillHover
             : root.plated ? IrisStyle.plateFillFor(IrisStyle.controlPlate) : ColorUtils.applyAlpha(IrisStyle.fillHover, 0)
@@ -97,10 +97,14 @@ MouseArea {
         anchors.verticalCenter: parent.verticalCenter
         width: Math.min(implicitWidth, root.width - x - mark.width - Math.round(10 * root.d))
         text: root.chosen ? Translation.tr(String(root.chosen.label ?? "")) : root.otherText
+        // A mono-caption Design reads the value like a part number: mono capitals (a font choice keeps its own face).
+        readonly property bool mono: IrisStyle.monoCaptions && !(root.chosen && root.fontFor) && root.otherFamily.length === 0
         font.family: root.chosen && root.fontFor ? root.fontFor(root.chosen)
-            : !root.chosen && root.otherFamily.length > 0 ? root.otherFamily : IrisStyle.fontMain
-        font.pixelSize: IrisStyle.typeLabel
-        font.weight: IrisStyle.weight(Font.Normal)
+            : !root.chosen && root.otherFamily.length > 0 ? root.otherFamily : valueText.mono ? IrisStyle.fontMono : IrisStyle.fontMain
+        font.capitalization: valueText.mono ? Font.AllUppercase : Font.MixedCase
+        font.letterSpacing: valueText.mono ? Math.round(IrisStyle.typeFootnote * 0.12) : 0
+        font.pixelSize: valueText.mono ? IrisStyle.typeFootnote : IrisStyle.typeLabel
+        font.weight: IrisStyle.weight(valueText.mono ? Font.Medium : Font.Normal)
         elide: Text.ElideRight
     }
     MaterialSymbol {
@@ -108,11 +112,13 @@ MouseArea {
         anchors.right: parent.right
         anchors.rightMargin: Math.round(6 * root.d)
         anchors.verticalCenter: parent.verticalCenter
-        text: root.discloses ? "expand_more" : "unfold_more"
-        rotation: root.discloses && root.expanded ? 180 : 0
+        // A plate Design points at the menu with the chevron, the seal when it is open.
+        text: IrisStyle.plateSelection ? "chevron_right" : root.discloses ? "expand_more" : "unfold_more"
+        rotation: root.discloses && root.expanded ? (IrisStyle.plateSelection ? 90 : 180) : 0
         Behavior on rotation { NumberAnimation { duration: IrisStyle.duration(200); easing.type: IrisStyle.feedbackEasing } }
         iconSize: Math.round(16 * root.d)
-        color: root.containsMouse || root.open ? IrisStyle.text : IrisStyle.subtext
+        color: IrisStyle.plateSelection && (root.open || root.expanded) ? IrisStyle.accent
+            : root.containsMouse || root.open ? IrisStyle.text : IrisStyle.subtext
     }
 
     // The menu's text lands where the button's was: the anchor's text column, past its glyph.
