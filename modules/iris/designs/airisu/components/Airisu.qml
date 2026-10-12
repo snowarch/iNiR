@@ -19,6 +19,11 @@ QtObject {
     readonly property color inkSecond: ColorUtils.mix(IrisStyle.text, IrisStyle.bodySurface, 0.66) // iris-literal: AIRISU's second tone, solid
     readonly property color inkThird: ColorUtils.mix(IrisStyle.text, IrisStyle.bodySurface, 0.44)  // iris-literal: AIRISU's third tone, solid
     readonly property color reverse: IrisStyle.bodySurface          // ink reversed out of a solid ink plate
+    // A sticker printed on the other stock (the Island's face: gofun at night, sumi by day), and its three inks.
+    readonly property color sticker: IrisStyle.text
+    readonly property color stickerInk: IrisStyle.bodySurface
+    readonly property color stickerInkSecond: ColorUtils.mix(IrisStyle.bodySurface, IrisStyle.text, 0.62) // iris-literal: the sticker's second tone, solid
+    readonly property color stickerInkThird: ColorUtils.mix(IrisStyle.bodySurface, IrisStyle.text, 0.4)   // iris-literal: the sticker's third tone, solid
     readonly property color seal: IrisStyle.accentFill              // 朱: only the seal, what is live or signs
     readonly property color inkOnSeal: IrisStyle.inkOnAccentFill
     readonly property color sealText: IrisStyle.accent              // 朱 set as type, solved to read on the stock

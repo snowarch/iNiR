@@ -2513,7 +2513,15 @@ Item {
                             Layout.preferredHeight: item?.implicitHeight ?? 0
                             active: activityPage.resident
                             asynchronous: !activityPage.current
-                            sourceComponent: IslandActivityPage { width: activityLoader.width; island: root }
+                            // A Design may set the running jobs its own way (`islandActivity`, on the same services).
+                            readonly property string designUrl: IrisDesign.skin("islandActivity")
+                            source: activityLoader.designUrl
+                            sourceComponent: activityLoader.designUrl.length > 0 ? null : engineActivityPage
+                            onLoaded: if (activityLoader.designUrl.length > 0) item.island = root
+                        }
+                        Component {
+                            id: engineActivityPage
+                            IslandActivityPage { width: activityLoader.width; island: root }
                         }
                     }
 
@@ -2528,7 +2536,16 @@ Item {
                             Layout.preferredHeight: item?.implicitHeight ?? 0
                             active: desktopPage.resident
                             asynchronous: !desktopPage.current
-                            sourceComponent: IslandDesktopPage {
+                            // A Design may print the page its own way (`islandDesktop`, on the same blocks in the same
+                            // order); while the blocks are being arranged the engine's page stands in to be arranged.
+                            readonly property string designUrl: root.studio ? "" : IrisDesign.skin("islandDesktop")
+                            source: desktopLoader.designUrl
+                            sourceComponent: desktopLoader.designUrl.length > 0 ? null : engineDesktopPage
+                            onLoaded: if (desktopLoader.designUrl.length > 0) item.island = root
+                        }
+                        Component {
+                            id: engineDesktopPage
+                            IslandDesktopPage {
                                 width: desktopLoader.width
                                 island: root
                                 navOffset: (root.navUrl.length > 0 ? designNav.height : navFrame.height) + expandedContent.rowSpacing

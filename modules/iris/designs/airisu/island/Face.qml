@@ -31,12 +31,34 @@ Item {
     readonly property real figure: Math.round(IrisStyle.typeHeadline * IrisStyle.typeScale * (root.island?.clockScale ?? 1))
     // Ruby needs a strip tall enough to stack two lines; a slim strip sets the datum on the time's line.
     readonly property bool stacks: root.h >= Math.round(34 * root.d)
+    // The strip at rest is the sheet's main sticker (SYSTEM.md §4): a plate of the other stock die-cut inside the body,
+    // the backing sheet showing round it like a kiss cut, and everything on it printed in that stock's inks. A level
+    // stays the LED board lit on the lacquer and a notice the stamp's impression on it: those are transients, not the
+    // sticker.
+    readonly property bool paper: root.mode !== "event" && root.mode !== "feedback"
+    readonly property color ink: root.paper ? Airisu.stickerInk : Airisu.ink
+    readonly property color inkSecond: root.paper ? Airisu.stickerInkSecond : Airisu.inkSecond
+    readonly property color inkThird: root.paper ? Airisu.stickerInkThird : Airisu.inkThird
+    readonly property color live: root.paper ? Airisu.seal : Airisu.sealText
+    readonly property int kiss: Math.max(2, Math.round(3 * root.d))
+
+    ADie {
+        id: sticker
+        anchors.fill: parent
+        anchors.margins: root.kiss
+        kind: "chamfer"
+        cut: Math.max(2, Airisu.chamfer - root.kiss)
+        fill: Airisu.sticker
+        opacity: root.paper ? 1 : 0
+        visible: opacity > 0
+        Behavior on opacity { enabled: Airisu.moving; NumberAnimation { duration: Airisu.detent } }
+    }
 
     // The time in the figures' face; the colon is two seal squares.
     component Time: Row {
         id: time
         property real size: root.figure
-        property color ink: Airisu.ink
+        property color ink: root.ink
         readonly property var parts: String(DateTime.timeDisplay).split(":")
         spacing: Math.max(2, Math.round(time.size * 0.14))
         AText {
@@ -80,6 +102,7 @@ Item {
             voice: "ruby"
             size: IrisStyle.typeCaption
             text: ruby.gloss
+            color: root.inkSecond
         }
         Item {
             id: line
@@ -92,7 +115,7 @@ Item {
     component Mark: MaterialSymbol {
         iconSize: Math.round(17 * root.d)
         fill: 0
-        color: Airisu.ink
+        color: root.ink
     }
 
     // A row of the strip, laid at the strip's width, shown only in its mode. Changing mode is a detent, not a fade.
@@ -124,6 +147,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             voice: "ruby"
             text: idle.gloss
+            color: root.inkSecond
         }
         Column {
             Layout.alignment: Qt.AlignVCenter
@@ -137,13 +161,14 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
                     iconSize: IrisStyle.typeMeta
-                    color: Airisu.inkSecond
+                    color: root.inkSecond
                 }
                 AText {
                     anchors.verticalCenter: parent.verticalCenter
                     voice: "ruby"
                     size: IrisStyle.typeCaption
                     text: idle.gloss
+                    color: root.inkSecond
                 }
             }
             Time { anchors.horizontalCenter: parent.horizontalCenter }
@@ -175,6 +200,7 @@ Item {
                 text: StringUtils.cleanMusicTitle(root.island?.title ?? "")
                 size: IrisStyle.typeLabel
                 font.weight: Font.Bold
+                color: root.ink
             }
         }
         // Playing is the seal lit; paused, the seal is only its outline.
@@ -183,7 +209,7 @@ Item {
             Layout.preferredHeight: Layout.preferredWidth
             color: root.island?.playing ? Airisu.seal : "transparent"
             border.width: root.island?.playing ? 0 : Airisu.hair
-            border.color: Airisu.inkSecond
+            border.color: root.inkSecond
         }
     }
 
@@ -208,11 +234,12 @@ Item {
             text: Translation.tr("Recording")
             size: IrisStyle.typeLabel
             font.weight: Font.Bold
+            color: root.ink
         }
         AText {
             voice: "figure"
             size: root.figure
-            color: Airisu.sealText
+            color: root.live
             text: root.island?.clockText(RecorderStatus.elapsedSeconds) ?? ""
         }
     }
@@ -222,7 +249,7 @@ Item {
         readonly property bool paused: root.island?.timerPaused ?? false
         Mark {
             text: timer.paused ? "pause" : (root.island?.timerGlyph ?? "timer")
-            color: timer.paused ? Airisu.inkThird : Airisu.ink
+            color: timer.paused ? root.inkThird : root.ink
         }
         Item { Layout.fillWidth: true }
         Ruby {
@@ -231,7 +258,7 @@ Item {
             AText {
                 voice: "figure"
                 size: root.figure
-                color: timer.paused ? Airisu.inkThird : Airisu.ink
+                color: timer.paused ? root.inkThird : root.ink
                 text: root.island?.clockText(root.island?.timerSeconds ?? 0) ?? ""
             }
         }
@@ -256,12 +283,14 @@ Item {
                 text: String(root.island?.task?.title ?? "")
                 size: IrisStyle.typeLabel
                 font.weight: Font.Bold
+                color: root.ink
             }
         }
         AText {
             visible: Number(root.island?.task?.progress ?? -1) >= 0
             voice: "figure"
             size: root.figure
+            color: root.ink
             text: Math.round(Number(root.island?.task?.progress ?? 0) * 100) + "%"
         }
     }
@@ -274,6 +303,7 @@ Item {
             text: Translation.tr("Editing desktop")
             size: IrisStyle.typeLabel
             font.weight: Font.Bold
+            color: root.ink
         }
         // The engine's press area ends editing; this is the seal it presses.
         ADie {
@@ -412,6 +442,8 @@ Item {
         anchors.bottomMargin: Airisu.u(1)
         height: Airisu.u(1.5)
         head: false
+        ink: root.ink
+        inkFaint: root.inkThird
         live: root.mode !== "media" || (root.island?.playing ?? false)
         value: root.mode === "media" ? (root.island?.trackProgress ?? 0)
             : root.mode === "timer" ? (root.island?.timerProgress ?? 0)

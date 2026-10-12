@@ -4,6 +4,7 @@ AText 1.0 AText.qml
 ADie 1.0 ADie.qml
 APrint 1.0 APrint.qml
 ATombo 1.0 ATombo.qml
+ARegistration 1.0 ARegistration.qml
 AScreen 1.0 AScreen.qml
 APerforation 1.0 APerforation.qml
 ARuler 1.0 ARuler.qml

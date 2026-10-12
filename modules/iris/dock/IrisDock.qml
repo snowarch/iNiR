@@ -593,6 +593,7 @@ Item {
                         slotIndex: 0
                         HoverPlate {
                             lit: launcherArea.containsMouse || launcherArea.pressed
+                            skinned: launcherSkin.active
                         }
                         MouseArea {
                             id: launcherArea
@@ -614,11 +615,18 @@ Item {
                                 GlobalStates.searchOpen = !GlobalStates.searchOpen
                             }
                             onContainsMouseChanged: nameLabel.present(containsMouse ? launcherSlot : null, Translation.tr("Applications"))
+                            readonly property var skinData: ({ box: Qt.rect(launcherGlyph.x, launcherGlyph.y, launcherGlyph.width, launcherGlyph.height) })
+                            IrisSkin {
+                                id: launcherSkin
+                                part: "dockSlot"
+                                host: launcherArea
+                            }
                             Item {
                                 id: launcherGlyph
-                                x: root.edgeX(parent.width, width, 7 * root.d + (root.iconSize - root.iconSize * 0.9) / 2)
-                                y: root.edgeY(parent.height, height, 7 * root.d + (root.iconSize - root.iconSize * 0.9) / 2)
-                                width: Math.round(root.iconSize * 0.9 * launcherSlot.iconScale * (launcherArea.pressed ? IrisStyle.pressScale(0.92) : 1))
+                                readonly property int shift: launcherSkin.item?.shift ?? 0
+                                x: root.edgeX(parent.width, width, 7 * root.d + (root.iconSize - root.iconSize * 0.9) / 2) + launcherGlyph.shift
+                                y: root.edgeY(parent.height, height, 7 * root.d + (root.iconSize - root.iconSize * 0.9) / 2) + launcherGlyph.shift
+                                width: Math.round(root.iconSize * 0.9 * launcherSlot.iconScale * (launcherArea.pressed && !launcherSkin.active ? IrisStyle.pressScale(0.92) : 1))
                                 height: width
                                 // A Design with its own insignia (AIRISU's kamon) opens the apps from it: the dock wears the mark.
                                 IrisMark {
@@ -748,7 +756,13 @@ Item {
                                     }
                                     if (window.menuOpen) window.menuApp = null
                                     GlobalStates.irisDockShown = false
-                                    if (root.activate(entry.app) && IrisStyle.motionEnabled) launchBounce.restart()
+                                    if (root.activate(entry.app)) appSlot.launched()
+                                }
+                                // A launch: iRiS hops; a Design that draws the slot answers it its own way (AIRISU prints it twice).
+                                property int launches: 0
+                                function launched(): void {
+                                    if (appButton.skinned) appSlot.launches++
+                                    else if (IrisStyle.motionEnabled) launchBounce.restart()
                                 }
 
                                 SequentialAnimation {
@@ -762,9 +776,23 @@ Item {
                                 HoverPlate {
                                     lift: appSlot.lift + appIcon.hoverLift
                                     lit: appButton.hovered || appButton.down
+                                    skinned: appButton.skinned
                                 }
                                 IrisButton {
                                     id: appButton
+                                    // A Design may draw how the slot answers the pointer, the press and a launch; the
+                                    // button keeps the click, the menus and the drag.
+                                    skinPart: "dockSlot"
+                                    skinData: ({ box: appButton.iconBox, launches: appSlot.launches })
+                                    readonly property rect iconBox: {
+                                        const host = appButton.iconHost
+                                        void (appIcon.x + appIcon.y + appIcon.width + appIcon.scale + appButton.width + appButton.height
+                                            + appButton.contentItem.x + appButton.contentItem.y + (host?.x ?? 0) + (host?.y ?? 0)
+                                            + (host?.width ?? 0) + (host?.height ?? 0))
+                                        const visual = appIcon.width * appIcon.scale
+                                        const corner = appIcon.mapToItem(appButton, (appIcon.width - visual) / 2, (appIcon.height - visual) / 2)
+                                        return Qt.rect(corner.x, corner.y, visual, visual)
+                                    }
                                     anchors.fill: parent
                                     anchors.topMargin: root.atBottom ? -appSlot.outward : 0
                                     anchors.bottomMargin: root.atTop ? -appSlot.outward : 0
@@ -779,7 +807,7 @@ Item {
                                     middleClickAction: () => {
                                         const e = AppSearch.lookupDesktopEntry(entry.modelData.appId)
                                         if (e) AppSearch.launchEntry(e)
-                                        if (IrisStyle.motionEnabled) launchBounce.restart()
+                                        appSlot.launched()
                                     }
                                     altAction: () => {
                                         window.frozenSlotX = window.pointerSlotX
@@ -818,7 +846,7 @@ Item {
                                     }
                                     SmartAppIcon {
                                         id: appIcon
-                                        property real hoverLift: !root.magnify && appButton.hovered ? 2 * root.d : 0
+                                        property real hoverLift: !root.magnify && appButton.hovered && !appButton.skinned ? 2 * root.d : 0
                                         Behavior on hoverLift { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                                         width: iconSize
                                         height: iconSize
@@ -828,7 +856,7 @@ Item {
                                         icon: entry.separator ? "" : IrisPieces.appIcon(entry.modelData.appId)
                                         fallback: "application-x-executable"
                                         iconSize: Math.round(root.iconSize)
-                                        readonly property real press: appButton.down || appGrip.pressed ? IrisStyle.pressScale(0.92) : 1
+                                        readonly property real press: (appButton.down || appGrip.pressed) && !appButton.skinned ? IrisStyle.pressScale(0.92) : 1
                                         scale: appSlot.iconScale * press
                                         visible: !largeIcon.visible
                                         // The bubble leaves from and lands on this very square: a swap, no fade, or the slot blinks empty.
@@ -965,8 +993,18 @@ Item {
                                 const size = pieceFace.width * pieceFace.scale
                                 return { x: p.x, y: p.y, size: size, source: "dock-" + pieceSlot.modelData.slot }
                             }
+                            // What the Design's slot skin reads, the same as an app's.
+                            readonly property bool hovered: pieceHover.hovered
+                            readonly property bool down: pieceTap.pressed
+                            readonly property var skinData: ({ box: Qt.rect(pieceFace.x, pieceFace.y, pieceFace.width, pieceFace.height) })
                             HoverPlate {
                                 lit: pieceHover.hovered || pieceTap.pressed
+                                skinned: pieceSkin.active
+                            }
+                            IrisSkin {
+                                id: pieceSkin
+                                part: "dockSlot"
+                                host: pieceSlot
                             }
                             IrisBubbleFace {
                                 id: pieceFace
@@ -979,7 +1017,8 @@ Item {
                                     : root.atBottom ? pieceSlot.height - height - 7 * root.d - (root.iconSize - height) / 2
                                     : (pieceSlot.height - height) / 2)
                                 transformOrigin: root.edgeOrigin
-                                scale: pieceSlot.iconScale * (pieceTap.pressed ? IrisStyle.pressScale(0.92) : 1)
+                                scale: pieceSlot.iconScale * (pieceTap.pressed && !pieceSkin.active ? IrisStyle.pressScale(0.92) : 1)
+                                transform: Translate { x: pieceSkin.item?.shift ?? 0; y: pieceSkin.item?.shift ?? 0 }
                                 screenName: root.screen?.name ?? ""
                                 kind: pieceSlot.modelData.kind
                                 plated: true
@@ -1534,7 +1573,9 @@ Item {
         id: plate
         property real lift: 0
         property bool lit: false
-        visible: !root.magnify
+        // A Design that draws the slot (dockSlot) answers the pointer without a plate.
+        property bool skinned: false
+        visible: !root.magnify && !plate.skinned
         width: root.plateSize
         height: plate.width
         radius: IrisStyle.plainMarks ? 0 : IrisStyle.iconRadius(plate.width)
