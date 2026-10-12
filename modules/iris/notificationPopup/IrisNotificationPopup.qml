@@ -134,7 +134,7 @@ PanelWindow {
             required property var modelData
             readonly property var notification: banner.modelData
             readonly property var actions: (banner.notification?.actions ?? []).filter(action => action.identifier !== "default")
-            readonly property bool critical: String(banner.notification?.urgency ?? "") === "critical"
+            readonly property bool critical: ["2", "critical"].includes(String(banner.notification?.urgency ?? "").toLowerCase()) // the enum's number, as a string
             readonly property bool hovered: bannerHover.hovered
             width: popupColumn.width
             height: plate.height

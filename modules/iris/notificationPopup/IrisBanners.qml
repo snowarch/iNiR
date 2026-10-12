@@ -39,7 +39,11 @@ Item {
     visible: root.present
     onPopupsChanged: if (root.popups.length === 0) exitLinger.restart()
     Timer { id: exitLinger; interval: IrisStyle.settleDuration * 2 + 80 }
-    readonly property real popupWidth: Math.min(Math.max(260, root.width - 2 * IrisFrame.band - 16),
+    // A Design that draws its own banner says where they gather and how wide they are; they no longer grow out of the Island.
+    readonly property string scene: IrisDesign.skin("banner")
+    readonly property bool designed: root.scene.length > 0
+    readonly property real designMargin: Number(IrisDesign.surface("banners", "margin", 24)) * root.d
+    readonly property real popupWidth: root.designed ? Number(IrisDesign.surface("banners", "width", 400)) * root.d + 16 : Math.min(Math.max(260, root.width - 2 * IrisFrame.band - 16),
         Math.max(340, Number(root.options?.width ?? 380) * root.d) + 16)
     readonly property var island: GlobalStates.irisIslandGeometry?.[root.screenName] ?? null
     readonly property real bubbleSize: Math.round(44 * root.d)
@@ -86,12 +90,15 @@ Item {
 
     ListView {
         id: popupColumn
-        x: Math.round(root.islandEdge === "left" ? root.sideGap
+        readonly property bool fromBottom: root.designed || !root.barTop
+        x: Math.round(root.designed ? IrisFrame.safeClear("left") + root.designMargin
+            : root.islandEdge === "left" ? root.sideGap
             : root.islandEdge === "right" ? parent.width - width - root.sideGap : (parent.width - width) / 2)
-        y: Math.round(root.islandSide ? IrisFrame.safeInset("top") + Math.round(12 * root.d)
+        y: Math.round(root.designed ? parent.height - height - IrisFrame.safeClear("bottom") - root.designMargin
+            : root.islandSide ? IrisFrame.safeInset("top") + Math.round(12 * root.d)
             : root.barTop ? Math.max(root.edgeOffset + IrisFrame.band, root.islandClear)
             : parent.height - height - Math.max(root.edgeOffset + IrisFrame.band, root.islandClear))
-        verticalLayoutDirection: root.barTop ? ListView.TopToBottom : ListView.BottomToTop
+        verticalLayoutDirection: popupColumn.fromBottom ? ListView.BottomToTop : ListView.TopToBottom
         width: Math.min(root.popupWidth - 16, parent.width - 16)
         height: Math.max(1, popupColumn.contentHeight)
         spacing: 8 * root.d
@@ -111,7 +118,11 @@ Item {
                 easing.bezierCurve: IrisStyle.recedeCurve
             }
         }
-        displaced: Transition {
+        // A displacement animates to the heights it saw when it started; a Design's banner measures its height a
+        // tick after it lands, so its neighbours would settle overlapping it. They step instead.
+        displaced: root.designed ? null : displacedSlide
+        Transition {
+            id: displacedSlide
             NumberAnimation { property: "y"; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
         }
     }
@@ -124,7 +135,7 @@ Item {
             required property var modelData
             readonly property var notification: banner.modelData
             readonly property var actions: (banner.notification?.actions ?? []).filter(action => action.identifier !== "default")
-            readonly property bool critical: String(banner.notification?.urgency ?? "") === "critical"
+            readonly property bool critical: ["2", "critical"].includes(String(banner.notification?.urgency ?? "").toLowerCase()) // the enum's number, as a string
             readonly property bool hovered: bannerHover.hovered
             width: popupColumn.width
             height: plate.height
@@ -143,9 +154,9 @@ Item {
             property real leave: 0
             readonly property bool swiped: Math.abs(banner.swipe) > 1
             readonly property real bloom: Math.min(banner.appear, banner.swiped ? 1 : 1 - banner.leave)
-            readonly property bool meltsIntoIsland: root.island !== null && !root.islandSide
+            readonly property bool meltsIntoIsland: root.island !== null && !root.islandSide && !root.designed
             // Measured a tick later: wrapped text re-measures inside the layout while the plate's height is read.
-            readonly property real measuredHeight: content.implicitHeight + 24 * root.d
+            readonly property real measuredHeight: root.designed ? (designBanner.item?.implicitHeight ?? 0) : content.implicitHeight + 24 * root.d
             property real fullHeight: banner.measuredHeight
             onMeasuredHeightChanged: fullSync.restart()
             Timer { id: fullSync; interval: 0; onTriggered: banner.fullHeight = banner.measuredHeight }
@@ -186,28 +197,29 @@ Item {
                 const w = plate.width * banner.fade
                 const h = plate.height * banner.fade
                 return { x: at.x + (plate.width - w) / 2, y: at.y + (plate.height - h) / 2, width: w, height: h,
-                    radius: Math.min(h / 2, plate.radius), paints: false, id: "banner:" + banner.bodyKey,
+                    radius: root.designed ? 0 : Math.min(h / 2, plate.radius), paints: false, id: "banner:" + banner.bodyKey,
                     joins: banner.meltsIntoIsland ? "island" : "", fuse: IrisStyle.fuseDeep * (1 - banner.bloom) }
             }
             onBodyChanged: if (banner.bodyKey) root.publish(banner.bodyKey, banner.body)
             Component.onDestruction: if (banner.bodyKey) root.publish(banner.bodyKey, null)
             Rectangle {
                 id: plate
-                width: Math.round(root.bubbleSize + (banner.width - root.bubbleSize) * banner.bloom)
-                height: Math.round(root.bubbleSize + (banner.fullHeight - root.bubbleSize) * banner.bloom)
+                // A Design's banner sweeps in from the edge it gathers on at its full size.
+                width: root.designed ? banner.width : Math.round(root.bubbleSize + (banner.width - root.bubbleSize) * banner.bloom)
+                height: root.designed ? banner.fullHeight : Math.round(root.bubbleSize + (banner.fullHeight - root.bubbleSize) * banner.bloom)
                 clip: true
-                x: Math.round((banner.width - width) / 2 + banner.swipe)
+                x: Math.round((banner.width - width) / 2 + banner.swipe - (root.designed ? (1 - banner.bloom) * 48 * root.d : 0))
                 readonly property real islandLift: {
                     void (banner.y + popupColumn.y + popupColumn.contentY + popupColumn.height)
                     if (!banner.meltsIntoIsland) return root.barTop ? -18 * root.d : 18 * root.d
                     const at = banner.mapToItem(root, 0, 0)
                     return (root.island.y + root.island.height / 2) - (at.y + root.bubbleSize / 2)
                 }
-                y: Math.round(plate.islandLift * (1 - banner.bloom))
+                y: root.designed ? 0 : Math.round(plate.islandLift * (1 - banner.bloom))
                 opacity: Math.min(1, banner.bloom * 3) * banner.fade
                 radius: Math.min(height / 2, root.bubbleSize / 2 + (Math.round(22 * root.d) - root.bubbleSize / 2) * banner.bloom)
                 color: "transparent"
-                border.width: banner.critical ? 1 : 0
+                border.width: banner.critical && !root.designed ? 1 : 0
                 border.color: IrisStyle.tintBorder(IrisStyle.danger)
 
                 Timer {
@@ -219,8 +231,21 @@ Item {
                     onTapped: root.activate(banner.notification)
                 }
 
+                Loader {
+                    id: designBanner
+                    width: banner.width
+                    active: root.designed
+                    source: root.scene
+                    onLoaded: {
+                        item.notification = Qt.binding(() => banner.notification)
+                        item.hovered = Qt.binding(() => banner.hovered)
+                        item.now = Qt.binding(() => root.now)
+                    }
+                }
+
                 RowLayout {
                     id: content
+                    visible: !root.designed
                     x: 14 * root.d
                     y: 12 * root.d
                     width: banner.width - 26 * root.d
@@ -327,7 +352,7 @@ Item {
                     color: closeArea.containsMouse ? IrisStyle.surfaceHighest : IrisStyle.surfaceHigh
                     border.width: 1
                     border.color: IrisStyle.hairlineStrong
-                    opacity: banner.hovered ? 1 : 0
+                    opacity: banner.hovered && !root.designed ? 1 : 0
                     visible: opacity > 0
                     Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                     MaterialSymbol {

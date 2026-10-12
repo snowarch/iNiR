@@ -13,9 +13,11 @@ QtObject {
         controlCenter: "scenes/ControlCenter.qml",
         bar: "scenes/Bar.qml",
         spotlight: "scenes/Spotlight.qml",
-        osd: "scenes/Osd.qml"
+        osd: "scenes/Osd.qml",
+        banner: "scenes/Banner.qml"
     })
     // How a surface's body holds this Design's scene: its width and its inner padding (0: laid edge to edge).
-    readonly property var surfaces: ({ controlCenter: { width: 440, padding: 0, gap: 12 } })
+    readonly property var surfaces: ({ controlCenter: { width: 440, padding: 0, gap: 12 },
+        banners: { width: 400, corner: "bottomLeft", margin: 24 } })
     readonly property var field: ({ corner: "chamfer" }) // a sticker cut with a blade (IrisField.frag bodyBox)
 }

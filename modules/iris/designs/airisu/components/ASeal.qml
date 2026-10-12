@@ -3,14 +3,17 @@ import QtQuick.Shapes
 import qs.modules.iris.style
 
 // A sealed button: a plate cut at its upper-right and lower-left corners like the field's bodies. `kind` "seal" is
-// the vermilion (live: play, record, confirm), "gofun" the chosen plate, "line" a 1 px outline. Holds a glyph or text.
+// the vermilion (live: play, record, confirm), "gofun" the chosen plate, "amber" danger, "line" a 1 px outline.
+// Holds a glyph or text; text buttons are mono capitals.
 Item {
     id: root
     property string kind: "seal"
     property string glyph: ""
     property string text: ""
-    readonly property color fillColour: root.kind === "seal" ? Airisu.seal : root.kind === "gofun" ? Airisu.gofun : "transparent"
-    readonly property color ink: root.kind === "seal" ? Airisu.inkOnSeal : root.kind === "gofun" ? Airisu.inkOnGofun : Airisu.gofun
+    readonly property color fillColour: root.kind === "seal" ? Airisu.seal : root.kind === "gofun" ? Airisu.gofun
+        : root.kind === "amber" ? Airisu.amber : "transparent"
+    readonly property color ink: root.kind === "seal" ? Airisu.inkOnSeal : root.kind === "gofun" ? Airisu.inkOnGofun
+        : root.kind === "amber" ? Airisu.inkOnAmber : Airisu.gofun
     readonly property real cut: Math.min(Airisu.cut, height / 3)
     signal clicked()
 
@@ -50,10 +53,9 @@ Item {
         id: label
         anchors.centerIn: parent
         visible: root.text.length > 0
-        voice: "wide"
-        size: IrisStyle.typeLabel
-        font.capitalization: Font.AllUppercase
-        font.letterSpacing: Math.round(IrisStyle.typeLabel * 0.08)
+        voice: "mono"
+        size: IrisStyle.typeCaption
+        font.weight: Font.Bold
         text: root.text
         color: root.ink
     }

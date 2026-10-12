@@ -20,6 +20,7 @@ QtObject {
     readonly property color inkOnSeal: IrisStyle.inkOnAccentFill
     readonly property color sealText: IrisStyle.accent        // 朱 as text
     readonly property color amber: IrisStyle.danger           // 山吹: danger (the airisu palette's alert)
+    readonly property color inkOnAmber: IrisStyle.onTintFor(IrisStyle.danger)
     readonly property color data: IrisStyle.textSecondary     // mono labels
     readonly property color quiet: IrisStyle.textTertiary
     readonly property color fillet: IrisStyle.hairline        // 鉄: the 1 px rule between parts
