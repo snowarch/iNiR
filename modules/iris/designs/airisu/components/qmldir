@@ -1,0 +1,9 @@
+module airisu
+singleton Airisu 1.0 Airisu.qml
+AText 1.0 AText.qml
+AMeter 1.0 AMeter.qml
+ATile 1.0 ATile.qml
+ASeal 1.0 ASeal.qml
+ASpec 1.0 ASpec.qml
+AHeader 1.0 AHeader.qml
+ARule 1.0 ARule.qml

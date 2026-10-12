@@ -1216,7 +1216,7 @@ Scope {
                     id: controlCentreLoader
                     z: 1
                     anchors.fill: parent
-                    readonly property bool panelMode: String(Config.options?.iris?.controlCenter?.opens ?? "island") !== "island"
+                    readonly property bool panelMode: IrisDesign.has("controlCenter") || String(Config.options?.iris?.controlCenter?.opens ?? "island") !== "island"
                     readonly property bool externalOpen: GlobalStates.controlPanelOpen
                         && (controlCentreLoader.panelMode || GlobalStates.irisMorphOwner === "stage")
                     readonly property bool wanted: controlCentreLoader.externalOpen

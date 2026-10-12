@@ -33,6 +33,11 @@ Singleton {
         const relative = String(root.parts?.[part] ?? "")
         return relative.length > 0 ? `${root.folder(root.current)}${relative}` : ""
     }
+    // What a surface's body needs to hold this Design's scene (its width, its padding), or `fallback`.
+    function surface(id: string, key: string, fallback: var): var {
+        const value = root.manifest?.surfaces?.[id]?.[key]
+        return value === undefined ? fallback : value
+    }
     function has(part: string): bool {
         return String(root.parts?.[part] ?? "").length > 0
     }

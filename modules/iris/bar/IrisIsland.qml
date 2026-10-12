@@ -279,7 +279,8 @@ Item {
     property bool settingsIntent: false
     property string pageIntent: ""
 
-    readonly property bool controlsInIsland: String(Config.options?.iris?.controlCenter?.opens ?? "island") === "island"
+    // A Design that brings its own Control Center opens it as its own body, never as an Island page.
+    readonly property bool controlsInIsland: !IrisDesign.has("controlCenter") && String(Config.options?.iris?.controlCenter?.opens ?? "island") === "island"
     function openControlCenterFrom(part): void {
         if (root.controlsInIsland) {
             root.openPage("controls", true, part ?? null)

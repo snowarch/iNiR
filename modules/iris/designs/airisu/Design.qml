@@ -9,7 +9,10 @@ QtObject {
     // The solver's language for this Design (scripts/colors/washi/airisu.go): lacquer, gofun, the vermilion seal.
     readonly property string palette: "airisu"
     readonly property var parts: ({
-        insignia: "parts/Insignia.qml"
+        insignia: "parts/Insignia.qml",
+        controlCenter: "scenes/ControlCenter.qml"
     })
+    // How a surface's body holds this Design's scene: its width and its inner padding (0: laid edge to edge).
+    readonly property var surfaces: ({ controlCenter: { width: 440, padding: 0 } })
     readonly property var field: ({ corner: "chamfer" }) // a sticker cut with a blade (IrisField.frag bodyBox)
 }

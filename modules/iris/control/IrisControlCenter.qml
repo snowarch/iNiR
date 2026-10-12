@@ -24,7 +24,7 @@ Item {
     readonly property bool islandSide: root.islandEdge === "left" || root.islandEdge === "right"
     readonly property bool morphOpen: GlobalStates.controlPanelOpen
         && root.screenName === (GlobalStates.focusedScreen?.name ?? "")
-        && (String(Config.options?.iris?.controlCenter?.opens ?? "island") !== "island" || GlobalStates.irisMorphOwner === "stage")
+        && (IrisDesign.has("controlCenter") || String(Config.options?.iris?.controlCenter?.opens ?? "island") !== "island" || GlobalStates.irisMorphOwner === "stage")
     readonly property bool armed: root.morphOpen && panel.armed
     readonly property bool present: root.morphOpen || panel.progress > 0
     readonly property alias body: panel
@@ -79,9 +79,12 @@ Item {
     readonly property var placement: root.fromPiece
         ? IrisFrame.place(root.placementOrigin, panel.width, panel.height, root.width, root.height, root.baseRadius,
             root.avoidRects, IrisStyle.cardJoins ? -IrisStyle.weld : Math.max(IrisFrame.bodyAir, IrisStyle.cardGap)) : null
-    readonly property real panelWidth: Math.min(root.width - 16, (Math.max(320, Number(root.options?.width ?? 360))
+    // The active Design may hold its own scene in this body (DESIGNS.md › Composiciones); the body stays this file's.
+    readonly property string scene: IrisDesign.skin("controlCenter")
+    readonly property real panelWidth: root.scene.length > 0 ? Math.min(root.width - 16, Number(IrisDesign.surface("controlCenter", "width", 360)) * IrisStyle.density)
+        : Math.min(root.width - 16, (Math.max(320, Number(root.options?.width ?? 360))
         + (GlobalStates.irisControlEdit ? IrisControlOptions.editorExtra : 0)) * IrisStyle.density)
-    readonly property real contentPadding: IrisStyle.concentricPad(IrisStyle.surfaceRadius("controlCenter", IrisStyle.radiusPanel), 16 * IrisStyle.density)
+    readonly property real contentPadding: root.scene.length > 0 ? Number(IrisDesign.surface("controlCenter", "padding", 16)) * IrisStyle.density : IrisStyle.concentricPad(IrisStyle.surfaceRadius("controlCenter", IrisStyle.radiusPanel), 16 * IrisStyle.density)
     readonly property real edge: Math.round(8 * IrisStyle.density) + IrisFrame.band
     readonly property real edgeLeft: Math.round(8 * IrisStyle.density) + IrisFrame.safeClear("left")
     readonly property real edgeRight: Math.round(8 * IrisStyle.density) + IrisFrame.safeClear("right")
@@ -163,7 +166,7 @@ Item {
             id: contents
             anchors.fill: parent
             anchors.margins: root.contentPadding
-            contentHeight: quickPanel.item?.implicitHeight ?? 0
+            contentHeight: (root.scene.length > 0 ? designScene.item?.implicitHeight : quickPanel.item?.implicitHeight) ?? 0
             boundsBehavior: Flickable.StopAtBounds
             // Scroll only when capped, or a drag on a capsule becomes a flick.
             interactive: contents.contentHeight > contents.height + 1
@@ -174,7 +177,17 @@ Item {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
+                active: root.scene.length === 0
                 sourceComponent: IrisQuickPanel { targetScreen: root.screenData }
+            }
+            Loader {
+                id: designScene
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                active: root.scene.length > 0
+                source: root.scene
+                onLoaded: item.targetScreen = Qt.binding(() => root.screenData)
             }
         }
     }

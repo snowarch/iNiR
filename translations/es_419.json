@@ -9483,5 +9483,8 @@
   "At night, from %1": "De noche, desde las %1",
   "By day, from %1": "De día, desde las %1",
   "Drag the sun and the moon to change the hours.": "Arrastra el sol y la luna para cambiar las horas.",
-  "%1 brings its own colours.": "%1 trae sus propios colores."
+  "%1 brings its own colours.": "%1 trae sus propios colores.",
+  "control": "control",
+  "Screen and sound": "Pantalla y sonido",
+  "Build": "Versión"
 }

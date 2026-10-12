@@ -9483,5 +9483,8 @@
   "At night, from %1": "夜 %1 から",
   "By day, from %1": "昼 %1 から",
   "Drag the sun and the moon to change the hours.": "太陽と月をドラッグして時刻を変更します。",
-  "%1 brings its own colours.": "%1 は独自の色を使います。"
+  "%1 brings its own colours.": "%1 は独自の色を使います。",
+  "control": "操作",
+  "Screen and sound": "画面と音声",
+  "Build": "ビルド"
 }

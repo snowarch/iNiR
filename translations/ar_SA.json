@@ -9483,5 +9483,8 @@
   "At night, from %1": "ليلًا، من %1",
   "By day, from %1": "نهارًا، من %1",
   "Drag the sun and the moon to change the hours.": "اسحب الشمس والقمر لتغيير الساعات.",
-  "%1 brings its own colours.": "يأتي %1 بألوانه الخاصة."
+  "%1 brings its own colours.": "يأتي %1 بألوانه الخاصة.",
+  "control": "التحكم",
+  "Screen and sound": "الشاشة والصوت",
+  "Build": "الإصدار"
 }

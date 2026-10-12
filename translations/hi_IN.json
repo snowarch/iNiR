@@ -9483,5 +9483,8 @@
   "At night, from %1": "रात में, %1 से",
   "By day, from %1": "दिन में, %1 से",
   "Drag the sun and the moon to change the hours.": "समय बदलने के लिए सूरज और चाँद खींचें।",
-  "%1 brings its own colours.": "%1 अपने रंग लाता है।"
+  "%1 brings its own colours.": "%1 अपने रंग लाता है।",
+  "control": "नियंत्रण",
+  "Screen and sound": "स्क्रीन और ध्वनि",
+  "Build": "बिल्ड"
 }
