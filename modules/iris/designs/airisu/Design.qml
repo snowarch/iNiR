@@ -11,5 +11,5 @@ QtObject {
     readonly property var parts: ({
         insignia: "parts/Insignia.qml"
     })
-    readonly property var field: ({ corner: "round" }) // "chamfer" once the field draws it (AIRISU F3)
+    readonly property var field: ({ corner: "chamfer" }) // a sticker cut with a blade (IrisField.frag bodyBox)
 }

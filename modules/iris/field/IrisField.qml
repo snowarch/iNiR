@@ -193,7 +193,7 @@ Item {
         readonly property vector4d field: Qt.vector4d(root.smoothing, root.framed ? 1 : 0,
             root.band, root.cornerRadius)
         readonly property color tint: root.tint
-        readonly property vector4d options: Qt.vector4d(0, 0, 0, 0)
+        readonly property vector4d options: Qt.vector4d(0, IrisStyle.fieldChamfer ? 1 : 0, IrisStyle.chamferCut, 0)
         readonly property vector4d quiet: root.quietRect
         readonly property color rim: root.rim
         readonly property color sheen: root.sheen

@@ -300,6 +300,12 @@ func TestDesignKeepsItsPigments(t *testing.T) {
 			t.Errorf("%s: accent %s faded to chroma %.3f", name, p.Accent, hexLCH(p.Accent).C)
 		}
 	}
+	for _, name := range []string{"dark", "ink", "light"} {
+		p := build(req, name)
+		if d := hueDistance(hexLCH(p.Danger).H, hexLCH("#f8b500").H); d > 12 {
+			t.Errorf("%s: danger %s is not the warning tape's amber", name, p.Danger)
+		}
+	}
 	if got := build(Request{Language: "airisu", Material: "black"}, "ink").Surface; got != "#e9e6df" {
 		t.Errorf("Ink under AIRISU wears %s, want gofun #e9e6df", got)
 	}

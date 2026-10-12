@@ -86,6 +86,7 @@ layout(std140, binding = 0) uniform buf {
     // field in a small window (a menu) samples the wallpaper glass at the right place.
     vec4 scene;
     // x: 1 when another window paints the band, so this field draws only the bodies and their joins.
+    // y: the Design's corner (0 round, 1 chamfer: DESIGNS.md, `field.corner`); z: the most a chamfer cuts, in pixels.
     vec4 options;
     // Left, top, right, bottom of an inner rectangle nothing reaches: its pixels skip the whole pass.
     vec4 quiet;
@@ -137,6 +138,22 @@ float roundedBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
     float r = min(radius, min(halfSize.x, halfSize.y));
     vec2 q = abs(p - centre) - (halfSize - r);
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+}
+
+// A body's own outline. Round is the rounded box. Chamfer (a Design's `field.corner`) cuts the upper-right and
+// lower-left corners at 45° by `options.z` (never more than half the body) and keeps the other two square: a sticker cut
+// with a blade. The cut is a half-plane intersected with the square box, so joins, rims and shadows that read the
+// distance follow it like any other edge.
+float bodyBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
+    if (u.options.y < 0.5)
+        return roundedBox(p, centre, halfSize, radius);
+    vec2 d = p - centre;
+    vec2 q = abs(d) - halfSize;
+    float box = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
+    float cut = min(u.options.z, min(halfSize.x, halfSize.y));
+    if (cut > 0.5 && d.x * d.y < 0.0)
+        box = max(box, (abs(d.x) + abs(d.y) - (halfSize.x + halfSize.y - cut)) * 0.70710678);
+    return box;
 }
 
 // The chrome bevel's environment by elevation e: -1 ground, 0 horizon, 1 sky.
@@ -336,7 +353,7 @@ void main() {
         int block = i / 4;
         int slot = i - block * 4;
         float radius = blockValue(block, slot, u.radiiA, u.radiiB, u.radiiC, u.radiiD, u.radiiE);
-        bodies[i] = roundedBox(p, s.xy, s.zw, radius);
+        bodies[i] = bodyBox(p, s.xy, s.zw, radius);
         united = min(united, bodies[i]);
         float m = blockValue(block, slot, u.glassA, u.glassB, u.glassC, u.glassD, u.glassE);
         if (m > 1.5)
@@ -523,7 +540,7 @@ void main() {
                     int block = i / 4;
                     int slot = i - block * 4;
                     float radius = blockValue(block, slot, u.radiiA, u.radiiB, u.radiiC, u.radiiD, u.radiiE);
-                    bodiesQ[i] = roundedBox(q, s.xy, s.zw, max(radius, bevel));
+                    bodiesQ[i] = bodyBox(q, s.xy, s.zw, max(radius, bevel));
                     unitedQ = min(unitedQ, bodiesQ[i]);
                 }
                 for (int i = 0; i < 20; ++i) {
@@ -773,7 +790,7 @@ void main() {
             if (blockValue(block, slot, u.paintsA, u.paintsB, u.paintsC, u.paintsD, u.paintsE) > 0.5)
                 continue;
             vec4 s = shapeAt(i);
-            casters[i] = roundedBox(ps, s.xy, s.zw, blockValue(block, slot, u.radiiA, u.radiiB, u.radiiC, u.radiiD, u.radiiE));
+            casters[i] = bodyBox(ps, s.xy, s.zw, blockValue(block, slot, u.radiiA, u.radiiB, u.radiiC, u.radiiD, u.radiiE));
             alone = min(alone, casters[i]);
         }
         for (int i = 0; i < 20; ++i) {

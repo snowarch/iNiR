@@ -28,7 +28,7 @@ var airisuHighlightSeeds = map[string]string{
 func hexLCH(hex string) LCH { c, _ := seedLCH(hex); return c }
 
 var airisuLanguage = &Language{
-	name: "airisu", whole: true, pigments: true,
+	name: "airisu", whole: true, pigments: true, dangerSeed: "#f8b500", // red means "live", never "wrong"
 	schemes: []spec{
 		{
 			// Night: shikkoku lacquer at the screen edge, sumi and tetsu for its groups, gofun ink.

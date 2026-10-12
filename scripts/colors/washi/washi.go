@@ -594,12 +594,17 @@ func build(req Request, name string) Palette {
 	}
 	p.Success = status(150, 0.13, readText, false).Hex()
 	p.Warning = status(72, 0.14, readMark, false).Hex()
-	danger := status(27, 0.17, readText, true)
+	dangerH, dangerFillSeed := 27.0, LCH{0.55, 0.15, 33}
+	if lang.dangerSeed != "" {
+		ds := hexLCH(lang.dangerSeed)
+		dangerH, dangerFillSeed = ds.H, ds
+	}
+	danger := status(dangerH, 0.17, readText, true)
 	p.Danger, p.OnDanger = danger.Hex(), v.onFill(danger, readOn).Hex()
 
 	// Filled shapes: the same hues as pigments (bengara, ai, shu), each with its ink.
 	accentFill := v.fill(accentSeed, readText)
-	dangerFill := v.fill(LCH{0.55, 0.15, 33}, readShape)
+	dangerFill := v.fill(dangerFillSeed, readShape)
 	highlightFill := v.fill(LCH{0.6, math.Max(0.1, highlight.LCH().C), highlight.LCH().H}, readShape)
 	if lang.pigments {
 		highlightFill = v.fill(highlightSeed, readShape)
@@ -869,7 +874,7 @@ func styleIDs() []string {
 
 // Version changes whenever a solve would give other colours for the same request; IrisWashi.qml asks again when it
 // differs (TestShellKnowsVersion keeps the two equal).
-const Version = 24
+const Version = 25
 
 // solveSchemes is the palette alone, without the other styles' swatches.
 func solveSchemes(req Request, key string) Output {

@@ -921,6 +921,8 @@ QtObject {
     readonly property real shapeScale: root.preset.shape * root.tweak("shape", 0.3, 1.6)
     // Large containers stop growing well before a pill, so content keeps a concentric margin.
     function corner(px: real): int {
+        // Inside a chamfered silhouette every plate is square: the cut is the only corner (concentric or nothing).
+        if (root.fieldChamfer) return 0
         const cap = px >= 18 ? 1.3 : px >= 10 ? 1.4 : 1.6
         return Math.max(2, Math.round(px * Math.min(root.shapeScale, cap) * root.density))
     }
@@ -967,6 +969,10 @@ QtObject {
         return half
     }
     function pieceRadius(size: real): real { return root.profileRadius(root.pieceShape, size) }
+    // A Design that cuts corners (DESIGNS.md `field.corner: "chamfer"`): the field cuts two opposite corners of every
+    // body at 45° by `chamferCut` and squares the other two; the plates inside go square (`corner`).
+    readonly property bool fieldChamfer: IrisDesign.fieldCorner === "chamfer"
+    readonly property int chamferCut: Math.round(10 * root.density)
     // Auto is what the Island and the Dock always did: a capsule when melted into the edge, the bubbles' shape when floating.
     // Linked, both take the bubbles' shape whatever their own choice.
     readonly property bool linkShapes: Boolean(root.theme?.linkShapes ?? false)

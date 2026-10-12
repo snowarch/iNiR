@@ -51,6 +51,9 @@ type Language struct {
 	// reads as a shape and carries one of the language's two inks (the hanko is vermilion, not the deeper red text on
 	// paper needs), and a mark starts from its own lightness instead of the scheme's band.
 	pigments bool
+	// dangerSeed is the colour an alert takes when it is not washi's shu: AIRISU keeps red for what is live, and an
+	// alert is the warning tape's kerria amber. Empty is shu.
+	dangerSeed string
 }
 
 func (l *Language) specOf(name string) spec {
