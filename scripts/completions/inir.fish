@@ -292,6 +292,7 @@ complete -c inir -n '__inir_at_function iris' -a theme -d 'iRiS themes, each a w
 complete -c inir -n '__inir_at_value 1 theme iris' -a 'list apply: save: import: export export: folder'
 complete -c inir -n '__inir_at_function iris' -a settings -d 'Open iRiS Settings on a section: general, appearance, motio…'
 complete -c inir -n '__inir_at_value 1 settings iris' -a 'general appearance motion bar bubbles dock desktop windows sidebars controlCenter spotlight orbit notifications sound capture display keyboard battery gaming lock player anime sources system lock/security next prev back forward search: open'
+complete -c inir -n '__inir_at_function iris' -a settingsClose -d 'Close iRiS Settings in either host, over the desktop or as…'
 complete -c inir -n '__inir_at_function iris' -a bubble -d 'Place an Island bubble (left, right, utility) or an extra b…'
 complete -c inir -n '__inir_at_value 2 bubble iris' -a 'left right utility weather notifications controls sound mic tools media visualizer tray top-left top-right bottom-left bottom-right'
 complete -c inir -n '__inir_at_function iris' -a dock -d 'reveal, hide or toggle the iRiS Dock (revealed stays until…'

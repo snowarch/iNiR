@@ -126,6 +126,12 @@ Scope {
             if (page >= 0) GlobalStates.openSettingsPage(page, section)
             else GlobalStates.openSettings()
         }
+        // Closes iRiS Settings in either host (over the desktop or a window); does nothing when it is closed.
+        function settingsClose(): string {
+            const was = GlobalStates.settingsOverlayOpen
+            GlobalStates.settingsOverlayOpen = false
+            return was ? "closed" : "already closed"
+        }
         function bubble(slot: string, place: string): string {
             const extra = IrisPieces.extraIds.includes(slot)
             if (!extra && !IrisPieces.slotIds.includes(slot)) return "Unknown bubble"

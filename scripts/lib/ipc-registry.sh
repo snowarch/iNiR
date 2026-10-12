@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 0d6c3f7cd89fa87b
+# IPC.md hash: a291a4bca4af1e12
 # Targets: 74
 
 declare -gA IPC_TARGET_DESC=(
@@ -186,7 +186,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [globalActions]="run runWithArgs list search open"
   [globalStyle]="set get list"
   [hub]="refresh install remove update use openItem status changed"
-  [iris]="open page close toggle card theme settings bubble dock dockApp dockMove appBubble focus today controlCenter pin layout strip edge dockEdge zone barPiece arrange edit studio notch surround accent spotlight gallerySource orbit orbitCorner orbitClose spotlightClose bubbleCard tap bubbleMenu morph activity activities set adaptive tokens palette preset icon control lock utility watch watchPick desktopAction desktopMenu menuClose watchSubs watchSeek watchSkip motion motioned status"
+  [iris]="open page close toggle card theme settings settingsClose bubble dock dockApp dockMove appBubble focus today controlCenter pin layout strip edge dockEdge zone barPiece arrange edit studio notch surround accent spotlight gallerySource orbit orbitCorner orbitClose spotlightClose bubbleCard tap bubbleMenu morph activity activities set adaptive tokens palette preset icon control lock utility watch watchPick desktopAction desktopMenu menuClose watchSubs watchSeek watchSkip motion motioned status"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
   [lock]="activate prepareSleep deactivate status focus"
   [loginScreen]="set style status sync"
@@ -381,7 +381,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["iris:toggle"]="Expand or collapse the island on the focused output"
   ["iris:card"]="\`open\`, \`close\` or \`toggle\` the media bubble's floating card, or \`pin\` to keep it open"
   ["iris:theme"]="iRiS themes, each a whole redesign of the family: \`list\`, \`apply:<id>\`, \`save:<name>\` (what you see now becomes a theme file), \`import:<path>\` (a shared \`.json\`), \`export\` or \`export:<id>\` (prints the theme as JSON to share) and \`folder\` (where theme files live, \`~/.config/inir/iris/themes\`)"
-  ["iris:settings"]="Open iRiS Settings on a section: \`general\`, \`appearance\`, \`motion\`, \`bar\`, \`bubbles\`, \`dock\`, \`desktop\`, \`windows\`, \`sidebars\`, \`controlCenter\`, \`spotlight\`, \`orbit\`, \`notifications\`, \`sound\`, \`capture\`, \`display\`, \`keyboard\`, \`battery\`, \`gaming\`, \`lock\`, \`player\`, \`anime\`, \`sources\` or \`system\`; add \`/<group>\` to open that group, e.g. \`bubbles/behaviour\` or \`lock/security\`. It also takes \`next\`, \`prev\`, \`back\`, \`forward\` (the history), \`search:<words>\` and \`open\` (the first result)"
+  ["iris:settings"]="Open iRiS Settings on a section: \`general\`, \`appearance\`, \`motion\`, \`bar\`, \`bubbles\`, \`dock\`, \`desktop\`, \`windows\`, \`sidebars\`, \`controlCenter\`, \`spotlight\`, \`orbit\`, \`notifications\`, \`sound\`, \`capture\`, \`display\`, \`keyboard\`, \`battery\`, \`gaming\`, \`lock\`, \`player\`, \`anime\`, \`sources\` or \`system\`; add \`/<group>\` to open that group, e.g. \`bubbles/behaviour\` or \`lock/security\`. It also takes \`next\`, \`prev\`, \`back\`, \`forward\` (the history), \`search:<words>\` and \`open\` (the first result), and \`tune:open\` / \`tune:close\` (every Fine-tune fold on the page)"
+  ["iris:settingsClose"]="Close iRiS Settings in either host, over the desktop or as a window; a bare \`inir settings\` is a toggle"
   ["iris:bubble"]="Place an Island bubble (\`left\`, \`right\`, \`utility\`) or an extra bubble (\`weather\`, \`notifications\`, \`controls\`, \`sound\`, \`mic\`, \`tools\`, \`media\`, \`visualizer\`, \`tray\`): a zone (\`top-left\`, \`top-right\`, \`left\`, \`right\`, \`bottom-left\`, \`bottom-right\`), \`edge:<top"
   ["iris:dock"]="\`reveal\`, \`hide\` or \`toggle\` the iRiS Dock (revealed stays until hidden or an app is chosen)"
   ["iris:dockApp"]="Open a Dock app's \`windows\` or \`menu\` by app id (e.g. \`kitty windows\`), \`pin\` to keep it in the Dock or unpin it (prints which), or \`<any> close\`"
