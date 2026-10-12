@@ -156,10 +156,14 @@ Item {
         return out
     }
     // A small section shows every row at once (Android's rule: a sub-page from about fifteen settings): its groups read as
-    // captioned cards and nothing is behind a click. Galleries and editors keep the larger sections' group pages.
+    // captioned cards and nothing is behind a click. Galleries and editors keep the larger sections' group pages. What
+    // counts is what shows: rows folded behind a group's Fine-tune take no room (a modified one never folds). An index of
+    // a few groups is a few rows over an empty page: those sections read whole up to twice as long.
+    readonly property int essentialCount: root.entries.filter(spec => !IrisOptions.fineTune(spec) || IrisOptions.changed(spec)).length
     readonly property bool flatSection: !root.searching && root.advancedPage < 0 && root.group.length === 0 && root.groups.length > 1
         && root.section !== "system" && root.section !== "home"
-        && (root.split || (root.entries.length <= 15 && !root.entries.some(spec => ["widgets", "pieces", "niriMotion"].includes(spec.kind))))
+        && (root.split || ((root.essentialCount <= 15 || (root.groups.length <= 6 && root.essentialCount <= 30))
+            && !root.entries.some(spec => ["widgets", "pieces", "niriMotion"].includes(spec.kind))))
     // Groups of one row would each be a card under a caption that repeats the row's name: neighbours share one card.
     readonly property var flatBlocks: {
         if (!root.flatSection) return []
@@ -1778,7 +1782,8 @@ Item {
         readonly property bool banner: root.split && hero.staged
         Layout.fillWidth: true
         implicitHeight: hero.banner ? hero.pad + root.stageHeight + Math.round(10 * root.d) + heroText.implicitHeight + Math.round(6 * root.d)
-            : hero.staged ? Math.round(150 * root.d) + 2 * hero.pad : heroText.implicitHeight + 28 * root.d
+            // Beside the scene the words decide the height when they need more than the scene's: a head never cuts its line.
+            : hero.staged ? Math.max(Math.round(150 * root.d) + 2 * hero.pad, heroText.implicitHeight + 2 * hero.pad) : heroText.implicitHeight + 28 * root.d
         radius: root.split ? detailPane.radius : IrisStyle.radiusTile
         color: root.split ? "transparent" : IrisStyle.readingCard
 
@@ -1809,7 +1814,7 @@ Item {
                     font.weight: IrisStyle.weight(Font.DemiBold)
                     // A half-screen window leaves the title beside the scene a third of the page: it wraps, never cuts.
                     wrapMode: Text.WordWrap
-                    maximumLineCount: 2
+                    maximumLineCount: 4
                     elide: Text.ElideRight
                 }
                 IrisText {
@@ -1819,7 +1824,7 @@ Item {
                     color: IrisStyle.subtext
                     font.pixelSize: IrisStyle.typeLabel
                     wrapMode: Text.WordWrap
-                    maximumLineCount: 3
+                    maximumLineCount: 6
                     elide: Text.ElideRight
                 }
             }
@@ -1827,7 +1832,7 @@ Item {
         Loader {
             id: stageLoader
             x: hero.banner ? hero.pad : hero.width - hero.pad - width
-            y: hero.pad
+            y: hero.banner ? hero.pad : Math.round((hero.height - height) / 2)
             width: hero.banner ? hero.width - 2 * hero.pad : Math.round(300 * root.d)
             height: hero.banner ? root.stageHeight : Math.round(150 * root.d)
             active: hero.sceneSection.length > 0
@@ -1948,7 +1953,9 @@ Item {
                 anchors.left: groupMark.right
                 anchors.leftMargin: 12 * root.d
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.ceil(Math.min(implicitWidth, parent.width * 0.42))
+                // The summary gets the rest of the row; with nothing to summarise (a lone switch) the name takes it all.
+                width: Math.ceil(Math.min(implicitWidth, groupRow.lone || groupRow.summary.length === 0
+                    ? parent.width - x - trailing.width - Math.round(28 * root.d) : parent.width * 0.42))
                 text: groupRow.lone ? Translation.tr(groupRow.rows[0].label) : groupRow.modelData.title
                 font.pixelSize: IrisStyle.typeLabel
                 font.weight: IrisStyle.weight(groupRow.unfolded ? Font.DemiBold : Font.Medium)
