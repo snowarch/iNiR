@@ -1245,6 +1245,7 @@ Desktop background and widget controls.
 | `desktopItemsState` | Report desktop-item persistence, availability, item count, validation errors and undo state |
 | `quickControlsPage page` | Show a page of the selected widget's quick controls: widget, look or arrange (and stack, for a widget in a stack) |
 | `quickControlsGeometry` | Report where the selected widget's toolbar and quick-controls sheet sit, as JSON |
+| `arrangeWidget widgetName x y probe` | Move a widget on the focused screen to x, y as a drop would place it: lined up with the widgets around and off any it would cover. With `probe` true it only reports where it would land, as JSON |
 | `widgetSnapshot widgetName path` | Save one desktop widget, as it renders now, to a PNG (offscreen: works while windows cover the desktop). |
 | `legibilityState` | Report what each desktop widget reads under itself (brightness, spread, light or dark backdrop) and the ink and accent it chose |
 | `focusWidget widgetName openControls` | Select a desktop widget and optionally open its quick controls |

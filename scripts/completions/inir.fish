@@ -155,6 +155,8 @@ complete -c inir -n '__inir_at_function background' -a widgetSnapshot -d 'Save o
 complete -c inir -n '__inir_at_function background' -a legibilityState -d 'Report what each desktop widget reads under itself (brightn…'
 complete -c inir -n '__inir_at_function background' -a desktopItemsState -d 'Report desktop-item persistence, availability, item count,…'
 complete -c inir -n '__inir_at_function background' -a focusWidget -d 'Select a desktop widget and optionally open its quick contr…'
+complete -c inir -n '__inir_at_function background' -a arrangeWidget -d 'Move a widget on the focused screen to x, y as a drop would…'
+complete -c inir -n '__inir_at_value 4 arrangeWidget background' -a 'probe'
 complete -c inir -n '__inir_at_function background' -a promoteWidget -d 'Move a desktop widget to the top of the persistent layer or…'
 complete -c inir -n '__inir_at_function background' -a resetLayerOrder -d 'Reset desktop widgets to their built-in stacking order'
 complete -c inir -n '__inir_at_function background' -a setWidgetEnabled -d 'Enable or disable a built-in desktop widget'

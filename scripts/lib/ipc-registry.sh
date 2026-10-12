@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: a291a4bca4af1e12
+# IPC.md hash: f942c7f4c180fa40
 # Targets: 74
 
 declare -gA IPC_TARGET_DESC=(
@@ -165,7 +165,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [appCatalog]="refresh search install list"
   [audio]="volumeUp volumeDown mute playEvent micMute"
   [autostart]="status addCommand addApp removeLast reload"
-  [background]="widgetDesign widgetMaterial widgetSearch toggleEditMode toggleWidgetManager setEditMode editState applyOrganicEdgePreset applyOrganicEdgeComposition applyOrganicEdgeMaterial applyOrganicEdgeResponse organicEdgeState setOrganicEdgeEnabled quickControlsPage quickControlsGeometry widgetSnapshot legibilityState desktopItemsState focusWidget promoteWidget resetLayerOrder setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
+  [background]="widgetDesign widgetMaterial widgetSearch toggleEditMode toggleWidgetManager setEditMode editState applyOrganicEdgePreset applyOrganicEdgeComposition applyOrganicEdgeMaterial applyOrganicEdgeResponse organicEdgeState setOrganicEdgeEnabled quickControlsPage quickControlsGeometry widgetSnapshot legibilityState desktopItemsState focusWidget arrangeWidget promoteWidget resetLayerOrder setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
   [bar]="mediaWidth toggle close open"
   [battery]="status simulate"
   [bluetooth]="status simulate"
@@ -283,6 +283,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["background:legibilityState"]="Report what each desktop widget reads under itself (brightness, spread, light or dark backdrop) and the ink and accent it chose"
   ["background:desktopItemsState"]="Report desktop-item persistence, availability, item count, validation errors and undo state"
   ["background:focusWidget"]="Select a desktop widget and optionally open its quick controls"
+  ["background:arrangeWidget"]="Move a widget on the focused screen to x, y as a drop would place it: lined up with the widgets around and off any it would cover. With \`probe\` true it only reports where it would land, as JSON"
   ["background:promoteWidget"]="Move a desktop widget to the top of the persistent layer order"
   ["background:resetLayerOrder"]="Reset desktop widgets to their built-in stacking order"
   ["background:setWidgetEnabled"]="Enable or disable a built-in desktop widget"
@@ -697,6 +698,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["background:quickControlsPage"]="<page>"
   ["background:widgetSnapshot"]="<widgetName> <path>"
   ["background:focusWidget"]="<widgetName> <openControls>"
+  ["background:arrangeWidget"]="<widgetName> <x> <y> <probe>"
   ["background:promoteWidget"]="<widgetName>"
   ["background:setWidgetEnabled"]="<widgetName> <enabled>"
   ["background:clockDebugSetMode"]="<style> <adaptToWallpaper>"
@@ -846,6 +848,7 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["background:widgetDesign"]="iris material individual instrument readout undo status"
   ["background:widgetMaterial"]="status match"
   ["background:widgetSearch"]="open next previous take close"
+  ["background:arrangeWidget"]="probe"
   ["battery:simulate"]="full off"
   ["bluetooth:simulate"]="off on none clear"
   ["colorMode:set"]="dark light toggle"
