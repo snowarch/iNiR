@@ -56,7 +56,7 @@ Item {
         scale: 1.08 - 0.08 * root.shown
         width: Math.min(320 * root.d, parent.width - 40)
         implicitHeight: body.implicitHeight + 40 * root.d
-        radius: IrisStyle.radiusPlate
+        radius: IrisStyle.fieldChamfer ? 0 : IrisStyle.radiusPlate
         raised: true
 
         ColumnLayout {
@@ -72,8 +72,9 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 implicitWidth: Math.round(52 * root.d)
                 implicitHeight: implicitWidth
+                // A glyph-mark Design (AIRISU) shows the key alone, in the seal, on no disc.
                 radius: width / 2
-                color: IrisStyle.tintFill(IrisStyle.accent)
+                color: IrisStyle.plainMarks ? "transparent" : IrisStyle.tintFill(IrisStyle.accent)
                 MaterialSymbol {
                     anchors.centerIn: parent
                     text: PolkitService.batteryChargeLimitRequest ? "battery_charging_full" : "lock"
@@ -88,6 +89,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 text: PolkitService.actionLabel !== Translation.tr("Authentication")
                     ? PolkitService.actionLabel : Translation.tr("Authentication required")
+                font.family: IrisStyle.fontTitle
                 font.pixelSize: IrisStyle.typeHeadline
                 font.weight: IrisStyle.weight(Font.DemiBold)
                 wrapMode: Text.Wrap
@@ -99,7 +101,8 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 text: PolkitService.cleanMessage
                 color: IrisStyle.subtext
-                font.pixelSize: IrisStyle.typeMeta
+                font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontMain
+                font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeFootnote : IrisStyle.typeMeta
                 wrapMode: Text.Wrap
                 maximumLineCount: 4
                 elide: Text.ElideRight
@@ -116,11 +119,12 @@ Item {
                 placeholderText: PolkitService.cleanPrompt
                 font.pixelSize: IrisStyle.typeBody
                 onAccepted: root.submit()
+                // A plate Design cuts the field square on its fillet, the seal underlining the focus.
                 background: Rectangle {
-                    radius: height / 2
-                    color: (input.activeFocus ? IrisStyle.fill : IrisStyle.fillQuiet)
-                    border.width: input.activeFocus ? Math.max(1, Math.round(1.5 * root.d)) : 0
-                    border.color: IrisStyle.tintBorder(IrisStyle.accent)
+                    radius: IrisStyle.plateSelection ? 0 : height / 2
+                    color: IrisStyle.plateSelection ? IrisStyle.bodySurface : (input.activeFocus ? IrisStyle.fill : IrisStyle.fillQuiet)
+                    border.width: IrisStyle.plateSelection ? Math.max(1, Math.round(root.d)) : input.activeFocus ? Math.max(1, Math.round(1.5 * root.d)) : 0
+                    border.color: IrisStyle.plateSelection ? (input.activeFocus ? IrisStyle.accentFill : IrisStyle.hairline) : IrisStyle.tintBorder(IrisStyle.accent)
                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                 }
             }

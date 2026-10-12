@@ -16,6 +16,7 @@ QtObject {
         osd: "scenes/Osd.qml",
         banner: "scenes/Banner.qml",
         lock: "scenes/Lock.qml",
+        session: "scenes/Session.qml",
         clockFace: "parts/ClockFace.qml",
         // Skins of iRiS's primitives: every surface that uses them (Settings, the dock, menus, the sidebars) wears them.
         switch: "skins/Switch.qml",

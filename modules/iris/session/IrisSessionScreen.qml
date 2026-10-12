@@ -73,6 +73,8 @@ Variants {
             sequences: [StandardKey.Cancel]
             onActivated: {
                 if ((sessionLoader.item?.pending ?? "").length > 0) sessionLoader.item.pending = ""
+                // A staged Design's lever goes back to neutral before the screen closes.
+                else if ((sessionLoader.item?.scene ?? "").length > 0 && sessionLoader.item.keyboardNavigation) sessionLoader.item.keyboardNavigation = false
                 else GlobalStates.sessionOpen = false
             }
         }
@@ -104,6 +106,9 @@ Variants {
                 property bool keyboardNavigation: false
                 property string pending: ""
                 readonly property var pendingAction: stage.actions.find(action => action.id === stage.pending) ?? null
+                // The active Design may stage the choice its own way (DESIGNS.md › Composiciones); the actions, the keys
+                // and the confirm stay here.
+                readonly property string scene: IrisDesign.skin("session")
 
                 function trigger(index: int): void {
                     const action = stage.actions[index]
@@ -122,14 +127,18 @@ Variants {
                 Component.onCompleted: Qt.callLater(() => stage.forceActiveFocus())
                 Keys.onPressed: event => {
                     const count = stage.actions.length
-                    if (event.key === Qt.Key_Right || event.key === Qt.Key_Tab) {
+                    if (event.key === Qt.Key_Right || event.key === Qt.Key_Tab || (stage.scene.length > 0 && event.key === Qt.Key_Down)) {
                         stage.keyboardNavigation = true
                         stage.pending = ""
                         stage.focusIndex = (stage.focusIndex + 1) % count
-                    } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backtab) {
+                    } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backtab || (stage.scene.length > 0 && event.key === Qt.Key_Up)) {
                         stage.keyboardNavigation = true
                         stage.pending = ""
                         stage.focusIndex = (stage.focusIndex + count - 1) % count
+                    } else if (stage.scene.length > 0 && ((event.key >= Qt.Key_1 && event.key <= Qt.Key_4) || event.key === Qt.Key_R)) {
+                        // A Design that numbers the actions (AIRISU's gears) takes their numbers straight.
+                        stage.keyboardNavigation = true
+                        stage.trigger(event.key === Qt.Key_R ? 4 : event.key - Qt.Key_1)
                     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
                         stage.keyboardNavigation = true
                         stage.trigger(stage.focusIndex)
@@ -184,8 +193,19 @@ Variants {
                     }
                 }
 
+                Loader {
+                    anchors.fill: parent
+                    active: stage.scene.length > 0
+                    source: stage.scene
+                    onLoaded: {
+                        item.host = stage
+                        item.shown = Qt.binding(() => window.presentationShown)
+                    }
+                }
+
                 ColumnLayout {
                     anchors.centerIn: parent
+                    visible: stage.scene.length === 0
                     spacing: 0
                     opacity: window.presentationShown ? 1 : 0
                     scale: window.presentationShown ? 1 : 0.96
