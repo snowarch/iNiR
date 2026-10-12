@@ -10,9 +10,10 @@ QtObject {
     readonly property string palette: "airisu"
     readonly property var parts: ({
         insignia: "parts/Insignia.qml",
-        controlCenter: "scenes/ControlCenter.qml"
+        controlCenter: "scenes/ControlCenter.qml",
+        bar: "scenes/Bar.qml"
     })
     // How a surface's body holds this Design's scene: its width and its inner padding (0: laid edge to edge).
-    readonly property var surfaces: ({ controlCenter: { width: 440, padding: 0 } })
+    readonly property var surfaces: ({ controlCenter: { width: 440, padding: 0, gap: 12 } })
     readonly property var field: ({ corner: "chamfer" }) // a sticker cut with a blade (IrisField.frag bodyBox)
 }

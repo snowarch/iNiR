@@ -41,7 +41,7 @@ Item {
             fuse: root.fromPiece ? Math.round(IrisStyle.fuseDeep * joinRise) : IrisStyle.fuseDeep,
             id: "control-center", glass: IrisStyle.surfaceGlass("controlCenter"),
             joins: root.fromPiece ? (joinRise > 0 ? String(root.origin?.fieldId ?? "") : "")
-                : root.islandBody ? "island" : "" }]
+                : root.islandBody && root.scene.length === 0 ? "island" : "" }]
         return shapes
     }
     readonly property var islandBody: GlobalStates.irisIslandGeometry?.[root.screenName] ?? null
@@ -85,6 +85,8 @@ Item {
         : Math.min(root.width - 16, (Math.max(320, Number(root.options?.width ?? 360))
         + (GlobalStates.irisControlEdit ? IrisControlOptions.editorExtra : 0)) * IrisStyle.density)
     readonly property real contentPadding: root.scene.length > 0 ? Number(IrisDesign.surface("controlCenter", "padding", 16)) * IrisStyle.density : IrisStyle.concentricPad(IrisStyle.surfaceRadius("controlCenter", IrisStyle.radiusPanel), 16 * IrisStyle.density)
+    // How far the body hangs from the Island: welded into it in iRiS, apart from it when a Design says so.
+    readonly property real hang: root.scene.length > 0 ? Number(IrisDesign.surface("controlCenter", "gap", -IrisStyle.weld / IrisStyle.density)) * IrisStyle.density : -IrisStyle.weld
     readonly property real edge: Math.round(8 * IrisStyle.density) + IrisFrame.band
     readonly property real edgeLeft: Math.round(8 * IrisStyle.density) + IrisFrame.safeClear("left")
     readonly property real edgeRight: Math.round(8 * IrisStyle.density) + IrisFrame.safeClear("right")
@@ -136,9 +138,9 @@ Item {
             : root.holding ? Math.max(12, Math.min(root.heldTop, root.height - height - root.edgeGap))
             : root.islandSide ? Math.round(Math.max(IrisFrame.safeInset("top") + root.edge, Math.min(root.height - height - IrisFrame.safeInset("bottom") - root.edge,
                 (root.origin ? root.origin.y + root.origin.height / 2 : (root.islandBody ? root.islandBody.y + root.islandBody.height / 2 : root.height / 2)) - height / 2)))
-            : root.barBottom ? (root.islandBody ? root.islandBody.y - height + IrisStyle.weld
+            : root.barBottom ? (root.islandBody ? root.islandBody.y - height - root.hang
                 : root.height - height - root.edgeGap - IrisFrame.band)
-            : (root.islandBody ? root.islandBody.y + root.islandBody.height - IrisStyle.weld
+            : (root.islandBody ? root.islandBody.y + root.islandBody.height + root.hang
                 : root.edgeGap + IrisFrame.band)
         onYChanged: if (!root.holding) root.heldTop = panel.y
         width: root.panelWidth
