@@ -23,6 +23,8 @@ Item {
     property bool _dragSessionActive: false
     readonly property bool containsPress: _dragArea.pressed || root._dragSessionActive
     readonly property bool isDragging: _dragArea.drag.active
+    // Keys held while carrying (a host lets Alt place freely, past its magnets).
+    property int dragModifiers: Qt.NoModifier
 
     signal pressed()
     signal released()
@@ -48,7 +50,9 @@ Item {
         drag.threshold: root.dragThreshold
         cursorShape: root.draggable && drag.active ? Qt.ClosedHandCursor
             : root.draggable && root.grabCursor ? Qt.OpenHandCursor : Qt.ArrowCursor
-        onPressed: {
+        onPositionChanged: mouse => root.dragModifiers = mouse.modifiers
+        onPressed: mouse => {
+            root.dragModifiers = mouse.modifiers
             root._dragSessionActive = true
             startX = root.x
             startY = root.y

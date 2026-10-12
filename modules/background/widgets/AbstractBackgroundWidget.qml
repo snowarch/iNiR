@@ -850,11 +850,28 @@ AbstractWidget {
     readonly property real _editMagnetThreshold: Math.max(6,
         Math.min(18, root._editGridSize * 0.4))
 
-    function _snapEditEdge(value: real, start: real, end: real): real {
+    function _snapEditEdge(value: real, start: real, end: real, vertical: bool): real {
         const minValue = Number(start) || 0
         const maxValue = Math.max(minValue, Number(end) || 0)
         const raw = Math.max(minValue, Math.min(maxValue, Number(value) || 0))
         const threshold = root._editMagnetThreshold
+        // A resized edge meets a neighbour's edge, or stops one gutter short of it, before the grid.
+        const canvas = root._canvas
+        if (canvas && typeof canvas.arrangeNeighbours === "function") {
+            const gap = canvas.arrangeGap ?? 16
+            let best = null
+            for (const n of canvas.arrangeNeighbours(root.editInstanceKey)) {
+                const lines = vertical ? [n.y, n.y + n.height, n.y - gap, n.y + n.height + gap]
+                    : [n.x, n.x + n.width, n.x - gap, n.x + n.width + gap]
+                for (const line of lines) {
+                    const d = Math.abs(line - raw)
+                    if (d <= root._neighbourMagnet && (best === null || d < best.d))
+                        best = { d: d, at: line }
+                }
+            }
+            if (best !== null && best.at >= minValue && best.at <= maxValue)
+                return root._snapToPixel(best.at)
+        }
         if (Math.abs(raw - minValue) <= threshold)
             return root._snapToPixel(minValue)
         if (Math.abs(raw - maxValue) <= threshold)
@@ -900,21 +917,73 @@ AbstractWidget {
             root._zoneSafeTop, root._zoneSafeBottom)
     }
 
-    // The ghost is the exact position that will be committed on release.
-    property real _snapPreviewX: _snapEnabled ? root._snapEditX(root.x) : root.x
-    property real _snapPreviewY: _snapEnabled ? root._snapEditY(root.y) : root.y
+    // ── Arranging ──────────────────────────────────────────────
+    // A carried widget is pulled to its neighbours' edges, centres and one gutter beside them, then to the grid,
+    // and never rests on top of another: if the spot is taken it lands on the nearest free one, which the ghost
+    // shows before the drop. Alt carries it freely (no magnets, overlap allowed). Stacking keeps its own drop.
+    readonly property bool _arrangeFree: (root.dragModifiers & Qt.AltModifier) !== 0
+    readonly property real _neighbourMagnet: 12
+    function _planDrop(x: real, y: real): var {
+        const canvas = root._canvas
+        let px = x
+        let py = y
+        let guides = []
+        if (root._snapEnabled && canvas && typeof canvas.magnetize === "function") {
+            const pulled = canvas.magnetize(root.editInstanceKey, x, y, root.width, root.height, root._neighbourMagnet)
+            px = pulled.snappedX ? root._clampX(pulled.x) : root._snapEditX(x)
+            py = pulled.snappedY ? root._clampY(pulled.y) : root._snapEditY(y)
+            guides = pulled.guides
+        } else {
+            px = root._snapEnabled ? root._snapEditX(x) : root._clampX(x)
+            py = root._snapEnabled ? root._snapEditY(y) : root._clampY(y)
+        }
+        if (canvas && typeof canvas.freeSpot === "function") {
+            const spot = canvas.freeSpot(root.editInstanceKey, px, py, root.width, root.height)
+            if (spot.moved) {
+                px = root._clampX(spot.x)
+                py = root._clampY(spot.y)
+                guides = []
+            }
+        }
+        return { x: Math.round(px), y: Math.round(py), guides: guides }
+    }
+    // Evaluated only while carrying: it reads every neighbour.
+    readonly property var _dropPlan: root.isDragging && !root._arrangeFree && root._dropKey.length === 0
+        ? root._planDrop(root.x, root.y) : null
+    property real _snapPreviewX: root._dropPlan ? root._dropPlan.x : root.x
+    property real _snapPreviewY: root._dropPlan ? root._dropPlan.y : root.y
     Rectangle {
         id: snapGhost
-        visible: root.isDragging && root._snapEnabled && root.draggable
+        visible: root._dropPlan !== null && root.draggable
+            && (Math.abs(root._snapPreviewX - root.x) > 0.5 || Math.abs(root._snapPreviewY - root.y) > 0.5)
         x: root._snapPreviewX - root.x
         y: root._snapPreviewY - root.y
         width: root.width
         height: root.height
-        radius: Appearance.rounding.small
-        color: "transparent"
+        radius: root.widgetIrisFamily ? Math.round(Math.max(0, Math.min(40, Config.options?.iris?.widgets?.radius ?? 22)) * IrisStyle.density)
+            : Appearance.rounding.small
+        color: root.widgetIrisFamily ? IrisStyle.tintFill(IrisStyle.accent) : ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.08)
         border.width: 1.5
-        border.color: ColorUtils.applyAlpha(root.widgetIrisFamily ? IrisStyle.accent : Appearance.colors.colPrimary, 0.35)
-        opacity: 0.7
+        border.color: root.widgetIrisFamily ? IrisStyle.tintBorder(IrisStyle.accent) : ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.45)
+    }
+    // Alignment lines through the widgets the carried one lines up with; a gutter shows as a short tick.
+    Repeater {
+        model: root._dropPlan ? root._dropPlan.guides : []
+        delegate: Rectangle {
+            required property var modelData
+            parent: root._chromeHost ?? root
+            readonly property real originX: parent === root ? root.x : 0
+            readonly property real originY: parent === root ? root.y : 0
+            readonly property real dx: root._snapPreviewX - root.x
+            readonly property real dy: root._snapPreviewY - root.y
+            x: (modelData.vertical ? modelData.at - 0.5 : modelData.from) - originX
+            y: (modelData.vertical ? modelData.from : modelData.at - 0.5) - originY
+            width: modelData.vertical ? 1 : Math.max(1, modelData.to - modelData.from)
+            height: modelData.vertical ? Math.max(1, modelData.to - modelData.from) : 1
+            color: root.widgetIrisFamily ? IrisStyle.accent : Appearance.colors.colPrimary
+            opacity: modelData.gap ? 0.9 : 0.7
+            z: 300
+        }
     }
 
     // ── Edit engagement ──────────────────────────────────────
@@ -1442,7 +1511,7 @@ AbstractWidget {
                     let rightEdge = rh._startX + rh._startWidth + dx
                     if (root._snapEnabled)
                         rightEdge = root._snapEditEdge(rightEdge,
-                            root._zoneSafeLeft, root._zoneSafeRight)
+                            root._zoneSafeLeft, root._zoneSafeRight, false)
                     newW = Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth,
                         rightEdge - rh._startX))
                 }
@@ -1451,7 +1520,7 @@ AbstractWidget {
                     let leftEdge = rh._startX + dx
                     if (root._snapEnabled)
                         leftEdge = root._snapEditEdge(leftEdge,
-                            root._zoneSafeLeft, root._zoneSafeRight)
+                            root._zoneSafeLeft, root._zoneSafeRight, false)
                     const dw = Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth,
                         fixedRight - leftEdge))
                     newX = fixedRight - dw
@@ -1461,7 +1530,7 @@ AbstractWidget {
                     let bottomEdge = rh._startY + rh._startHeight + dy
                     if (root._snapEnabled)
                         bottomEdge = root._snapEditEdge(bottomEdge,
-                            root._zoneSafeTop, root._zoneSafeBottom)
+                            root._zoneSafeTop, root._zoneSafeBottom, true)
                     newH = Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight,
                         bottomEdge - rh._startY))
                 }
@@ -1470,7 +1539,7 @@ AbstractWidget {
                     let topEdge = rh._startY + dy
                     if (root._snapEnabled)
                         topEdge = root._snapEditEdge(topEdge,
-                            root._zoneSafeTop, root._zoneSafeBottom)
+                            root._zoneSafeTop, root._zoneSafeBottom, true)
                     const dh = Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight,
                         fixedBottom - topEdge))
                     newY = fixedBottom - dh
@@ -1522,6 +1591,7 @@ AbstractWidget {
                     root.snapToZone(root.placementStrategy)
                 else if (root._isAutoPlacement)
                     root.refreshPlacementIfNeeded()
+                _makeRoomLater.restart()
             }
 
             onCanceled: {
@@ -1599,7 +1669,18 @@ AbstractWidget {
             else if (root.placementStrategy === "free"
                     && (Math.round(root._clampX(root.x)) !== Math.round(root.x) || Math.round(root._clampY(root.y)) !== Math.round(root.y)))
                 root._setOutputValues({ x: Math.round(root._clampX(root.x)), y: Math.round(root._clampY(root.y)) })
+            root._makeRoom()
         }
+    }
+    // A widget that grew moves the neighbours it now covers aside; it runs once the new size has settled.
+    function _makeRoom(): void {
+        if (GlobalStates.widgetEditMode && root._canvas && typeof root._canvas.makeRoom === "function")
+            root._canvas.makeRoom(root.editInstanceKey)
+    }
+    Timer {
+        id: _makeRoomLater
+        interval: 120
+        onTriggered: root._makeRoom()
     }
 
     // Carrying one widget over another lights the other as a drop target; letting go stacks them.
@@ -1735,15 +1816,9 @@ AbstractWidget {
             root._absorb()
             return
         }
-        let newX = root.x;
-        let newY = root.y;
-
-        if (root._snapEnabled) {
-            newX = root._snapEditX(newX)
-            newY = root._snapEditY(newY)
-        }
-        const finalX = root._snapEnabled ? newX : root._clampX(newX)
-        const finalY = root._snapEnabled ? newY : root._clampY(newY)
+        const plan = root._arrangeFree ? null : root._planDrop(root.x, root.y)
+        const finalX = plan ? plan.x : root._clampX(root.x)
+        const finalY = plan ? plan.y : root._clampY(root.y)
         root.x = finalX;
         root.y = finalY;
         const updates = { x: finalX, y: finalY }

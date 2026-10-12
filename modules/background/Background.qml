@@ -324,6 +324,21 @@ Scope {
             return key
         }
 
+        // Carries a widget to x,y on the focused output the way a drop does (magnets, grid, never on top of another).
+        // `probe` only reports where it would land and the guides it would draw.
+        function arrangeWidget(widgetName: string, x: real, y: real, probe: bool): string {
+            const screen = GlobalStates.focusedScreen ?? Quickshell.screens[0]
+            const canvas = backgroundScope.widgetCanvases[screen?.name ?? ""]
+            const item = canvas?.loadedWidget((screen?.name ?? "") + "::" + String(widgetName ?? "").trim()) ?? null
+            if (!item)
+                return "widget not on the focused output: " + widgetName
+            const plan = item._planDrop(Number(x), Number(y))
+            if (!probe)
+                item._setOutputValues({ x: plan.x, y: plan.y, placementStrategy: "free" })
+            return JSON.stringify({ widget: widgetName, asked: { x: Number(x), y: Number(y) }, lands: { x: plan.x, y: plan.y },
+                size: { width: Math.round(item.width), height: Math.round(item.height) }, guides: plan.guides })
+        }
+
         function promoteWidget(widgetName: string): string {
             const name = String(widgetName ?? "").trim()
             if (name.length === 0)
@@ -2246,6 +2261,9 @@ Scope {
                     return true
                 }
 
+                // The gutter widgets keep between each other when the canvas places them: arranged side by side,
+                // pushed aside or added, they sit this far apart.
+                readonly property int arrangeGap: 16
                 function _nearestFreePosition(item, desiredX, desiredY, placed, work): var {
                     const left = Number(work.left ?? 0)
                     const top = Number(work.top ?? 0)
@@ -2255,9 +2273,11 @@ Scope {
                     const maxY = Math.max(top, bottom - item.height)
                     const startX = Math.max(left, Math.min(maxX, desiredX))
                     const startY = Math.max(top, Math.min(maxY, desiredY))
-                    const gap = 14
+                    // A hair under the gutter, so a spot exactly one gutter away counts as free.
+                    const gap = widgetCanvas.arrangeGap
+                    const testGap = gap - 1
                     if (widgetCanvas._positionIsFree(
-                            startX, startY, item.width, item.height, placed, gap))
+                            startX, startY, item.width, item.height, placed, testGap))
                         return { x: Math.round(startX), y: Math.round(startY) }
 
                     const step = 24
@@ -2267,7 +2287,7 @@ Scope {
                         const px = Math.max(left, Math.min(maxX, x))
                         const py = Math.max(top, Math.min(maxY, y))
                         if (!widgetCanvas._positionIsFree(
-                                px, py, item.width, item.height, placed, gap))
+                                px, py, item.width, item.height, placed, testGap))
                             return
                         const dx = px - startX
                         const dy = py - startY
@@ -2277,6 +2297,16 @@ Scope {
                             best = { x: Math.round(px), y: Math.round(py) }
                         }
                     }
+                    // Beside a neighbour, one gutter away and aligned with it: a widget moved aside or added lines up
+                    // with what is already there instead of landing on the lattice.
+                    for (const rect of placed) {
+                        consider(rect.x + rect.width + gap, rect.y)
+                        consider(rect.x - item.width - gap, rect.y)
+                        consider(rect.x, rect.y + rect.height + gap)
+                        consider(rect.x, rect.y - item.height - gap)
+                        consider(rect.x + rect.width + gap, rect.y + rect.height - item.height)
+                        consider(rect.x + rect.width - item.width, rect.y + rect.height + gap)
+                    }
                     for (let y = top; y <= maxY; y += step) {
                         for (let x = left; x <= maxX; x += step)
                             consider(x, y)
@@ -2285,6 +2315,115 @@ Scope {
                     consider(left, maxY)
                     consider(maxX, maxY)
                     return best ?? { x: Math.round(startX), y: Math.round(startY) }
+                }
+
+                // ── Arranging (edit mode) ─────────────────────────────────────
+                // The widgets an arranged one meets: on screen, neither the item itself nor the pages of its stack.
+                function arrangeNeighbours(instanceKey: string): var {
+                    const widgets = widgetCanvas._loadedDesktopWidgets()
+                    const current = widgets.find(item => item.editInstanceKey === instanceKey)
+                    if (!current)
+                        return []
+                    return widgets.filter(item => item !== current && item.width > 0 && item.height > 0
+                        && item.opacity > 0.01
+                        && !(current.stacked && item.stacked && item.stack?.id === current.stack?.id))
+                        .map(item => ({ key: item.editInstanceKey, x: item.x, y: item.y, width: item.width,
+                            height: item.height, locked: Boolean(item.locked), item: item }))
+                }
+
+                // Magnetic snap: within `threshold` px of a neighbour's edge or centre, or one gutter beside it, the
+                // carried rect lands exactly there. Gives the position and the guide lines to draw.
+                function magnetize(instanceKey: string, x: real, y: real, width: real, height: real, threshold: real): var {
+                    const others = widgetCanvas.arrangeNeighbours(instanceKey)
+                    const gap = widgetCanvas.arrangeGap
+                    let bestX = null
+                    let bestY = null
+                    for (const n of others) {
+                        // Only neighbours near on the other axis pull: alignment reads between widgets that sit
+                        // close, not across the screen.
+                        const nearRow = y < n.y + n.height + 320 && y + height > n.y - 320
+                        const nearColumn = x < n.x + n.width + 320 && x + width > n.x - 320
+                        if (nearRow) {
+                            for (const c of [
+                                    { at: n.x, line: n.x }, { at: n.x + n.width - width, line: n.x + n.width },
+                                    { at: n.x + (n.width - width) / 2, line: n.x + n.width / 2 },
+                                    { at: n.x + n.width + gap, line: n.x + n.width, gap: true },
+                                    { at: n.x - width - gap, line: n.x, gap: true }]) {
+                                const d = Math.abs(c.at - x)
+                                if (d <= threshold && (bestX === null || d < bestX.d))
+                                    bestX = { d: d, at: c.at, line: c.line, gap: Boolean(c.gap), n: n }
+                            }
+                        }
+                        if (nearColumn) {
+                            for (const c of [
+                                    { at: n.y, line: n.y }, { at: n.y + n.height - height, line: n.y + n.height },
+                                    { at: n.y + (n.height - height) / 2, line: n.y + n.height / 2 },
+                                    { at: n.y + n.height + gap, line: n.y + n.height, gap: true },
+                                    { at: n.y - height - gap, line: n.y, gap: true }]) {
+                                const d = Math.abs(c.at - y)
+                                if (d <= threshold && (bestY === null || d < bestY.d))
+                                    bestY = { d: d, at: c.at, line: c.line, gap: Boolean(c.gap), n: n }
+                            }
+                        }
+                    }
+                    const outX = bestX ? Math.round(bestX.at) : x
+                    const outY = bestY ? Math.round(bestY.at) : y
+                    const guides = []
+                    // An alignment draws its line through both widgets; a gutter draws the gap it keeps.
+                    if (bestX)
+                        guides.push(bestX.gap
+                            ? { vertical: false, gap: true, at: Math.round(Math.max(outY, bestX.n.y) + Math.min(outY + height, bestX.n.y + bestX.n.height)) / 2,
+                                from: Math.min(outX + width, bestX.n.x + bestX.n.width), to: Math.max(outX, bestX.n.x) }
+                            : { vertical: true, at: Math.round(bestX.line),
+                                from: Math.min(outY, bestX.n.y), to: Math.max(outY + height, bestX.n.y + bestX.n.height) })
+                    if (bestY)
+                        guides.push(bestY.gap
+                            ? { vertical: true, gap: true, at: Math.round(Math.max(outX, bestY.n.x) + Math.min(outX + width, bestY.n.x + bestY.n.width)) / 2,
+                                from: Math.min(outY + height, bestY.n.y + bestY.n.height), to: Math.max(outY, bestY.n.y) }
+                            : { vertical: false, at: Math.round(bestY.line),
+                                from: Math.min(outX, bestY.n.x), to: Math.max(outX + width, bestY.n.x + bestY.n.width) })
+                    return { x: outX, y: outY, snappedX: bestX !== null, snappedY: bestY !== null, guides: guides }
+                }
+
+                // Where a carried widget may rest: the spot asked for when nothing is under it, else the nearest free
+                // one (beside a neighbour first). Nothing is left lying on top of another at rest.
+                function freeSpot(instanceKey: string, x: real, y: real, width: real, height: real): var {
+                    const placed = widgetCanvas.arrangeNeighbours(instanceKey)
+                    if (widgetCanvas._positionIsFree(x, y, width, height, placed, 0))
+                        return { x: Math.round(x), y: Math.round(y), moved: false }
+                    const spot = widgetCanvas._nearestFreePosition({ width: width, height: height }, x, y, placed,
+                        bgRoot.desktopItemsWorkArea)
+                    return { x: spot.x, y: spot.y, moved: true }
+                }
+
+                // A widget that grew (resized, a larger size class) moves the neighbours it now covers aside, each to
+                // its nearest free spot. When one of them cannot move (locked, held by a zone), the grown one steps off.
+                function makeRoom(instanceKey: string): void {
+                    const grown = widgetCanvas.loadedWidget(instanceKey)
+                    if (!grown)
+                        return
+                    const all = widgetCanvas.arrangeNeighbours(instanceKey)
+                    const me = { x: grown.x, y: grown.y, width: grown.width, height: grown.height }
+                    const covered = all.filter(n => widgetCanvas._rectOverlaps(me, n, 0))
+                    if (covered.length === 0)
+                        return
+                    const moving = covered.filter(n => !n.locked && n.item.placementStrategy === "free")
+                    if (moving.length < covered.length) {
+                        const spot = widgetCanvas.freeSpot(instanceKey, me.x, me.y, me.width, me.height)
+                        if (spot.moved)
+                            grown._setOutputValues({ x: spot.x, y: spot.y, placementStrategy: "free" })
+                        return
+                    }
+                    const settled = [me].concat(all.filter(n => moving.indexOf(n) < 0))
+                    const cx = me.x + me.width / 2
+                    const cy = me.y + me.height / 2
+                    moving.sort((a, b) => Math.hypot(a.x + a.width / 2 - cx, a.y + a.height / 2 - cy)
+                        - Math.hypot(b.x + b.width / 2 - cx, b.y + b.height / 2 - cy))
+                    for (const n of moving) {
+                        const spot = widgetCanvas._nearestFreePosition(n, n.x, n.y, settled, bgRoot.desktopItemsWorkArea)
+                        settled.push({ x: spot.x, y: spot.y, width: n.width, height: n.height })
+                        n.item._setOutputValues({ x: spot.x, y: spot.y })
+                    }
                 }
 
                 function initializeOutputWidgetLayout(): void {
