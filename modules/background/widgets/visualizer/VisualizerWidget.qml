@@ -28,8 +28,9 @@ AbstractBackgroundWidget {
         lineWidth: 2, edgeInset: 0, edgeSoftness: 28, accentStrength: 70,
         contentWidth: 304, contentHeight: 104, dim: 0,
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
-        showBackground: true, useBlur: false, showBorder: true,
-        backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2,
+        // A visualizer is drawn on the wallpaper itself: a plate and an outline only box the music in.
+        showBackground: false, useBlur: false, showBorder: false,
+        backgroundOpacity: 0, borderWidth: 1, borderOpacity: 0.2,
         cornerRadius: -1, x: 100, y: 100
     })
 

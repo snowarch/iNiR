@@ -80,13 +80,16 @@ Rectangle {
     // the shared Ricelin opacity again or every widget becomes nearly invisible.
     readonly property real _plateAlpha: root._backgroundVisible
         ? (root._island ? 1 : root._editorial ? (root._glass ? Appearance.editorial.glassOpacity : Math.min(1, 0.86 + root._surfaceStrength * 0.14)) : Math.min(0.96, 0.72 + root._surfaceStrength * 0.24)) : 0
-    readonly property string _irisMaterialName: String(Config.options?.iris?.widgets?.material ?? "glass")
+    // The owning widget's own Look material and opacity win over the shared row (AbstractBackgroundWidget resolves
+    // both), so a widget made Transparent in its Look controls drops its plate whichever design draws it.
+    readonly property string _irisMaterialName: String(parent?.irisMaterial ?? Config.options?.iris?.widgets?.material ?? "glass")
     readonly property bool _irisGlass: root._iris && root._backgroundVisible && root._irisMaterialName === "glass"
     readonly property bool _irisClear: root._iris && root._irisMaterialName === "clear"
     readonly property string _irisOutline: String(Config.options?.iris?.widgets?.outline ?? "auto")
     readonly property bool _irisRimHidden: root._iris && !GlobalStates.widgetEditMode && (root._irisOutline === "none"
         || (root._irisOutline !== "always" && root._irisClear && !Boolean(Config.options?.iris?.widgets?.rim ?? false)))
-    readonly property real _irisStrength: Math.max(0, Math.min(100, Config.options?.iris?.widgets?.opacity ?? 100)) / 100
+    readonly property real _irisStrength: Math.max(0, Math.min(1, Number(parent?.irisSurfaceOpacity
+        ?? (Config.options?.iris?.widgets?.opacity ?? 100) / 100)))
     readonly property bool _glass: root._irisGlass || !root._iris && !root._island && root._backgroundVisible
         && Appearance.blurBackendFor("widgets", Appearance.blurTopology.unsupported) === "wallpaper"
         && root.surfaceUseBlur
@@ -132,7 +135,7 @@ Rectangle {
         : ColorUtils.applyAlpha(
         root.colorMode === "dark" ? ColorUtils.mix(IrisStyle.text, IrisStyle.accent, 0.98) : root._irisMaterial,
         root._backgroundVisible ? Math.min(1, 0.72 + root._surfaceStrength * 0.28)
-            * Math.max(0, Math.min(100, Config.options?.iris?.widgets?.opacity ?? 100)) / 100 : 0)
+            * root._irisStrength : 0)
     readonly property color _cookieFillBase: root.colorMode === "auto"
         ? root.surfaceFill : root._plate
     readonly property color _cookieFill: root._backgroundVisible
