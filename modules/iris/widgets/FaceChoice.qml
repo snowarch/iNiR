@@ -14,10 +14,10 @@ Rectangle {
 
     implicitWidth: row.implicitWidth + Math.round(20 * IrisStyle.density)
     implicitHeight: Math.round(34 * IrisStyle.density)
-    radius: height / 2
-    color: root.selected ? IrisStyle.tintFill(IrisStyle.accent)
+    radius: IrisStyle.fieldChamfer ? 0 : height / 2
+    color: root.selected ? IrisStyle.selectionFill
         : hover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
-    border.width: root.selected ? 1 : 0
+    border.width: root.selected && !IrisStyle.plateSelection ? 1 : 0
     border.color: IrisStyle.tintBorder(IrisStyle.accent)
     scale: tap.pressed ? IrisStyle.pressScale(0.97) : 1
     Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -33,12 +33,12 @@ Rectangle {
             text: root.icon
             fill: root.selected ? 1 : 0
             iconSize: 16 * IrisStyle.typeScale
-            color: root.selected ? IrisStyle.accent : IrisStyle.textSecondary
+            color: root.selected ? IrisStyle.selectionInk : IrisStyle.textSecondary
         }
         StyledText {
             anchors.verticalCenter: parent.verticalCenter
             text: root.label
-            color: root.selected ? IrisStyle.text : IrisStyle.textSecondary
+            color: root.selected ? IrisStyle.selectionText : IrisStyle.textSecondary
             font.family: IrisStyle.fontMain
             font.pixelSize: IrisStyle.typeLabel
             font.weight: root.selected ? Font.DemiBold : Font.Medium

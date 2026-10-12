@@ -986,6 +986,11 @@ QtObject {
     readonly property bool indexed: IrisDesign.trait("index") === true
     readonly property bool monoCaptions: IrisDesign.trait("captions") === "mono"
     readonly property bool lowerTitles: IrisDesign.trait("titles") === "lower"
+    // Where you are and what is chosen (a row, a cell, a tile): the accent wash in iRiS, the gofun plate with lacquer ink
+    // in a plate Design. `selectionInk` marks (the chosen glyph, a check), `selectionText` the label on it.
+    readonly property color selectionFill: root.plateSelection ? root.text : root.tintFill(root.accent)
+    readonly property color selectionInk: root.plateSelection ? root.bodySurface : root.accent
+    readonly property color selectionText: root.plateSelection ? root.bodySurface : root.text
     // A list's place as a part number: 01, 02… (indexed Designs).
     function indexLabel(i: int): string { return (i + 1 < 10 ? "0" : "") + (i + 1) }
     readonly property int chamferCut: Math.round(10 * root.density)

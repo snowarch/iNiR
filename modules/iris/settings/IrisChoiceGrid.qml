@@ -135,7 +135,7 @@ Item {
                 radius: IrisStyle.radiusRow
                 // Where you are reads in the accent; the wash under it only supports it. Hover is a fill step.
                 color: cell.pressed ? IrisStyle.fillActive
-                    : cell.chosen ? IrisStyle.tintFill(IrisStyle.accent)
+                    : cell.chosen ? IrisStyle.selectionFill
                     : cell.containsMouse ? IrisStyle.fillHover : "transparent"
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
             }
@@ -155,7 +155,7 @@ Item {
                 // Names in right-to-left scripts keep the column's alignment: a grid reads down one edge.
                 horizontalAlignment: Text.AlignLeft
                 text: cell.modelData.text
-                color: cell.chosen ? IrisStyle.accent : cell.isExtra ? IrisStyle.subtext : IrisStyle.text
+                color: cell.chosen ? IrisStyle.selectionInk : cell.isExtra ? IrisStyle.subtext : IrisStyle.text
                 font.family: !cell.isExtra && root.fontFor ? root.fontFor(cell.modelData.option) : IrisStyle.fontMain
                 font.pixelSize: IrisStyle.typeLabel
                 font.weight: IrisStyle.weight(cell.chosen ? Font.DemiBold : Font.Normal)
@@ -168,7 +168,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "check"
                 iconSize: Math.round(16 * root.d)
-                color: IrisStyle.accent
+                color: IrisStyle.selectionInk
             }
         }
     }
