@@ -24,6 +24,21 @@ Rectangle {
     readonly property int selectedIndex: root.options.findIndex(option => option.value === root.current)
     readonly property real slot: (root.width - 2 * root.inset) / root.count
     signal picked(var value)
+    // The width that holds the longest label in every language with its air: a caller with a fixed slot takes at least
+    // this, so a translated label never spills past its segment.
+    readonly property real fitWidth: {
+        let widest = 0
+        for (const option of root.options)
+            widest = Math.max(widest, labelMetrics.advanceWidth(Translation.tr(String(option.label ?? "")))
+                + (String(option.swatch ?? "").length > 0 ? 18 * root.d : 0))
+        return Math.ceil(root.count * (widest + 24 * root.d) + 2 * root.inset)
+    }
+    FontMetrics {
+        id: labelMetrics
+        font.family: IrisStyle.fontMain
+        font.pixelSize: IrisStyle.typeMeta
+        font.weight: IrisStyle.weight(Font.DemiBold)
+    }
 
     implicitHeight: Math.round((root.pictured ? 52 : root.glyphOnly ? 32 : 28) * root.d)
     implicitWidth: root.glyphOnly ? root.count * (root.implicitHeight - 2 * root.inset) + 2 * root.inset : 0
@@ -119,7 +134,7 @@ Rectangle {
                     text: Translation.tr(String(segment.modelData.label ?? ""))
                     font.pixelSize: IrisStyle.typeFootnote
                     font.weight: IrisStyle.weight(segment.selected ? Font.DemiBold : Font.Normal)
-                    color: segment.selected ? IrisStyle.text : IrisStyle.subtext
+                    color: segment.selected ? IrisStyle.accent : IrisStyle.subtext
                     elide: Text.ElideRight
                 }
             }
@@ -139,11 +154,14 @@ Rectangle {
                 }
                 IrisText {
                     anchors.verticalCenter: parent.verticalCenter
+                    // Bounded by its segment: a slot too narrow for a translation elides instead of spilling over its neighbour.
+                    width: Math.min(implicitWidth, Math.max(0, segment.width - Math.round(16 * root.d)))
+                    elide: Text.ElideRight
                     text: Translation.tr(String(segment.modelData.label ?? ""))
                     font.family: root.fontFor ? root.fontFor(segment.modelData) : IrisStyle.fontMain
                     font.pixelSize: IrisStyle.typeMeta
                     font.weight: IrisStyle.weight(segment.selected ? Font.DemiBold : Font.Normal)
-                    color: segment.selected ? IrisStyle.text : IrisStyle.subtext
+                    color: segment.selected ? IrisStyle.accent : IrisStyle.subtext
                 }
             }
         }

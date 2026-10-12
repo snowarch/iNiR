@@ -21,6 +21,8 @@ import qs.modules.iris.components
 // from are one surface: drawn and moved in the same frame.
 Item {
     id: root
+    // Apply sizes from its word, so a long translation never elides it.
+    TextMetrics { id: applyMetrics; font.pixelSize: IrisStyle.typeLabel; font.weight: IrisStyle.weight(Font.DemiBold); text: Translation.tr("Apply") }
 
     property var screen: null
     readonly property var targetScreen: {
@@ -859,7 +861,7 @@ Item {
                 IrisSegmented {
                     id: sourceSwitch
                     visible: root.sources.length > 1
-                    Layout.preferredWidth: Math.round(84 * root.d) * root.sources.length + 2 * sourceSwitch.inset
+                    Layout.preferredWidth: Math.max(Math.round(84 * root.d) * root.sources.length + 2 * sourceSwitch.inset, sourceSwitch.fitWidth)
                     Layout.preferredHeight: Math.round(34 * root.d)
                     accessibleName: Translation.tr("Source")
                     options: root.sources.map(entry => ({ value: entry.id, label: entry.label }))
@@ -973,7 +975,7 @@ Item {
                 }
                 IrisSegmented {
                     visible: root.onlineSortable && root.onlineOrder === "top"
-                    Layout.preferredWidth: Math.round(58 * root.d) * 4 + 2 * inset
+                    Layout.preferredWidth: Math.max(Math.round(58 * root.d) * 4 + 2 * inset, fitWidth)
                     Layout.preferredHeight: Math.round(34 * root.d)
                     accessibleName: Translation.tr("Top of the")
                     options: [{ value: "1d", label: Translation.tr("Day") }, { value: "1w", label: Translation.tr("Week") },
@@ -1162,7 +1164,7 @@ Item {
                 }
                 IrisSegmented {
                     visible: root.overviewTargetable
-                    Layout.preferredWidth: Math.round(96 * root.d) * 2 + 2 * inset
+                    Layout.preferredWidth: Math.max(Math.round(96 * root.d) * 2 + 2 * inset, fitWidth)
                     Layout.preferredHeight: Math.round(32 * root.d)
                     accessibleName: Translation.tr("Apply to")
                     options: [{ value: "main", label: Translation.tr("Desktop") }, { value: "backdrop", label: Translation.tr("Overview") }]
@@ -1195,7 +1197,7 @@ Item {
                 }
                 IrisButton {
                     implicitHeight: Math.round(36 * root.d)
-                    implicitWidth: Math.round(88 * root.d)
+                    implicitWidth: Math.max(Math.round(88 * root.d), applyMetrics.advanceWidth + Math.round(36 * root.d))
                     buttonRadius: height / 2
                     buttonRadiusPressed: height / 2
                     emphasized: true
