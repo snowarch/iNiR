@@ -9342,5 +9342,13 @@
   "Carry a widget near another and it lines up; drop it on one that is taken and it finds the nearest free spot. Hold Alt to place it freely.": "ウィジェットを別のウィジェットに近づけると揃います。使用中の場所に落とすと最も近い空きを探します。Alt を押したままにすると自由に置けます。",
   "To the grid, the screen's edges and centre, and the widgets around.": "グリッド、画面の端と中央、そして近くのウィジェットに。",
   "Widgets fade when windows are open on the workspace.": "ワークスペースにウィンドウが開いているとウィジェットが薄くなります。",
-  "None chosen shows it on every screen.": "何も選ばないとすべての画面に表示されます。"
+  "None chosen shows it on every screen.": "何も選ばないとすべての画面に表示されます。",
+  "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.": "天気のピースとウィジェットすべてが表示する予報。オフにすると空のままで、何も取得しません。",
+  "With longitude, overrides the place.": "経度と合わせて、場所を上書きします。",
+  "Network name": "ネットワーク名",
+  "What other devices see when the hotspot in the Control Center is on.": "コントロールセンターのホットスポットがオンのとき、ほかの端末に見える名前。",
+  "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.": "5 GHz は近くで速く、2.4 GHz は遠くまで届き古い端末でも使えます。",
+  "Browser identity": "ブラウザーの識別子",
+  "The user agent sent to wallpaper, news and image sites that refuse unknown clients.": "不明なクライアントを拒む壁紙・ニュース・画像サイトに送るユーザーエージェント。",
+  "At least 8 characters": "8 文字以上"
 }

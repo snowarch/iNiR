@@ -9342,5 +9342,13 @@
   "Carry a widget near another and it lines up; drop it on one that is taken and it finds the nearest free spot. Hold Alt to place it freely.": "把小组件靠近另一个即可对齐；放到已占用的位置上，它会找到最近的空位。按住 Alt 可自由放置。",
   "To the grid, the screen's edges and centre, and the widgets around.": "对齐网格、屏幕边缘和中心以及附近的小组件。",
   "Widgets fade when windows are open on the workspace.": "工作区有打开的窗口时小组件会变淡。",
-  "None chosen shows it on every screen.": "未选择时显示在所有屏幕上。"
+  "None chosen shows it on every screen.": "未选择时显示在所有屏幕上。",
+  "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.": "所有天气组件和小部件显示的预报。关闭后它们保持空白，不会获取任何数据。",
+  "With longitude, overrides the place.": "与经度一起，替代地点。",
+  "Network name": "网络名称",
+  "What other devices see when the hotspot in the Control Center is on.": "控制中心的热点开启时，其他设备看到的名称。",
+  "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.": "5 GHz 在近处更快；2.4 GHz 覆盖更远，并兼容旧设备。",
+  "Browser identity": "浏览器标识",
+  "The user agent sent to wallpaper, news and image sites that refuse unknown clients.": "发送给拒绝未知客户端的壁纸、新闻和图片网站的用户代理。",
+  "At least 8 characters": "至少 8 个字符"
 }

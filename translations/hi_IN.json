@@ -9342,5 +9342,13 @@
   "Carry a widget near another and it lines up; drop it on one that is taken and it finds the nearest free spot. Hold Alt to place it freely.": "किसी विजेट को दूसरे के पास लाएँ, वह संरेखित हो जाएगा; भरी जगह पर छोड़ें तो वह सबसे पास की खाली जगह ढूँढ लेगा। उसे स्वतंत्र रूप से रखने के लिए Alt दबाए रखें।",
   "To the grid, the screen's edges and centre, and the widgets around.": "ग्रिड, स्क्रीन के किनारों और केंद्र, और आसपास के विजेट से।",
   "Widgets fade when windows are open on the workspace.": "वर्कस्पेस पर खिड़कियाँ खुली होने पर विजेट फीके पड़ जाते हैं।",
-  "None chosen shows it on every screen.": "कुछ न चुनने पर सभी स्क्रीन पर दिखता है।"
+  "None chosen shows it on every screen.": "कुछ न चुनने पर सभी स्क्रीन पर दिखता है।",
+  "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.": "वह पूर्वानुमान जो हर मौसम पीस और विजेट दिखाता है। बंद होने पर वे खाली रहते हैं और कुछ भी नहीं लाया जाता।",
+  "With longitude, overrides the place.": "देशांतर के साथ, स्थान को बदल देता है।",
+  "Network name": "नेटवर्क नाम",
+  "What other devices see when the hotspot in the Control Center is on.": "कंट्रोल सेंटर का हॉटस्पॉट चालू होने पर दूसरे डिवाइस यही देखते हैं।",
+  "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.": "5 GHz पास में तेज़ है; 2.4 GHz दूर तक पहुँचता है और पुराने डिवाइस के साथ चलता है।",
+  "Browser identity": "ब्राउज़र पहचान",
+  "The user agent sent to wallpaper, news and image sites that refuse unknown clients.": "अनजान क्लाइंट को मना करने वाली वॉलपेपर, समाचार और इमेज साइटों को भेजा जाने वाला यूज़र एजेंट।",
+  "At least 8 characters": "कम से कम 8 अक्षर"
 }

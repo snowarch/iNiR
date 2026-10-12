@@ -1412,9 +1412,11 @@ Item {
             placeholderText: Translation.tr(String(root.spec.placeholder ?? ""))
             horizontalAlignment: root.spec.short ? Text.AlignHCenter : Text.AlignLeft
             echoMode: root.spec.secret ? TextInput.Password : TextInput.Normal
-            text: String(root.value ?? "")
+            // A numeric row's 0 means unset: the field shows its placeholder.
+            readonly property string stored: root.spec.numeric && Number(root.value ?? 0) === 0 ? "" : String(root.value ?? "")
+            text: field.stored
             Accessible.name: Translation.tr(root.spec.label)
-            onTextChanged: if (field.text !== String(root.value ?? "")) commitDelay.restart()
+            onTextChanged: if (field.text !== field.stored) commitDelay.restart()
             Timer {
                 id: commitDelay
                 interval: 400

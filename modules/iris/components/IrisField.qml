@@ -21,6 +21,11 @@ MaterialTextField {
     // Material insets the background for a floating label iRiS never shows, which drops the box below its text.
     topInset: 0
     bottomInset: 0
+    // One line that scrolls to the cursor: Material's field wraps, which cut a long value (a user agent) in half.
+    wrapMode: TextInput.NoWrap
+    // At rest a long value reads from its start, not from where the cursor was left.
+    onActiveFocusChanged: if (!root.activeFocus) root.cursorPosition = 0
+    onTextChanged: if (!root.activeFocus) root.cursorPosition = 0
 
     IrisText {
         anchors.left: parent.left

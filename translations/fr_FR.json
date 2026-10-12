@@ -9342,5 +9342,13 @@
   "Carry a widget near another and it lines up; drop it on one that is taken and it finds the nearest free spot. Hold Alt to place it freely.": "Approchez un widget d'un autre et il s'aligne ; déposez-le sur une place prise et il trouve la place libre la plus proche. Maintenez Alt pour le placer librement.",
   "To the grid, the screen's edges and centre, and the widgets around.": "Sur la grille, les bords et le centre de l'écran, et les widgets voisins.",
   "Widgets fade when windows are open on the workspace.": "Les widgets s'estompent quand des fenêtres sont ouvertes sur l'espace de travail.",
-  "None chosen shows it on every screen.": "Si aucun n'est choisi, il s'affiche sur tous les écrans."
+  "None chosen shows it on every screen.": "Si aucun n'est choisi, il s'affiche sur tous les écrans.",
+  "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.": "La météo affichée par chaque pièce et widget météo. Désactivée, ils restent vides et rien n'est téléchargé.",
+  "With longitude, overrides the place.": "Avec la longitude, remplace le lieu.",
+  "Network name": "Nom du réseau",
+  "What other devices see when the hotspot in the Control Center is on.": "Ce que voient les autres appareils quand le point d'accès du Centre de contrôle est activé.",
+  "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.": "Le 5 GHz est plus rapide à proximité ; le 2.4 GHz porte plus loin et fonctionne avec les anciens appareils.",
+  "Browser identity": "Identité du navigateur",
+  "The user agent sent to wallpaper, news and image sites that refuse unknown clients.": "L'agent utilisateur envoyé aux sites de fonds d'écran, d'actualités et d'images qui refusent les clients inconnus.",
+  "At least 8 characters": "Au moins 8 caractères"
 }

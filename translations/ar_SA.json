@@ -9342,5 +9342,13 @@
   "Carry a widget near another and it lines up; drop it on one that is taken and it finds the nearest free spot. Hold Alt to place it freely.": "قرّب أداة من أخرى فتصطف معها؛ أفلتها على مكان مشغول فتجد أقرب مكان فارغ. اضغط Alt مطولًا لوضعها بحرية.",
   "To the grid, the screen's edges and centre, and the widgets around.": "إلى الشبكة وحواف الشاشة ومركزها والأدوات القريبة.",
   "Widgets fade when windows are open on the workspace.": "تخفت الأدوات عندما تكون هناك نوافذ مفتوحة في مساحة العمل.",
-  "None chosen shows it on every screen.": "إن لم تختر شيئًا تظهر على كل الشاشات."
+  "None chosen shows it on every screen.": "إن لم تختر شيئًا تظهر على كل الشاشات.",
+  "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.": "التوقعات التي تعرضها كل قطع وأدوات الطقس. عند الإيقاف تبقى فارغة ولا يُجلب شيء.",
+  "With longitude, overrides the place.": "مع خط الطول، يحل محل المكان.",
+  "Network name": "اسم الشبكة",
+  "What other devices see when the hotspot in the Control Center is on.": "ما تراه الأجهزة الأخرى عند تشغيل نقطة الاتصال في مركز التحكم.",
+  "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.": "5 غيغاهرتز أسرع عن قرب؛ 2.4 غيغاهرتز يصل أبعد ويعمل مع الأجهزة القديمة.",
+  "Browser identity": "هوية المتصفح",
+  "The user agent sent to wallpaper, news and image sites that refuse unknown clients.": "وكيل المستخدم المرسَل إلى مواقع الخلفيات والأخبار والصور التي ترفض العملاء غير المعروفين.",
+  "At least 8 characters": "8 أحرف على الأقل"
 }

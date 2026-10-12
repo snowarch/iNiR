@@ -9342,5 +9342,13 @@
   "Carry a widget near another and it lines up; drop it on one that is taken and it finds the nearest free spot. Hold Alt to place it freely.": "קרבו וידג'ט לאחר והוא מתיישר; שחררו אותו על מקום תפוס והוא ימצא את המקום הפנוי הקרוב. החזיקו Alt כדי למקם אותו בחופשיות.",
   "To the grid, the screen's edges and centre, and the widgets around.": "לרשת, לקצוות ולמרכז המסך ולווידג'טים הסמוכים.",
   "Widgets fade when windows are open on the workspace.": "הווידג'טים מתעמעמים כשיש חלונות פתוחים במרחב העבודה.",
-  "None chosen shows it on every screen.": "בלי בחירה, מוצג בכל המסכים."
+  "None chosen shows it on every screen.": "בלי בחירה, מוצג בכל המסכים.",
+  "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.": "התחזית שמציגים כל רכיבי ווידג'טי מזג האוויר. כשכבוי הם נשארים ריקים ושום דבר לא נטען.",
+  "With longitude, overrides the place.": "יחד עם קו האורך, מחליף את המיקום.",
+  "Network name": "שם הרשת",
+  "What other devices see when the hotspot in the Control Center is on.": "מה שמכשירים אחרים רואים כשהנקודה החמה במרכז הבקרה פועלת.",
+  "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.": "5 GHz מהיר יותר מקרוב; 2.4 GHz מגיע רחוק יותר ועובד עם מכשירים ישנים.",
+  "Browser identity": "זהות הדפדפן",
+  "The user agent sent to wallpaper, news and image sites that refuse unknown clients.": "סוכן המשתמש שנשלח לאתרי רקעים, חדשות ותמונות שדוחים לקוחות לא מוכרים.",
+  "At least 8 characters": "לפחות 8 תווים"
 }

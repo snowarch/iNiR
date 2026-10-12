@@ -9342,5 +9342,13 @@
   "Carry a widget near another and it lines up; drop it on one that is taken and it finds the nearest free spot. Hold Alt to place it freely.": "Đưa một widget lại gần widget khác để nó thẳng hàng; thả lên chỗ đã có thì nó tìm chỗ trống gần nhất. Giữ Alt để đặt tự do.",
   "To the grid, the screen's edges and centre, and the widgets around.": "Theo lưới, mép và tâm màn hình, và các widget xung quanh.",
   "Widgets fade when windows are open on the workspace.": "Widget mờ đi khi có cửa sổ mở trên không gian làm việc.",
-  "None chosen shows it on every screen.": "Không chọn thì hiển thị trên mọi màn hình."
+  "None chosen shows it on every screen.": "Không chọn thì hiển thị trên mọi màn hình.",
+  "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.": "Dự báo mà mọi mục và widget thời tiết hiển thị. Khi tắt, chúng để trống và không tải gì cả.",
+  "With longitude, overrides the place.": "Cùng với kinh độ, thay thế địa điểm.",
+  "Network name": "Tên mạng",
+  "What other devices see when the hotspot in the Control Center is on.": "Những gì thiết bị khác thấy khi điểm phát sóng trong Trung tâm điều khiển bật.",
+  "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.": "5 GHz nhanh hơn ở gần; 2.4 GHz đi xa hơn và hoạt động với thiết bị cũ.",
+  "Browser identity": "Danh tính trình duyệt",
+  "The user agent sent to wallpaper, news and image sites that refuse unknown clients.": "User agent gửi tới các trang hình nền, tin tức và hình ảnh từ chối máy khách lạ.",
+  "At least 8 characters": "Ít nhất 8 ký tự"
 }

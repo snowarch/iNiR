@@ -9342,5 +9342,13 @@
   "Carry a widget near another and it lines up; drop it on one that is taken and it finds the nearest free spot. Hold Alt to place it freely.": "Поднесите виджет к другому, и он выровняется; отпустите его на занятом месте, и он найдёт ближайшее свободное. Удерживайте Alt, чтобы поставить его свободно.",
   "To the grid, the screen's edges and centre, and the widgets around.": "К сетке, краям и центру экрана и к соседним виджетам.",
   "Widgets fade when windows are open on the workspace.": "Виджеты тускнеют, когда на рабочем пространстве открыты окна.",
-  "None chosen shows it on every screen.": "Если ничего не выбрано, показывается на всех экранах."
+  "None chosen shows it on every screen.": "Если ничего не выбрано, показывается на всех экранах.",
+  "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.": "Прогноз, который показывают все погодные элементы и виджеты. Если выключено, они пусты и ничего не загружается.",
+  "With longitude, overrides the place.": "Вместе с долготой заменяет место.",
+  "Network name": "Имя сети",
+  "What other devices see when the hotspot in the Control Center is on.": "Что видят другие устройства, когда точка доступа в Центре управления включена.",
+  "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.": "5 ГГц быстрее вблизи; 2.4 ГГц дальше и работает со старыми устройствами.",
+  "Browser identity": "Идентификация браузера",
+  "The user agent sent to wallpaper, news and image sites that refuse unknown clients.": "User agent, отправляемый сайтам обоев, новостей и изображений, которые отклоняют неизвестных клиентов.",
+  "At least 8 characters": "Не менее 8 символов"
 }

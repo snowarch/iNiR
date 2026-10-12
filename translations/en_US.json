@@ -9342,5 +9342,13 @@
   "Carry a widget near another and it lines up; drop it on one that is taken and it finds the nearest free spot. Hold Alt to place it freely.": "Carry a widget near another and it lines up; drop it on one that is taken and it finds the nearest free spot. Hold Alt to place it freely.",
   "To the grid, the screen's edges and centre, and the widgets around.": "To the grid, the screen's edges and centre, and the widgets around.",
   "Widgets fade when windows are open on the workspace.": "Widgets fade when windows are open on the workspace.",
-  "None chosen shows it on every screen.": "None chosen shows it on every screen."
+  "None chosen shows it on every screen.": "None chosen shows it on every screen.",
+  "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.": "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.",
+  "With longitude, overrides the place.": "With longitude, overrides the place.",
+  "Network name": "Network name",
+  "What other devices see when the hotspot in the Control Center is on.": "What other devices see when the hotspot in the Control Center is on.",
+  "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.": "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.",
+  "Browser identity": "Browser identity",
+  "The user agent sent to wallpaper, news and image sites that refuse unknown clients.": "The user agent sent to wallpaper, news and image sites that refuse unknown clients.",
+  "At least 8 characters": "At least 8 characters"
 }

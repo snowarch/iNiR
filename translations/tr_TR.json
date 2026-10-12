@@ -9342,5 +9342,13 @@
   "Carry a widget near another and it lines up; drop it on one that is taken and it finds the nearest free spot. Hold Alt to place it freely.": "Bir widget'ı diğerine yaklaştırın, hizalansın; dolu bir yere bırakın, en yakın boş yeri bulsun. Serbestçe yerleştirmek için Alt'a basılı tutun.",
   "To the grid, the screen's edges and centre, and the widgets around.": "Izgaraya, ekranın kenarlarına ve ortasına ve yakındaki widget'lara.",
   "Widgets fade when windows are open on the workspace.": "Çalışma alanında açık pencere olduğunda widget'lar soluklaşır.",
-  "None chosen shows it on every screen.": "Hiçbiri seçilmezse tüm ekranlarda gösterilir."
+  "None chosen shows it on every screen.": "Hiçbiri seçilmezse tüm ekranlarda gösterilir.",
+  "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.": "Tüm hava durumu parçalarının ve widget'larının gösterdiği tahmin. Kapalıyken boş kalırlar ve hiçbir şey indirilmez.",
+  "With longitude, overrides the place.": "Boylamla birlikte konumun yerini alır.",
+  "Network name": "Ağ adı",
+  "What other devices see when the hotspot in the Control Center is on.": "Kontrol Merkezi'ndeki hotspot açıkken diğer cihazların gördüğü ad.",
+  "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.": "5 GHz yakında daha hızlıdır; 2.4 GHz daha uzağa ulaşır ve eski cihazlarla çalışır.",
+  "Browser identity": "Tarayıcı kimliği",
+  "The user agent sent to wallpaper, news and image sites that refuse unknown clients.": "Bilinmeyen istemcileri reddeden duvar kâğıdı, haber ve görsel sitelerine gönderilen kullanıcı aracısı.",
+  "At least 8 characters": "En az 8 karakter"
 }

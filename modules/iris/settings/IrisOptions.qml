@@ -91,6 +91,8 @@ QtObject {
             if (floating && listed.includes(id)) updates["iris.bar.pieces"] = listed.filter(entry => entry !== id)
             Config.setNestedValues(updates)
         }
+        // A number typed as text (coordinates) is stored as a number; anything unreadable as 0, which means unset.
+        else if (spec.numeric) Config.setNestedValue(spec.path, Number.isFinite(parseFloat(next)) ? parseFloat(next) : 0)
         else Config.setNestedValue(spec.path, next)
     }
     // A leading "!" negates either form, so a row can hide on one value of a choice.
@@ -701,6 +703,13 @@ QtObject {
         { section: "player", group: "Bubble", label: "Media bubble opens", description: "A card that floats out of the bubble, or the Island's player page. Cluster composition only.", path: "iris.player.bubbleOpens", kind: "choice", fallback: "card", choices: [{label:"Card",value:"card",glyph:"web_asset"},{label:"Island",value:"island",glyph:"pill"}] },
         { section: "player", group: "Bubble", label: "Keep the card open", description: "The card stays beside the Island while a player is active.", path: "iris.player.cardPinned", kind: "switch", fallback: false },
     ].concat(root.bubbleRows, [
+        { section: "sources", group: "Weather", label: "Weather", description: "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.", path: "bar.weather.enable", kind: "switch", fallback: false, keywords: ["weather", "forecast", "temperature", "clima", "tiempo"] },
+        { section: "sources", group: "Weather", label: "Latitude", description: "With longitude, overrides the place.", path: "bar.weather.manualLat", visibleWhen: "bar.weather.enable", kind: "text", numeric: true, placeholder: "-34.6037", fallback: 0, tune: true, keywords: ["coordinates", "latitude", "location", "coordenadas"] },
+        { section: "sources", group: "Weather", label: "Longitude", path: "bar.weather.manualLon", visibleWhen: "bar.weather.enable", kind: "text", numeric: true, placeholder: "-58.3816", fallback: 0, tune: true, keywords: ["coordinates", "longitude", "location", "coordenadas"] },
+        { section: "sources", group: "Hotspot", label: "Network name", description: "What other devices see when the hotspot in the Control Center is on.", path: "hotspot.ssid", kind: "text", placeholder: "iNiR Hotspot", fallback: "iNiR Hotspot", keywords: ["hotspot", "ssid", "wifi", "share", "tethering", "compartir"] },
+        { section: "sources", group: "Hotspot", label: "Password", path: "hotspot.password", kind: "text", secret: true, placeholder: "At least 8 characters", fallback: "", keywords: ["hotspot", "password", "key", "contraseña"] },
+        { section: "sources", group: "Hotspot", label: "Band", description: "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.", path: "hotspot.band", kind: "choice", fallback: "bg", choices: [{label:"2.4 GHz",value:"bg"},{label:"5 GHz",value:"a"}] },
+        { section: "sources", group: "Network", label: "Browser identity", description: "The user agent sent to wallpaper, news and image sites that refuse unknown clients.", path: "networking.userAgent", kind: "text", placeholder: "Mozilla/5.0 …", fallback: "", keywords: ["user agent", "browser", "network", "wallhaven"] },
         { section: "sources", group: "Weather", label: "Fahrenheit", description: "Degrees and distances in US units instead of Celsius and metric.", path: "bar.weather.useUSCS", kind: "switch", fallback: false },
         { section: "sources", group: "Weather", label: "Place", description: "The city the forecast is for. Leave it empty and iRiS works it out from your connection, which is usually close but not always right.", path: "bar.weather.city", kind: "text", placeholder: "Worked out from your connection", fallback: "" },
         { section: "sources", group: "Weather", label: "Use GPS when there is one", description: "Asks geoclue instead of guessing from your connection. Off unless you want it.", path: "bar.weather.enableGPS", kind: "switch", fallback: false },
@@ -1220,7 +1229,7 @@ QtObject {
         "Windows": "select_window", "Workspaces": "view_column", "Apps": "apps", "Performance": "speed", "Web search": "travel_explore",
         "Read text": "document_scanner", "Texture": "texture", "Borders": "border_style", "Edges": "border_style", "Movement": "animation", "Closing": "close",
         "Room for iRiS": "fit_screen", "Keyboard": "keyboard", "Mouse": "mouse", "Trackpad": "touch_app", "Pointer": "arrow_selector_tool", "Screen": "monitor",
-        "Arranging": "drag_pan", "Power saving": "energy_savings_leaf", "World clock": "public", "Month Calendar": "calendar_month", "Upcoming Events": "event_upcoming", "Date badge": "today", "Day progress": "wb_twilight", "Timers": "timer", "System uptime": "history", "Media Controls": "album", "System Monitor": "monitoring", "Battery": "battery_full", "Controls": "toggle_on", "Screen time": "hourglass_top", "News": "newspaper", "Notes": "sticky_note_2", "Todo": "checklist", "User card": "account_circle", "Custom image": "image", "Image converter": "transform", "Decorative shape": "interests", "Japanese Typography": "translate", "Editorial": "article", "Mascot": "pets"
+        "Arranging": "drag_pan", "Power saving": "energy_savings_leaf", "World clock": "public", "Month Calendar": "calendar_month", "Upcoming Events": "event_upcoming", "Date badge": "today", "Day progress": "wb_twilight", "Timers": "timer", "System uptime": "history", "Media Controls": "album", "System Monitor": "monitoring", "Battery": "battery_full", "Controls": "toggle_on", "Screen time": "hourglass_top", "News": "newspaper", "Notes": "sticky_note_2", "Todo": "checklist", "User card": "account_circle", "Custom image": "image", "Image converter": "transform", "Decorative shape": "interests", "Japanese Typography": "translate", "Editorial": "article", "Mascot": "pets", "Hotspot": "wifi_tethering", "Network": "language"
     })
     readonly property var groupTints: ({
         get "Shell family"() { return IrisStyle.identity.purple },
@@ -1350,6 +1359,8 @@ QtObject {
         get "Widgets"() { return IrisStyle.identity.teal },
         get "Windows"() { return IrisStyle.identity.blue },
         get "Workspaces"() { return IrisStyle.identity.indigo },
+        get "Hotspot"() { return IrisStyle.identity.teal },
+        get "Network"() { return IrisStyle.identity.indigo },
         get "Arranging"() { return IrisStyle.identity.sky },
         get "Power saving"() { return IrisStyle.identity.green },
         get "World clock"() { return IrisStyle.identity.teal },

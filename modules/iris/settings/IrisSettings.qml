@@ -232,7 +232,7 @@ Item {
             const name = Translation.tr(spec.label)
             return !on ? "" : name.length <= 24 ? name : Translation.tr("On")
         }
-        case "text": return String(value ?? "")
+        case "text": return spec.numeric && Number(value ?? 0) === 0 ? "" : String(value ?? "")
         case "niriMotion": return NiriAnimationPresets.activePreset?.name ?? ""
         case "icon": return String(value ?? "").length > 0 ? Translation.tr("Custom") : ""
         case "zone":

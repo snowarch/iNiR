@@ -9342,5 +9342,13 @@
   "Carry a widget near another and it lines up; drop it on one that is taken and it finds the nearest free spot. Hold Alt to place it freely.": "위젯을 다른 위젯 가까이 가져가면 정렬됩니다. 이미 차지된 곳에 놓으면 가장 가까운 빈자리를 찾습니다. Alt를 누르고 있으면 자유롭게 놓을 수 있습니다.",
   "To the grid, the screen's edges and centre, and the widgets around.": "격자, 화면의 가장자리와 중앙, 주변 위젯에 맞춥니다.",
   "Widgets fade when windows are open on the workspace.": "작업 공간에 창이 열려 있으면 위젯이 흐려집니다.",
-  "None chosen shows it on every screen.": "아무것도 선택하지 않으면 모든 화면에 표시됩니다."
+  "None chosen shows it on every screen.": "아무것도 선택하지 않으면 모든 화면에 표시됩니다.",
+  "The forecast every weather piece and widget shows. Off, they stay empty and nothing is fetched.": "모든 날씨 조각과 위젯이 보여 주는 예보입니다. 끄면 비어 있고 아무것도 가져오지 않습니다.",
+  "With longitude, overrides the place.": "경도와 함께 위치를 덮어씁니다.",
+  "Network name": "네트워크 이름",
+  "What other devices see when the hotspot in the Control Center is on.": "제어 센터의 핫스팟이 켜져 있을 때 다른 기기에 보이는 이름입니다.",
+  "5 GHz is faster nearby; 2.4 GHz reaches further and works with older devices.": "5 GHz는 가까이에서 더 빠르고, 2.4 GHz는 더 멀리 닿으며 오래된 기기에서도 작동합니다.",
+  "Browser identity": "브라우저 식별자",
+  "The user agent sent to wallpaper, news and image sites that refuse unknown clients.": "알 수 없는 클라이언트를 거부하는 배경화면, 뉴스, 이미지 사이트에 보내는 사용자 에이전트입니다.",
+  "At least 8 characters": "8자 이상"
 }
