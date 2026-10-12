@@ -24,7 +24,8 @@ QtObject {
         button: "skins/Button.qml",
         meter: "skins/Meter.qml",
         ring: "skins/Ring.qml",
-        groupHeader: "skins/GroupHeader.qml"
+        groupHeader: "skins/GroupHeader.qml",
+        cardHeader: "skins/CardHeader.qml"
     })
     // How a surface's body holds this Design's scene: its width and its inner padding (0: laid edge to edge).
     readonly property var surfaces: ({ controlCenter: { width: 440, padding: 0, gap: 12 },

@@ -28,13 +28,18 @@ Rectangle {
     // A Design whose marks are glyphs alone (AIRISU) draws no plate: the glyph in its line weight, in the ink.
     readonly property bool plain: IrisStyle.plainMarks
     property color ink: root.plain ? IrisStyle.textSecondary : root.tiled && root.plate !== "tint" ? root.tint : IrisStyle.onTint
-    property Gradient tintGradient: Gradient {
-        GradientStop { position: 0; color: root.tiled ? root.tileTop : IrisStyle.tileTop(root.tint) }
-        GradientStop { position: 1; color: root.tiled ? root.tileBase : root.tint }
-    }
     radius: root.plain ? 0 : IrisStyle.iconRadius(width)
     color: "transparent"
-    gradient: root.plain ? null : root.tintGradient
+    // The plate is its own child: a Rectangle's gradient cannot be bound back to none (Qt 6 keeps the last one).
+    Rectangle {
+        anchors.fill: parent
+        visible: !root.plain
+        radius: root.radius
+        gradient: Gradient {
+            GradientStop { position: 0; color: root.tiled ? root.tileTop : IrisStyle.tileTop(root.tint) }
+            GradientStop { position: 1; color: root.tiled ? root.tileBase : root.tint }
+        }
+    }
     MaterialSymbol {
         anchors.centerIn: parent
         text: root.glyph

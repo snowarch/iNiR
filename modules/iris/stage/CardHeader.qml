@@ -15,7 +15,16 @@ RowLayout {
     default property alias actions: actionRow.data
     Layout.fillWidth: true
     spacing: 8 * IrisStyle.density
+    // The active Design may draw the head its own way (AIRISU: a line glyph, the name wide in capitals with the body
+    // stripe, the detail in mono); the actions stay here.
+    Item {
+        visible: headSkin.active
+        Layout.fillWidth: true
+        implicitHeight: headSkin.item?.implicitHeight ?? 0
+        IrisSkin { id: headSkin; part: "cardHeader"; host: header }
+    }
     Rectangle {
+        visible: !headSkin.active
         implicitWidth: Math.round(24 * IrisStyle.density)
         implicitHeight: implicitWidth
         radius: IrisStyle.iconRadius(width)
@@ -26,6 +35,7 @@ RowLayout {
         MaterialSymbol { anchors.centerIn: parent; text: header.glyph; fill: 1; iconSize: Math.round(15 * IrisStyle.density); color: IrisStyle.onTint }
     }
     ColumnLayout {
+        visible: !headSkin.active
         Layout.fillWidth: true
         spacing: 0
         IrisText {
@@ -43,5 +53,6 @@ RowLayout {
             elide: Text.ElideRight
         }
     }
-    RowLayout { id: actionRow; spacing: 0 }
+    // Sized by its actions: a nested layout fills by default and took half the head from a skinned title.
+    RowLayout { id: actionRow; Layout.fillWidth: false; spacing: 0 }
 }

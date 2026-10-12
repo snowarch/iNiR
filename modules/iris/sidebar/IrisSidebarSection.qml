@@ -92,27 +92,44 @@ Loader {
                     implicitWidth: Math.round(24 * root.d)
                     implicitHeight: implicitWidth
                     radius: IrisStyle.iconRadius(width)
-                    gradient: Gradient {
-                        GradientStop { position: 0; color: IrisStyle.tileTop(section.tint) }
-                        GradientStop { position: 1; color: section.tint }
+                    // A glyph-mark Design (AIRISU) keeps the glyph in its line weight and no tinted plate.
+                    color: "transparent"
+                    Rectangle {
+                        anchors.fill: parent
+                        visible: !IrisStyle.plainMarks
+                        radius: parent.radius
+                        gradient: Gradient {
+                            GradientStop { position: 0; color: IrisStyle.tileTop(section.tint) }
+                            GradientStop { position: 1; color: section.tint }
+                        }
                     }
-                    MaterialSymbol { anchors.centerIn: parent; text: section.glyph; fill: 1; iconSize: Math.round(15 * root.d); color: IrisStyle.onTint }
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: section.glyph
+                        fill: IrisStyle.plainMarks ? 0 : 1
+                        iconSize: Math.round((IrisStyle.plainMarks ? 18 : 15) * root.d)
+                        color: IrisStyle.plainMarks ? IrisStyle.secondaryOf(section.ink) : IrisStyle.onTint
+                    }
                 }
                 IrisText {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     text: section.title
                     color: section.ink
-                    font.weight: IrisStyle.weight(Font.DemiBold)
-                    font.pixelSize: IrisStyle.typeBody
+                    // A mono-caption Design names its parts in wide capitals, the detail in mono.
+                    font.family: IrisStyle.monoCaptions ? IrisStyle.fontTitle : IrisStyle.fontMain
+                    font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
+                    font.weight: IrisStyle.weight(IrisStyle.monoCaptions ? Font.ExtraBold : Font.DemiBold)
+                    font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeLabel : IrisStyle.typeBody
                     elide: Text.ElideRight
                 }
                 IrisText {
                     visible: text.length > 0
                     text: section.detail
                     color: IrisStyle.secondaryOf(section.ink)
-                    font.family: IrisStyle.fontNumbers
-                    font.pixelSize: IrisStyle.typeMeta
+                    font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontNumbers
+                    font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
+                    font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeFootnote : IrisStyle.typeMeta
                 }
                 RowLayout {
                     id: actionRow
