@@ -254,6 +254,8 @@ Item {
         return ""
     }
     property var unfolded: ({})
+    // Every Fine-tune fold on the page at once (`inir iris settings tune:open`); a section change folds them again.
+    property bool tuneAll: false
     function fold(key: string): void {
         const next = Object.assign({}, root.unfolded)
         next[key] = !next[key]
@@ -525,6 +527,7 @@ Item {
         else if (verb === "prev") root.stepSection(-1)
         else if (verb.startsWith("search:")) { searchField.text = verb.slice(7); root.query = searchField.text }
         else if (verb === "open") root.openFirstResult()
+        else if (verb === "tune:open" || verb === "tune:close") root.tuneAll = verb === "tune:open"
         else return false
         return true
     }
@@ -579,7 +582,7 @@ Item {
             root.applyRequest()
         }
     }
-    onSectionChanged: { settingsFlick.contentY = 0; root.heldGroup = ""; pageEnter.restart(); spyPace.restart() }
+    onSectionChanged: { settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; pageEnter.restart(); spyPace.restart() }
     onOpenGroupChanged: { settingsFlick.contentY = 0; pageEnter.restart() }
     onAdvancedPageChanged: pageEnter.restart()
 
@@ -916,12 +919,21 @@ Item {
                 spacing: 0
 
                 RowLayout {
+                    id: headRow
                     Layout.fillWidth: true
                     Layout.leftMargin: 20 * root.d
                     Layout.rightMargin: IrisStyle.concentricPad(frame.radius, 14 * root.d)
                     Layout.topMargin: IrisStyle.concentricPad(frame.radius, 14 * root.d)
                     Layout.preferredHeight: Math.round(52 * root.d)
                     spacing: 4 * root.d
+                    // What the name and the actions share: the row less every fixed control in it. Measured from the
+                    // row, never from the name or the actions, whose widths move with the folding (that loop froze the shell).
+                    readonly property real sharedRoom: {
+                        let fixed = 0
+                        for (const child of headRow.children)
+                            if (child.visible && child !== titleColumn && child !== toolbarActions) fixed += child.width + headRow.spacing
+                        return headRow.width - fixed - headRow.spacing - 6 * root.d
+                    }
                     IrisIconButton {
                         visible: root.homeLayout
                         materialIcon: "grid_view"
@@ -945,10 +957,12 @@ Item {
                         Accessible.name: Translation.tr("Forward")
                     }
                     ColumnLayout {
+                        id: titleColumn
                         Layout.fillWidth: true
                         Layout.leftMargin: 6 * root.d
                         spacing: 0
                         IrisText {
+                            id: pageTitle
                             Layout.fillWidth: true
                             text: root.searching ? Translation.tr("Results for “%1”").arg(root.query)
                                 : root.advancedPage >= 0 ? root.pageTitle(root.advancedPage)
@@ -977,7 +991,27 @@ Item {
                         Layout.preferredWidth: Math.round(240 * root.d)
                         implicitHeight: Math.round(32 * root.d)
                     }
+                    // The actions keep their words while the page's name still reads whole beside them (up to 260·d of
+                    // it); measured in the language on screen, never a fixed window width.
+                    RowLayout {
+                        id: toolbarActions
+                        spacing: 4 * root.d
+                        // Fold one at a time, the least used first, only as many as the name needs.
+                        readonly property var foldOrder: [restoreAction, customizeAction, rehearseAction].filter(action => action.visible)
+                        readonly property var folded: {
+                            const room = headRow.sharedRoom - Math.min(pageTitle.implicitWidth, 260 * root.d)
+                            let need = toolbarActions.foldOrder.reduce((sum, action) => sum + action.fullWidth, 0)
+                                + Math.max(0, toolbarActions.foldOrder.length - 1) * spacing
+                            const out = []
+                            for (const action of toolbarActions.foldOrder) {
+                                if (need <= room) break
+                                need -= action.fullWidth - action.implicitHeight
+                                out.push(action)
+                            }
+                            return out
+                        }
                     ToolbarAction {
+                        id: rehearseAction
                         readonly property bool rehearses: root.section === "lock"
                         readonly property bool arranges: root.section === "controlCenter"
                         visible: !root.searching && root.advancedPage < 0 && (rehearses || arranges)
@@ -992,6 +1026,7 @@ Item {
                         }
                     }
                     ToolbarAction {
+                        id: customizeAction
                         readonly property string studioTarget: root.studioTargets[root.section] ?? ""
                         readonly property string target: studioTarget.length > 0 ? studioTarget : (root.editTargets[root.section] ?? "")
                         visible: !root.searching && root.advancedPage < 0 && target.length > 0
@@ -1003,6 +1038,7 @@ Item {
                         }
                     }
                     ToolbarAction {
+                        id: restoreAction
                         readonly property var resettable: (root.openGroup.length > 0 ? (root.shownGroups[0]?.rows ?? []) : root.specifications
                             .filter(spec => spec.section === root.section)).filter(spec => String(spec.path).startsWith("iris."))
                         readonly property bool modified: {
@@ -1013,6 +1049,7 @@ Item {
                         glyph: "restart_alt"
                         label: Translation.tr("Restore defaults")
                         onClicked: resettable.forEach(spec => IrisOptions.commit(spec, spec.fallback))
+                    }
                     }
                     IrisIconButton {
                         materialIcon: root.windowed ? "layers" : "web_asset"
@@ -1480,12 +1517,19 @@ Item {
 
     // The toolbar's actions: one anatomy, a quiet capsule with its glyph. None of them is the page's answer, so none
     // wears the accent; a change in Settings applies as it is made.
+    FontMetrics {
+        id: toolbarMetrics
+        font.family: IrisStyle.fontMain
+        font.pixelSize: IrisStyle.typeLabel
+        font.weight: IrisStyle.weight(Font.Medium)
+    }
     component ToolbarAction: IrisButton {
         id: action
         property string glyph: ""
         property string label: ""
-        // In a narrow window the page's name keeps the room: the actions fold to their glyphs.
-        readonly property bool folded: !root.wideEnough
+        // When the page's name would lose its room, actions fold to their glyphs one at a time (toolbarActions.folded).
+        readonly property bool folded: toolbarActions.folded.includes(action)
+        readonly property real fullWidth: Math.ceil(toolbarMetrics.advanceWidth(action.label)) + Math.round((16 + 6 + 24) * root.d)
         buttonRadius: height / 2
         colBackground: IrisStyle.controlPlated ? IrisStyle.plateFillFor(IrisStyle.controlPlate) : IrisStyle.fill
         colBackgroundHover: IrisStyle.fillHover
@@ -2014,6 +2058,61 @@ Item {
         IrisLinkCard { tinted: true; links: moreGroup.links }
     }
 
+    // The foot of a group that folds its fine-tuning: what it holds, by name, and a chevron that turns as it opens.
+    component FineTuneRow: MouseArea {
+        id: tune
+        property bool open: false
+        property var names: []
+        implicitHeight: Math.round((tune.open ? 44 : 54) * root.d)
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        Accessible.role: Accessible.Button
+        Accessible.name: tune.open ? Translation.tr("Fewer settings") : Translation.tr("Fine-tune")
+        Accessible.description: tune.names.join(", ")
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: Math.round(4 * root.d)
+            radius: IrisStyle.radiusRow
+            color: tune.pressed ? IrisStyle.fillActive : tune.containsMouse ? IrisStyle.fillQuiet : "transparent"
+            Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+        }
+        ColumnLayout {
+            anchors.left: parent.left
+            anchors.leftMargin: Math.round(16 * root.d)
+            anchors.right: chevron.left
+            anchors.rightMargin: Math.round(12 * root.d)
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Math.round(2 * root.d)
+            IrisText {
+                Layout.fillWidth: true
+                text: tune.open ? Translation.tr("Fewer settings") : Translation.tr("Fine-tune")
+                color: tune.containsMouse ? IrisStyle.text : IrisStyle.textSecondary
+                font.pixelSize: IrisStyle.typeLabel
+                font.weight: IrisStyle.weight(Font.Medium)
+                elide: Text.ElideRight
+            }
+            IrisText {
+                Layout.fillWidth: true
+                visible: !tune.open
+                text: tune.names.join(", ")
+                color: IrisStyle.textTertiary
+                font.pixelSize: IrisStyle.typeFootnote
+                elide: Text.ElideRight
+            }
+        }
+        MaterialSymbol {
+            id: chevron
+            anchors.right: parent.right
+            anchors.rightMargin: Math.round(16 * root.d)
+            anchors.verticalCenter: parent.verticalCenter
+            text: "expand_more"
+            iconSize: Math.round(18 * root.d)
+            color: tune.containsMouse ? IrisStyle.text : IrisStyle.textTertiary
+            rotation: tune.open ? 180 : 0
+            Behavior on rotation { NumberAnimation { duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve } }
+        }
+    }
+
     component GroupBlock: ColumnLayout {
         id: group
         required property var modelData
@@ -2070,14 +2169,30 @@ Item {
         // A long group reads as captioned cards, one per `part` its rows name; search shows one card. Keyed by caption,
         // so a write (a slider mid-drag) never rebuilds a card under the pointer.
         function partOf(spec: var): string { return root.searching ? "" : String(spec.part ?? "") }
-        readonly property var parts: [...new Set(group.modelData.rows.map(spec => group.partOf(spec)))]
+        // Essentials first: the group's fine-tuning (IrisOptions.fineTune) waits behind one row at its foot that names
+        // what it holds. Only worth it with two or more such rows and something left to read; a search shows everything,
+        // and a row you changed stays out where you left it.
+        readonly property string tuneKey: "tune:" + root.section + "/" + String(group.modelData.key ?? group.modelData.title)
+        readonly property var tuned: {
+            Config.revision
+            if (root.searching) return []
+            return group.modelData.rows.filter(spec => IrisOptions.fineTune(spec) && !IrisOptions.changed(spec))
+        }
+        readonly property bool folds: group.tuned.length >= 2 && group.tuned.length < group.modelData.rows.length
+        readonly property bool tuneOpen: group.folds && (root.tuneAll || (root.unfolded[group.tuneKey] ?? false))
+        readonly property var shownRows: group.folds && !group.tuneOpen ? group.modelData.rows.filter(spec => !group.tuned.includes(spec)) : group.modelData.rows
+        // A search result or a link to a folded row opens the fold first, so the row can glow where it lives.
+        readonly property bool landsInFold: root.landingPath.length > 0 && group.tuned.some(spec => String(spec.path ?? "") === root.landingPath)
+        onLandsInFoldChanged: if (group.landsInFold && !group.tuneOpen) root.fold(group.tuneKey)
+        readonly property var parts: [...new Set(group.shownRows.map(spec => group.partOf(spec)))]
         Repeater {
             model: ScriptModel { values: group.parts }
             ColumnLayout {
                 id: part
                 required property string modelData
                 required property int index
-                readonly property var rows: group.modelData.rows.filter(spec => group.partOf(spec) === part.modelData)
+                readonly property var rows: group.shownRows.filter(spec => group.partOf(spec) === part.modelData)
+                readonly property bool lastPart: part.index === group.parts.length - 1
                 Layout.fillWidth: true
                 Layout.topMargin: part.index > 0 ? 12 * root.d : 0
                 spacing: 6 * root.d
@@ -2110,11 +2225,24 @@ Item {
                                 Layout.fillWidth: true
                                 spec: modelData
                                 highlight: root.query
-                                last: index === part.rows.length - 1
+                                last: index === part.rows.length - 1 && !(part.lastPart && group.folds)
                                 landing: root.landingPath.length > 0 && String(modelData.path ?? "") === root.landingPath
                                 onLandingChanged: if (landing) landingReveal.restart()
+                                // A row unfolded under the pointer arrives softly; one created already landed still glows.
+                                Component.onCompleted: {
+                                    if (landing) landingReveal.restart()
+                                    if (group.tuned.includes(modelData) && group.tuneOpen) arrive.restart()
+                                }
+                                NumberAnimation { id: arrive; target: settingRow; property: "opacity"; from: 0; to: 1; duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing }
                                 Timer { id: landingReveal; interval: 120; onTriggered: root.reveal(settingRow) }
                             }
+                        }
+                        FineTuneRow {
+                            visible: part.lastPart && group.folds
+                            Layout.fillWidth: true
+                            open: group.tuneOpen
+                            names: group.tuned.map(spec => Translation.tr(String(spec.label ?? "")))
+                            onClicked: root.fold(group.tuneKey)
                         }
                     }
                 }

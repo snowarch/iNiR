@@ -24,6 +24,10 @@ ClippingRectangle {
     readonly property real d: IrisStyle.density
     readonly property int pad: Math.round(14 * card.d)
     readonly property int stageHeight: Math.round(228 * card.d)
+    // The desk takes at most a third of a narrow card and leaves when the card cannot hold it beside a readable
+    // column (a Settings window, a large text scale): the strip under it still shows the wallpapers.
+    readonly property bool deskShown: card.width >= 520 * card.d
+    readonly property real deskHeight: Math.round(Math.min(168 * card.d, card.width * 0.36 * desk.screenH / Math.max(1, desk.screenW)))
     property var screen: GlobalStates.focusedScreen
     readonly property string current: Wallpapers.effectiveWallpaperPath
     readonly property string kind: Wallpapers.isVideoFile(card.current) ? Translation.tr("Live")
@@ -84,6 +88,13 @@ ClippingRectangle {
         GlobalStates.wallpaperSelectorOpen = true
     }
 
+    FontMetrics {
+        id: buttonMetrics
+        font.family: IrisStyle.fontMain
+        font.pixelSize: IrisStyle.typeLabel
+        font.weight: IrisStyle.weight(Font.Medium)
+    }
+
     Layout.fillWidth: true
     implicitHeight: card.stageHeight + (strip.visible ? strip.height + 2 * card.pad : 0)
     radius: IrisStyle.radiusTile
@@ -133,8 +144,9 @@ ClippingRectangle {
             anchors.left: parent.left
             anchors.leftMargin: Math.round(28 * card.d)
             anchors.verticalCenter: parent.verticalCenter
-            height: Math.round(168 * card.d)
-            width: Math.round(height * desk.screenW / desk.screenH)
+            visible: card.deskShown
+            height: card.deskHeight
+            width: card.deskShown ? Math.round(height * desk.screenW / desk.screenH) : 0
             screen: card.screen
             radius: IrisStyle.radiusRow
             MouseArea {
@@ -145,7 +157,8 @@ ClippingRectangle {
         }
 
         ColumnLayout {
-            anchors.left: desk.right
+            id: column
+            anchors.left: card.deskShown ? desk.right : parent.left
             anchors.leftMargin: Math.round(28 * card.d)
             anchors.right: parent.right
             anchors.rightMargin: Math.round(24 * card.d)
@@ -236,9 +249,18 @@ ClippingRectangle {
             }
             RowLayout {
                 Layout.topMargin: Math.round(14 * card.d)
+                Layout.maximumWidth: column.width
                 spacing: Math.round(8 * card.d)
-                GlassButton { glyph: "photo_library"; label: Translation.tr("Change wallpaper"); onClicked: card.openGallery() }
+                // The button keeps its word while the column holds it with the shuffle beside it; past that it is its glyph.
+                GlassButton {
+                    glyph: "photo_library"
+                    label: buttonMetrics.advanceWidth(Translation.tr("Change wallpaper")) + Math.round((17 + 6 + 28 + 8 + 34) * card.d) <= column.width
+                        ? Translation.tr("Change wallpaper") : ""
+                    hint: Translation.tr("Change wallpaper")
+                    onClicked: card.openGallery()
+                }
                 GlassButton { glyph: "shuffle"; label: ""; onClicked: Wallpapers.nextWallpaper() }
+                Item { Layout.fillWidth: true }
             }
         }
     }
@@ -326,12 +348,13 @@ ClippingRectangle {
         id: glass
         property string glyph: ""
         property string label: ""
+        property string hint: ""
         implicitHeight: Math.round(34 * card.d)
         implicitWidth: glassRow.implicitWidth + Math.round((glass.label.length > 0 ? 28 : 18) * card.d)
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
-        Accessible.name: glass.label.length > 0 ? glass.label : Translation.tr("Random wallpaper")
+        Accessible.name: glass.label.length > 0 ? glass.label : glass.hint.length > 0 ? glass.hint : Translation.tr("Random wallpaper")
         Rectangle {
             anchors.fill: parent
             radius: height / 2

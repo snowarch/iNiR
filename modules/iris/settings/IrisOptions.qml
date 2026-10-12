@@ -132,6 +132,14 @@ QtObject {
     function modified(spec: var): bool {
         return root.resettable(spec) && !root.same(root.currentValue(spec), spec.fallback)
     }
+    // Fine-tuning folds behind a group's "Fine-tune" row: a range nudges what a choice already decided, so ranges fold
+    // unless a row says `tune: false`; any row can join with `tune: true`. What differs from its default never folds.
+    function fineTune(spec: var): bool {
+        return spec.tune !== undefined ? Boolean(spec.tune) : spec.kind === "range"
+    }
+    function changed(spec: var): bool {
+        return spec.fallback !== undefined && !root.same(root.currentValue(spec), spec.fallback)
+    }
 
     readonly property bool widgetGlass: DesktopWidgetDesign.current === "iris"
     readonly property var pairings: [

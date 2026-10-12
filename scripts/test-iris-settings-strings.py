@@ -7,7 +7,10 @@ literal in modules/iris/settings/IrisOptions.qml or modules/iris/pieces/IrisPiec
 that reaches the screen through Translation.tr(). A literal with no entry in a
 catalogue shows in English in that language (2026-10-11: every bubble description
 under Settings › Bubbles and Anime › Airing was in English in all 18 catalogues).
-This guard fails when a complete catalogue lacks one of them.
+This guard fails when a complete catalogue lacks one of them. The surface's own
+words (every Translation.tr("…") literal in modules/iris/settings and the iRiS
+wallpaper gallery) are checked the same way: "Fine-tune" shipped in English once
+because only the registries were read.
 """
 
 import json
@@ -24,6 +27,10 @@ SOURCES = [
 PARTIAL = {"kl_GL"}
 FIELDS = r"(?:label|description|tip|subtitle|title|group|note)"
 LITERAL = re.compile(FIELDS + r': "((?:[^"\\]|\\.)*)"')
+TR = re.compile(r'Translation\.tr\("((?:[^"\\]|\\.)*)"\)')
+SURFACES = sorted((ROOT / "modules" / "iris" / "settings").glob("*.qml")) + [
+    ROOT / "modules" / "iris" / "wallpaper" / "IrisWallpaperPicker.qml",
+]
 # Literals that are names, not words (a font family shown in its own face).
 NAMES = {"Montserrat"}
 
@@ -35,6 +42,13 @@ def strings() -> dict[str, str]:
         for match in LITERAL.finditer(text):
             value = json.loads('"' + match.group(1) + '"')
             if value and value not in NAMES and not value.startswith("iris."):
+                line = text.count("\n", 0, match.start()) + 1
+                found.setdefault(value, f"{path.relative_to(ROOT)}:{line}")
+    for path in SURFACES:
+        text = path.read_text(encoding="utf-8")
+        for match in TR.finditer(text):
+            value = json.loads('"' + match.group(1) + '"')
+            if value and value not in NAMES:
                 line = text.count("\n", 0, match.start()) + 1
                 found.setdefault(value, f"{path.relative_to(ROOT)}:{line}")
     return found
