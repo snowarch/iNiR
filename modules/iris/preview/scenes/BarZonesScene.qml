@@ -21,7 +21,7 @@ PreviewScene {
     ]
     readonly property real thick: IrisFrame.islandBand
     property real t: 0
-    NumberAnimation on t { running: zonesRoot.playing; from: 0; to: 3; duration: IrisStyle.duration(5400); loops: Animation.Infinite }
+    NumberAnimation on t { running: zonesRoot.playing; alwaysRunToEnd: true; from: 0; to: 3; duration: IrisStyle.duration(5400); loops: Animation.Infinite }
     readonly property int lit: Math.min(2, Math.floor(zonesRoot.t))
     Rectangle {
         id: bar

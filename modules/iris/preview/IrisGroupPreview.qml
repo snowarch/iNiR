@@ -17,6 +17,19 @@ ClippingRectangle {
     property string section: ""
     property string group: ""
     property bool playing: true
+    // Awake for a few seconds after it appears, after any change and while the pointer is on it; then every scene rests on
+    // what it shows. Settings left open stops drawing (measured 2026-10-11: a scene looping in an idle Settings cost the
+    // shell 16-18 % CPU, closed 1.4 %).
+    readonly property bool awake: wakeTimer.running || sceneHover.hovered
+    function wake(): void { wakeTimer.restart() }
+    Timer { id: wakeTimer; interval: 9000; running: true }
+    HoverHandler { id: sceneHover }
+    Connections {
+        target: Config
+        function onRevisionChanged(): void { root.wake() }
+    }
+    onSceneChanged: root.wake()
+    onPlayingChanged: if (root.playing) root.wake()
     property bool compact: false
     property string caption: ""
     // Niri's values for the scenes that draw them (windows, keyboard, the screen); Settings passes its reader in.

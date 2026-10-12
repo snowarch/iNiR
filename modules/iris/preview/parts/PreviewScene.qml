@@ -12,7 +12,8 @@ Item {
     required property Item preview
     readonly property real d: IrisStyle.density
     readonly property int rev: Config.revision
-    readonly property bool playing: scene.preview.playing
+    // A scene moves while it is seen and awake (IrisGroupPreview.awake), then rests on what it shows.
+    readonly property bool playing: scene.preview.playing && (scene.preview.awake ?? true)
     readonly property string section: scene.preview.section
     readonly property string group: scene.preview.group
     readonly property string wallpaper: scene.preview.wallpaper

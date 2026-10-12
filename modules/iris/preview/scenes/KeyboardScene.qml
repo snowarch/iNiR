@@ -116,6 +116,7 @@ PreviewScene {
             SequentialAnimation {
                 id: typed
                 running: keysRoot.playing
+                alwaysRunToEnd: true
                 loops: Animation.Infinite
                 ScriptAction { script: { typedText.count = 1; keysRoot.repeating = true } }
                 PauseAnimation { duration: keysRoot.delay }
