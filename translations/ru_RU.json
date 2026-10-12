@@ -9465,5 +9465,22 @@
   "iCal link (.ics)": "Ссылка iCal (.ics)",
   "That link is not a calendar": "Эта ссылка — не календарь",
   "The link answered with an error": "Ссылка ответила ошибкой",
-  "Couldn't reach it": "Не удалось подключиться"
+  "Couldn't reach it": "Не удалось подключиться",
+  "Hours": "Часы",
+  "What each feed brings in the next two weeks. Click one to pause it.": "Что приносит каждый календарь в ближайшие две недели. Нажмите, чтобы приостановить.",
+  "In the order they start. Click one to pause it.": "В порядке запуска. Нажмите, чтобы приостановить.",
+  "%1, as a command": "%1, как команда",
+  "%1 · started by your Niri config": "%1 · запускается вашей конфигурацией Niri",
+  "%1 · starts with you": "%1 · запускается с вами",
+  "%1 · paused": "%1 · на паузе",
+  "An app's name, or a command": "Название приложения или команда",
+  "Run “%1” when you sign in": "Выполнять «%1» при входе",
+  "Nothing in the next weeks": "Ничего в ближайшие недели",
+  "Next: %1, %2": "Далее: %1, %2",
+  "Paused · click to bring it back": "На паузе · нажмите, чтобы вернуть",
+  "Paste a calendar's iCal link": "Вставьте iCal-ссылку календаря",
+  "until %1": "до %1",
+  "At night, from %1": "Ночью, с %1",
+  "By day, from %1": "Днём, с %1",
+  "Drag the sun and the moon to change the hours.": "Перетащите солнце и луну, чтобы изменить время."
 }

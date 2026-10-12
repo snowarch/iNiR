@@ -9465,5 +9465,22 @@
   "iCal link (.ics)": "iCal 링크 (.ics)",
   "That link is not a calendar": "이 링크는 캘린더가 아닙니다",
   "The link answered with an error": "링크가 오류로 응답했습니다",
-  "Couldn't reach it": "연결할 수 없음"
+  "Couldn't reach it": "연결할 수 없음",
+  "Hours": "시간",
+  "What each feed brings in the next two weeks. Click one to pause it.": "각 피드가 앞으로 2주 동안 가져오는 일정. 클릭하면 일시 중지.",
+  "In the order they start. Click one to pause it.": "시작 순서대로. 클릭하면 일시 중지.",
+  "%1, as a command": "%1, 명령으로",
+  "%1 · started by your Niri config": "%1 · Niri 설정이 실행",
+  "%1 · starts with you": "%1 · 함께 시작",
+  "%1 · paused": "%1 · 일시 중지됨",
+  "An app's name, or a command": "앱 이름 또는 명령",
+  "Run “%1” when you sign in": "로그인 시 “%1” 실행",
+  "Nothing in the next weeks": "앞으로 몇 주간 일정 없음",
+  "Next: %1, %2": "다음: %1, %2",
+  "Paused · click to bring it back": "일시 중지됨 · 클릭해서 다시 켜기",
+  "Paste a calendar's iCal link": "캘린더의 iCal 링크 붙여넣기",
+  "until %1": "%1까지",
+  "At night, from %1": "밤, %1부터",
+  "By day, from %1": "낮, %1부터",
+  "Drag the sun and the moon to change the hours.": "해와 달을 끌어 시간을 바꾸세요."
 }

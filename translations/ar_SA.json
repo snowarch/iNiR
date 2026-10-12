@@ -9465,5 +9465,22 @@
   "iCal link (.ics)": "رابط iCal (.ics)",
   "That link is not a calendar": "هذا الرابط ليس تقويمًا",
   "The link answered with an error": "أجاب الرابط بخطأ",
-  "Couldn't reach it": "تعذّر الوصول إليه"
+  "Couldn't reach it": "تعذّر الوصول إليه",
+  "Hours": "الساعات",
+  "What each feed brings in the next two weeks. Click one to pause it.": "ما يجلبه كل تقويم في الأسبوعين القادمين. انقر لإيقافه مؤقتًا.",
+  "In the order they start. Click one to pause it.": "بترتيب بدء تشغيلها. انقر للإيقاف المؤقت.",
+  "%1, as a command": "%1، كأمر",
+  "%1 · started by your Niri config": "%1 · يبدأ من إعدادات Niri لديك",
+  "%1 · starts with you": "%1 · يبدأ معك",
+  "%1 · paused": "%1 · متوقف مؤقتًا",
+  "An app's name, or a command": "اسم تطبيق أو أمر",
+  "Run “%1” when you sign in": "شغّل “%1” عند تسجيل الدخول",
+  "Nothing in the next weeks": "لا شيء في الأسابيع القادمة",
+  "Next: %1, %2": "التالي: %1، %2",
+  "Paused · click to bring it back": "متوقف مؤقتًا · انقر لإعادته",
+  "Paste a calendar's iCal link": "الصق رابط iCal لتقويم",
+  "until %1": "حتى %1",
+  "At night, from %1": "ليلًا، من %1",
+  "By day, from %1": "نهارًا، من %1",
+  "Drag the sun and the moon to change the hours.": "اسحب الشمس والقمر لتغيير الساعات."
 }

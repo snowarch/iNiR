@@ -9465,5 +9465,22 @@
   "iCal link (.ics)": "Link iCal (.ics)",
   "That link is not a calendar": "Quel link non è un calendario",
   "The link answered with an error": "Il link ha risposto con un errore",
-  "Couldn't reach it": "Irraggiungibile"
+  "Couldn't reach it": "Irraggiungibile",
+  "Hours": "Orari",
+  "What each feed brings in the next two weeks. Click one to pause it.": "Cosa porta ogni feed nelle prossime due settimane. Fai clic per metterlo in pausa.",
+  "In the order they start. Click one to pause it.": "Nell'ordine in cui partono. Fai clic per mettere in pausa.",
+  "%1, as a command": "%1, come comando",
+  "%1 · started by your Niri config": "%1 · avviato dalla tua config di Niri",
+  "%1 · starts with you": "%1 · parte con te",
+  "%1 · paused": "%1 · in pausa",
+  "An app's name, or a command": "Nome di un'app o un comando",
+  "Run “%1” when you sign in": "Esegui “%1” all'accesso",
+  "Nothing in the next weeks": "Niente nelle prossime settimane",
+  "Next: %1, %2": "Prossimo: %1, %2",
+  "Paused · click to bring it back": "In pausa · fai clic per riprenderlo",
+  "Paste a calendar's iCal link": "Incolla il link iCal di un calendario",
+  "until %1": "fino alle %1",
+  "At night, from %1": "Di notte, dalle %1",
+  "By day, from %1": "Di giorno, dalle %1",
+  "Drag the sun and the moon to change the hours.": "Trascina il sole e la luna per cambiare gli orari."
 }

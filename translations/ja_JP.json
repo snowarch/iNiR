@@ -9465,5 +9465,22 @@
   "iCal link (.ics)": "iCal リンク (.ics)",
   "That link is not a calendar": "このリンクはカレンダーではありません",
   "The link answered with an error": "リンクがエラーを返しました",
-  "Couldn't reach it": "接続できません"
+  "Couldn't reach it": "接続できません",
+  "Hours": "時刻",
+  "What each feed brings in the next two weeks. Click one to pause it.": "各フィードの今後 2 週間。クリックで一時停止。",
+  "In the order they start. Click one to pause it.": "起動する順。クリックで一時停止。",
+  "%1, as a command": "%1（コマンド）",
+  "%1 · started by your Niri config": "%1 · Niri の設定が起動",
+  "%1 · starts with you": "%1 · 一緒に起動",
+  "%1 · paused": "%1 · 一時停止中",
+  "An app's name, or a command": "アプリ名かコマンド",
+  "Run “%1” when you sign in": "ログイン時に「%1」を実行",
+  "Nothing in the next weeks": "今後数週間は予定なし",
+  "Next: %1, %2": "次: %1、%2",
+  "Paused · click to bring it back": "一時停止中 · クリックで再開",
+  "Paste a calendar's iCal link": "カレンダーの iCal リンクを貼り付け",
+  "until %1": "%1 まで",
+  "At night, from %1": "夜 %1 から",
+  "By day, from %1": "昼 %1 から",
+  "Drag the sun and the moon to change the hours.": "太陽と月をドラッグして時刻を変更します。"
 }

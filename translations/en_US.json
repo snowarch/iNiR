@@ -9465,5 +9465,22 @@
   "iCal link (.ics)": "iCal link (.ics)",
   "That link is not a calendar": "That link is not a calendar",
   "The link answered with an error": "The link answered with an error",
-  "Couldn't reach it": "Couldn't reach it"
+  "Couldn't reach it": "Couldn't reach it",
+  "Hours": "Hours",
+  "What each feed brings in the next two weeks. Click one to pause it.": "What each feed brings in the next two weeks. Click one to pause it.",
+  "In the order they start. Click one to pause it.": "In the order they start. Click one to pause it.",
+  "%1, as a command": "%1, as a command",
+  "%1 · started by your Niri config": "%1 · started by your Niri config",
+  "%1 · starts with you": "%1 · starts with you",
+  "%1 · paused": "%1 · paused",
+  "An app's name, or a command": "An app's name, or a command",
+  "Run “%1” when you sign in": "Run “%1” when you sign in",
+  "Nothing in the next weeks": "Nothing in the next weeks",
+  "Next: %1, %2": "Next: %1, %2",
+  "Paused · click to bring it back": "Paused · click to bring it back",
+  "Paste a calendar's iCal link": "Paste a calendar's iCal link",
+  "until %1": "until %1",
+  "At night, from %1": "At night, from %1",
+  "By day, from %1": "By day, from %1",
+  "Drag the sun and the moon to change the hours.": "Drag the sun and the moon to change the hours."
 }

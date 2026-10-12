@@ -9465,5 +9465,22 @@
   "iCal link (.ics)": "Tautan iCal (.ics)",
   "That link is not a calendar": "Tautan itu bukan kalender",
   "The link answered with an error": "Tautan menjawab dengan galat",
-  "Couldn't reach it": "Tidak bisa dijangkau"
+  "Couldn't reach it": "Tidak bisa dijangkau",
+  "Hours": "Jam",
+  "What each feed brings in the next two weeks. Click one to pause it.": "Yang dibawa tiap feed dalam dua minggu ke depan. Klik untuk menjeda.",
+  "In the order they start. Click one to pause it.": "Sesuai urutan mulai. Klik untuk menjeda.",
+  "%1, as a command": "%1, sebagai perintah",
+  "%1 · started by your Niri config": "%1 · dimulai oleh konfigurasi Niri-mu",
+  "%1 · starts with you": "%1 · mulai bersamamu",
+  "%1 · paused": "%1 · dijeda",
+  "An app's name, or a command": "Nama aplikasi atau perintah",
+  "Run “%1” when you sign in": "Jalankan “%1” saat masuk",
+  "Nothing in the next weeks": "Tidak ada di minggu-minggu mendatang",
+  "Next: %1, %2": "Berikutnya: %1, %2",
+  "Paused · click to bring it back": "Dijeda · klik untuk mengaktifkan",
+  "Paste a calendar's iCal link": "Tempel tautan iCal sebuah kalender",
+  "until %1": "sampai %1",
+  "At night, from %1": "Malam, mulai %1",
+  "By day, from %1": "Siang, mulai %1",
+  "Drag the sun and the moon to change the hours.": "Seret matahari dan bulan untuk mengubah jamnya."
 }

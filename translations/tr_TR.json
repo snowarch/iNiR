@@ -9465,5 +9465,22 @@
   "iCal link (.ics)": "iCal bağlantısı (.ics)",
   "That link is not a calendar": "Bu bağlantı bir takvim değil",
   "The link answered with an error": "Bağlantı hata ile yanıt verdi",
-  "Couldn't reach it": "Ulaşılamadı"
+  "Couldn't reach it": "Ulaşılamadı",
+  "Hours": "Saatler",
+  "What each feed brings in the next two weeks. Click one to pause it.": "Her akışın önümüzdeki iki haftada getirdikleri. Duraklatmak için tıkla.",
+  "In the order they start. Click one to pause it.": "Başlama sırasıyla. Duraklatmak için tıkla.",
+  "%1, as a command": "%1, komut olarak",
+  "%1 · started by your Niri config": "%1 · Niri yapılandırman başlatıyor",
+  "%1 · starts with you": "%1 · seninle başlar",
+  "%1 · paused": "%1 · duraklatıldı",
+  "An app's name, or a command": "Bir uygulama adı ya da komut",
+  "Run “%1” when you sign in": "Oturum açılışında “%1” çalıştır",
+  "Nothing in the next weeks": "Önümüzdeki haftalarda bir şey yok",
+  "Next: %1, %2": "Sıradaki: %1, %2",
+  "Paused · click to bring it back": "Duraklatıldı · geri getirmek için tıkla",
+  "Paste a calendar's iCal link": "Bir takvimin iCal bağlantısını yapıştır",
+  "until %1": "%1'e kadar",
+  "At night, from %1": "Gece, %1'den itibaren",
+  "By day, from %1": "Gündüz, %1'den itibaren",
+  "Drag the sun and the moon to change the hours.": "Saatleri değiştirmek için güneşi ve ayı sürükle."
 }

@@ -9465,5 +9465,22 @@
   "iCal link (.ics)": "iCal लिंक (.ics)",
   "That link is not a calendar": "यह लिंक कैलेंडर नहीं है",
   "The link answered with an error": "लिंक ने त्रुटि लौटाई",
-  "Couldn't reach it": "पहुँच नहीं सके"
+  "Couldn't reach it": "पहुँच नहीं सके",
+  "Hours": "समय",
+  "What each feed brings in the next two weeks. Click one to pause it.": "हर फ़ीड अगले दो हफ़्तों में क्या लाती है। रोकने के लिए क्लिक करें।",
+  "In the order they start. Click one to pause it.": "शुरू होने के क्रम में। रोकने के लिए क्लिक करें।",
+  "%1, as a command": "%1, कमांड के रूप में",
+  "%1 · started by your Niri config": "%1 · आपके Niri कॉन्फ़िग से शुरू",
+  "%1 · starts with you": "%1 · आपके साथ शुरू",
+  "%1 · paused": "%1 · रुका हुआ",
+  "An app's name, or a command": "ऐप का नाम या कमांड",
+  "Run “%1” when you sign in": "साइन इन पर “%1” चलाएँ",
+  "Nothing in the next weeks": "अगले हफ़्तों में कुछ नहीं",
+  "Next: %1, %2": "अगला: %1, %2",
+  "Paused · click to bring it back": "रुका हुआ · वापस लाने के लिए क्लिक करें",
+  "Paste a calendar's iCal link": "किसी कैलेंडर का iCal लिंक चिपकाएँ",
+  "until %1": "%1 तक",
+  "At night, from %1": "रात में, %1 से",
+  "By day, from %1": "दिन में, %1 से",
+  "Drag the sun and the moon to change the hours.": "समय बदलने के लिए सूरज और चाँद खींचें।"
 }

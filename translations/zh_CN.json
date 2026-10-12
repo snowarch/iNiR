@@ -9465,5 +9465,22 @@
   "iCal link (.ics)": "iCal 链接 (.ics)",
   "That link is not a calendar": "该链接不是日历",
   "The link answered with an error": "链接返回了错误",
-  "Couldn't reach it": "无法连接"
+  "Couldn't reach it": "无法连接",
+  "Hours": "时间",
+  "What each feed brings in the next two weeks. Click one to pause it.": "每个日历源未来两周的内容。点击可暂停。",
+  "In the order they start. Click one to pause it.": "按启动顺序。点击可暂停。",
+  "%1, as a command": "%1（命令）",
+  "%1 · started by your Niri config": "%1 · 由你的 Niri 配置启动",
+  "%1 · starts with you": "%1 · 随你启动",
+  "%1 · paused": "%1 · 已暂停",
+  "An app's name, or a command": "应用名称或命令",
+  "Run “%1” when you sign in": "登录时运行“%1”",
+  "Nothing in the next weeks": "未来几周没有事件",
+  "Next: %1, %2": "下一个：%1，%2",
+  "Paused · click to bring it back": "已暂停 · 点击恢复",
+  "Paste a calendar's iCal link": "粘贴日历的 iCal 链接",
+  "until %1": "直到 %1",
+  "At night, from %1": "夜晚，从 %1 起",
+  "By day, from %1": "白天，从 %1 起",
+  "Drag the sun and the moon to change the hours.": "拖动太阳和月亮来更改时间。"
 }

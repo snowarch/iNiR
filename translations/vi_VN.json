@@ -9465,5 +9465,22 @@
   "iCal link (.ics)": "Liên kết iCal (.ics)",
   "That link is not a calendar": "Liên kết đó không phải lịch",
   "The link answered with an error": "Liên kết trả về lỗi",
-  "Couldn't reach it": "Không kết nối được"
+  "Couldn't reach it": "Không kết nối được",
+  "Hours": "Giờ",
+  "What each feed brings in the next two weeks. Click one to pause it.": "Mỗi nguồn mang gì trong hai tuần tới. Nhấp để tạm dừng.",
+  "In the order they start. Click one to pause it.": "Theo thứ tự khởi động. Nhấp để tạm dừng.",
+  "%1, as a command": "%1, dạng lệnh",
+  "%1 · started by your Niri config": "%1 · do cấu hình Niri khởi động",
+  "%1 · starts with you": "%1 · khởi động cùng bạn",
+  "%1 · paused": "%1 · tạm dừng",
+  "An app's name, or a command": "Tên ứng dụng hoặc một lệnh",
+  "Run “%1” when you sign in": "Chạy “%1” khi đăng nhập",
+  "Nothing in the next weeks": "Không có gì trong vài tuần tới",
+  "Next: %1, %2": "Tiếp theo: %1, %2",
+  "Paused · click to bring it back": "Tạm dừng · nhấp để bật lại",
+  "Paste a calendar's iCal link": "Dán liên kết iCal của lịch",
+  "until %1": "đến %1",
+  "At night, from %1": "Ban đêm, từ %1",
+  "By day, from %1": "Ban ngày, từ %1",
+  "Drag the sun and the moon to change the hours.": "Kéo mặt trời và mặt trăng để đổi giờ."
 }

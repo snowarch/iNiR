@@ -9465,5 +9465,22 @@
   "iCal link (.ics)": "קישור iCal ‏(.ics)",
   "That link is not a calendar": "הקישור הזה אינו יומן",
   "The link answered with an error": "הקישור החזיר שגיאה",
-  "Couldn't reach it": "לא ניתן להגיע אליו"
+  "Couldn't reach it": "לא ניתן להגיע אליו",
+  "Hours": "שעות",
+  "What each feed brings in the next two weeks. Click one to pause it.": "מה כל פיד מביא בשבועיים הקרובים. לחיצה משהה אותו.",
+  "In the order they start. Click one to pause it.": "לפי סדר ההפעלה. לחיצה משהה.",
+  "%1, as a command": "%1, כפקודה",
+  "%1 · started by your Niri config": "%1 · מופעל מהתצורה של Niri",
+  "%1 · starts with you": "%1 · מתחיל איתך",
+  "%1 · paused": "%1 · מושהה",
+  "An app's name, or a command": "שם יישום או פקודה",
+  "Run “%1” when you sign in": "הרץ “%1” בכניסה",
+  "Nothing in the next weeks": "אין כלום בשבועות הקרובים",
+  "Next: %1, %2": "הבא: %1, %2",
+  "Paused · click to bring it back": "מושהה · לחץ כדי להחזיר",
+  "Paste a calendar's iCal link": "הדבק קישור iCal של יומן",
+  "until %1": "עד %1",
+  "At night, from %1": "בלילה, מ-%1",
+  "By day, from %1": "ביום, מ-%1",
+  "Drag the sun and the moon to change the hours.": "גרור את השמש והירח כדי לשנות את השעות."
 }
