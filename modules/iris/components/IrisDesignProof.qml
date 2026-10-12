@@ -40,7 +40,17 @@ PanelWindow {
         { part: "scrubber", name: "scrubber · knob", w: 150, h: 20, look: ({ shownValue: 0.7, knob: true }) },
         { part: "ring", name: "ring", w: 34, h: 34, look: ({ progress: 0.66, stroke: 3 }) },
         { part: "cardHeader", name: "card head", w: 150, h: 46, look: ({ title: "Bluetooth", detail: "2 connected" }) },
-        { part: "groupHeader", name: "group head", w: 150, h: 30, look: ({ title: "Notifications" }) }
+        { part: "groupHeader", name: "group head", w: 150, h: 30, look: ({ title: "Notifications" }) },
+        { part: "controlTile", name: "control · on", w: 84, h: 70, look: ({ skinData: ({ shape: "tile",
+            control: ({ lit: true, ready: true, glyph: "dark_mode", label: "Dark", tint: IrisStyle.accent, moduleId: "darkMode" }) }) }) },
+        { part: "controlTile", name: "control · off", w: 84, h: 70, look: ({ skinData: ({ shape: "tile",
+            control: ({ lit: false, ready: true, glyph: "bedtime", label: "Night light", tint: IrisStyle.accent, moduleId: "nightLight" }) }) }) },
+        { part: "controlTile", name: "control · line", w: 84, h: 70, look: ({ skinData: ({ shape: "tile",
+            control: ({ lit: true, ready: true, glyph: "bluetooth", label: "Bluetooth", tint: IrisStyle.identity.blue, moduleId: "bluetooth" }) }) }) },
+        { part: "controlTile", name: "control · round", w: 46, h: 46, look: ({ skinData: ({ shape: "disc",
+            control: ({ lit: true, ready: true, glyph: "lan", label: "Ethernet", tint: IrisStyle.accent, moduleId: "network" }) }) }) },
+        { part: "controlTile", name: "control · wide", w: 160, h: 64, look: ({ skinData: ({ shape: "wide", key: 38, chevron: true, open: false,
+            control: ({ lit: false, ready: true, glyph: "speaker", label: "Devices", detail: "ALC897 Analog", tint: IrisStyle.accent, moduleId: "devices" }) }) }) }
     ]
     // The scenes a Design draws on the engine's model, each sample in the states a person brings it to. A stand-in
     // model only: nothing here reaches a service.
@@ -130,6 +140,7 @@ PanelWindow {
         property color tint: IrisStyle.text
         property string title: ""
         property string detail: ""
+        property var skinData: null
         function slotX(i: int): real { return i * width / Math.max(1, options.length) }
     }
 

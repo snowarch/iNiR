@@ -29,7 +29,11 @@ QtObject {
         cardHeader: "skins/CardHeader.qml",
         slider: "skins/Slider.qml",
         scrubber: "skins/Scrubber.qml",
-        notificationIcon: "skins/NotificationIcon.qml"
+        notificationIcon: "skins/NotificationIcon.qml",
+        controlTile: "skins/ControlTile.qml",
+        controlHeader: "skins/ControlHeader.qml",
+        controlPreset: "skins/ControlPreset.qml",
+        mediaBackdrop: "skins/MediaBackdrop.qml"
     })
     // What a primitive needs to hold this Design's skin, and how a surface's body holds a scene.
     readonly property var surfaces: ({ switch: { width: 52, height: 24 }, banners: { width: 380, margin: 24 } })

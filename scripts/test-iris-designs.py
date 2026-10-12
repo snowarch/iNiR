@@ -5,7 +5,8 @@ A Design (`modules/iris/designs/<id>/Design.qml`) brings skins, scenes and parts
 place. A part that replaces an engine body (the Island, the dock, the Stage, the frame) loses everything that body
 does: pages, activities, pieces, the field and its joins. AIRISU's bar did that in 2026-10 and the Island became a
 player that only paused music. This checks every Design: each part's file exists, each part key is read by an owner
-outside `designs/` (`IrisDesign.skin("key")`, `has("key")` or an `IrisSkin { part }`), and no part names an engine body.
+outside `designs/` (`IrisDesign.skin("key")`, `has("key")`, an `IrisSkin { part }` or an IrisButton's `skinPart`), and no part
+names an engine body.
 """
 
 import pathlib
@@ -23,6 +24,9 @@ for path in IRIS.rglob("*.qml"):
     text = path.read_text(errors="ignore")
     consumers.update(re.findall(r'IrisDesign\.(?:skin|has)\("(\w+)"', text))
     consumers.update(re.findall(r'IrisSkin \{[^}]*?part: "(\w+)"', text))
+    # An IrisButton dressed as another part names it on its skinPart line.
+    for line in re.findall(r'skinPart: ([^\n]+)', text):
+        consumers.update(re.findall(r'"(\w+)"', line))
 
 errors = []
 for manifest in sorted(IRIS.glob("designs/*/Design.qml")):

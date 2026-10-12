@@ -48,6 +48,9 @@ Item {
     readonly property real unit: Math.round((IrisControlOptions.labelled ? 70 : 64) * root.d)
     readonly property real cell: Math.max(1, (root.width - (root.columns - 1) * root.gap) / root.columns)
     readonly property real tileRadius: IrisStyle.radiusTile
+    // A Design that draws the controls itself (AIRISU: boxes on a printed form) gets each one's state; the grid keeps
+    // the clicks, the lists, the carrying and the sizes.
+    readonly property bool designed: IrisDesign.has("controlTile")
 
     property string carrying: ""
     property bool carryingNew: false
@@ -425,9 +428,11 @@ Item {
         implicitHeight: discButton.size
         buttonRadius: IrisStyle.capsule(height)
         buttonRadiusPressed: IrisStyle.capsule(height)
-        colBackground: discButton.control.lit ? discButton.control.tint : IrisStyle.fill
-        colBackgroundHover: !discButton.control.ready ? discButton.colBackground
+        colBackground: discButton.skinned ? "transparent" : discButton.control.lit ? discButton.control.tint : IrisStyle.fill
+        colBackgroundHover: discButton.skinned || !discButton.control.ready ? discButton.colBackground
             : discButton.control.lit ? ColorUtils.mix(discButton.control.tint, IrisStyle.text, 0.85) : IrisStyle.fillHover
+        skinPart: root.designed ? "controlTile" : "button"
+        skinData: ({ control: discButton.control, shape: "disc" })
         Accessible.name: discButton.control.label
         Accessible.checkable: true
         Accessible.checked: discButton.control.lit
@@ -435,6 +440,7 @@ Item {
         altAction: () => { if (discButton.control.ready) root.togglePicker(discButton.control.expands) }
         HoverHandler { enabled: !root.editing; onHoveredChanged: discButton.control.hover(hovered) }
         MaterialSymbol {
+            visible: !root.designed
             anchors.centerIn: parent
             text: discButton.control.glyph
             fill: discButton.control.lit ? 1 : 0
@@ -478,11 +484,15 @@ Item {
             anchors.fill: parent
             buttonRadius: IrisControlOptions.roundControls ? Math.min(width, height) / 2 : root.tileRadius
             buttonRadiusPressed: button.buttonRadius
-            colBackground: faceState.lit && !face.wide ? faceState.tint
+            colBackground: button.skinned ? "transparent" : faceState.lit && !face.wide ? faceState.tint
                 : faceState.lit ? IrisStyle.tintFill(faceState.tint) : IrisStyle.fillQuiet
-            colBackgroundHover: !faceState.ready ? button.colBackground
+            colBackgroundHover: button.skinned || !faceState.ready ? button.colBackground
                 : faceState.lit && !face.wide ? ColorUtils.mix(faceState.tint, IrisStyle.text, 0.85)
                 : faceState.lit ? IrisStyle.tintFillHover(faceState.tint) : IrisStyle.fillHover
+            skinPart: root.designed ? "controlTile" : "button"
+            skinData: ({ control: faceState, shape: face.wide ? "wide" : "tile",
+                open: faceState.expands.length > 0 && root.picker === faceState.expands,
+                key: face.wide ? wideDisc.size : 0, chevron: face.wide && faceState.expands.length > 0 && faceState.ready && face.width >= Math.round(170 * root.d) })
             Accessible.name: faceState.label
             Accessible.checkable: true
             Accessible.checked: faceState.lit
@@ -496,7 +506,7 @@ Item {
         }
 
         ColumnLayout {
-            visible: !face.disc && !face.wide
+            visible: !face.disc && !face.wide && !root.designed
             anchors.centerIn: parent
             width: face.width
             spacing: Math.round(2 * root.d)
@@ -524,6 +534,8 @@ Item {
 
         RowLayout {
             visible: face.wide
+            // Under a Design's tile it stays only as the hit areas of its key and chevron.
+            opacity: root.designed ? 0 : 1
             anchors.fill: parent
             anchors.leftMargin: Math.round((face.height - wideDisc.height) / 2)
             anchors.rightMargin: Math.round(10 * root.d)

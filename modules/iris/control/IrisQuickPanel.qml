@@ -70,12 +70,24 @@ ColumnLayout {
         Layout.rightMargin: 2 * root.d
         spacing: 8 * root.d
         ColumnLayout {
+            id: heading
             Layout.fillWidth: true
             Layout.maximumWidth: Number.POSITIVE_INFINITY
             spacing: 0
+            // What a Design's heading needs: the line the pointer writes, and whether the panel is being arranged.
+            readonly property string hint: root.shownHint
+            readonly property bool editing: root.editing
+            // A Design may set the heading its own way (AIRISU: a leaf of a tear-off calendar).
+            Item {
+                Layout.fillWidth: true
+                visible: headSkin.active
+                implicitHeight: headSkin.item?.implicitHeight ?? 0
+                IrisSkin { id: headSkin; part: "controlHeader"; host: heading }
+            }
             // At rest the panel is named by the day, not by itself.
             Item {
                 Layout.fillWidth: true
+                visible: !headSkin.active
                 implicitHeight: editTitle.implicitHeight
                 IrisText {
                     id: editTitle
@@ -111,6 +123,7 @@ ColumnLayout {
             Item {
                 id: subtitle
                 Layout.fillWidth: true
+                visible: !headSkin.active
                 implicitHeight: lineA.implicitHeight
                 readonly property string line: root.shownHint.length > 0 ? root.shownHint
                     : root.editing ? Translation.tr("Drag to reorder, drag a corner to resize, − takes it out")
@@ -630,6 +643,13 @@ ColumnLayout {
         required property var modelData
         readonly property string moduleId: tile.modelData.id
         readonly property bool on: IrisControlOptions.modules.includes(tile.moduleId)
+        // What a Design reads to draw the tile as one of its controls (the `controlTile` part): already in the panel
+        // is its lit state, in the accent, with no name inside (it is set under the tile).
+        readonly property bool hovered: tileArea.containsMouse
+        readonly property bool down: tileArea.pressed
+        readonly property bool visualFocus: false
+        readonly property var skinData: ({ shape: "tile", bare: true, control: { moduleId: tile.moduleId, glyph: tile.modelData.glyph,
+            lit: tile.on, ready: true, tint: IrisStyle.accent } })
         width: Math.floor((shelfColumn.width - 3 * Math.round(4 * root.d)) / 4)
         height: Math.round(66 * root.d)
         Rectangle {
@@ -639,14 +659,21 @@ ColumnLayout {
             width: Math.round(38 * root.d)
             height: width
             radius: IrisStyle.iconRadius(width)
-            color: tile.on ? (tileArea.containsMouse ? IrisStyle.tintFillHover(IrisStyle.accent) : IrisStyle.tintFill(IrisStyle.accent))
+            color: tileSkin.active ? "transparent"
+                : tile.on ? (tileArea.containsMouse ? IrisStyle.tintFillHover(IrisStyle.accent) : IrisStyle.tintFill(IrisStyle.accent))
                 : tileArea.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
-            border.width: tile.on ? 1 : 0
+            border.width: tile.on && !tileSkin.active ? 1 : 0
             border.color: IrisStyle.tintBorder(IrisStyle.accent)
-            scale: tileArea.pressed ? IrisStyle.pressScale(0.92) : 1
+            scale: tileArea.pressed && !tileSkin.active ? IrisStyle.pressScale(0.92) : 1
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
             Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+            IrisSkin {
+                id: tileSkin
+                part: "controlTile"
+                host: tile
+            }
             MaterialSymbol {
+                visible: !tileSkin.active
                 anchors.centerIn: parent
                 text: tile.modelData.glyph
                 fill: tile.on ? 1 : 0
@@ -722,16 +749,28 @@ ColumnLayout {
         readonly property real miniHeight: card.packed.rows * card.miniUnit + Math.max(0, card.packed.rows - 1) * card.miniGap
             + (card.listed ? card.miniUnit + card.miniGap : 0)
 
+        // A Design may draw the card its own way (the `controlPreset` part) from the packing above.
+        readonly property bool hovered: cardArea.containsMouse
+        readonly property bool down: cardArea.pressed
+
         width: shelfColumn.width
         height: Math.max(cardText.implicitHeight, card.miniHeight) + Math.round(24 * root.d)
         radius: IrisStyle.radiusTile
-        color: card.current ? IrisStyle.tintFill(IrisStyle.accent) : cardArea.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
-        border.width: card.current ? Math.max(1, Math.round(1.5 * root.d)) : 0
+        color: presetSkin.active ? "transparent"
+            : card.current ? IrisStyle.tintFill(IrisStyle.accent) : cardArea.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
+        border.width: card.current && !presetSkin.active ? Math.max(1, Math.round(1.5 * root.d)) : 0
         border.color: IrisStyle.tintBorder(IrisStyle.accent)
         Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
 
+        IrisSkin {
+            id: presetSkin
+            part: "controlPreset"
+            host: card
+        }
+
         Item {
             id: mini
+            visible: !presetSkin.active
             x: Math.round(12 * root.d)
             anchors.verticalCenter: parent.verticalCenter
             width: card.miniWidth
@@ -839,6 +878,7 @@ ColumnLayout {
 
         ColumnLayout {
             id: cardText
+            visible: !presetSkin.active
             anchors.left: mini.right
             anchors.leftMargin: Math.round(12 * root.d)
             anchors.right: parent.right

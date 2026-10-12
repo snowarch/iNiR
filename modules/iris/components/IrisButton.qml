@@ -14,6 +14,10 @@ RippleButton {
     property bool quiet: false
     property bool emphasized: false
     property bool danger: false
+    // Which of the Design's parts dresses it, and what that part needs to know: a control in the Control Center is
+    // drawn as the Design's control tile, with its state, while the button keeps the press, the keys and the toggle.
+    property string skinPart: "button"
+    property var skinData: null
     // A Design may draw the plate and the label its own way (AIRISU: a plate cut with a blade); the press, the toggle
     // and the content stay the button's.
     readonly property bool skinned: buttonSkin.active
@@ -84,7 +88,7 @@ RippleButton {
 
         IrisSkin {
             id: buttonSkin
-            part: "button"
+            part: root.skinPart
             host: root
             anchors.fill: undefined
             x: -contentHost.x

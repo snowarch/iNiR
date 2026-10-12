@@ -15,11 +15,14 @@ Item {
 
     readonly property real overscan: 48
 
+    // A Design may print the cover its own way (AIRISU: a one-ink halftone); the cover and where it sits stay the owner's.
+    IrisSkin { id: skin; part: "mediaBackdrop"; host: root }
+
     Image {
         id: cover
         anchors.fill: parent
         anchors.margins: -root.overscan
-        source: root.source
+        source: skin.active ? "" : root.source
         sourceSize: Qt.size(160, 160)
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
@@ -28,7 +31,8 @@ Item {
     Item {
         id: composed
         anchors.fill: parent
-        layer.enabled: root.radius > 0
+        visible: !skin.active
+        layer.enabled: root.radius > 0 && !skin.active
         layer.effect: MultiEffect {
             maskEnabled: true
             maskSource: roundMask
@@ -83,7 +87,7 @@ Item {
         id: roundMask
         anchors.fill: parent
         visible: false
-        layer.enabled: root.radius > 0
+        layer.enabled: root.radius > 0 && !skin.active
         Rectangle {
             anchors.fill: parent
             radius: root.radius
