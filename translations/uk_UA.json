@@ -9423,5 +9423,14 @@
   "Keep it under": "Тримати нижче",
   "Slowest": "Найповільніша",
   "Slow": "Повільна",
-  "Your colours": "Ваші кольори"
+  "Your colours": "Ваші кольори",
+  "Beside the other screen": "Поруч з іншим екраном",
+  "Island on": "Island на",
+  "Main screen": "Основний екран",
+  "None chosen shows them on every screen.": "Якщо нічого не вибрано, показуються на всіх екранах.",
+  "Where the wallpaper gallery and other one-screen panels open.": "Де відкриваються галерея шпалер та інші панелі на один екран.",
+  "Which side the pointer crosses to reach it.": "З якого боку вказівник переходить на нього.",
+  "Widgets on": "Віджети на",
+  "Above": "Зверху",
+  "Below": "Знизу"
 }

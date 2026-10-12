@@ -9423,5 +9423,14 @@
   "Keep it under": "保持在以下",
   "Slowest": "最慢",
   "Slow": "慢",
-  "Your colours": "你的颜色"
+  "Your colours": "你的颜色",
+  "Beside the other screen": "在另一块屏幕旁",
+  "Island on": "Island 所在屏幕",
+  "Main screen": "主屏幕",
+  "None chosen shows them on every screen.": "不选择时在所有屏幕上显示。",
+  "Where the wallpaper gallery and other one-screen panels open.": "壁纸图库和其他单屏面板打开的位置。",
+  "Which side the pointer crosses to reach it.": "指针从哪一侧移到它上面。",
+  "Widgets on": "小部件所在屏幕",
+  "Above": "上方",
+  "Below": "下方"
 }

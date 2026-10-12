@@ -9423,5 +9423,14 @@
   "Keep it under": "Держать ниже",
   "Slowest": "Самая медленная",
   "Slow": "Медленная",
-  "Your colours": "Ваши цвета"
+  "Your colours": "Ваши цвета",
+  "Beside the other screen": "Рядом с другим экраном",
+  "Island on": "Island на",
+  "Main screen": "Основной экран",
+  "None chosen shows them on every screen.": "Если ничего не выбрано, показываются на всех экранах.",
+  "Where the wallpaper gallery and other one-screen panels open.": "Где открываются галерея обоев и другие панели на один экран.",
+  "Which side the pointer crosses to reach it.": "С какой стороны указатель переходит на него.",
+  "Widgets on": "Виджеты на",
+  "Above": "Сверху",
+  "Below": "Снизу"
 }

@@ -9423,5 +9423,14 @@
   "Keep it under": "이 크기 미만으로",
   "Slowest": "가장 느림",
   "Slow": "느림",
-  "Your colours": "내 색상"
+  "Your colours": "내 색상",
+  "Beside the other screen": "다른 화면 옆",
+  "Island on": "Island 표시 화면",
+  "Main screen": "주 화면",
+  "None chosen shows them on every screen.": "아무것도 고르지 않으면 모든 화면에 표시됩니다.",
+  "Where the wallpaper gallery and other one-screen panels open.": "배경화면 갤러리 등 한 화면용 패널이 열리는 곳입니다.",
+  "Which side the pointer crosses to reach it.": "포인터가 어느 쪽으로 넘어가는지입니다.",
+  "Widgets on": "위젯 표시 화면",
+  "Above": "위",
+  "Below": "아래"
 }

@@ -560,7 +560,8 @@ Item {
         widgets: asked => asked === "Organic edge" ? "player/Edge wave" : "widgets",
         wallpaper: () => "wallpaper",
         tools: () => "capture",
-        advanced: () => "colour/App colours"
+        advanced: () => "colour/App colours",
+        monitors: () => "display/Screens"
     })
     function applyRequest(): void {
         const landing = root.nativePages[String(root.pages[GlobalStates.settingsOverlayRequestedPage]?.key ?? "")]

@@ -108,7 +108,27 @@ Singleton {
         if (key === "scale") return Number(out.scale)
         if (key === "transform") return String(out.transform ?? "Normal").toLowerCase()
         if (key === "vrr") return out.vrr_enabled ? String(out.vrr_mode ?? "on") : "off"
+        if (key === "place") return root.placeOf(out, root.neighbour(out))
         return ""
+    }
+    // Where a screen sits, read against the first other screen: the side it touches, in logical pixels.
+    function neighbour(out: var): var {
+        return root.outputs.find(entry => entry.name !== out?.name) ?? null
+    }
+    function logicalRect(out: var): var {
+        const size = String(out?.current_resolution ?? "0x0").split("x").map(Number)
+        const turned = ["90", "270", "flipped-90", "flipped-270"].includes(String(out?.transform ?? "").toLowerCase())
+        const scale = Number(out?.scale ?? 1) || 1
+        return { x: Number(out?.position?.x ?? 0), y: Number(out?.position?.y ?? 0),
+            width: Math.round((turned ? size[1] : size[0]) / scale), height: Math.round((turned ? size[0] : size[1]) / scale) }
+    }
+    function placeOf(out: var, other: var): string {
+        if (!out || !other) return ""
+        const a = root.logicalRect(out), b = root.logicalRect(other)
+        if (a.x >= b.x + b.width) return "right"
+        if (a.x + a.width <= b.x) return "left"
+        if (a.y >= b.y + b.height) return "below"
+        return "above"
     }
     function displayChoices(key: string): var {
         root.revision
@@ -127,10 +147,12 @@ Singleton {
         }
         if (key === "transform") return [{ label: "Normal", value: "normal" }, { label: "90°", value: "90" }, { label: "180°", value: "180" }, { label: "270°", value: "270" }]
         if (key === "vrr") return [{ label: "Off", value: "off" }, { label: "In games", value: "on-demand" }, { label: "Always", value: "on" }]
+        if (key === "place") return [{ label: "Left", value: "left", glyph: "west" }, { label: "Right", value: "right", glyph: "east" }, { label: "Above", value: "above", glyph: "north" }, { label: "Below", value: "below", glyph: "south" }]
         return []
     }
     function applyDisplay(key: string, next: var): void {
         if (key === "screen") { root.selectedOutput = String(next); root.revision++; return }
+        if (key === "place") { root.place(String(next)); return }
         const out = root.output
         if (!out || root.pending) return
         let setting = key
@@ -156,6 +178,21 @@ Singleton {
         applier.command = ["python3", root.script, "apply-output", out.name, `${setting}=${wanted}`]
         applier.running = true
         countdown.restart()
+    }
+    // Moves the chosen screen to one side of the other, edges aligned, and saves every position at once (Niri reloads it).
+    function place(side: string): void {
+        const out = root.output, other = root.neighbour(out)
+        if (!out || !other || layoutWriter.running || side === root.placeOf(out, other)) return
+        const a = root.logicalRect(out), b = root.logicalRect(other)
+        const at = side === "right" ? { x: b.x + b.width, y: b.y } : side === "left" ? { x: b.x - a.width, y: b.y }
+            : side === "below" ? { x: b.x, y: b.y + b.height } : { x: b.x, y: b.y - a.height }
+        const layout = {}
+        for (const entry of root.outputs) {
+            const rect = root.logicalRect(entry)
+            layout[entry.name] = entry.name === out.name ? at : { x: rect.x, y: rect.y }
+        }
+        layoutWriter.command = ["python3", root.script, "persist-layout", JSON.stringify(layout)]
+        layoutWriter.running = true
     }
     function keepDisplay(): void {
         const change = root.pending
@@ -196,6 +233,17 @@ Singleton {
     Reader { id: layoutReader; section: "layout" }
     Reader { id: animationsReader; section: "animations" }
     Reader { id: rulesReader; section: "window-rules" }
+    Process {
+        id: layoutWriter
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try { root.error = JSON.parse(text)?.error ? String(JSON.parse(text).error) : "" } catch (e) {}
+            }
+        }
+        onExited: layoutSettle.restart()
+    }
+    // Niri reloads its config on its own; read the outputs back once it has.
+    Timer { id: layoutSettle; interval: 600; onTriggered: root.reload(["outputs"]) }
     Process {
         id: outputsReader
         command: ["python3", root.script, "outputs"]

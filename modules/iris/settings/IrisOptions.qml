@@ -106,6 +106,7 @@ QtObject {
             .filter(widget => String(widget.irisQmlPath ?? "").length > 0)
             .map(widget => ({ label: String(widget.name ?? widget.id), value: "custom:" + widget.id }))
         // Recording sources by the names PipeWire gives them; a system source is an output's monitor.
+        if (spec.choicesFrom === "primaryScreens") return [{ label: "Auto", value: "" }].concat(Quickshell.screens.map(screen => ({ label: String(screen.name), value: String(screen.name) })))
         if (spec.choicesFrom === "monitorSources") return [{ label: "Default output", value: "" }].concat(Audio.outputDevices.map(node => ({ label: Audio.friendlyDeviceName(node), value: String(node.name) + ".monitor" })))
         if (spec.choicesFrom === "microphones") return [{ label: "Default microphone", value: "" }].concat(Audio.inputDevices.map(node => ({ label: Audio.friendlyDeviceName(node), value: String(node.name) })))
         if (spec.choicesFrom) return IrisWidgetRows.choicesFor(String(spec.choicesFrom))
@@ -1051,6 +1052,9 @@ QtObject {
         { section: "appearance", group: "App colours", part: "Apps", label: "Cava frame rate", path: "appearance.cava.framerate", visibleWhen: "appearance.wallpaperTheming.enableCava", regen: true, kind: "range", fallback: 60, min: 30, max: 165, step: 5, unit: " fps" },
         { section: "appearance", group: "App colours", part: "Apps", label: "Cava in stereo", path: "appearance.cava.stereo", visibleWhen: "appearance.wallpaperTheming.enableCava", regen: true, kind: "switch", fallback: true, tune: true },
 
+        { section: "display", group: "Screens", label: "Island on", description: "None chosen shows it on every screen.", path: "iris.bar.screenList", showIf: () => Quickshell.screens.length > 1, kind: "pieces", fallback: [], choicesFrom: "screens", keywords: ["monitor", "bar", "island", "screen", "pantalla"] },
+        { section: "display", group: "Screens", label: "Widgets on", description: "None chosen shows them on every screen.", path: "background.widgets.screenList", showIf: () => Quickshell.screens.length > 1, kind: "pieces", fallback: [], choicesFrom: "screens", keywords: ["monitor", "widgets", "desktop", "screen", "pantalla"] },
+        { section: "display", group: "Screens", label: "Main screen", description: "Where the wallpaper gallery and other one-screen panels open.", path: "display.primaryMonitor", showIf: () => Quickshell.screens.length > 1, kind: "choice", fallback: "", choicesFrom: "primaryScreens", keywords: ["primary", "main", "monitor", "principal"] },
         { section: "display", group: "Night Light", label: "On a schedule", description: "Warmer colours in the evening, back to normal in the morning.", path: "light.night.automatic", kind: "switch", fallback: true, keywords: ["night", "blue light", "warm", "wlsunset", "noche"] },
         { section: "display", group: "Night Light", label: "From", path: "light.night.from", visibleWhen: "light.night.automatic", kind: "text", placeholder: "19:00", fallback: "19:00" },
         { section: "display", group: "Night Light", label: "Until", path: "light.night.to", visibleWhen: "light.night.automatic", kind: "text", placeholder: "06:30", fallback: "06:30" },
@@ -1168,6 +1172,7 @@ QtObject {
         { section: "keyboard", group: "Pointer", niri: "input", key: "warp-mouse-to-focus", read: "general.warp_mouse_to_focus", label: "Pointer jumps to the focused window", kind: "switch", fallback: false, write: on => on ? "on" : "off" },
 
         { section: "display", group: "Screen", niri: "display", key: "screen", label: "Screen", showIf: () => IrisNiri.outputs.length > 1, kind: "choice", fallback: "" },
+        { section: "display", group: "Screen", niri: "display", key: "place", label: "Beside the other screen", description: "Which side the pointer crosses to reach it.", showIf: () => IrisNiri.outputs.length > 1, kind: "choice", fallback: "right", keywords: ["arrange", "layout", "position", "monitors", "left", "right", "posición", "monitores"] },
         { section: "display", group: "Screen", niri: "display", key: "resolution", label: "Resolution", description: "Applies now; keep it or it goes back in 15 seconds.", kind: "choice", fallback: "", keywords: ["niri", "resolution", "monitor", "resolucion", "mode"] },
         { section: "display", group: "Screen", niri: "display", key: "rate", label: "Refresh rate", kind: "choice", fallback: "", keywords: ["hz", "refresh", "frecuencia"] },
         { section: "display", group: "Screen", niri: "display", key: "scale", label: "Scale", kind: "choice", fallback: 1, keywords: ["scale", "hidpi", "escala", "zoom"] },
@@ -1215,7 +1220,6 @@ QtObject {
     ]
     // The shared iNiR pages that still act under iRiS, as "More Settings" lists them. Pages for other families stay out.
     readonly property var morePages: [
-        { group: "Desktop", key: "monitors", label: "Monitors", detail: "What each screen shows", icon: "display_settings", tintName: "blue", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["monitor", "screen", "output", "display", "pantalla"] },
         { group: "System", key: "autostart", label: "Autostart", detail: "Apps that start with you", icon: "rocket_launch", tintName: "orange", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["autostart", "startup", "login", "inicio"] },
         { group: "System", key: "services", label: "Services", detail: "Network, hotspot, updates and calendar accounts", icon: "settings_suggest", tintName: "gray", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["services", "network", "search", "data"] },
         { group: "Shell", key: "hub", label: "Community Hub", detail: "Widgets, themes and web apps from other people", icon: "storefront", tintName: "pink", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["hub", "community", "plugins", "extensions", "widgets", "themes", "store", "download", "install", "comunidad"] },
@@ -1286,7 +1290,7 @@ QtObject {
         "Windows": "select_window", "Workspaces": "view_column", "Apps": "apps", "Performance": "speed", "Web search": "travel_explore",
         "Read text": "document_scanner", "Texture": "texture", "Borders": "border_style", "Edges": "border_style", "Movement": "animation", "Closing": "close",
         "Room for iRiS": "fit_screen", "Keyboard": "keyboard", "Mouse": "mouse", "Trackpad": "touch_app", "Pointer": "arrow_selector_tool", "Screen": "monitor",
-        "Arranging": "drag_pan", "Power saving": "energy_savings_leaf", "World clock": "public", "Month Calendar": "calendar_month", "Upcoming Events": "event_upcoming", "Date badge": "today", "Day progress": "wb_twilight", "Timers": "timer", "System uptime": "history", "Media Controls": "album", "System Monitor": "monitoring", "Battery": "battery_full", "Controls": "toggle_on", "Screen time": "hourglass_top", "News": "newspaper", "Notes": "sticky_note_2", "Todo": "checklist", "User card": "account_circle", "Custom image": "image", "Image converter": "transform", "Decorative shape": "interests", "Japanese Typography": "translate", "Editorial": "article", "Mascot": "pets", "Hotspot": "wifi_tethering", "Network": "language"
+        "Arranging": "drag_pan", "Power saving": "energy_savings_leaf", "World clock": "public", "Month Calendar": "calendar_month", "Upcoming Events": "event_upcoming", "Date badge": "today", "Day progress": "wb_twilight", "Timers": "timer", "System uptime": "history", "Media Controls": "album", "System Monitor": "monitoring", "Battery": "battery_full", "Controls": "toggle_on", "Screen time": "hourglass_top", "News": "newspaper", "Notes": "sticky_note_2", "Todo": "checklist", "User card": "account_circle", "Custom image": "image", "Image converter": "transform", "Decorative shape": "interests", "Japanese Typography": "translate", "Editorial": "article", "Mascot": "pets", "Hotspot": "wifi_tethering", "Network": "language", "Screens": "desktop_windows"
     })
     readonly property var groupTints: ({
         get "Shell family"() { return IrisStyle.identity.purple },
@@ -1420,6 +1424,7 @@ QtObject {
         get "Network"() { return IrisStyle.identity.indigo },
         get "Transition"() { return IrisStyle.identity.purple },
         get "Library"() { return IrisStyle.identity.teal },
+        get "Screens"() { return IrisStyle.identity.blue },
         get "Arranging"() { return IrisStyle.identity.sky },
         get "Power saving"() { return IrisStyle.identity.green },
         get "World clock"() { return IrisStyle.identity.teal },

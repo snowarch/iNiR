@@ -9423,5 +9423,14 @@
   "Keep it under": "この大きさ未満に",
   "Slowest": "最も遅い",
   "Slow": "遅い",
-  "Your colours": "自分の色"
+  "Your colours": "自分の色",
+  "Beside the other screen": "もう一方の画面の隣",
+  "Island on": "Island の表示先",
+  "Main screen": "メイン画面",
+  "None chosen shows them on every screen.": "何も選ばなければすべての画面に表示します。",
+  "Where the wallpaper gallery and other one-screen panels open.": "壁紙ギャラリーなど、1 画面だけのパネルが開く場所。",
+  "Which side the pointer crosses to reach it.": "ポインターがどちら側から移るか。",
+  "Widgets on": "ウィジェットの表示先",
+  "Above": "上",
+  "Below": "下"
 }
