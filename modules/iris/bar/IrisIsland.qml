@@ -2361,6 +2361,14 @@ Item {
             asynchronous: true
             property bool warm: false
             Timer { id: pageWarmth; interval: 20000; onTriggered: details.warm = false }
+            // The first expansion after the shell starts paid for building the page types (≈60 ms on the GUI thread, in
+            // the middle of the spring). They are built once here instead, at rest a few seconds after start, and the
+            // warmth then runs out as usual; later expansions find the types ready.
+            Timer {
+                interval: 6000
+                running: true
+                onTriggered: if (!root.expanded) { details.warm = true; pageWarmth.restart() }
+            }
             Connections {
                 target: root
                 function onPointerOnIslandChanged(): void {
