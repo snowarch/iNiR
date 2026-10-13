@@ -52,7 +52,7 @@ var airisuLanguage = &Language{
 			accentL: 0.58, accentC: [2]float64{0.13, 0.2}, markL: 0.64, markC: 0.15, widgets: 1.1,
 		},
 	},
-	materialNames: []string{"black", "graphite", "midnight", "wallpaper", "theme"},
+	materialNames: []string{"urushi", "black", "graphite", "midnight", "wallpaper", "theme"},
 	accentSeeds:   airisuAccentSeeds, highlightSeeds: airisuHighlightSeeds, identity: identitySeeds, identityHex: airisuIdentityHex,
 	neutralHue: airisuHue, onColour: hexLCH("#e9e6df").RGB(), darkOn: [2]float64{0.15, 0.004},
 	fillFrom: [2]float64{0.6, 0.56}, fillC: [2]float64{0.12, 0.24},

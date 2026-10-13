@@ -11,6 +11,7 @@ const (
 	readOverGlass = 3.0 // the accent over the glass frost (a backdrop, not a page)
 	readWash      = 3.5 // the accent on its own 15 % wash
 	readShape     = 3.0 // a filled shape that is not text (a badge)
+	readPigment   = 1.5 // a pigment printed on paper (a Design's fill): its hue is its edge, so yamabuki stays yellow
 	readOn        = 4.5 // ink on a filled colour, and a colour that carries the language's own ink
 )
 

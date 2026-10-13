@@ -383,7 +383,13 @@ func (v solver) fill(seed LCH, need float64) RGB {
 		ink := func(f RGB) bool {
 			return contrast(f, v.lang.onColour) >= readOn || contrast(f, LCH{v.lang.darkOn[0], v.lang.darkOn[1], seed.H}.RGB()) >= readOn
 		}
-		return solve(v.s, seed.H, c, seed.L, both(readsOn(readShape, v.ramp.all()...), ink))
+		// On paper a pigment needs only to be told from the page by its hue: held to a shape's 3:1 there, yamabuki was
+		// deepened into an olive brown no printer would call yellow. The ink set on it still has to read.
+		shape := readShape
+		if !v.s.dark {
+			shape = readPigment
+		}
+		return solve(v.s, seed.H, c, seed.L, both(readsOn(shape, v.ramp.all()...), ink))
 	}
 	if !v.s.dark {
 		// A filled shape on paper is the loudest thing on it: a pigment, never a screen's saturated blue.
@@ -501,7 +507,78 @@ func schemeLanguage(req Request, name string) *Language {
 // paperOf is a material's paper in a scheme with the person's tone and warmth.
 func paperOf(lang *Language, s spec, material string, req Request) LCH {
 	t := req.Tune[s.name]
+	if material == "urushi" {
+		if p, ok := urushi(lang, s, req, t.Tone); ok {
+			return warm(s, p, warmthOf(s.name, t))
+		}
+		material = "black"
+	}
 	return warm(s, lang.paper(s, material, req.Seeds, t.Tone), warmthOf(s.name, t))
+}
+
+// urushi is a Design's lacquer (AIRISU): kuro-urushi, black lacquer with a breath of the accent's hue in its depth at
+// night and a paper barely washed with it by day. At a coloured lacquer's chroma (0.046) every body, rule and key took the
+// accent's hue and the accent itself had nothing left to stand out from: the shell read as one navy slab. Only a language
+// that offers it.
+func urushi(lang *Language, s spec, req Request, tone float64) (LCH, bool) {
+	offered := false
+	for _, m := range lang.materialNames {
+		offered = offered || m == "urushi"
+	}
+	if !offered {
+		return LCH{}, false
+	}
+	h, ok := urushiHue(lang, req)
+	if !ok {
+		return LCH{}, false
+	}
+	var p LCH
+	switch s.name {
+	case "dark":
+		p = LCH{0.215, 0.012, h}
+	case "ink":
+		p = LCH{0.875, 0.014, h}
+	default:
+		p = LCH{0.945, 0.01, h}
+	}
+	if s.dark {
+		p.L = clampF(p.L+tone/100*0.4, 0.12, 0.3)
+	} else {
+		p.L = clampF(p.L+tone/100*0.3, map[string]float64{"ink": 0.83, "light": 0.89}[s.name], 1)
+	}
+	return p, true
+}
+
+// urushiHue is the hue the lacquer is coloured with: the person's accent wherever it comes from (a named one, a custom
+// hue, the wallpaper's, the theme's). A source with no hue to give (a grey wallpaper) leaves the Design's own lacquer,
+// never plain black.
+func urushiHue(lang *Language, req Request) (float64, bool) {
+	pick := func(hexes ...string) (float64, bool) {
+		for _, x := range hexes {
+			if c, ok := seedLCH(x); ok && c.C >= 0.03 {
+				return c.H, true
+			}
+		}
+		return 0, false
+	}
+	switch req.Accent {
+	case "custom":
+		return hsl(req.AccentHue, 0.7, 0.5).LCH().H, true
+	case "wallpaper":
+		if h, ok := pick(req.Seeds.Wallpaper, req.Seeds.Primary); ok {
+			return h, true
+		}
+	case "theme":
+		if h, ok := pick(req.Seeds.Primary); ok {
+			return h, true
+		}
+	}
+	if x, ok := lang.accentSeeds[req.Accent]; ok {
+		if h, ok := pick(x); ok {
+			return h, true
+		}
+	}
+	return pick(lang.accentSeeds["design"])
 }
 
 func build(req Request, name string) Palette {
@@ -517,7 +594,7 @@ func build(req Request, name string) Palette {
 		widgets = clampF(*tune.Widgets/100, 0.4, 1.6)
 	}
 	material := req.Material
-	if _, named := s.materials[material]; !named && material != "wallpaper" && material != "theme" {
+	if _, named := s.materials[material]; !named && material != "wallpaper" && material != "theme" && material != "urushi" {
 		material = "black"
 	}
 	ramp := lang.ramp(s, paperOf(lang, s, material, req))
@@ -603,7 +680,13 @@ func build(req Request, name string) Palette {
 	p.Danger, p.OnDanger = danger.Hex(), v.onFill(danger, readOn).Hex()
 
 	// Filled shapes: the same hues as pigments (bengara, ai, shu), each with its ink.
-	accentFill := v.fill(accentSeed, readText)
+	// A Design's seal is solved from a pigment's lightness, never from a pale seed's: a light wallpaper accent would
+	// otherwise make it a pastel.
+	sealSeed := accentSeed
+	if v.lang.pigments {
+		sealSeed.L = math.Min(sealSeed.L, v.s.accentL)
+	}
+	accentFill := v.fill(sealSeed, readText)
 	dangerFill := v.fill(dangerFillSeed, readShape)
 	highlightFill := v.fill(LCH{0.6, math.Max(0.1, highlight.LCH().C), highlight.LCH().H}, readShape)
 	if lang.pigments {
@@ -874,7 +957,7 @@ func styleIDs() []string {
 
 // Version changes whenever a solve would give other colours for the same request; IrisWashi.qml asks again when it
 // differs (TestShellKnowsVersion keeps the two equal).
-const Version = 25
+const Version = 29
 
 // solveSchemes is the palette alone, without the other styles' swatches.
 func solveSchemes(req Request, key string) Output {
