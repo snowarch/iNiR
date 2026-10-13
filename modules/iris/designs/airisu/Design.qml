@@ -64,6 +64,7 @@ QtObject {
         noticeCard: "skins/NoticeCard.qml",
         menuRow: "skins/MenuRow.qml",
         listMark: "skins/ListMark.qml",
+        oskKey: "skins/OskKey.qml",
         // Desktop widgets, each a print of its own: drawn whatever widget design is chosen (DesktopWidgetDesign).
         widgetClock: "widgets/Clock.qml",
         widgetWeather: "widgets/Forecast.qml",

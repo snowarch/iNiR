@@ -4,6 +4,7 @@ import QtQuick
 import qs.modules.common.functions
 import qs.modules.onScreenKeyboard
 import qs.modules.iris.style
+import qs.modules.iris.components
 
 // The shared keycap (`OskKey` keeps the behaviour: ydotool, shift, caps), spoken in iRiS's fills.
 OskKey {
@@ -19,22 +20,26 @@ OskKey {
     rippleEnabled: false
     rippleDuration: IrisStyle.duration(420)
     stateTransitionsEnabled: IrisStyle.motionEnabled
-    pressScaleEnabled: true
+    pressScaleEnabled: !root.skinned
     cookieMorphing: false
 
-    colBackground: root.shape === "empty" ? "transparent" : IrisStyle.fill
-    colBackgroundHover: IrisStyle.fillHover
-    colBackgroundToggled: IrisStyle.tintFill(IrisStyle.accent)
-    colBackgroundToggledHover: IrisStyle.tintFillHover(IrisStyle.accent)
+    // A Design that cuts its own keycaps (IrisDesign part `oskKey`) draws the plate; the key keeps its legend.
+    readonly property bool skinned: capSkin.active
+    colBackground: root.shape === "empty" || root.skinned ? "transparent" : IrisStyle.fill
+    colBackgroundHover: root.skinned ? "transparent" : IrisStyle.fillHover
+    colBackgroundToggled: root.skinned ? "transparent" : IrisStyle.tintFill(IrisStyle.accent)
+    colBackgroundToggledHover: root.skinned ? "transparent" : IrisStyle.tintFillHover(IrisStyle.accent)
     colRipple: IrisStyle.fillActive
     colRippleToggled: IrisStyle.tintFillHover(IrisStyle.accent)
 
     colKeyText: IrisStyle.text
-    colKeyTextToggled: IrisStyle.accent
+    colKeyTextToggled: root.skinned && IrisStyle.plateSelection ? IrisStyle.inkOnAccentFill : IrisStyle.accent
     keyFontFamily: IrisStyle.fontMain
     keyFontSize: IrisStyle.typeHeadline
     fnFontSize: IrisStyle.typeMeta
     glyphFontSize: Math.round(20 * root.d)
+
+    IrisSkin { id: capSkin; part: "oskKey"; host: root; z: -1 }
 
     // A lit key (shift, caps) is a tint and a hairline of the same tint.
     Rectangle {
@@ -42,7 +47,7 @@ OskKey {
         z: 2
         radius: root.buttonEffectiveRadius
         color: "transparent"
-        border.width: root.toggled ? 1 : 0
+        border.width: root.toggled && !root.skinned ? 1 : 0
         border.color: IrisStyle.tintBorder(IrisStyle.accent)
         visible: border.width > 0
     }
