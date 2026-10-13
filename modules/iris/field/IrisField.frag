@@ -144,16 +144,28 @@ float roundedBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
 // lower-left corners at 45° by `options.z` (never more than half the body) and keeps the other two square: a sticker cut
 // with a blade. The cut is a half-plane intersected with the square box, so joins, rims and shadows that read the
 // distance follow it like any other edge.
-float bodyBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
-    if (u.options.y < 0.5)
-        return roundedBox(p, centre, halfSize, radius);
+float cutBox(vec2 p, vec2 centre, vec2 halfSize, float cut) {
     vec2 d = p - centre;
     vec2 q = abs(d) - halfSize;
     float box = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
-    float cut = min(u.options.z, min(halfSize.x, halfSize.y));
+    cut = min(cut, min(halfSize.x, halfSize.y));
     if (cut > 0.5 && d.x * d.y < 0.0)
         box = max(box, (abs(d.x) + abs(d.y) - (halfSize.x + halfSize.y - cut)) * 0.70710678);
     return box;
+}
+
+float bodyBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
+    if (u.options.y < 0.5)
+        return roundedBox(p, centre, halfSize, radius);
+    return cutBox(p, centre, halfSize, u.options.z);
+}
+
+// The screen's opening inside the frame band: the same blade, its cut the size the round corner would have been, so a
+// chamfered Design never shows a round corner around its bodies.
+float frameBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
+    if (u.options.y < 0.5)
+        return roundedBox(p, centre, halfSize, radius);
+    return cutBox(p, centre, halfSize, radius);
 }
 
 // The chrome bevel's environment by elevation e: -1 ground, 0 horizon, 1 sky.
@@ -330,7 +342,7 @@ void main() {
         vec2 hi = size - vec2(u.field.z + u.edgeWave.z * alongY, u.field.z + u.edgeWave.w * alongX);
         frameCentre = (lo + hi) * 0.5;
         frameHalf = max((hi - lo) * 0.5, vec2(0.0));
-        frameDistance = -roundedBox(frameP, frameCentre, frameHalf, u.field.w);
+        frameDistance = -frameBox(frameP, frameCentre, frameHalf, u.field.w);
         united = frameDistance;
     }
     float frameClusterDistance = frameDistance;
@@ -531,7 +543,7 @@ void main() {
                 float frameQ = FAR * 10.0;
                 float unitedQ = FAR * 10.0;
                 if (u.field.y > 0.5) {
-                    frameQ = -roundedBox(q + u.scene.xy, frameCentre, frameHalf, max(u.field.w, bevel));
+                    frameQ = -frameBox(q + u.scene.xy, frameCentre, frameHalf, max(u.field.w, bevel));
                     unitedQ = frameQ;
                 }
                 float bodiesQ[20];
@@ -780,7 +792,7 @@ void main() {
         vec2 ps = p - vec2(0.0, u.shadeShape.x);
         float frameShade = FAR * 10.0;
         if (u.field.y > 0.5)
-            frameShade = -roundedBox(ps + u.scene.xy, frameCentre, frameHalf, u.field.w);
+            frameShade = -frameBox(ps + u.scene.xy, frameCentre, frameHalf, u.field.w);
         float alone = FAR * 10.0;
         float withFrame = FAR * 10.0;
         float casters[20];
