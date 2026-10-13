@@ -63,12 +63,25 @@ PreviewScene {
                     RowLayout {
                         x: Math.round(12 * panelRoot.d); y: Math.round(12 * panelRoot.d)
                         spacing: Math.round(8 * panelRoot.d)
+                        // As the real sections head themselves: a line-colour bar under a line-section Design (AIRISU),
+                        // the glyph bare under a glyph-mark one, the tinted chip otherwise.
                         Rectangle {
-                            implicitWidth: Math.round(24 * panelRoot.d); implicitHeight: implicitWidth
-                            radius: IrisStyle.iconRadius(width); color: parent.parent.modelData[2]
-                            MaterialSymbol { anchors.centerIn: parent; text: parent.parent.parent.modelData[0]; fill: 1; iconSize: Math.round(14 * panelRoot.d); color: IrisStyle.onTint }
+                            visible: IrisStyle.lineSections
+                            implicitWidth: Math.max(3, Math.round(4 * panelRoot.d)); implicitHeight: Math.round(16 * panelRoot.d)
+                            color: parent.parent.modelData[2]
+                            antialiasing: false
                         }
-                        IrisText { text: parent.parent.modelData[1]; font.weight: IrisStyle.weight(Font.DemiBold) }
+                        Rectangle {
+                            visible: !IrisStyle.lineSections
+                            implicitWidth: Math.round(24 * panelRoot.d); implicitHeight: implicitWidth
+                            radius: IrisStyle.iconRadius(width); color: IrisStyle.plainMarks ? "transparent" : parent.parent.modelData[2]
+                            MaterialSymbol { anchors.centerIn: parent; text: parent.parent.parent.modelData[0]; fill: 1; iconSize: Math.round(14 * panelRoot.d); color: IrisStyle.plainMarks ? IrisStyle.text : IrisStyle.onTint }
+                        }
+                        IrisText {
+                            text: parent.parent.modelData[1]
+                            font.family: IrisStyle.lineSections ? IrisStyle.fontTitle : IrisStyle.fontMain
+                            font.weight: IrisStyle.weight(IrisStyle.lineSections ? Font.ExtraBold : Font.DemiBold)
+                        }
                     }
                 }
             }
