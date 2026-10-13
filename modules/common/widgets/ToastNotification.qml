@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.common
 import qs.modules.common.functions
+import qs.modules.iris.style
 
 Item {
     id: root
@@ -23,10 +24,23 @@ Item {
 
     implicitWidth: card.width
     implicitHeight: card.height
+
+    // Under iRiS, a Design that draws toasts (IrisDesign part `toast`) draws this one over the card's geometry; the card
+    // stays, unseen, for its clock, its hover and its click.
+    readonly property string designUrl: (Config.options?.panelFamily ?? "ii") === "iris" ? IrisStyle.toastSkin : ""
+    Loader {
+        id: designToast
+        anchors.fill: card
+        z: 1
+        active: root.designUrl.length > 0
+        source: root.designUrl
+        onLoaded: item.host = root
+    }
     layer.enabled: Appearance.effectsEnabled
 
     GlassBackground {
         id: card
+        opacity: designToast.item ? 0 : 1
 
         width: contentLayout.implicitWidth + 32
         height: contentLayout.implicitHeight + 20

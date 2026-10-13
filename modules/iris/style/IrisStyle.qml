@@ -999,6 +999,8 @@ QtObject {
     readonly property bool monoCaptions: IrisDesign.trait("captions") === "mono"
     // A side panel's section is headed by a bar of its line colour, as a station sign marks a line, instead of a glyph.
     readonly property bool lineSections: IrisDesign.trait("sections") === "line"
+    // The shell's shared toasts (reloaded, copied, failed) take the Design's own toast under iRiS when it has one.
+    readonly property string toastSkin: IrisDesign.skin("toast")
     readonly property bool lowerTitles: IrisDesign.trait("titles") === "lower"
     // Where you are and what is chosen (a row, a cell, a tile): the accent wash in iRiS, a solid plate of the accent with
     // its own ink in a plate Design (never the text colour as a plate: a white slab on every chosen row).

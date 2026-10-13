@@ -67,6 +67,7 @@ QtObject {
         oskKey: "skins/OskKey.qml",
         nameTag: "skins/NameTag.qml",
         authPlate: "skins/AuthPlate.qml",
+        toast: "skins/Toast.qml",
         // Desktop widgets, each a print of its own: drawn whatever widget design is chosen (DesktopWidgetDesign).
         widgetClock: "widgets/Clock.qml",
         widgetWeather: "widgets/Forecast.qml",
