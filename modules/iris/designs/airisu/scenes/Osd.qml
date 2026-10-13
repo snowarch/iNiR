@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Shapes
 import QtQuick.Layouts
 import qs.services
 import qs.modules.common
@@ -183,13 +184,22 @@ Item {
         id: keyRow
         readonly property bool layout: (root.osd?.keyboardIcon ?? "") === "language"
         readonly property bool active: root.osd?.keyboardActive ?? false
-        MaterialSymbol {
+        // A lock key is its keycap, cut by the die, and the seal box beside the words stamped while it holds.
+        ALacquer {
             visible: !keyRow.layout
             Layout.alignment: Qt.AlignVCenter
-            text: root.osd?.keyboardIcon ?? "keyboard"
-            fill: 1
-            iconSize: Math.round(22 * root.d)
-            color: keyRow.active ? root.ink : root.inkThird
+            implicitWidth: Airisu.u(9)
+            implicitHeight: Airisu.u(9)
+            cut: Airisu.cutFor(Airisu.u(9))
+            lacquer: Airisu.slot
+            moving: false
+            MaterialSymbol {
+                anchors.centerIn: parent
+                text: root.osd?.keyboardIcon ?? "keyboard"
+                fill: 1
+                iconSize: Math.round(20 * root.d)
+                color: keyRow.active ? root.ink : root.inkThird
+            }
         }
         ALacquer {
             visible: keyRow.layout
@@ -218,6 +228,14 @@ Item {
             color: keyRow.layout || keyRow.active ? root.ink : root.inkSecond
             text: keyRow.layout ? Translation.tr("Keyboard layout") : (root.osd?.keyboardText ?? "")
         }
+        ASeal {
+            visible: !keyRow.layout
+            Layout.alignment: Qt.AlignVCenter
+            implicitWidth: Airisu.u(3.5)
+            implicitHeight: Airisu.u(3.5)
+            stamped: keyRow.active
+            rule: root.inkThird
+        }
     }
 
     // A song: its cover, the artist over the title, what the key did.
@@ -234,17 +252,20 @@ Item {
         Column {
             Layout.fillWidth: true
             Layout.maximumWidth: Math.round(260 * root.d)
+            Layout.preferredWidth: Math.max(artist.implicitWidth, song.implicitWidth)
             Layout.alignment: Qt.AlignVCenter
             spacing: Math.round(2 * root.d)
             AText {
+                id: artist
                 width: parent.width
                 visible: text.length > 0
-                size: IrisStyle.typeFootnote
-                font.weight: Font.Bold
+                voice: "mono"
+                size: IrisStyle.typeCaption
                 color: root.inkSecond
                 text: root.osd?.mediaArtist ?? ""
             }
             AText {
+                id: song
                 width: parent.width
                 size: IrisStyle.typeLabel
                 font.weight: Font.Bold
@@ -252,13 +273,54 @@ Item {
                 text: (root.osd?.mediaTitle ?? "").length > 0 ? root.osd.mediaTitle : Translation.tr("Now playing")
             }
         }
-        MaterialSymbol {
-            visible: (root.osd?.mediaAction ?? "").length > 0
+        // What the key did: a skip is a run of chevrons the way it went, the first in the seal and the others a print
+        // deeper each, as a sign points the way; play and pause keep their sign.
+        Item {
+            readonly property string action: String(root.osd?.mediaAction ?? "")
+            readonly property bool skips: action === "next" || action === "previous"
+            visible: action.length > 0
             Layout.alignment: Qt.AlignVCenter
-            text: root.osd?.mediaIcon ?? "play_arrow"
-            fill: 1
-            iconSize: Math.round(22 * root.d)
-            color: root.ink
+            implicitWidth: skips ? Airisu.u(10) : Airisu.u(6)
+            implicitHeight: Airisu.u(6)
+            Row {
+                visible: parent.skips
+                anchors.centerIn: parent
+                spacing: -Math.round(4 * root.d)
+                layoutDirection: parent.action === "previous" ? Qt.RightToLeft : Qt.LeftToRight
+                Repeater {
+                    model: 3
+                    Shape {
+                        id: chevron
+                        required property int index
+                        readonly property bool back: String(root.osd?.mediaAction ?? "") === "previous"
+                        width: Math.round(14 * root.d)
+                        height: Math.round(18 * root.d)
+                        preferredRendererType: Shape.CurveRenderer
+                        ShapePath {
+                            fillColor: chevron.index === 0 ? Airisu.seal : chevron.index === 1 ? Airisu.underPlate(Airisu.seal)
+                                : Airisu.underPlate(Airisu.underPlate(Airisu.seal))
+                            strokeColor: "transparent"
+                            strokeWidth: 0
+                            PathPolyline {
+                                readonly property real w: chevron.width
+                                readonly property real h: chevron.height
+                                readonly property real t: Math.round(5 * root.d)
+                                path: chevron.back
+                                    ? [Qt.point(w, 0), Qt.point(w - t, 0), Qt.point(0, h / 2), Qt.point(w - t, h), Qt.point(w, h), Qt.point(t, h / 2), Qt.point(w, 0)]
+                                    : [Qt.point(0, 0), Qt.point(t, 0), Qt.point(w, h / 2), Qt.point(t, h), Qt.point(0, h), Qt.point(w - t, h / 2), Qt.point(0, 0)]
+                            }
+                        }
+                    }
+                }
+            }
+            MaterialSymbol {
+                visible: !parent.skips
+                anchors.centerIn: parent
+                text: root.osd?.mediaIcon ?? "play_arrow"
+                fill: 1
+                iconSize: Math.round(22 * root.d)
+                color: root.ink
+            }
         }
     }
 
@@ -266,12 +328,14 @@ Item {
     Slot {
         id: connectionRow
         readonly property string tone: root.osd?.connection?.tone ?? ""
-        MaterialSymbol {
+        // The line it came in on: a bar of the connection's line colour, as a board marks its lines; its sign and its
+        // state ride in the ruby over the device's name.
+        Rectangle {
             Layout.alignment: Qt.AlignVCenter
-            text: root.osd?.connection?.icon ?? ""
-            fill: 1
-            iconSize: Math.round(22 * root.d)
-            color: connectionRow.tone === "off" ? root.inkThird : root.ink
+            implicitWidth: Math.max(3, Math.round(4 * root.d))
+            implicitHeight: Airisu.u(9)
+            color: connectionRow.tone === "off" ? root.inkThird : (root.osd?.connectionTint ?? root.ink)
+            antialiasing: false
         }
         Column {
             id: connectionWords
@@ -279,20 +343,29 @@ Item {
             Layout.maximumWidth: Math.round(260 * root.d)
             Layout.alignment: Qt.AlignVCenter
             spacing: Math.round(2 * root.d)
+            Row {
+                spacing: Airisu.u(1)
+                MaterialSymbol {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.osd?.connection?.icon ?? ""
+                    fill: 1
+                    iconSize: Math.round(13 * root.d)
+                    color: root.inkSecond
+                }
+                AText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    voice: "mono"
+                    size: IrisStyle.typeCaption
+                    color: root.inkSecond
+                    text: String(root.osd?.connection?.detail ?? "")
+                }
+            }
             AText {
                 width: parent.width
                 size: IrisStyle.typeLabel
                 font.weight: Font.Bold
-                color: root.ink
+                color: connectionRow.tone === "off" ? root.inkSecond : root.ink
                 text: root.osd?.connection?.title ?? ""
-            }
-            AText {
-                width: parent.width
-                visible: text.length > 0
-                size: IrisStyle.typeFootnote
-                font.weight: Font.Medium
-                color: root.inkSecond
-                text: root.osd?.connection?.detail ?? ""
             }
         }
         AText {

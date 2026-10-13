@@ -275,13 +275,25 @@ Item {
                         height: parent.height - Airisu.u(4)
                         color: root.inkThird
                     }
+                    // A stub is torn off to answer: its word set in capitals like a ticket's printed choice.
                     IrisButton {
+                        id: answer
                         anchors.fill: parent
                         anchors.margins: Airisu.u(1)
                         quiet: true
-                        text: String(stub.modelData.text ?? "")
+                        Accessible.name: String(stub.modelData.text ?? "")
                         skinData: ({ under: root.lacquer })
                         onClicked: Notifications.attemptInvokeAction(root.notification.notificationId, stub.modelData.identifier)
+                        AText {
+                            anchors.centerIn: parent
+                            width: Math.min(implicitWidth, answer.width - Airisu.u(2))
+                            size: IrisStyle.typeFootnote
+                            font.weight: Font.Bold
+                            font.capitalization: Font.AllUppercase
+                            font.letterSpacing: Math.round(IrisStyle.typeFootnote * 0.08)
+                            color: root.ink
+                            text: String(stub.modelData.text ?? "")
+                        }
                     }
                 }
             }
