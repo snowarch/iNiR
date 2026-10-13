@@ -3,9 +3,9 @@ import qs.modules.iris.style
 import "../components"
 
 // AIRISU's section mark in a list: a catalogue's running head. The section's name in the data face's capitals, a short
-// bar of its line's colour before it (none for a section with no line: the top hit, the suggestions, the clipboard),. No
-// chip: a list of four sections would carry four plates of colour. It stands
-// at the foot of the room the engine keeps for the head.
+// bar of its line's colour before it (none for a section with no line: the top hit, the suggestions, the clipboard). No
+// chip: a list of four sections would carry four plates of colour. It stands at the foot of the room the engine keeps
+// for the head.
 Item {
     id: root
     property Item host

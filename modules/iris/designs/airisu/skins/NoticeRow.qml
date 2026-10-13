@@ -67,7 +67,7 @@ Item {
         x: line.x + line.width + Airisu.u(3)
         y: root.pad
         width: root.width - x - tail.width - Airisu.u(2)
-        spacing: Math.round(1 * root.d)
+        spacing: 0
         AText {
             width: parent.width
             voice: "mono"
