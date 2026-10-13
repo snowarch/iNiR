@@ -292,8 +292,7 @@ QtObject {
     readonly property var identityHues: ({ red: 0.01, orange: 0.09, yellow: 0.14, green: 0.37, teal: 0.52, sky: 0.55,
         blue: 0.6, indigo: 0.67, purple: 0.78, pink: 0.95 })
     function materialSwatch(name: string): color { return Qt.color(root.washi?.materials?.[name] ?? "#000000") }
-    readonly property string materialName: IrisDesign.material.length > 0 ? IrisDesign.material
-        : root.followsTheme ? "theme" : String(root.theme?.surface ?? "black")
+    readonly property string materialName: root.followsTheme ? "theme" : String(root.theme?.surface ?? "black")
     // What each scheme calls its materials (Settings, the previews): the three stored names stay black, graphite, midnight.
     readonly property var materialLabels: root.ink ? ({ black: "Washi", graphite: "Kraft", midnight: "Mist" })
         : root.light ? ({ black: "Snow", graphite: "Silver", midnight: "Sky" }) : ({ black: "Black", graphite: "Graphite", midnight: "Midnight" })

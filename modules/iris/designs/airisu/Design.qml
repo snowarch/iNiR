@@ -71,9 +71,6 @@ QtObject {
     // Every body is cut with a blade (IrisField.frag bodyBox): 45° off two opposite corners, gussets where bodies meet.
     readonly property var field: ({ corner: "chamfer" })
     readonly property string preset: "night"
-    // What the shell is made of: urushi, lacquer coloured with the person's accent (scripts/colors/washi), so the frame
-    // and every body are one coloured material, never plain black or paper white.
-    readonly property string material: "urushi"
     readonly property var fonts: ({ text: "Archivo", title: "Archivo SemiExpanded", numbers: "Archivo SemiExpanded",
         mono: "JetBrainsMono Nerd Font" })
     readonly property var motion: ({ morph: "tuned", duration: 220 })
