@@ -843,16 +843,27 @@ Item {
                 columns: playing.across ? 3 : 2
                 columnSpacing: Math.round((playing.across ? 12 : 10) * root.d)
                 rowSpacing: Math.round(6 * root.d)
-                IrisArtwork {
+                // A Design that prints a record its own way (IrisDesign part `recordCover`) draws the cover; it reads
+                // `source`, `artist` and `circular` from here.
+                Item {
+                    id: coverSlot
                     readonly property real side: playing.across ? nowPlaying.height - 2 * nowPlaying.pad
                         : Math.max(Math.round(40 * root.d), Math.min(Math.round(playing.width * 0.5),
                             playing.height - playing.keysHeight - playing.rowSpacing))
+                    readonly property url source: MediaArtwork.displaySource
+                    readonly property bool circular: (Config.options?.iris?.player?.roundCover ?? false) && !nowPlaying.wide
+                    readonly property string artist: String(media.effectiveArtist ?? "")
                     Layout.preferredWidth: side
                     Layout.preferredHeight: side
                     Layout.alignment: playing.across ? Qt.AlignVCenter : Qt.AlignLeft | Qt.AlignTop
-                    source: MediaArtwork.displaySource
-                    circular: (Config.options?.iris?.player?.roundCover ?? false) && !nowPlaying.wide
-                    radius: circular ? width / 2 : IrisStyle.radiusTile
+                    IrisArtwork {
+                        anchors.fill: parent
+                        visible: !recordSkin.active
+                        source: coverSlot.source
+                        circular: coverSlot.circular
+                        radius: circular ? width / 2 : IrisStyle.radiusTile
+                    }
+                    IrisSkin { id: recordSkin; part: "recordCover"; host: coverSlot }
                 }
                 ColumnLayout {
                     Layout.fillWidth: true
