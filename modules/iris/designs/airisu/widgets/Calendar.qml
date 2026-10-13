@@ -20,13 +20,13 @@ Item {
     function dp(v: real): real { return root.face ? root.face.dp(v) : Math.round(v) }
     function px(v: real): real { return root.face ? root.face.px(v) : Math.round(v) }
     readonly property int pad: root.dp(14)
-    readonly property var viewing: root.face?.viewing ?? DateTime.clock.date
+    readonly property var viewing: root.widget ? root.widget.viewingDate : DateTime.clock.date
     readonly property var cells: root.widget ? root.widget.monthCells() : []
     readonly property int weekStart: Number(root.widget?.weekStart ?? 1)
     // A day of the month shown, as a date the calendars can be asked about.
     function dayOf(day: int): var {
-        const shown = root.widget?.viewingDate ?? DateTime.clock.date
-    readonly property var viewing: root.widget ? root.widget.viewingDate : DateTime.clock.date
+        const shown = root.viewing
+        return new Date(shown.getFullYear(), shown.getMonth(), day)
     }
 
     AStock {
