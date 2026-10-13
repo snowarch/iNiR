@@ -23,6 +23,11 @@ Item {
     readonly property var viewing: root.face?.viewing ?? DateTime.clock.date
     readonly property var cells: root.widget ? root.widget.monthCells() : []
     readonly property int weekStart: Number(root.widget?.weekStart ?? 1)
+    // A day of the month shown, as a date the calendars can be asked about.
+    function dayOf(day: int): var {
+        const shown = root.widget?.viewingDate ?? DateTime.clock.date
+        return new Date(shown.getFullYear(), shown.getMonth(), day)
+    }
 
     AStock {
         id: stock
@@ -147,9 +152,7 @@ Item {
                     required property var modelData
                     required property int index
                     readonly property bool sunday: (root.weekStart + cell.index) % 7 === 0
-                    readonly property var date: new Date(root.viewing.getFullYear(), root.viewing.getMonth()
-                        + (cell.modelData.currentMonth ? 0 : cell.index < 7 ? -1 : 1), cell.modelData.day)
-                    readonly property bool busy: cell.modelData.currentMonth && IrisFaceData.hasEvents(cell.date)
+                    readonly property bool busy: cell.modelData.currentMonth && IrisFaceData.hasEvents(root.dayOf(cell.modelData.day))
                     width: grid.cellW
                     height: grid.cellH
                     Rectangle {

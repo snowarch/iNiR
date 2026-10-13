@@ -6,6 +6,7 @@ import qs.modules.iris.style
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetNotes")
 
     readonly property int words: String(root.widget.noteText ?? "").trim().split(/\s+/).filter(word => word.length > 0).length
 

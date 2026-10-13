@@ -12,6 +12,7 @@ import qs.modules.iris.pieces
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetScreenTime")
 
     property int revision: 0
     readonly property bool on: ScreenTime.enabled

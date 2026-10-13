@@ -11,6 +11,7 @@ import qs.modules.iris.style
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetProfile")
 
     readonly property string name: SystemInfo.displayName || SystemInfo.username || "user"
     readonly property string host: {

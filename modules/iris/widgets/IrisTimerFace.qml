@@ -9,6 +9,7 @@ import qs.modules.iris.bar.island
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetTimers")
 
     readonly property var timers: [
         {

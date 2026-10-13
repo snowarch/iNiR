@@ -9,6 +9,7 @@ import qs.modules.iris.style
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetNews")
 
     readonly property int capacity: root.small ? 1 : root.medium ? 2 : 4
     readonly property var stories: {
