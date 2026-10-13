@@ -46,6 +46,22 @@ PreviewScene {
             id: plate
             anchors.fill: parent
             radius: body.radius
+            // A chamfered Design (AIRISU) cuts the body by its die, so a preview wears the same 45° corners as the shell.
+            layer.enabled: IrisStyle.fieldChamfer
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: plateDie
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 1
+            }
+            IrisCutPlate {
+                id: plateDie
+                anchors.fill: parent
+                visible: false
+                layer.enabled: IrisStyle.fieldChamfer
+                cutLength: Math.max(2, Math.min(IrisStyle.chamferCut, Math.round(Math.min(width, height) / 4)))
+                color: "white" // iris-literal: a mask, never shown
+            }
             color: body.glass ? "transparent" : IrisStyle.bodySurface
             border.width: !body.glass && IrisStyle.rim.a > 0 ? 1 : 0
             border.color: IrisStyle.rim

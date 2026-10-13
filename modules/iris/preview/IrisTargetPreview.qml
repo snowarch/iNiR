@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import qs
@@ -41,6 +42,22 @@ Item {
         radius: IrisStyle.radiusSheet
         border.width: IrisStyle.rim.a > 0 ? 1 : 0
         border.color: IrisStyle.rim
+        // A chamfered Design (AIRISU) cuts the body by its die, so a preview wears the same 45° corners as the shell.
+        layer.enabled: IrisStyle.fieldChamfer
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskSource: bodyDie
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 1
+        }
+        IrisCutPlate {
+            id: bodyDie
+            anchors.fill: parent
+            visible: false
+            layer.enabled: IrisStyle.fieldChamfer
+            cutLength: Math.max(2, Math.min(IrisStyle.chamferCut, Math.round(Math.min(width, height) / 4)))
+            color: "white" // iris-literal: a mask, never shown
+        }
         IrisGlassEdge { anchors.fill: parent; z: 10; visible: IrisStyle.edgeLit && shown; radius: parent.radius }
         IrisLightWash {
             anchors.fill: parent
@@ -60,7 +77,7 @@ Item {
             width: Math.min(parent.width, Math.round(420 * root.d))
             height: specimenColumn.implicitHeight + Math.round(40 * root.d)
             scale: Math.min(1, parent.height / Math.max(1, specimen.height), parent.width / Math.max(1, specimen.width))
-            layer.enabled: specimen.scale < 0.999
+            layer.enabled: IrisStyle.fieldChamfer || specimen.scale < 0.999
             layer.smooth: true
             layer.mipmap: true
 

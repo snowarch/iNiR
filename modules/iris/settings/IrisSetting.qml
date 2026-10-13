@@ -30,16 +30,19 @@ Item {
             .join("")
     }
     readonly property real d: IrisStyle.settingsDensity
-    // A picked card: iRiS tints it and sets its name in the accent; a Design that selects with a plate (AIRISU) prints the
-    // picked one as the chosen plate, the ink reversed with the paper's colour cut out of it, as its form boxes are.
+    // A picked card: iRiS tints it and sets its name in the accent; a Design that selects with a plate (AIRISU) lays the
+    // picked one a step of ink over the others and rules its die in the seal: a card is never a plate of the ink itself
+    // (a white card on lacquer), and its name stays in the ink.
     readonly property bool platePick: IrisStyle.plateSelection
     function pickFill(selected: bool, hovered: bool): color {
-        return selected ? (root.platePick ? IrisStyle.text : IrisStyle.tintFill(IrisStyle.accent)) : hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
+        if (selected && root.platePick)
+            return ColorUtils.mix(IrisStyle.text, IrisStyle.surfaceOpaque, 0.12) // iris-literal: one step of ink
+        return selected ? IrisStyle.tintFill(IrisStyle.accent) : hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
     }
-    function pickInk(selected: bool): color { return !selected ? IrisStyle.text : root.platePick ? IrisStyle.surfaceOpaque : IrisStyle.accent }
-    function pickDetail(selected: bool): color {
-        return selected && root.platePick ? ColorUtils.mix(IrisStyle.surfaceOpaque, IrisStyle.text, 0.74) : IrisStyle.muted // iris-literal: the second tone on the chosen plate
-    }
+    function pickInk(selected: bool): color { return !selected || root.platePick ? IrisStyle.text : IrisStyle.accent }
+    function pickDetail(selected: bool): color { return IrisStyle.muted }
+    // The seal's rule round a picked card under a plate-selecting Design.
+    function pickRule(selected: bool): color { return selected && root.platePick ? IrisStyle.accentFill : "transparent" }
     readonly property var value: {
         Config.revision
         return IrisOptions.currentValue(root.spec)
@@ -716,7 +719,7 @@ Item {
                                 radius: IrisStyle.radiusTile
                                 readonly property color stuff: root.pickFill(tile.selected, tileHover.hovered)
                                 color: IrisStyle.fieldChamfer ? "transparent" : tile.stuff
-                                IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: tile.stuff }
+                                IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: tile.stuff; stroke: root.pickRule(tile.selected); strokeWidth: tile.selected ? 2 : 0 }
                                 scale: tileTap.pressed ? IrisStyle.pressScale(0.97) : 1
                                 Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
                                 Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -803,7 +806,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "check"
                                     iconSize: Math.round(16 * root.d)
-                                    color: root.platePick ? root.pickInk(true) : IrisStyle.accent
+                                    color: IrisStyle.accent
                                     opacity: tile.selected ? 1 : 0
                                     scale: tile.selected ? 1 : 0.6
                                     Behavior on opacity { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -902,7 +905,7 @@ Item {
                         anchors.fill: parent
                         anchors.margins: -out
                         cutLength: IrisStyle.chamferCut + Math.round(out * (2 - Math.SQRT2))
-                        stroke: designCard.selected ? (root.platePick ? IrisStyle.text : IrisStyle.accent) : IrisStyle.borderStrong
+                        stroke: designCard.selected ? (root.platePick ? IrisStyle.accentFill : IrisStyle.accent) : IrisStyle.borderStrong
                         strokeWidth: designCard.selected ? 2 : 1
                     }
                     HoverHandler { id: designHover; cursorShape: Qt.PointingHandCursor }
@@ -943,7 +946,7 @@ Item {
                     radius: IrisStyle.radiusTile
                     readonly property color plate: root.pickFill(card.selected, cardHover.hovered)
                     color: IrisStyle.fieldChamfer ? "transparent" : card.plate
-                    IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: card.plate }
+                    IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: card.plate; stroke: root.pickRule(card.selected); strokeWidth: card.selected ? 2 : 0 }
                     scale: cardTap.pressed ? IrisStyle.pressScale(0.97) : 1
                     Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
                     Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -1067,7 +1070,7 @@ Item {
                             MaterialSymbol {
                                 text: "check"
                                 iconSize: Math.round(16 * root.d)
-                                color: root.platePick ? root.pickInk(true) : IrisStyle.accent
+                                color: IrisStyle.accent
                                 opacity: card.selected ? 1 : 0
                                 scale: card.selected ? 1 : 0.6
                                 Behavior on opacity { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -1127,7 +1130,7 @@ Item {
                         radius: IrisStyle.radiusTile
                         readonly property color plate: root.pickFill(source.selected, sourceHover.hovered)
                         color: IrisStyle.fieldChamfer ? "transparent" : source.plate
-                        IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: source.plate }
+                        IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: source.plate; stroke: root.pickRule(source.selected); strokeWidth: source.selected ? 2 : 0 }
                         scale: sourceTap.pressed ? IrisStyle.pressScale(0.97) : 1
                         Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
                         Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -1251,7 +1254,7 @@ Item {
                                 MaterialSymbol {
                                     text: "check"
                                     iconSize: Math.round(16 * root.d)
-                                    color: root.platePick ? root.pickInk(true) : IrisStyle.accent
+                                    color: IrisStyle.accent
                                     opacity: source.selected ? 1 : 0
                                     scale: source.selected ? 1 : 0.6
                                     Behavior on opacity { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
