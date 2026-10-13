@@ -44,7 +44,43 @@ PreviewScene {
         autoPaddingEnabled: false
     }
     Rectangle { anchors.fill: parent; color: IrisStyle.surface; opacity: lockPreview.dim }
+    // A Design that draws the lock its own way is shown as itself: the real lock surface, scaled to the preview, on a
+    // context that never asks PAM and takes no keys (the preview has none to give).
+    readonly property bool drawn: IrisDesign.has("lockClock")
+    QtObject {
+        id: standIn
+        signal shouldReFocus()
+        signal unlocked(targetAction: var)
+        signal failed()
+        property string currentText: ""
+        property bool unlockInProgress: false
+        property bool showFailure: false
+        property bool fingerprintsConfigured: false
+        function clearText(): void { standIn.currentText = "" }
+        function resetClearTimer(): void {}
+        function tryUnlock(): void {}
+    }
+    Item {
+        anchors.fill: parent
+        visible: lockPreview.drawn
+        clip: true
+        readonly property size screen: Qt.size(GlobalStates.focusedScreen?.width ?? 1920, GlobalStates.focusedScreen?.height ?? 1080)
+        Loader {
+            active: lockPreview.drawn && lockPreview.preview.visible
+            sourceComponent: IrisLockSurface {
+                width: parent.parent.screen.width
+                height: parent.parent.screen.height
+                scale: Math.min(lockPreview.width / width, lockPreview.height / height)
+                transformOrigin: Item.TopLeft
+                x: (lockPreview.width - width * scale) / 2
+                y: (lockPreview.height - height * scale) / 2
+                context: standIn
+                editing: true
+            }
+        }
+    }
     ColumnLayout {
+        visible: !lockPreview.drawn
         anchors.centerIn: parent
         width: parent.width - Math.round(64 * lockPreview.d)
         spacing: Math.round(10 * lockPreview.d)
