@@ -26,6 +26,8 @@ Singleton {
     property bool hasTouchpad: false
     property bool hasTrackpoint: false
     property int secondsLeft: 0
+    // How long a display change waits for Keep before it goes back.
+    readonly property int revertAfter: 15
 
     function ensure(): void {
         if (!root.available) return
@@ -174,7 +176,7 @@ Singleton {
         else if (key === "vrr") previous = out.vrr_enabled ? String(out.vrr_mode ?? "on") : "off"
         if (wanted === previous) return
         root.pending = { output: out.name, key: setting, value: wanted, previous: previous }
-        root.secondsLeft = 15
+        root.secondsLeft = root.revertAfter
         applier.command = ["python3", root.script, "apply-output", out.name, `${setting}=${wanted}`]
         applier.running = true
         countdown.restart()

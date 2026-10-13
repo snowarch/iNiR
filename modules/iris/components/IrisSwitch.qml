@@ -8,7 +8,7 @@ Rectangle {
     property bool on: false
     property string name: ""
     readonly property real d: IrisStyle.density
-    // A Design may draw it its own way (AIRISU: OFF│ON); the switch keeps the toggle, the keys and the name.
+    // A Design may draw it its own way (AIRISU: O│I); the switch keeps the toggle, the keys and the name.
     readonly property bool skinned: skin.active
     // What a skin draws from: the pointer over it and the press.
     readonly property bool hovered: area.containsMouse

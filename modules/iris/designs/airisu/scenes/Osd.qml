@@ -11,13 +11,13 @@ import qs.modules.iris.components
 import qs.modules.iris.bar.island
 import "../components"
 
-// AIRISU's OSD, where the Island is not there to answer: the body holds one lacquer panel in the pigment of what
-// changed, as the Island's strip does. A level is its subject's lacquer (light yamabuki,
-// muted tame, the rest the accent) with the level as the second coat laid at 45°, or as a band along the foot for Bar; Minimal keeps its
-// ring round the mark. A keyboard lock is the accent's lacquer while it holds, a layout its keycap sunk in the panel; a
-// song is music's lacquer with its cover; a connection takes its line's colour; a volume held back is the caution's.
-// Each time it comes up its lacquer is laid across it. IrisOSD keeps when, where, how long and the body, so every row
-// of Feedback in Settings still means what it says.
+// AIRISU's OSD, where the Island is not there to answer: the body holds one lacquer panel breathing the pigment of what
+// changed. A level is set as a meter: its figure leaning at the start, its name in the data face's capitals over a
+// ladder of steps that light as it climbs (Bar lays them flat; Minimal keeps a gauge round the sign). A keyboard lock is
+// its glyph while it holds, a layout its keycap sunk in the panel; a song is its cover and words; a connection takes its
+// line's colour. A volume held back or a connection in trouble keeps the panel and gains a band of yamabuki along its
+// head, its die ruled in yamabuki. Each time it comes up its lacquer is laid across it. IrisOSD keeps when, where, how
+// long and the body, so every row of Feedback in Settings still means what it says.
 Item {
     id: root
     property var osd: null
@@ -35,7 +35,7 @@ Item {
         connection: connectionRow, warning: warningRow })[root.kind] ?? levelRow
     implicitWidth: root.level && !root.minimal ? Math.round(root.restWidth)
         : Math.round(Math.max(Math.round(200 * root.d), Math.min(root.restWidth * 1.2, root.current.implicitWidth + 2 * root.pad)))
-    implicitHeight: Math.round(root.current.implicitHeight + 2 * root.rise)
+    implicitHeight: Math.round(root.current.implicitHeight + 2 * root.rise + root.tape)
 
     readonly property bool opened: root.osd?.open ?? false
     readonly property int kiss: Airisu.kiss
@@ -46,7 +46,7 @@ Item {
     readonly property color pigment: {
         switch (root.kind) {
         case "volume": return Airisu.pigment(root.muted ? "system" : "music")
-        case "brightness": return Airisu.pigment("caution")
+        case "brightness": return Airisu.pigment("display")
         case "mic": return Airisu.pigment(root.muted ? "system" : "message")
         case "keyboard": return root.keyLocked ? Airisu.seal : Airisu.pigment("system")
         case "media": return Airisu.pigment("music")
@@ -56,82 +56,64 @@ Item {
         default: return Airisu.pigment("rest")
         }
     }
-    readonly property bool loud: root.kind === "warning"
-    readonly property color panel: root.loud ? Airisu.vivid(root.pigment) : Airisu.lacquerOf(root.pigment)
+    // Caution is a band of yamabuki along the head and the die ruled in it; the panel stays the stock's.
+    readonly property bool cautioned: root.kind === "warning" || (root.kind === "connection" && root.connectionTone === "warn")
+    readonly property int tape: root.cautioned ? Airisu.u(1) : 0
+    readonly property color panel: Airisu.lacquerOf(root.pigment)
     readonly property bool barLevel: root.style === "bar"
-    readonly property bool coated: root.current === levelRow && !root.minimal
-    readonly property color coatColour: root.barLevel ? Airisu.vivid(root.pigment) : Airisu.coat(root.pigment)
-    readonly property color ink: root.coated && !root.barLevel ? Airisu.inkOver(root.panel, root.coatColour) : Airisu.inkOn(root.panel)
-    readonly property color inkSecond: ColorUtils.mix(root.ink, root.panel, 0.74) // iris-literal: second tone on lacquer
-    readonly property color inkThird: ColorUtils.mix(root.ink, root.panel, 0.52)  // iris-literal: third tone on lacquer
+    readonly property color ink: Airisu.inkOn(root.panel)
+    readonly property color inkSecond: Airisu.inkSecondOn(root.panel)
+    readonly property color inkThird: Airisu.inkThirdOn(root.panel)
 
     ALacquer {
+        id: panel
         anchors.fill: parent
         anchors.margins: root.kiss
         cut: Math.max(2, Airisu.chamfer - root.kiss)
         lacquer: root.opened ? root.panel : Airisu.ground
-        coat: root.coatColour
-        band: root.barLevel ? Math.max(3, Math.round(height * 0.16)) : 0
-        share: root.coated ? root.value : 0
-        travel: Airisu.detent
+    }
+    ADie {
+        visible: root.cautioned
+        anchors.fill: panel
+        kind: "chamfer"
+        cut: panel.cut
+        stroke: Airisu.tape
+        strokeWidth: Airisu.hair
+    }
+    Rectangle {
+        visible: root.cautioned
+        x: panel.x
+        y: panel.y
+        width: panel.width - panel.cut
+        height: root.tape
+        color: Airisu.tape
+        antialiasing: false
     }
 
     component Slot: RowLayout {
         id: slot
         x: root.pad
-        y: root.rise
+        y: root.rise + root.tape
         width: root.width - 2 * root.pad
-        height: root.height - 2 * root.rise
+        height: root.height - 2 * root.rise - root.tape
         visible: root.current === slot
         spacing: Airisu.u(3)
     }
 
-    // A level: the mark, its name, the figure.
+    // A level: the figure leaning at the start, and over the ladder of steps (ASteps) the name in the data face's capitals
+    // with its sign; Bar lays the steps flat, Minimal keeps a gauge round the sign instead of the ladder.
     Slot {
         id: levelRow
         readonly property string name: root.kind === "brightness" ? Translation.tr("Brightness")
             : root.kind === "mic" ? Translation.tr("Microphone") : Translation.tr("Volume")
-        readonly property color ink: root.muted ? root.inkSecond : root.ink
-        Item {
-            implicitWidth: Airisu.u(8)
-            implicitHeight: Airisu.u(8)
-            Layout.alignment: Qt.AlignVCenter
-            ProgressRing {
-                anchors.fill: parent
-                visible: root.minimal
-                progress: root.value
-                tint: levelRow.ink
-                stroke: Math.round(3 * root.d)
-            }
-            MaterialSymbol {
-                anchors.centerIn: parent
-                text: root.osd?.icon ?? "volume_up"
-                fill: 1
-                iconSize: Math.round((root.minimal ? 16 : 22) * root.d)
-                color: levelRow.ink
-            }
-        }
-        Column {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-            spacing: Airisu.u(1.5)
-            AText {
-                width: parent.width
-                size: IrisStyle.typeLabel
-                font.weight: Font.Bold
-                color: levelRow.ink
-                text: root.muted ? Translation.tr("Muted") : levelRow.name
-            }
-        }
         AText {
             visible: root.osd?.levelFigure ?? true
             Layout.alignment: Qt.AlignVCenter
             Layout.preferredWidth: hundred.advanceWidth
-            horizontalAlignment: Text.AlignRight
             voice: "figure"
             lean: Airisu.lean
             size: IrisStyle.typeDisplay
-            color: levelRow.ink
+            color: root.muted ? root.inkThird : root.ink
             text: Math.round(root.value * 100)
             TextMetrics {
                 id: hundred
@@ -140,6 +122,58 @@ Item {
                 font.weight: Font.ExtraBold
                 font.letterSpacing: -Math.round(IrisStyle.typeDisplay * 0.03)
                 text: "100"
+            }
+        }
+        Item {
+            visible: root.minimal
+            implicitWidth: Airisu.u(9)
+            implicitHeight: Airisu.u(9)
+            Layout.alignment: Qt.AlignVCenter
+            ProgressRing {
+                anchors.fill: parent
+                progress: root.value
+                tint: root.muted ? root.inkThird : Airisu.seal
+                stroke: Math.round(3 * root.d)
+            }
+            MaterialSymbol {
+                anchors.centerIn: parent
+                text: root.osd?.icon ?? "volume_up"
+                fill: 1
+                iconSize: Math.round(15 * root.d)
+                color: root.muted ? root.inkSecond : root.ink
+            }
+        }
+        Column {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
+            spacing: Airisu.u(1.5)
+            Row {
+                spacing: Airisu.u(1)
+                MaterialSymbol {
+                    visible: !root.minimal
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.osd?.icon ?? "volume_up"
+                    fill: 1
+                    iconSize: Math.round(14 * root.d)
+                    color: root.muted ? root.inkSecond : root.ink
+                }
+                AText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    voice: "mono"
+                    size: IrisStyle.typeCaption
+                    color: root.inkSecond
+                    text: root.muted ? Translation.tr("Muted") : levelRow.name
+                }
+            }
+            ASteps {
+                visible: !root.minimal
+                width: parent.width
+                height: Airisu.u(4)
+                value: root.value
+                muted: root.muted
+                rising: !root.barLevel
+                ink: root.ink
+                quiet: root.inkThird
             }
         }
     }
@@ -272,7 +306,7 @@ Item {
         }
     }
 
-    // A volume held back: on the caution's lacquer, its sign and why.
+    // A volume held back: under the caution's band, its sign in yamabuki and why.
     Slot {
         id: warningRow
         MaterialSymbol {
@@ -280,7 +314,7 @@ Item {
             text: "volume_off"
             fill: 1
             iconSize: Math.round(22 * root.d)
-            color: root.ink
+            color: Airisu.caution
         }
         Column {
             id: warningWords

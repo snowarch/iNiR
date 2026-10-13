@@ -38,7 +38,7 @@ Item {
     readonly property bool eventCaution: Qt.colorEqual(root.eventTint, IrisStyle.danger) || Qt.colorEqual(root.eventTint, IrisStyle.warning)
     readonly property string levelIcon: String(root.island?.feedbackIcon ?? "volume_up")
     readonly property color levelPigment: root.levelIcon.indexOf("bright") >= 0 || root.levelIcon.indexOf("light") >= 0
-        ? Airisu.pigment("caution") : root.levelIcon.indexOf("mic") >= 0 ? Airisu.pigment("time")
+        ? Airisu.pigment("display") : root.levelIcon.indexOf("mic") >= 0 ? Airisu.pigment("time")
         : root.levelIcon.indexOf("volume") >= 0 || root.levelIcon.indexOf("speaker") >= 0 ? Airisu.pigment("music")
         : Airisu.pigment("system")
     readonly property color pigment: {
@@ -48,19 +48,19 @@ Item {
         case "timer": return Airisu.pigment("time")
         case "task": return Airisu.pigment("rest")
         case "edit": return Airisu.pigment("system")
-        case "event": return root.eventCaution ? Airisu.pigment("caution") : Airisu.pigment("rest")
+        case "event": return Airisu.pigment("rest")
         case "feedback": return root.island?.feedbackMuted ? Airisu.pigment("system") : root.levelPigment
         default: return Airisu.pigment("time")
         }
     }
     // The strip is the body itself: only a notice and a recording lacquer it, the one thing that must be seen from across
-    // the room.
-    readonly property color surface: root.mode === "event" ? (root.eventCaution ? Airisu.vivid(root.pigment) : Airisu.coat(root.pigment))
-        : root.mode === "record" ? Airisu.coat(root.pigment) : "transparent"
+    // the room. A warning or a danger is the same notice with a band of yamabuki along its foot.
+    readonly property bool taped: root.mode === "event" && root.eventCaution
+    readonly property color surface: root.mode === "event" || root.mode === "record" ? Airisu.coat(root.pigment) : "transparent"
     readonly property bool barLevel: root.mode === "feedback" && root.levelStyle === "bar"
     // A level fills the strip as a meter does; anything else that runs is a band of shu along its foot.
     readonly property bool fills: root.mode === "feedback" && !root.barLevel
-    readonly property color coatColour: root.fills ? Airisu.coat(root.pigment) : Airisu.vivid(root.pigment)
+    readonly property color coatColour: root.taped ? Airisu.tape : root.fills ? Airisu.coat(root.pigment) : Airisu.vivid(root.pigment)
     // Type over a coat that runs the whole height takes the ink that reads on both coats.
     readonly property color ink: root.run > 0 && root.fills ? Airisu.inkOver(root.surface, root.coatColour) : Airisu.inkOn(root.surface)
     readonly property color inkSecond: ColorUtils.mix(root.ink, root.surface, 0.74) // iris-literal: second tone on lacquer
@@ -90,9 +90,9 @@ Item {
         lacquer: root.surface
         coat: root.coatColour
         // At rest the hour is a hairline of its pigment, read at a glance and never louder than the time.
-        band: root.fills ? 0 : root.barLevel ? Math.max(3, Math.round(panel.height * 0.22))
+        band: root.taped ? Math.max(3, Math.round(panel.height * 0.1)) : root.fills ? 0 : root.barLevel ? Math.max(3, Math.round(panel.height * 0.22))
             : root.resting ? Math.max(2, Math.round(panel.height * 0.06)) : Math.max(2, Math.round(panel.height * 0.09))
-        share: root.run
+        share: root.taped ? 1 : root.run
         // A level follows the hand; a song and a timer step once a second (a pixel or two, no animation to pay for).
         travel: root.mode === "feedback" ? Airisu.detent : root.mode === "task" ? Airisu.snap : 0
     }

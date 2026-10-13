@@ -12,8 +12,10 @@ Item {
     property color lacquer: Airisu.sticker
     property color coat: "transparent"
     property real share: 0
-    // The coat may run along the foot only (a band), as tall as `band`; 0 covers the whole height.
+    // The coat may run along the foot only (a band), as tall as `band`; 0 covers the whole height. `head` lays the band
+    // along the top instead.
     property real band: 0
+    property bool head: false
     property int cut: Airisu.chamfer
     property bool cutTopRight: true
     property bool cutBottomLeft: true
@@ -46,12 +48,13 @@ Item {
     // The edge travels its own lean plus the width, so a band (whose lean is only its own height) starts at once and
     // reads the share it carries, instead of lying hidden for the panel's height first.
     function cutAt(points: var, s: real, top: real): var {
-        const h = root.h
-        const lean = top > 0 ? Math.min(top, h) : h
-        const reach = -lean + Math.max(0, Math.min(1, s)) * (root.w + lean)
-        let out = root.clip(points, p => p.x - (h - p.y) - reach)
+        const band = top > 0 ? Math.min(top, root.h) : root.h
+        // The band's foot, where the edge starts: the panel's foot, or the band's own when it runs along the head.
+        const foot = top > 0 && root.head ? band : root.h
+        const reach = -band + Math.max(0, Math.min(1, s)) * (root.w + band)
+        let out = root.clip(points, p => p.x - (foot - p.y) - reach)
         if (top > 0)
-            out = root.clip(out, p => (h - top) - p.y)
+            out = root.head ? root.clip(out, p => p.y - band) : root.clip(out, p => (root.h - band) - p.y)
         return out
     }
     // The part still ahead of that cut, so a colour being laid never lies over the one it replaces (a see-through lacquer
@@ -121,6 +124,7 @@ Item {
     // Where the coat runs the whole height over a lacquer that can be seen through, the lacquer stops at the coat's edge
     // instead of lying under it (two see-through coats would darken where both are).
     readonly property bool coated: root.shown > 0.001 && root.coat.a > 0
+    readonly property var coatRegion: root.coated ? root.cutAt(root.die, root.shown, root.band) : []
     readonly property var bare: root.coated && root.band <= 0 && (root.texture !== null || root.lacquer.a < 0.999)
         ? root.aheadOf(root.die, root.shown) : root.die
 
@@ -153,7 +157,7 @@ Item {
             fillColor: root.glazed(root.coat)
             strokeColor: "transparent"
             strokeWidth: 0
-            PathPolyline { path: root.coated ? root.closed(root.cutAt(root.die, root.shown, root.band)) : [] }
+            PathPolyline { path: root.coated ? root.closed(root.coatRegion) : [] }
         }
     }
 }

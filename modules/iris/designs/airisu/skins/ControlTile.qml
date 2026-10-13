@@ -6,12 +6,14 @@ import qs.modules.iris.style
 import qs.modules.iris.control
 import "../components"
 
-// AIRISU's control in the Control Center: a key (AKey). Off, it is the body's next coat with its sign and name; turned
-// on, the lacquer is laid across it at 45° in the pigment Settings › Control Center › Accent names (the accent, a
-// tame for Ink, or each control's line colour), its sign and name cut out in that lacquer's ink; a recording is
-// always the accent, because it is live. Round keeps the person's disc; a wide control keeps its key at the head of the
-// strip, sunk into it while off, with its name and state beside it. The grid keeps every click and list; the library
-// shelf in edit mode draws its tiles with the same key (`bare`: the name is set under it, not inside).
+// AIRISU's control in the Control Center: a key (AKey) of the body's next coat, on or off. What says it is on is the
+// seal box (ASeal) in its corner, stamped in the pigment Settings › Control Center › Accent names (the accent, or a tame
+// for Ink); a recording always stamps the accent, because it is live. Lit keys never turn into plates of shu: a grid of
+// them would be the 2 parts of seal spent ten times over. The sign stands at the head and the name at the foot, as a
+// label is set on a part. Round keeps the person's disc with the box at its foot like the logo's square; a wide control
+// keeps its key at the head of the strip, stamped in the seal while on, with its name and state beside it. The grid keeps
+// every click and list; the library shelf in edit mode draws its tiles with the same key (`bare`: the name is set under
+// it, not inside).
 Item {
     id: root
     property Item host
@@ -24,8 +26,7 @@ Item {
     readonly property bool pressed: (root.host?.down ?? false) && root.ready
     readonly property bool keyed: root.host?.visualFocus ?? false
     readonly property real d: Airisu.d
-    readonly property int shift: 0
-    readonly property int run: root.pressed ? Airisu.hair : 0
+    readonly property int run: root.shift
 
     readonly property color tint: root.control?.tint ?? IrisStyle.accent
     readonly property bool live: (root.control?.moduleId ?? "") === "record"
@@ -33,10 +34,11 @@ Item {
         // Ink's quiet lacquer is tame itself: its coat sat a hair from the off key and an "on" read as off.
         : Qt.colorEqual(root.tint, IrisStyle.text) ? Airisu.pigment("system")
         : Airisu.seal
-    // The colour the key is now: its lacquer when on, the body's next coat when off, half into the stock when it cannot answer.
-    readonly property color face: !root.ready ? Airisu.dim : root.lit ? root.lacquer : Airisu.groundRaised
+    // The colour the key is: the body's next coat, half into the stock when it cannot answer.
+    readonly property color face: !root.ready ? Airisu.dim : Airisu.groundRaised
     readonly property color ink: !root.ready ? Airisu.inkThird : Airisu.inkOn(root.face)
-    readonly property color inkSecond: !root.ready ? Airisu.inkThird : root.lit ? Airisu.inkSecondOn(root.face) : Airisu.inkSecond
+    readonly property color inkSecond: !root.ready ? Airisu.inkThird : Airisu.inkSecond
+    readonly property int shift: root.pressed ? Airisu.offset : 0
 
     // ── Tile: the key is the whole cell.
     AKey {
@@ -47,55 +49,79 @@ Item {
         pressed: root.pressed
         keyed: root.keyed
         available: root.ready
-        Column {
-            anchors.centerIn: parent
-            anchors.horizontalCenterOffset: root.run
-            anchors.verticalCenterOffset: root.run
-            width: parent.width - Airisu.u(2)
-            spacing: Math.round(2 * root.d)
-            MaterialSymbol {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: root.control?.glyph ?? ""
-                fill: root.lit ? 1 : 0
-                iconSize: Math.round(21 * root.d)
-                color: root.ink
-            }
-            AText {
-                visible: IrisControlOptions.labelled && !(root.spec.bare ?? false)
-                width: Math.min(implicitWidth, parent.width)
-                anchors.horizontalCenter: parent.horizontalCenter
-                horizontalAlignment: Text.AlignHCenter
-                size: IrisStyle.typeFootnote
-                font.weight: root.lit ? Font.Bold : Font.Medium
-                fontSizeMode: Text.HorizontalFit
-                minimumPixelSize: IrisStyle.typeCaption
-                text: root.control?.label ?? ""
-                color: root.lit ? root.ink : root.inkSecond
-            }
+        readonly property int pad: Airisu.u(2.5)
+        MaterialSymbol {
+            x: parent.pad + root.run
+            y: parent.pad + root.run
+            text: root.control?.glyph ?? ""
+            fill: root.lit ? 1 : 0
+            iconSize: Math.round(21 * root.d)
+            color: root.ink
+        }
+        AText {
+            visible: IrisControlOptions.labelled && !(root.spec.bare ?? false)
+            x: parent.pad + root.run
+            y: parent.height - parent.pad - height + root.run
+            width: parent.width - 2 * parent.pad - tileSeal.width - Airisu.u(1)
+            size: IrisStyle.typeFootnote
+            font.weight: Font.Bold
+            fontSizeMode: Text.HorizontalFit
+            minimumPixelSize: IrisStyle.typeCaption
+            text: root.control?.label ?? ""
+            color: root.lit ? root.ink : root.inkSecond
+        }
+        ASeal {
+            id: tileSeal
+            x: parent.width - parent.pad - width + root.run
+            y: parent.height - parent.pad - height + root.run
+            stamped: root.lit
+            seal: root.lacquer
+            available: root.ready
         }
     }
 
-    // ── Round: the person's disc, coloured the same way; the pointer steps it, a press deepens it.
-    Rectangle {
+    // ── Round: the person's disc, with the seal box at its foot like the logo's square.
+    Item {
         visible: root.shape === "disc"
         readonly property real side: Math.min(parent.width, parent.height)
         width: side
         height: side
         anchors.centerIn: parent
-        radius: side / 2
-        color: root.ready && (root.hovered || root.pressed)
-            ? Airisu.step(root.face, root.pressed ? Airisu.pressStep : Airisu.hoverStep) : root.face
-        Behavior on color { enabled: Airisu.moving; ColorAnimation { duration: Airisu.snap } }
-        border.width: root.keyed ? Airisu.strong : 0
-        border.color: root.lit ? root.ink : Airisu.seal
-        MaterialSymbol {
-            anchors.centerIn: parent
-            anchors.horizontalCenterOffset: root.run
-            anchors.verticalCenterOffset: root.run
-            text: root.control?.glyph ?? ""
-            fill: root.lit ? 1 : 0
-            iconSize: Math.round(Math.min(21 * root.d, parent.width * 0.46))
-            color: root.ink
+        Rectangle {
+            visible: root.pressed
+            anchors.fill: parent
+            radius: width / 2
+            color: Airisu.underPlate(root.face)
+        }
+        Rectangle {
+            x: root.run
+            y: root.run
+            width: parent.width
+            height: parent.height
+            radius: width / 2
+            color: root.face
+            MaterialSymbol {
+                anchors.centerIn: parent
+                text: root.control?.glyph ?? ""
+                fill: root.lit ? 1 : 0
+                iconSize: Math.round(Math.min(21 * root.d, parent.width * 0.46))
+                color: root.ink
+            }
+        }
+        ASeal {
+            width: Math.max(6, Math.round(parent.side * 0.24))
+            height: width
+            x: parent.width - width + Math.round(width * 0.2) + root.run
+            y: parent.height - height + Math.round(width * 0.2) + root.run
+            visible: root.lit
+            stamped: root.lit
+            seal: root.lacquer
+            available: root.ready
+        }
+        AMarks {
+            anchors.fill: parent
+            shown: (root.ready && root.hovered) || root.keyed
+            color: root.keyed ? Airisu.seal : Airisu.marks
         }
     }
 

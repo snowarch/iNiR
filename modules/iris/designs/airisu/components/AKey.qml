@@ -2,11 +2,12 @@ import QtQuick
 import QtQuick.Shapes
 import qs.modules.iris.style
 
-// A key, AIRISU's control: a lacquer die that answers by its coat, never by growing, glowing or a ring. The pointer
-// lays a coat one step toward the lacquer's ink across it at the die's 45° (one snap), a press lays it a step deeper and
-// carries what is printed on it a hair down and right (`shift`, which the host's content follows), keyboard focus inks
-// the die's uncut corner as a flag, and a key that cannot be taken keeps no coat. A key with no lacquer (a quiet one) is
-// only its coat, laid on the body it sits on.
+// A key, AIRISU's control: a die printed in two plates, one over the other in register. It answers by marks and by
+// the register, never by tinting, growing or glowing: the pointer brings crop marks to its corners (AMarks), keyboard
+// focus brings them in shu, and a press drops the top plate down and right (`shift`, which the host's content follows)
+// so the plate under it shows along its head and its start, a deeper print of the same lacquer. A key with no lacquer (a
+// quiet one) has only its under plate, which a press lays on the body it sits on. A key that cannot be taken keeps no
+// marks and no register.
 Item {
     id: root
     property color lacquer: Airisu.groundRaised
@@ -17,35 +18,39 @@ Item {
     property int cut: Airisu.cutFor(root.height)
     property bool cutTopRight: true
     property bool cutBottomLeft: true
-    // What the coat is a step of: the lacquer, or what lies under a quiet key.
+    // What lies under a quiet key, so its under plate is a print of that.
     property color under: Airisu.ground
     readonly property color stock: root.lacquer.a > 0 ? root.lacquer : root.under
     readonly property color ink: Airisu.inkOn(root.stock)
-    property color coat: Airisu.step(root.stock, root.pressed ? Airisu.pressStep : Airisu.hoverStep)
-    property color flag: Qt.colorEqual(root.stock, Airisu.seal) ? root.ink : Airisu.seal
-    readonly property int shift: root.pressed && root.available ? Airisu.hair : 0
-    readonly property int flagSize: Math.max(4, Math.round(Math.min(root.height * 0.36, 10 * Airisu.d)))
+    // The under plate (版の下刷り): the lacquer printed deeper, seen only where the top plate has moved off it.
+    property color coat: Airisu.underPlate(root.stock)
+    // The marks' colour while the keyboard holds the key (they stand on the body, so always shu); the pointer's are the ink's.
+    property color flag: Airisu.seal
+    readonly property bool down: root.pressed && root.available
+    readonly property int shift: root.down ? Airisu.offset : 0
 
     ALacquer {
         anchors.fill: parent
+        visible: root.down
         cut: root.cut
         cutTopRight: root.cutTopRight
         cutBottomLeft: root.cutBottomLeft
-        lacquer: root.lacquer
-        coat: root.coat
-        share: root.available && (root.hovered || root.pressed) ? 1 : 0
-        travel: Airisu.snap
+        lacquer: root.coat
     }
-    Shape {
-        visible: root.keyed
-        width: root.flagSize
-        height: root.flagSize
-        preferredRendererType: Shape.CurveRenderer
-        ShapePath {
-            fillColor: root.flag
-            strokeColor: "transparent"
-            strokeWidth: 0
-            PathPolyline { path: [Qt.point(0, 0), Qt.point(root.flagSize, 0), Qt.point(0, root.flagSize), Qt.point(0, 0)] }
-        }
+    ALacquer {
+        x: root.shift
+        y: root.shift
+        width: root.width
+        height: root.height
+        cut: root.cut
+        cutTopRight: root.cutTopRight
+        cutBottomLeft: root.cutBottomLeft
+        // Pressed, the top plate is printed solid, so the under plate shows only where it has moved off it.
+        lacquer: root.down && root.lacquer.a > 0 ? Airisu.solid(root.lacquer) : root.lacquer
+    }
+    AMarks {
+        anchors.fill: parent
+        shown: (root.available && root.hovered) || root.keyed
+        color: root.keyed ? root.flag : Airisu.marks
     }
 }

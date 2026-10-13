@@ -79,15 +79,25 @@ QtObject {
     function inkSecondOn(lacquer: color): color { return ColorUtils.mix(root.inkOn(lacquer), root.solid(lacquer), 0.74) } // iris-literal: second tone on lacquer
     function inkThirdOn(lacquer: color): color { return ColorUtils.mix(root.inkOn(lacquer), root.solid(lacquer), 0.52) }  // iris-literal: third tone on lacquer
 
-    // A control answers by a coat (the pointer one, a press two). A coloured lacquer is coated a step toward its own ink;
-    // a dark one takes a coat of shu, so the pointer warms it into the urushi instead of greying it like any dark theme's
-    // hover. A control that cannot be taken keeps no coat.
+    // Where a surface answers by its colour and not by crop marks (a picture's scrim, a ticket held): a coloured lacquer
+    // is coated a step toward its own ink, a dark or a paper one goes up the ladder a rung (sumi toward tetsu), never
+    // toward the seal: shu is spent on what is live, not on where the pointer is.
     function step(lacquer: color, n: real): color {
         const c = root.solid(lacquer)
         return c.hslSaturation > 0.45 && c.hslLightness > 0.3 ? ColorUtils.mix(root.inkOn(lacquer), c, n)
-            : ColorUtils.mix(root.seal, c, n * 1.6)
+            : ColorUtils.mix(IrisStyle.text, c, n * 0.6)
     }
     readonly property real hoverStep: 0.12 // iris-literal: the pointer's coat
+    // The under plate of a key in register: its lacquer a print deeper (shu's is the dark red of a second pull, sumi's
+    // the shikkoku under it); under a quiet key, the next sheet of the stock it lies on.
+    function underPlate(lacquer: color): color {
+        const c = root.solid(lacquer)
+        if (IrisStyle.light)
+            return ColorUtils.mix(IrisStyle.text, c, c.hslSaturation > 0.45 ? 0.38 : 0.14) // iris-literal: a second pull by day
+        return c.hslSaturation > 0.45 ? ColorUtils.mix(root.base, c, 0.5) : ColorUtils.mix(IrisStyle.text, c, 0.12) // iris-literal: a second pull at night
+    }
+    // Crop marks: the ink's second tone, so they register the piece without shouting over it.
+    readonly property color marks: root.inkSecond
     readonly property real pressStep: 0.22 // iris-literal: a press's coat
     // A slot (a level's run, a switch, a choice of words) is sunk into whatever lacquer it is cut in: that lacquer one
     // shade deeper in its own hue, so it reads on the body and on a coloured panel alike; the pointer lifts it a step.
@@ -111,6 +121,9 @@ QtObject {
     readonly property color sealText: IrisStyle.accent              // 朱 set as type, solved to read on the stock
     readonly property color sealOnMedia: IrisStyle.accentOnMedia    // 朱 over a picture (the lock), in every scheme
     readonly property color caution: IrisStyle.secondaryAccent      // 山吹: only caution
+    // The caution band (山吹の帯): the one way yamabuki is laid wide, a band along an edge or a die ruled in it; never a
+    // plate.
+    readonly property color tape: root.vivid(root.pigment("caution"))
     readonly property color danger: IrisStyle.danger
     readonly property color rule: IrisStyle.hairline                // the 1 px rule
     // The identity bands, like a station sign's line colour: they say which line, never how much.

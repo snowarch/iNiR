@@ -3,9 +3,9 @@ import qs.modules.iris.style
 import "../components"
 
 // AIRISU's button: a key (AKey). The primary action is a key of the accent's lacquer (the danger's, when it destroys);
-// the chosen one wears the chosen plate; any other is a tag, its die ruled in the third ink of what it sits on and inked
-// by the pointer (a key of the body's next coat read as a grey key that cannot be taken), and a quiet one is its words
-// alone until the pointer lays its coat. One that cannot be taken is ruled dashed. Its words are cut out of the lacquer
+// the chosen one wears the chosen plate; any other is a tag, its die ruled in the second ink of what it sits on (a key of
+// the body's next coat read as a grey key that cannot be taken), and a quiet one is its words alone. The pointer and the
+// keyboard bring the key's crop marks, a press its register. One that cannot be taken is ruled dashed. Its words are cut out of the lacquer
 // in the lacquer's own ink.
 Item {
     id: root
@@ -40,10 +40,13 @@ Item {
     }
     ADie {
         visible: root.tag
-        anchors.fill: parent
+        x: root.shift
+        y: root.shift
+        width: parent.width
+        height: parent.height
         kind: "chamfer"
         cut: key.cut
-        stroke: root.available && (root.host?.hovered ?? false) ? Airisu.inkOn(root.under) : Airisu.inkThirdOn(root.under)
+        stroke: root.available ? Airisu.inkSecondOn(root.under) : Airisu.inkThirdOn(root.under)
         strokeWidth: Airisu.hair
         dashed: !root.available
     }

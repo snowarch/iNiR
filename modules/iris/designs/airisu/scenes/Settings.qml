@@ -383,14 +383,22 @@ Item {
                     readonly property bool shown: IrisNiri.pending !== null
                     visible: notice.shown
                     width: parent.width
-                    height: notice.shown ? root.u(12) : 0
-                    lacquer: Airisu.lacquerOf(Airisu.pigment("caution"))
+                    height: notice.shown ? root.u(12) + root.u(1) : 0
+                    // A change that goes back by itself: the page's lacquer under a band of yamabuki that is drawn
+                    // back as its seconds go.
+                    lacquer: Airisu.lacquerOf(Airisu.pigment("system"))
+                    coat: Airisu.tape
+                    head: true
+                    band: root.u(1)
+                    share: Math.max(0, Math.min(1, IrisNiri.secondsLeft / IrisNiri.revertAfter))
+                    travel: Airisu.detent
                     AText {
                         anchors.left: parent.left
                         anchors.leftMargin: root.u(4)
                         anchors.right: keep.left
                         anchors.rightMargin: root.u(3)
                         anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: Math.round(root.u(1) / 2)
                         size: IrisStyle.typeLabel
                         color: Airisu.inkOn(notice.lacquer)
                         text: Translation.tr("Keep this display setting? It goes back in %1 s.").arg(IrisNiri.secondsLeft)
@@ -400,6 +408,7 @@ Item {
                         anchors.right: keep.left
                         anchors.rightMargin: root.u(1)
                         anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: Math.round(root.u(1) / 2)
                         label: Translation.tr("Revert")
                         onClicked: IrisNiri.revertDisplay()
                     }
@@ -408,6 +417,7 @@ Item {
                         anchors.right: parent.right
                         anchors.rightMargin: root.u(2)
                         anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: Math.round(root.u(1) / 2)
                         label: Translation.tr("Keep")
                         sealed: true
                         onClicked: IrisNiri.keepDisplay()
@@ -595,9 +605,14 @@ Item {
             visible: entry.row
             anchors.fill: parent
             lacquer: "transparent"
-            coat: Airisu.step(entry.stock, entry.pressed ? Airisu.pressStep : Airisu.hoverStep)
-            share: !entry.chosen && (entry.containsMouse || entry.pressed) ? 1 : 0
+            coat: Airisu.underPlate(entry.stock)
+            share: !entry.chosen && entry.pressed ? 1 : 0
             cut: Airisu.cutFor(height)
+        }
+        AMarks {
+            visible: entry.row
+            anchors.fill: parent
+            shown: !entry.chosen && entry.containsMouse
         }
         MaterialSymbol {
             visible: entry.row && entry.type !== "you"

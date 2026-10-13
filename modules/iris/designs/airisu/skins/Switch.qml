@@ -1,13 +1,13 @@
 import QtQuick
+import QtQuick.Shapes
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's switch: a lever in a slot, both cut by the die. Off, the slot is sunk into what it is cut in and the lever is
-// the body's next coat resting at the start; on, the slot is lacquered in the seal (what is live) and the lever stands at
-// the far end in the seal's ink, so on and off read at a glance with no word. The lever stops in its place (a detent),
-// it does not spring. The pointer steps the lever's coat, a press carries it a hair, keyboard focus flags the corner,
-// and a switch that cannot be taken sinks into the stock. On a chosen row's plate it takes that plate's inks. The host
-// keeps the toggle, the keys and the name.
+// AIRISU's switch: a machine's rocker printed as two boxes in one ruled die, O and I, the marks every appliance switch
+// carries, so it reads in any language. The box taken holds a plate: off, a step of ink under the O; on, the seal under
+// the I (what is live). The plate stops in its box (a detent), it never springs. The pointer brings the die's crop marks,
+// the keyboard brings them in shu, a press drops the plate in register. One that cannot be taken is ruled dashed, its
+// plate sunk. On a chosen row's plate it takes that plate's inks. The host keeps the toggle, the keys and the name.
 Item {
     id: root
     property Item host
@@ -17,35 +17,81 @@ Item {
     readonly property bool available: root.host?.enabled ?? true
     readonly property bool keyed: root.host?.keyed ?? false
     readonly property bool reversed: root.host?.reversed ?? false
-    readonly property int inset: Math.max(2, Math.round(3 * Airisu.d))
+    readonly property int inset: Math.max(2, Math.round(2 * Airisu.d))
     readonly property int run: root.pressed && root.available ? Airisu.hair : 0
-    readonly property color slot: !root.available ? Airisu.dim
-        : !root.on ? Airisu.slot : root.reversed ? IrisStyle.selectionLabel : Airisu.seal
-    readonly property color restingLever: root.reversed ? IrisStyle.selectionDetail : Airisu.groundRaised
-    readonly property color lever: !root.available ? Airisu.inkThird
-        : root.reversed && root.on ? IrisStyle.selectionFill
-        : root.on ? Airisu.inkOnSeal
-        : root.hovered || root.pressed ? Airisu.step(root.restingLever, root.pressed ? Airisu.pressStep : Airisu.hoverStep)
-        : root.restingLever
+    readonly property int cut: Math.max(2, Math.round(root.height / 4))
+    readonly property color rule: root.reversed ? IrisStyle.selectionDetail : Airisu.inkThird
+    readonly property color plate: root.on ? (root.reversed ? IrisStyle.selectionLabel : Airisu.seal)
+        : (root.reversed ? IrisStyle.selectionDetail : Airisu.cell)
+    readonly property color plateInk: root.on ? (root.reversed ? IrisStyle.selectionFill : Airisu.inkOnSeal)
+        : (root.reversed ? IrisStyle.selectionLabel : Airisu.ink)
+    readonly property color idleInk: root.reversed ? IrisStyle.selectionDetail : Airisu.inkThird
+    readonly property real cellWidth: (root.width - 2 * root.inset) / 2
 
-    ALacquer {
+    ADie {
         anchors.fill: parent
-        cut: Math.max(2, Math.round(root.height / 3))
-        lacquer: root.slot
+        kind: "chamfer"
+        cut: root.cut
+        stroke: root.rule
+        strokeWidth: Airisu.hair
+        dashed: !root.available
+    }
+    // The plate under the box taken, and the deeper pull under it that a press shows.
+    ALacquer {
+        visible: root.available && root.run > 0
+        x: plate.x - root.run
+        y: plate.y - root.run
+        width: plate.width
+        height: plate.height
+        cut: plate.cut
+        lacquer: Airisu.underPlate(root.plate)
     }
     ALacquer {
-        width: Math.round(root.width / 2) - root.inset
+        id: plate
+        width: Math.round(root.cellWidth)
         height: root.height - 2 * root.inset
         x: (root.on ? root.width - root.inset - width : root.inset) + root.run
         y: root.inset + root.run
         Behavior on x { enabled: Airisu.moving; NumberAnimation { duration: Airisu.detent; easing.type: Easing.BezierSpline; easing.bezierCurve: Airisu.curve } }
-        cut: Math.max(2, Math.round(height / 3))
-        lacquer: root.lever
+        cut: Math.max(2, root.cut - root.inset)
+        lacquer: root.available ? root.plate : Airisu.dim
     }
-    AKey {
+    // O and I, drawn on the module: a compass ring and a bar of the same stroke.
+    Shape {
+        id: marks
         anchors.fill: parent
-        lacquer: "transparent"
-        available: false
-        keyed: root.keyed
+        preferredRendererType: Shape.CurveRenderer
+        readonly property real glyph: Math.round(root.height * 0.36)
+        readonly property real stroke: Math.max(1.5, Math.round(1.6 * Airisu.d * 2) / 2)
+        readonly property real offX: root.inset + root.cellWidth / 2
+        readonly property real onX: root.width - root.inset - root.cellWidth / 2
+        readonly property real cy: root.height / 2
+        ShapePath {
+            fillColor: "transparent"
+            strokeColor: !root.available ? root.idleInk : root.on ? root.idleInk : root.plateInk
+            strokeWidth: marks.stroke
+            PathAngleArc {
+                centerX: marks.offX + (root.on ? 0 : root.run)
+                centerY: marks.cy + (root.on ? 0 : root.run)
+                radiusX: marks.glyph / 2
+                radiusY: marks.glyph / 2
+                startAngle: 0
+                sweepAngle: 360
+            }
+        }
+        ShapePath {
+            fillColor: "transparent"
+            strokeColor: !root.available ? root.idleInk : root.on ? root.plateInk : root.idleInk
+            strokeWidth: marks.stroke
+            capStyle: ShapePath.FlatCap
+            startX: marks.onX + (root.on ? root.run : 0)
+            startY: marks.cy - marks.glyph / 2 + (root.on ? root.run : 0)
+            PathLine { relativeX: 0; relativeY: marks.glyph }
+        }
+    }
+    AMarks {
+        anchors.fill: parent
+        shown: (root.available && root.hovered) || root.keyed
+        color: root.keyed ? Airisu.seal : Airisu.marks
     }
 }

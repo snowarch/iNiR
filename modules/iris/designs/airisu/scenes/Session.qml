@@ -8,13 +8,12 @@ import qs.modules.common.functions
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's session screen: a row of lacquer panels, one per action (restarting in the caution's yamabuki, locking in
-// tame, the others in the accent's shu), with
-// the key that takes it (S1…) leaning in its corner and its sign and name cut out of it. What cannot be undone is
-// confirmed by holding it: the pigment at full strength is laid across the panel at 45° for 600 ms, and when the coat
-// reaches the far corner it is done; letting go draws it back. The keyboard asks twice, as the engine does, and the coat
-// waits wholly laid, the panel in its pigment, between the two. As the screen comes up the panels are laid one after another. IrisSessionScreen
-// keeps the actions, the keys and the confirm.
+// AIRISU's session screen: a row of tickets (切符), one per action (locking in tame, the others breathing the accent's
+// shu), each with the key that takes it (S1…) leaning on its stub, a perforation and half moons where the stub would be
+// torn, and its sign and name under it. What cannot be undone is sealed by holding it: a seal box beside the sign is
+// stamped from its middle out over 600 ms, and when it is whole it is done; letting go lifts it. The keyboard asks twice,
+// as the engine does, and the box waits stamped between the two. As the screen comes up the tickets are laid one after
+// another. IrisSessionScreen keeps the actions, the keys and the confirm.
 Item {
     id: root
     property var host
@@ -31,7 +30,7 @@ Item {
     function pigmentOf(id: string): color {
         switch (id) {
         case "suspend": return Airisu.pigment("time")
-        case "reboot": return Airisu.pigment("caution")
+        case "reboot": return Airisu.pigment("restart")
         case "poweroff": return Airisu.pigment("live")
         case "lock": return Airisu.pigment("system")
         case "logout": return Airisu.pigment("message")
@@ -90,12 +89,11 @@ Item {
                     readonly property color pigment: root.pigmentOf(String(ticket.modelData.id ?? ""))
                     readonly property color lacquer: Airisu.lacquerOf(ticket.pigment)
                     readonly property color coat: Airisu.vivid(ticket.pigment)
-                    readonly property color face: ticket.hovered && !ticket.pressed ? Airisu.step(ticket.lacquer, Airisu.hoverStep) : ticket.lacquer
+                    readonly property color face: ticket.lacquer
                     // How far the coat is laid: the hold's, or all of it while the keyboard waits for the second press.
                     readonly property real laidShare: ticket.waiting ? 1 : ticket.ink
-                    // Each thing printed takes the ink of the coat under its centre: the coat runs from the top left with
-                    // its edge at 45°, so a point is covered once the edge has come past x + y.
-                    function under(px: real, py: real): bool { return ticket.laidShare * (ticket.width + ticket.height) >= px + py }
+                    // Each thing printed takes the ticket's ink (the seal is stamped beside the words, never under them).
+                    function under(px: real, py: real): bool { return false }
                     function inkAt(px: real, py: real): color { return Airisu.inkOn(ticket.under(px, py) ? ticket.coat : ticket.face) }
                     function secondAt(px: real, py: real): color {
                         const on = ticket.under(px, py)
@@ -132,19 +130,48 @@ Item {
                         duration: Airisu.snap
                     }
 
-                    ALacquer {
+                    // The ticket: punched with a half moon at both sides where its stub is torn off.
+                    readonly property real perforation: root.pad + Airisu.u(7)
+                    ADie {
                         anchors.fill: parent
-                        lacquer: ticket.laid ? ticket.face : "transparent"
-                        coat: ticket.coat
-                        share: ticket.laidShare
-                        travel: ticket.waiting ? Airisu.snap : 0
+                        kind: "ticket"
+                        notchY: ticket.perforation
+                        notchRadius: Airisu.u(1.5)
+                        fill: ticket.laid ? ticket.face : "transparent"
                     }
-                    AKey {
+                    Row {
+                        x: Airisu.u(3)
+                        y: ticket.perforation - Math.round(Airisu.d)
+                        spacing: Airisu.u(1.5) - width0
+                        readonly property int width0: Math.max(1, Math.round(2 * Airisu.d))
+                        Repeater {
+                            model: Math.max(0, Math.floor((ticket.width - Airisu.u(6)) / Airisu.u(1.5)))
+                            Rectangle {
+                                width: Math.max(1, Math.round(2 * Airisu.d))
+                                height: width
+                                color: Airisu.inkThirdOn(ticket.face)
+                                antialiasing: false
+                            }
+                        }
+                    }
+                    // What cannot be undone is sealed by holding it: the box is stamped from its middle out as the hold
+                    // goes, and whole while the keyboard waits for the second press.
+                    ASeal {
+                        visible: ticket.confirms
+                        x: parent.width - root.pad - width + ticket.run
+                        y: ticket.perforation + root.pad + ticket.run
+                        width: Airisu.u(10)
+                        height: width
+                        stamped: ticket.laidShare > 0
+                        rule: Airisu.inkThirdOn(ticket.face)
+                        seal: ticket.coat
+                        pressed: ticket.laidShare
+                        driven: true
+                    }
+                    AMarks {
                         anchors.fill: parent
-                        lacquer: "transparent"
-                        available: false
-                        keyed: ticket.keyed
-                        flag: Airisu.seal
+                        shown: ticket.hovered || ticket.keyed
+                        color: ticket.keyed ? Airisu.seal : Airisu.marks
                     }
 
                     Item {
@@ -163,8 +190,8 @@ Item {
                             text: "S" + (ticket.index + 1)
                         }
                         MaterialSymbol {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            y: Math.round((parent.height - words.height - root.pad - height) / 2)
+                            x: root.pad - Math.round(2 * root.d)
+                            y: ticket.perforation + root.pad
                             text: String(ticket.modelData.icon ?? "")
                             fill: 1
                             iconSize: Math.round(34 * root.d)
