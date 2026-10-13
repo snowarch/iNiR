@@ -125,7 +125,9 @@ QtObject {
     // plate.
     readonly property color tape: root.vivid(root.pigment("caution"))
     readonly property color danger: IrisStyle.danger
-    readonly property color rule: IrisStyle.hairline                // the 1 px rule
+    // The 1 px rule: a solid stroke of the ink on the stock, never the scheme's hairline, which some materials (Black)
+    // print in the stock's own colour.
+    readonly property color rule: ColorUtils.mix(IrisStyle.text, root.solid(IrisStyle.bodySurface), IrisStyle.light ? 0.24 : 0.2) // iris-literal: a rule of ink
     // The identity bands, like a station sign's line colour: they say which line, never how much.
     function band(id: string): color { return IrisStyle.identityColor(id) }
 
