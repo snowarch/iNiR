@@ -35,7 +35,8 @@ Item {
         : Qt.colorEqual(root.tint, IrisStyle.text) ? Airisu.pigment("system")
         : Airisu.seal
     // The colour the key is: the body's next coat, half into the stock when it cannot answer.
-    readonly property color face: !root.ready ? Airisu.dim : Airisu.groundRaised
+    // On, the key stands a rung higher than off as well as carrying its seal, so a grid reads at a glance.
+    readonly property color face: !root.ready ? Airisu.dim : root.lit ? Airisu.step(Airisu.groundRaised, 0.22) : Airisu.groundRaised
     readonly property color ink: !root.ready ? Airisu.inkThird : Airisu.inkOn(root.face)
     readonly property color inkSecond: !root.ready ? Airisu.inkThird : Airisu.inkSecond
     readonly property int shift: root.pressed ? Airisu.offset : 0
