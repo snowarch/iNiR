@@ -31,7 +31,8 @@ IrisWidgetFace {
 
         Layout.preferredWidth: root.cell
         Layout.preferredHeight: root.disc + (root.labelled ? root.dp(20) : 0)
-        opacity: toggle.available ? 1 : 0.4
+        opacity: toggle.available || discSkinned ? 1 : 0.4
+        readonly property bool discSkinned: IrisDesign.has("controlTile")
 
         Rectangle {
             id: disc
@@ -39,12 +40,21 @@ IrisWidgetFace {
             width: root.disc
             height: root.disc
             radius: IrisStyle.capsule(height)
-            color: toggle.on ? toggle.tint : tap.pressed ? root.fillActive : hover.hovered ? root.fillHover : root.fill
-            scale: tap.pressed ? IrisStyle.pressScale(0.94) : 1
+            color: disc.skinned ? "transparent" : toggle.on ? toggle.tint : tap.pressed ? root.fillActive : hover.hovered ? root.fillHover : root.fill
+            scale: tap.pressed && !disc.skinned ? IrisStyle.pressScale(0.94) : 1
+            // A Design's control key (IrisDesign part `controlTile`) draws it, as it draws the Control Center's.
+            readonly property bool skinned: discSkin.active
+            readonly property bool hovered: hover.hovered
+            readonly property bool down: tap.pressed
+            readonly property bool visualFocus: false
+            readonly property var skinData: ({ shape: "disc", control: ({ lit: toggle.on, ready: toggle.available, glyph: toggle.glyph,
+                label: toggle.label, tint: toggle.tint }) })
+            IrisSkin { id: discSkin; part: "controlTile"; host: disc }
             Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
             Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
 
             MaterialSymbol {
+                visible: !disc.skinned
                 anchors.centerIn: parent
                 text: toggle.glyph
                 fill: toggle.on ? 1 : 0
