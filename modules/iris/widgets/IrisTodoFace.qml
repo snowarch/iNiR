@@ -9,6 +9,7 @@ import qs.modules.iris.style
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetTodo")
 
     property bool adding: false
     readonly property int capacity: root.small ? 3 : root.medium ? 4 : 8

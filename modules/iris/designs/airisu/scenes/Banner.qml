@@ -55,7 +55,7 @@ Item {
     property real torn: 0
     onClockChanged: if (!root.clock) root.torn = 0
     Timer {
-        running: root.clock !== null && root.visible
+        running: !!root.clock && root.visible === true
         repeat: true
         triggeredOnStart: true
         // Forty steps over the banner's time: the run only moves when a step goes, so nothing is drawn in between.

@@ -66,8 +66,8 @@ QtObject {
         listMark: "skins/ListMark.qml",
         // Desktop widgets, each a print of its own: drawn whatever widget design is chosen (DesktopWidgetDesign).
         widgetClock: "widgets/Clock.qml",
-        widgetWeather: "widgets/Weather.qml",
-        widgetDate: "widgets/Date.qml",
+        widgetWeather: "widgets/Forecast.qml",
+        widgetDate: "widgets/Leaf.qml",
         widgetUptime: "widgets/Uptime.qml",
         widgetDay: "widgets/DayRule.qml",
         widgetWorldClock: "widgets/WorldClock.qml",
@@ -77,8 +77,9 @@ QtObject {
         widgetNotes: "widgets/Notes.qml",
         widgetNews: "widgets/News.qml",
         widgetProfile: "widgets/Profile.qml",
-        widgetScreenTime: "widgets/ScreenTime.qml",
-        widgetBattery: "widgets/Battery.qml",
+        widgetScreenTime: "widgets/DayLog.qml",
+        widgetBattery: "widgets/Charge.qml",
+        widgetTodo: "widgets/Tasks.qml",
         widgetVitals: "widgets/Vitals.qml",
         // Every other widget: iRiS's face set on AIRISU's lacquer.
         widgetStock: "widgets/Stock.qml"
