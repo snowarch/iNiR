@@ -1089,9 +1089,14 @@ Item {
                 visible: opacity > 0.01
                 opacity: nameLabel.shown && !window.menuOpen && window.revealed ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
-                width: labelText.implicitWidth + 22 * root.d
+                width: tagSkin.active ? (tagSkin.item?.implicitWidth ?? 0) : labelText.implicitWidth + 22 * root.d
                 height: Math.round(28 * root.d)
                 radius: IrisStyle.plateSelection ? 0 : height / 2
+                // A Design that labels the slot its own way (IrisDesign part `nameTag`) draws the whole tag; it reads
+                // `label`, `windowCount` and which side the Dock is on (`facing`).
+                quiet: tagSkin.active
+                readonly property string facing: root.atLeft ? "left" : root.atRight ? "right" : root.atTop ? "up" : "down"
+                IrisSkin { id: tagSkin; part: "nameTag"; host: nameLabel }
                 readonly property real targetLift: root.iconSize * root.magnifyGain * (nameLabel.target?.grow ?? 0)
                 x: root.atLeft ? dock.x + dock.width + 8 * root.d + nameLabel.targetLift
                     : root.atRight ? dock.x - width - 8 * root.d - nameLabel.targetLift
@@ -1102,6 +1107,7 @@ Item {
                 property int windowCount: 0
                 Row {
                     id: labelText
+                    visible: !tagSkin.active
                     anchors.centerIn: parent
                     spacing: 6 * root.d
                     IrisText {

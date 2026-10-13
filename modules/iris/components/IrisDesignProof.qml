@@ -5,6 +5,8 @@ import Quickshell
 import Quickshell.Wayland
 import qs.services
 import qs.modules.iris.style
+import qs.modules.iris.polkit
+import qs.modules.iris.regionSelector
 
 // A proof of the active Design (校正刷り): every control part it skins, in each state a person reaches (rest, pointer,
 // press, keyboard, inactive), drawn on stand-in hosts and saved as one image. A Design's author sees what a pointer or
@@ -154,6 +156,13 @@ PanelWindow {
                     summary: "Invoice 2026-10", urgency: "1", time: Date.now() - 90 * root.minute, body: "Your October invoice is ready.", actions: [] }) }) }) },
                 { name: "critical", look: ({ host: ({ hidden: 0, dismiss: () => {}, invoke: () => {}, notification: ({ appName: "iNiR", appIcon: "",
                     summary: "Battery critically low", urgency: "2", time: Date.now() - 2 * root.minute, body: "6% left.", actions: [] }) }) }) }
+            ] },
+        { part: "nameTag", name: "dock name tag", w: -1, cell: 220,
+            states: [{ name: "rest", look: ({}) }],
+            samples: [
+                { name: "one window", look: ({ host: ({ label: "Firefox", windowCount: 1, facing: "down" }) }) },
+                { name: "three", look: ({ host: ({ label: "kitty", windowCount: 3, facing: "down" }) }) },
+                { name: "dock at left", look: ({ host: ({ label: "Visual Studio Code", windowCount: 2, facing: "left" }) }) }
             ] },
         { part: "lockActivity", name: "activity", w: 380, media: true, plate: true,
             states: [{ name: "rest", look: ({}) }],
@@ -412,8 +421,36 @@ PanelWindow {
                     }
                 }
             }
+            Row {
+                spacing: Math.round(32 * root.d)
+                Text {
+                    width: root.labelWidth
+                    text: "engine · auth, snip"
+                    color: IrisStyle.textSecondary
+                    font.family: IrisStyle.fontMono
+                    font.pixelSize: IrisStyle.typeMeta
+                }
+                Item {
+                    width: Math.round(380 * root.d)
+                    height: Math.round(380 * root.d)
+                    IrisPolkitContent {
+                        anchors.fill: parent
+                        service: root.polkitStandIn
+                    }
+                }
+                IrisOptionsToolbar {
+                    action: 0
+                    selectionMode: 0
+                }
+            }
         }
     }
+
+    // Engine surfaces a Design dresses from the inside, drawn on stand-ins: the authentication dialog and the snip
+    // toolbar. Nothing here reaches polkit or the region selector.
+    readonly property var polkitStandIn: ({ flow: null, interactionAvailable: true, batteryChargeLimitRequest: false,
+        actionLabel: "Install software", cleanMessage: "Authentication is required to install a package on this system.",
+        cleanPrompt: "Password", submit: () => {}, cancel: () => {} })
 
     Timer {
         interval: 900

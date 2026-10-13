@@ -64,6 +64,10 @@ RippleButton {
     colBackgroundToggledHover: root.skinned ? "transparent" : IrisStyle.tintFillHover(IrisStyle.accent)
     colRipple: root.skinned ? "transparent" : IrisStyle.tintFill((root.danger ? IrisStyle.danger : IrisStyle.accent))
     colRippleToggled: root.skinned ? "transparent" : IrisStyle.tintFill(IrisStyle.accent)
+    // A skinned button draws nothing of its own, whatever colours a caller handed it (they were for iRiS's anatomy).
+    buttonColor: root.skinned ? "transparent" : root.toggled
+        ? (root.buttonHovered ? root.colBackgroundToggledHover : root.colBackgroundToggled)
+        : (root.buttonHovered ? root.colBackgroundHover : root.colBackground)
 
     Accessible.name: root.text
     Accessible.role: Accessible.Button

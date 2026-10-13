@@ -77,7 +77,8 @@ IrisSurface {
                 width: current?.width ?? 0
                 height: actions.height - 4
                 radius: IrisStyle.capsule(height)
-                color: IrisStyle.fillActive
+                // A plate Design takes the chosen box as its form boxes do: the chosen plate, with its own ink.
+                color: IrisStyle.plateSelection ? IrisStyle.selectionFill : IrisStyle.fillActive
                 Behavior on x { NumberAnimation { duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve } }
                 Behavior on width { NumberAnimation { duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve } }
             }
@@ -115,7 +116,7 @@ IrisSurface {
                                 iconSize: Math.round(17 * root.d)
                                 fill: actionButton.current ? 1 : 0
                                 animateFill: true
-                                color: actionButton.current ? IrisStyle.text
+                                color: actionButton.current ? IrisStyle.selectionLabel
                                     : actionButton.containsMouse ? IrisStyle.textSecondary : IrisStyle.subtext
                             }
                             IrisText {
@@ -123,7 +124,7 @@ IrisSurface {
                                 text: actionButton.modelData.name
                                 font.pixelSize: IrisStyle.typeLabel
                                 font.weight: actionButton.current ? Font.DemiBold : Font.Normal
-                                color: actionButton.current ? IrisStyle.text
+                                color: actionButton.current ? IrisStyle.selectionLabel
                                     : actionButton.containsMouse ? IrisStyle.textSecondary : IrisStyle.subtext
                             }
                         }
@@ -149,7 +150,8 @@ IrisSurface {
                 width: (shapes.width - 4) / 2
                 height: shapes.height - 4
                 radius: IrisStyle.capsule(height)
-                color: IrisStyle.fillActive
+                // A plate Design takes the chosen box as its form boxes do: the chosen plate, with its own ink.
+                color: IrisStyle.plateSelection ? IrisStyle.selectionFill : IrisStyle.fillActive
                 Behavior on x { NumberAnimation { duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve } }
             }
 
@@ -185,7 +187,7 @@ IrisSurface {
                             iconSize: Math.round(17 * root.d)
                             fill: shapeButton.current ? 1 : 0
                             animateFill: true
-                            color: shapeButton.current ? IrisStyle.text
+                            color: shapeButton.current ? IrisStyle.selectionLabel
                                 : shapeButton.containsMouse ? IrisStyle.textSecondary : IrisStyle.subtext
                         }
                     }
