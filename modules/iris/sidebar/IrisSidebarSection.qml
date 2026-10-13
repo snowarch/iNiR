@@ -88,7 +88,14 @@ Loader {
                 anchors.fill: parent
                 spacing: 8 * root.d
                 Rectangle {
-                    visible: section.glyph.length > 0
+                    visible: IrisStyle.lineSections
+                    implicitWidth: Math.max(3, Math.round(4 * root.d))
+                    implicitHeight: Math.round(16 * root.d)
+                    color: section.tint
+                    antialiasing: false
+                }
+                Rectangle {
+                    visible: section.glyph.length > 0 && !IrisStyle.lineSections
                     implicitWidth: Math.round(24 * root.d)
                     implicitHeight: implicitWidth
                     radius: IrisStyle.iconRadius(width)
@@ -117,9 +124,9 @@ Loader {
                     text: section.title
                     color: section.ink
                     // A mono-caption Design names its parts in wide capitals, the detail in mono.
-                    font.family: IrisStyle.monoCaptions ? IrisStyle.fontTitle : IrisStyle.fontMain
+                    font.family: IrisStyle.monoCaptions || IrisStyle.lineSections ? IrisStyle.fontTitle : IrisStyle.fontMain
                     font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
-                    font.weight: IrisStyle.weight(IrisStyle.monoCaptions ? Font.ExtraBold : Font.DemiBold)
+                    font.weight: IrisStyle.weight(IrisStyle.monoCaptions || IrisStyle.lineSections ? Font.ExtraBold : Font.DemiBold)
                     font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeLabel : IrisStyle.typeBody
                     elide: Text.ElideRight
                 }
@@ -127,8 +134,8 @@ Loader {
                     visible: text.length > 0
                     text: section.detail
                     color: IrisStyle.secondaryOf(section.ink)
-                    font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontNumbers
-                    font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
+                    font.family: IrisStyle.monoCaptions || IrisStyle.lineSections ? IrisStyle.fontMono : IrisStyle.fontNumbers
+                    font.capitalization: IrisStyle.monoCaptions || IrisStyle.lineSections ? Font.AllUppercase : Font.MixedCase
                     font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeFootnote : IrisStyle.typeMeta
                 }
                 RowLayout {

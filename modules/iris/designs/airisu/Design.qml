@@ -98,7 +98,8 @@ QtObject {
     readonly property var motion: ({ morph: "tuned", duration: 220 })
     // How it reads: glyphs without tinted plates; the chosen row lacquered in the accent; lists that can be typed
     // numbered; Island pages hang under the strip as a panel of their own; a level runs along a piece's cut edge; the
-    // pointer lays an opaque coat where a surface has no key of its own.
+    // pointer lays an opaque coat where a surface has no key of its own; a side panel's sections are headed by their
+    // line colour.
     readonly property var traits: ({ marks: "glyph", selection: "plate", index: true,
-        pages: "hang", rings: "edge", hover: "plate" })
+        pages: "hang", rings: "edge", hover: "plate", sections: "line" })
 }
