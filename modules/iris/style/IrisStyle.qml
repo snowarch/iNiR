@@ -1006,6 +1006,12 @@ QtObject {
     readonly property color selectionLabel: root.plateSelection ? root.inkOnAccentFill : root.text
     // A detail on the chosen row (its comment, its verb): the second tone of the plate's ink in a plate Design.
     readonly property color selectionDetail: root.plateSelection ? ColorUtils.mix(root.inkOnAccentFill, root.accentFill, 0.72) : root.subtext
+    // The current row of a list (Spotlight's result, a browse tile): a plate Design lays it one step of ink over the body
+    // and keeps the ink, leaving the seal to what marks it; a whole row of the accent read as an alarm bar on every query.
+    readonly property color rowSelectionFill: root.plateSelection ? ColorUtils.mix(root.text, root.surfaceOpaque, 0.12) : root.selectionFill // iris-literal: one step of ink
+    readonly property color rowSelectionLabel: root.plateSelection ? root.text : root.selectionLabel
+    readonly property color rowSelectionDetail: root.plateSelection ? root.subtext : root.selectionDetail
+    readonly property color rowSelectionInk: root.plateSelection ? root.accent : root.selectionInk
     // A list's place as a part number: 01, 02… (indexed Designs).
     function indexLabel(i: int): string { return (i + 1 < 10 ? "0" : "") + (i + 1) }
     readonly property int chamferCut: Math.round(10 * root.density)

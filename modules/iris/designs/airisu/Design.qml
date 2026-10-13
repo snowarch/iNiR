@@ -63,6 +63,7 @@ QtObject {
         noticeRow: "skins/NoticeRow.qml",
         noticeCard: "skins/NoticeCard.qml",
         menuRow: "skins/MenuRow.qml",
+        listMark: "skins/ListMark.qml",
         // Desktop widgets, each a print of its own: drawn whatever widget design is chosen (DesktopWidgetDesign).
         widgetClock: "widgets/Clock.qml",
         widgetVitals: "widgets/Vitals.qml",

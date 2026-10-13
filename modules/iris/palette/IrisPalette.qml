@@ -642,7 +642,7 @@ Item {
                                 width: tiles.tileWidth - 4 * stage.d
                                 height: tiles.height
                                 radius: IrisStyle.radiusTile
-                                color: IrisStyle.selectionFill
+                                color: IrisStyle.rowSelectionFill
                                 Behavior on x { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                             }
 
@@ -702,7 +702,7 @@ Item {
                                             font.pixelSize: IrisStyle.typeFootnote
                                             font.weight: IrisStyle.weight(Font.Bold)
                                             font.features: { "tnum": 1 }
-                                            color: tile.chosen ? IrisStyle.selectionDetail : IrisStyle.textTertiary
+                                            color: tile.chosen ? IrisStyle.rowSelectionDetail : IrisStyle.textTertiary
                                         }
                                         Rectangle {
                                             anchors.horizontalCenter: parent.horizontalCenter
@@ -712,7 +712,7 @@ Item {
                                             width: 4 * stage.d
                                             height: width
                                             radius: IrisStyle.capsule(width)
-                                            color: tile.chosen ? IrisStyle.selectionDetail : IrisStyle.textTertiary
+                                            color: tile.chosen ? IrisStyle.rowSelectionDetail : IrisStyle.textTertiary
                                         }
                                         IrisText {
                                             id: tileLabel
@@ -730,7 +730,7 @@ Item {
                                             maximumLineCount: 2
                                             elide: Text.ElideRight
                                             font.pixelSize: IrisStyle.typeFootnote
-                                            color: tile.chosen ? IrisStyle.selectionLabel : IrisStyle.subtext
+                                            color: tile.chosen ? IrisStyle.rowSelectionLabel : IrisStyle.subtext
                                         }
                                     }
                                 }
@@ -883,7 +883,9 @@ Item {
                                 y: resultColumn.y + (target ? target.y + target.rowY : 0)
                                 height: target?.rowHeight ?? 0
                                 radius: IrisStyle.radiusTile
-                                color: IrisStyle.selectionFill
+                                color: IrisStyle.rowSelectionFill
+                                // A Design may mark the current row its own way (IrisDesign part `listMark`).
+                                IrisSkin { part: "listMark"; host: highlight }
                                 Behavior on y { NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
                                 Behavior on height { NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
                             }
@@ -1020,7 +1022,7 @@ Item {
                                                     font.pixelSize: IrisStyle.typeMeta
                                                     font.weight: IrisStyle.weight(Font.Bold)
                                                     font.features: { "tnum": 1 }
-                                                    color: result.selected ? IrisStyle.selectionDetail : IrisStyle.textTertiary
+                                                    color: result.selected ? IrisStyle.rowSelectionInk : IrisStyle.textTertiary
                                                     TextMetrics {
                                                         id: codeWidth
                                                         font.family: IrisStyle.fontNumbers
@@ -1093,7 +1095,6 @@ Item {
                                                             tint: result.mark.tint
                                                             glyph: result.modelData?.iconName || "search"
                                                             glyphShare: 0.58
-                                                            reversed: result.selected && IrisStyle.plateSelection
                                                         }
                                                     }
                                                 }
@@ -1106,15 +1107,15 @@ Item {
                                                         readonly property bool emphasise: !root.clipboardMode && !result.mathHit
                                                             && result.modelData?.fontType !== LauncherSearchResult.FontType.Monospace
                                                         textFormat: emphasise || result.mathHit ? Text.StyledText : Text.PlainText
-                                                        color: result.selected ? IrisStyle.selectionLabel : IrisStyle.text
+                                                        color: result.selected ? IrisStyle.rowSelectionLabel : IrisStyle.text
                                                         // A Design of plain marks keeps its caution colour for caution: the sign is set in the ink.
                                                         readonly property color equals: !IrisStyle.plainMarks ? IrisStyle.secondaryAccent
-                                                            : result.selected ? IrisStyle.selectionDetail : IrisStyle.textTertiary
+                                                            : result.selected ? IrisStyle.rowSelectionDetail : IrisStyle.textTertiary
                                                         text: result.clipImage ? Translation.tr("Image")
                                                             : result.mathHit
                                                                 ? "<font color='" + equals + "'>=</font> " + stage.escapeHtml(String(result.modelData?.name ?? ""))
                                                             : emphasise ? stage.emphasised(String(result.modelData?.name ?? ""),
-                                                                result.selected ? IrisStyle.selectionDetail : IrisStyle.textSecondary)
+                                                                result.selected ? IrisStyle.rowSelectionDetail : IrisStyle.textSecondary)
                                                             : String(result.modelData?.name ?? "")
                                                         font.family: result.mathHit ? IrisStyle.fontMain
                                                             : result.modelData?.fontType === LauncherSearchResult.FontType.Monospace
@@ -1130,7 +1131,7 @@ Item {
                                                         visible: (result.topHit || root.actionMode || Boolean(result.modelData?.fuzzy)) && text.length > 0
                                                         text: result.mathHit ? root.settled
                                                             : result.modelData?.comment || result.modelData?.genericName || result.modelData?.type || ""
-                                                        color: result.selected ? IrisStyle.selectionDetail : IrisStyle.subtext
+                                                        color: result.selected ? IrisStyle.rowSelectionDetail : IrisStyle.subtext
                                                         font.pixelSize: IrisStyle.typeMeta
                                                         elide: Text.ElideRight
                                                     }
@@ -1150,7 +1151,7 @@ Item {
                                                     Layout.preferredHeight: Math.round(26 * stage.d)
                                                     materialIcon: "delete"
                                                     iconSize: Math.round(16 * stage.d)
-                                                    foreground: result.selected ? IrisStyle.selectionLabel : IrisStyle.text
+                                                    foreground: result.selected ? IrisStyle.rowSelectionLabel : IrisStyle.text
                                                     Accessible.name: Translation.tr("Delete from history")
                                                     onClicked: {
                                                         Cliphist.deleteEntry(String(result.modelData?.rawValue ?? ""))
@@ -1161,13 +1162,12 @@ Item {
                                                     visible: Boolean(result.modelData?.pick) && result.modelData.isOn()
                                                     text: "check"
                                                     iconSize: Math.round(18 * stage.d)
-                                                    color: result.selected ? IrisStyle.selectionInk : IrisStyle.accent
+                                                    color: result.selected ? IrisStyle.rowSelectionInk : IrisStyle.accent
                                                 }
                                                 IrisSwitch {
                                                     visible: typeof result.modelData?.isOn === "function" && !result.modelData?.pick
                                                     on: visible && result.modelData.isOn()
                                                     name: String(result.modelData?.name ?? "")
-                                                    reversed: result.selected && IrisStyle.plateSelection
                                                     onToggled: {
                                                         root.selectedIndex = result.index
                                                         root.executeSelected()
@@ -1176,7 +1176,7 @@ Item {
                                                 IrisText {
                                                     visible: result.selected && text.length > 0 && typeof result.modelData?.isOn !== "function"
                                                     text: String(result.modelData?.verb ?? "")
-                                                    color: IrisStyle.selectionDetail
+                                                    color: IrisStyle.rowSelectionDetail
                                                     font.pixelSize: IrisStyle.typeMeta
                                                 }
                                                 Rectangle {
@@ -1186,12 +1186,12 @@ Item {
                                                     radius: IrisStyle.radiusChip
                                                     color: IrisStyle.plainMarks ? "transparent" : IrisStyle.fill
                                                     border.width: IrisStyle.plainMarks ? Math.max(1, Math.round(stage.d)) : 0
-                                                    border.color: IrisStyle.selectionLabel
+                                                    border.color: IrisStyle.rowSelectionLabel
                                                     MaterialSymbol {
                                                         anchors.centerIn: parent
                                                         text: "keyboard_return"
                                                         iconSize: Math.round(14 * stage.d)
-                                                        color: IrisStyle.selectionLabel
+                                                        color: IrisStyle.rowSelectionLabel
                                                     }
                                                 }
                                             }
