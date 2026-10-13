@@ -5,7 +5,9 @@ import "../components"
 // AIRISU's lock clock: the time as a race number is cut, leaning, the figures four times the display size, in
 // the ink Clock colour names, with a hard shadow of sumi cut a step down and to the right of them so they hold on a
 // bright picture without a glow; the date over them, a step smaller in the media's second ink. Every Type and Clock row
-// comes resolved from the engine's block; Date off leaves the time alone.
+// comes resolved from the engine's block; Date off leaves the time alone. Over the lower end of the figures the session
+// is postmarked (APostmark): the machine's name, the day and the minute it was locked, in the seal, a stamp's turn off
+// square. It is the only shu on the clock: the lock is the moment that was sealed.
 Item {
     id: root
     property var host
@@ -66,5 +68,16 @@ Item {
         id: ink
         dateInk: IrisStyle.onMediaSecondary
         timeInk: root.host?.colour ?? IrisStyle.onMedia
+    }
+    APostmark {
+        visible: String(root.host?.lockedText ?? "").length > 0
+        width: Math.round(root.size * 1.3)
+        height: width
+        x: ink.width - Math.round(width * 0.55)
+        y: ink.height - Math.round(height * 0.6)
+        colour: Airisu.sealOnMedia
+        over: String(root.host?.machine ?? "").toUpperCase()
+        date: root.host?.lockedAt ? Qt.formatDate(root.host.lockedAt, "dd·MM·yy") : ""
+        under: String(root.host?.lockedText ?? "")
     }
 }
