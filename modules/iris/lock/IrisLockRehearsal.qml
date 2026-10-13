@@ -36,7 +36,8 @@ Scope {
             id: window
             required property var modelData
             screen: window.modelData
-            visible: true
+            // Only while editing: a rehearsal that outlives its editor must never cover the screen or hold the keys.
+            visible: GlobalStates.irisLockEdit
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             exclusiveZone: 0

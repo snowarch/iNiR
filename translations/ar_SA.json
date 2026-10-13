@@ -9502,5 +9502,8 @@
   "The whole shell's look": "مظهر الواجهة بالكامل",
   "Every key, by what it does": "كل اختصار، حسب ما يفعله",
   "Results": "النتائج",
-  "Hold to confirm": "اضغط مطولًا للتأكيد"
+  "Hold to confirm": "اضغط مطولًا للتأكيد",
+  "%1 brings its own material.": "يأتي %1 بمادته الخاصة.",
+  "Show this block": "إظهار هذه الكتلة",
+  "%1 brings its own layout.": "يأتي %1 بتخطيطه الخاص."
 }

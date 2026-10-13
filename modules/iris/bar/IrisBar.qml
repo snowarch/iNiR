@@ -477,6 +477,15 @@ Scope {
                 IrisLockOptions.toggleWidget(screen, key)
                 return IrisLockOptions.widgetShown(screen, key) ? key + " on the lock" : key + " off the lock"
             }
+            if (action === "peek" || action === "unpeek") {
+                GlobalStates.irisLockPeek = action === "peek"
+                return action === "peek" ? "without handles" : "with handles"
+            }
+            if (action.startsWith("select:") && IrisLockOptions.blockIds.includes(action.slice(7))) {
+                GlobalStates.irisLockEdit = true
+                GlobalStates.irisLockSelection = action.slice(7)
+                return action.slice(7) + " selected"
+            }
             if (action.startsWith("select:")) {
                 const [key, tab] = action.slice(7).split("/")
                 const screen = GlobalStates.focusedScreen?.name ?? ""
@@ -498,6 +507,7 @@ Scope {
             const wanted = action === "edit" || action === "on" ? true
                 : action === "off" || action === "done" ? false : !GlobalStates.irisLockEdit
             GlobalStates.irisLockEdit = wanted
+            if (!wanted) GlobalStates.irisLockPeek = false
             return wanted ? "editing" : "closed"
         }
         function utility(name: string): string {

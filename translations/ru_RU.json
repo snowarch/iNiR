@@ -9502,5 +9502,8 @@
   "The whole shell's look": "Внешний вид всей оболочки",
   "Every key, by what it does": "Все клавиши по назначению",
   "Results": "Результаты",
-  "Hold to confirm": "Удерживайте для подтверждения"
+  "Hold to confirm": "Удерживайте для подтверждения",
+  "%1 brings its own material.": "%1 приносит свой материал.",
+  "Show this block": "Показать этот блок",
+  "%1 brings its own layout.": "%1 приносит свой макет."
 }

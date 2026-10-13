@@ -129,20 +129,15 @@ Item {
             return out
         }
         preferredRendererType: Shape.CurveRenderer
-        ShapePath {
-            strokeColor: root.edgeRings ? IrisStyle.trackOf(ring.tint) : "transparent"
-            strokeWidth: root.edgeRings ? ring.stroke : 0
-            fillColor: "transparent"
-            joinStyle: ShapePath.MiterJoin
-            PathPolyline { path: root.edgeRings ? ring.outline : [] }
-        }
+        // Traced on the edge, the level alone: a resting outline would frame the bubble as a box.
         ShapePath {
             strokeColor: root.edgeRings && ring.progress > 0 ? ring.tint : "transparent"
             strokeWidth: root.edgeRings ? ring.stroke : 0
             fillColor: "transparent"
             joinStyle: ShapePath.MiterJoin
             capStyle: ShapePath.FlatCap
-            PathPolyline { path: root.edgeRings && ring.progress > 0 ? ring.traced(ring.progress) : [] }
+            // An empty list reaches PathPolyline as no value at all and warns: a lone point draws nothing.
+            PathPolyline { path: root.edgeRings && ring.progress > 0 ? ring.traced(ring.progress) : [Qt.point(0, 0)] }
         }
         ShapePath {
             strokeColor: root.edgeRings ? "transparent" : IrisStyle.trackOf(ring.tint)

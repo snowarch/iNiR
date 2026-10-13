@@ -102,9 +102,10 @@ ClippingRectangle {
         height: root.height / world.k
         scale: world.k
         transformOrigin: Item.TopLeft
+        // Drawn at twice the frame and read back with one linear step: a mipmapped layer sampled a level under the frame
+        // and every line of the scene's type came out soft.
         layer.enabled: world.k < 0.999
         layer.smooth: true
-        layer.mipmap: true
         layer.textureSize: Qt.size(Math.max(1, Math.ceil(root.width * 2)), Math.max(1, Math.ceil(root.height * 2)))
 
         Loader {
@@ -130,7 +131,8 @@ ClippingRectangle {
         anchors.fill: parent
         radius: root.radius
         color: "transparent"
-        border.width: 1
+        // A chamfered Design cuts the frame with its own die; this rule would run on through the cut corners.
+        border.width: IrisStyle.fieldChamfer ? 0 : 1
         border.color: IrisStyle.border
     }
 

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import qs.modules.iris.components
 import qs.modules.iris.style
 
 Rectangle {
@@ -14,7 +15,8 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: linkColumn.implicitHeight
     radius: IrisStyle.radiusTile
-    color: IrisStyle.readingCard
+    color: IrisStyle.fieldChamfer ? "transparent" : IrisStyle.readingCard
+    IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: IrisStyle.readingCard }
 
     Column {
         id: linkColumn

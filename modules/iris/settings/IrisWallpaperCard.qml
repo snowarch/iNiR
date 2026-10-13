@@ -96,12 +96,16 @@ ClippingRectangle {
     }
 
     Layout.fillWidth: true
-    implicitHeight: card.stageHeight + (strip.visible ? strip.height + 2 * card.pad : 0)
+    implicitHeight: welcome.active ? Number(welcome.item?.implicitHeight ?? 0) : card.stageHeight + (strip.visible ? strip.height + 2 * card.pad : 0)
     radius: IrisStyle.radiusTile
-    color: IrisStyle.readingCard
+    color: welcome.active ? IrisStyle.bodyClip : IrisStyle.readingCard
+
+    // A Design may greet its own way (AIRISU: the desktop printed beside the name); the card keeps what it knows and does.
+    IrisSkin { id: welcome; part: "welcomeCard"; host: card }
 
     Item {
         id: stage
+        visible: !welcome.active
         width: parent.width
         height: card.stageHeight
         clip: true
@@ -267,7 +271,7 @@ ClippingRectangle {
 
     Row {
         id: strip
-        visible: card.nearby.length > 1
+        visible: card.nearby.length > 1 && !welcome.active
         x: card.pad
         y: card.stageHeight + card.pad
         width: parent.width - 2 * card.pad

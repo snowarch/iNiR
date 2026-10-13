@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.modules.iris.frame
+import qs.modules.iris.style
 
 Region {
     id: root
@@ -59,7 +60,7 @@ Region {
     property bool settled: true
     readonly property var built: root.build(root.held ?? [], root.settled)
     readonly property var pieces: root.built.bodies
-    readonly property bool empty: root.pieces.length === 0 && !root.framed
+    readonly property bool empty: root.pieces.length === 0 && root.built.runs.length === 0 && !root.framed
     onBuiltChanged: root.placeRuns()
 
     // The window this region blurs. The region publishes itself, as DMS's WindowBlur does: nothing
@@ -213,6 +214,43 @@ Region {
         root.lines(s, inside, false, 2 * k, exact, mine)
         for (const q of mine) out.push(q)
     }
+    // A chamfered Design's body (IrisField.frag `bodyBox`: the upper-right and lower-left corners cut at 45°) is blurred as
+    // the rows its cut leaves, by the same centre rule moved in half a pixel along the cut's normal: one rect for the
+    // square middle, one per row of each cut (every third row while it moves, taking the narrowest of the three), so no
+    // blurred corner shows past the blade.
+    function chamfered(s: var, cut: real, exact: bool, out: var): void {
+        const i = root.inset
+        const c = Math.min(cut, s.width / 2, s.height / 2)
+        const top = root.lo(s.y + i), bottom = root.hi(s.y + s.height - i)
+        const left = root.lo(s.x + i), right = root.hi(s.x + s.width - i)
+        if (bottom <= top || right <= left) return
+        const reach = c + i * Math.SQRT2
+        const span = n => {
+            const cy = n + 0.5
+            let a = left, b = right
+            if (cy - s.y < reach) b = Math.min(b, root.lo(s.x + s.width - reach + cy - s.y))
+            if (s.y + s.height - cy < reach) a = Math.max(a, root.hi(s.x + reach - (s.y + s.height - cy)))
+            return [a, b]
+        }
+        const step = exact || c <= 0.5 ? 1 : 3
+        let open = null
+        const flush = () => {
+            if (open && open.b > open.a) out.push({ x: open.a, y: open.from, width: open.b - open.a, height: open.to - open.from })
+            open = null
+        }
+        for (let n = top; n < bottom; n += step) {
+            const end = Math.min(bottom, n + step)
+            let a = left, b = right
+            for (let m = n; m < end; m++) {
+                const q = span(m)
+                a = Math.max(a, q[0])
+                b = Math.min(b, q[1])
+            }
+            if (open && open.a === a && open.b === b) open.to = end
+            else { flush(); open = { a: a, b: b, from: n, to: end } }
+        }
+        flush()
+    }
     // Runs past the declared pieces live in a pool of child regions, grown on demand and zeroed when unused.
     readonly property Component runComponent: Component { Region {} }
     property var runPool: []
@@ -239,9 +277,11 @@ Region {
         const cache = root.memo.runs ?? {}, kept = {}
         const b = root.band
         root.memo.frame = { x: b, y: b, width: root.windowWidth - 2 * b, height: root.windowHeight - 2 * b, radius: root.cornerRadius }
+        const cut = IrisStyle.fieldChamfer ? IrisStyle.chamferCut : 0
         for (const s of list) {
             const i = root.inset
-            out.push({ x: s.x + i, y: s.y + i, width: s.width - 2 * i, height: s.height - 2 * i, radius: Math.max(0, Number(s.radius ?? 0) - i) })
+            if (cut > 0) root.chamfered(s, cut, exact, runs)
+            else out.push({ x: s.x + i, y: s.y + i, width: s.width - 2 * i, height: s.height - 2 * i, radius: Math.max(0, Number(s.radius ?? 0) - i) })
             const joins = !s.joins ? [] : Array.isArray(s.joins) ? s.joins : [s.joins]
             for (const id of joins) {
                 if (id === "frame") {

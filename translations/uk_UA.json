@@ -9502,5 +9502,8 @@
   "The whole shell's look": "Вигляд усієї оболонки",
   "Every key, by what it does": "Усі клавіші за призначенням",
   "Results": "Результати",
-  "Hold to confirm": "Утримуйте для підтвердження"
+  "Hold to confirm": "Утримуйте для підтвердження",
+  "%1 brings its own material.": "%1 має власний матеріал.",
+  "Show this block": "Показати цей блок",
+  "%1 brings its own layout.": "%1 має власний макет."
 }

@@ -13,8 +13,10 @@ Rectangle {
     readonly property bool skinned: badgeSkin.active
 
     visible: root.count > 0
-    height: root.skinned ? root.width : root.size
-    width: Math.max(root.size, label.implicitWidth + root.size * 0.7)
+    implicitHeight: root.skinned ? root.implicitWidth : root.size
+    implicitWidth: Math.max(root.size, label.implicitWidth + root.size * 0.7)
+    height: root.implicitHeight
+    width: root.implicitWidth
     // A Design that cuts its bodies (AIRISU) makes the count a square sticker: no ring, the number in its wide face.
     radius: IrisStyle.fieldChamfer ? 0 : height / 2
     color: root.skinned ? "transparent" : IrisStyle.badge

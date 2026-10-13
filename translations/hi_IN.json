@@ -9502,5 +9502,8 @@
   "The whole shell's look": "पूरे शेल का रूप",
   "Every key, by what it does": "हर कुंजी, उसके काम के अनुसार",
   "Results": "परिणाम",
-  "Hold to confirm": "पुष्टि के लिए दबाए रखें"
+  "Hold to confirm": "पुष्टि के लिए दबाए रखें",
+  "%1 brings its own material.": "%1 अपनी सामग्री लाता है।",
+  "Show this block": "यह ब्लॉक दिखाएँ",
+  "%1 brings its own layout.": "%1 अपना लेआउट लाता है।"
 }

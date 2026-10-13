@@ -27,16 +27,9 @@ IrisWidgetFace {
     }
     readonly property string longDate: Translation.locale.toString(root.now, "d MMMM")
 
-    // A Design may bring its own clock (AIRISU's license plate): the dial and the figures step aside for it.
-    readonly property string designFace: IrisDesign.skin("clockFace")
-    padding: root.designFace.length > 0 ? root.dp(4) : root.analog && root.small ? root.dp(8) : root.dp(16)
-
-    Loader {
-        anchors.fill: parent
-        active: root.designFace.length > 0
-        source: root.designFace
-        onLoaded: item.face = root
-    }
+    // A Design may print its own clock (AIRISU's date stamp): the dial and the figures step aside for it.
+    designFace: IrisDesign.skin("widgetClock")
+    padding: root.analog && root.small ? root.dp(8) : root.dp(16)
 
     SystemClock {
         id: clock
@@ -45,7 +38,7 @@ IrisWidgetFace {
 
     FaceDial {
         id: dial
-        visible: root.analog && root.designFace.length === 0
+        visible: root.analog && !root.designed
         face: root
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
@@ -57,7 +50,7 @@ IrisWidgetFace {
     }
 
     ColumnLayout {
-        visible: (!root.analog || !root.small) && root.designFace.length === 0
+        visible: (!root.analog || !root.small) && !root.designed
         anchors.left: root.analog ? dial.right : parent.left
         anchors.leftMargin: root.analog ? root.dp(18) : 0
         anchors.right: parent.right

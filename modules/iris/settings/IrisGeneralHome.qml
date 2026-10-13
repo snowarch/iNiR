@@ -24,6 +24,8 @@ ColumnLayout {
     property var entries: []
     // A group opened from here: its fact alone, wide, as the head of its rows.
     property string only: ""
+    // The facts as a grid while browsing; a Design whose page lists them with their answers beside it shows only the hero.
+    property bool facts: true
     readonly property var shown: root.only.length > 0 ? root.entries.filter(entry => entry.key === root.only) : root.entries
     readonly property bool fillets: IrisStyle.plateSelection
     readonly property int columns: root.only.length > 0 ? 1 : root.width >= 620 * root.d ? 3 : 2
@@ -36,8 +38,30 @@ ColumnLayout {
         screen: root.screen
     }
 
+    // A Design that lists General's groups beside its page greets with the desktop and the three choices that change how
+    // the whole shell looks at once, as real rows; the groups stay one click away in its column.
+    readonly property var quick: ["iris.appearance.design", "iris.appearance.scheme", "iris.appearance.accent"]
+        .map(path => IrisOptions.settings.find(spec => spec.path === path)).filter(spec => spec !== undefined)
+    ColumnLayout {
+        visible: !root.facts && root.only.length === 0
+        Layout.fillWidth: true
+        Layout.topMargin: Math.round(6 * root.d)
+        spacing: 0
+        Repeater {
+            model: !root.facts && root.only.length === 0 ? root.quick : []
+            IrisSetting {
+                required property var modelData
+                required property int index
+                Layout.fillWidth: true
+                spec: modelData
+                last: index === root.quick.length - 1
+            }
+        }
+    }
+
     // A plate Design parts its tiles with the 1 px fillet the grid shows between them; iRiS sets them apart with air.
     Rectangle {
+        visible: root.facts || root.only.length > 0
         Layout.fillWidth: true
         implicitHeight: grid.implicitHeight + (root.fillets ? 2 : 0)
         color: root.fillets ? IrisStyle.hairline : "transparent"
@@ -92,18 +116,9 @@ ColumnLayout {
             anchors.fill: parent
             radius: root.fillets ? 0 : IrisStyle.radiusTile
             color: fact.pressed ? IrisStyle.fillActive
-                : root.fillets ? (fact.containsMouse ? IrisStyle.surfaceHighest : IrisStyle.readingCard)
+                : root.fillets ? (fact.containsMouse ? IrisStyle.fillHover : IrisStyle.readingCard)
                 : fact.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
-        }
-        // A plate Design marks the tile under the pointer with the seal at its edge, as its lists do.
-        Rectangle {
-            visible: root.fillets
-            width: Math.max(2, Math.round(3 * root.d))
-            height: parent.height
-            color: IrisStyle.accentFill
-            opacity: fact.containsMouse ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
         }
 
         readonly property int pad: Math.round(14 * root.d)
@@ -132,7 +147,8 @@ ColumnLayout {
             }
             IrisText {
                 visible: IrisStyle.indexed
-                text: IrisStyle.indexLabel(Math.max(0, root.entries.indexOf(fact.modelData)))
+                // Its place among General's groups, the same whether the grid or the group alone is shown.
+                text: IrisStyle.indexLabel(Math.max(0, root.entries.findIndex(entry => String(entry.key ?? "") === fact.key)))
                 color: IrisStyle.textTertiary
                 font.family: IrisStyle.fontMono
                 font.pixelSize: IrisStyle.typeCaption

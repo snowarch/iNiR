@@ -61,7 +61,7 @@ AbstractBackgroundWidget {
     implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.max(root.activeClockWidth,
         root.statusShown ? statusText.implicitWidth : 0)
     irisFace: Component { IrisClockFace { widget: root } }
-    designFaceKey: "clockFace"
+    designFaceKey: "widgetClock"
     irisSizes: ["small", "medium"]
     irisOptions: [
         { key: "face", label: Translation.tr("Face"), fallback: "analog", choices: [

@@ -22,6 +22,7 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "mediaControls"
+    designFaceKey: "widgetNowPlaying"
     defaultConfig: ({
         placementStrategy: "free", playerPreset: "full",
         visualizerType: "wave", visualizerPosition: "bottom",

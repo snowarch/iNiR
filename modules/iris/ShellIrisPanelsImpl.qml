@@ -70,6 +70,19 @@ Item {
 
         loading: enabledPanel && resident
         activeAsync: enabledPanel && GlobalStates.deferredPanelsReady && resident
+
+        // A background load that completes after the panel was closed hands the loader a live window nobody will
+        // close (a quick open and close stranded the lock rehearsal over the whole screen, holding the keyboard).
+        // Whatever the loader holds once the panel is no longer wanted is let go. `active` is read, never `item`,
+        // which would force a pending load to finish.
+        property Timer strandGuard: Timer {
+            interval: 0
+            // Only a panel nobody wants any more: while a reload rebuilds Config and the gate, `enabledPanel` is false
+            // for a moment, and releasing on it dropped an open Settings and left its reloaded copy behind it.
+            onTriggered: if (loader.active && !loader.resident) loader.active = false
+        }
+        onItemChanged: loader.strandGuard.restart()
+        onResidentChanged: if (!loader.resident) loader.strandGuard.restart()
     }
 
     IrisAppsSync {}

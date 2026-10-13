@@ -21,9 +21,9 @@ RippleButton {
     // A Design may draw the plate and the label its own way (AIRISU: a plate cut with a blade); the press, the toggle
     // and the content stay the button's.
     readonly property bool skinned: buttonSkin.active
-    // Under a Design's skin the ink follows the skin's plates: lacquer on the chosen gofun, the seal's ink on the seal.
+    // Under a Design's skin the ink follows the skin's plates: the chosen plate's ink, the seal's ink on the seal.
     property color foreground: root.skinned ? (root.danger && root.emphasized ? IrisStyle.onTintFor(IrisStyle.danger)
-            : root.emphasized ? IrisStyle.inkOnAccentFill : root.selected ? IrisStyle.bodySurface
+            : root.emphasized ? IrisStyle.inkOnAccentFill : root.selected ? IrisStyle.selectionLabel
             : root.danger ? IrisStyle.danger : IrisStyle.text)
         : root.danger && root.emphasized ? IrisStyle.inkOnDanger
         : root.emphasized ? IrisStyle.inkOnAccent

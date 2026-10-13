@@ -367,7 +367,7 @@ complete -c inir -n '__inir_at_value 2 icon iris' -a 'controls tools focus notif
 complete -c inir -n '__inir_at_function iris' -a control -d 'Arrange the Control Center in place (drag controls, resize…'
 complete -c inir -n '__inir_at_value 1 control iris' -a 'edit done toggle undo'
 complete -c inir -n '__inir_at_function iris' -a lock -d 'Rehearse the lock screen (the real surface, editable, with…'
-complete -c inir -n '__inir_at_value 1 lock iris' -a 'edit done toggle page: layouts scene type clock widgets widget: weather monthCalendar select: iris centered corner minimal'
+complete -c inir -n '__inir_at_value 1 lock iris' -a 'edit done toggle page: layouts scene type clock widgets widget: weather monthCalendar select: glance media activity session status peek unpeek iris centered corner minimal'
 complete -c inir -n '__inir_at_function iris' -a utility -d 'Set the utility satellite: tray, tools, sound, mic or none'
 complete -c inir -n '__inir_at_value 1 utility iris' -a 'tray tools sound mic none'
 complete -c inir -n '__inir_at_function iris' -a watch -d 'What the Continue bubble has in progress, or resume one of…'

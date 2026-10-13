@@ -9,6 +9,8 @@ import qs.modules.iris.bar.island
 
 IrisWidgetFace {
     id: root
+    // A Design may print its own vitals (AIRISU's chart recorder).
+    designFace: IrisDesign.skin("widgetVitals")
 
     readonly property var resources: Array.from(root.widget._resourceModel ?? [])
     readonly property var loads: root.resources.filter(entry => ["cpu", "mem", "gpu"].includes(entry.key))

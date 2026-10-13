@@ -9502,5 +9502,8 @@
   "The whole shell's look": "A aparência de todo o shell",
   "Every key, by what it does": "Cada atalho, pelo que ele faz",
   "Results": "Resultados",
-  "Hold to confirm": "Segure para confirmar"
+  "Hold to confirm": "Segure para confirmar",
+  "%1 brings its own material.": "%1 traz seu próprio material.",
+  "Show this block": "Mostrar este bloco",
+  "%1 brings its own layout.": "%1 traz sua própria disposição."
 }

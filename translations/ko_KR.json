@@ -9502,5 +9502,8 @@
   "The whole shell's look": "셸 전체의 모습",
   "Every key, by what it does": "모든 키를 기능별로",
   "Results": "결과",
-  "Hold to confirm": "길게 눌러 확인"
+  "Hold to confirm": "길게 눌러 확인",
+  "%1 brings its own material.": "%1은(는) 자체 소재를 사용합니다.",
+  "Show this block": "이 블록 표시",
+  "%1 brings its own layout.": "%1은(는) 자체 레이아웃을 사용합니다."
 }

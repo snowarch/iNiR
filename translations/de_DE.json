@@ -9454,7 +9454,7 @@
   "The Niri file these lines live in, for the ones written by hand.": "Die Niri-Datei mit diesen Zeilen, für die von Hand geschriebenen.",
   "What people who use iNiR share, reviewed before it is published.": "Was Leute teilen, die iNiR nutzen, vor der Veröffentlichung geprüft.",
   "Apps start from Niri's startup file, so this works only under Niri.": "Apps starten aus Niris Startdatei, das klappt also nur unter Niri.",
-  "Niri's startup file is missing. Run iNiR's setup again to bring it back.": "Niris Startdatei fehlt. Führe die iNiR-Einrichtung erneut aus, um sie wiederherzustellen.",
+  "Niri's startup file is missing. Run iNiR's setup again to bring it back.": "Die Startdatei von Niri fehlt. Führe die iNiR-Einrichtung erneut aus, um sie wiederherzustellen.",
   "Add an app or a command": "App oder Befehl hinzufügen",
   "Start it with you": "Mit dir starten",
   "Run it as a command when you sign in": "Bei der Anmeldung als Befehl ausführen",
@@ -9502,5 +9502,8 @@
   "The whole shell's look": "Das Aussehen der ganzen Shell",
   "Every key, by what it does": "Jede Taste, nach ihrer Funktion",
   "Results": "Ergebnisse",
-  "Hold to confirm": "Zum Bestätigen halten"
+  "Hold to confirm": "Zum Bestätigen halten",
+  "%1 brings its own material.": "%1 bringt ein eigenes Material mit.",
+  "Show this block": "Diesen Block zeigen",
+  "%1 brings its own layout.": "%1 bringt ein eigenes Layout mit."
 }

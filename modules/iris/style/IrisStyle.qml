@@ -292,7 +292,8 @@ QtObject {
     readonly property var identityHues: ({ red: 0.01, orange: 0.09, yellow: 0.14, green: 0.37, teal: 0.52, sky: 0.55,
         blue: 0.6, indigo: 0.67, purple: 0.78, pink: 0.95 })
     function materialSwatch(name: string): color { return Qt.color(root.washi?.materials?.[name] ?? "#000000") }
-    readonly property string materialName: root.followsTheme ? "theme" : String(root.theme?.surface ?? "black")
+    readonly property string materialName: IrisDesign.material.length > 0 ? IrisDesign.material
+        : root.followsTheme ? "theme" : String(root.theme?.surface ?? "black")
     // What each scheme calls its materials (Settings, the previews): the three stored names stay black, graphite, midnight.
     readonly property var materialLabels: root.ink ? ({ black: "Washi", graphite: "Kraft", midnight: "Mist" })
         : root.light ? ({ black: "Snow", graphite: "Silver", midnight: "Sky" }) : ({ black: "Black", graphite: "Graphite", midnight: "Midnight" })
@@ -727,8 +728,10 @@ QtObject {
         const base = Qt.color(root.bodySurface)
         return ColorUtils.mix(Qt.rgba(Qt.color(ink).r, Qt.color(ink).g, Qt.color(ink).b, 1), Qt.rgba(base.r, base.g, base.b, 1), level)
     }
-    readonly property color fillHover: root.plateHover ? root.hoverPlate(root.fillInk, 0.24) : ColorUtils.applyAlpha(root.fillInk, root.fillAlpha(0.18))
-    readonly property color fillActive: root.plateHover ? root.hoverPlate(root.fillInk, 0.34) : ColorUtils.applyAlpha(root.fillInk, root.fillAlpha(0.26))
+    // The plate is laid in the accent's pigment, not the ink's: an ink plate on a coloured body was the grey hover of any
+    // dark theme, while a coat of the chosen pigment reads as the same lacquer warmed (below the chosen row's full coat).
+    readonly property color fillHover: root.plateHover ? root.hoverPlate(root.accentFill, root.light ? 0.14 : 0.22) : ColorUtils.applyAlpha(root.fillInk, root.fillAlpha(0.18)) // iris-literal: the plate's share of pigment
+    readonly property color fillActive: root.plateHover ? root.hoverPlate(root.accentFill, root.light ? 0.22 : 0.32) : ColorUtils.applyAlpha(root.fillInk, root.fillAlpha(0.26)) // iris-literal: the pressed plate's share
     // A strong fill (a slider's level, a scrubber) is ink, not a film: the body's hue at 60 % turned paper's levels brown.
     // On paper the strong fill is ink: at the night's 0.6 it read as a dark grey slab beside the controls; 0.46 is a pencil line.
     // A level's fill (sliders, scrubbers, the Island's levels). Dark at 0.6 read as a disabled grey beside lit tiles.
@@ -996,13 +999,14 @@ QtObject {
     readonly property bool indexed: IrisDesign.trait("index") === true
     readonly property bool monoCaptions: IrisDesign.trait("captions") === "mono"
     readonly property bool lowerTitles: IrisDesign.trait("titles") === "lower"
-    // Where you are and what is chosen (a row, a cell, a tile): the accent wash in iRiS, the gofun plate with lacquer ink
-    // in a plate Design. `selectionInk` marks (the chosen glyph, a check), `selectionLabel` the label on it.
-    readonly property color selectionFill: root.plateSelection ? root.text : root.tintFill(root.accent)
-    readonly property color selectionInk: root.plateSelection ? root.bodySurface : root.accent
-    readonly property color selectionLabel: root.plateSelection ? root.bodySurface : root.text
+    // Where you are and what is chosen (a row, a cell, a tile): the accent wash in iRiS, a solid plate of the accent with
+    // its own ink in a plate Design (never the text colour as a plate: a white slab on every chosen row).
+    // `selectionInk` marks (the chosen glyph, a check), `selectionLabel` the label on it.
+    readonly property color selectionFill: root.plateSelection ? root.accentFill : root.tintFill(root.accent)
+    readonly property color selectionInk: root.plateSelection ? root.inkOnAccentFill : root.accent
+    readonly property color selectionLabel: root.plateSelection ? root.inkOnAccentFill : root.text
     // A detail on the chosen row (its comment, its verb): the second tone of the plate's ink in a plate Design.
-    readonly property color selectionDetail: root.plateSelection ? ColorUtils.mix(root.bodySurface, root.text, 0.7) : root.subtext
+    readonly property color selectionDetail: root.plateSelection ? ColorUtils.mix(root.inkOnAccentFill, root.accentFill, 0.72) : root.subtext
     // A list's place as a part number: 01, 02… (indexed Designs).
     function indexLabel(i: int): string { return (i + 1 < 10 ? "0" : "") + (i + 1) }
     readonly property int chamferCut: Math.round(10 * root.density)

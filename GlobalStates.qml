@@ -393,6 +393,8 @@ Singleton {
     // The quick-controls tab `inir iris lock select:<key>/<tab>` asks the selected lock widget to show.
     property string irisLockWidgetTab: ""
     property string irisLockPage: "scene"
+    // The lock rehearsal shown without its handles, asked for by `inir iris lock peek` (the eye is held instead).
+    property bool irisLockPeek: false
     property bool irisEdit: false
     // What the edit bar is inspecting: a piece slot ("extra:vitals", "left",
     // "app:kitty"), a surface ("island", "dock", "cards"…) or "" for the family.

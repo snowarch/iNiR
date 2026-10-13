@@ -312,8 +312,14 @@ ColumnLayout {
                             role: IrisText.Title
                             font.pixelSize: IrisStyle.typeLabel
                         }
+                        // A Design that prints counts its own way (AIRISU's leaning die) takes the badge for both counts.
+                        IrisBadge {
+                            visible: !notificationColumn.empty && IrisDesign.has("badge")
+                            count: Notifications.list.length
+                            size: Math.round(17 * root.d)
+                        }
                         Rectangle {
-                            visible: !notificationColumn.empty
+                            visible: !notificationColumn.empty && !IrisDesign.has("badge")
                             implicitWidth: Math.max(implicitHeight, totalLabel.implicitWidth + Math.round(10 * root.d))
                             implicitHeight: Math.round(17 * root.d)
                             radius: IrisStyle.capsule(height)
@@ -409,8 +415,13 @@ ColumnLayout {
                                             font.weight: IrisStyle.weight(Font.DemiBold)
                                             elide: Text.ElideRight
                                         }
+                                        IrisBadge {
+                                            visible: groupRow.count > 1 && !rowHover.hovered && IrisDesign.has("badge")
+                                            count: groupRow.count
+                                            size: Math.round(16 * root.d)
+                                        }
                                         Rectangle {
-                                            visible: groupRow.count > 1 && !rowHover.hovered
+                                            visible: groupRow.count > 1 && !rowHover.hovered && !IrisDesign.has("badge")
                                             implicitWidth: Math.max(implicitHeight, countLabel.implicitWidth + Math.round(10 * root.d))
                                             implicitHeight: Math.round(16 * root.d)
                                             radius: IrisStyle.capsule(height)

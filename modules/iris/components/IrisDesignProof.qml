@@ -91,8 +91,82 @@ PanelWindow {
                 { name: "keyboard", look: ({ shown: true, host: root.sessionHost({ focusIndex: 2, keyboardNavigation: true }) }) },
                 { name: "asks again", look: ({ shown: true, host: root.sessionHost({ focusIndex: 2, keyboardNavigation: true, pending: "poweroff" }) }) },
                 { name: "held", look: ({ shown: true, host: root.sessionHost({ held: ({ index: 1, ink: 0.55 }) }) }) }
+            ] },
+        // The lock's parts over the lock's dark scene; the sign-in on the lock's plate, as the engine lays it.
+        { part: "lockSignIn", name: "sign in", w: -1, cell: 400, media: true, plate: true,
+            states: [{ name: "rest", look: ({}) }],
+            samples: [
+                { name: "waiting", look: ({ host: root.lockHost({}) }) },
+                { name: "focused", look: ({ host: root.lockHost({ focused: true }) }) },
+                { name: "typed", look: ({ host: root.lockHost({ focused: true, typed: 7, cursor: 7 }) }) },
+                { name: "selected", look: ({ host: root.lockHost({ focused: true, typed: 7, cursor: 7, selectionStart: 0, selectionEnd: 7 }) }) },
+                { name: "keyboard", look: ({ host: root.lockHost({ focused: true, typed: 3, cursor: 3, oskVisible: true }) }) },
+                { name: "checking", look: ({ host: root.lockHost({ typed: 7, cursor: 7, context: ({ unlockInProgress: true }), hint: Translation.tr("Unlocking…") }) }) },
+                { name: "refused", look: ({ host: root.lockHost({ focused: true, context: ({ showFailure: true }), hint: Translation.tr("Incorrect password") }) }) },
+                { name: "fingerprint", look: ({ host: root.lockHost({ focused: true, context: ({ fingerprintsConfigured: true }) }) }) },
+                { name: "field alone", look: ({ host: root.lockHost({ focused: true, typed: 2, cursor: 2, entry: ({ avatar: false, name: false }) }) }) }
+            ] },
+        { part: "lockClock", name: "lock clock", w: -1, cell: 400, media: true,
+            states: [{ name: "rest", look: ({}) }],
+            samples: [
+                { name: "date over time", look: ({ host: root.clockHost({}) }) },
+                { name: "accent", look: ({ host: root.clockHost({ colour: IrisStyle.accentOnMedia, timeWeight: 800 }) }) },
+                { name: "12 hour, long name", look: ({ host: root.clockHost({ timeText: "11:58 PM", lockedText: "11:41 PM", machine: "workstation-studio-02" }) }) },
+                { name: "time alone", look: ({ host: root.clockHost({ showDate: false }) }) },
+                { name: "small", look: ({ host: root.clockHost({ timeSize: 50, showDate: false }) }) }
+            ] },
+        { part: "lockChip", name: "glance", w: -1, cell: 220, media: true, plate: true,
+            states: [{ name: "rest", look: ({}) }],
+            samples: [
+                { name: "weather", look: ({ host: ({ glyph: "cloud", figure: "8°", ruby: "Pergamino", tint: IrisStyle.onMedia, battery: -1 }) }) },
+                { name: "event", look: ({ host: ({ glyph: "event", figure: "", ruby: "In 20 min", headline: "Stand-up", tint: IrisStyle.identity.red, battery: -1 }) }) },
+                { name: "battery low", look: ({ host: ({ glyph: "", figure: "18%", ruby: Translation.tr("Battery"), tint: IrisStyle.dangerOnMedia, battery: 0.18 }) }) }
+            ] },
+        { part: "mediaCard", name: "player · lock", w: 380, media: true, plate: true,
+            states: [{ name: "rest", look: ({}) }],
+            samples: [
+                { name: "playing", look: ({ host: root.mediaHost({ overMedia: true }) }) },
+                { name: "stream", look: ({ host: root.mediaHost({ overMedia: true, liveStream: true, hasTimeline: false }) }) },
+                { name: "nothing", look: ({ host: root.mediaHost({ overMedia: true, hasPlayer: false, hasTimeline: false, emptyDetail: Translation.tr("Your music appears here") }) }) }
+            ] },
+        { part: "mediaCard", name: "player · card", w: 360,
+            states: [{ name: "rest", look: ({}) }],
+            samples: [
+                { name: "playing", look: ({ host: root.mediaHost({}) }) },
+                { name: "folded", look: ({ host: root.mediaHost({ compact: true }) }) },
+                { name: "offer", look: ({ host: root.mediaHost({ hasPlayer: false, hasTimeline: false, emptyDetail: "Open Spotify" }) }) }
+            ] },
+        { part: "lockActivity", name: "activity", w: 380, media: true, plate: true,
+            states: [{ name: "rest", look: ({}) }],
+            samples: [
+                { name: "recording", look: ({ host: ({ live: true, glyph: "radio_button_checked", label: Translation.tr("Recording"), figure: "4:12", progress: -1 }) }) },
+                { name: "timer", look: ({ host: ({ glyph: "hourglass_top", label: Translation.tr("Timer"), figure: "12:40", progress: 0.35 }) }) },
+                { name: "paused", look: ({ host: ({ glyph: "pause", label: Translation.tr("Focus"), figure: "18:02", progress: 0.6 }) }) }
             ] }
     ]
+    // Stand-ins for the lock's sign-in and clock blocks: how much is typed, never a password; nothing reaches PAM.
+    function lockHost(state: var): var {
+        const context = Object.assign({ unlockInProgress: false, showFailure: false, fingerprintsConfigured: false }, state.context ?? {})
+        return Object.assign({ entry: ({ avatar: true, name: true, hint: true, width: 248 }), editing: false, oskVisible: false,
+            typed: 0, cursor: 0, selectionStart: 0, selectionEnd: 0, focused: false, still: true, unit: root.d, textScale: 1,
+            displayName: SystemInfo.displayName || SystemInfo.username, userName: SystemInfo.username, hint: "",
+            toggleKeyboard: () => {}, submit: () => {} }, state, { context: context })
+    }
+    function clockHost(state: var): var {
+        return Object.assign({ timeSize: 4 * IrisStyle.typeDisplay, showDate: true, dateText: Translation.locale.toString(DateTime.clock.date, "dddd, d MMMM"),
+            timeText: DateTime.time, family: IrisStyle.fontNumbers, timeWeight: 700, tracking: -2, colour: IrisStyle.onMedia,
+            lockedAt: new Date(Date.now() - 17 * 60000), lockedText: Qt.formatDateTime(new Date(Date.now() - 17 * 60000), "HH:mm"),
+            machine: SystemInfo.hostname, context: null }, state)
+    }
+    // A stand-in for the player card: a record that plays nothing (its keys do nothing either).
+    function mediaHost(state: var): var {
+        const playback = { effectiveTitle: "Blue Monday '88", effectiveArtist: "New Order", effectiveIsPlaying: true,
+            effectiveLength: 251, effectivePosition: 97, effectiveCanSeek: true, effectiveCanGoNext: true, effectiveCanGoPrevious: true,
+            displayedArtFilePath: state.hasPlayer === false ? "" : String(MprisController.activePlayer?.trackArtUrl ?? ""),
+            togglePlaying: () => {}, next: () => {}, previous: () => {}, seek: () => {} }
+        return Object.assign({ playback: playback, player: ({ trackAlbum: "Substance" }), hasPlayer: true, liveStream: false, hasTimeline: true,
+            compact: false, overMedia: false, showPlayers: false, headerReserve: 0, emptyDetail: "", emptyIcon: "", offersOpen: true }, state)
+    }
     // A stand-in for the session screen's stage: its actions as the engine lists them, nothing that runs.
     function sessionHost(state: var): var {
         const actions = [
@@ -271,8 +345,15 @@ PanelWindow {
                                     required property var modelData
                                     width: Math.round(((scene.modelData.cell ?? scene.modelData.w) + 24) * root.d)
                                     height: (stage.item?.implicitHeight ?? 0) + Math.round(24 * root.d)
-                                    // The body the engine would give it, outlined so its bounds read.
+                                    // A lock part stands on the lock's dark scene.
                                     Rectangle {
+                                        visible: scene.modelData.media ?? false
+                                        anchors.fill: parent
+                                        color: IrisStyle.darkSurfaceOpaque
+                                    }
+                                    // The body the engine would give it, outlined so its bounds read; a lock part's plate.
+                                    Rectangle {
+                                        visible: !(scene.modelData.media ?? false)
                                         x: stage.x
                                         y: stage.y
                                         width: stage.width
@@ -280,6 +361,15 @@ PanelWindow {
                                         color: IrisStyle.bodySurface
                                         border.width: 1
                                         border.color: IrisStyle.hairline
+                                    }
+                                    Loader {
+                                        x: stage.x
+                                        y: stage.y
+                                        width: stage.width
+                                        height: stage.item?.implicitHeight ?? 0
+                                        active: scene.modelData.plate ?? false
+                                        source: IrisDesign.skin("lockPlate")
+                                        onLoaded: item.host = ({ material: "tint", outline: true })
                                     }
                                     Loader {
                                         id: stage

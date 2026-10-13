@@ -9502,5 +9502,8 @@
   "The whole shell's look": "Tampilan seluruh shell",
   "Every key, by what it does": "Setiap tombol, menurut fungsinya",
   "Results": "Hasil",
-  "Hold to confirm": "Tahan untuk mengonfirmasi"
+  "Hold to confirm": "Tahan untuk mengonfirmasi",
+  "%1 brings its own material.": "%1 membawa materialnya sendiri.",
+  "Show this block": "Tampilkan blok ini",
+  "%1 brings its own layout.": "%1 membawa tata letaknya sendiri."
 }

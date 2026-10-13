@@ -7584,5 +7584,8 @@
   "Glass and blur are off": "Glasi aamma blur matuneqarput",
   "Glass, blur and motion on": "Glasi, blur aamma aalaneq ammaqqapput",
   "The whole shell's look": "Shellip tamarmi isikkua",
-  "Every key, by what it does": "Tasti tamarmik, suliaat malillugu"
+  "Every key, by what it does": "Tasti tamarmik, suliaat malillugu",
+  "%1 brings its own material.": "%1 brings its own material.",
+  "Show this block": "Show this block",
+  "%1 brings its own layout.": "%1 brings its own layout."
 }

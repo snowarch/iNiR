@@ -9382,7 +9382,7 @@
   "How saturated the sixteen colours are.": "十六种颜色的饱和度。",
   "Hues that lean": "靠拢的色相",
   "Lean toward the accent": "向强调色靠拢",
-  "Lower is darker; 50 matches the shell's surfaces.": "越低越暗；50 与外壳表面一致。",
+  "Lower is darker; 50 matches the shell's surfaces.": "越低越暗；50 与 shell 的表面一致。",
   "Terminal background": "终端背景",
   "Terminal brightness": "终端亮度",
   "Terminal colour": "终端颜色",
@@ -9502,5 +9502,8 @@
   "The whole shell's look": "整个界面的外观",
   "Every key, by what it does": "按功能列出的所有按键",
   "Results": "结果",
-  "Hold to confirm": "长按确认"
+  "Hold to confirm": "长按确认",
+  "%1 brings its own material.": "%1 自带材质。",
+  "Show this block": "显示此区块",
+  "%1 brings its own layout.": "%1 自带布局。"
 }

@@ -15,6 +15,9 @@ IrisWidgetFace {
     id: root
 
     readonly property var player: MprisController.activePlayer
+    // What a Design's face (`widgetNowPlaying`) reads: the engine's playback, positions and lyrics stay here.
+    readonly property alias playback: media
+    designFace: IrisDesign.skin("widgetNowPlaying")
     readonly property bool hasPlayer: root.player !== null && root.player !== undefined
     readonly property bool playing: root.hasPlayer && media.effectiveIsPlaying
     readonly property bool restsWhenPaused: Boolean(root.widget.irisOption("rest", true))

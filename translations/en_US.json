@@ -9502,5 +9502,8 @@
   "The whole shell's look": "The whole shell's look",
   "Every key, by what it does": "Every key, by what it does",
   "Results": "Results",
-  "Hold to confirm": "Hold to confirm"
+  "Hold to confirm": "Hold to confirm",
+  "%1 brings its own material.": "%1 brings its own material.",
+  "Show this block": "Show this block",
+  "%1 brings its own layout.": "%1 brings its own layout."
 }

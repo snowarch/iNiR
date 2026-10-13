@@ -544,6 +544,8 @@ Item {
         rescaleSize: 48
     }
     readonly property color artTint: IrisStyle.artTintOf(tintQuantizer.colors)
+    // Whether the record is laid under the media page, so a Design's page sets its inks on it.
+    readonly property bool artBehind: artBackdrop.active
 
     readonly property bool visualExpanded: root.expanded && details.status === Loader.Ready
     readonly property real bubble: root.compactHeight
@@ -2334,6 +2336,7 @@ Item {
             readonly property string designUrl: IrisDesign.skin("islandArtBackdrop")
             source: artBackdrop.designUrl
             sourceComponent: artBackdrop.designUrl.length > 0 ? null : engineArtBackdrop
+            onLoaded: if (artBackdrop.designUrl.length > 0 && "island" in item) item.island = root
             Component {
                 id: engineArtBackdrop
                 IrisMediaBackdrop {

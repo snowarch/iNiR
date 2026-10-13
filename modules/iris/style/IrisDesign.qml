@@ -26,6 +26,8 @@ Singleton {
     readonly property string palette: String(root.manifest?.palette ?? "")
     // What the Design wears whatever the person's rows say: its preset, its type, its camera.
     readonly property string preset: String(root.manifest?.preset ?? "")
+    // The material it is made of (a washi material its palette offers), or "" to keep the person's Material row.
+    readonly property string material: String(root.manifest?.material ?? "")
     readonly property var fonts: root.manifest?.fonts ?? ({})
     function font(role: string): string { return String(root.fonts?.[role] ?? "") }
     readonly property string morph: String(root.manifest?.motion?.morph ?? "")

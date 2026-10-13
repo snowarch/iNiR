@@ -65,14 +65,19 @@ Item {
         cursorShape: IrisPieces.musicLaunch === "opening" ? Qt.BusyCursor : Qt.PointingHandCursor
         onClicked: IrisPieces.openMusic()
     }
-    implicitHeight: (root.compact ? compactBody.implicitHeight : body.implicitHeight) + 28 * IrisStyle.density
+    // A Design draws the player its own way on this card's model (DESIGNS.md › skins): the playback, its states, the
+    // empty card's offer and the actions stay here.
+    readonly property var playback: media
+    readonly property bool skinned: cardSkin.active
+    implicitHeight: root.skinned ? (cardSkin.item?.implicitHeight ?? 0)
+        : (root.compact ? compactBody.implicitHeight : body.implicitHeight) + 28 * IrisStyle.density
     implicitWidth: 360 * IrisStyle.density
     PlayerBase { id: media; player: root.player; positionUpdatesActive: root.active }
 
     Item {
         anchors.fill: parent
         visible: root.showBackground
-        Rectangle { anchors.fill: parent; radius: IrisStyle.radiusSmall; color: IrisStyle.surfaceHigh }
+        Rectangle { anchors.fill: parent; visible: !root.skinned; radius: IrisStyle.radiusSmall; color: IrisStyle.surfaceHigh }
         Loader {
             anchors.fill: parent
             active: root.active && root.showBackground && (Config.options?.iris?.player?.artworkBackground ?? true)
@@ -82,7 +87,7 @@ Item {
     }
     ColumnLayout {
         id: body
-        visible: !root.compact
+        visible: !root.compact && !root.skinned
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
@@ -207,7 +212,7 @@ Item {
 
     RowLayout {
         id: compactBody
-        visible: root.compact
+        visible: root.compact && !root.skinned
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
@@ -245,4 +250,6 @@ Item {
         IrisIconButton { visible: root.hasPlayer; foreground: root.ink; materialIcon: media.effectiveIsPlaying ? "pause" : "play_arrow"; Accessible.name: media.effectiveIsPlaying ? Translation.tr("Pause") : Translation.tr("Play"); onClicked: media.togglePlaying(); iconSize: Math.round(24 * IrisStyle.density) }
         IrisIconButton { visible: root.hasPlayer; foreground: root.ink; materialIcon: "skip_next"; Accessible.name: Translation.tr("Next track"); enabled: media.effectiveCanGoNext; onClicked: media.next() }
     }
+
+    IrisSkin { id: cardSkin; part: "mediaCard"; host: root }
 }

@@ -19,7 +19,7 @@ Item {
     // The lock widget tapped on the stage: its Look opens here, written to the lock's own scope.
     property var widget: null
     property rect avoid: Qt.rect(0, 0, 0, 0)
-    property bool peeking: false
+    readonly property bool peeking: peekButton.pressed || GlobalStates.irisLockPeek
     // The inspector steps aside rather than sitting on the block you are editing.
     readonly property bool onRight: root.avoid.width > 0
         && root.avoid.x < panel.width + Math.round(56 * root.d)
@@ -114,7 +114,6 @@ Item {
                     Accessible.name: Translation.tr("Hold to see it without the handles")
                     // Held, not toggled: a preview you have to keep asking for cannot
                     // strand you outside the editor.
-                    onPressedChanged: root.peeking = peekButton.pressed
                 }
                 IrisButton {
                     text: Translation.tr("Done")

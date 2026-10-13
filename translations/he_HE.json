@@ -9502,5 +9502,8 @@
   "The whole shell's look": "המראה של כל המעטפת",
   "Every key, by what it does": "כל קיצור, לפי מה שהוא עושה",
   "Results": "תוצאות",
-  "Hold to confirm": "החזק לאישור"
+  "Hold to confirm": "החזק לאישור",
+  "%1 brings its own material.": "‏%1 מגיע עם חומר משלו.",
+  "Show this block": "הצגת הבלוק הזה",
+  "%1 brings its own layout.": "‏%1 מגיע עם פריסה משלו."
 }

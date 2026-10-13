@@ -9502,5 +9502,8 @@
   "The whole shell's look": "Tüm kabuğun görünümü",
   "Every key, by what it does": "Her tuş, ne yaptığına göre",
   "Results": "Sonuçlar",
-  "Hold to confirm": "Onaylamak için basılı tutun"
+  "Hold to confirm": "Onaylamak için basılı tutun",
+  "%1 brings its own material.": "%1 kendi materyalini getirir.",
+  "Show this block": "Bu bloğu göster",
+  "%1 brings its own layout.": "%1 kendi düzenini getirir."
 }

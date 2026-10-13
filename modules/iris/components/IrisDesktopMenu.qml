@@ -487,22 +487,16 @@ Loader {
                                 Accessible.name: row.modelData?.text ?? ""
                                 onContainsMouseChanged: if (containsMouse) popup.focusStop(row.index, -1)
                                 onClicked: popup.choose(row.modelData)
-                                // A plate-selection Design (AIRISU) lights the row as the gofun plate with the seal at its
-                                // edge; its ink turns over with it.
+                                // A plate-selection Design (AIRISU) lights the row as the solid plate of the accent; its
+                                // ink turns over with it.
                                 readonly property bool plate: IrisStyle.plateSelection && menuItem.lit && !menuItem.danger
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: IrisStyle.plateSelection ? 0 : IrisStyle.radiusRow
-                                    color: menuItem.plate ? IrisStyle.text : menuItem.danger
+                                    color: menuItem.plate ? IrisStyle.selectionFill : menuItem.danger
                                         ? (menuItem.lit ? IrisStyle.tintFill(IrisStyle.danger) : ColorUtils.applyAlpha(IrisStyle.danger, 0))
                                         : (menuItem.lit ? IrisStyle.tintFill(IrisStyle.accent) : ColorUtils.applyAlpha(IrisStyle.accent, 0))
                                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(90); easing.type: IrisStyle.feedbackEasing } }
-                                    Rectangle {
-                                        visible: menuItem.plate
-                                        width: Math.max(2, Math.round(3 * root.d))
-                                        height: parent.height
-                                        color: IrisStyle.accentFill
-                                    }
                                 }
                                 RowLayout {
                                     id: itemRow
@@ -532,7 +526,7 @@ Loader {
                                             readonly property bool squircled: menuItem.tinted && !IrisStyle.plainMarks
                                             fill: squircled ? 1 : 0
                                             iconSize: squircled ? Math.round(root.glyphSize * 0.82) : root.glyphSize
-                                            color: menuItem.plate ? IrisStyle.bodySurface : squircled ? IrisStyle.onTint
+                                            color: menuItem.plate ? IrisStyle.selectionInk : squircled ? IrisStyle.onTint
                                                 : menuItem.danger ? IrisStyle.danger : menuItem.lit ? IrisStyle.text : IrisStyle.subtext
                                         }
                                         IconImage {
@@ -545,7 +539,7 @@ Loader {
                                     IrisText {
                                         Layout.fillWidth: true
                                         text: row.modelData?.text ?? ""
-                                        color: menuItem.danger ? IrisStyle.danger : menuItem.plate ? IrisStyle.bodySurface : IrisStyle.text
+                                        color: menuItem.danger ? IrisStyle.danger : menuItem.plate ? IrisStyle.selectionLabel : IrisStyle.text
                                         // A choice of typeface reads in its own face.
                                         font.family: String(row.modelData?.family ?? "").length > 0 ? row.modelData.family : IrisStyle.fontMain
                                         font.pixelSize: root.textSize
@@ -555,7 +549,7 @@ Loader {
                                     IrisText {
                                         visible: text.length > 0
                                         text: String(row.modelData?.detail ?? "")
-                                        color: menuItem.plate ? IrisStyle.bodySurface : IrisStyle.muted
+                                        color: menuItem.plate ? IrisStyle.selectionDetail : IrisStyle.muted
                                         font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeFootnote : IrisStyle.typeMeta
                                         font.weight: IrisStyle.weight(Font.DemiBold)
                                         font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase

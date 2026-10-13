@@ -65,11 +65,10 @@ IrisButton {
             elide: Text.ElideRight
             text: chip.label
             color: chip.foreground
-            // Under a Design's skin a chip is a sticker label: mono capitals (AIRISU's WI-FI │ BLUETOOTH).
-            font.family: chip.labelFamily.length > 0 ? chip.labelFamily : chip.skinned ? IrisStyle.fontMono : IrisStyle.fontMain
-            font.capitalization: chip.skinned && chip.labelFamily.length === 0 ? Font.AllUppercase : Font.MixedCase
-            font.letterSpacing: chip.skinned && chip.labelFamily.length === 0 ? Math.round(IrisStyle.typeFootnote * 0.12) : 0
-            font.pixelSize: chip.skinned ? IrisStyle.typeFootnote : IrisStyle.typeLabel
+            // Under a Design's skin a chip is a tab of its form, in the Design's own face and in sentence case: mono
+            // capitals read as the costume every "tech" design wears, never as a label.
+            font.family: chip.labelFamily.length > 0 ? chip.labelFamily : IrisStyle.fontMain
+            font.pixelSize: chip.skinned ? IrisStyle.typeMeta : IrisStyle.typeLabel
             font.weight: chip.selected || chip.emphasized ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Medium)
         }
     }

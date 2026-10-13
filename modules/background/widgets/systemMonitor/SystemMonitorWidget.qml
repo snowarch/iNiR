@@ -50,6 +50,7 @@ AbstractBackgroundWidget {
     visibleWhenLocked: false
     needsColText: true
     irisFace: Component { IrisVitalsFace { widget: root } }
+    designFaceKey: "widgetVitals"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"
     irisOptions: [

@@ -18,6 +18,15 @@ Item {
 
     required property var widget
     property color light: "transparent"
+    // A Design that prints this widget (`IrisDesign.skin`): its part draws the whole face, stock included, from this
+    // face's state (`face: root`), and the plate, shadow, glass and leak below step aside for it.
+    property string designFace: ""
+    readonly property bool designed: root.designFace.length > 0
+    // A Design that dresses every widget it does not print whole (`widgetStock`): its stock replaces the plate, shadow,
+    // glass and leak, and the face's ink is the stock's.
+    readonly property string stockSkin: root.designed ? "" : IrisDesign.skin("widgetStock")
+    readonly property bool stocked: root.stockSkin.length > 0
+    readonly property bool ownPlate: root.designed || root.stocked
     property real padding: root.dp(16)
     default property alias content: body.data
 
@@ -49,7 +58,7 @@ Item {
     // left white cards among a dark shell. Only a transparent face, which has no material, follows the wallpaper.
     readonly property bool lightBackdrop: IrisStyle.light && !root.clear ? true : root.clear ? root.widget.inkOnLight
         : root.widget.forceDarkInk
-    readonly property bool ownInk: root.lightBackdrop || (IrisStyle.light && root.clear)
+    readonly property bool ownInk: root.lightBackdrop || (IrisStyle.light && root.clear) || root.stockInk
     // A paper scheme's face is the shell's paper with the shell's own ink and accents, as the quick-controls sheet is;
     // the light-backdrop path (white frost, accents deepened to 0.3-0.4 lightness) turned orange brown there.
     readonly property bool paper: IrisStyle.light && !root.clear
@@ -79,12 +88,14 @@ Item {
     function mark(seed: color): color {
         return root.resolvesMarks ? Lume.mark(seed, root.seenLevel, root.clear ? root.readSpread : 0, true, 3) : seed
     }
-    readonly property color accent: root.mark(root.widget.irisAccent)
-    readonly property color highlight: root.mark(root.widget.irisAccent3)
-    readonly property color accent2: root.mark(root.widget.irisAccent2)
+    // A Design's stock brings its own pigments for the data.
+    readonly property bool stockInk: root.stocked && !root.clear && stockLoader.item !== null
+    readonly property color accent: root.stockInk ? stockLoader.item.accent : root.mark(root.widget.irisAccent)
+    readonly property color highlight: root.stockInk ? stockLoader.item.ink : root.mark(root.widget.irisAccent3)
+    readonly property color accent2: root.stockInk ? stockLoader.item.accent2 : root.mark(root.widget.irisAccent2)
     readonly property color warm: root.mark(IrisStyle.secondaryAccent)
     readonly property color danger: root.mark(IrisStyle.danger)
-    readonly property color ink: root.paper ? IrisStyle.text : root.lightBackdrop ? IrisStyle.inkOnLight : IrisStyle.light ? IrisStyle.inkOnDark : IrisStyle.text
+    readonly property color ink: root.stockInk ? stockLoader.item.ink : root.paper ? IrisStyle.text : root.lightBackdrop ? IrisStyle.inkOnLight : IrisStyle.light ? IrisStyle.inkOnDark : IrisStyle.text
     readonly property color inkSecondary: IrisStyle.secondaryOf(root.ink)
     readonly property color inkTertiary: IrisStyle.tertiaryOf(root.ink)
     readonly property color fillQuiet: root.ownInk ? IrisStyle.fillQuietOf(root.ink) : IrisStyle.fillQuiet
@@ -119,7 +130,7 @@ Item {
     // A shadow under glass shows through it: the body darkens toward its middle and its top edge reads as a glow.
     RectangularShadow {
         anchors.fill: parent
-        visible: root.opaque && root.plated
+        visible: root.opaque && root.plated && !root.ownPlate
         radius: root.radius
         blur: root.dp(28)
         spread: -root.dp(4)
@@ -129,7 +140,7 @@ Item {
 
     Loader {
         anchors.fill: parent
-        active: root.glass
+        active: root.glass && !root.ownPlate
         visible: root.plated
         sourceComponent: ClippingRectangle {
             id: glassPane
@@ -192,9 +203,17 @@ Item {
         }
     }
 
+    Loader {
+        id: stockLoader
+        anchors.fill: parent
+        active: root.stocked && root.plated && !root.clear
+        source: root.stockSkin
+        onLoaded: item.face = root
+    }
+
     Rectangle {
         anchors.fill: parent
-        visible: root.plated
+        visible: root.plated && !root.ownPlate
         radius: root.radius
         color: root.plateColor
         border.width: root.flatRim ? 1 : 0
@@ -207,7 +226,7 @@ Item {
     // flat colour (and its outline: an edge the light reaches burns instead) and keeps its opacity.
     Loader {
         anchors.fill: parent
-        active: IrisStyle.leak && root.plated && !root.clear
+        active: IrisStyle.leak && root.plated && !root.clear && !root.ownPlate
         sourceComponent: IrisLeakPlate {
             strength: IrisStyle.leakWidgets
             at: {
@@ -222,14 +241,14 @@ Item {
 
     IrisGlassEdge {
         anchors.fill: parent
-        visible: root.glassEdge && root.rimShown && root.plated
+        visible: root.glassEdge && root.rimShown && root.plated && !root.ownPlate
         radius: root.radius
     }
 
     Rectangle {
         anchors.fill: parent
         anchors.margins: 1
-        visible: !root.clear && root.light.a > 0
+        visible: !root.clear && root.light.a > 0 && !root.ownPlate
         opacity: (root.glass ? IrisStyle.glassWash : 1) * (1 - Math.min(1, Math.abs(root.slide)))
         radius: Math.max(0, root.radius - 1)
         gradient: Gradient {
@@ -276,10 +295,18 @@ Item {
                 opacity: (root.lightBackdrop ? IrisStyle.frostShadow : IrisStyle.plateShadow.a) * root.textShadow
             }
 
+            Loader {
+                anchors.fill: parent
+                active: root.designed
+                source: root.designFace
+                onLoaded: item.face = root
+            }
+
             Item {
                 id: body
                 anchors.fill: parent
                 anchors.margins: root.padding
+                visible: !root.designed
             }
         }
     }

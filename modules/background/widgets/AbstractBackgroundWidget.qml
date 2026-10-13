@@ -20,10 +20,10 @@ AbstractWidget {
 
     required property string configEntryName
     readonly property bool widgetIrisFamily: (Config.options?.panelFamily ?? "ii") === "iris"
-    // iRiS only: an iRiS Design (AIRISU) that brings this widget's face draws it whatever widget design is chosen.
+    // iRiS only: the iRiS face, which an iRiS Design (AIRISU) may draw its own way (`designFaceKey`); the other widget
+    // designs (Material, iNstrument, Readout) keep drawing themselves under any Design.
     property string designFaceKey: ""
-    readonly property bool widgetIris: root.widgetIrisFamily && (root.irisDesign === "iris"
-        || (root.designFaceKey.length > 0 && IrisDesign.has(root.designFaceKey)))
+    readonly property bool widgetIris: root.widgetIrisFamily && root.irisDesign === "iris"
     required property int screenWidth
     required property int screenHeight
     required property int scaledScreenWidth
@@ -2385,7 +2385,9 @@ AbstractWidget {
         id: irisFaceLoader
         anchors.fill: parent
         active: root.irisFaced
-        opacity: root.widgetOpacity * root.dimOpacity
+        // A face answers to its own rows (Material, Opacity in iRiS Settings); Material's Opacity and Dimming are hidden
+        // while a face is drawn, and a value left there from before faded it to a ghost with no row to undo it.
+        opacity: 1
         sourceComponent: root.irisFace
     }
 

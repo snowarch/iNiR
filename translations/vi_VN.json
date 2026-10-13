@@ -9502,5 +9502,8 @@
   "The whole shell's look": "Diện mạo của toàn bộ shell",
   "Every key, by what it does": "Mọi phím, theo chức năng",
   "Results": "Kết quả",
-  "Hold to confirm": "Nhấn giữ để xác nhận"
+  "Hold to confirm": "Nhấn giữ để xác nhận",
+  "%1 brings its own material.": "%1 có chất liệu riêng.",
+  "Show this block": "Hiện khối này",
+  "%1 brings its own layout.": "%1 có bố cục riêng."
 }

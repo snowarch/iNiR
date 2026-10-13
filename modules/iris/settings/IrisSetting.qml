@@ -30,6 +30,16 @@ Item {
             .join("")
     }
     readonly property real d: IrisStyle.settingsDensity
+    // A picked card: iRiS tints it and sets its name in the accent; a Design that selects with a plate (AIRISU) prints the
+    // picked one as the chosen plate, the ink reversed with the paper's colour cut out of it, as its form boxes are.
+    readonly property bool platePick: IrisStyle.plateSelection
+    function pickFill(selected: bool, hovered: bool): color {
+        return selected ? (root.platePick ? IrisStyle.text : IrisStyle.tintFill(IrisStyle.accent)) : hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
+    }
+    function pickInk(selected: bool): color { return !selected ? IrisStyle.text : root.platePick ? IrisStyle.surfaceOpaque : IrisStyle.accent }
+    function pickDetail(selected: bool): color {
+        return selected && root.platePick ? ColorUtils.mix(IrisStyle.surfaceOpaque, IrisStyle.text, 0.74) : IrisStyle.muted // iris-literal: the second tone on the chosen plate
+    }
     readonly property var value: {
         Config.revision
         return IrisOptions.currentValue(root.spec)
@@ -84,8 +94,9 @@ Item {
     }
     FontMetrics {
         id: figureMetrics
-        font.family: IrisStyle.fontMain
-        font.pixelSize: IrisStyle.typeLabel
+        font.family: IrisStyle.fontNumbers
+        font.pixelSize: IrisStyle.typeHeadline
+        font.weight: IrisStyle.figureWeight
     }
     // Segments share the track evenly, so the widest name sets every slot.
     readonly property real segmentNatural: root.spec.kind !== "choice" || root.choices.length === 0 ? 0
@@ -164,10 +175,12 @@ Item {
                         font.weight: IrisStyle.weight(Font.Medium)
                         wrapMode: Text.WordWrap
                     }
+                    FontMetrics { id: labelMetrics; font: label.font }
                     Item {
                         id: resetMark
                         x: label.x + Math.min(label.contentWidth, label.width) + Math.round(6 * root.d)
-                        y: Math.round((label.font.pixelSize * 1.4 - height) / 2)
+                        // Centred on the first line's lowercase, where the eye reads the word's middle.
+                        y: Math.round(label.baselineOffset - labelMetrics.xHeight / 2 - height / 2)
                         width: Math.round(18 * root.d)
                         height: width
                         opacity: root.modified ? 1 : 0
@@ -206,7 +219,9 @@ Item {
                     Layout.fillWidth: true
                     visible: text.length > 0
                     text: root.spec.description ? Translation.tr(root.spec.description) : ""
-                    color: IrisStyle.subtext
+                    // A chamfered Design prints its row in two inks, the name in the ink and what it does a tone down: at
+                    // the shared subtext (nine tenths of the ink) both read as one black block.
+                    color: IrisStyle.fieldChamfer ? IrisStyle.muted : IrisStyle.subtext
                     font.pixelSize: IrisStyle.typeMeta
                     wrapMode: Text.WordWrap
                     maximumLineCount: description.full ? 12 : 2
@@ -270,12 +285,13 @@ Item {
             }
 
             IrisButton {
+                id: actionButton
                 visible: root.spec.kind === "action"
                 opacity: root.controlOpacity
                 Layout.alignment: Qt.AlignVCenter
                 text: Translation.tr(String(root.spec.button ?? ""))
-                colBackground: IrisStyle.fill
-                colBackgroundHover: IrisStyle.fillHover
+                colBackground: actionButton.skinned ? "transparent" : IrisStyle.fill
+                colBackgroundHover: actionButton.skinned ? "transparent" : IrisStyle.fillHover
                 onClicked: root.spec.run()
             }
 
@@ -372,9 +388,12 @@ Item {
                         horizontalAlignment: Text.AlignRight
                         verticalAlignment: Text.AlignVCenter
                         text: Translation.tr(IrisOptions.rangeText(root.spec, root.shownValue))
-                        color: figureHover.hovered ? IrisStyle.text : IrisStyle.subtext
+                        // The range's answer is a figure, set in the figures' voice like every value iRiS shows large.
+                        color: IrisStyle.text
+                        font.family: IrisStyle.fontNumbers
                         font.features: ({ "tnum": 1 })
-                        font.pixelSize: IrisStyle.typeLabel
+                        font.pixelSize: IrisStyle.typeHeadline
+                        font.weight: IrisStyle.figureWeight
                     }
                     TextInput {
                         id: figureInput
@@ -385,9 +404,10 @@ Item {
                         color: IrisStyle.text
                         selectionColor: IrisStyle.accentContainer
                         selectedTextColor: IrisStyle.inkOnAccentContainer
-                        font.family: IrisStyle.fontMain
+                        font.family: IrisStyle.fontNumbers
                         font.features: ({ "tnum": 1 })
-                        font.pixelSize: IrisStyle.typeLabel
+                        font.pixelSize: IrisStyle.typeHeadline
+                        font.weight: IrisStyle.figureWeight
                         inputMethodHints: Qt.ImhFormattedNumbersOnly
                         Accessible.name: Translation.tr(root.spec.label)
                         onEditingFinished: if (figure.editing) figure.settle(figureInput.text)
@@ -694,8 +714,9 @@ Item {
                                 width: tiles.tileWidth
                                 height: Math.round(44 * root.d)
                                 radius: IrisStyle.radiusTile
-                                color: tile.selected ? IrisStyle.tintFill(IrisStyle.accent)
-                                    : tileHover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
+                                readonly property color stuff: root.pickFill(tile.selected, tileHover.hovered)
+                                color: IrisStyle.fieldChamfer ? "transparent" : tile.stuff
+                                IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: tile.stuff }
                                 scale: tileTap.pressed ? IrisStyle.pressScale(0.97) : 1
                                 Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
                                 Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -710,7 +731,7 @@ Item {
                                     width: Math.round(30 * root.d)
                                     height: width
                                     // Concentric with the row: the row's radius less the air around the chip.
-                                    radius: Math.max(Math.round(5 * root.d), tile.radius - chip.inset)
+                                    radius: IrisStyle.fieldChamfer ? 0 : Math.max(Math.round(5 * root.d), tile.radius - chip.inset)
                                     color: tile.sides[0]?.bg ?? IrisStyle.fillQuiet
                                     IrisImage {
                                         visible: tile.wall
@@ -770,7 +791,7 @@ Item {
                                     anchors.rightMargin: Math.round(6 * root.d)
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: Translation.tr(tile.modelData.label)
-                                    color: tile.selected ? IrisStyle.accent : IrisStyle.text
+                                    color: root.pickInk(tile.selected)
                                     elide: Text.ElideRight
                                     font.pixelSize: IrisStyle.typeLabel
                                     font.weight: IrisStyle.weight(tile.selected ? Font.DemiBold : Font.Medium)
@@ -782,7 +803,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "check"
                                     iconSize: Math.round(16 * root.d)
-                                    color: IrisStyle.accent
+                                    color: root.platePick ? root.pickInk(true) : IrisStyle.accent
                                     opacity: tile.selected ? 1 : 0
                                     scale: tile.selected ? 1 : 0.6
                                     Behavior on opacity { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -814,18 +835,22 @@ Item {
     Component {
         id: designCardsComponent
 
-        Row {
+        // Laid by hand, not a Row: the cards' width comes from the width the layout gives, and a Row feeding its own
+        // implicit width back into that loops its polish.
+        Item {
             id: designs
             readonly property real gap: Math.round(10 * root.d)
             readonly property real cardWidth: Math.floor((width - (root.choices.length - 1) * designs.gap) / Math.max(1, root.choices.length))
-            spacing: designs.gap
+            implicitHeight: Math.round(designs.cardWidth * 0.56)
 
             Repeater {
                 model: root.choices
                 Item {
                     id: designCard
                     required property var modelData
+                    required property int index
                     readonly property bool selected: root.value === designCard.modelData.value
+                    x: designCard.index * (designs.cardWidth + designs.gap)
                     width: designs.cardWidth
                     height: Math.round(designCard.width * 0.56)
                     scale: designTap.pressed ? IrisStyle.pressScale(0.98) : 1
@@ -839,20 +864,46 @@ Item {
                         anchors.fill: parent
                         radius: IrisStyle.radiusTile
                         color: IrisStyle.fillQuiet
+                        // A chamfered Design cuts the picture by its own die, as every plate on its field.
+                        layer.enabled: IrisStyle.fieldChamfer
+                        layer.smooth: true
+                        layer.effect: MultiEffect {
+                            maskEnabled: true
+                            maskSource: designDie
+                            maskThresholdMin: 0.5
+                            maskSpreadAtMin: 1
+                        }
                         Loader {
                             anchors.fill: parent
                             source: designCard.modelData.preview
                             asynchronous: true
                         }
                     }
+                    IrisCutPlate {
+                        id: designDie
+                        anchors.fill: parent
+                        visible: false
+                        layer.enabled: IrisStyle.fieldChamfer
+                        color: "white" // iris-literal: a mask, never shown
+                    }
                     // Chosen: the accent ring the material cards wear, outside the picture so it never covers it.
                     Rectangle {
+                        visible: !IrisStyle.fieldChamfer
                         anchors.fill: parent
                         anchors.margins: -Math.round(3 * root.d)
                         radius: IrisStyle.radiusTile + Math.round(3 * root.d)
                         color: "transparent"
                         border.width: designCard.selected ? 2 : designHover.hovered ? 1 : 0
                         border.color: designCard.selected ? IrisStyle.accent : IrisStyle.borderStrong
+                    }
+                    IrisCutPlate {
+                        readonly property int out: Math.round(3 * root.d)
+                        visible: IrisStyle.fieldChamfer && (designCard.selected || designHover.hovered)
+                        anchors.fill: parent
+                        anchors.margins: -out
+                        cutLength: IrisStyle.chamferCut + Math.round(out * (2 - Math.SQRT2))
+                        stroke: designCard.selected ? (root.platePick ? IrisStyle.text : IrisStyle.accent) : IrisStyle.borderStrong
+                        strokeWidth: designCard.selected ? 2 : 1
                     }
                     HoverHandler { id: designHover; cursorShape: Qt.PointingHandCursor }
                     TapHandler { id: designTap; onTapped: root.commit(designCard.modelData.value) }
@@ -890,8 +941,9 @@ Item {
                     width: materials.cardWidth
                     height: scene.height + cardText.implicitHeight + card.inset + Math.round(18 * root.d)
                     radius: IrisStyle.radiusTile
-                    color: card.selected ? IrisStyle.tintFill(IrisStyle.accent)
-                        : cardHover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
+                    readonly property color plate: root.pickFill(card.selected, cardHover.hovered)
+                    color: IrisStyle.fieldChamfer ? "transparent" : card.plate
+                    IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: card.plate }
                     scale: cardTap.pressed ? IrisStyle.pressScale(0.97) : 1
                     Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
                     Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -913,15 +965,23 @@ Item {
                         width: card.width - 2 * card.inset
                         height: Math.round(76 * root.d)
                         // Concentric with the card: its radius less the air around the picture.
-                        radius: Math.max(Math.round(5 * root.d), card.radius - card.inset)
+                        radius: IrisStyle.fieldChamfer ? 0 : Math.max(Math.round(5 * root.d), card.radius - card.inset)
                         color: card.stuff
+                        // A chamfered card's picture is cut concentric with it: the card's cut less the air around it.
+                        layer.enabled: IrisStyle.fieldChamfer
+                        layer.effect: MultiEffect {
+                            maskEnabled: true
+                            maskSource: sceneDie
+                            maskThresholdMin: 0.5
+                            maskSpreadAtMin: 1
+                        }
                         ClippingRectangle {
                             id: desk
                             x: scene.band
                             y: scene.band
                             width: scene.width - 2 * scene.band
                             height: Math.round(scene.height * 0.42)
-                            radius: scene.framed ? Math.max(Math.round(4 * root.d), scene.radius - scene.band) : 0
+                            radius: scene.framed && !IrisStyle.fieldChamfer ? Math.max(Math.round(4 * root.d), scene.radius - scene.band) : 0
                             color: IrisStyle.fillQuiet
                             IrisImage { anchors.fill: parent; source: materials.picture }
                             // Melted into the frame's edge when there is one; floating under the screen's edge when not.
@@ -940,15 +1000,15 @@ Item {
                             width: scene.width - 2 * x
                             y: desk.y + desk.height + Math.round(6 * root.d)
                             height: scene.height - y - Math.round(7 * root.d)
-                            radius: Math.max(Math.round(4 * root.d), scene.radius - Math.round(6 * root.d))
+                            radius: IrisStyle.fieldChamfer ? 0 : Math.max(Math.round(4 * root.d), scene.radius - Math.round(6 * root.d))
                             // Fills are the ink at a low alpha over the paper, as on every surface.
                             color: IrisStyle.fill
                             Column {
                                 x: Math.round(8 * root.d)
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: Math.round(4 * root.d)
-                                Rectangle { width: Math.round(group.width * 0.46); height: Math.round(4 * root.d); radius: height / 2; color: IrisStyle.text }
-                                Rectangle { width: Math.round(group.width * 0.3); height: Math.round(4 * root.d); radius: height / 2; color: IrisStyle.textTertiary }
+                                Rectangle { width: Math.round(group.width * 0.46); height: Math.round(4 * root.d); radius: IrisStyle.capsule(height); color: IrisStyle.text }
+                                Rectangle { width: Math.round(group.width * 0.3); height: Math.round(4 * root.d); radius: IrisStyle.capsule(height); color: IrisStyle.textTertiary }
                             }
                             Rectangle {
                                 anchors.right: parent.right
@@ -961,7 +1021,28 @@ Item {
                             }
                         }
                         // The picture's own edge, so a light paper never melts into a light card.
-                        Rectangle { anchors.fill: parent; radius: scene.radius; color: "transparent"; border.width: 1; border.color: IrisStyle.border }
+                        Rectangle { visible: !IrisStyle.fieldChamfer; anchors.fill: parent; radius: scene.radius; color: "transparent"; border.width: 1; border.color: IrisStyle.border }
+                    }
+                    IrisCutPlate {
+                        id: sceneDie
+                        x: scene.x
+                        y: scene.y
+                        width: scene.width
+                        height: scene.height
+                        visible: false
+                        layer.enabled: IrisStyle.fieldChamfer
+                        cutLength: IrisStyle.chamferCut - Math.round(card.inset * (2 - Math.SQRT2))
+                        color: "white" // iris-literal: a mask, never shown
+                    }
+                    IrisCutPlate {
+                        visible: IrisStyle.fieldChamfer
+                        x: scene.x
+                        y: scene.y
+                        width: scene.width
+                        height: scene.height
+                        cutLength: sceneDie.cutLength
+                        stroke: IrisStyle.border
+                        strokeWidth: 1
                     }
                     Column {
                         id: cardText
@@ -978,7 +1059,7 @@ Item {
                             IrisText {
                                 Layout.fillWidth: true
                                 text: Translation.tr(card.modelData.label)
-                                color: card.selected ? IrisStyle.accent : IrisStyle.text
+                                color: root.pickInk(card.selected)
                                 elide: Text.ElideRight
                                 font.pixelSize: IrisStyle.typeLabel
                                 font.weight: IrisStyle.weight(card.selected ? Font.DemiBold : Font.Medium)
@@ -986,7 +1067,7 @@ Item {
                             MaterialSymbol {
                                 text: "check"
                                 iconSize: Math.round(16 * root.d)
-                                color: IrisStyle.accent
+                                color: root.platePick ? root.pickInk(true) : IrisStyle.accent
                                 opacity: card.selected ? 1 : 0
                                 scale: card.selected ? 1 : 0.6
                                 Behavior on opacity { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -996,7 +1077,7 @@ Item {
                         IrisText {
                             width: parent.width
                             text: Translation.tr(card.modelData.detail ?? "")
-                            color: IrisStyle.muted
+                            color: root.pickDetail(card.selected)
                             elide: Text.ElideRight
                             font.pixelSize: IrisStyle.typeMeta
                         }
@@ -1044,8 +1125,9 @@ Item {
                         width: swatchSet.cardWidth
                         height: picture.height + sourceText.implicitHeight + source.inset + Math.round(18 * root.d)
                         radius: IrisStyle.radiusTile
-                        color: source.selected ? IrisStyle.tintFill(IrisStyle.accent)
-                            : sourceHover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
+                        readonly property color plate: root.pickFill(source.selected, sourceHover.hovered)
+                        color: IrisStyle.fieldChamfer ? "transparent" : source.plate
+                        IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: source.plate }
                         scale: sourceTap.pressed ? IrisStyle.pressScale(0.97) : 1
                         Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
                         Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -1062,8 +1144,15 @@ Item {
                             width: source.width - 2 * source.inset
                             height: Math.round(46 * root.d)
                             // Concentric with the card: its radius less the air around the picture.
-                            radius: Math.max(Math.round(5 * root.d), source.radius - source.inset)
+                            radius: IrisStyle.fieldChamfer ? 0 : Math.max(Math.round(5 * root.d), source.radius - source.inset)
                             color: source.kind === "custom" ? "transparent" : source.gives
+                            layer.enabled: IrisStyle.fieldChamfer
+                            layer.effect: MultiEffect {
+                                maskEnabled: true
+                                maskSource: pictureDie
+                                maskThresholdMin: 0.5
+                                maskSpreadAtMin: 1
+                            }
                             IrisImage {
                                 visible: source.kind === "wallpaper"
                                 anchors.fill: parent
@@ -1116,7 +1205,28 @@ Item {
                                 border.color: IrisStyle.bodySurface
                             }
                             // The picture's own edge, so a light colour never melts into a light card.
-                            Rectangle { anchors.fill: parent; radius: picture.radius; color: "transparent"; border.width: 1; border.color: IrisStyle.border }
+                            Rectangle { visible: !IrisStyle.fieldChamfer; anchors.fill: parent; radius: picture.radius; color: "transparent"; border.width: 1; border.color: IrisStyle.border }
+                        }
+                        IrisCutPlate {
+                            id: pictureDie
+                            x: picture.x
+                            y: picture.y
+                            width: picture.width
+                            height: picture.height
+                            visible: false
+                            layer.enabled: IrisStyle.fieldChamfer
+                            cutLength: IrisStyle.chamferCut - Math.round(source.inset * (2 - Math.SQRT2))
+                            color: "white" // iris-literal: a mask, never shown
+                        }
+                        IrisCutPlate {
+                            visible: IrisStyle.fieldChamfer
+                            x: picture.x
+                            y: picture.y
+                            width: picture.width
+                            height: picture.height
+                            cutLength: pictureDie.cutLength
+                            stroke: IrisStyle.border
+                            strokeWidth: 1
                         }
                         Column {
                             id: sourceText
@@ -1133,7 +1243,7 @@ Item {
                                 IrisText {
                                     Layout.fillWidth: true
                                     text: Translation.tr(source.modelData.label)
-                                    color: source.selected ? IrisStyle.accent : IrisStyle.text
+                                    color: root.pickInk(source.selected)
                                     elide: Text.ElideRight
                                     font.pixelSize: IrisStyle.typeLabel
                                     font.weight: IrisStyle.weight(source.selected ? Font.DemiBold : Font.Medium)
@@ -1141,7 +1251,7 @@ Item {
                                 MaterialSymbol {
                                     text: "check"
                                     iconSize: Math.round(16 * root.d)
-                                    color: IrisStyle.accent
+                                    color: root.platePick ? root.pickInk(true) : IrisStyle.accent
                                     opacity: source.selected ? 1 : 0
                                     scale: source.selected ? 1 : 0.6
                                     Behavior on opacity { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -1151,7 +1261,7 @@ Item {
                             IrisText {
                                 width: parent.width
                                 text: root.sourceDetail(source.kind)
-                                color: IrisStyle.muted
+                                color: root.pickDetail(source.selected)
                                 elide: Text.ElideRight
                                 font.pixelSize: IrisStyle.typeMeta
                             }
