@@ -14,7 +14,10 @@ PreviewScene {
     readonly property bool live: galleryRoot.opt("iris.wallpaper.livePreview", true)
     readonly property int perRow: Math.max(1, Math.floor((galleryRoot.galleryWidth - 30 * galleryRoot.d) / (galleryRoot.thumb + 10 * galleryRoot.d)))
     readonly property var sources: {
-        const list = Array.from(Wallpapers.wallpapers ?? []).map(path => Wallpapers.stillUrlFor(path)).filter(url => url.length > 0)
+        // The picker's listing holds its folders too; a folder is never a picture.
+        const list = Array.from(Wallpapers.wallpapers ?? [])
+            .filter(path => Wallpapers.extensions.includes(String(path).split(".").pop().toLowerCase()))
+            .map(path => Wallpapers.stillUrlFor(path)).filter(url => url.length > 0)
         const pool = list.length > 0 ? list : [galleryRoot.wallpaper]
         return Array.from({ length: galleryRoot.perRow * 2 }, (_, i) => pool[i % pool.length])
     }
