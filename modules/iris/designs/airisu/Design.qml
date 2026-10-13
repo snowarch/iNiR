@@ -81,6 +81,9 @@ QtObject {
         widgetScreenTime: "widgets/DayLog.qml",
         widgetBattery: "widgets/Charge.qml",
         widgetTodo: "widgets/Tasks.qml",
+        widgetVisualizer: "widgets/Spectrum.qml",
+        widgetEditorial: "widgets/Poster.qml",
+        widgetJapanese: "widgets/Hanko.qml",
         widgetVitals: "widgets/Vitals.qml",
         // Every other widget: iRiS's face set on AIRISU's lacquer.
         widgetStock: "widgets/Stock.qml"

@@ -4,6 +4,8 @@ import QtQuick.Layouts
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.iris.style
+import qs.modules.iris.widgets
 
 AbstractBackgroundWidget {
     id: root
@@ -14,8 +16,12 @@ AbstractBackgroundWidget {
         colorMode: "auto", dim: 0, showBackground: false, showBorder: false,
         backgroundOpacity: 0.12, borderWidth: 1, borderOpacity: 0.2,
         cornerRadius: -1, useBlur: false, x: 100, y: 300 })
-    implicitWidth: Math.max(180, Number(root._readConfigKey("contentWidth") ?? 360)) * scaleFactor
-    implicitHeight: Math.max(140, Number(root._readConfigKey("contentHeight") ?? 240)) * scaleFactor
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.max(180, Number(root._readConfigKey("contentWidth") ?? 360)) * scaleFactor
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.max(140, Number(root._readConfigKey("contentHeight") ?? 240)) * scaleFactor
+    // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
+    irisFace: IrisDesign.has("widgetEditorial") ? designPrint : null
+    irisSizes: ["medium", "large", "small"]
+    Component { id: designPrint; IrisDesignFace { widget: root; part: "widgetEditorial" } }
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 180
     resizeMinHeight: 140
@@ -29,6 +35,7 @@ AbstractBackgroundWidget {
     readonly property real inset: (root._globalEditorial ? Appearance.editorial.inset : 20) * scaleFactor
 
     WidgetSurface {
+        visible: !root.irisFaced
         irisPresentation: root.widgetIris
         anchors.fill: parent
         regionBrightness: root.regionBrightness
@@ -46,7 +53,7 @@ AbstractBackgroundWidget {
     }
 
     Rectangle {
-        visible: root.showAccent && root.composition === "label"
+        visible: root.showAccent && root.composition === "label" && !root.irisFaced
         x: root.inset; y: root.inset
         width: 3 * root.scaleFactor
         height: parent.height - root.inset * 2
@@ -55,6 +62,7 @@ AbstractBackgroundWidget {
     }
 
     ColumnLayout {
+        visible: !root.irisFaced
         anchors.fill: parent
         anchors.margins: root.inset
         anchors.leftMargin: root.composition === "label" ? root.inset * 2 : root.inset

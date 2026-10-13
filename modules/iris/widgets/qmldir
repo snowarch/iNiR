@@ -1,5 +1,6 @@
 module qs.modules.iris.widgets
 IrisWidgetFace 1.0 IrisWidgetFace.qml
+IrisDesignFace 1.0 IrisDesignFace.qml
 IrisWidgetControls 1.0 IrisWidgetControls.qml
 FaceText 1.0 FaceText.qml
 FaceFigure 1.0 FaceFigure.qml

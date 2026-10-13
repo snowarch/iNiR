@@ -11,6 +11,8 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.models
 import qs.modules.common.widgets
+import qs.modules.iris.style
+import qs.modules.iris.widgets
 import qs.modules.background.widgets
 
 AbstractBackgroundWidget {
@@ -34,8 +36,15 @@ AbstractBackgroundWidget {
         cornerRadius: -1, x: 100, y: 100
     })
 
-    implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 304) * scaleFactor)
-    implicitHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 104) * scaleFactor)
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 304) * scaleFactor)
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 104) * scaleFactor)
+    // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
+    irisFace: IrisDesign.has("widgetVisualizer") ? designPrint : null
+    irisSizes: ["medium", "small", "large"]
+    Component { id: designPrint; IrisDesignFace { widget: root; part: "widgetVisualizer" } }
+    // What a print reads: the spectrum, whether it is moving, and its ceiling.
+    readonly property var printPoints: cavaProcess.points
+    readonly property bool printLive: root._active && cavaProcess.audioSignalActive
 
     visibleWhenLocked: false
     needsColText: true
@@ -345,6 +354,7 @@ AbstractBackgroundWidget {
 
     // ── Card background ────────────────────────────────────────
     WidgetSurface {
+        visible: !root.irisFaced
         irisPresentation: root.widgetIris
         regionBrightness: root.regionBrightness
         id: cardBg
@@ -371,6 +381,7 @@ AbstractBackgroundWidget {
     // The field and the artwork on top of it move out together (LiveLayer): in their own surface, in their own
     // order, so a still widget does not repaint the whole desktop every frame. The card stays in the host, below.
     LiveLayer {
+        visible: !root.irisFaced
         anchors.fill: parent
         live: root.motionActive && (root.vizType === "organic"
             ? root._organicPresent
