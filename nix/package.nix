@@ -19,10 +19,23 @@ let
   # InnerTube and browser-cookie extraction must share one closed Python
   # environment; putting the yt-dlp executable in PATH does not expose its
   # module or SecretStorage backend to this interpreter on Nix.
-  pythonRuntime = pkgs.python3.withPackages (ps: [
-    ps.ytmusicapi
-    ps.yt-dlp
-    ps.secretstorage
+  pythonRuntime = pkgs.python3.withPackages (ps: with ps; [
+    materialyoucolor
+    material-color-utilities
+    opencv4
+    pillow
+    numpy
+    psutil
+    tqdm
+    loguru
+    click
+    pygobject3
+    pycairo
+    kde-material-you-colors
+    websockets
+    ytmusicapi
+    yt-dlp
+    secretstorage
   ]);
 
   runtimeDeps =
@@ -59,6 +72,7 @@ let
       wireplumber
       yt-dlp
     ]
+    ++ optionalTop "adw-gtk3"
     ++ optionalTop "brightnessctl"
     ++ optionalTop "cava"
     ++ optionalTop "ddcutil"

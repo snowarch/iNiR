@@ -1059,6 +1059,15 @@ Item {
     component SearchView: ColumnLayout {
         spacing: 8
 
+        Timer {
+            id: searchDebounce
+            interval: 400
+            repeat: false
+            onTriggered: {
+                if (searchField.text.trim().length > 0) YtMusic.search(searchField.text.trim());
+            }
+        }
+
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 42
@@ -1073,25 +1082,36 @@ Item {
                 anchors.rightMargin: 10
                 spacing: 10
                 
-                MaterialSymbol {
-                    id: searchIcon
-                    text: YtMusic.searching ? "progress_activity" : "search"
-                    iconSize: 20
-                    color: root.colTextSecondary
-                    rotation: 0
-
-                    RotationAnimation on rotation {
-                        from: 0; to: 360; duration: 1000
-                        loops: Animation.Infinite
-                        running: YtMusic.searching && GlobalStates.sidebarLeftOpen
+                MouseArea {
+                    Layout.preferredWidth: 20
+                    Layout.preferredHeight: 20
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        searchDebounce.stop();
+                        if (searchField.text.trim().length > 0) YtMusic.search(searchField.text.trim());
                     }
 
-                    // Reset rotation to 0 when search ends so icon doesn't stay tilted
-                    Connections {
-                        target: YtMusic
-                        function onSearchingChanged() {
-                            if (!YtMusic.searching)
-                                searchIcon.rotation = 0
+                    MaterialSymbol {
+                        id: searchIcon
+                        anchors.centerIn: parent
+                        text: YtMusic.searching ? "progress_activity" : "search"
+                        iconSize: 20
+                        color: root.colTextSecondary
+                        rotation: 0
+
+                        RotationAnimation on rotation {
+                            from: 0; to: 360; duration: 1000
+                            loops: Animation.Infinite
+                            running: YtMusic.searching && GlobalStates.sidebarLeftOpen
+                        }
+
+                        // Reset rotation to 0 when search ends so icon doesn't stay tilted
+                        Connections {
+                            target: YtMusic
+                            function onSearchingChanged() {
+                                if (!YtMusic.searching)
+                                    searchIcon.rotation = 0
+                            }
                         }
                     }
                 }
@@ -1107,7 +1127,18 @@ Item {
                     font.family: Appearance.font.family.main
                     background: Item {}
                     selectByMouse: true
-                    onAccepted: { if (text.trim()) YtMusic.search(text) }
+                    onTextChanged: {
+                        if (text.trim().length > 0) {
+                            searchDebounce.restart();
+                        } else {
+                            searchDebounce.stop();
+                            YtMusic.searchResults = [];
+                        }
+                    }
+                    onAccepted: {
+                        searchDebounce.stop();
+                        if (text.trim()) YtMusic.search(text);
+                    }
                     Keys.onEscapePressed: { text = ""; focus = false }
 
                     TextInputContextMenu {
@@ -1122,7 +1153,12 @@ Item {
                     buttonRadius: 14
                     colBackground: "transparent"
                     colBackgroundHover: root.colLayer2Hover
-                    onClicked: { searchField.text = ""; searchField.forceActiveFocus() }
+                    onClicked: {
+                        searchDebounce.stop();
+                        searchField.text = "";
+                        YtMusic.searchResults = [];
+                        searchField.forceActiveFocus();
+                    }
                     contentItem: MaterialSymbol { 
                         anchors.centerIn: parent
                         text: "close"

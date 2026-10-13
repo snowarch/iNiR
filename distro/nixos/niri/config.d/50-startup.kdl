@@ -1,0 +1,17 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 50 — Processes spawned at login
+// ─────────────────────────────────────────────────────────────────────────────
+// Each line runs once when Niri starts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Export XDG_MENU_PREFIX into the systemd user session and rebuild the
+// sycoca database so KDE/Qt apps see the correct .desktop entries.
+spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX 2>/dev/null && (kbuildsycoca6 2>/dev/null || true)"
+
+// Clipboard history: wl-paste watches the clipboard and cliphist stores it.
+// Access via iNiR's clipboard overlay (Mod+V).
+spawn-at-startup "bash" "-c" "wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/clipboard-store.py &"
+spawn-at-startup "bash" "-c" "wl-paste --type image --watch ~/.config/quickshell/inir/scripts/clipboard-image-store.sh &"
+
+// Sincronización inicial de tema y color (el daemon en caliente lo gestiona systemd)
+spawn-at-startup "niri-sync-colors"

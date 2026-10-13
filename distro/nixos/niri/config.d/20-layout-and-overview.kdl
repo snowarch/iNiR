@@ -1,0 +1,95 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 20 — Layout, gaps, borders, shadows & overview
+// ─────────────────────────────────────────────────────────────────────────────
+// Docs: https://niri-wm.github.io/niri/Configuration:-Layout
+//
+// Niri uses a scrollable-tiling layout: windows arrange in an infinite
+// horizontal strip and you scroll left/right to navigate.
+// ─────────────────────────────────────────────────────────────────────────────
+
+layout {
+    // Gap between windows and from windows to screen edges (logical px).
+    gaps 12
+
+    // Transparent so iNiR's own wallpaper/backdrop shows through.
+    background-color "transparent"
+
+    // When focusing a column that's off-screen, how should the view scroll?
+    center-focused-column "never"
+
+    // Keep a lone column from hugging the left edge on empty workspaces.
+    always-center-single-column
+
+    // Widths cycled by switch-preset-column-width (Mod+R).
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    // Default width for new windows. Empty {} = let the app decide.
+    default-column-width {
+        proportion 0.5
+    }
+
+    // ── Focus ring ──────────────────────────────────────────────────────────
+    // Dynamic focus ring colors are managed live by niri-sync-colors from Material You
+    focus-ring {
+        off
+        width 1
+        active-color "#7aa2f7"
+        inactive-color "#565f89"
+    }
+
+    // ── Border ──────────────────────────────────────────────────────────────
+    // Desactivado a proposito: niri dibuja el borde alrededor de TODAS las ventanas
+    // y les encoge para hacerle hueco, asi que el focus ring de arriba ya marca cual
+    // esta activa sin que nada cambie de tamano.
+    border {
+        off
+        width 4
+        active-color   "#707070"
+        inactive-color "#d0d0d0"
+        urgent-color   "#cc4444"
+    }
+
+    // ── Shadow ──────────────────────────────────────────────────────────────
+    shadow {
+        softness 30
+        spread 5
+        offset x=0 y=5
+        draw-behind-window true
+        color "#00000070"
+    }
+
+    // ── Struts ──────────────────────────────────────────────────────────────
+    struts {
+        left 4
+        right 4
+        top 4
+        bottom 4
+    }
+}
+
+// ── Niri's built-in overview ────────────────────────────────────────────────
+overview {
+    zoom 0.75
+}
+
+// ── Recent Windows (Alt+Tab switcher) ───────────────────────────────────────
+recent-windows {
+    open-delay-ms 120
+    debounce-ms 750
+
+    highlight {
+        active-color "#e5989bff"
+        urgent-color "#ffb4abff"
+        padding 18
+        corner-radius 14
+    }
+
+    previews {
+        max-height 520
+        max-scale 0.55
+    }
+}

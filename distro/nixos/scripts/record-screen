@@ -1,0 +1,338 @@
+#!/usr/bin/env bash
+#
+# record-screen: Grabador de pantalla con audio permanente para Wayland (Niri / iNiR).
+# Captura audio de escritorio (sistema), micrófono o ambos de forma transparente.
+#
+
+set -Eeuo pipefail
+
+# Directorio de salida
+VIDEOS_DIR="$(xdg-user-dir VIDEOS 2>/dev/null || echo "$HOME/Vídeos")"
+[[ -d "$VIDEOS_DIR" ]] || VIDEOS_DIR="$HOME/Videos"
+SAVE_DIR="$VIDEOS_DIR/Grabaciones"
+mkdir -p "$SAVE_DIR"
+
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/record-screen"
+PID_FILE="$STATE_DIR/recording.pid"
+INFO_FILE="$STATE_DIR/recording.info"
+mkdir -p "$STATE_DIR"
+
+notify() {
+    local title="$1"
+    local msg="$2"
+    local urgency="${3:-normal}"
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send -a "Grabador" -u "$urgency" "$title" "$msg" 2>/dev/null || true
+    fi
+}
+
+stop_recording() {
+    local stopped=0
+
+    # 1. Si hay PID registrado en PID_FILE
+    if [[ -f "$PID_FILE" ]]; then
+        local pid
+        pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+        if [[ -n "$pid" && "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" 2>/dev/null; then
+            kill -INT "$pid" 2>/dev/null || true
+            stopped=1
+        fi
+        rm -f "$PID_FILE"
+    fi
+
+    # 2. Si iNiR record.sh está corriendo
+    if [[ -f "${XDG_STATE_HOME:-$HOME/.local/state}/inir/recorder.pid" ]]; then
+        local inir_pid
+        inir_pid="$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/inir/recorder.pid" 2>/dev/null || true)"
+        if [[ -n "$inir_pid" && "$inir_pid" =~ ^[0-9]+$ ]] && kill -0 "$inir_pid" 2>/dev/null; then
+            kill -INT "$inir_pid" 2>/dev/null || true
+            stopped=1
+        fi
+    fi
+
+    # 3. Asegurar detención de cualquier wf-recorder
+    if pgrep -x wf-recorder >/dev/null 2>&1; then
+        pkill -INT -x wf-recorder 2>/dev/null || true
+        stopped=1
+    fi
+
+    # Esperar hasta 3 segundos a que wf-recorder termine de cerrar el contenedor MP4
+    if [[ "$stopped" -eq 1 ]]; then
+        local wait_ticks=0
+        while pgrep -x wf-recorder >/dev/null 2>&1 && (( wait_ticks < 30 )); do
+            sleep 0.1
+            wait_ticks=$((wait_ticks + 1))
+        done
+    fi
+
+    if [[ "$stopped" -eq 1 ]]; then
+        local saved_file=""
+        if [[ -f "$INFO_FILE" ]]; then
+            saved_file="$(cat "$INFO_FILE" 2>/dev/null || true)"
+            rm -f "$INFO_FILE"
+        fi
+        if [[ -n "$saved_file" && -f "$saved_file" ]]; then
+            notify "Grabación guardada" "$(basename "$saved_file")\nCarpeta: $SAVE_DIR"
+            echo "Grabación guardada en: $saved_file"
+        else
+            notify "Grabación detenida" "El vídeo se ha guardado en $SAVE_DIR"
+            echo "Grabación detenida."
+        fi
+        return 0
+    else
+        notify "Grabador" "No hay ninguna grabación activa" "low"
+        echo "No hay ninguna grabación activa."
+        return 0
+    fi
+}
+
+# Comprobar si ya se está grabando
+is_recording() {
+    if [[ -f "$PID_FILE" ]]; then
+        local pid
+        pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+        if [[ -n "$pid" && "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" 2>/dev/null; then
+            return 0
+        fi
+    fi
+    if pgrep -x wf-recorder >/dev/null 2>&1; then
+        return 0
+    fi
+    return 1
+}
+
+# Ayuda
+usage() {
+    cat <<EOF
+Uso: $(basename "$0") [OPCIONES]
+
+Grabador de pantalla con soporte nativo de audio permanente para NixOS / Wayland.
+
+Opciones:
+  -f, --fullscreen      Graba la pantalla completa del monitor activo.
+  -r, --region          Selecciona un área rectangular interactiva con slurp (por defecto).
+  --audio-mode MODE     Modo de audio: 'system' (por defecto), 'mic', 'both', 'none'.
+  -m, --mic             Atajo para grabar el micrófono en vez del sistema.
+  -b, --both            Atajo para grabar audio del sistema + micrófono.
+  --no-audio            Graba únicamente vídeo sin audio.
+  -s, --stop            Detiene cualquier grabación activa.
+  --toggle              Si ya está grabando, se detiene. Si no, inicia una nueva (por defecto).
+  -h, --help            Muestra este mensaje de ayuda.
+
+Atajos en Niri:
+  Mod+Alt+R             Alternar grabación de región seleccionada (con audio).
+  Mod+Alt+F             Alternar grabación de pantalla completa (con audio).
+EOF
+}
+
+# Parámetros por defecto
+MODE="region"
+AUDIO_MODE="system"
+FORCE_STOP=0
+FORCE_START=0
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -f|--fullscreen)
+            MODE="fullscreen"
+            shift
+            ;;
+        -r|--region)
+            MODE="region"
+            shift
+            ;;
+        --audio-mode)
+            AUDIO_MODE="$2"
+            shift 2
+            ;;
+        -m|--mic)
+            AUDIO_MODE="mic"
+            shift
+            ;;
+        -b|--both)
+            AUDIO_MODE="both"
+            shift
+            ;;
+        --no-audio|--no-sound)
+            AUDIO_MODE="none"
+            shift
+            ;;
+        -s|--stop)
+            FORCE_STOP=1
+            shift
+            ;;
+        --start)
+            FORCE_START=1
+            shift
+            ;;
+        --toggle)
+            # Default behavior
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Opción desconocida: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+if [[ "$FORCE_STOP" -eq 1 ]]; then
+    stop_recording
+    exit 0
+fi
+
+# Si ya está grabando y no se forzó el inicio, detener (toggle)
+if is_recording && [[ "$FORCE_START" -eq 0 ]]; then
+    stop_recording
+    exit 0
+fi
+
+# Requerimientos básicos
+if ! command -v wf-recorder >/dev/null 2>&1; then
+    notify "Error" "wf-recorder no está instalado en el sistema." "critical"
+    echo "Error: wf-recorder no encontrado." >&2
+    exit 1
+fi
+
+# Detectar monitor activo en Niri
+get_active_monitor() {
+    local mon=""
+    if command -v niri >/dev/null 2>&1; then
+        if command -v jq >/dev/null 2>&1; then
+            mon="$(niri msg --json focused-output 2>/dev/null | jq -r '.name // empty' 2>/dev/null || true)"
+        fi
+        if [[ -z "$mon" ]]; then
+            mon="$(niri msg focused-output 2>/dev/null | head -n 1 | sed -n 's/.*"\([^"]*\)".*/\1/p' || true)"
+        fi
+    fi
+    echo "$mon"
+}
+
+# Resolver dispositivo de audio
+AUDIO_DEVICE=""
+AUDIO_LABEL="Sin audio"
+
+if [[ "$AUDIO_MODE" != "none" ]]; then
+    if command -v pactl >/dev/null 2>&1; then
+        case "$AUDIO_MODE" in
+            system)
+                DEF_SINK="$(pactl get-default-sink 2>/dev/null || true)"
+                if [[ -n "$DEF_SINK" ]]; then
+                    if [[ "$DEF_SINK" == *.monitor ]]; then
+                        AUDIO_DEVICE="$DEF_SINK"
+                    else
+                        AUDIO_DEVICE="${DEF_SINK}.monitor"
+                    fi
+                    AUDIO_LABEL="Audio del sistema"
+                fi
+                ;;
+            mic)
+                DEF_SOURCE="$(pactl get-default-source 2>/dev/null || true)"
+                if [[ -n "$DEF_SOURCE" ]]; then
+                    AUDIO_DEVICE="$DEF_SOURCE"
+                    AUDIO_LABEL="Micrófono"
+                fi
+                ;;
+            both)
+                # Si se solicita ambos y existe record.sh de iNiR, delegar para usar su mix automático
+                INIR_RECORDER=""
+                if [[ -x "$HOME/.config/quickshell/inir/scripts/videos/record.sh" ]]; then
+                    INIR_RECORDER="$HOME/.config/quickshell/inir/scripts/videos/record.sh"
+                elif [[ -x "/run/current-system/sw/share/quickshell/inir/scripts/videos/record.sh" ]]; then
+                    INIR_RECORDER="/run/current-system/sw/share/quickshell/inir/scripts/videos/record.sh"
+                fi
+
+                if [[ -n "$INIR_RECORDER" ]]; then
+                    ARGS=("--sound")
+                    [[ "$MODE" == "fullscreen" ]] && ARGS+=("--fullscreen")
+                    exec bash "$INIR_RECORDER" "${ARGS[@]}"
+                fi
+                # Fallback al sistema
+                DEF_SINK="$(pactl get-default-sink 2>/dev/null || true)"
+                if [[ -n "$DEF_SINK" ]]; then
+                    if [[ "$DEF_SINK" == *.monitor ]]; then
+                        AUDIO_DEVICE="$DEF_SINK"
+                    else
+                        AUDIO_DEVICE="${DEF_SINK}.monitor"
+                    fi
+                    AUDIO_LABEL="Audio del sistema (mix fallback)"
+                fi
+                ;;
+        esac
+    fi
+
+    # Fallback si pactl no resolvió pero tenemos wpctl: extraer el node.name real para libpulse
+    if [[ -z "$AUDIO_DEVICE" ]] && command -v wpctl >/dev/null 2>&1; then
+        wp_node="$(wpctl inspect @DEFAULT_AUDIO_SINK@ 2>/dev/null | grep 'node\.name' | head -n1 | sed -n 's/.*"\(.*\)".*/\1/p' || true)"
+        if [[ -n "$wp_node" ]]; then
+            AUDIO_DEVICE="${wp_node}.monitor"
+            AUDIO_LABEL="Audio del sistema (wpctl)"
+        fi
+    fi
+fi
+
+# Configurar geometría
+GEO_ARGS=()
+if [[ "$MODE" == "fullscreen" ]]; then
+    MONITOR="$(get_active_monitor)"
+    if [[ -n "$MONITOR" ]]; then
+        GEO_ARGS+=(-o "$MONITOR")
+    fi
+    GEO_LABEL="Modo: Completa"
+else
+    if ! command -v slurp >/dev/null 2>&1; then
+        notify "Error" "slurp no está disponible para selección de región" "critical"
+        echo "Error: slurp no encontrado." >&2
+        exit 1
+    fi
+
+    GEOMETRY="$(slurp 2>/dev/null || true)"
+    if [[ -z "$GEOMETRY" ]]; then
+        echo "Selección cancelada por el usuario."
+        exit 0
+    fi
+    GEO_ARGS+=(--geometry "$GEOMETRY")
+    GEO_LABEL="Área: $GEOMETRY"
+fi
+
+# Generar nombre de archivo y registrar info justo antes de grabar
+TIMESTAMP="$(date +%Y-%m-%d_%H.%M.%S)"
+OUTPUT_FILE="$SAVE_DIR/grabacion_${TIMESTAMP}.mp4"
+echo "$OUTPUT_FILE" > "$INFO_FILE"
+
+# Configurar argumentos de wf-recorder
+CMD=(wf-recorder -f "$OUTPUT_FILE" -c libx264 -p preset=veryfast -p crf=23 --pixel-format yuv420p "${GEO_ARGS[@]}")
+
+# Configurar audio
+if [[ "$AUDIO_MODE" != "none" && -n "$AUDIO_DEVICE" ]]; then
+    CMD+=(--audio="$AUDIO_DEVICE" -C aac -R 48000 -P b=192k)
+elif [[ "$AUDIO_MODE" != "none" ]]; then
+    CMD+=(--audio -C aac -R 48000 -P b=192k)
+    AUDIO_LABEL="Audio por defecto"
+fi
+
+notify "Iniciando grabación de pantalla" "$GEO_LABEL | $AUDIO_LABEL"
+
+# Ejecutar en segundo plano
+"${CMD[@]}" >"$STATE_DIR/wf-recorder.log" 2>&1 &
+RECORDER_PID=$!
+echo "$RECORDER_PID" > "$PID_FILE"
+
+sleep 0.4
+if ! kill -0 "$RECORDER_PID" 2>/dev/null; then
+    rm -f "$PID_FILE" "$INFO_FILE"
+    notify "Error al iniciar grabación" "wf-recorder falló. Revisa: $STATE_DIR/wf-recorder.log" "critical"
+    echo "Error: wf-recorder falló al iniciar. Revisa el log: $STATE_DIR/wf-recorder.log" >&2
+    if [[ -f "$STATE_DIR/wf-recorder.log" ]]; then
+        tail -n 5 "$STATE_DIR/wf-recorder.log" | sed 's/^/  /' >&2
+    fi
+    exit 1
+fi
+
+echo "Grabando pantalla en $OUTPUT_FILE (PID: $RECORDER_PID, Audio: $AUDIO_LABEL)"
+echo "Para detener la grabación ejecute: $(basename "$0") --stop"

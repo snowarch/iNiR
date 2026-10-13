@@ -1,0 +1,678 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+trap 'exit 0' INT TERM
+
+
+GENERATED_DIR="$HOME/.local/state/quickshell/user/generated"
+COLORS_JSON="$GENERATED_DIR/colors.json"
+
+
+if [[ -f "$HOME/.config/inir/config.json" ]]; then
+    SHELL_CONFIG_FILE="$HOME/.config/inir/config.json"
+elif [[ -f "$HOME/.config/illogical-impulse/config.json" ]]; then
+    SHELL_CONFIG_FILE="$HOME/.config/illogical-impulse/config.json"
+else
+    SHELL_CONFIG_FILE="$HOME/.config/inir/config.json"
+fi
+
+NIRI_CONFIG_FILE="$HOME/.config/niri/config.kdl"
+PYTHON="python3"
+
+find_niri_config_py() {
+    if [[ -f "$HOME/.config/quickshell/inir/scripts/niri-config.py" ]]; then
+        echo "$HOME/.config/quickshell/inir/scripts/niri-config.py"
+    elif [[ -f "/run/current-system/sw/share/quickshell/inir/scripts/niri-config.py" ]]; then
+        echo "/run/current-system/sw/share/quickshell/inir/scripts/niri-config.py"
+    else
+        echo ""
+    fi
+}
+
+find_inir_terminal_generator() {
+    for candidate in \
+        "$HOME/.config/quickshell/inir/scripts/colors/generate_terminal_configs.py" \
+        "/run/current-system/sw/share/quickshell/inir/scripts/colors/generate_terminal_configs.py"; do
+        if [[ -f "$candidate" ]]; then
+            echo "$candidate"
+            return 0
+        fi
+    done
+    echo ""
+}
+
+find_applycolor_sh() {
+    for candidate in \
+        "$HOME/.config/quickshell/inir/scripts/colors/applycolor.sh" \
+        "/run/current-system/sw/share/quickshell/inir/scripts/colors/applycolor.sh"; do
+        if [[ -f "$candidate" ]]; then
+            echo "$candidate"
+            return 0
+        fi
+    done
+    echo ""
+}
+
+seed_default_colors_if_missing() {
+    if [[ ! -f "$COLORS_JSON" ]]; then
+        mkdir -p "$GENERATED_DIR"
+        cat > "$COLORS_JSON" <<'EOF'
+{
+  "primary": "#7aa2f7",
+  "on_primary": "#1d202f",
+  "primary_container": "#2ac3de",
+  "on_primary_container": "#15161e",
+  "secondary": "#bb9af7",
+  "on_secondary": "#1d202f",
+  "surface": "#1a1b26",
+  "on_surface": "#c0caf5",
+  "background": "#16161e",
+  "on_background": "#c0caf5",
+  "outline": "#565f89",
+  "dark": true
+}
+EOF
+    fi
+}
+
+sync_once() {
+    seed_default_colors_if_missing
+
+    command -v "$PYTHON" >/dev/null 2>&1 || {
+        echo "niri-sync-colors: python3 not found (skipping sync)" >&2
+        return 1
+    }
+
+    local niri_config_py
+    niri_config_py="$(find_niri_config_py)"
+
+    # Execute Python engine for atomic palette extraction and multi-terminal updates
+    local py_out
+    py_out="$("$PYTHON" -c '
+import json, os, sys, re, colorsys
+from pathlib import Path
+
+generated_dir = sys.argv[1]
+shell_conf_file = sys.argv[2]
+niri_kdl_file = sys.argv[3]
+niri_config_py = sys.argv[4]
+
+colors_file = os.path.join(generated_dir, "colors.json")
+meta_file = os.path.join(generated_dir, "theme-meta.json")
+term_file = os.path.join(generated_dir, "terminal.json")
+palette_file = os.path.join(generated_dir, "palette.json")
+
+try:
+    with open(colors_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+except Exception:
+    sys.exit(0)
+
+meta = {}
+if os.path.exists(meta_file):
+    try:
+        with open(meta_file, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+    except Exception:
+        meta = {}
+
+term_data = {}
+if os.path.exists(term_file):
+    try:
+        with open(term_file, "r", encoding="utf-8") as f:
+            term_data = json.load(f)
+    except Exception:
+        term_data = {}
+
+c = data.get("colors", data) if isinstance(data.get("colors"), dict) else data
+if "dark" in data and isinstance(data["dark"], dict):
+    c = data["dark"]
+
+def get_color(key, default):
+    val = c.get(key) or data.get(key) or term_data.get(key) or default
+    if isinstance(val, str):
+        val = val.strip()
+        if not val.startswith("#") and re.match(r"^[0-9a-fA-F]{6}$", val):
+            val = "#" + val
+    return val
+
+primary = get_color("primary", "#7aa2f7")
+secondary = get_color("secondary", get_color("outline", "#bb9af7"))
+surface = get_color("surface", get_color("background", "#1a1b26"))
+on_surface = get_color("on_surface", "#c0caf5")
+outline = get_color("outline", "#565f89")
+
+is_dark = data.get("dark", None)
+if isinstance(is_dark, str):
+    is_dark = is_dark.lower() in ("true", "1", "yes", "dark")
+if not isinstance(is_dark, bool):
+    mode = str(meta.get("mode", "")).strip().lower()
+    if mode in ("light", "dark"):
+        is_dark = mode == "dark"
+    else:
+        hex_bg = get_color("background", "#1a1b26").lstrip("#")
+        if len(hex_bg) == 6:
+            try:
+                r, g, b = (int(hex_bg[i:i + 2], 16) for i in (0, 2, 4))
+                is_dark = (0.2126 * r + 0.7152 * g + 0.0722 * b) < 128
+            except ValueError:
+                is_dark = True
+        else:
+            is_dark = True
+
+bg = surface if surface else ("#16161e" if is_dark else "#f5f5f7")
+fg = on_surface if on_surface else ("#c0caf5" if is_dark else "#1d202f")
+
+# Build 16 ANSI colors
+ansi = {}
+for i in range(16):
+    k = f"term{i}"
+    if k in term_data and isinstance(term_data[k], str) and term_data[k].startswith("#"):
+        ansi[k] = term_data[k]
+
+defaults_dark = {
+    "term0": bg, "term1": "#f7768e", "term2": "#9ece6a", "term3": "#e0af68",
+    "term4": primary, "term5": secondary, "term6": "#7dcfff", "term7": fg,
+    "term8": outline, "term9": "#f7768e", "term10": "#9ece6a", "term11": "#e0af68",
+    "term12": primary, "term13": secondary, "term14": "#7dcfff", "term15": "#ffffff"
+}
+defaults_light = {
+    "term0": bg, "term1": "#d20f39", "term2": "#40a02b", "term3": "#df8e1d",
+    "term4": primary, "term5": secondary, "term6": "#179299", "term7": fg,
+    "term8": outline, "term9": "#d20f39", "term10": "#40a02b", "term11": "#df8e1d",
+    "term12": primary, "term13": secondary, "term14": "#179299", "term15": "#1d202f"
+}
+base_palette = defaults_dark if is_dark else defaults_light
+for k, v in base_palette.items():
+    if k not in ansi:
+        ansi[k] = v
+
+# 1. Update Niri focus-ring and border colors
+niri_updated = False
+if niri_config_py and os.path.isfile(niri_config_py) and os.access(niri_config_py, os.R_OK):
+    ret1 = os.system(f"{sys.executable} \"{niri_config_py}\" set layout focus-ring.active-color \"{primary}\" >/dev/null 2>&1")
+    ret2 = os.system(f"{sys.executable} \"{niri_config_py}\" set layout focus-ring.inactive-color \"{secondary}\" >/dev/null 2>&1")
+    ret3 = os.system(f"{sys.executable} \"{niri_config_py}\" set layout border.active-color \"{primary}\" >/dev/null 2>&1")
+    ret4 = os.system(f"{sys.executable} \"{niri_config_py}\" set layout border.inactive-color \"{secondary}\" >/dev/null 2>&1")
+    if ret1 == 0 and ret2 == 0 and ret3 == 0 and ret4 == 0:
+        niri_updated = True
+
+if not niri_updated:
+    candidates = [
+        os.path.join(os.path.dirname(niri_kdl_file), "config.d", "20-layout-and-overview.kdl"),
+        niri_kdl_file
+    ]
+    for target in candidates:
+        if os.path.exists(target):
+            try:
+                with open(target, "r", encoding="utf-8") as f:
+                    kdl = f.read()
+                kdl_new = re.sub(r"(active-color\s+)\"[^\"]+\"", lambda m: f"{m.group(1)}\"{primary}\"", kdl)
+                kdl_new = re.sub(r"(inactive-color\s+)\"[^\"]+\"", lambda m: f"{m.group(1)}\"{secondary}\"", kdl_new)
+                if kdl_new != kdl:
+                    tmp = f"{target}.tmp.{os.getpid()}"
+                    with open(tmp, "w", encoding="utf-8") as f:
+                        f.write(kdl_new)
+                    os.replace(tmp, target)
+                    niri_updated = True
+                    break
+            except Exception:
+                pass
+
+# 2. Sync wallpaper path into iNiR shell config
+if os.path.exists(meta_file):
+    try:
+        wp = meta.get("source_path")
+        if wp and os.path.exists(wp):
+            if os.path.exists(shell_conf_file):
+                with open(shell_conf_file, "r", encoding="utf-8") as f:
+                    conf = json.load(f)
+            else:
+                conf = {}
+                os.makedirs(os.path.dirname(shell_conf_file), exist_ok=True)
+            if not isinstance(conf.get("background"), dict):
+                conf["background"] = {}
+            if conf["background"].get("wallpaperPath") != wp:
+                conf["background"]["wallpaperPath"] = wp
+                tmp = f"{shell_conf_file}.tmp.{os.getpid()}"
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump(conf, f, indent=2)
+                os.replace(tmp, shell_conf_file)
+    except Exception:
+        pass
+
+# Helper for atomic file write
+def write_atomic(filepath, content):
+    p = Path(filepath)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = f"{filepath}.tmp.{os.getpid()}"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write(content)
+    os.replace(tmp, filepath)
+
+# 3. Synchronize Compatible Terminals (Kitty, Foot, Ghostty, WezTerm, Alacritty)
+home = os.path.expanduser("~")
+
+# --- Kitty ---
+kitty_dir = os.path.join(home, ".config", "kitty")
+if os.path.isdir(kitty_dir) or any(os.access(os.path.join(p, "kitty"), os.X_OK) for p in os.environ.get("PATH", "").split(":")):
+    try:
+        kitty_content = f"""# Auto-generated by niri-sync-colors (Material You)
+foreground            {fg}
+background            {bg}
+selection_foreground  {bg}
+selection_background  {primary}
+cursor                {primary}
+cursor_text_color     {bg}
+url_color             {primary}
+active_border_color   {primary}
+inactive_border_color {outline}
+active_tab_foreground {bg}
+active_tab_background {primary}
+inactive_tab_foreground {fg}
+inactive_tab_background {bg}
+
+# 16 terminal colors
+color0  {ansi["term0"]}
+color8  {ansi["term8"]}
+color1  {ansi["term1"]}
+color9  {ansi["term9"]}
+color2  {ansi["term2"]}
+color10 {ansi["term10"]}
+color3  {ansi["term3"]}
+color11 {ansi["term11"]}
+color4  {ansi["term4"]}
+color12 {ansi["term12"]}
+color5  {ansi["term5"]}
+color13 {ansi["term13"]}
+color6  {ansi["term6"]}
+color14 {ansi["term14"]}
+color7  {ansi["term7"]}
+color15 {ansi["term15"]}
+"""
+        write_atomic(os.path.join(kitty_dir, "current-theme.conf"), kitty_content)
+        write_atomic(os.path.join(kitty_dir, "theme.conf"), kitty_content)
+        # Ensure include in kitty.conf
+        kitty_conf = os.path.join(kitty_dir, "kitty.conf")
+        if os.path.exists(kitty_conf):
+            try:
+                with open(kitty_conf, "r", encoding="utf-8") as kf:
+                    ktext = kf.read()
+                if "current-theme.conf" not in ktext and "theme.conf" not in ktext:
+                    with open(kitty_conf, "a", encoding="utf-8") as kf:
+                        kf.write("\ninclude ./current-theme.conf\n")
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+# --- Foot ---
+foot_dir = os.path.join(home, ".config", "foot")
+if os.path.isdir(foot_dir) or any(os.access(os.path.join(p, "foot"), os.X_OK) for p in os.environ.get("PATH", "").split(":")):
+    try:
+        foot_content = f"""# Auto-generated by niri-sync-colors (Material You)
+[colors]
+foreground={fg.lstrip("#")}
+background={bg.lstrip("#")}
+regular0={ansi["term0"].lstrip("#")}
+regular1={ansi["term1"].lstrip("#")}
+regular2={ansi["term2"].lstrip("#")}
+regular3={ansi["term3"].lstrip("#")}
+regular4={ansi["term4"].lstrip("#")}
+regular5={ansi["term5"].lstrip("#")}
+regular6={ansi["term6"].lstrip("#")}
+regular7={ansi["term7"].lstrip("#")}
+bright0={ansi["term8"].lstrip("#")}
+bright1={ansi["term9"].lstrip("#")}
+bright2={ansi["term10"].lstrip("#")}
+bright3={ansi["term11"].lstrip("#")}
+bright4={ansi["term12"].lstrip("#")}
+bright5={ansi["term13"].lstrip("#")}
+bright6={ansi["term14"].lstrip("#")}
+bright7={ansi["term15"].lstrip("#")}
+selection-foreground={bg.lstrip("#")}
+selection-background={primary.lstrip("#")}
+"""
+        write_atomic(os.path.join(foot_dir, "inir-colors.ini"), foot_content)
+    except Exception:
+        pass
+
+# --- Ghostty ---
+ghostty_dir = os.path.join(home, ".config", "ghostty")
+if os.path.isdir(ghostty_dir) or any(os.access(os.path.join(p, "ghostty"), os.X_OK) for p in os.environ.get("PATH", "").split(":")):
+    try:
+        ghostty_content = f"""# Auto-generated by niri-sync-colors (Material You)
+background = {bg}
+foreground = {fg}
+cursor-color = {primary}
+cursor-text = {bg}
+selection-background = {primary}
+selection-foreground = {bg}
+palette = 0={ansi["term0"]}
+palette = 1={ansi["term1"]}
+palette = 2={ansi["term2"]}
+palette = 3={ansi["term3"]}
+palette = 4={ansi["term4"]}
+palette = 5={ansi["term5"]}
+palette = 6={ansi["term6"]}
+palette = 7={ansi["term7"]}
+palette = 8={ansi["term8"]}
+palette = 9={ansi["term9"]}
+palette = 10={ansi["term10"]}
+palette = 11={ansi["term11"]}
+palette = 12={ansi["term12"]}
+palette = 13={ansi["term13"]}
+palette = 14={ansi["term14"]}
+palette = 15={ansi["term15"]}
+"""
+        write_atomic(os.path.join(ghostty_dir, "themes", "ii-auto"), ghostty_content)
+    except Exception:
+        pass
+
+# --- WezTerm ---
+wezterm_dir = os.path.join(home, ".config", "wezterm")
+if os.path.isdir(wezterm_dir) or any(os.access(os.path.join(p, "wezterm"), os.X_OK) for p in os.environ.get("PATH", "").split(":")):
+    try:
+        wezterm_content = f"""-- Auto-generated by niri-sync-colors (Material You)
+return {{
+  background = "{bg}",
+  foreground = "{fg}",
+  cursor_bg = "{primary}",
+  cursor_fg = "{bg}",
+  selection_bg = "{primary}",
+  selection_fg = "{bg}",
+  ansi = {{
+    "{ansi["term0"]}", "{ansi["term1"]}", "{ansi["term2"]}", "{ansi["term3"]}",
+    "{ansi["term4"]}", "{ansi["term5"]}", "{ansi["term6"]}", "{ansi["term7"]}",
+  }},
+  brights = {{
+    "{ansi["term8"]}", "{ansi["term9"]}", "{ansi["term10"]}", "{ansi["term11"]}",
+    "{ansi["term12"]}", "{ansi["term13"]}", "{ansi["term14"]}", "{ansi["term15"]}",
+  }},
+}}
+"""
+        write_atomic(os.path.join(wezterm_dir, "colors.lua"), wezterm_content)
+    except Exception:
+        pass
+
+# --- Alacritty (Only if user has ~/.config/alacritty or alacritty is installed) ---
+alacritty_dir = os.path.join(home, ".config", "alacritty")
+if os.path.isdir(alacritty_dir) or any(os.access(os.path.join(p, "alacritty"), os.X_OK) for p in os.environ.get("PATH", "").split(":")):
+    try:
+        alacritty_toml = f"""# Auto-generated by niri-sync-colors (Material You)
+[colors.primary]
+background = "{bg}"
+foreground = "{fg}"
+
+[colors.cursor]
+text = "{bg}"
+cursor = "{primary}"
+
+[colors.selection]
+text = "{bg}"
+background = "{primary}"
+
+[colors.normal]
+black = "{ansi["term0"]}"
+red = "{ansi["term1"]}"
+green = "{ansi["term2"]}"
+yellow = "{ansi["term3"]}"
+blue = "{ansi["term4"]}"
+magenta = "{ansi["term5"]}"
+cyan = "{ansi["term6"]}"
+white = "{ansi["term7"]}"
+
+[colors.bright]
+black = "{ansi["term8"]}"
+red = "{ansi["term9"]}"
+green = "{ansi["term10"]}"
+yellow = "{ansi["term11"]}"
+blue = "{ansi["term12"]}"
+magenta = "{ansi["term13"]}"
+cyan = "{ansi["term14"]}"
+white = "{ansi["term15"]}"
+"""
+        target_toml = os.path.join(alacritty_dir, "theme.toml")
+        if not os.path.exists(target_toml) or os.access(target_toml, os.W_OK):
+            write_atomic(target_toml, alacritty_toml)
+    except Exception:
+        pass
+
+# 4. Synchronize GTK 3 & 4 Theme Colors (for LocalSend, Flutter, and GTK apps)
+for gtk_ver in ("gtk-3.0", "gtk-4.0"):
+    gtk_dir = os.path.join(home, ".config", gtk_ver)
+    gtk_css_path = os.path.join(gtk_dir, "gtk.css")
+    if os.path.exists(gtk_css_path):
+        try:
+            with open(gtk_css_path, "r", encoding="utf-8") as gf:
+                content = gf.read()
+            for var_name, var_val in [
+                ("theme_selected_bg_color", primary),
+                ("theme_selected_fg_color", "#ffffff" if is_dark else "#000000"),
+                ("theme_bg_color", bg),
+                ("theme_fg_color", fg),
+                ("theme_base_color", bg),
+                ("theme_text_color", fg),
+                ("theme_view_bg_color", bg),
+                ("theme_view_fg_color", fg),
+                ("accent_color", primary),
+                ("accent_bg_color", primary),
+            ]:
+                pattern = rf"@define-color\s+{var_name}\s+[^;]+;"
+                replacement = f"@define-color {var_name} {var_val};"
+                if re.search(pattern, content):
+                    content = re.sub(pattern, replacement, content)
+                else:
+                    content = f"@define-color {var_name} {var_val};\n" + content
+            write_atomic(gtk_css_path, content)
+        except Exception:
+            pass
+
+    # Ensure settings.ini enforces dark theme variant
+    settings_ini_path = os.path.join(gtk_dir, "settings.ini")
+    if os.path.exists(settings_ini_path):
+        try:
+            with open(settings_ini_path, "r", encoding="utf-8") as sf:
+                scontent = sf.read()
+            target_theme = "adw-gtk3-dark" if is_dark else "adw-gtk3"
+            if "gtk-theme-name" in scontent:
+                scontent = re.sub(r"gtk-theme-name\s*=.*", f"gtk-theme-name={target_theme}", scontent)
+            else:
+                scontent += f"\ngtk-theme-name={target_theme}\n"
+            if gtk_ver == "gtk-3.0":
+                if "gtk-application-prefer-dark-theme" in scontent:
+                    scontent = re.sub(r"gtk-application-prefer-dark-theme\s*=.*", f"gtk-application-prefer-dark-theme={1 if is_dark else 0}", scontent)
+                else:
+                    scontent += f"\ngtk-application-prefer-dark-theme={1 if is_dark else 0}\n"
+            write_atomic(settings_ini_path, scontent)
+        except Exception:
+            pass
+
+# 5. Synchronize KDE / Qt kdeglobals Decimal RGB Colors
+kdeglobals_path = os.path.join(home, ".config", "kdeglobals")
+if os.path.exists(kdeglobals_path):
+    try:
+        def to_rgb_dec(hex_c):
+            h = hex_c.lstrip("#")
+            if len(h) == 3: h = "".join(x*2 for x in h)
+            return f"{int(h[0:2], 16)},{int(h[2:4], 16)},{int(h[4:6], 16)}"
+        with open(kdeglobals_path, "r", encoding="utf-8") as kf:
+            ktext = kf.read()
+        ktext_new = re.sub(r"=#[0-9a-fA-F]{6}", lambda m: f"={to_rgb_dec(m.group(0)[1:])}", ktext)
+        if ktext_new != ktext:
+            write_atomic(kdeglobals_path, ktext_new)
+    except Exception:
+        pass
+
+# 6. Compute GNOME accent color from primary hue
+ACCENTS = {
+    "blue": (53, 132, 228),
+    "teal": (38, 162, 105),
+    "green": (46, 194, 126),
+    "yellow": (246, 211, 45),
+    "orange": (255, 120, 0),
+    "red": (224, 27, 36),
+    "pink": (213, 97, 151),
+    "purple": (145, 65, 172),
+}
+
+best_accent = "blue"
+try:
+    h_str = primary.lstrip("#")
+    if len(h_str) == 3:
+        h_str = "".join(x*2 for x in h_str)
+    r, g, b = tuple(int(h_str[i:i+2], 16) for i in (0, 2, 4))
+    h, s, v = colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)
+    if s < 0.15:
+        best_accent = "slate"
+    else:
+        best_diff = float("inf")
+        for name, rgb in ACCENTS.items():
+            ah, as_, av = colorsys.rgb_to_hsv(rgb[0]/255.0, rgb[1]/255.0, rgb[2]/255.0)
+            diff = abs(h - ah)
+            if diff > 0.5:
+                diff = 1.0 - diff
+            if diff < best_diff:
+                best_diff = diff
+                best_accent = name
+except Exception:
+    best_accent = "blue"
+
+# Format OSC terminal escape sequence for live update on /dev/pts/*
+osc_seq = f"\\033]10;{fg}\\007\\033]11;{bg}\\007\\033]12;{primary}\\007"
+for idx in range(16):
+    col = ansi[f"term{idx}"]
+    osc_seq += f"\\033]4;{idx};{col}\\007"
+
+print(f"ACCENT={best_accent}")
+print(f"DARK={1 if is_dark else 0}")
+print(f"PRIMARY={primary}")
+print(f"SECONDARY={secondary}")
+print(f"BG={bg}")
+print(f"FG={fg}")
+print(f"OSC=\"{osc_seq}\"")
+' "$GENERATED_DIR" "$SHELL_CONFIG_FILE" "$NIRI_CONFIG_FILE" "$niri_config_py" 2>/dev/null || true)"
+
+    # Parse Python output
+    # shellcheck disable=SC2034
+    local ACCENT="blue" DARK=1 PRIMARY="" SECONDARY="" BG="" FG="" OSC=""
+
+    if [[ -n "$py_out" ]]; then
+        eval "$py_out" 2>/dev/null || true
+    fi
+
+    # Broadcast OSC color escape sequences to all active interactive terminal devices
+    if [[ -n "$OSC" ]]; then
+        for pts in /dev/pts/[0-9]*; do
+            if [[ -w "$pts" ]]; then
+                printf "%b" "$OSC" > "$pts" 2>/dev/null || true
+            fi
+        done
+    fi
+
+    # Signal live-reloading terminal emulators
+    pgrep -x kitty &>/dev/null && pkill -SIGUSR1 -x kitty 2>/dev/null || true
+    pgrep -x foot &>/dev/null && pkill -SIGUSR1 -x foot 2>/dev/null || true
+
+    # If iNiR native applycolor.sh exists, also trigger it for external apps (VSCode, Zed, Spicetify...)
+    local applycolor_bin
+    applycolor_bin="$(find_applycolor_sh)"
+    if [[ -n "$applycolor_bin" ]]; then
+        bash "$applycolor_bin" --force >/dev/null 2>&1 & disown || true
+    fi
+
+    # Trigger live reload of Niri configuration for instant visual feedback
+    if command -v niri >/dev/null 2>&1; then
+        niri msg action load-config-file 2>/dev/null || true
+    fi
+
+    # Synchronize GNOME / GTK accent color and color scheme if session bus is active
+    if command -v gsettings >/dev/null 2>&1 && [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
+        if gsettings list-keys org.gnome.desktop.interface 2>/dev/null | grep -q "^accent-color$"; then
+            gsettings set org.gnome.desktop.interface accent-color "$ACCENT" 2>/dev/null || true
+        fi
+        if [[ "$DARK" -eq 1 ]]; then
+            gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
+            gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark' 2>/dev/null || true
+        else
+            gsettings set org.gnome.desktop.interface color-scheme 'prefer-light' 2>/dev/null || true
+            gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3' 2>/dev/null || true
+        fi
+    fi
+}
+
+poll_loop() {
+    local last_mts=""
+    local cur_mts=""
+    sync_once || true
+    while true; do
+        if [[ -d "$GENERATED_DIR" ]]; then
+            cur_mts="$(stat -c '%Y:%s:%n' "$GENERATED_DIR"/* 2>/dev/null | sha256sum | cut -d' ' -f1 || true)"
+            if [[ -n "$cur_mts" && "$cur_mts" != "$last_mts" ]]; then
+                sync_once || true
+                last_mts="$cur_mts"
+            fi
+        fi
+        sleep 3
+    done
+}
+
+case "${1:-}" in
+    "")
+        sync_once || true
+        ;;
+
+    --watch)
+        LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/niri-sync-colors.lock"
+        if command -v flock >/dev/null 2>&1; then
+            exec 200>"$LOCK_FILE"
+            if ! flock -n 200; then
+                exit 0
+            fi
+        fi
+
+        if ! command -v inotifywait >/dev/null 2>&1; then
+            echo "niri-sync-colors: inotifywait not found yet — using polling fallback" >&2
+            poll_loop
+        fi
+
+        sync_once || true
+
+        while true; do
+            while [[ ! -d "$GENERATED_DIR" ]]; do
+                sleep 2
+            done
+
+            sync_once || true
+
+            inotifywait -m \
+                -e close_write,moved_to \
+                --format '%f' \
+                "$GENERATED_DIR" 2>/dev/null |
+            while read -r file; do
+                case "$file" in
+                    colors.json|theme-meta.json|terminal.json)
+                        sync_once || echo "niri-sync-colors: sync failed, will retry on next event" >&2
+                        ;;
+                esac
+            done
+            sleep 1
+        done
+        ;;
+
+    --help|-h)
+        cat <<'HELP'
+Usage:
+  niri-sync-colors
+  niri-sync-colors --watch
+
+Synchronizes iNiR Material You colors with Niri focus rings, compatible
+terminal emulators (Kitty, Foot, Ghostty, WezTerm, active PTS shells),
+GTK/GNOME desktop accent, and keeps wallpaper metadata in sync.
+HELP
+        ;;
+
+    *)
+        echo "Usage: niri-sync-colors [--watch]" >&2
+        exit 2
+        ;;
+esac

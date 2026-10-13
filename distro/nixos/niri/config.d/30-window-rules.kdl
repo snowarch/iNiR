@@ -1,0 +1,92 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 30 — Window rules
+// ─────────────────────────────────────────────────────────────────────────────
+// Docs: https://niri-wm.github.io/niri/Configuration:-Window-Rules
+//
+// Rules are evaluated top-to-bottom. A window can match multiple rules and
+// all matching properties accumulate. Use `niri msg windows` to inspect
+// app-id and title of running windows.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Global defaults ─────────────────────────────────────────────────────────
+// Round every window's corners and clip content to match.
+// Works best with prefer-no-csd (set in config.kdl).
+window-rule {
+    geometry-corner-radius 16
+    clip-to-geometry true
+}
+
+// Gaming surfaces: avoid client clipping so fullscreen games remain eligible
+// for direct scanout. Keep the global rounded/clipped behavior for normal apps.
+window-rule {
+    match app-id=r#"^(gamescope|steam_app_[0-9]+|dota2|lutris|net\.lutris\..*|heroic|com\.heroicgameslauncher\.hgl|org\.prismlauncher\.PrismLauncher|minecraft|wine|wine64)$"#
+
+    geometry-corner-radius 0
+    clip-to-geometry false
+}
+
+// Dim unfocused windows slightly for visual hierarchy.
+window-rule {
+    match is-active=false
+    opacity 0.9
+}
+
+// ── Per-app fixes ───────────────────────────────────────────────────────────
+
+// WezTerm: work around initial configure bug (needs an empty default width).
+window-rule {
+    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    default-column-width {}
+}
+
+// Firefox / Zen: picture-in-picture window opens floating.
+window-rule {
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    open-floating true
+}
+window-rule {
+    match app-id=r#"zen$"# title="^Picture-in-Picture$"
+    open-floating true
+}
+
+window-rule {
+    match app-id="steam" title=r#"^notificationtoasts_\d+_desktop$"#
+    open-floating true
+    open-focused false
+    default-floating-position x=10 y=10 relative-to="bottom-right"
+}
+
+// KDE's XEmbed→SNI bridge exposes a transient X11 window during tray watcher
+// restarts. Keep it floating, transparent and unfocused so it never flashes.
+window-rule {
+    match app-id=r#"^xembedsniproxy$"#
+    open-floating true
+    open-focused false
+    opacity 0.0
+    focus-ring { off; }
+    border { off; }
+    shadow { off; }
+}
+
+// ── Privacy: block password managers from screen capture ────────────────────
+// Uncomment the block below to hide these apps during screencasts.
+// /-window-rule {
+//     match app-id=r#"^org\.keepassxc\.KeePassXC$"#
+//     match app-id=r#"^org\.gnome\.World\.Secrets$"#
+//     block-out-from "screen-capture"
+// }
+
+// ── Floating apps ───────────────────────────────────────────────────────────
+// Apps that work better as floating windows.
+// window-rule {
+//     match app-id="pavucontrol"
+//     open-floating true
+// }
+// window-rule {
+//     match app-id="nm-connection-editor"
+//     open-floating true
+// }
+// window-rule {
+//     match app-id=r#"^org\.gnome\.Calculator$"#
+//     open-floating true
+// }

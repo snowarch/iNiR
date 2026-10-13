@@ -1,0 +1,25 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 80 — Layer rules (Backdrop & iRiS surfaces)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Fondo de escritorio para familia Material ii
+layer-rule {
+    match namespace="quickshell:iiBackdrop"
+    place-within-backdrop true
+    opacity 1.0
+}
+
+// Fondo de escritorio para familia Waffle
+layer-rule {
+    match namespace="quickshell:wBackdrop"
+    place-within-backdrop true
+    opacity 1.0
+}
+
+// Superficies translúcidas de iRiS (Glass / Island) con desenfoque real
+layer-rule {
+    match namespace="^quickshell:iris-"
+    background-effect {
+        xray false
+    }
+}

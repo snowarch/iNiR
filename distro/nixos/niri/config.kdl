@@ -1,0 +1,40 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// iNiR — Niri Compositor Configuration on NixOS
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// This configuration is split into modular files under config.d/ to support
+// the iNiR settings UI (niri-config.py), preset animations, and surgical edits.
+// Niri auto-reloads on save.
+//
+//   10  Input devices, touchpad, mouse, cursor
+//   20  Layout, gaps, borders, shadows & overview
+//   30  Window rules (corner radius, per-app tweaks, scanout)
+//   40  Environment variables & XWayland satellite
+//   50  Startup processes & clipboard watchers
+//   60  Animations (spring physics & easing curves)
+//   70  Key bindings (iNiR shell overlays, apps & window management)
+//   80  Layer rules (backdrop & iRiS blur surfaces)
+//   90  User extra overrides (never touched by updates)
+// ─────────────────────────────────────────────────────────────────────────────
+
+prefer-no-csd
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+debug {
+    honor-xdg-activation-with-invalid-serial
+}
+
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+include "config.d/10-input-and-cursor.kdl"
+include "config.d/20-layout-and-overview.kdl"
+include "config.d/30-window-rules.kdl"
+include "config.d/40-environment.kdl"
+include "config.d/50-startup.kdl"
+include "config.d/60-animations.kdl"
+include "config.d/70-binds.kdl"
+include "config.d/80-layer-rules.kdl"
+include "config.d/90-user-extra.kdl"

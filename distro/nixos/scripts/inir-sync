@@ -1,0 +1,263 @@
+#!/usr/bin/env bash
+#
+# inir-sync: Synchronization and diagnostic CLI for iNiR NixOS
+# Manages upstream synchronization, theme palette synchronization,
+# and configuration sanity checks.
+#
+
+set -Eeuo pipefail
+
+BOLD="\033[1m"
+GREEN="\033[32m"
+BLUE="\033[34m"
+YELLOW="\033[33m"
+RED="\033[31m"
+CYAN="\033[36m"
+RESET="\033[0m"
+
+UPSTREAM_URL="${INIR_UPSTREAM_URL:-https://github.com/snowarch/iNiR.git}"
+
+info()  { echo -e "${CYAN}ℹ️  ${RESET}$*"; }
+ok()    { echo -e "${GREEN}✅ ${RESET}$*"; }
+warn()  { echo -e "${YELLOW}⚠️  ${RESET}$*"; }
+error() { echo -e "${RED}❌ ${RESET}$*" >&2; }
+head()  { echo -e "\n${BOLD}${BLUE}── $* ──${RESET}\n"; }
+
+find_flake_dir() {
+    # Check current directory first
+    if [[ -f "flake.nix" && -f "flake.lock" ]]; then
+        pwd
+        return 0
+    fi
+    # Check common locations
+    for candidate in \
+        "/etc/nixos" \
+        "$HOME/projectos/inir-nixos" \
+        "$HOME/projects/inir-nixos" \
+        "$HOME/.config/nixos"; do
+        if [[ -f "$candidate/flake.nix" && -f "$candidate/flake.lock" ]]; then
+            echo "$candidate"
+            return 0
+        fi
+    done
+    echo ""
+}
+
+get_locked_inir_rev() {
+    local flake_dir="$1"
+    if [[ -f "$flake_dir/flake.lock" ]] && command -v jq >/dev/null 2>&1; then
+        jq -r '.nodes.inir.locked.rev // empty' "$flake_dir/flake.lock" 2>/dev/null || true
+    fi
+}
+
+get_remote_inir_rev() {
+    if command -v git >/dev/null 2>&1; then
+        timeout 5 git ls-remote "$UPSTREAM_URL" HEAD 2>/dev/null | awk '{print $1}' || true
+    fi
+}
+
+
+status() {
+    head "iNiR NixOS Synchronization Status"
+
+    local flake_dir
+    flake_dir="$(find_flake_dir)"
+
+    if [[ -n "$flake_dir" ]]; then
+        ok "Flake directory detected: ${BOLD}$flake_dir${RESET}"
+        local locked_rev
+        locked_rev="$(get_locked_inir_rev "$flake_dir")"
+        if [[ -n "$locked_rev" ]]; then
+            info "Locked iNiR upstream commit: ${BOLD}${locked_rev:0:8}${RESET} (${locked_rev})"
+        else
+            warn "Could not read locked inir commit from $flake_dir/flake.lock"
+        fi
+
+        echo -n "  Checking remote upstream ($UPSTREAM_URL)... "
+        local remote_rev
+        remote_rev="$(get_remote_inir_rev)"
+        if [[ -n "$remote_rev" ]]; then
+            echo -e "${BOLD}${remote_rev:0:8}${RESET}"
+            if [[ "$locked_rev" == "$remote_rev" ]]; then
+                ok "Repository is ${BOLD}up-to-date${RESET} with upstream iNiR"
+            else
+                warn "New upstream commits available! (${BOLD}${locked_rev:0:8}${RESET} -> ${BOLD}${remote_rev:0:8}${RESET})"
+                info "Run ${BOLD}inir-sync --update${RESET} to pull the latest changes into flake.lock"
+            fi
+        else
+            warn "Could not reach remote upstream (network offline or git unavailable)"
+        fi
+    else
+        warn "No flake.nix / flake.lock found in standard locations (/etc/nixos, ~/projectos/inir-nixos)"
+    fi
+
+    echo ""
+    info "Runtime state:"
+    local gen_dir="$HOME/.local/state/quickshell/user/generated"
+    if [[ -f "$gen_dir/colors.json" ]]; then
+        local color_count
+        color_count="$(grep -c '"' "$gen_dir/colors.json" 2>/dev/null || echo 0)"
+        ok "Material You palette active (${color_count} color keys in $gen_dir/colors.json)"
+    else
+        warn "Material You palette not yet generated in $gen_dir"
+    fi
+
+    if systemctl --user is-active --quiet niri-sync-colors.service 2>/dev/null; then
+        ok "niri-sync-colors background service is active"
+    else
+        info "niri-sync-colors service is not running (run: inir-sync --colors)"
+    fi
+
+    if [[ -f "$HOME/.config/niri/config.kdl" ]]; then
+        ok "Niri configuration present (~/.config/niri/config.kdl)"
+    else
+        warn "Niri configuration missing (~/.config/niri/config.kdl) — run: inir-sync --seed-niri"
+    fi
+}
+
+update_upstream() {
+    head "Updating Upstream iNiR Input"
+
+    local flake_dir
+    flake_dir="$(find_flake_dir)"
+    if [[ -z "$flake_dir" ]]; then
+        error "No flake directory found to update."
+        exit 1
+    fi
+
+    info "Working directory: $flake_dir"
+    local prev_rev
+    prev_rev="$(get_locked_inir_rev "$flake_dir")"
+    info "Current locked revision: ${prev_rev:0:8}"
+
+    info "Running: nix flake update inir..."
+    if (cd "$flake_dir" && nix flake update inir --extra-experimental-features 'nix-command flakes'); then
+        local new_rev
+        new_rev="$(get_locked_inir_rev "$flake_dir")"
+        if [[ "$prev_rev" != "$new_rev" ]]; then
+            ok "Upstream inir successfully updated: ${BOLD}${prev_rev:0:8} -> ${new_rev:0:8}${RESET}"
+        else
+            ok "inir is already up to date at ${BOLD}${new_rev:0:8}${RESET}"
+        fi
+
+        info "Validating flake evaluation..."
+        if (cd "$flake_dir" && nix flake check --no-build --extra-experimental-features 'nix-command flakes'); then
+            ok "Flake evaluation check passed successfully!"
+            info "To apply system-wide, run: ${BOLD}sudo nixos-rebuild switch --flake $flake_dir#nixos${RESET}"
+        else
+            error "Flake check failed after update!"
+            exit 1
+        fi
+    else
+        error "Failed to update inir flake input."
+        exit 1
+    fi
+}
+
+sync_colors() {
+    head "Synchronizing Palette and Terminals"
+    if command -v niri-sync-colors >/dev/null 2>&1; then
+        niri-sync-colors
+        ok "Palette and terminal themes synchronized!"
+    else
+        error "niri-sync-colors command not found in PATH"
+        exit 1
+    fi
+}
+
+seed_niri() {
+    head "Seeding Niri Modular Configuration"
+    local config_dir="$HOME/.config/niri"
+    mkdir -p "$config_dir/config.d"
+
+    # Find templates or installed store templates
+    local src_dir=""
+    local flake_dir
+    flake_dir="$(find_flake_dir)"
+    if [[ -n "$flake_dir" && -d "$flake_dir/niri" ]]; then
+        src_dir="$flake_dir/niri"
+    elif [[ -d "/run/current-system/sw/share/quickshell/inir/niri" ]]; then
+        src_dir="/run/current-system/sw/share/quickshell/inir/niri"
+    fi
+
+    if [[ -n "$src_dir" && -f "$src_dir/config.kdl" ]]; then
+        for f in "$src_dir"/config.d/*.kdl; do
+            local base
+            base="$(basename "$f")"
+            local dst="$config_dir/config.d/$base"
+            if [[ ! -e "$dst" ]]; then
+                install -Dm644 "$f" "$dst"
+                ok "Seeded $dst"
+            else
+                info "Already exists: $dst (preserved)"
+            fi
+        done
+        if [[ ! -e "$config_dir/config.kdl" ]]; then
+            install -Dm644 "$src_dir/config.kdl" "$config_dir/config.kdl"
+            ok "Seeded $config_dir/config.kdl"
+        else
+            info "Already exists: $config_dir/config.kdl (preserved)"
+        fi
+        ok "Niri modular configuration verified."
+    else
+        error "Could not locate niri configuration templates."
+        exit 1
+    fi
+}
+
+run_doctor() {
+    head "Running Diagnostic Sanity Check"
+    if command -v verify-setup >/dev/null 2>&1; then
+        verify-setup
+    elif [[ -x "./scripts/verify-setup.sh" ]]; then
+        ./scripts/verify-setup.sh
+    else
+        error "verify-setup not found."
+        exit 1
+    fi
+}
+
+usage() {
+    echo -e "${BOLD}iNiR NixOS Synchronization Tool${RESET}
+
+${BOLD}USAGE:${RESET}
+  inir-sync [COMMAND]
+
+${BOLD}COMMANDS:${RESET}
+  ${GREEN}status, -s${RESET}        Check sync status with upstream iNiR and runtime (default)
+  ${GREEN}update, -u${RESET}        Update upstream inir flake input and check for build integrity
+  ${GREEN}colors, -c${RESET}        Trigger instant Material You color & terminal sync
+  ${GREEN}seed-niri${RESET}         Deploy missing modular Niri config files to ~/.config/niri/
+  ${GREEN}doctor, -d${RESET}        Run verify-setup diagnostics
+  ${GREEN}help, -h, --help${RESET}  Show this help message
+
+${BOLD}ENVIRONMENT:${RESET}
+  INIR_UPSTREAM_URL Custom upstream Git URL (default: https://github.com/snowarch/iNiR.git)"
+}
+
+
+case "${1:-status}" in
+    status|-s|--status)
+        status
+        ;;
+    update|-u|--update)
+        update_upstream
+        ;;
+    colors|-c|--colors)
+        sync_colors
+        ;;
+    seed-niri|--seed-niri)
+        seed_niri
+        ;;
+    doctor|-d|--doctor)
+        run_doctor
+        ;;
+    help|-h|--help)
+        usage
+        ;;
+    *)
+        error "Unknown command: $1"
+        usage
+        exit 1
+        ;;
+esac

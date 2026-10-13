@@ -23,7 +23,15 @@ Item {
     property string detail: ""        // "" | "album" | "artist" | "account"
     property string searchFilter: "songs"   // songs | albums | artists | playlists
     function _runSearch() {
+        searchDebounce.stop();
         if (searchField.text.trim().length > 0) YtMusic.search(searchField.text.trim(), root.searchFilter);
+    }
+
+    Timer {
+        id: searchDebounce
+        interval: 400
+        repeat: false
+        onTriggered: root._runSearch()
     }
 
     onVisibleChanged: if (visible) _ensureHome()
@@ -89,10 +97,18 @@ Item {
                     anchors.rightMargin: 4
                     spacing: 8
 
-                    MaterialSymbol {
-                        text: "search"
-                        iconSize: Appearance.font.pixelSize.huge
-                        color: Appearance.colSecondaryActionIcon
+                    MouseArea {
+                        Layout.preferredWidth: Appearance.font.pixelSize.huge + 8
+                        Layout.preferredHeight: Appearance.font.pixelSize.huge + 8
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root._runSearch()
+
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: "search"
+                            iconSize: Appearance.font.pixelSize.huge
+                            color: Appearance.colSecondaryActionIcon
+                        }
                     }
 
                     Item {
@@ -105,6 +121,14 @@ Item {
                             color: Appearance.colors.colOnSurface
                             font.pixelSize: Appearance.font.pixelSize.normal
                             clip: true
+                            onTextChanged: {
+                                if (text.trim().length > 0) {
+                                    searchDebounce.restart();
+                                } else {
+                                    searchDebounce.stop();
+                                    YtMusic.searchResults = [];
+                                }
+                            }
                             onAccepted: root._runSearch()
                         }
                         StyledText {
@@ -123,7 +147,11 @@ Item {
                         visible: root.searchMode
                         symbol: "close"
                         color: Appearance.colSecondaryActionIcon
-                        onClicked: searchField.text = ""
+                        onClicked: {
+                            searchDebounce.stop();
+                            searchField.text = "";
+                            YtMusic.searchResults = [];
+                        }
                     }
                     ITIconButton {
                         Layout.alignment: Qt.AlignVCenter

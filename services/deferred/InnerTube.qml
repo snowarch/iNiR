@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.modules.common
+import qs.services
 
 // InnerTube browsing engine — wraps scripts/innertube.py (ytmusicapi).
 // Public browsing needs NO cookies; replaces the flaky yt-dlp + browser-cookie path.
@@ -281,22 +282,49 @@ Singleton {
             let obj;
             try { obj = JSON.parse(line); } catch (e) { return; }
             if (obj._meta) { if (obj.lyricsId !== undefined) lyricsId = obj.lyricsId; return; }
-            if (obj.error) { root.error = obj.error; return; }
-            if (obj._done) { finished(buffer, lyricsId); buffer = []; lyricsId = ""; return; }
+            if (obj.error) {
+                root.error = obj.error;
+                root.searching = false;
+                buffer = [];
+                return;
+            }
+            if (obj._done) {
+                finished(buffer.slice ? buffer.slice() : buffer, lyricsId);
+                buffer = [];
+                lyricsId = "";
+                return;
+            }
             buffer.push(obj);
         }
     }
 
     // ---- search ----
     function search(query, filter): void {
-        if (!query || !root.available) return;
+        if (!query) return;
+        if (!root.available) {
+            root.retryAvailability();
+            return;
+        }
         root.error = "";
         root.searching = true;
         _searchProc.exec([root._runner, "search", query, filter || "songs"]);
     }
     Process {
         id: _searchProc
-        stdout: StreamCollector { onFinished: (items) => { root.searchResults = items; root.searching = false; } }
+        stdout: StreamCollector {
+            onFinished: (items) => {
+                root.searchResults = items;
+                root.searching = false;
+            }
+        }
+        onExited: (code) => {
+            if (code !== 0 && root.searching) {
+                root.searching = false;
+                if (root.searchResults.length === 0 && !root.error) {
+                    root.error = Translation.tr("Search failed. Check your connection.");
+                }
+            }
+        }
     }
 
     // ---- radio (autoplay watch-playlist) ----

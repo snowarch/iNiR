@@ -1,0 +1,48 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 60 — Animations
+// ─────────────────────────────────────────────────────────────────────────────
+
+animations {
+    workspace-switch {
+        spring damping-ratio=1.0 stiffness=1000 epsilon=0.0001
+    }
+
+    window-open {
+        duration-ms 220
+        curve "cubic-bezier" 0.05 0.7 0.1 1.0
+    }
+
+    window-close {
+        duration-ms 160
+        curve "cubic-bezier" 0.2 0.0 0.0 1.0
+    }
+
+    horizontal-view-movement {
+        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
+    }
+
+    window-movement {
+        spring damping-ratio=0.92 stiffness=850 epsilon=0.0001
+    }
+
+    window-resize {
+        spring damping-ratio=1.0 stiffness=850 epsilon=0.0001
+    }
+
+    config-notification-open-close {
+        spring damping-ratio=0.7 stiffness=1000 epsilon=0.001
+    }
+
+    screenshot-ui-open {
+        duration-ms 200
+        curve "cubic-bezier" 0.05 0.7 0.1 1.0
+    }
+
+    overview-open-close {
+        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
+    }
+
+    recent-windows-close {
+        spring damping-ratio=1.0 stiffness=1000 epsilon=0.001
+    }
+}

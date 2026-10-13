@@ -1,0 +1,41 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 10 — Input devices, gestures & cursor
+// ─────────────────────────────────────────────────────────────────────────────
+
+input {
+    keyboard {
+        xkb {
+            layout "latam,us"
+        }
+        repeat-delay 250
+        repeat-rate 50
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+        accel-speed 0.3
+        accel-profile "adaptive"
+        dwt
+        click-method "clickfinger"
+        scroll-method "two-finger"
+    }
+
+    mouse {
+        accel-speed 0.2
+        accel-profile "flat"
+    }
+
+    mod-key "Super"
+    mod-key-nested "Alt"
+}
+
+cursor {
+    xcursor-theme "Adwaita"
+    xcursor-size 24
+    hide-when-typing
+}
+
+output "eDP-1" {
+    scale 1.0
+}
