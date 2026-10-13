@@ -1466,7 +1466,11 @@ Item {
                         pressScaleEnabled: false
                         colBackgroundHover: IrisStyle.tintFill(IrisStyle.accent)
                         Accessible.name: menuRow.label
+                        // A Design that draws menu rows (IrisDesign part `menuRow`) draws these too.
+                        skinPart: IrisDesign.has("menuRow") ? "menuRow" : "button"
+                        skinData: ({ option: ({ text: menuRow.label, iconName: menuRow.glyph, danger: menuRow.danger }) })
                         RowLayout {
+                            visible: !IrisDesign.has("menuRow")
                             anchors.fill: parent
                             anchors.leftMargin: 8 * root.d
                             anchors.rightMargin: 10 * root.d

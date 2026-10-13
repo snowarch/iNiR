@@ -179,6 +179,12 @@ Loader {
             return list
         }
         property int stop: -1
+        // The rows that a digit takes, in order: 1 to 9 choose them from the keyboard.
+        readonly property var rowStops: popup.stops.filter(s => s.tile < 0 && root.shown[s.entry]?.type !== "hero")
+        function codeOf(entry: int): int {
+            const i = popup.rowStops.findIndex(s => s.entry === entry)
+            return i >= 0 && i < 9 ? i + 1 : 0
+        }
         function isStop(entry: int, tile: int): bool {
             const s = popup.stops[popup.stop]
             return s !== undefined && s.entry === entry && s.tile === tile
@@ -226,7 +232,10 @@ Loader {
                 else if (count > 0 && (event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || event.key === Qt.Key_Left))
                     popup.stop = (popup.stop - 1 + count) % count
                 else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) popup.runStop()
-                else return
+                else if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9 && popup.rowStops[event.key - Qt.Key_1]) {
+                    popup.focusStop(popup.rowStops[event.key - Qt.Key_1].entry, -1)
+                    popup.runStop()
+                } else return
                 event.accepted = true
             }
         }
@@ -480,7 +489,14 @@ Loader {
                                 implicitWidth: itemRow.implicitWidth + Math.round(24 * root.d)
                                 implicitHeight: root.rowHeight
                                 enabled: menuItem.usable
-                                opacity: menuItem.usable ? 1 : 0.4
+                                opacity: menuItem.usable || menuItem.skinned ? 1 : 0.4
+                                // What a Design's row reads (IrisDesign part `menuRow`); it draws the row, this keeps the input.
+                                readonly property bool skinned: rowSkin.active
+                                readonly property var option: row.modelData
+                                readonly property bool marked: root.marked
+                                readonly property bool compact: root.compact
+                                readonly property int code: popup.codeOf(row.index)
+                                IrisSkin { id: rowSkin; part: "menuRow"; host: menuItem }
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 Accessible.role: Accessible.MenuItem
@@ -491,6 +507,7 @@ Loader {
                                 // ink turns over with it.
                                 readonly property bool plate: IrisStyle.plateSelection && menuItem.lit && !menuItem.danger
                                 Rectangle {
+                                    visible: !menuItem.skinned
                                     anchors.fill: parent
                                     radius: IrisStyle.plateSelection ? 0 : IrisStyle.radiusRow
                                     color: menuItem.plate ? IrisStyle.selectionFill : menuItem.danger
@@ -500,6 +517,7 @@ Loader {
                                 }
                                 RowLayout {
                                     id: itemRow
+                                    opacity: menuItem.skinned ? 0 : 1
                                     anchors.fill: parent
                                     anchors.leftMargin: Math.round((root.compact ? 8 : 10) * root.d)
                                     anchors.rightMargin: Math.round((root.compact ? 10 : 12) * root.d)
