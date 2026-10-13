@@ -41,7 +41,25 @@ PreviewScene {
             x: Math.round(14 * spotRoot.d); y: Math.round(14 * spotRoot.d)
             width: parent.width - 2 * x
             spacing: Math.round(6 * spotRoot.d)
+            // A plate Design (AIRISU) writes the query large on a ruled line, as its Spotlight does; iRiS keeps its field.
+            Item {
+                visible: IrisStyle.plateSelection
+                Layout.fillWidth: true
+                implicitHeight: Math.round(46 * spotRoot.d)
+                IrisText {
+                    anchors.left: parent.left
+                    anchors.bottom: rule.top
+                    anchors.bottomMargin: Math.round(4 * spotRoot.d)
+                    text: Translation.tr("Search apps, files and actions")
+                    color: IrisStyle.textTertiary
+                    font.family: IrisStyle.fontTitle
+                    font.weight: IrisStyle.weight(Font.ExtraBold)
+                    font.pixelSize: IrisStyle.typeHeadline
+                }
+                Rectangle { id: rule; anchors.bottom: parent.bottom; width: parent.width; height: 1; color: IrisStyle.textTertiary }
+            }
             Rectangle {
+                visible: !IrisStyle.plateSelection
                 Layout.fillWidth: true
                 implicitHeight: Math.round(40 * spotRoot.d)
                 radius: IrisStyle.capsule(height)

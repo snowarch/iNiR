@@ -403,6 +403,7 @@ Loader {
                                             Math.round(heroWallpaper.height * (hero.QsWindow.window?.devicePixelRatio ?? 1)))
                                     }
                                     Rectangle {
+                                        visible: !IrisStyle.plateSelection
                                         anchors.left: parent.left
                                         anchors.right: parent.right
                                         anchors.bottom: parent.bottom
@@ -412,6 +413,17 @@ Loader {
                                             GradientStop { position: 1; color: hero.lit ? IrisStyle.veil : IrisStyle.veilStrong }
                                         }
                                     }
+                                    // A plate Design labels the picture with a die-cut tag laid on it instead of a scrim.
+                                    IrisCutPlate {
+                                        visible: IrisStyle.plateSelection
+                                        x: Math.round(6 * root.d)
+                                        anchors.bottom: parent.bottom
+                                        anchors.bottomMargin: Math.round(6 * root.d)
+                                        width: heroWords.implicitWidth + Math.round(16 * root.d)
+                                        height: heroWords.implicitHeight + Math.round(10 * root.d)
+                                        cutLength: Math.round(height / 4)
+                                        color: hero.lit ? IrisStyle.veil : IrisStyle.veilStrong
+                                    }
                                     RowLayout {
                                         anchors.left: parent.left
                                         anchors.right: parent.right
@@ -419,10 +431,12 @@ Loader {
                                         anchors.margins: Math.round(10 * root.d)
                                         spacing: Math.round(6 * root.d)
                                         ColumnLayout {
-                                            Layout.fillWidth: true
+                                            id: heroWords
+                                            Layout.fillWidth: !IrisStyle.plateSelection
+                                            Layout.leftMargin: IrisStyle.plateSelection ? Math.round(4 * root.d) : 0
                                             spacing: 0
                                             IrisText {
-                                                Layout.fillWidth: true
+                                                Layout.fillWidth: !IrisStyle.plateSelection
                                                 text: row.modelData?.text ?? ""
                                                 color: IrisStyle.onMedia
                                                 font.pixelSize: root.textSize
@@ -430,14 +444,17 @@ Loader {
                                                 elide: Text.ElideRight
                                             }
                                             IrisText {
-                                                Layout.fillWidth: true
+                                                Layout.fillWidth: !IrisStyle.plateSelection
                                                 visible: text.length > 0
                                                 text: String(row.modelData?.detail ?? "")
                                                 color: IrisStyle.onMediaSecondary
                                                 font.pixelSize: IrisStyle.typeFootnote
+                                                font.family: IrisStyle.plateSelection ? IrisStyle.fontMono : IrisStyle.fontMain
+                                                font.capitalization: IrisStyle.plateSelection ? Font.AllUppercase : Font.MixedCase
                                                 elide: Text.ElideRight
                                             }
                                         }
+                                        Item { visible: IrisStyle.plateSelection; Layout.fillWidth: true }
                                         MaterialSymbol {
                                             visible: !hero.secondary
                                             text: row.modelData?.iconName ?? "chevron_right"
