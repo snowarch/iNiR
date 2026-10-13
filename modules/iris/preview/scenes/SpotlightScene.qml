@@ -69,7 +69,17 @@ PreviewScene {
                     }
                 }
             }
-            IrisText { text: Translation.tr("Top hit"); role: IrisText.Meta; Layout.topMargin: Math.round(4 * spotRoot.d) }
+            // The section head and the current row as the engine draws them, in the Design's own parts when it has them.
+            Item {
+                id: topHead
+                readonly property string title: Translation.tr("Top hit")
+                readonly property var tint: null
+                Layout.fillWidth: true
+                Layout.topMargin: Math.round(4 * spotRoot.d)
+                implicitHeight: headSkin.active ? (headSkin.item?.implicitHeight ?? 0) : headText.implicitHeight
+                IrisSkin { id: headSkin; part: "sectionTab"; host: topHead }
+                IrisText { id: headText; visible: !headSkin.active; text: topHead.title; role: IrisText.Meta }
+            }
             Repeater {
                 model: spotRoot.results
                 RowLayout {
@@ -79,15 +89,25 @@ PreviewScene {
                     Layout.fillWidth: true
                     spacing: Math.round(10 * spotRoot.d)
                     Rectangle {
+                        id: hitRow
                         Layout.fillWidth: true
                         implicitHeight: Math.round(36 * spotRoot.d)
                         radius: IrisStyle.radiusRow
-                        color: hit.index === 0 ? IrisStyle.tintFill(IrisStyle.accent) : "transparent"
+                        color: hit.index === 0 ? IrisStyle.rowSelectionFill : "transparent"
+                        IrisSkin { visible: hit.index === 0; part: "listMark"; host: hitRow }
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: Math.round(8 * spotRoot.d)
                             anchors.rightMargin: Math.round(10 * spotRoot.d)
                             spacing: Math.round(10 * spotRoot.d)
+                            IrisText {
+                                visible: IrisStyle.indexed
+                                text: IrisStyle.indexLabel(hit.index)
+                                color: hit.index === 0 ? IrisStyle.rowSelectionInk : IrisStyle.textTertiary
+                                font.family: IrisStyle.fontNumbers
+                                font.pixelSize: IrisStyle.typeMeta
+                                font.weight: IrisStyle.weight(Font.DemiBold)
+                            }
                             SmartAppIcon { implicitSize: Math.round(24 * spotRoot.d); icon: IrisPieces.appIcon(hit.app?.appId ?? ""); fallback: "application-x-executable" }
                             IrisText {
                                 Layout.fillWidth: true
