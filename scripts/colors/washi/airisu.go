@@ -1,8 +1,11 @@
 package main
 
-import "math"
+import (
+	"math"
+	"sort"
+)
 
-// AIRISU's palette (modules/iris/AIRISU.md): the traditional Japanese colours of a tuning shop at night. Lacquer black
+// AIRISU's palette: the traditional Japanese colours of a tuning shop at night. Lacquer black
 // (漆黒 shikkoku) and ink black (墨 sumi) for the grounds, shell white (胡粉 gofun) for the ink, the vermilion seal
 // (朱 shu) for what is live and kerria amber (山吹 yamabuki) for the glanced detail. The contracts are washi's, so a
 // colour that would not read on its ground is moved until it does; the seal keeps its pigment as a fill.
@@ -27,46 +30,77 @@ var airisuHighlightSeeds = map[string]string{
 
 func hexLCH(hex string) LCH { c, _ := seedLCH(hex); return c }
 
+// The ladder of the night, from the board: shikkoku lacquer for the canvas, sumi for what is laid on it (+0.058, a
+// breath over the board's 0.042 so a group still reads at 1.1:1), tetsu iron for rules and tracks (+0.139). The greys
+// are cool and the ink is warm gofun: lacquer and shell, never a screen's grey on grey. A material only gives the
+// lacquer its hue; the ladder is AIRISU's own.
+var airisuSteps = map[string][2]float64{"dark": {0.058, 0.139}, "ink": {-0.04, -0.09}, "light": {-0.035, -0.08}}
+
 var airisuLanguage = &Language{
-	name: "airisu", whole: true, pigments: true, dangerSeed: "#f8b500", // red means "live", never "wrong"
+	name: "airisu", whole: true, pigments: true, fixedInk: true, dangerSeed: "#f8b500", // red means "live", never "wrong"
 	schemes: []spec{
 		{
-			// Night: shikkoku lacquer at the screen edge, sumi and tetsu for its groups, gofun ink.
+			// Night: shikkoku lacquer, sumi and tetsu, gofun ink. Graphite starts the ladder at sumi, midnight is kon
+			// (紺), the lacquer's indigo.
 			name: "dark", dark: true,
-			materials: map[string]LCH{"black": hexLCH("#0b0b0c"), "graphite": hexLCH("#1c1c1e"), "midnight": {0.19, 0.028, 258}},
-			paperL:    0.18, paperC: 0.03, steps: [2]float64{0.05, 0.1}, inkL: hexLCH("#e9e6df").L,
+			materials: map[string]LCH{"black": hexLCH("#0b0b0c"), "graphite": hexLCH("#18181b"), "midnight": {0.165, 0.024, 262}},
+			paperL:    0.165, paperC: 0.022, steps: airisuSteps["dark"], inkL: hexLCH("#e9e6df").L,
 			accentL: 0.62, accentC: [2]float64{0.14, 0.22}, markL: 0.74, markC: 0.15, widgets: 1,
 		},
 		{
-			// Ink: gofun, the shell white the shop's stickers are printed on, with shikkoku ink.
+			// Ink: gofun, the shell white the shop's stickers are printed on, with sumi ink.
 			name:      "ink",
-			materials: map[string]LCH{"black": hexLCH("#e9e6df"), "graphite": {0.86, 0.012, airisuHue}, "midnight": {0.89, 0.014, 232}},
-			paperL:    0.9, paperC: 0.03, steps: [2]float64{-0.04, -0.075}, inkL: 0.2,
+			materials: map[string]LCH{"black": hexLCH("#e9e6df"), "graphite": {0.87, 0.012, airisuHue}, "midnight": {0.9, 0.016, 250}},
+			paperL:    0.91, paperC: 0.02, steps: airisuSteps["ink"], inkL: hexLCH("#141414").L,
 			accentL: 0.56, accentC: [2]float64{0.13, 0.2}, markL: 0.6, markC: 0.14, widgets: 1,
 		},
 		{
-			// Light: gofun bleached toward the page, the same pigments a step deeper.
+			// Light: gofun bleached toward the page, the same pigments.
 			name:      "light",
-			materials: map[string]LCH{"black": {0.97, 0.005, airisuHue}, "graphite": {0.93, 0.006, airisuHue}, "midnight": {0.95, 0.014, 240}},
-			paperL:    0.965, paperC: 0.025, steps: [2]float64{-0.035, -0.07}, inkL: 0.17,
+			materials: map[string]LCH{"black": {0.97, 0.006, airisuHue}, "graphite": {0.935, 0.005, airisuHue}, "midnight": {0.955, 0.012, 250}},
+			paperL:    0.962, paperC: 0.012, steps: airisuSteps["light"], inkL: 0.17,
 			accentL: 0.58, accentC: [2]float64{0.13, 0.2}, markL: 0.64, markC: 0.15, widgets: 1.1,
 		},
 	},
-	materialNames: []string{"urushi", "black", "graphite", "midnight", "wallpaper", "theme"},
+	materialNames: []string{"black", "graphite", "midnight", "wallpaper", "theme"},
 	accentSeeds:   airisuAccentSeeds, highlightSeeds: airisuHighlightSeeds, identity: identitySeeds, identityHex: airisuIdentityHex,
-	neutralHue: airisuHue, onColour: hexLCH("#e9e6df").RGB(), darkOn: [2]float64{0.15, 0.004},
-	fillFrom: [2]float64{0.6, 0.56}, fillC: [2]float64{0.12, 0.24},
+	neutralHue: airisuHue, onColour: hexLCH("#e9e6df").RGB(), darkOn: [2]float64{0.14, 0.002},
+	fillFrom: [2]float64{0.6, 0.56}, fillC: [2]float64{0.09, 0.24},
+	wheel: airisuWheel(),
+}
+
+// airisuWheel is every hue as a traditional pigment: a colour that comes from outside (a custom hue, the wallpaper,
+// the theme) keeps its hue and takes the lightness and chroma of the pigments beside it, so a Material blue becomes
+// a gunjō and never stays a screen's blue. Named pigments are the wheel's stops and come out as themselves.
+func airisuWheel() []LCH {
+	stops := []string{
+		"#d0576b", // 今様 imayō
+		"#e5341b", // 朱 shu
+		"#ee7800", // 橙 daidai
+		"#f8b500", // 山吹 yamabuki
+		"#d7cf3a", // 鶸 hiwa
+		"#b9d08b", // 若葉 wakaba
+		"#68be8d", // 若竹 wakatake
+		"#00a3af", // 浅葱 asagi
+		"#2a83a2", // 縹 hanada
+		"#4c6cb3", // 群青 gunjō
+		"#7058a3", // 菫 sumire
+		"#e95295", // 躑躅 tsutsuji
+	}
+	out := make([]LCH, len(stops))
+	for i, h := range stops {
+		out[i] = hexLCH(h)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].H < out[b].H })
+	return out
 }
 
 func init() {
-	airisuLanguage.paper = paper
+	airisuLanguage.paper = airisuPaper
 	airisuLanguage.ramp = func(s spec, p LCH) Ramp {
+		// Each rung keeps the lacquer's hue, a little more of it as it rises (sumi and tetsu are cooler than the black).
 		step := func(i int) LCH {
-			if s.dark && p.L < 0.2 && p.C < 0.006 {
-				// Lacquer's groups are sumi and the iron between it and tetsu: neutral, the faintest gofun warmth.
-				return LCH{[2]float64{0.205, 0.26}[i] + math.Max(0, p.L-0.137), 0.003, airisuHue}
-			}
-			return LCH{clampF(p.L+s.steps[i], 0, 1), p.C, p.H}
+			return LCH{clampF(p.L+s.steps[i], 0, 1), math.Min(0.032, math.Max(p.C, 0.003)*[2]float64{1.3, 1.8}[i]), p.H}
 		}
 		return Ramp{p, step(0), step(1)}
 	}
@@ -84,4 +118,59 @@ func init() {
 		return 0.004 // shikkoku
 	}
 	languages["airisu"] = airisuLanguage
+}
+
+// airisuPaper is a material as lacquer: the three named ones are the ladder's own; the wallpaper and the theme only
+// lend their hue, at a lacquer's chroma, so neither can turn the canvas into a coloured card.
+func airisuPaper(s spec, name string, seeds Seeds, tone float64) LCH {
+	p, ok := s.materials[name]
+	hueOf := func(hexes ...string) bool {
+		for _, h := range hexes {
+			if c, good := seedLCH(h); good && c.C >= 0.02 {
+				p, ok = LCH{s.paperL, math.Min(s.paperC, c.C*0.3), c.H}, true
+				return true
+			}
+		}
+		return false
+	}
+	switch name {
+	case "wallpaper":
+		hueOf(seeds.Wallpaper, seeds.Primary)
+	case "theme":
+		hueOf(seeds.Background, seeds.Primary)
+	}
+	if !ok {
+		p = s.materials["black"]
+	}
+	if s.dark {
+		p.L = clampF(p.L+tone/100*0.4, 0.1, 0.3)
+	} else {
+		p.L = clampF(p.L+tone/100*0.3, map[string]float64{"ink": 0.83, "light": 0.89}[s.name], 1)
+	}
+	return p
+}
+
+// pigmentOf is a seed on the wheel: its hue, and the lightness and chroma of the stops on either side, eased by how
+// far it sits between them. Within a few degrees of a stop it is that pigment.
+func pigmentOf(wheel []LCH, seed LCH) LCH {
+	n := len(wheel)
+	for i := 0; i < n; i++ {
+		a, b := wheel[i], wheel[(i+1)%n]
+		span := math.Mod(b.H-a.H+360, 360)
+		at := math.Mod(seed.H-a.H+360, 360)
+		if at > span {
+			continue
+		}
+		if at < 4 {
+			return a
+		}
+		if span-at < 4 {
+			return b
+		}
+		t := at / span
+		t = t * t * (3 - 2*t)
+		L := a.L + (b.L-a.L)*t
+		return LCH{L, math.Min(a.C+(b.C-a.C)*t, maxChroma(L, seed.H)), seed.H}
+	}
+	return seed
 }

@@ -15,7 +15,7 @@ Singleton {
     id: root
 
     // The solver's version (scripts/colors/washi Version): a newer solver answers the same request again.
-    readonly property int version: 29
+    readonly property int version: 30
     readonly property string cachePath: `${Directories.stateUserPath}/generated/iris-washi.json`
     readonly property var appearance: Config.options?.iris?.appearance ?? ({})
     readonly property bool followsTheme: String(ThemeService.currentTheme ?? "auto") !== "auto" && Boolean(root.appearance?.followTheme ?? true)
@@ -28,8 +28,7 @@ Singleton {
     readonly property string requestJson: JSON.stringify({
         language: IrisDesign.palette.length > 0 ? IrisDesign.palette : String(root.appearance?.language ?? "iris"),
         variant: String(root.appearance?.variant ?? "tonalSpot"),
-        material: IrisDesign.material.length > 0 ? IrisDesign.material
-            : root.followsTheme ? "theme" : String(root.appearance?.theme?.surface ?? "black"),
+        material: root.followsTheme ? "theme" : String(root.appearance?.theme?.surface ?? "black"),
         glass: ["wallpaper", "compositor"].includes(String(root.appearance?.glass?.mode ?? "off")),
         inkStyle: String(root.appearance?.inkStyle ?? "washi"),
         darkStyle: String(root.appearance?.darkStyle ?? "style"),

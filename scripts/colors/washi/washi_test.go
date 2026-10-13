@@ -310,3 +310,27 @@ func TestDesignKeepsItsPigments(t *testing.T) {
 		t.Errorf("Ink under AIRISU wears %s, want gofun #e9e6df", got)
 	}
 }
+
+// AIRISU takes any colour from outside as the traditional pigment of its hue, and any material as lacquer: a Material
+// blue becomes a gunjō-like seal, a blue material only cools the lacquer, and the ink stays gofun.
+func TestDesignThemesWhatComesIn(t *testing.T) {
+	for _, hue := range []float64{0, 60, 120, 212, 280, 330} {
+		p := build(Request{Language: "airisu", Material: "black", Accent: "custom", AccentHue: hue}, "dark")
+		fill := hexLCH(p.AccentFill)
+		if fill.C < 0.09 || fill.L < 0.5 || fill.L > 0.86 {
+			t.Errorf("hue %.0f: seal %s is not a pigment (L %.2f C %.3f)", hue, p.AccentFill, fill.L, fill.C)
+		}
+	}
+	if got := build(Request{Language: "airisu", Material: "black", Accent: "blue"}, "dark").AccentFill; hueDistance(hexLCH(got).H, hexLCH("#4c6cb3").H) > 3 {
+		t.Errorf("Gunjō seal turned to %s", got)
+	}
+	for _, m := range []string{"black", "graphite", "midnight", "wallpaper", "theme"} {
+		p := build(Request{Language: "airisu", Material: m, Seeds: Seeds{Wallpaper: "#1f3e48", Primary: "#b2c8ed", Background: "#0c0e12"}}, "dark")
+		if s := hexLCH(p.Surface); s.C > 0.03 || s.L > 0.25 {
+			t.Errorf("%s: canvas %s is not lacquer", m, p.Surface)
+		}
+		if d := hueDistance(hexLCH(p.Text).H, hexLCH("#e9e6df").H); d > 12 {
+			t.Errorf("%s: ink %s left gofun", m, p.Text)
+		}
+	}
+}

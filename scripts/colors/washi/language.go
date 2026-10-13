@@ -52,6 +52,11 @@ type Language struct {
 	// reads as a shape and carries one of the language's two inks (the hanko is vermilion, not the deeper red text on
 	// paper needs), and a mark starts from its own lightness instead of the scheme's band.
 	pigments bool
+	// fixedInk keeps the ink in the language's own hue whatever the material (gofun stays warm on a blue lacquer).
+	fixedInk bool
+	// wheel is the language's pigments ordered by hue: a seed from outside the language takes the lightness and chroma
+	// of the pigments beside its hue (pigmentOf).
+	wheel []LCH
 	// dangerSeed is the colour an alert takes when it is not washi's shu: AIRISU keeps red for what is live, and an
 	// alert is the warning tape's kerria amber. Empty is shu.
 	dangerSeed string

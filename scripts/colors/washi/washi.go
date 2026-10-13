@@ -371,6 +371,11 @@ func (v solver) accent(seed LCH) RGB {
 		}
 	}
 	check = both(check, func(c RGB) bool { return contrast(c, over(c, far, 0.15)) >= readWash })
+	if v.lang.wheel != nil {
+		// A pigment set as type starts from itself, with its own chroma: the seal where it reads, moved only as far as
+		// reading needs.
+		return solve(v.s, seed.H, math.Min(seed.C, v.s.accentC[1])*v.colour, seed.L, check)
+	}
 	return solve(v.s, seed.H, c, v.s.accentL, check)
 }
 
@@ -451,14 +456,18 @@ func (v solver) seedOf(choice string, hue float64, table map[string]string, fall
 	pick := func(hexes ...string) (LCH, bool) {
 		for _, h := range hexes {
 			if c, ok := seedLCH(h); ok && c.C >= 0.03 {
-				return c, true
+				return v.onWheel(c), true
 			}
 		}
 		return LCH{}, false
 	}
+	if _, own := table["design"]; own && v.lang.wheel != nil {
+		// A source with no hue to give (a grey wallpaper) leaves the Design's own colour.
+		fallback = "design"
+	}
 	switch choice {
 	case "custom":
-		return hsl(hue, 0.7, 0.5).LCH()
+		return v.onWheel(hsl(hue, 0.7, 0.5).LCH())
 	case "wallpaper":
 		if c, ok := pick(v.req.Seeds.Wallpaper, v.req.Seeds.Primary); ok {
 			return c
@@ -469,11 +478,11 @@ func (v solver) seedOf(choice string, hue float64, table map[string]string, fall
 		}
 	case "wallpaperHighlight":
 		if c, ok := pick(v.req.Seeds.Secondary, v.req.Seeds.Wallpaper, v.req.Seeds.Primary); ok {
-			return LCH{c.L, math.Max(c.C, 0.12), c.H}
+			return v.onWheel(LCH{c.L, math.Max(c.C, 0.12), c.H})
 		}
 	case "themeHighlight":
 		if c, ok := pick(v.req.Seeds.Tertiary); ok {
-			return LCH{c.L, math.Max(c.C, 0.12), c.H}
+			return v.onWheel(LCH{c.L, math.Max(c.C, 0.12), c.H})
 		}
 	}
 	if hex, ok := table[choice]; ok {
@@ -482,6 +491,14 @@ func (v solver) seedOf(choice string, hue float64, table map[string]string, fall
 	}
 	c, _ := seedLCH(table[fallback])
 	return c
+}
+
+// onWheel is a seed from outside as the language's pigment of that hue, for a language that has a wheel.
+func (v solver) onWheel(c LCH) LCH {
+	if v.lang.wheel == nil {
+		return c
+	}
+	return pigmentOf(v.lang.wheel, c)
 }
 
 func hexes(cs ...RGB) []string {
@@ -507,78 +524,7 @@ func schemeLanguage(req Request, name string) *Language {
 // paperOf is a material's paper in a scheme with the person's tone and warmth.
 func paperOf(lang *Language, s spec, material string, req Request) LCH {
 	t := req.Tune[s.name]
-	if material == "urushi" {
-		if p, ok := urushi(lang, s, req, t.Tone); ok {
-			return warm(s, p, warmthOf(s.name, t))
-		}
-		material = "black"
-	}
 	return warm(s, lang.paper(s, material, req.Seeds, t.Tone), warmthOf(s.name, t))
-}
-
-// urushi is a Design's lacquer (AIRISU): kuro-urushi, black lacquer with a breath of the accent's hue in its depth at
-// night and a paper barely washed with it by day. At a coloured lacquer's chroma (0.046) every body, rule and key took the
-// accent's hue and the accent itself had nothing left to stand out from: the shell read as one navy slab. Only a language
-// that offers it.
-func urushi(lang *Language, s spec, req Request, tone float64) (LCH, bool) {
-	offered := false
-	for _, m := range lang.materialNames {
-		offered = offered || m == "urushi"
-	}
-	if !offered {
-		return LCH{}, false
-	}
-	h, ok := urushiHue(lang, req)
-	if !ok {
-		return LCH{}, false
-	}
-	var p LCH
-	switch s.name {
-	case "dark":
-		p = LCH{0.215, 0.012, h}
-	case "ink":
-		p = LCH{0.875, 0.014, h}
-	default:
-		p = LCH{0.945, 0.01, h}
-	}
-	if s.dark {
-		p.L = clampF(p.L+tone/100*0.4, 0.12, 0.3)
-	} else {
-		p.L = clampF(p.L+tone/100*0.3, map[string]float64{"ink": 0.83, "light": 0.89}[s.name], 1)
-	}
-	return p, true
-}
-
-// urushiHue is the hue the lacquer is coloured with: the person's accent wherever it comes from (a named one, a custom
-// hue, the wallpaper's, the theme's). A source with no hue to give (a grey wallpaper) leaves the Design's own lacquer,
-// never plain black.
-func urushiHue(lang *Language, req Request) (float64, bool) {
-	pick := func(hexes ...string) (float64, bool) {
-		for _, x := range hexes {
-			if c, ok := seedLCH(x); ok && c.C >= 0.03 {
-				return c.H, true
-			}
-		}
-		return 0, false
-	}
-	switch req.Accent {
-	case "custom":
-		return hsl(req.AccentHue, 0.7, 0.5).LCH().H, true
-	case "wallpaper":
-		if h, ok := pick(req.Seeds.Wallpaper, req.Seeds.Primary); ok {
-			return h, true
-		}
-	case "theme":
-		if h, ok := pick(req.Seeds.Primary); ok {
-			return h, true
-		}
-	}
-	if x, ok := lang.accentSeeds[req.Accent]; ok {
-		if h, ok := pick(x); ok {
-			return h, true
-		}
-	}
-	return pick(lang.accentSeeds["design"])
 }
 
 func build(req Request, name string) Palette {
@@ -594,7 +540,7 @@ func build(req Request, name string) Palette {
 		widgets = clampF(*tune.Widgets/100, 0.4, 1.6)
 	}
 	material := req.Material
-	if _, named := s.materials[material]; !named && material != "wallpaper" && material != "theme" && material != "urushi" {
+	if _, named := s.materials[material]; !named && material != "wallpaper" && material != "theme" {
 		material = "black"
 	}
 	ramp := lang.ramp(s, paperOf(lang, s, material, req))
@@ -604,7 +550,7 @@ func build(req Request, name string) Palette {
 
 	// Ink: sumi in the paper's own hue (or paper white at night), readInk on the deepest group.
 	pc := ramp.Surface
-	if pc.C < 0.004 {
+	if pc.C < 0.004 || lang.fixedInk {
 		pc.H = lang.neutralHue
 	}
 	inkC := lang.inkChroma(s, pc)
@@ -653,7 +599,7 @@ func build(req Request, name string) Palette {
 	case "theme":
 		highlightSeed = v.seedOf("themeHighlight", 0, lang.highlightSeeds, "orange")
 	case "custom":
-		highlightSeed = hsl(req.HighlightHue, 0.92, 0.58).LCH()
+		highlightSeed = v.onWheel(hsl(req.HighlightHue, 0.92, 0.58).LCH())
 	default:
 		highlightSeed = v.seedOf(highlightChoice, 0, lang.highlightSeeds, "orange")
 	}
@@ -683,7 +629,7 @@ func build(req Request, name string) Palette {
 	// A Design's seal is solved from a pigment's lightness, never from a pale seed's: a light wallpaper accent would
 	// otherwise make it a pastel.
 	sealSeed := accentSeed
-	if v.lang.pigments {
+	if v.lang.pigments && v.lang.wheel == nil {
 		sealSeed.L = math.Min(sealSeed.L, v.s.accentL)
 	}
 	accentFill := v.fill(sealSeed, readText)
@@ -957,7 +903,7 @@ func styleIDs() []string {
 
 // Version changes whenever a solve would give other colours for the same request; IrisWashi.qml asks again when it
 // differs (TestShellKnowsVersion keeps the two equal).
-const Version = 29
+const Version = 30
 
 // solveSchemes is the palette alone, without the other styles' swatches.
 func solveSchemes(req Request, key string) Output {
