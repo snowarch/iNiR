@@ -56,12 +56,22 @@ ColumnLayout {
                     width: Math.round(46 * root.d)
                     height: width
                     radius: IrisStyle.iconRadius(width)
-                    color: entry.on ? entry.modelData.tint : hover.hovered ? IrisStyle.fillHover : IrisStyle.fill
-                    scale: tap.pressed ? IrisStyle.pressScale(0.92) : hover.hovered ? 1.04 : 1
+                    color: icon.skinned ? "transparent" : entry.on ? entry.modelData.tint : hover.hovered ? IrisStyle.fillHover : IrisStyle.fill
+                    scale: icon.skinned ? 1 : tap.pressed ? IrisStyle.pressScale(0.92) : hover.hovered ? 1.04 : 1
+                    // A Design's control key (IrisDesign part `controlTile`) draws it, on or off, as it draws the Control
+                    // Center's; its own mark of being on replaces the badge.
+                    readonly property bool skinned: iconSkin.active
+                    readonly property bool hovered: hover.hovered
+                    readonly property bool down: tap.pressed
+                    readonly property bool visualFocus: false
+                    readonly property var skinData: ({ shape: "disc", control: ({ lit: entry.on, ready: true, glyph: entry.modelData.glyph,
+                        label: entry.modelData.label, tint: entry.modelData.tint }) })
+                    IrisSkin { id: iconSkin; part: "controlTile"; host: icon }
                     Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
                     Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
 
                     MaterialSymbol {
+                        visible: !icon.skinned
                         anchors.centerIn: parent
                         text: entry.modelData.glyph
                         fill: 1
@@ -69,6 +79,7 @@ ColumnLayout {
                         color: entry.on ? IrisStyle.onTint : IrisStyle.textSecondary
                     }
                     Rectangle {
+                        visible: !icon.skinned
                         anchors.right: parent.right
                         anchors.top: parent.top
                         anchors.margins: -Math.round(5 * root.d)
