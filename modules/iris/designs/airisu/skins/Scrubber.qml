@@ -3,9 +3,10 @@ import qs.modules.common.functions
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's scrubber: a run (ARun). A position in time is thin, thickening while it can be taken; a setting's range (the
-// host has a knob) is as deep as the row slider's, its 45° edge the grip. The run is the colour the caller gives it (an artwork's tint, a muted
-// stream's grey) or the accent's lacquer; paused, it sinks halfway into the stock. The host keeps the drag, keys and wheel.
+// AIRISU's scrubber: a position in time is a run (ARun), thin, thickening while it can be taken; a setting's range (the
+// host has a knob) is a rule (ARule), as the row slider is. The run is the colour the caller gives it (an artwork's
+// tint, a muted stream's grey) or the accent's lacquer; paused, it sinks halfway into the stock. The host keeps the drag,
+// keys and wheel.
 Item {
     id: root
     property Item host
@@ -16,7 +17,21 @@ Item {
     readonly property color pigment: Qt.colorEqual(root.given, IrisStyle.fillStrong) ? Airisu.seal : root.given
     readonly property color track: root.host?.trackColor ?? IrisStyle.fill
 
+    // A setting's range is a rule, as the row slider's.
+    ARule {
+        visible: root.knob
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        height: Math.max(root.height, Math.round(30 * Airisu.d))
+        value: root.host?.shownValue ?? 0
+        hovered: root.engaged
+        held: root.host?.dragging ?? false
+        available: root.host?.enabled ?? true
+        keyed: root.host?.keyed ?? root.host?.activeFocus ?? false
+    }
     ARun {
+        visible: !root.knob
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
