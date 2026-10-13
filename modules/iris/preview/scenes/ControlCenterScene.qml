@@ -34,6 +34,28 @@ PreviewScene {
         y: IrisFrame.band
         opacity: ccRoot.fromIsland ? 0 : 1
     }
+    // A Design that draws the Control Center's keys and levels shows its own here, on stand-in hosts.
+    readonly property bool skinned: IrisDesign.has("controlTile")
+    component StandIn: Item {
+        id: standIn
+        property string part: ""
+        property var skinData: null
+        property bool hovered: false
+        property bool down: false
+        property bool visualFocus: false
+        property real shownValue: 0.6
+        property bool vertical: true
+        property bool muted: false
+        property bool held: false
+        property string icon: ""
+        property string label: ""
+        Loader {
+            anchors.fill: parent
+            active: standIn.visible && standIn.part.length > 0
+            source: IrisDesign.skin(standIn.part)
+            onLoaded: item.host = standIn
+        }
+    }
     Plate {
         id: ccPlate
         surface: "controlCenter"
@@ -73,8 +95,16 @@ PreviewScene {
                         height: Math.round(block.spot.h * ccGrid.unit + (block.spot.h - 1) * ccGrid.gap)
                         radius: block.kind === "platter" || block.kind === "media" ? IrisStyle.radiusPlate
                             : !ccRoot.round ? IrisStyle.radiusTile : Math.min(width, height) / 2
-                        color: block.kind === "levels" ? "transparent"
+                        readonly property bool keyed: ccRoot.skinned && block.kind === "toggle" && !block.wide
+                        color: block.kind === "levels" || block.keyed ? "transparent"
                             : block.index === 0 && block.kind === "toggle" && !block.wide ? IrisStyle.accent : IrisStyle.fillQuiet
+                        StandIn {
+                            anchors.fill: parent
+                            visible: block.keyed
+                            part: "controlTile"
+                            skinData: ({ shape: ccRoot.round ? "disc" : "tile", control: ({ lit: block.index === 0, ready: true,
+                                glyph: IrisControlOptions.glyphOf(block.modelData), label: "" }) })
+                        }
                         clip: true
                         Grid {
                             visible: block.kind === "platter"
@@ -89,8 +119,14 @@ PreviewScene {
                                     width: Math.round(38 * ccRoot.d)
                                     height: width
                                     radius: IrisStyle.capsule(width)
-                                    color: index === 0 ? IrisStyle.accent : IrisStyle.fill
-                                    MaterialSymbol { anchors.centerIn: parent; text: IrisControlOptions.glyphOf(parent.modelData); iconSize: Math.round(17 * ccRoot.d); color: parent.index === 0 ? IrisStyle.inkOnAccent : IrisStyle.text }
+                                    color: ccRoot.skinned ? "transparent" : index === 0 ? IrisStyle.accent : IrisStyle.fill
+                                    MaterialSymbol { visible: !ccRoot.skinned; anchors.centerIn: parent; text: IrisControlOptions.glyphOf(parent.modelData); iconSize: Math.round(17 * ccRoot.d); color: parent.index === 0 ? IrisStyle.inkOnAccent : IrisStyle.text }
+                                    StandIn {
+                                        anchors.fill: parent
+                                        visible: ccRoot.skinned
+                                        part: "controlTile"
+                                        skinData: ({ shape: "disc", control: ({ lit: parent.index === 0, ready: true, glyph: IrisControlOptions.glyphOf(parent.modelData), label: "" }) })
+                                    }
                                 }
                             }
                         }
@@ -105,9 +141,15 @@ PreviewScene {
                                     width: Math.round(Math.min(46 * ccRoot.d, (block.width - 20 * ccRoot.d) / 3))
                                     height: block.height
                                     radius: IrisStyle.capsule(width)
-                                    color: IrisStyle.fill
-                                    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: parent.height * 0.6; radius: parent.radius; color: IrisStyle.fillStrong }
-                                    MaterialSymbol { anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: Math.round(10 * ccRoot.d); text: IrisControlOptions.glyphOf(parent.modelData); iconSize: Math.round(15 * ccRoot.d); color: IrisStyle.surface }
+                                    color: ccRoot.skinned ? "transparent" : IrisStyle.fill
+                                    StandIn {
+                                        anchors.fill: parent
+                                        visible: ccRoot.skinned && IrisDesign.has("meter")
+                                        part: "meter"
+                                        icon: IrisControlOptions.glyphOf(parent.modelData)
+                                    }
+                                    Rectangle { visible: !ccRoot.skinned; anchors.bottom: parent.bottom; width: parent.width; height: parent.height * 0.6; radius: parent.radius; color: IrisStyle.fillStrong }
+                                    MaterialSymbol { visible: !ccRoot.skinned; anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: Math.round(10 * ccRoot.d); text: IrisControlOptions.glyphOf(parent.modelData); iconSize: Math.round(15 * ccRoot.d); color: IrisStyle.surface }
                                 }
                             }
                         }
@@ -120,7 +162,7 @@ PreviewScene {
                             color: IrisStyle.fillStrong
                         }
                         MaterialSymbol {
-                            visible: !block.wide && !block.grouped && block.kind !== "media"
+                            visible: !block.wide && !block.grouped && block.kind !== "media" && !block.keyed
                             x: block.kind === "level" && !block.upright ? Math.round(14 * ccRoot.d) : Math.round((parent.width - width) / 2)
                             y: block.kind === "level" && block.upright ? parent.height - height - Math.round(14 * ccRoot.d) : Math.round((parent.height - height) / 2)
                             text: IrisControlOptions.glyphOf(block.modelData)

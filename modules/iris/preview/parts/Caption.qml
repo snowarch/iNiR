@@ -19,7 +19,10 @@ Rectangle {
     implicitWidth: captionRow.implicitWidth + Math.round(22 * IrisStyle.density)
     implicitHeight: Math.round(28 * IrisStyle.density)
     radius: IrisStyle.capsule(height)
-    color: IrisStyle.veilHeavy
+    // A plate Design (AIRISU) labels the scene as a part: a die-cut tag, the words in mono capitals.
+    readonly property bool tagged: IrisStyle.plateSelection
+    color: caption.tagged ? "transparent" : IrisStyle.veilHeavy
+    IrisCutPlate { anchors.fill: parent; visible: caption.tagged; color: IrisStyle.veilHeavy; cutLength: Math.round(caption.height / 3) }
     visible: caption.text.length > 0 && !(caption.preview?.compact ?? false)
     Binding { target: caption.preview; property: "caption"; value: caption.text }
     RowLayout {
@@ -27,6 +30,13 @@ Rectangle {
         anchors.centerIn: parent
         spacing: Math.round(6 * IrisStyle.density)
         MaterialSymbol { text: caption.glyph; iconSize: Math.round(14 * IrisStyle.density); color: IrisStyle.subtext }
-        IrisText { text: caption.text; font.pixelSize: IrisStyle.typeMeta; color: IrisStyle.text }
+        IrisText {
+            text: caption.text
+            font.pixelSize: caption.tagged ? IrisStyle.typeFootnote : IrisStyle.typeMeta
+            font.family: caption.tagged ? IrisStyle.fontMono : IrisStyle.fontMain
+            font.capitalization: caption.tagged ? Font.AllUppercase : Font.MixedCase
+            font.letterSpacing: caption.tagged ? Math.round(IrisStyle.typeFootnote * 0.12) : 0
+            color: IrisStyle.text
+        }
     }
 }

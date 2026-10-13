@@ -27,9 +27,18 @@ PreviewScene {
         anchors.horizontalCenter: parent.horizontalCenter
         y: feedIsland.y + feedIsland.height + IrisStyle.weld
         width: feedRoot.bannerWidth
-        height: Math.round(76 * feedRoot.d)
+        height: bannerSkin.item ? bannerSkin.item.implicitHeight : Math.round(76 * feedRoot.d)
         radius: IrisStyle.radiusPlate
+        // A Design that draws banners shows its own here, on a stand-in notice that starts over each time it runs out.
+        Loader {
+            id: bannerSkin
+            anchors.fill: parent
+            active: IrisDesign.skin("banner").length > 0
+            source: IrisDesign.skin("banner")
+            onLoaded: feedRoot.resetNotice()
+        }
         RowLayout {
+            visible: !bannerSkin.item
             anchors.fill: parent
             anchors.margins: Math.round(14 * feedRoot.d)
             spacing: Math.round(12 * feedRoot.d)
@@ -43,6 +52,7 @@ PreviewScene {
         }
         Rectangle {
             id: drain
+            visible: !bannerSkin.item
             anchors.bottom: parent.bottom
             anchors.bottomMargin: Math.round(6 * feedRoot.d)
             x: Math.round(18 * feedRoot.d)
@@ -59,18 +69,36 @@ PreviewScene {
             }
         }
     }
+    function resetNotice(): void {
+        if (!bannerSkin.item) return
+        bannerSkin.item.notification = ({ notificationId: -1, appName: "iNiR", appIcon: "", image: "", urgency: "1",
+            summary: Translation.tr("A notification"), time: Date.now(), timer: ({ interval: feedRoot.duration }), actions: [],
+            body: Translation.tr("Stays %1 s, then folds back into the Island.").arg((feedRoot.duration / 1000).toFixed(1)) })
+    }
+    Timer { interval: feedRoot.duration + 600; running: feedRoot.playing && bannerSkin.item !== null; repeat: true; onTriggered: feedRoot.resetNotice() }
     Rectangle {
+        id: osdPlate
         anchors.horizontalCenter: parent.horizontalCenter
         y: bannerPlate.y + bannerPlate.height + Math.round(40 * feedRoot.d)
         opacity: feedRoot.osd ? 1 : 0.3
-        width: feedRoot.osdWidth
-        height: Math.round(44 * feedRoot.d)
+        width: osdSkin.item ? osdSkin.item.implicitWidth : feedRoot.osdWidth
+        height: osdSkin.item ? osdSkin.item.implicitHeight : Math.round(44 * feedRoot.d)
         radius: IrisStyle.capsule(height)
         color: IrisStyle.bodySurface
+        // A Design's OSD stands in for the stand-in level.
+        Loader {
+            id: osdSkin
+            anchors.fill: parent
+            active: IrisDesign.skin("osd").length > 0
+            source: IrisDesign.skin("osd")
+            onLoaded: item.osd = Qt.binding(() => ({ kind: "volume", level: true, value: Math.min(1, Audio.value ?? 0.7), icon: "volume_up",
+                levelFigure: true, open: true, levelStyle: String(feedRoot.opt("iris.osd.style", "capsule")) }))
+        }
         border.width: IrisStyle.rim.a > 0 ? 1 : 0
         border.color: IrisStyle.rim
         IrisGlassEdge { anchors.fill: parent; z: 10; visible: IrisStyle.edgeLit && shown; radius: parent.radius }
         RowLayout {
+            visible: !osdSkin.item
             anchors.fill: parent
             anchors.leftMargin: Math.round(14 * feedRoot.d)
             anchors.rightMargin: Math.round(16 * feedRoot.d)
