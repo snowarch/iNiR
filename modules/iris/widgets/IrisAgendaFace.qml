@@ -7,6 +7,7 @@ import qs.modules.iris.style
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetAgenda")
 
     readonly property var today: DateTime.clock.date
     readonly property var events: Array.from(root.widget.upcomingEvents ?? [])

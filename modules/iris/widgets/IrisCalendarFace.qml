@@ -8,6 +8,7 @@ import qs.modules.iris.style
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetCalendar")
 
     readonly property var today: DateTime.clock.date
     readonly property var viewing: root.widget.viewingDate
