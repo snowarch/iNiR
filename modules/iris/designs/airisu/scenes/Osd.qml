@@ -38,7 +38,7 @@ Item {
     implicitHeight: Math.round(root.current.implicitHeight + 2 * root.rise)
 
     readonly property bool opened: root.osd?.open ?? false
-    readonly property int kiss: Math.round(3 * root.d)
+    readonly property int kiss: Airisu.kiss
 
     // The panel's pigment for what changed.
     readonly property string connectionTone: root.osd?.connection?.tone ?? ""

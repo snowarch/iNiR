@@ -23,12 +23,7 @@ Item {
     readonly property real s: root.face?.widget?.scaleFactor ?? 1
     function dp(v: real): real { return root.face ? root.face.dp(v) : Math.round(v) }
     function type(token: real): int { return Math.round(token * root.s) }
-    function clock(seconds: real): string {
-        const t = Math.max(0, Math.floor(seconds))
-        const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60
-        const ss = sec < 10 ? "0" + sec : String(sec)
-        return h > 0 ? h + ":" + (m < 10 ? "0" + m : m) + ":" + ss : m + ":" + ss
-    }
+    function clock(seconds: real): string { return StringUtils.friendlyTimeForSeconds(seconds) }
 
     readonly property bool small: root.face?.small ?? false
     readonly property bool large: root.face?.large ?? false

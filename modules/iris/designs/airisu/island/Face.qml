@@ -226,7 +226,7 @@ Item {
             radius: width / 2
             color: root.ink
             SequentialAnimation on opacity {
-                running: root.mode === "record" && Airisu.moving
+                running: root.mode === "record" && Airisu.moving && root.visible
                 loops: Animation.Infinite
                 PropertyAction { value: 1 }
                 PauseAnimation { duration: 700 }

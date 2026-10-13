@@ -21,7 +21,7 @@ Item {
     id: root
     property Item host
     readonly property real d: Airisu.d
-    function u(n: real): int { return Math.round(n * 4 * root.d) }
+    function u(n: real): int { return Airisu.u(n) }
     readonly property var screen: root.host?.screen ?? GlobalStates.focusedScreen
     readonly property real aspect: root.screen ? root.screen.height / Math.max(1, root.screen.width) : 0.5625
     readonly property real plateW: Math.round(Math.min(root.width * 0.46, root.u(80)))
