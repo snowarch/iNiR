@@ -83,7 +83,7 @@ PreviewScene {
     }
 
     Rectangle {
-        visible: widgetsRoot.on
+        visible: widgetsRoot.on && !widgetsRoot.printed
         x: widgetsRoot.plateX
         y: widgetsRoot.plateY
         width: widgetsRoot.wide
@@ -123,7 +123,7 @@ PreviewScene {
         }
     }
     Rectangle {
-        visible: widgetsRoot.on
+        visible: widgetsRoot.on && !widgetsRoot.printed
         x: widgetsRoot.plateX + widgetsRoot.wide + widgetsRoot.gap
         y: widgetsRoot.plateY
         width: widgetsRoot.unit
@@ -142,6 +142,41 @@ PreviewScene {
             IrisText { text: String(Weather.data?.temp ?? "18°"); font.family: IrisStyle.fontNumbers; font.weight: widgetsRoot.weight; font.pixelSize: 34 * IrisStyle.typeScale }
             IrisText { text: Weather.data?.city ?? Translation.tr("Weather"); color: IrisStyle.subtext; elide: Text.ElideRight; Layout.fillWidth: true }
         }
+    }
+    // A Design that prints the clock and the weather shows its own prints here, on stand-in faces fed by the live clock
+    // and forecast (the widgets themselves are not instantiated).
+    readonly property bool printed: widgetsRoot.iris && IrisDesign.has("widgetClock") && IrisDesign.has("widgetWeather")
+    readonly property var standIn: ({
+        small: true, medium: false, large: false,
+        dp: v => Math.round(v * widgetsRoot.d), px: v => Math.round(v * widgetsRoot.d * IrisStyle.typeScale),
+        clear: widgetsRoot.clear, material: widgetsRoot.material, accent: IrisStyle.accent, accent2: IrisStyle.secondaryAccent,
+        opaque: !widgetsRoot.glass && !widgetsRoot.clear, strength: widgetsRoot.strength, veil: 0, plated: !widgetsRoot.clear,
+        moving: false, ink: IrisStyle.onMedia, inkSecondary: IrisStyle.onMediaSecondary, inkTertiary: IrisStyle.onMediaTertiary,
+        analog: false, seconds: false, now: DateTime.clock.date,
+        timeText: Translation.locale.toString(DateTime.clock.date, "hh:mm"),
+        weekday: Translation.locale.toString(DateTime.clock.date, "dddd"),
+        longDate: Translation.locale.toString(DateTime.clock.date, "d MMMM"),
+        ready: true, city: String(Weather.visibleCity ?? ""), condition: String(Weather.data?.description ?? ""),
+        glyph: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud", range: "", hours: [], days: [],
+        weekLow: 0, weekHigh: 1, degrees: v => String(v ?? ""),
+        widget: ({ temperatureText: String(Weather.data?.temp ?? "18°") }) })
+    Loader {
+        active: widgetsRoot.on && widgetsRoot.printed
+        x: widgetsRoot.plateX
+        y: widgetsRoot.plateY
+        width: widgetsRoot.unit
+        height: widgetsRoot.unit
+        source: IrisDesign.skin("widgetClock")
+        onLoaded: item.face = Qt.binding(() => widgetsRoot.standIn)
+    }
+    Loader {
+        active: widgetsRoot.on && widgetsRoot.printed
+        x: widgetsRoot.plateX + widgetsRoot.wide + widgetsRoot.gap
+        y: widgetsRoot.plateY
+        width: widgetsRoot.unit
+        height: widgetsRoot.unit
+        source: IrisDesign.skin("widgetWeather")
+        onLoaded: item.face = Qt.binding(() => widgetsRoot.standIn)
     }
     OffState { visible: !widgetsRoot.on; text: Translation.tr("Desktop widgets off") }
     Caption {
