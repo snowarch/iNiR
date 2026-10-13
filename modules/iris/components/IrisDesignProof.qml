@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import qs.services
 import qs.modules.iris.style
 import qs.modules.iris.polkit
+import qs.modules.iris.lock
 import qs.modules.iris.regionSelector
 
 // A proof of the active Design (校正刷り): every control part it skins, in each state a person reaches (rest, pointer,
@@ -421,6 +422,31 @@ PanelWindow {
                     }
                 }
             }
+            // The whole lock as the real surface draws it, on a context that never asks PAM and with no keys: the
+            // proof's window takes no input, so nothing here can lock or hold the session.
+            Row {
+                spacing: Math.round(32 * root.d)
+                Text {
+                    width: root.labelWidth
+                    text: "lock · whole"
+                    color: IrisStyle.textSecondary
+                    font.family: IrisStyle.fontMono
+                    font.pixelSize: IrisStyle.typeMeta
+                }
+                Item {
+                    width: 960
+                    height: 540
+                    clip: true
+                    IrisLockSurface {
+                        width: 1920
+                        height: 1080
+                        scale: 0.5
+                        transformOrigin: Item.TopLeft
+                        context: lockStandIn
+                        editing: false
+                    }
+                }
+            }
             Row {
                 spacing: Math.round(32 * root.d)
                 Text {
@@ -446,6 +472,20 @@ PanelWindow {
         }
     }
 
+    // The lock's stand-in context: nothing typed, nothing checked, nothing unlocked.
+    QtObject {
+        id: lockStandIn
+        signal shouldReFocus()
+        signal unlocked(targetAction: var)
+        signal failed()
+        property string currentText: ""
+        property bool unlockInProgress: false
+        property bool showFailure: false
+        property bool fingerprintsConfigured: false
+        function clearText(): void { lockStandIn.currentText = "" }
+        function resetClearTimer(): void {}
+        function tryUnlock(): void {}
+    }
     // Engine surfaces a Design dresses from the inside, drawn on stand-ins: the authentication dialog and the snip
     // toolbar. Nothing here reaches polkit or the region selector.
     readonly property var polkitStandIn: ({ flow: null, interactionAvailable: true, batteryChargeLimitRequest: false,
