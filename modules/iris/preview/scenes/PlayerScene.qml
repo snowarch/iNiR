@@ -21,8 +21,28 @@ PreviewScene {
     readonly property bool pinned: playerRoot.opt("iris.player.cardPinned", false)
     readonly property real naturalWidth: Math.round(560 * playerRoot.d)
     readonly property real naturalHeight: Math.round(290 * playerRoot.d)
+    // A Design that draws the player card shows its own here, on a stand-in of the record that plays (its keys do nothing).
+    readonly property string cardUrl: IrisDesign.skin("mediaCard")
+    readonly property var standIn: ({
+        playback: ({ effectiveTitle: MprisController.titleOf(playerRoot.player) || Translation.tr("Song title"),
+            effectiveArtist: MprisController.artistOf(playerRoot.player) || Translation.tr("Artist"),
+            effectiveIsPlaying: MprisController.isPlaying, effectiveLength: MprisController.lengthOf(playerRoot.player) || 240,
+            effectivePosition: MprisController.positionOf(playerRoot.player) || 92, effectiveCanSeek: false,
+            effectiveCanGoNext: true, effectiveCanGoPrevious: true, displayedArtFilePath: String(playerRoot.cover ?? ""),
+            togglePlaying: () => {}, next: () => {}, previous: () => {}, seek: () => {} }),
+        player: playerRoot.player, hasPlayer: true, liveStream: false, hasTimeline: true, compact: false, overMedia: false,
+        showPlayers: false, headerReserve: 0, emptyDetail: "", emptyIcon: "", offersOpen: false })
+    Loader {
+        id: designCard
+        anchors.centerIn: parent
+        width: Math.round(380 * playerRoot.d)
+        active: playerRoot.cardUrl.length > 0
+        source: playerRoot.cardUrl
+        onLoaded: item.host = Qt.binding(() => playerRoot.standIn)
+    }
     ClippingRectangle {
         id: playerCard
+        visible: !designCard.item
         anchors.centerIn: parent
         width: Math.round(380 * playerRoot.d)
         height: Math.round(210 * playerRoot.d)

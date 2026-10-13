@@ -20,8 +20,18 @@ Item {
         framed: false
         shapes: [{ id: "island", x: 0, y: 0, width: pill.width, height: pill.height, radius: pill.radius }]
     }
+    // A Design that draws the Island's face shows it here at rest, on a stand-in Island.
+    readonly property string faceUrl: pill.vertical ? "" : IrisDesign.skin("islandFace")
+    Loader {
+        id: face
+        anchors.fill: parent
+        active: pill.faceUrl.length > 0
+        source: pill.faceUrl
+        onLoaded: item.island = ({ compactMode: "clock", compactHeight: pill.height, clockScale: 1, clockStyle: "time",
+            notch: false, bottomEdge: false, clockText: () => "" })
+    }
     IrisClock {
-        visible: !pill.vertical
+        visible: !pill.vertical && !face.item
         anchors.centerIn: parent
         pixelSize: IrisStyle.typeHeadline
         separatorColor: IrisStyle.secondaryAccent

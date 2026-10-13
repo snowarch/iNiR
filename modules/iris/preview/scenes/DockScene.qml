@@ -174,6 +174,16 @@ PreviewScene {
                 transformOrigin: ({ top: Item.Top, left: Item.Left, right: Item.Right })[dockRoot.edge] ?? Item.Bottom
                 z: 3 - Math.min(3, dockIcon.distance)
                 Behavior on scale { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
+                // The slot as the Design answers it (IrisDesign part `dockSlot`), the pointer standing on the magnified one.
+                Item {
+                    id: slotHost
+                    anchors.fill: parent
+                    readonly property bool hovered: dockIcon.distance === 0
+                    readonly property bool down: false
+                    readonly property bool visualFocus: false
+                    readonly property var skinData: ({ box: Qt.rect(0, 0, dockIcon.width, dockIcon.height), launches: 0 })
+                    IrisSkin { part: "dockSlot"; host: slotHost }
+                }
                 Rectangle {
                     anchors.fill: parent
                     visible: dockIcon.modelData.launcher === true
@@ -188,8 +198,16 @@ PreviewScene {
                     icon: IrisPieces.appIcon(dockIcon.modelData.appId ?? "")
                     fallback: "application-x-executable"
                 }
+                IrisBadge {
+                    visible: IrisDesign.has("badge") && dockRoot.badges && dockIcon.modelData.launcher !== true && dockIcon.index % 3 === 1
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: -Math.round(3 * dockRoot.d)
+                    count: dockIcon.index
+                    size: Math.round(17 * dockRoot.d)
+                }
                 Rectangle {
-                    visible: dockRoot.badges && dockIcon.modelData.launcher !== true && dockIcon.index % 3 === 1
+                    visible: !IrisDesign.has("badge") && dockRoot.badges && dockIcon.modelData.launcher !== true && dockIcon.index % 3 === 1
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.margins: -Math.round(3 * dockRoot.d)
