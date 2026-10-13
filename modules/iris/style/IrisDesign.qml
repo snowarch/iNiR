@@ -55,6 +55,20 @@ Singleton {
     function has(part: string): bool {
         return String(root.parts?.[part] ?? "").length > 0
     }
+    // The options the Design decides for itself (IrisStyle and IrisWashi read the Design first): Settings leaves their
+    // rows out while it is worn, and they apply again under another Design.
+    function owns(path: string): bool {
+        switch (path) {
+        case "iris.appearance.language": case "iris.appearance.variant": return root.palette.length > 0
+        case "iris.appearance.preset": return root.preset.length > 0
+        case "iris.appearance.fontFamily": return root.font("text").length > 0
+        case "iris.appearance.titleFontFamily": return root.font("title").length > 0
+        case "iris.appearance.numbersFontFamily": return root.font("numbers").length > 0
+        case "iris.appearance.morph": return root.morph.length > 0
+        case "iris.appearance.settingsLayout": return root.has("settingsPage")
+        }
+        return false
+    }
 
     function load(): void {
         const component = Qt.createComponent(`${root.folder(root.current)}Design.qml`)
