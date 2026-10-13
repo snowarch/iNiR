@@ -31,6 +31,11 @@ Singleton {
         { key: "newsTicker", glyph: "newspaper", english: "News", label: Translation.tr("News"), tint: IrisStyle.identity.teal }
     ]
 
+    // Widgets without an iRiS face that the active Design prints all the same (IrisDesignFace): they take that print as
+    // their face under iRiS and keep drawing themselves everywhere else.
+    readonly property var prints: ({ visualizer: IrisDesign.has("widgetVisualizer"), editorial: IrisDesign.has("widgetEditorial"),
+        japaneseTypography: IrisDesign.has("widgetJapanese") })
+
     // Widgets without an iRiS face, listed wherever the set is: they count on the desktop and can be taken away.
     readonly property var otherEntries: [
         { key: "visualizer", glyph: DesktopWidgetIdentity.glyph("visualizer"), english: "Visualizer", label: Translation.tr("Visualizer"), tint: DesktopWidgetIdentity.tint("visualizer") },

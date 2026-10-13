@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
-import qs.modules.iris.style
 import qs.modules.iris.widgets
 
 AbstractBackgroundWidget {
@@ -19,7 +18,7 @@ AbstractBackgroundWidget {
     implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.max(180, Number(root._readConfigKey("contentWidth") ?? 360)) * scaleFactor
     implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.max(140, Number(root._readConfigKey("contentHeight") ?? 240)) * scaleFactor
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
-    irisFace: IrisDesign.has("widgetEditorial") ? designPrint : null
+    irisFace: IrisFaceData.prints.editorial ? designPrint : null
     irisSizes: ["medium", "large", "small"]
     Component { id: designPrint; IrisDesignFace { widget: root; part: "widgetEditorial" } }
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })

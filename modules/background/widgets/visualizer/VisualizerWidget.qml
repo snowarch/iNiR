@@ -11,7 +11,6 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.models
 import qs.modules.common.widgets
-import qs.modules.iris.style
 import qs.modules.iris.widgets
 import qs.modules.background.widgets
 
@@ -39,7 +38,7 @@ AbstractBackgroundWidget {
     implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 304) * scaleFactor)
     implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 104) * scaleFactor)
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
-    irisFace: IrisDesign.has("widgetVisualizer") ? designPrint : null
+    irisFace: IrisFaceData.prints.visualizer ? designPrint : null
     irisSizes: ["medium", "small", "large"]
     Component { id: designPrint; IrisDesignFace { widget: root; part: "widgetVisualizer" } }
     // What a print reads: the spectrum, whether it is moving, and its ceiling.
