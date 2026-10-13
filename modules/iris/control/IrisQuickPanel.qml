@@ -59,9 +59,13 @@ ColumnLayout {
         ]
     }
 
+    // A block's plate; a Design may lay its own (`controlPlate`), and the block keeps its content and input.
     component Block: Rectangle {
+        id: block
+        readonly property string plateKind: "block"
         radius: root.blockRadius
-        color: root.blockColor
+        color: plate.active ? "transparent" : root.blockColor
+        IrisSkin { id: plate; part: "controlPlate"; host: block; z: -1 }
     }
 
     RowLayout {

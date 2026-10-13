@@ -606,8 +606,10 @@ Item {
             readonly property real discSize: Math.round(Math.min(46 * root.d, platter.slotWidth - 12 * root.d,
                 platter.inRow ? platter.height - 2 * platter.pad - platter.captionHeight
                     : (platter.height - 2 * platter.pad - platter.rowGap) / 2 - platter.captionHeight))
+            readonly property string plateKind: "group"
             radius: IrisStyle.radiusPlate
-            color: IrisStyle.fillQuiet
+            color: platterPlate.active ? "transparent" : IrisStyle.fillQuiet
+            IrisSkin { id: platterPlate; part: "controlPlate"; host: platter; z: -1 }
             Grid {
                 anchors.centerIn: parent
                 columns: platter.inRow ? platter.count : 2
@@ -758,9 +760,11 @@ Item {
             readonly property bool hasPlayer: MprisController.activePlayer !== null && MprisController.activePlayer !== undefined
             // Nothing playing: the whole tile is a button for the music app you use most.
             readonly property bool offersMusic: !nowPlaying.hasPlayer && IrisPieces.musicAppName.length > 0
+            readonly property string plateKind: "media"
             radius: nowPlaying.strip && IrisControlOptions.roundControls ? height / 2 : IrisStyle.radiusPlate
-            color: nowPlaying.hasPlayer ? IrisStyle.fillQuiet : "transparent"
+            color: nowPlaying.hasPlayer && !mediaPlate.active ? IrisStyle.fillQuiet : "transparent"
             clip: true
+            IrisSkin { id: mediaPlate; part: "controlPlate"; host: nowPlaying; visible: nowPlaying.hasPlayer; z: -1 }
             PlayerBase { id: media; player: MprisController.activePlayer; positionUpdatesActive: nowPlaying.visible }
             Loader {
                 anchors.fill: parent
@@ -826,21 +830,26 @@ Item {
                     }
                 }
             }
+            // A strip and a wide tile set the cover, the words and the keys in one row. A square tile sets the cover as
+            // large as the keys under it leave room for, with the title beside it, so no corner of the tile stays empty.
             GridLayout {
+                id: playing
+                readonly property bool across: nowPlaying.strip || nowPlaying.wide
+                readonly property real keysHeight: Math.round(30 * root.d)
                 visible: nowPlaying.hasPlayer
                 anchors.fill: parent
                 anchors.margins: nowPlaying.pad
-                flow: nowPlaying.strip || nowPlaying.wide ? GridLayout.LeftToRight : GridLayout.TopToBottom
-                columns: nowPlaying.strip || nowPlaying.wide ? 3 : 1
-                rows: nowPlaying.strip || nowPlaying.wide ? 1 : 3
-                columnSpacing: Math.round(12 * root.d)
-                rowSpacing: Math.round(4 * root.d)
+                flow: GridLayout.LeftToRight
+                columns: playing.across ? 3 : 2
+                columnSpacing: Math.round((playing.across ? 12 : 10) * root.d)
+                rowSpacing: Math.round(6 * root.d)
                 IrisArtwork {
-                    readonly property real side: nowPlaying.strip ? nowPlaying.height - 2 * nowPlaying.pad
-                        : nowPlaying.wide ? nowPlaying.height - 2 * nowPlaying.pad : Math.round(40 * root.d)
+                    readonly property real side: playing.across ? nowPlaying.height - 2 * nowPlaying.pad
+                        : Math.max(Math.round(40 * root.d), Math.min(Math.round(playing.width * 0.5),
+                            playing.height - playing.keysHeight - playing.rowSpacing))
                     Layout.preferredWidth: side
                     Layout.preferredHeight: side
-                    Layout.alignment: nowPlaying.strip || nowPlaying.wide ? Qt.AlignVCenter : Qt.AlignLeft | Qt.AlignTop
+                    Layout.alignment: playing.across ? Qt.AlignVCenter : Qt.AlignLeft | Qt.AlignTop
                     source: MediaArtwork.displaySource
                     circular: (Config.options?.iris?.player?.roundCover ?? false) && !nowPlaying.wide
                     radius: circular ? width / 2 : IrisStyle.radiusTile
@@ -857,6 +866,8 @@ Item {
                         text: media.effectiveTitle
                         font.pixelSize: nowPlaying.wide ? IrisStyle.typeBody : IrisStyle.typeLabel
                         font.weight: IrisStyle.weight(Font.DemiBold)
+                        wrapMode: playing.across ? Text.NoWrap : Text.Wrap
+                        maximumLineCount: playing.across ? 1 : 3
                         elide: Text.ElideRight
                     }
                     IrisText {
@@ -867,16 +878,24 @@ Item {
                         elide: Text.ElideRight
                     }
                     Transport {
-                        visible: !nowPlaying.strip
+                        visible: nowPlaying.wide
                         Layout.fillWidth: true
                         Layout.topMargin: Math.round(4 * root.d)
                         player: media
                         live: true
                     }
+                    Item { Layout.fillHeight: true; visible: !playing.across }
                 }
                 Transport {
                     visible: nowPlaying.strip
                     Layout.preferredWidth: Math.round(112 * root.d)
+                    player: media
+                    live: true
+                }
+                Transport {
+                    visible: !playing.across
+                    Layout.columnSpan: 2
+                    Layout.fillWidth: true
                     player: media
                     live: true
                 }
