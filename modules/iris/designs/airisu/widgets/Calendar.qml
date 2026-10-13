@@ -26,7 +26,7 @@ Item {
     // A day of the month shown, as a date the calendars can be asked about.
     function dayOf(day: int): var {
         const shown = root.widget?.viewingDate ?? DateTime.clock.date
-        return new Date(shown.getFullYear(), shown.getMonth(), day)
+    readonly property var viewing: root.widget ? root.widget.viewingDate : DateTime.clock.date
     }
 
     AStock {

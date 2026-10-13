@@ -10,6 +10,7 @@ import qs.modules.iris.bar.island
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetBattery")
 
     readonly property var glyphs: ({
         mouse: "mouse", keyboard: "keyboard", headset: "headset_mic", headphones: "headphones",
