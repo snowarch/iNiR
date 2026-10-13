@@ -7,6 +7,7 @@ import qs.modules.iris.style
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetWorldClock")
 
     readonly property var cities: Array.from(root.widget.cities ?? []).slice(0, 4)
     readonly property int localOffset: -WorldClock.now.getTimezoneOffset()

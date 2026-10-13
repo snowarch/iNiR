@@ -9,6 +9,7 @@ import qs.modules.iris.style
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetWeather")
 
     readonly property bool ready: Weather.enabled && !String(Weather.data?.temp ?? "--").startsWith("--")
     readonly property string glyph: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"

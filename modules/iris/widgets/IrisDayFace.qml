@@ -9,6 +9,7 @@ import qs.modules.iris.bar.island
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetDay")
 
     readonly property real fraction: root.widget.dayFraction
     readonly property int percent: Math.floor(root.fraction * 100)

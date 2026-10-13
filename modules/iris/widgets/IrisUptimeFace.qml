@@ -7,6 +7,7 @@ import qs.modules.iris.style
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetUptime")
 
     readonly property int total: root.widget.sessionSeconds
     readonly property int days: Math.floor(root.total / 86400)

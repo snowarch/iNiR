@@ -7,6 +7,7 @@ import qs.modules.iris.style
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetDate")
 
     readonly property var today: root.widget.today
     readonly property real yearShare: root.widget.dayOfYear / root.widget.daysInYear
