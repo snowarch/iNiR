@@ -70,11 +70,11 @@ PreviewScene {
             Repeater {
                 model: [
                     { sep: true },
-                    { glyph: "widgets", text: Translation.tr("Edit widgets"), tint: "teal", lit: true },
-                    { glyph: "palette", text: Translation.tr("Customize iRiS"), tint: "purple" },
+                    { glyph: "widgets", text: Translation.tr("Edit widgets"), tint: "teal", lit: true, code: 1 },
+                    { glyph: "palette", text: Translation.tr("Customize iRiS"), tint: "purple", code: 2 },
                     { sep: true },
-                    { glyph: "settings", text: Translation.tr("Settings"), tint: "gray" },
-                    { glyph: "restart_alt", text: Translation.tr("Restart shell"), tint: "gray" }
+                    { glyph: "settings", text: Translation.tr("Settings"), tint: "gray", code: 3 },
+                    { glyph: "restart_alt", text: Translation.tr("Restart shell"), tint: "gray", code: 4 }
                 ]
                 Item {
                     id: menuRow
@@ -88,8 +88,26 @@ PreviewScene {
                         x: Math.round(8 * menuRoot.d); width: parent.width - 2 * x; height: 1
                         color: IrisStyle.hairline
                     }
+                    // A Design that draws menu rows shows its own here (its number, sign and marks), on a stand-in host.
+                    Item {
+                        id: rowHost
+                        visible: menuRow.modelData.sep !== true && IrisDesign.has("menuRow")
+                        anchors.fill: parent
+                        readonly property var option: ({ text: menuRow.modelData.text, iconName: menuRow.modelData.glyph })
+                        readonly property bool lit: menuRow.modelData.lit === true
+                        readonly property bool pressed: false
+                        readonly property bool marked: true
+                        readonly property bool compact: menuRoot.compact
+                        readonly property int code: menuRow.modelData.code ?? 0
+                        Loader {
+                            anchors.fill: parent
+                            active: rowHost.visible
+                            source: IrisDesign.skin("menuRow")
+                            onLoaded: item.host = rowHost
+                        }
+                    }
                     Rectangle {
-                        visible: menuRow.modelData.sep !== true
+                        visible: menuRow.modelData.sep !== true && !IrisDesign.has("menuRow")
                         anchors.fill: parent
                         radius: IrisStyle.radiusRow
                         color: menuRow.modelData.lit ? IrisStyle.fillHover : "transparent"
