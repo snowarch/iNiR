@@ -18,9 +18,10 @@ QtObject {
     // Text one and two steps down, as solid tones of the ink on this stock (a tint, not a see-through film).
     readonly property color inkSecond: ColorUtils.mix(IrisStyle.text, IrisStyle.bodySurface, 0.66) // iris-literal: AIRISU's second tone, solid
     readonly property color inkThird: ColorUtils.mix(IrisStyle.text, IrisStyle.bodySurface, 0.44)  // iris-literal: AIRISU's third tone, solid
-    // ── Lacquer (漆): AIRISU's material, and the only colours it uses: the person's accent as shu (朱), its hue muted
-    // toward the black as tame (溜) for what is at rest or set aside, and ki (黄) for caution, all laid in the black of
-    // the urushi. A subject is told by its sign and its words, never by a hue of its own.
+    // ── Lacquer (漆) and the 90/8/2 rule: ninety parts lacquer and ink (shikkoku, sumi, tetsu), eight of gofun, two of
+    // seal. The ladder is the solver's (scripts/colors/washi/airisu.go): canvas, raised and rule rungs. A subject's
+    // pigment never colours a whole panel; it is breathed into the rung (a few parts in a hundred) and spent whole only
+    // on what is live: the seal, a level's run, a mark.
     function pigment(subject: string): color {
         switch (subject) {
         // Caution is the Design's yamabuki as the solver keeps it for a fill (the airisu language seeds danger with it),
@@ -30,50 +31,34 @@ QtObject {
         default: return IrisStyle.accentFill
         }
     }
-    readonly property color tame: ColorUtils.darken(ColorUtils.adjustSaturation(IrisStyle.accentFill, 0.45), 0.14)
-    // Night lacquer holds a little of its pigment in the black, so a panel is the urushi a shade redder; by day it is the
-    // paper washed with it.
-    readonly property real lacquerLoad: IrisStyle.light ? 0.16 : 0.22 // iris-literal: how much pigment the lacquer holds
-    // The neutral the pigments are laid in: the scheme's black (or its plain paper), never the shell's own urushi, which
-    // already carries the accent and would muddy every other hue.
+    // Tame (溜): the seal with its fire taken out, for what is at rest or set aside.
+    readonly property color tame: ColorUtils.mix(IrisStyle.accentFill, IrisStyle.textSecondary, 0.35) // iris-literal: the seal at rest
+    // The neutral of the ladder: the scheme's own black (or its plain paper).
     readonly property color base: IrisStyle.materialSwatch("black")
-    function lacquerOf(pigment: color): color {
-        const c = Qt.color(pigment)
-        if (IrisStyle.light || c.hslHue < 0 || c.hslSaturation < 0.12) return ColorUtils.mix(pigment, root.base, root.lacquerLoad)
-        // At night a hue is kept, not mixed into the black: yamabuki mixed so went olive mud, never ki-urushi.
-        return Qt.hsla(c.hslHue, Math.min(0.7, c.hslSaturation * 0.85), 0.14 + 0.12 * root.yellowness(c), 1) // iris-literal: night lacquer
-    }
-    // How near a hue is to yellow. A yellow lacquer stays itself only lighter than a red one (ki-urushi is ochre where
-    // shu at the same depth is oxblood); at a red's depth it turns olive.
-    function yellowness(c: color): real { return Math.max(0, 1 - Math.abs(c.hslHue - 0.125) / 0.075) }
-    // A desktop widget is a thick coat of coloured lacquer (iro-urushi), the pigment carried well into the black, so on
-    // the wall it reads as a lacquered object in its colour and never as a dark card.
-    readonly property real stockLoad: IrisStyle.light ? 0.2 : 0.42 // iris-literal: how much pigment a widget's lacquer holds
-    // At night the coat keeps the pigment's hue and its chroma and only goes deep (iro-urushi is coloured right through);
-    // mixing it into the black greyed it into a dark card. A grey pigment has no hue to keep and is mixed.
-    function stockOf(pigment: color): color {
-        const c = Qt.color(pigment)
-        if (IrisStyle.light || c.hslHue < 0 || c.hslSaturation < 0.12) return ColorUtils.mix(pigment, root.base, root.stockLoad)
-        return root.deepOf(pigment)
-    }
-    // Lacquer laid deep whatever the scheme: an object made of it (a dial) is urushi by day too, never washed paper.
+    readonly property color raised: root.solid(IrisStyle.surfaceHigh)
+    readonly property color iron: root.solid(IrisStyle.surfaceHighest)
+    // How much of a pigment each rung carries: a panel breathes it, a widget's coat holds a little more, the canvas less.
+    readonly property real lacquerLoad: 0.07 // iris-literal: pigment in a panel's lacquer
+    readonly property real stockLoad: 0.1    // iris-literal: pigment in a widget's lacquer
+    // A panel: the raised rung (sumi at night, the next paper by day) with a breath of its subject.
+    function lacquerOf(pigment: color): color { return ColorUtils.mix(pigment, root.raised, root.lacquerLoad) }
+    // A desktop widget: the same rung as an object on the wall, holding a little more of its pigment.
+    function stockOf(pigment: color): color { return ColorUtils.mix(pigment, root.raised, root.stockLoad) }
+    // An object made of the lacquer itself (a dial): the canvas rung, whatever the scheme.
     function deepOf(pigment: color): color {
-        const c = Qt.color(pigment)
-        if (c.hslHue < 0 || c.hslSaturation < 0.12) return ColorUtils.mix(pigment, IrisStyle.materialSwatch("black"), 0.3)
-        return Qt.hsla(c.hslHue, Math.min(0.62, c.hslSaturation * 0.9), 0.2 + 0.12 * root.yellowness(c), 1) // iris-literal: night lacquer, deep and still coloured
+        return ColorUtils.mix(pigment, IrisStyle.light ? root.solid(IrisStyle.bodySurface) : root.base, 0.06) // iris-literal: canvas with a breath
     }
-    // The second coat, under type: a step deeper into the pigment (at night) or into the ink (by day), so whatever is set
-    // on it still reads.
-    function coat(pigment: color): color {
-        return IrisStyle.light ? ColorUtils.mix(pigment, IrisStyle.text, 0.8 + 0.2 * root.yellowness(pigment)) // iris-literal: the day coat, a step toward sumi (a yellow keeps itself: deepened it goes brown)
-            : ColorUtils.mix(pigment, root.base, 0.62)                        // iris-literal: the night coat, nearer the pigment
-    }
+    // The second coat, under type (the 45° band): the rule rung with a little more of the pigment, so whatever is set on
+    // it still reads and the band is told from the panel by a step of the ladder, not by a colour.
+    function coat(pigment: color): color { return ColorUtils.mix(pigment, root.iron, 0.14) } // iris-literal: the coat's pigment
     // The pigment at full strength, where nothing is set on it (a level's run, a mark).
     function vivid(pigment: color): color {
         // By day a pigment is deepened to read on paper, but a yellow printed on paper is yellow with sumi on it: deepened it
         // went the olive brown of mud.
         return IrisStyle.light ? ColorUtils.mix(pigment, IrisStyle.text, 0.78 + 0.22 * root.yellowness(pigment)) : pigment // iris-literal: the day pigment, deepened to read
     }
+    // How near a hue is to yellow: a yellow deepened toward sumi goes olive, so it keeps itself.
+    function yellowness(c: color): real { return Math.max(0, 1 - Math.abs(Qt.color(c).hslHue - 0.125) / 0.075) }
     // The ink a lacquer takes (gofun or sumi, whichever reads), and its lower tones tinted with the lacquer's own hue:
     // on a coloured surface a second line is the colour, never grey.
     // A see-through colour (a glass body's next coat) as the eye sees it over the body, so its ink is chosen against that.
@@ -106,14 +91,15 @@ QtObject {
     readonly property real pressStep: 0.22 // iris-literal: a press's coat
     // A slot (a level's run, a switch, a choice of words) is sunk into whatever lacquer it is cut in: that lacquer one
     // shade deeper in its own hue, so it reads on the body and on a coloured panel alike; the pointer lifts it a step.
-    readonly property color slot: IrisStyle.light ? ColorUtils.applyAlpha(IrisStyle.text, 0.1) : ColorUtils.applyAlpha(root.base, 0.42) // iris-literal: a slot's depth
-    readonly property color slotLifted: IrisStyle.light ? ColorUtils.applyAlpha(IrisStyle.text, 0.16) : ColorUtils.applyAlpha(root.base, 0.26) // iris-literal: a lifted slot
+    // At night the slot is the rule rung (tetsu), which reads on the canvas and on sumi alike.
+    readonly property color slot: IrisStyle.light ? ColorUtils.applyAlpha(IrisStyle.text, 0.1) : root.iron // iris-literal: a slot's depth
+    readonly property color slotLifted: IrisStyle.light ? ColorUtils.applyAlpha(IrisStyle.text, 0.16) : ColorUtils.mix(IrisStyle.text, root.iron, 0.08) // iris-literal: a lifted slot
     readonly property color slotCoat: ColorUtils.applyAlpha(IrisStyle.text, 0.08) // iris-literal: the pointer's coat inside a slot
     readonly property color slotPress: ColorUtils.applyAlpha(IrisStyle.text, 0.15) // iris-literal: a press inside a slot
-    // A key that cannot be taken is sunk into the body, a shade under it: raised a step it read as a grey key that
-    // stood out more than the live ones beside it.
+    // A key that cannot be taken sits half a rung over the canvas, under the live keys: raised a full step it read as a
+    // grey key that stood out more than the live ones beside it, sunk under the canvas it vanished.
     readonly property color dim: IrisStyle.light ? ColorUtils.mix(IrisStyle.text, root.solid(IrisStyle.bodySurface), 0.07) // iris-literal: an inactive key, sunk
-        : ColorUtils.mix(root.solid(IrisStyle.bodySurface), root.base, 0.5)                                               // iris-literal: an inactive key, sunk
+        : ColorUtils.mix(root.raised, root.base, 0.5)                                                                     // iris-literal: an inactive key, half a rung
 
     // A record's own pigment: the colour its cover is printed in (the engine's art tint), or music's when it has none.
     function recordPigment(tint: color): color { return Qt.colorEqual(tint, IrisStyle.text) ? root.pigment("music") : tint }
