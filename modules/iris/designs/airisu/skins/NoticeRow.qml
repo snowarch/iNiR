@@ -8,7 +8,7 @@ import "../components"
 // AIRISU's notice in a list (the Control Center's, Today's): a line of a timetable (時刻表). When it came stands first in
 // the data face, then a bar in the line colour of what it is about, the way a departure board marks each line; then the
 // sender as a ruby in the data face's capitals over the subject, and the newest words under it. How many are waiting is
-// a figure at the end. The pointer brings the row's crop marks and, where the figure stood, the key that puts the whole
+// a figure at the end. The pointer lifts the row a rung and, where the figure stood, brings the key that puts the whole
 // group away. The host keeps the tap (it opens the newest) and the dismissal.
 Item {
     id: root
@@ -37,6 +37,13 @@ Item {
         critical: root.critical
     }
 
+    ALacquer {
+        anchors.fill: parent
+        anchors.leftMargin: -Airisu.u(1)
+        cut: Airisu.cutFor(height)
+        lacquer: root.hovered ? Airisu.step(Airisu.ground, Airisu.hoverStep) : "transparent"
+        moving: false
+    }
     AText {
         id: clock
         x: 0
@@ -125,10 +132,5 @@ Item {
             }
         }
     }
-    AMarks {
-        anchors.fill: parent
-        anchors.leftMargin: -Airisu.u(1)
-        shown: root.hovered
-        gap: Math.round(Airisu.m / 2)
-    }
+
 }

@@ -4,9 +4,10 @@ import qs.modules.common.widgets
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's menu row (the desktop's, a bubble's, the tray's, the Dock's): a line of a parts list. Its number leads in the
-// data face (the digit that takes it from the keyboard), its sign stands bare in the second ink (no tinted chip), its words in the ink, a detail in the data face's capitals at the end. The row under
-// the pointer or the keyboard takes its crop marks, never a plate; a press prints the row's under plate. What is chosen
+// AIRISU's menu row (the desktop's, a bubble's, the tray's, the Dock's): a line of a parts list. Its number leads in
+// the data face (the digit that takes it from the keyboard), its sign stands bare in the second ink (no tinted chip),
+// its words in the ink, a detail in the data face's capitals at the end. The row under the pointer or the keyboard (the
+// menu's current row) takes crop marks in shu, never a plate; a press prints the row's under plate. What is chosen
 // carries the seal box stamped at the end; what opens further, a chevron. What would destroy keeps its words in the ink
 // and only its sign in yamabuki. A row that cannot be taken is set in the third ink.
 Item {
@@ -111,6 +112,7 @@ Item {
     AMarks {
         anchors.fill: parent
         shown: root.lit
+        color: Airisu.seal
         gap: Math.max(2, Math.round(Airisu.m / 2))
         arm: Math.max(3, Math.round(Airisu.m * 1.25))
     }

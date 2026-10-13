@@ -3,10 +3,10 @@ import qs.modules.iris.style
 import "../components"
 
 // AIRISU's button: a key (AKey). The primary action is a key of the accent's lacquer (the danger's, when it destroys);
-// the chosen one wears the chosen plate; any other is a tag, its die ruled in the second ink of what it sits on (a key of
-// the body's next coat read as a grey key that cannot be taken), and a quiet one is its words alone. The pointer and the
-// keyboard bring the key's crop marks, a press its register. One that cannot be taken is ruled dashed. Its words are cut out of the lacquer
-// in the lacquer's own ink.
+// the chosen one wears the chosen plate; any other is a tag, its die ruled in the second ink of what it sits on (a key
+// of the body's next coat read as a grey key that cannot be taken), and a quiet one is its words alone. The pointer
+// lifts the key a rung, the keyboard brings its crop marks in shu, a press its register. One that cannot be taken is
+// ruled dashed. Its words are cut out of the lacquer in the lacquer's own ink.
 Item {
     id: root
     property Item host

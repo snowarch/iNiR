@@ -4,8 +4,8 @@ import qs.modules.iris.style
 
 // A rule (定規): how AIRISU draws a setting's range. A row of ticks on the module, every fifth one long, printed in ink as
 // far as the value and in the third ink past it, with a die-cut pointer standing over the value. The pointer is the grip:
-// it is the ink's at rest and the seal's while a hand holds it (the only shu on the row). The pointer brings the rule's
-// crop marks, the keyboard brings them in shu; one that cannot be taken prints every tick in the third ink and drops
+// it is the ink's at rest and the seal's while a hand holds it (the only shu on the row). The pointer inks the rule's foot,
+// the keyboard brings crop marks in shu; one that cannot be taken prints every tick in the third ink and drops
 // the pointer.
 Item {
     id: root
@@ -59,7 +59,7 @@ Item {
         }
         // The rule's foot.
         ShapePath {
-            strokeColor: Airisu.inkThird
+            strokeColor: root.available && root.hovered ? Airisu.ink : Airisu.inkThird
             strokeWidth: Airisu.hair
             fillColor: "transparent"
             startX: 0
@@ -87,7 +87,7 @@ Item {
     }
     AMarks {
         anchors.fill: parent
-        shown: (root.available && root.hovered) || root.keyed
-        color: root.keyed ? Airisu.seal : Airisu.marks
+        shown: root.keyed
+        color: Airisu.seal
     }
 }

@@ -89,7 +89,7 @@ Item {
                     readonly property color pigment: root.pigmentOf(String(ticket.modelData.id ?? ""))
                     readonly property color lacquer: Airisu.lacquerOf(ticket.pigment)
                     readonly property color coat: Airisu.vivid(ticket.pigment)
-                    readonly property color face: ticket.lacquer
+                    readonly property color face: ticket.hovered && !ticket.pressed ? Airisu.step(ticket.lacquer, Airisu.hoverStep) : ticket.lacquer
                     // How far the coat is laid: the hold's, or all of it while the keyboard waits for the second press.
                     readonly property real laidShare: ticket.waiting ? 1 : ticket.ink
                     // Each thing printed takes the ticket's ink (the seal is stamped beside the words, never under them).
@@ -170,8 +170,8 @@ Item {
                     }
                     AMarks {
                         anchors.fill: parent
-                        shown: ticket.hovered || ticket.keyed
-                        color: ticket.keyed ? Airisu.seal : Airisu.marks
+                        shown: ticket.keyed
+                        color: Airisu.seal
                     }
 
                     Item {

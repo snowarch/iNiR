@@ -5,8 +5,8 @@ import "../components"
 
 // AIRISU's switch: a machine's rocker printed as two boxes in one ruled die, O and I, the marks every appliance switch
 // carries, so it reads in any language. The box taken holds a plate: off, a step of ink under the O; on, the seal under
-// the I (what is live). The plate stops in its box (a detent), it never springs. The pointer brings the die's crop marks,
-// the keyboard brings them in shu, a press drops the plate in register. One that cannot be taken is ruled dashed, its
+// the I (what is live). The plate stops in its box (a detent), it never springs. The pointer inks the die's rule, the
+// keyboard brings crop marks in shu, a press drops the plate in register. One that cannot be taken is ruled dashed, its
 // plate sunk. On a chosen row's plate it takes that plate's inks. The host keeps the toggle, the keys and the name.
 Item {
     id: root
@@ -32,7 +32,7 @@ Item {
         anchors.fill: parent
         kind: "chamfer"
         cut: root.cut
-        stroke: root.rule
+        stroke: root.available && root.hovered ? Airisu.ink : root.rule
         strokeWidth: Airisu.hair
         dashed: !root.available
     }
@@ -91,7 +91,7 @@ Item {
     }
     AMarks {
         anchors.fill: parent
-        shown: (root.available && root.hovered) || root.keyed
-        color: root.keyed ? Airisu.seal : Airisu.marks
+        shown: root.keyed
+        color: Airisu.seal
     }
 }

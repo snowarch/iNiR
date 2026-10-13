@@ -605,14 +605,9 @@ Item {
             visible: entry.row
             anchors.fill: parent
             lacquer: "transparent"
-            coat: Airisu.underPlate(entry.stock)
-            share: !entry.chosen && entry.pressed ? 1 : 0
+            coat: entry.pressed ? Airisu.underPlate(entry.stock) : Airisu.step(entry.stock, Airisu.hoverStep)
+            share: !entry.chosen && (entry.containsMouse || entry.pressed) ? 1 : 0
             cut: Airisu.cutFor(height)
-        }
-        AMarks {
-            visible: entry.row
-            anchors.fill: parent
-            shown: !entry.chosen && entry.containsMouse
         }
         MaterialSymbol {
             visible: entry.row && entry.type !== "you"

@@ -6,7 +6,7 @@ import "../components"
 
 // AIRISU's level (the Control Center's volume, brightness, microphone): a meter (メーター) on a lacquer panel, its level
 // a ladder of steps (ASteps) that rise from the start. The glyph and name stand at the start, the figure at the end.
-// The pointer brings the panel's crop marks. Upright, the steps climb from the foot. The host (IrisCapsuleSlider) keeps the drag, the wheel and the pocket
+// The pointer lifts the panel a rung. Upright, the steps climb from the foot. The host (IrisCapsuleSlider) keeps the drag, the wheel and the pocket
 // under the glyph that mutes.
 Item {
     id: root
@@ -36,7 +36,7 @@ Item {
         cutBottomLeft: !root.vertical
         cutTopLeft: root.vertical
         cutBottomRight: root.vertical
-        lacquer: root.panel
+        lacquer: root.hovered && !root.held && root.available ? Airisu.step(root.panel, Airisu.hoverStep) : root.panel
     }
 
     MaterialSymbol {
@@ -92,10 +92,5 @@ Item {
         available: root.available
         ink: root.ink
         quiet: Airisu.inkThirdOn(root.panel)
-    }
-    AMarks {
-        anchors.fill: parent
-        shown: root.available && root.hovered && !root.held
-        color: Airisu.marks
     }
 }

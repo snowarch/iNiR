@@ -7,13 +7,13 @@ import qs.modules.iris.control
 import "../components"
 
 // AIRISU's control in the Control Center: a key (AKey) of the body's next coat, on or off. What says it is on is the
-// seal box (ASeal) in its corner, stamped in the pigment Settings › Control Center › Accent names (the accent, or a tame
-// for Ink); a recording always stamps the accent, because it is live. Lit keys never turn into plates of shu: a grid of
-// them would be the 2 parts of seal spent ten times over. The sign and the box stand at the head and the name at the
-// foot, as a label is set on a part. Round is cut as a key too, its box at its foot like the logo's square; a wide control
-// keeps its key at the head of the strip, stamped in the seal while on, with its name and state beside it. The grid keeps
-// every click and list; the library shelf in edit mode draws its tiles with the same key (`bare`: the name is set under
-// it, not inside).
+// seal box (ASeal) in its corner, stamped in the pigment Settings › Control Center › Accent names (the accent, or a
+// tame for Ink); a recording always stamps the accent, because it is live. Lit keys never turn into plates of shu: a
+// grid of them would be the 2 parts of seal spent ten times over. The sign and the box stand at the head and the name
+// at the foot, as a label is set on a part. Round is cut as a key too, its box at its foot like the logo's square; a
+// wide control keeps its key at the head of the strip, stamped in the seal while on, with its name and state beside it.
+// The grid keeps every click and list; the library shelf in edit mode draws its tiles with the same key (`bare`: the
+// name is set under it, not inside).
 Item {
     id: root
     property Item host
