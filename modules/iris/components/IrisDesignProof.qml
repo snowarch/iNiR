@@ -136,6 +136,25 @@ PanelWindow {
                 { name: "folded", look: ({ host: root.mediaHost({ compact: true }) }) },
                 { name: "offer", look: ({ host: root.mediaHost({ hasPlayer: false, hasTimeline: false, emptyDetail: "Open Spotify" }) }) }
             ] },
+        { part: "noticeRow", name: "notice row", w: 360,
+            states: [{ name: "rest", look: ({}) }],
+            samples: [
+                { name: "group", look: ({ host: root.noticeHost({ count: 3 }) }) },
+                { name: "pointer", look: ({ host: root.noticeHost({ count: 3, hovered: true }) }) },
+                { name: "one, short", look: ({ host: root.noticeHost({ modelData: "Spotify", newest: ({ summary: "Blue Monday", body: "New Order", time: Date.now() - 50 * root.minute, urgency: "0" }) }) }) },
+                { name: "critical", look: ({ host: root.noticeHost({ modelData: "iNiR", lines: 1, newest: ({ summary: "Battery critically low", body: "6% left. Plug in the charger or the session will suspend.", time: Date.now() - 2 * root.minute, urgency: "2" }) }) }) }
+            ] },
+        { part: "noticeCard", name: "notice · today", w: 320,
+            states: [{ name: "rest", look: ({}) }],
+            samples: [
+                { name: "answers", look: ({ host: ({ hidden: 0, dismiss: () => {}, invoke: () => {}, notification: ({ appName: "Discord", appIcon: "discord",
+                    summary: "Kai", urgency: "1", time: Date.now() - 6 * root.minute, body: "are you around tonight? I pushed the new build",
+                    actions: [{ identifier: "reply", text: "Reply" }, { identifier: "default", text: "" }] }) }) }) },
+                { name: "stack", look: ({ host: ({ hidden: 4, dismiss: () => {}, invoke: () => {}, notification: ({ appName: "Thunderbird", appIcon: "mail",
+                    summary: "Invoice 2026-10", urgency: "1", time: Date.now() - 90 * root.minute, body: "Your October invoice is ready.", actions: [] }) }) }) },
+                { name: "critical", look: ({ host: ({ hidden: 0, dismiss: () => {}, invoke: () => {}, notification: ({ appName: "iNiR", appIcon: "",
+                    summary: "Battery critically low", urgency: "2", time: Date.now() - 2 * root.minute, body: "6% left.", actions: [] }) }) }) }
+            ] },
         { part: "lockActivity", name: "activity", w: 380, media: true, plate: true,
             states: [{ name: "rest", look: ({}) }],
             samples: [
@@ -144,6 +163,12 @@ PanelWindow {
                 { name: "paused", look: ({ host: ({ glyph: "pause", label: Translation.tr("Focus"), figure: "18:02", progress: 0.6 }) }) }
             ] }
     ]
+    // A stand-in for a Control Center notice row: a group of notices from one app.
+    function noticeHost(state: var): var {
+        return Object.assign({ modelData: "Discord", count: 1, hovered: false, editing: false, lines: 2, group: ({ appIcon: "discord" }),
+            newest: ({ summary: "Kai", body: "are you around tonight? I pushed the new build and would love a second pair of eyes",
+                time: Date.now() - 4 * root.minute, urgency: "1" }), dismissAll: () => {} }, state)
+    }
     // Stand-ins for the lock's sign-in and clock blocks: how much is typed, never a password; nothing reaches PAM.
     function lockHost(state: var): var {
         const context = Object.assign({ unlockInProgress: false, showFailure: false, fingerprintsConfigured: false }, state.context ?? {})

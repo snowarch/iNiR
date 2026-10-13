@@ -366,15 +366,24 @@ ColumnLayout {
                             readonly property int count: groupRow.group?.notifications?.length ?? 0
                             Layout.fillWidth: true
                             Layout.topMargin: groupRow.index === 0 ? Math.round(6 * root.d) : 0
-                            implicitHeight: rowBody.implicitHeight + Math.round(16 * root.d)
+                            implicitHeight: groupRow.skinned ? (noticeSkin.item?.implicitHeight ?? 0) : rowBody.implicitHeight + Math.round(16 * root.d)
+                            // What a Design's row reads (IrisDesign part `noticeRow`); it draws the row, this keeps the taps.
+                            readonly property bool skinned: noticeSkin.active
+                            readonly property bool hovered: rowHover.hovered
+                            readonly property bool editing: root.editing
+                            readonly property int lines: notificationColumn.shown.length > 2 ? 1 : 2
                             function open(): void {
                                 const actions = groupRow.newest?.actions ?? []
                                 const preferred = actions.find(action => action.identifier === "default")
                                 if (preferred) Notifications.attemptInvokeAction(groupRow.newest.notificationId, preferred.identifier)
                                 else GlobalStates.openSidebarRight(root.targetScreen?.name ?? "")
                             }
+                            function dismissAll(): void {
+                                (groupRow.group?.notifications ?? []).slice().forEach(n => Notifications.discardNotification(n.notificationId))
+                            }
+                            IrisSkin { id: noticeSkin; part: "noticeRow"; host: groupRow; z: 1 }
                             Rectangle {
-                                visible: groupRow.index > 0
+                                visible: groupRow.index > 0 && !groupRow.skinned
                                 x: rowBody.x + icon.width + rowBody.spacing
                                 width: groupRow.width - x
                                 height: 1
@@ -383,6 +392,7 @@ ColumnLayout {
                             Rectangle {
                                 anchors.fill: parent
                                 anchors.leftMargin: -Math.round(6 * root.d)
+                                visible: !groupRow.skinned
                                 radius: IrisStyle.radiusRow
                                 color: rowHover.hovered && !root.editing ? IrisStyle.fillHover : "transparent"
                                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
@@ -391,6 +401,7 @@ ColumnLayout {
                             TapHandler { enabled: !root.editing; onTapped: groupRow.open() }
                             RowLayout {
                                 id: rowBody
+                                visible: !groupRow.skinned
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
@@ -447,7 +458,7 @@ ColumnLayout {
                                             implicitWidth: Math.round(20 * root.d)
                                             implicitHeight: Math.round(20 * root.d)
                                             Accessible.name: Translation.tr("Dismiss")
-                                            onClicked: (groupRow.group?.notifications ?? []).slice().forEach(n => Notifications.discardNotification(n.notificationId))
+                                            onClicked: groupRow.dismissAll()
                                         }
                                     }
                                     IrisText {

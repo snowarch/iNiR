@@ -174,9 +174,14 @@ Loader {
         required property var notification
         property int hidden: 0
         signal unfold()
-        implicitHeight: noticeBody.implicitHeight + 20 * root.d
+        // A Design that draws the notice its own way (IrisDesign part `noticeCard`) reads these; the card keeps the taps.
+        readonly property bool skinned: noticeSkin.active
+        function dismiss(): void { Notifications.discardNotification(notice.notification.notificationId) }
+        function invoke(identifier: string): void { Notifications.attemptInvokeAction(notice.notification.notificationId, identifier); root.navigate() }
+        implicitHeight: notice.skinned ? (noticeSkin.item?.implicitHeight ?? 0) : noticeBody.implicitHeight + 20 * root.d
         radius: IrisStyle.radiusRow
-        color: IrisStyle.surfaceHighest
+        color: notice.skinned ? "transparent" : IrisStyle.surfaceHighest
+        IrisSkin { id: noticeSkin; part: "noticeCard"; host: notice; z: 1 }
 
         TapHandler {
             enabled: notice.hidden > 0
@@ -189,6 +194,7 @@ Loader {
 
         ColumnLayout {
             id: noticeBody
+            visible: !notice.skinned
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
@@ -225,7 +231,7 @@ Loader {
                     materialIcon: "close"
                     iconSize: Math.round(15 * root.d)
                     Accessible.name: Translation.tr("Dismiss notification")
-                    onClicked: Notifications.discardNotification(notice.notification.notificationId)
+                    onClicked: notice.dismiss()
                 }
             }
             IrisText { Layout.fillWidth: true; text: String(notice.notification?.summary ?? ""); textFormat: Text.PlainText; wrapMode: Text.Wrap; maximumLineCount: 2; elide: Text.ElideRight; font.weight: IrisStyle.weight(Font.DemiBold) }
@@ -240,7 +246,7 @@ Loader {
                         required property var modelData
                         text: modelData.identifier === "default" ? Translation.tr("Open") : modelData.text
                         implicitHeight: 30 * root.d
-                        onClicked: { Notifications.attemptInvokeAction(notice.notification.notificationId, modelData.identifier); root.navigate() }
+                        onClicked: notice.invoke(modelData.identifier)
                     }
                 }
             }

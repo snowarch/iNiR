@@ -60,6 +60,8 @@ QtObject {
         controlPlate: "skins/ControlPlate.qml",
         mediaBackdrop: "skins/MediaBackdrop.qml",
         mediaCard: "skins/MediaCard.qml",
+        noticeRow: "skins/NoticeRow.qml",
+        noticeCard: "skins/NoticeCard.qml",
         // Desktop widgets, each a print of its own: drawn whatever widget design is chosen (DesktopWidgetDesign).
         widgetClock: "widgets/Clock.qml",
         widgetVitals: "widgets/Vitals.qml",
