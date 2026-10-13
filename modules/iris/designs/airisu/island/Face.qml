@@ -14,9 +14,10 @@ import "../components"
 
 // AIRISU's Island face. The engine (IrisIsland) decides the mode, the events, the levels, the clock style and the size;
 // this lacquers the strip in the pigment of what it is showing and sets the one thing it says as type cut out of the
-// lacquer. Only a notice and a recording lacquer the strip (the
-// caution's yamabuki for a warning); at rest it is the body with the time cut in its ink. Whatever runs (the song, the timer, a task, a level) is the second coat, its 45° edge
-// travelling across the strip; a change of subject repaints the strip along the same cut instead of fading.
+// lacquer. Only a notice and a recording lacquer the strip (the caution's yamabuki for a warning); at rest it is the body
+// with the time cut in its ink, leaning like a livery number. Whatever runs (the hour, the song, the timer, a task, a
+// level) is the second coat, its 45° edge travelling across the strip; a change of subject repaints the strip along the
+// same cut instead of fading.
 Item {
     id: root
     property var island: null
@@ -49,7 +50,7 @@ Item {
         case "edit": return Airisu.pigment("system")
         case "event": return root.eventCaution ? Airisu.pigment("caution") : Airisu.pigment("rest")
         case "feedback": return root.island?.feedbackMuted ? Airisu.pigment("system") : root.levelPigment
-        default: return Airisu.pigment("rest")
+        default: return Airisu.pigment("time")
         }
     }
     // The strip is the body itself: only a notice and a recording lacquer it, the one thing that must be seen from across
@@ -67,7 +68,9 @@ Item {
 
     // What runs, as the second coat: how far, and whether it is moving now.
     readonly property string levelStyle: root.island?.levelStyle ?? "capsule"
-    readonly property real run: root.mode === "media" ? (root.island?.trackProgress ?? 0)
+    readonly property bool resting: root.mode === "idle" || root.mode === "clock"
+    readonly property real run: root.resting ? DateTime.clock.date.getMinutes() / 60
+        : root.mode === "media" ? (root.island?.trackProgress ?? 0)
         : root.mode === "timer" ? (root.island?.timerProgress ?? 0)
         : root.mode === "task" ? Math.max(0, Number(root.island?.task?.progress ?? 0))
         : root.mode === "feedback" && root.levelStyle !== "minimal" ? (root.island?.feedbackValue ?? 0) : 0
@@ -86,7 +89,9 @@ Item {
         cutBottomLeft: !root.welded || !root.atFoot
         lacquer: root.surface
         coat: root.coatColour
-        band: root.fills ? 0 : root.barLevel ? Math.max(3, Math.round(panel.height * 0.22)) : Math.max(2, Math.round(panel.height * 0.09))
+        // At rest the hour is a hairline of its pigment, read at a glance and never louder than the time.
+        band: root.fills ? 0 : root.barLevel ? Math.max(3, Math.round(panel.height * 0.22))
+            : root.resting ? Math.max(2, Math.round(panel.height * 0.06)) : Math.max(2, Math.round(panel.height * 0.09))
         share: root.run
         // A level follows the hand; a song and a timer step once a second (a pixel or two, no animation to pay for).
         travel: root.mode === "feedback" ? Airisu.detent : root.mode === "task" ? Airisu.snap : 0
@@ -96,6 +101,7 @@ Item {
     component Time: AText {
         property real figureSize: root.figure
         voice: "figure"
+        lean: Airisu.lean
         size: figureSize
         color: root.ink
         text: String(DateTime.timeDisplay)
@@ -237,6 +243,7 @@ Item {
         }
         AText {
             voice: "figure"
+            lean: Airisu.lean
             size: root.figure
             color: root.ink
             text: root.island?.clockText(RecorderStatus.elapsedSeconds) ?? ""
@@ -260,6 +267,7 @@ Item {
         }
         AText {
             voice: "figure"
+            lean: Airisu.lean
             size: root.figure
             color: timer.paused ? root.inkSecond : root.ink
             text: root.island?.clockText(root.island?.timerSeconds ?? 0) ?? ""
@@ -293,6 +301,7 @@ Item {
         AText {
             visible: Number(root.island?.task?.progress ?? -1) >= 0
             voice: "figure"
+            lean: Airisu.lean
             size: root.figure
             color: root.ink
             text: Math.round(Number(root.island?.task?.progress ?? 0) * 100) + "%"
@@ -354,6 +363,7 @@ Item {
         AText {
             visible: (root.island?.event?.value ?? -1) >= 0
             voice: "figure"
+            lean: Airisu.lean
             size: root.figure
             color: root.ink
             text: Math.round((root.island?.event?.value ?? 0) * 100) + "%"
@@ -375,6 +385,7 @@ Item {
             Layout.preferredWidth: Math.round(root.figure * 1.9)
             horizontalAlignment: Text.AlignRight
             voice: "figure"
+            lean: Airisu.lean
             size: root.figure
             color: level.muted ? root.inkSecond : root.ink
             text: Math.round((root.island?.feedbackValue ?? 0) * 100)

@@ -6,8 +6,8 @@ import qs.modules.common.widgets
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's segmented (SYSTEM.md §6): the boxes of a printed form, ruled in the third ink, one per choice. The chosen box
-// is the chosen plate (gofun at night, sumi by day) with its words reversed out; it stops in the next box (one detent)
+// AIRISU's segmented: the boxes of a form, ruled in the third ink, one per choice. The chosen box is lacquered in the
+// selection's pigment with its words cut out of it; it stops in the next box (one detent)
 // instead of sliding. The pointer lays its coat on one box, a press carries that box's words a hair, the keyboard flags
 // the box it is on, and boxes that cannot be taken are ruled dashed. The host keeps the picking.
 Item {

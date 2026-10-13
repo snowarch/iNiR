@@ -104,6 +104,7 @@ ColumnLayout {
                 visible: slip.figure.length > 0
                 Layout.alignment: Qt.AlignVCenter
                 voice: "figure"
+                lean: Airisu.lean
                 size: IrisStyle.typeDisplay
                 text: slip.figure
                 color: slip.running ? slip.ink : slip.inkThird

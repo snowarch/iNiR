@@ -87,6 +87,7 @@ Item {
         AText {
             anchors.right: parent.right
             voice: "figure"
+            lean: Airisu.lean
             size: IrisStyle.typeTitleLarge
             color: root.count > 0 ? Airisu.ink : Airisu.inkThird
             text: String(root.count)

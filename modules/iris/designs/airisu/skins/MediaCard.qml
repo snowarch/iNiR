@@ -188,6 +188,7 @@ Item {
                     AText {
                         id: at
                         voice: "figure"
+                        lean: Airisu.lean
                         size: IrisStyle.typeTitle
                         color: root.ink
                         text: root.clock(root.position)
@@ -226,6 +227,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: root.position > 0
                         voice: "figure"
+                        lean: Airisu.lean
                         size: IrisStyle.typeMeta
                         color: root.inkThird
                         text: root.clock(root.position)

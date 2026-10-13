@@ -43,9 +43,12 @@ Item {
     }
     // The part of a polygon on the near side of a 45° cut that has come `s` of the way across (it leans forward, its
     // top ahead of its foot), and at most `top` from the foot when the coat is a band.
+    // The edge travels its own lean plus the width, so a band (whose lean is only its own height) starts at once and
+    // reads the share it carries, instead of lying hidden for the panel's height first.
     function cutAt(points: var, s: real, top: real): var {
         const h = root.h
-        const reach = -h + Math.max(0, Math.min(1, s)) * (root.w + h)
+        const lean = top > 0 ? Math.min(top, h) : h
+        const reach = -lean + Math.max(0, Math.min(1, s)) * (root.w + lean)
         let out = root.clip(points, p => p.x - (h - p.y) - reach)
         if (top > 0)
             out = root.clip(out, p => (h - top) - p.y)

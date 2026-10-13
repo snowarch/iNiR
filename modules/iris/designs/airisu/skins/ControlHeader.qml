@@ -23,6 +23,7 @@ Item {
         visible: !root.editing
         anchors.verticalCenter: parent.verticalCenter
         voice: "figure"
+        lean: Airisu.lean
         size: IrisStyle.typeDisplay
         text: Qt.formatDate(root.date, "d")
         color: root.weekday === 0 ? Airisu.sealText : root.weekday === 6 ? IrisStyle.identity.blue : Airisu.ink

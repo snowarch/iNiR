@@ -57,6 +57,7 @@ QtObject {
         controlTile: "skins/ControlTile.qml",
         controlHeader: "skins/ControlHeader.qml",
         controlPreset: "skins/ControlPreset.qml",
+        controlPlate: "skins/ControlPlate.qml",
         mediaBackdrop: "skins/MediaBackdrop.qml",
         mediaCard: "skins/MediaCard.qml",
         // Desktop widgets, each a print of its own: drawn whatever widget design is chosen (DesktopWidgetDesign).

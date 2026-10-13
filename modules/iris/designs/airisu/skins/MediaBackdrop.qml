@@ -5,7 +5,7 @@ import "../components"
 
 // AIRISU's cover behind a player (the Control Center's, a media card's): not the picture again, but the record's own
 // lacquer, the colour its cover is printed in, laid where the cover would be blurred; a new record repaints it at 45°.
-// The owner keeps where it sits and whether it shows.
+// The owner keeps where it sits and whether it shows; every owner is a plate, so it is cut by the plate's die.
 Item {
     id: root
     property Item host
@@ -18,7 +18,6 @@ Item {
     }
     ALacquer {
         anchors.fill: parent
-        cut: 0
         lacquer: Airisu.lacquerOf(Airisu.recordPigment(IrisStyle.artTintOf(quantizer.colors)))
     }
 }

@@ -90,18 +90,21 @@ Item {
             MaterialSymbol { anchors.centerIn: parent; text: "skip_next"; fill: 1; iconSize: root.dp(20); color: nextKey.enabled ? root.ink : root.inkThird }
         }
     }
-    // The time: where the needle is as the one large figure, the length beside it in the third ink.
+    // The time: where the needle is as the one large figure, the length beside it in the third ink. A player that has
+    // not said how long the song is still has the time it has played.
     component Time: Row {
-        visible: root.length > 0
+        visible: root.length > 0 || root.position > 0
         spacing: root.dp(6)
         AText {
             id: here
             voice: "figure"
+            lean: Airisu.lean
             size: root.type(root.large ? IrisStyle.typeDisplay : IrisStyle.typeTitleLarge)
             text: root.clock(root.position)
             color: root.ink
         }
         AText {
+            visible: root.length > 0
             anchors.baseline: here.baseline
             voice: "figure"
             size: root.type(IrisStyle.typeMeta)

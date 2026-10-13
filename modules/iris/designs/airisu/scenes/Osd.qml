@@ -129,6 +129,7 @@ Item {
             Layout.preferredWidth: hundred.advanceWidth
             horizontalAlignment: Text.AlignRight
             voice: "figure"
+            lean: Airisu.lean
             size: IrisStyle.typeDisplay
             color: levelRow.ink
             text: Math.round(root.value * 100)
@@ -264,6 +265,7 @@ Item {
             visible: (root.osd?.connection?.value ?? -1) >= 0
             Layout.alignment: Qt.AlignVCenter
             voice: "figure"
+            lean: Airisu.lean
             size: IrisStyle.typeTitle
             color: root.ink
             text: Math.round(root.osd?.connection?.value ?? 0) + "%"

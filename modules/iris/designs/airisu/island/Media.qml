@@ -122,17 +122,21 @@ GridLayout {
                 tint: page.run
                 barHeight: Math.round(22 * page.d)
             }
+            // A player that has not said how long the song is (a stream, a browser's first seconds) still has the time
+            // it has played: the figure stays, only the total waits.
             Row {
-                visible: media.effectiveLength > 0
+                visible: media.effectiveLength > 0 || media.effectivePosition > 0
                 spacing: Math.round(6 * page.d)
                 AText {
                     id: position
                     voice: "figure"
+                    lean: Airisu.lean
                     size: IrisStyle.typeDisplay
                     color: page.ink
                     text: page.island?.clockText(media.effectivePosition) ?? ""
                 }
                 AText {
+                    visible: media.effectiveLength > 0
                     anchors.baseline: position.baseline
                     voice: "figure"
                     size: IrisStyle.typeLabel

@@ -55,6 +55,7 @@ Item {
         AText {
             width: parent.width
             voice: "figure"
+            lean: Airisu.lean
             size: root.t(IrisStyle.typeDisplay)
             color: root.paused ? IrisStyle.onMediaSecondary : IrisStyle.onMedia
             text: root.host?.figure ?? ""

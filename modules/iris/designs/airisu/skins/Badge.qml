@@ -19,6 +19,7 @@ Item {
     AText {
         anchors.centerIn: parent
         voice: "figure"
+        lean: Airisu.lean
         size: Math.round((root.figure.length > 1 ? 0.52 : 0.62) * root.height)
         text: root.figure
         color: Airisu.inkOn(root.face)

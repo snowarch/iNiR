@@ -111,6 +111,7 @@ GridLayout {
         AText {
             anchors.centerIn: parent
             voice: "figure"
+            lean: Airisu.lean
             size: Math.round(stop.side * (stop.figure.length > 1 ? 0.42 : 0.52))
             text: stop.figure
             color: stop.chosen ? IrisStyle.selectionLabel : stop.occupied ? Airisu.ink : Airisu.inkThird
@@ -179,6 +180,7 @@ GridLayout {
             AText {
                 id: time
                 voice: "figure"
+                lean: Airisu.lean
                 size: Math.round(2 * IrisStyle.typeDisplay)
                 text: String(DateTime.timeDisplay)
                 color: head.ink
@@ -218,6 +220,7 @@ GridLayout {
                 AText {
                     id: temperature
                     voice: "figure"
+                    lean: Airisu.lean
                     size: IrisStyle.typeDisplay
                     text: parent.figure
                     color: head.ink
@@ -459,6 +462,7 @@ GridLayout {
                         AText {
                             anchors.horizontalCenter: parent.horizontalCenter
                             voice: "figure"
+                            lean: Airisu.lean
                             size: IrisStyle.typeLabel
                             text: String(hour.modelData.temp)
                             color: hour.ink
@@ -515,6 +519,7 @@ GridLayout {
                 AText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     voice: "figure"
+                    lean: Airisu.lean
                     size: IrisStyle.typeTitle
                     text: agenda.when.getDate()
                     color: Airisu.inkOn(date.face)
@@ -588,7 +593,7 @@ GridLayout {
                 model: [
                     { label: Translation.tr("CPU"), level: ResourceUsage.cpuUsage, value: Math.round(ResourceUsage.cpuUsage * 100), unit: "%", warn: 0.85 },
                     { label: Translation.tr("Memory"), level: ResourceUsage.memoryUsedPercentage, value: Math.round(ResourceUsage.memoryUsedPercentage * 100), unit: "%", warn: 0.85 },
-                    { label: Translation.tr("Heat"), level: ResourceUsage.tempPercentage, value: ResourceUsage.maxTemp, unit: "°", warn: ResourceUsage.tempWarningThreshold / 100 },
+                    { label: Translation.tr("Heat"), level: ResourceUsage.tempPercentage, value: ResourceUsage.maxTemp, unit: "°C", warn: ResourceUsage.tempWarningThreshold / 100 },
                     { label: Translation.tr("Disk"), level: ResourceUsage.diskUsedPercentage, value: Math.round(ResourceUsage.diskUsedPercentage * 100), unit: "%", warn: 0.9 }
                 ]
                 Item {
@@ -613,6 +618,7 @@ GridLayout {
                         AText {
                             id: figure
                             voice: "figure"
+                            lean: Airisu.lean
                             size: IrisStyle.typeTitle
                             text: vital.modelData.value
                             color: vital.ink

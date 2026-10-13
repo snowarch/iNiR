@@ -45,6 +45,7 @@ Item {
         width: time.room + Math.round(time.size * 0.04)
         elide: Text.ElideNone
         voice: "figure"
+        lean: Airisu.lean
         size: Math.max(IrisStyle.typeTitle, Math.floor(Math.min(time.nominal * time.room / Math.max(1, measure.advanceWidth),
             time.tall / 0.86, time.nominal)))
         color: stock.ink
@@ -98,6 +99,7 @@ Item {
                 readonly property real nominal: Math.round(stamp.r * 0.42)
                 width: Math.min(implicitWidth, beside.width - unit.implicitWidth)
                 voice: "figure"
+                lean: Airisu.lean
                 size: Math.max(IrisStyle.typeHeadline, Math.floor(Math.min(besideFigure.nominal,
                     besideFigure.nominal * beside.width / Math.max(1, besideMeasure.advanceWidth))))
                 color: stock.ink
@@ -202,6 +204,7 @@ Item {
                 id: bandTime
                 readonly property real nominal: Math.floor(stamp.b * 2 * 0.86 / 0.74)
                 voice: "figure"
+                lean: Airisu.lean
                 // Solved at the nominal size with the seconds counted in, so the band never measures what it sizes.
                 size: Math.max(IrisStyle.typeCaption, Math.floor(Math.min(bandTime.nominal, bandTime.nominal * struck.room
                     / Math.max(1, bandMeasure.advanceWidth + (seconds.visible ? secondsMeasure.advanceWidth + bandTime.nominal * 0.06 : 0)))))
@@ -230,6 +233,7 @@ Item {
                 visible: root.ticking
                 anchors.baseline: bandTime.baseline
                 voice: "figure"
+                lean: Airisu.lean
                 size: Math.max(IrisStyle.typeCaption, Math.round(bandTime.size * 0.4))
                 color: stock.vivid
                 text: String(root.now.getSeconds()).padStart(2, "0")

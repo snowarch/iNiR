@@ -142,11 +142,11 @@ QtObject {
     readonly property int hair: Math.max(1, Math.round(root.d))
     readonly property int strong: Math.max(2, Math.round(2 * root.d))
     readonly property int offset: Math.max(2, Math.round(2 * root.d))  // a print's hard offset shadow
-    // ── Chosen (選). What is picked among choices (a box of a form, the switch's taken cell, the open tab of an index) is a
-    // plate in the ink's own colour with the stock reversed out of it: gofun at night, sumi by day. The seal stays for what
-    // is live or signs, so a page with a chosen box and a running thing never shows two seals.
-    readonly property color chosen: IrisStyle.text
-    readonly property color inkOnChosen: root.solid(IrisStyle.bodySurface)
+    // ── Chosen (選). What is picked among choices (a box of a form, the switch's taken cell, the open tab of an index) is
+    // lacquered in the selection's pigment with its ink cut out of it, as a lit control is. A plate in the ink's own colour
+    // read as a white (or black) block on the lacquer, the one thing AIRISU never lays.
+    readonly property color chosen: IrisStyle.selectionFill
+    readonly property color inkOnChosen: IrisStyle.selectionInk
     // A box that holds something but is not chosen (the switch's off cell, the group being read): one step of ink on the stock.
     readonly property color cell: ColorUtils.mix(IrisStyle.text, root.solid(IrisStyle.bodySurface), IrisStyle.light ? 0.08 : 0.12) // iris-literal: a filled box, one step of ink
     // The cover a Place's index is printed on: the black lacquer a step under the body at night, sumi by day.
@@ -163,6 +163,8 @@ QtObject {
     readonly property int kiss: Math.round(3 * root.d)
 
     // ── Faces.
+    // How far a hero figure leans (tan of its slope, about 11°).
+    readonly property real lean: 0.2
     readonly property string figureFace: "Archivo SemiExpanded"
     readonly property string textFace: "Archivo"
     readonly property string dataFace: IrisStyle.fontMono

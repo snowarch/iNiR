@@ -32,7 +32,8 @@ Item {
         id: name
         x: mark.visible ? Airisu.u(7) : 0
         y: Math.round((root.line - implicitHeight) / 2)
-        width: parent.width - x - Airisu.u(16)
+        // Room is kept at the right only for a lone switch on the name's line.
+        width: parent.width - x - (root.lone ? Airisu.u(16) : 0)
         voice: root.reading ? "figure" : "text"
         size: root.reading ? IrisStyle.typeTitle : IrisStyle.typeHeadline
         font.weight: root.reading ? Font.ExtraBold : Font.Bold

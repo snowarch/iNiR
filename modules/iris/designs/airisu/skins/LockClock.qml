@@ -2,7 +2,7 @@ import QtQuick
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's lock clock: the time as a race number is cut, the figures four times the display size, in
+// AIRISU's lock clock: the time as a race number is cut, leaning, the figures four times the display size, in
 // the ink Clock colour names, with a hard shadow of sumi cut a step down and to the right of them so they hold on a
 // bright picture without a glow; the date over them, a step smaller in the media's second ink. Every Type and Clock row
 // comes resolved from the engine's block; Date off leaves the time alone.
@@ -36,9 +36,15 @@ Item {
             color: plate.dateInk
             text: root.host?.dateText ?? ""
         }
+        // Leaning like a livery number, sheared about its middle so it keeps its box; set in curves, since a sheared
+        // glyph cache blurs.
         Text {
+            id: figure
             anchors.horizontalCenter: parent.horizontalCenter
-            renderType: root.host?.renderType ?? Text.NativeRendering
+            renderType: Text.CurveRendering
+            transform: Matrix4x4 {
+                matrix: Qt.matrix4x4(1, -Airisu.lean, 0, Airisu.lean * figure.height / 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+            }
             color: plate.timeInk
             text: root.host?.timeText ?? ""
             font.family: root.host?.family ?? Airisu.figureFace

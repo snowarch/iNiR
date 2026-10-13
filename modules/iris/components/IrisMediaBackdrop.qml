@@ -15,7 +15,7 @@ Item {
 
     readonly property real overscan: 48
 
-    // A Design may print the cover its own way (AIRISU: a one-ink halftone); the cover and where it sits stay the owner's.
+    // A Design may lay the cover its own way (AIRISU: the record's lacquer); the cover and where it sits stay the owner's.
     IrisSkin { id: skin; part: "mediaBackdrop"; host: root }
 
     Image {

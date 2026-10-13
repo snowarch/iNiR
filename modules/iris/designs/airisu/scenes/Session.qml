@@ -60,6 +60,7 @@ Item {
             AText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 voice: "figure"
+                lean: Airisu.lean
                 size: 2 * IrisStyle.typeDisplay
                 color: IrisStyle.onMedia
                 text: DateTime.time
@@ -156,6 +157,7 @@ Item {
                             x: root.pad
                             y: root.pad
                             voice: "figure"
+                            lean: Airisu.lean
                             size: IrisStyle.typeLabel
                             color: ticket.secondAt(x + width / 2, y + height / 2)
                             text: "S" + (ticket.index + 1)

@@ -25,7 +25,8 @@ Item {
     function figure(key: string): string {
         return String(root.widget?._getDisplayText(key) ?? "").replace(/[%°C]/g, "").trim()
     }
-    function unit(key: string): string { return key === "temp" || key === "gpuTemp" ? "°" : "%" }
+    // A degree alone shrinks to a dot at a unit's size; with its scale it reads as one.
+    function unit(key: string): string { return key === "temp" || key === "gpuTemp" ? "°C" : "%" }
     function label(channel: var): string {
         return channel.key === "temp" ? Translation.tr("CPU heat") : channel.key === "gpuTemp" ? Translation.tr("GPU heat")
             : String(channel.label ?? "")
@@ -114,6 +115,7 @@ Item {
                     AText {
                         id: value
                         voice: "figure"
+                        lean: Airisu.lean
                         size: Math.max(IrisStyle.typeLabel, Math.min(root.px(root.large ? 40 : 30), Math.round(stripe.height * 0.62)))
                         color: stripe.inkAt(reading.x, reading.x + reading.width)
                         text: root.figure(stripe.key)

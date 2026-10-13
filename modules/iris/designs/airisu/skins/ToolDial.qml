@@ -38,6 +38,7 @@ Item {
         anchors.verticalCenterOffset: -Airisu.m + root.shift
         visible: root.figure.length > 0
         voice: "figure"
+        lean: Airisu.lean
         size: IrisStyle.typeTitleLarge
         text: root.figure
         color: root.ink
