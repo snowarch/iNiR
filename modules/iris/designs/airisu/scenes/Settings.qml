@@ -510,17 +510,23 @@ Item {
             hovered: tab.containsMouse
             pressed: tab.pressed
         }
-        ALacquer {
-            visible: tab.chosen
+        Loader {
+            active: tab.chosen
             anchors.bottom: parent.bottom
             x: -root.u(3)
             width: parent.width + root.u(3)
             height: tab.line
-            lacquer: edge.open
-            cut: Airisu.cutFor(tab.line)
-            cutTopRight: false
-            cutTopLeft: true
-            cutBottomLeft: true
+            sourceComponent: chosenTab
+        }
+        Component {
+            id: chosenTab
+            ALacquer {
+                lacquer: edge.open
+                cut: Airisu.cutFor(tab.line)
+                cutTopRight: false
+                cutTopLeft: true
+                cutBottomLeft: true
+            }
         }
         MaterialSymbol {
             anchors.verticalCenter: parent.bottom
@@ -601,13 +607,18 @@ Item {
             color: Airisu.inkSecond
             text: String(entry.modelData.text ?? "")
         }
-        ALacquer {
-            visible: entry.row
+        // The row's rung under the pointer, built only while the pointer is on it: forty empty shapes in the index cost
+        // their first sync on every opening of Settings.
+        Loader {
             anchors.fill: parent
-            lacquer: "transparent"
-            coat: entry.pressed ? Airisu.underPlate(entry.stock) : Airisu.step(entry.stock, Airisu.hoverStep)
-            share: !entry.chosen && (entry.containsMouse || entry.pressed) ? 1 : 0
-            cut: Airisu.cutFor(height)
+            active: entry.row && !entry.chosen && (entry.containsMouse || entry.pressed)
+            sourceComponent: ALacquer {
+                lacquer: "transparent"
+                coat: entry.pressed ? Airisu.underPlate(entry.stock) : Airisu.step(entry.stock, Airisu.hoverStep)
+                share: 1
+                travel: 0
+                cut: Airisu.cutFor(height)
+            }
         }
         MaterialSymbol {
             visible: entry.row && entry.type !== "you"

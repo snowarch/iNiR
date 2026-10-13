@@ -32,27 +32,34 @@ Item {
     readonly property bool down: root.pressed && root.available
     readonly property int shift: root.down ? Airisu.offset : 0
 
-    ALacquer {
+    // Each plate is built only while it shows (a quiet key at rest builds none): a page of keys is many shapes, and
+    // every one built costs at the first sync of the frame that shows it.
+    Loader {
         anchors.fill: parent
-        visible: root.down
-        cut: root.cut
-        cutTopRight: root.cutTopRight
-        cutBottomLeft: root.cutBottomLeft
-        lacquer: root.coat
+        active: root.down
+        sourceComponent: ALacquer {
+            cut: root.cut
+            cutTopRight: root.cutTopRight
+            cutBottomLeft: root.cutBottomLeft
+            lacquer: root.coat
+        }
     }
-    ALacquer {
+    Loader {
         x: root.shift
         y: root.shift
         width: root.width
         height: root.height
-        cut: root.cut
-        cutTopRight: root.cutTopRight
-        cutBottomLeft: root.cutBottomLeft
-        // Pressed, the top plate is printed solid, so the under plate shows only where it has moved off it.
-        lacquer: root.down && root.lacquer.a > 0 ? Airisu.solid(root.lacquer) : root.lacquer
-        coat: root.lift
-        share: root.available && root.hovered && !root.down ? 1 : 0
-        travel: Airisu.snap
+        active: root.lacquer.a > 0 || root.down || (root.available && root.hovered)
+        sourceComponent: ALacquer {
+            cut: root.cut
+            cutTopRight: root.cutTopRight
+            cutBottomLeft: root.cutBottomLeft
+            // Pressed, the top plate is printed solid, so the under plate shows only where it has moved off it.
+            lacquer: root.down && root.lacquer.a > 0 ? Airisu.solid(root.lacquer) : root.lacquer
+            coat: root.lift
+            share: root.available && root.hovered && !root.down ? 1 : 0
+            travel: Airisu.snap
+        }
     }
     AMarks {
         anchors.fill: parent
