@@ -854,22 +854,26 @@ ColumnLayout {
                 anchors.leftMargin: page.grouped ? Math.round(10 * IrisStyle.density) : 0
                 anchors.rightMargin: page.grouped ? Math.round(10 * IrisStyle.density) : 0
                 spacing: 6 * IrisStyle.density
+                // The model is the four kinds alone: a reading rebuilt as a new list each tick recreated every
+                // delegate, so the rings jumped instead of moving and each tick paid for four new rows.
                 Repeater {
-                    model: [
-                        { label: Translation.tr("CPU"), glyph: "memory", level: ResourceUsage.cpuUsage, value: Math.round(ResourceUsage.cpuUsage * 100), unit: "%", warn: 0.85 },
-                        { label: Translation.tr("Memory"), glyph: "memory_alt", level: ResourceUsage.memoryUsedPercentage, value: Math.round(ResourceUsage.memoryUsedPercentage * 100), unit: "%", warn: 0.85 },
-                        { label: Translation.tr("Heat"), glyph: "device_thermostat", level: ResourceUsage.tempPercentage, value: ResourceUsage.maxTemp, unit: "°", warn: ResourceUsage.tempWarningThreshold / 100 },
-                        { label: Translation.tr("Disk"), glyph: "hard_drive", level: ResourceUsage.diskUsedPercentage, value: Math.round(ResourceUsage.diskUsedPercentage * 100), unit: "%", warn: 0.9 }
-                    ]
+                    model: ["cpu", "memory", "heat", "disk"]
                     RowLayout {
                         id: vital
-                        required property var modelData
-                        readonly property real level: Math.max(0, Math.min(1, Number(vital.modelData.level) || 0))
-                        readonly property color tint: vital.level >= vital.modelData.warn ? IrisStyle.danger : IrisStyle.accent
+                        required property string modelData
+                        readonly property var reading: vital.modelData === "cpu"
+                            ? { label: Translation.tr("CPU"), glyph: "memory", level: ResourceUsage.cpuUsage, value: Math.round(ResourceUsage.cpuUsage * 100), unit: "%", warn: 0.85 }
+                            : vital.modelData === "memory"
+                            ? { label: Translation.tr("Memory"), glyph: "memory_alt", level: ResourceUsage.memoryUsedPercentage, value: Math.round(ResourceUsage.memoryUsedPercentage * 100), unit: "%", warn: 0.85 }
+                            : vital.modelData === "heat"
+                            ? { label: Translation.tr("Heat"), glyph: "device_thermostat", level: ResourceUsage.tempPercentage, value: ResourceUsage.maxTemp, unit: "°", warn: ResourceUsage.tempWarningThreshold / 100 }
+                            : { label: Translation.tr("Disk"), glyph: "hard_drive", level: ResourceUsage.diskUsedPercentage, value: Math.round(ResourceUsage.diskUsedPercentage * 100), unit: "%", warn: 0.9 }
+                        readonly property real level: Math.max(0, Math.min(1, Number(vital.reading.level) || 0))
+                        readonly property color tint: vital.level >= vital.reading.warn ? IrisStyle.danger : IrisStyle.accent
                         Layout.fillWidth: true
                         Layout.preferredWidth: 1
                         spacing: 6 * IrisStyle.density
-                        Accessible.name: vital.modelData.label + ", " + vital.modelData.value + vital.modelData.unit
+                        Accessible.name: vital.reading.label + ", " + vital.reading.value + vital.reading.unit
                         Item { Layout.fillWidth: true }
                         Item {
                             Layout.preferredWidth: Math.round(26 * IrisStyle.density)
@@ -883,7 +887,7 @@ ColumnLayout {
                             }
                             Glyph {
                                 anchors.centerIn: parent
-                                text: vital.modelData.glyph
+                                text: vital.reading.glyph
                                 iconSize: 12 * IrisStyle.density
                                 color: vital.tint
                             }
@@ -895,15 +899,15 @@ ColumnLayout {
                             spacing: -2 * IrisStyle.density
                             IrisText {
                                 Layout.fillWidth: true
-                                text: vital.modelData.label
+                                text: vital.reading.label
                                 color: IrisStyle.muted
                                 font.pixelSize: IrisStyle.typeCaption
                                 font.weight: IrisStyle.weight(Font.Medium)
                                 elide: Text.ElideRight
                             }
                             Metric {
-                                value: vital.modelData.value
-                                unit: vital.modelData.unit
+                                value: vital.reading.value
+                                unit: vital.reading.unit
                                 pixelSize: IrisStyle.typeLabel
                                 weight: Font.Bold
                             }
