@@ -8,12 +8,11 @@ import qs.modules.iris.style
 import qs.modules.iris.control
 import "../components"
 
-// AIRISU's layout card in the Control Center's library: the layout as the printer's imposition sheet for it. Each place
-// on the panel is drawn as the ruled box it will be printed in (a round switch a circle, the Connections plate a box with
-// its four keys, the player a box with its cover inked, a level its graduated rule, the notifications a box of lines),
-// beside the layout's name and what it does. The layout in use carries the inspector's seal (検印) on its corner, as
-// an approved proof does, and its box is ruled in the full ink; the pointer lights the sheet a step, a press runs it out
-// of register. The engine keeps the packing, the click and what a layout applies.
+// AIRISU's layout card in the Control Center's library: a key (AKey) holding the layout in miniature beside its name and
+// what it does. Each place on the panel is sunk into the card as the die it will be cut with (a round switch a disc, the
+// Connections plate with its four keys, the player in music's lacquer, a level its run, the notifications a long slot),
+// so the card is the panel seen from far. The layout in use wears the chosen plate. The engine keeps the packing, the
+// click and what a layout applies.
 Item {
     id: root
     property Item host
@@ -23,22 +22,23 @@ Item {
     readonly property bool pressed: root.card?.down ?? false
     readonly property real d: Airisu.d
     readonly property int pad: Airisu.u(3)
-    readonly property color line: root.chosen ? Airisu.ink : Airisu.inkSecond
+    readonly property color face: root.chosen ? IrisStyle.selectionFill : Airisu.groundRaised
+    readonly property color mark: root.chosen ? Airisu.inkSecondOn(root.face) : Airisu.inkThird
+    readonly property int run: root.pressed ? Airisu.hair : 0
 
-    APrint {
+    AKey {
         anchors.fill: parent
-        die: "rect"
+        lacquer: root.face
+        hovered: root.hovered
         pressed: root.pressed
-        fill: root.hovered ? Airisu.groundRaised : "transparent"
-        under: Airisu.inkUnder
-        stroke: root.chosen ? Airisu.ink : Airisu.rule
-        strokeWidth: Airisu.hair
+        keyed: root.card?.visualFocus ?? false
 
         // The imposition sheet: every place of the layout in its ruled box.
         Item {
             id: sheet
-            x: root.pad
+            x: root.pad + root.run
             anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenterOffset: root.run
             width: root.card?.miniWidth ?? 0
             height: root.card?.miniHeight ?? 0
             Repeater {
@@ -56,24 +56,22 @@ Item {
                     width: place.spot.w * root.card.miniCell + (place.spot.w - 1) * root.card.miniGap
                     height: place.spot.h * root.card.miniUnit + (place.spot.h - 1) * root.card.miniGap
 
-                    // A box: every switch, the plate and the player.
-                    Rectangle {
+                    // A die: every switch, the plate, and the player in music's lacquer.
+                    ALacquer {
                         visible: (place.switchPlace && !(place.round && place.single)) || place.kind === "platter" || place.kind === "media"
                         anchors.fill: parent
-                        color: "transparent"
-                        border.width: Airisu.hair
-                        border.color: root.line
+                        cut: Airisu.cutFor(Math.min(width, height))
+                        lacquer: place.kind === "media" ? Airisu.lacquerOf(Airisu.pigment("music")) : Airisu.slot
+                        moving: false
                     }
-                    // A round switch: a circle.
+                    // A round switch: a disc.
                     Rectangle {
                         visible: place.switchPlace && place.round && place.single
                         anchors.centerIn: parent
-                        width: Math.round(Math.min(parent.width, parent.height) * 0.7)
+                        width: Math.round(Math.min(parent.width, parent.height) * 0.8)
                         height: width
                         radius: width / 2
-                        color: "transparent"
-                        border.width: Airisu.hair
-                        border.color: root.line
+                        color: Airisu.slot
                     }
                     // The Connections plate: its four keys.
                     Grid {
@@ -87,46 +85,39 @@ Item {
                                 width: Math.max(3, Math.round(Math.min(place.width, place.height) * 0.22))
                                 height: width
                                 radius: place.round ? width / 2 : 0
-                                color: root.line
+                                color: root.mark
                             }
                         }
                     }
-                    // The player: its cover inked in the corner.
+                    // The player: its cover in the corner.
                     Rectangle {
                         visible: place.kind === "media"
                         x: Math.max(2, Math.round(2 * root.d))
                         y: x
                         width: Math.max(4, Math.round(Math.min(place.height * 0.5, 10 * root.d)))
                         height: width
-                        color: root.line
+                        color: Airisu.vivid(Airisu.pigment("music"))
                     }
-                    // Levels: a graduated rule each, its mark where the level stands.
+                    // Levels: a run each, laid to 60 %.
                     Row {
                         id: rules
                         visible: place.kind === "levels" || place.kind === "level"
                         anchors.centerIn: parent
                         readonly property int count: place.kind === "level" ? 1 : Math.max(1, (root.card.modelData.levels ?? []).length)
                         readonly property bool upright: place.height >= place.width * 0.6
-                        spacing: Math.round(Math.min(place.width, place.height) / (rules.count + 1))
+                        spacing: Math.max(2, Math.round(2 * root.d))
                         Repeater {
                             model: rules.count
                             Item {
-                                width: rules.upright ? Math.max(3, Math.round(4 * root.d)) : (place.width - Math.round(4 * root.d) - rules.spacing * (rules.count - 1)) / rules.count
-                                height: rules.upright ? place.height : Math.max(3, Math.round(4 * root.d))
-                                Rectangle {
-                                    color: root.line
-                                    x: rules.upright ? Math.round((parent.width - width) / 2) : 0
-                                    y: rules.upright ? 0 : Math.round((parent.height - height) / 2)
-                                    width: rules.upright ? Airisu.hair : parent.width
-                                    height: rules.upright ? parent.height : Airisu.hair
-                                }
-                                // The mark: a short bar across the rule at 60 %.
-                                Rectangle {
-                                    color: root.line
-                                    x: rules.upright ? 0 : Math.round(parent.width * 0.6)
-                                    y: rules.upright ? Math.round(parent.height * 0.4) : 0
-                                    width: rules.upright ? parent.width : Airisu.strong
-                                    height: rules.upright ? Airisu.strong : parent.height
+                                width: rules.upright ? (place.width - rules.spacing * (rules.count - 1)) / rules.count : place.width
+                                height: rules.upright ? place.height : (place.height - rules.spacing * (rules.count - 1)) / rules.count
+                                ARun {
+                                    width: rules.upright ? parent.height : parent.width
+                                    height: rules.upright ? parent.width : parent.height
+                                    anchors.centerIn: parent
+                                    rotation: rules.upright ? -90 : 0
+                                    value: 0.6
+                                    moving: false
                                 }
                             }
                         }
@@ -139,9 +130,7 @@ Item {
                 y: (root.card?.packed?.rows ?? 0) * ((root.card?.miniUnit ?? 0) + (root.card?.miniGap ?? 0))
                 width: sheet.width
                 height: root.card?.miniUnit ?? 0
-                color: "transparent"
-                border.width: Airisu.hair
-                border.color: root.line
+                color: Airisu.slot
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
                     x: Math.max(2, Math.round(4 * root.d))
@@ -151,8 +140,8 @@ Item {
                         Rectangle {
                             required property real modelData
                             width: Math.round(sheet.width * modelData)
-                            height: Airisu.hair
-                            color: root.line
+                            height: Math.max(2, Math.round(2 * root.d))
+                            color: root.mark
                         }
                     }
                 }
@@ -163,41 +152,26 @@ Item {
             id: words
             x: sheet.x + sheet.width + Airisu.u(3)
             anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - x - root.pad - (seal.visible ? seal.width + Airisu.u(2) : 0)
+            anchors.verticalCenterOffset: root.run
+            width: parent.width - x - root.pad
             spacing: Math.round(2 * root.d)
             AText {
                 width: parent.width
                 size: IrisStyle.typeLabel
                 font.weight: Font.Bold
+                color: Airisu.inkOn(root.face)
                 text: Translation.tr(root.card?.modelData?.label ?? "")
             }
             AText {
                 width: parent.width
                 size: IrisStyle.typeMeta
                 font.weight: Font.Normal
-                color: Airisu.inkSecond
+                color: root.chosen ? Airisu.inkSecondOn(root.face) : Airisu.inkSecond
                 wrapMode: Text.WordWrap
                 maximumLineCount: 3
                 text: Translation.tr(root.card?.modelData?.description ?? "")
             }
         }
 
-        // The inspector's seal: this is the layout the panel is printed from.
-        Rectangle {
-            id: seal
-            visible: root.chosen
-            x: parent.width - root.pad - width
-            y: root.pad
-            width: Airisu.u(5)
-            height: width
-            color: Airisu.seal
-            MaterialSymbol {
-                anchors.centerIn: parent
-                text: "check"
-                iconSize: Math.round(15 * root.d)
-                fill: 1
-                color: Airisu.inkOnSeal
-            }
-        }
     }
 }

@@ -2,16 +2,16 @@ import QtQuick
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's card head (SYSTEM.md §4, Body = 切符, a ticket torn from its origin): the stub. Where it came from is the
-// ruby over what it is now, the live state in full ink; under them the perforation it was torn along. A card with no
-// live line is its name alone. The host is a CardHeader and keeps its actions at the right.
+// AIRISU's card head: where it came from set small over what it is now, the live state in full ink and a step heavier;
+// a card with no live line is its name alone. Air, not a rule, parts it from what it holds. The host is a CardHeader and
+// keeps its actions at the right.
 Item {
     id: root
     property Item host
     readonly property string title: String(root.host?.title ?? "")
     readonly property string detail: String(root.host?.detail ?? "")
     readonly property bool twoLines: root.detail.length > 0
-    implicitHeight: column.implicitHeight + Airisu.u(2.5) + perforation.height
+    implicitHeight: column.implicitHeight + Airisu.u(2)
 
     Column {
         id: column
@@ -20,7 +20,9 @@ Item {
         AText {
             visible: root.twoLines
             width: parent.width
-            voice: "ruby"
+            size: IrisStyle.typeFootnote
+            font.weight: Font.Bold
+            color: Airisu.inkSecond
             text: root.title
         }
         AText {
@@ -29,10 +31,5 @@ Item {
             font.weight: Font.Bold
             text: root.twoLines ? root.detail : root.title
         }
-    }
-    APerforation {
-        id: perforation
-        anchors.bottom: parent.bottom
-        width: parent.width
     }
 }

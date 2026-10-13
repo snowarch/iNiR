@@ -5,6 +5,7 @@ import QtQuick.Shapes
 // the module. `kind` "rect" · "chamfer" (45° off the upper right and lower left, a body's and a seal's die) · "tab" (an
 // index tab standing on the top edge: `tabX`, `tabWidth`, `tabHeight`) · "ticket" (half moons punched in both sides at
 // `notchY`). A stroke is laid inside the die so a 1 px rule lands on a whole pixel; `dashed` draws an inactive die.
+// `texture` fills the die with a texture provider of the die's own size (a frosted piece of the scene) instead of `fill`.
 Item {
     id: root
     property string kind: "rect"
@@ -18,6 +19,7 @@ Item {
     property real tabHeight: Airisu.m
     property real notchY: root.height / 2
     property real notchRadius: Airisu.m
+    property Item texture: null
 
     readonly property real s: root.strokeWidth > 0 ? root.strokeWidth / 2 : 0
     readonly property real rise: root.kind === "tab" ? root.tabHeight : 0
@@ -33,6 +35,7 @@ Item {
         preferredRendererType: Shape.CurveRenderer
         ShapePath {
             fillColor: root.fill
+            fillItem: root.texture
             strokeColor: root.strokeWidth > 0 ? root.stroke : "transparent"
             strokeWidth: root.strokeWidth
             strokeStyle: root.dashed ? ShapePath.DashLine : ShapePath.SolidLine

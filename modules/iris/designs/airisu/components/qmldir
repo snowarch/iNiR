@@ -2,17 +2,10 @@ module airisu
 singleton Airisu 1.0 Airisu.qml
 AText 1.0 AText.qml
 ADie 1.0 ADie.qml
-APrint 1.0 APrint.qml
-ATombo 1.0 ATombo.qml
-ARegistration 1.0 ARegistration.qml
-AScreen 1.0 AScreen.qml
-APerforation 1.0 APerforation.qml
+ARecord 1.0 ARecord.qml
+ALacquer 1.0 ALacquer.qml
+AStock 1.0 AStock.qml
+AKey 1.0 AKey.qml
+ARun 1.0 ARun.qml
 ARuler 1.0 ARuler.qml
-ALed 1.0 ALed.qml
-ATape 1.0 ATape.qml
 AHalftone 1.0 AHalftone.qml
-AMeter 1.0 AMeter.qml
-ASeal 1.0 ASeal.qml
-ARule 1.0 ARule.qml
-APlate 1.0 APlate.qml
-ACautionTape 1.0 ACautionTape.qml

@@ -4,10 +4,9 @@ import qs.modules.common
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's Spotlight head (SYSTEM.md §7, the catalogue's page head): what you type is the page's headline, set in the
-// figures' face; the running head above it says which part of the catalogue you are in (Search, or the mode its key
-// opened, with that key), and the folio on the right counts what the page holds, its name as ruby over the figure. A
-// strong rule closes the head. The field, its keys and its focus stay the engine's: this answers where they go and the
+// AIRISU's Spotlight head: what you type is the page's headline, set in the figures' face; the running head above it
+// says which part you are in (Search, or the mode its key opened, with that key sunk into the body), and the folio on
+// the right counts what the page holds, its name over the figure. A groove closes the head. The field, its keys and its focus stay the engine's: this answers where they go and the
 // type they are set in.
 Item {
     id: root
@@ -32,8 +31,8 @@ Item {
     readonly property color placeholderColour: Airisu.inkThird
     readonly property color selectionColour: Airisu.seal
     readonly property color selectedTextColour: Airisu.inkOnSeal
-    readonly property int ruleWeight: Airisu.strong
-    readonly property color ruleColour: Airisu.ink
+    readonly property int ruleWeight: Airisu.hair
+    readonly property color ruleColour: Airisu.rule
     readonly property int ruleInset: root.pad
 
     implicitHeight: root.headTop + running.height + Airisu.u(1) + Math.ceil(IrisStyle.typeDisplay * 1.24) + root.headFoot
@@ -45,15 +44,15 @@ Item {
         y: root.headTop
         height: Math.max(keycap.height, word.implicitHeight)
         spacing: Airisu.u(1.5)
-        ADie {
+        ALacquer {
             id: keycap
             visible: root.mode !== null
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.max(Airisu.u(4), key.implicitWidth + Airisu.u(1.5))
+            width: Math.max(Airisu.u(4), key.implicitWidth + Airisu.u(2))
             height: Airisu.u(4)
-            kind: "rect"
-            stroke: Airisu.inkSecond
-            strokeWidth: Airisu.hair
+            cut: Airisu.cutFor(height)
+            lacquer: Airisu.slot
+            moving: false
             AText {
                 id: key
                 anchors.centerIn: parent

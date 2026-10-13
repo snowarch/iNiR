@@ -3,18 +3,17 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.iris.style
 import qs.modules.iris.components
 import "../components"
 
-// AIRISU's notification banner (SYSTEM.md §7): a ticket. The stub keeps the sender's mark; a perforation runs between
-// it and the slip, and the time the banner has left is that perforation torn hole by hole from the top: when the last
-// hole goes, the banner leaves. The pointer keeps it (the engine stops its clock) and the perforation is whole again.
-// The slip is set like a station sign: the app as ruby over the title, the message, the actions as tags, and the
-// notice's line colour as a short band on the bottom edge; a critical notice runs caution tape there instead. It lands
-// as a stamp does, its ink a step out of register until it settles. IrisBanners keeps the list, the swipe, the clock,
-// the tap and the body; this is what the body holds.
+// AIRISU's notification banner: the notice is laid on the body as a panel of lacquer in its pigment (the accent, a
+// critical one the caution's yamabuki), the sender's mark at its head and the words beside it. The time the banner has
+// left is that lacquer itself: it is drawn back across the body along the die's 45° a step at a time, and when the
+// body is bare the banner leaves. The pointer keeps it (the engine stops its clock) and the lacquer is whole again.
+// IrisBanners keeps the list, the swipe, the clock, the tap and the body; this is what it holds.
 Item {
     id: root
     property var notification
@@ -28,10 +27,18 @@ Item {
     readonly property string title: String(root.notification?.summary || root.notification?.appName || "")
     readonly property string message: String(root.notification?.body ?? "").replace(/<[^>]*>/g, "")
     readonly property int pad: Airisu.u(4)
-    readonly property int stub: Airisu.u(16)
-    // What the engine reads the notice as (its sign and its line colour).
+    readonly property int kiss: Airisu.kiss
+    // What the engine reads the notice as (its sign and its line colour), and the notice's pigment.
     readonly property var semantic: mark.semantic ?? ({ glyph: "notifications" })
-    implicitHeight: Math.max(slip.implicitHeight, mark.height) + 2 * root.pad
+    readonly property color pigment: root.critical ? Airisu.pigment("caution")
+        : Airisu.pigment("message")
+    // The body under the lacquer, the lacquer, and the ink that reads on both while one is drawn back off the other.
+    readonly property color bare: Airisu.solid(IrisStyle.bodySurface)
+    readonly property color lacquer: root.critical ? Airisu.vivid(root.pigment) : Airisu.stockOf(root.pigment)
+    readonly property color ink: root.clock ? Airisu.inkOver(root.bare, root.lacquer) : Airisu.inkOn(root.lacquer)
+    readonly property color inkSecond: ColorUtils.mix(root.ink, root.lacquer, 0.72) // iris-literal: second tone on the notice
+    readonly property color inkThird: ColorUtils.mix(root.ink, root.lacquer, 0.52) // iris-literal: third tone on the notice
+    implicitHeight: Math.max(slip.implicitHeight, mark.height) + 2 * root.pad + 2 * root.kiss
 
     // The engine's clock for this banner; gone once the pointer has kept it, absent when it never times out.
     readonly property var clock: root.notification?.timer ?? null
@@ -41,8 +48,8 @@ Item {
         running: root.clock !== null && root.visible
         repeat: true
         triggeredOnStart: true
-        // A step per hole: the line only changes when a hole goes, so nothing is drawn in between.
-        interval: Math.max(40, Math.round(Number(root.clock?.interval ?? 4000) / Math.max(1, perforation.holes)))
+        // Forty steps over the banner's time: the coat only moves when a step goes, so nothing is drawn in between.
+        interval: Math.max(40, Math.round(Number(root.clock?.interval ?? 4000) / 40))
         onTriggered: {
             const span = Math.max(1, Number(root.clock?.interval ?? 1))
             const born = Number(root.notification?.time ?? Date.now())
@@ -50,48 +57,44 @@ Item {
         }
     }
 
-    // The stamp comes down a step out of register and settles as the banner lands.
+    // The lacquer is laid as the banner lands.
     property bool landed: !Airisu.moving
     Timer { running: !root.landed; interval: IrisStyle.emergeDuration; onTriggered: root.landed = true }
 
     Item {
         id: sheet
         anchors.fill: parent
-        transform: Translate {
-            x: root.landed ? 0 : Airisu.registration
-            y: root.landed ? 0 : Airisu.registration
-            Behavior on x { enabled: Airisu.moving; NumberAnimation { duration: Airisu.detent; easing.type: Easing.BezierSpline; easing.bezierCurve: Airisu.curve } }
-            Behavior on y { enabled: Airisu.moving; NumberAnimation { duration: Airisu.detent; easing.type: Easing.BezierSpline; easing.bezierCurve: Airisu.curve } }
-        }
 
-        // The stub: the sender's mark.
+        // The notice's lacquer, drawn back as its time goes; whole while kept or when it never times out.
+        ALacquer {
+            x: root.kiss
+            y: root.kiss
+            width: root.width - 2 * root.kiss
+            height: root.height - 2 * root.kiss
+            cut: Math.max(2, Airisu.chamfer - root.kiss)
+            lacquer: "transparent"
+            coat: root.lacquer
+            share: !root.landed ? 0 : root.clock ? 1 - root.torn : 1
+            travel: root.landed && root.torn === 0 ? Airisu.tear : 0
+        }
         IrisNotificationIcon {
             id: mark
-            x: root.pad
-            y: root.pad
-            size: Airisu.u(9)
+            x: root.kiss + root.pad
+            y: root.kiss + root.pad
+            size: Airisu.u(10)
             appName: root.app
             appIcon: String(root.notification?.appIcon ?? "")
             image: String(root.notification?.image ?? "")
             summary: String(root.notification?.summary ?? "")
             critical: root.critical
         }
-        APerforation {
-            id: perforation
-            x: root.stub - Math.round(width / 2)
-            height: root.height
-            vertical: true
-            fromStart: true
-            torn: root.torn
-            colour: Airisu.inkThird
-        }
 
         // The slip.
         Column {
             id: slip
-            x: root.stub + root.pad
-            y: root.pad
-            width: root.width - x - root.pad
+            x: mark.x + mark.width + Airisu.u(3)
+            y: root.kiss + root.pad
+            width: root.width - x - root.pad - root.kiss
 
             Item {
                 id: rubyLine
@@ -100,15 +103,18 @@ Item {
                 AText {
                     id: appLabel
                     width: Math.min(implicitWidth, parent.width - when.implicitWidth - Airisu.u(2))
-                    voice: "ruby"
+                    size: IrisStyle.typeFootnote
+                    font.weight: Font.Bold
+                    color: root.inkSecond
                     text: root.app.length > 0 && root.app !== root.title ? root.app : ""
                 }
                 AText {
                     id: when
                     anchors.right: parent.right
                     visible: !root.hovered
-                    voice: "ruby"
-                    color: Airisu.inkThird
+                    size: IrisStyle.typeFootnote
+                    font.weight: Font.Medium
+                    color: root.inkThird
                     text: {
                         const seconds = Math.max(0, Math.floor((root.now - Number(root.notification?.time ?? root.now)) / 1000))
                         return seconds < 60 ? Translation.tr("now")
@@ -124,6 +130,7 @@ Item {
                 font.weight: Font.Bold
                 wrapMode: Text.Wrap
                 maximumLineCount: 2
+                color: root.ink
                 text: root.title
             }
             AText {
@@ -135,6 +142,7 @@ Item {
                 wrapMode: Text.Wrap
                 maximumLineCount: root.hovered ? 8 : 2
                 lineHeight: 1.08
+                color: root.ink
                 text: root.message
             }
             Flow {
@@ -170,7 +178,7 @@ Item {
             visible: root.hovered
             width: Airisu.u(6)
             height: Airisu.u(6)
-            x: root.width - root.pad - width + Airisu.u(1)
+            x: root.width - root.kiss - root.pad - width + Airisu.u(1)
             y: slip.y + Math.round((rubyLine.height - height) / 2)
             Accessible.name: Translation.tr("Dismiss")
             onClicked: Notifications.timeoutNotification(root.notification.notificationId)
@@ -178,26 +186,9 @@ Item {
                 anchors.centerIn: parent
                 text: "close"
                 iconSize: Math.round(16 * root.d)
-                color: Airisu.ink
+                color: root.ink
             }
         }
 
-        // The line the notice belongs to, as on a station sign: a short band on the bottom edge. A notice the engine
-        // cannot place on a line gets none.
-        Rectangle {
-            visible: !root.critical && root.semantic.glyph !== "notifications"
-            x: slip.x
-            y: root.height - height
-            width: Airisu.u(8)
-            height: Airisu.m
-            color: root.semantic.tint ?? Airisu.rule
-        }
-        // A critical notice runs caution tape along the slip's foot instead, as wide as its words.
-        ACautionTape {
-            visible: root.critical
-            x: slip.x
-            y: root.height - height
-            width: slip.width
-        }
     }
 }

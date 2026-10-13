@@ -7,9 +7,9 @@ import qs.modules.common.widgets
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's page nav: the pages as marks on the sheet, the one you are on printed as a solid ink plate with its mark
-// reversed out (the chosen box of a form), the one under the pointer with its crop marks. The plate stops on the next
-// page in a detent; it never slides through the others. The engine (IrisIsland) owns the entries and what each does.
+// AIRISU's page nav: the pages as quiet keys (AKey), the one you are on on the chosen plate with its mark cut out of it,
+// the one under the pointer with its coat laid at 45°. A group is parted from the next by air. The engine (IrisIsland)
+// owns the entries and what each does.
 Item {
     id: root
     property var island: null
@@ -32,33 +32,24 @@ Item {
                 width: entry.divider ? Airisu.u(3) : root.slot
                 height: root.height
 
-                Rectangle {
-                    visible: entry.divider
-                    anchors.centerIn: parent
-                    width: Airisu.hair
-                    height: Airisu.u(3.5)
-                    color: Airisu.rule
-                }
-                APrint {
+                AKey {
                     id: key
                     visible: !entry.divider
                     anchors.centerIn: parent
                     width: root.plate
                     height: root.plate
-                    die: "rect"
+                    lacquer: entry.lit ? IrisStyle.selectionFill : "transparent"
+                    hovered: hover.hovered && !entry.lit
                     pressed: tap.pressed
-                    fill: entry.lit ? Airisu.ink : "transparent"
                     MaterialSymbol {
                         anchors.centerIn: parent
+                        anchors.horizontalCenterOffset: key.shift
+                        anchors.verticalCenterOffset: key.shift
                         text: entry.modelData.glyph ?? ""
                         iconSize: Math.round(18 * root.d)
                         fill: entry.lit ? 1 : 0
-                        color: entry.lit ? Airisu.reverse : hover.hovered ? Airisu.ink : Airisu.inkSecond
+                        color: entry.lit ? IrisStyle.selectionLabel : hover.hovered ? Airisu.ink : Airisu.inkSecond
                     }
-                }
-                ATombo {
-                    anchors.fill: key
-                    shown: hover.hovered && !entry.lit && !tap.pressed
                 }
                 HoverHandler {
                     id: hover

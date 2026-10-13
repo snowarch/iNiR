@@ -3,10 +3,10 @@ import qs.modules.common.widgets
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's timer key (the Island's tools): a box of a printed form with the minutes set large in it, the share of the
-// hour it takes run as a graduated rule along its foot, like the dial of a darkroom timer read flat. The one that runs
-// is the seal; one that cannot be taken while a countdown runs is printed as a screen, never faded. The pointer brings
-// the crop marks and a press runs the box out of register; dragging and the wheel still set the minutes (the engine).
+// AIRISU's timer key (the Island's tools): a key (AKey) of time's lacquer with its minutes set large and leaning,
+// and the share of the hour they take laid along its foot as a run. The one that runs is the pigment at full strength;
+// one that cannot be taken while a countdown runs sits half into the stock. Dragging and the wheel still set the minutes
+// (the engine); the pointer lays the key's coat and a press carries its figure a hair.
 Item {
     id: root
     property Item host
@@ -18,77 +18,51 @@ Item {
     readonly property bool available: root.slot.available ?? true
     readonly property bool hovered: root.slot.hovered ?? false
     readonly property bool pressed: root.slot.pressed ?? false
-    readonly property int shift: root.pressed && root.available ? Airisu.registration : 0
-    readonly property color ink: root.running ? Airisu.inkOnSeal : root.available ? Airisu.ink : Airisu.inkThird
+    readonly property color pigment: Airisu.pigment("time")
+    readonly property color face: !root.available ? Airisu.dim : root.running ? Airisu.vivid(root.pigment) : Airisu.lacquerOf(root.pigment)
+    readonly property color ink: root.available ? Airisu.inkOn(root.face) : Airisu.inkThird
+    readonly property int shift: key.shift
 
-    APrint {
-        id: box
+    AKey {
+        id: key
         anchors.fill: parent
-        die: "rect"
-        pressed: root.pressed && root.available
-        fill: root.running ? Airisu.seal : "transparent"
-        under: root.running ? Airisu.sealUnder : Airisu.inkUnder
-        stroke: root.running ? "transparent" : root.available ? Airisu.ink : Airisu.inkThird
-        strokeWidth: root.running ? 0 : Airisu.hair
-        dashed: !root.available
-
-        AScreen {
-            anchors.fill: parent
-            anchors.margins: Airisu.hair
-            visible: !root.available
-            pigment: Airisu.inkThird
-            density: 10
-        }
-        AText {
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: -Airisu.m
-            visible: root.figure.length > 0
-            voice: "figure"
-            size: IrisStyle.typeTitleLarge
-            text: root.figure
-            color: root.ink
-        }
-        MaterialSymbol {
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: -Airisu.m
-            visible: root.glyph.length > 0
-            text: root.glyph
-            fill: root.running ? 1 : 0
-            iconSize: Math.round(22 * Airisu.d)
-            color: root.ink
-        }
-        // The share of the hour: a rule of ticks every five minutes, the travelled part in solid ink.
-        Item {
-            visible: root.figure.length > 0
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.margins: Airisu.m
-            height: Airisu.u(1.5)
-            Repeater {
-                model: 13
-                Rectangle {
-                    required property int index
-                    x: Math.round(index * (parent.width - width) / 12)
-                    anchors.bottom: parent.bottom
-                    width: Airisu.hair
-                    height: index % 3 === 0 ? parent.height : Math.round(parent.height / 2)
-                    color: root.available ? Airisu.inkSecond : Airisu.inkThird
-                }
-            }
-            Rectangle {
-                anchors.bottom: parent.bottom
-                width: Math.round(parent.width * Math.max(0, Math.min(1, root.share)))
-                height: Airisu.strong
-                color: root.ink
-            }
-        }
+        lacquer: root.face
+        hovered: root.hovered
+        pressed: root.pressed
+        keyed: root.host?.visualFocus ?? false
+        available: root.available
     }
-    ATombo {
-        anchors.fill: parent
-        shown: root.hovered && root.available && !root.pressed
-        focusMarks: root.host?.visualFocus ?? false
-        air: Airisu.hair
-        length: Airisu.m
+    AText {
+        anchors.centerIn: parent
+        anchors.horizontalCenterOffset: root.shift
+        anchors.verticalCenterOffset: -Airisu.m + root.shift
+        visible: root.figure.length > 0
+        voice: "figure"
+        size: IrisStyle.typeTitleLarge
+        text: root.figure
+        color: root.ink
+    }
+    MaterialSymbol {
+        anchors.centerIn: parent
+        anchors.horizontalCenterOffset: root.shift
+        anchors.verticalCenterOffset: (root.figure.length > 0 ? -Airisu.m : 0) + root.shift
+        visible: root.glyph.length > 0
+        text: root.glyph
+        fill: root.running ? 1 : 0
+        iconSize: Math.round(22 * Airisu.d)
+        color: root.ink
+    }
+    // The share of the hour, laid along the foot.
+    ARun {
+        visible: root.figure.length > 0
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: Airisu.u(2)
+        height: Math.max(3, Math.round(4 * Airisu.d))
+        value: Math.max(0, Math.min(1, root.share))
+        available: root.available
+        pigment: root.running ? root.ink : Airisu.vivid(root.pigment)
+        moving: false
     }
 }

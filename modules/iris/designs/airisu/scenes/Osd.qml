@@ -5,16 +5,19 @@ import QtQuick.Layouts
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.bar.island
 import "../components"
 
-// AIRISU's OSD, where the Island is not there to answer (SYSTEM.md §7): a stamp's impression. A level is the LED board
-// with its figure set large and its name as ruby; Bar slims the board and Minimal prints the level as the postmark round
-// the mark. A keyboard lock is its lamp and a layout its keycap; a song is its cover and title; a connection is set like
-// a banner, its line a band on the foot; a volume held back runs caution tape there. IrisOSD keeps when, where, how long
-// and the body, so every row of Feedback in Settings still means what it says.
+// AIRISU's OSD, where the Island is not there to answer: the body holds one lacquer panel in the pigment of what
+// changed, as the Island's strip does. A level is its subject's lacquer (light yamabuki,
+// muted tame, the rest the accent) with the level as the second coat laid at 45°, or as a band along the foot for Bar; Minimal keeps its
+// ring round the mark. A keyboard lock is the accent's lacquer while it holds, a layout its keycap sunk in the panel; a
+// song is music's lacquer with its cover; a connection takes its line's colour; a volume held back is the caution's.
+// Each time it comes up its lacquer is laid across it. IrisOSD keeps when, where, how long and the body, so every row
+// of Feedback in Settings still means what it says.
 Item {
     id: root
     property var osd: null
@@ -34,11 +37,44 @@ Item {
         : Math.round(Math.max(Math.round(200 * root.d), Math.min(root.restWidth * 1.2, root.current.implicitWidth + 2 * root.pad)))
     implicitHeight: Math.round(root.current.implicitHeight + 2 * root.rise)
 
-    // Each time it comes up, the stamp lands a step out of register and settles.
-    property bool fresh: false
     readonly property bool opened: root.osd?.open ?? false
-    onOpenedChanged: if (root.opened && Airisu.moving) { root.fresh = true; settle.restart() }
-    Timer { id: settle; interval: Airisu.snap; onTriggered: root.fresh = false }
+    readonly property int kiss: Math.round(3 * root.d)
+
+    // The panel's pigment for what changed.
+    readonly property string connectionTone: root.osd?.connection?.tone ?? ""
+    readonly property bool keyLocked: (root.osd?.keyboardIcon ?? "") !== "language" && (root.osd?.keyboardActive ?? false)
+    readonly property color pigment: {
+        switch (root.kind) {
+        case "volume": return Airisu.pigment(root.muted ? "system" : "music")
+        case "brightness": return Airisu.pigment("caution")
+        case "mic": return Airisu.pigment(root.muted ? "system" : "message")
+        case "keyboard": return root.keyLocked ? Airisu.seal : Airisu.pigment("system")
+        case "media": return Airisu.pigment("music")
+        case "connection": return root.connectionTone === "off" ? Airisu.pigment("system") : root.connectionTone === "warn"
+            ? Airisu.pigment("caution") : (root.osd?.connectionTint ?? Airisu.pigment("network"))
+        case "warning": return Airisu.pigment("caution")
+        default: return Airisu.pigment("rest")
+        }
+    }
+    readonly property bool loud: root.kind === "warning"
+    readonly property color panel: root.loud ? Airisu.vivid(root.pigment) : Airisu.lacquerOf(root.pigment)
+    readonly property bool barLevel: root.style === "bar"
+    readonly property bool coated: root.current === levelRow && !root.minimal
+    readonly property color coatColour: root.barLevel ? Airisu.vivid(root.pigment) : Airisu.coat(root.pigment)
+    readonly property color ink: root.coated && !root.barLevel ? Airisu.inkOver(root.panel, root.coatColour) : Airisu.inkOn(root.panel)
+    readonly property color inkSecond: ColorUtils.mix(root.ink, root.panel, 0.74) // iris-literal: second tone on lacquer
+    readonly property color inkThird: ColorUtils.mix(root.ink, root.panel, 0.52)  // iris-literal: third tone on lacquer
+
+    ALacquer {
+        anchors.fill: parent
+        anchors.margins: root.kiss
+        cut: Math.max(2, Airisu.chamfer - root.kiss)
+        lacquer: root.opened ? root.panel : Airisu.ground
+        coat: root.coatColour
+        band: root.barLevel ? Math.max(3, Math.round(height * 0.16)) : 0
+        share: root.coated ? root.value : 0
+        travel: Airisu.detent
+    }
 
     component Slot: RowLayout {
         id: slot
@@ -48,21 +84,14 @@ Item {
         height: root.height - 2 * root.rise
         visible: root.current === slot
         spacing: Airisu.u(3)
-        transform: Translate { x: root.fresh ? Airisu.registration : 0; y: root.fresh ? Airisu.registration : 0 }
-    }
-    // A line as a station sign draws it: a short band on the foot, under the words.
-    component Band: Rectangle {
-        y: root.height - height
-        width: Airisu.u(8)
-        height: Airisu.m
     }
 
-    // A level: the mark, its name over the board, the figure.
+    // A level: the mark, its name, the figure.
     Slot {
         id: levelRow
         readonly property string name: root.kind === "brightness" ? Translation.tr("Brightness")
             : root.kind === "mic" ? Translation.tr("Microphone") : Translation.tr("Volume")
-        readonly property color ink: root.muted ? Airisu.inkThird : Airisu.ink
+        readonly property color ink: root.muted ? root.inkSecond : root.ink
         Item {
             implicitWidth: Airisu.u(8)
             implicitHeight: Airisu.u(8)
@@ -88,15 +117,10 @@ Item {
             spacing: Airisu.u(1.5)
             AText {
                 width: parent.width
-                voice: "ruby"
+                size: IrisStyle.typeLabel
+                font.weight: Font.Bold
+                color: levelRow.ink
                 text: root.muted ? Translation.tr("Muted") : levelRow.name
-            }
-            ALed {
-                visible: !root.minimal
-                width: parent.width
-                height: root.style === "bar" ? Airisu.m : Airisu.u(2)
-                value: root.value
-                dim: root.muted
             }
         }
         AText {
@@ -119,32 +143,34 @@ Item {
         }
     }
 
-    // A lock is its lamp, lit while it holds; a layout is its keycap.
+    // A lock is its glyph on the accent's lacquer while it holds; a layout is its keycap sunk in the panel.
     Slot {
         id: keyRow
         readonly property bool layout: (root.osd?.keyboardIcon ?? "") === "language"
         readonly property bool active: root.osd?.keyboardActive ?? false
-        Rectangle {
+        MaterialSymbol {
             visible: !keyRow.layout
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: Airisu.u(2.5)
-            implicitHeight: Airisu.u(2.5)
-            color: keyRow.active ? Airisu.seal : Airisu.groundRaised
+            text: root.osd?.keyboardIcon ?? "keyboard"
+            fill: 1
+            iconSize: Math.round(22 * root.d)
+            color: keyRow.active ? root.ink : root.inkThird
         }
-        ADie {
+        ALacquer {
             visible: keyRow.layout
             Layout.alignment: Qt.AlignVCenter
             implicitWidth: Math.max(Airisu.u(9), Math.min(Airisu.u(18), legend.implicitWidth + Airisu.u(4)))
             implicitHeight: Airisu.u(9)
-            kind: "rect"
-            stroke: Airisu.ink
-            strokeWidth: Airisu.hair
+            cut: Airisu.cutFor(Airisu.u(9))
+            lacquer: Airisu.slot
+            moving: false
             AText {
                 id: legend
                 anchors.centerIn: parent
                 width: Math.min(implicitWidth, parent.width - Airisu.u(2))
                 voice: "figure"
                 size: IrisStyle.typeTitle
+                color: root.ink
                 text: root.osd?.keyboardText ?? ""
             }
         }
@@ -154,12 +180,12 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             size: IrisStyle.typeBody
             font.weight: Font.Bold
-            color: keyRow.layout || keyRow.active ? Airisu.ink : Airisu.inkSecond
+            color: keyRow.layout || keyRow.active ? root.ink : root.inkSecond
             text: keyRow.layout ? Translation.tr("Keyboard layout") : (root.osd?.keyboardText ?? "")
         }
     }
 
-    // A song: its cover, the artist as ruby over the title, what the key did.
+    // A song: its cover, the artist over the title, what the key did.
     Slot {
         id: mediaRow
         IrisArtwork {
@@ -178,13 +204,16 @@ Item {
             AText {
                 width: parent.width
                 visible: text.length > 0
-                voice: "ruby"
+                size: IrisStyle.typeFootnote
+                font.weight: Font.Bold
+                color: root.inkSecond
                 text: root.osd?.mediaArtist ?? ""
             }
             AText {
                 width: parent.width
                 size: IrisStyle.typeLabel
                 font.weight: Font.Bold
+                color: root.ink
                 text: (root.osd?.mediaTitle ?? "").length > 0 ? root.osd.mediaTitle : Translation.tr("Now playing")
             }
         }
@@ -194,12 +223,11 @@ Item {
             text: root.osd?.mediaIcon ?? "play_arrow"
             fill: 1
             iconSize: Math.round(22 * root.d)
-            // Playing is live: the seal. Every other key is the ink.
-            color: (root.osd?.mediaAction ?? "") === "play" ? Airisu.sealText : Airisu.ink
+            color: root.ink
         }
     }
 
-    // A connection: set like a banner, with the line it belongs to on the foot.
+    // A connection: its sign, what it is over how, and a figure when it has one.
     Slot {
         id: connectionRow
         readonly property string tone: root.osd?.connection?.tone ?? ""
@@ -208,7 +236,7 @@ Item {
             text: root.osd?.connection?.icon ?? ""
             fill: 1
             iconSize: Math.round(22 * root.d)
-            color: connectionRow.tone === "off" ? Airisu.inkThird : connectionRow.tone === "warn" ? Airisu.caution : Airisu.ink
+            color: connectionRow.tone === "off" ? root.inkThird : root.ink
         }
         Column {
             id: connectionWords
@@ -220,12 +248,15 @@ Item {
                 width: parent.width
                 size: IrisStyle.typeLabel
                 font.weight: Font.Bold
+                color: root.ink
                 text: root.osd?.connection?.title ?? ""
             }
             AText {
                 width: parent.width
                 visible: text.length > 0
-                voice: "ruby"
+                size: IrisStyle.typeFootnote
+                font.weight: Font.Medium
+                color: root.inkSecond
                 text: root.osd?.connection?.detail ?? ""
             }
         }
@@ -234,31 +265,20 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             voice: "figure"
             size: IrisStyle.typeTitle
+            color: root.ink
             text: Math.round(root.osd?.connection?.value ?? 0) + "%"
         }
     }
-    Band {
-        visible: connectionRow.visible && connectionRow.tone !== "off"
-        x: connectionRow.x + connectionWords.x
-        color: root.osd?.connectionTint ?? Airisu.rule
-    }
 
-    // A volume held back: the caution plate, why, and tape on the foot.
+    // A volume held back: on the caution's lacquer, its sign and why.
     Slot {
         id: warningRow
-        ADie {
+        MaterialSymbol {
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: Airisu.u(8)
-            implicitHeight: Airisu.u(8)
-            kind: "rect"
-            fill: Airisu.caution
-            MaterialSymbol {
-                anchors.centerIn: parent
-                text: "volume_off"
-                fill: 1
-                iconSize: Math.round(18 * root.d)
-                color: Airisu.inkOnCaution
-            }
+            text: "volume_off"
+            fill: 1
+            iconSize: Math.round(22 * root.d)
+            color: root.ink
         }
         Column {
             id: warningWords
@@ -270,20 +290,17 @@ Item {
                 width: parent.width
                 size: IrisStyle.typeLabel
                 font.weight: Font.Bold
+                color: root.ink
                 text: Translation.tr("Volume held back")
             }
             AText {
                 width: parent.width
                 visible: text.length > 0
-                voice: "ruby"
+                size: IrisStyle.typeFootnote
+                font.weight: Font.Medium
+                color: root.inkSecond
                 text: root.osd?.warningText ?? ""
             }
         }
-    }
-    ACautionTape {
-        visible: warningRow.visible
-        x: warningRow.x + warningWords.x
-        y: root.height - height
-        width: root.width - x - root.pad
     }
 }

@@ -2,10 +2,11 @@ import QtQuick
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's button (SYSTEM.md §6, board Piezas). The primary action is the seal: the chamfer die in 朱, its label in the
-// seal's ink. The chosen one is a solid ink plate with the label reversed out. Any other is a tag, a rule round a
-// rectangle; a quiet one is its label alone. The pointer brings the crop marks, the keyboard the seal's marks, a press
-// runs the plate out of register, and an inactive button is printed as a screen, never faded.
+// AIRISU's button: a key (AKey). The primary action is a key of the accent's lacquer (the danger's, when it destroys);
+// the chosen one wears the chosen plate; any other is a tag, its die ruled in the third ink of what it sits on and inked
+// by the pointer (a key of the body's next coat read as a grey key that cannot be taken), and a quiet one is its words
+// alone until the pointer lays its coat. One that cannot be taken is ruled dashed. Its words are cut out of the lacquer
+// in the lacquer's own ink.
 Item {
     id: root
     property Item host
@@ -13,70 +14,49 @@ Item {
     readonly property bool danger: root.host?.danger ?? false
     readonly property bool selected: root.host?.selected ?? false
     readonly property bool quiet: root.host?.quiet ?? false
-    readonly property bool hovered: root.host?.hovered ?? false
-    readonly property bool pressed: root.host?.down ?? false
     readonly property bool available: root.host?.enabled ?? true
-    readonly property bool keyed: root.host?.visualFocus ?? false
     readonly property string text: String(root.host?.text ?? "")
-    readonly property string kind: root.emphasized ? "seal" : root.selected ? "plate" : root.quiet ? "quiet" : "tag"
-    readonly property color ink: root.kind === "seal" ? Airisu.inkOnSeal : root.kind === "plate" ? Airisu.reverse
-        : root.danger ? Airisu.danger : root.available ? Airisu.ink : Airisu.inkThird
-    // How far the top plate runs out of register while pressed; the host carries its own content by it.
-    readonly property int shift: root.pressed && root.available ? Airisu.registration : 0
+    // What a quiet key's coat is laid on, when the caller sits it on a coloured panel (`skinData.under`).
+    readonly property color under: root.host?.skinData?.under ?? Airisu.ground
+    readonly property bool tag: !root.quiet && (!root.available || !(root.emphasized || root.selected))
+    readonly property color lacquer: !root.available || root.tag ? "transparent"
+        : root.emphasized ? (root.danger ? Airisu.danger : Airisu.seal)
+        : root.selected ? IrisStyle.selectionFill : "transparent"
+    readonly property color ink: !root.available ? Airisu.inkThirdOn(root.under)
+        : root.emphasized || root.selected ? Airisu.inkOn(root.lacquer)
+        : root.danger ? Airisu.danger : Airisu.inkOn(root.under)
+    // How far a press carries the content; the host moves its own by it.
+    readonly property int shift: key.shift
 
-    APrint {
-        id: plate
+    AKey {
+        id: key
         anchors.fill: parent
-        visible: root.kind !== "quiet"
-        die: root.kind === "seal" ? "chamfer" : "rect"
-        pressed: root.pressed && root.available
-        fill: !root.available ? "transparent" : root.kind === "seal" ? Airisu.seal : root.kind === "plate" ? Airisu.ink : "transparent"
-        under: root.kind === "seal" ? Airisu.sealUnder : Airisu.inkUnder
-        stroke: root.kind === "tag" ? (root.danger ? Airisu.danger : root.available ? Airisu.ink : Airisu.inkThird) : "transparent"
-        strokeWidth: root.kind === "tag" ? Airisu.hair : 0
-        dashed: !root.available && root.kind === "tag"
-        // An inactive plate is its pigment as a screen.
-        AScreen {
-            anchors.fill: parent
-            visible: !root.available && root.kind !== "tag"
-            pigment: root.kind === "seal" ? Airisu.seal : Airisu.ink
-            density: 25
-        }
-        AText {
-            anchors.centerIn: parent
-            width: Math.min(implicitWidth, root.width - 4 * Airisu.m)
-            horizontalAlignment: Text.AlignHCenter
-            visible: root.text.length > 0
-            size: IrisStyle.typeLabel
-            font.weight: root.kind === "seal" || root.kind === "plate" ? Font.Bold : Font.DemiBold
-            text: root.text
-            color: root.ink
-        }
+        lacquer: root.lacquer
+        under: root.under
+        hovered: root.host?.hovered ?? false
+        pressed: root.host?.down ?? false
+        keyed: root.host?.visualFocus ?? false
+        available: root.available
     }
-    // A quiet button is its words alone, with the dotted rule of a printed form under them.
+    ADie {
+        visible: root.tag
+        anchors.fill: parent
+        kind: "chamfer"
+        cut: key.cut
+        stroke: root.available && (root.host?.hovered ?? false) ? Airisu.inkOn(root.under) : Airisu.inkThirdOn(root.under)
+        strokeWidth: Airisu.hair
+        dashed: !root.available
+    }
     AText {
-        id: quietLabel
         anchors.centerIn: parent
-        anchors.horizontalCenterOffset: root.pressed ? Airisu.registration : 0
-        anchors.verticalCenterOffset: root.pressed ? Airisu.registration : 0
-        width: Math.min(implicitWidth, root.width - 2 * Airisu.m)
+        anchors.horizontalCenterOffset: root.shift
+        anchors.verticalCenterOffset: root.shift
+        width: Math.min(implicitWidth, root.width - 4 * Airisu.m)
         horizontalAlignment: Text.AlignHCenter
-        visible: root.kind === "quiet" && root.text.length > 0
+        visible: root.text.length > 0
         size: IrisStyle.typeLabel
+        font.weight: root.emphasized || root.selected ? Font.Bold : Font.DemiBold
         text: root.text
         color: root.ink
-    }
-    APerforation {
-        visible: quietLabel.visible && root.hovered
-        anchors.top: quietLabel.baseline
-        anchors.topMargin: Airisu.u(1)
-        anchors.left: quietLabel.left
-        width: quietLabel.width
-        colour: root.ink
-    }
-    ATombo {
-        anchors.fill: parent
-        shown: root.hovered && root.available && !root.pressed
-        focusMarks: root.keyed
     }
 }

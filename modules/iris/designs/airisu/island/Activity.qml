@@ -7,32 +7,31 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.modules.iris.style
 import qs.modules.iris.components
 import "../components"
 
-// AIRISU's activity page: the shop's book of jobs in hand, one slip for each thing that runs (the recording, the timer,
-// what scripts publish), torn apart by perforations. Each slip sets its state as ruby over its name, its figure large at
-// the right and its time as punched tape along its foot; a job that has a line wears its band on the bottom edge. The
-// recording is the one live thing, so it alone carries the seal. Everything it reads and does is the engine's.
+// AIRISU's activity page: one lacquer panel for each thing that runs (the recording, the timer, what scripts publish),
+// each in its subject's pigment (the recording the accent, because it is live; the timer time's; a job its own line),
+// with how far it has come as the second coat laid at 45°. Each sets its state over its name, its figure large and
+// leaning at the right, and its keys after it, all cut out of the panel's ink. Everything it reads and does is the engine's.
 ColumnLayout {
     id: page
     property Item island: null
     readonly property real d: Airisu.d
-    spacing: Airisu.u(3)
+    spacing: Airisu.u(2)
 
     readonly property bool recording: page.island?.recording ?? false
     readonly property string timerKind: page.island?.timerKind ?? ""
 
-    component Mark: MaterialSymbol {
-        iconSize: Math.round(18 * page.d)
-        fill: 0
-        color: Airisu.ink
-    }
     component Key: IrisButton {
         id: key
         property string glyph
-        property color ink: key.emphasized ? Airisu.inkOnSeal : Airisu.ink
+        property color under: Airisu.ground
+        property color ink: key.emphasized ? Airisu.inkOnSeal : Airisu.inkOn(key.under)
+        quiet: !key.emphasized
+        skinData: ({ under: key.under })
         implicitWidth: Math.round(36 * page.d)
         implicitHeight: Math.round(32 * page.d)
         MaterialSymbol {
@@ -43,49 +42,61 @@ ColumnLayout {
             color: key.ink
         }
     }
-    // One slip: its mark, its state over its name, its figure, its keys; its time runs along the foot.
+    // One panel: its mark, its state over its name, its figure, its keys; how far it has come is its coat.
     component Slip: Item {
         id: slip
         property string glyph
-        property color markInk: Airisu.ink
+        property color pigment: Airisu.pigment("rest")
         property string reading
         property string name
         property string figure
-        property color figureInk: Airisu.ink
         property real progress: -1
         property bool running: true
-        property color band: "transparent"
-        property bool torn: false
         default property alias keys: keyRow.data
+        readonly property color lacquer: Airisu.lacquerOf(slip.pigment)
+        readonly property color coat: Airisu.coat(slip.pigment)
+        readonly property color ink: slip.progress > 0 ? Airisu.inkOver(slip.lacquer, slip.coat) : Airisu.inkOn(slip.lacquer)
+        readonly property color inkSecond: ColorUtils.mix(slip.ink, slip.lacquer, 0.74) // iris-literal: second tone on lacquer
+        readonly property color inkThird: ColorUtils.mix(slip.ink, slip.lacquer, 0.52)  // iris-literal: third tone on lacquer
+        readonly property int pad: Airisu.u(3)
         Layout.fillWidth: true
-        implicitHeight: body.implicitHeight + Airisu.u(3) + (slip.torn ? Airisu.u(3) : 0)
+        implicitHeight: body.implicitHeight + 2 * slip.pad
 
-        APerforation {
-            visible: slip.torn
-            width: parent.width
+        ALacquer {
+            anchors.fill: parent
+            lacquer: slip.lacquer
+            coat: slip.coat
+            share: Math.max(0, slip.progress)
+            travel: Airisu.snap
         }
         RowLayout {
             id: body
-            y: slip.torn ? Airisu.u(3) : 0
-            width: parent.width
+            x: slip.pad
+            y: slip.pad
+            width: parent.width - 2 * slip.pad
             spacing: Airisu.u(3)
-            Mark {
+            MaterialSymbol {
                 Layout.alignment: Qt.AlignVCenter
+                iconSize: Math.round(18 * page.d)
+                fill: 1
                 text: slip.glyph
-                color: slip.markInk
+                color: slip.running ? slip.ink : slip.inkThird
             }
             Column {
                 Layout.fillWidth: true
                 spacing: 0
                 AText {
                     width: parent.width
-                    voice: "ruby"
+                    size: IrisStyle.typeFootnote
+                    font.weight: Font.Bold
+                    color: slip.inkSecond
                     text: slip.reading
                 }
                 AText {
                     width: parent.width
                     size: IrisStyle.typeLabel
                     font.weight: Font.Bold
+                    color: slip.ink
                     text: slip.name
                 }
             }
@@ -95,7 +106,7 @@ ColumnLayout {
                 voice: "figure"
                 size: IrisStyle.typeDisplay
                 text: slip.figure
-                color: slip.figureInk
+                color: slip.running ? slip.ink : slip.inkThird
             }
             Row {
                 id: keyRow
@@ -103,42 +114,23 @@ ColumnLayout {
                 spacing: Airisu.u(1)
             }
         }
-        ATape {
-            visible: slip.progress >= 0
-            anchors.bottom: parent.bottom
-            x: lineBand.visible ? lineBand.width + Airisu.u(2) : 0
-            width: parent.width - x
-            height: Airisu.u(2)
-            head: true
-            live: slip.running
-            value: Math.max(0, slip.progress)
-        }
-        // The line the job belongs to, as a station sign carries it: a short band on the bottom edge.
-        Rectangle {
-            id: lineBand
-            visible: slip.band.a > 0
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: slip.progress >= 0 ? Math.round((Airisu.u(2) - height) / 2) : 0
-            width: Airisu.u(8)
-            height: Airisu.m
-            color: slip.band
-        }
     }
 
     Slip {
         visible: page.recording
+        id: recordSlip
         glyph: "radio_button_checked"
-        markInk: Airisu.seal
+        pigment: Airisu.pigment("live")
         reading: RecorderStatus.effectiveAudioMode === "none" ? Translation.tr("No audio")
             : RecorderStatus.effectiveAudioMode === "microphone" ? Translation.tr("Microphone")
             : RecorderStatus.effectiveAudioMode === "both" ? Translation.tr("System and microphone")
             : Translation.tr("System audio")
         name: Translation.tr("Screen recording")
         figure: page.island?.clockText(RecorderStatus.elapsedSeconds) ?? ""
-        figureInk: Airisu.sealText
         Key {
             glyph: "stop"
             emphasized: true
+            under: recordSlip.lacquer
             Accessible.name: Translation.tr("Stop recording")
             onClicked: {
                 Quickshell.execDetached([Directories.recordScriptPath, "--stop"])
@@ -150,21 +142,20 @@ ColumnLayout {
     Slip {
         id: timerSlip
         visible: page.timerKind.length > 0
-        torn: page.recording
         readonly property bool paused: page.island?.timerPaused ?? false
         glyph: page.island?.timerGlyph ?? "timer"
-        markInk: timerSlip.paused ? Airisu.inkThird : Airisu.ink
+        pigment: Airisu.pigment("time")
         reading: timerSlip.paused ? Translation.tr("Paused")
             : page.timerKind === "pomodoro"
                 ? Translation.tr("Cycle %1 of %2").arg(TimerService.pomodoroCycle + 1).arg(TimerService.cyclesBeforeLongBreak)
             : Translation.tr("Running")
         name: page.island?.timerLabel ?? ""
         figure: page.island?.clockText(page.island?.timerSeconds ?? 0) ?? ""
-        figureInk: timerSlip.paused ? Airisu.inkThird : Airisu.ink
         progress: page.timerKind !== "stopwatch" ? (page.island?.timerProgress ?? 0) : -1
         running: !timerSlip.paused
         Key {
             glyph: timerSlip.paused ? "play_arrow" : "pause"
+            under: timerSlip.lacquer
             Accessible.name: timerSlip.paused ? Translation.tr("Resume") : Translation.tr("Pause")
             onClicked: {
                 if (page.timerKind === "pomodoro") TimerService.togglePomodoro()
@@ -174,7 +165,7 @@ ColumnLayout {
         }
         Key {
             glyph: "close"
-            quiet: true
+            under: timerSlip.lacquer
             Accessible.name: Translation.tr("Stop timer")
             onClicked: {
                 if (page.timerKind === "pomodoro") TimerService.stopPomodoro()
@@ -191,17 +182,16 @@ ColumnLayout {
             required property var modelData
             required property int index
             readonly property real share: Number(job.modelData.progress ?? -1)
-            torn: job.index > 0 || page.recording || page.timerKind.length > 0
             glyph: String(job.modelData.glyph ?? "bolt")
             reading: String(job.modelData.detail ?? "").length > 0 ? String(job.modelData.detail)
                 : job.share < 0 ? Translation.tr("Working") : Translation.tr("In progress")
             name: String(job.modelData.title ?? "")
             figure: job.share >= 0 ? Math.round(job.share * 100) + "%" : ""
             progress: job.share
-            band: Airisu.band(String(job.modelData.tint ?? "lavender"))
+            pigment: Airisu.pigment("rest")
             Key {
                 glyph: "close"
-                quiet: true
+                under: job.lacquer
                 Accessible.name: Translation.tr("Dismiss")
                 onClicked: LiveActivities.dismiss(String(job.modelData.id))
             }

@@ -1,7 +1,8 @@
 #version 440
 // AIRISU's halftone (網点): a picture printed in one ink as a screen of dots on a grid turned to `angle`. Each cell
 // reads the picture at its centre and grows a dot whose area is that tone; a dot under `floorPx` across is not
-// printed (it would read as dither). `fadeFrom`..`fadeTo` is a screen ramp along x: the dots themselves shrink to
+// printed (it would read as dither), and the dots just over it are printed lighter, so where a screen starts its first
+// row of dots never shows as a line (light dots on black read even at the smallest size). `fadeFrom`..`fadeTo` is a screen ramp along x: the dots themselves shrink to
 // nothing, as a printer fades a picture, never an alpha gradient. `lightInk` prints the lights (light ink on a dark
 // stock); otherwise the darks (dark ink on paper).
 layout(location = 0) in vec2 qt_TexCoord0;
@@ -34,6 +35,6 @@ void main() {
     float tone = lightInk > 0.5 ? lum : 1.0 - lum;
     tone = clamp(tone * gain, 0.0, 1.0) * smoothstep(fadeFrom, fadeTo, uv.x);
     float r = cell * sqrt(tone / 3.14159265);
-    float a = (1.0 - smoothstep(r - 0.7, r + 0.7, length(q - centreQ))) * step(floorPx * 0.5, r);
+    float a = (1.0 - smoothstep(r - 0.7, r + 0.7, length(q - centreQ))) * smoothstep(floorPx * 0.5, floorPx * 1.25, r);
     fragColor = vec4(ink.rgb, 1.0) * ink.a * a * qt_Opacity;
 }

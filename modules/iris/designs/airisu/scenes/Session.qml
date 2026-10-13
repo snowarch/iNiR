@@ -4,15 +4,17 @@ import QtQuick
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.modules.iris.style
 import "../components"
 
-// AIRISU's session screen (SYSTEM.md §7): a strip of numbered tickets, as a book of coupon tickets (回数券) is printed,
-// one ticket per action joined by perforations. Each carries its station code (S1…, the key that takes it) and its sign;
-// the date stands over the time as ruby above the strip. What cannot be undone is sealed by holding it: the seal inks
-// from the centre for 600 ms and stays printed, and letting go before does nothing (law 5); the keyboard asks twice, as
-// the engine does, and the seal's ring waits printed in outline. The pointer brings trim marks on the ticket's cut
-// lines, the keyboard the same marks in the seal. IrisSessionScreen keeps the actions, the keys and the confirm.
+// AIRISU's session screen: a row of lacquer panels, one per action (restarting in the caution's yamabuki, locking in
+// tame, the others in the accent's shu), with
+// the key that takes it (S1…) leaning in its corner and its sign and name cut out of it. What cannot be undone is
+// confirmed by holding it: the pigment at full strength is laid across the panel at 45° for 600 ms, and when the coat
+// reaches the far corner it is done; letting go draws it back. The keyboard asks twice, as the engine does, and the coat
+// waits wholly laid, the panel in its pigment, between the two. As the screen comes up the panels are laid one after another. IrisSessionScreen
+// keeps the actions, the keys and the confirm.
 Item {
     id: root
     property var host
@@ -21,22 +23,21 @@ Item {
     readonly property var actions: root.host?.actions ?? []
     readonly property int ticketWidth: Math.round(128 * root.d)
     readonly property int ticketHeight: Math.round(168 * root.d)
+    readonly property int gap: Airisu.u(2)
     readonly property int pad: Airisu.u(3)
-    // Trim marks: they stand off the strip by `air` and run `reach` beyond it, on the line a ticket is torn along.
-    readonly property int air: Airisu.u(1.5)
-    readonly property int reach: Airisu.u(3)
     implicitWidth: sheet.width
     implicitHeight: sheet.height
 
-    // The stamp lands a step out of register and settles as the screen comes up.
-    property bool settled: false
-    onShownChanged: {
-        if (!root.shown) { root.settled = false; return }
-        if (Airisu.moving) settle.restart()
-        else root.settled = true
+    function pigmentOf(id: string): color {
+        switch (id) {
+        case "suspend": return Airisu.pigment("time")
+        case "reboot": return Airisu.pigment("caution")
+        case "poweroff": return Airisu.pigment("live")
+        case "lock": return Airisu.pigment("system")
+        case "logout": return Airisu.pigment("message")
+        default: return Airisu.pigment("rest")
+        }
     }
-    Component.onCompleted: if (root.shown) settle.restart()
-    Timer { id: settle; interval: Airisu.snap; onTriggered: root.settled = true }
 
     Column {
         id: sheet
@@ -44,21 +45,15 @@ Item {
         spacing: Airisu.u(6)
         opacity: root.shown ? 1 : 0
         Behavior on opacity { enabled: Airisu.moving; NumberAnimation { duration: Airisu.snap } }
-        transform: Translate {
-            x: root.settled ? 0 : Airisu.registration
-            y: root.settled ? 0 : Airisu.registration
-            Behavior on x { enabled: Airisu.moving; NumberAnimation { duration: Airisu.detent; easing.type: Easing.BezierSpline; easing.bezierCurve: Airisu.curve } }
-            Behavior on y { enabled: Airisu.moving; NumberAnimation { duration: Airisu.detent; easing.type: Easing.BezierSpline; easing.bezierCurve: Airisu.curve } }
-        }
 
-        // The date as ruby over the time, set on the backdrop in the media's ink.
+        // The date over the time, set on the backdrop in the media's ink.
         Column {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: Airisu.u(1)
             AText {
                 anchors.horizontalCenter: parent.horizontalCenter
-                voice: "ruby"
                 size: IrisStyle.typeLabel
+                font.weight: Font.Bold
                 color: IrisStyle.onMediaSecondary
                 text: Translation.locale.toString(DateTime.clock.date, "dddd, d MMMM")
             }
@@ -71,29 +66,10 @@ Item {
             }
         }
 
-        // The strip.
-        Item {
+        Row {
             id: strip
             anchors.horizontalCenter: parent.horizontalCenter
-            width: root.actions.length * root.ticketWidth
-            height: root.ticketHeight
-
-            ADie {
-                anchors.fill: parent
-                kind: "chamfer"
-                cut: Airisu.chamfer
-                fill: Airisu.ground
-            }
-            Repeater {
-                model: Math.max(0, root.actions.length - 1)
-                APerforation {
-                    required property int index
-                    x: (index + 1) * root.ticketWidth - Math.round(width / 2)
-                    height: strip.height
-                    vertical: true
-                    colour: Airisu.inkThird
-                }
-            }
+            spacing: root.gap
 
             Repeater {
                 model: root.actions
@@ -106,13 +82,37 @@ Item {
                     readonly property bool waiting: (root.host?.pending ?? "") === ticket.modelData.id
                     readonly property bool hovered: area.containsMouse
                     readonly property bool pressed: area.pressed
-                    // How much of the seal is inked while it is held (0 to 1); a stand-in host (the Design proof) may
+                    // How much of the coat is laid while it is held (0 to 1); a stand-in host (the Design proof) may
                     // show a hold under way.
                     property real ink: (root.host?.held?.index ?? -1) === ticket.index ? Number(root.host.held.ink) : 0
-                    readonly property int run: ticket.pressed ? Airisu.registration : 0
-                    x: ticket.index * root.ticketWidth
+                    readonly property int run: ticket.pressed ? Airisu.hair : 0
+                    readonly property color pigment: root.pigmentOf(String(ticket.modelData.id ?? ""))
+                    readonly property color lacquer: Airisu.lacquerOf(ticket.pigment)
+                    readonly property color coat: Airisu.vivid(ticket.pigment)
+                    readonly property color face: ticket.hovered && !ticket.pressed ? Airisu.step(ticket.lacquer, Airisu.hoverStep) : ticket.lacquer
+                    // How far the coat is laid: the hold's, or all of it while the keyboard waits for the second press.
+                    readonly property real laidShare: ticket.waiting ? 1 : ticket.ink
+                    // Each thing printed takes the ink of the coat under its centre: the coat runs from the top left with
+                    // its edge at 45°, so a point is covered once the edge has come past x + y.
+                    function under(px: real, py: real): bool { return ticket.laidShare * (ticket.width + ticket.height) >= px + py }
+                    function inkAt(px: real, py: real): color { return Airisu.inkOn(ticket.under(px, py) ? ticket.coat : ticket.face) }
+                    function secondAt(px: real, py: real): color {
+                        const on = ticket.under(px, py)
+                        return ColorUtils.mix(Airisu.inkOn(on ? ticket.coat : ticket.face), on ? ticket.coat : ticket.face, 0.74) // iris-literal: second tone on lacquer
+                    }
+                    // Laid one after another as the screen comes up.
+                    property bool laid: false
                     width: root.ticketWidth
                     height: root.ticketHeight
+                    Timer {
+                        running: root.shown && !ticket.laid
+                        interval: Airisu.moving ? 40 + ticket.index * 45 : 0
+                        onTriggered: ticket.laid = true
+                    }
+                    Connections {
+                        target: root
+                        function onShownChanged() { if (!root.shown) ticket.laid = false }
+                    }
 
                     NumberAnimation {
                         id: inking
@@ -131,68 +131,43 @@ Item {
                         duration: Airisu.snap
                     }
 
+                    ALacquer {
+                        anchors.fill: parent
+                        lacquer: ticket.laid ? ticket.face : "transparent"
+                        coat: ticket.coat
+                        share: ticket.laidShare
+                        travel: ticket.waiting ? Airisu.snap : 0
+                    }
+                    AKey {
+                        anchors.fill: parent
+                        lacquer: "transparent"
+                        available: false
+                        keyed: ticket.keyed
+                        flag: Airisu.seal
+                    }
+
                     Item {
-                        id: face
                         width: parent.width
                         height: parent.height
                         x: ticket.run
                         y: ticket.run
-
-                        // The station code: its number is the key that takes it.
-                        ADie {
-                            id: code
+                        // The key that takes it.
+                        AText {
                             x: root.pad
                             y: root.pad
-                            width: codeText.implicitWidth + Airisu.u(2)
-                            height: Airisu.u(5)
-                            kind: "rect"
-                            fill: ticket.keyed ? Airisu.seal : "transparent"
-                            stroke: ticket.keyed ? "transparent" : Airisu.ink
-                            strokeWidth: Airisu.hair
-                            AText {
-                                id: codeText
-                                anchors.centerIn: parent
-                                voice: "figure"
-                                size: IrisStyle.typeLabel
-                                font.letterSpacing: 0
-                                color: ticket.keyed ? Airisu.inkOnSeal : Airisu.ink
-                                text: "S" + (ticket.index + 1)
-                            }
+                            voice: "figure"
+                            size: IrisStyle.typeLabel
+                            color: ticket.secondAt(x + width / 2, y + height / 2)
+                            text: "S" + (ticket.index + 1)
                         }
-
-                        // The seal: a ring waits where it will be stamped, and holding inks it from the centre.
-                        Item {
-                            id: seal
-                            readonly property int size: Math.round(64 * root.d)
+                        MaterialSymbol {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            y: Math.round(code.y + code.height + (parent.height - code.y - code.height - words.height - root.pad - size) / 2)
-                            width: seal.size
-                            height: seal.size
-                            Rectangle {
-                                anchors.fill: parent
-                                visible: ticket.confirms && (ticket.waiting || ticket.pressed || ticket.ink > 0)
-                                radius: width / 2
-                                color: "transparent"
-                                border.width: Airisu.strong
-                                border.color: Airisu.seal
-                            }
-                            Rectangle {
-                                anchors.centerIn: parent
-                                width: Math.round(seal.size * ticket.ink)
-                                height: width
-                                radius: width / 2
-                                color: Airisu.seal
-                            }
-                            MaterialSymbol {
-                                id: glyph
-                                anchors.centerIn: parent
-                                text: String(ticket.modelData.icon ?? "")
-                                fill: 1
-                                iconSize: Math.round(30 * root.d)
-                                color: ticket.ink * seal.size >= glyph.iconSize * 1.1 ? Airisu.inkOnSeal : Airisu.ink
-                            }
+                            y: Math.round((parent.height - words.height - root.pad - height) / 2)
+                            text: String(ticket.modelData.icon ?? "")
+                            fill: 1
+                            iconSize: Math.round(34 * root.d)
+                            color: ticket.inkAt(x + width / 2, y + height / 2)
                         }
-
                         Column {
                             id: words
                             x: root.pad
@@ -202,8 +177,9 @@ Item {
                             spacing: Math.round(2 * root.d)
                             AText {
                                 width: parent.width
-                                voice: "ruby"
-                                color: ticket.waiting ? Airisu.sealText : Airisu.inkSecond
+                                size: IrisStyle.typeFootnote
+                                font.weight: Font.Bold
+                                color: ticket.secondAt(words.x + Math.min(implicitWidth, width) / 2, words.y + y + height / 2)
                                 text: !ticket.confirms ? " "
                                     : ticket.waiting ? Translation.tr("Confirm") : Translation.tr("Hold to confirm")
                             }
@@ -211,22 +187,9 @@ Item {
                                 width: parent.width
                                 size: IrisStyle.typeHeadline
                                 font.weight: Font.Bold
+                                color: ticket.inkAt(words.x + Math.min(implicitWidth, width) / 2, words.y + y + height / 2)
                                 text: String(ticket.modelData.label ?? "")
                             }
-                        }
-                    }
-
-                    // Trim marks on the ticket's cut lines, above and below the strip.
-                    Repeater {
-                        model: [[0, -1], [1, -1], [0, 1], [1, 1]]
-                        Rectangle {
-                            required property var modelData
-                            visible: ticket.keyed || (ticket.hovered && !ticket.pressed && !(root.host?.keyboardNavigation ?? false))
-                            color: ticket.keyed ? Airisu.seal : IrisStyle.onMedia
-                            width: ticket.keyed ? Airisu.strong : Airisu.hair
-                            height: root.reach
-                            x: modelData[0] === 0 ? 0 : ticket.width - width
-                            y: modelData[1] < 0 ? -root.air - height : ticket.height + root.air
                         }
                     }
 
@@ -255,8 +218,8 @@ Item {
         // What the screen is waiting for, or how long the machine has been up.
         AText {
             anchors.horizontalCenter: parent.horizontalCenter
-            voice: "ruby"
             size: IrisStyle.typeLabel
+            font.weight: Font.Bold
             color: root.host?.pendingAction ? IrisStyle.onMedia : IrisStyle.onMediaTertiary
             text: root.host?.pendingAction
                 ? Translation.tr("Press %1 again to continue").arg(root.host.pendingAction.label)

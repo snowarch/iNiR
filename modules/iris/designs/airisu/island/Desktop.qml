@@ -15,11 +15,12 @@ import qs.modules.iris.pieces
 import qs.modules.iris.bar
 import "../components"
 
-// AIRISU's desktop page: the shop's work order for the day (作業伝票), on the engine's blocks, in the order and with the
-// blocks Settings keeps. The head is the day set in the wide face, the date as its ruby, the wallpaper printed under it
-// in one ink as a halftone; the forecast is a station timetable whose current column is the solid plate; the window
-// in front is the job, its workspace a station number; the vitals are a spec sheet; the next date is a form box. While
-// the page is being arranged the engine's own page stands in, so moving blocks works the same in every Design.
+// AIRISU's desktop page, on the engine's blocks, in the order and with the blocks Settings keeps. The head is a panel of
+// time's lacquer whose second coat is the part of the hour gone, as on the desk clock, with the day's time set
+// large and leaning on it; when Settings puts the wallpaper there it is seen through the lacquer, as shunkei-nuri shows
+// the grain of the wood. Below it, everything is cut out of the body's ink: whose machine it is, the window in front with
+// the workspaces as keys, the forecast with the hour that is now on the chosen plate, the next date on a small panel of
+// its own, the vitals each with its run. While the page is being arranged the engine's own page stands in.
 GridLayout {
     id: page
     property Item island: null
@@ -68,16 +69,18 @@ GridLayout {
     function shows(kind: string): bool { return page.rows.includes(kind) }
     function closeAnd(action): void { if (page.island) page.island.expanded = false; action() }
 
-    // A small mark: AIRISU draws marks, it does not plate them.
+    // A small mark: AIRISU cuts marks out of the ink, it does not plate them.
     component Mark: MaterialSymbol {
         iconSize: Math.round(17 * page.d)
         fill: 0
         color: Airisu.ink
     }
-    // A key that is only its mark, in a tag's rule (the Button skin draws the die, the crop marks and the press).
+    // A key that is only its mark (the Button skin draws the die, its coat and the press).
     component Key: IrisButton {
         id: key
         property string glyph
+        property color under: Airisu.ground
+        skinData: ({ under: key.under })
         implicitWidth: Math.round(32 * page.d)
         implicitHeight: Math.round(30 * page.d)
         MaterialSymbol {
@@ -85,117 +88,110 @@ GridLayout {
             text: key.glyph
             iconSize: Math.round(17 * page.d)
             fill: 0
-            color: key.danger ? Airisu.danger : Airisu.ink
+            color: key.danger ? Airisu.danger : key.quiet ? Airisu.inkOn(key.under) : Airisu.ink
         }
     }
-    // A station number: the disc with its ring, a workspace's index inside. The chosen one is the solid plate.
-    component Station: Item {
-        id: station
+    // A workspace: a small die with its index leaning in it. The one you are on wears the chosen plate; one with windows
+    // is the body's next coat; an empty one is sunk into the body.
+    component Stop: Item {
+        id: stop
         property string figure
         property bool chosen: false
-        property bool faint: false
-        property real side: Math.round(22 * page.d)
-        implicitWidth: station.side
-        implicitHeight: station.side
-        Rectangle {
+        property bool occupied: false
+        property bool hovered: false
+        property real side: Math.round(24 * page.d)
+        readonly property color face: stop.chosen ? IrisStyle.selectionFill : stop.occupied ? Airisu.groundRaised : Airisu.slot
+        implicitWidth: stop.side
+        implicitHeight: stop.side
+        AKey {
             anchors.fill: parent
-            radius: width / 2
-            color: station.chosen ? Airisu.ink : Airisu.ground
-            border.width: station.chosen ? 0 : Math.max(Airisu.hair, Math.round(station.side * 0.09))
-            border.color: station.faint ? Airisu.inkThird : Airisu.ink
+            lacquer: stop.face
+            hovered: stop.hovered && !stop.chosen
         }
         AText {
             anchors.centerIn: parent
-            anchors.verticalCenterOffset: Math.round(station.side * 0.03)
-            size: Math.round(station.side * (station.figure.length > 1 ? 0.42 : 0.5))
-            font.weight: Font.Bold
-            text: station.figure
-            color: station.chosen ? Airisu.reverse : station.faint ? Airisu.inkThird : Airisu.ink
+            voice: "figure"
+            size: Math.round(stop.side * (stop.figure.length > 1 ? 0.42 : 0.52))
+            text: stop.figure
+            color: stop.chosen ? IrisStyle.selectionLabel : stop.occupied ? Airisu.ink : Airisu.inkThird
         }
     }
 
-    // ── The head: the day, the time and the weather, over the wallpaper printed in one ink.
+    // ── The head: a panel of time's lacquer, the part of the hour gone as its coat, the wallpaper seen through it.
     Item {
         id: head
         Layout.row: 0
         Layout.fillWidth: true
         implicitHeight: Math.round(122 * page.d)
+        readonly property color pigment: Airisu.pigment("time")
+        readonly property date now: DateTime.clock.date
+        readonly property bool pictured: page.banner.length > 0
+        readonly property color lacquer: Airisu.lacquerOf(head.pigment)
+        readonly property color coat: Airisu.coat(head.pigment)
+        readonly property color ink: Airisu.inkOver(head.lacquer, head.coat)
+        readonly property color inkSecond: ColorUtils.mix(head.ink, head.lacquer, 0.74) // iris-literal: second tone on lacquer
 
-        AHalftone {
-            anchors.fill: parent
-            visible: page.banner.length > 0
-            source: page.live || ready ? page.banner : ""
-            // iris-literal: the poster's one ink, under the third; on paper a breath of sumi, or the night is a slab
-            ink: ColorUtils.mix(Airisu.ink, Airisu.ground, ColorUtils.relativeLuminance(Airisu.ink) > ColorUtils.relativeLuminance(Airisu.ground) ? 0.34 : 0.14)
-            cell: Math.max(4, Math.round(4 * page.d))
-            // A night picture is mostly shadow. On the lacquer the light ink prints its lights, so the screen is opened
-            // up until they read as a picture and not as dust; on paper the dark ink prints its shadows, so it is held
-            // back or the head becomes one grey block. Either way the ramp toward the time stays long enough for the dots
-            // to die out one by one instead of stopping at an edge.
-            gain: lightInk ? 2.2 : 0.55
-            fadeFrom: 0.0
-            fadeTo: 0.75
+        Image {
+            id: wall
+            width: head.width
+            height: head.height
+            visible: head.pictured
+            // Kept once it has loaded, so a page that stops being live keeps its picture; read from the status it would
+            // change, the source looped on itself.
+            property bool kept: false
+            onStatusChanged: if (wall.status === Image.Ready) wall.kept = true
+            source: head.pictured && (page.live || wall.kept) ? page.banner : ""
+            fillMode: Image.PreserveAspectCrop
+            sourceSize.width: Math.max(1, Math.round(head.width * 1.25))
+            asynchronous: true
         }
-        // The rule that closes a head, the full measure.
-        Rectangle {
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: Airisu.strong
-            color: Airisu.ruleStrong
+        ShaderEffectSource {
+            id: grain
+            visible: false
+            width: head.width
+            height: head.height
+            sourceItem: head.pictured ? wall : null
+            hideSource: true
+            live: true
+        }
+        ALacquer {
+            anchors.fill: parent
+            texture: head.pictured && wall.status === Image.Ready ? grain : null
+            glaze: IrisStyle.light ? 0.8 : 0.74 // iris-literal: how much of the picture the lacquer lets through
+            lacquer: head.lacquer
+            coat: head.coat
+            share: 0
+            travel: 0
         }
 
         Column {
             id: day
-            anchors.left: parent.left
+            x: Airisu.u(4)
             anchors.bottom: parent.bottom
             anchors.bottomMargin: Airisu.u(3)
             spacing: 0
             AText {
-                voice: "ruby"
                 size: IrisStyle.typeLabel
-                text: Translation.locale.toString(DateTime.clock.date, "dddd · d MMMM")
-                color: Airisu.inkSecond
+                font.weight: Font.Bold
+                text: Translation.locale.toString(head.now, "dddd · d MMMM")
+                color: head.inkSecond
             }
-            Row {
+            AText {
                 id: time
-                readonly property real size: Math.round(2 * IrisStyle.typeDisplay)
-                readonly property var parts: String(DateTime.timeDisplay).split(":")
-                spacing: Math.round(time.size * 0.1)
-                AText {
-                    anchors.verticalCenter: parent.verticalCenter
-                    voice: "figure"
-                    size: time.size
-                    text: time.parts[0] ?? ""
-                }
-                // The colon is two seal squares, as on the strip.
-                Column {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.verticalCenterOffset: Math.round(time.size * 0.05)
-                    spacing: Math.round(time.size * 0.2)
-                    Repeater {
-                        model: 2
-                        Rectangle {
-                            width: Math.round(time.size * 0.13)
-                            height: width
-                            color: Airisu.seal
-                        }
-                    }
-                }
-                AText {
-                    anchors.verticalCenter: parent.verticalCenter
-                    voice: "figure"
-                    size: time.size
-                    text: (time.parts[1] ?? "").trim()
-                }
+                voice: "figure"
+                size: Math.round(2 * IrisStyle.typeDisplay)
+                text: String(DateTime.timeDisplay)
+                color: head.ink
             }
         }
 
-        // The weather: the figure with its unit set small against it, the sky as its ruby.
+        // The weather: the sky over the figure, its unit set small against it.
         Column {
             visible: page.weatherReady
             anchors.right: parent.right
+            anchors.rightMargin: Airisu.u(4)
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: Airisu.u(3) + Math.round(time.size * 0.12)
+            anchors.bottomMargin: Airisu.u(3) + Math.round(time.size * 0.1)
             spacing: 0
             Row {
                 anchors.right: parent.right
@@ -204,14 +200,15 @@ GridLayout {
                     anchors.verticalCenter: parent.verticalCenter
                     text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
                     iconSize: IrisStyle.typeLabel
-                    color: Airisu.inkSecond
+                    color: head.inkSecond
                 }
                 AText {
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.min(implicitWidth, Math.round(130 * page.d))
-                    voice: "ruby"
                     size: IrisStyle.typeMeta
+                    font.weight: Font.Bold
                     text: String(Weather.data?.description ?? "")
+                    color: head.inkSecond
                 }
             }
             Row {
@@ -223,24 +220,28 @@ GridLayout {
                     voice: "figure"
                     size: IrisStyle.typeDisplay
                     text: parent.figure
+                    color: head.ink
                 }
                 AText {
                     anchors.baseline: temperature.baseline
                     size: IrisStyle.typeLabel
                     font.weight: Font.Bold
                     text: parent.raw.slice(parent.figure.length)
+                    color: head.ink
                 }
             }
         }
 
-        // What the page itself does: arrange its blocks, change the picture it prints.
+        // What the page itself does: arrange its blocks, change the picture under the lacquer.
         Row {
             anchors.right: parent.right
             anchors.top: parent.top
+            anchors.margins: Airisu.u(1.5)
             spacing: Airisu.u(1)
             Key {
                 glyph: "edit"
                 quiet: true
+                under: head.lacquer
                 Accessible.name: Translation.tr("Arrange this page")
                 onClicked: {
                     if (page.island) page.island.pinned = true
@@ -248,9 +249,10 @@ GridLayout {
                 }
             }
             Key {
-                visible: page.banner.length > 0
+                visible: head.pictured
                 glyph: "wallpaper"
                 quiet: true
+                under: head.lacquer
                 Accessible.name: Translation.tr("Change wallpaper")
                 onClicked: {
                     GlobalStates.wallpaperSelectorTargetMonitor = page.island?.targetScreen?.name ?? ""
@@ -260,7 +262,7 @@ GridLayout {
         }
     }
 
-    // ── Profile: whose machine this is, the avatar cut as a disc; locking and the session are tags.
+    // ── Profile: whose machine this is, the avatar cut as a disc; locking and the session are keys.
     RowLayout {
         Layout.row: Math.max(1, page.rowOf("profile"))
         Layout.fillWidth: true
@@ -297,14 +299,23 @@ GridLayout {
                     text: (SystemInfo.displayName || SystemInfo.username || "?").charAt(0).toUpperCase()
                 }
             }
-            ATombo { anchors.fill: parent; shown: avatarHover.hovered }
+            // The pointer rings the disc in the accent.
+            Rectangle {
+                anchors.fill: parent
+                radius: width / 2
+                color: "transparent"
+                border.width: avatarHover.hovered ? Airisu.strong : 0
+                border.color: Airisu.seal
+            }
         }
         Column {
             Layout.fillWidth: true
             spacing: 0
             AText {
                 width: parent.width
-                voice: "ruby"
+                size: IrisStyle.typeFootnote
+                font.weight: Font.Bold
+                color: Airisu.inkSecond
                 readonly property string distro: String(SystemInfo.distroId ?? "").trim()
                 text: (SystemInfo.username || "user") + (distro.length > 0 && distro !== "unknown" ? "@" + distro : "")
                     + " · " + Translation.tr("Up %1").arg(DateTime.uptime)
@@ -328,7 +339,7 @@ GridLayout {
         }
     }
 
-    // ── The job: the window in front, its app as ruby over its title; the workspaces are station numbers.
+    // ── The window in front, its app over its title; the workspaces are keys.
     RowLayout {
         id: job
         Layout.row: Math.max(1, page.rowOf("context"))
@@ -361,7 +372,9 @@ GridLayout {
             spacing: 0
             AText {
                 width: parent.width
-                voice: "ruby"
+                size: IrisStyle.typeFootnote
+                font.weight: Font.Bold
+                color: Airisu.inkSecond
                 readonly property string app: job.entry?.name ?? String(page.focusedWindow?.app_id ?? "")
                 text: page.focusedWindow ? app + (job.workspaceName.length > 0 ? " · " + job.workspaceName : "")
                     : Translation.tr("No windows")
@@ -389,27 +402,25 @@ GridLayout {
                     Accessible.role: Accessible.Button
                     Accessible.name: Translation.tr("Workspace %1").arg(stop.modelData.idx)
                     onClicked: NiriService.switchToWorkspaceById(stop.modelData.id)
-                    Station {
+                    Stop {
                         id: number
                         figure: String(stop.modelData.idx)
                         chosen: stop.modelData.is_active
-                        faint: !stop.occupied && !stop.modelData.is_active
+                        occupied: stop.occupied
+                        hovered: stop.containsMouse
                     }
-                    ATombo { anchors.fill: parent; shown: stop.containsMouse && !stop.modelData.is_active; air: Airisu.hair; length: Airisu.m }
                 }
             }
         }
     }
 
-    // ── The forecast as a station timetable: the hour at the head of each column, the sky, the figure; the column
-    // that is now is printed solid. The rules are the timetable's own.
+    // ── The forecast: the hours side by side, the hour at the head, the sky, the figure leaning; the hour that is now
+    // stands on the chosen plate. No rules: the columns are their own air.
     Item {
         Layout.row: Math.max(1, page.rowOf("forecast"))
         Layout.fillWidth: true
         visible: page.shows("forecast")
         implicitHeight: Math.round(76 * page.d)
-        Rectangle { width: parent.width; height: Airisu.hair; color: Airisu.ink }
-        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: Airisu.hair; color: Airisu.ink }
         Row {
             anchors.fill: parent
             Repeater {
@@ -419,28 +430,23 @@ GridLayout {
                     required property var modelData
                     required property int index
                     readonly property bool now: hour.index === 0
-                    readonly property color ink: hour.now ? Airisu.reverse : Airisu.ink
+                    readonly property color ink: hour.now ? IrisStyle.selectionLabel : Airisu.ink
                     width: Math.floor(parent.width / Math.max(1, page.hours.length))
                     height: parent.height
                     Accessible.name: hour.modelData.label + ", " + hour.modelData.temp
-                    Rectangle {
+                    ALacquer {
                         anchors.fill: parent
                         visible: hour.now
-                        color: Airisu.ink
-                    }
-                    Rectangle {
-                        visible: hour.index > 0
-                        width: Airisu.hair
-                        height: parent.height
-                        color: Airisu.rule
+                        lacquer: IrisStyle.selectionFill
+                        moving: false
                     }
                     Column {
                         anchors.centerIn: parent
                         spacing: Airisu.u(1)
                         AText {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            voice: "data"
                             size: IrisStyle.typeCaption
+                            font.weight: Font.Bold
                             text: hour.now ? Translation.tr("Now") : String(hour.modelData.label).slice(0, 2)
                             color: hour.now ? hour.ink : Airisu.inkSecond
                         }
@@ -463,7 +469,7 @@ GridLayout {
         }
     }
 
-    // ── The next date: a form box with the day in it, what it is and when; open tasks are a tag beside it.
+    // ── The next date: its day on a small panel, what it is and when; open tasks are a key beside it.
     RowLayout {
         id: agenda
         Layout.row: Math.max(1, page.rowOf("agenda"))
@@ -486,37 +492,33 @@ GridLayout {
             if (days === 1) return Translation.tr("Tomorrow · %1").arg(time)
             return Translation.locale.toString(agenda.when, "dddd") + " · " + time
         }
-        // A Sunday is printed in the seal, as calendars here do.
         readonly property bool sunday: agenda.when.getDay() === 0
-        Item {
-            Layout.preferredWidth: Math.round(44 * page.d)
+        // The date on a small panel of time's lacquer (a Sunday's in the accent, as calendars here print it): the
+        // weekday over the day, leaning.
+        ALacquer {
+            id: date
+            Layout.preferredWidth: Math.round(46 * page.d)
             Layout.preferredHeight: Layout.preferredWidth
-            ADie {
-                anchors.fill: parent
-                kind: "rect"
-                stroke: Airisu.ink
-                strokeWidth: Airisu.hair
-            }
-            Rectangle {
-                id: weekday
-                width: parent.width
-                height: Math.round(parent.height * 0.32)
-                color: agenda.sunday ? Airisu.seal : Airisu.ink
+            readonly property color face: agenda.sunday ? Airisu.seal : Airisu.lacquerOf(Airisu.pigment("time"))
+            lacquer: date.face
+            moving: false
+            Column {
+                anchors.centerIn: parent
+                spacing: -Math.round(2 * page.d)
                 AText {
-                    anchors.centerIn: parent
+                    anchors.horizontalCenter: parent.horizontalCenter
                     size: IrisStyle.typeCaption
                     font.weight: Font.Bold
                     text: Translation.locale.toString(agenda.when, "ddd").replace(/\./g, "")
-                    color: agenda.sunday ? Airisu.inkOnSeal : Airisu.reverse
+                    color: Airisu.inkSecondOn(date.face)
                 }
-            }
-            AText {
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: weekday.bottom
-                anchors.topMargin: Airisu.hair
-                voice: "figure"
-                size: IrisStyle.typeTitle
-                text: agenda.when.getDate()
+                AText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    voice: "figure"
+                    size: IrisStyle.typeTitle
+                    text: agenda.when.getDate()
+                    color: Airisu.inkOn(date.face)
+                }
             }
         }
         Column {
@@ -524,7 +526,9 @@ GridLayout {
             spacing: 0
             AText {
                 width: parent.width
-                voice: "ruby"
+                size: IrisStyle.typeFootnote
+                font.weight: Font.Bold
+                color: Airisu.inkSecond
                 text: agenda.event ? agenda.whenText : Translation.tr("This week is clear")
             }
             AText {
@@ -562,8 +566,8 @@ GridLayout {
         }
     }
 
-    // ── Vitals as a spec sheet: four columns, the name as ruby, the figure with its unit, and under it how full it is
-    // as a rule run on a screen. Past its warning a vital prints in caution.
+    // ── Vitals: four columns, the name over the figure leaning with its unit, and under it its run in energy's
+    // pigment. Past its warning a vital runs and prints in the caution's yamabuki.
     Item {
         id: sheet
         Layout.row: Math.max(1, page.rowOf("vitals"))
@@ -593,12 +597,15 @@ GridLayout {
                     readonly property real level: Math.max(0, Math.min(1, Number(vital.modelData.level) || 0))
                     readonly property bool warned: vital.level >= vital.modelData.warn
                     readonly property color ink: vital.warned ? Airisu.caution : Airisu.ink
+                    readonly property color pigment: Airisu.vivid(Airisu.pigment(vital.warned ? "caution" : "energy"))
                     width: Math.floor((parent.width - 3 * parent.spacing) / 4)
                     height: parent.height
                     Accessible.name: vital.modelData.label + ", " + vital.modelData.value + vital.modelData.unit
                     AText {
-                        voice: "ruby"
                         width: parent.width
+                        size: IrisStyle.typeFootnote
+                        font.weight: Font.Bold
+                        color: Airisu.inkSecond
                         text: vital.modelData.label
                     }
                     Row {
@@ -618,21 +625,12 @@ GridLayout {
                             color: vital.ink
                         }
                     }
-                    Item {
+                    ARun {
                         anchors.bottom: parent.bottom
                         width: parent.width
-                        height: Airisu.m
-                        AScreen {
-                            anchors.fill: parent
-                            pigment: Airisu.inkThird
-                            density: 25
-                        }
-                        Rectangle {
-                            width: Math.round(parent.width * vital.level)
-                            height: parent.height
-                            color: vital.ink
-                            Behavior on width { enabled: Airisu.moving; NumberAnimation { duration: Airisu.detent } }
-                        }
+                        height: Math.max(3, Math.round(5 * page.d))
+                        value: vital.level
+                        pigment: vital.pigment
                     }
                 }
             }
