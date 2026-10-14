@@ -1646,13 +1646,7 @@ check_environment_vars() {
     
     # Check bash — look for INIR_VENV (canonical) or ILLOGICAL_IMPULSE_VIRTUAL_ENV (legacy)
     if [[ -f "$HOME/.bashrc" ]] && ! grep -q "INIR_VENV" "$HOME/.bashrc" 2>/dev/null; then
-        cat >> "$HOME/.bashrc" << BEOF
-
-# iNiR environment
-export INIR_VENV="${venv_path}"
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="\$INIR_VENV"
-# end iNiR
-BEOF
+        write_inir_shell_env "$HOME/.bashrc" bash
         ((fixed++)) || true
     fi
     
@@ -1670,13 +1664,7 @@ FEOF
     
     # Check zsh
     if [[ -f "$HOME/.zshrc" ]] && ! grep -q "INIR_VENV" "$HOME/.zshrc" 2>/dev/null; then
-        cat >> "$HOME/.zshrc" << ZEOF
-
-# iNiR environment
-export INIR_VENV="${venv_path}"
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="\$INIR_VENV"
-# end iNiR
-ZEOF
+        write_inir_shell_env "$HOME/.zshrc" zsh
         ((fixed++)) || true
     fi
     

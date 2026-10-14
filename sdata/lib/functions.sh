@@ -272,27 +272,57 @@ function install_dir__skip_existed(){
   fi
 }
 
+# Marked iNiR blocks in shell profiles: set, remove or prune (see rc-block.py).
+inir_rc_block() {
+  python3 "${REPO_ROOT}/sdata/lib/rc-block.py" "$@"
+}
+
+# Writes the iNiR environment block into a bash or zsh rc file.
+write_inir_shell_env() {
+  local rc_file="$1" shell_name="$2"
+  local venv_path="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
+  sed -i '/iNiR-env.sh/d' "$rc_file" 2>/dev/null || true
+  inir_rc_block set env "$rc_file" <<EOF
+export INIR_VENV="${venv_path}"
+export ILLOGICAL_IMPULSE_VIRTUAL_ENV="\$INIR_VENV"
+# Apply terminal color sequences (Material You from wallpaper)
+if [ -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt ]; then
+  cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
+fi
+# Starship prompt (fish is wired via config.fish; ${shell_name} needs its own init)
+if command -v starship >/dev/null 2>&1; then
+  eval "\$(starship init ${shell_name})"
+fi
+EOF
+}
+
 function ensure_launcher_path_in_shells(){
   local launcher_dir="$1"
   [[ -n "$launcher_dir" ]] || return 0
 
-  local marker="# iNiR launcher PATH"
-  local end_marker="# end iNiR launcher PATH"
-  local sh_block="
-${marker}
-case \":\$PATH:\" in
+  local body="case \":\$PATH:\" in
   *:\"${launcher_dir}\":*) ;;
   *) export PATH=\"${launcher_dir}:\$PATH\" ;;
-esac
-${end_marker}
-"
+esac"
   local shell_file=""
 
-  for shell_file in "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc" \
+  # Older installers created every profile; a ~/.bash_profile holding only our
+  # block hides ~/.profile from bash login shells, so those files go away.
+  for shell_file in "$HOME/.bash_profile" "$HOME/.zprofile" "$HOME/.zshrc"; do
+    inir_rc_block prune "$shell_file" || true
+  done
+
+  # Only profiles that exist get the block, plus one login profile per shell.
+  if [[ ! -f "$HOME/.profile" && ! -f "$HOME/.bash_profile" && ! -f "$HOME/.bash_login" ]]; then
+    : >"$HOME/.profile"
+  fi
+  if [[ "$(basename -- "${SHELL:-}")" == zsh && ! -f "$HOME/.zprofile" && ! -f "$HOME/.zshrc" ]]; then
+    : >"$HOME/.zprofile"
+  fi
+  for shell_file in "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bash_login" "$HOME/.bashrc" \
                     "$HOME/.zprofile" "$HOME/.zshrc"; do
-    touch "$shell_file"
-    sed -i "/${marker}/,/${end_marker}/d" "$shell_file" 2>/dev/null || true
-    printf '%s\n' "$sh_block" >> "$shell_file"
+    [[ -f "$shell_file" ]] || continue
+    printf '%s\n' "$body" | inir_rc_block set path "$shell_file" || true
   done
 
   local fish_conf_dir="${XDG_CONFIG_HOME}/fish/conf.d"

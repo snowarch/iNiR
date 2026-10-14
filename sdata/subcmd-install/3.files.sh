@@ -219,8 +219,10 @@ case "${SKIP_QUICKSHELL}" in
     # Install Python packages now that requirements.txt is in place
     showfun install-python-packages
     v install-python-packages
+    # YT Music is optional: without network or curl the install still finishes
+    # and `inir doctor` installs Deno later.
     showfun ensure-ytmusic-js-runtime
-    v ensure-ytmusic-js-runtime
+    ensure-ytmusic-js-runtime || log_warning "YT Music needs Deno; run 'inir doctor' once online"
 
     if [[ "${IS_UPDATE}" == "true" && "${SKIP_VERIFICATION}" != "true" ]] \
         && [[ -n "${NIRI_SOCKET:-}${WAYLAND_DISPLAY:-}" ]] && ! inir_user_service_is_masked; then
@@ -320,6 +322,16 @@ case "${SKIP_NIRI}" in
           "$NIRI_BINDS_TARGET"
       else
         log_warning "Niri is still running without ${XDG_BIN_HOME} in PATH — preserving existing launcher paths until the next session"
+      fi
+
+      # Materialize the cursor everywhere XWayland apps look. niri already exports
+      # XCURSOR_* to the clients it spawns, but X11/Electron apps (Spotify, etc.)
+      # that request the core X cursor resolve it through ~/.icons/default, which
+      # otherwise inherits Adwaita and shows a different pointer. sync-cursor reads
+      # the theme from the niri KDL, so it runs once that config is in place.
+      if command -v python3 &>/dev/null && [[ -f "${REPO_ROOT}/scripts/niri-config.py" ]]; then
+        python3 "${REPO_ROOT}/scripts/niri-config.py" sync-cursor >/dev/null 2>&1 || true
+        log_success "Cursor theme synced for XWayland apps"
       fi
     fi
     ;;
@@ -488,19 +500,22 @@ if [[ -f "dots/.config/mpv/mpv.conf" ]]; then
   install_file__auto_backup "dots/.config/mpv/mpv.conf" "${XDG_CONFIG_HOME}/mpv/mpv.conf"
 fi
 
-# GTK settings
+# GTK and KDE settings: the shipped files seed a new install. After that the theme
+# pipeline (apply-gtk-theme.sh) owns them, so a reinstall must not put the
+# defaults back over generated colors and the user's theme, font and icons.
 for gtkver in gtk-3.0 gtk-4.0; do
-  if [[ -d "dots/.config/${gtkver}" ]]; then
+  if [[ -d "dots/.config/${gtkver}" ]] \
+      && [[ "${INSTALL_FIRSTRUN}" == true || ! -f "${XDG_CONFIG_HOME}/${gtkver}/settings.ini" ]]; then
     install_dir "dots/.config/${gtkver}" "${XDG_CONFIG_HOME}/${gtkver}"
   fi
 done
 
-# KDE settings (for Qt apps like Dolphin, Kate, etc.)
-# These are controlled by iNiR for theming - always overwrite
-if [[ -f "defaults/kde/kdeglobals" ]]; then
-  install_file "defaults/kde/kdeglobals" "${XDG_CONFIG_HOME}/kdeglobals"
-elif [[ -f "dots/.config/kdeglobals" ]]; then
-  install_file "dots/.config/kdeglobals" "${XDG_CONFIG_HOME}/kdeglobals"
+if [[ "${INSTALL_FIRSTRUN}" == true || ! -f "${XDG_CONFIG_HOME}/kdeglobals" ]]; then
+  if [[ -f "defaults/kde/kdeglobals" ]]; then
+    install_file "defaults/kde/kdeglobals" "${XDG_CONFIG_HOME}/kdeglobals"
+  elif [[ -f "dots/.config/kdeglobals" ]]; then
+    install_file "dots/.config/kdeglobals" "${XDG_CONFIG_HOME}/kdeglobals"
+  fi
 fi
 
 # Dolphin config — only if dolphin is installed (nautilus is now the default file manager)
@@ -692,28 +707,7 @@ fi
 VENV_PATH="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
 
 # Bash: source from .bashrc
-BASH_ENV_MARKER="# iNiR environment"
-if [[ -f "$HOME/.bashrc" ]]; then
-    # Clean up old markers
-    sed -i '/iNiR-env.sh/d' "$HOME/.bashrc"
-    # Remove any existing iNiR block
-    sed -i "/${BASH_ENV_MARKER}/,/# end iNiR/d" "$HOME/.bashrc"
-fi
-cat >> "$HOME/.bashrc" << BEOF
-
-${BASH_ENV_MARKER}
-export INIR_VENV="${VENV_PATH}"
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="\$INIR_VENV"
-# Apply terminal color sequences (Material You from wallpaper)
-if [ -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt ]; then
-  cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
-fi
-# Starship prompt (fish is wired via config.fish; bash needs its own init)
-if command -v starship >/dev/null 2>&1; then
-  eval "\$(starship init bash)"
-fi
-# end iNiR
-BEOF
+write_inir_shell_env "$HOME/.bashrc" bash
 log_success "Bash environment configured"
 
 # Fish: conf.d snippet
@@ -728,23 +722,7 @@ log_success "Fish environment configured"
 
 # Zsh: source from .zshrc (if zsh is installed)
 if [[ -f "$HOME/.zshrc" ]]; then
-    sed -i '/iNiR-env.sh/d' "$HOME/.zshrc"
-    sed -i "/${BASH_ENV_MARKER}/,/# end iNiR/d" "$HOME/.zshrc"
-    cat >> "$HOME/.zshrc" << ZEOF
-
-${BASH_ENV_MARKER}
-export INIR_VENV="${VENV_PATH}"
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="\$INIR_VENV"
-# Apply terminal color sequences (Material You from wallpaper)
-if [ -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt ]; then
-  cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
-fi
-# Starship prompt (fish is wired via config.fish; zsh needs its own init)
-if command -v starship >/dev/null 2>&1; then
-  eval "\$(starship init zsh)"
-fi
-# end iNiR
-ZEOF
+    write_inir_shell_env "$HOME/.zshrc" zsh
     log_success "Zsh environment configured"
 fi
 

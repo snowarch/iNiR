@@ -105,8 +105,22 @@ _show_privilege_instructions() {
   echo "  $(whoami) ALL=(ALL) NOPASSWD: ALL" >&2
 }
 
+# True when the command installs packages through a system package manager.
+pkg_command_installs() {
+  case "${1:-} ${2:-}" in
+    "pacman -S"*|"xbps-install "*|"apt install"|"apt-get install"|"dnf install"|"zypper in"|"zypper install") return 0 ;;
+  esac
+  return 1
+}
+
 # Use elevate() when USE_ELEVATE is set (graphical mode), otherwise use sudo
 pkg_sudo() {
+  # --skip-deps means the user owns their packages: no step installs any, migrations included.
+  if [[ "${SKIP_ALLDEPS:-false}" == "true" ]] && pkg_command_installs "$@"; then
+    echo -e "${STY_YELLOW:-}  Skipped with --skip-deps: $*${STY_RST:-}" >&2
+    return 1
+  fi
+
   # Priority 1: USE_ELEVATE environment variable (for custom elevation)
   if [[ "${USE_ELEVATE:-false}" == "true" ]] && type elevate &>/dev/null; then
     elevate "$@"
@@ -174,17 +188,17 @@ install-yay(){
   rm -rf /tmp/buildyay
 
   # Sync databases and install base-devel
-  if ! x pkg_sudo pacman -Sy --needed --noconfirm base-devel git; then
+  if ! pkg_sudo pacman -Sy --needed --noconfirm base-devel git; then
       log_error "Failed to install base-devel/git. Check your pacman mirrors."
       return 1
   fi
 
   # Clone yay-bin (faster than compiling yay)
-  x git clone https://aur.archlinux.org/yay-bin.git /tmp/buildyay || return 1
+  git clone https://aur.archlinux.org/yay-bin.git /tmp/buildyay || return 1
 
   # Build and install
   x cd /tmp/buildyay
-  if ! x makepkg -si --noconfirm; then
+  if ! makepkg -si --noconfirm; then
       log_error "Failed to build/install yay."
       x cd "${REPO_ROOT}"
       return 1
@@ -246,7 +260,7 @@ install-python-packages(){
 
   if [[ ! -d "$venv_dir/bin" ]]; then
     x mkdir -p "$(dirname "$venv_dir")"
-    x uv venv --prompt ii-venv "$venv_dir" -p 3.12 || uv venv --prompt ii-venv "$venv_dir" || {
+    uv venv --prompt ii-venv "$venv_dir" -p 3.12 || uv venv --prompt ii-venv "$venv_dir" || {
       log_warning "Could not create Python venv"
       return 0
     }
@@ -265,7 +279,13 @@ install-python-packages(){
 
   if [[ -f "$requirements_file" ]]; then
     source "$venv_dir/bin/activate"
-    x uv pip install -r "$requirements_file"
+    # A package that cannot build (missing headers, no wheel for this Python)
+    # must not stop an install or update halfway; doctor retries it.
+    if ! uv pip install -r "$requirements_file"; then
+      deactivate
+      log_warning "Some Python packages could not be installed; run 'inir doctor' after installing your distro's Python and Cairo development packages"
+      return 0
+    fi
     deactivate
   else
     log_warning "requirements.txt not found"

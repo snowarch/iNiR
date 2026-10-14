@@ -170,6 +170,38 @@ install_missioncenter_fedora() {
   command -v missioncenter &>/dev/null
 }
 
+install_hyprpicker_fedora() {
+  command -v hyprpicker &>/dev/null && return 0
+  if dnf_pkg_available hyprpicker; then
+    sudo dnf install -y hyprpicker >/dev/null 2>&1 && return 0
+  fi
+  # hyprpicker was retired from current Fedora releases, but its build-time
+  # libraries (hyprutils + hyprwayland-scanner) are official packages. Compile
+  # only the tiny picker itself; this avoids enabling a broad Hyprland COPR that
+  # could replace unrelated system packages.
+  tui_info "Installing hyprpicker fallback..."
+  sudo dnf install -y cmake gcc-c++ ninja-build cairo-devel libjpeg-turbo-devel pango-devel \
+    wayland-devel wayland-protocols-devel libxkbcommon-devel hyprutils-devel hyprwayland-scanner-devel \
+    >/dev/null 2>&1 || { log_warning "Could not install hyprpicker build dependencies"; return 1; }
+  local build_dir
+  build_dir="$(mktemp -d /tmp/inir-hyprpicker.XXXXXX)" || return 1
+  if ! git clone --depth 1 --branch v0.4.7 https://github.com/hyprwm/hyprpicker.git "$build_dir/src" 2>/dev/null; then
+    rm -rf "$build_dir"
+    log_warning "Could not reach hyprpicker upstream; install the Fedora-compatible package manually"
+    return 1
+  fi
+  if cmake -S "$build_dir/src" -B "$build_dir/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr >/dev/null 2>&1 \
+      && cmake --build "$build_dir/build" >/dev/null 2>&1 \
+      && sudo cmake --install "$build_dir/build" >/dev/null 2>&1; then
+    log_success "hyprpicker installed from upstream source"
+  else
+    log_warning "hyprpicker source build failed"
+  fi
+  rm -rf "$build_dir"
+  command -v hyprpicker &>/dev/null
+}
+
 install_songrec_fedora() {
   command -v songrec &>/dev/null && return 0
   ensure_fedora_rust_toolchain || return 1
@@ -201,7 +233,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [jq]="jq" [rsync]="rsync" [curl]="curl" [git]="git" [python3]="python3"
     [fish]="fish" [magick]="ImageMagick" [grim]="grim" [cliphist]="cliphist"
     [wl-copy]="wl-clipboard" [wl-paste]="wl-clipboard"
-    [hyprpicker]="hyprpicker" [playerctl]="playerctl" [notify-send]="libnotify"
+    [playerctl]="playerctl" [notify-send]="libnotify"
     [flock]="util-linux" [wlsunset]="wlsunset" [easyeffects]="easyeffects"
     [uv]="uv" [cava]="cava" [qalc]="qalculate" [yt-dlp]="yt-dlp"
     [socat]="socat" [brightnessctl]="brightnessctl" [slurp]="slurp"
@@ -209,7 +241,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [tesseract]="tesseract" [blueman-manager]="blueman" [kwriteconfig6]="kf6-kconfig"
     [ddcutil]="ddcutil" [nm-connection-editor]="nm-connection-editor"
     [xdg-settings]="xdg-utils" [mpv]="mpv" [swaylock]="swaylock"
-    [swayidle]="swayidle" [trans]="translate-shell"
+    [swayidle]="swayidle" [trans]="translate-shell" [lsp-plugins-lv2]="lsp-plugins-lv2"
     [ocr-eng]="tesseract-langpack-eng" [ocr-spa]="tesseract-langpack-spa"
     [ocr-rus]="tesseract-langpack-rus" [ocr-jpn]="tesseract-langpack-jpn"
     [ocr-jpn-vert]="tesseract-langpack-jpn_vert"
@@ -227,7 +259,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
 
   for cmd in "${_fed_miss_cmds[@]}"; do
     case "$cmd" in
-      awww|awww-daemon|gowall|missioncenter|songrec)
+      awww|awww-daemon|gowall|hyprpicker|missioncenter|songrec)
         [[ " ${_fed_special_cmds[*]} " == *" ${cmd} "* ]] || _fed_special_cmds+=("$cmd")
         ;;
       checkupdates|go)
@@ -239,6 +271,9 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
         if [[ -z "$_fed_pkg" ]]; then
           log_warning "No Fedora repair mapping for Doctor command: $cmd"
           _fed_unresolved+=("$cmd")
+        elif [[ "$_fed_pkg" == ffmpeg ]] && ! dnf_pkg_available ffmpeg && dnf_pkg_available ffmpeg-free; then
+          # Without RPM Fusion, Fedora's own ffmpeg-free provides the command.
+          [[ " ${_fed_miss_pkgs[*]} " == *" ffmpeg-free "* ]] || _fed_miss_pkgs+=("ffmpeg-free")
         elif dnf_pkg_available "$_fed_pkg"; then
           [[ " ${_fed_miss_pkgs[*]} " == *" ${_fed_pkg} "* ]] || _fed_miss_pkgs+=("$_fed_pkg")
         else
@@ -266,7 +301,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
       fi
     fi
 
-    v sudo dnf install $_fed_installflags --allowerasing "${_fed_miss_pkgs[@]}" || return 1
+    sudo dnf install $_fed_installflags --allowerasing "${_fed_miss_pkgs[@]}" || return 1
   fi
 
   # Special providers do not correspond 1:1 to a Fedora package name.
@@ -278,6 +313,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
         fi
         ;;
       gowall) install_gowall_fedora || _fed_unresolved+=("gowall") ;;
+      hyprpicker) install_hyprpicker_fedora || _fed_unresolved+=("hyprpicker") ;;
       missioncenter) install_missioncenter_fedora || _fed_unresolved+=("missioncenter") ;;
       songrec) install_songrec_fedora || _fed_unresolved+=("songrec") ;;
     esac
@@ -318,7 +354,7 @@ if fedora_quickshell_compatible; then
   log_info "Compatible Quickshell available from configured Fedora repositories"
 elif ! dnf copr list --enabled 2>/dev/null | grep -q "errornointernet/quickshell"; then
   log_info "Quickshell 0.3+ not in configured repos — enabling release COPR..."
-  ensure_copr_support && v sudo dnf copr enable -y errornointernet/quickshell || {
+  ensure_copr_support && sudo dnf copr enable -y errornointernet/quickshell || {
     log_error "Failed to enable Quickshell COPR"
     log_warning "Install quickshell from a compatible repository and rerun setup"
   }
@@ -582,7 +618,7 @@ dnf_pkgs_available_batch FEDORA_INSTALLABLE_PKGS FEDORA_REPO_FALLBACK_PKGS "${_r
 
 if [[ ${#FEDORA_INSTALLABLE_PKGS[@]} -gt 0 ]]; then
   log_info "Installing ${#FEDORA_INSTALLABLE_PKGS[@]} packages from Fedora/RPM Fusion repositories..."
-  if ! v sudo dnf install $installflags --allowerasing "${FEDORA_INSTALLABLE_PKGS[@]}"; then
+  if ! sudo dnf install $installflags --allowerasing "${FEDORA_INSTALLABLE_PKGS[@]}"; then
     log_warning "Fedora package batch failed — retrying individually"
     for pkg in "${FEDORA_INSTALLABLE_PKGS[@]}"; do
       sudo dnf install $installflags --allowerasing "$pkg" >/dev/null 2>&1 || \
@@ -678,46 +714,8 @@ if ! command -v cliphist &>/dev/null; then
     log_warning "cliphist is still missing — clipboard history will not work until it is installed"
 fi
 
-# hyprpicker was retired from current Fedora releases, but its build-time
-# libraries (hyprutils + hyprwayland-scanner) are official packages. Compile
-# only the tiny picker itself when the user's configured repos do not carry it;
-# this avoids enabling a broad Hyprland COPR that could replace unrelated
-# system packages.
-if ${INSTALL_TOOLKIT:-true} && ! command -v hyprpicker &>/dev/null; then
-  tui_info "Installing hyprpicker fallback..."
-  HYPRPICKER_BUILD_DEPS=(
-    cmake
-    gcc-c++
-    ninja-build
-    cairo-devel
-    libjpeg-turbo-devel
-    pango-devel
-    wayland-devel
-    wayland-protocols-devel
-    libxkbcommon-devel
-    hyprutils-devel
-    hyprwayland-scanner-devel
-  )
-  if sudo dnf install -y "${HYPRPICKER_BUILD_DEPS[@]}" >/dev/null 2>&1; then
-    HYPRPICKER_BUILD_DIR="/tmp/hyprpicker-build-$$"
-    if git clone --depth 1 --branch v0.4.7 https://github.com/hyprwm/hyprpicker.git "$HYPRPICKER_BUILD_DIR" 2>/dev/null; then
-      if cmake -S "$HYPRPICKER_BUILD_DIR" -B "$HYPRPICKER_BUILD_DIR/build" \
-          -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
-          >/dev/null 2>&1 \
-          && cmake --build "$HYPRPICKER_BUILD_DIR/build" >/dev/null 2>&1 \
-          && sudo cmake --install "$HYPRPICKER_BUILD_DIR/build" >/dev/null 2>&1; then
-        log_success "hyprpicker installed from upstream source"
-      else
-        log_warning "hyprpicker source build failed"
-      fi
-    else
-      log_warning "Could not reach hyprpicker upstream; install the Fedora-compatible package manually"
-    fi
-    rm -rf "$HYPRPICKER_BUILD_DIR"
-  else
-    log_warning "Could not install hyprpicker build dependencies"
-  fi
-  unset HYPRPICKER_BUILD_DEPS HYPRPICKER_BUILD_DIR
+if ${INSTALL_TOOLKIT:-true}; then
+  install_hyprpicker_fedora || log_warning "hyprpicker is still missing; the color picker stays off until it is installed"
 fi
 
 # Non-repository runtime providers. These are required by exposed iNiR

@@ -11,11 +11,6 @@ tui_title "System Setup"
 function setup_user_groups(){
   tui_info "Setting up user groups..."
   
-  # i2c group for ddcutil (external monitor brightness)
-  if [[ -z $(getent group i2c) ]]; then
-    x pkg_sudo groupadd i2c
-  fi
-  
   # Add user to required groups
   local groups_before=" $(id -nG) "
   local required_groups="video,i2c,input"
@@ -27,6 +22,15 @@ function setup_user_groups(){
       required_groups+=",bluetooth"
     fi
   fi
+
+  # usermod refuses the whole list if one group is missing: i2c (ddcutil) never
+  # exists by default, and input/video only exist once udev has created them.
+  local required
+  for required in ${required_groups//,/ }; do
+    if ! getent group "$required" >/dev/null; then
+      x pkg_sudo groupadd --system "$required"
+    fi
+  done
 
   x pkg_sudo usermod -aG "$required_groups" "$(whoami)"
 
@@ -168,7 +172,7 @@ function setup_systemd_services(){
   # Enable ydotool only if service exists
   if $ydotool_service_found && has_usable_systemd_user_manager; then
     v systemctl --user daemon-reload
-    v systemctl --user enable ydotool --now 2>/dev/null || log_warning "Could not enable ydotool service"
+    systemctl --user enable ydotool --now 2>/dev/null || log_warning "Could not enable ydotool service"
   elif $ydotool_service_found; then
     log_info "ydotool service found, but no usable systemd user manager is active"
   fi
@@ -323,12 +327,19 @@ function setup_desktop_settings(){
   # If preferred theme is not installed, fall back to Adwaita.
   # If user later changes icon theme in Settings, IconThemeService persists and syncs it.
   if command -v gsettings &>/dev/null; then
-    try gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
-    try gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme"
-    try gsettings set org.gnome.desktop.interface icon-theme "$icon_theme"
-    try gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme"
-    try gsettings set org.gnome.desktop.interface cursor-size 24
-    try gsettings set org.gnome.desktop.interface font-name 'Rubik 11'
+    # From a TTY there is no session bus and every `gsettings set` is lost; the
+    # theme step then reads Adwaita back and writes it into settings.ini. A
+    # private bus lets dconf store the values for the real session.
+    local gset=(gsettings)
+    if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]] && command -v dbus-run-session &>/dev/null; then
+      gset=(dbus-run-session -- gsettings)
+    fi
+    try "${gset[@]}" set org.gnome.desktop.interface color-scheme 'prefer-dark'
+    try "${gset[@]}" set org.gnome.desktop.interface gtk-theme "$gtk_theme"
+    try "${gset[@]}" set org.gnome.desktop.interface icon-theme "$icon_theme"
+    try "${gset[@]}" set org.gnome.desktop.interface cursor-theme "$cursor_theme"
+    try "${gset[@]}" set org.gnome.desktop.interface cursor-size 24
+    try "${gset[@]}" set org.gnome.desktop.interface font-name 'Rubik 11'
   fi
   
   # KDE/Qt settings (Dolphin, etc.)
@@ -359,16 +370,6 @@ function setup_desktop_settings(){
     # Window size
     dconf write /org/gnome/nautilus/window-state/initial-size "(1100, 700)" 2>/dev/null || true
     log_success "Nautilus defaults configured"
-  fi
-
-  # Materialize the cursor everywhere XWayland apps look. niri already exports
-  # XCURSOR_* to the clients it spawns, but X11/Electron apps (Spotify, etc.)
-  # that request the core X cursor resolve it through ~/.icons/default, which
-  # otherwise inherits Adwaita and shows a different pointer. sync-cursor reads
-  # the theme from the niri KDL and writes the default-theme inheritance file.
-  if command -v python3 &>/dev/null && [[ -f "${REPO_ROOT}/scripts/niri-config.py" ]]; then
-    python3 "${REPO_ROOT}/scripts/niri-config.py" sync-cursor >/dev/null 2>&1 || true
-    log_success "Cursor theme synced for XWayland apps"
   fi
 
   # xdg-desktop-portal config for Niri (required for dark mode in GTK4/libadwaita apps)

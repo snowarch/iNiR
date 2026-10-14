@@ -136,3 +136,11 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+# Recorded in version.json so `inir update` keeps the choice: with --skip-deps
+# the user owns their packages and updates never install any.
+if [[ "$SKIP_ALLDEPS" == true ]]; then
+  INIR_DEPENDENCIES=user
+else
+  INIR_DEPENDENCIES=setup
+fi

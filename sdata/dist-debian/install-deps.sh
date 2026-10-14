@@ -65,6 +65,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [blueman-manager]="blueman" [kwriteconfig6]="libkf6config-bin" [ddcutil]="ddcutil"
     [nm-connection-editor]="network-manager-gnome" [xdg-settings]="xdg-utils" [mpv]="mpv"
     [swaylock]="swaylock" [swayidle]="swayidle" [trans]="translate-shell"
+    [lsp-plugins-lv2]="lsp-plugins-lv2"
     [ocr-eng]="tesseract-ocr-eng" [ocr-spa]="tesseract-ocr-spa" [ocr-rus]="tesseract-ocr-rus"
     [ocr-jpn]="tesseract-ocr-jpn" [ocr-jpn-vert]="tesseract-ocr-jpn-vert"
     [ocr-chi-sim]="tesseract-ocr-chi-sim" [ocr-chi-sim-vert]="tesseract-ocr-chi-sim-vert"
@@ -313,7 +314,7 @@ ensure_ubuntu_component() {
     return 1
   fi
 
-  v sudo add-apt-repository -y "$component" || {
+  sudo add-apt-repository -y "$component" || {
     log_warning "Failed to enable ${component}"
     return 1
   }
@@ -401,7 +402,7 @@ ensure_debian_component() {
   printf 'deb %s %s %s\n' "$mirror" "$DEBIAN_CODENAME" "$component" \
     | sudo tee "/etc/apt/sources.list.d/inir-${DEBIAN_CODENAME}-${component}.list" >/dev/null || return 1
 
-  if ! v sudo apt update; then
+  if ! sudo apt update; then
     log_warning "Could not refresh Debian '${component}' component"
     return 1
   fi
@@ -429,7 +430,7 @@ ensure_debian_backports() {
   log_info "Enabling Debian ${suite} using ${mirror}..."
   printf 'deb %s %s main\n' "$mirror" "$suite" \
     | sudo tee "/etc/apt/sources.list.d/inir-${suite}.list" >/dev/null || return 1
-  if ! v sudo apt update; then
+  if ! sudo apt update; then
     log_warning "Could not refresh ${suite}; source-build fallbacks remain available"
     return 1
   fi

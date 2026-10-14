@@ -2882,17 +2882,19 @@ run_update() {
     check_dependencies
     if [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
         tui_warn "Missing packages detected: ${doctor_missing_deps[*]}"
-        if $ask; then
+        if [[ "$(read_installed_version_field '.dependencies' setup)" == user ]]; then
+            tui_info "Installed with --skip-deps: packages are yours to manage, so none are installed"
+        elif $ask; then
             # Interactive mode: offer to install
             if tui_confirm "Install missing packages now?"; then
                 detect_distro
                 SKIP_SYSUPDATE=true
                 ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
-                if ! source ./sdata/subcmd-install/1.deps-router.sh; then
-                    tui_error "Dependency installation failed"
-                    return 1
+                if source ./sdata/subcmd-install/1.deps-router.sh; then
+                    tui_success "Dependencies installed"
+                else
+                    tui_warn "Some packages could not be installed; the update continues and 'inir doctor' retries them"
                 fi
-                tui_success "Dependencies installed"
             else
                 tui_info "Skipped dependency installation"
             fi
@@ -2903,11 +2905,11 @@ run_update() {
             SKIP_SYSUPDATE=true
             ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
             USE_ELEVATE=true  # Signal deps-router to use elevate() instead of sudo
-            if ! source ./sdata/subcmd-install/1.deps-router.sh; then
-                tui_error "Dependency installation failed"
-                return 1
+            if source ./sdata/subcmd-install/1.deps-router.sh; then
+                tui_success "Dependencies installed"
+            else
+                tui_warn "Some packages could not be installed; the update continues and 'inir doctor' retries them"
             fi
-            tui_success "Dependencies installed"
         else
             # No way to elevate — just inform
             tui_info "Run './setup doctor' to install missing packages"
@@ -2987,7 +2989,7 @@ run_update() {
     # owns ytmusicapi, and Deno is repaired as part of the YT playback runtime.
     _step_phase_header 6 "Python / YT runtime"
     install-python-packages
-    ensure-ytmusic-js-runtime
+    ensure-ytmusic-js-runtime || tui_warn "YT Music needs Deno; run 'inir doctor' once online"
 
     # Signal success to the shell UI before restart
     _write_update_status "success"
