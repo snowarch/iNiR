@@ -61,13 +61,25 @@ fi
 # The icon theme follows the scheme: the chosen theme names a family, and its light or dark sibling
 # is applied (WhiteSur-dark draws white symbolic icons, lost on a light scheme). Everything below
 # (GTK settings.ini, kdeglobals, qt5ct, qt6ct) reads the applied name.
+# org.gnome.desktop.interface keys someone actually set; empty while a key still has
+# its schema default. gsettings answers that default too, and after an install from
+# a TTY (no session bus, every `gsettings set` lost) it is Adwaita, which would then
+# replace iNiR's theme in settings.ini and kdeglobals.
+interface_setting() {
+    if command -v dconf >/dev/null 2>&1; then
+        dconf read "/org/gnome/desktop/interface/$1" 2>/dev/null | tr -d "'"
+    else
+        gsettings get org.gnome.desktop.interface "$1" 2>/dev/null | tr -d "'"
+    fi
+}
+
 THEME_MODE=$(jq -r '.mode // empty' "$XDG_STATE_HOME/quickshell/user/generated/theme-meta.json" 2>/dev/null || true)
 if [[ "$THEME_MODE" != "light" && "$THEME_MODE" != "dark" ]]; then
-    [[ "$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null)" == "'prefer-light'" ]] \
+    [[ "$(interface_setting color-scheme)" == prefer-light ]] \
         && THEME_MODE="light" || THEME_MODE="dark"
 fi
 CHOSEN_ICON_THEME=$(jq -r '.appearance.iconTheme // empty' "$SHELL_CONFIG_FILE" 2>/dev/null || true)
-[[ -z "$CHOSEN_ICON_THEME" ]] && CHOSEN_ICON_THEME=$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d "'" || true)
+[[ -z "$CHOSEN_ICON_THEME" ]] && CHOSEN_ICON_THEME=$(interface_setting icon-theme || true)
 APPLIED_ICON_THEME=""
 if [[ -n "$CHOSEN_ICON_THEME" ]]; then
     APPLIED_ICON_THEME=$("$SCRIPT_DIR/icon-theme-for-mode.sh" "$CHOSEN_ICON_THEME" "$THEME_MODE" 2>/dev/null || echo "$CHOSEN_ICON_THEME")
@@ -247,11 +259,11 @@ EOF
 
 generate_kdeglobals() {
     local icon_theme font_raw mono_raw font_name font_size mono_name mono_size
-    icon_theme=$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d "'")
+    icon_theme="${APPLIED_ICON_THEME:-$(interface_setting icon-theme)}"
 
     # Read current GTK fonts so wallpaper theme changes don't reset user fonts
-    font_raw=$(gsettings get org.gnome.desktop.interface font-name 2>/dev/null | tr -d "'")
-    mono_raw=$(gsettings get org.gnome.desktop.interface monospace-font-name 2>/dev/null | tr -d "'")
+    font_raw=$(interface_setting font-name)
+    mono_raw=$(interface_setting monospace-font-name)
     if [[ -n "$font_raw" ]]; then
         font_size="${font_raw##* }"
         font_name="${font_raw% *}"
@@ -1121,13 +1133,13 @@ sync_gtk_settings_ini() {
 
     local before current_icon current_cursor current_font current_theme current_scheme prefer_dark
     before=$(cksum "$settings_file" 2>/dev/null || true)
-    current_icon=$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d "'")
-    current_cursor=$(gsettings get org.gnome.desktop.interface cursor-theme 2>/dev/null | tr -d "'")
-    current_font=$(gsettings get org.gnome.desktop.interface font-name 2>/dev/null | tr -d "'")
-    current_theme=$(gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null | tr -d "'")
-    current_scheme=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | tr -d "'")
+    current_icon="${APPLIED_ICON_THEME:-$(interface_setting icon-theme)}"
+    current_cursor=$(interface_setting cursor-theme)
+    current_font=$(interface_setting font-name)
+    current_theme=$(interface_setting gtk-theme)
+    current_scheme=$(interface_setting color-scheme)
     prefer_dark=0
-    [[ "$current_scheme" == "prefer-dark" ]] && prefer_dark=1
+    [[ "$current_scheme" == "prefer-dark" || ( -z "$current_scheme" && "$THEME_MODE" == dark ) ]] && prefer_dark=1
 
     set_gtk_setting "$settings_file" "gtk-icon-theme-name" "$current_icon"
     set_gtk_setting "$settings_file" "gtk-cursor-theme-name" "$current_cursor"

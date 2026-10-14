@@ -40,6 +40,8 @@ declare -A INIR_ONLY_PATHS=(
     ["${XDG_DATA_HOME}/applications/inir-settings.desktop"]="iNiR settings desktop entry"
     ["${XDG_DATA_HOME}/icons/hicolor/scalable/apps/inir.svg"]="iNiR launcher icon"
     ["${HOME}/.local/bin/sync-pixel-sddm.py"]="iNiR SDDM theme sync helper"
+    ["${XDG_CONFIG_HOME}/environment.d/inir.conf"]="iNiR session environment"
+    ["${XDG_DATA_HOME:-$HOME/.local/share}/inir"]="iNiR data (OCR models, provider markers)"
 )
 
 # Shared configs - may be used by other apps or user customizations

@@ -983,26 +983,9 @@ if ! rpm -q adw-gtk3-theme &>/dev/null; then
   v sudo dnf install -y adw-gtk3-theme
 fi
 
-#####################################################################################
-# Setup configuration files
-#####################################################################################
-tui_info "Setting up configuration files..."
-
-# GTK configuration
-setup-gtk-config "Bibata-Modern-Classic" "WhiteSur-dark" "adw-gtk3-dark" "Geist"
-
-# Kvantum configuration
-setup-kvantum-config "MaterialAdw"
-
-# Environment variables
-setup-environment-config "Bibata-Modern-Classic"
-
-# Terminal configuration
-setup-kitty-config
-setup-foot-config
-
-# Fish shell configuration
-setup-fish-config
+# User configuration (GTK, Kvantum, terminals, fish) is installed by
+# sdata/subcmd-install/3.files.sh for every distro; a dependency step that wrote
+# its own copies here overwrote the user's choices on every reinstall.
 
 #####################################################################################
 # Post-install summary
