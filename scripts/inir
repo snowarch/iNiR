@@ -1,6 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# The inir binary (snowarch/inir-cli) is the front door when it is installed: it does
+# what it knows and hands the rest back to this file (INIR_CLI_DELEGATED set). Nothing
+# here changes without it. INIR_NO_CLI=1 skips it; a binary that cannot run is skipped too.
+if [[ -z "${INIR_CLI_DELEGATED:-}" && -z "${INIR_NO_CLI:-}" ]]; then
+    for _inir_cli in "${INIR_CLI:-}" "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" \
+                     /usr/local/lib/inir/inir /usr/lib/inir/inir; do
+        [[ -n "$_inir_cli" && -f "$_inir_cli" && -x "$_inir_cli" ]] || continue
+        # The binary comes back through this same path, so script_dir stays what it is now.
+        INIR_BASH_LAUNCHER="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/$(basename -- "${BASH_SOURCE[0]}")"
+        export INIR_BASH_LAUNCHER
+        shopt -s execfail
+        exec "$_inir_cli" "$@"
+        shopt -u execfail
+        unset INIR_BASH_LAUNCHER
+    done
+    unset _inir_cli
+fi
+# One hop only: what this launcher starts (the shell, its own inir calls) asks the binary again.
+unset INIR_CLI_DELEGATED INIR_BASH_LAUNCHER
+
 qs_bin="/usr/bin/qs"
 user_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
 system_config_dir="${INIR_SYSTEM_RUNTIME_DIR:-/usr/local/share/quickshell/inir}"
@@ -3613,7 +3633,8 @@ install_completions() {
         printf 'The %s completion file was not found next to inir.\n' "$shell" >&2
         return 1
     fi
-    if [[ -e "$dest" && ! -L "$dest" ]]; then
+    # The inir binary writes its own script there, marked; that one is ours too.
+    if [[ -e "$dest" && ! -L "$dest" ]] && ! grep -qsF 'answered by the inir binary on every Tab' "$dest"; then
         printf 'Left %s as it is: it is a file of your own, not a link inir made.\n' "$dest"
         return 0
     fi

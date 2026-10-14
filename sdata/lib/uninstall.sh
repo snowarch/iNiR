@@ -400,11 +400,12 @@ uninstall_remove_shell_integration() {
         fi
     done
 
-    # `inir completions install` only ever makes links; a regular file is the user's.
+    # `inir completions install` makes links (bash launcher) or files that carry the
+    # inir binary's marker; any other regular file is the user's.
     for profile in "${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions/inir" \
                    "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions/_inir" \
                    "${XDG_CONFIG_HOME}/fish/completions/inir.fish"; do
-        if [[ -L "$profile" ]]; then
+        if [[ -L "$profile" ]] || grep -qsF 'answered by the inir binary on every Tab' "$profile"; then
             rm -f -- "$profile" || return 1
             ((changed++)) || true
         fi
