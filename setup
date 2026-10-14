@@ -597,6 +597,7 @@ show_help() {
     tui_list_item "--local                Sync local repo to install (skip git pull)"
     tui_list_item "--realign              Safely realign an old published checkout after rewritten remote history (update only)"
     tui_list_item "--simulate             Walk the update flow visually without touching files (update only)"
+    tui_list_item "--skip-deps            Install or update without touching system packages"
     tui_list_item "--set-default-shell    Set Fish as default shell (uses chsh)"
     tui_list_item "-h, --help             Show this help"
     tui_section_end
@@ -2904,8 +2905,8 @@ run_update() {
     check_dependencies
     if [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
         tui_warn "Missing packages detected: ${doctor_missing_deps[*]}"
-        if [[ "$(read_installed_version_field '.dependencies' setup)" == user ]]; then
-            tui_info "Installed with --skip-deps: packages are yours to manage, so none are installed"
+        if [[ "${SKIP_ALLDEPS:-false}" == true || "$(read_installed_version_field '.dependencies' setup)" == user ]]; then
+            tui_info "--skip-deps: packages are yours to manage, so none are installed"
         elif $ask; then
             # Interactive mode: offer to install
             if tui_confirm "Install missing packages now?"; then
@@ -3129,6 +3130,8 @@ case "$COMMAND" in
                 --local) export _II_POST_PULL=local ;;
                 --realign) export INIR_REALIGN_REMOTE=1 ;;
                 --simulate|--dry-run) export INIR_SIMULATE_UPDATE=1 ;;
+                # Exported: survives the re-exec into the pulled setup and reaches migrations (pkg_sudo).
+                --skip-deps) export SKIP_ALLDEPS=true ;;
             esac
         done
         run_update

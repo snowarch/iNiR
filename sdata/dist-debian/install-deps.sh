@@ -79,6 +79,10 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   _deb_unresolved=()
   read -r -a _deb_miss_cmds <<<"$ONLY_MISSING_DEPS"
 
+  # Candidates come from the package index; an empty or stale one makes every package look
+  # unavailable. Refreshing the index is not a system upgrade, so SKIP_SYSUPDATE does not apply.
+  v sudo apt update
+
   for cmd in "${_deb_miss_cmds[@]}"; do
     case "$cmd" in
       awww|awww-daemon|gowall|missioncenter|songrec|xwayland-satellite)
@@ -94,6 +98,9 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
           _deb_unresolved+=("$cmd")
         elif [[ "$(apt-cache policy "$_deb_pkg" 2>/dev/null | awk '/Candidate:/ { print $2; exit }')" =~ ^[^\(] ]]; then
           [[ " ${_deb_requested_pkgs[*]} " == *" ${_deb_pkg} "* ]] || _deb_requested_pkgs+=("$_deb_pkg")
+        elif [[ "$cmd" == qs || "$cmd" == niri ]]; then
+          # Not in the archive: the full installer brings them from the PPA or builds them.
+          _deb_special_cmds+=("$cmd")
         else
           log_warning "Debian package unavailable for $cmd: $_deb_pkg"
           _deb_unresolved+=("$cmd")
@@ -103,10 +110,6 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   done
 
   if [[ ${#_deb_requested_pkgs[@]} -gt 0 ]]; then
-    case ${SKIP_SYSUPDATE:-false} in
-      true) log_info "Skipping system update" ;;
-      *) v sudo apt update ;;
-    esac
     sudo apt install $installflags "${_deb_requested_pkgs[@]}" || return 1
   fi
 
@@ -143,7 +146,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   # missing-only flag cleared; package checks make already-satisfied work cheap.
   _deb_need_full_provider=false
   for cmd in "${_deb_special_cmds[@]}"; do
-    case "$cmd" in awww|awww-daemon|songrec|xwayland-satellite) _deb_need_full_provider=true ;; esac
+    case "$cmd" in awww|awww-daemon|songrec|xwayland-satellite|qs|niri) _deb_need_full_provider=true ;; esac
   done
   unset ONLY_MISSING_DEPS
   if $_deb_need_full_provider; then
