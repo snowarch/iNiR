@@ -98,6 +98,7 @@ depends=(
   pavucontrol
   cava
   easyeffects
+  lsp-plugins-lv2
   mpv
   mpv-mpris
   yt-dlp

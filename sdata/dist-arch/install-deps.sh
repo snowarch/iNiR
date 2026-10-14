@@ -169,6 +169,9 @@ collect_pkgbuild_deps() {
 for pkgdir in ./sdata/dist-arch/inir-*/; do
   pkgname=$(basename "$pkgdir")
   case "$pkgname" in
+    # The meta-package that registers everything with pacman, built further down;
+    # collecting it here would install every group whatever the --no-* flags say.
+    inir-deps) continue ;;
     inir-audio) $INSTALL_AUDIO || continue ;;
     inir-toolkit) $INSTALL_TOOLKIT || continue ;;
     inir-screencapture) $INSTALL_SCREENCAPTURE || continue ;;
