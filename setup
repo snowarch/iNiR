@@ -3155,7 +3155,7 @@ case "$COMMAND" in
             echo "No provider '${_recipe}' for ${OS_GROUP_ID}" >&2
             exit 2
         fi
-        INSTALL_AUDIO=true INSTALL_TOOLKIT=true INSTALL_SCREENCAPTURE=true INSTALL_FONTS=true
+        : "${INSTALL_AUDIO:=true}" "${INSTALL_TOOLKIT:=true}" "${INSTALL_SCREENCAPTURE:=true}" "${INSTALL_FONTS:=true}"
         declare -F "${_family}_detect" >/dev/null && "${_family}_detect"
         "provider_${_recipe}"
         ;;
