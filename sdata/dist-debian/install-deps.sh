@@ -77,6 +77,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   _deb_installable_pkgs=()
   _deb_special_cmds=()
   _deb_unresolved=()
+  _deb_deferred=()
   read -r -a _deb_miss_cmds <<<"$ONLY_MISSING_DEPS"
 
   # Candidates come from the package index; an empty or stale one makes every package look
@@ -102,8 +103,9 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
           # Not in the archive: the full installer brings them from the PPA or builds them.
           _deb_special_cmds+=("$cmd")
         else
-          log_warning "Debian package unavailable for $cmd: $_deb_pkg"
-          _deb_unresolved+=("$cmd")
+          # Not in the enabled archives (translate-shell is in contrib, hyprpicker in backports): the full
+          # installer enables those and has source fallbacks, so defer instead of failing here.
+          _deb_deferred+=("$cmd:$_deb_pkg")
         fi
         ;;
     esac
@@ -120,12 +122,16 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     sudo apt install $installflags flatpak >/dev/null 2>&1 || true
     if command -v flatpak &>/dev/null; then
       flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo >/dev/null 2>&1 || true
-      if flatpak install -y --user flathub io.missioncenter.MissionCenter >/dev/null 2>&1; then
+      _mc_log="$(mktemp /tmp/inir-missioncenter-log.XXXXXX)"
+      if flatpak install -y --user flathub io.missioncenter.MissionCenter >"$_mc_log" 2>&1; then
         _mc_wrapper="$(mktemp /tmp/inir-missioncenter.XXXXXX)"
         printf '%s\n' '#!/bin/sh' 'exec flatpak run io.missioncenter.MissionCenter "$@"' > "$_mc_wrapper"
         sudo install -m 0755 "$_mc_wrapper" /usr/local/bin/missioncenter
         rm -f "$_mc_wrapper"
+      else
+        log_warning "Mission Center Flatpak installation failed: $(tail -n 3 "$_mc_log" | tr '\n' ' ')"
       fi
+      rm -f "$_mc_log"
     fi
   fi
 
@@ -145,6 +151,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   # Debian installer (repository/PPA first, then source). Re-enter once with the
   # missing-only flag cleared; package checks make already-satisfied work cheap.
   _deb_need_full_provider=false
+  [[ ${#_deb_deferred[@]} -gt 0 ]] && _deb_need_full_provider=true
   for cmd in "${_deb_special_cmds[@]}"; do
     case "$cmd" in awww|awww-daemon|songrec|xwayland-satellite|qs|niri) _deb_need_full_provider=true ;; esac
   done
@@ -159,6 +166,13 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
       awww|awww-daemon) command -v awww &>/dev/null && command -v awww-daemon &>/dev/null || _deb_unresolved+=("awww") ;;
       *) command -v "$cmd" &>/dev/null || _deb_unresolved+=("$cmd") ;;
     esac
+  done
+
+  for _deb_item in "${_deb_deferred[@]}"; do
+    cmd="${_deb_item%%:*}" _deb_pkg="${_deb_item#*:}"
+    command -v "$cmd" &>/dev/null \
+      || dpkg-query -W -f='${Status}' "$_deb_pkg" 2>/dev/null | grep -q 'install ok installed' \
+      || _deb_unresolved+=("$cmd")
   done
 
   if [[ ${#_deb_unresolved[@]} -gt 0 ]]; then
@@ -176,7 +190,7 @@ fi
 if $IS_UBUNTU; then
   case "$UBUNTU_VERSION" in
     2[0-4].*|25.04)
-      log_error "Ubuntu ${UBUNTU_VERSION} ships Qt older than 6.9, which iNiR needs. Use Ubuntu 25.10 or newer."
+      log_error "Ubuntu ${UBUNTU_VERSION} ships Qt older than 6.9, which iNiR needs. Use Ubuntu 26.04 LTS or newer."
       exit 1
       ;;
   esac
@@ -967,15 +981,17 @@ if ! command -v missioncenter &>/dev/null; then
   sudo apt install $installflags flatpak >/dev/null 2>&1 || true
   if command -v flatpak &>/dev/null; then
     flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo >/dev/null 2>&1 || true
-    if flatpak install -y --user flathub io.missioncenter.MissionCenter >/dev/null 2>&1; then
+    _mc_log="$(mktemp /tmp/inir-missioncenter-log.XXXXXX)"
+    if flatpak install -y --user flathub io.missioncenter.MissionCenter >"$_mc_log" 2>&1; then
       _mc_wrapper="$(mktemp /tmp/inir-missioncenter.XXXXXX)"
       printf '%s\n' '#!/bin/sh' 'exec flatpak run io.missioncenter.MissionCenter "$@"' > "$_mc_wrapper"
       sudo install -m 0755 "$_mc_wrapper" /usr/local/bin/missioncenter
       rm -f "$_mc_wrapper"
       log_success "Mission Center installed"
     else
-      log_warning "Mission Center Flatpak installation failed"
+      log_warning "Mission Center Flatpak installation failed: $(tail -n 3 "$_mc_log" | tr '\n' ' ')"
     fi
+    rm -f "$_mc_log"
   fi
 fi
 
