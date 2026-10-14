@@ -510,6 +510,35 @@ if $IS_DEBIAN && [[ "$DEBIAN_CODENAME" == "trixie" ]]; then
     ensure_debian_backports || true
   fi
 fi
+
+# niri and xwayland-satellite are in neither archive, and Quickshell only in Debian backports (older).
+# DankLinux builds all three for Debian (OBS) and Ubuntu (Launchpad PPA), the same packages
+# DankMaterialShell installs; without it each one is a Rust or C++ build on the user's machine.
+ensure_danklinux_repo() {
+  if $IS_UBUNTU; then
+    grep -qs "avengemedia/danklinux" /etc/apt/sources.list.d/* && return 0
+    ensure_add_apt_repository || return 1
+    sudo add-apt-repository -y ppa:avengemedia/danklinux || return 1
+  elif $IS_DEBIAN; then
+    local target list=/etc/apt/sources.list.d/inir-danklinux.list key=/etc/apt/keyrings/inir-danklinux.asc
+    case "$DEBIAN_CODENAME" in
+      trixie) target=Debian_13 ;;
+      forky) target=Debian_Testing ;;
+      sid) target=Debian_Unstable ;;
+      *) return 1 ;;
+    esac
+    [[ -f "$list" ]] && return 0
+    local url="https://download.opensuse.org/repositories/home:/AvengeMedia:/danklinux/${target}"
+    sudo install -d -m 0755 /etc/apt/keyrings || return 1
+    curl -fsSL "$url/Release.key" | sudo tee "$key" >/dev/null || return 1
+    echo "deb [signed-by=$key] $url/ /" | sudo tee "$list" >/dev/null || return 1
+  else
+    return 1
+  fi
+  sudo apt update
+  APT_PKG_AVAILABLE_CACHE=()
+}
+ensure_danklinux_repo || log_warning "DankLinux repository unavailable: niri, Quickshell and xwayland-satellite will be built from source"
 log_repo_context
 
 #####################################################################################
