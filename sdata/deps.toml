@@ -117,9 +117,9 @@ void = ["xdg-desktop-portal", "xdg-desktop-portal-gtk", "xdg-desktop-portal-wlr"
 [[dep]]
 name = "network"
 group = "core"
-arch = ["networkmanager", "gnome-keyring"]
+arch = ["networkmanager", "nm-connection-editor", "gnome-keyring"]
 fedora = ["NetworkManager", "nm-connection-editor", "gnome-keyring"]
-debian = ["network-manager", "gnome-keyring"]
+debian = ["network-manager", "network-manager-gnome", "gnome-keyring"]
 void = ["NetworkManager", "network-manager-applet", "gnome-keyring", "libsecret"]
 
 [[dep]]

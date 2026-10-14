@@ -235,8 +235,9 @@ DEBIAN_CORE_PKGS=(
   xdg-desktop-portal-gtk
   xdg-desktop-portal-gnome
   
-  # Network
+  # Network (network-manager-gnome: nm-connection-editor, the network panel's advanced settings)
   network-manager
+  network-manager-gnome
   gnome-keyring
   
   # File manager

@@ -38,8 +38,9 @@ depends=(
   # Polkit, for the shell's own authentication dialogs
   polkit
   
-  # Network
+  # Network (nm-connection-editor: the network panel's advanced settings)
   networkmanager
+  nm-connection-editor
   gnome-keyring
   
   # File manager

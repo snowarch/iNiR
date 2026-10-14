@@ -120,6 +120,7 @@ depends=(
   #--- Desktop integration ---
   polkit
   networkmanager
+  nm-connection-editor
   gnome-keyring
   nautilus
   kitty
