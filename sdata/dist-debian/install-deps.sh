@@ -443,16 +443,17 @@ if apt_pkg_available songrec; then
   DEBIAN_AUDIO_PKGS+=(songrec)
 fi
 
-# Check if qalculate-qt is available (preferred over qalculate)
+# The launcher's math runs the qalc CLI; the GUI is extra (qalculate-qt preferred).
+DEBIAN_TOOLKIT_PKGS+=(qalc)
 if apt_pkg_available qalculate-qt; then
   DEBIAN_TOOLKIT_PKGS+=(qalculate-qt)
 elif apt_pkg_available qalculate-gtk; then
   DEBIAN_TOOLKIT_PKGS+=(qalculate-gtk)
 fi
 
-# Check if kf6-kconfig is available (Ubuntu 24.04+, Debian trixie+)
-if apt_pkg_available kf6-kconfig; then
-  DEBIAN_FONT_PKGS+=(kf6-kconfig)
+# kwriteconfig6 (KDE color schemes). kf6-kconfig is only the source package's name.
+if apt_pkg_available libkf6config-bin; then
+  DEBIAN_FONT_PKGS+=(libkf6config-bin)
 fi
 
 # Fix any broken packages first

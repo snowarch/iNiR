@@ -91,7 +91,7 @@ name = "kconfig"
 group = "toolkit"
 arch = "kconfig"
 fedora = "kf6-kconfig"
-debian = { pkg = "kf6-kconfig", group = "fonts" }
+debian = { pkg = "libkf6config-bin", group = "fonts" }
 void = "kf6-kconfig"
 
 # --- core: session and desktop ------------------------------------------------------
@@ -379,7 +379,7 @@ name = "calculator"
 group = "toolkit"
 arch = "libqalculate"
 fedora = "qalculate"
-debian = { first = ["qalculate-qt", "qalculate-gtk"] }
+debian = { pkg = "qalc", first = ["qalculate-qt", "qalculate-gtk"] }
 void = "qalculate"
 
 [[dep]]
