@@ -2387,7 +2387,11 @@ run_update() {
     if [[ "$invoked_from" != "$REPO_ROOT" && -e "${invoked_from}/.git" && -f "${invoked_from}/shell.qml" ]]; then
         tui_warn "Updating that repo, not the one you are standing in:"
         tui_dim "    you are in: $invoked_from"
-        tui_dim "    repo path comes from ~/.config/inir/version.json"
+        if [[ "$REPO_ROOT" == "$SCRIPT_DIR" ]]; then
+            tui_dim "    that is where this setup lives"
+        else
+            tui_dim "    repo path comes from ~/.config/inir/version.json"
+        fi
     fi
 
     local installed_mode=$(get_installed_install_mode)
@@ -2575,9 +2579,23 @@ run_update() {
             tui_info "Refusing to destroy local commits automatically."
             show_repo_realign_guidance "$tracked_branch"
             return 20
+        elif [[ "$update_rc" -eq 2 && ! -e "${REPO_ROOT}/.git" ]]; then
+            # A copy without git history (an install that died early runs from the
+            # runtime copy) can never pull: saying "up to date" would strand it.
+            _report_update_failure 21 "${REPO_ROOT} is not a git checkout"
+            tui_error "${REPO_ROOT} is not a git checkout, so it cannot update itself."
+            if [[ -e "${invoked_from}/.git" && -f "${invoked_from}/shell.qml" ]]; then
+                tui_info "From the checkout you are in:"
+                tui_dim "  cd ${invoked_from} && git pull --ff-only && ./setup install"
+            else
+                tui_info "From the folder you cloned iNiR into:"
+                tui_dim "  git pull --ff-only && ./setup install"
+            fi
+            tui_info "Without one:"
+            tui_dim "  git clone https://github.com/snowarch/inir.git ~/inir && cd ~/inir && ./setup install"
+            return 21
         elif [[ "$update_rc" -eq 2 ]]; then
-            # Could not check remote (offline/no git/missing tracked branch)
-            tui_warn "Could not check for remote updates (offline, not a git repo, or missing tracked branch)"
+            tui_warn "Could not reach origin to look for a newer version (offline or no tracked branch)"
             tui_info "Checking local repo vs installed version..."
         fi
         # Fall through: rc=1 (no updates) or rc=2 (error) — check local repo vs installed
@@ -2591,7 +2609,11 @@ run_update() {
         if [[ "$installed_ver" == "0.0.0" ]] && [[ -f "${FIRSTRUN_FILE}" ]]; then
             tui_info "Detected existing installation without version tracking"
         elif [[ "$installed_commit" == "$repo_commit" ]]; then
-            tui_success "Already up to date ($installed_ver)"
+            if [[ "$update_rc" -eq 2 ]]; then
+                tui_success "Installed version matches this checkout ($installed_ver); newer versions were not checked"
+            else
+                tui_success "Already up to date ($installed_ver)"
+            fi
             _write_update_status "success"
 
             local pending=$(count_pending_migrations)
