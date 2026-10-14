@@ -2621,7 +2621,7 @@ run_repair() {
 run_local_test() {
     local dir="$1"
     shift
-    local test_script="$dir/scripts/test-local-distribution.sh"
+    local test_script="$dir/dev/tests/test-local-distribution.sh"
 
     if [[ ! -x "$test_script" ]]; then
         echo "local test script not found in $dir" >&2

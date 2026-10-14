@@ -94,7 +94,7 @@ complete -c inir -n '__fish_seen_subcommand_from completions' -a 'bash zsh fish 
 # Subcommand completions: bind (keys first, then any call)
 complete -c inir -n '__fish_seen_subcommand_from bind; and test (count (commandline -opc)) -eq 2' -a '--add --remove --list --examples' -d 'bind option'
 
-# >>> generated from the IPC registry: python3 scripts/lib/generate-ipc-registry.py >>>
+# >>> generated from the IPC registry: python3 dev/tools/generate-ipc-registry.py >>>
 complete -c inir -n '__inir_at_target' -a ai -d 'Shared multi-provider AI service'
 complete -c inir -n '__inir_at_function ai' -a ensureInitialized -d 'Force-load models, provider catalogs and API keys'
 complete -c inir -n '__inir_at_function ai' -a diagnose -d 'Dump current AI, catalog and tool state as JSON'

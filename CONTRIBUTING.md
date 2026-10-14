@@ -146,7 +146,7 @@ Power actions go through `Session.powerAction`, package updates through `Package
 Before opening a PR that touches distro or init support, run:
 
 ```bash
-scripts/check-distro-parity.py
+dev/tools/check-distro-parity.py
 ```
 
 It lists every system command and option your branch takes away from the other distributions. Each line needs an

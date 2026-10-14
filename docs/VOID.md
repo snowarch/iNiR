@@ -316,4 +316,4 @@ Recommended validation order:
 - QEMU docs: virtio-gpu device (venus/gfxstream options), display backends.
 - Repo facts: `scripts/inir` (service helpers, `run --session`),
   `sdata/lib/deps-map.sh`, `sdata/subcmd-install/3.files.sh`,
-  migrations 021/022, `Makefile`, `scripts/test-local-distribution.sh`.
+  migrations 021/022, `Makefile`, `dev/tests/test-local-distribution.sh`.

@@ -13,12 +13,12 @@ all: build
 
 build:
 	@chmod +x scripts/inir
-	@chmod +x scripts/test-local-distribution.sh
+	@chmod +x dev/tests/test-local-distribution.sh
 	@chmod +x setup
 	@find scripts -type f \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} +
 
 test-local: build
-	@bash scripts/test-local-distribution.sh
+	@bash dev/tests/test-local-distribution.sh
 
 install-bin:
 	@install -Dm755 scripts/inir $(BINDIR)/inir

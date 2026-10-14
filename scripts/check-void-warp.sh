@@ -56,7 +56,7 @@ else
   printf 'PASS: WARP is optional and absent from normal dependency/Doctor activation\n'
 fi
 
-check bash "$repo_root/scripts/test-void-warp-extra.sh"
+check bash "$repo_root/dev/tests/test-void-warp-extra.sh"
 
 for warp_toggle in \
   "$repo_root/modules/common/models/quickToggles/CloudflareWarpToggle.qml" \
