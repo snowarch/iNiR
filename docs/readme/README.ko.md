@@ -260,7 +260,7 @@ sudo make install       # system-wide instead of your home
 ./setup rollback        # undo the last update
 ```
 
-**배포판:** Arch가 주 대상입니다. Fedora와 Debian/Ubuntu도 배포판 저장소를 먼저 쓰는 자동 의존성 설치가 있고, 그 밖의 배포판은 [패키지 목록](https://github.com/snowarch/inir/wiki/PACKAGES)의 일반 안내를 따르면 됩니다. iNiR는 Qt 6.9 이상이 필요합니다: Ubuntu 25.10, Fedora 43, Debian testing 이후.
+**배포판:** Arch가 주 대상입니다. Fedora와 Debian/Ubuntu도 배포판 저장소를 먼저 쓰는 자동 의존성 설치가 있고, 그 밖의 배포판은 [패키지 목록](https://github.com/snowarch/inir/wiki/PACKAGES)의 일반 안내를 따르면 됩니다. iNiR는 Qt 6.9 이상이 필요합니다: Ubuntu 26.04 LTS, Fedora 43, Debian testing 이후.
 
 ---
 

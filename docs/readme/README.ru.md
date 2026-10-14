@@ -260,7 +260,7 @@ sudo make install       # system-wide instead of your home
 ./setup rollback        # undo the last update
 ```
 
-**Дистрибутивы:** основная цель — Arch. У Fedora и Debian/Ubuntu тоже есть автоматическая установка зависимостей, сначала из репозиториев дистрибутива; остальным подойдёт общее руководство в [списке пакетов](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR нужен Qt 6.9 или новее: Ubuntu 25.10, Fedora 43, Debian testing и новее.
+**Дистрибутивы:** основная цель — Arch. У Fedora и Debian/Ubuntu тоже есть автоматическая установка зависимостей, сначала из репозиториев дистрибутива; остальным подойдёт общее руководство в [списке пакетов](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR нужен Qt 6.9 или новее: Ubuntu 26.04 LTS, Fedora 43, Debian testing и новее.
 
 ---
 

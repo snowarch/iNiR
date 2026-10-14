@@ -260,7 +260,7 @@ sudo make install       # system-wide instead of your home
 ./setup rollback        # undo the last update
 ```
 
-**Distribuzioni:** Arch è l'obiettivo principale. Anche Fedora e Debian/Ubuntu hanno un'installazione automatica delle dipendenze che usa prima i repository della distribuzione; le altre seguono la guida generale nella [lista dei pacchetti](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR richiede Qt 6.9 o più recente: Ubuntu 25.10, Fedora 43 e Debian testing o successive.
+**Distribuzioni:** Arch è l'obiettivo principale. Anche Fedora e Debian/Ubuntu hanno un'installazione automatica delle dipendenze che usa prima i repository della distribuzione; le altre seguono la guida generale nella [lista dei pacchetti](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR richiede Qt 6.9 o più recente: Ubuntu 26.04 LTS, Fedora 43 e Debian testing o successive.
 
 ---
 

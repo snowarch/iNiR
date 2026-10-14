@@ -278,7 +278,7 @@ sudo make install       # system-wide instead of your home
 
 </div>
 
-**التوزيعات:** Arch هو الهدف الأساسي. لدى Fedora وDebian/Ubuntu أيضًا تثبيت تلقائي للاعتماديات يبدأ بمستودعات التوزيعة؛ أما التوزيعات الأخرى فتتبع الإرشادات العامة في [قائمة الحزم](https://github.com/snowarch/inir/wiki/PACKAGES). يحتاج iNiR إلى Qt 6.9 أو أحدث: Ubuntu 25.10 وFedora 43 وDebian testing أو ما بعدها.
+**التوزيعات:** Arch هو الهدف الأساسي. لدى Fedora وDebian/Ubuntu أيضًا تثبيت تلقائي للاعتماديات يبدأ بمستودعات التوزيعة؛ أما التوزيعات الأخرى فتتبع الإرشادات العامة في [قائمة الحزم](https://github.com/snowarch/inir/wiki/PACKAGES). يحتاج iNiR إلى Qt 6.9 أو أحدث: Ubuntu 26.04 LTS وFedora 43 وDebian testing أو ما بعدها.
 
 ---
 

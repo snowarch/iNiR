@@ -260,7 +260,7 @@ sudo make install       # system-wide instead of your home
 ./setup rollback        # undo the last update
 ```
 
-**डिस्ट्रो:** Arch मुख्य लक्ष्य है। Fedora और Debian/Ubuntu के लिए भी अपने-आप डिपेंडेंसी इंस्टॉल होती है, जो पहले डिस्ट्रो की रिपॉज़िटरी इस्तेमाल करती है; बाकी डिस्ट्रो [पैकेज सूची](https://github.com/snowarch/inir/wiki/PACKAGES) की सामान्य गाइड देखें। iNiR को Qt 6.9 या नया चाहिए: Ubuntu 25.10, Fedora 43 और Debian testing या उसके बाद।
+**डिस्ट्रो:** Arch मुख्य लक्ष्य है। Fedora और Debian/Ubuntu के लिए भी अपने-आप डिपेंडेंसी इंस्टॉल होती है, जो पहले डिस्ट्रो की रिपॉज़िटरी इस्तेमाल करती है; बाकी डिस्ट्रो [पैकेज सूची](https://github.com/snowarch/inir/wiki/PACKAGES) की सामान्य गाइड देखें। iNiR को Qt 6.9 या नया चाहिए: Ubuntu 26.04 LTS, Fedora 43 और Debian testing या उसके बाद।
 
 ---
 

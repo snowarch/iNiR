@@ -260,7 +260,7 @@ sudo make install       # system-wide instead of your home
 ./setup rollback        # undo the last update
 ```
 
-**Distributionen:** Arch ist das Hauptziel. Fedora und Debian/Ubuntu haben ebenfalls automatische Abhängigkeitspfade, die zuerst die Paketquellen der Distribution nutzen; andere Distributionen folgen der allgemeinen Anleitung in der [Paketliste](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR braucht Qt 6.9 oder neuer: Ubuntu 25.10, Fedora 43 und Debian testing oder später.
+**Distributionen:** Arch ist das Hauptziel. Fedora und Debian/Ubuntu haben ebenfalls automatische Abhängigkeitspfade, die zuerst die Paketquellen der Distribution nutzen; andere Distributionen folgen der allgemeinen Anleitung in der [Paketliste](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR braucht Qt 6.9 oder neuer: Ubuntu 26.04 LTS, Fedora 43 und Debian testing oder später.
 
 ---
 

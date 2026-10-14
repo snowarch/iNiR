@@ -260,7 +260,7 @@ sudo make install       # system-wide instead of your home
 ./setup rollback        # undo the last update
 ```
 
-**发行版：** Arch 是首要目标。Fedora 和 Debian/Ubuntu 也有自动安装依赖的路径，优先使用发行版仓库；其他发行版请参考[软件包列表](https://github.com/snowarch/inir/wiki/PACKAGES)中的通用说明。iNiR 需要 Qt 6.9 或更新版本：Ubuntu 25.10、Fedora 43 以及 Debian testing 或更新版本。
+**发行版：** Arch 是首要目标。Fedora 和 Debian/Ubuntu 也有自动安装依赖的路径，优先使用发行版仓库；其他发行版请参考[软件包列表](https://github.com/snowarch/inir/wiki/PACKAGES)中的通用说明。iNiR 需要 Qt 6.9 或更新版本：Ubuntu 26.04 LTS、Fedora 43 以及 Debian testing 或更新版本。
 
 ---
 

@@ -276,7 +276,7 @@ is also supported through XBPS. Fedora and Debian/Ubuntu
 retain their automated dependency paths with distro-repository-first fallbacks;
 other distributions use the generic guidance in the
 [package list](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR needs Qt
-6.9 or newer: Ubuntu 25.10, Fedora 43 and Debian testing or later.
+6.9 or newer: Ubuntu 26.04 LTS, Fedora 43 and Debian testing or later.
 
 ---
 
