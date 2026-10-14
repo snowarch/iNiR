@@ -1818,8 +1818,15 @@ check_niri_config() {
 # Run a doctor check as an animated step. Output is buffered while the
 # spinner runs. Single-result steps show the result inline on the step
 # line; multi-result steps expand details below.
+# INIR_DOCTOR_ONLY="5,8" runs just those steps (the inir binary checks first and asks
+# for the ones it found failing); with it the hero card and summary stay out.
+_doctor_wants() {
+    [[ -z "${INIR_DOCTOR_ONLY:-}" ]] || [[ ",${INIR_DOCTOR_ONLY}," == *",$1,"* ]]
+}
+
 _doctor_run_step() {
     local step="$1" total="$2" desc="$3"; shift 3
+    _doctor_wants "$step" || return 0
     local tmpfile pre_failed pre_fixed
     tmpfile=$(mktemp)
     pre_failed=$doctor_failed
@@ -1841,13 +1848,17 @@ _doctor_run_step() {
         msg=$(sed 's/\x1b\[[0-9;]*m//g; s/^[[:space:]]*//; s/^[✓✗⚠→] //' "$tmpfile")
     fi
 
+    local status=pass
     if [[ $new_fails -gt 0 ]]; then
+        status=fail
         tui_step_fail "${msg:-$desc}"
     elif [[ $new_fixes -gt 0 ]]; then
+        status=fixed
         tui_step_warn "${msg:-Fixed: $desc}"
     else
         tui_step_done "${msg:-$desc}"
     fi
+    [[ -n "${INIR_DOCTOR_REPORT:-}" ]] && printf '%s %s\n' "$step" "$status" >>"$INIR_DOCTOR_REPORT"
 
     # Expand details for multi-result steps
     (( lines > 1 )) && sed 's/^/  /' "$tmpfile"
@@ -1864,7 +1875,7 @@ run_doctor_with_fixes() {
     # Step 1: Dependencies (special — may trigger interactive install)
     _doctor_run_step 1 $total_steps "Checking dependencies" check_dependencies
 
-    if [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
+    if _doctor_wants 1 && [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
         detect_distro
         case "$OS_GROUP_ID" in
             arch|fedora|debian|ubuntu|void)
@@ -1880,6 +1891,7 @@ run_doctor_with_fixes() {
                     else
                         # Re-check after a successful repair.
                         doctor_passed=0; doctor_failed=0; doctor_fixed=0
+                        [[ -n "${INIR_DOCTOR_REPORT:-}" ]] && sed -i '/^1 /d' "$INIR_DOCTOR_REPORT"
                         _doctor_run_step 1 $total_steps "Re-checking dependencies" check_dependencies
                     fi
                 fi
@@ -1906,7 +1918,7 @@ run_doctor_with_fixes() {
 
     # Step 15 pre-check: the CLI owns the rebuild for every install kind (`inir doctor --fix-abi`).
     # It runs outside _doctor_run_step so the build and its prompts show live in the terminal.
-    if ! _doctor_abi_detect; then
+    if _doctor_wants 15 && ! _doctor_abi_detect; then
         echo ""
         echo -e "  ${STY_YELLOW}Quickshell was built for another Qt version: $_doctor_abi_msg${STY_RST}"
         echo -e "  ${STY_FAINT}Quickshell uses Qt internals and asks to be rebuilt after every Qt update. Until then it can crash.${STY_RST}"
@@ -1932,6 +1944,11 @@ run_doctor_with_fixes() {
     _doctor_run_step 23 $total_steps "Checking environment variables" check_environment_vars
     _doctor_run_step 24 $total_steps "Checking Niri config"          check_niri_config
     _doctor_run_step 25 $total_steps "Checking graphics renderer"    check_graphics_stack
+
+    if [[ -n "${INIR_DOCTOR_ONLY:-}" ]]; then
+        [[ $doctor_failed -eq 0 ]]
+        return
+    fi
 
     echo ""
     tui_divider

@@ -3058,10 +3058,12 @@ run_update() {
 ###############################################################################
 run_doctor() {
     detect_distro
-    echo ""
-    tui_hero_card "iNiR Doctor" \
-        "Diagnosing and auto-fixing your shell setup."
-    show_setup_context_card "Doctor Context"
+    if [[ -z "${INIR_DOCTOR_ONLY:-}" ]]; then
+        echo ""
+        tui_hero_card "iNiR Doctor" \
+            "Diagnosing and auto-fixing your shell setup."
+        show_setup_context_card "Doctor Context"
+    fi
     run_doctor_with_fixes
 }
 
@@ -3132,7 +3134,18 @@ case "$COMMAND" in
         run_update
         ;;
     migrate) run_migrate ;;
-    doctor) run_doctor ;;
+    doctor)
+        for _arg in "${SUBCMD_ARGS[@]}"; do
+            case "$_arg" in
+                -y|--yes) ask=false; assume_yes=true ;;
+                -q|--quiet) quiet=true ;;
+                # Steps by number (--only=5,8): the inir binary checks first and asks for these.
+                --only=*) export INIR_DOCTOR_ONLY="${_arg#--only=}" ;;
+                # One "<step> <pass|fixed|fail>" line per step run.
+                --report=*) export INIR_DOCTOR_REPORT="${_arg#--report=}" ;;
+            esac
+        done
+        run_doctor ;;
     rollback) run_rollback ;;
     my-changes) run_my_changes ;;
     uninstall) run_uninstall ;;
