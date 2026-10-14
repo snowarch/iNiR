@@ -400,6 +400,8 @@ fi
 # Font packages
 DEBIAN_FONT_PKGS=(
   fontconfig
+  # KDE platform theme: Qt apps follow the shell colors (doctor checks for it).
+  plasma-integration
   fonts-dejavu
   fonts-liberation
   fonts-noto-color-emoji

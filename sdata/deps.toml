@@ -84,6 +84,8 @@ void = "kvantum"
 [[dep]]
 name = "plasma-integration"
 group = "fonts"
+fedora = "plasma-integration"
+debian = "plasma-integration"
 void = ["breeze", "plasma-integration", "kde-cli-tools"]
 
 [[dep]]

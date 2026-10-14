@@ -334,6 +334,8 @@ FEDORA_SCREENCAPTURE_PKGS=(
 # Font packages
 FEDORA_FONT_PKGS=(
   fontconfig
+  # KDE platform theme: Qt apps follow the shell colors (doctor checks for it).
+  plasma-integration
   dejavu-fonts-all
   liberation-fonts
   google-noto-emoji-fonts
