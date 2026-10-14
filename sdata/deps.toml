@@ -1,0 +1,500 @@
+# What iNiR installs, per distro. The bash installers (sdata/dist-*/install-deps.sh)
+# and the inir binary read the same table; dev/tests/test-deps-table.py keeps it
+# equal to what those scripts install.
+#
+# Each [[dep]] is one thing the shell needs. `group` says when it goes in:
+#   core           always
+#   audio          unless --no-audio
+#   toolkit        unless --no-toolkit
+#   screencapture  unless --no-screencapture
+#   fonts          unless --no-fonts
+# `groups = [..]` installs it when any of them is on. A distro key gives its
+# package, a list of them, or a table:
+#   { pkg = "name", group = "fonts" }   another group (or groups) on this distro
+#   { first = ["a", "b"] }              the first one the repositories have
+#   { aur = "name" }                    Arch only: through the AUR helper
+#   { build = "recipe" }                a provider in sdata/dist-*/providers.sh, run
+#                                       after the packages when it is still missing
+# `ubuntu` falls back to `debian`. No key: not installed on that distro.
+
+schema = 1
+
+# --- core: compositor, shell, Qt ------------------------------------------------
+
+[[dep]]
+name = "quickshell"
+group = "core"
+arch = "quickshell"
+fedora = "quickshell"
+debian = { pkg = "quickshell", build = "quickshell" }
+void = "quickshell"
+
+[[dep]]
+name = "niri"
+group = "core"
+arch = "niri"
+fedora = "niri"
+debian = { pkg = "niri", build = "niri" }
+void = "niri"
+
+[[dep]]
+name = "qt6"
+group = "core"
+arch = ["qt6-base", "qt6-declarative", "qt6-svg", "qt6-wayland", "qt6-5compat", "qt6-imageformats",
+        "qt6-multimedia", "qt6-tools", "qt6-translations", "qt6-multimedia-ffmpeg"]
+fedora = ["qt6-qtbase", "qt6-qtdeclarative", "qt6-qtsvg", "qt6-qtwayland", "qt6-qt5compat",
+          "qt6-qtmultimedia", "qt6-qtimageformats", "qt6-qttools"]
+debian = ["qt6-base-dev", "qt6-declarative-dev", "qt6-svg-dev", "qt6-wayland-dev", "qt6-5compat-dev",
+          "qt6-multimedia-dev", "qt6-image-formats-plugins"]
+void = ["qt6-base", "qt6-declarative", "qt6-svg", "qt6-wayland", "qt6-qt5compat", "qt6-multimedia",
+        "qt6-webengine", "layer-shell-qt", "qt6-imageformats", "qt6-virtualkeyboard"]
+
+[[dep]]
+name = "quickshell-libs"
+group = "core"
+arch = ["jemalloc", "libpipewire", "libxcb", "wayland", "libdrm", "mesa"]
+fedora = ["jemalloc", "libxcb", "libdrm", "mesa-dri-drivers"]
+debian = ["libjemalloc-dev", "libpipewire-0.3-dev", "libxcb1-dev", "libwayland-dev", "libdrm-dev",
+          "wayland-protocols", "libxkbcommon-dev"]
+
+[[dep]]
+name = "kde-qml"
+group = "core"
+arch = ["kirigami", "kdialog", "syntax-highlighting"]
+fedora = ["kf6-kirigami", "kdialog", "kf6-syntax-highlighting"]
+debian = ["libkf6syntaxhighlighting6", "qml6-module-org-kde-kirigami", "kdialog"]
+void = ["kf6-syntax-highlighting", "kf6-kirigami", "kdialog"]
+
+[[dep]]
+name = "qt-theming"
+group = "core"
+arch = ["qt6ct", "plasma-integration", "frameworkintegration", "kdecoration", "breeze-icons"]
+fedora = ["qt6ct", "kde-gtk-config", "breeze-gtk"]
+debian = ["qt6ct", "kde-config-gtk-style", "breeze-gtk-theme"]
+void = ["qt6ct", "breeze-icons"]
+
+[[dep]]
+name = "kvantum"
+group = "fonts"
+arch = { pkg = "kvantum", group = "core" }
+fedora = "kvantum"
+debian = { first = ["qt6-style-kvantum", "qt-style-kvantum", "kvantum"] }
+void = "kvantum"
+
+[[dep]]
+name = "plasma-integration"
+group = "fonts"
+void = ["breeze", "plasma-integration", "kde-cli-tools"]
+
+[[dep]]
+name = "kconfig"
+group = "toolkit"
+arch = "kconfig"
+fedora = "kf6-kconfig"
+debian = { pkg = "kf6-kconfig", group = "fonts" }
+void = "kf6-kconfig"
+
+# --- core: session and desktop ------------------------------------------------------
+
+[[dep]]
+name = "polkit"
+group = "core"
+arch = "polkit"
+fedora = "polkit"
+debian = { first = ["policykit-1", "polkitd+pkexec"] }
+void = ["polkit", "polkit-gnome"]
+
+[[dep]]
+name = "portals"
+group = "core"
+arch = ["xdg-desktop-portal", "xdg-desktop-portal-gtk", "xdg-desktop-portal-gnome"]
+fedora = ["xdg-desktop-portal", "xdg-desktop-portal-gtk", "xdg-desktop-portal-gnome"]
+debian = ["xdg-desktop-portal", "xdg-desktop-portal-gtk", "xdg-desktop-portal-gnome"]
+void = ["xdg-desktop-portal", "xdg-desktop-portal-gtk", "xdg-desktop-portal-wlr", "xdg-desktop-portal-gnome"]
+
+[[dep]]
+name = "network"
+group = "core"
+arch = ["networkmanager", "gnome-keyring"]
+fedora = ["NetworkManager", "nm-connection-editor", "gnome-keyring"]
+debian = ["network-manager", "gnome-keyring"]
+void = ["NetworkManager", "network-manager-applet", "gnome-keyring", "libsecret"]
+
+[[dep]]
+name = "void-session"
+group = "core"
+void = ["elogind", "dbus", "seatd", "turnstile", "power-profiles-daemon", "xorg-minimal"]
+
+[[dep]]
+name = "login"
+group = "core"
+arch = "sddm"
+fedora = "sddm"
+void = "sddm"
+
+[[dep]]
+name = "files"
+group = "core"
+arch = "nautilus"
+fedora = "nautilus"
+debian = "nautilus"
+void = "nautilus"
+
+[[dep]]
+name = "terminal"
+group = "core"
+arch = "kitty"
+fedora = "kitty"
+debian = "kitty"
+void = "kitty"
+
+[[dep]]
+name = "fish"
+group = "core"
+arch = "fish"
+fedora = "fish"
+debian = "fish"
+void = "fish-shell"
+
+[[dep]]
+name = "xwayland"
+group = "core"
+arch = "xwayland-satellite"
+fedora = "xwayland-satellite"
+debian = { pkg = "xwayland-satellite", build = "xwayland-satellite" }
+void = "xwayland-satellite"
+
+[[dep]]
+name = "wallpaper-daemon"
+group = "core"
+arch = "awww"
+fedora = { build = "awww" }
+debian = { pkg = "awww", build = "awww" }
+void = "awww"
+
+[[dep]]
+name = "thumbnails"
+group = "core"
+fedora = ["ffmpegthumbnailer", "tumbler"]
+debian = ["ffmpegthumbnailer", "tumbler"]
+
+[[dep]]
+name = "icon-themes"
+group = "core"
+arch = ["hicolor-icon-theme", "adwaita-icon-theme", "papirus-icon-theme"]
+fedora = { pkg = ["hicolor-icon-theme", "adwaita-icon-theme", "papirus-icon-theme"], group = "fonts" }
+debian = ["hicolor-icon-theme", "adwaita-icon-theme", "papirus-icon-theme"]
+
+[[dep]]
+name = "mission-center"
+group = "core"
+arch = "mission-center"
+fedora = { build = "missioncenter" }
+debian = { build = "missioncenter" }
+void = { build = "missioncenter" }
+
+[[dep]]
+name = "browser-media"
+group = "audio"
+arch = { pkg = "plasma-browser-integration", group = "core" }
+fedora = "plasma-browser-integration"
+debian = "plasma-browser-integration"
+void = "plasma-browser-integration"
+
+# --- core: command line tools -------------------------------------------------------
+
+[[dep]]
+name = "base-tools"
+group = "core"
+arch = ["coreutils", "curl", "ripgrep", "jq", "python", "xdg-user-dirs", "xdg-utils", "rsync", "git",
+        "wl-clipboard", "libnotify", "pacman-contrib", "wlsunset", "go"]
+fedora = ["coreutils", "curl", "ripgrep", "jq", "xdg-user-dirs", "rsync", "git", "unzip", "wl-clipboard",
+          "libnotify", "wlsunset"]
+debian = ["coreutils", "curl", "ripgrep", "jq", "xdg-user-dirs", "rsync", "git", "wl-clipboard",
+          "libnotify-bin", "wlsunset", "unzip"]
+void = ["wl-clipboard", "wlsunset", "jq", "curl", "wget", "git", "ripgrep", "bc", "xdg-utils",
+        "xdg-user-dirs", "libnotify", "rsync", "fuzzel", "dunst"]
+
+[[dep]]
+name = "cliphist"
+group = "core"
+arch = "cliphist"
+fedora = { pkg = "cliphist", build = "cliphist" }
+debian = { pkg = "cliphist", build = "cliphist" }
+void = "cliphist"
+
+[[dep]]
+name = "gum"
+group = "core"
+arch = "gum"
+fedora = "gum"
+debian = { pkg = "gum", build = "gum" }
+void = "gum"
+
+[[dep]]
+name = "prompt"
+group = "core"
+arch = ["starship", "eza"]
+fedora = { pkg = "eza", build = "starship-eza" }
+debian = { pkg = ["starship", "eza"], build = "starship-eza" }
+
+[[dep]]
+name = "uv"
+group = "toolkit"
+arch = "uv"
+fedora = { pkg = "uv", group = "core" }
+debian = { pkg = "uv", build = "uv", group = "core" }
+void = { pkg = "uv", group = "core" }
+
+[[dep]]
+name = "translate"
+group = "fonts"
+arch = { pkg = "translate-shell", groups = ["toolkit", "fonts"] }
+fedora = { pkg = "translate-shell", group = "core" }
+debian = { pkg = "translate-shell", group = "core" }
+void = { pkg = "translate-shell", group = "toolkit" }
+
+# Native builds: Python packages with C extensions, and what setup compiles itself.
+[[dep]]
+name = "build-tools"
+group = "core"
+fedora = ["gcc", "gcc-c++", "make", "meson", "ninja-build", "cmake", "pkg-config", "python3-devel",
+          "dbus-devel", "cairo-devel", "cairo-gobject-devel", "gobject-introspection-devel", "gtk3-devel",
+          "glib2-devel"]
+debian = ["build-essential", "cmake", "ninja-build", "pkg-config"]
+void = ["base-devel", "pkg-config", "cairo-devel", "python3-devel", "glib-devel", "gobject-introspection",
+        "python3-gobject-devel", "libffi-devel"]
+
+# --- audio -------------------------------------------------------------------------
+
+[[dep]]
+name = "pipewire"
+group = "audio"
+arch = ["pipewire", "pipewire-pulse", "pipewire-alsa", "wireplumber"]
+fedora = ["pipewire", "pipewire-pulseaudio", "pipewire-alsa", "wireplumber"]
+debian = ["pipewire", "pipewire-pulse", "pipewire-alsa", "wireplumber"]
+void = ["pipewire", "wireplumber", "alsa-pipewire", "libspa-bluetooth"]
+
+[[dep]]
+name = "media-control"
+group = "audio"
+arch = ["playerctl", "pavucontrol"]
+fedora = ["playerctl", "pavucontrol"]
+debian = ["playerctl", "pavucontrol"]
+void = ["playerctl", "libdbusmenu-gtk3", "pavucontrol"]
+
+[[dep]]
+name = "cava"
+group = "audio"
+arch = "cava"
+fedora = "cava"
+debian = { pkg = "cava", build = "cava" }
+void = "cava"
+
+[[dep]]
+name = "equalizer"
+group = "audio"
+arch = ["easyeffects", "lsp-plugins-lv2"]
+fedora = ["easyeffects", "lsp-plugins-lv2"]
+debian = ["easyeffects", "lsp-plugins-lv2"]
+void = ["easyeffects", "lsp-plugins-lv2"]
+
+[[dep]]
+name = "player"
+group = "audio"
+arch = ["mpv", "mpv-mpris", "yt-dlp", "yt-dlp-ejs", "deno", "socat"]
+fedora = ["mpv", "yt-dlp", "socat"]
+debian = ["mpv", "yt-dlp", "socat"]
+void = ["mpv", "mpv-mpris", "yt-dlp", "socat"]
+
+[[dep]]
+name = "songrec"
+group = "fonts"
+arch = "songrec"
+fedora = { build = "songrec", group = "audio" }
+debian = { pkg = "songrec", build = "songrec", group = "audio" }
+void = { pkg = "songrec", group = "audio" }
+
+# --- toolkit -----------------------------------------------------------------------
+
+[[dep]]
+name = "input"
+group = "toolkit"
+arch = ["upower", "wtype", "ydotool", "python-evdev", "python-pillow", "fprintd"]
+fedora = ["upower", "wtype", "ydotool", "python3-evdev", "python3-pillow", "fprintd"]
+debian = ["upower", "wtype", "ydotool", "python3-evdev", "python3-pil", "python3-cairo", "fprintd",
+          "libgirepository-2.0-dev"]
+void = ["upower", "wtype", "python3-evdev", "python3-Pillow", "fprintd", "cmake"]
+
+[[dep]]
+name = "ydotool"
+group = "toolkit"
+void = { build = "ydotool" }
+
+[[dep]]
+name = "go"
+group = "toolkit"
+fedora = "golang"
+debian = "golang-go"
+
+[[dep]]
+name = "backlight"
+group = "toolkit"
+arch = ["brightnessctl", "ddcutil", "geoclue"]
+fedora = ["brightnessctl", "ddcutil", "geoclue2"]
+debian = ["brightnessctl", "ddcutil", "geoclue-2.0"]
+void = ["brightnessctl", "ddcutil", "geoclue2"]
+
+[[dep]]
+name = "idle"
+group = "toolkit"
+arch = ["swayidle", "swaylock"]
+fedora = ["swayidle", "swaylock"]
+debian = ["swayidle", "swaylock"]
+void = { pkg = ["swayidle", "swaylock"], group = "core" }
+
+[[dep]]
+name = "screenshot"
+groups = ["toolkit", "screencapture"]
+arch = ["grim", "slurp", "imagemagick"]
+fedora = ["grim", "slurp", "ImageMagick"]
+debian = ["grim", "slurp", "imagemagick"]
+void = { pkg = ["grim", "slurp"], group = "core" }
+
+[[dep]]
+name = "imagemagick-void"
+groups = ["toolkit", "screencapture"]
+void = "ImageMagick"
+
+[[dep]]
+name = "hyprpicker"
+group = "toolkit"
+arch = "hyprpicker"
+fedora = { pkg = "hyprpicker", build = "hyprpicker" }
+debian = { pkg = "hyprpicker", build = "hyprpicker" }
+void = "hyprpicker"
+
+[[dep]]
+name = "calculator"
+group = "toolkit"
+arch = "libqalculate"
+fedora = "qalculate"
+debian = { first = ["qalculate-qt", "qalculate-gtk"] }
+void = "qalculate"
+
+[[dep]]
+name = "bluetooth"
+group = "toolkit"
+arch = "blueman"
+fedora = "blueman"
+debian = "blueman"
+void = ["bluez", "blueman"]
+
+[[dep]]
+name = "gowall"
+group = "toolkit"
+arch = { aur = "gowall-bin", group = "core" }
+fedora = { build = "gowall" }
+debian = { build = "gowall" }
+void = "gowall"
+
+[[dep]]
+name = "flatpak"
+group = "toolkit"
+void = "flatpak"
+
+[[dep]]
+name = "ocr"
+groups = ["toolkit", "screencapture"]
+arch = ["tesseract", "tesseract-data-eng", "tesseract-data-spa", "tesseract-data-rus", "tesseract-data-jpn",
+        "tesseract-data-jpn_vert", "tesseract-data-chi_sim", "tesseract-data-chi_sim_vert",
+        "tesseract-data-chi_tra", "tesseract-data-chi_tra_vert"]
+fedora = ["tesseract", "tesseract-langpack-eng", "tesseract-langpack-spa", "tesseract-langpack-rus",
+          "tesseract-langpack-jpn", "tesseract-langpack-jpn_vert", "tesseract-langpack-chi_sim",
+          "tesseract-langpack-chi_sim_vert", "tesseract-langpack-chi_tra", "tesseract-langpack-chi_tra_vert"]
+debian = ["tesseract-ocr", "tesseract-ocr-eng", "tesseract-ocr-spa", "tesseract-ocr-rus", "tesseract-ocr-jpn",
+          "tesseract-ocr-jpn-vert", "tesseract-ocr-chi-sim", "tesseract-ocr-chi-sim-vert",
+          "tesseract-ocr-chi-tra", "tesseract-ocr-chi-tra-vert"]
+void = ["tesseract-ocr", "tesseract-ocr-eng", "tesseract-ocr-spa", "tesseract-ocr-rus", "tesseract-ocr-jpn",
+        "tesseract-ocr-chi_sim", "tesseract-ocr-chi_tra"]
+
+[[dep]]
+name = "ocr-vertical-models"
+groups = ["toolkit", "screencapture"]
+void = { build = "ocr-vertical-models" }
+
+# --- screencapture -----------------------------------------------------------------
+
+[[dep]]
+name = "recording"
+group = "screencapture"
+arch = ["swappy", "wf-recorder", "ffmpeg"]
+fedora = ["swappy", "wf-recorder"]
+debian = ["wf-recorder", "ffmpeg"]
+void = ["swappy", "wf-recorder", "ffmpeg"]
+
+[[dep]]
+name = "swappy"
+group = "screencapture"
+debian = { pkg = "swappy", build = "swappy" }
+
+[[dep]]
+name = "ffmpeg-core"
+group = "core"
+arch = "ffmpeg"
+
+# --- fonts and theming --------------------------------------------------------------
+
+[[dep]]
+name = "fonts"
+group = "fonts"
+arch = ["fontconfig", "noto-fonts-emoji", "ttf-dejavu", "ttf-liberation", "ttf-roboto", "glib2",
+        "adw-gtk-theme", "capitaine-cursors", "ttf-material-symbols-variable", "ttf-jetbrains-mono-nerd"]
+fedora = ["fontconfig", "dejavu-fonts-all", "liberation-fonts", "google-noto-emoji-fonts",
+          "jetbrains-mono-fonts-all", "glib2"]
+debian = ["fontconfig", "fonts-dejavu", "fonts-liberation", "fonts-noto-color-emoji", "fonts-jetbrains-mono"]
+void = ["curl", "unzip", "fontconfig", "dejavu-fonts-ttf", "twemoji", "nerd-fonts-ttf", "noto-fonts-emoji"]
+
+[[dep]]
+name = "emoji-core"
+group = "core"
+arch = "noto-fonts-emoji"
+
+[[dep]]
+name = "aur-fonts"
+group = "fonts"
+arch = { aur = ["ttf-roboto-flex", "ttf-oxanium", "ttf-gabarito-git", "otf-space-grotesk", "ttf-readex-pro",
+                "ttf-rubik-vf", "ttf-twemoji", "whitesur-icon-theme"] }
+
+[[dep]]
+name = "darkly"
+group = "fonts"
+arch = { aur = "darkly-bin" }
+fedora = { build = "darkly" }
+debian = { build = "darkly" }
+void = { build = "darkly" }
+
+[[dep]]
+name = "darkly-build"
+group = "fonts"
+void = ["cmake", "extra-cmake-modules", "qt6-base-devel", "qt6-declarative-devel", "kf6-kcoreaddons-devel",
+        "kf6-kcmutils-devel", "kf6-kcolorscheme-devel", "kf6-kconfig-devel", "kf6-kguiaddons-devel",
+        "kf6-ki18n-devel", "kf6-kiconthemes-devel", "kf6-kwindowsystem-devel", "kf6-kirigami-devel",
+        "kf6-frameworkintegration-devel", "kf6-kdecoration-devel"]
+
+[[dep]]
+name = "qt-avif"
+group = "core"
+arch = { aur = "qt6-avif-image-plugin" }
+
+[[dep]]
+name = "fonts-download"
+group = "core"
+fedora = { build = "fonts-download" }
+
+[[dep]]
+name = "theme-download"
+group = "fonts"
+fedora = { build = "themes-download", group = "core" }
+debian = { build = "themes-download" }
+void = { build = "themes-download" }
