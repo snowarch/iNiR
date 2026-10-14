@@ -125,7 +125,8 @@ function setup_systemd_services(){
       else
         log_warning "Bluetooth service directory missing (/etc/sv/bluetoothd); reinstall the bluez package"
       fi
-      configure_void_ydotool_uinput || return 1
+      # ydotool is optional (toolkit): a missing permission is a warning, and inir doctor repairs it later.
+      configure_void_ydotool_uinput || log_warning "ydotool can't type yet; inir doctor sets up /dev/uinput once udev runs"
     fi
     return 0
   fi
