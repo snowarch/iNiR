@@ -15,6 +15,11 @@ case ":${PATH}:" in
   *) export PATH="${PATH}:${XDG_BIN_HOME}" ;;
 esac
 
+# Setup downloads fonts, themes, binaries and installers from many hosts; one dropped connection used to
+# leave a piece missing until the next run (Deno, in a CI run). Every curl it or its scripts call retries.
+curl() { command curl --retry 3 --retry-all-errors --connect-timeout 15 "$@"; }
+export -f curl
+
 # Colors (ANSI escape codes)
 STY_RED='\e[31m'
 STY_GREEN='\e[32m'
