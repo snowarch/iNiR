@@ -76,6 +76,10 @@ inir/
 ├── translations/                 # i18n strings (17 locales)
 ├── distro/arch/                  # Arch PKGBUILDs (dependency manifests)
 ├── assets/                       # Icons, wallpapers, systemd unit, desktop entry
+├── dev/                          # Never shipped to users
+│   ├── tests/                    # `make test-local` and the checks it runs
+│   ├── tools/                    # Release, wiki sync, IPC registry generator, parity checks
+│   └── lifecycle/                # Install/update/uninstall bench, one container per distro
 └── docs/                         # Canonical public documentation; Wiki is published from here
 ```
 
@@ -174,8 +178,8 @@ inir/
 - `services/CompositorService.qml`: Compositor detection (Niri vs Hyprland)
 
 **Tests:**
-- `scripts/test-local-distribution.sh`: Local distribution test script
-- Co-located test files are not present in this repo
+- `dev/tests/test-local-distribution.sh`: what `make test-local` runs; it calls the other `dev/tests/*`
+- `dev/lifecycle/run.sh arch fedora debian ubuntu void`: install, reinstall, update and uninstall in clean containers
 
 ## Naming Conventions
 
