@@ -519,3 +519,40 @@ fi
 
 provider_fonts-download() { fedora_critical_fonts && fedora_optional_fonts; }
 provider_themes-download() { fedora_icon_themes && fedora_cursor_themes && fedora_gtk_theme; }
+
+# The package sources the rest needs: Quickshell and niri COPRs only when Fedora lacks them, RPM Fusion Free.
+provider_repos() {
+tui_info "Checking Fedora package sources..."
+
+# Fedora 44+ has a quickshell package, but iNiR currently needs Quickshell 0.3+.
+# Prefer an official package as soon as Fedora catches up; until then use the
+# release COPR rather than silently installing an incompatible 0.2.x runtime.
+if fedora_quickshell_compatible; then
+  log_info "Compatible Quickshell available from configured Fedora repositories"
+elif ! dnf copr list --enabled 2>/dev/null | grep -q "errornointernet/quickshell"; then
+  log_info "Quickshell 0.3+ not in configured repos — enabling release COPR..."
+  ensure_copr_support && sudo dnf copr enable -y errornointernet/quickshell || {
+    log_error "Failed to enable Quickshell COPR"
+    log_warning "Install quickshell from a compatible repository and rerun setup"
+  }
+fi
+
+# Niri is official on supported Fedora releases; retain COPR for derivatives
+# or older Fedora installations whose repository set does not include it.
+if dnf_pkg_available niri; then
+  log_info "Niri available from configured Fedora repositories"
+elif ! dnf copr list --enabled 2>/dev/null | grep -q "yalter/niri"; then
+  log_info "Niri not in configured repos — enabling compatibility COPR..."
+  ensure_copr_support && v sudo dnf copr enable -y yalter/niri
+fi
+
+#####################################################################################
+# Enable RPM Fusion Free (for ffmpeg, etc.)
+#####################################################################################
+tui_info "Checking RPM Fusion Free..."
+
+if ! rpm -q rpmfusion-free-release &>/dev/null; then
+  v sudo dnf install -y \
+    "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${FEDORA_VERSION}.noarch.rpm"
+fi
+}

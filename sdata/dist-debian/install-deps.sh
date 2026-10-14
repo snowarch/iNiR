@@ -208,27 +208,7 @@ installflags=""
 $ask || installflags="-y"
 
 
-read_apt_components
-if $IS_UBUNTU; then
-  ensure_ubuntu_component "universe"
-fi
-if $IS_DEBIAN; then
-  # translate-shell is distributed in Debian contrib. Enable the component on
-  # the same mirror the user already trusts instead of adding a third-party
-  # repository or silently leaving the translation feature unavailable.
-  ensure_debian_component "contrib" || true
-fi
-
-# Quickshell and Hyprpicker are prebuilt in Debian 13 backports. Enable that
-# official suite only when stable repositories do not already provide them.
-if $IS_DEBIAN && [[ "$DEBIAN_CODENAME" == "trixie" ]]; then
-  if ! apt_quickshell_compatible || ! apt_pkg_available hyprpicker; then
-    ensure_debian_backports || true
-  fi
-fi
-
-ensure_danklinux_repo || log_warning "DankLinux repository unavailable: niri, Quickshell and xwayland-satellite will be built from source"
-log_repo_context
+provider_repos
 
 #####################################################################################
 # Install official repository packages
