@@ -1079,6 +1079,8 @@ if [[ -n "${II_TARGET}" && -d "${II_TARGET}" ]]; then
   log_success "Version tracking configured"
 fi
 
+install_inir_cli_binary || log_warning "Could not fetch the inir binary; the bash launcher keeps working"
+
 #####################################################################################
 # Final status checks
 #####################################################################################
