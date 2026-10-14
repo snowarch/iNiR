@@ -7,6 +7,14 @@ XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
 XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
 XDG_STATE_HOME=${XDG_STATE_HOME:-$HOME/.local/state}
 
+# Setup installs the launcher, uv, starship and eza into XDG_BIN_HOME. The rest of
+# the same run has to find them there, before a new login puts it on PATH. Last on
+# PATH, so nothing there shadows a system binary.
+case ":${PATH}:" in
+  *":${XDG_BIN_HOME}:"*) ;;
+  *) export PATH="${PATH}:${XDG_BIN_HOME}" ;;
+esac
+
 # Colors (ANSI escape codes)
 STY_RED='\e[31m'
 STY_GREEN='\e[32m'
