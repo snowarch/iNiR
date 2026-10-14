@@ -6,6 +6,19 @@ dnf_pkg_available() {
   dnf -q list --available "$pkg" &>/dev/null || dnf -q list --installed "$pkg" &>/dev/null
 }
 
+# What the providers read about this system. install-deps.sh runs it first, and `setup provider` too.
+fedora_detect() {
+  FEDORA_VERSION=$(rpm -E %fedora)
+  ARCH=$(uname -m)
+  case "$ARCH" in
+    x86_64) ARCH_SUFFIX="amd64" ;;
+    aarch64) ARCH_SUFFIX="arm64" ;;
+    *) ARCH_SUFFIX="$ARCH" ;;
+  esac
+  installflags=""
+  ${ask:-true} || installflags="-y"
+}
+
 # Batch check which packages are available from configured repos.
 # Populates the arrays passed as $1 (available) and $2 (missing).
 dnf_pkgs_available_batch() {

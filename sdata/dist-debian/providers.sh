@@ -6,6 +6,32 @@
 
 # --- helpers the providers use -------------------------------------------------
 
+# What the providers read about this system. install-deps.sh runs it first, and `setup provider` too.
+debian_detect() {
+  IS_UBUNTU=false
+  IS_DEBIAN=false
+  UBUNTU_VERSION=""
+  UBUNTU_CODENAME=""
+  DEBIAN_VERSION=""
+  DEBIAN_CODENAME=""
+  # Ubuntu derivatives (PikaOS, Pop!_OS, Linux Mint...) count as Ubuntu.
+  DISTRO_ID=$(grep "^ID=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
+  DISTRO_ID_LIKE=$(grep "^ID_LIKE=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
+  DISTRO_NAME=$(grep "^PRETTY_NAME=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
+  if grep -qi "ubuntu" /etc/os-release 2>/dev/null || [[ "$DISTRO_ID_LIKE" == *"ubuntu"* ]]; then
+    IS_UBUNTU=true
+    UBUNTU_VERSION=$(grep "^VERSION_ID=" /etc/os-release | cut -d= -f2 | tr -d '"')
+    UBUNTU_CODENAME=$(grep "^UBUNTU_CODENAME=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
+  elif [[ -f /etc/debian_version ]] || [[ "$DISTRO_ID_LIKE" == *"debian"* ]]; then
+    IS_DEBIAN=true
+    DEBIAN_VERSION=$(cat /etc/debian_version 2>/dev/null || echo "unknown")
+    DEBIAN_CODENAME=$(grep "^VERSION_CODENAME=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
+  fi
+  ARCH=$(dpkg --print-architecture)
+  installflags=""
+  ${ask:-true} || installflags="-y"
+}
+
 declare -a APT_COMPONENTS=()
 declare -a MISSING_REPO_PKGS=()
 declare -A APT_PKG_AVAILABLE_CACHE=()

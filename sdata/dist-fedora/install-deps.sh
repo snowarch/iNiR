@@ -20,10 +20,10 @@ if is_immutable_distro 2>/dev/null; then
 fi
 
 # Detect Fedora version
-FEDORA_VERSION=$(rpm -E %fedora)
+source "${REPO_ROOT}/sdata/dist-fedora/providers.sh"
+fedora_detect
 tui_info "Detected Fedora ${FEDORA_VERSION}"
 
-source "${REPO_ROOT}/sdata/dist-fedora/providers.sh"
 
 #####################################################################################
 # Optional: install only a specific list of missing deps
@@ -448,12 +448,6 @@ fi
 #####################################################################################
 tui_info "Installing packages from GitHub releases..."
 
-ARCH=$(uname -m)
-case "$ARCH" in
-  x86_64) ARCH_SUFFIX="amd64" ;;
-  aarch64) ARCH_SUFFIX="arm64" ;;
-  *) ARCH_SUFFIX="$ARCH" ;;
-esac
 
 
 provider_cliphist

@@ -11,34 +11,13 @@ if ! command -v apt >/dev/null 2>&1; then
   exit 1
 fi
 
-# Detect Ubuntu vs Debian for version-specific handling
-IS_UBUNTU=false
-IS_DEBIAN=false
-UBUNTU_VERSION=""
-DEBIAN_VERSION=""
-DEBIAN_CODENAME=""
-
-# Also detect Ubuntu derivatives (PikaOS, Pop!_OS, Linux Mint, etc.)
-DISTRO_ID=$(grep "^ID=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
-DISTRO_ID_LIKE=$(grep "^ID_LIKE=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
-DISTRO_NAME=$(grep "^PRETTY_NAME=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
-
-if grep -qi "ubuntu" /etc/os-release 2>/dev/null || [[ "$DISTRO_ID_LIKE" == *"ubuntu"* ]]; then
-  IS_UBUNTU=true
-  # Try to get Ubuntu base version from derivative or actual Ubuntu
-  UBUNTU_VERSION=$(grep "^VERSION_ID=" /etc/os-release | cut -d= -f2 | tr -d '"')
-  # Some derivatives use UBUNTU_CODENAME
-  UBUNTU_CODENAME=$(grep "^UBUNTU_CODENAME=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
+source "${REPO_ROOT}/sdata/dist-debian/providers.sh"
+debian_detect
+if $IS_UBUNTU; then
   tui_info "Detected ${DISTRO_NAME:-Ubuntu} (Ubuntu-based)"
-elif [[ -f /etc/debian_version ]] || [[ "$DISTRO_ID_LIKE" == *"debian"* ]]; then
-  IS_DEBIAN=true
-  DEBIAN_VERSION=$(cat /etc/debian_version 2>/dev/null || echo "unknown")
-  DEBIAN_CODENAME=$(grep "^VERSION_CODENAME=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
+elif $IS_DEBIAN; then
   tui_info "Detected ${DISTRO_NAME:-Debian} (Debian-based)"
 fi
-
-# Detect architecture
-ARCH=$(dpkg --print-architecture)
 tui_info "Architecture: ${ARCH}"
 
 #####################################################################################
@@ -228,7 +207,6 @@ esac
 installflags=""
 $ask || installflags="-y"
 
-source "${REPO_ROOT}/sdata/dist-debian/providers.sh"
 
 read_apt_components
 if $IS_UBUNTU; then
