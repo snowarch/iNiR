@@ -92,7 +92,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
         if [[ -z "$_deb_pkg" ]]; then
           log_warning "No Debian repair mapping for Doctor command: $cmd"
           _deb_unresolved+=("$cmd")
-        elif apt-cache show "$_deb_pkg" &>/dev/null 2>&1; then
+        elif [[ "$(apt-cache policy "$_deb_pkg" 2>/dev/null | awk '/Candidate:/ { print $2; exit }')" =~ ^[^\(] ]]; then
           [[ " ${_deb_requested_pkgs[*]} " == *" ${_deb_pkg} "* ]] || _deb_requested_pkgs+=("$_deb_pkg")
         else
           log_warning "Debian package unavailable for $cmd: $_deb_pkg"
@@ -332,7 +332,11 @@ apt_pkg_available() {
     return $?
   fi
 
-  if apt-cache show "$pkg" &>/dev/null 2>&1; then
+  # `apt-cache show` also succeeds for names only other packages mention (Debian 13
+  # still knows policykit-1 that way), so require a version apt can install.
+  local candidate
+  candidate="$(apt-cache policy "$pkg" 2>/dev/null | awk '/Candidate:/ { print $2; exit }')"
+  if [[ -n "$candidate" && "$candidate" != "(none)" ]]; then
     APT_PKG_AVAILABLE_CACHE["$pkg"]="yes"
     return 0
   fi
@@ -580,7 +584,7 @@ DEBIAN_QT6_PKGS=(
   # Core Qt6 development (runtime libs installed as deps)
   qt6-base-dev
   qt6-declarative-dev
-  libqt6svg6-dev
+  qt6-svg-dev
   qt6-wayland-dev
   qt6-5compat-dev
   qt6-multimedia-dev
@@ -688,9 +692,15 @@ DEBIAN_FONT_PKGS=(
   
   # Launcher
   
-  # Qt theming
-  kvantum
 )
+
+# Kvantum is qt6-style-kvantum on Ubuntu and qt-style-kvantum on Debian 13.
+for _kvantum_pkg in qt6-style-kvantum qt-style-kvantum kvantum; do
+  if apt_pkg_available "$_kvantum_pkg"; then
+    DEBIAN_FONT_PKGS+=("$_kvantum_pkg")
+    break
+  fi
+done
 
 # Wayland packages - only dev packages, runtime libs installed as deps
 DEBIAN_WAYLAND_PKGS=(
@@ -912,12 +922,19 @@ if ! command -v songrec &>/dev/null; then
     log_info "Compiling songrec from source with Cargo..."
     
     # Install build dependencies
+    # songrec 0.7 is GTK4/libadwaita; libspa-sys runs bindgen, which needs libclang.
     SONGREC_DEPS=(
       build-essential
-      libasound2-dev
-      libgtk-3-dev
-      libssl-dev
       pkg-config
+      libasound2-dev
+      libpulse-dev
+      libdbus-1-dev
+      libssl-dev
+      libgtk-4-dev
+      libadwaita-1-dev
+      libsoup-3.0-dev
+      libpipewire-0.3-dev
+      libclang-dev
     )
     sudo apt install $installflags "${SONGREC_DEPS[@]}" 2>/dev/null || true
     
@@ -1216,6 +1233,7 @@ if ! command -v xwayland-satellite &>/dev/null; then
   sudo apt install $installflags \
     libxcb1-dev \
     libxcb-composite0-dev \
+    libxcb-cursor-dev \
     libxcb-render0-dev \
     libxcb-xfixes0-dev \
     libclang-dev 2>/dev/null || true
@@ -1372,7 +1390,7 @@ if ! quickshell_installed_compatible; then
     qt6-base-private-dev
     qt6-declarative-dev
     qt6-declarative-private-dev
-    libqt6svg6-dev
+    qt6-svg-dev
     # Wayland support
     qt6-wayland-dev
     libwayland-dev

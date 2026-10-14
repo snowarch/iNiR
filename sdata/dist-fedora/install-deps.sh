@@ -205,9 +205,10 @@ install_hyprpicker_fedora() {
 install_songrec_fedora() {
   command -v songrec &>/dev/null && return 0
   ensure_fedora_rust_toolchain || return 1
+  # clang-devel: libspa-sys runs bindgen, which needs libclang.
   sudo dnf install -y \
     alsa-lib-devel pulseaudio-libs-devel pipewire-devel openssl-devel dbus-devel \
-    pkgconf-pkg-config glib2-devel gtk4-devel libsoup3-devel libadwaita-devel \
+    pkgconf-pkg-config glib2-devel gtk4-devel libsoup3-devel libadwaita-devel clang-devel \
     >/dev/null 2>&1 || return 1
 
   local temp_root
