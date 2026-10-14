@@ -3077,7 +3077,7 @@ COMMAND=""
 SUBCMD_ARGS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
-        install|reinstall|update|migrate|doctor|rollback|my-changes|uninstall|status|config|theme|info|backup|logs|extras)
+        install|reinstall|update|provider|migrate|doctor|rollback|my-changes|uninstall|status|config|theme|info|backup|logs|extras)
             COMMAND="$1"; shift
             SUBCMD_ARGS=("$@")
             break
@@ -3123,6 +3123,41 @@ case "$COMMAND" in
         done
         IS_UPDATE=true
         run_install
+        ;;
+    provider)
+        # One install step from sdata/dist-*/providers.sh, the `build = "<recipe>"` names in deps.toml.
+        # The inir binary runs these for whatever its package step could not install.
+        _recipe=""
+        for _arg in "${SUBCMD_ARGS[@]}"; do
+            case "$_arg" in
+                -y|--yes) ask=false; assume_yes=true ;;
+                -*) ;;
+                *) _recipe="$_arg" ;;
+            esac
+        done
+        detect_distro
+        case "$OS_GROUP_ID" in
+            ubuntu|debian) _family=debian ;;
+            fedora|void) _family="$OS_GROUP_ID" ;;
+            *) _family="" ;;
+        esac
+        _providers="./sdata/dist-${_family}/providers.sh"
+        if [[ -z "$_family" || ! -f "$_providers" ]]; then
+            echo "No install providers for ${OS_GROUP_ID:-this system}" >&2
+            exit 2
+        fi
+        source "$_providers"
+        if [[ -z "$_recipe" ]]; then
+            declare -F | awk '$3 ~ /^provider_/ {sub(/^provider_/, "", $3); print $3}'
+            exit 0
+        fi
+        if ! declare -F "provider_${_recipe}" >/dev/null; then
+            echo "No provider '${_recipe}' for ${OS_GROUP_ID}" >&2
+            exit 2
+        fi
+        INSTALL_AUDIO=true INSTALL_TOOLKIT=true INSTALL_SCREENCAPTURE=true INSTALL_FONTS=true
+        declare -F "${_family}_detect" >/dev/null && "${_family}_detect"
+        "provider_${_recipe}"
         ;;
     update)
         for _arg in "${SUBCMD_ARGS[@]}"; do
