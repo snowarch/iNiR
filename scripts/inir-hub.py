@@ -177,7 +177,10 @@ def read_cache(source: str) -> dict | None:
 def load_records() -> dict:
     try:
         data = json.loads(RECORDS.read_text())
-        return data.get("items", {}) if isinstance(data, dict) else {}
+        items = data.get("items", {}) if isinstance(data, dict) else {}
+        # A hand-edited record without a kind or version is dropped, not a crash later on.
+        return {k: v for k, v in items.items() if isinstance(v, dict) and v.get("kind") in KINDS
+                and isinstance(v.get("version"), str)} if isinstance(items, dict) else {}
     except (OSError, json.JSONDecodeError):
         return {}
 
@@ -331,7 +334,9 @@ def place(item: dict, data: bytes) -> Path:
 def install(item_ids: list[str]) -> list[dict]:
     with locked():
         records = load_records()
-        items = annotate(catalogue(DEFAULT_MAX_AGE)[0], records)
+        # Fresh index (the cache stays if the fetch fails): a stale one names an older package whose sha256
+        # no longer matches what the source serves.
+        items = annotate(catalogue(0)[0], records)
         results = []
         for item_id in item_ids:
             item = find(item_id, items)
