@@ -456,13 +456,7 @@ case "$ARCH" in
 esac
 
 
-# Fedora 43 did not ship cliphist, while newer releases do. Keep the existing
-# upstream static-binary route only as a fallback after the configured mirrors
-# have been tried, so Fedora 44+ never need GitHub for this dependency.
-if ! command -v cliphist &>/dev/null; then
-  install_github_binary "cliphist" "sentriz/cliphist" "linux-${ARCH_SUFFIX}$" || \
-    log_warning "cliphist is still missing — clipboard history will not work until it is installed"
-fi
+provider_cliphist
 
 if ${INSTALL_TOOLKIT:-true}; then
   install_hyprpicker_fedora || log_warning "hyprpicker is still missing; the color picker stays off until it is installed"
@@ -483,26 +477,7 @@ if ${INSTALL_AUDIO:-true} && ! install_songrec_fedora; then
   log_warning "songrec is still missing — music recognition will be unavailable"
 fi
 
-# darkly - Qt theme (download .rpm from GitHub)
-if ${INSTALL_FONTS:-true}; then
-  if ! rpm -q darkly &>/dev/null; then
-    log_info "Installing darkly theme from GitHub..."
-    DARKLY_RPM_URL=$(curl -s --connect-timeout 10 --max-time 30 "https://api.github.com/repos/Bali10050/darkly/releases/latest" | \
-      jq -r ".assets[] | select(.name | test(\"fc${FEDORA_VERSION}.*x86_64.rpm$\")) | .browser_download_url" | head -1)
-    
-    # Fallback to any Fedora RPM if exact version not found
-    if [[ -z "$DARKLY_RPM_URL" || "$DARKLY_RPM_URL" == "null" ]]; then
-      DARKLY_RPM_URL=$(curl -s --connect-timeout 10 --max-time 30 "https://api.github.com/repos/Bali10050/darkly/releases/latest" | \
-        jq -r '.assets[] | select(.name | test("fc[0-9]+.*x86_64.rpm$")) | .browser_download_url' | head -1)
-    fi
-    
-    if [[ -n "$DARKLY_RPM_URL" && "$DARKLY_RPM_URL" != "null" ]]; then
-      v sudo dnf install -y "$DARKLY_RPM_URL"
-    else
-      log_warning "darkly RPM not found for Fedora ${FEDORA_VERSION}"
-    fi
-  fi
-fi
+provider_darkly
 
 #####################################################################################
 # uv fallback for Fedora derivatives that do not carry the package
@@ -521,217 +496,32 @@ fi
 #####################################################################################
 # Install critical fonts
 #####################################################################################
-tui_info "Installing critical fonts..."
-
-FONT_DIR="$HOME/.local/share/fonts"
-mkdir -p "$FONT_DIR"
-
-# Material Symbols Rounded (icons) - this is the font iNiR actually uses
-if ! fc-list | grep -qi "Material Symbols Rounded"; then
-  log_info "Downloading Material Symbols Rounded font..."
-  
-  # Direct download from raw.githubusercontent
-  MATERIAL_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
-  
-  if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$FONT_DIR/MaterialSymbolsRounded.ttf" "$MATERIAL_URL"; then
-    fc-cache -fv "$FONT_DIR" 2>/dev/null
-    log_success "Material Symbols Rounded font installed"
-  else
-    log_warning "Could not download Material Symbols Rounded"
-    log_warning "Download from: https://fonts.google.com/icons"
-  fi
-fi
-
-# Also install Outlined variant (used by nts)
-if ! fc-list | grep -qi "Material Symbols Outlined"; then
-  log_info "Downloading Material Symbols Outlined font..."
-  
-  MATERIAL_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
-  
-  if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$FONT_DIR/MaterialSymbolsOutlined.ttf" "$MATERIAL_URL"; then
-    fc-cache -fv "$FONT_DIR" 2>/dev/null
-    log_success "Material Symbols Outlined font installed"
-  else
-    log_warning "Could not download Material Symbols Outlined"
-  fi
-fi
-
-# JetBrains Mono Nerd Font (if not installed via dnf)
-if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
-  log_info "Downloading JetBrains Mono Nerd Font..."
-  
-  NERD_FONTS_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
-  TEMP_DIR="/tmp/nerdfonts-$$"
-  mkdir -p "$TEMP_DIR"
-  
-  if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$TEMP_DIR/JetBrainsMono.zip" "$NERD_FONTS_URL"; then
-    unzip -o "$TEMP_DIR/JetBrainsMono.zip" -d "$FONT_DIR" >/dev/null 2>&1
-    fc-cache -f "$FONT_DIR"
-    log_success "JetBrains Mono Nerd Font installed"
-  else
-    log_warning "Could not download JetBrains Mono Nerd Font"
-  fi
-  
-  rm -rf "$TEMP_DIR"
-fi
+fedora_critical_fonts
 
 #####################################################################################
 # Icon themes (WhiteSur, MacTahoe)
 #####################################################################################
-tui_info "Installing icon themes..."
-
-ICON_DIR="$HOME/.local/share/icons"
-mkdir -p "$ICON_DIR"
-
-# WhiteSur icon theme
-if [[ ! -d "$ICON_DIR/WhiteSur-dark" ]]; then
-  log_info "Installing WhiteSur icon theme..."
-  
-  TEMP_DIR="/tmp/whitesur-icons-$$"
-  mkdir -p "$TEMP_DIR"
-  
-  if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$TEMP_DIR/whitesur.tar.gz" \
-    "https://github.com/vinceliuice/WhiteSur-icon-theme/archive/refs/heads/master.tar.gz"; then
-    tar -xzf "$TEMP_DIR/whitesur.tar.gz" -C "$TEMP_DIR"
-    cd "$TEMP_DIR/WhiteSur-icon-theme-master"
-    ./install.sh -d "$ICON_DIR" -t default >/dev/null 2>&1 || {
-      # Fallback: manual copy of canonical theme dirs
-      cp -r src/WhiteSur "$ICON_DIR/WhiteSur" 2>/dev/null || true
-      cp -r src/WhiteSur-dark "$ICON_DIR/WhiteSur-dark" 2>/dev/null || true
-      cp -r src/WhiteSur-light "$ICON_DIR/WhiteSur-light" 2>/dev/null || true
-    }
-    cd - >/dev/null
-    log_success "WhiteSur icon theme installed"
-  else
-    log_warning "Could not download WhiteSur icon theme"
-  fi
-  
-  rm -rf "$TEMP_DIR"
-fi
-
-# MacTahoe icon theme (for dock)
-if [[ ! -d "$ICON_DIR/MacTahoe" ]]; then
-  log_info "Installing MacTahoe icon theme..."
-  
-  TEMP_DIR="/tmp/mactahoe-icons-$$"
-  mkdir -p "$TEMP_DIR"
-  
-  if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$TEMP_DIR/mactahoe.tar.gz" \
-    "https://github.com/vinceliuice/MacTahoe-icon-theme/archive/refs/heads/master.tar.gz"; then
-    tar -xzf "$TEMP_DIR/mactahoe.tar.gz" -C "$TEMP_DIR"
-    cd "$TEMP_DIR/MacTahoe-icon-theme-master" 2>/dev/null || cd "$TEMP_DIR/MacTahoe-icon-theme-main"
-    ./install.sh -d "$ICON_DIR" >/dev/null 2>&1
-    cd - >/dev/null
-    log_success "MacTahoe icon theme installed"
-  else
-    log_warning "Could not download MacTahoe icon theme"
-  fi
-  
-  rm -rf "$TEMP_DIR"
-fi
+fedora_icon_themes
 
 #####################################################################################
 # Cursor themes
 #####################################################################################
-tui_info "Installing cursor themes..."
-
-# Bibata Modern cursors (popular, well-maintained)
-if [[ ! -d "$ICON_DIR/Bibata-Modern-Classic" ]]; then
-  log_info "Installing Bibata cursor theme..."
-  
-  TEMP_DIR="/tmp/bibata-cursors-$$"
-  mkdir -p "$TEMP_DIR"
-  
-  # Download Bibata Modern Classic (dark)
-  if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$TEMP_DIR/bibata-classic.tar.xz" \
-    "https://github.com/ful1e5/Bibata_Cursor/releases/latest/download/Bibata-Modern-Classic.tar.xz"; then
-    tar -xf "$TEMP_DIR/bibata-classic.tar.xz" -C "$ICON_DIR"
-    log_success "Bibata Modern Classic cursor installed"
-  fi
-  
-  # Download Bibata Modern Ice (light)
-  if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$TEMP_DIR/bibata-ice.tar.xz" \
-    "https://github.com/ful1e5/Bibata_Cursor/releases/latest/download/Bibata-Modern-Ice.tar.xz"; then
-    tar -xf "$TEMP_DIR/bibata-ice.tar.xz" -C "$ICON_DIR"
-    log_success "Bibata Modern Ice cursor installed"
-  fi
-  
-  rm -rf "$TEMP_DIR"
-fi
+fedora_cursor_themes
 
 #####################################################################################
 # Optional fonts (nice to have)
 #####################################################################################
-tui_info "Installing optional fonts..."
-
-# Space Grotesk
-if ! fc-list | grep -qi "Space Grotesk"; then
-  log_info "Downloading Space Grotesk font..."
-  curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$FONT_DIR/SpaceGrotesk.ttf" \
-    "https://github.com/floriankarsten/space-grotesk/raw/master/fonts/ttf/SpaceGrotesk%5Bwght%5D.ttf" 2>/dev/null && \
-    log_success "Space Grotesk installed"
-fi
-
-# Rubik
-if ! fc-list | grep -qi "Rubik"; then
-  log_info "Downloading Rubik font..."
-  curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$FONT_DIR/Rubik.ttf" \
-    "https://github.com/googlefonts/rubik/raw/main/fonts/variable/Rubik%5Bwght%5D.ttf" 2>/dev/null && \
-    log_success "Rubik installed"
-fi
-
-# Geist (used by default in iNiR)
-if ! fc-list | grep -qi "Geist"; then
-  log_info "Downloading Geist font..."
-  TEMP_DIR="/tmp/geist-font-$$"
-  mkdir -p "$TEMP_DIR"
-  if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$TEMP_DIR/geist.zip" \
-    "https://github.com/vercel/geist-font/releases/latest/download/Geist.zip"; then
-    unzip -o "$TEMP_DIR/geist.zip" -d "$TEMP_DIR" >/dev/null 2>&1
-    find "$TEMP_DIR" -name "*.ttf" -exec cp {} "$FONT_DIR/" \;
-    log_success "Geist font installed"
-  fi
-  rm -rf "$TEMP_DIR"
-fi
-
-# Refresh font cache
-fc-cache -f "$FONT_DIR" 2>/dev/null
+fedora_optional_fonts
 
 #####################################################################################
 # Install CLI tools (starship, eza)
 #####################################################################################
-tui_info "Installing CLI tools..."
-
-# Starship prompt
-if ! command -v starship &>/dev/null; then
-  log_info "Installing Starship prompt..."
-  mkdir -p ~/.local/bin
-  curl -sS --connect-timeout 10 --speed-limit 1024 --speed-time 30 https://starship.rs/install.sh | sh -s -- -y -b ~/.local/bin 2>/dev/null || \
-    log_warning "Could not install Starship"
-fi
-
-# Eza is in Fedora repositories; keep the release binary as a derivative/
-# restricted-repository fallback only.
-if ! command -v eza &>/dev/null; then
-  log_info "Installing Eza..."
-  mkdir -p ~/.local/bin
-  if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o /tmp/eza.tar.gz \
-    'https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-musl.tar.gz'; then
-    tar -xzf /tmp/eza.tar.gz -C ~/.local/bin
-    chmod +x ~/.local/bin/eza
-    log_success "Eza installed"
-  fi
-  rm -f /tmp/eza.tar.gz
-fi
+provider_starship-eza
 
 #####################################################################################
 # Install adw-gtk3 theme
 #####################################################################################
-tui_info "Installing GTK themes..."
-
-if ! rpm -q adw-gtk3-theme &>/dev/null; then
-  v sudo dnf install -y adw-gtk3-theme
-fi
+fedora_gtk_theme
 
 # User configuration (GTK, Kvantum, terminals, fish) is installed by
 # sdata/subcmd-install/3.files.sh for every distro; a dependency step that wrote
