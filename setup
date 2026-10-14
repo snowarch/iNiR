@@ -3138,7 +3138,7 @@ case "$COMMAND" in
         detect_distro
         case "$OS_GROUP_ID" in
             ubuntu|debian) _family=debian ;;
-            fedora|void) _family="$OS_GROUP_ID" ;;
+            arch|fedora|void) _family="$OS_GROUP_ID" ;;
             *) _family="" ;;
         esac
         _providers="./sdata/dist-${_family}/providers.sh"

@@ -128,11 +128,8 @@ esac
 #####################################################################################
 # Ensure AUR helper
 #####################################################################################
-if ! command -v yay >/dev/null 2>&1 && ! command -v paru >/dev/null 2>&1; then
-  log_warning "No AUR helper found"
-  showfun install-yay
-  v install-yay
-fi
+source "${REPO_ROOT}/sdata/dist-arch/providers.sh"
+v provider_aur-helper
 
 # Set AUR helper
 if command -v yay >/dev/null 2>&1; then
