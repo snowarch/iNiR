@@ -415,7 +415,12 @@ find_qs() {
 # must work without Quickshell installed.
 require_qs() {
     if [[ -z "${_qs_resolved:-}" ]]; then
-        find_qs
+        # On pleamar the verbs go to its scene; Quickshell may not be installed at all.
+        if [[ "$(inir_engine)" == pleamar ]]; then
+            qs_bin="$(command -v qs || true)"
+        else
+            find_qs
+        fi
         _qs_resolved=1
     fi
 }
@@ -2188,6 +2193,25 @@ inir_engine() {
     fi
 }
 
+# On pleamar the shell is one scene, named after its file (inir.plm). A verb goes to it as one line,
+# `submit ipc <target> <function> [args]`, and its logic carries it out (pleamar/logic/ipc.luau).
+pleamar_bin() {
+    command -v pleamar 2>/dev/null || printf '%s' "$HOME/.local/bin/pleamar"
+}
+
+pleamar_ipc() {
+    local bin
+    bin="$(pleamar_bin)"
+    if [[ ! -x "$bin" ]]; then
+        echo "pleamar not found" >&2
+        return 1
+    fi
+    "$bin" --say inir "submit ipc $*" 2>/dev/null || {
+        echo "iNiR is not running on pleamar (systemctl --user start inir-pleamar)" >&2
+        return 1
+    }
+}
+
 start_background() {
     local dir="$1"
     if [[ "$(inir_engine)" == pleamar ]]; then
@@ -3889,6 +3913,11 @@ run_ipc_target_command() {
     # Validate function name against registry before forwarding to qs.
     validate_ipc_function "$target" "$1"
 
+    if [[ "$(inir_engine)" == pleamar ]]; then
+        pleamar_ipc "$target" "$@"
+        exit $?
+    fi
+
     # Some IPC owners are intentionally optional. The equalizer target is only
     # constructed while the iiEqualizer panel is enabled, so report that state
     # explicitly instead of leaking Quickshell's generic "Target not found".
@@ -4580,6 +4609,10 @@ case "$command_name" in
             echo "Usage: inir ipc <target> <function> [args...]" >&2
             exit 1
         fi
+        if [[ "$(inir_engine)" == pleamar ]]; then
+            pleamar_ipc "$@"
+            exit $?
+        fi
         resolve_config_dir
         if ! ensure_running_instance_for_ipc "$config_dir" "${2:-}"; then
             echo "Timed out waiting for iNiR to start" >&2
@@ -4617,6 +4650,10 @@ case "$command_name" in
                     ;;
             esac
         done
+        if [[ "$(inir_engine)" == pleamar ]]; then
+            pleamar_ipc settings toggle
+            exit $?
+        fi
         resolve_config_dir
         toggle_settings "$config_dir"
         ;;
