@@ -109,8 +109,12 @@ PanelWindow {
             ? NiriService.displayScales[screen.name]
             : 1)
         : (hyprlandMonitor ? hyprlandMonitor.scale : 1)
-    readonly property real monitorOffsetX: root.useNiri ? 0 : (hyprlandMonitor ? hyprlandMonitor.x : 0)
-    readonly property real monitorOffsetY: root.useNiri ? 0 : (hyprlandMonitor ? hyprlandMonitor.y : 0)
+    readonly property real monitorOffsetX: root.useNiri
+        ? (NiriService.outputs?.[screen.name]?.logical?.x ?? 0)
+        : (hyprlandMonitor ? hyprlandMonitor.x : 0)
+    readonly property real monitorOffsetY: root.useNiri
+        ? (NiriService.outputs?.[screen.name]?.logical?.y ?? 0)
+        : (hyprlandMonitor ? hyprlandMonitor.y : 0)
     property int activeWorkspaceId: root.useNiri 
         ? (NiriService.focusedWorkspaceIndex ?? 0)
         : (hyprlandMonitor && hyprlandMonitor.activeWorkspace ? hyprlandMonitor.activeWorkspace.id : 0)
@@ -369,7 +373,11 @@ PanelWindow {
         const cropToStdout = `${cropBase} -`
         const cropInPlace = `${cropBase} '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
         const cleanup = `/usr/bin/rm '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
-        const slurpRegion = `${rx},${ry} ${rw}x${rh}`
+        const recordX = Math.round(root.regionX + root.monitorOffsetX);
+        const recordY = Math.round(root.regionY + root.monitorOffsetY);
+        const recordWidth = Math.round(root.regionWidth);
+        const recordHeight = Math.round(root.regionHeight);
+        const slurpRegion = `${recordX},${recordY} ${recordWidth}x${recordHeight}`
         const screenshotSaveDir = StringUtils.shellSingleQuoteEscape(Directories.screenshotsPath)
         const uploadAndGetUrl = (filePath) => {
             const escaped = StringUtils.shellSingleQuoteEscape(filePath)
