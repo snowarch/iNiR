@@ -2478,7 +2478,6 @@
             "previews": true,
             "customize": "shell",
             "themeColoursOnly": false,
-            "settingsLayout": "sidebar",
             "settingsHost": "overlay",
             "saved": [],
             "themeId": "iris",

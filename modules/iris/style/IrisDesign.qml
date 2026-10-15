@@ -65,7 +65,6 @@ Singleton {
         case "iris.appearance.titleFontFamily": return root.font("title").length > 0
         case "iris.appearance.numbersFontFamily": return root.font("numbers").length > 0
         case "iris.appearance.morph": return root.morph.length > 0
-        case "iris.appearance.settingsLayout": return root.has("settingsPage")
         }
         return false
     }

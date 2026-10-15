@@ -56,14 +56,9 @@ Item {
     // How tall the rows a scene holds are, so it can end their sheet where they end; -1 while a shared page fills the slot.
     readonly property real rowsExtent: settingsFlick.visible
         ? settingsFlick.anchors.topMargin + settingsFlick.contentHeight + settingsFlick.anchors.bottomMargin : -1
-    // Sidebar (every area beside the page), Rail (only their marks) or Home (every area on one page, each opened full width).
-    readonly property string layoutStyle: root.sceneDrawn ? "scene" : String(Config.options?.iris?.appearance?.settingsLayout ?? "sidebar")
-    readonly property bool railLayout: root.layoutStyle === "rail"
-    readonly property bool homeLayout: root.layoutStyle === "home"
-    readonly property bool atHome: root.homeLayout && root.section === "home" && !root.searching && root.advancedPage < 0
-    onHomeLayoutChanged: if (!root.homeLayout && root.section === "home") root.section = "general"
-    // The section a rail mark is pointed at: its name shows on a capsule beside the rail.
-    property var railHint: null
+    // One layout (2026-10-15, the maintainer: "tres versiones de Settings"): the sidebar lists every area beside the page.
+    // The Rail and Home variants went; a Design's scene (AIRISU) draws its own.
+    readonly property string layoutStyle: root.sceneDrawn ? "scene" : "sidebar"
     // A section with a single group has nothing to choose between: it opens on that group.
     readonly property string openGroup: root.searching ? ""
         : root.group.length > 0 ? root.group
@@ -74,43 +69,27 @@ Item {
     // it. Search, the Hub, Home, the shared pages and a window too narrow for it keep the full width.
     // Measured beside a full sidebar, never from the page itself: the sidebar narrows when the columns show, and a width
     // that decided the columns from the room they make would flip between the two.
-    readonly property real pageWidth: root.sceneDrawn ? Number(root.scene.pageWidth ?? frame.width) : frame.width - (root.homeLayout ? 0 : root.railLayout ? Math.round(76 * root.d) : root.sidebarFull)
+    readonly property real pageWidth: root.sceneDrawn ? Number(root.scene.pageWidth ?? frame.width) : frame.width - root.sidebarFull
     readonly property real sidebarNeed: root.sceneDrawn ? Number(root.scene.need ?? 0) : sidebarLayout.implicitHeight + 2 * sidebar.pad + Math.round(4 * root.d)
-    // Depth (2026-10-12, the maintainer: "la nueva distribucion de navegacion ocupa demasiado lugar sin aprovechar
-    // superficies"): while a section's column shows, the sidebar stands as a rail of its marks and the column is the
-    // navigation; resting the pointer on the rail (or searching) opens the whole list over the column, which steps
-    // back under it. The page never moves: the sidebar reveals, it does not push.
+    // The sidebar keeps its width on every section: it never narrows to a rail (2026-10-15).
     readonly property real sidebarFull: Math.round(Math.min(272 * root.d, frame.width * 0.3))
-    readonly property real sidebarPlate: Math.round(32 * root.d)
-    readonly property real sidebarRail: root.sidebarPlate + 2 * sidebar.pad
-    readonly property bool sidebarCondensed: root.layoutStyle === "sidebar" && root.columns
-    property bool sidebarPeek: false
-    property real sidebarOpen: !root.sidebarCondensed || root.sidebarPeek || searchField.activeFocus ? 1 : 0
-    Behavior on sidebarOpen {
-        enabled: IrisStyle.motionEnabled
-        NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
-    }
-    // A width inside the sidebar as it opens: the plate around a mark when shut, `full` when open.
-    function sidebarReveal(full: real): real { return Math.round(root.sidebarPlate + (full - root.sidebarPlate) * root.sidebarOpen) }
-    Timer { id: peekOpen; interval: 180; onTriggered: root.sidebarPeek = true }
-    Timer { id: peekShut; interval: 240; onTriggered: root.sidebarPeek = false }
-    onSidebarCondensedChanged: if (!root.sidebarCondensed) { peekOpen.stop(); root.sidebarPeek = false }
     readonly property bool wideEnough: root.pageWidth >= Math.round(720 * root.d)
     // A shared page the column lists (the Hub, General's About and Shortcuts) reads in the pane beside it,
     // its row the tab; any other shared page keeps the full width.
     readonly property bool pageInPane: root.advancedPage >= 0 && root.wideEnough
         && root.navLinks.some(link => link.page && root.pageIndexOf(link.page) === root.advancedPage)
-    readonly property bool paneable: (root.advancedPage < 0 || root.pageInPane) && root.section !== "home" && root.wideEnough
-    readonly property bool split: root.paneable && !root.searching && !root.atHome
+    readonly property bool paneable: (root.advancedPage < 0 || root.pageInPane) && root.wideEnough
+    readonly property bool split: root.paneable && !root.searching
     // A section with a single group has nothing to index: its pane takes the whole width.
-    readonly property bool columns: root.split
+    // Only a Design's scene (AIRISU) reads a section beside its own index of groups; iRiS keeps one layout (2026-10-15):
+    // the sidebar never narrows, a short section reads whole and a long one lists its groups to open one at a time.
+    readonly property bool columns: root.sceneDrawn && root.split
         && (root.groups.length > 1 || root.section === "general" || root.section === "sidebars" || root.section === "system")
-    readonly property real navWidth: root.columns ? Math.round(Math.min(280 * root.d, Math.max(232 * root.d, root.pageWidth * 0.27))) : 0
     // A group asked for by name (a link, the CLI, history) is a place in the section's scroll: it scrolls there once built.
     property string pendingGroup: ""
     Timer { id: pendingScroll; interval: 140; onTriggered: { if (root.pendingGroup.length > 0) root.scrollToGroup(root.pendingGroup); root.pendingGroup = "" } }
     function showGroup(title: string): void {
-        if (root.paneable && root.groups.length > 1 && root.section !== "general") { root.group = ""; root.pendingGroup = title; pendingScroll.restart() }
+        if (root.paneable && root.readsWhole && root.groups.length > 1 && root.section !== "general") { root.group = ""; root.pendingGroup = title; pendingScroll.restart() }
         else root.group = title
     }
     // In a section shown whole, the group being read: the column follows it; a click holds its pick until you scroll.
@@ -119,15 +98,11 @@ Item {
     readonly property bool browsing: !root.searching && root.openGroup.length === 0 && root.advancedPage < 0
     // The page's head stays in view while its rows scroll when it shows a scene, unless the window is so short that the
     // rows would be left a sliver: then it scrolls with them.
-    // A section whose groups leave the column room shows its scene there, under the entries (2026-10-11, the maintainer:
-    // "ese espacio puede ser mejor aprovechado"): the pane opens on its rows, the column is index and picture at once.
-    readonly property real columnRoom: groupNav.height - navColumn.y - navColumn.implicitHeight - Math.round(20 * root.d)
-    readonly property real columnStageWidth: root.sceneDrawn ? Number(root.scene.stageWidth ?? 0) : root.navWidth - Math.round(20 * root.d)
-    readonly property real columnStageHeight: root.sceneDrawn ? Number(root.scene.stageHeight ?? 0)
-        : Math.round(Math.min(root.columnStageWidth * 0.75, root.columnRoom - Math.round(110 * root.d)))
+    // A Design's scene holds the section's picture beside its index of groups.
+    readonly property real columnStageWidth: root.sceneDrawn ? Number(root.scene.stageWidth ?? 0) : 0
+    readonly property real columnStageHeight: root.sceneDrawn ? Number(root.scene.stageHeight ?? 0) : 0
     // A Design's page holds the scene in a place of its own beside the rows, whatever the section.
-    readonly property bool stageInColumn: root.sceneDrawn ? pageHero.shown && pageHero.stageAvailable
-        : root.columns && pageHero.shown && pageHero.stageAvailable && root.columnStageHeight >= Math.round(root.columnStageWidth * 0.5)
+    readonly property bool stageInColumn: root.sceneDrawn && pageHero.shown && pageHero.stageAvailable
     readonly property bool heroPinned: !root.stageInColumn && pageHero.shown && pageHero.staged
         && detailBody.height >= (root.split ? root.stageMin + root.stageCaption : pageHero.implicitHeight) + Math.round(260 * root.d)
     // In the pane the scene is a stage across its width that takes the room the rows leave: a short group shows what it
@@ -200,6 +175,9 @@ Item {
     // captioned cards and nothing is behind a click; galleries and editors read whole too, as they do in the pane. What
     // counts is what shows: rows folded behind a group's Fine-tune take no room (a modified one never folds). An index of
     // a few groups is a few rows over an empty page: those sections read whole up to twice as long.
+    // A section reads whole (its groups under captions) up to about fifteen rows; a longer one lists its groups and opens
+    // one at a time, as the compact window of 2026-10-05 did. A Design's scene reads whole beside its own index.
+    readonly property bool readsWhole: root.columns || root.essentialCount <= 15
     readonly property int essentialCount: {
         let count = 0
         for (const group of root.groups) {
@@ -212,8 +190,8 @@ Item {
     // with every row under it.
     readonly property bool generalHome: root.section === "general" && root.split
     readonly property bool flatSection: !root.searching && root.advancedPage < 0 && root.group.length === 0 && root.groups.length > 1
-        && root.section !== "system" && root.section !== "home" && !root.generalHome
-        && (root.split || root.essentialCount <= 15 || (root.groups.length <= 6 && root.essentialCount <= 30))
+        && root.section !== "system" && !root.generalHome
+        && root.readsWhole
     // Groups of one row would each be a card under a caption that repeats the row's name: neighbours share one card.
     readonly property var flatBlocks: {
         if (!root.flatSection) return []
@@ -524,7 +502,7 @@ Item {
     function sectionIsFlat(id: string): bool {
         const rows = root.specifications.filter(spec => spec.section === id && root.shown(spec))
         const groups = new Set(rows.map(spec => String(spec.group ?? "")))
-        return id !== "system" && groups.size > 1 && (root.paneable
+        return id !== "system" && groups.size > 1 && ((root.sceneDrawn && root.paneable)
             || (rows.length <= 15 && !rows.some(spec => ["widgets", "pieces", "niriMotion", "list"].includes(spec.kind))))
     }
     function openResult(spec: var, land: bool): void {
@@ -689,7 +667,7 @@ Item {
         const own = root.pageIndexOf(key)
         root.advancedPage = own
         root.section = own >= 0 ? String(root.ownPages.concat(root.morePages).find(entry => entry.key === key)?.home ?? "system")
-            : root.homeLayout ? "home" : "general"
+            : "general"
         if (own < 0 && root.sections.some(s => s.id === root.requestedSection)) {
             root.section = root.requestedSection
             // A place asked for by name is where you want to be, not a filter over it.
@@ -789,24 +767,6 @@ Item {
             }
         }
 
-        // A rail mark's name, on a capsule beside the rail while it is pointed at.
-        Rectangle {
-            z: 2
-            visible: root.railLayout && root.railHint !== null
-            x: Math.round(sidebar.width + 6 * root.d)
-            y: Math.round((root.railHint?.y ?? 0) - height / 2)
-            width: Math.round(railCaption.implicitWidth + 20 * root.d)
-            height: Math.round(26 * root.d)
-            radius: IrisStyle.capsule(height)
-            color: IrisStyle.bodySurface
-            IrisText {
-                id: railCaption
-                anchors.centerIn: parent
-                text: root.railHint?.title ?? ""
-                font.pixelSize: IrisStyle.typeMeta
-                font.weight: IrisStyle.weight(Font.DemiBold)
-            }
-        }
 
         IrisSkin { id: pageScene; part: "settingsPage"; host: root }
 
@@ -815,30 +775,20 @@ Item {
             visible: !root.sceneDesigned
             spacing: 0
 
-            // The sidebar's place in the row: a rail while the columns show. The sidebar itself is drawn over the row from
-            // here, so it can open across the column without moving the page.
             Item {
                 id: sidebarSlot
                 z: 2
-                visible: !root.homeLayout
                 Layout.fillHeight: true
-                Layout.preferredWidth: root.railLayout ? Math.round(76 * root.d) : root.sidebarCondensed ? root.sidebarRail : root.sidebarFull
+                Layout.preferredWidth: root.sidebarFull
             Rectangle {
                 id: sidebar
                 readonly property int pad: IrisStyle.concentricPad(frame.radius, 12 * root.d)
                 height: parent.height
-                width: root.railLayout ? sidebarSlot.width : Math.round(root.sidebarRail + (root.sidebarFull - root.sidebarRail) * root.sidebarOpen)
+                width: sidebarSlot.width
                 clip: true
                 topLeftRadius: frame.radius
                 bottomLeftRadius: frame.radius
                 color: IrisStyle.readingSidebar
-                HoverHandler {
-                    enabled: root.sidebarCondensed
-                    onHoveredChanged: {
-                        if (hovered) { peekShut.stop(); peekOpen.restart() }
-                        else { peekOpen.stop(); peekShut.restart() }
-                    }
-                }
                 Rectangle {
                     anchors.right: parent.right
                     anchors.top: parent.top
@@ -848,19 +798,18 @@ Item {
                 }
                 ColumnLayout {
                     id: sidebarLayout
-                    // Laid at the open width and revealed: nothing reflows or elides while the sidebar opens.
                     anchors.left: parent.left
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     anchors.leftMargin: sidebar.pad
                     anchors.topMargin: sidebar.pad + 4 * root.d
                     anchors.bottomMargin: sidebar.pad
-                    width: (root.railLayout ? sidebar.width : root.sidebarFull) - 2 * sidebar.pad + 4 * root.d
+                    width: root.sidebarFull - 2 * sidebar.pad + 4 * root.d
                     spacing: 0
 
                     Item {
                         id: sideSearchSlot
-                        visible: root.layoutStyle === "sidebar"
+                        visible: !root.sceneDrawn
                         Layout.fillWidth: true
                         Layout.rightMargin: 4 * root.d
                         Layout.bottomMargin: 10 * root.d
@@ -873,12 +822,11 @@ Item {
                         readonly property bool focused: searchField.activeFocus
                         readonly property bool hovered: searchHover.hovered
                         readonly property bool skinned: searchSkin.active
-                        parent: root.sceneDrawn ? root.scene.searchSlot : root.layoutStyle === "sidebar" ? sideSearchSlot : headSearchSlot
+                        parent: root.sceneDrawn ? root.scene.searchSlot : sideSearchSlot
                         anchors.left: parent.left
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
-                        // On the rail it is its glyph's plate, and opens with the sidebar.
-                        width: parent === sideSearchSlot ? root.sidebarReveal(parent.width) : parent.width
+                        width: parent.width
                         radius: Math.min(height / 2, Math.max(IrisStyle.radiusRow, frame.radius - sidebar.pad))
                         color: searchPlate.skinned ? "transparent" : searchField.activeFocus ? IrisStyle.fill : IrisStyle.fillQuiet
                         border.width: searchField.activeFocus && !searchPlate.skinned ? 1 : 0
@@ -967,13 +915,13 @@ Item {
                             readonly property bool shown: travelWash.row !== null && travelWash.row.selected
                             property bool travels: false
                             x: sidebarColumn.x
-                            width: root.railLayout ? sidebarColumn.width : root.sidebarReveal(sidebarColumn.width)
+                            width: sidebarColumn.width
                             y: travelWash.row ? sidebarColumn.y + travelWash.row.y + travelWash.row.height - travelWash.row.rowHeight : 0
                             height: travelWash.row ? travelWash.row.rowHeight : 0
                             radius: IrisStyle.plateSelection ? 0 : travelWash.row ? travelWash.row.washRadius : 0
                             // A plate-selection Design (AIRISU) puts where you are on the solid plate of the accent.
                             color: IrisStyle.plateSelection ? IrisStyle.selectionFill
-                                : IrisStyle.tintFillHover(travelWash.row?.compact ? travelWash.row.modelData.tint : IrisStyle.accent)
+                                : IrisStyle.tintFillHover(IrisStyle.accent)
                             opacity: travelWash.shown ? 1 : 0
                             // It lands where it first appears and travels from then on. Moving the selection hides it for a
                             // moment (the old row lets go before the new one takes it): only a hide that lasts stops the travel.
@@ -987,6 +935,32 @@ Item {
                             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
                         }
 
+                        // Where you are stays in the list: a section opened from search, a link or the CLI below the fold
+                        // scrolls its row into view, with a row of air past it.
+                        onHeightChanged: sideFollow.restart()
+                        onContentHeightChanged: sideFollow.restart()
+                        Connections {
+                            target: root
+                            function onTravelRowChanged(): void { sideFollow.restart() }
+                        }
+                        Timer {
+                            id: sideFollow
+                            interval: 0
+                            onTriggered: {
+                                const row = root.travelRow
+                                if (!row || !row.selected) return
+                                const top = sidebarColumn.y + row.y + row.height - 2 * row.rowHeight
+                                const bottom = sidebarColumn.y + row.y + row.height + row.rowHeight
+                                const end = Math.max(0, sidebarFlick.contentHeight - sidebarFlick.height)
+                                // The first block keeps the profile above it in view.
+                                const to = top < sidebarFlick.contentY ? (row.modelData.cluster === root.sections[0]?.cluster ? 0 : top)
+                                    : bottom > sidebarFlick.contentY + sidebarFlick.height ? bottom - sidebarFlick.height : sidebarFlick.contentY
+                                sideScroll.to = Math.max(0, Math.min(end, to))
+                                if (sideScroll.to !== sidebarFlick.contentY) sideScroll.restart()
+                            }
+                        }
+                        NumberAnimation { id: sideScroll; target: sidebarFlick; property: "contentY"; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
+
                         Column {
                             id: sidebarColumn
                             width: sidebarFlick.width - 4 * root.d
@@ -994,9 +968,8 @@ Item {
 
                             MouseArea {
                                 id: profile
-                                visible: !root.railLayout
                                 width: parent.width
-                                height: visible ? Math.round(50 * root.d) : 0
+                                height: Math.round(50 * root.d)
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 Accessible.role: Accessible.Button
@@ -1004,25 +977,21 @@ Item {
                                 onClicked: root.selectSection("general")
                                 Rectangle {
                                     height: parent.height
-                                    width: root.sidebarReveal(parent.width)
+                                    width: parent.width
                                     radius: IrisStyle.radiusRow
                                     color: profile.containsMouse ? IrisStyle.fillHover : "transparent"
                                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
                                 }
-                                // On the rail the face shrinks to a mark's size, centred on the marks below it.
                                 FaceAvatar {
                                     id: profileAvatar
-                                    readonly property real full: Math.round(40 * root.d)
-                                    readonly property real shut: Math.round(24 * root.d)
-                                    x: Math.round(6 * root.d + (root.sidebarPlate - profileAvatar.shut) / 2 * (1 - root.sidebarOpen) - 6 * root.d * (1 - root.sidebarOpen))
+                                    x: Math.round(6 * root.d)
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: Math.round(profileAvatar.shut + (profileAvatar.full - profileAvatar.shut) * root.sidebarOpen)
+                                    width: Math.round(40 * root.d)
                                     height: width
                                 }
                                 Column {
-                                    x: Math.round(6 * root.d + profileAvatar.full + 10 * root.d)
+                                    x: Math.round(6 * root.d + profileAvatar.width + 10 * root.d)
                                     width: parent.width - x - Math.round(6 * root.d)
-                                    opacity: root.sidebarOpen
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: 1
                                     IrisText {
@@ -1072,7 +1041,7 @@ Item {
                     }
 
                     Rectangle {
-                        Layout.preferredWidth: root.sidebarReveal(sidebarLayout.width - 4 * root.d)
+                        Layout.preferredWidth: sidebarLayout.width - 4 * root.d
                         Layout.topMargin: 6 * root.d
                         Layout.bottomMargin: 6 * root.d
                         implicitHeight: 1
@@ -1114,14 +1083,6 @@ Item {
                         return headRow.width - fixed - headRow.spacing - 6 * root.d
                     }
                     IrisIconButton {
-                        visible: root.homeLayout
-                        materialIcon: "grid_view"
-                        enabled: !root.atHome
-                        opacity: enabled ? 1 : 0.35
-                        onClicked: root.selectSection("home")
-                        Accessible.name: Translation.tr("Every area")
-                    }
-                    IrisIconButton {
                         materialIcon: "chevron_left"
                         enabled: root.backStack.length > 0
                         opacity: enabled ? 1 : 0.35
@@ -1145,9 +1106,8 @@ Item {
                             Layout.fillWidth: true
                             text: root.searching ? Translation.tr("Results for “%1”").arg(root.query)
                                 : root.advancedPage >= 0 ? root.pageTitle(root.advancedPage)
-                                : root.split ? Translation.tr(root.currentSection.title)
+                                : root.columns ? Translation.tr(root.currentSection.title)
                                 : root.openGroup.length > 0 ? root.openGroup
-                                : root.atHome ? Translation.tr("Settings")
                                 : Translation.tr(root.currentSection.title)
                             font.family: IrisStyle.fontTitle
                             font.pixelSize: IrisStyle.lowerTitles ? IrisStyle.typeDisplay : IrisStyle.typeTitleLarge
@@ -1158,19 +1118,13 @@ Item {
                         }
                         IrisText {
                             Layout.fillWidth: true
-                            visible: !root.searching && !root.split && root.openGroup.length > 0 && root.advancedPage < 0
+                            visible: !root.searching && !root.columns && root.openGroup.length > 0 && root.advancedPage < 0
                                 && root.openGroup !== Translation.tr(root.currentSection.title)
                             text: Translation.tr(root.currentSection.title)
                             color: IrisStyle.muted
                             font.pixelSize: IrisStyle.typeMeta
                             elide: Text.ElideRight
                         }
-                    }
-                    Item {
-                        id: headSearchSlot
-                        visible: root.layoutStyle !== "sidebar"
-                        Layout.preferredWidth: Math.round(240 * root.d)
-                        implicitHeight: Math.round(32 * root.d)
                     }
                     // The actions keep their words while the page's name still reads whole beside them (up to 260·d of
                     // it); measured in the language on screen, never a fixed window width.
@@ -1283,99 +1237,11 @@ Item {
                     }
                     transform: Translate { id: pageShift }
 
-                    // The section's groups, down the side of the pane they open in. The chosen row is the pane itself
-                    // reaching into the column, its edge melting into the pane's through two fillets; it travels from row
-                    // to row on the morph curve.
-                    Flickable {
-                        id: groupNav
-                        property Item current: null
-                        readonly property real rowHeight: Math.round(44 * root.d)
-                        visible: root.columns
-                        // Steps back under the sidebar while it opens over it.
-                        opacity: root.sidebarCondensed ? 1 - root.sidebarOpen : 1
-                        enabled: opacity > 0.5
-                        y: detailPane.y + detailPane.radius
-                        width: root.navWidth
-                        height: Math.max(0, detailPane.height - 2 * detailPane.radius)
-                        clip: true
-                        contentHeight: navColumn.y + navColumn.implicitHeight + Math.round(12 * root.d)
-                        boundsBehavior: Flickable.StopAtBounds
-                        ScrollBar.vertical: IrisScrollBar {}
-                        onCurrentChanged: { navArm.restart(); navFollow.restart() }
-                        // The entry being read never sits outside the column: it scrolls into view with a row of air.
-                        Timer {
-                            id: navFollow
-                            interval: 0
-                            onTriggered: {
-                                const entry = groupNav.current
-                                if (!entry) return
-                                const top = navColumn.y + entry.y - groupNav.rowHeight
-                                const bottom = navColumn.y + entry.y + entry.height + groupNav.rowHeight
-                                const end = Math.max(0, groupNav.contentHeight - groupNav.height)
-                                const to = top < groupNav.contentY ? top : bottom > groupNav.contentY + groupNav.height ? bottom - groupNav.height : groupNav.contentY
-                                navScroll.to = Math.max(0, Math.min(end, to))
-                                if (navScroll.to !== groupNav.contentY) navScroll.restart()
-                            }
-                        }
-                        NumberAnimation { id: navScroll; target: groupNav; property: "contentY"; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
-                        Timer { id: navArm; interval: 0; onTriggered: { navTab.placedIn = root.section; navTab.travels = IrisStyle.motionEnabled } }
-
-                        Shape {
-                            id: navTab
-                            property bool travels: false
-                            property string placedIn: ""
-                            readonly property real fillet: IrisStyle.radiusRow
-                            readonly property real corner: IrisStyle.radiusRow
-                            readonly property real lead: Math.round(6 * root.d)
-                            readonly property real tabHeight: groupNav.rowHeight - Math.round(4 * root.d)
-                            visible: groupNav.current !== null
-                            width: groupNav.width
-                            height: navTab.tabHeight + 2 * navTab.fillet
-                            y: groupNav.current ? navColumn.y + groupNav.current.y + Math.round(2 * root.d) - navTab.fillet : 0
-                            preferredRendererType: Shape.CurveRenderer
-                            Behavior on y {
-                                enabled: navTab.travels && navTab.placedIn === root.section
-                                NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
-                            }
-                            ShapePath {
-                                fillColor: IrisStyle.readingCard
-                                strokeWidth: -1
-                                startX: navTab.width
-                                startY: 0
-                                PathArc { x: navTab.width - navTab.fillet; y: navTab.fillet; radiusX: navTab.fillet; radiusY: navTab.fillet; direction: PathArc.Clockwise }
-                                PathLine { x: navTab.lead + navTab.corner; y: navTab.fillet }
-                                PathArc { x: navTab.lead; y: navTab.fillet + navTab.corner; radiusX: navTab.corner; radiusY: navTab.corner; direction: PathArc.Counterclockwise }
-                                PathLine { x: navTab.lead; y: navTab.fillet + navTab.tabHeight - navTab.corner }
-                                PathArc { x: navTab.lead + navTab.corner; y: navTab.fillet + navTab.tabHeight; radiusX: navTab.corner; radiusY: navTab.corner; direction: PathArc.Counterclockwise }
-                                PathLine { x: navTab.width - navTab.fillet; y: navTab.fillet + navTab.tabHeight }
-                                PathArc { x: navTab.width; y: navTab.tabHeight + 2 * navTab.fillet; radiusX: navTab.fillet; radiusY: navTab.fillet; direction: PathArc.Clockwise }
-                                PathLine { x: navTab.width; y: 0 }
-                            }
-                        }
-
-                        Column {
-                            id: navColumn
-                            y: Math.round(8 * root.d)
-                            width: groupNav.width
-                            Repeater {
-                                model: ScriptModel { objectProp: "key"; values: root.sceneDesigned ? [] : root.navEntries }
-                                NavEntry {}
-                            }
-                        }
-                        Item {
-                            id: columnStageSlot
-                            visible: root.stageInColumn
-                            x: Math.round(10 * root.d)
-                            y: navColumn.y + navColumn.implicitHeight + Math.round(14 * root.d)
-                            width: root.columnStageWidth
-                            height: visible ? pageHero.implicitHeight : 0
-                        }
-                    }
 
                     Rectangle {
                         id: detailPane
                         readonly property real inset: root.split ? IrisStyle.concentricPad(frame.radius, 14 * root.d) : 0
-                        x: root.columns ? root.navWidth : 0
+                        x: 0
                         y: root.split ? Math.round(4 * root.d) : 0
                         width: pageArea.width - detailPane.x - detailPane.inset
                         height: pageArea.height - detailPane.y - detailPane.inset
@@ -1416,7 +1282,7 @@ Item {
                                 readonly property string key: pageHero.spying ? root.spyGroup : String(root.shownGroups[0]?.key ?? "")
                                 // A group with no scene has no head: the toolbar already names it.
                                 readonly property bool shown: pageHero.sectionPage || (pageHero.groupPage && pageHero.stageAvailable)
-                                parent: root.stageInColumn ? (root.sceneDrawn ? root.scene.stageSlot : columnStageSlot) : root.heroPinned ? heroPinSlot : heroFlowSlot
+                                parent: root.stageInColumn ? root.scene.stageSlot : root.heroPinned ? heroPinSlot : heroFlowSlot
                                 width: root.stageInColumn ? root.columnStageWidth : root.split && root.heroPinned ? detailBody.width : settingsRows.width
                                 // A Design's page names the page itself: the head is only its scene there.
                                 visible: pageHero.shown && (!root.sceneDrawn || root.stageInColumn)
@@ -1469,7 +1335,7 @@ Item {
                                         }
                                     }
                                 }
-                                visible: root.advancedPage < 0 && !root.atHome
+                                visible: root.advancedPage < 0
                                 onContentYChanged: if (root.flatSection) spyPace.start()
                                 // Rows laid after the section changed (a Place opening, a fold) move every head: the reading is taken again.
                                 onContentHeightChanged: if (root.flatSection) spyPace.restart()
@@ -1609,99 +1475,6 @@ Item {
                         }
                     }
 
-                    // Home: every area at once, in the sidebar's clusters, each one card of marks to open.
-                    Flickable {
-                        id: homeFlick
-                        anchors.fill: parent
-                        visible: root.atHome
-                        contentHeight: homeColumn.implicitHeight + 32 * root.d
-                        boundsBehavior: Flickable.StopAtBounds
-                        ScrollBar.vertical: IrisScrollBar {}
-                        ColumnLayout {
-                            id: homeColumn
-                            y: 6 * root.d
-                            width: Math.min(homeFlick.width - 56 * root.d, 820 * root.d)
-                            x: Math.round((homeFlick.width - width) / 2)
-                            spacing: 14 * root.d
-                            Repeater {
-                                model: Array.from(new Set(root.sections.map(section => section.cluster)))
-                                Rectangle {
-                                    id: cluster
-                                    required property int modelData
-                                    readonly property var members: root.sections.filter(section => section.cluster === cluster.modelData)
-                                    Layout.fillWidth: true
-                                    implicitHeight: tiles.implicitHeight + 16 * root.d
-                                    radius: IrisStyle.radiusTile
-                                    color: IrisStyle.fieldChamfer ? "transparent" : IrisStyle.readingCard
-                                    IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: IrisStyle.readingCard }
-                                    Flow {
-                                        id: tiles
-                                        readonly property real tileWidth: Math.floor((tiles.width - 2 * tiles.spacing) / 3)
-                                        anchors.left: parent.left
-                                        anchors.right: parent.right
-                                        anchors.top: parent.top
-                                        anchors.margins: 8 * root.d
-                                        spacing: 2 * root.d
-                                        Repeater {
-                                            model: cluster.members
-                                            MouseArea {
-                                                id: tile
-                                                required property var modelData
-                                                // A third each, whatever the cluster's count: every mark on the page sits in one grid.
-                                                width: tiles.tileWidth
-                                                height: Math.round(58 * root.d)
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                Accessible.role: Accessible.Button
-                                                Accessible.name: Translation.tr(tile.modelData.title)
-                                                onClicked: root.selectSection(tile.modelData.id)
-                                                Rectangle {
-                                                    anchors.fill: parent
-                                                    radius: IrisStyle.radiusRow
-                                                    color: tile.pressed ? IrisStyle.fillActive : tile.containsMouse ? IrisStyle.fillHover : "transparent"
-                                                    Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
-                                                }
-                                                IrisSquircle {
-                                                    id: tileMark
-                                                    anchors.left: parent.left
-                                                    anchors.leftMargin: 10 * root.d
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    width: Math.round(34 * root.d)
-                                                    height: width
-                                                    tint: tile.modelData.tint
-                                                    glyph: tile.modelData.icon
-                                                }
-                                                Column {
-                                                    anchors.left: tileMark.right
-                                                    anchors.leftMargin: 10 * root.d
-                                                    anchors.right: parent.right
-                                                    anchors.rightMargin: 8 * root.d
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    spacing: 2 * root.d
-                                                    IrisText {
-                                                        width: parent.width
-                                                        text: Translation.tr(tile.modelData.title)
-                                                        font.pixelSize: IrisStyle.typeLabel
-                                                        font.weight: IrisStyle.weight(Font.DemiBold)
-                                                        elide: Text.ElideRight
-                                                    }
-                                                    IrisText {
-                                                        width: parent.width
-                                                        text: Translation.tr(tile.modelData.subtitle ?? "")
-                                                        color: IrisStyle.muted
-                                                        font.pixelSize: IrisStyle.typeFootnote
-                                                        wrapMode: Text.WordWrap
-                                                        maximumLineCount: 2
-                                                        elide: Text.ElideRight
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
 
                     // One of iRiS's own pages (About, Shortcuts, Hub): loaded while it is shown, gone when you leave it.
                     Loader {
@@ -1771,143 +1544,6 @@ Item {
         }
     }
 
-    // One entry of the group column: a caption, air, a group (its mark, name and one-line answer), you (General's
-    // welcome), or a link that leaves the page.
-    component NavEntry: MouseArea {
-        id: entry
-        required property var modelData
-        readonly property string type: String(entry.modelData.type ?? "")
-        readonly property bool row: entry.type === "group" || entry.type === "you" || entry.type === "link"
-        // A page the pane can hold is a place, not a way out: it is chosen like a group and carries no arrow.
-        readonly property bool holdsPage: root.navHoldsPage(entry.modelData)
-        readonly property bool selected: root.navSelected(entry.modelData)
-        readonly property bool real: entry.type === "group" && entry.modelData.rows !== undefined
-        readonly property string detail: root.navDetail(entry.modelData)
-        readonly property bool modified: entry.real && root.modifiedIn(entry.modelData)
-        readonly property color tint: entry.modelData.tintName ? (IrisStyle.identity[entry.modelData.tintName] ?? root.currentSection.tint)
-            : (IrisOptions.groupTints[entry.modelData.key] ?? root.currentSection.tint)
-        width: navColumn.width
-        height: entry.type === "caption" ? Math.round(30 * root.d) : entry.type === "gap" ? Math.round(12 * root.d) : groupNav.rowHeight
-        enabled: entry.row
-        hoverEnabled: entry.row
-        cursorShape: entry.row ? Qt.PointingHandCursor : Qt.ArrowCursor
-        Accessible.role: entry.row ? Accessible.Button : Accessible.StaticText
-        Accessible.name: title.text
-        Accessible.description: entry.detail
-        onSelectedChanged: if (entry.selected) groupNav.current = entry
-        Component.onCompleted: if (entry.selected) groupNav.current = entry
-        Component.onDestruction: if (groupNav.current === entry) groupNav.current = null
-        onClicked: root.openNav(entry.modelData)
-
-        IrisText {
-            visible: entry.type === "caption"
-            anchors.left: parent.left
-            anchors.leftMargin: Math.round(14 * root.d)
-            anchors.right: parent.right
-            anchors.rightMargin: Math.round(12 * root.d)
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: Math.round(6 * root.d)
-            text: String(entry.modelData.text ?? "")
-            color: IrisStyle.monoCaptions ? IrisStyle.textTertiary : IrisStyle.label
-            font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontTitle
-            font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeCaption : IrisStyle.typeMeta
-            font.weight: IrisStyle.monoCaptions ? Font.Medium : IrisStyle.weight(Font.DemiBold)
-            font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
-            font.letterSpacing: IrisStyle.monoCaptions ? Math.round(IrisStyle.typeCaption * 0.16) : 0
-            elide: Text.ElideRight
-        }
-        // Hover is the fill step, kept off the pane's edge; the chosen row is the tab the column draws under it.
-        Rectangle {
-            visible: entry.row
-            x: Math.round(6 * root.d)
-            y: Math.round(2 * root.d)
-            width: parent.width - Math.round(12 * root.d)
-            height: parent.height - Math.round(4 * root.d)
-            radius: IrisStyle.radiusRow
-            color: entry.selected ? "transparent" : entry.pressed ? IrisStyle.fillActive : entry.containsMouse ? IrisStyle.fillQuiet : "transparent"
-            Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
-        }
-        FaceAvatar {
-            id: avatar
-            visible: entry.type === "you"
-            x: Math.round(12 * root.d)
-            anchors.verticalCenter: parent.verticalCenter
-            width: Math.round(24 * root.d)
-            height: width
-        }
-        IrisText {
-            visible: entry.row && entry.type !== "you" && IrisStyle.indexed
-            anchors.centerIn: mark
-            text: IrisStyle.indexLabel(Math.max(0, root.navGroupIndex(entry.modelData)))
-            color: entry.selected ? IrisStyle.text : IrisStyle.textTertiary
-            font.family: IrisStyle.fontMono
-            font.pixelSize: IrisStyle.typeFootnote
-            font.weight: Font.Medium
-        }
-        IrisSquircle {
-            id: mark
-            visible: entry.row && entry.type !== "you" && !IrisStyle.indexed
-            x: Math.round(12 * root.d)
-            anchors.verticalCenter: parent.verticalCenter
-            width: Math.round(24 * root.d)
-            height: width
-            tint: entry.tint
-            glyph: String(entry.modelData.glyph ?? IrisOptions.groupGlyphs[entry.modelData.key] ?? root.currentSection.icon)
-        }
-        Column {
-            visible: entry.row
-            anchors.left: parent.left
-            anchors.leftMargin: Math.round(48 * root.d)
-            anchors.right: trail.left
-            anchors.rightMargin: Math.round(6 * root.d)
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 0
-            IrisText {
-                id: title
-                width: parent.width
-                text: entry.type === "you" ? (SystemInfo.displayName || SystemInfo.username)
-                    : entry.type === "link" ? String(entry.modelData.label ?? "")
-                    : String(entry.modelData.label ?? entry.modelData.title ?? "")
-                color: entry.selected ? (IrisStyle.plateSelection ? IrisStyle.text : IrisStyle.accent) : IrisStyle.text
-                Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
-                font.pixelSize: IrisStyle.typeLabel
-                font.weight: IrisStyle.weight(entry.selected ? (IrisStyle.plateSelection ? Font.Bold : Font.DemiBold) : Font.Medium)
-                elide: Text.ElideRight
-            }
-            IrisText {
-                width: parent.width
-                visible: text.length > 0
-                text: entry.detail
-                color: IrisStyle.muted
-                font.pixelSize: IrisStyle.typeFootnote
-                elide: Text.ElideRight
-            }
-        }
-        Item {
-            id: trail
-            visible: entry.row
-            anchors.right: parent.right
-            anchors.rightMargin: Math.round(14 * root.d)
-            anchors.verticalCenter: parent.verticalCenter
-            width: entry.type === "link" && !entry.holdsPage ? Math.round(16 * root.d) : entry.modified ? Math.round(6 * root.d) : 0
-            height: Math.round(16 * root.d)
-            Rectangle {
-                visible: entry.modified
-                anchors.centerIn: parent
-                width: Math.round(6 * root.d)
-                height: width
-                radius: IrisStyle.capsule(width)
-                color: IrisStyle.accent
-            }
-            MaterialSymbol {
-                visible: entry.type === "link" && !entry.holdsPage
-                anchors.centerIn: parent
-                text: entry.modelData.page ? "chevron_right" : "arrow_outward"
-                iconSize: Math.round(16 * root.d)
-                color: entry.containsMouse ? IrisStyle.text : IrisStyle.textTertiary
-            }
-        }
-    }
 
     component SectionRow: MouseArea {
         id: sectionRow
@@ -1926,16 +1562,9 @@ Item {
         Component.onCompleted: if (sectionRow.selected && sectionRow.travels) root.travelRow = sectionRow
         Component.onDestruction: if (root.travelRow === sectionRow) root.travelRow = null
         readonly property bool dimmed: root.searching && !root.matchedSections.has(sectionRow.modelData.id)
-        readonly property bool compact: root.railLayout
-        readonly property real rowHeight: Math.round((sectionRow.compact ? 36 : 27) * root.d * Math.max(1, IrisStyle.typeScale))
+        readonly property real rowHeight: Math.round(27 * root.d * Math.max(1, IrisStyle.typeScale))
         width: parent ? parent.width : 0
         height: sectionRow.rowHeight + (sectionRow.clusterStart ? Math.round(8 * root.d) : 0)
-        onContainsMouseChanged: {
-            if (sectionRow.compact && sectionRow.containsMouse) {
-                const at = sectionRow.mapToItem(frame, 0, sectionRow.height - sectionRow.rowHeight / 2)
-                root.railHint = { title: Translation.tr(sectionRow.modelData.title), y: at.y }
-            } else if (root.railHint?.title === Translation.tr(sectionRow.modelData.title)) root.railHint = null
-        }
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
@@ -1946,33 +1575,30 @@ Item {
         Rectangle {
             anchors.left: parent.left
             anchors.bottom: parent.bottom
-            width: sectionRow.compact ? parent.width : root.sidebarReveal(parent.width)
+            width: parent.width
             height: sectionRow.rowHeight
             // Concentric with the mark it holds; where you are is a wash of the accent, as light as a hover, never a
             // solid block heavier than the buttons around it.
             radius: IrisStyle.plateSelection ? 0 : sectionRow.washRadius
-            color: sectionRow.selected && !sectionRow.travels ? (IrisStyle.plateSelection ? IrisStyle.selectionFill : IrisStyle.tintFillHover(sectionRow.compact ? sectionRow.modelData.tint : IrisStyle.accent))
+            color: sectionRow.selected && !sectionRow.travels ? (IrisStyle.plateSelection ? IrisStyle.selectionFill : IrisStyle.tintFillHover(IrisStyle.accent))
                 : sectionRow.selected ? "transparent"
                 : sectionRow.containsMouse ? IrisStyle.fillHover : "transparent"
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
             IrisSquircle {
                 id: sectionMark
-                // An indexed Design numbers the areas instead (a parts catalogue); the rail keeps its glyphs.
-                // A shut sidebar is a rail of glyphs: numbers alone name nothing, so they cross with the glyphs as it opens.
-                readonly property bool numbered: IrisStyle.indexed && !sectionRow.compact
-                opacity: sectionMark.numbered ? 1 - root.sidebarOpen : 1
-                visible: opacity > 0
-                x: sectionRow.compact ? Math.round((parent.width - width) / 2) : Math.round(6 * root.d)
+                // An indexed Design numbers the areas instead (a parts catalogue).
+                readonly property bool numbered: IrisStyle.indexed
+                visible: !sectionMark.numbered
+                x: Math.round(6 * root.d)
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.round((sectionRow.compact ? 24 : 20) * root.d)
+                width: Math.round(20 * root.d)
                 height: width
                 tint: sectionRow.modelData.tint
                 glyph: sectionRow.modelData.icon
                 ink: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.selectionInk : IrisStyle.plainMarks ? IrisStyle.textSecondary : IrisStyle.onTint
             }
             IrisText {
-                visible: sectionMark.numbered && opacity > 0
-                opacity: root.sidebarOpen
+                visible: sectionMark.numbered
                 anchors.centerIn: sectionMark
                 // The folio runs on through the footer, as a catalogue's pages do: Sources follows the last area.
                 text: IrisStyle.indexLabel(Math.max(0, root.sections.findIndex(section => section.id === sectionRow.modelData.id)))
@@ -1982,8 +1608,6 @@ Item {
                 font.weight: Font.Medium
             }
             IrisText {
-                visible: !sectionRow.compact
-                opacity: root.sidebarOpen
                 x: sectionMark.x + sectionMark.width + Math.round(10 * root.d)
                 width: sectionRow.width - x - Math.round(8 * root.d)
                 anchors.rightMargin: 8 * root.d

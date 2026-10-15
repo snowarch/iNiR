@@ -4120,8 +4120,6 @@ Singleton {
                     property string customize: "shell"
                     // Choosing a theme takes only its colours; its shapes, layout and motion stay as they are.
                     property bool themeColoursOnly: false
-                    // How iRiS Settings is laid out: "sidebar", "rail" (icons only) or "home" (a grid of areas to open).
-                    property string settingsLayout: "sidebar"
                     property string settingsHost: "overlay"
                     // Looks saved from iRiS Studio: [{ name, values: { "iris.…": value } }].
                     property list<var> saved: []
