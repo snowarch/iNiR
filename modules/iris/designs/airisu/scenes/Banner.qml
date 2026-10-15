@@ -52,20 +52,25 @@ Item {
 
     // The engine's clock for this banner; gone once the pointer has kept it, absent when it never times out.
     readonly property var clock: root.notification?.timer ?? null
+    // The run burns down at the display's pace, from where the banner's time already is to its end. It went in forty
+    // steps (one every 100 ms on a 4 s banner) and read as a lagging shell (2026-10-15, the maintainer: "la barrita que
+    // cuenta hacia atrás se ve todo lagueado"); the machine is in the cut and the stamp, never in a stuttering clock.
     property real torn: 0
-    onClockChanged: if (!root.clock) root.torn = 0
-    Timer {
-        running: !!root.clock && root.visible === true
-        repeat: true
-        triggeredOnStart: true
-        // Forty steps over the banner's time: the run only moves when a step goes, so nothing is drawn in between.
-        interval: Math.max(40, Math.round(Number(root.clock?.interval ?? 4000) / 40))
-        onTriggered: {
-            const span = Math.max(1, Number(root.clock?.interval ?? 1))
-            const born = Number(root.notification?.time ?? Date.now())
-            root.torn = Math.min(1, Math.max(0, (Date.now() - born) / span))
-        }
+    NumberAnimation { id: run; target: root; property: "torn"; to: 1 }
+    function startRun(): void {
+        run.stop()
+        if (!root.clock || root.visible !== true) return
+        const span = Math.max(1, Number(root.clock.interval ?? 1))
+        const born = Number(root.notification?.time ?? Date.now())
+        const now = Math.min(1, Math.max(0, (Date.now() - born) / span))
+        root.torn = now
+        run.from = now
+        run.duration = Math.round((1 - now) * span)
+        run.start()
     }
+    onClockChanged: { if (!root.clock) { run.stop(); root.torn = 0 } else root.startRun() }
+    onVisibleChanged: root.startRun()
+    Component.onCompleted: root.startRun()
 
     // Stamped: the die is ruled as the banner lands, and its lacquer laid a detent later.
     property bool landed: !Airisu.moving
