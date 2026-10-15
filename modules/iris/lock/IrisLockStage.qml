@@ -62,12 +62,14 @@ Item {
             glass.zoom = Math.max(0.01, unit.x - origin.x)
             glass.at = origin
         }
-        Component.onCompleted: Qt.callLater(glass.sync)
-        onWidthChanged: Qt.callLater(glass.sync)
-        onHeightChanged: Qt.callLater(glass.sync)
+        // A timer of its own, not Qt.callLater: a deferred call outlived the stage when Settings left the Lock page.
+        Timer { id: glassSync; interval: 0; onTriggered: glass.sync() }
+        Component.onCompleted: glassSync.restart()
+        onWidthChanged: glassSync.restart()
+        onHeightChanged: glassSync.restart()
         Connections {
             target: root
-            function onRelayout(): void { Qt.callLater(glass.sync) }
+            function onRelayout(): void { glassSync.restart() }
         }
         ClippingRectangle {
             anchors.fill: parent
@@ -422,9 +424,10 @@ Item {
                 root.noteZone(zoneColumn.modelData, zoneColumn.members.length > 0 ? zoneColumn.y : root.height,
                     zoneColumn.members.length > 0 ? zoneColumn.y + zoneColumn.height : 0)
             }
-            onHeightChanged: Qt.callLater(zoneColumn.note)
-            onMembersChanged: Qt.callLater(zoneColumn.note)
-            Component.onCompleted: Qt.callLater(zoneColumn.note)
+            Timer { id: noteLater; interval: 0; onTriggered: zoneColumn.note() }
+            onHeightChanged: noteLater.restart()
+            onMembersChanged: noteLater.restart()
+            Component.onCompleted: noteLater.restart()
             Repeater {
                 model: ScriptModel { values: zoneColumn.members }
                 delegate: BlockBody {
