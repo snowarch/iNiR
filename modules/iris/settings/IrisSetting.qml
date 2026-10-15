@@ -175,7 +175,7 @@ Item {
                         text: root.highlight.length > 0 ? root.marked(Translation.tr(root.spec.label)) : Translation.tr(root.spec.label)
                         textFormat: root.highlight.length > 0 ? Text.StyledText : Text.PlainText
                         font.pixelSize: IrisStyle.typeBody
-                        font.weight: IrisStyle.weight(Font.Medium)
+                        font.weight: IrisStyle.weight(Font.Normal)
                         wrapMode: Text.WordWrap
                     }
                     FontMetrics { id: labelMetrics; font: label.font }

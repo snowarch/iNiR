@@ -79,7 +79,9 @@ Item {
     readonly property bool pageInPane: root.advancedPage >= 0 && root.wideEnough
         && root.navLinks.some(link => link.page && root.pageIndexOf(link.page) === root.advancedPage)
     readonly property bool paneable: (root.advancedPage < 0 || root.pageInPane) && root.wideEnough
-    readonly property bool split: root.paneable && !root.searching
+    // The page as one pane beside an index is a Design's scene (AIRISU); iRiS reads its groups as cards on the window
+    // (2026-10-15), each under its caption, as a grouped form does.
+    readonly property bool split: root.sceneDrawn && root.paneable && !root.searching
     // A section with a single group has nothing to index: its pane takes the whole width.
     // Only a Design's scene (AIRISU) reads a section beside its own index of groups; iRiS keeps one layout (2026-10-15):
     // the sidebar never narrows, a short section reads whole and a long one lists its groups to open one at a time.
@@ -188,7 +190,7 @@ Item {
     }
     // General beside its column opens on its welcome (IrisGeneralHome) and each group alone: read whole it mixed the hero
     // with every row under it.
-    readonly property bool generalHome: root.section === "general" && root.split
+    readonly property bool generalHome: root.section === "general" && root.paneable && !root.searching
     readonly property bool flatSection: !root.searching && root.advancedPage < 0 && root.group.length === 0 && root.groups.length > 1
         && root.section !== "system" && !root.generalHome
         && root.readsWhole
@@ -1449,7 +1451,7 @@ Item {
                                     }
 
                                     IrisLinkCard {
-                                        visible: root.section === "general" && root.browsing && !root.split
+                                        visible: root.section === "general" && root.browsing && !root.split && !root.generalHome
                                         tinted: true
                                         links: [
                                             { key: "about", label: Translation.tr("About iNiR"), icon: "info", tint: IrisStyle.identity.lavender },
@@ -1723,9 +1725,9 @@ Item {
             visible: text.length > 0
             Layout.leftMargin: 16 * root.d
             text: list.modelData.caption
-            color: IrisStyle.label
+            color: IrisStyle.text
             font.family: IrisStyle.fontTitle
-            font.pixelSize: IrisStyle.typeMeta
+            font.pixelSize: IrisStyle.typeBody
             font.weight: IrisStyle.weight(Font.DemiBold)
         }
         Rectangle {
@@ -1811,7 +1813,8 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.round(26 * root.d)
                 height: width
-                tint: IrisOptions.groupTints[groupRow.modelData.key] ?? root.currentSection.tint
+                // One hue per page, the section's: the sidebar is where colour tells areas apart.
+                tint: root.currentSection.tint
                 glyph: IrisOptions.groupGlyphs[groupRow.modelData.key] ?? root.currentSection.icon
             }
             IrisText {
@@ -1823,8 +1826,8 @@ Item {
                 width: Math.ceil(Math.min(implicitWidth, groupRow.lone || groupRow.summary.length === 0
                     ? parent.width - x - trailing.width - Math.round(28 * root.d) : parent.width * 0.42))
                 text: groupRow.lone ? Translation.tr(groupRow.rows[0].label) : groupRow.modelData.title
-                font.pixelSize: IrisStyle.typeLabel
-                font.weight: IrisStyle.weight(groupRow.unfolded ? Font.DemiBold : Font.Medium)
+                font.pixelSize: IrisStyle.typeBody
+                font.weight: IrisStyle.weight(groupRow.unfolded ? Font.DemiBold : Font.Normal)
                 elide: Text.ElideRight
             }
             IrisText {
@@ -2031,8 +2034,8 @@ Item {
                 }
             }
         }
-        // A page read whole opens each group on its identity: the mark the column shows and a title a step above its
-        // rows, so the eye finds where a block starts (a 12 px caption read smaller than the rows under it).
+        // A page read whole opens each group on its name, the rows' size a weight above them, over its card (a 12 px
+        // caption read smaller than the rows under it; a coloured mark on every head was one rainbow too many).
         // A Design may open each group its own way (AIRISU: the name wide, the sticker stripe, the count in mono, a rule).
         Item {
             id: groupHead
@@ -2066,22 +2069,15 @@ Item {
         }
         RowLayout {
             visible: root.flatSection && String(group.modelData.caption ?? "").length > 0 && !headSkin.active
-            Layout.leftMargin: 14 * root.d
-            Layout.topMargin: 14 * root.d
-            Layout.bottomMargin: 2 * root.d
+            Layout.leftMargin: 16 * root.d
+            Layout.topMargin: 10 * root.d
             spacing: 10 * root.d
-            IrisSquircle {
-                Layout.preferredWidth: Math.round(28 * root.d)
-                Layout.preferredHeight: Math.round(28 * root.d)
-                tint: IrisOptions.groupTints[group.modelData.key] ?? root.currentSection.tint
-                glyph: IrisOptions.groupGlyphs[group.modelData.key] ?? root.currentSection.icon
-            }
             IrisText {
                 Layout.fillWidth: true
                 text: String(group.modelData.caption ?? "")
                 color: IrisStyle.text
                 font.family: IrisStyle.fontTitle
-                font.pixelSize: IrisStyle.typeTitle
+                font.pixelSize: IrisStyle.typeBody
                 font.weight: IrisStyle.weight(Font.DemiBold)
                 elide: Text.ElideRight
             }
