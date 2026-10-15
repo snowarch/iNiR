@@ -2064,7 +2064,7 @@ ensure_running_instance() {
     apply_qt_runtime_env
     apply_qt_logging_rules
     check_qs_abi
-    start_background "$dir"
+    start_background "$dir" || return 1
     wait_for_start "$dir"
 }
 
@@ -2177,8 +2177,23 @@ start_inir_service_if_enabled() {
     return 1
 }
 
+# Which engine draws the shell: quickshell (default) or pleamar, as written in
+# ${XDG_CONFIG_HOME}/inir/engine. On pleamar nothing here starts Quickshell behind its back.
+inir_engine() {
+    local f="${XDG_CONFIG_HOME:-$HOME/.config}/inir/engine"
+    if [[ -r "$f" ]] && [[ "$(tr -d '[:space:]' < "$f")" == pleamar ]]; then
+        printf 'pleamar'
+    else
+        printf 'quickshell'
+    fi
+}
+
 start_background() {
     local dir="$1"
+    if [[ "$(inir_engine)" == pleamar ]]; then
+        echo "iNiR runs on pleamar (~/.config/inir/engine): this command is not there yet" >&2
+        return 1
+    fi
     if is_inir_service_enabled; then
         if is_using_runit_supervisor; then
             sv up "${XDG_CONFIG_HOME:-$HOME/.config}/service/inir" >/dev/null 2>&1
@@ -4385,6 +4400,10 @@ case "$command_name" in
         exec "$qs_bin" -n -d -p "$config_dir"
         ;;
     restart)
+        if [[ "$(inir_engine)" == pleamar ]]; then
+            systemctl --user restart inir-pleamar.service
+            exit $?
+        fi
         require_qs
         restart_quiet=""
         while [[ $# -gt 0 ]]; do
