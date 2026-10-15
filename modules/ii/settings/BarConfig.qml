@@ -512,7 +512,7 @@ ContentPage {
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.colors.colLayer1
                     colBackgroundHover: Appearance.colors.colLayer1Hover
-                    onClicked: GlobalStates.openSettingsPage(21)
+                    onClicked: GlobalStates.openSettingsAt("ricelin")
 
                     RowLayout {
                         anchors.fill: parent

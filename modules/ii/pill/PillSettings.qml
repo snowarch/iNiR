@@ -15,21 +15,21 @@ PillSurface {
     mBottom: 14
 
     readonly property var entries: [
-        { page: 0, icon: "mixer", label: Translation.tr("Quick"), desc: Translation.tr("Wallpaper and common tweaks") },
-        { page: 4, icon: "palette", label: Translation.tr("Themes"), desc: Translation.tr("Colors, fonts and global styles") },
-        { page: 3, icon: "waves", label: Translation.tr("Wallpaper"), desc: Translation.tr("Backdrop, effects and wallpaper behavior") },
-        { page: 2, icon: "app-window", label: Translation.tr("Bar"), desc: Translation.tr("Pill modules, layout and behavior") },
-        { page: 12, icon: "monitor", label: Translation.tr("Display & input"), desc: Translation.tr("Niri outputs, devices and layout") },
-        { page: 18, icon: "sidebar-right", label: Translation.tr("Workspaces"), desc: Translation.tr("Workspace strip and navigation") },
-        { page: 9, icon: "keyboard", label: Translation.tr("Shortcuts"), desc: Translation.tr("Keybindings reference") },
-        { page: 1, icon: "cog", label: Translation.tr("System"), desc: Translation.tr("Audio, battery, language and lock") },
-        { page: 21, icon: "sparkles", label: Translation.tr("Ricelin"), desc: Translation.tr("Pill and island appearance") }
+        { page: "quick", icon: "mixer", label: Translation.tr("Quick"), desc: Translation.tr("Wallpaper and common tweaks") },
+        { page: "themes", icon: "palette", label: Translation.tr("Themes"), desc: Translation.tr("Colors, fonts and global styles") },
+        { page: "wallpaper", icon: "waves", label: Translation.tr("Wallpaper"), desc: Translation.tr("Backdrop, effects and wallpaper behavior") },
+        { page: "bar", icon: "app-window", label: Translation.tr("Bar"), desc: Translation.tr("Pill modules, layout and behavior") },
+        { page: "compositor", icon: "monitor", label: Translation.tr("Display & input"), desc: Translation.tr("Niri outputs, devices and layout") },
+        { page: "workspace-strip", icon: "sidebar-right", label: Translation.tr("Workspaces"), desc: Translation.tr("Workspace strip and navigation") },
+        { page: "shortcuts", icon: "keyboard", label: Translation.tr("Shortcuts"), desc: Translation.tr("Keybindings reference") },
+        { page: "system", icon: "cog", label: Translation.tr("System"), desc: Translation.tr("Audio, battery, language and lock") },
+        { page: "ricelin", icon: "sparkles", label: Translation.tr("Ricelin"), desc: Translation.tr("Pill and island appearance") }
     ]
 
     implicitHeight: header.height + 10 * s + divider.height + 8 * s + list.implicitHeight
 
     function openPage(page) {
-        GlobalStates.openSettingsPage(page);
+        GlobalStates.openSettingsAt(page);
         root.requestClose();
     }
 

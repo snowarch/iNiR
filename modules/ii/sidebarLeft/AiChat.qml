@@ -639,7 +639,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.colors.colErrorContainer
                     colBackgroundHover: Appearance.colors.colErrorContainerHover
-                    onClicked: GlobalStates.openSettingsPage(24)
+                    onClicked: GlobalStates.openSettingsAt("ai")
                     contentItem: Item {
                         implicitWidth: centredRow1.implicitWidth
                         implicitHeight: centredRow1.implicitHeight
@@ -1042,7 +1042,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     icon: "settings"
                     text: ""
                     tooltipText: Translation.tr("AI Settings")
-                    clickAction: () => GlobalStates.openSettingsPage(24)
+                    clickAction: () => GlobalStates.openSettingsAt("ai")
                 }
 
                 Item {

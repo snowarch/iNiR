@@ -90,8 +90,8 @@ Item {
         x: root.bodyX - toolbar.fillet
         y: root.bodyY
         onLibraryRequested: GlobalStates.desktopWidgetManagerToggleRequested(root.outputName)
-        onEdgeSettingsRequested: GlobalStates.openSettingsPage(14, "Organic edge")
-        onSettingsRequested: GlobalStates.openSettingsPage(14)
+        onEdgeSettingsRequested: GlobalStates.openSettingsAt("widgets", "Organic edge")
+        onSettingsRequested: GlobalStates.openSettingsAt("widgets")
         onDoneRequested: GlobalStates.setWidgetEditMode(false)
     }
 }

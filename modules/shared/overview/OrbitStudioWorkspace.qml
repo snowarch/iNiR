@@ -225,7 +225,7 @@ FocusScope {
                 iconRenderType: Text.QtRendering
                 onClicked: {
                     root.dismissed()
-                    GlobalStates.openSettingsPage(27)
+                    GlobalStates.openSettingsAt("orbit")
                 }
                 M3ToolTip { text: Translation.tr("Orbit settings") }
             }

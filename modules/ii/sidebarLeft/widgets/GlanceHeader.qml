@@ -231,7 +231,7 @@ Item {
                                 Quickshell.shellPath("scripts/inir"), "waffle-settings-window"]);
                             return;
                         }
-                        GlobalStates.openSettingsPage(5, Translation.tr("Widgets"));
+                        GlobalStates.openSettingsAt("panels", Translation.tr("Widgets"));
                     }
 
                     contentItem: Item {

@@ -112,6 +112,11 @@ ShellRoot {
         property: "watchFiles"
         value: !root.disableHotReload && !GlobalStates.screenLocked
     }
+    Binding {
+        target: GlobalStates
+        property: "settingsPageKeys"
+        value: SettingsPageRegistry.pages.map(page => page.key)
+    }
     Connections {
         target: Quickshell
         function onWatchFilesChanged(): void { console.info("[Boot] hot reload", Quickshell.watchFiles ? "on" : "off") }

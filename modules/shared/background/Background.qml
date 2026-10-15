@@ -1996,7 +1996,7 @@ Scope {
                         } },
                     { type: "separator" },
                     { text: Translation.tr("Widget settings"), iconName: "settings", monochromeIcon: true,
-                        action: () => GlobalStates.openSettingsPage(14) },
+                        action: () => GlobalStates.openSettingsAt("widgets") },
                     { text: Translation.tr("Done editing"), iconName: "check", monochromeIcon: true,
                         action: () => { widgetManagerPanel.shown = false; GlobalStates.setWidgetEditMode(false) } }
                 ] : [
@@ -2047,7 +2047,7 @@ Scope {
                                 sizes[(sizes.indexOf(irisDesktopMenu.gridSize) + 1) % sizes.length])
                         } },
                     { text: Translation.tr("Widget settings"), iconName: "settings",
-                        action: () => GlobalStates.openSettingsPage(14) },
+                        action: () => GlobalStates.openSettingsAt("widgets") },
                     { type: "separator" },
                     { text: Translation.tr("Done"), iconName: "check", tint: "green",
                         action: () => { widgetManagerPanel.shown = false; GlobalStates.setWidgetEditMode(false) } }
@@ -2953,8 +2953,8 @@ Scope {
                         y: editControlsBar.iris ? (irisTopEdge ? IrisFrame.band : parent.height - height - IrisFrame.band)
                             : Math.max(editGridOverlay.safeTop, editGridOverlay.safeBottom - height - 12)
                         onLibraryRequested: widgetManagerPanel.shown = !widgetManagerPanel.shown
-                        onEdgeSettingsRequested: GlobalStates.openSettingsPage(14, "Organic edge")
-                        onSettingsRequested: GlobalStates.openSettingsPage(14)
+                        onEdgeSettingsRequested: GlobalStates.openSettingsAt("widgets", "Organic edge")
+                        onSettingsRequested: GlobalStates.openSettingsAt("widgets")
                         onDoneRequested: {
                             widgetManagerPanel.shown = false
                             GlobalStates.setWidgetEditMode(false)

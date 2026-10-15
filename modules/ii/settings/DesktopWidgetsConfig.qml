@@ -21,8 +21,7 @@ ContentPage {
     property bool isIiActive: ["ii", "iris"].includes(Config.options?.panelFamily ?? "ii")
     readonly property bool irisActive: (Config.options?.panelFamily ?? "ii") === "iris"
     function openIrisWidgets(): void {
-        const page = SettingsPageRegistry.pages.findIndex(entry => entry.key === "iris")
-        if (page >= 0) GlobalStates.openSettingsPage(page, "desktop/widgets")
+        GlobalStates.openSettingsAt("iris", "desktop/widgets")
     }
     property int _customMediaFolderCount: 0
     property int _customMediaFolderImageCount: 0

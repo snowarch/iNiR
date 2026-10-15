@@ -106,7 +106,7 @@ Item {
     // deep link, so this intentionally takes no provider argument.
     function openProviderSettings(): void {
         root.close()
-        GlobalStates.openSettingsPage(24)
+        GlobalStates.openSettingsAt("ai")
     }
 
     function contextLabel(tokens): string {

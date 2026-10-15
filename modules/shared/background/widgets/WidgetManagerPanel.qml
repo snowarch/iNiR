@@ -397,7 +397,7 @@ Item {
                     iconName: "settings"
                     compact: true
                     tooltip: Translation.tr("Open full widget settings")
-                    onClicked: GlobalStates.openSettingsPage(14)
+                    onClicked: GlobalStates.openSettingsAt("widgets")
                 }
 
                 WidgetEditAction {
