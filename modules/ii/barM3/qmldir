@@ -9,7 +9,6 @@ ClockWidgetPopup 1.0 ClockWidgetPopup.qml
 ClockWidget 1.0 ClockWidget.qml
 Divisor 1.0 Divisor.qml
 DocktoPanel 1.0 DocktoPanel.qml
-GroupedList 1.0 GroupedList.qml
 HyprlandXkbIndicator 1.0 HyprlandXkbIndicator.qml
 LeftSidebarButton 1.0 LeftSidebarButton.qml
 RightSidebarButton 1.0 RightSidebarButton.qml
@@ -26,7 +25,6 @@ ResourcesPopup 1.0 ResourcesPopup.qml
 Resources 1.0 Resources.qml
 ScrollHint 1.0 ScrollHint.qml
 StyledPopup 1.0 StyledPopup.qml
-StyledPopupValueRow 1.0 StyledPopupValueRow.qml
 SystemIcons 1.0 SystemIcons.qml
 SysTrayItem 1.0 SysTrayItem.qml
 SysTrayMenuEntry 1.0 SysTrayMenuEntry.qml

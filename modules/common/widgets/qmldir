@@ -1,7 +1,5 @@
 AddressBar 1.0 AddressBar.qml
 AddressBreadcrumb 1.0 AddressBreadcrumb.qml
-AngelAccentBar 1.0 AngelAccentBar.qml
-AngelBackground 1.0 AngelBackground.qml
 AngelPartialBorder 1.0 AngelPartialBorder.qml
 BarModuleOrderEditor 1.0 BarModuleOrderEditor.qml
 BarWidgetSwitcher 1.0 BarWidgetSwitcher.qml
@@ -27,7 +25,6 @@ ConfigSpinBox 1.0 ConfigSpinBox.qml
 ConfigSwitch 1.0 ConfigSwitch.qml
 ConfigTimeInput 1.0 ConfigTimeInput.qml
 ContentPage 1.0 ContentPage.qml
-ContentSection 1.0 ContentSection.qml
 ContentSubsectionLabel 1.0 ContentSubsectionLabel.qml
 ContentSubsection 1.0 ContentSubsection.qml
 ContextMenu 1.0 ContextMenu.qml
@@ -175,19 +172,13 @@ WindowDialogTitle 1.0 WindowDialogTitle.qml
 WallpaperCrossfader 1.0 WallpaperCrossfader.qml
 VideoCrossfader 1.0 VideoCrossfader.qml
 ZzzBurst 1.0 ZzzBurst.qml
-ZzzCard 1.0 ZzzCard.qml
 ZzzGhostMark 1.0 ZzzGhostMark.qml
 ZzzGlyphBadge 1.0 ZzzGlyphBadge.qml
-ZzzGlyphButton 1.0 ZzzGlyphButton.qml
-ZzzDataChip 1.0 ZzzDataChip.qml
 ZzzDiagonalPattern 1.0 ZzzDiagonalPattern.qml
 ZzzGlassWash 1.0 ZzzGlassWash.qml
 ZzzGraphicPlate 1.0 ZzzGraphicPlate.qml
 ZzzPanelBackdrop 1.0 ZzzPanelBackdrop.qml
 ZzzPlate 1.0 ZzzPlate.qml
-ZzzPlateCard 1.0 ZzzPlateCard.qml
-ZzzSectionHeader 1.0 ZzzSectionHeader.qml
-ZzzSignalButton 1.0 ZzzSignalButton.qml
 ZzzStatBar 1.0 ZzzStatBar.qml
 ZzzSurfaceAccent 1.0 ZzzSurfaceAccent.qml
 ZzzTechFrame 1.0 ZzzTechFrame.qml

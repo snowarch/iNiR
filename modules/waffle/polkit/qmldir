@@ -1,3 +1,0 @@
-module qs.modules.waffle.polkit
-WafflePolkit 1.0 WafflePolkit.qml
-WPolkitContent 1.0 WPolkitContent.qml

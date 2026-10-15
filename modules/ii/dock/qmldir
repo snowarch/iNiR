@@ -8,5 +8,4 @@ DockMacItem 1.0 DockMacItem.qml
 DockPillItem 1.0 DockPillItem.qml
 DockPreview 1.0 DockPreview.qml
 Dock 1.0 Dock.qml
-DockSeparator 1.0 DockSeparator.qml
 DockWindowPreview 1.0 DockWindowPreview.qml

@@ -23,7 +23,6 @@ WChoiceButton 1.0 WChoiceButton.qml
 WListView 1.0 WListView.qml
 WScrollBar 1.0 WScrollBar.qml
 WBarAttachedPanelContent 1.0 WBarAttachedPanelContent.qml
-WFadeLoader 1.0 WFadeLoader.qml
 WPanelIconButton 1.0 WPanelIconButton.qml
 WPanelPageColumn 1.0 WPanelPageColumn.qml
 WPanelSeparator 1.0 WPanelSeparator.qml
