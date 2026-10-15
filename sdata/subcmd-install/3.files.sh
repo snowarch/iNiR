@@ -18,6 +18,23 @@ for dir in "$XDG_BIN_HOME" "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME"
   fi
 done
 
+#####################################################################################
+# Reinstall after `setup uninstall`: its backup brings the settings and state back,
+# so this is not a first install (that would reset the user's niri and dotfiles).
+#####################################################################################
+if [[ ! -f "${FIRSTRUN_FILE}" && ! -f "${DOTS_CORE_CONFDIR}/config.json" ]]; then
+  _uninstall_backup="$(ls -d "${HOME}"/.local/share/inir-uninstall-backup-* 2>/dev/null | sort | tail -1)"
+  if [[ -n "$_uninstall_backup" && -f "${_uninstall_backup}/$(basename "$DOTS_CORE_CONFDIR")/config.json" ]]; then
+    mkdir -p "${DOTS_CORE_CONFDIR}"
+    cp -a "${_uninstall_backup}/$(basename "$DOTS_CORE_CONFDIR")/." "${DOTS_CORE_CONFDIR}/"
+    if [[ -d "${_uninstall_backup}/quickshell-state" && ! -d "${XDG_STATE_HOME}/quickshell/user" ]]; then
+      mkdir -p "${XDG_STATE_HOME}/quickshell"
+      cp -a "${_uninstall_backup}/quickshell-state" "${XDG_STATE_HOME}/quickshell/user"
+    fi
+    log_success "Settings restored from the last uninstall: ${_uninstall_backup}"
+  fi
+fi
+
 INIR_LAUNCHER_PATH="${XDG_BIN_HOME}/inir"
 INIR_APPLICATIONS_DIR="${XDG_DATA_HOME}/applications"
 INIR_ICON_DIR="${XDG_DATA_HOME}/icons/hicolor/scalable/apps"
@@ -104,55 +121,62 @@ case "${SKIP_QUICKSHELL}" in
     II_SOURCE="${REPO_ROOT}"
     II_TARGET="${XDG_CONFIG_HOME}/quickshell/inir"
 
-    v mkdir -p "$II_TARGET"
-    python3 "${II_SOURCE}/sdata/lib/runtime-payload.py" retire-checkout \
-      --root "$II_SOURCE" --target "$II_TARGET" || return 1
+    # A linked checkout (the runtime dir is this repo) is already in place: copying it onto
+    # itself fails on the first file.
+    if [[ "$(realpath "$II_TARGET" 2>/dev/null)" == "$(realpath "$II_SOURCE")" ]]; then
+      log_info "Linked checkout: the shell runs from this repo, nothing to copy"
+    else
 
-    # Create backup before update (if this is an update)
-    if [[ "${IS_UPDATE}" == "true" ]]; then
-      log_info "Creating backup before update..."
-      create_update_backup "$II_TARGET" >/dev/null
-    fi
+      v mkdir -p "$II_TARGET"
+      python3 "${II_SOURCE}/sdata/lib/runtime-payload.py" retire-checkout \
+        --root "$II_SOURCE" --target "$II_TARGET" || return 1
 
-    # Generate manifest BEFORE syncing (to know what should exist)
-    log_info "Generating file manifest..."
-    generate_manifest "$II_SOURCE" "${II_TARGET}/.inir-manifest.new" || return 1
-
-    # Copy all .qml files from root (auto-detect, no manual list needed)
-    for qml_file in "${II_SOURCE}"/*.qml; do
-      if [[ -f "$qml_file" ]]; then
-        install_file "$qml_file" "${II_TARGET}/$(basename "$qml_file")"
+      # Create backup before update (if this is an update)
+      if [[ "${IS_UPDATE}" == "true" ]]; then
+        log_info "Creating backup before update..."
+        create_update_backup "$II_TARGET" >/dev/null
       fi
-    done
 
-    runtime_root_manifest="${II_SOURCE}/sdata/runtime-root-files.txt"
-    if [[ -f "$runtime_root_manifest" ]]; then
-      while IFS= read -r runtime_file; do
-        [[ -n "$runtime_file" ]] || continue
-        if [[ -f "${II_SOURCE}/${runtime_file}" ]]; then
-          install_file "${II_SOURCE}/${runtime_file}" "${II_TARGET}/${runtime_file}"
+      # Generate manifest BEFORE syncing (to know what should exist)
+      log_info "Generating file manifest..."
+      generate_manifest "$II_SOURCE" "${II_TARGET}/.inir-manifest.new" || return 1
+
+      # Copy all .qml files from root (auto-detect, no manual list needed)
+      for qml_file in "${II_SOURCE}"/*.qml; do
+        if [[ -f "$qml_file" ]]; then
+          install_file "$qml_file" "${II_TARGET}/$(basename "$qml_file")"
         fi
-      done < "$runtime_root_manifest"
-    fi
+      done
 
-    # Copy runtime payload directories
-    runtime_dirs_manifest="${II_SOURCE}/sdata/runtime-payload-dirs.txt"
-    if [[ -f "$runtime_dirs_manifest" ]]; then
-      while IFS= read -r dir; do
-        [[ -n "$dir" ]] || continue
-        if [[ -d "${II_SOURCE}/${dir}" ]]; then
-          install_dir__sync "${II_SOURCE}/${dir}" "${II_TARGET}/${dir}" || return 1
-        fi
-      done < "$runtime_dirs_manifest"
-    fi
+      runtime_root_manifest="${II_SOURCE}/sdata/runtime-root-files.txt"
+      if [[ -f "$runtime_root_manifest" ]]; then
+        while IFS= read -r runtime_file; do
+          [[ -n "$runtime_file" ]] || continue
+          if [[ -f "${II_SOURCE}/${runtime_file}" ]]; then
+            install_file "${II_SOURCE}/${runtime_file}" "${II_TARGET}/${runtime_file}"
+          fi
+        done < "$runtime_root_manifest"
+      fi
 
-    # Finalize manifest
-    mv "${II_TARGET}/.inir-manifest.new" "${II_TARGET}/.inir-manifest"
+      # Copy runtime payload directories
+      runtime_dirs_manifest="${II_SOURCE}/sdata/runtime-payload-dirs.txt"
+      if [[ -f "$runtime_dirs_manifest" ]]; then
+        while IFS= read -r dir; do
+          [[ -n "$dir" ]] || continue
+          if [[ -d "${II_SOURCE}/${dir}" ]]; then
+            install_dir__sync "${II_SOURCE}/${dir}" "${II_TARGET}/${dir}" || return 1
+          fi
+        done < "$runtime_dirs_manifest"
+      fi
 
-    # Cleanup orphan files (files that no longer exist in repo)
-    if [[ "${IS_UPDATE}" == "true" ]]; then
-      log_info "Cleaning up orphan files..."
-      cleanup_orphans "$II_TARGET" "${II_TARGET}/.inir-manifest" || return 1
+      # Finalize manifest
+      mv "${II_TARGET}/.inir-manifest.new" "${II_TARGET}/.inir-manifest"
+
+      # Cleanup orphan files (files that no longer exist in repo)
+      if [[ "${IS_UPDATE}" == "true" ]]; then
+        log_info "Cleaning up orphan files..."
+        cleanup_orphans "$II_TARGET" "${II_TARGET}/.inir-manifest" || return 1
+      fi
     fi
 
     # Fix script permissions
@@ -252,7 +276,12 @@ case "${SKIP_NIRI}" in
     # On updates, preserve the user's config and only patch launcher/theme bits.
     # On first run, always install iNiR defaults (backup_clashing_targets already
     # saved the pre-existing config to the backup dir).
-    if [[ "${INSTALL_FIRSTRUN}" == true ]]; then
+    # A config an earlier iNiR left (uninstall keeps a customized one) is the user's: a reinstall
+    # keeps it, keyboard layout and binds included, instead of resetting it to the defaults.
+    if [[ "${INSTALL_FIRSTRUN}" == true && -f "$NIRI_CONFIG" ]] \
+        && grep -qs 'spawn "inir"' "${XDG_CONFIG_HOME}/niri/config.d/70-binds.kdl"; then
+      log_success "Preserving the Niri config of an earlier iNiR install"
+    elif [[ "${INSTALL_FIRSTRUN}" == true ]]; then
       if [[ -d "defaults/niri" ]]; then
         install_dir__sync "defaults/niri" "${XDG_CONFIG_HOME}/niri"
         log_success "Niri config installed (defaults)"
