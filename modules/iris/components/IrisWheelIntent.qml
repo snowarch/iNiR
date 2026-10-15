@@ -14,10 +14,13 @@ Item {
     property bool moved: false
     property point lastScene: Qt.point(NaN, NaN)
     readonly property Flickable scroller: root.findScroller(root.target)
-    // Inside a scrolling page the wheel belongs to the page until the pointer really moves over the control: a pointer
-    // left still on a slider after a scroll no longer takes the next turn of the wheel once the page settles
-    // (2026-10-15, the maintainer: "el scroll de los sliders está roto").
-    readonly property bool armed: root.hovered && (!root.scroller || root.moved)
+    // The wheel latches to where its gesture began, as AppKit's scrolling does: while the page is moving (and for a
+    // beat after it stops) the wheel keeps scrolling it, even as a control slides under a still pointer; a pointer at
+    // rest on a control over a page at rest turns the control, and a pointer that really moves onto one takes it at
+    // once. Requiring the move every time (141f2666) left a slider pointed at and turned scrolling the page instead.
+    property int latchMs: 260
+    property bool latched: false
+    readonly property bool armed: root.hovered && (!root.scroller || root.moved || !root.latched)
 
     function findScroller(item): Flickable {
         for (let p = item?.parent ?? null; p; p = p.parent)
@@ -30,7 +33,12 @@ Item {
         root.lastScene = Qt.point(NaN, NaN)
     }
 
-    function scrolled(): void { root.moved = false }
+    function scrolled(): void {
+        root.moved = false
+        root.latched = true
+        latch.restart()
+    }
+    Timer { id: latch; interval: root.latchMs; onTriggered: root.latched = false }
     Connections {
         target: root.scroller
         function onContentYChanged(): void { root.scrolled() }
@@ -50,7 +58,6 @@ Item {
 
     function take(event): bool {
         if (root.armed) return true
-        if (root.scroller) root.scrolled()
         event.accepted = false
         return false
     }
