@@ -25,14 +25,19 @@ function setup_user_groups(){
 
   # usermod refuses the whole list if one group is missing: i2c (ddcutil) never
   # exists by default, and input/video only exist once udev has created them.
-  local required
+  # Only what is missing from the group database (not this session, which
+  # predates a usermod): a user already in all of them needs no sudo.
+  local required missing_groups="" member_of=" $(id -nG "$(whoami)") "
   for required in ${required_groups//,/ }; do
     if ! getent group "$required" >/dev/null; then
       x pkg_sudo groupadd --system "$required"
     fi
+    [[ "$member_of" == *" $required "* ]] || missing_groups+="${missing_groups:+,}$required"
   done
 
-  x pkg_sudo usermod -aG "$required_groups" "$(whoami)"
+  if [[ -n "$missing_groups" ]]; then
+    x pkg_sudo usermod -aG "$missing_groups" "$(whoami)"
+  fi
 
   local group group_changed=false
   for group in ${required_groups//,/ }; do
@@ -138,8 +143,10 @@ function setup_systemd_services(){
     return 0
   fi
   
-  # i2c-dev module for ddcutil
-  v pkg_sudo sh -c 'printf "%s\n" i2c-dev > /etc/modules-load.d/i2c-dev.conf'
+  # i2c-dev module for ddcutil. Written only when it is not there: a reinstall needs no sudo.
+  if ! grep -qx 'i2c-dev' /etc/modules-load.d/i2c-dev.conf 2>/dev/null; then
+    v pkg_sudo sh -c 'printf "%s\n" i2c-dev > /etc/modules-load.d/i2c-dev.conf'
+  fi
   
   # ydotool service - create user service symlink if needed
   # Check multiple possible locations (varies by distro)
@@ -179,8 +186,10 @@ function setup_systemd_services(){
   fi
   
   # Bluetooth (optional)
-  if command -v bluetoothctl &>/dev/null; then
-    v pkg_sudo systemctl enable bluetooth --now
+  # Enabled is enough: without an adapter the unit stays inactive by its own condition, and
+  # starts when one appears. Optional, so it never stops the install.
+  if command -v bluetoothctl &>/dev/null && ! systemctl is-enabled --quiet bluetooth 2>/dev/null; then
+    pkg_sudo systemctl enable bluetooth --now || log_warning "Could not enable the Bluetooth service"
   fi
 
   # SDDM display manager. A machine without a login screen gets SDDM. One that already has another
