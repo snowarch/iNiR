@@ -2212,6 +2212,22 @@ pleamar_ipc() {
     }
 }
 
+# The lock's state on pleamar, said as the Quickshell lock says it: secure once the compositor
+# confirms the session is locked, activating before that.
+pleamar_lock_status() {
+    local bin locked held
+    bin="$(pleamar_bin)"
+    locked="$("$bin" --say inir "get locked" 2>/dev/null)" || { printf 'unlocked\n'; return 1; }
+    held="$("$bin" --say inir "get lock.held" 2>/dev/null)"
+    if [[ "$locked" != true ]]; then
+        printf 'unlocked\n'
+    elif awk -v h="${held:-0}" 'BEGIN { exit !(h >= 0.5) }'; then
+        printf 'secure\n'
+    else
+        printf 'activating\n'
+    fi
+}
+
 start_background() {
     local dir="$1"
     if [[ "$(inir_engine)" == pleamar ]]; then
@@ -3914,6 +3930,27 @@ run_ipc_target_command() {
     validate_ipc_function "$target" "$1"
 
     if [[ "$(inir_engine)" == pleamar ]]; then
+        case "$target ${1:-}" in
+            "lock status")
+                pleamar_lock_status
+                exit $?
+                ;;
+            "lock prepareSleep")
+                # swayidle's before-sleep: return only once the session is covered, and fail
+                # closed so logind does not suspend an open session.
+                pleamar_ipc lock prepareSleep || exit 1
+                local _i
+                for _i in $(seq 1 40); do
+                    if [[ "$(pleamar_lock_status)" == secure ]]; then
+                        printf 'secure\n'
+                        exit 0
+                    fi
+                    sleep 0.05
+                done
+                echo "Lock did not become secure before sleep" >&2
+                exit 1
+                ;;
+        esac
         pleamar_ipc "$target" "$@"
         exit $?
     fi
