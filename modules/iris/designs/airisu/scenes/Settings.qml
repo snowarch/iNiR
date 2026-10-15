@@ -127,15 +127,43 @@ Item {
         // Cut only where the body is: its upper-right corner. Its foot stands inside the body's square edge.
         cutBottomLeft: false
 
-        Column {
+        // The index scrolls inside the edge when the screen is too short for every tab at its smallest: it ends above the
+        // foot's tabs (they ran into each other at 1280x800) and brings the open tab into view.
+        Flickable {
+            id: mainTabs
             y: root.u(6)
             width: parent.width
-            Repeater {
-                model: edge.main
-                IndexTab { list: edge.main }
+            height: Math.max(0, footTabs.y - y - root.u(3))
+            contentHeight: mainColumn.implicitHeight
+            interactive: contentHeight > height
+            boundsBehavior: Flickable.StopAtBounds
+            clip: true
+            Column {
+                id: mainColumn
+                width: parent.width
+                Repeater {
+                    model: edge.main
+                    IndexTab { list: edge.main }
+                }
             }
+            function follow(): void {
+                const tab = mainColumn.children.find(child => child.chosen === true)
+                if (!tab) return
+                const end = Math.max(0, mainTabs.contentHeight - mainTabs.height)
+                if (tab.y < mainTabs.contentY) mainTabs.contentY = Math.max(0, tab.y - tab.height)
+                else if (tab.y + tab.height > mainTabs.contentY + mainTabs.height)
+                    mainTabs.contentY = Math.min(end, tab.y + 2 * tab.height - mainTabs.height)
+            }
+            Timer { id: tabFollow; interval: 0; onTriggered: mainTabs.follow() }
+            onHeightChanged: tabFollow.restart()
+            Connections {
+                target: root.host
+                function onSectionChanged(): void { tabFollow.restart() }
+            }
+            Component.onCompleted: tabFollow.restart()
         }
         Column {
+            id: footTabs
             anchors.bottom: parent.bottom
             anchors.bottomMargin: root.u(6)
             width: parent.width
