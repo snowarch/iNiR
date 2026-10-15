@@ -5,6 +5,7 @@ import Quickshell.Services.Pipewire
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.pill
 
 Item {
     id: root

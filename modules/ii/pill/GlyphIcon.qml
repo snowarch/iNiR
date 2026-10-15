@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Self-contained vector glyph drawn from baked SVG path data, so the pill never

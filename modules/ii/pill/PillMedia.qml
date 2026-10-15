@@ -5,6 +5,7 @@ import QtQuick.Effects
 import Quickshell.Widgets
 import qs.services
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Now-playing card. Album art bleeds edge-to-edge on the left, faded into the

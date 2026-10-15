@@ -45,6 +45,7 @@ import qs.modules.ii.sidebarRight.sysmon
 import qs.modules.ii.sidebarRight.events
 import qs.modules.ii.sidebarRight.screenTime
 import qs.modules.ii.sidebarRight.weather
+import qs.modules.common.pill
 
 Item {
     id: root

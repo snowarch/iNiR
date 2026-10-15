@@ -4,6 +4,7 @@ import QtQuick
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.pill
 
 PillSurface {
     id: root

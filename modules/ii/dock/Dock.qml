@@ -16,6 +16,7 @@ import Quickshell
 import Quickshell.Widgets
 import Quickshell.Wayland
 import qs.modules.ii.pill
+import qs.modules.common.pill
 
 Scope {
     id: root

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import qs.modules.common
+import qs.modules.common.pill
 
 Item {
     id: root

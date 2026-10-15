@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.SystemTray
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * System tray. Draws StatusNotifier items as warm-tinted icons. Left-click

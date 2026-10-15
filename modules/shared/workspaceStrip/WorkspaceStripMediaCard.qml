@@ -6,7 +6,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.ii.pill
+import qs.modules.common.pill
 
 // Compact landscape album-art entry at the head of the rail. The full square
 // artwork belongs to the flyout; the rail keeps one stable rhythm throughout.

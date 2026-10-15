@@ -8,7 +8,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.ii.pill
+import qs.modules.common.pill
 
 // "Now playing" media flyout — the music-player analog of the reference.
 // Shown when the media thumbnail is selected; reuses MprisController so it

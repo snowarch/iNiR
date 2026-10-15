@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Services.Pipewire
 import qs.services
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Mixer surface: application streams are the primary view, with a large master

@@ -1,0 +1,5 @@
+module qs.modules.common.pill
+singleton PillTheme 1.0 PillTheme.qml
+singleton PillMotion 1.0 PillMotion.qml
+IslandPanel 1.0 IslandPanel.qml
+HeatHold 1.0 HeatHold.qml

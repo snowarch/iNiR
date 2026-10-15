@@ -3,11 +3,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs
-import qs.modules.ii.barM3
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.services
+import qs.modules.common.m3
 
 FocusScope {
     id: root

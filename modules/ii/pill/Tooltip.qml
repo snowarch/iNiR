@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Washi hint bubble for pill controls. Anchored to its parent control and

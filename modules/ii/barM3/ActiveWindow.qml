@@ -2,6 +2,7 @@ import qs.modules.ii.bar as StockBar
 import qs.modules.ii.barM3
 import qs.modules.common
 import qs.modules.common.functions
+import qs.modules.common.m3
 import QtQuick
 
 // The source component only draws its app icon in vertical mode; horizontally

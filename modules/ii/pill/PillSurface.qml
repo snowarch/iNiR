@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Shared morph-surface base for the pill's standard surfaces. Each surface fills

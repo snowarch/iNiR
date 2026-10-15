@@ -8,7 +8,7 @@ import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.ii.pill
+import qs.modules.common.pill
 
 // One workspace thumbnail in the rail.
 //

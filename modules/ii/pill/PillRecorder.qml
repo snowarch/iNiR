@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import qs.services
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Recorder surface: start/stop screen recording from the pill. Upstream's

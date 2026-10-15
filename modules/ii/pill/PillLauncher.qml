@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import qs.services
 import qs.modules.common
+import qs.modules.common.pill
 import "lib/fuzzy.js" as Fuzzy
 import "lib/calc.js" as Calc
 

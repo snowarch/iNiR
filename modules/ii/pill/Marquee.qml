@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Single-line text that ping-pong scrolls when wider than the available width,

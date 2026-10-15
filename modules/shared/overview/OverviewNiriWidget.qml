@@ -1,11 +1,11 @@
 pragma ComponentBehavior: Bound
 import qs
 import qs.services
-import qs.modules.ii.barM3
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.shared.workspaceStrip
+import qs.modules.common.m3
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Layouts

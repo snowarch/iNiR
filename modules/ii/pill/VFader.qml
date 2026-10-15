@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Vertical filament fader. A thin matte thread with a rising fill and a flat

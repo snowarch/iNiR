@@ -7,6 +7,7 @@ import Quickshell
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * The pill body. One element carries every state. Width/height driven by `mode`

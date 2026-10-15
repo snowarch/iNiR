@@ -8,6 +8,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.services
+import qs.modules.common.m3
 
 FocusScope {
     id: root

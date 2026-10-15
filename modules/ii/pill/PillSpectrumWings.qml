@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.pill
 
 Item {
     id: root

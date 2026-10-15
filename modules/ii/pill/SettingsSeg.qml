@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Mini-segmented choice control. `options` is a list of `{ label, value }`; the

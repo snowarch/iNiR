@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * 飴 Ame, the shapeshifter. One molten-glass bead, the shell's only glowing

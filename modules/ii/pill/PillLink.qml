@@ -8,6 +8,7 @@ import Quickshell.Bluetooth
 import Quickshell.Services.Notifications
 import qs.modules.common
 import qs.services
+import qs.modules.common.pill
 
 /**
  * 繋 LINK surface: connectivity rows (auto-detected Netz, Bluetooth) over the

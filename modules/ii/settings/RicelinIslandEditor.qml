@@ -7,6 +7,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.ii.pill
+import qs.modules.common.pill
 
 ColumnLayout {
     id: root

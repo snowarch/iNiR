@@ -2,8 +2,6 @@ module qs.modules.ii.pill
 Ame 1.0 Ame.qml
 Filament 1.0 Filament.qml
 GlyphIcon 1.0 GlyphIcon.qml
-HeatHold 1.0 HeatHold.qml
-IslandPanel 1.0 IslandPanel.qml
 LinkBt 1.0 LinkBt.qml
 LinkToggle 1.0 LinkToggle.qml
 LinkWifi 1.0 LinkWifi.qml
@@ -20,7 +18,6 @@ PillLauncher 1.0 PillLauncher.qml
 PillLink 1.0 PillLink.qml
 PillMedia 1.0 PillMedia.qml
 PillMixer 1.0 PillMixer.qml
-singleton PillMotion 1.0 PillMotion.qml
 singleton PillNotifs 1.0 PillNotifs.qml
 PillOsd 1.0 PillOsd.qml
 singleton PillPlayers 1.0 PillPlayers.qml
@@ -32,7 +29,6 @@ PillSpectrumWings 1.0 PillSpectrumWings.qml
 PillSurface 1.0 PillSurface.qml
 singleton PillSysmon 1.0 PillSysmon.qml
 PillSysmonSurface 1.0 PillSysmonSurface.qml
-singleton PillTheme 1.0 PillTheme.qml
 PillTrayMenu 1.0 PillTrayMenu.qml
 singleton PillWeather 1.0 PillWeather.qml
 PillWorkspaces 1.0 PillWorkspaces.qml

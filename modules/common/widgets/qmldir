@@ -186,3 +186,4 @@ ZzzTechFrame 1.0 ZzzTechFrame.qml
 OrganicAudioMotion 1.0 OrganicAudioMotion.qml
 OrganicScreenEdge 1.0 OrganicScreenEdge.qml
 singleton OrganicIdleClock 1.0 OrganicIdleClock.qml
+NotificationStatusButton 1.0 NotificationStatusButton.qml

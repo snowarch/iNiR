@@ -10,7 +10,7 @@ import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.ii.pill
+import qs.modules.common.pill
 
 // Detached "now playing"-style flyout shown to the side of the selected card.
 // Carries the selected workspace's identity and a live, interactive list of its

@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell.Hyprland
 import qs.services
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Workspace dots for one monitor. No numbers, no icons. Active one is a larger

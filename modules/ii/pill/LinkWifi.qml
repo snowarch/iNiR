@@ -7,6 +7,7 @@ import Quickshell.Io
 import Quickshell.Networking
 import qs.modules.common
 import qs.services
+import qs.modules.common.pill
 
 /**
  * WLAN drill-in for the link surface: back chevron, wifi enable toggle and the

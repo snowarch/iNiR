@@ -10,8 +10,6 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.shared.overlay
-import qs.modules.ii.sidebarRight.notifications
-
 StyledOverlayWidget {
     id: root
 

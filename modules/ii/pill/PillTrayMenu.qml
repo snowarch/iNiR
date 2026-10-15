@@ -5,6 +5,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * The tray's native context menu, in a layer-shell window of its own so it can

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Hand-drawn wifi glyph: three concentric arcs over a base dot, the lit-arc

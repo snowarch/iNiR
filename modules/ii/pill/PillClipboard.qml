@@ -6,6 +6,7 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.services
 import qs.services.deferred
+import qs.modules.common.pill
 
 /**
  * 控 CLIPBOARD surface: search field over the cliphist history, drawn as one of

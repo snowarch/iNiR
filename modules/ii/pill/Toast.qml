@@ -5,6 +5,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
+import qs.modules.common.pill
 
 /**
  * Toast content for the morphing pill body: icon tile, app eyebrow, summary

@@ -14,6 +14,7 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.ii.pill
 import qs.modules.waffle.looks
+import qs.modules.common.pill
 
 // Edge-hover workspace navigator with window thumbnails and a now-playing
 // media flyout.

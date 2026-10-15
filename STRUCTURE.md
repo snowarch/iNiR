@@ -113,7 +113,7 @@ inir/
 **modules/ii/barM3/:**
 - Purpose: Separate Material 3 bar implementation selected by `bar.appearanceStyle === "m3"`
 - Contains: M3Bar.qml and its own widget components; the layout contract lives under `bar.m3` in Config
-- Key files: `modules/ii/barM3/M3Bar.qml`, `modules/ii/barM3/M3Palette.qml`
+- Key files: `modules/ii/barM3/M3Bar.qml`, `modules/common/m3/M3Palette.qml`
 
 **services/:**
 - Purpose: Runtime singletons providing backend functionality (audio, network, compositor IPC, theming, etc.)

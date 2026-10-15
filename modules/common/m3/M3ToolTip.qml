@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import qs.modules.ii.barM3
 import qs.modules.common
 import qs.modules.common.widgets
 

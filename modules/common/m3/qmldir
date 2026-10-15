@@ -1,0 +1,3 @@
+module qs.modules.common.m3
+singleton M3Palette 1.0 M3Palette.qml
+M3ToolTip 1.0 M3ToolTip.qml

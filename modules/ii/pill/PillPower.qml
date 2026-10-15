@@ -5,6 +5,7 @@ import Quickshell.Widgets
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
+import qs.modules.common.pill
 
 /**
  * Power surface: a row of hand-drawn session glyphs split by a hairline into a

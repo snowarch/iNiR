@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Toggle switch: tile bg off, terracotta fill on, cream knob slides on the

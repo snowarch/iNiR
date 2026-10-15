@@ -25,6 +25,7 @@ import qs.modules.ii.sidebarRight.hotspot
 import qs.modules.ii.sidebarRight.nightLight
 import qs.modules.ii.sidebarRight.volumeMixer
 import qs.modules.ii.sidebarRight.wifiNetworks
+import qs.modules.common.pill
 
 Item {
     id: root

@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import qs.services
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Adapter that presents iNiR's MprisController through the shape the ported pill

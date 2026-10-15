@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Bluetooth
 import qs.modules.common
 import qs.services
+import qs.modules.common.pill
 
 /**
  * Bluetooth drill-in for the link surface: back chevron, scan with 25s

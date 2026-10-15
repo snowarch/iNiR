@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.common
 import qs.services
+import qs.modules.common.pill
 
 /**
  * 蓄 BATTERY surface: a typographic read-out for the laptop battery. The

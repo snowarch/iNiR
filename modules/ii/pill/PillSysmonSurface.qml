@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.common
 import qs.services
+import qs.modules.common.pill
 
 /**
  * 系 SYSTEM surface: a flat washi card of live machine vitals fed by the

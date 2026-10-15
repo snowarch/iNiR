@@ -7,6 +7,7 @@ import qs.modules.shared.mediaControls
 import qs.services
 import qs.modules.common.models
 import qs
+import qs.modules.common.m3
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Effects

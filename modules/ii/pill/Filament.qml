@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Thread primitive for the link surface, matches the mixer fader's filament

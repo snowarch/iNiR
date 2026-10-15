@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Effects
 import qs.modules.common
 import qs.modules.ii.pill
+import qs.modules.common.pill
 
 IslandPanel {
     id: root

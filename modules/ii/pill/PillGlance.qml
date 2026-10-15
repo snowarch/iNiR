@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import qs.services
 import qs.modules.common
+import qs.modules.common.pill
 
 /**
  * Glance surface: the day at one look — current weather, today's agenda and

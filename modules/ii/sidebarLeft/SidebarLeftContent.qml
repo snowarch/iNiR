@@ -10,6 +10,7 @@ import qs.modules.ii.pill
 import qs.modules.ii.sidebarLeft.animeSchedule
 import qs.modules.ii.sidebarLeft.innertune
 import qs.modules.ii.sidebarLeft.news
+import qs.modules.common.pill
 // DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
 // import qs.modules.ii.sidebarLeft.plugins
 import QtQuick
