@@ -76,34 +76,29 @@ waffleSettings.qml            # Waffle-specific settings GUI
 welcome.qml                   # First-run wizard
 killDialog.qml                # Process kill confirmation
 
-modules/                      # UI module directories
-├── common/                   # Shared infrastructure
-│   ├── Appearance.qml        # ii visual tokens
-│   ├── Config.qml            # Central config (JsonAdapter)
-│   └── widgets/              # Reusable widgets + qmldir
-├── bar/                      # Top bar (ii family)
-├── barM3/                    # Material 3 bar — independent layout model, bar.appearanceStyle "m3"
-├── iris/                     # iRiS Island family, chassis, surfaces, Studio, widgets and themes
-├── background/               # Wallpaper backdrop + desktop widgets + desktop items
-├── ii/                       # ii composition implementation + critical host + ii-only overlay pieces
-│   ├── ShellIiPanelsImpl.qml # Deferred/on-demand ii composition authority
-│   └── critical/             # First-frame ii background/bar/dock host
-├── sidebarLeft/              # AI chat, YT Music, widgets
-├── sidebarRight/             # Toggles, calendar, tools
-├── settings/                 # All config UI pages
-├── dock/                     # App dock (all 4 positions)
-├── overview/                 # Workspace overview + app search
-├── wallpaperLauncher/        # Shared compact wallpaper carousel
+modules/                      # UI: one folder per family, plus what they share
+├── common/                   # Shared kit: Config, Appearance (Material tokens and the palette), widgets, functions
+├── shared/                   # Surfaces more than one family loads: wallpaper and desktop widgets (background),
+│                             #   lock, overview, clipboard, region selector, session screen, overlay, OSK...
+├── ii/                       # Material family
+│   ├── ShellIiPanelsImpl.qml # Deferred/on-demand Material composition
+│   ├── critical/             # First-frame background/bar/dock
+│   ├── bar/ barM3/ pill/ verticalBar/ dock/ sidebar/ sidebarLeft/ sidebarRight/ controlPanel/ dashboard/
+│   ├── notificationPopup/ onScreenDisplay/ equalizer/
+│   └── settings/             # The Settings app: Material's pages and the page registry
 ├── waffle/                   # Windows 11 family
-│   ├── ShellWafflePanelsImpl.qml # Deferred/on-demand Waffle composition authority
-│   ├── critical/             # First-frame Waffle bar/background/backdrop host
-│   ├── bar/                  # Bottom taskbar
-│   ├── startMenu/            # Start menu with search
-│   ├── actionCenter/         # Quick settings
-│   ├── notificationCenter/   # Notification list + calendar
+│   ├── ShellWafflePanelsImpl.qml
+│   ├── critical/
+│   ├── bar/ startMenu/ actionCenter/ notificationCenter/ ...
 │   ├── looks/Looks.qml       # Waffle visual tokens
-│   └── [13 more subdirs]
-└── [more modules]
+│   └── settings/             # Waffle Settings
+└── iris/                     # iRiS family
+    ├── ShellIrisPanelsImpl.qml
+    ├── critical/
+    ├── style/IrisStyle.qml   # iRiS visual tokens; IrisDesign.qml loads a Design
+    ├── bar/ field/ frame/ dock/ control/ palette/ orbit/ lock/ ...
+    ├── designs/              # Designs (iris, airisu)
+    └── settings/             # iRiS Settings
 
 services/                     # Runtime singletons (+ services/deferred/)
 ├── qmldir                    # Service module registration
@@ -142,6 +137,11 @@ distro/arch/                  # Arch PKGBUILDs (dependency manifests)
 assets/                       # Icons, wallpapers, systemd unit, desktop entry
 docs/                         # User documentation
 ```
+
+A family may use `modules/shared`, `modules/common` and `services`; nothing else may use a family, apart from the
+entry files that compose the shell. `dev/tests/test-family-isolation.py` follows every reference
+(`dev/tools/module-map.py`) and fails on a new crossing; the ones that existed when the folders were drawn are listed in
+`dev/tests/family-crossings.json`, and that list only shrinks.
 
 ## Config System
 

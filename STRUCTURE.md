@@ -13,35 +13,29 @@ inir/
 ├── waffleSettings.qml            # Waffle-specific settings GUI
 ├── welcome.qml                   # First-run wizard
 ├── killDialog.qml                # Process kill confirmation
-├── modules/                      # UI module directories
-│   ├── common/                   # Shared infrastructure
-│   │   ├── Appearance.qml        # ii visual tokens
-│   │   ├── Config.qml            # Central config (JsonAdapter)
-│   │   └── widgets/              # Reusable widgets + qmldir
-│   ├── bar/                      # Top bar (ii family)
-│   ├── barM3/                    # Material 3 bar — independent layout model, bar.appearanceStyle "m3"
-│   ├── background/               # Wallpaper backdrop + desktop widgets + desktop items
-│   ├── sidebarLeft/              # AI chat, YT Music, widgets
-│   ├── sidebarRight/             # Toggles, calendar, tools
-│   ├── settings/                 # All config UI pages
-│   ├── dock/                     # App dock (all 4 positions)
-│   ├── overview/                 # Workspace overview + app search
-│   ├── wallpaperLauncher/        # Shared compact wallpaper carousel
-│   ├── waffle/                   # Windows 11 family
-│   │   ├── ShellWafflePanelsImpl.qml # Deferred/on-demand family composition
-│   │   ├── critical/             # First-frame taskbar/background/backdrop
-│   │   ├── bar/                  # Bottom taskbar
-│   │   ├── startMenu/            # Start menu with search
-│   │   ├── actionCenter/         # Quick settings
-│   │   ├── notificationCenter/   # Notification list + calendar
-│   │   ├── looks/Looks.qml       # Waffle visual tokens
-│   │   └── [13 more subdirs]
-│   ├── ii/                       # ii family composition + ii-only components
-│   │   ├── ShellIiPanelsImpl.qml # Deferred/on-demand family composition
+├── modules/                      # UI: one folder per family, plus what they share
+│   ├── common/                   # Shared kit: Config, Appearance (Material tokens and the palette), widgets, functions
+│   ├── shared/                   # Surfaces more than one family loads: wallpaper and desktop widgets (background),
+│   │                             #   lock, overview, clipboard, region selector, session screen, overlay, OSK...
+│   ├── ii/                       # Material family
+│   │   ├── ShellIiPanelsImpl.qml # Deferred/on-demand Material composition
 │   │   ├── critical/             # First-frame background/bar/dock
-│   │   ├── overlay/
-│   │   └── sidebarRight/
-│   └── [more modules]
+│   │   ├── bar/ barM3/ pill/ verticalBar/ dock/ sidebar/ sidebarLeft/ sidebarRight/ controlPanel/ dashboard/
+│   │   ├── notificationPopup/ onScreenDisplay/ equalizer/
+│   │   └── settings/             # The Settings app: Material's pages and the page registry
+│   ├── waffle/                   # Windows 11 family
+│   │   ├── ShellWafflePanelsImpl.qml
+│   │   ├── critical/
+│   │   ├── bar/ startMenu/ actionCenter/ notificationCenter/ ...
+│   │   ├── looks/Looks.qml       # Waffle visual tokens
+│   │   └── settings/             # Waffle Settings
+│   └── iris/                     # iRiS family
+│       ├── ShellIrisPanelsImpl.qml
+│       ├── critical/
+│       ├── style/IrisStyle.qml   # iRiS visual tokens; IrisDesign.qml loads a Design
+│       ├── bar/ field/ frame/ dock/ control/ palette/ orbit/ lock/ ...
+│       ├── designs/              # Designs (iris, airisu)
+│       └── settings/             # iRiS Settings
 ├── services/                     # Runtime singletons (+ services/deferred/)
 │   ├── qmldir                    # Service module registration
 │   ├── Audio.qml                 # PipeWire volume, mute, per-app mixer
@@ -86,7 +80,8 @@ inir/
 ## Directory Purposes
 
 **modules/:**
-- Purpose: All UI module directories organized by panel family and feature area
+- Purpose: The UI, one folder per family (`ii` Material, `waffle`, `iris`) plus `shared` and `common`. A family uses
+  shared, common and services; nothing else uses a family (`dev/tests/test-family-isolation.py`)
 - Contains: QML components, qmldir registration files, subdirectories per feature
 - Key files: `modules/common/Config.qml`, `modules/common/Appearance.qml`, `modules/common/widgets/qmldir`
 
@@ -101,9 +96,14 @@ inir/
 - Key files: `modules/waffle/looks/Looks.qml`, `modules/waffle/bar/WaffleBar.qml`, `modules/waffle/settings/WSettingsContent.qml`
 
 **modules/ii/:**
-- Purpose: ii-family composition plus ii-specific overlay/sidebar integration
-- Contains: deferred/on-demand composition (`ShellIiPanelsImpl.qml`), critical first-frame host, overlay system, sidebarRight integration
-- Key files: `modules/ii/ShellIiPanelsImpl.qml`, `modules/ii/critical/ShellIiCriticalPanels.qml`, `modules/shared/overlay/Overlay.qml`
+- Purpose: The Material family: every surface only Material loads, and the Settings app
+- Contains: composition (`ShellIiPanelsImpl.qml`), critical first-frame host, bars, dock, sidebars, control panel, dashboard, OSD, notifications, `settings/`
+- Key files: `modules/ii/ShellIiPanelsImpl.qml`, `modules/ii/critical/ShellIiCriticalPanels.qml`, `modules/ii/settings/SettingsPageRegistry.qml`
+
+**modules/shared/:**
+- Purpose: Surfaces more than one family loads, with one implementation
+- Contains: background (wallpaper, desktop widgets and items), lock, overview, clipboard, region selector, session screen, overlay, on-screen keyboard, polkit, wallpaper selector and launcher
+- Key files: `modules/shared/background/Background.qml`, `modules/shared/lock/Lock.qml`, `modules/shared/overlay/Overlay.qml`
 
 **modules/shared/background/:**
 - Purpose: Per-output desktop surface rendering the wallpaper and hosting desktop widgets and desktop items
@@ -205,6 +205,6 @@ inir/
 **New config key:** Update `modules/common/Config.qml`, consumers, and every owning Settings family; use `defaults/config.json` only for curated fresh-install preferences
 **New translation:** Wrap a literal in `Translation.tr(...)`, then synchronize and audit every locale catalog
 **New waffle subdir:** `modules/waffle/[subdir]/` following existing waffle subdir patterns
-**New ii-family component:** `modules/ii/[subdir]/` for overlay or sidebarRight additions
+**New Material surface:** `modules/ii/[subdir]/`; a surface a second family will load goes to `modules/shared/[subdir]/`
 **New desktop widget:** `modules/shared/background/widgets/[name]/` — declare a `background.widgets.<name>` key in `modules/common/Config.qml` and expose it in both Settings families
 **New M3 bar widget:** `modules/ii/barM3/<Name>.qml` — reference it from the `bar.m3` layout lists in `modules/common/Config.qml`
