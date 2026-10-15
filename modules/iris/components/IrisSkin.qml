@@ -8,7 +8,9 @@ Loader {
     id: root
     property Item host: parent
     property string part
-    readonly property string url: IrisDesign.skin(root.part)
+    // The owner may decline the Design's anatomy where it does not fit (Settings' spread in a narrow window).
+    property bool wanted: true
+    readonly property string url: root.wanted ? IrisDesign.skin(root.part) : ""
     anchors.fill: parent
     active: root.url.length > 0
     source: root.url

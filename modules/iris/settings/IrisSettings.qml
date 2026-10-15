@@ -50,6 +50,10 @@ Item {
     // history and every row stay here.
     readonly property Item scene: pageScene.item
     readonly property bool sceneDrawn: root.scene !== null
+    // A Design's page is a spread (AIRISU: name and plate, the sheet of rows, the index): under 960 px it squeezed the
+    // sheet to a sliver and the rows ran past its foot, so a narrow window reads the engine's one column, in the Design's
+    // own parts. The frame's width, never the page's: the page's width follows the choice.
+    readonly property bool sceneFits: frame.width >= Math.round(960 * root.d)
     // A Design that draws the page is known before its scene arrives: the engine's own chrome is then never built, and the
     // body waits for the scene instead of showing that chrome for the frames the scene takes to load.
     readonly property bool sceneDesigned: pageScene.url.length > 0
@@ -770,7 +774,7 @@ Item {
         }
 
 
-        IrisSkin { id: pageScene; part: "settingsPage"; host: root }
+        IrisSkin { id: pageScene; part: "settingsPage"; wanted: root.sceneFits; host: root }
 
         RowLayout {
             anchors.fill: parent
