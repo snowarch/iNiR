@@ -941,6 +941,8 @@ iRiS bar and Island design. Available while the iRiS bar is enabled.
 | `adaptive` | How much the wallpaper shapes iRiS, `0`-`100`; any other word prints what was read from the wallpaper |
 | `proof <file>` | Draw every control the active Design skins, in each state a person reaches (rest, pointer, press, keyboard, inactive), and save it as one image at an absolute `.png` path |
 | `tokens` | JSON with the colours iRiS resolved for the current look and the contrast of each text, accent and fill on the surface it sits on (worst case over glass), plus the ones below their target |
+| `options <section>` | JSON with every row iRiS Settings declares in a section (`appearance`, `dock`...; empty for all): the paths it writes, whether it is shown now, whether the Design owns it, its value and choices. `<section>@<page>` lists 40 rows at a time, for sections too long for one reply |
+| `preview <path> <value>` | Apply a value in memory only, the way a Settings slider does while it is dragged; nothing is saved. Returns the value it replaced, as JSON, to put it back |
 | `spotlight` | Open Spotlight with a query already typed, e.g. `firefox` or `12*7` (empty for suggestions); while it is open, replaces the query |
 | `spotlightClose` | Close Spotlight |
 | `orbit` | Open Orbit with a search already typed, e.g. `firefox` (empty for all the workspaces) |

@@ -1811,6 +1811,26 @@
      "values": []
     },
     {
+     "name": "options",
+     "args": [
+      "section"
+     ],
+     "description": "JSON with every row iRiS Settings declares in a section (`appearance`, `dock`...; empty for all): the paths it writes, whether it is shown now, whether the Design owns it, its value and choices. `<section>@<page>` lists 40 rows at a time, for sections too long for one reply",
+     "values": [
+      "appearance",
+      "dock"
+     ]
+    },
+    {
+     "name": "preview",
+     "args": [
+      "path",
+      "value"
+     ],
+     "description": "Apply a value in memory only, the way a Settings slider does while it is dragged; nothing is saved. Returns the value it replaced, as JSON, to put it back",
+     "values": []
+    },
+    {
      "name": "proof",
      "args": [
       "path"

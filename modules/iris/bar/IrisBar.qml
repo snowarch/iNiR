@@ -401,6 +401,43 @@ Scope {
             return String(Math.max(0, Math.min(100, value)))
         }
         function tokens(): string { return JSON.stringify(IrisStyle.audit()) }
+        // Every row iRiS Settings declares, as data: where it writes, whether it is offered now, and what it can take.
+        // `<section>@<page>` lists 40 rows at a time (an IPC reply has a size limit); an empty list is the end.
+        function options(section: string): string {
+            const page = section.includes("@") ? Number(section.split("@")[1]) : -1
+            section = section.split("@")[0]
+            // A widget row's value can be an object graph that never ends; it is named instead.
+            const data = value => { try { return JSON.parse(JSON.stringify(IrisOptions.plain(value)) ?? "null") } catch (error) { return String(value) } }
+            const rows = []
+            for (const spec of IrisOptions.settings) {
+                if (section.length > 0 && spec.section !== section) continue
+                const row = { section: String(spec.section ?? ""), group: String(spec.group ?? ""), part: String(spec.part ?? ""),
+                    label: String(spec.label ?? ""), kind: String(spec.kind ?? ""),
+                    paths: spec.bundle ? Array.from(spec.bundle, path => String(path)) : spec.flags ? [String(spec.flags)] : spec.path ? [String(spec.path)] : [],
+                    via: spec.widget ? "widget" : spec.widgetDesign ? "widgetDesign" : spec.niri ? "niri" : spec.kind === "icon" ? "icon" : spec.set ? "set" : spec.flags ? "flags" : spec.bundle ? "bundle" : "path",
+                    tune: IrisOptions.fineTune(spec), mirror: Boolean(spec.mirror), visibleWhen: String(spec.visibleWhen ?? ""), showIf: Boolean(spec.showIf),
+                    fallback: data(spec.fallback), min: spec.min, max: spec.max, step: spec.step }
+                try {
+                    row.shown = IrisOptions.shown(spec)
+                    row.owned = (spec.bundle ?? (spec.path ? [String(spec.path)] : [])).some(path => IrisDesign.owns(String(path)))
+                    row.current = data(IrisOptions.currentValue(spec))
+                    row.choices = IrisOptions.choicesOf(spec).map(choice => choice.values ? { value: data(choice.value), values: data(choice.values) } : data(choice.value))
+                } catch (error) {
+                    row.error = String(error)
+                }
+                rows.push(row)
+            }
+            return JSON.stringify(page < 0 ? rows : rows.slice(page * 40, page * 40 + 40))
+        }
+        // Applies a value in memory only, as a Settings slider does while it is dragged; nothing is written to disk.
+        // Returns the value it replaced, as JSON, so the caller can put it back.
+        function preview(path: string, value: string): string {
+            const was = JSON.stringify(IrisOptions.plain(Config.getNestedValue(path, null)))
+            let parsed = value
+            try { parsed = JSON.parse(value) } catch (error) {}
+            Config.previewNestedValue(path, parsed)
+            return was
+        }
         // The active Design's control parts in every state, saved as one image (an absolute .png path).
         function proof(path: string): string {
             if (!path.startsWith("/") || !path.endsWith(".png")) return "needs an absolute .png path"
