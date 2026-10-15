@@ -183,7 +183,7 @@ Region {
         const k = Math.max(0, Number(s.fuse ?? 0))
         if (k < 0.5) return
         const g = b => b.x + "," + b.y + "," + b.width + "," + b.height + "," + (b.radius ?? 0)
-        const key = g(s) + "," + k + "|" + (t === null ? "frame:" + g(root.memo.frame) + "," + root.windowWidth + "," + root.windowHeight
+        const key = g(s) + "," + k + "," + IrisStyle.fieldChamfer + "|" + (t === null ? "frame:" + g(root.memo.frame) + "," + root.windowWidth + "," + root.windowHeight
             : g(t)) + "|" + root.framed + "," + root.band
         // A still body keeps its exact runs while another one moves; only a moving one is walked coarse.
         const known = cache[key] ?? (exact ? null : cache[key + "~"])
@@ -204,12 +204,31 @@ Region {
                 return Math.sqrt(ox * ox + oy * oy) + Math.min(qx > qy ? qx : qy, 0) - r
             }
         }
-        const own = box(s), joined = box(t === null ? root.memo.frame : t), sign = t === null ? -1 : 1, limit = -root.inset
-        const inside = (x, y) => {
-            const a = sign * joined(x, y), b = own(x, y)
-            const h = Math.max(0, Math.min(1, 0.5 + 0.5 * (b - a) / k))
-            return b + (a - b) * h - k * h * (1 - h) < limit
+        // A chamfered Design draws square boxes cut at 45° and joins them with a gusset whose legs are the blade's
+        // (IrisField.frag cutBox, smoothUnion): measured the round way, the blur filled a fillet the field never drew.
+        const blade = IrisStyle.fieldChamfer ? IrisStyle.chamferCut : 0
+        const cutBox = (b, c, mask) => {
+            const hx = b.width / 2, hy = b.height / 2, cx = b.x + hx, cy = b.y + hy, cc = Math.min(c, hx, hy)
+            return (x, y) => {
+                const dx = x - cx, dy = y - cy, qx = Math.abs(dx) - hx, qy = Math.abs(dy) - hy
+                const ox = qx > 0 ? qx : 0, oy = qy > 0 ? qy : 0
+                let d = Math.sqrt(ox * ox + oy * oy) + Math.min(qx > qy ? qx : qy, 0)
+                const cuts = mask === 0 ? dx * dy < 0 : mask === -1 ? dy < 0 : mask === -2 ? dy > 0 : mask === -3 ? dx < 0 : dx > 0
+                if (cc > 0.5 && cuts) d = Math.max(d, (Math.abs(dx) + Math.abs(dy) - (hx + hy - cc)) * 0.70710678)
+                return d
+            }
         }
+        const own = blade > 0 ? cutBox(s, blade, root.cutMaskOf(s)) : box(s)
+        const joined = blade > 0 ? (t === null ? cutBox(root.memo.frame, Number(root.memo.frame.radius ?? 0), 0) : cutBox(t, blade, root.cutMaskOf(t)))
+            : box(t === null ? root.memo.frame : t)
+        const sign = t === null ? -1 : 1, limit = -root.inset, gusset = Math.min(k, 2 * blade)
+        const inside = blade > 0
+            ? (x, y) => { const a = sign * joined(x, y), b = own(x, y); return Math.min(Math.min(a, b), (a + b - gusset * 0.5) * 0.70710678) < limit }
+            : (x, y) => {
+                const a = sign * joined(x, y), b = own(x, y)
+                const h = Math.max(0, Math.min(1, 0.5 + 0.5 * (b - a) / k))
+                return b + (a - b) * h - k * h * (1 - h) < limit
+            }
         root.lines(s, inside, true, 2 * k, exact, mine)
         root.lines(s, inside, false, 2 * k, exact, mine)
         for (const q of mine) out.push(q)
@@ -220,6 +239,10 @@ Region {
     // blurred corner shows past the blade.
     function chamfered(s: var, cut: real, exact: bool, out: var): void {
         const i = root.inset
+        // The corners the blade takes (IrisField.frag cutsCorner): the Design's pair, or the two a welded body shows.
+        const mask = root.cutMaskOf(s)
+        const ul = mask === -1 || mask === -3, ur = mask === 0 || mask === -1 || mask === -4
+        const ll = mask === 0 || mask === -2 || mask === -3, lr = mask === -2 || mask === -4
         const c = Math.min(cut, s.width / 2, s.height / 2)
         const top = root.lo(s.y + i), bottom = root.hi(s.y + s.height - i)
         const left = root.lo(s.x + i), right = root.hi(s.x + s.width - i)
@@ -228,8 +251,11 @@ Region {
         const span = n => {
             const cy = n + 0.5
             let a = left, b = right
-            if (cy - s.y < reach) b = Math.min(b, root.lo(s.x + s.width - reach + cy - s.y))
-            if (s.y + s.height - cy < reach) a = Math.max(a, root.hi(s.x + reach - (s.y + s.height - cy)))
+            const fromTop = cy - s.y, fromBottom = s.y + s.height - cy
+            if (fromTop < reach && ur) b = Math.min(b, root.lo(s.x + s.width - reach + fromTop))
+            if (fromTop < reach && ul) a = Math.max(a, root.hi(s.x + reach - fromTop))
+            if (fromBottom < reach && ll) a = Math.max(a, root.hi(s.x + reach - fromBottom))
+            if (fromBottom < reach && lr) b = Math.min(b, root.lo(s.x + s.width - reach + fromBottom))
             return [a, b]
         }
         const step = exact || c <= 0.5 ? 1 : 3
@@ -250,6 +276,17 @@ Region {
             else { flush(); open = { a: a, b: b, from: n, to: end } }
         }
         flush()
+    }
+    // IrisField.cutMask, for the same window: which corners a welded body's blade takes (0 the Design's pair).
+    function cutMaskOf(s: var): int {
+        const list = !s.joins ? [] : Array.isArray(s.joins) ? s.joins : [s.joins]
+        if (!root.framed || !list.includes("frame")) return 0
+        const reach = root.band + 2
+        if (s.y + s.height >= root.windowHeight - reach) return -1
+        if (s.y <= reach) return -2
+        if (s.x + s.width >= root.windowWidth - reach) return -3
+        if (s.x <= reach) return -4
+        return 0
     }
     // Runs past the declared pieces live in a pool of child regions, grown on demand and zeroed when unused.
     readonly property Component runComponent: Component { Region {} }

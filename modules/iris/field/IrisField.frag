@@ -144,12 +144,23 @@ float roundedBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
 // lower-left corners at 45° by `options.z` (never more than half the body) and keeps the other two square: a sticker cut
 // with a blade. The cut is a half-plane intersected with the square box, so joins, rims and shadows that read the
 // distance follow it like any other edge.
-float cutBox(vec2 p, vec2 centre, vec2 halfSize, float cut) {
+// Which corners the blade takes: 0 the Design's pair (upper-right and lower-left); a body welded to the frame cuts the
+// two corners it shows instead (-1 the upper pair, -2 the lower, -3 the left, -4 the right), so it stands symmetric on
+// its edge. Under a chamfered Design a body's radius lane carries this code (IrisField.qml radiusBlock).
+bool cutsCorner(vec2 d, float mask) {
+    if (mask > -0.5) return d.x * d.y < 0.0;
+    if (mask > -1.5) return d.y < 0.0;
+    if (mask > -2.5) return d.y > 0.0;
+    if (mask > -3.5) return d.x < 0.0;
+    return d.x > 0.0;
+}
+
+float cutBox(vec2 p, vec2 centre, vec2 halfSize, float cut, float mask) {
     vec2 d = p - centre;
     vec2 q = abs(d) - halfSize;
     float box = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
     cut = min(cut, min(halfSize.x, halfSize.y));
-    if (cut > 0.5 && d.x * d.y < 0.0)
+    if (cut > 0.5 && cutsCorner(d, mask))
         box = max(box, (abs(d.x) + abs(d.y) - (halfSize.x + halfSize.y - cut)) * 0.70710678);
     return box;
 }
@@ -157,7 +168,7 @@ float cutBox(vec2 p, vec2 centre, vec2 halfSize, float cut) {
 float bodyBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
     if (u.options.y < 0.5)
         return roundedBox(p, centre, halfSize, radius);
-    return cutBox(p, centre, halfSize, u.options.z);
+    return cutBox(p, centre, halfSize, u.options.z, radius < -0.5 ? radius : 0.0);
 }
 
 // The screen's opening inside the frame band: the same blade, its cut the size the round corner would have been, so a
@@ -165,7 +176,7 @@ float bodyBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
 float frameBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
     if (u.options.y < 0.5)
         return roundedBox(p, centre, halfSize, radius);
-    return cutBox(p, centre, halfSize, radius);
+    return cutBox(p, centre, halfSize, radius, 0.0);
 }
 
 // The chrome bevel's environment by elevation e: -1 ground, 0 horizon, 1 sky.
@@ -188,8 +199,10 @@ float bayer4(vec2 p) {
 float smoothUnion(float a, float b, float k) {
     if (k <= 0.001)
         return min(a, b);
+    // The gusset's legs are the blade's: every 45° edge on screen is one length (a 56 px shoulder beside 10 px cuts
+    // read as points that did not belong together).
     if (u.options.y >= 0.5)
-        return min(min(a, b), (a + b - k * 0.5) * 0.70710678);
+        return min(min(a, b), (a + b - min(k, 2.0 * u.options.z) * 0.5) * 0.70710678);
     float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
     return mix(b, a, h) - k * h * (1.0 - h);
 }
@@ -438,7 +451,8 @@ void main() {
                 && blockValue(block, slot, u.alsoA, u.alsoB, u.alsoC, u.alsoD, u.alsoE) > -0.5)
                 continue;
             vec4 s = shapeAt(i);
-            float r = min(blockValue(block, slot, u.radiiA, u.radiiB, u.radiiC, u.radiiD, u.radiiE), min(s.z, s.w));
+            // A chamfered Design's radius lane is a cut code, not a radius: its corners are straight.
+            float r = u.options.y >= 0.5 ? 0.0 : min(blockValue(block, slot, u.radiiA, u.radiiB, u.radiiC, u.radiiD, u.radiiE), min(s.z, s.w));
             float under = u.field.z + 2.0;
             vec2 a = s.xy - s.zw;
             vec2 b = s.xy + s.zw;
