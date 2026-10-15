@@ -238,6 +238,31 @@ Item {
     readonly property var shownGroups: root.searching ? root.groups
         : root.openGroup.length > 0 ? root.groups.filter(entry => entry.title === root.openGroup)
         : root.flatBlocks
+    // A page's groups arrive one per frame: building a long page's rows at once (Appearance, Lock) froze the whole
+    // shell for a quarter second on every switch. The first comes at once, so the top of the page is there on the
+    // first frame; a search or a link to a row gets every group at once, so it can scroll to it.
+    readonly property string pageKey: root.section + "/" + root.openGroup + "/" + root.advancedPage
+    property string fedPage: ""
+    property int blocksShown: 1
+    readonly property var fedGroups: {
+        if (root.searching || root.landingPath.length > 0) return root.shownGroups
+        const shown = root.fedPage === root.pageKey ? root.blocksShown : 1
+        return shown >= root.shownGroups.length ? root.shownGroups : root.shownGroups.slice(0, shown)
+    }
+    function feedPage(): void {
+        root.fedPage = root.pageKey
+        root.blocksShown = 1
+        blockFeed.restart()
+    }
+    Timer {
+        id: blockFeed
+        interval: 16
+        repeat: true
+        onTriggered: {
+            if (root.blocksShown >= root.shownGroups.length) stop()
+            else root.blocksShown += 1
+        }
+    }
     // A section's groups in named blocks, by what someone came to change (IrisOptions.groupClusters); a section without
     // blocks is cut into even cards. Groups a block does not name close the page in a last block of their own.
     readonly property var groupChunks: {
@@ -697,6 +722,7 @@ Item {
     // A Design's scene sets its own page; the engine's slide would only move chrome nobody sees.
     function enterPage(): void { if (!root.sceneDesigned) pageEnter.restart() }
     onSectionChanged: { settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
+    onPageKeyChanged: Qt.callLater(root.feedPage)
     onOpenGroupChanged: { settingsFlick.contentY = 0; root.enterPage() }
     onAdvancedPageChanged: root.enterPage()
 
@@ -1524,7 +1550,7 @@ Item {
 
                                     Repeater {
                                         id: blockRepeater
-                                        model: ScriptModel { objectProp: "title"; values: root.shownGroups }
+                                        model: ScriptModel { objectProp: "title"; values: root.fedGroups }
                                         GroupBlock {}
                                     }
 
