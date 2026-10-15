@@ -11,7 +11,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.models.quickToggles
 import qs.modules.common.widgets
-import qs.modules.mediaControls.components
+import qs.modules.shared.mediaControls.components
 import qs.modules.iris.components
 import qs.modules.iris.pieces
 import qs.modules.iris.style

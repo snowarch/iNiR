@@ -6,7 +6,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
-import qs.modules.background.widgets
+import qs.modules.shared.background.widgets
 import qs.modules.iris.style
 import qs.modules.iris.components
 

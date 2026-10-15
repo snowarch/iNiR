@@ -1,0 +1,3 @@
+module qs.modules.ii.sidebarRight.notifications
+NotificationList 1.0 NotificationList.qml
+NotificationStatusButton 1.0 NotificationStatusButton.qml

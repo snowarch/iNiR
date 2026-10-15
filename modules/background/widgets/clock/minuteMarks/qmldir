@@ -1,5 +1,0 @@
-module qs.modules.background.widgets.clock.minuteMarks
-MinuteMarks 1.0 MinuteMarks.qml
-BigHourNumbers 1.0 BigHourNumbers.qml
-Dots 1.0 Dots.qml
-Lines 1.0 Lines.qml

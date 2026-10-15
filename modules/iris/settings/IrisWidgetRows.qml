@@ -6,9 +6,9 @@ import Quickshell
 import qs
 import qs.modules.common
 import qs.services
-import qs.modules.background.widgets
-import "../../background/widgets/OrganicEdgeConfig.js" as EdgeConfig
-import "../../background/widgets/japaneseTypography/JapaneseTypographyPresets.js" as JapanesePresets
+import qs.modules.shared.background.widgets
+import "../../shared/background/widgets/OrganicEdgeConfig.js" as EdgeConfig
+import "../../shared/background/widgets/japaneseTypography/JapaneseTypographyPresets.js" as JapanesePresets
 
 // Settings › Widgets: every desktop widget's own options as iRiS rows, one group per widget. A row names its widget and
 // key (`widget`, `key`) instead of a path: it reads what the screen in front shows and writes the base value with every

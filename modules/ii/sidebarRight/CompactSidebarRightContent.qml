@@ -1,0 +1,2335 @@
+// CompactSidebarRightContent.qml
+//
+// Two-column compact sidebar:
+//   Left rail  (54 px) — icon navigation + system actions
+//   Right area          — active section fills the rest
+//
+// Sections:
+//   0 = Controls  (sliders + quick toggles)
+//   1 = Notifications
+//   2+ = Widgets  (calendar / events / todo / notepad / calc / sysmon / timer)
+//
+// Fully compatible with all global styles: material, aurora, inir, angel, zzz.
+
+import qs
+import qs.services
+import qs.modules.common
+import qs.modules.common.models
+import qs.modules.common.widgets
+import qs.modules.common.functions
+import qs.modules.ii.pill
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Bluetooth
+import Quickshell.Hyprland
+import QtQuick.Effects
+import Qt5Compat.GraphicalEffects as GE
+
+import qs.modules.ii.sidebarRight.quickToggles
+import qs.modules.ii.sidebarRight.quickToggles.classicStyle
+import qs.modules.ii.sidebarRight.bluetoothDevices
+import qs.modules.ii.sidebarRight.nightLight
+import qs.modules.ii.sidebarRight.hotspot
+import qs.modules.ii.sidebarRight.volumeMixer
+import qs.modules.ii.sidebarRight.wifiNetworks
+import qs.modules.ii.sidebarLeft.widgets
+
+import qs.modules.ii.sidebarRight.calendar
+import qs.modules.ii.sidebarRight.todo
+import qs.modules.ii.sidebarRight.pomodoro
+import qs.modules.ii.sidebarRight.notepad
+import qs.modules.ii.sidebarRight.calculator
+import qs.modules.ii.sidebarRight.sysmon
+import qs.modules.ii.sidebarRight.events
+import qs.modules.ii.sidebarRight.screenTime
+import qs.modules.ii.sidebarRight.weather
+
+Item {
+    id: root
+
+    // ── Public API (same as SidebarRightContent) ──────────────────
+    property int sidebarWidth: Appearance.sizes.sidebarWidth
+    property int sidebarPadding: 10
+    property int screenWidth: 1920
+    property int screenHeight: 1080
+    property var panelScreen: null
+    property bool panelVisible: false
+    property bool geometryPreviewActive: false
+
+    property bool showAudioOutputDialog: false
+    property bool showAudioInputDialog: false
+    property bool showBluetoothDialog: false
+    property bool showEventsDialog: false
+    property bool showHotspotDialog: false
+    property bool showNightLightDialog: false
+    property bool showWifiDialog: false
+    property bool editMode: false
+    property bool layoutEditMode: false // Edit mode for reordering Controls sections
+    property var eventsDialogEditEvent: null
+    property bool reloadButtonEnabled: true
+    property bool settingsButtonEnabled: true
+    readonly property real preferredContentHeight: Math.max(520,
+        root.screenHeight * SidebarGeometry.rightFitExpandedPreferredRatio)
+    readonly property real minimumUsefulHeight: Math.max(420,
+        root.screenHeight * SidebarGeometry.rightFitExpandedMinRatio)
+    readonly property real minimumUsefulWidth: 360
+    readonly property real maximumUsefulWidth: 900
+    readonly property bool compactTightHeight: height > 0 && height < 760
+    readonly property bool compactNarrowWidth: width > 0 && width < 420
+    readonly property int compactPanelPadding: Math.max(6, Math.min(sidebarPadding, Math.round(Math.min(width || sidebarWidth, height || screenHeight) * 0.018)))
+    readonly property int compactContentPadding: Math.max(6, Math.min(10, compactPanelPadding))
+    readonly property int compactRailWidth: Math.max(50, Math.min(58, Math.round((width || sidebarWidth) * 0.13)))
+    readonly property int compactRailMargin: Math.max(6, Math.min(9, Math.round(compactRailWidth * 0.15)))
+    readonly property int compactNavItemHeight: compactTightHeight ? 40 : 46
+    readonly property int compactNavBgHeight: compactTightHeight ? 34 : 38
+    readonly property int compactNavSpacing: compactTightHeight ? 2 : 4
+    readonly property int compactActionItemHeight: compactTightHeight ? 36 : 40
+    readonly property int compactActionBgHeight: compactTightHeight ? 30 : 34
+    readonly property int compactSectionSpacing: compactTightHeight ? Appearance.sizes.spacingSmall : Appearance.sizes.spacingMedium
+    readonly property int compactGridSpacing: compactNarrowWidth ? 4 : 5
+    
+    // Controls section order from config
+    readonly property var defaultSectionOrder: ["sliders", "toggles", "devices", "media", "quickActions"]
+    property var controlsSectionOrder: Config.options?.sidebar?.right?.controlsSectionOrder ?? defaultSectionOrder
+    
+    function moveSectionUp(index: int): void {
+        if (index <= 0) return
+        let order = [...root.controlsSectionOrder]
+        const temp = order[index - 1]
+        order[index - 1] = order[index]
+        order[index] = temp
+        root.controlsSectionOrder = order
+        Config.setNestedValue("sidebar.right.controlsSectionOrder", order)
+    }
+    
+    function moveSectionDown(index: int): void {
+        if (index >= root.controlsSectionOrder.length - 1) return
+        let order = [...root.controlsSectionOrder]
+        const temp = order[index + 1]
+        order[index + 1] = order[index]
+        order[index] = temp
+        root.controlsSectionOrder = order
+        Config.setNestedValue("sidebar.right.controlsSectionOrder", order)
+    }
+
+    // Active section index — persisted
+    property int activeSection: Persistent.states?.sidebar?.compactGroup?.tab ?? 0
+
+    onActiveSectionChanged: {
+        if (Persistent.states?.sidebar?.compactGroup)
+            Persistent.states.sidebar.compactGroup.tab = activeSection
+        Qt.callLater(() => {
+            // Focus the newly active section's content
+            const idx = activeSection
+            if (idx >= 0 && idx < sectionRepeater.count) {
+                const item = sectionRepeater.itemAt(idx)
+                if (item && item.sectionLoader && item.sectionLoader.item) {
+                    item.sectionLoader.item.forceActiveFocus()
+                }
+            }
+        })
+    }
+
+    function handleRequestedWidget(): void {
+        const w = GlobalStates.sidebarRightRequestedWidget
+        if (!w) return
+        const idx = root.sections.findIndex(s => s.id === w)
+        if (idx !== -1) root.activeSection = idx
+        GlobalStates.sidebarRightRequestedWidget = ""
+    }
+
+    Component.onCompleted: {
+        Notifications.ensureInitialized()
+        handleRequestedWidget()
+    }
+
+    Connections {
+        target: GlobalStates
+        function onSidebarRightRequestedWidgetChanged() {
+            root.handleRequestedWidget()
+        }
+    }
+
+    // Notification count for badge
+    readonly property int notificationCount: Notifications.list?.length ?? 0
+
+    property int configVersion: 0
+    Connections {
+        target: Config
+        function onConfigChanged() { root.configVersion++ }
+    }
+
+    // ── Section definitions ───────────────────────────────────────
+    readonly property var baseSections: [
+        { id: "controls",      icon: "tune",          label: Translation.tr("Controls")      },
+        { id: "notifications", icon: "notifications", label: Translation.tr("Notifications") },
+    ]
+
+    component CompactContentSurface: Rectangle {
+        id: surface
+
+        default property alias content: contentHolder.data
+
+        anchors.margins: root.compactContentPadding
+        radius: 0
+        color: "transparent"
+        border.width: 0
+        border.color: "transparent"
+        clip: false
+
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+
+        Item {
+            id: contentHolder
+            anchors.fill: parent
+        }
+    }
+
+    Component {
+        id: calendarComponent
+        Item {
+            anchors.fill: parent
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: root.compactContentPadding
+                spacing: root.compactNavSpacing
+
+                // Calendar grid card
+                Item {
+                    Layout.fillWidth: true
+                    implicitHeight: calendarSurface.implicitHeight
+
+                    StyledRectangularShadow {
+                        target: calendarSurface
+                        visible: false
+                        blur: 0.35 * Appearance.sizes.elevationMargin
+                    }
+
+                    Rectangle {
+                        id: calendarSurface
+                        anchors.fill: parent
+                        implicitHeight: calWidget.implicitHeight + 12
+                        radius: 0
+                        color: "transparent"
+                        border.width: 0
+                        Behavior on border.width {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
+                        border.color: "transparent"
+                        clip: false
+
+                        CalendarWidget {
+                            id: calWidget
+                            anchors.fill: parent
+                            anchors.margins: root.compactGridSpacing
+                            onDayWithEventsClicked: (date) => {
+                                const eventsIdx = root.sections.findIndex(s => s.id === "events")
+                                if (eventsIdx !== -1) root.activeSection = eventsIdx
+                            }
+                            onOpenEventsDialog: (editEvent) => {
+                                const eventsIdx = root.sections.findIndex(s => s.id === "events")
+                                if (eventsIdx !== -1) root.activeSection = eventsIdx
+                            }
+                        }
+                    }
+                }
+
+                // Upcoming events below the calendar
+                Item {
+                    id: upcomingArea
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+
+                    readonly property color _colText: bg.inirEverywhere ? Appearance.inir.colText
+                        : bg.angelEverywhere ? Appearance.angel.colText
+                        : Appearance.colors.colOnLayer1
+                    readonly property color _colSub: bg.inirEverywhere ? Appearance.inir.colTextSecondary
+                        : bg.angelEverywhere ? Appearance.angel.colTextSecondary
+                        : Appearance.colors.colSubtext
+                    readonly property color _colPrimary: bg.inirEverywhere ? Appearance.inir.colPrimary
+                        : bg.angelEverywhere ? Appearance.angel.colPrimary
+                        : Appearance.colors.colPrimary
+
+                    // Merged upcoming events (next 14 days)
+                    property int _eventsTrigger: 0
+                    Connections {
+                        target: Events
+                        function onEventAdded(event) { upcomingArea._eventsTrigger++ }
+                        function onEventRemoved(id) { upcomingArea._eventsTrigger++ }
+                        function onEventUpdated(event) { upcomingArea._eventsTrigger++ }
+                    }
+                    property int _externalTrigger: 0
+                    Connections {
+                        target: CalendarSync
+                        function onEventsUpdated() { upcomingArea._externalTrigger++ }
+                    }
+                    readonly property var upcomingEvents: {
+                        const _t = _eventsTrigger
+                        const _t2 = _externalTrigger
+                        const now = new Date()
+                        const local = Events.getUpcomingEvents(14).map(e => Object.assign({}, e, { _source: "local" }))
+                        const startDay = new Date(now); startDay.setHours(0,0,0,0)
+                        const ext = []
+                        for (let i = 0; i < 14; i++) {
+                            const d = new Date(startDay); d.setDate(d.getDate() + i)
+                            const dayEvts = CalendarSync.getEventsForDate(d) || []
+                            for (const e of dayEvts) {
+                                const evtTime = new Date(e.startDate || e.dateTime)
+                                if (evtTime >= now || (e.allDay && evtTime >= startDay))
+                                    ext.push(Object.assign({}, e, { _source: "external", dateTime: e.startDate || e.dateTime, category: "general", priority: "normal" }))
+                            }
+                        }
+                        const all = local.concat(ext)
+                        all.sort((a,b) => new Date(a.dateTime || a.startDate) - new Date(b.dateTime || b.startDate))
+                        return all
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 0
+
+                        // "Upcoming" header
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.bottomMargin: Appearance.sizes.spacingSmall
+                            spacing: root.compactGridSpacing
+
+                            MaterialSymbol {
+                                text: "event_upcoming"
+                                iconSize: 16
+                                fill: 1
+                                color: upcomingArea._colPrimary
+                            }
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: Translation.tr("Upcoming")
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: Font.Medium
+                                color: upcomingArea._colText
+                            }
+                            RippleButton {
+                                implicitWidth: 28
+                                implicitHeight: 28
+                                buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
+                                colBackground: "transparent"
+                                colBackgroundHover: Appearance.colLayer2Hover
+                                colRipple: Appearance.colLayer2Active
+                                onClicked: {
+                                    const eventsIdx = root.sections.findIndex(s => s.id === "events")
+                                    if (eventsIdx !== -1) root.activeSection = eventsIdx
+                                }
+                                contentItem: MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "open_in_full"
+                                    iconSize: 15
+                                    color: upcomingArea._colPrimary
+                                }
+                                StyledToolTip { text: Translation.tr("Open all events") }
+                            }
+                        }
+
+                        // Event list or empty hint
+                        Flickable {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            contentHeight: upcomingCol.implicitHeight
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
+                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+                            ColumnLayout {
+                                id: upcomingCol
+                                width: parent.width
+                                spacing: root.compactNavSpacing
+
+                                Repeater {
+                                    model: upcomingArea.upcomingEvents.slice(0, 8)
+                                    delegate: EventCard {
+                                        required property var modelData
+                                        Layout.fillWidth: true
+                                        event: modelData
+                                        isExternal: (modelData?._source ?? "local") === "external"
+                                        onEditClicked: (evt) => {
+                                            if (!isExternal) {
+                                                root.eventsDialogEditEvent = evt
+                                                root.showEventsDialog = true
+                                            }
+                                        }
+                                        onRemoveClicked: {
+                                            if (!isExternal) Events.removeEvent(modelData.id)
+                                        }
+                                    }
+                                }
+
+                                // Empty state
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 60
+                                    visible: upcomingArea.upcomingEvents.length === 0
+
+                                    StyledText {
+                                        anchors.centerIn: parent
+                                        text: Translation.tr("No upcoming events")
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        color: upcomingArea._colSub
+                                        opacity: 0.7
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Component { 
+        id: eventsComponent
+        Item {
+            anchors.fill: parent
+
+            StyledRectangularShadow {
+                target: eventsSurface
+                visible: false
+                blur: 0.35 * Appearance.sizes.elevationMargin
+            }
+
+            CompactContentSurface {
+                id: eventsSurface
+                anchors.fill: parent
+
+                EventsWidget { 
+                    anchors.fill: parent
+                    anchors.margins: root.compactGridSpacing
+                    onOpenEventsDialog: (editEvent) => {
+                        root.eventsDialogEditEvent = editEvent
+                        root.showEventsDialog = true
+                    }
+                }
+            }
+        }
+    }
+    Component {
+        id: todoComponent
+        Item {
+            anchors.fill: parent
+
+            StyledRectangularShadow {
+                target: todoSurface
+                visible: false
+                blur: 0.35 * Appearance.sizes.elevationMargin
+            }
+
+            CompactContentSurface {
+                id: todoSurface
+                anchors.fill: parent
+
+                TodoWidget {
+                    anchors.fill: parent
+                    anchors.margins: root.compactGridSpacing
+                }
+            }
+        }
+    }
+    Component {
+        id: notepadComponent
+        Item {
+            anchors.fill: parent
+
+            StyledRectangularShadow {
+                target: notepadSurface
+                visible: false
+                blur: 0.35 * Appearance.sizes.elevationMargin
+            }
+
+            CompactContentSurface {
+                id: notepadSurface
+                anchors.fill: parent
+
+                NotepadWidget {
+                    anchors.fill: parent
+                    anchors.margins: root.compactGridSpacing
+                }
+            }
+        }
+    }
+    Component {
+        id: calculatorComponent
+        Item {
+            anchors.fill: parent
+
+            StyledRectangularShadow {
+                target: calculatorSurface
+                visible: false
+                blur: 0.35 * Appearance.sizes.elevationMargin
+            }
+
+            CompactContentSurface {
+                id: calculatorSurface
+                anchors.fill: parent
+
+                CalculatorWidget {
+                    compactMode: true
+                    centerContentVertically: true
+                    anchors.fill: parent
+                    anchors.margins: root.compactGridSpacing
+                }
+            }
+        }
+    }
+    Component {
+        id: sysmonComponent
+        Item {
+            anchors.fill: parent
+
+            StyledRectangularShadow {
+                target: sysmonSurface
+                visible: false
+                blur: 0.35 * Appearance.sizes.elevationMargin
+            }
+
+            CompactContentSurface {
+                id: sysmonSurface
+                anchors.fill: parent
+
+                SysMonWidget {
+                    anchors.fill: parent
+                    anchors.margins: root.compactGridSpacing
+                }
+            }
+        }
+    }
+    Component {
+        id: timerComponent
+        Item {
+            anchors.fill: parent
+
+            StyledRectangularShadow {
+                target: timerSurface
+                visible: false
+                blur: 0.35 * Appearance.sizes.elevationMargin
+            }
+
+            CompactContentSurface {
+                id: timerSurface
+                anchors.fill: parent
+
+                PomodoroWidget {
+                    anchors.fill: parent
+                    anchors.margins: root.compactGridSpacing
+                    compactMode: true
+                }
+            }
+        }
+    }
+    Component {
+        id: screenTimeComponent
+        Item {
+            anchors.fill: parent
+
+            StyledRectangularShadow {
+                target: screenTimeSurface
+                visible: false
+                blur: 0.35 * Appearance.sizes.elevationMargin
+            }
+
+            CompactContentSurface {
+                id: screenTimeSurface
+                anchors.fill: parent
+
+                ScreenTimeWidget {
+                    anchors.fill: parent
+                    anchors.margins: root.compactGridSpacing
+                }
+            }
+        }
+    }
+    Component {
+        id: weatherDetailComponent
+        Item {
+            anchors.fill: parent
+
+            StyledRectangularShadow {
+                target: weatherSurface
+                visible: false
+                blur: 0.35 * Appearance.sizes.elevationMargin
+            }
+
+            CompactContentSurface {
+                id: weatherSurface
+                anchors.fill: parent
+
+                StyledFlickable {
+                    anchors.fill: parent
+                    anchors.margins: root.compactGridSpacing
+                    contentHeight: weatherDetailItem.implicitHeight
+                    clip: true
+
+                    WeatherDetailWidget {
+                        id: weatherDetailItem
+                        width: parent.width
+                        margin: root.compactGridSpacing
+                    }
+                }
+            }
+        }
+    }
+
+    component ControlChipButton: Item {
+        id: chip
+        required property string chipIcon
+        required property string chipLabel
+        property string value: ""
+
+        signal clicked()
+
+        implicitHeight: 48
+
+        // Style helpers
+        readonly property color _colPrimary: bg.inirEverywhere ? Appearance.inir.colPrimary
+            : bg.angelEverywhere ? Appearance.angel.colPrimary
+            : Appearance.colors.colPrimary
+        readonly property color _colText: bg.inirEverywhere ? Appearance.inir.colText
+            : bg.angelEverywhere ? Appearance.angel.colText
+            : Appearance.colors.colOnLayer1
+        readonly property color _colSub: bg.inirEverywhere ? Appearance.inir.colTextSecondary
+            : bg.angelEverywhere ? Appearance.angel.colTextSecondary
+            : Appearance.colors.colSubtext
+
+        Rectangle {
+            id: chipBg
+            anchors.fill: parent
+            radius: bg.angelEverywhere ? Appearance.angel.roundingSmall
+                : bg.inirEverywhere ? Appearance.inir.roundingSmall
+                : Appearance.rounding.small
+            color: {
+                if (chipMA.containsPress)
+                    return bg.inirEverywhere ? Appearance.inir.colLayer2Active
+                        : bg.angelEverywhere ? Appearance.angel.colGlassCardActive
+                        : bg.colDarkSurfaceActive
+                if (chipMA.containsMouse)
+                    return bg.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : bg.colDarkSurfaceHover
+                return "transparent"
+            }
+            border.width: 0
+
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 8
+                anchors.rightMargin: 10
+                spacing: 9
+
+                // Icon in accent-tinted circle
+                Rectangle {
+                    Layout.preferredWidth: 32
+                    Layout.preferredHeight: 32
+                    radius: 16
+                    color: ColorUtils.transparentize(chip._colPrimary, 0.84)
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        iconSize: 17
+                        text: chip.chipIcon
+                        color: chip._colPrimary
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: chip.chipLabel
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.Medium
+                        color: chip._colText
+                        elide: Text.ElideRight
+                    }
+
+                    Revealer {
+                        vertical: true
+                        reveal: chip.value !== ""
+                        Layout.fillWidth: true
+                        StyledText {
+                            text: chip.value
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            color: chip._colSub
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+
+                MaterialSymbol {
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                    iconSize: 14
+                    text: "chevron_right"
+                    color: chip._colSub
+                    opacity: chipMA.containsMouse ? 0.9 : 0.5
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
+                }
+            }
+
+            MouseArea {
+                id: chipMA
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: chip.clicked()
+            }
+        }
+
+        BubbleToolTip {
+            visible: chipMA.containsMouse
+            position: "left"
+            text: chip.chipLabel
+        }
+    }
+
+    readonly property var widgetSections: {
+        root.configVersion // Force dependency
+        const enabled = Config.options?.sidebar?.right?.enabledWidgets ?? ["calendar", "todo", "notepad", "calculator", "sysmon", "weather", "timer"]
+        const all = [
+            {id: "calendar",   icon: "calendar_month", label: Translation.tr("Calendar"),   component: calendarComponent},
+            {id: "events",     icon: "event_upcoming", label: Translation.tr("Events"),     component: eventsComponent},
+            {id: "todo",       icon: "done_outline",  label: Translation.tr("To Do"),      component: todoComponent},
+            {id: "notepad",    icon: "edit_note",     label: Translation.tr("Notepad"),    component: notepadComponent},
+            {id: "calculator", icon: "calculate",     label: Translation.tr("Calc"),       component: calculatorComponent},
+            {id: "sysmon",     icon: "monitor_heart", label: Translation.tr("System"),     component: sysmonComponent},
+            {id: "weather",    icon: "light_mode", label: Translation.tr("Weather"), component: weatherDetailComponent},
+            {id: "timer",      icon: "schedule",      label: Translation.tr("Timer"),      component: timerComponent},
+            {id: "screentime", icon: "av_timer",      label: Translation.tr("Screen Time"), component: screenTimeComponent},
+        ]
+        return all.filter(w => {
+            if (w.id === "screentime" && !(Config.options?.sidebar?.screenTime?.enable ?? false))
+                return false
+            return enabled.includes(w.id)
+        })
+    }
+
+    readonly property var sections: baseSections.concat(widgetSections)
+
+    // ── Close dialogs when sidebar is hidden ─────────────────────
+    Connections {
+        target: GlobalStates
+        function onSidebarRightOpenChanged() {
+            if (!GlobalStates.sidebarRightOpen) {
+                root.showWifiDialog        = false
+                root.showBluetoothDialog   = false
+                root.showEventsDialog      = false
+                root.showAudioOutputDialog = false
+                root.showAudioInputDialog  = false
+                root.showNightLightDialog  = false
+                root.showHotspotDialog     = false
+                root.eventsDialogEditEvent = null
+            }
+        }
+        function onRequestWifiDialogChanged() {
+            if (GlobalStates.requestWifiDialog) {
+                GlobalStates.requestWifiDialog = false
+                if (!GlobalStates.sidebarRightOpen)
+                    GlobalStates.openSidebarRight(GlobalStates.sidebarLeftTargetOutput)
+                root.showWifiDialog = true
+            }
+        }
+        function onRequestBluetoothDialogChanged() {
+            if (GlobalStates.requestBluetoothDialog) {
+                GlobalStates.requestBluetoothDialog = false
+                if (!GlobalStates.sidebarRightOpen)
+                    GlobalStates.openSidebarRight(GlobalStates.sidebarLeftTargetOutput)
+                root.showBluetoothDialog = true
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Background (identical pattern to SidebarRightContent)
+    // ─────────────────────────────────────────────────────────────
+    StyledRectangularShadow {
+        target: bg
+        visible: bg.angelEverywhere && !Appearance.gameModeMinimal
+    }
+
+    IslandPanel {
+        anchors.fill: bg
+        visible: bg.islandStyle
+        radius: bg.radius
+        glassEnabled: true
+        screen: root.panelScreen ?? root.QsWindow?.window?.screen ?? null
+        glassScreenX: root.screenWidth - bg.width - Appearance.sizes.hyprlandGapsOut
+        glassScreenY: Appearance.sizes.hyprlandGapsOut
+        glassScreenWidth: root.screenWidth
+        glassScreenHeight: root.screenHeight
+    }
+
+    ZzzPlate {
+        anchors.fill: bg
+        visible: bg.zzzEverywhere && !Appearance.gameModeMinimal
+        fillColor: Appearance.zzz.chrome
+        strokeColor: Appearance.zzz.hairline
+        strokeWidth: Appearance.zzz.hairlineThick
+        chamfer: Appearance.zzz.cutCorner
+    }
+
+    Rectangle {
+        id: bg
+        anchors.fill: parent
+
+        property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
+        // Resolve one owner for the complete surface. Explicit Ricelin islands
+        // override the global worldview; otherwise the selected global style owns it.
+        readonly property string surfaceDialect: Appearance.surfaceDialectFor(
+            (Config.options?.sidebar?.style ?? "panel") === "island" ? "island" : "")
+        readonly property bool islandStyle: surfaceDialect === "island"
+        readonly property bool zzzEverywhere: surfaceDialect === "zzz"
+        readonly property bool angelEverywhere: surfaceDialect === "angel"
+        readonly property bool auroraEverywhere: surfaceDialect === "aurora" || angelEverywhere
+        readonly property bool inirEverywhere: surfaceDialect === "inir"
+        readonly property bool gameModeMinimal: Appearance.gameModeMinimal
+
+        readonly property string wallpaperUrl: {
+            const _d1 = WallpaperListener.multiMonitorEnabled
+            const _d2 = WallpaperListener.effectivePerMonitor
+            const _d3 = Wallpapers.effectiveWallpaperUrl
+            return WallpaperListener.wallpaperUrlForScreen(root.panelScreen)
+        }
+        readonly property bool useWallpaperBackdrop: root.panelVisible
+            && auroraEverywhere
+            && !inirEverywhere
+            && !gameModeMinimal
+            && wallpaperUrl.length > 0
+
+        ColorQuantizer {
+            id: bgQuant
+            source: bg.auroraEverywhere ? bg.wallpaperUrl : ""
+            depth: 0
+            rescaleSize: 10
+        }
+        readonly property color wallpaperDominantColor: bgQuant?.colors?.[0] ?? Appearance.colors.colPrimary
+        readonly property QtObject blendedColors: AdaptedMaterialScheme {
+            color: ColorUtils.mix(bg.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8)
+                   || Appearance.colors.colSecondaryContainer
+        }
+        readonly property color colDarkSurface: angelEverywhere
+            ? ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.76)
+            : zzzEverywhere ? Appearance.zzz.tile
+            : inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colLayer1, 0.22)
+            : auroraEverywhere ? ColorUtils.transparentize(
+                (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base),
+                Math.max(0.10, Appearance.aurora.subSurfaceTransparentize - 0.16)
+            )
+            : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.22)
+        readonly property color colDarkSurfaceHover: angelEverywhere
+            ? Appearance.angel.colGlassCardHover
+            : zzzEverywhere ? Appearance.zzz.paperAlt
+            : inirEverywhere ? Appearance.inir.colLayer2Hover
+            : auroraEverywhere ? ColorUtils.transparentize(
+                (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1),
+                Math.max(0.16, Appearance.aurora.subSurfaceTransparentize - 0.10)
+            )
+            : ColorUtils.transparentize(Appearance.colLayer1Hover, 0.20)
+        readonly property color colDarkSurfaceActive: angelEverywhere
+            ? Appearance.angel.colGlassCardActive
+            : zzzEverywhere ? Appearance.zzz.bg3
+            : inirEverywhere ? Appearance.inir.colLayer2Active
+            : auroraEverywhere ? ColorUtils.transparentize(
+                (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1),
+                Math.max(0.12, Appearance.aurora.subSurfaceTransparentize - 0.14)
+            )
+            : ColorUtils.transparentize(Appearance.colLayer1Active, 0.18)
+
+        color: (gameModeMinimal || islandStyle) ? "transparent"
+             : zzzEverywhere ? "transparent"
+             : inirEverywhere   ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
+             : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
+             : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
+
+        border.width: (gameModeMinimal || islandStyle) ? 0 : (zzzEverywhere ? 0 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        border.color: zzzEverywhere ? Appearance.zzz.hairline
+                    : angelEverywhere  ? Appearance.angel.colPanelBorder
+                    : inirEverywhere   ? Appearance.inir.colBorder
+                    : Appearance.colors.colLayer0Border
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+
+        radius: islandStyle ? (Config.options?.appearance?.island?.radius ?? 18)
+              : zzzEverywhere ? Appearance.zzz.panelRadius
+              : angelEverywhere  ? Appearance.angel.roundingNormal
+              : inirEverywhere   ? (cardStyle ? Appearance.inir.roundingLarge : Appearance.inir.roundingNormal)
+              : cardStyle        ? Appearance.rounding.normal
+              : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        clip: true
+
+        layer.enabled: root.panelVisible && !gameModeMinimal
+        layer.effect: GE.OpacityMask {
+            maskSource: Rectangle {
+                width: bg.width; height: bg.height; radius: bg.radius
+            }
+        }
+
+        // Aurora blurred wallpaper
+        Image {
+            id: bgBlurWallpaper
+            x: -(root.screenWidth - bg.width - Appearance.sizes.hyprlandGapsOut)
+            y: -Appearance.sizes.hyprlandGapsOut
+            width:  root.screenWidth  ?? 1920
+            height: root.screenHeight ?? 1080
+            visible: bg.useWallpaperBackdrop
+            source: bg.useWallpaperBackdrop ? bg.wallpaperUrl : ""
+            fillMode: Image.PreserveAspectCrop
+            cache: true; asynchronous: true
+            sourceSize.width: root.screenWidth ?? 1920
+            sourceSize.height: root.screenHeight ?? 1080
+            // OPTIMIZATION: Release FBO when sidebar is hidden (saves ~16 MiB VRAM)
+            layer.enabled: Appearance.effectsEnabled && bg.useWallpaperBackdrop && root.panelVisible
+            layer.effect: MultiEffect {
+                source: bgBlurWallpaper
+                anchors.fill: source
+                saturation: bg.angelEverywhere
+                    ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
+                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 64
+                blur: Appearance.effectsEnabled
+                    ? (bg.angelEverywhere ? Appearance.angel.blurIntensity : 1) : 0
+            }
+            Rectangle {
+                anchors.fill: parent
+                color: bg.angelEverywhere
+                    ? ColorUtils.transparentize((bg.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base),
+                                               Appearance.angel.overlayOpacity * Appearance.angel.panelTransparentize)
+                    : ColorUtils.transparentize((bg.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base),
+                                               Appearance.aurora.overlayTransparentize)
+            }
+        }
+
+        // Angel inset glow — top edge
+        Rectangle {
+            anchors { top: parent.top; left: parent.left; right: parent.right }
+            height:  Appearance.angel.insetGlowHeight
+            visible: bg.angelEverywhere
+            color:   Appearance.angel.colInsetGlow
+            z: 10
+        }
+
+        AngelPartialBorder { visible: bg.angelEverywhere; targetRadius: bg.radius; z: 10 }
+
+        ZzzPanelBackdrop {
+            anchors.fill: parent
+            visible: bg.zzzEverywhere && opacity > 0
+            label: "SYSTEM"
+            index: "RC"
+            ghostText: "RIGHT"
+            accentColor: Appearance.zzz.accent
+            showTicks: false
+            showBurst: false
+            showGrid: true
+            horizontalBias: 0.10
+            verticalBias: 0.16
+            ghostWidthFactor: 0.6
+            ghostStrength: 0.55
+            z: 0
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // Two-column layout
+        // ─────────────────────────────────────────────────────────
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: root.compactPanelPadding
+            anchors.topMargin: bg.angelEverywhere ? root.compactPanelPadding + 4
+                : bg.inirEverywhere ? root.compactPanelPadding + 6 : root.compactPanelPadding
+            spacing: bg.angelEverywhere ? root.compactPanelPadding + 2
+                : bg.inirEverywhere ? root.compactPanelPadding + 4 : root.compactPanelPadding
+
+            Rectangle {
+                id: compactSurface
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                radius: bg.zzzEverywhere ? Appearance.zzz.controlRadius
+                    : bg.angelEverywhere ? Appearance.angel.roundingNormal
+                    : bg.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                Behavior on radius {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                // Compact mode sits directly on the panel background (no wrapper card),
+                // matching the normal SidebarRightContent layout.
+                color: "transparent"
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                border.width: 0
+                Behavior on border.width {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                border.color: "transparent"
+                Behavior on border.color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                clip: true
+
+                layer.enabled: root.panelVisible && !bg.gameModeMinimal
+                layer.effect: GE.OpacityMask {
+                    maskSource: Rectangle {
+                        width: compactSurface.width
+                        height: compactSurface.height
+                        radius: compactSurface.radius
+                    }
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    spacing: 0
+
+            // ── LEFT RAIL ─────────────────────────────────────────
+            Rectangle {
+                id: leftRail
+                Layout.fillHeight: true
+                Layout.preferredWidth: root.compactRailWidth
+                color: "transparent"
+
+                // Thin separator on right edge
+                Rectangle {
+                    anchors {
+                        top: parent.top; bottom: parent.bottom; right: parent.right
+                        topMargin: bg.radius; bottomMargin: bg.radius
+                    }
+                    width: 0
+                    visible: false
+                    color: bg.angelEverywhere  ? ColorUtils.transparentize(Appearance.angel.colCardBorder,  0.62)
+                         : bg.inirEverywhere   ? ColorUtils.transparentize(Appearance.inir.colBorder, 0.45)
+                         : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
+                         : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
+                }
+
+                // ── Sliding selection highlight (declared before ColumnLayout = behind it) ──
+                Rectangle {
+                    id: navIndicator
+                    // Layout constants — must match ColumnLayout margins and nav item dimensions
+                    readonly property int colTop: root.compactContentPadding
+                    readonly property int colLeft: root.compactRailMargin
+                    readonly property int colRight: root.compactRailMargin
+                    readonly property int navBgLeft: 0
+                    readonly property int navItemH: root.compactNavItemHeight
+                    readonly property int navBgH: root.compactNavBgHeight
+                    readonly property int navSpacing: root.compactNavSpacing
+                    readonly property int clampedIdx: Math.max(0, Math.min(root.activeSection, root.sections.length - 1))
+
+                    x: colLeft + navBgLeft
+                    y: colTop + clampedIdx * (navItemH + navSpacing) + (navItemH - navBgH) / 2
+                    width: leftRail.width - colLeft - colRight - navBgLeft
+                    height: navBgH
+                    radius: bg.angelEverywhere ? Appearance.angel.roundingSmall
+                          : bg.inirEverywhere  ? Appearance.inir.roundingSmall
+                          : Appearance.rounding.small
+                    // Bgless doctrine: the selected category is signalled by the colored
+                    // material symbol + left accent pill (navPill), not a tenuous plate.
+                    color: "transparent"
+                    border.width: 0
+                    visible: root.activeSection >= 0 && root.activeSection < root.sections.length
+
+                    Behavior on y {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: Appearance.animation.elementMoveFast.duration * 1.5
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+                }
+
+                // ── Sliding active pill on left edge ──
+                Rectangle {
+                    id: navPill
+                    x: navIndicator.colLeft + 1
+                    y: navIndicator.colTop + navIndicator.clampedIdx * (navIndicator.navItemH + navIndicator.navSpacing) + (navIndicator.navItemH - height) / 2
+                    width: 3
+                    height: 26
+                    color: bg.zzzEverywhere   ? Appearance.zzz.accent
+                         : bg.inirEverywhere  ? Appearance.inir.colPrimary
+                         : bg.angelEverywhere ? Appearance.angel.colPrimary
+                         : Appearance.colors.colPrimary
+                    radius: bg.zzzEverywhere ? 0 : 2
+                    visible: root.activeSection >= 0 && root.activeSection < root.sections.length
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+                    Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+
+                    Behavior on y {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: Appearance.animation.elementMoveFast.duration * 1.5
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                }
+
+                // Section scroll navigation on rail
+                WheelHandler {
+                    orientation: Qt.Vertical
+                    onWheel: (event) => {
+                        if (event.angleDelta.y < 0)
+                            root.activeSection = Math.min(root.activeSection + 1, root.sections.length - 1)
+                        else if (event.angleDelta.y > 0)
+                            root.activeSection = Math.max(root.activeSection - 1, 0)
+                    }
+                }
+
+                ColumnLayout {
+                    anchors {
+                        fill: parent
+                        topMargin: root.compactContentPadding; bottomMargin: root.compactContentPadding
+                        leftMargin: root.compactRailMargin; rightMargin: root.compactRailMargin
+                    }
+                    spacing: root.compactNavSpacing
+
+                    // ── Section navigation buttons ──────────────
+                    Repeater {
+                        model: root.sections
+                        delegate: Item {
+                            id: navItem
+                            required property int index
+                            required property var modelData
+
+                            Layout.fillWidth: true
+                            implicitHeight: root.compactNavItemHeight
+
+                            readonly property bool isActive: root.activeSection === navItem.index
+                            readonly property bool isNotifications: navItem.modelData.id === "notifications"
+
+                            // Button background (active highlight provided by navIndicator behind)
+                            Rectangle {
+                                id: navBg
+                                anchors {
+                                    left: parent.left; right: parent.right
+                                    verticalCenter: parent.verticalCenter
+                                }
+                                height: root.compactNavBgHeight
+                                radius: bg.angelEverywhere ? Appearance.angel.roundingSmall
+                                      : bg.inirEverywhere  ? Appearance.inir.roundingSmall
+                                      : Appearance.rounding.small
+
+                                // Bgless doctrine: no plate at rest, hover or press.
+                                // Feedback lives in the icon colour/weight + accent pill.
+                                color: "transparent"
+                                border.width: 0
+
+                                MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    iconSize: 24
+                                    fill: navItem.isActive ? 1 : 0
+                                    animateFill: true
+                                    font.weight: (navItem.isActive || navMA.containsMouse) ? Font.DemiBold : Font.Normal
+                                    text: navItem.modelData.icon
+                                    // Bgless: active icon carries the accent itself (no plate behind)
+                                    color: navItem.isActive
+                                        ? (bg.zzzEverywhere   ? Appearance.zzz.accent
+                                         : bg.inirEverywhere  ? Appearance.inir.colPrimary
+                                         : bg.angelEverywhere ? Appearance.angel.colPrimary
+                                         : Appearance.colors.colPrimary)
+                                        : (navMA.containsMouse
+                                         ? (bg.zzzEverywhere  ? Appearance.zzz.ink
+                                          : bg.inirEverywhere ? Appearance.inir.colText
+                                          : bg.angelEverywhere ? Appearance.angel.colText
+                                          : Appearance.colors.colOnLayer1)
+                                         : (bg.zzzEverywhere  ? Appearance.zzz.inkMuted
+                                          : bg.inirEverywhere ? Appearance.inir.colTextSecondary
+                                          : bg.angelEverywhere ? Appearance.angel.colTextSecondary
+                                          : Appearance.colors.colOnLayer1))
+                                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+                                }
+
+                                // ── Notification badge ──────────
+                                Rectangle {
+                                    id: notifBadge
+                                    visible: opacity > 0
+                                    opacity: (navItem.isNotifications && root.notificationCount > 0 && !navItem.isActive) ? 1 : 0
+                                    Behavior on opacity {
+                                        enabled: Appearance.animationsEnabled
+                                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                    }
+                                    anchors {
+                                        top: parent.top
+                                        right: parent.right
+                                        topMargin: 2
+                                        rightMargin: 2
+                                    }
+                                    width: Math.max(16, badgeLabel.implicitWidth + 8)
+                                    height: 16
+                                    radius: 8
+                                    color: bg.inirEverywhere  ? Appearance.inir.colPrimary
+                                         : bg.angelEverywhere ? Appearance.angel.colPrimary
+                                         : Appearance.colors.colPrimary
+
+                                    StyledText {
+                                        id: badgeLabel
+                                        anchors.centerIn: parent
+                                        text: root.notificationCount > 99 ? "99+" : root.notificationCount.toString()
+                                        font.pixelSize: 9
+                                        font.weight: Font.Bold
+                                        font.family: Appearance.font.family.numbers
+                                        color: bg.inirEverywhere  ? Appearance.inir.colOnPrimary
+                                             : bg.angelEverywhere ? Appearance.angel.colOnPrimary
+                                             : Appearance.colors.colOnPrimary
+                                    }
+
+                                    // Subtle entrance animation
+                                    scale: visible ? 1.0 : 0.0
+                                    Behavior on scale {
+                                        enabled: Appearance.animationsEnabled
+                                        NumberAnimation {
+                                            duration: Appearance.animation.elementMoveFast.duration
+                                            easing.type: Easing.OutBack
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: navMA
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.activeSection = navItem.index
+                                }
+                                BubbleToolTip {
+                                    visible: navMA.containsMouse
+                                    position: "left"
+                                    text: navItem.isNotifications && root.notificationCount > 0
+                                        ? navItem.modelData.label + " (" + root.notificationCount + ")"
+                                        : navItem.modelData.label
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Vertical spacer ──────────────────────────
+                    Item { Layout.fillHeight: true }
+
+                    // Subtle separator between nav and system buttons
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 10
+                        Layout.rightMargin: 4
+                        height: 1
+                        visible: false
+                        color: bg.angelEverywhere  ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.68)
+                             : bg.inirEverywhere   ? ColorUtils.transparentize(Appearance.inir.colBorder, 0.5)
+                             : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.80)
+                             : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.76)
+                    }
+
+                    // ── System action buttons ────────────────────
+                    Repeater {
+                        model: [
+                            { icon: "restart_alt",       label: Translation.tr("Reload Quickshell"),
+                              action: function() { doReload() } },
+                            { icon: "settings",          label: Translation.tr("Settings"),
+                              action: function() { doSettings() } },
+                            { icon: "power_settings_new",label: Translation.tr("Session"),
+                              action: function() { GlobalStates.sessionOpen = true } },
+                        ]
+                        delegate: Item {
+                            id: sysItem
+                            required property int index
+                            required property var modelData
+                            Layout.fillWidth: true
+                            implicitHeight: root.compactActionItemHeight
+
+                            Rectangle {
+                                id: sysActBg
+                                anchors {
+                                    left: parent.left; right: parent.right
+                                    verticalCenter: parent.verticalCenter
+                                }
+                                height: root.compactActionBgHeight
+                                radius: bg.angelEverywhere ? Appearance.angel.roundingSmall
+                                      : bg.inirEverywhere  ? Appearance.inir.roundingSmall
+                                      : Appearance.rounding.small
+                                color: {
+                                    if (sysMA.containsPress)
+                                        return bg.colDarkSurfaceActive
+                                    if (sysMA.containsMouse)
+                                        return bg.colDarkSurfaceHover
+                                    return "transparent"
+                                }
+                                border.width: 0
+                                border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.46)
+                                    : bg.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colBorder, 0.36)
+                                    : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.75)
+                                    : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.70)
+                                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+
+                                MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    iconSize: 20
+                                    text: sysItem.modelData.icon
+                                    color: bg.inirEverywhere  ? Appearance.inir.colTextSecondary
+                                         : bg.angelEverywhere ? Appearance.angel.colTextSecondary
+                                         : Appearance.colors.colOnLayer1
+                                }
+                                MouseArea {
+                                    id: sysMA
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: sysItem.modelData.action()
+                                }
+                                BubbleToolTip {
+                                    visible: sysMA.containsMouse
+                                    position: "left"
+                                    text: sysItem.modelData.label
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Layout toggle ────────────────────────────
+                    Item {
+                        Layout.fillWidth: true
+                        implicitHeight: root.compactActionItemHeight
+                        Rectangle {
+                            anchors {
+                                left: parent.left; right: parent.right
+                                verticalCenter: parent.verticalCenter
+                            }
+                            height: root.compactActionBgHeight
+                            radius: bg.angelEverywhere ? Appearance.angel.roundingSmall
+                                  : bg.inirEverywhere  ? Appearance.inir.roundingSmall
+                                  : Appearance.rounding.small
+                            color: {
+                                if (layoutMA.containsPress)
+                                    return bg.colDarkSurfaceActive
+                                if (layoutMA.containsMouse)
+                                    return bg.colDarkSurfaceHover
+                                return "transparent"
+                            }
+                            border.width: 0
+                            border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.46)
+                                : bg.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colBorder, 0.36)
+                                : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.75)
+                                : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.70)
+                            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                iconSize: 18
+                                text: "view_agenda"
+                                color: bg.inirEverywhere  ? Appearance.inir.colPrimary
+                                     : bg.angelEverywhere ? Appearance.angel.colPrimary
+                                     : Appearance.colors.colPrimary
+                            }
+                            MouseArea {
+                                id: layoutMA
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Config.setNestedValue("sidebar.layout", "default")
+                            }
+                            BubbleToolTip {
+                                visible: layoutMA.containsMouse
+                                position: "left"
+                                text: Translation.tr("Switch to default layout")
+                            }
+                        }
+                    }
+                } // ColumnLayout (rail)
+            } // leftRail
+
+            // ── RIGHT CONTENT AREA ────────────────────────────────
+            Item {
+                id: contentArea
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                // Crossfade container — all sections stacked, only active one visible
+                Repeater {
+                    id: sectionRepeater
+                    model: root.sections
+
+                    delegate: Item {
+                        id: sectionItem
+                        required property int index
+                        required property var modelData
+                        anchors.fill: parent
+
+                        readonly property bool isCurrent: root.activeSection === sectionItem.index
+                        readonly property bool isBase: sectionItem.modelData.id === "controls" || sectionItem.modelData.id === "notifications"
+                        property alias sectionLoader: sectionContentLoader
+
+                        // Crossfade opacity
+                        opacity: isCurrent ? 1 : 0
+                        visible: opacity > 0
+                        Behavior on opacity {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation {
+                                duration: Appearance.animation.elementMoveFast.duration
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+
+                        // Subtle slide-in from direction of navigation
+                        transform: Translate {
+                            y: sectionItem.isCurrent ? 0 : (root.activeSection > sectionItem.index ? -6 : 6)
+                            Behavior on y {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation {
+                                    duration: Appearance.animation.elementMove.duration
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+                        }
+
+                        // ── Section content ──────────────────────
+                        Loader {
+                            id: sectionContentLoader
+                            anchors.fill: parent
+                            // Lazy loading: base sections always loaded, widgets only when adjacent or current
+                            active: sectionItem.isBase
+                                || sectionItem.isCurrent
+                                || Math.abs(root.activeSection - sectionItem.index) <= 1
+
+                            sourceComponent: {
+                                if (sectionItem.modelData.id === "controls")
+                                    return controlsSectionComponent
+                                if (sectionItem.modelData.id === "notifications")
+                                    return notificationsSectionComponent
+                                // Widget sections — use component from data
+                                return sectionItem.modelData.component ?? null
+                            }
+                        }
+                    }
+                }
+            } // contentArea
+                } // RowLayout (two columns)
+            }
+        }
+    } // bg Rectangle
+
+    // ── Section content components ────────────────────────────────
+
+    Component {
+        id: controlsSectionComponent
+        Item {
+            id: controlsRoot
+            readonly property int controlsAreaPadding: Math.max(root.compactGridSpacing, Math.min(root.compactContentPadding, Math.round(Math.min(width || root.width, height || root.height) * 0.018)))
+            readonly property int controlsGap: Math.max(root.compactNavSpacing, Math.min(root.compactSectionSpacing, Math.round((height || root.height) * (root.compactTightHeight ? 0.006 : 0.009))))
+            readonly property int controlsInnerPadding: Math.max(3, Math.round(controlsAreaPadding / 2))
+            readonly property int controlsInlineGap: Math.max(root.compactGridSpacing, Math.round(controlsGap * 0.8))
+
+            // Scrollable content for Controls section
+            Flickable {
+                id: controlsFlickable
+                anchors.fill: parent
+                anchors.topMargin: controlsRoot.controlsAreaPadding
+                anchors.bottomMargin: controlsRoot.controlsAreaPadding
+                anchors.leftMargin: controlsRoot.controlsAreaPadding
+                anchors.rightMargin: controlsRoot.controlsAreaPadding
+                contentWidth: controlsColumn.width
+                contentHeight: controlsColumn.implicitHeight
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                ScrollBar.vertical: ScrollBar {
+                    id: controlsVScroll
+                    policy: controlsFlickable.contentHeight > controlsFlickable.height
+                        ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                }
+
+                ColumnLayout {
+                    id: controlsColumn
+                    width: controlsFlickable.width - (controlsVScroll.visible ? controlsVScroll.width + controlsRoot.controlsInlineGap : 0)
+                    spacing: controlsRoot.controlsGap
+
+                    // Section header
+                    SectionHeader {
+                        Layout.fillWidth: true
+                        headerText: Translation.tr("Controls")
+                        headerIcon: "tune"
+                        // Layout edit button
+                        showAction: true
+                        actionIcon: root.layoutEditMode ? "check" : "reorder"
+                        actionTooltip: root.layoutEditMode ? Translation.tr("Done editing") : Translation.tr("Reorder sections")
+                        onActionClicked: root.layoutEditMode = !root.layoutEditMode
+                        // Quick toggles edit (only for android style)
+                        showSecondaryAction: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "android"
+                        secondaryActionIcon: root.editMode ? "check" : "edit"
+                        secondaryActionTooltip: Translation.tr("Edit quick toggles")
+                        onSecondaryActionClicked: root.editMode = !root.editMode
+                    }
+
+                    // ═══════════════════════════════════════════════════════
+                    // REORDERABLE CONTROLS SECTIONS
+                    // ═══════════════════════════════════════════════════════
+                    Repeater {
+                        model: root.controlsSectionOrder
+                        
+                        delegate: ColumnLayout {
+                            id: sectionDelegate
+                            required property string modelData
+                            required property int index
+                            
+                            Layout.fillWidth: true
+                            Layout.topMargin: sectionDelegate.index > 0 ? controlsRoot.controlsInlineGap : 0
+                            spacing: controlsRoot.controlsInlineGap
+                            
+                            // Move buttons (visible in edit mode)
+                            Revealer {
+                                vertical: true
+                                reveal: root.layoutEditMode
+                                Layout.fillWidth: true
+                            RowLayout {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                spacing: controlsRoot.controlsInlineGap
+                                
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: {
+                                        switch (sectionDelegate.modelData) {
+                                            case "sliders": return Translation.tr("Sliders")
+                                            case "toggles": return Translation.tr("Quick Toggles")
+                                            case "devices": return Translation.tr("Devices")
+                                            case "media": return Translation.tr("Media Player")
+                                            case "quickActions": return Translation.tr("Quick Actions")
+                                            default: return sectionDelegate.modelData
+                                        }
+                                    }
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    font.weight: Font.Medium
+                                    color: bg.inirEverywhere ? Appearance.inir.colPrimary
+                                        : bg.angelEverywhere ? Appearance.angel.colPrimary
+                                        : Appearance.colors.colPrimary
+                                }
+                                
+                                RippleButton {
+                                    implicitWidth: 28; implicitHeight: 28
+                                    buttonRadius: 14
+                                    enabled: sectionDelegate.index > 0
+                                    opacity: enabled ? 1 : 0.3
+                                    colBackground: "transparent"
+                                    colBackgroundHover: bg.inirEverywhere ? Appearance.inir.colLayer1Hover
+                                        : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
+                                        : Appearance.colLayer1Hover
+                                    onClicked: root.moveSectionUp(sectionDelegate.index)
+                                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "arrow_upward"; iconSize: 16; color: bg.inirEverywhere ? Appearance.inir.colText : bg.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                                    StyledToolTip { text: Translation.tr("Move up") }
+                                }
+                                
+                                RippleButton {
+                                    implicitWidth: 28; implicitHeight: 28
+                                    buttonRadius: 14
+                                    enabled: sectionDelegate.index < root.controlsSectionOrder.length - 1
+                                    opacity: enabled ? 1 : 0.3
+                                    colBackground: "transparent"
+                                    colBackgroundHover: bg.inirEverywhere ? Appearance.inir.colLayer1Hover
+                                        : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
+                                        : Appearance.colLayer1Hover
+                                    onClicked: root.moveSectionDown(sectionDelegate.index)
+                                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "arrow_downward"; iconSize: 16; color: bg.inirEverywhere ? Appearance.inir.colText : bg.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                                    StyledToolTip { text: Translation.tr("Move down") }
+                                }
+                            }
+                            }
+                            
+                            // Section content based on modelData
+                            Loader {
+                                Layout.fillWidth: true
+                                active: sectionDelegate.modelData === "sliders"
+                                visible: active && (Config.options?.sidebar?.quickSliders?.enable && (Config.options?.sidebar?.quickSliders?.showMic || Config.options?.sidebar?.quickSliders?.showVolume || Config.options?.sidebar?.quickSliders?.showBrightness))
+                                sourceComponent: QuickSliders {
+                                    verticalPadding: controlsRoot.controlsInnerPadding
+                                    horizontalPadding: controlsRoot.controlsAreaPadding
+                                    sliderSpacing: controlsRoot.controlsGap
+                                    compactSurface: true
+                                }
+                            }
+                            
+                            Loader {
+                                Layout.fillWidth: true
+                                active: sectionDelegate.modelData === "toggles"
+                                visible: active
+                                sourceComponent: ColumnLayout {
+                                    spacing: controlsRoot.controlsInlineGap
+                                    
+                                    // ControlsCard
+                                    Item {
+                                        Layout.fillWidth: true
+                                        implicitHeight: ccSurface.implicitHeight
+                                        
+                                        Rectangle {
+                                            id: ccSurface
+                                            anchors.fill: parent
+                                            implicitHeight: ccCard.implicitHeight + controlsRoot.controlsAreaPadding
+                                            radius: 0
+                                            color: "transparent"
+                                            border.width: 0
+                                            Behavior on border.width {
+                                                enabled: Appearance.animationsEnabled
+                                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                            }
+                                            border.color: "transparent"
+                                            ControlsCard { id: ccCard; anchors.fill: parent; anchors.margins: controlsRoot.controlsInnerPadding }
+                                            AngelPartialBorder { targetRadius: ccSurface.radius; visible: false }
+                                        }
+                                    }
+                                    
+                                    // Classic/Android Quick Panel
+                                    Loader {
+                                        id: compactClassicQuickPanelLoader
+                                        Layout.fillWidth: true
+                                        Layout.leftMargin: 0; Layout.rightMargin: 0
+                                        active: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "classic"
+                                        sourceComponent: ClassicQuickPanel {
+                                            compactMode: true
+                                            compactItemSlotWidth: Math.max(44, Math.min(50, Math.round(controlsFlickable.width / 7)))
+                                            compactSpacing: controlsRoot.controlsInlineGap
+                                        }
+                                        Connections {
+                                            target: compactClassicQuickPanelLoader.item
+                                            ignoreUnknownSignals: true
+                                            function onOpenAudioOutputDialog() { root.showAudioOutputDialog = true }
+                                            function onOpenAudioInputDialog()  { root.showAudioInputDialog  = true }
+                                            function onOpenBluetoothDialog()   { root.showBluetoothDialog   = true }
+                                            function onOpenNightLightDialog()  { root.showNightLightDialog  = true }
+                                            function onOpenHotspotDialog()     { root.showHotspotDialog     = true }
+                                            function onOpenWifiDialog()        { root.showWifiDialog        = true }
+                                        }
+                                    }
+                                    Loader {
+                                        id: compactAndroidQuickPanelLoader
+                                        Layout.fillWidth: true
+                                        Layout.leftMargin: 0; Layout.rightMargin: 0
+                                        active: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "android"
+                                        sourceComponent: AndroidQuickPanel { editMode: root.editMode }
+                                        Connections {
+                                            target: compactAndroidQuickPanelLoader.item
+                                            ignoreUnknownSignals: true
+                                            function onOpenAudioOutputDialog() { root.showAudioOutputDialog = true }
+                                            function onOpenAudioInputDialog()  { root.showAudioInputDialog  = true }
+                                            function onOpenBluetoothDialog()   { root.showBluetoothDialog   = true }
+                                            function onOpenNightLightDialog()  { root.showNightLightDialog  = true }
+                                            function onOpenHotspotDialog()     { root.showHotspotDialog     = true }
+                                            function onOpenWifiDialog()        { root.showWifiDialog        = true }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Loader {
+                                Layout.fillWidth: true
+                                active: sectionDelegate.modelData === "devices"
+                                visible: active
+                                sourceComponent: ColumnLayout {
+                                    spacing: controlsRoot.controlsInlineGap
+                                    SectionDivider { text: Translation.tr("Devices"); visible: false }
+
+                                    GridLayout {
+                                        Layout.fillWidth: true
+                                        columns: 2
+                                        columnSpacing: controlsRoot.controlsInlineGap
+                                        rowSpacing: controlsRoot.controlsInlineGap
+
+                                        ControlChipButton { Layout.fillWidth: true; chipIcon: "media_output"; chipLabel: Translation.tr("Output"); value: Audio.sink?.description ?? ""; onClicked: root.showAudioOutputDialog = true }
+                                        ControlChipButton { Layout.fillWidth: true; chipIcon: "mic_external_on"; chipLabel: Translation.tr("Input"); value: Audio.source?.description ?? ""; onClicked: root.showAudioInputDialog = true }
+                                        ControlChipButton { Layout.fillWidth: true; chipIcon: "bluetooth"; chipLabel: Translation.tr("Bluetooth"); value: Bluetooth.defaultAdapter?.enabled ? Translation.tr("On") : Translation.tr("Off"); onClicked: root.showBluetoothDialog = true }
+                                        ControlChipButton { Layout.fillWidth: true; chipIcon: Network.materialSymbol; chipLabel: Translation.tr("Wi-Fi"); value: Network.networkName ?? ""; onClicked: root.showWifiDialog = true }
+                                    }
+                                }
+                            }
+                            
+                            Loader {
+                                Layout.fillWidth: true
+                                active: sectionDelegate.modelData === "media"
+                                visible: active
+                                sourceComponent: ColumnLayout {
+                                    spacing: controlsRoot.controlsInlineGap
+                                    SectionDivider { text: Translation.tr("Media"); visible: false }
+
+                                    CompactMediaPlayer {
+                                        Layout.fillWidth: true
+                                    }
+                                }
+                            }
+                            
+                            Loader {
+                                Layout.fillWidth: true
+                                active: sectionDelegate.modelData === "quickActions"
+                                visible: active
+                                sourceComponent: QuickActionsSection {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: notificationsSectionComponent
+        Item {
+            ColumnLayout {
+                anchors {
+                    fill: parent
+                    margins: root.compactContentPadding
+                }
+                spacing: root.compactContentPadding
+
+                // Section header with notification count + actions
+                SectionHeader {
+                    headerText: Translation.tr("Notifications")
+                    headerIcon: "notifications"
+                    badgeText: root.notificationCount > 0 ? root.notificationCount.toString() : ""
+                    // DND toggle
+                    showAction: true
+                    actionIcon: Notifications.silent ? "notifications_off" : "notifications_active"
+                    actionTooltip: Notifications.silent ? Translation.tr("Unmute notifications") : Translation.tr("Mute notifications")
+                    actionToggled: Notifications.silent
+                    onActionClicked: Notifications.silent = !Notifications.silent
+                    // Clear all button
+                    showSecondaryAction: root.notificationCount > 0
+                    secondaryActionIcon: "delete_sweep"
+                    secondaryActionTooltip: Translation.tr("Clear all notifications")
+                    onSecondaryActionClicked: Notifications.discardAllNotifications()
+                }
+
+                // Notification list or empty state
+                Item {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+
+                    // Notification list
+                    CenterWidgetGroup {
+                        anchors.fill: parent
+                        opacity: root.notificationCount > 0 ? 1 : 0
+                        visible: opacity > 0
+                        Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
+                    }
+
+                    // Enhanced empty state placeholder
+                    EmptyNotificationsPlaceholder {
+                        anchors.fill: parent
+                        opacity: root.notificationCount === 0 ? 1 : 0
+                        visible: opacity > 0
+                        Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Dialogs (identical to SidebarRightContent) ────────────────
+    ToggleDialog {
+        shownPropertyString: "showAudioOutputDialog"
+        dialog: VolumeDialog { isSink: true }
+    }
+    ToggleDialog {
+        shownPropertyString: "showAudioInputDialog"
+        dialog: VolumeDialog { isSink: false }
+    }
+    ToggleDialog {
+        shownPropertyString: "showBluetoothDialog"
+        dialog: BluetoothDialog {}
+        onShownChanged: {
+            if (!Bluetooth.defaultAdapter) return
+            if (!shown) {
+                Bluetooth.defaultAdapter.discovering = false
+            } else {
+                Bluetooth.defaultAdapter.enabled = true
+                Bluetooth.defaultAdapter.discovering = true
+            }
+        }
+    }
+    ToggleDialog {
+        shownPropertyString: "showNightLightDialog"
+        dialog: NightLightDialog {}
+    }
+    ToggleDialog {
+        shownPropertyString: "showHotspotDialog"
+        dialog: HotspotDialog {}
+    }
+    ToggleDialog {
+        shownPropertyString: "showWifiDialog"
+        dialog: WifiDialog {}
+        onShownChanged: {
+            if (!shown) return
+            Network.enableWifi()
+            Network.rescanWifi()
+        }
+    }
+
+    ToggleDialog {
+        id: compactEventsToggle
+        shownPropertyString: "showEventsDialog"
+        dialog: EventsDialog {}
+        onShownChanged: {
+            if (shown && compactEventsToggle.item) {
+                if (root.eventsDialogEditEvent) {
+                    compactEventsToggle.item.loadEvent(root.eventsDialogEditEvent)
+                } else {
+                    compactEventsToggle.item.resetForm()
+                }
+            }
+        }
+        onActiveChanged: {
+            if (!active) {
+                root.eventsDialogEditEvent = null
+            }
+        }
+    }
+
+    // ── Cooldown timers ───────────────────────────────────────────
+    Timer { id: reloadCooldown;   interval: 500; onTriggered: root.reloadButtonEnabled  = true }
+    Timer { id: settingsCooldown; interval: 500; onTriggered: root.settingsButtonEnabled = true }
+
+    // ── System action implementations ────────────────────────────
+    function doReload() {
+        if (!root.reloadButtonEnabled) return
+        root.reloadButtonEnabled = false
+        reloadCooldown.restart()
+        if (CompositorService.isHyprland)
+            Hyprland.dispatch("reload")
+        else if (CompositorService.isNiri)
+            Quickshell.execDetached(["/usr/bin/niri", "msg", "action", "load-config-file"])
+        Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")])
+    }
+
+    function doSettings() {
+        if (!root.settingsButtonEnabled) return
+        root.settingsButtonEnabled = false
+        settingsCooldown.restart()
+        if (CompositorService.isNiri) {
+            const wins = NiriService.windows || []
+            for (let i = 0; i < wins.length; i++) {
+                const w = wins[i]
+                if (w.title === "Settings — iNiR" && w.app_id === "org.quickshell") {
+                    GlobalStates.sidebarRightOpen = false
+                    Qt.callLater(() => NiriService.focusWindow(w.id))
+                    return
+                }
+            }
+        }
+        GlobalStates.sidebarRightOpen = false
+        Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]))
+    }
+
+    // ═════════════════════════════════════════════════════════════
+    // INLINE COMPONENTS
+    // ═════════════════════════════════════════════════════════════
+
+    component ToggleDialog: Loader {
+        id: tdLoader
+        required property string shownPropertyString
+        property alias dialog: tdLoader.sourceComponent
+        readonly property bool shown: root[shownPropertyString]
+        anchors.fill: parent
+        active: shown
+        onItemChanged: {
+            if (item) { item.show = true; item.forceActiveFocus() }
+        }
+        Connections {
+            target: tdLoader.item
+            ignoreUnknownSignals: true
+            function onDismiss() { root[tdLoader.shownPropertyString] = false }
+        }
+    }
+
+    // ── Section Header ───────────────────────────────────────────
+    component SectionHeader: Item {
+        id: sectionHeader
+        required property string headerText
+        property string headerIcon: ""
+        property string badgeText: ""
+        property bool showAction: false
+        property string actionIcon: ""
+        property string actionTooltip: ""
+        property bool actionToggled: false
+        property bool showSecondaryAction: false
+        property string secondaryActionIcon: ""
+        property string secondaryActionTooltip: ""
+
+        signal actionClicked()
+        signal secondaryActionClicked()
+
+        Layout.fillWidth: true
+        implicitHeight: headerRow.implicitHeight
+
+        RowLayout {
+            id: headerRow
+            anchors.left: parent.left
+            anchors.right: parent.right
+            spacing: 8
+
+            MaterialSymbol {
+                visible: sectionHeader.headerIcon !== ""
+                text: sectionHeader.headerIcon
+                iconSize: 18
+                fill: 1
+                color: bg.inirEverywhere  ? Appearance.inir.colPrimary
+                     : bg.angelEverywhere ? Appearance.angel.colPrimary
+                     : Appearance.colors.colPrimary
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                text: sectionHeader.headerText
+                font.pixelSize: Appearance.font.pixelSize.small
+                font.weight: Font.Medium
+                color: bg.inirEverywhere  ? Appearance.inir.colText
+                     : bg.angelEverywhere ? Appearance.angel.colText
+                     : Appearance.colors.colOnLayer0
+            }
+
+            // Badge (notification count)
+            Revealer {
+                reveal: sectionHeader.badgeText !== ""
+                Rectangle {
+                    implicitWidth: Math.max(18, badgeLabelInHeader.implicitWidth + 8)
+                    implicitHeight: 18
+                    radius: 9
+                    color: bg.inirEverywhere  ? Appearance.inir.colSecondaryContainer
+                         : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.70)
+                         : Appearance.colors.colSecondaryContainer
+
+                    StyledText {
+                        id: badgeLabelInHeader
+                        anchors.centerIn: parent
+                        text: sectionHeader.badgeText
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.weight: Font.Bold
+                        font.family: Appearance.font.family.numbers
+                        color: bg.inirEverywhere  ? Appearance.inir.colOnSecondaryContainer
+                             : bg.angelEverywhere ? Appearance.angel.colOnPrimary
+                             : Appearance.colors.colOnSecondaryContainer
+                    }
+                }
+            }
+
+            // Secondary action button
+            Revealer {
+                reveal: sectionHeader.showSecondaryAction
+            RippleButton {
+                implicitWidth: 28; implicitHeight: 28
+                buttonRadius: bg.angelEverywhere ? Appearance.angel.roundingSmall
+                    : bg.inirEverywhere ? Appearance.inir.roundingSmall : 14
+                colBackground: bg.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colLayer1, 0.35)
+                    : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.72)
+                    : bg.auroraEverywhere ? bg.colDarkSurface
+                    : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.68)
+                colBackgroundHover: Appearance.colLayer1Hover
+                onClicked: sectionHeader.secondaryActionClicked()
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent; text: sectionHeader.secondaryActionIcon; iconSize: 16
+                    color: Appearance.colActionIcon
+                }
+                StyledToolTip {
+                    position: "left"
+                    text: sectionHeader.secondaryActionTooltip
+                }
+            }
+            }
+
+            // Primary action button
+            Revealer {
+                reveal: sectionHeader.showAction
+            RippleButton {
+                implicitWidth: 28; implicitHeight: 28
+                buttonRadius: bg.angelEverywhere ? Appearance.angel.roundingSmall
+                    : bg.inirEverywhere ? Appearance.inir.roundingSmall : 14
+                colBackground: sectionHeader.actionToggled
+                    ? (bg.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                     : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.60)
+                     : Appearance.colors.colSecondaryContainer)
+                    : (bg.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colLayer1, 0.35)
+                     : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.72)
+                     : bg.auroraEverywhere ? bg.colDarkSurface
+                     : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.68))
+                colBackgroundHover: Appearance.colLayer1Hover
+                onClicked: sectionHeader.actionClicked()
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent; text: sectionHeader.actionIcon; iconSize: 16
+                    fill: sectionHeader.actionToggled ? 1 : 0; animateFill: true
+                    color: sectionHeader.actionToggled
+                        ? (bg.inirEverywhere  ? Appearance.inir.colOnSecondaryContainer
+                         : bg.angelEverywhere ? Appearance.angel.colOnPrimary
+                         : Appearance.colors.colOnSecondaryContainer)
+                        : Appearance.colActionIcon
+                }
+                StyledToolTip {
+                    position: "left"
+                    text: sectionHeader.actionTooltip
+                }
+            }
+            }
+        }
+    }
+
+    // ── Empty Notifications Placeholder ───────────────────────────
+    component EmptyNotificationsPlaceholder: Item {
+        id: emptyPlaceholder
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            width: Math.min(parent.width - 32, 280)
+            spacing: 12
+
+            MaterialPlaceholderMessage {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.fillWidth: true
+                maximumWidth: 280
+                compact: true
+                shown: emptyPlaceholder.visible
+                icon: Notifications.silent ? "notifications_off" : "notifications_active"
+                text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("All caught up")
+                shape: MaterialShape.Shape.Ghostish
+            }
+
+            RippleButton {
+                id: dndChip
+                Layout.alignment: Qt.AlignHCenter
+                implicitHeight: 32
+                implicitWidth: dndChipContent.implicitWidth + 20
+                buttonRadius: bg.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+                colBackground: Notifications.silent
+                    ? (bg.zzzEverywhere ? Appearance.zzz.sticker
+                        : bg.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                        : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.60)
+                        : Appearance.colors.colSecondaryContainer)
+                    : (bg.inirEverywhere ? Appearance.inir.colLayer1
+                        : bg.angelEverywhere ? Appearance.angel.colGlassCard
+                        : bg.colDarkSurface)
+                colBackgroundHover: Notifications.silent
+                    ? (bg.zzzEverywhere ? Appearance.colors.colPrimaryHover
+                        : bg.inirEverywhere ? Appearance.inir.colSecondaryContainerHover
+                        : bg.angelEverywhere ? Appearance.angel.colPrimaryHover
+                        : Appearance.colors.colSecondaryContainerHover)
+                    : (bg.zzzEverywhere ? Appearance.colLayer1Hover
+                        : bg.inirEverywhere ? Appearance.inir.colLayer1Hover
+                        : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : bg.colDarkSurfaceHover)
+                colRipple: Notifications.silent
+                    ? (bg.zzzEverywhere ? Appearance.colors.colPrimaryActive
+                        : bg.inirEverywhere ? Appearance.inir.colSecondaryContainerActive
+                        : bg.angelEverywhere ? Appearance.angel.colPrimaryActive
+                        : Appearance.colors.colSecondaryContainerActive)
+                    : (bg.zzzEverywhere ? Appearance.colLayer1Active
+                        : bg.inirEverywhere ? Appearance.inir.colLayer1Active
+                        : bg.angelEverywhere ? Appearance.angel.colGlassCardActive
+                        : bg.colDarkSurfaceActive)
+                onClicked: Notifications.silent = !Notifications.silent
+
+                contentItem: Item {
+                    implicitWidth: dndChipContent.implicitWidth
+                    implicitHeight: dndChipContent.implicitHeight
+                    RowLayout {
+                        id: dndChipContent
+                        width: Math.min(implicitWidth, parent.width)
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        MaterialSymbol {
+                            text: Notifications.silent ? "notifications_active" : "notifications_off"
+                            iconSize: 16
+                            color: Notifications.silent
+                                ? (bg.zzzEverywhere ? Appearance.zzz.onSticker
+                                    : bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
+                                    : bg.angelEverywhere ? Appearance.angel.colOnPrimary
+                                    : Appearance.colors.colOnSecondaryContainer)
+                                : (bg.zzzEverywhere ? Appearance.colors.colSubtext
+                                    : bg.inirEverywhere ? Appearance.inir.colTextSecondary
+                                    : bg.angelEverywhere ? Appearance.angel.colTextSecondary
+                                    : Appearance.colors.colSubtext)
+                        }
+
+                        StyledText {
+                            text: Notifications.silent
+                                ? Translation.tr("Enable notifications")
+                                : Translation.tr("Enable DND")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Notifications.silent
+                                ? (bg.zzzEverywhere ? Appearance.zzz.onSticker
+                                    : bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
+                                    : bg.angelEverywhere ? Appearance.angel.colOnPrimary
+                                    : Appearance.colors.colOnSecondaryContainer)
+                                : (bg.zzzEverywhere ? Appearance.colors.colOnLayer1
+                                    : bg.inirEverywhere ? Appearance.inir.colText
+                                    : bg.angelEverywhere ? Appearance.angel.colText
+                                    : Appearance.colors.colOnLayer1)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Quick Actions Section ─────────────────────────────────────
+    component QuickActionsSection: ColumnLayout {
+        id: quickActions
+        spacing: root.compactNavSpacing
+
+        SectionDivider {
+            text: Translation.tr("Quick Actions")
+            visible: false
+        }
+
+        // Action buttons — compact 3-column grid
+        GridLayout {
+            Layout.fillWidth: true
+            columns: 3
+            columnSpacing: root.compactGridSpacing
+            rowSpacing: root.compactGridSpacing
+
+            QuickActionButton {
+                Layout.fillWidth: true
+                icon: "screenshot_monitor"
+                label: Translation.tr("Screenshot")
+                onClicked: {
+                    GlobalStates.sidebarRightOpen = false
+                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "screenshot"]))
+                }
+            }
+
+            QuickActionButton {
+                Layout.fillWidth: true
+                icon: "videocam"
+                label: Translation.tr("Record")
+                onClicked: {
+                    GlobalStates.sidebarRightOpen = false
+                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "record"]))
+                }
+            }
+
+            QuickActionButton {
+                Layout.fillWidth: true
+                icon: "document_scanner"
+                label: Translation.tr("OCR")
+                onClicked: {
+                    GlobalStates.sidebarRightOpen = false
+                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "ocr"]))
+                }
+            }
+
+            QuickActionButton {
+                Layout.fillWidth: true
+                icon: "travel_explore"
+                label: Translation.tr("Search")
+                onClicked: {
+                    GlobalStates.sidebarRightOpen = false
+                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "search"]))
+                }
+            }
+
+            QuickActionButton {
+                Layout.fillWidth: true
+                icon: "palette"
+                label: Translation.tr("Color Picker")
+                onClicked: {
+                    GlobalStates.sidebarRightOpen = false
+                    Qt.callLater(() => ShellExec.execDetachedArgs(["/usr/bin/hyprpicker", "-a"], "Pick color"))
+                }
+            }
+
+            QuickActionButton {
+                Layout.fillWidth: true
+                icon: "folder_open"
+                label: Translation.tr("Files")
+                onClicked: ShellExec.execDetachedArgs(["xdg-open", Quickshell.env("HOME")], "Open home folder")
+            }
+        }
+    }
+
+    component BubbleToolTip: PopupToolTip {
+        id: bubble
+        property string position: "left" // top | right | left
+        delay: 0
+        horizontalPadding: 12
+        verticalPadding: 5
+        anchorEdges: position === "left" ? Edges.Left
+            : position === "right" ? Edges.Right
+            : Edges.Top
+        anchorGravity: anchorEdges
+        contentItem: Item {
+            id: bubbleContent
+            property bool shown: false
+            implicitWidth: bubbleBackground.implicitWidth
+            implicitHeight: bubbleBackground.implicitHeight
+            opacity: shown ? 1 : 0
+            scale: shown ? 1 : 0.9
+
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic }
+            }
+
+            Behavior on scale {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic }
+            }
+
+            Rectangle {
+                id: bubbleBackground
+                anchors.centerIn: parent
+                color: bg.angelEverywhere ? Appearance.angel.colPrimary
+                    : bg.inirEverywhere ? Appearance.inir.colPrimary
+                    : Appearance.colors.colPrimary
+                radius: Appearance.rounding.full
+                implicitWidth: bubbleLabel.implicitWidth + 24
+                implicitHeight: bubbleLabel.implicitHeight + 10
+
+                StyledText {
+                    id: bubbleLabel
+                    anchors.centerIn: parent
+                    text: bubble.text
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    font.weight: Font.Medium
+                    color: bg.angelEverywhere ? Appearance.angel.colOnPrimary
+                        : bg.inirEverywhere ? Appearance.inir.colOnPrimary
+                        : Appearance.colors.colOnPrimary
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+        }
+    }
+
+    // ── Quick Action Button ───────────────────────────────────────
+    component QuickActionButton: Item {
+        id: qaBtn
+        required property string icon
+        required property string label
+        property bool toggled: false
+
+        signal clicked()
+
+        implicitHeight: 52
+
+        // Style helpers
+        readonly property color _colPrimary: bg.inirEverywhere ? Appearance.inir.colPrimary
+            : bg.angelEverywhere ? Appearance.angel.colPrimary
+            : Appearance.colors.colPrimary
+        readonly property color _colText: bg.inirEverywhere ? Appearance.inir.colText
+            : bg.angelEverywhere ? Appearance.angel.colText
+            : Appearance.colors.colOnLayer1
+        readonly property color _colOnToggle: bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
+            : bg.angelEverywhere ? Appearance.angel.colOnPrimary
+            : Appearance.colors.colOnSecondaryContainer
+        readonly property color _colToggleBg: bg.inirEverywhere ? Appearance.inir.colSecondaryContainer
+            : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.6)
+            : Appearance.colors.colSecondaryContainer
+
+        Rectangle {
+            id: qaBtnBg
+            anchors.fill: parent
+            radius: bg.angelEverywhere ? Appearance.angel.roundingSmall
+                : bg.inirEverywhere ? Appearance.inir.roundingSmall
+                : Appearance.rounding.small
+            color: {
+                if (qaBtnMA.containsPress)
+                    return bg.inirEverywhere ? Appearance.inir.colLayer2Active
+                        : bg.angelEverywhere ? Appearance.angel.colGlassCardActive
+                        : bg.colDarkSurfaceActive
+                if (qaBtnMA.containsMouse)
+                    return bg.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : bg.colDarkSurfaceHover
+                if (qaBtn.toggled)
+                    return qaBtn._colToggleBg
+                return "transparent"
+            }
+            border.width: 0
+
+            scale: qaBtnMA.containsPress ? 0.94 : 1.0
+            Behavior on scale {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+            }
+
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: 4
+
+                // Icon in accent circle
+                Rectangle {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 28
+                    Layout.preferredHeight: 28
+                    radius: 14
+                    color: qaBtn.toggled
+                        ? ColorUtils.transparentize(qaBtn._colOnToggle, 0.82)
+                        : ColorUtils.transparentize(qaBtn._colPrimary, 0.86)
+
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: qaBtn.icon
+                        iconSize: 17
+                        fill: qaBtn.toggled ? 1 : 0
+                        animateFill: true
+                        color: qaBtn.toggled ? qaBtn._colOnToggle : qaBtn._colPrimary
+                    }
+                }
+
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.maximumWidth: qaBtnBg.width - 6
+                    text: qaBtn.label
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.weight: Font.Medium
+                    color: qaBtn.toggled ? qaBtn._colOnToggle : qaBtn._colText
+                    elide: Text.ElideRight
+                    horizontalAlignment: Text.AlignHCenter
+                }
+            }
+
+            MouseArea {
+                id: qaBtnMA
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: qaBtn.clicked()
+            }
+
+            BubbleToolTip {
+                visible: qaBtnMA.containsMouse
+                position: "left"
+                text: qaBtn.label
+            }
+        }
+    }
+}

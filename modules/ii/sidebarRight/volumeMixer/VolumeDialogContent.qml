@@ -15,69 +15,74 @@ ColumnLayout {
     readonly property list<var> devices: isSink ? Audio.outputDevices : Audio.inputDevices
     readonly property bool hasApps: appPwNodes.length > 0
     readonly property var currentDevice: isSink ? Audio.defaultSink : Audio.source
-    spacing: Appearance.sizes.spacingMedium
+    spacing: 16
 
     onDialogShownChanged: {
         if (!dialogShown && devicePopup.visible)
             devicePopup.close()
     }
 
-    // Device selector at top
+    // Device selector button
     RippleButton {
         id: deviceButton
         Layout.fillWidth: true
+        Layout.topMargin: 8
         implicitHeight: 48
         
-        colBackground: Appearance.colors.colLayer2
-        colBackgroundHover: Appearance.colors.colLayer2Hover
-        colRipple: Appearance.colors.colLayer2Active
-        buttonRadius: Appearance.rounding.small
+        colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+            : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer2
+        colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colLayer2Hover
+        colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colLayer2Active
+        buttonRadius: Appearance.rounding.normal
 
         contentItem: RowLayout {
             anchors {
                 fill: parent
-                leftMargin: Appearance.sizes.spacingMedium
-                rightMargin: Appearance.sizes.spacingMedium
+                leftMargin: 16
+                rightMargin: 16
             }
-            spacing: Appearance.sizes.spacingMedium
+            spacing: 12
 
             MaterialSymbol {
                 text: root.isSink ? "speaker" : "mic"
-                iconSize: Appearance.font.pixelSize.huge
+                iconSize: 24
                 color: Appearance.colors.colPrimary
             }
 
             StyledText {
                 Layout.fillWidth: true
-                text: Audio.friendlyDeviceName(root.currentDevice) || (root.isSink ? "Select output..." : "Select input...")
-                font.pixelSize: Appearance.font.pixelSize.small
+                text: Audio.friendlyDeviceName(root.currentDevice) || (root.isSink ? Translation.tr("Select output...") : Translation.tr("Select input..."))
+                font.pixelSize: Appearance.font.pixelSize.normal
                 elide: Text.ElideRight
             }
 
             MaterialSymbol {
                 text: devicePopup.visible ? "expand_less" : "expand_more"
                 iconSize: Appearance.font.pixelSize.normal
-                color: Appearance.colors.colSubtext
+                color: Appearance.colSecondaryActionIcon
             }
         }
 
         onClicked: devicePopup.visible ? devicePopup.close() : devicePopup.open()
     }
 
+    // Device selection popup
     Popup {
         id: devicePopup
         y: deviceButton.y + deviceButton.height + 4
         width: deviceButton.width
         height: Math.min(250, deviceList.contentHeight + 16)
-        padding: Appearance.sizes.spacingSmall
+        padding: 8
 
         background: Rectangle {
             color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
-                : Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface : Appearance.colors.colLayer3
-            radius: Appearance.rounding.normal
-            border.width: 1
-            border.color: Appearance.colors.colOutlineVariant
+                : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface : Appearance.colors.colLayer2
+            radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.normal
+            border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
+            border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : Appearance.colors.colOutlineVariant
         }
 
         ListView {
@@ -96,28 +101,28 @@ ColumnLayout {
                 property bool isSelected: modelData.id === root.currentDevice?.id
 
                 colBackground: isSelected ? Appearance.colors.colPrimaryContainer : "transparent"
-                colBackgroundHover: Appearance.colors.colLayer2Hover
-                colRipple: Appearance.colors.colLayer2Active
+                colBackgroundHover: Appearance.colLayer2Hover
+                colRipple: Appearance.colLayer2Active
                 buttonRadius: Appearance.rounding.small
 
                 contentItem: RowLayout {
                     anchors {
                         fill: parent
-                        leftMargin: Appearance.sizes.spacingMedium
-                        rightMargin: Appearance.sizes.spacingMedium
+                        leftMargin: 12
+                        rightMargin: 12
                     }
-                    spacing: Appearance.sizes.spacingSmall
+                    spacing: 8
 
                     MaterialSymbol {
                         text: isSelected ? "check" : (root.isSink ? "speaker" : "mic")
                         iconSize: Appearance.font.pixelSize.normal
-                        color: isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colSubtext
+                        color: isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colSecondaryActionIcon
                     }
 
                     StyledText {
                         Layout.fillWidth: true
                         text: Audio.friendlyDeviceName(modelData)
-                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.pixelSize: Appearance.font.pixelSize.normal
                         elide: Text.ElideRight
                         color: isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                     }
@@ -133,33 +138,53 @@ ColumnLayout {
     }
 
     // Apps list
-    StyledListView {
+    DialogSectionListView {
         Layout.fillHeight: true
-        Layout.fillWidth: true
-        clip: true
-        spacing: Appearance.sizes.spacingSmall
+        topMargin: 14
 
         model: ScriptModel {
             values: root.appPwNodes
         }
         delegate: VolumeMixerEntry {
-            width: ListView.view.width
+            anchors {
+                left: parent?.left
+                right: parent?.right
+            }
             required property var modelData
             node: modelData
         }
-
-        // Empty state
-        StyledText {
+        MaterialPlaceholderMessage {
             anchors.centerIn: parent
-            opacity: root.appPwNodes.length === 0 ? 1 : 0
-            visible: opacity > 0
-            text: root.isSink ? Translation.tr("No apps playing audio") : Translation.tr("No apps using microphone")
-            color: Appearance.colors.colSubtext
-            font.pixelSize: Appearance.font.pixelSize.small
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-            }
+            maximumWidth: 320
+            shown: !root.hasApps
+            icon: "widgets"
+            text: Translation.tr("No applications")
+            explanation: root.isSink
+                ? Translation.tr("Apps playing audio will appear here")
+                : Translation.tr("Apps using the microphone will appear here")
+            shape: MaterialShape.Shape.Clover4Leaf
         }
+    }
+
+    component DialogSectionListView: StyledListView {
+        Layout.fillWidth: true
+        Layout.topMargin: -22
+        Layout.bottomMargin: -16
+        Layout.leftMargin: -Appearance.rounding.large
+        Layout.rightMargin: -Appearance.rounding.large
+        topMargin: 12
+        bottomMargin: 12
+        leftMargin: 20
+        rightMargin: 20
+
+        clip: true
+        spacing: 4
+        animateAppearance: false
+
+        highlightRangeMode: ListView.StrictlyEnforceRange
+        preferredHighlightBegin: height * 0.5 - 34
+        preferredHighlightEnd: height * 0.5 + 34
+        highlightMoveDuration: Appearance.animationsEnabled ? Appearance.calcEffectiveDuration(180) : 0
+        highlightFollowsCurrentItem: true
     }
 }

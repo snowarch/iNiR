@@ -15,7 +15,7 @@ import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.frame
 import qs.modules.iris.pieces
-import qs.modules.settings
+import qs.modules.ii.settings
 
 Item {
     id: root

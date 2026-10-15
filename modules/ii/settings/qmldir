@@ -1,0 +1,27 @@
+module qs.modules.ii.settings
+singleton SettingsPageRegistry 1.0 SettingsPageRegistry.qml
+singleton SettingsArrangement 1.0 SettingsArrangement.qml
+singleton SettingsChromeLayout 1.0 SettingsChromeLayout.qml
+QuickWallpaperItem 1.0 QuickWallpaperItem.qml
+ThemePresetCard 1.0 ThemePresetCard.qml
+ColorPickerRow 1.0 ColorPickerRow.qml
+WaffleConfig 1.0 WaffleConfig.qml
+AutostartConfig 1.0 AutostartConfig.qml
+WorkspaceStripConfig 1.0 WorkspaceStripConfig.qml
+DockConfig 1.0 DockConfig.qml
+M3LayoutSection 1.0 M3LayoutSection.qml
+SidebarsConfig 1.0 SidebarsConfig.qml
+SettingsOverlay 1.0 SettingsOverlay.qml
+SettingsFocus 1.0 SettingsFocus.qml
+SettingsPageHost 1.0 SettingsPageHost.qml
+SettingsNavEditPane 1.0 SettingsNavEditPane.qml
+SettingsChromeEditFrame 1.0 SettingsChromeEditFrame.qml
+SettingsNativeDialogGuard 1.0 SettingsNativeDialogGuard.qml
+PillOptionsEditor 1.0 PillOptionsEditor.qml
+RicelinIslandEditor 1.0 RicelinIslandEditor.qml
+OrbitShelfEditor 1.0 OrbitShelfEditor.qml
+
+SettingsEditorial 1.0 SettingsEditorial.qml
+
+OrganicEdgeSettings 1.0 OrganicEdgeSettings.qml
+NiriAnimationPresetGrid 1.0 NiriAnimationPresetGrid.qml

@@ -1,0 +1,5 @@
+module qs.modules.ii.sidebarLeft.plugins
+
+# DISABLED: webapps — requires quickshell-webengine rebuild
+# WebAppView 1.0 WebAppView.qml
+PluginsTab 1.0 PluginsTab.qml

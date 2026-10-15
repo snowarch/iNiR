@@ -1,0 +1,3 @@
+module qs.modules.ii.sidebarRight.bluetoothDevices
+BluetoothDeviceItem 1.0 BluetoothDeviceItem.qml
+BluetoothDialog 1.0 BluetoothDialog.qml

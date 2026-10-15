@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.modules.common
 import qs.modules.common.functions
-import qs.modules.regionSelector
+import qs.modules.shared.regionSelector
 import qs.modules.waffle.looks
 import qs.services
 

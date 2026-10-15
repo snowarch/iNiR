@@ -9,7 +9,7 @@ import qs.modules.common
 import qs.services
 import qs.modules.common.functions
 import qs.modules.iris.style
-import qs.modules.background.widgets
+import qs.modules.shared.background.widgets
 
 Singleton {
     id: root

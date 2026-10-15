@@ -103,17 +103,17 @@ inir/
 **modules/ii/:**
 - Purpose: ii-family composition plus ii-specific overlay/sidebar integration
 - Contains: deferred/on-demand composition (`ShellIiPanelsImpl.qml`), critical first-frame host, overlay system, sidebarRight integration
-- Key files: `modules/ii/ShellIiPanelsImpl.qml`, `modules/ii/critical/ShellIiCriticalPanels.qml`, `modules/ii/overlay/Overlay.qml`
+- Key files: `modules/ii/ShellIiPanelsImpl.qml`, `modules/ii/critical/ShellIiCriticalPanels.qml`, `modules/shared/overlay/Overlay.qml`
 
-**modules/background/:**
+**modules/shared/background/:**
 - Purpose: Per-output desktop surface rendering the wallpaper and hosting desktop widgets and desktop items
 - Contains: Background render surface (Background.qml), desktop items (desktopItems/), widget instances (widgets/)
-- Key files: `modules/background/Background.qml`, `modules/background/desktopItems/DesktopItemDelegate.qml`, `modules/background/widgets/WidgetManagerPanel.qml`
+- Key files: `modules/shared/background/Background.qml`, `modules/shared/background/desktopItems/DesktopItemDelegate.qml`, `modules/shared/background/widgets/WidgetManagerPanel.qml`
 
-**modules/barM3/:**
+**modules/ii/barM3/:**
 - Purpose: Separate Material 3 bar implementation selected by `bar.appearanceStyle === "m3"`
 - Contains: M3Bar.qml and its own widget components; the layout contract lives under `bar.m3` in Config
-- Key files: `modules/barM3/M3Bar.qml`, `modules/barM3/M3Palette.qml`
+- Key files: `modules/ii/barM3/M3Bar.qml`, `modules/ii/barM3/M3Palette.qml`
 
 **services/:**
 - Purpose: Runtime singletons providing backend functionality (audio, network, compositor IPC, theming, etc.)
@@ -206,5 +206,5 @@ inir/
 **New translation:** Wrap a literal in `Translation.tr(...)`, then synchronize and audit every locale catalog
 **New waffle subdir:** `modules/waffle/[subdir]/` following existing waffle subdir patterns
 **New ii-family component:** `modules/ii/[subdir]/` for overlay or sidebarRight additions
-**New desktop widget:** `modules/background/widgets/[name]/` — declare a `background.widgets.<name>` key in `modules/common/Config.qml` and expose it in both Settings families
-**New M3 bar widget:** `modules/barM3/<Name>.qml` — reference it from the `bar.m3` layout lists in `modules/common/Config.qml`
+**New desktop widget:** `modules/shared/background/widgets/[name]/` — declare a `background.widgets.<name>` key in `modules/common/Config.qml` and expose it in both Settings families
+**New M3 bar widget:** `modules/ii/barM3/<Name>.qml` — reference it from the `bar.m3` layout lists in `modules/common/Config.qml`

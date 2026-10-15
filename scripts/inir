@@ -4077,12 +4077,12 @@ EOF
                 GlobalStates.qml|ShellIiPanels.qml|ShellWafflePanels.qml|ShellIrisPanels.qml|shell.qml|settings.qml|waffleSettings.qml|defaults/config.json|modules/common/Config.qml|modules/common/Appearance.qml|modules/common/Looks.qml|modules/common/widgets/*)
                     : ;; # Broad files do not turn a focused audit into an exhaustive one.
                 modules/iris/*) select_prefix "iris" ;;
-                modules/sidebarLeft/aiChat/*|modules/sidebarLeft/AiChat.qml|modules/sidebarLeft/ApiInputBoxIndicator.qml|services/Ai.qml|services/ai/*)
+                modules/ii/sidebarLeft/aiChat/*|modules/ii/sidebarLeft/AiChat.qml|modules/ii/sidebarLeft/ApiInputBoxIndicator.qml|services/Ai.qml|services/ai/*)
                     select_prefix "sidebar-left/ai"; select_prefix "settings/ai" ;;
-                modules/sidebarLeft/widgets/*|modules/sidebarLeft/WidgetsView.qml)
+                modules/ii/sidebarLeft/widgets/*|modules/ii/sidebarLeft/WidgetsView.qml)
                     select_prefix "sidebar-left/widgets" ;;
-                modules/sidebarLeft/*)
-                    area="${changed_path#modules/sidebarLeft/}"
+                modules/ii/sidebarLeft/*)
+                    area="${changed_path#modules/ii/sidebarLeft/}"
                     area="${area%%/*}"
                     case "$area" in
                         *AnimeSchedule*) select_prefix "sidebar-left/anime-schedule" ;;
@@ -4095,29 +4095,29 @@ EOF
                         *Tools*|plugins) select_prefix "sidebar-left/tools" ;;
                         *) : ;;
                     esac ;;
-                modules/sidebarRight/notifications/*) select_prefix "sidebar-right/notifications" ;;
-                modules/sidebarRight/events/*) select_prefix "sidebar-right/events" ;;
-                modules/sidebarRight/todo/*) select_prefix "sidebar-right/todo" ;;
-                modules/sidebarRight/notepad/*) select_prefix "sidebar-right/notepad" ;;
-                modules/sidebarRight/calculator/*) select_prefix "sidebar-right/calculator" ;;
-                modules/sidebarRight/weather/*) select_prefix "sidebar-right/weather" ;;
-                modules/sidebarRight/*) : ;;
-                modules/controlPanel/*) select_prefix "control-panel" ;;
-                modules/dashboard/*) select_prefix "dashboard" ;;
-                modules/mediaControls/*) select_prefix "media-controls" ;;
-                modules/clipboard/*) select_prefix "clipboard"; select_prefix "overview/clipboard" ;;
-                modules/cheatsheet/*) select_prefix "cheatsheet" ;;
-                modules/overview/*) select_prefix "overview" ;;
-                modules/wallpaperSelector/*) select_prefix "wallpaper" ;;
+                modules/ii/sidebarRight/notifications/*) select_prefix "sidebar-right/notifications" ;;
+                modules/ii/sidebarRight/events/*) select_prefix "sidebar-right/events" ;;
+                modules/ii/sidebarRight/todo/*) select_prefix "sidebar-right/todo" ;;
+                modules/ii/sidebarRight/notepad/*) select_prefix "sidebar-right/notepad" ;;
+                modules/ii/sidebarRight/calculator/*) select_prefix "sidebar-right/calculator" ;;
+                modules/ii/sidebarRight/weather/*) select_prefix "sidebar-right/weather" ;;
+                modules/ii/sidebarRight/*) : ;;
+                modules/ii/controlPanel/*) select_prefix "control-panel" ;;
+                modules/ii/dashboard/*) select_prefix "dashboard" ;;
+                modules/shared/mediaControls/*) select_prefix "media-controls" ;;
+                modules/shared/clipboard/*) select_prefix "clipboard"; select_prefix "overview/clipboard" ;;
+                modules/shared/cheatsheet/*) select_prefix "cheatsheet" ;;
+                modules/shared/overview/*) select_prefix "overview" ;;
+                modules/shared/wallpaperSelector/*) select_prefix "wallpaper" ;;
                 modules/tilingAssistance/*) select_prefix "tiling" ;;
                 modules/waffle/startMenu/*) select_prefix "waffle/start"; select_prefix "waffle/all-apps"; select_prefix "waffle/search" ;;
                 modules/waffle/actionCenter/*) select_prefix "waffle/action-center" ;;
                 modules/waffle/notificationCenter/*) select_prefix "waffle/notification-center" ;;
                 modules/waffle/widgets/*) select_prefix "waffle/widgets" ;;
                 modules/waffle/taskView/*) select_prefix "waffle/taskview" ;;
-                modules/settings/SettingsOverlay.qml|modules/settings/SettingsPageRegistry.qml)
+                modules/ii/settings/SettingsOverlay.qml|modules/ii/settings/SettingsPageRegistry.qml)
                     : ;;
-                modules/settings/*Config.qml)
+                modules/ii/settings/*Config.qml)
                     area="${changed_path##*/}"; area="${area%Config.qml}"; select_settings_area "$area" ;;
                 modules/waffle/settings/pages/W*Page.qml)
                     area="${changed_path##*/}"; area="${area#W}"; area="${area%Page.qml}"; select_settings_area "$area" ;;

@@ -17,8 +17,8 @@ import qs.modules.iris.lock
 import qs.modules.iris.sidebar
 import qs.modules.iris.orbit
 import qs.modules.iris.osk
-import qs.modules.background
-import qs.modules.lock
+import qs.modules.shared.background
+import qs.modules.shared.lock
 
 Item {
     id: root
@@ -160,7 +160,7 @@ Item {
         activeAsync: Config.ready && IrisGate.official && GlobalStates.deferredPanelsReady
             && CompositorService.isNiri
             && (Config.options?.background?.backdrop?.enable ?? false)
-        source: "../background/Backdrop.qml"
+        source: "../shared/background/Backdrop.qml"
     }
 
     LazyLoader {
@@ -205,14 +205,14 @@ Item {
         open: GlobalStates.overlayOpen
         requireEnabledPanel: false
         closeGraceMs: IrisStyle.settleDuration + 120
-        source: "../ii/overlay/Overlay.qml"
+        source: "../shared/overlay/Overlay.qml"
     }
 
     OnDemandPanelLoader {
         identifier: "irisCheatsheet"
         open: GlobalStates.cheatsheetOpen
         requireEnabledPanel: false
-        source: "../cheatsheet/Cheatsheet.qml"
+        source: "../shared/cheatsheet/Cheatsheet.qml"
     }
 
     OnDemandPanelLoader {
@@ -227,7 +227,7 @@ Item {
         identifier: "irisRegionSelector"
         open: GlobalStates.regionSelectorOpen || GlobalStates.annotationEditorOpen
         requireEnabledPanel: false
-        source: "../regionSelector/RegionSelector.qml"
+        source: "../shared/regionSelector/RegionSelector.qml"
     }
 
 
@@ -242,14 +242,14 @@ Item {
         identifier: "irisWallpaperLauncher"
         open: GlobalStates.wallpaperLauncherOpen
         requireEnabledPanel: false
-        source: "../wallpaperLauncher/WallpaperLauncher.qml"
+        source: "../shared/wallpaperLauncher/WallpaperLauncher.qml"
     }
 
     OnDemandPanelLoader {
         identifier: "irisCoverflowSelector"
         open: GlobalStates.coverflowSelectorOpen
         requireEnabledPanel: false
-        source: "../wallpaperSelector/WallpaperCoverflow.qml"
+        source: "../shared/wallpaperSelector/WallpaperCoverflow.qml"
     }
 
     OnDemandPanelLoader {
@@ -258,13 +258,13 @@ Item {
         requireEnabledPanel: false
         extraCondition: !(GlobalStates.barOpen
             && (Config.options?.enabledPanels ?? []).includes("irisBar"))
-        source: "../recordingOsd/RecordingOsd.qml"
+        source: "../shared/recordingOsd/RecordingOsd.qml"
     }
 
     OnDemandPanelLoader {
         identifier: "irisTilingOverlay"
         open: GlobalStates.tilingOverlayPickerOpen || GlobalStates.tilingOverlayOsdOpen
         requireEnabledPanel: false
-        source: "../tilingOverlay/TilingOverlay.qml"
+        source: "../shared/tilingOverlay/TilingOverlay.qml"
     }
 }

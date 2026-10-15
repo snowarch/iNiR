@@ -82,7 +82,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.background.widgets
+import qs.modules.shared.background.widgets
 
 AbstractBackgroundWidget {
     id: root
@@ -115,7 +115,7 @@ AbstractBackgroundWidget {
 | `qs.modules.common` | Config, Appearance, Directories, GlobalStates |
 | `qs.modules.common.functions` | ColorUtils, StringUtils, DateUtils, FileUtils, ObjectUtils |
 | `qs.modules.common.widgets` | 130+ reusable UI components (see Components section) |
-| `qs.modules.background.widgets` | AbstractBackgroundWidget base class |
+| `qs.modules.shared.background.widgets` | AbstractBackgroundWidget base class |
 
 ---
 

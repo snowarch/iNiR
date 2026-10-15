@@ -1,0 +1,396 @@
+import qs
+import qs.services
+import qs.modules.common
+import qs.modules.common.widgets
+import qs.modules.common.functions
+import qs.modules.ii.sidebarLeft
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Quickshell
+import Qt5Compat.GraphicalEffects
+
+Rectangle {
+    id: root
+    property var responseData
+    property var tagInputField
+
+    // Optional hook for the parent view (e.g., WallhavenView) to request auto-scroll
+    // when the user clicks paging buttons.
+    property var onNextPageRequested
+    property var onClearRequested
+
+    property string previewDownloadPath
+    property string downloadPath
+    property string nsfwPath
+
+    readonly property bool isWallhaven: root.responseData != null && root.responseData.provider === "wallhaven"
+
+    property real availableWidth: parent.width
+    property real rowTooShortThreshold: 190
+    property real rowMaxHeight: 350  // Cap height for single vertical images
+    property real imageSpacing: 5
+    property real responsePadding: 5
+    property bool cleanLayout: false  // When true: no background, no padding, just images
+    property bool showPagingButtons: true  // Show next/clear buttons at bottom
+
+    anchors.left: parent?.left
+    anchors.right: parent?.right
+    implicitHeight: columnLayout.implicitHeight + (cleanLayout ? 0 : root.responsePadding * 2)
+
+    Component.onCompleted: {
+        // Break property bind to prevent aggressive updates
+        availableWidth = parent.width
+    }
+
+    Connections {
+        target: parent
+        function onWidthChanged() {
+            // Only update if not currently scrolling
+            if (!parent.moving && !parent.dragging) {
+                updateWidthTimer.restart()
+            }
+        }
+    }
+
+    Timer {
+        id: updateWidthTimer
+        interval: 150
+        onTriggered: {
+            // Double-check we're not scrolling before updating
+            if (parent && !parent.moving && !parent.dragging) {
+                availableWidth = parent.width
+            }
+        }
+    }
+
+    radius: cleanLayout ? 0 : Appearance.rounding.normal
+    color: cleanLayout ? "transparent" : (Appearance.inirEverywhere ? Appearance.inir.colLayer1 : (Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1))
+
+    ColumnLayout {
+        id: columnLayout
+        
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: cleanLayout ? 0 : responsePadding
+        spacing: root.imageSpacing
+
+        RowLayout { // Header
+            visible: !cleanLayout
+            Rectangle { // Provider name
+                id: providerNameWrapper
+                color: Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer
+                radius: Appearance.rounding.small
+                implicitWidth: providerName.implicitWidth + 10 * 2
+                implicitHeight: Math.max(providerName.implicitHeight + 5 * 2, 30)
+                Layout.alignment: Qt.AlignVCenter
+
+                StyledText {
+                    id: providerName
+                    anchors.centerIn: parent
+                    font.pixelSize: Appearance.font.pixelSize.large
+                    color: Appearance.colors.colOnSecondaryContainer
+                    text: root.isWallhaven
+                        ? Translation.tr("Page %1").arg(root.responseData?.page ?? "")
+                        : (Booru.providers[root.responseData?.provider ?? ""]?.name ?? "")
+                }
+            }
+            Item { Layout.fillWidth: true }
+            Item { // Page number
+                visible: !root.isWallhaven && (root.responseData?.page ?? "") != "" && (root.responseData?.page ?? 0) > 0
+                implicitWidth: Math.max(pageNumber.implicitWidth + 10 * 2, 30)
+                implicitHeight: pageNumber.implicitHeight + 5 * 2
+                Layout.alignment: Qt.AlignVCenter
+
+                StyledText {
+                    id: pageNumber
+                    anchors.centerIn: parent
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colOnLayer2
+                    // text: `Page ${root.responseData.page}`
+                    text: Translation.tr("Page %1").arg(root.responseData?.page ?? "")
+                }
+            }
+        }
+
+        StyledFlickable { // Tag strip
+            id: tagsFlickable
+            visible: !cleanLayout && (root.responseData?.tags?.length ?? 0) > 0
+            Layout.alignment: Qt.AlignLeft
+            Layout.fillWidth: true
+            implicitHeight: tagRowLayout.implicitHeight
+            contentWidth: tagRowLayout.implicitWidth
+
+            clip: true
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: tagsFlickable.width
+                    height: tagsFlickable.height
+                    radius: Appearance.rounding.small
+                }
+            }
+
+            Behavior on implicitHeight {
+                enabled: Appearance.animationsEnabled
+                animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
+            }
+
+            RowLayout {
+                id: tagRowLayout
+                Layout.alignment: Qt.AlignBottom
+
+                Repeater {
+                    id: tagRepeater
+                    model: root.responseData?.tags ?? []
+
+                    ApiCommandButton {
+                        Layout.fillWidth: false
+                        buttonText: modelData
+                        onClicked: {
+                            if(root.tagInputField.text.length !== 0) root.tagInputField.text += " "
+                            root.tagInputField.text += modelData
+                        }
+                    }
+                }
+                
+            }
+        }
+
+        StyledText { // Message
+            id: messageText
+            Layout.fillWidth: true
+            visible: (root.responseData?.message?.length ?? 0) > 0 && (!cleanLayout || (root.responseData?.images?.length ?? 0) === 0)
+            font.pixelSize: Appearance.font.pixelSize.small
+            color: Appearance.colors.colOnLayer1
+            text: root.responseData?.message ?? ""
+            wrapMode: Text.WordWrap
+            Layout.margins: responsePadding
+            textFormat: Text.MarkdownText
+            onLinkActivated: (link) => {
+                Qt.openUrlExternally(link)
+                GlobalStates.sidebarLeftOpen = false
+            }
+            PointingHandLinkHover {}
+        }
+
+        Repeater {
+            model: ScriptModel {
+                values: {
+                    // Greedily add images to a row as long as rowHeight >= rowTooShortThreshold
+                    let i = 0;
+                    let rows = [];
+                    const responseList = root.responseData?.images ?? [];
+                    const minRowHeight = rowTooShortThreshold;
+                    // For clean layout, use full width; otherwise subtract padding
+                    const paddingOffset = root.cleanLayout ? 0 : (responsePadding * 2);
+                    const availableImageWidth = availableWidth - paddingOffset;
+
+                    while (i < responseList.length) {
+                        let row = {
+                            height: 0,
+                            images: [],
+                        };
+                        let j = i;
+                        let combinedAspect = 0;
+                        let rowHeight = 0;
+
+                        // Try to add as many images as possible without going below minRowHeight
+                        while (j < responseList.length) {
+                            combinedAspect += responseList[j].aspect_ratio;
+                            // Subtract imageSpacing for each gap between images in the row
+                            let imagesInRow = j - i + 1;
+                            let totalSpacing = root.imageSpacing * (imagesInRow - 1);
+                            let rowAvailableWidth = availableImageWidth - totalSpacing;
+                            rowHeight = rowAvailableWidth / combinedAspect;
+                            if (rowHeight < minRowHeight) {
+                                combinedAspect -= responseList[j].aspect_ratio;
+                                imagesInRow -= 1;
+                                totalSpacing = root.imageSpacing * (imagesInRow - 1);
+                                rowAvailableWidth = availableImageWidth - totalSpacing;
+                                rowHeight = rowAvailableWidth / combinedAspect;
+                                break;
+                            }
+                            j++;
+                        }
+
+                        // If we couldn't add any image (shouldn't happen), add at least one
+                        if (j === i) {
+                            row.images.push(responseList[i]);
+                            row.height = Math.min(rowMaxHeight, availableImageWidth / responseList[i].aspect_ratio);
+                            rows.push(row);
+                            i++;
+                        } else {
+                            for (let k = i; k < j; k++) {
+                                row.images.push(responseList[k]);
+                            }
+                            // Recalculate spacing for the final row
+                            let imagesInRow = j - i;
+                            let totalSpacing = root.imageSpacing * (imagesInRow - 1);
+                            let rowAvailableWidth = availableImageWidth - totalSpacing;
+                            row.height = Math.min(rowMaxHeight, rowAvailableWidth / combinedAspect);
+                            rows.push(row);
+                            i = j;
+                        }
+                    }
+                    return rows;
+                }
+            }
+            delegate: RowLayout {
+                id: imageRow
+                required property var modelData
+                property var rowHeight: modelData.height
+                spacing: root.imageSpacing
+                Layout.alignment: Qt.AlignHCenter
+
+                Repeater {
+                    model: modelData.images
+                    delegate: BooruImage {
+                        required property var modelData
+                        imageData: modelData
+                        fallbackTags: root.responseData?.tags ?? []
+                        aspectCrop: root.cleanLayout || root.responseData?.provider === "wallhaven"
+                        lazyTagFetch: root.responseData?.provider === "wallhaven"
+                        rowHeight: imageRow.rowHeight
+                        // Clean layout: no radius, no background. Normal: 50 for single image, normal rounding for multiple
+                        imageRadius: root.cleanLayout ? Appearance.rounding.small : (imageRow.modelData.images.length == 1 ? 50 : Appearance.rounding.normal)
+                        showBackground: !root.cleanLayout
+                        // Wallhaven search often lacks per-image tags; BooruImage will fall back to response tags.
+                        enableTooltip: Persistent.states.booru.showTagsOnHover
+                        // Download manually to reduce redundant requests or make sure downloading works
+                        manualDownload: ["danbooru", "waifu.im", "t.alcy.cc"].includes(root.responseData?.provider ?? "")
+                        previewDownloadPath: root.previewDownloadPath
+                        downloadPath: root.downloadPath
+                        nsfwPath: root.nsfwPath
+                    }
+                }
+            }
+        }
+
+        RowLayout { // Paging buttons
+            id: pagingButtonsRow
+            Layout.alignment: Qt.AlignRight
+            spacing: 6
+            visible: root.showPagingButtons && (root.responseData?.page ?? "") != "" && (root.responseData?.page ?? 0) > 0
+
+            RippleButton { // Next page button
+                id: button
+                property string buttonText
+                property bool clickHandled: false
+
+                implicitHeight: 30
+                leftPadding: 10
+                rightPadding: 5
+
+                onClicked: {
+                    // Prevent double-clicks
+                    if (clickHandled) return
+                    clickHandled = true
+                    clickResetTimer.restart()
+
+                    if (root.onNextPageRequested) {
+                        root.onNextPageRequested(root.responseData)
+                    }
+                    
+                    tagInputField.text = `${responseData.tags.join(" ")} ${parseInt(root.responseData.page) + 1}`
+                    tagInputField.accept()
+                }
+
+                Timer {
+                    id: clickResetTimer
+                    interval: 500
+                    onTriggered: button.clickHandled = false
+                }
+
+                buttonRadius: Appearance.rounding.small
+                colBackground: Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colSurfaceContainerHighest
+                colBackgroundHover: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colSurfaceContainerHighestHover
+                colRipple: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSurfaceContainerHighestActive            
+
+                contentItem: Item {
+                    anchors.fill: parent
+                    implicitHeight: nextPageRow.implicitHeight
+                    implicitWidth: nextPageRow.implicitWidth
+
+                    RowLayout {
+                        id: nextPageRow
+                        anchors.centerIn: parent
+                        spacing: 0
+                        StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
+                            text: Translation.tr("Next page")
+                            color: Appearance.colors.colOnSurface
+                        }
+                        MaterialSymbol {
+                            Layout.alignment: Qt.AlignVCenter
+                            iconSize: Appearance.font.pixelSize.larger
+                            color: Appearance.colors.colOnSurface
+                            text: "chevron_right"
+                        }
+                    }
+                }
+            }
+
+            RippleButton { // Clear button
+                id: clearButton
+                property bool clickHandled: false
+                
+                implicitHeight: 30
+                leftPadding: 10
+                rightPadding: 10
+
+                onClicked: {
+                    // Prevent double-clicks
+                    if (clickHandled) return
+                    clickHandled = true
+                    clearClickResetTimer.restart()
+                    
+                    if (root.tagInputField) {
+                        root.tagInputField.text = ""
+                    }
+                    if (root.onClearRequested) {
+                        root.onClearRequested(root.responseData)
+                    } else if (root.responseData.provider === "wallhaven") {
+                        Wallhaven.clearResponses()
+                    } else {
+                        Booru.clearResponses()
+                    }
+                }
+
+                Timer {
+                    id: clearClickResetTimer
+                    interval: 500
+                    onTriggered: clearButton.clickHandled = false
+                }
+
+                buttonRadius: Appearance.rounding.small
+                colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colSurfaceContainerHighest
+                colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colSurfaceContainerHighestHover
+                colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSurfaceContainerHighestActive
+
+                contentItem: Item {
+                    anchors.fill: parent
+                    implicitHeight: clearRow.implicitHeight
+                    implicitWidth: clearRow.implicitWidth
+
+                    RowLayout {
+                        id: clearRow
+                        anchors.centerIn: parent
+                        spacing: 0
+                        StyledText {
+                            Layout.alignment: Qt.AlignVCenter
+                            verticalAlignment: Text.AlignVCenter
+                            text: Translation.tr("Clear")
+                            color: Appearance.colors.colOnSurface
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

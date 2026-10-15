@@ -1,0 +1,3 @@
+module qs.modules.shared.background.widgets.controls
+ControlsWidget 1.0 ControlsWidget.qml
+ControlsInstrument 1.0 ControlsInstrument.qml

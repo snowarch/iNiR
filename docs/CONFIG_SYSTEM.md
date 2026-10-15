@@ -304,7 +304,7 @@ If `folder` is empty, shuffle uses the current wallpaper directory. If `generate
 
 Users normally interact with config through Settings:
 
-- **Shared/Material Settings**: the same page registry can be presented by `modules/settings/SettingsOverlay.qml` or the standalone `settings.qml` window according to `settingsUi.overlayMode`
+- **Shared/Material Settings**: the same page registry can be presented by `modules/ii/settings/SettingsOverlay.qml` or the standalone `settings.qml` window according to `settingsUi.overlayMode`
 - **Waffle-native Settings**: `waffleSettings.qml` and `modules/waffle/settings/` are used when Waffle is not configured to reuse Material-style Settings
 
 Both presentations write the same effective config. When a config key affects both families, every independently implemented control that exposes that semantic must stay synchronized.

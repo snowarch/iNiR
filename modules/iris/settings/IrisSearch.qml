@@ -6,10 +6,10 @@ import Quickshell
 import qs
 import qs.services
 import qs.modules.common
-import qs.modules.settings
+import qs.modules.ii.settings
 import qs.modules.iris.style
 import qs.modules.iris.widgets
-import qs.modules.background.widgets
+import qs.modules.shared.background.widgets
 
 // What Spotlight can do besides apps, by area: every switch and pick Settings shows (IrisOptions.quickActions),
 // every other option and section as a way into Settings, the themes, and the shell's actions that act under

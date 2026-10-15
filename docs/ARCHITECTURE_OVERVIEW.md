@@ -107,11 +107,11 @@ A simplified map of what lives where:
 | `scripts/inir` | CLI launcher (~3600 lines of bash) | High |
 | `sdata/` | Install, update, migrations | High |
 | `defaults/` | Shipped default config and app configs | Medium |
-| `modules/bar/` | Top bar (ii family) | Normal |
+| `modules/ii/bar/` | Top bar (ii family) | Normal |
 | `modules/waffle/` | Complete Windows 11 family | Normal |
-| `modules/sidebar/` | Physical sidebar hosts and live layout behavior | High |
-| `modules/sidebarLeft/` | Semantic feature content: AI chat, YT Music, widgets | Normal |
-| `modules/sidebarRight/` | Semantic system content: toggles, calendar, tools | Normal |
+| `modules/ii/sidebar/` | Physical sidebar hosts and live layout behavior | High |
+| `modules/ii/sidebarLeft/` | Semantic feature content: AI chat, YT Music, widgets | Normal |
+| `modules/ii/sidebarRight/` | Semantic system content: toggles, calendar, tools | Normal |
 | `translations/` | i18n strings (18 locales) | Low |
 
 Full breakdown: [Project Map](PROJECT_MAP.md)

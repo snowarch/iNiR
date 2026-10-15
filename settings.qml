@@ -13,7 +13,7 @@ import QtQuick.Window
 import Qt5Compat.GraphicalEffects
 import Quickshell
 import qs.services
-import qs.modules.settings
+import qs.modules.ii.settings
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions as CF

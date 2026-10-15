@@ -11,9 +11,9 @@ import qs.modules.iris.frame
 import qs.modules.iris.control
 import qs.modules.iris.background
 import qs
-import qs.modules.settings
-import qs.modules.background.widgets
-import "../../background/widgets/OrganicEdgeConfig.js" as EdgeConfig
+import qs.modules.ii.settings
+import qs.modules.shared.background.widgets
+import "../../shared/background/widgets/OrganicEdgeConfig.js" as EdgeConfig
 
 QtObject {
     id: root

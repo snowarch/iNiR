@@ -2492,7 +2492,7 @@ Singleton {
                     property int padding: 12 // Horizontal capsule padding around edge-section content, px
                 }
 
-                // Options for the separate M3 implementation under modules/barM3/. It
+                // Options for the separate M3 implementation under modules/ii/barM3/. It
                 // keeps its own layout/appearance contract instead of reusing
                 // bar.layout/bar.modules/bar.borderless, because its grouping
                 // model (three flat layouts of widget names, string grouping
@@ -2514,7 +2514,7 @@ Singleton {
                         property int datePixelSize: 0
                     }
                     property int gapsOut: 5 // Outer gap the float/M3 styles detach by
-                    // Widget names resolve to modules/barM3/<Name>.qml. Available:
+                    // Widget names resolve to modules/ii/barM3/<Name>.qml. Available:
                     // media, workspaces, activeWindow, leftSidebarButton, rightSidebarButton, docktoPanel,
                     // visualizer, divisor, resources, sysTray, systemIcons, utilButtons,
                     // networkSpeed, updatesCount, batteryIndicator, weatherBar,

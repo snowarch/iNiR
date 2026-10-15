@@ -2889,7 +2889,7 @@
   },
   {
    "name": "pill",
-   "family": "shared",
+   "family": "ii",
    "description": "The pill bar's morphing surfaces (only registered while Bar appearance is set to Pill). Valid surface names: `power`, `media`, `battery`, `calendar`, `link`, `mixer`, `sysmon`, `clipboard`, `glance`, `launcher`, `recorder`.",
    "example": "Super+V repeat=false { spawn \"inir\" \"pill\" \"toggle\" \"clipboard\"; }",
    "functions": [

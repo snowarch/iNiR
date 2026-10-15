@@ -1,0 +1,3 @@
+module qs.modules.ii.sidebarRight.wifiNetworks
+WifiDialog 1.0 WifiDialog.qml
+WifiNetworkItem 1.0 WifiNetworkItem.qml

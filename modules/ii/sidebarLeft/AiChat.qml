@@ -1,0 +1,1080 @@
+import qs
+import qs.services
+import qs.services.ai
+import qs.services.deferred
+import qs.modules.common
+import qs.modules.common.widgets
+import qs.modules.common.functions
+import qs.modules.ii.sidebarLeft.aiChat
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
+import Quickshell
+import Quickshell.Io
+
+Item {
+    id: root
+    clip: true
+    property real padding: 4
+    property var inputField: messageInputField
+    property string commandPrefix: "/"
+    property bool historyOpen: false
+    // The normal sidebar is the baseline. Extra information is added only
+    // after the content has enough room, never by letting compact rows grow.
+    readonly property bool compactLayout: width < 520
+    readonly property bool wideLayout: width >= 620
+    readonly property bool dictating: VoiceSearch.running && VoiceSearch.mode === "dictate"
+
+    property var suggestionQuery: ""
+    property var suggestionList: []
+
+    Connections {
+        target: VoiceSearch
+        function onTranscriptionReady(text) {
+            if (VoiceSearch.mode !== "dictate") return;
+            const needsSpace = messageInputField.text.length > 0 && !messageInputField.text.endsWith(" ");
+            messageInputField.insert(messageInputField.length, (needsSpace ? " " : "") + text);
+            messageInputField.forceActiveFocus();
+        }
+    }
+
+    onFocusChanged: focus => {
+        if (focus) {
+            root.inputField.forceActiveFocus();
+        }
+    }
+
+    Keys.onPressed: event => {
+        messageInputField.forceActiveFocus();
+        if (event.modifiers === Qt.NoModifier) {
+            if (event.key === Qt.Key_PageUp) {
+                messageListView.contentY = Math.max(0, messageListView.contentY - messageListView.height / 2);
+                event.accepted = true;
+            } else if (event.key === Qt.Key_PageDown) {
+                messageListView.contentY = Math.min(messageListView.contentHeight - messageListView.height / 2, messageListView.contentY + messageListView.height / 2);
+                event.accepted = true;
+            }
+        }
+        if ((event.modifiers & Qt.ControlModifier) && (event.modifiers & Qt.ShiftModifier) && event.key === Qt.Key_O) {
+            Ai.clearMessages();
+        }
+    }
+
+    property var allCommands: [
+        {
+            name: "attach",
+            description: Translation.tr("Attach a file. Only works with Gemini."),
+            execute: args => {
+                Ai.attachFile(args.join(" ").trim());
+            }
+        },
+        {
+            name: "model",
+            description: Translation.tr("Choose model"),
+            execute: args => {
+                if (args.length === 0 || !args[0] || args[0] === "get") {
+                    Ai.addMessage(Translation.tr("Usage: %1model MODEL_ID").arg(root.commandPrefix), Ai.interfaceRole);
+                    return;
+                }
+                Ai.setModel(args[0]);
+            }
+        },
+        {
+            name: "tool",
+            description: Translation.tr("Set the tool to use for the model."),
+            execute: args => {
+                // console.log(args)
+                if (args.length == 0 || args[0] == "get") {
+                    Ai.addMessage(Translation.tr("Usage: %1tool TOOL_NAME").arg(root.commandPrefix), Ai.interfaceRole);
+                } else {
+                    const tool = args[0];
+                    const switched = Ai.setTool(tool);
+                    if (switched) {
+                        Ai.addMessage(Translation.tr("Tool set to: %1").arg(tool), Ai.interfaceRole);
+                    }
+                }
+            }
+        },
+        {
+            name: "prompt",
+            description: Translation.tr("Set the system prompt for the model."),
+            execute: args => {
+                if (args.length === 0 || args[0] === "get") {
+                    Ai.printPrompt();
+                    return;
+                }
+                Ai.loadPrompt(args.join(" ").trim());
+            }
+        },
+        {
+            name: "key",
+            description: Translation.tr("Set API key"),
+            execute: args => {
+                if (args.length === 0) {
+                    Ai.addMessage(Translation.tr("Usage: %1key YOUR_API_KEY\n%1key get").arg(root.commandPrefix), Ai.interfaceRole);
+                    return;
+                }
+                if (args[0] == "get") {
+                    Ai.printApiKey();
+                } else {
+                    Ai.setApiKey(args[0]);
+                }
+            }
+        },
+        {
+            name: "save",
+            description: Translation.tr("Save chat"),
+            execute: args => {
+                const joinedArgs = args.join(" ");
+                if (joinedArgs.trim().length == 0) {
+                    Ai.addMessage(Translation.tr("Usage: %1save CHAT_NAME").arg(root.commandPrefix), Ai.interfaceRole);
+                    return;
+                }
+                Ai.saveChat(joinedArgs);
+            }
+        },
+        {
+            name: "load",
+            description: Translation.tr("Load chat"),
+            execute: args => {
+                const joinedArgs = args.join(" ");
+                if (joinedArgs.trim().length == 0) {
+                    Ai.addMessage(Translation.tr("Usage: %1load CHAT_NAME").arg(root.commandPrefix), Ai.interfaceRole);
+                    return;
+                }
+                Ai.loadChat(joinedArgs);
+            }
+        },
+        {
+            name: "clear",
+            description: Translation.tr("Clear chat history"),
+            execute: () => {
+                Ai.clearMessages();
+            }
+        },
+        {
+            name: "temp",
+            description: Translation.tr("Set temperature (randomness) of the model. Values range between 0 to 2 for Gemini, 0 to 1 for other models. Default is 0.5."),
+            execute: args => {
+                // console.log(args)
+                if (args.length == 0 || args[0] == "get") {
+                    Ai.printTemperature();
+                } else {
+                    const temp = parseFloat(args[0]);
+                    Ai.setTemperature(temp);
+                }
+            }
+        },
+        {
+            name: "test",
+            description: Translation.tr("Markdown test"),
+            execute: () => {
+                Ai.addMessage(`
+<think>
+A longer think block to test revealing animation
+OwO wem ipsum dowo sit amet, consekituwet awipiscing ewit, sed do eiuwsmod tempow inwididunt ut wabowe et dowo mawa. Ut enim ad minim weniam, quis nostwud exeucitation uwuwamcow bowowis nisi ut awiquip ex ea commowo consequat. Duuis aute iwuwe dowo in wepwependewit in wowuptate velit esse ciwwum dowo eu fugiat nuwa pawiatuw. Excepteuw sint occaecat cupidatat non pwowoident, sunt in cuwpa qui officia desewunt mowit anim id est wabowum. Meouw! >w<
+Mowe uwu wem ipsum!
+</think>
+## ✏️ Markdown test
+### Formatting
+
+- *Italic*, \`Monospace\`, **Bold**, [Link](https://example.com)
+- Arch lincox icon <img src="${Quickshell.shellPath("assets/icons/arch-symbolic.svg")}" height="${Appearance.font.pixelSize.small}"/>
+
+### Table
+
+Quickshell vs AGS/Astal
+
+|                          | Quickshell       | AGS/Astal         |
+|--------------------------|------------------|-------------------|
+| UI Toolkit               | Qt               | Gtk3/Gtk4         |
+| Language                 | QML              | Js/Ts/Lua         |
+| Reactivity               | Implied          | Needs declaration |
+| Widget placement         | Mildly difficult | More intuitive    |
+| Bluetooth & Wifi support | ❌               | ✅                |
+| No-delay keybinds        | ✅               | ❌                |
+| Development              | New APIs         | New syntax        |
+
+### Code block
+
+Just a hello world...
+
+\`\`\`cpp
+#include <bits/stdc++.h>
+// This is intentionally very long to test scrolling
+const std::string GREETING = \"UwU\";
+int main(int argc, char* argv[]) {
+    std::cout << GREETING;
+}
+\`\`\`
+
+### LaTeX
+
+
+Inline w/ dollar signs: $\\frac{1}{2} = \\frac{2}{4}$
+
+Inline w/ double dollar signs: $$\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$$
+
+Inline w/ backslash and square brackets \\[\\int_0^\\infty \\frac{1}{x^2} dx = \\infty\\]
+
+Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
+`, Ai.interfaceRole);
+            }
+        },
+    ]
+
+    function handleInput(inputText) {
+        if (inputText.startsWith(root.commandPrefix)) {
+            // Handle special commands
+            const command = inputText.split(" ")[0].substring(1);
+            const args = inputText.split(" ").slice(1);
+            const commandObj = root.allCommands.find(cmd => cmd.name === `${command}`);
+            if (commandObj) {
+                commandObj.execute(args);
+            } else {
+                Ai.addMessage(Translation.tr("Unknown command: ") + command, Ai.interfaceRole);
+            }
+        } else {
+            const sent = Ai.sendUserMessage(inputText)
+            if (!sent) return false
+        }
+
+        messageListView.positionViewAtEnd()
+        return true
+    }
+
+    Process {
+        id: decodeImageAndAttachProc
+        property string imageDecodePath: Directories.cliphistDecode
+        property string imageDecodeFileName: "image"
+        property string imageDecodeFilePath: `${imageDecodePath}/${imageDecodeFileName}`
+        function handleEntry(entry: string) {
+            imageDecodeFileName = parseInt(entry.match(/^(\d+)\t/)[1]);
+            decodeImageAndAttachProc.exec(["bash", "-c", `[ -f ${imageDecodeFilePath} ] || echo '${StringUtils.shellSingleQuoteEscape(entry)}' | ${Cliphist.cliphistBinary} decode > '${imageDecodeFilePath}'`]);
+        }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0) {
+                Ai.attachFile(imageDecodeFilePath);
+            } else {
+                console.error("[AiChat] Failed to decode image in clipboard content");
+            }
+        }
+    }
+
+    component StatusItem: MouseArea {
+        id: statusItem
+        property string icon
+        property string statusText
+        property string description
+        hoverEnabled: true
+        implicitHeight: statusItemRowLayout.implicitHeight
+        implicitWidth: statusItemRowLayout.implicitWidth
+
+        RowLayout {
+            id: statusItemRowLayout
+            spacing: 0
+            MaterialSymbol {
+                text: statusItem.icon
+                iconSize: Appearance.font.pixelSize.huge
+                color: Appearance.colSecondaryActionIcon
+            }
+            StyledText {
+                font.pixelSize: Appearance.font.pixelSize.small
+                font.weight: Font.Medium
+                text: statusItem.statusText
+                color: Appearance.colMetadataText
+                animateChange: true
+            }
+        }
+
+        StyledToolTip {
+            text: statusItem.description
+            extraVisibleCondition: false
+            alternativeVisibleCondition: statusItem.containsMouse
+        }
+    }
+
+    component StatusSeparator: Rectangle {
+        implicitWidth: 4
+        implicitHeight: 4
+        radius: implicitWidth / 2
+        color: Appearance.colors.colOutlineVariant
+    }
+
+    ColumnLayout {
+        id: columnLayout
+        anchors {
+            fill: parent
+            margins: root.padding
+        }
+        spacing: root.padding
+
+        Item {
+            // Messages
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: root.width
+                    height: root.height
+                    radius: Appearance.rounding.small
+                }
+            }
+
+            StyledRectangularShadow {
+                z: 1
+                target: statusBg
+                opacity: messageListView.atYBeginning ? 0 : 1
+                visible: opacity > 0
+                Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
+                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+            }
+            Rectangle {
+                id: statusBg
+                // Above the empty-state placeholder (z:2) and scroll button (z:3):
+                // the model-selector popup grows from here and must cover them.
+                z: 4
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                    top: parent.top
+                    topMargin: 4
+                }
+                // Content-sized and centred, with no cap: a long model name plus the
+                // status chips pushed this wider than the sidebar itself, so the row
+                // ran off both edges. It may never exceed the space it sits in.
+                readonly property real _maxWidth: Math.max(0, parent.width - 8)
+                implicitWidth: Math.min(statusRowLayout.implicitWidth + 10 * 2, _maxWidth)
+                width: root.compactLayout ? _maxWidth : implicitWidth
+                implicitHeight: Math.max(statusRowLayout.implicitHeight, 38)
+                // NO clip: the model-selector popup grows downward out of this
+                // plate, so clipping it to contain the row also swallowed the whole
+                // menu. Nothing overflows any more — the cap plus the model name
+                // eliding is what keeps the row inside.
+                radius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.normal - root.padding
+                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
+                RowLayout {
+                    id: statusRowLayout
+                    anchors.centerIn: parent
+                    // Squeeze inside the capped plate instead of overflowing it —
+                    // the model name is the one item here that can give ground.
+                    width: Math.min(implicitWidth, statusBg._maxWidth - 10 * 2)
+                    spacing: 10
+
+                    // Shrinks when the row is tight, never stretches past its natural size.
+                    AiModelSelector {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        Layout.maximumWidth: root.compactLayout ? 100000 : implicitWidth
+                        containmentItem: root
+                    }
+                    StatusSeparator { visible: !root.compactLayout }
+                    StatusItem {
+                        visible: !root.compactLayout
+                        icon: Ai.currentModelHasApiKey ? "key" : "key_off"
+                        statusText: ""
+                        description: Ai.currentModelHasApiKey
+                            ? Translation.tr("Provider connected securely through the system keyring")
+                            : Translation.tr("Provider not connected\nOpen AI Settings to add its key")
+                    }
+                    StatusSeparator { visible: root.wideLayout }
+                    StatusItem {
+                        visible: root.wideLayout
+                        icon: "article"
+                        statusText: Ai.currentPromptName.length > 0 ? Ai.currentPromptName : Translation.tr("default")
+                        description: Translation.tr("Active personality / system prompt\nChange with /prompt NAME")
+                    }
+                    StatusSeparator { visible: root.wideLayout }
+                    StatusItem {
+                        visible: root.wideLayout
+                        icon: "device_thermostat"
+                        statusText: Ai.temperature.toFixed(1)
+                        description: Translation.tr("Temperature\nChange with /temp VALUE")
+                    }
+                    StatusSeparator {
+                        visible: root.wideLayout && Ai.tokenCount.total > 0
+                    }
+                    StatusItem {
+                        visible: root.wideLayout && Ai.tokenCount.total > 0
+                        icon: "token"
+                        statusText: Ai.tokenCount.total
+                        description: Translation.tr("Total token count\nInput: %1\nOutput: %2").arg(Ai.tokenCount.input).arg(Ai.tokenCount.output)
+                    }
+                }
+            }
+
+            ScrollEdgeFade {
+                z: 1
+                target: messageListView
+                vertical: true
+            }
+
+            StyledListView { // Message list
+                id: messageListView
+                z: 0
+                anchors.fill: parent
+                spacing: 10
+                popin: false
+                topMargin: statusBg.implicitHeight + statusBg.anchors.topMargin * 2
+
+                touchpadScrollFactor: (Config.options?.interactions?.scrolling?.touchpadScrollFactor ?? 0.5) * 1.4
+                mouseScrollFactor: (Config.options?.interactions?.scrolling?.mouseScrollFactor ?? 1.0) * 1.4
+
+                property int lastResponseLength: 0
+                onContentHeightChanged: {
+                    if (atYEnd)
+                        Qt.callLater(positionViewAtEnd);
+                }
+                onCountChanged: {
+                    // Auto-scroll when new messages are added
+                    if (atYEnd)
+                        Qt.callLater(positionViewAtEnd);
+                }
+
+                add: null // Prevent function calls from being janky
+
+                model: ScriptModel {
+                    values: Ai.messageIDs.filter(id => {
+                        const message = Ai.messageByID[id];
+                        return message?.visibleToUser ?? true;
+                    })
+                }
+                delegate: AiMessage {
+                    required property var modelData
+                    required property int index
+                    messageIndex: index
+                    messageData: {
+                        Ai.messageByID[modelData];
+                    }
+                    messageInputField: root.inputField
+                }
+            }
+
+            MaterialPlaceholderMessage {
+                anchors.fill: parent
+                z: 2
+                shown: Ai.messageIDs.length === 0 && !aiMascot.active
+                icon: "neurology"
+                text: Translation.tr("Large language models")
+                explanation: Translation.tr("Choose a recommended, free or local model above. Connect providers in AI Settings — no model IDs required.\nCtrl+O expands · Ctrl+P detaches")
+                shape: MaterialShape.Shape.PixelCircle
+            }
+
+            ColumnLayout {
+                anchors.centerIn: parent
+                z: 2
+                visible: aiMascot.active && Ai.messageIDs.length === 0
+                spacing: 8
+                width: Math.min(parent.width - 32, 340)
+
+                MascotImage {
+                    id: aiMascot
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 120
+                    Layout.preferredHeight: 120
+                    surface: "aiChat"
+                    pose: "ai-oracle"
+                }
+
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: Translation.tr("Large language models")
+                    font.pixelSize: Appearance.font.pixelSize.large
+                    color: Appearance.colors.colOnLayer0
+                }
+
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    text: Translation.tr("Choose a recommended, free or local model above. Connect providers in AI Settings — no model IDs required.\nCtrl+O expands · Ctrl+P detaches")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colMetadataText
+                }
+            }
+
+            ScrollToBottomButton {
+                z: 3
+                target: messageListView
+            }
+
+            ChatHistoryPanel {
+                z: 5
+                anchors.fill: parent
+                open: root.historyOpen
+                onRequestClose: root.historyOpen = false
+            }
+        }
+
+        // Compact hint row (replaces DescriptionBox for model suggestions)
+        RowLayout {
+            visible: root.suggestionList.length > 0 && messageInputField.text.length > 0
+            Layout.fillWidth: true
+            spacing: 4
+            
+            StyledText {
+                Layout.fillWidth: true
+                text: root.suggestionList.length > 1 
+                    ? Translation.tr("Select model") 
+                    : ""
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colMetadataText
+                elide: Text.ElideRight
+            }
+            KeyboardKey {
+                visible: root.suggestionList.length > 1
+                key: "↑↓"
+            }
+            KeyboardKey {
+                key: "Tab"
+            }
+        }
+
+        FlowButtonGroup { // Suggestions
+            id: suggestions
+            visible: root.suggestionList.length > 0 && messageInputField.text.length > 0
+            property int selectedIndex: 0
+            Layout.fillWidth: true
+            spacing: 4
+
+            Repeater {
+                id: suggestionRepeater
+                model: {
+                    suggestions.selectedIndex = 0;
+                    return root.suggestionList.slice(0, 10);
+                }
+                delegate: ApiCommandButton {
+                    id: commandButton
+                    colBackground: Appearance.angelEverywhere
+                        ? (suggestions.selectedIndex === index ? Appearance.angel.colGlassCardHover : Appearance.angel.colGlassCard)
+                        : Appearance.auroraEverywhere
+                            ? (suggestions.selectedIndex === index ? Appearance.aurora.colSubSurface : "transparent")
+                            : Appearance.zzzEverywhere
+                                ? (suggestions.selectedIndex === index ? Appearance.zzz.sticker : "transparent")
+                                : (suggestions.selectedIndex === index ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
+                    bounce: false
+                    contentItem: StyledText {
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.zzzEverywhere && suggestions.selectedIndex === index
+                            ? Appearance.zzz.onSticker : Appearance.colors.colOnSurface
+                        horizontalAlignment: Text.AlignHCenter
+                        text: modelData.displayName ?? modelData.name
+                    }
+
+                    onHoveredChanged: {
+                        if (commandButton.hovered) {
+                            suggestions.selectedIndex = index;
+                        }
+                    }
+                    onClicked: {
+                        suggestions.acceptSuggestion(modelData.name);
+                    }
+                    
+                    StyledToolTip {
+                        visible: commandButton.hovered && modelData.description
+                        text: modelData.description ?? ""
+                        delay: 300
+                    }
+                }
+            }
+
+            function acceptSuggestion(word) {
+                const words = messageInputField.text.trim().split(/\s+/);
+                if (words.length > 0) {
+                    words[words.length - 1] = word;
+                } else {
+                    words.push(word);
+                }
+                const updatedText = words.join(" ") + " ";
+                messageInputField.text = updatedText;
+                messageInputField.cursorPosition = messageInputField.text.length;
+                messageInputField.forceActiveFocus();
+            }
+
+            function acceptSelectedWord() {
+                if (suggestions.selectedIndex >= 0 && suggestions.selectedIndex < suggestionRepeater.count) {
+                    const word = root.suggestionList[suggestions.selectedIndex].name;
+                    suggestions.acceptSuggestion(word);
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: connectionRow.implicitHeight + 12
+            visible: !Ai.currentModelReady
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+            color: ColorUtils.transparentize(Appearance.colors.colErrorContainer, 0.34)
+
+            RowLayout {
+                id: connectionRow
+                anchors.fill: parent
+                anchors.margins: 6
+                spacing: 7
+
+                MaterialSymbol {
+                    text: Ai.getModel() ? "lock" : "info"
+                    iconSize: Appearance.font.pixelSize.large
+                    color: Appearance.colors.colOnErrorContainer
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Ai.getModel()
+                        ? Translation.tr("Connect %1 before sending messages.")
+                            .arg(AiProviderCatalog.providerById(Ai.getModel()?.provider_id ?? "")?.name ?? Translation.tr("this provider"))
+                        : Translation.tr("Connect a provider or start a local model.")
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    color: Appearance.colors.colOnErrorContainer
+                    wrapMode: Text.WordWrap
+                }
+                RippleButton {
+                    implicitWidth: root.compactLayout ? 30 : connectionButtonLabel.implicitWidth + 16
+                    implicitHeight: 28
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: Appearance.colors.colErrorContainer
+                    colBackgroundHover: Appearance.colors.colErrorContainerHover
+                    onClicked: GlobalStates.openSettingsPage(24)
+                    contentItem: Item {
+                        implicitWidth: centredRow1.implicitWidth
+                        implicitHeight: centredRow1.implicitHeight
+                        RowLayout {
+                            id: centredRow1
+                            width: Math.min(implicitWidth, parent.width)
+                            anchors.centerIn: parent
+                            spacing: 4
+                            MaterialSymbol {
+                                visible: root.compactLayout
+                                text: "key"
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnErrorContainer
+                            }
+                            StyledText {
+                                id: connectionButtonLabel
+                                visible: !root.compactLayout
+                                text: Translation.tr("Connect")
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colOnErrorContainer
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Rectangle { // Input area
+            id: inputWrapper
+            border.width: Appearance.editorialEverywhere ? 1 : 0
+            border.color: messageInputField.activeFocus ? Appearance.editorial.accent : Appearance.editorial.rule
+            property real spacing: 5
+            Layout.fillWidth: true
+            radius: Appearance.editorialEverywhere ? Appearance.editorial.radius : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal - root.padding
+            Behavior on radius {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+            }
+            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
+            implicitHeight: Math.max(45,
+                (attachedFileIndicator.visible
+                    ? attachedFileIndicator.implicitHeight + attachedFileIndicator.anchors.margins + spacing
+                    : 0)
+                + inputFieldRowLayout.implicitHeight + inputFieldRowLayout.anchors.topMargin
+                + commandButtonsRow.implicitHeight + commandButtonsRow.anchors.bottomMargin
+                + spacing)
+            clip: true
+
+            Behavior on implicitHeight {
+                enabled: Appearance.animationsEnabled
+                animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
+            }
+
+            AttachedFileIndicator {
+                id: attachedFileIndicator
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    right: parent.right
+                    margins: visible ? 5 : 0
+                }
+                filePath: Ai.pendingFilePath
+                onRemove: Ai.attachFile("")
+            }
+
+            RowLayout { // Input field and send button
+                id: inputFieldRowLayout
+                anchors {
+                    top: attachedFileIndicator.bottom
+                    left: parent.left
+                    right: parent.right
+                    topMargin: 5
+                }
+                spacing: 0
+
+                StyledTextArea { // The actual TextArea
+                    id: messageInputField
+                    wrapMode: TextArea.Wrap
+                    Layout.fillWidth: true
+                    Layout.minimumHeight: 40
+                    Layout.maximumHeight: root.compactLayout ? 104 : 156
+                    padding: 10
+                    color: activeFocus ? Appearance.colors.colOnSurface : Appearance.colMetadataText
+                    placeholderText: !Network.online && !(Ai.getModel()?.local ?? false)
+                        ? Translation.tr("%1. Local models still work").arg(Network.offlineReason)
+                        : Ai.currentModelReady
+                        ? Translation.tr("Ask %1 anything...").arg(Ai.getModel()?.name ?? Translation.tr("the assistant"))
+                        : Translation.tr("Connect the selected provider to start chatting")
+
+                    background: null
+
+                    onTextChanged: {
+                        // Handle suggestions
+                        if (messageInputField.text.length === 0) {
+                            root.suggestionQuery = "";
+                            root.suggestionList = [];
+                            return;
+                        } else if (messageInputField.text.startsWith(`${root.commandPrefix}model`)) {
+                            root.suggestionQuery = messageInputField.text.split(" ")[1] ?? "";
+                            const modelResults = Fuzzy.go(root.suggestionQuery, Ai.modelList.map(model => {
+                                return {
+                                    name: Fuzzy.prepare(model),
+                                    obj: model
+                                };
+                            }), {
+                                all: true,
+                                key: "name"
+                            });
+                            root.suggestionList = modelResults.map(model => {
+                                const resolvedModel = Ai.models[model.target]
+                                if (!resolvedModel) return null
+                                return {
+                                    name: `${messageInputField.text.trim().split(" ").length == 1 ? (root.commandPrefix + "model ") : ""}${model.target}`,
+                                    displayName: resolvedModel.name ?? model.target,
+                                    description: resolvedModel.description ?? ""
+                                };
+                            }).filter(model => model !== null)
+                        } else if (messageInputField.text.startsWith(`${root.commandPrefix}prompt`)) {
+                            root.suggestionQuery = messageInputField.text.split(" ")[1] ?? "";
+                            const promptFileResults = Fuzzy.go(root.suggestionQuery, Ai.promptFiles.map(file => {
+                                return {
+                                    name: Fuzzy.prepare(file),
+                                    obj: file
+                                };
+                            }), {
+                                all: true,
+                                key: "name"
+                            });
+                            root.suggestionList = promptFileResults.map(file => {
+                                return {
+                                    name: `${messageInputField.text.trim().split(" ").length == 1 ? (root.commandPrefix + "prompt ") : ""}${file.target}`,
+                                    displayName: `${FileUtils.trimFileExt(FileUtils.fileNameForPath(file.target))}`,
+                                    description: Translation.tr("Load prompt from %1").arg(file.target)
+                                };
+                            });
+                        } else if (messageInputField.text.startsWith(`${root.commandPrefix}save`)) {
+                            root.suggestionQuery = messageInputField.text.split(" ")[1] ?? "";
+                            const promptFileResults = Fuzzy.go(root.suggestionQuery, Ai.savedChats.map(file => {
+                                return {
+                                    name: Fuzzy.prepare(file),
+                                    obj: file
+                                };
+                            }), {
+                                all: true,
+                                key: "name"
+                            });
+                            root.suggestionList = promptFileResults.map(file => {
+                                const chatName = FileUtils.trimFileExt(FileUtils.fileNameForPath(file.target)).trim();
+                                return {
+                                    name: `${messageInputField.text.trim().split(" ").length == 1 ? (root.commandPrefix + "save ") : ""}${chatName}`,
+                                    displayName: `${chatName}`,
+                                    description: Translation.tr("Save chat to %1").arg(chatName)
+                                };
+                            });
+                        } else if (messageInputField.text.startsWith(`${root.commandPrefix}load`)) {
+                            root.suggestionQuery = messageInputField.text.split(" ")[1] ?? "";
+                            const promptFileResults = Fuzzy.go(root.suggestionQuery, Ai.savedChats.map(file => {
+                                return {
+                                    name: Fuzzy.prepare(file),
+                                    obj: file
+                                };
+                            }), {
+                                all: true,
+                                key: "name"
+                            });
+                            root.suggestionList = promptFileResults.map(file => {
+                                const chatName = FileUtils.trimFileExt(FileUtils.fileNameForPath(file.target)).trim();
+                                return {
+                                    name: `${messageInputField.text.trim().split(" ").length == 1 ? (root.commandPrefix + "load ") : ""}${chatName}`,
+                                    displayName: `${chatName}`,
+                                    description: Translation.tr(`Load chat from %1`).arg(file.target)
+                                };
+                            });
+                        } else if (messageInputField.text.startsWith(`${root.commandPrefix}tool`)) {
+                            root.suggestionQuery = messageInputField.text.split(" ")[1] ?? "";
+                            const toolResults = Fuzzy.go(root.suggestionQuery, Ai.availableTools.map(tool => {
+                                return {
+                                    name: Fuzzy.prepare(tool),
+                                    obj: tool
+                                };
+                            }), {
+                                all: true,
+                                key: "name"
+                            });
+                            root.suggestionList = toolResults.map(tool => {
+                                const toolName = tool.target;
+                                return {
+                                    name: `${messageInputField.text.trim().split(" ").length == 1 ? (root.commandPrefix + "tool ") : ""}${tool.target}`,
+                                    displayName: toolName,
+                                    description: Ai.toolDescriptions[toolName]
+                                };
+                            });
+                        } else if (messageInputField.text.startsWith(root.commandPrefix)) {
+                            root.suggestionQuery = messageInputField.text;
+                            root.suggestionList = root.allCommands.filter(cmd => cmd.name.startsWith(messageInputField.text.substring(1))).map(cmd => {
+                                return {
+                                    name: `${root.commandPrefix}${cmd.name}`,
+                                    description: `${cmd.description}`
+                                };
+                            });
+                        }
+                    }
+
+                    function accept() {
+                        root.handleInput(text);
+                        text = "";
+                    }
+
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Tab) {
+                            suggestions.acceptSelectedWord();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Up && suggestions.visible) {
+                            suggestions.selectedIndex = Math.max(0, suggestions.selectedIndex - 1);
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Down && suggestions.visible) {
+                            suggestions.selectedIndex = Math.min(root.suggestionList.length - 1, suggestions.selectedIndex + 1);
+                            event.accepted = true;
+                        } else if ((event.key === Qt.Key_Enter || event.key === Qt.Key_Return)) {
+                            if (event.modifiers & Qt.ShiftModifier) {
+                                // Insert newline
+                                messageInputField.insert(messageInputField.cursorPosition, "\n");
+                                event.accepted = true;
+                            } else {
+                                const inputText = messageInputField.text
+                                if (root.handleInput(inputText)) messageInputField.clear()
+                                event.accepted = true
+                            }
+                        } else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_V) {
+                            // Intercept Ctrl+V to handle image/file pasting
+                            if (event.modifiers & Qt.ShiftModifier) {
+                                // Let Shift+Ctrl+V = plain paste
+                                messageInputField.text += Quickshell.clipboardText;
+                                event.accepted = true;
+                                return;
+                            }
+                            // Try image paste first
+                            const currentClipboardEntry = Cliphist.entries[0];
+                            const cleanCliphistEntry = StringUtils.cleanCliphistEntry(currentClipboardEntry);
+                            if (/^\d+\t\[\[.*binary data.*\d+x\d+.*\]\]$/.test(currentClipboardEntry)) {
+                                // First entry = currently copied entry = image?
+                                decodeImageAndAttachProc.handleEntry(currentClipboardEntry);
+                                event.accepted = true;
+                                return;
+                            } else if (cleanCliphistEntry.startsWith("file://")) {
+                                // First entry = currently copied entry = image?
+                                const fileName = decodeURIComponent(cleanCliphistEntry);
+                                Ai.attachFile(fileName);
+                                event.accepted = true;
+                                return;
+                            }
+                            event.accepted = false; // No image, let text pasting proceed
+                        } else if (event.key === Qt.Key_Escape) {
+                            // Esc to detach file
+                            if (Ai.pendingFilePath.length > 0) {
+                                Ai.attachFile("");
+                                event.accepted = true;
+                            } else {
+                                event.accepted = false;
+                            }
+                        }
+                    }
+                }
+
+                RippleButton { // Voice dictation button
+                    id: micButton
+                    Layout.alignment: Qt.AlignTop
+                    implicitWidth: 40
+                    implicitHeight: 40
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                    toggled: root.dictating
+                    colBackgroundToggled: Appearance.colors.colError
+                    onClicked: {
+                        if (VoiceSearch.running) {
+                            VoiceSearch.stop();
+                        } else {
+                            VoiceSearch.startDictation();
+                        }
+                    }
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        iconSize: 22
+                        color: root.dictating ? Appearance.colors.colOnError : Appearance.colors.colOnLayer2
+                        text: root.dictating
+                            ? (VoiceSearch.transcribing ? "graphic_eq" : "stop")
+                            : "mic"
+                    }
+                    StyledToolTip {
+                        text: root.dictating
+                            ? (VoiceSearch.transcribing ? Translation.tr("Transcribing…") : Translation.tr("Stop recording"))
+                            : Translation.tr("Voice input")
+                    }
+                }
+
+                RippleButton { // Send button
+                    id: sendButton
+                    Layout.alignment: Qt.AlignTop
+                    Layout.rightMargin: 5
+                    implicitWidth: 40
+                    implicitHeight: 40
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                    enabled: Ai.busy || (messageInputField.text.length > 0 && Ai.currentModelReady)
+                    toggled: enabled
+                    // Active send = accent, not the default dark chrome plate.
+                    colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.accent
+                        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                        : Appearance.colors.colPrimary
+                    colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.zzz.sticker
+                        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryHover
+                        : Appearance.colors.colPrimaryHover
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: sendButton.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: {
+                            if (Ai.busy && messageInputField.text.length === 0) {
+                                Ai.stopRequest();
+                                return;
+                            }
+                            const inputText = messageInputField.text
+                            if (root.handleInput(inputText)) messageInputField.clear()
+                        }
+                    }
+
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        iconSize: 22
+                        color: sendButton.enabled
+                            ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary)
+                            : Appearance.colors.colOnLayer2Disabled
+                        text: (Ai.busy && messageInputField.text.length === 0) ? "stop" : "arrow_upward"
+                    }
+                    StyledToolTip {
+                        text: (Ai.busy && messageInputField.text.length === 0)
+                            ? Translation.tr("Stop generating")
+                            : Translation.tr("Send")
+                    }
+                }
+            }
+
+            RowLayout { // Controls
+                id: commandButtonsRow
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 5
+                anchors.leftMargin: root.compactLayout ? 5 : 10
+                anchors.rightMargin: 5
+                spacing: 4
+
+                property var commandsShown: [
+                    { name: "", sendDirectly: false, dontAddSpace: true },
+                    { name: "clear", sendDirectly: true },
+                ]
+
+                ApiInputBoxIndicator {
+                    icon: "api"
+                    readonly property var _model: Ai.getModel()
+                    text: _model?.name ?? Translation.tr("No model")
+                    showText: !root.compactLayout
+                    showDisclosure: !root.compactLayout
+                    maximumTextWidth: root.wideLayout ? 180 : 120
+                    tooltipText: _model?.name ?? Translation.tr("No model — click to select")
+                    clickAction: () => {
+                        messageInputField.text = root.commandPrefix + "model "
+                        messageInputField.cursorPosition = messageInputField.text.length
+                        messageInputField.forceActiveFocus()
+                    }
+                }
+
+                ApiInputBoxIndicator {
+                    icon: "service_toolbox"
+                    text: Ai.currentTool.charAt(0).toUpperCase() + Ai.currentTool.slice(1)
+                    showText: !root.compactLayout
+                    showDisclosure: !root.compactLayout
+                    maximumTextWidth: 84
+                    tooltipText: Ai.currentTool
+                    clickAction: () => {
+                        messageInputField.text = root.commandPrefix + "tool "
+                        messageInputField.cursorPosition = messageInputField.text.length
+                        messageInputField.forceActiveFocus()
+                    }
+                }
+
+                ApiInputBoxIndicator {
+                    icon: "history"
+                    text: ""
+                    tooltipText: Translation.tr("Conversations")
+                    clickAction: () => {
+                        root.historyOpen = !root.historyOpen
+                    }
+                }
+
+                ApiInputBoxIndicator {
+                    icon: "settings"
+                    text: ""
+                    tooltipText: Translation.tr("AI Settings")
+                    clickAction: () => GlobalStates.openSettingsPage(24)
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                ButtonGroup {
+                    // Command buttons
+                    padding: 0
+
+                    Repeater {
+                        // Command buttons
+                        model: commandButtonsRow.commandsShown
+                        delegate: ApiCommandButton {
+                            property string commandRepresentation: `${root.commandPrefix}${modelData.name}`
+                            buttonText: commandRepresentation
+                            downAction: () => {
+                                if (modelData.sendDirectly) {
+                                    root.handleInput(commandRepresentation);
+                                } else {
+                                    messageInputField.text = commandRepresentation + (modelData.dontAddSpace ? "" : " ");
+                                    messageInputField.cursorPosition = messageInputField.text.length;
+                                    messageInputField.forceActiveFocus();
+                                }
+                                if (modelData.name === "clear") {
+                                    messageInputField.text = "";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

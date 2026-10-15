@@ -1,5 +1,0 @@
-module qs.modules.background.widgets.clock.dateIndicator
-DateIndicator 1.0 DateIndicator.qml
-BubbleDate 1.0 BubbleDate.qml
-RectangleDate 1.0 RectangleDate.qml
-RotatingDate 1.0 RotatingDate.qml

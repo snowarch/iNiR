@@ -1,0 +1,2 @@
+module qs.modules.shared.bootGreeting
+BootGreeting 1.0 BootGreeting.qml

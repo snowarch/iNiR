@@ -13,7 +13,7 @@
 //-@ pragma Env QTWEBENGINE_CHROMIUM_FLAGS=--disable-features=ThirdPartyCookieBlocking,StorageAccessAPI
 
 import qs.modules.common
-import qs.modules.settings
+import qs.modules.ii.settings
 
 import QtQuick
 import Quickshell
@@ -718,14 +718,14 @@ ShellRoot {
 
     LazyLoader {
         active: Config.ready
-        source: "modules/altSwitcher/AltSwitcherNoVisual.qml"
+        source: "modules/shared/altSwitcher/AltSwitcherNoVisual.qml"
     }
 
     LazyLoader {
         active: Config.ready
             && (Config.options?.panelFamily ?? "ii") === "ii"
             && !root.iiAltSwitcherNoVisual
-        source: "modules/altSwitcher/AltSwitcher.qml"
+        source: "modules/shared/altSwitcher/AltSwitcher.qml"
     }
 
     // Load ONLY the active family panels to reduce startup time.
@@ -736,10 +736,10 @@ ShellRoot {
     // being torn down — two instances existed and Quickshell dropped one
     // handler per target (region, tiling, wallpaperSelector, coverflowSelector).
     // One owner here is valid whichever family is loaded.
-    LazyLoader { active: Config.ready; source: "modules/regionSelector/RegionSelectorRouter.qml" }
-    LazyLoader { active: Config.ready; source: "modules/japaneseLookup/JapaneseLookup.qml" }
-    LazyLoader { active: Config.ready; source: "modules/tilingOverlay/TilingOverlayRouter.qml" }
-    LazyLoader { active: Config.ready; source: "modules/wallpaperSelector/WallpaperSelectorRouter.qml" }
+    LazyLoader { active: Config.ready; source: "modules/shared/regionSelector/RegionSelectorRouter.qml" }
+    LazyLoader { active: Config.ready; source: "modules/shared/japaneseLookup/JapaneseLookup.qml" }
+    LazyLoader { active: Config.ready; source: "modules/shared/tilingOverlay/TilingOverlayRouter.qml" }
+    LazyLoader { active: Config.ready; source: "modules/shared/wallpaperSelector/WallpaperSelectorRouter.qml" }
 
     // Same reason as the routers: both panel files declared these, so every
     // family switch registered them twice and Quickshell kept whichever won the
@@ -913,7 +913,7 @@ ShellRoot {
     }
 
     // Close confirmation dialog (always loaded, handles IPC)
-    LazyLoader { active: Config.ready; source: "modules/closeConfirm/CloseConfirm.qml" }
+    LazyLoader { active: Config.ready; source: "modules/shared/closeConfirm/CloseConfirm.qml" }
 
     // Shared (always loaded via ToastManager)
     ToastManager {}

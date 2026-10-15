@@ -1,0 +1,3 @@
+module qs.modules.ii.sidebarLeft.news
+
+NewsView 1.0 NewsView.qml

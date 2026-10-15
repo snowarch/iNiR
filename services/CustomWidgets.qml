@@ -282,7 +282,7 @@ import qs.services              // Audio, Battery, DateTime, Network, Weather, R
 import qs.modules.common        // Config, Appearance, Directories, GlobalStates
 import qs.modules.common.functions // ColorUtils, StringUtils, DateUtils, FileUtils
 import qs.modules.common.widgets   // 130+ components (StyledText, MaterialSymbol, RippleButton, CircularProgress, Graph, CavaVisualizer...)
-import qs.modules.background.widgets // AbstractBackgroundWidget base class
+import qs.modules.shared.background.widgets // AbstractBackgroundWidget base class
 
 AbstractBackgroundWidget {
     id: root

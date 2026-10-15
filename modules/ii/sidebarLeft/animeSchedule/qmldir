@@ -1,0 +1,4 @@
+module qs.modules.ii.sidebarLeft.animeSchedule
+
+AnimeCard 1.0 AnimeCard.qml
+AnimeScheduleView 1.0 AnimeScheduleView.qml

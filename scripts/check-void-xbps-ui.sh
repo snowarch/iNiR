@@ -37,7 +37,7 @@ updates="$repo_root/services/Updates.qml"
 search="$repo_root/services/deferred/PackageSearch.qml"
 catalog="$repo_root/services/AppCatalog.qml"
 catalog_json="$repo_root/defaults/app-catalog.json"
-software_view="$repo_root/modules/sidebarLeft/SoftwareView.qml"
+software_view="$repo_root/modules/ii/sidebarLeft/SoftwareView.qml"
 
 for needle in \
   'xbps-install", "-nu"' \

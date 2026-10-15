@@ -1,0 +1,2 @@
+module qs.modules.shared.background.widgets.newsTicker
+NewsTickerWidget 1.0 NewsTickerWidget.qml

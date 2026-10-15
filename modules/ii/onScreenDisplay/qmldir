@@ -1,0 +1,3 @@
+module qs.modules.ii.onScreenDisplay
+OnScreenDisplay 1.0 OnScreenDisplay.qml
+OsdValueIndicator 1.0 OsdValueIndicator.qml

@@ -140,14 +140,14 @@ Migration `028-bar-modular-layout` exists but is disabled. The bar has a built-i
 
 Visible surfaces:
 
-- `modules/sidebarRight/screenTime/ScreenTimeWidget.qml`
+- `modules/ii/sidebarRight/screenTime/ScreenTimeWidget.qml`
 - `modules/waffle/actionCenter/screenTime/ScreenTimePage.qml`
 
 It stores local daily JSON under the iNiR state directory. It has daily totals, app totals, hourly buckets, and per-app hourly drill-down. It is off by default and hidden from sidebar layouts while disabled.
 
 ### World Clock
 
-`modules/sidebarLeft/widgets/WorldClockWidget.qml` is a sidebar-left widget configured through `sidebar.widgets.worldClock_settings`.
+`modules/ii/sidebarLeft/widgets/WorldClockWidget.qml` is a sidebar-left widget configured through `sidebar.widgets.worldClock_settings`.
 
 If no timezones are configured, it suggests useful zones from the user's locale/system timezone. If the user configures timezones, Settings owns the explicit list and order.
 

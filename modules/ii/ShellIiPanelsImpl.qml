@@ -1,25 +1,25 @@
 pragma ComponentBehavior: Bound
 
-import qs.modules.bootGreeting
-import qs.modules.lock
-import qs.modules.mascot
-import qs.modules.mediaControls
-import qs.modules.notificationPopup
-import qs.modules.onScreenDisplay
-import qs.modules.onScreenKeyboard
-import qs.modules.recordingOsd
-import qs.modules.polkit
-import qs.modules.regionSelector
-import qs.modules.screenCorners
-import qs.modules.sessionScreen
-import qs.modules.tilingOverlay
-import qs.modules.wallpaperSelector
-import qs.modules.wallpaperLauncher
-import qs.modules.ii.overlay
-import qs.modules.shellUpdate
-import qs.modules.workspaceStrip
-import qs.modules.clipboard as ClipboardModule
-import qs.modules.equalizer
+import qs.modules.shared.bootGreeting
+import qs.modules.shared.lock
+import qs.modules.shared.mascot
+import qs.modules.shared.mediaControls
+import qs.modules.ii.notificationPopup
+import qs.modules.ii.onScreenDisplay
+import qs.modules.shared.onScreenKeyboard
+import qs.modules.shared.recordingOsd
+import qs.modules.shared.polkit
+import qs.modules.shared.regionSelector
+import qs.modules.shared.screenCorners
+import qs.modules.shared.sessionScreen
+import qs.modules.shared.tilingOverlay
+import qs.modules.shared.wallpaperSelector
+import qs.modules.shared.wallpaperLauncher
+import qs.modules.shared.overlay
+import qs.modules.shared.shellUpdate
+import qs.modules.shared.workspaceStrip
+import qs.modules.shared.clipboard as ClipboardModule
+import qs.modules.ii.equalizer
 
 import QtQuick
 import Quickshell
@@ -139,7 +139,7 @@ Item {
     readonly property bool osdStandaloneNeeded: !panelsRoot.pillOsdTakeover
         || panelsRoot.osdScreens.some(screen => !panelsRoot.pillHostScreenNames.includes(screen?.name ?? ""))
 
-    PanelLoader { identifier: "iiBackdrop"; extraCondition: Config.options?.background?.backdrop?.enable ?? false; source: "../background/Backdrop.qml" }
+    PanelLoader { identifier: "iiBackdrop"; extraCondition: Config.options?.background?.backdrop?.enable ?? false; source: "../shared/background/Backdrop.qml" }
     PanelLoader {
         identifier: "iiNotificationPopup"
         extraCondition: panelsRoot.notificationStandaloneNeeded
@@ -156,18 +156,18 @@ Item {
     }
 
     DeferredPanelLoader { identifier: "iiBootGreeting"; component: BootGreeting {} }
-    OnDemandPanelLoader { identifier: "iiCheatsheet"; open: GlobalStates.cheatsheetOpen; source: "../cheatsheet/Cheatsheet.qml" }
+    OnDemandPanelLoader { identifier: "iiCheatsheet"; open: GlobalStates.cheatsheetOpen; source: "../shared/cheatsheet/Cheatsheet.qml" }
     OnDemandPanelLoader {
         identifier: "iiControlPanel"
         open: GlobalStates.controlPanelOpen
         keepLoaded: Config.options?.controlPanel?.keepLoaded ?? false
-        source: "../controlPanel/ControlPanel.qml"
+        source: "./controlPanel/ControlPanel.qml"
     }
     OnDemandPanelLoader {
         identifier: "iiDashboard"
         open: GlobalStates.dashboardOpen
         keepLoaded: Config.options?.dashboard?.keepLoaded ?? false
-        source: "../dashboard/Dashboard.qml"
+        source: "./dashboard/Dashboard.qml"
     }
     OnDemandPanelLoader {
         identifier: "iiEqualizer"
@@ -234,7 +234,7 @@ Item {
         open: GlobalStates.overlayOpen || OverlayContext.hasPinnedWidgets || OverlayContext.nativeDialogOpen
         component: Overlay {}
     }
-    OnDemandPanelLoader { identifier: "iiOverview"; open: GlobalStates.overviewOpen; retainAfterUse: true; closeGraceMs: 300; source: "../overview/Overview.qml" }
+    OnDemandPanelLoader { identifier: "iiOverview"; open: GlobalStates.overviewOpen; retainAfterUse: true; closeGraceMs: 300; source: "../shared/overview/Overview.qml" }
     DeferredPanelLoader { identifier: "iiPolkit"; component: Polkit {} }
 
     DeferredPanelLoader { identifier: "iiRegionSelector"; component: RegionSelector {} }
@@ -287,8 +287,8 @@ Item {
         }
     }
 
-    DeferredPanelLoader { identifier: "iiSidebarLeft"; source: "../sidebarLeft/SidebarLeft.qml" }
-    DeferredPanelLoader { identifier: "iiSidebarRight"; source: "../sidebarRight/SidebarRight.qml" }
+    DeferredPanelLoader { identifier: "iiSidebarLeft"; source: "./sidebarLeft/SidebarLeft.qml" }
+    DeferredPanelLoader { identifier: "iiSidebarRight"; source: "./sidebarRight/SidebarRight.qml" }
 
     OnDemandPanelLoader {
         identifier: "iiTilingOverlay"

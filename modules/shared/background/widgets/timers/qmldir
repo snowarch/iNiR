@@ -1,0 +1,2 @@
+module qs.modules.shared.background.widgets.timers
+TimerWidget 1.0 TimerWidget.qml

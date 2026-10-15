@@ -191,12 +191,12 @@ for videos, GIFs, parallax, or systems without awww. Neither path writes config
 or regenerates colours, and cancelling resynchronizes the configured wallpaper.
 No picker draws the desktop wallpaper directly.
 
-`modules/background/Background.qml` is the per-output desktop surface: it renders
+`modules/shared/background/Background.qml` is the per-output desktop surface: it renders
 the wallpaper and hosts the desktop widgets and desktop items. `DesktopWidgetLayout`
 maps each widget instance to its output through `Config.options.background.widgets.outputOverrides`
 plus `screenList`/`layerOrder`; `DesktopItems` persists icons to
 `Directories.stateUserPath/desktop-items.json` (schema v1) with an undo tombstone,
-and `modules/background/desktopItems/` provides the icon delegate, drop coordinator
+and `modules/shared/background/desktopItems/` provides the icon delegate, drop coordinator
 and image-choice surfaces. Layout editing runs through the shell-wide
 `ShellEditSession` service and `modules/common/widgets/ShellLayoutEditorWindow.qml`.
 

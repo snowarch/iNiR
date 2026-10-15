@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs
 import qs.modules.common
-import qs.modules.background.widgets
+import qs.modules.shared.background.widgets
 import qs.modules.iris.frame
 import qs.modules.iris.style
 import qs.modules.iris.components

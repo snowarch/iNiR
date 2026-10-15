@@ -483,7 +483,7 @@ If you change it, you are effectively changing file locations and side effects a
 
 The settings experience has shared ii/material and Waffle-native presentations:
 
-- `modules/settings/SettingsOverlay.qml` or `settings.qml` for the shared Settings page registry, depending on `settingsUi.overlayMode`
+- `modules/ii/settings/SettingsOverlay.qml` or `settings.qml` for the shared Settings page registry, depending on `settingsUi.overlayMode`
 - `waffleSettings.qml` for Waffle-native settings when Waffle is not configured to reuse Material-style settings
 
 These settings files do not define all logic themselves. They assemble page components that read and write through shared services and config.
@@ -540,7 +540,7 @@ The flow is roughly:
 - `ThemeService` and `Appearance` react to resulting theme/wallpaper state
 - background modules and glass surfaces repaint accordingly
 
-So a wallpaper feature is not local to `modules/background/`.
+So a wallpaper feature is not local to `modules/shared/background/`.
 
 It spans UI, config, scripts, and theming.
 

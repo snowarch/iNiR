@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.common.functions
-import qs.modules.onScreenKeyboard
+import qs.modules.shared.onScreenKeyboard
 import qs.modules.iris.style
 import qs.modules.iris.components
 

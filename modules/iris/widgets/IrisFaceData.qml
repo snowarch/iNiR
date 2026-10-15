@@ -5,7 +5,7 @@ import QtQuick
 import Quickshell
 import qs.services
 import qs.modules.iris.style
-import qs.modules.background.widgets
+import qs.modules.shared.background.widgets
 
 Singleton {
     id: root

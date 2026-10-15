@@ -12,7 +12,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.settings
+import qs.modules.ii.settings
 import qs.modules.iris.frame
 import qs.modules.iris.components
 import qs.modules.iris.style

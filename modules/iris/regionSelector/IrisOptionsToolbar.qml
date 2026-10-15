@@ -8,7 +8,7 @@ import qs.services
 import qs.modules.common.widgets
 import qs.modules.iris.style
 import qs.modules.iris.components
-import qs.modules.regionSelector
+import qs.modules.shared.regionSelector
 
 IrisSurface {
     id: root

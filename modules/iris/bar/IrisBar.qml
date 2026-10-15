@@ -9,7 +9,7 @@ import qs
 import qs.services
 import qs.services.deferred
 import qs.modules.common
-import qs.modules.settings
+import qs.modules.ii.settings
 import qs.modules.iris.background
 import qs.modules.iris.control
 import qs.modules.iris.field

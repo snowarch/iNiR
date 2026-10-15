@@ -1,23 +1,23 @@
 pragma ComponentBehavior: Bound
 
-import qs.modules.bootGreeting
-import qs.modules.cheatsheet
-import qs.modules.lock
-import qs.modules.mascot
-import qs.modules.onScreenKeyboard
-import qs.modules.recordingOsd
-import qs.modules.tilingOverlay
-import qs.modules.overview
-import qs.modules.polkit
-import qs.modules.regionSelector
-import qs.modules.screenCorners
-import qs.modules.sessionScreen
-import qs.modules.shellUpdate
-import qs.modules.wallpaperSelector
-import qs.modules.wallpaperLauncher
-import qs.modules.ii.overlay
-import qs.modules.workspaceStrip
-import qs.modules.clipboard as ClipboardModule
+import qs.modules.shared.bootGreeting
+import qs.modules.shared.cheatsheet
+import qs.modules.shared.lock
+import qs.modules.shared.mascot
+import qs.modules.shared.onScreenKeyboard
+import qs.modules.shared.recordingOsd
+import qs.modules.shared.tilingOverlay
+import qs.modules.shared.overview
+import qs.modules.shared.polkit
+import qs.modules.shared.regionSelector
+import qs.modules.shared.screenCorners
+import qs.modules.shared.sessionScreen
+import qs.modules.shared.shellUpdate
+import qs.modules.shared.wallpaperSelector
+import qs.modules.shared.wallpaperLauncher
+import qs.modules.shared.overlay
+import qs.modules.shared.workspaceStrip
+import qs.modules.shared.clipboard as ClipboardModule
 
 import qs.modules.waffle.actionCenter
 import qs.modules.waffle.altSwitcher as WaffleAltSwitcherModule

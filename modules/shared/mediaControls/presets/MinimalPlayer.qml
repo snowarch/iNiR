@@ -1,0 +1,262 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects as GE
+import Quickshell
+import Quickshell.Services.Mpris
+import qs.modules.common
+import qs.modules.common.widgets
+import qs.modules.common.functions
+import qs.modules.common.models
+import qs.services
+import qs.modules.shared.mediaControls.components
+
+/**
+ * MinimalPlayer - Minimalist design
+ * Clean and simple, focuses on essentials
+ */
+Item {
+    id: root
+    property bool motion: true
+    property MprisPlayer player: null
+    property list<real> visualizerPoints: []
+    property real radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.normal
+    Behavior on radius {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
+    property real screenX: 0
+    property real screenY: 0
+
+    readonly property string vizType: Config.getNestedValue("background.widgets.mediaControls.visualizerType", "wave")
+    readonly property string vizPosition: Config.getNestedValue("background.widgets.mediaControls.visualizerPosition", "bottom")
+
+    PlayerBase {
+        id: playerBase
+        player: root.player
+    }
+
+    // Theme seed for the whole player. Defaults to the album-art colour (floating popup
+    // keeps that). Desktop host overrides it with the wallpaper seed for cohesion.
+    property color themeSourceColor: playerBase.artDominantColor
+    property QtObject blendedColors: AdaptedMaterialScheme { color: root.themeSourceColor }
+    readonly property QtObject effectiveColors: Appearance.editorialEverywhere && Appearance.colors
+        ? Appearance.colors : root.blendedColors
+
+    StyledRectangularShadow {
+        target: card
+        visible: !Appearance.zzzEverywhere
+            && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
+    }
+
+    Rectangle {
+        id: card
+        anchors.centerIn: parent
+        width: parent.width - Appearance.sizes.elevationMargin
+        height: parent.height - Appearance.sizes.elevationMargin
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
+        color: Appearance.zzzEverywhere ? Appearance.zzz.paper
+             : Appearance.inirEverywhere ? playerBase.inirLayer1
+             : Appearance.auroraEverywhere ? ColorUtils.transparentize(
+                 effectiveColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7
+               )
+             : (effectiveColors?.colLayer0 ?? Appearance.colors.colLayer0)
+        border.width: root.vizType === "organic" && root.vizPosition !== "none"
+            ? 0 : (Appearance.zzzEverywhere ? Appearance.zzz.borderThick
+                : Appearance.inirEverywhere ? 1 : 0)
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+            : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        // Organic morph on style/shape switch (organic-transitions)
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        clip: true
+
+        layer.enabled: true
+        layer.effect: GE.OpacityMask {
+            maskSource: Rectangle { width: card.width; height: card.height; radius: card.radius }
+        }
+
+        ZzzGraphicPlate {
+            anchors.fill: parent
+            accentColor: effectiveColors?.colPrimary ?? Appearance.zzz.accent
+        }
+
+        // Visualizer overlay
+        MediaVisualizerOverlay {
+            anchors.fill: parent
+            edgeHeight: 25
+            visualizerPoints: root.visualizerPoints
+            active: playerBase.effectiveIsPlaying
+            playerColor: root.themeSourceColor
+        }
+
+        RowLayout {
+            id: minimalRow
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 12
+
+            PlayerArtwork {
+                Layout.preferredWidth: minimalRow.height
+                Layout.preferredHeight: minimalRow.height
+                Layout.alignment: Qt.AlignVCenter
+                artSource: playerBase.displayedArtFilePath
+                transitionKey: playerBase.mediaTransitionKey
+                downloaded: playerBase.downloaded
+                slideDirection: playerBase.slideDirection
+                artRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                    : Appearance.inirEverywhere
+                    ? Appearance.inir.roundingSmall
+                    : Appearance.rounding.small
+                placeholderColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                    : Appearance.inirEverywhere
+                    ? playerBase.inirLayer2
+                    : (effectiveColors?.colLayer1 ?? Appearance.colors.colLayer1)
+                iconColor: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                    : Appearance.inirEverywhere
+                    ? playerBase.inirTextSecondary
+                    : (effectiveColors?.colSubtext ?? Appearance.colors.colSubtext)
+                iconSize: 26
+                enableBlurTransition: false
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 3
+
+                Item { Layout.fillHeight: true }
+
+                // Title
+                StyledText {
+                    Layout.fillWidth: true
+                    text: StringUtils.cleanMusicTitle(playerBase.effectiveTitle) || "—"
+                    font.pixelSize: Appearance.font.pixelSize.normal
+                    font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Medium
+                    font.italic: Appearance.zzzEverywhere
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                        : Appearance.inirEverywhere
+                        ? playerBase.inirText
+                        : (effectiveColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
+                    elide: Text.ElideRight
+                    animateChange: true
+                    animationDistanceX: 6
+                }
+
+                // Artist
+                StyledText {
+                    Layout.fillWidth: true
+                    text: playerBase.effectiveArtist || ""
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                        : Appearance.inirEverywhere
+                        ? playerBase.inirTextSecondary
+                        : (effectiveColors?.colSubtext ?? Appearance.colors.colSubtext)
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
+                    elide: Text.ElideRight
+                    visible: text !== ""
+                }
+
+                // Progress bar
+                PlayerProgress {
+                    motion: root.motion
+                    Layout.fillWidth: true
+                    Layout.topMargin: 2
+                    implicitHeight: 14
+                    position: playerBase.effectivePosition
+                    length: playerBase.effectiveLength
+                    canSeek: playerBase.effectiveCanSeek
+                    isPlaying: playerBase.effectiveIsPlaying
+                    highlightColor: Appearance.zzzEverywhere ? (effectiveColors?.colPrimary ?? Appearance.zzz.accent)
+                        : Appearance.inirEverywhere
+                        ? playerBase.inirPrimary
+                        : Appearance.auroraEverywhere
+                            ? Appearance.colors.colPrimary
+                            : (effectiveColors?.colPrimary ?? Appearance.colors.colPrimary)
+                    trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
+                        : Appearance.inirEverywhere
+                        ? playerBase.inirLayer2
+                        : Appearance.auroraEverywhere
+                            ? Appearance.aurora.colElevatedSurface
+                            : (effectiveColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
+                    enableWavy: false
+                    onSeekRequested: seconds => playerBase.seek(seconds)
+                }
+
+                StyledText {
+                    Layout.alignment: Qt.AlignRight
+                    text: StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)
+                        + " / "
+                        + StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.family: Appearance.font.family.numbers
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                        : Appearance.inirEverywhere
+                        ? playerBase.inirTextSecondary
+                        : (effectiveColors?.colSubtext ?? Appearance.colors.colSubtext)
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
+                }
+
+                Item { Layout.fillHeight: true }
+            }
+
+            PlayerControls {
+                Layout.alignment: Qt.AlignVCenter
+                canGoPrevious: playerBase.effectiveCanGoPrevious
+                canGoNext: playerBase.effectiveCanGoNext
+                buttonSize: 28
+                playButtonSize: 36
+                iconSize: 18
+                playIconSize: 20
+                isPlaying: playerBase.effectiveIsPlaying
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                    : Appearance.inirEverywhere
+                    ? Appearance.inir.roundingSmall
+                    : Appearance.rounding.full
+                buttonHoverColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                    : Appearance.inirEverywhere
+                    ? Appearance.inir.colLayer2Hover
+                    : Appearance.auroraEverywhere
+                        ? Appearance.aurora.colSubSurface
+                        : ColorUtils.transparentize(
+                            effectiveColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5
+                          )
+                buttonRippleColor: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.28)
+                    : Appearance.inirEverywhere
+                    ? Appearance.inir.colLayer2Active
+                    : Appearance.auroraEverywhere
+                        ? Appearance.aurora.colSubSurfaceActive
+                        : (effectiveColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
+                iconColor: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                    : Appearance.inirEverywhere
+                    ? playerBase.inirText
+                    : Appearance.auroraEverywhere
+                        ? Appearance.colors.colOnLayer0
+                        : (effectiveColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                playIconColor: Appearance.zzzEverywhere ? (effectiveColors?.colPrimary ?? Appearance.zzz.accent)
+                    : Appearance.inirEverywhere
+                    ? playerBase.inirPrimary
+                    : Appearance.auroraEverywhere
+                        ? Appearance.colors.colOnLayer0
+                        : Appearance.colors.colOnLayer1
+                onPreviousClicked: playerBase.previous()
+                onPlayPauseClicked: playerBase.togglePlaying()
+                onNextClicked: playerBase.next()
+            }
+        }
+    }
+}

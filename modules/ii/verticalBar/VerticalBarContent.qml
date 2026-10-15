@@ -1,0 +1,829 @@
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Bluetooth
+import Quickshell.Services.UPower
+import qs
+import qs.services
+import qs.modules.common
+import qs.modules.common.models
+import qs.modules.common.widgets
+import qs.modules.common.functions
+import qs.modules.ii.bar as Bar
+import QtQuick.Effects
+import Qt5Compat.GraphicalEffects as GE
+
+Item { // Bar content region
+    id: root
+
+    property var screen: root.QsWindow.window?.screen
+    property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
+    property alias backgroundItem: barBackground
+    property bool nativeBlurAllowed: true
+    readonly property string nativeBlurTopology: Appearance.blurTopology.roundedRectangle
+    readonly property bool nativeBlurActive: !root.isIslands
+        && Appearance.useCompositorBlur("bar", root.nativeBlurTopology)
+        && root.nativeBlurAllowed
+        && (Config.options?.bar?.showBackground ?? true)
+        && !root.gameModeMinimal
+
+    // Right-click context menu anchor (invisible, positioned at click)
+    Item {
+        id: barContextMenuAnchor
+        width: 1
+        height: 1
+    }
+
+    // For vertical bar: bottom config means bar is on the RIGHT side
+    // (same config key reused for different meaning in vertical mode)
+    readonly property bool barOnRight: Config.options?.bar?.bottom ?? false
+
+    function openBarContextMenu(clickX, clickY, mouseArea) {
+        // Position anchor at bar edge for correct horizontal popup positioning
+        // If bar on right: anchor at left edge (x=0), popup goes left via popupSide=Edges.Left
+        // If bar on left: anchor at right edge (x=width), popup goes right via popupSide=Edges.Right
+        const mapped = mouseArea.mapToItem(root, clickX, clickY)
+        barContextMenuAnchor.x = root.barOnRight ? 0 : root.width
+        barContextMenuAnchor.y = mapped.y
+        barContextMenu.requestOpen()
+    }
+
+    ContextMenu {
+        id: barContextMenu
+        anchorItem: barContextMenuAnchor
+        popupSide: root.barOnRight ? Edges.Left : Edges.Right
+        closeOnFocusLost: true
+        closeOnHoverLost: true
+
+        model: [
+            {
+                iconName: "browse_activity",
+                monochromeIcon: true,
+                text: Translation.tr("Mission Center"),
+                action: () => {
+                    Session.launchTaskManager()
+                },
+            },
+            { type: "separator" },
+            {
+                iconName: "settings",
+                monochromeIcon: true,
+                text: Translation.tr("Settings"),
+                action: () => {
+                    GlobalStates.toggleSettings()
+                },
+            },
+        ]
+    }
+    readonly property bool cardStyleEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
+    readonly property color separatorColor: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : Appearance.colors.colOutlineVariant
+    readonly property bool inirEverywhere: Appearance.inirEverywhere
+    readonly property bool auroraEverywhere: Appearance.auroraEverywhere
+    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
+    readonly property bool gameModeMinimal: Appearance.gameModeMinimal
+    readonly property bool barSpectrumAudioPlaying: MprisController.isPlaying || YtMusic.isPlaying
+    readonly property bool barSpectrumOutputEnabled:
+        (Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary") === "all"
+        || Quickshell.screens.length <= 1
+        || String(root.screen?.name ?? "") === String(GlobalStates.primaryScreen?.name ?? "")
+    readonly property bool barSpectrumConfigured: (Config.options?.bar?.visualizer?.enable ?? false)
+        && (Config.options?.bar?.showBackground ?? true)
+        && root.barSpectrumOutputEnabled
+        && !root.gameModeMinimal
+        && root.visible
+    readonly property bool barSpectrumProcessWanted: root.barSpectrumConfigured
+        && root.barSpectrumAudioPlaying
+    readonly property bool barSpectrumVisible: root.barSpectrumConfigured
+        && verticalBarCava.audioSignalActive
+    readonly property real barSpectrumFillRatio: Math.max(0.1,
+        Math.min(1, Config.options?.bar?.visualizer?.height ?? 0.6))
+    readonly property real barSpectrumOpacity: Math.max(0,
+        Math.min(1, Config.options?.bar?.visualizer?.opacity ?? 0.35))
+    readonly property string barSpectrumType: Config.options?.bar?.visualizer?.type ?? "bars"
+    readonly property real barSpectrumDensity: Math.max(4, Config.options?.bar?.visualizer?.density ?? 12)
+    readonly property real barSpectrumGap: Math.max(0, Config.options?.bar?.visualizer?.gap ?? 2)
+    readonly property int barSpectrumSmoothing: Math.max(0, Config.options?.bar?.visualizer?.smoothing ?? 2)
+    readonly property string barSpectrumWaveMode: Config.options?.bar?.visualizer?.waveMode ?? "fill"
+    readonly property real barSpectrumLineWidth: Math.max(1, Config.options?.bar?.visualizer?.lineWidth ?? 2)
+    readonly property real barSpectrumEdgeInset: Math.max(6, Config.options?.bar?.visualizer?.edgeInset ?? 6)
+    readonly property real barSpectrumEdgeSoftness: Math.max(0,
+        Math.min(1, (Config.options?.bar?.visualizer?.edgeSoftness ?? 36) / 100))
+    readonly property string barSpectrumFrequencyProfile: Config.options?.bar?.visualizer?.frequencyProfile ?? "flat"
+    readonly property real barSpectrumAccentStrength: Math.max(0,
+        Math.min(1, (Config.options?.bar?.visualizer?.accentStrength ?? 70) / 100))
+    readonly property string barSpectrumOrganicFit: Config.options?.bar?.visualizer?.organicFit ?? "auto"
+    readonly property real barSpectrumOrganicLayoutScale: barSpectrumOrganicFit === "aura" ? 1
+        : barSpectrumOrganicFit === "contained" ? 0.72 : 0.62
+    readonly property real barSpectrumOrganicSensitivity: Math.max(0, Math.min(1,
+        (Config.options?.bar?.visualizer?.organicSensitivity ?? 42) / 100)) * barSpectrumOrganicLayoutScale
+    readonly property real barSpectrumOrganicPulse: Math.max(0, Math.min(1,
+        (Config.options?.bar?.visualizer?.organicPulse ?? 55) / 100)) * barSpectrumOrganicLayoutScale
+    readonly property real barSpectrumOrganicMotionSpeed: Math.max(0.25, Math.min(1.5,
+        (Config.options?.bar?.visualizer?.organicMotionSpeed ?? 80) / 100))
+    readonly property real barSpectrumOrganicIdleMotion: Math.max(0, Math.min(1,
+        (Config.options?.bar?.visualizer?.organicIdleMotion ?? 0) / 100))
+    readonly property real barSpectrumOrganicGlow: Math.max(0, Math.min(1,
+        (Config.options?.bar?.visualizer?.organicGlow ?? 25) / 100)) * barSpectrumOrganicLayoutScale
+    readonly property real barSpectrumOrganicBaseRadius: Math.max(0, Math.min(1,
+        (Config.options?.bar?.visualizer?.organicBaseRadius ?? 36) / 100))
+    readonly property bool barSpectrumOrganicEdgeAura: barSpectrumOrganicFit === "aura"
+    readonly property color barSpectrumColor: root.inirEverywhere ? Appearance.inir.colPrimary
+        : root.zzzEverywhere ? Appearance.zzz.accent
+        : Appearance.colors.colPrimary
+
+    readonly property string barAppearance: Config.options?.bar?.appearanceStyle ?? "classic"
+    readonly property bool isIslands: root.barAppearance === "islands"
+
+    readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
+
+    ColorQuantizer {
+        id: wallpaperColorQuantizer
+        source: (Appearance.auroraEverywhere || Appearance.angelEverywhere) ? root.wallpaperUrl : ""
+        depth: 0 // 2^0 = 1 color
+        rescaleSize: 10
+    }
+
+    readonly property color wallpaperDominantColor: (wallpaperColorQuantizer?.colors?.[0] ?? Appearance.colors.colPrimary)
+    readonly property QtObject blendedColors: AdaptedMaterialScheme {
+        color: ColorUtils.mix(root.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.colors.colSecondaryContainer
+    }
+
+    component HorizontalBarSeparator: Rectangle {
+        Layout.leftMargin: Appearance.sizes.baseBarHeight / 3
+        Layout.rightMargin: Appearance.sizes.baseBarHeight / 3
+        Layout.fillWidth: true
+        implicitHeight: 1
+        color: root.separatorColor
+    }
+
+    // Background shadow - for floating styles or always for angel
+    Loader {
+        active: (Config.options?.bar?.showBackground ?? true) && !root.gameModeMinimal
+            && !root.isIslands
+            && (Appearance.angelEverywhere || ((Config.options?.bar?.cornerStyle ?? 0) === 1 || (Config.options?.bar?.cornerStyle ?? 0) === 3))
+        anchors.fill: barBackground
+        sourceComponent: StyledRectangularShadow {
+            anchors.fill: undefined // The loader's anchors act on this, and this should not have any anchor
+            target: barBackground
+        }
+    }
+
+    // Background
+    Rectangle {
+        id: barBackground
+        // Floating style: cornerStyle 1 (floating) or 3 (card) - NOT 0 (hug)
+        // Aurora style forces floating appearance but hug mode should still work
+        readonly property bool floatingStyle: (Config.options?.bar?.cornerStyle ?? 0) === 1 || (Config.options?.bar?.cornerStyle ?? 0) === 3
+
+        anchors {
+            fill: parent
+            // Only add margins for floating styles, NOT for hug mode (cornerStyle 0)
+            margins: floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
+        }
+        visible: (Config.options?.bar?.showBackground ?? true) && !root.gameModeMinimal && !root.isIslands
+        color: {
+            if (Appearance.editorialEverywhere) return Appearance.editorial.paper
+            if (root.zzzEverywhere) return Appearance.zzz.bg0
+            if (root.angelEverywhere) {
+                const base = root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0
+                if (root.nativeBlurActive)
+                    return ColorUtils.transparentize(base, Appearance.angel.compositorPanelTransparentize)
+                return ColorUtils.applyAlpha(base, 1)
+            }
+            if (root.inirEverywhere) return Appearance.inir.colLayer0
+            if (root.auroraEverywhere) {
+                const base = root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0
+                if (root.nativeBlurActive)
+                    return ColorUtils.transparentize(base, Appearance.aurora.compositorOverlayTransparentize)
+                return ColorUtils.applyAlpha(base, 1)
+            }
+            return root.cardStyleEverywhere ? Appearance.colors.colLayer1 : ((Config.options?.bar?.cornerStyle ?? 0) === 3 ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
+        }
+        radius: root.zzzEverywhere ? 0
+            : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            : root.inirEverywhere ? Appearance.inir.roundingNormal
+            : floatingStyle ? ((Config.options?.bar?.cornerStyle ?? 0) === 3 ? Appearance.rounding.normal : Appearance.rounding.windowRounding) : 0
+        // No Behavior on the base radius — the per-corner radii below own the
+        // corners, and a second interceptor on radius is unsupported (Qt warn).
+
+        // ZZZ round mode: a FLUSH vertical bar softens only its INNER edge (facing
+        // into the screen); a FLOATING bar rounds all four. bar.bottom doubles as the
+        // side toggle here — false = left edge (inner = right), true = right edge.
+        readonly property bool isRightBar: Config.options?.bar?.bottom ?? false
+        readonly property real zzzRoundEdge: (root.zzzEverywhere && Appearance.zzz.round) ? Appearance.zzz.panelRadius : -1
+        readonly property bool zzzAllCorners: zzzRoundEdge >= 0 && floatingStyle
+        topLeftRadius: (zzzRoundEdge >= 0 && (zzzAllCorners || isRightBar)) ? zzzRoundEdge : radius
+        bottomLeftRadius: (zzzRoundEdge >= 0 && (zzzAllCorners || isRightBar)) ? zzzRoundEdge : radius
+        topRightRadius: (zzzRoundEdge >= 0 && (zzzAllCorners || !isRightBar)) ? zzzRoundEdge : radius
+        bottomRightRadius: (zzzRoundEdge >= 0 && (zzzAllCorners || !isRightBar)) ? zzzRoundEdge : radius
+        Behavior on topRightRadius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on topLeftRadius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        border.width: root.zzzEverywhere ? 1 : (Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : (floatingStyle ? 1 : 0)))
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        border.color: root.zzzEverywhere ? Appearance.zzz.borderColor
+            : Appearance.angelEverywhere ? "transparent"
+            : root.inirEverywhere ? Appearance.inir.colBorder
+            : Appearance.colors.colLayer0Border
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+
+        clip: true
+
+        // Angel inset glow — top edge
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: Appearance.angel.insetGlowHeight
+            visible: Appearance.angelEverywhere
+            color: Appearance.angel.colInsetGlow
+        }
+
+        // Angel partial border
+        AngelPartialBorder {
+            targetRadius: barBackground.radius
+        }
+    }
+
+    // Keep the vertical bar on the same visualizer contract as horizontal bars.
+    // Organic is especially well suited to this narrow, tall host.
+    CavaProcess {
+        id: verticalBarCava
+        active: root.barSpectrumProcessWanted
+        // Samples follow the long axis of the vertical host; the renderer is
+        // rotated below, so its local width corresponds to screen height.
+        sampleCount: Math.max(50, Math.round(Math.max(1, root.height) / root.barSpectrumDensity))
+    }
+
+    AudioVisualizerLayer {
+        // Cava's renderer is horizontal. Rotate the complete presentation so
+        // bars/waves follow the vertical bar's long axis on either screen edge.
+        anchors.centerIn: barBackground
+        width: root.barSpectrumType === "organic" ? barBackground.width : barBackground.height
+        height: root.barSpectrumType === "organic" ? barBackground.height : barBackground.width
+        rotation: root.barSpectrumType === "organic" ? 0 : (root.barOnRight ? 90 : -90)
+        active: root.barSpectrumVisible && !root.isIslands
+        points: active ? verticalBarCava.points : []
+        normalizationCeiling: active ? verticalBarCava.normalizationCeiling : 100
+        visualizerType: root.barSpectrumType
+        spectrumOpacity: root.barSpectrumOpacity
+        spectrumColor: root.barSpectrumColor
+        barCount: Math.max(4, Math.round(root.height / Math.max(4, root.barSpectrumDensity)))
+        barSpacing: root.barSpectrumGap
+        smoothing: root.barSpectrumSmoothing
+        fillRatio: root.barSpectrumFillRatio
+        waveMode: root.barSpectrumWaveMode
+        lineWidth: root.barSpectrumLineWidth
+        edgeInset: root.barSpectrumEdgeInset
+        edgeSoftness: root.barSpectrumEdgeSoftness
+        frequencyProfile: root.barSpectrumFrequencyProfile
+        accentStrength: root.barSpectrumAccentStrength
+        reverseFrequency: root.barOnRight
+        topLeftRadius: root.barOnRight ? barBackground.topRightRadius : barBackground.bottomLeftRadius
+        topRightRadius: root.barOnRight ? barBackground.bottomRightRadius : barBackground.topLeftRadius
+        bottomLeftRadius: root.barOnRight ? barBackground.topLeftRadius : barBackground.bottomRightRadius
+        bottomRightRadius: root.barOnRight ? barBackground.bottomLeftRadius : barBackground.topRightRadius
+        organicEdgeAura: root.barSpectrumOrganicEdgeAura
+        organicSensitivity: root.barSpectrumOrganicSensitivity
+        organicPulse: root.barSpectrumOrganicPulse
+        organicMotionSpeed: root.barSpectrumOrganicMotionSpeed
+        organicIdleMotion: root.barSpectrumOrganicIdleMotion
+        organicGlow: root.barSpectrumOrganicGlow
+        organicBaseRadius: root.barSpectrumOrganicBaseRadius
+        organicOpacity: root.barSpectrumOpacity
+    }
+
+    // Aurora/Angel blur layer — rendered as sibling of barBackground so the blur
+    // is applied over the full screen-sized wallpaper image (not the narrow
+    // clipped bar region). Placed right after barBackground in z-order so it
+    // sits between background and content.
+    Item {
+        id: auroraBlurLayer
+        anchors.fill: barBackground
+        visible: root.auroraEverywhere && !root.inirEverywhere && !root.gameModeMinimal
+            && (Config.options?.bar?.showBackground ?? true) && !root.nativeBlurActive
+            && !root.isIslands
+
+        // Clip + mask to barBackground shape
+        clip: true
+        layer.enabled: visible
+        layer.effect: GE.OpacityMask {
+            maskSource: Rectangle {
+                width: auroraBlurLayer.width
+                height: auroraBlurLayer.height
+                radius: barBackground.radius
+            }
+        }
+
+        Image {
+            id: blurredWallpaper
+            // Position relative to screen — uses screen-sized source so the
+            // wallpaper portion shown matches corner decorators exactly.
+            readonly property real barMargin: barBackground.floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
+            x: root.barOnRight
+                ? (-(root.screen?.width ?? 1920) + auroraBlurLayer.width + barMargin)
+                : -barMargin
+            y: -barMargin
+            width: root.screen?.width ?? 1920
+            height: root.screen?.height ?? 1080
+            source: root.nativeBlurActive ? "" : root.wallpaperUrl
+            fillMode: Image.PreserveAspectCrop
+            cache: true
+            sourceSize.width: root.screen?.width ?? 1920
+            sourceSize.height: root.screen?.height ?? 1080
+            asynchronous: true
+
+            layer.enabled: Appearance.effectsEnabled && root.auroraEverywhere && !root.inirEverywhere && !root.nativeBlurActive
+            layer.effect: MultiEffect {
+                source: blurredWallpaper
+                anchors.fill: source
+                saturation: Appearance.angelEverywhere
+                    ? Appearance.angel.blurSaturation
+                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 64
+                blur: Appearance.effectsEnabled ? 1 : 0
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: Appearance.angelEverywhere
+                    ? ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity)
+                    : ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+            }
+        }
+    }
+
+    FocusedScrollMouseArea { // Top section | scroll to change brightness
+        id: barTopSectionMouseArea
+        anchors.top: parent.top
+        implicitHeight: topSectionColumnLayout.implicitHeight
+        implicitWidth: Appearance.sizes.baseVerticalBarWidth
+        // Edge sections own their natural height. The old symmetric
+        // `(root.height - middle.height) / 2` split assumed top and bottom had
+        // identical demand, which breaks as soon as tray/indicators or UI scale
+        // make the bottom section taller.
+        height: Math.min(root.height, implicitHeight)
+        width: Appearance.sizes.verticalBarWidth
+
+        onScrollDown: root.brightnessMonitor.setBrightness(root.brightnessMonitor.brightness - 0.05)
+        onScrollUp: root.brightnessMonitor.setBrightness(root.brightnessMonitor.brightness + 0.05)
+        onMovedAway: GlobalStates.osdBrightnessOpen = false
+        onPressed: event => {
+            if (event.button === Qt.LeftButton)
+                GlobalStates.toggleSidebarLeft(root.screen?.name ?? "");
+            else if (event.button === Qt.RightButton)
+                root.openBarContextMenu(event.x, event.y, barTopSectionMouseArea)
+        }
+
+        ColumnLayout { // Content
+            id: topSectionColumnLayout
+            anchors.fill: parent
+            spacing: 10
+
+            Bar.LeftSidebarButton { // Left sidebar button
+                Layout.alignment: Qt.AlignHCenter
+                Layout.topMargin: (Appearance.sizes.baseVerticalBarWidth - implicitWidth) / 2 + Appearance.sizes.hyprlandGapsOut
+                colBackground: buttonHovered ? Appearance.colors.colLayer1Hover : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
+            }
+
+            Item {
+                Layout.fillHeight: true
+            }
+            
+        }
+    }
+
+    Item {
+        id: middleHost
+        anchors {
+            top: barTopSectionMouseArea.bottom
+            bottom: barBottomSectionMouseArea.top
+            left: parent.left
+            right: parent.right
+        }
+
+        Column { // Middle section
+            id: middleSection
+            anchors.centerIn: parent
+            spacing: 4
+
+        // When taskbar is active: clock/date moves up to where resources was
+        Bar.BarGroup {
+            id: clockGroupTop
+            vertical: true
+            screen: root.screen
+            nativeBlurActive: root.nativeBlurActive
+            spectrumEnabled: root.barSpectrumVisible
+            spectrumPoints: root.barSpectrumVisible ? verticalBarCava.points : []
+            spectrumCeiling: root.barSpectrumVisible ? verticalBarCava.normalizationCeiling : 100
+            spectrumType: root.barSpectrumType
+            spectrumOpacity: root.barSpectrumOpacity
+            spectrumFillRatio: root.barSpectrumFillRatio
+            spectrumDensity: root.barSpectrumDensity
+            spectrumGap: root.barSpectrumGap
+            spectrumSmoothing: root.barSpectrumSmoothing
+            spectrumWaveMode: root.barSpectrumWaveMode
+            spectrumLineWidth: root.barSpectrumLineWidth
+            spectrumEdgeInset: root.barSpectrumEdgeInset
+            spectrumEdgeSoftness: root.barSpectrumEdgeSoftness
+            spectrumFrequencyProfile: root.barSpectrumFrequencyProfile
+            spectrumAccentStrength: root.barSpectrumAccentStrength
+            spectrumOrganicSensitivity: root.barSpectrumOrganicSensitivity
+            spectrumOrganicPulse: root.barSpectrumOrganicPulse
+            spectrumOrganicMotionSpeed: root.barSpectrumOrganicMotionSpeed
+            spectrumOrganicIdleMotion: root.barSpectrumOrganicIdleMotion
+            spectrumOrganicGlow: root.barSpectrumOrganicGlow
+            spectrumOrganicEdgeAura: root.barSpectrumOrganicEdgeAura
+            spectrumOrganicBaseRadius: root.barSpectrumOrganicBaseRadius
+            spectrumDomain: root
+            padding: 8
+            visible: Config.options?.bar?.modules?.taskbar ?? false
+
+            VerticalClockWidget {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+            }
+
+            HorizontalBarSeparator {}
+
+            VerticalDateWidget {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+            }
+
+            HorizontalBarSeparator {
+                visible: Battery.available
+            }
+
+            BatteryIndicator {
+                visible: Battery.available
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+            }
+        }
+
+        Bar.BarGroup {
+            id: resourcesGroup
+            vertical: true
+            screen: root.screen
+            nativeBlurActive: root.nativeBlurActive
+            spectrumEnabled: root.barSpectrumVisible
+            spectrumPoints: root.barSpectrumVisible ? verticalBarCava.points : []
+            spectrumCeiling: root.barSpectrumVisible ? verticalBarCava.normalizationCeiling : 100
+            spectrumType: root.barSpectrumType
+            spectrumOpacity: root.barSpectrumOpacity
+            spectrumFillRatio: root.barSpectrumFillRatio
+            spectrumDensity: root.barSpectrumDensity
+            spectrumGap: root.barSpectrumGap
+            spectrumSmoothing: root.barSpectrumSmoothing
+            spectrumWaveMode: root.barSpectrumWaveMode
+            spectrumLineWidth: root.barSpectrumLineWidth
+            spectrumEdgeInset: root.barSpectrumEdgeInset
+            spectrumEdgeSoftness: root.barSpectrumEdgeSoftness
+            spectrumFrequencyProfile: root.barSpectrumFrequencyProfile
+            spectrumAccentStrength: root.barSpectrumAccentStrength
+            spectrumOrganicSensitivity: root.barSpectrumOrganicSensitivity
+            spectrumOrganicPulse: root.barSpectrumOrganicPulse
+            spectrumOrganicMotionSpeed: root.barSpectrumOrganicMotionSpeed
+            spectrumOrganicIdleMotion: root.barSpectrumOrganicIdleMotion
+            spectrumOrganicGlow: root.barSpectrumOrganicGlow
+            spectrumOrganicEdgeAura: root.barSpectrumOrganicEdgeAura
+            spectrumOrganicBaseRadius: root.barSpectrumOrganicBaseRadius
+            spectrumDomain: root
+            padding: 8
+            // Hide resources when taskbar is active to free vertical space
+            visible: !(Config.options?.bar?.modules?.taskbar ?? false)
+            Resources {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+            }
+            
+            HorizontalBarSeparator {}
+
+            VerticalMedia {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+            }
+        }
+
+    HorizontalBarSeparator {
+            visible: Config.options?.bar?.borderless ?? false
+        }
+
+        Bar.BarGroup {
+            id: middleCenterGroup
+            vertical: true
+            screen: root.screen
+            nativeBlurActive: root.nativeBlurActive
+            spectrumEnabled: root.barSpectrumVisible
+            spectrumPoints: root.barSpectrumVisible ? verticalBarCava.points : []
+            spectrumCeiling: root.barSpectrumVisible ? verticalBarCava.normalizationCeiling : 100
+            spectrumType: root.barSpectrumType
+            spectrumOpacity: root.barSpectrumOpacity
+            spectrumFillRatio: root.barSpectrumFillRatio
+            spectrumDensity: root.barSpectrumDensity
+            spectrumGap: root.barSpectrumGap
+            spectrumSmoothing: root.barSpectrumSmoothing
+            spectrumWaveMode: root.barSpectrumWaveMode
+            spectrumLineWidth: root.barSpectrumLineWidth
+            spectrumEdgeInset: root.barSpectrumEdgeInset
+            spectrumEdgeSoftness: root.barSpectrumEdgeSoftness
+            spectrumFrequencyProfile: root.barSpectrumFrequencyProfile
+            spectrumAccentStrength: root.barSpectrumAccentStrength
+            spectrumOrganicSensitivity: root.barSpectrumOrganicSensitivity
+            spectrumOrganicPulse: root.barSpectrumOrganicPulse
+            spectrumOrganicMotionSpeed: root.barSpectrumOrganicMotionSpeed
+            spectrumOrganicIdleMotion: root.barSpectrumOrganicIdleMotion
+            spectrumOrganicGlow: root.barSpectrumOrganicGlow
+            spectrumOrganicEdgeAura: root.barSpectrumOrganicEdgeAura
+            spectrumOrganicBaseRadius: root.barSpectrumOrganicBaseRadius
+            spectrumDomain: root
+            padding: 6
+
+            Bar.Workspaces {
+                id: workspacesWidget
+                vertical: true
+                MouseArea {
+                    // Right-click to toggle overview
+                    anchors.fill: parent
+                    acceptedButtons: Qt.RightButton
+
+                    onPressed: event => {
+                        if (event.button === Qt.RightButton) {
+                            GlobalStates.toggleOverview(root.screen?.name ?? "");
+                        }
+                    }
+                }
+            }
+        }
+
+        HorizontalBarSeparator {
+            visible: (Config.options?.bar?.modules?.taskbar ?? false) && (Config.options?.bar?.borderless ?? false)
+        }
+
+        // Taskbar (apps in bar) — vertical mode
+        Bar.BarGroup {
+            id: taskbarGroup
+            vertical: true
+            screen: root.screen
+            nativeBlurActive: root.nativeBlurActive
+            spectrumEnabled: root.barSpectrumVisible
+            spectrumPoints: root.barSpectrumVisible ? verticalBarCava.points : []
+            spectrumCeiling: root.barSpectrumVisible ? verticalBarCava.normalizationCeiling : 100
+            spectrumType: root.barSpectrumType
+            spectrumOpacity: root.barSpectrumOpacity
+            spectrumFillRatio: root.barSpectrumFillRatio
+            spectrumDensity: root.barSpectrumDensity
+            spectrumGap: root.barSpectrumGap
+            spectrumSmoothing: root.barSpectrumSmoothing
+            spectrumWaveMode: root.barSpectrumWaveMode
+            spectrumLineWidth: root.barSpectrumLineWidth
+            spectrumEdgeInset: root.barSpectrumEdgeInset
+            spectrumEdgeSoftness: root.barSpectrumEdgeSoftness
+            spectrumFrequencyProfile: root.barSpectrumFrequencyProfile
+            spectrumAccentStrength: root.barSpectrumAccentStrength
+            spectrumOrganicSensitivity: root.barSpectrumOrganicSensitivity
+            spectrumOrganicPulse: root.barSpectrumOrganicPulse
+            spectrumOrganicMotionSpeed: root.barSpectrumOrganicMotionSpeed
+            spectrumOrganicIdleMotion: root.barSpectrumOrganicIdleMotion
+            spectrumOrganicGlow: root.barSpectrumOrganicGlow
+            spectrumOrganicEdgeAura: root.barSpectrumOrganicEdgeAura
+            spectrumOrganicBaseRadius: root.barSpectrumOrganicBaseRadius
+            spectrumDomain: root
+            padding: 4
+            visible: Config.options?.bar?.modules?.taskbar ?? false
+
+            Bar.BarTaskbar {
+                vertical: true
+                parentWindow: root.QsWindow.window
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+                // `middleHost` already excludes the natural top/bottom edge
+                // sections, so only subtract the fixed middle widgets here.
+                maximumHeight: Math.max(24, middleHost.height
+                    - (clockGroupTop.visible ? clockGroupTop.height : 0)
+                    - middleCenterGroup.height
+                    - (clockGroup.visible ? clockGroup.height : 0)
+                    - middleSection.spacing * 6)
+            }
+        }
+
+        HorizontalBarSeparator {
+            visible: Config.options?.bar?.borderless ?? false
+        }
+
+        // When taskbar is NOT active: clock/date stays in its original position
+        Bar.BarGroup {
+            id: clockGroup
+            vertical: true
+            screen: root.screen
+            nativeBlurActive: root.nativeBlurActive
+            spectrumEnabled: root.barSpectrumVisible
+            spectrumPoints: root.barSpectrumVisible ? verticalBarCava.points : []
+            spectrumCeiling: root.barSpectrumVisible ? verticalBarCava.normalizationCeiling : 100
+            spectrumType: root.barSpectrumType
+            spectrumOpacity: root.barSpectrumOpacity
+            spectrumFillRatio: root.barSpectrumFillRatio
+            spectrumDensity: root.barSpectrumDensity
+            spectrumGap: root.barSpectrumGap
+            spectrumSmoothing: root.barSpectrumSmoothing
+            spectrumWaveMode: root.barSpectrumWaveMode
+            spectrumLineWidth: root.barSpectrumLineWidth
+            spectrumEdgeInset: root.barSpectrumEdgeInset
+            spectrumEdgeSoftness: root.barSpectrumEdgeSoftness
+            spectrumFrequencyProfile: root.barSpectrumFrequencyProfile
+            spectrumAccentStrength: root.barSpectrumAccentStrength
+            spectrumOrganicSensitivity: root.barSpectrumOrganicSensitivity
+            spectrumOrganicPulse: root.barSpectrumOrganicPulse
+            spectrumOrganicMotionSpeed: root.barSpectrumOrganicMotionSpeed
+            spectrumOrganicIdleMotion: root.barSpectrumOrganicIdleMotion
+            spectrumOrganicGlow: root.barSpectrumOrganicGlow
+            spectrumOrganicEdgeAura: root.barSpectrumOrganicEdgeAura
+            spectrumOrganicBaseRadius: root.barSpectrumOrganicBaseRadius
+            spectrumDomain: root
+            padding: 8
+            visible: !(Config.options?.bar?.modules?.taskbar ?? false)
+            
+            VerticalClockWidget {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+            }
+
+            HorizontalBarSeparator {}
+
+            VerticalDateWidget {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+            }
+
+            HorizontalBarSeparator {
+                visible: Battery.available
+            }
+
+            BatteryIndicator {
+                visible: Battery.available
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+            }
+            
+        }
+        }
+    }
+
+    FocusedScrollMouseArea { // Bottom section | scroll to change volume
+        id: barBottomSectionMouseArea
+
+        anchors {
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
+        implicitWidth: Appearance.sizes.baseVerticalBarWidth
+        implicitHeight: bottomSectionColumnLayout.implicitHeight
+        height: Math.min(root.height, implicitHeight)
+        width: Appearance.sizes.verticalBarWidth
+        
+        onScrollDown: Audio.decrementVolume();
+        onScrollUp: Audio.incrementVolume();
+        onMovedAway: GlobalStates.osdVolumeOpen = false;
+        onPressed: event => {
+            if (event.button === Qt.LeftButton) {
+                GlobalStates.toggleSidebarRight(root.screen?.name ?? "");
+            } else if (event.button === Qt.RightButton) {
+                root.openBarContextMenu(event.x, event.y, barBottomSectionMouseArea)
+            }
+        }
+
+        ColumnLayout {
+            id: bottomSectionColumnLayout
+            anchors.fill: parent
+            spacing: 4
+
+            Item { 
+                Layout.fillWidth: true
+                Layout.fillHeight: true 
+            }
+
+            Bar.SysTray {
+                vertical: true
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+                invertSide: Config?.options.bar.bottom
+            }
+
+            RippleButton { // Right sidebar button
+                id: rightSidebarButton
+
+                Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
+                Layout.bottomMargin: Appearance.rounding.screenRounding
+                Layout.fillHeight: false
+
+                implicitHeight: indicatorsColumnLayout.implicitHeight + 4 * 2
+                implicitWidth: indicatorsColumnLayout.implicitWidth + 6 * 2
+
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+                colBackground: buttonHovered ? Appearance.colors.colLayer1Hover : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
+                colBackgroundHover: Appearance.colors.colLayer1Hover
+                colRipple: Appearance.colors.colLayer1Active
+                colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colSecondaryContainer
+                colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colSecondaryContainerHover
+                colRippleToggled: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colSecondaryContainerActive
+                toggled: GlobalStates.sidebarRightOpen
+                    && GlobalStates.sidebarRightPresentationOutput === (root.screen?.name ?? "")
+                property color colText: toggled
+                    ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer)
+                    : Appearance.colors.colOnLayer0
+
+                Behavior on colText {
+                    animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+
+                onPressed: {
+                    GlobalStates.toggleSidebarRight(root.screen?.name ?? "");
+                }
+
+                ColumnLayout {
+                    id: indicatorsColumnLayout
+                    anchors.centerIn: parent
+                    property real realSpacing: 6
+                    spacing: 0
+
+                    Revealer {
+                        vertical: true
+                        reveal: Audio.sink?.audio?.muted ?? false
+                        Layout.fillWidth: true
+                        Layout.bottomMargin: reveal ? indicatorsColumnLayout.realSpacing : 0
+                        Behavior on Layout.bottomMargin {
+                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
+                        MaterialSymbol {
+                            text: "volume_off"
+                            iconSize: Appearance.font.pixelSize.larger
+                            color: rightSidebarButton.colText
+                        }
+                    }
+                    Revealer {
+                        vertical: true
+                        reveal: Audio.micMuted
+                        Layout.fillWidth: true
+                        Layout.bottomMargin: reveal ? indicatorsColumnLayout.realSpacing : 0
+                        Behavior on Layout.topMargin {
+                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
+                        MaterialSymbol {
+                            text: "mic_off"
+                            iconSize: Appearance.font.pixelSize.larger
+                            color: rightSidebarButton.colText
+                        }
+                    }
+                    Bar.HyprlandXkbIndicator {
+                        vertical: true
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.bottomMargin: KeyboardIndicators.hasPanelIndicators ? indicatorsColumnLayout.realSpacing : 0
+                        color: rightSidebarButton.colText
+                    }
+                    Revealer {
+                        vertical: true
+                        reveal: Notifications.silent || Notifications.unread > 0
+                        Layout.fillWidth: true
+                        Layout.bottomMargin: reveal ? indicatorsColumnLayout.realSpacing : 0
+                        implicitHeight: reveal ? notificationUnreadCount.implicitHeight : 0
+                        implicitWidth: reveal ? notificationUnreadCount.implicitWidth : 0
+                        Behavior on Layout.bottomMargin {
+                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
+                        Bar.NotificationUnreadCount {
+                            id: notificationUnreadCount
+                        }
+                    }
+                    MaterialSymbol {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.bottomMargin: indicatorsColumnLayout.realSpacing
+                        text: Network.materialSymbol
+                        iconSize: Appearance.font.pixelSize.larger
+                        color: rightSidebarButton.colText
+                    }
+                    MaterialSymbol {
+                        Layout.alignment: Qt.AlignHCenter
+                        visible: BluetoothStatus.available
+                        text: BluetoothStatus.activeIcon
+                        iconSize: Appearance.font.pixelSize.larger
+                        color: rightSidebarButton.colText
+                    }
+                }
+            }
+        }
+    }
+}

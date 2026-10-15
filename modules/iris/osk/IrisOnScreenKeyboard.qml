@@ -9,7 +9,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
-import qs.modules.onScreenKeyboard
+import qs.modules.shared.onScreenKeyboard
 import qs.modules.iris.frame
 import qs.modules.iris.style
 import qs.modules.iris.field as Field

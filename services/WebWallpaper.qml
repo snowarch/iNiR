@@ -54,7 +54,7 @@ Singleton {
         id: hostProbeProc
         command: [
             root.runner,
-            Quickshell.shellPath("modules/background/WebWallpaperHost.qml"),
+            Quickshell.shellPath("modules/shared/background/WebWallpaperHost.qml"),
             "--", "--probe"
         ]
         stderr: StdioCollector { id: hostProbeErr }
@@ -74,7 +74,7 @@ Singleton {
             required property var modelData
 
             readonly property string screenName: modelData?.name ?? ""
-            readonly property string hostPath: Quickshell.shellPath("modules/background/WebWallpaperHost.qml")
+            readonly property string hostPath: Quickshell.shellPath("modules/shared/background/WebWallpaperHost.qml")
             readonly property string pidFile: "/tmp/quickshell/web-wallpaper-" + screenName.replace(/[^A-Za-z0-9_.-]/g, "_") + ".pid"
             property bool wantStart: false
             property bool restarting: false

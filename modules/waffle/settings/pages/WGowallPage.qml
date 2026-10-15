@@ -9,7 +9,7 @@ import qs.services
 import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
-import qs.modules.settings
+import qs.modules.ii.settings
 import qs.modules.waffle.looks
 import qs.modules.waffle.settings
 

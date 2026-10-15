@@ -7,7 +7,6 @@ import qs.modules.common.functions
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Services.Pipewire
 
 WindowDialog {
     id: root

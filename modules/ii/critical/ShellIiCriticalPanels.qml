@@ -3,12 +3,12 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs
-import qs.modules.background
-import qs.modules.bar
-import qs.modules.barM3 as BarM3
-import qs.modules.dock
-import qs.modules.pill
-import qs.modules.verticalBar
+import qs.modules.shared.background
+import qs.modules.ii.bar
+import qs.modules.ii.barM3 as BarM3
+import qs.modules.ii.dock
+import qs.modules.ii.pill
+import qs.modules.ii.verticalBar
 import qs.modules.common
 
 Item {

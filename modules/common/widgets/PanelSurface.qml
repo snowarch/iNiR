@@ -85,7 +85,7 @@ Item {
 
     // Cara island Ricelin (opt-in por superficie, gateada por config del
     // consumidor): gradiente washi + hairline + sheen + glass, dibujada con
-    // Appearance directo — modules/common no puede importar qs.modules.pill.
+    // Appearance directo — modules/common no puede importar qs.modules.ii.pill.
     property bool islandSkin: false
     // Optional explicit owner for nested surfaces. Empty preserves the global
     // worldview exactly; panel-local dialects such as Ricelin can opt in

@@ -1,0 +1,2 @@
+module qs.modules.shared.background.widgets.dayProgress
+DayProgressWidget 1.0 DayProgressWidget.qml

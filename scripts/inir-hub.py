@@ -83,7 +83,7 @@ def target_of(kind: str, item_id: str) -> Path:
     if kind == "webapp":
         return shell_config_dir() / "plugins" / item_id  # scripts/scan-plugins.py
     if kind == "theme":
-        return shell_config_dir() / "themes" / f"{item_id}.json"  # modules/settings/ThemesConfig.qml
+        return shell_config_dir() / "themes" / f"{item_id}.json"  # modules/ii/settings/ThemesConfig.qml
     if kind == "iris-theme":
         return shell_config_dir() / "iris" / "themes" / f"{item_id}.json"  # modules/iris/settings/IrisThemes.qml
     raise HubError(f"unknown kind {kind}")

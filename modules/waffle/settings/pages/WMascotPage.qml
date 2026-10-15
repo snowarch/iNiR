@@ -14,7 +14,7 @@ import qs.modules.waffle.settings
 
 /**
  * Dedicated Mascot settings page (waffle family). ii mirror:
- * modules/settings/MascotConfig.qml — keep both in sync.
+ * modules/ii/settings/MascotConfig.qml — keep both in sync.
  *
  * How this page is built:
  * - Registered in waffleSettings.qml pages[] (settingsPageIndex must equal

@@ -11,9 +11,9 @@ import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
-import qs.modules.lock
+import qs.modules.shared.lock
 import qs.modules.waffle.looks
-import qs.modules.background.widgets.clock as BackgroundClock
+import qs.modules.shared.background.widgets.clock as BackgroundClock
 import Quickshell
 import Quickshell.Widgets
 

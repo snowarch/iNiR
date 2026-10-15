@@ -1,0 +1,11 @@
+module qs.modules.shared.mediaControls.presets
+
+CompactPlayer 1.0 CompactPlayer.qml
+FullPlayer 1.0 FullPlayer.qml
+MinimalPlayer 1.0 MinimalPlayer.qml
+AlbumArtPlayer 1.0 AlbumArtPlayer.qml
+VisualizerPlayer 1.0 VisualizerPlayer.qml
+ClassicPlayer 1.0 ClassicPlayer.qml
+LyricsPlayer 1.0 LyricsPlayer.qml
+LyricsSplitPlayer 1.0 LyricsSplitPlayer.qml
+ExpandingLyricsPlayer 1.0 ExpandingLyricsPlayer.qml

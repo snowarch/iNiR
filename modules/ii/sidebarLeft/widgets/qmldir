@@ -1,0 +1,18 @@
+module qs.modules.ii.sidebarLeft.widgets
+
+GlanceHeader 1.0 GlanceHeader.qml
+ContextCard 1.0 ContextCard.qml
+QuickNote 1.0 QuickNote.qml
+StatusRings 1.0 StatusRings.qml
+WeekStrip 1.0 WeekStrip.qml
+ControlsCard 1.0 ControlsCard.qml
+QuickLaunch 1.0 QuickLaunch.qml
+MediaPlayerWidget 1.0 MediaPlayerWidget.qml
+CryptoWidget 1.0 CryptoWidget.qml
+QuickWallpaper 1.0 QuickWallpaper.qml
+WorldClockWidget 1.0 WorldClockWidget.qml
+DraggableWidgetContainer 1.0 DraggableWidgetContainer.qml
+WidgetSettingsMenu 1.0 WidgetSettingsMenu.qml
+
+YtMusicPlayerCard 1.0 YtMusicPlayerCard.qml
+YtMusicTrackItem 1.0 YtMusicTrackItem.qml

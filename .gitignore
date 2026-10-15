@@ -182,7 +182,7 @@ wiki/
 
 # ── Stale paths (prevent accidental commits) ─────────────────
 /src/
-modules/ii/overlay/floatingImage/undefined/
+modules/shared/overlay/floatingImage/undefined/
 docs-site/
 prompt-framework-opencode.md
 version.json

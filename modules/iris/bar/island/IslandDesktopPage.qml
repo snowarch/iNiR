@@ -14,7 +14,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.mediaControls.components
+import qs.modules.shared.mediaControls.components
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.frame

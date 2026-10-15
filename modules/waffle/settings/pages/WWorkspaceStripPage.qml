@@ -8,7 +8,7 @@ import qs.modules.waffle.looks
 import qs.modules.waffle.settings
 
 // Waffle-side settings for the shared Workspace Strip module (the strip itself
-// loads in both families; this mirrors modules/settings/WorkspaceStripConfig.qml).
+// loads in both families; this mirrors modules/ii/settings/WorkspaceStripConfig.qml).
 WSettingsPage {
     id: root
     settingsPageIndex: 13

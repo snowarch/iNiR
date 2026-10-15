@@ -1,0 +1,289 @@
+import qs
+import qs.services
+import qs.modules.common
+import qs.modules.common.widgets
+import qs.modules.common.functions
+import qs.modules.ii.sidebarLeft.anime
+import QtQml
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
+import Quickshell
+import Quickshell.Io
+import Quickshell.Hyprland
+
+Button {
+    id: root
+    property var imageData
+    property var fallbackTags: []
+    property var rowHeight
+    property bool aspectCrop: false
+    property bool lazyTagFetch: false
+    property bool manualDownload: false
+    property string previewDownloadPath
+    property string downloadPath
+    property string nsfwPath
+    readonly property string _fileUrl: imageData?.file_url ?? imageData?.sample_url ?? imageData?.preview_url ?? ""
+    property string fileName: {
+        if (root._fileUrl.length > 0) {
+            const cleanUrl = root._fileUrl.split("?")[0]
+            const slashIndex = cleanUrl.lastIndexOf("/")
+            const candidate = decodeURIComponent(cleanUrl.substring(slashIndex + 1))
+            if (candidate.length > 0)
+                return candidate
+        }
+        const fallbackId = String(root.imageData?.id ?? "preview")
+        const fallbackExt = String(root.imageData?.file_ext ?? "jpg")
+        return fallbackId + "." + fallbackExt
+    }
+    property string filePath: `${root.previewDownloadPath}/${root.fileName}`
+    property int maxTagStringLineLength: 50
+    property real imageRadius: Appearance.rounding.small
+    property bool showBackground: true  // When false, no background rectangle behind image
+
+    // Allow consumers (e.g. Wallhaven) to opt-out of hover tooltips
+    property bool enableTooltip: true
+    property bool buttonHovered: false
+
+    // Wallhaven tags are expensive (detail endpoint). Fetch them only when the user shows intent.
+    property bool tagsRequested: false
+
+    Timer {
+        id: tagFetchTimer
+        interval: 450
+        repeat: false
+        onTriggered: {
+            if (!root.lazyTagFetch)
+                return
+            if (!root.imageData || !root.imageData.id)
+                return
+            if (root.imageData.tags && root.imageData.tags.length > 0)
+                return
+            root.tagsRequested = true
+            Wallhaven.ensureWallpaperTags(root.imageData.id)
+        }
+    }
+
+    readonly property string _tagText: {
+        if (root.imageData && root.imageData.tags && root.imageData.tags.length > 0)
+            return root.imageData.tags
+        if (root.fallbackTags && root.fallbackTags.length > 0)
+            return root.fallbackTags
+        return ""
+    }
+
+    hoverEnabled: true
+
+    onHoveredChanged: {
+        if (!root.lazyTagFetch)
+            return
+        if (root.hovered) {
+            // Only start the timer if tags are not already present.
+            if (!(root.imageData && root.imageData.tags && root.imageData.tags.length > 0)) {
+                tagFetchTimer.restart()
+            }
+        } else {
+            tagFetchTimer.stop()
+        }
+    }
+    
+    Process {
+        id: downloadProcess
+        running: false
+        command: ["/usr/bin/bash", "-c", `mkdir -p '${root.previewDownloadPath}' && [ -f ${root.filePath} ] || curl -sSL '${root.imageData.preview_url ?? root.imageData.sample_url}' -o '${root.filePath}'`]
+        onExited: (exitCode, exitStatus) => {
+            imageObject.source = `${previewDownloadPath}/${root.fileName}`
+        }
+    }
+
+    Component.onCompleted: {
+        if (root.manualDownload) {
+            downloadProcess.running = true
+        }
+    }
+
+    StyledToolTip {
+        // Scrolling moves the pointer across many thumbnails. Require real
+        // hover intent for Wallhaven instead of flashing every available tag.
+        delay: root.lazyTagFetch ? 750 : 16
+        extraVisibleCondition: root.enableTooltip && root.imageData && root._tagText.length > 0
+        alternativeVisibleCondition: root.enableTooltip && (root.buttonHovered || root.hovered)
+        text: `${StringUtils.wordWrap(root._tagText, root.maxTagStringLineLength)}`
+    }
+
+    padding: 0
+    implicitWidth: root.rowHeight * modelData.aspect_ratio
+    implicitHeight: root.rowHeight
+
+    background: Rectangle {
+        implicitWidth: root.rowHeight * modelData.aspect_ratio
+        implicitHeight: root.rowHeight
+        radius: imageRadius
+        color: root.showBackground ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : (Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2)) : "transparent"
+    }
+
+    contentItem: Item {
+        anchors.fill: parent
+
+        StyledImage {
+            id: imageObject
+            anchors.fill: parent
+            width: root.rowHeight * modelData.aspect_ratio
+            height: root.rowHeight
+            fillMode: root.aspectCrop ? Image.PreserveAspectCrop : Image.PreserveAspectFit
+            source: root.manualDownload ? "" : modelData.preview_url
+            sourceSize.width: root.rowHeight * modelData.aspect_ratio
+            sourceSize.height: root.rowHeight
+
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: root.rowHeight * modelData.aspect_ratio
+                    height: root.rowHeight
+                    radius: imageRadius
+                }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.RightButton
+            hoverEnabled: true
+            propagateComposedEvents: true
+            onEntered: root.buttonHovered = true
+            onExited: root.buttonHovered = false
+            onWheel: wheel => {
+                if (contextMenu.active) {
+                    contextMenu.close()
+                }
+                wheel.accepted = false
+            }
+            onPressed: mouse => {
+                if (mouse.button !== Qt.RightButton)
+                    return
+
+                // Anchor at the right edge of the image so the popup
+                // opens outside the sidebar (popupSide: Edges.Right).
+                menuAnchor.x = parent.width
+                menuAnchor.y = mouse.y
+
+                // Re-open cleanly if it was already open.
+                if (contextMenu.active) {
+                    contextMenu.close()
+                }
+
+                contextMenu.requestOpen()
+                Qt.callLater(() => {
+                    contextMenu.updateAnchor()
+                })
+                mouse.accepted = true
+            }
+        }
+
+        RippleButton {
+            id: menuButton
+            anchors.top: parent.top
+            anchors.right: parent.right
+            property real buttonSize: 24
+            anchors.margins: 6
+            implicitHeight: buttonSize
+            implicitWidth: buttonSize
+            visible: root.hovered || root.buttonHovered || contextMenu.active
+
+            buttonRadius: buttonSize / 2
+            rippleEnabled: false
+            colBackground: ColorUtils.transparentize(Appearance.colors.colLayer1, 0.38)
+            colBackgroundHover: colBackground
+            colRipple: colBackground
+
+            contentItem: MaterialSymbol {
+                horizontalAlignment: Text.AlignHCenter
+                iconSize: Appearance.font.pixelSize.normal
+                color: Appearance.colors.colOnSurface
+                text: "more_vert"
+            }
+
+            onClicked: {
+                // Position anchor at right edge, vertically centered on the button
+                menuAnchor.x = parent.width
+                menuAnchor.y = menuButton.y + menuButton.height / 2
+
+                if (contextMenu.active) {
+                    contextMenu.close()
+                }
+
+                contextMenu.requestOpen()
+                Qt.callLater(() => {
+                    contextMenu.updateAnchor()
+                })
+            }
+        }
+
+        // Invisible anchor point for context menu positioning (set to cursor position on right-click)
+        Item {
+            id: menuAnchor
+            width: 1
+            height: 1
+            z: 1000
+        }
+
+        BooruImageContextMenu {
+            id: contextMenu
+            z: 1000
+            anchorItem: menuAnchor
+            anchorHovered: root.hovered || root.buttonHovered
+            
+            model: [
+                {
+                    iconName: "open_in_new",
+                    monochromeIcon: true,
+                    text: Translation.tr("Open file link"),
+                    action: () => {
+                        if (CompositorService.isHyprland) Hyprland.dispatch("keyword cursor:no_warps true")
+                        Qt.openUrlExternally(root.imageData.file_url)
+                        if (CompositorService.isHyprland) Hyprland.dispatch("keyword cursor:no_warps false")
+                    }
+                },
+                ...(root.imageData.source && root.imageData.source.length > 0 ? [{
+                    iconName: "link",
+                    monochromeIcon: true,
+                    text: Translation.tr("Go to source (%1)").arg(StringUtils.getDomain(root.imageData.source)),
+                    action: () => {
+                        if (CompositorService.isHyprland) Hyprland.dispatch("keyword cursor:no_warps true")
+                        Qt.openUrlExternally(root.imageData.source)
+                        if (CompositorService.isHyprland) Hyprland.dispatch("keyword cursor:no_warps false")
+                    }
+                }] : []),
+                { type: "separator" },
+                {
+                    iconName: "download",
+                    monochromeIcon: true,
+                    text: Translation.tr("Download"),
+                    action: () => {
+                        const targetPath = root.imageData.is_nsfw ? root.nsfwPath : root.downloadPath;
+                        const localPath = `${targetPath}/${root.fileName}`;
+                        Quickshell.execDetached(["/usr/bin/bash", "-c", 
+                            `mkdir -p '${targetPath}' && curl '${root.imageData.file_url}' -o '${localPath}' && notify-send '${Translation.tr("Download complete")}' '${localPath}' -a 'Shell'`
+                        ])
+                        if (Config.options?.sidebar?.openFolderOnDownload ?? false)
+                            ShellExec.execDetachedArgs(["xdg-open", targetPath], "Open image")
+                    }
+                },
+                {
+                    iconName: "wallpaper",
+                    monochromeIcon: true,
+                    text: Translation.tr("Set as wallpaper"),
+                    action: () => {
+                        const targetPath = root.imageData.is_nsfw ? root.nsfwPath : root.downloadPath;
+                        const localPath = `${targetPath}/${root.fileName}`;
+                        const mode = Appearance.m3colors.darkmode ? "dark" : "light";
+                        Quickshell.execDetached(["/usr/bin/bash", "-c",
+                            `mkdir -p '${targetPath}' && curl -sSL '${root.imageData.file_url}' -o '${localPath}' && '${Directories.wallpaperSwitchScriptPath}' --image '${localPath}' --mode '${mode}'`
+                        ])
+                    }
+                }
+            ]
+        }
+    }
+}

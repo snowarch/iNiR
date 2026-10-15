@@ -1,0 +1,130 @@
+import qs.modules.common
+import qs.modules.common.widgets
+import qs.services
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Services.Pipewire
+
+Rectangle {
+    id: root
+    required property PwNode node
+
+    function setVolume(value: real): void {
+        const clamped = Math.max(0, Math.min(slider.to, value))
+        if (root.node === Audio.sink) {
+            Audio.setSinkVolume(clamped)
+        } else if (root.node === Audio.source) {
+            Audio.setSourceVolume(clamped)
+        } else if (root.node?.audio) {
+            root.node.audio.volume = clamped
+        }
+    }
+
+    function stepVolume(delta: real): void {
+        root.setVolume((root.node?.audio?.volume ?? 0) + delta)
+    }
+
+    PwObjectTracker {
+        objects: [root.node]
+    }
+
+    implicitHeight: rowLayout.implicitHeight + Appearance.sizes.spacingMedium * 2
+    radius: Appearance.rounding.small
+    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
+
+    RowLayout {
+        id: rowLayout
+        anchors {
+            fill: parent
+            margins: Appearance.sizes.spacingMedium
+        }
+        spacing: Appearance.sizes.spacingMedium
+
+        Rectangle {
+            Layout.preferredWidth: 40
+            Layout.preferredHeight: 40
+            radius: Appearance.rounding.small
+            color: Appearance.colors.colLayer3
+
+            Image {
+                anchors.centerIn: parent
+                sourceSize.width: 24
+                sourceSize.height: 24
+                source: root.node ? Quickshell.iconPath(MprisController.streamIconName(root.node), "image-missing") : ""
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 4
+
+            RowLayout {
+                Layout.fillWidth: true
+                
+                StyledText {
+                    Layout.fillWidth: true
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    elide: Text.ElideRight
+                    text: MprisController.streamDisplayName(root.node)
+                }
+                
+                StyledText {
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                    text: Math.round((root.node?.audio.volume ?? 0) * 100) + "%"
+                }
+            }
+
+            StyledSlider {
+                id: slider
+                Layout.fillWidth: true
+                value: root.node?.audio.volume ?? 0
+                configuration: StyledSlider.Configuration.S
+                property real modelValue: root.node?.audio.volume ?? 0
+                to: (root.node === Audio.sink) ? 1.5 : 1
+
+                Binding {
+                    target: slider
+                    property: "value"
+                    value: slider.modelValue
+                    when: !slider.pressed && !slider._userInteracting
+                }
+                onMoved: root.setVolume(value)
+            }
+        }
+
+        RippleButton {
+            Layout.preferredWidth: 32
+            Layout.preferredHeight: 32
+            buttonRadius: Appearance.rounding.full
+            colBackground: root.node?.audio.muted ? Appearance.colors.colErrorContainer : "transparent"
+            colBackgroundHover: root.node?.audio.muted ? Appearance.colors.colErrorContainer : Appearance.colors.colLayer3Hover
+            colRipple: Appearance.colors.colLayer3Active
+            onClicked: root.node.audio.muted = !root.node.audio.muted
+
+            contentItem: MaterialSymbol {
+                anchors.centerIn: parent
+                text: root.node?.audio.muted ? "volume_off" : "volume_up"
+                iconSize: Appearance.font.pixelSize.normal
+                color: root.node?.audio.muted ? Appearance.colors.colOnErrorContainer : Appearance.colors.colOnLayer2
+            }
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.NoButton
+        onWheel: event => {
+            if (!root.node?.audio)
+                return
+            const verticalDelta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.pixelDelta.y
+            if (verticalDelta === 0)
+                return
+            root.stepVolume(verticalDelta > 0 ? 0.05 : -0.05)
+            event.accepted = true
+        }
+    }
+}

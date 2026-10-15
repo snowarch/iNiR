@@ -13,7 +13,7 @@ import qs.modules.waffle.looks
 import qs.modules.waffle.settings
 
 /**
- * AI settings page (waffle family). ii mirror: modules/settings/AiConfig.qml —
+ * AI settings page (waffle family). ii mirror: modules/ii/settings/AiConfig.qml —
  * keep both in sync; every control here writes the same config keys.
  *
  * Registered in waffleSettings.qml pages[] (index 15 — waffle indices are
