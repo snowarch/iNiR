@@ -595,6 +595,11 @@ install_void_ydotool() {
 # deps.toml recipe names.
 provider_missioncenter() { install_void_missioncenter "$@"; }
 provider_ydotool() { install_void_ydotool "$@"; }
-provider_ocr-vertical-models() { install_void_ocr_models "$@"; }
+# The OCR packages call their program tesseract-ocr; iNiR and doctor call tesseract. Alone (setup provider),
+# it installs the vertical models the install path installs.
+provider_ocr-vertical-models() {
+  configure_void_tesseract_command || return 1
+  if (($#)); then install_void_ocr_models "$@"; else install_void_ocr_models jpn_vert chi_sim_vert chi_tra_vert; fi
+}
 provider_darkly() { install_void_darkly "$@"; }
 provider_themes-download() { install_void_visual_providers "$@"; }
