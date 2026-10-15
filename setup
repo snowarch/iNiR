@@ -2631,6 +2631,8 @@ run_update() {
                 fi
             fi
             repair_update_owned_state true
+            # The binary has its own releases: an up-to-date shell still gets a newer one.
+            install_inir_cli_binary || tui_warn "Could not fetch the inir binary; the bash launcher keeps working"
             return 0
         else
             # Local repo ahead of installed - create snapshot
