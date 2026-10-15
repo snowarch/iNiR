@@ -290,11 +290,35 @@ Region {
             }
         }
         root.memo.runs = kept
+        root.frameCuts(runs)
         return { bodies: out.slice(0, 70), runs: runs }
     }
 
 
 
+
+    // A chamfered Design's frame opening (IrisField.frag frameBox) is square at the upper-left and lower-right and cut at
+    // the other two by a blade the size the round corner would have been. A round hole here blurred a curved patch into
+    // the square corners, past any band, and left the band's blades unblurred. The blades' rows are held half a pixel
+    // inside the drawn edge along its normal, as a cut body's are.
+    function frameCuts(runs: var): void {
+        if (!root.framed || !IrisStyle.fieldChamfer) return
+        const edge = root.hi(root.band - root.inset)
+        const x0 = edge, y0 = edge
+        const x1 = Math.round(root.windowWidth) - edge, y1 = Math.round(root.windowHeight) - edge
+        const c = Math.min(root.cornerRadius, (x1 - x0) / 2, (y1 - y0) / 2)
+        const lean = root.inset * Math.SQRT2
+        for (let n = y0; n < y0 + Math.ceil(c); n++) {
+            const reach = c - (n + 0.5 - y0) - lean
+            const a = root.hi(x1 - reach)
+            if (reach > 0 && a < x1) runs.push({ x: a, y: n, width: x1 - a, height: 1 })
+        }
+        for (let n = y1 - Math.ceil(c); n < y1; n++) {
+            const reach = c - (y1 - n - 0.5) - lean
+            const b = root.lo(x0 + reach)
+            if (reach > 0 && b > x0) runs.push({ x: x0, y: n, width: b - x0, height: 1 })
+        }
+    }
 
     component Piece: Region {
         id: piece
@@ -321,8 +345,9 @@ Region {
             y: edge
             width: Math.max(0, root.windowWidth - 2 * edge)
             height: Math.max(0, root.windowHeight - 2 * edge)
-            // Concentric with the frame's inner corner: the hole is grown by the pixel rounding of its edge.
-            radius: Math.round(root.cornerRadius + root.band - edge)
+            // Concentric with the frame's inner corner: the hole is grown by the pixel rounding of its edge. A chamfered
+            // Design's opening is square, its two blades put back as rows (frameCuts).
+            radius: IrisStyle.fieldChamfer ? 0 : Math.round(root.cornerRadius + root.band - edge)
         }
     }
     // Empty: its only job is to make the region change, which schedules the window's polish.
