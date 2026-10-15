@@ -11,7 +11,6 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.ii.settings
 import qs.modules.iris.components
 import qs.modules.iris.frame
 import qs.modules.iris.style
@@ -344,9 +343,7 @@ PanelWindow {
                                 onClicked: {
                                     root.settingsOrigin = layoutButton
                                     root.publishSettingsOrigin()
-                                    const page = SettingsPageRegistry.pages.findIndex(entry => entry.key === "iris")
-                                    if (page >= 0) GlobalStates.openSettingsPage(page, "sidebars")
-                                    else GlobalStates.openSettings()
+                                    GlobalStates.openSettingsAt("iris", "sidebars")
                                 }
                             }
                         }

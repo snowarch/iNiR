@@ -12,7 +12,6 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.ii.settings
 import qs.modules.iris.frame
 import qs.modules.iris.components
 import qs.modules.iris.style
@@ -326,13 +325,12 @@ Item {
         Config.revision
         return entry.rows.some(spec => IrisOptions.modified(spec))
     }
-    readonly property var pages: SettingsPageRegistry.pages.map(page => Object.assign({}, page, { component: Quickshell.shellPath(root.irisPageFor(page.key) || page.component) }))
-    function irisPageFor(key: string): string {
-        if (key === "about") return "modules/iris/settings/IrisAboutPage.qml"
-        if (key === "shortcuts") return "modules/iris/settings/IrisShortcutsPage.qml"
-        if (key === "hub") return "modules/iris/settings/IrisHubPage.qml"
-        return ""
-    }
+    // The pages iRiS keeps beside its sections, asked for by name ("about", "shortcuts", "hub"). Each scrolls itself.
+    readonly property var pages: [
+        { key: "about", component: Qt.resolvedUrl("IrisAboutPage.qml") },
+        { key: "shortcuts", component: Qt.resolvedUrl("IrisShortcutsPage.qml") },
+        { key: "hub", component: Qt.resolvedUrl("IrisHubPage.qml") }
+    ]
     property var unfolded: ({})
     // Every Fine-tune fold on the page at once (`inir iris settings tune:open`); a section change folds them again.
     property bool tuneAll: false
@@ -342,7 +340,6 @@ Item {
         root.unfolded = next
     }
     IrisGroupPreview { id: sceneProbe; visible: false; section: ""; group: "" }
-    readonly property int irisPageIndex: root.pages.findIndex(page => page.key === "iris")
     readonly property var morePages: IrisOptions.morePages.filter(entry => root.pages.some(page => page.key === entry.key))
     readonly property var moreGroups: [...new Set(root.morePages.map(entry => Translation.tr(entry.group)))]
     // iRiS's own pages (General's links) are found by search as the shared ones are.
@@ -549,9 +546,8 @@ Item {
             action: () => { searchField.text = ""; root.go({ section: entry.home ?? "system", group: "", advancedPage: root.pageIndexOf(entry.key) }) } }
     }
     function pageTitle(index: int): string {
-        const page = root.pages[index]
-        const entry = IrisOptions.morePages.find(candidate => candidate.key === page?.key)
-        return entry ? Translation.tr(entry.label) : String(page?.name ?? page?.title ?? "")
+        const entry = root.ownPages.concat(IrisOptions.morePages).find(candidate => candidate.key === root.pages[index]?.key)
+        return entry ? Translation.tr(entry.label) : ""
     }
     // What a Design's page offers at its foot, and its name for the page: the toolbar's, as this layout reads them.
     readonly property var pageActions: [rehearseAction, customizeAction, restoreAction].filter(action => action.shown)
@@ -651,7 +647,7 @@ Item {
         else return false
         return true
     }
-    // Shared pages iRiS draws natively: a request for one (the desktop's "Widget settings") lands in its section.
+    // Material's pages iRiS draws in its own sections: a request for one (the desktop's "Widget settings") lands there.
     readonly property var nativePages: ({
         widgets: asked => asked === "Organic edge" ? "player/Edge wave" : "widgets",
         wallpaper: () => "wallpaper",
@@ -660,24 +656,26 @@ Item {
         monitors: () => "display/Screens",
         themes: () => "colour/Colour theme",
         autostart: () => "general/At login",
-        services: () => "sources/Calendar"
+        services: () => "sources/Calendar",
+        orbit: () => "orbit",
+        dock: () => "dock",
+        sidebars: () => "sidebars"
     })
+    // A request names a page: "iris" (or any page iRiS has no copy of) opens its sections, at the place or verb the
+    // section part carries; one of its own pages opens that page.
     function applyRequest(): void {
-        const landing = root.nativePages[String(root.pages[GlobalStates.settingsOverlayRequestedPage]?.key ?? "")]
-        if (landing) {
-            GlobalStates.settingsOverlayRequestedSection = landing(String(GlobalStates.settingsOverlayRequestedSection ?? ""))
-            GlobalStates.settingsOverlayRequestedPage = root.irisPageIndex
-            return
-        }
-        const verb = String(GlobalStates.settingsOverlayRequestedSection ?? "")
-        if (GlobalStates.settingsOverlayRequestedPage === root.irisPageIndex && root.runCommand(verb)) {
-            GlobalStates.settingsOverlayRequestedSection = ""
-            GlobalStates.settingsOverlayCurrentPage = GlobalStates.settingsOverlayRequestedPage
-            GlobalStates.settingsOverlayRequestedPage = -1
-            return
-        }
-        if (GlobalStates.settingsOverlayRequestedPage >= 0) root.group = ""
-        const request = String(GlobalStates.settingsOverlayRequestedSection ?? "").split("/")
+        let key = String(GlobalStates.settingsOverlayRequestedKey ?? "")
+        if (key.length === 0) return
+        let asked = String(GlobalStates.settingsOverlayRequestedSection ?? "")
+        const landing = root.nativePages[key]
+        if (landing) { asked = landing(asked); key = "iris" }
+        GlobalStates.settingsOverlayCurrentPage = GlobalStates.settingsPageKeys.indexOf(key)
+        GlobalStates.settingsOverlayRequestedSection = ""
+        GlobalStates.settingsOverlayRequestedPage = -1
+        GlobalStates.settingsOverlayRequestedKey = ""
+        if (key === "iris" && root.runCommand(asked)) return
+        root.group = ""
+        const request = asked.split("/")
         root.requestedSection = root.renamedSections[request[0] ?? ""] ?? (request[0] ?? "")
         if (request.length > 1) {
             root.requestedGroup = request.slice(1).join("/")
@@ -687,24 +685,19 @@ Item {
             groupRequest.stop()
             root.requestedGroup = ""
         }
-        GlobalStates.settingsOverlayRequestedSection = ""
         root.followMovedGroup()
-        const page = GlobalStates.settingsOverlayRequestedPage
-        if (page >= 0) {
-            const irisPage = page === root.irisPageIndex
-            root.advancedPage = irisPage ? -1 : page
-            root.section = irisPage || root.irisPageFor(String(root.pages[page]?.key ?? "")).length > 0 ? (root.homeLayout ? "home" : "general") : "system"
-            if (irisPage && root.sections.some(s => s.id === root.requestedSection)) {
-                root.section = root.requestedSection
-                // A place asked for by name is where you want to be, not a filter over it.
-                if (searchField.text.length > 0) searchField.text = ""
-            }
-            root.advancedPage = root.landingPage(root.section, root.advancedPage)
-            GlobalStates.settingsOverlayCurrentPage = page
-            GlobalStates.settingsOverlayRequestedPage = -1
-            root.backStack = []
-            root.forwardStack = []
+        const own = root.pageIndexOf(key)
+        root.advancedPage = own
+        root.section = own >= 0 ? String(root.ownPages.concat(root.morePages).find(entry => entry.key === key)?.home ?? "system")
+            : root.homeLayout ? "home" : "general"
+        if (own < 0 && root.sections.some(s => s.id === root.requestedSection)) {
+            root.section = root.requestedSection
+            // A place asked for by name is where you want to be, not a filter over it.
+            if (searchField.text.length > 0) searchField.text = ""
         }
+        root.advancedPage = root.landingPage(root.section, root.advancedPage)
+        root.backStack = []
+        root.forwardStack = []
     }
     Component.onCompleted: {
         IrisNiri.ensure()
@@ -712,7 +705,7 @@ Item {
     }
     Connections {
         target: GlobalStates
-        function onSettingsOverlayRequestedPageChanged(): void { Qt.callLater(root.applyRequest) }
+        function onSettingsOverlayRequestedKeyChanged(): void { Qt.callLater(root.applyRequest) }
         function onSettingsOverlayOpenChanged(): void {
             if (!GlobalStates.settingsOverlayOpen) return
             IrisNiri.ensure()
@@ -739,12 +732,8 @@ Item {
     Shortcut { sequence: "Ctrl+F"; enabled: GlobalStates.settingsOverlayOpen; onActivated: searchField.forceActiveFocus() }
     // The other host opens where this one stands.
     function switchHost(): void {
-        if (root.advancedPage < 0) {
-            GlobalStates.settingsOverlayRequestedSection = root.section + (root.group.length > 0 ? "/" + root.group : "")
-            GlobalStates.settingsOverlayRequestedPage = root.irisPageIndex
-        } else {
-            GlobalStates.settingsOverlayRequestedPage = root.advancedPage
-        }
+        GlobalStates.settingsOverlayRequestedSection = root.advancedPage < 0 ? root.section + (root.group.length > 0 ? "/" + root.group : "") : ""
+        GlobalStates.settingsOverlayRequestedKey = root.advancedPage < 0 ? "iris" : root.pages[root.advancedPage].key
         Config.setNestedValue("iris.appearance.settingsHost", root.windowed ? "overlay" : "window")
     }
     function stepSection(delta: int): void {
@@ -1714,7 +1703,8 @@ Item {
                         }
                     }
 
-                    SettingsPageHost {
+                    // One of iRiS's own pages (About, Shortcuts, Hub): loaded while it is shown, gone when you leave it.
+                    Loader {
                         id: pageHost
                         parent: root.sceneDrawn ? root.scene.rowsSlot : pageArea
                         // Beside its column the page reads in the pane, inside its curve; alone it takes the width.
@@ -1722,19 +1712,9 @@ Item {
                         y: root.sceneDrawn ? 0 : root.pageInPane ? detailPane.y + Math.round(detailPane.radius / 3) : 0
                         width: root.sceneDrawn ? parent.width : root.pageInPane ? detailPane.width - Math.round(8 * root.d) : pageArea.width - Math.round(24 * root.d)
                         height: root.sceneDrawn ? parent.height : root.pageInPane ? detailPane.height - Math.round(2 * detailPane.radius / 3) : pageArea.height
-                        onCurrentItemChanged: {
-                            if (currentItem && root.requestedSection.length > 0
-                                && SettingsSearchRegistry.activatePageSection(currentItem, root.requestedSection))
-                                root.requestedSection = ""
-                        }
-                        onCurrentIndexChanged: {
-                            if (currentIndex >= 0) GlobalStates.settingsOverlayCurrentPage = currentIndex
-                        }
                         visible: root.advancedPage >= 0
-                        pages: root.pages
-                        requestedIndex: root.advancedPage
-                        loadEnabled: visible
-                        directNavigation: true
+                        active: visible
+                        source: String(root.pages[root.advancedPage]?.component ?? "")
                     }
                 }
             }

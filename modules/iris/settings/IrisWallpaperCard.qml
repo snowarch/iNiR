@@ -16,7 +16,6 @@ import qs.modules.iris.components
 import qs.modules.iris.preview
 import qs.modules.iris.style
 import qs.modules.iris.widgets
-import qs.modules.ii.settings
 
 ClippingRectangle {
     id: card

@@ -6,7 +6,6 @@ import Quickshell
 import qs
 import qs.services
 import qs.modules.common
-import qs.modules.ii.settings
 import qs.modules.iris.style
 import qs.modules.iris.widgets
 import qs.modules.shared.background.widgets
@@ -164,9 +163,7 @@ Singleton {
     }
 
     function openSettings(where: string): void {
-        const page = SettingsPageRegistry.pages.findIndex(entry => entry.key === "iris")
-        if (page >= 0) GlobalStates.openSettingsPage(page, where)
-        else GlobalStates.openSettings()
+        GlobalStates.openSettingsAt("iris", where)
     }
 
     function build(): var {

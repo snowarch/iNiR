@@ -9,7 +9,6 @@ import qs
 import qs.services
 import qs.services.deferred
 import qs.modules.common
-import qs.modules.ii.settings
 import qs.modules.iris.background
 import qs.modules.iris.control
 import qs.modules.iris.field
@@ -47,8 +46,7 @@ Scope {
             if (!ShellUpdates.overlayOpen) return
             ShellUpdates.closeOverlay()
             if (!ShellUpdates.hasUpdate && !ShellUpdates.isUpdating) {
-                const page = SettingsPageRegistry.pages.findIndex(entry => entry.key === "about")
-                if (page >= 0) GlobalStates.openSettingsPage(page, "")
+                GlobalStates.openSettingsAt("about", "")
                 return
             }
             GlobalStates.irisBubbleCardRequest = ""
@@ -122,9 +120,7 @@ Scope {
             }
         }
         function settings(section: string): void {
-            const page = SettingsPageRegistry.pages.findIndex(entry => entry.key === "iris")
-            if (page >= 0) GlobalStates.openSettingsPage(page, section)
-            else GlobalStates.openSettings()
+            GlobalStates.openSettingsAt("iris", section)
         }
         // Closes iRiS Settings in either host (over the desktop or a window); does nothing when it is closed.
         function settingsClose(): string {

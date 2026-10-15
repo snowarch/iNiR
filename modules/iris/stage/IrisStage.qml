@@ -15,7 +15,6 @@ import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.frame
 import qs.modules.iris.pieces
-import qs.modules.ii.settings
 
 Item {
     id: root
@@ -1159,9 +1158,7 @@ Item {
             { text: Translation.tr("Bubble settings…"), iconName: "tune",
                 action: () => {
                     root.publishOrigin(slot, rect)
-                    const page = SettingsPageRegistry.pages.findIndex(entry => entry.key === "iris")
-                    if (page >= 0) GlobalStates.openSettingsPage(page, "bubbles")
-                    else GlobalStates.openSettings()
+                    GlobalStates.openSettingsAt("iris", "bubbles")
                 } }
         ]
     }
