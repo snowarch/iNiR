@@ -16,6 +16,14 @@ window-rule {
     clip-to-geometry true
 }
 
+// iNiR Settings as a window (iRiS "iNiR Settings", Material and Waffle "Settings — iNiR"): two thirds of the screen,
+// room for the sidebar beside a page that keeps its answers in a column, instead of half a column.
+window-rule {
+    match app-id=r#"^org\.quickshell$"# title="^iNiR Settings$"
+    match app-id=r#"^org\.quickshell$"# title="^Settings — iNiR$"
+    default-column-width { proportion 0.66667; }
+}
+
 // Gaming surfaces: avoid client clipping so fullscreen games remain eligible
 // for direct scanout. Keep the global rounded/clipped behavior for normal apps.
 window-rule {

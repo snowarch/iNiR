@@ -1004,10 +1004,13 @@ Item {
                                         elide: Text.ElideRight
                                     }
                                     Row {
+                                        width: parent.width
                                         spacing: 5 * root.d
-                                        IrisMark { implicitSize: Math.round(13 * root.d); anchors.verticalCenter: parent.verticalCenter }
+                                        IrisMark { id: familyMark; implicitSize: Math.round(13 * root.d); anchors.verticalCenter: parent.verticalCenter }
                                         IrisText {
                                             anchors.verticalCenter: parent.verticalCenter
+                                            width: Math.min(implicitWidth, parent.width - familyMark.width - parent.spacing)
+                                            elide: Text.ElideRight
                                             // The family, or the Design it wears (AIRISU's spec line in mono).
                                             text: IrisDesign.custom ? `iRiS · ${IrisDesign.name}` : Translation.tr("iRiS · Island family")
                                             color: IrisStyle.muted
