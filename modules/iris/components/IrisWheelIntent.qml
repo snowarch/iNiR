@@ -11,12 +11,13 @@ Item {
     property bool hovered: false
     property Item target: root.parent
     property real travel: 3
-    property int settleMs: 350
     property bool moved: false
-    property bool settled: true
     property point lastScene: Qt.point(NaN, NaN)
     readonly property Flickable scroller: root.findScroller(root.target)
-    readonly property bool armed: root.hovered && (!root.scroller || root.moved || root.settled)
+    // Inside a scrolling page the wheel belongs to the page until the pointer really moves over the control: a pointer
+    // left still on a slider after a scroll no longer takes the next turn of the wheel once the page settles
+    // (2026-10-15, the maintainer: "el scroll de los sliders está roto").
+    readonly property bool armed: root.hovered && (!root.scroller || root.moved)
 
     function findScroller(item): Flickable {
         for (let p = item?.parent ?? null; p; p = p.parent)
@@ -29,13 +30,7 @@ Item {
         root.lastScene = Qt.point(NaN, NaN)
     }
 
-    function scrolled(): void {
-        root.settled = false
-        root.moved = false
-        settleTimer.restart()
-    }
-
-    Timer { id: settleTimer; interval: root.settleMs; onTriggered: root.settled = true }
+    function scrolled(): void { root.moved = false }
     Connections {
         target: root.scroller
         function onContentYChanged(): void { root.scrolled() }
