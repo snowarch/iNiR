@@ -415,12 +415,7 @@ find_qs() {
 # must work without Quickshell installed.
 require_qs() {
     if [[ -z "${_qs_resolved:-}" ]]; then
-        # On pleamar the verbs go to its scene; Quickshell may not be installed at all.
-        if [[ "$(inir_engine)" == pleamar ]]; then
-            qs_bin="$(command -v qs || true)"
-        else
-            find_qs
-        fi
+        find_qs
         _qs_resolved=1
     fi
 }
@@ -2069,7 +2064,7 @@ ensure_running_instance() {
     apply_qt_runtime_env
     apply_qt_logging_rules
     check_qs_abi
-    start_background "$dir" || return 1
+    start_background "$dir"
     wait_for_start "$dir"
 }
 
@@ -2182,58 +2177,8 @@ start_inir_service_if_enabled() {
     return 1
 }
 
-# Which engine draws the shell: quickshell (default) or pleamar, as written in
-# ${XDG_CONFIG_HOME}/inir/engine. On pleamar nothing here starts Quickshell behind its back.
-inir_engine() {
-    local f="${XDG_CONFIG_HOME:-$HOME/.config}/inir/engine"
-    if [[ -r "$f" ]] && [[ "$(tr -d '[:space:]' < "$f")" == pleamar ]]; then
-        printf 'pleamar'
-    else
-        printf 'quickshell'
-    fi
-}
-
-# On pleamar the shell is one scene, named after its file (inir.plm). A verb goes to it as one line,
-# `submit ipc <target> <function> [args]`, and its logic carries it out (pleamar/logic/ipc.luau).
-pleamar_bin() {
-    command -v pleamar 2>/dev/null || printf '%s' "$HOME/.local/bin/pleamar"
-}
-
-pleamar_ipc() {
-    local bin
-    bin="$(pleamar_bin)"
-    if [[ ! -x "$bin" ]]; then
-        echo "pleamar not found" >&2
-        return 1
-    fi
-    "$bin" --say inir "submit ipc $*" 2>/dev/null || {
-        echo "iNiR is not running on pleamar (systemctl --user start inir-pleamar)" >&2
-        return 1
-    }
-}
-
-# The lock's state on pleamar, said as the Quickshell lock says it: secure once the compositor
-# confirms the session is locked, activating before that.
-pleamar_lock_status() {
-    local bin locked held
-    bin="$(pleamar_bin)"
-    locked="$("$bin" --say inir "get locked" 2>/dev/null)" || { printf 'unlocked\n'; return 1; }
-    held="$("$bin" --say inir "get lock.held" 2>/dev/null)"
-    if [[ "$locked" != true ]]; then
-        printf 'unlocked\n'
-    elif awk -v h="${held:-0}" 'BEGIN { exit !(h >= 0.5) }'; then
-        printf 'secure\n'
-    else
-        printf 'activating\n'
-    fi
-}
-
 start_background() {
     local dir="$1"
-    if [[ "$(inir_engine)" == pleamar ]]; then
-        echo "iNiR runs on pleamar (~/.config/inir/engine): this command is not there yet" >&2
-        return 1
-    fi
     if is_inir_service_enabled; then
         if is_using_runit_supervisor; then
             sv up "${XDG_CONFIG_HOME:-$HOME/.config}/service/inir" >/dev/null 2>&1
@@ -3929,32 +3874,6 @@ run_ipc_target_command() {
     # Validate function name against registry before forwarding to qs.
     validate_ipc_function "$target" "$1"
 
-    if [[ "$(inir_engine)" == pleamar ]]; then
-        case "$target ${1:-}" in
-            "lock status")
-                pleamar_lock_status
-                exit $?
-                ;;
-            "lock prepareSleep")
-                # swayidle's before-sleep: return only once the session is covered, and fail
-                # closed so logind does not suspend an open session.
-                pleamar_ipc lock prepareSleep || exit 1
-                local _i
-                for _i in $(seq 1 40); do
-                    if [[ "$(pleamar_lock_status)" == secure ]]; then
-                        printf 'secure\n'
-                        exit 0
-                    fi
-                    sleep 0.05
-                done
-                echo "Lock did not become secure before sleep" >&2
-                exit 1
-                ;;
-        esac
-        pleamar_ipc "$target" "$@"
-        exit $?
-    fi
-
     # Some IPC owners are intentionally optional. The equalizer target is only
     # constructed while the iiEqualizer panel is enabled, so report that state
     # explicitly instead of leaking Quickshell's generic "Target not found".
@@ -4466,10 +4385,6 @@ case "$command_name" in
         exec "$qs_bin" -n -d -p "$config_dir"
         ;;
     restart)
-        if [[ "$(inir_engine)" == pleamar ]]; then
-            systemctl --user restart inir-pleamar.service
-            exit $?
-        fi
         require_qs
         restart_quiet=""
         while [[ $# -gt 0 ]]; do
@@ -4646,10 +4561,6 @@ case "$command_name" in
             echo "Usage: inir ipc <target> <function> [args...]" >&2
             exit 1
         fi
-        if [[ "$(inir_engine)" == pleamar ]]; then
-            pleamar_ipc "$@"
-            exit $?
-        fi
         resolve_config_dir
         if ! ensure_running_instance_for_ipc "$config_dir" "${2:-}"; then
             echo "Timed out waiting for iNiR to start" >&2
@@ -4687,10 +4598,6 @@ case "$command_name" in
                     ;;
             esac
         done
-        if [[ "$(inir_engine)" == pleamar ]]; then
-            pleamar_ipc settings toggle
-            exit $?
-        fi
         resolve_config_dir
         toggle_settings "$config_dir"
         ;;
