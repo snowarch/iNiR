@@ -217,7 +217,8 @@ Singleton {
 
     function postUpdateNotice(summary: string, body: string): void {
         updateNotice.running = false
-        updateNotice.command = ["/usr/bin/notify-send", "-a", "iNiR", "-u", "normal", "-t", "15000", "-w",
+        // -w waits until the notice closes; a server that keeps it in its history never says so.
+        updateNotice.command = ["/usr/bin/timeout", "60", "/usr/bin/notify-send", "-a", "iNiR", "-u", "normal", "-t", "15000", "-w",
             "-A", "open=" + Translation.tr("What changed"), "--", summary, body]
         updateNotice.running = true
     }

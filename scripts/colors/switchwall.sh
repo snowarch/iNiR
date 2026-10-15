@@ -93,6 +93,12 @@ get_max_monitor_resolution() {
     echo "$width $height"
 }
 
+# A notification with a button waits for the answer. Bounded: when nobody answers (it expired, or the
+# server keeps it in its history without closing it), the prompt gives up instead of living forever.
+notify_action() {
+    timeout 120 notify-send -t 60000 "$@" 2>/dev/null
+}
+
 check_and_prompt_upscale() {
     local img="$1"
 
@@ -113,7 +119,7 @@ check_and_prompt_upscale() {
             img_height=$(identify -format "%h" "$img" 2>/dev/null)
         fi
         if [[ "$img_width" -lt "$min_width_desired" || "$img_height" -lt "$min_height_desired" ]]; then
-            action=$(notify-send "Upscale?" \
+            action=$(notify_action "Upscale?" \
                 "Image resolution (${img_width}x${img_height}) is lower than screen resolution (${min_width_desired}x${min_height_desired})" \
                 -A "open_upscayl=Open Upscayl"\
                 -a "Wallpaper switcher")
@@ -123,7 +129,7 @@ check_and_prompt_upscale() {
                 elif command -v yay >/dev/null 2>&1 || command -v paru >/dev/null 2>&1; then
                     local aur_helper
                     aur_helper="$(command -v yay >/dev/null 2>&1 && printf yay || printf paru)"
-                    action2=$(notify-send \
+                    action2=$(notify_action \
                         -a "Wallpaper switcher" \
                         -c "im.error" \
                         -A "install_upscayl=Install Upscayl (Arch)" \
@@ -406,7 +412,7 @@ switch() {
                 echo "Missing dependency: ffmpeg"
                 if command -v xbps-install >/dev/null 2>&1; then
                     echo "Void: sudo xbps-install -S ffmpeg"
-                    action=$(notify-send \
+                    action=$(notify_action \
                         -a "Wallpaper switcher" \
                         -c "im.error" \
                         -A "install_void=Install (Void)" \
@@ -417,7 +423,7 @@ switch() {
                     fi
                 elif command -v pacman >/dev/null 2>&1; then
                     echo "Arch: sudo pacman -S ffmpeg"
-                    action=$(notify-send \
+                    action=$(notify_action \
                         -a "Wallpaper switcher" \
                         -c "im.error" \
                         -A "install_arch=Install (Arch)" \
