@@ -5,9 +5,6 @@ import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.shared.lock
-import qs.modules.waffle.lock
-import qs.modules.iris.lock
-import qs.modules.iris.style
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -163,27 +160,29 @@ Scope {
             // Unlock the keyring if configured to do so
             if (Config.options?.lock?.security?.unlockKeyring ?? true) root.unlockKeyring(); // Async
 
-            if (root._cachedUseIrisLock && IrisStyle.recedeDuration > 0) {
-                root.irisUnlocking = true
-                irisRelease.restart()
+            // A family's surface that recedes on unlock (iRiS) says how long it takes; the session stays locked until then.
+            if (root.recedeDuration > 0) {
+                root.receding = true
+                recedeRelease.restart()
                 return
             }
             root.finishUnlock()
         }
     }
 
-    property bool irisUnlocking: false
+    property bool receding: false
+    property int recedeDuration: 0
     Timer {
-        id: irisRelease
-        interval: IrisStyle.recedeDuration + 40
+        id: recedeRelease
+        interval: root.recedeDuration + 40
         onTriggered: root.finishUnlock()
     }
     Connections {
         target: GlobalStates
         function onScreenLockedChanged(): void {
             if (GlobalStates.screenLocked) return
-            irisRelease.stop()
-            root.irisUnlocking = false
+            recedeRelease.stop()
+            root.receding = false
         }
     }
 
@@ -207,35 +206,17 @@ Scope {
         }
     }
 
-    // Lock surface component - switches between Material (ii) and Windows 11 (waffle) styles
-    // Reactive binding - updates automatically when panelFamily changes (but only when unlocked)
-    readonly property bool useWaffleLock: Config.ready && !GlobalStates.screenLocked 
-        ? (Config.options?.panelFamily === "waffle")
-        : root._cachedUseWaffleLock
-    readonly property bool useIrisLock: Config.ready && !GlobalStates.screenLocked
-        ? (Config.options?.panelFamily === "iris")
-        : root._cachedUseIrisLock
-    
-    // Cache the last known value to prevent switching during lock
-    property bool _cachedUseWaffleLock: false
-    property bool _cachedUseIrisLock: false
-    
-    onUseWaffleLockChanged: {
-        if (!GlobalStates.screenLocked) {
-            root._cachedUseWaffleLock = root.useWaffleLock
-        }
-    }
-    onUseIrisLockChanged: {
-        if (!GlobalStates.screenLocked)
-            root._cachedUseIrisLock = root.useIrisLock
-    }
-    
+    // The lock surface is the active family's (FamilyParts "lockSurface", "lockSurface.hyprland" where it differs);
+    // Material's is the shared one. The family is read while unlocked and kept while locked, so a family switch never
+    // swaps the surface under a locked session.
+    readonly property string family: Config.ready && !GlobalStates.screenLocked ? FamilyParts.active : root._cachedFamily
+    property string _cachedFamily: "ii"
+    onFamilyChanged: if (!GlobalStates.screenLocked) root._cachedFamily = root.family
+    readonly property string familySurface: (!CompositorService.isNiri && FamilyParts.url(root._cachedFamily, "lockSurface.hyprland"))
+        || FamilyParts.url(root._cachedFamily, "lockSurface")
+
     Component.onCompleted: {
-        // Initialize cache.
-        if (Config.ready) {
-            root._cachedUseWaffleLock = Config.options?.panelFamily === "waffle"
-            root._cachedUseIrisLock = Config.options?.panelFamily === "iris"
-        }
+        if (Config.ready) root._cachedFamily = FamilyParts.active
         root.initIfReady()
     }
     
@@ -246,26 +227,6 @@ Scope {
         }
     }
     
-    Component {
-        id: waffleLockComponent
-        WaffleLockSurface {
-            context: lockContext
-        }
-    }
-    
-    Component {
-        id: waffleLockSafeComponent
-        WaffleLockSurfaceSafe {
-            context: lockContext
-        }
-    }
-
-    Component {
-        id: irisLockComponent
-        IrisLockSurface {
-            context: lockContext
-        }
-    }
     
     WlSessionLock {
         id: lock
@@ -283,14 +244,21 @@ Scope {
             Loader {
                 id: lockSurfaceLoader
                 active: GlobalStates.screenLocked && Config.ready
-                // The iRiS lock arrives from the wallpaper; an async first frame is a bare colour flash.
-                asynchronous: !root._cachedUseIrisLock
+                // A surface that arrives from the wallpaper (iRiS) loads in one go: an async first frame is a bare colour flash.
+                asynchronous: !FamilyParts.flag(root._cachedFamily, "lockSurfaceSync")
                 anchors.fill: parent
                 // Don't animate opacity - causes issues during hot-reload
                 opacity: active ? 1 : 0
-                sourceComponent: root._cachedUseWaffleLock
-                    ? (CompositorService.isNiri ? waffleLockSafeComponent : waffleLockComponent)
-                    : root._cachedUseIrisLock ? irisLockComponent : iiLockComponent
+                // context is required: a family's file loads through setSource with it as an initial property.
+                function pick(): void {
+                    if (root.familySurface.length > 0) setSource(root.familySurface, { context: lockContext })
+                    else sourceComponent = iiLockComponent
+                }
+                Component.onCompleted: pick()
+                Connections {
+                    target: root
+                    function onFamilySurfaceChanged(): void { lockSurfaceLoader.pick() }
+                }
                 
                 // Detect load errors
                 onStatusChanged: {
@@ -306,15 +274,21 @@ Scope {
                 
                 Binding {
                     target: lockSurfaceLoader.item
-                    when: root._cachedUseIrisLock && lockSurfaceLoader.item !== null
+                    when: lockSurfaceLoader.item !== null && "screenName" in lockSurfaceLoader.item
                     property: "screenName"
                     value: lockSurface.screen?.name ?? ""
                 }
                 Binding {
                     target: lockSurfaceLoader.item
-                    when: root._cachedUseIrisLock && lockSurfaceLoader.item !== null
+                    when: lockSurfaceLoader.item !== null && "leaving" in lockSurfaceLoader.item
                     property: "leaving"
-                    value: root.irisUnlocking
+                    value: root.receding
+                }
+                Binding {
+                    target: root
+                    when: lockSurfaceLoader.item !== null && "recedeDuration" in lockSurfaceLoader.item
+                    property: "recedeDuration"
+                    value: lockSurfaceLoader.item?.recedeDuration ?? 0
                 }
 
                 // Force focus to loaded item
@@ -342,8 +316,7 @@ Scope {
                 onTriggered: {
                     console.warn("[Lock] Lock surface failed to load after 2s — status:",
                                  lockSurfaceLoader.status, "active:", lockSurfaceLoader.active,
-                                 "Config.ready:", Config.ready, "waffle:", root._cachedUseWaffleLock,
-                                 "iris:", root._cachedUseIrisLock,
+                                 "Config.ready:", Config.ready, "family:", root._cachedFamily,
                                  "isNiri:", CompositorService.isNiri)
                     root.useFallbackLock()
                 }

@@ -2,8 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.shared.background.widgets
-import qs.modules.iris.widgets
-
 AbstractBackgroundWidget {
     id: root
 
@@ -15,7 +13,7 @@ AbstractBackgroundWidget {
     implicitWidth: root.irisFaced ? root.irisFaceWidth : instrumentBody.implicitWidth
     implicitHeight: root.irisFaced ? root.irisFaceHeight : instrumentBody.implicitHeight
     irisOnly: true
-    irisFace: Component { IrisScreenTimeFace { widget: root } }
+    irisFacePart: "screenTime"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"
     semanticPaletteControls: false

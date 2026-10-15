@@ -9,8 +9,6 @@ import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
 import qs.modules.shared.background.widgets
 import qs.modules.shared.background.widgets.instrument
-import qs.modules.iris.widgets
-
 AbstractBackgroundWidget {
     id: root
 
@@ -85,7 +83,7 @@ AbstractBackgroundWidget {
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
         : root.weatherStyle === "dial" ? Math.round(shapeSize * 1.4) : shapeSize
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
-    irisFace: Component { IrisWeatherFace { widget: root } }
+    irisFacePart: "weather"
     irisSizes: ["small", "medium", "large"]
     irisOptions: [
         { key: "showLocation", raw: true, label: Translation.tr("Location"), icon: "location_on", fallback: true }

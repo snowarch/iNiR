@@ -2,7 +2,6 @@ import QtQuick
 import qs
 import qs.services
 import qs.modules.common
-import qs.modules.iris.closeConfirm
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -144,38 +143,36 @@ Scope {
                 id: contentLoader
                 anchors.fill: parent
                 focus: true
-                // Both contents declare targetWindow as required, so they must be
-                // instantiated from an inline Component. A Loader source URL cannot
-                // initialize required properties and fails to Loader.Error, leaving
-                // this keyboard-exclusive fullscreen window with no way out.
-                sourceComponent: Config.options?.panelFamily === "waffle" ? waffleContent
-                    : Config.options?.panelFamily === "iris" ? irisContent : iiContent
+                // A family draws its own confirmation (FamilyParts "closeConfirm"); Material's is the shared one.
+                // Every content declares targetWindow as required: a family's file loads through setSource with it
+                // as an initial property, since a bare source URL fails to Loader.Error and would leave this
+                // keyboard-exclusive fullscreen window with no way out.
+                readonly property string familySource: FamilyParts.url(FamilyParts.active, "closeConfirm")
+                function pick(): void {
+                    if (familySource.length > 0) setSource(familySource, { targetWindow: root.targetWindow })
+                    else sourceComponent = iiContent
+                }
+                Component.onCompleted: pick()
+                onFamilySourceChanged: pick()
                 onLoaded: if (item) item.forceActiveFocus()
+
+                Binding {
+                    target: contentLoader.item
+                    when: contentLoader.item !== null
+                    property: "targetWindow"
+                    value: root.targetWindow
+                }
+                Connections {
+                    target: contentLoader.item
+                    ignoreUnknownSignals: true
+                    function onConfirm(): void { root.confirmClose() }
+                    function onCancel(): void { root.cancel() }
+                }
 
                 Component {
                     id: iiContent
                     CloseConfirmContent {
                         targetWindow: root.targetWindow
-                        onConfirm: root.confirmClose()
-                        onCancel: root.cancel()
-                    }
-                }
-
-                Component {
-                    id: waffleContent
-                    WCloseConfirmContent {
-                        targetWindow: root.targetWindow
-                        onConfirm: root.confirmClose()
-                        onCancel: root.cancel()
-                    }
-                }
-
-                Component {
-                    id: irisContent
-                    IrisCloseConfirmContent {
-                        targetWindow: root.targetWindow
-                        onConfirm: root.confirmClose()
-                        onCancel: root.cancel()
                     }
                 }
             }

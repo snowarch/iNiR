@@ -11,8 +11,6 @@ import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
 import qs.modules.shared.background.widgets
 import qs.modules.shared.background.widgets.instrument
-import qs.modules.iris.widgets
-
 AbstractBackgroundWidget {
     id: root
 
@@ -29,7 +27,7 @@ AbstractBackgroundWidget {
 
     implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round((root.displayMode === "instrument" ? 220 : 160) * scaleFactor)
     implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round((root.displayMode === "instrument" ? 140 : 104) * scaleFactor)
-    irisFace: Component { IrisBatteryFace { widget: root } }
+    irisFacePart: "battery"
     irisSizes: ["small", "medium"]
     irisOptions: [
         { key: "showTime", raw: true, label: Translation.tr("Time remaining"), icon: "timer", fallback: true }

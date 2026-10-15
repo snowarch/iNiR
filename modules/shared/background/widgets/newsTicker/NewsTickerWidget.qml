@@ -9,8 +9,6 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.shared.background.widgets
-import qs.modules.iris.widgets
-
 // Compact desktop headline surface backed by the shared NewsService. Articles
 // only open from an explicit action, never from an incidental card click.
 AbstractBackgroundWidget {
@@ -36,7 +34,7 @@ AbstractBackgroundWidget {
         * root.scaleFactor)
     implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 92)
         * root.scaleFactor)
-    irisFace: Component { IrisNewsFace { widget: root } }
+    irisFacePart: "news"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"
     irisOptions: [

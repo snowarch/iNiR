@@ -10,8 +10,6 @@ import qs.modules.shared.background.widgets.instrument
 import qs.modules.shared.mediaControls.presets
 import qs.modules.shared.mediaControls.components
 import qs.modules.iris.components
-import qs.modules.iris.widgets
-
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -339,7 +337,7 @@ AbstractBackgroundWidget {
 
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.hasPlayer ? root.widgetWidth : root.placeholderWidth
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.hasPlayer ? root.widgetHeight : root.placeholderHeight
-    irisFace: Component { IrisNowPlayingFace { widget: root } }
+    irisFacePart: "nowPlaying"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"
     irisOptions: [

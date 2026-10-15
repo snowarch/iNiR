@@ -12,8 +12,6 @@ import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
 import qs.modules.shared.background.widgets
 import qs.modules.shared.background.widgets.instrument
-import qs.modules.iris.widgets
-
 AbstractBackgroundWidget {
     id: root
 
@@ -49,7 +47,7 @@ AbstractBackgroundWidget {
 
     visibleWhenLocked: false
     needsColText: true
-    irisFace: Component { IrisVitalsFace { widget: root } }
+    irisFacePart: "vitals"
     designFaceKey: "widgetVitals"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"

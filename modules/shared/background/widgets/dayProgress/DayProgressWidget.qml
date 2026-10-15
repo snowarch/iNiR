@@ -9,8 +9,6 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.shared.background.widgets
 import qs.modules.shared.background.widgets.instrument
-import qs.modules.iris.widgets
-
 AbstractBackgroundWidget {
     id: root
 
@@ -26,7 +24,7 @@ AbstractBackgroundWidget {
 
     implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 240) * scaleFactor)
     implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 240) * scaleFactor)
-    irisFace: Component { IrisDayFace { widget: root } }
+    irisFacePart: "day"
     irisSizes: ["small", "medium"]
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 190

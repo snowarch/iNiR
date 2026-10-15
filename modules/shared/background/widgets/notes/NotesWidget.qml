@@ -10,8 +10,6 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
 import qs.modules.shared.background.widgets
-import qs.modules.iris.widgets
-
 AbstractBackgroundWidget {
     id: root
 
@@ -36,7 +34,7 @@ AbstractBackgroundWidget {
         * root.scaleFactor)
     implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 160)
         * root.scaleFactor)
-    irisFace: Component { IrisNotesFace { widget: root } }
+    irisFacePart: "notes"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"
 

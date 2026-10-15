@@ -8,8 +8,6 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
 import qs.modules.shared.background.widgets
-import qs.modules.iris.widgets
-
 AbstractBackgroundWidget {
     id: root
 
@@ -60,7 +58,7 @@ AbstractBackgroundWidget {
         + (root.statusShown ? contentColumn.spacing + statusText.implicitHeight : 0)
     implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.max(root.activeClockWidth,
         root.statusShown ? statusText.implicitWidth : 0)
-    irisFace: Component { IrisClockFace { widget: root } }
+    irisFacePart: "clock"
     designFaceKey: "widgetClock"
     irisSizes: ["small", "medium"]
     irisOptions: [

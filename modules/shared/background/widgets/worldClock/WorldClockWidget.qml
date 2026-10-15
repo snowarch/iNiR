@@ -8,8 +8,6 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.shared.background.widgets
 import qs.modules.shared.background.widgets.instrument
-import qs.modules.iris.widgets
-
 AbstractBackgroundWidget {
     id: root
 
@@ -47,7 +45,7 @@ AbstractBackgroundWidget {
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.instrument
         ? Math.max(root.listHeight, root.instrumentHeightTarget)
         : root.listHeight
-    irisFace: Component { IrisWorldClockFace { widget: root } }
+    irisFacePart: "worldClock"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"
     irisOptions: [

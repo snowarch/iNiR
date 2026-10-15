@@ -10,8 +10,6 @@ import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
 import qs.modules.shared.background.widgets
 import qs.modules.shared.background.widgets.instrument
-import qs.modules.iris.widgets
-
 AbstractBackgroundWidget {
     id: root
 
@@ -40,7 +38,7 @@ AbstractBackgroundWidget {
 
     implicitWidth: root.irisFaced ? root.irisFaceWidth : timerGrid.implicitWidth
     implicitHeight: root.irisFaced ? root.irisFaceHeight : timerGrid.implicitHeight
-    irisFace: Component { IrisTimerFace { widget: root } }
+    irisFacePart: "timer"
     irisSizes: ["small", "medium"]
     irisDefaultSize: "medium"
     visibleWhenLocked: true

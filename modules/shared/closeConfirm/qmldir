@@ -1,4 +1,3 @@
 module qs.modules.shared.closeConfirm
 CloseConfirm 1.0 CloseConfirm.qml
 CloseConfirmContent 1.0 CloseConfirmContent.qml
-WCloseConfirmContent 1.0 WCloseConfirmContent.qml

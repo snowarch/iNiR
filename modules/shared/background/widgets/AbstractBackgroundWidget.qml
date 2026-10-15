@@ -1903,7 +1903,7 @@ AbstractWidget {
             readonly property var pages: [
                 { value: "widget", label: Translation.tr("Widget"), visible: root._widgetSpecificPopover !== null && !root.locked },
                 { value: "colors", label: Translation.tr("Look"), visible: (root.semanticPaletteQuickControls
-                    || (root.widgetIrisFamily && root.irisFace !== null)) && !root.locked },
+                    || (root.widgetIrisFamily && root.hasIrisFace)) && !root.locked },
                 { value: "layout", label: Translation.tr("Arrange") }
             ]
             readonly property string page: {
@@ -2033,7 +2033,7 @@ AbstractWidget {
     // Read a possibly-nested key from configEntry (e.g. "cookie.size" → configEntry.cookie.size)
     readonly property var _designResolved: DesktopWidgetDesign.resolve(root.configEntryName,
         String(root._storedConfigKey("iris.design") ?? "auto"), String(root._storedConfigKey("design") ?? "auto"),
-        root.irisFace !== null)
+        root.hasIrisFace)
     readonly property string widgetSharedDesign: root._designResolved.design
     readonly property var widgetDesignValues: DesktopWidgetDesign.values(root.configEntryName, root.widgetSharedDesign)
     function _readConfigKey(key: string): var {
@@ -2071,7 +2071,7 @@ AbstractWidget {
         root._syncPlacementStrategy();
         _placementLater.restart();
         if (!root.outputName.startsWith("lock:"))
-            DesktopWidgetStacks.report(root.configEntryName, root.irisSizes, root.irisDefaultSize, root.irisFace !== null)
+            DesktopWidgetStacks.report(root.configEntryName, root.irisSizes, root.irisDefaultSize, root.hasIrisFace)
         root._stackMemo = root._stackKey()
     }
     function resetToDefaults(): void {
@@ -2087,7 +2087,7 @@ AbstractWidget {
         updates["palette.tertiary"] = "tertiary"
         updates["palette.signal"] = "signal"
         updates["palette.surface"] = "surface"
-        if (root.widgetIrisFamily && root.irisFace !== null) {
+        if (root.widgetIrisFamily && root.hasIrisFace) {
             updates["iris.size"] = root.irisDefaultSize
             updates["iris.material"] = "auto"
             updates["iris.design"] = "auto"
@@ -2289,13 +2289,18 @@ AbstractWidget {
     readonly property color irisTintedPlate: ColorUtils.mix(IrisStyle.surface, root.irisAccent, 0.82)
     readonly property color irisPlate: root.irisMaterial === "tinted" ? root.irisTintedPlate : IrisStyle.surface
 
+    // An iRiS face is either named (`irisFacePart: "clock"`, listed in modules/iris/parts.json as widgetFace.clock) or
+    // given as a Component by a widget whose face depends on the worn Design.
+    property string irisFacePart: ""
     property Component irisFace: null
+    readonly property string irisFaceUrl: root.irisFacePart.length > 0 ? FamilyParts.url("iris", "widgetFace." + root.irisFacePart) : ""
+    readonly property bool hasIrisFace: root.irisFace !== null || root.irisFaceUrl.length > 0
     property bool irisOnly: false
     readonly property var designChoices: {
         const list = []
         const family = Config.options?.panelFamily ?? "ii"
         if (family !== "iris" && family !== "ii") return list
-        if (family === "iris" && root.irisFace !== null) list.push({ value: "iris", icon: "auto_awesome", label: Translation.tr("iRiS") })
+        if (family === "iris" && root.hasIrisFace) list.push({ value: "iris", icon: "auto_awesome", label: Translation.tr("iRiS") })
         if (family === "ii" || !root.irisOnly) list.push({ value: "material", icon: "widgets", label: Translation.tr("Material") })
         if (DesktopWidgetDesign.supports(root.configEntryName)) {
             list.push({ value: "instrument", icon: "avg_pace", label: Translation.tr("iNstrument") })
@@ -2324,7 +2329,7 @@ AbstractWidget {
     property var irisSizes: ["small"]
     property string irisDefaultSize: root.irisSizes[0]
     property var irisOptions: []
-    readonly property bool irisFaced: root.widgetIris && root.irisFace !== null
+    readonly property bool irisFaced: root.widgetIris && root.hasIrisFace
     readonly property var irisMaterials: ["glass", "clear", "solid", "tinted"]
     readonly property string irisMaterial: {
         const own = String(root._readConfigKey("iris.material") ?? "auto")
@@ -2389,6 +2394,12 @@ AbstractWidget {
         // while a face is drawn, and a value left there from before faded it to a ghost with no row to undo it.
         opacity: 1
         sourceComponent: root.irisFace
+        function loadNamed(): void { if (root.irisFace === null && root.irisFaceUrl.length > 0) setSource(root.irisFaceUrl, { widget: root }) }
+        Component.onCompleted: loadNamed()
+        Connections {
+            target: root
+            function onIrisFaceUrlChanged(): void { irisFaceLoader.loadNamed() }
+        }
     }
 
     function widgetSemanticSet(role: string): var {

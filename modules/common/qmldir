@@ -4,6 +4,7 @@ singleton AiProviderPresets 1.0 AiProviderPresets.qml
 singleton Appearance 1.0 Appearance.qml
 singleton Config 1.0 Config.qml
 singleton Directories 1.0 Directories.qml
+singleton FamilyParts 1.0 FamilyParts.qml
 singleton Icons 1.0 Icons.qml
 singleton Images 1.0 Images.qml
 singleton MediaArtworkCache 1.0 MediaArtworkCache.qml

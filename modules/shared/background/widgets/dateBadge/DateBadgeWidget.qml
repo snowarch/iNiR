@@ -6,8 +6,6 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.shared.background.widgets
-import qs.modules.iris.widgets
-
 AbstractBackgroundWidget {
     id: root
     configEntryName: "dateBadge"
@@ -19,7 +17,7 @@ AbstractBackgroundWidget {
         cornerRadius: -1, useBlur: false, x: 260, y: 80 })
     implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.max(140, Number(root._readConfigKey("contentWidth") ?? 220)) * scaleFactor
     implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.max(120, Number(root._readConfigKey("contentHeight") ?? 140)) * scaleFactor
-    irisFace: Component { IrisDateFace { widget: root } }
+    irisFacePart: "date"
     irisOptions: [
         { key: "showWeekday", raw: true, label: Translation.tr("Weekday"), icon: "calendar_view_week", fallback: true },
         { key: "showYear", raw: true, label: Translation.tr("Year"), icon: "event", fallback: true },

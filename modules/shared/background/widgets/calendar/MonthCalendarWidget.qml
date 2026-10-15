@@ -11,8 +11,6 @@ import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
 import qs.modules.shared.background.widgets
 import qs.modules.shared.background.widgets.instrument
-import qs.modules.iris.widgets
-
 AbstractBackgroundWidget {
     id: root
 
@@ -30,7 +28,7 @@ AbstractBackgroundWidget {
 
     implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 300) * root.scaleFactor)
     implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 340) * root.scaleFactor)
-    irisFace: Component { IrisCalendarFace { widget: root } }
+    irisFacePart: "calendar"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"
     visibleWhenLocked: true

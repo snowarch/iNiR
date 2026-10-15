@@ -8,8 +8,6 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.shared.background.widgets
 import qs.modules.shared.background.widgets.instrument
-import qs.modules.iris.widgets
-
 AbstractBackgroundWidget {
     id: root
 
@@ -45,7 +43,7 @@ AbstractBackgroundWidget {
     // Preserve the saved row dimensions when switching presentation.
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.instrument ? Math.max(root.rowWidth, Math.round(260 * scaleFactor)) : root.rowWidth
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.instrument ? Math.max(root.rowHeight, Math.round(130 * scaleFactor)) : root.rowHeight
-    irisFace: Component { IrisUptimeFace { widget: root } }
+    irisFacePart: "uptime"
     irisOptions: [
         { key: "showSince", raw: true, label: Translation.tr("Start time"), icon: "login", fallback: true }
     ]

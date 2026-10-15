@@ -17,6 +17,8 @@ Item {
     property bool editing: false
     property string screenName: root.QsWindow.window?.screen?.name ?? ""
     property bool leaving: false
+    // How long the surface takes to recede on unlock; the shared lock keeps the session locked until then.
+    readonly property int recedeDuration: IrisStyle.recedeDuration
     readonly property bool sceneReady: !root.painted || wallpaper.status === Image.Ready || wallpaper.status === Image.Error
     property real presence: 0
     readonly property real arrival: IrisStyle.ramp(root.presence, 0.25, 0.75)
