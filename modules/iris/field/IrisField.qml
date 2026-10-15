@@ -41,8 +41,22 @@ Item {
     property color frameMusicInk: IrisFrame.musicInk
     property real frameMusicLight: IrisFrame.musicLight
     property real frameMusicLightWidth: IrisFrame.musicLightWidth
-    function glassOf(shape: var): int {
+    // One matter (2026-10-15, the maintainer: the Dock on the frame "se ve separado del frame" once it is glass): a
+    // body welded to the frame, directly or through the bodies it hangs from, is the frame's material wherever it is
+    // joined; its own material is for when it floats. A glass body on a solid band read as two things fitted together.
+    function glassOf(shape: var, depth: int): int {
         if (!shape) return 0
+        if (root.framed && root.weldedToFrame(shape, depth ?? 0)) return root.frameGlass
+        return root.ownGlass(shape)
+    }
+    function weldedToFrame(shape: var, depth: int): bool {
+        const list = !shape.joins ? [] : Array.isArray(shape.joins) ? shape.joins : [shape.joins]
+        if (list.includes("frame")) return true
+        if (depth >= 4) return false
+        const all = root.shapes ?? []
+        return list.some(name => { const other = all.find(candidate => candidate?.id === name); return other ? root.weldedToFrame(other, depth + 1) : false })
+    }
+    function ownGlass(shape: var): int {
         const g = shape.glass
         if (g === undefined || g === null || g === "inherit") return root.glassCode
         if (g === "compositor") return Appearance.compositorBlurActive && root.compositorAllowed ? 2 : 1
