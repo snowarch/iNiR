@@ -670,16 +670,18 @@ Item {
             root.requestedGroup = ""
         }
         root.followMovedGroup()
+        // The place is worked out first and set once: every write to section or advancedPage rebuilds the page, and
+        // setting "general" on the way to the asked section built General's page on each request.
         const own = root.pageIndexOf(key)
-        root.advancedPage = own
-        root.section = own >= 0 ? String(root.ownPages.concat(root.morePages).find(entry => entry.key === key)?.home ?? "system")
+        let section = own >= 0 ? String(root.ownPages.concat(root.morePages).find(entry => entry.key === key)?.home ?? "system")
             : "general"
         if (own < 0 && root.sections.some(s => s.id === root.requestedSection)) {
-            root.section = root.requestedSection
+            section = root.requestedSection
             // A place asked for by name is where you want to be, not a filter over it.
             if (searchField.text.length > 0) searchField.text = ""
         }
-        root.advancedPage = root.landingPage(root.section, root.advancedPage)
+        root.advancedPage = root.landingPage(section, own)
+        root.section = section
         root.backStack = []
         root.forwardStack = []
     }
@@ -1415,7 +1417,16 @@ Item {
                                     Repeater {
                                         id: blockRepeater
                                         model: ScriptModel { objectProp: "title"; values: root.fedGroups }
-                                        GroupBlock {}
+                                        // A block is built by the incubator in slices of a frame: one block of a heavy
+                                        // Design (AIRISU's lacquered rows) took up to 400 ms built at once. A search or
+                                        // a link to a row builds at once, since it scrolls to what it built.
+                                        Loader {
+                                            id: blockLoader
+                                            required property var modelData
+                                            Layout.fillWidth: true
+                                            asynchronous: !root.searching && root.landingPath.length === 0
+                                            sourceComponent: GroupBlock { modelData: blockLoader.modelData }
+                                        }
                                     }
 
                                     IrisText {
