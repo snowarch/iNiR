@@ -128,36 +128,43 @@ Item {
     readonly property var bare: root.coated && root.band <= 0 && (root.texture !== null || root.lacquer.a < 0.999)
         ? root.aheadOf(root.die, root.shown) : root.die
 
-    // A quiet key at rest paints nothing: its Shape stays out of the scene, since every one built costs at first sync.
+    // A quiet key at rest paints nothing: its Shape is not even built (a Shape with its paths is a dozen objects and a
+    // triangulation at first sync, and Settings makes thousands of these on a page switch).
     readonly property bool paints: root.texture !== null || root.coated || root._top.a > 0 || (root._laid < 1 && root._under.a > 0)
-    Shape {
+    Loader {
         anchors.fill: parent
-        visible: root.paints
-        preferredRendererType: Shape.CurveRenderer
-        ShapePath {
-            fillColor: "transparent"
-            fillItem: root.texture
-            strokeColor: "transparent"
-            strokeWidth: 0
-            PathPolyline { path: root.texture ? root.closed(root.die) : [] }
-        }
-        ShapePath {
-            fillColor: root.glazed(root._laid < 1 ? root._under : root._top)
-            strokeColor: "transparent"
-            strokeWidth: 0
-            PathPolyline { path: root._laid < 1 ? root.closed(root.aheadOf(root.bare, root._laid)) : root.closed(root.bare) }
-        }
-        ShapePath {
-            fillColor: root._laid < 1 ? root.glazed(root._top) : "transparent"
-            strokeColor: "transparent"
-            strokeWidth: 0
-            PathPolyline { path: root._laid < 1 ? root.closed(root.cutAt(root.bare, root._laid, 0)) : [] }
-        }
-        ShapePath {
-            fillColor: root.glazed(root.coat)
-            strokeColor: "transparent"
-            strokeWidth: 0
-            PathPolyline { path: root.coated ? root.closed(root.coatRegion) : [] }
+        active: root.paints
+        sourceComponent: lacquerShape
+    }
+    Component {
+        id: lacquerShape
+        Shape {
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath {
+                fillColor: "transparent"
+                fillItem: root.texture
+                strokeColor: "transparent"
+                strokeWidth: 0
+                PathPolyline { path: root.texture ? root.closed(root.die) : [] }
+            }
+            ShapePath {
+                fillColor: root.glazed(root._laid < 1 ? root._under : root._top)
+                strokeColor: "transparent"
+                strokeWidth: 0
+                PathPolyline { path: root._laid < 1 ? root.closed(root.aheadOf(root.bare, root._laid)) : root.closed(root.bare) }
+            }
+            ShapePath {
+                fillColor: root._laid < 1 ? root.glazed(root._top) : "transparent"
+                strokeColor: "transparent"
+                strokeWidth: 0
+                PathPolyline { path: root._laid < 1 ? root.closed(root.cutAt(root.bare, root._laid, 0)) : [] }
+            }
+            ShapePath {
+                fillColor: root.glazed(root.coat)
+                strokeColor: "transparent"
+                strokeWidth: 0
+                PathPolyline { path: root.coated ? root.closed(root.coatRegion) : [] }
+            }
         }
     }
 }
