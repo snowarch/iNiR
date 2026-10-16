@@ -36,3 +36,5 @@ WeatherBar 1.0 WeatherBar.qml
 WeatherCard 1.0 WeatherCard.qml
 WeatherPopup 1.0 WeatherPopup.qml
 Workspaces 1.0 Workspaces.qml
+GroupedList 1.0 GroupedList.qml
+StyledPopupValueRow 1.0 StyledPopupValueRow.qml
