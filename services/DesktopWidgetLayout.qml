@@ -457,8 +457,23 @@ Singleton {
         return root.enabled(name, widgetKey, fallback)
     }
 
+    // Read on every widget row's visibility (Settings › Widgets asks per row): computed once per change of the
+    // records instead of deep-cloning every record on each call.
+    readonly property var savedOutputs: {
+        const seen = new Set()
+        const out = []
+        for (const record of root.records) {
+            const output = root._outputName(record?.output)
+            if (!output || seen.has(output) || root.isLockScope(output))
+                continue
+            seen.add(output)
+            out.push(output)
+        }
+        return out
+    }
+
     function savedOutputNames(): list<string> {
-        return root._normalizedRecords().map(record => record.output).filter(name => !root.isLockScope(name))
+        return root.savedOutputs.slice()
     }
 
     function diagnostics(): string {
