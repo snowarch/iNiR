@@ -399,7 +399,26 @@ Most people only need:
 EOF
 }
 
+# Executable of the running inir shell (Quickshell or qs-rs), so the windows and commands inir
+# starts run on the same runtime as the shell.
+running_shell_qs() {
+    local run="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/quickshell" link pid exe
+    for link in "$run"/by-pid/*; do
+        pid="${link##*/}"
+        [[ -e "$run/by-shell/inir/$(basename "$(readlink "$link")")" ]] || continue
+        [[ "$(cat "/proc/$pid/comm" 2>/dev/null)" == qs ]] || continue
+        exe="$(readlink "/proc/$pid/exe" 2>/dev/null)" || continue
+        exe="${exe% (deleted)}"
+        [[ -x "$exe" ]] && { printf '%s\n' "$exe"; return 0; }
+    done
+    return 1
+}
+
 find_qs() {
+    local running
+    if running="$(running_shell_qs)"; then
+        qs_bin="$running"
+    fi
     if [[ ! -x "$qs_bin" ]]; then
         qs_bin="$(command -v qs || true)"
     fi
@@ -4694,6 +4713,12 @@ case "$command_name" in
         done
         resolve_config_dir
         open_detached_qml_window "$config_dir" "welcome.qml"
+        ;;
+    kill-dialog)
+        # The conflict dialog (services/ConflictKiller.qml), on the shell's own runtime.
+        require_qs
+        resolve_config_dir
+        open_detached_qml_window "$config_dir" "killDialog.qml"
         ;;
     repair)
         require_qs
