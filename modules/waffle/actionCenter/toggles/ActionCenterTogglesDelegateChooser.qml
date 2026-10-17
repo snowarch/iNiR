@@ -55,7 +55,7 @@ DelegateChooser {
         roleValue: "vpn"
         ActionCenterToggleButton {
             toggleModel: VpnToggle {}
-            icon: "shield-lock"
+            icon: "globe-shield"
         }
     }
     DelegateChoice {
