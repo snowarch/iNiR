@@ -418,6 +418,9 @@ find_qs() {
     local running
     if running="$(running_shell_qs)"; then
         qs_bin="$running"
+    elif [[ -n "${INIR_QS_BIN:-}" && -x "$INIR_QS_BIN" ]]; then
+        # Another Quickshell runtime for the shell (e.g. qs-rs), set by the service or the session.
+        qs_bin="$INIR_QS_BIN"
     fi
     if [[ ! -x "$qs_bin" ]]; then
         qs_bin="$(command -v qs || true)"
