@@ -343,7 +343,7 @@ def get_dominant_color(image_path, x, y, w, h, screen_width=None, screen_height=
     # choose an accent as if the backdrop were much brighter than it really is.
     region = np.float32(region.reshape((-1, 3)))
     if region.shape[0] < 3:
-        return [int(x) for x in np.mean(region, axis=0)]
+        return [int(x) for x in reversed(np.mean(region, axis=0))]
     # K-means to find dominant color
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
     K = min(3, region.shape[0])
