@@ -380,6 +380,16 @@ Singleton {
         root._writeRetries = 0;
         if (reason.length > 0)
             console.warn("[Config] write flight released:", reason);
+        // Someone else changed the file meanwhile: load it before anything of ours goes out,
+        // or the next write serializes memory from before their change and undoes it. The
+        // echo of our own save also lands here; it matches the disk and changes nothing.
+        if (root._pendingReload) {
+            root._pendingReload = false;
+            if (root._diskChanged()) {
+                root._rebaseOnDisk();
+                return;
+            }
+        }
         if (root._pendingCustomInject || root._pendingMascotInject) {
             root._pendingCustomInject = false;
             root._pendingMascotInject = false;
@@ -394,6 +404,30 @@ Singleton {
         if (root._pendingReload) {
             root._pendingReload = false;
             fileReloadTimer.restart();
+        }
+    }
+    function _diskChanged(): bool {
+        diskProbe.reload();
+        return diskProbe.text() !== configFileView.text();
+    }
+
+    // Reload the file and replay on top what this process changed since its last write; the
+    // custom/mascot inject or write still owed goes out after that (_resumeAfterRebase).
+    function _rebaseOnDisk(): void {
+        fileWriteTimer.stop();
+        fileReloadTimer.stop();
+        root._rebasingExternalChange = true;
+        configFileView.reload();
+    }
+
+    function _resumeAfterRebase(): void {
+        if (root._pendingCustomInject || root._pendingMascotInject) {
+            root._pendingCustomInject = false;
+            root._pendingMascotInject = false;
+            customInjectTimer.restart();
+        } else if (root._pendingWrite) {
+            root._pendingWrite = false;
+            fileWriteTimer.restart();
         }
     }
     property var _customSnapshotForInject: ({})
@@ -598,6 +632,12 @@ Singleton {
         onTriggered: {
             if (!root._writeInFlight)
                 return;
+            // No save came back because ours was a no-op (the file already had those bytes), and
+            // the file changed since: writing the mirror now would undo that change.
+            if (root._pendingReload && root._diskChanged()) {
+                root._endWriteFlight("");
+                return;
+            }
             if (root._writeRetries >= 2) {
                 root._endWriteFlight("write never acknowledged");
                 return;
@@ -613,6 +653,15 @@ Singleton {
         interval: 1
         repeat: false
         onTriggered: root._injectCustomDataSync()
+    }
+
+    // What is on disk right now, read on the spot (external-change checks around a write).
+    FileView {
+        id: diskProbe
+        path: root.filePath
+        preload: false
+        blockAllReads: true
+        printErrors: false
     }
 
     // Raw reader for keys the adapter can't handle (property var in JsonObject)
@@ -672,6 +721,7 @@ Singleton {
             if (root._rebasingExternalChange) {
                 root._rebasingExternalChange = false;
                 root._reapplyPendingMutations();
+                root._resumeAfterRebase();
             }
         }
         onLoadFailed: error => {
