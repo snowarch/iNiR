@@ -10,6 +10,7 @@ import qs.services
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
+import Quickshell.Wayland
 import QtQuick
 import "brightnessPolicy.js" as BrightnessPolicy
 
@@ -653,6 +654,13 @@ Singleton {
         // Division by 100 is to normalize to [0, 1]
         return (6.600135 + 216.360356 * Math.pow(Math.E, -0.0811129189 * x)) / 100.0;
     }
+    // qs-rs samples the screen in process (mean Rec. 709 luma of one capture, the number
+    // `grim | magick -colorspace Gray` gives); Quickshell keeps the grim pipeline.
+    readonly property bool inProcessLightness: Quickshell.hasVersion(0, 3, ["screencopy-luminance"])
+    function applyLightness(screen: var, lightness: real): void {
+        if (isNaN(lightness) || lightness < 0) return;
+        root.getMonitorForScreen(screen)?.setBrightnessMultiplier(root.brightnessMultiplierForLightness(lightness));
+    }
     Variants {
         model: Quickshell.screens
         Scope {
@@ -660,6 +668,7 @@ Singleton {
             required property var modelData
             property string screenName: modelData.name
             property string screenshotPath: `${root.screenshotDir}/screenshot-${screenName}.png`
+            readonly property bool antiFlashbangActive: (Config.options?.light?.antiFlashbang?.enable ?? false) && Appearance.m3colors.darkmode
             Connections {
                 enabled: (Config.options?.light?.antiFlashbang?.enable ?? false) && Appearance.m3colors.darkmode && CompositorService.isHyprland
                 target: CompositorService.isHyprland ? Hyprland : null
@@ -692,8 +701,29 @@ Singleton {
                 id: screenshotTimer
                 interval: 700 // This is what I have for a Hyprland ws anim
                 onTriggered: {
+                    if (sampler.item) {
+                        sampler.item.sample();
+                        return;
+                    }
                     screenshotProc.running = false;
                     screenshotProc.running = true;
+                }
+            }
+
+            // One capture per sample, dropped as soon as it is read (no frame kept around).
+            LazyLoader {
+                id: sampler
+                active: root.inProcessLightness && screenScope.antiFlashbangActive
+                component: ScreencopyView {
+                    function sample(): void {
+                        captureSource = null;
+                        captureSource = screenScope.modelData;
+                    }
+                    onHasContentChanged: {
+                        if (!hasContent) return;
+                        root.applyLightness(screenScope.modelData, meanLuminance() * 100);
+                        captureSource = null;
+                    }
                 }
             }
 
@@ -708,9 +738,7 @@ Singleton {
                     id: lightnessCollector
                     onStreamFinished: {
                         // No cleanup needed - we pipe directly to magick without saving file
-                        const lightness = lightnessCollector.text
-                        const newMultiplier = root.brightnessMultiplierForLightness(parseFloat(lightness))
-                        Brightness.getMonitorForScreen(screenScope.modelData).setBrightnessMultiplier(newMultiplier)
+                        root.applyLightness(screenScope.modelData, parseFloat(lightnessCollector.text))
                     }
                 }
             }
