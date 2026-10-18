@@ -790,16 +790,16 @@ if args.scheme != "scheme-monochrome":
         # twin of Tonal Spot and left the strength slider without effect below 140 %.
         strength = max(0.3, args.color_strength)
         ceiling = min(90.0, 60.0 * max(1.0, strength))
-        hct = Hct.from_int(hex_to_argb(material_colors[key]))
-        if hct.chroma > ceiling:
-            material_colors[key] = argb_to_hex(Hct.from_hct(hct.hue, ceiling, hct.tone).to_int())
+        accent_hct = Hct.from_int(hex_to_argb(material_colors[key]))
+        if accent_hct.chroma > ceiling:
+            material_colors[key] = argb_to_hex(Hct.from_hct(accent_hct.hue, ceiling, accent_hct.tone).to_int())
         if key == "primary":
             base_floors = (16.0, 10.0) if args.scheme == "scheme-neutral" else (26.0, 18.0)
             for role, floor in ((key, base_floors[0] * strength), (container, base_floors[1] * strength)):
                 if role in material_colors:
-                    hct = Hct.from_int(hex_to_argb(material_colors[role]))
-                    if 4.0 <= hct.chroma < floor:
-                        material_colors[role] = argb_to_hex(Hct.from_hct(hct.hue, floor, hct.tone).to_int())
+                    accent_hct = Hct.from_int(hex_to_argb(material_colors[role]))
+                    if 4.0 <= accent_hct.chroma < floor:
+                        material_colors[role] = argb_to_hex(Hct.from_hct(accent_hct.hue, floor, accent_hct.tone).to_int())
 
 # Extended material
 if darkmode == True:
@@ -862,9 +862,9 @@ if args.surface_seed and re.fullmatch(r"#?[0-9A-Fa-f]{6}", args.surface_seed.str
         background = hex_to_argb(material_colors.get("background", material_colors.get("surface")))
         for key in ("primary", "secondary", "tertiary"):
             if key in material_colors:
-                argb = ensure_contrast(hex_to_argb(material_colors[key]), worst, 3.0, bool(darkmode), 94.0 if darkmode else 8.0)
-                argb = ensure_contrast(argb, background, 4.5, bool(darkmode), 94.0 if darkmode else 8.0)
-                material_colors[key] = argb_to_hex(argb)
+                accent = ensure_contrast(hex_to_argb(material_colors[key]), worst, 3.0, bool(darkmode), 94.0 if darkmode else 8.0)
+                accent = ensure_contrast(accent, background, 4.5, bool(darkmode), 94.0 if darkmode else 8.0)
+                material_colors[key] = argb_to_hex(accent)
 
 # iRiS: the shell's palette (scripts/colors/washi) already solved every role against every surface of its ramp. The apps
 # wear it as it is, so window, sidebar, text and accent are the shell's own colours, not a second reading of the seed.
@@ -1017,9 +1017,9 @@ if args.termscheme is not None:
             # And a ceiling, so no hue shouts over the others: greens and cyans reach chroma 77 and 54 at a tone
             # where reds and blues hold 40, and read as neon in the terminal and in every editor theme built on it.
             ceiling = 24 + 36 * user_saturation
-            hct = Hct.from_int(harmonized)
-            if hct.chroma > ceiling:
-                harmonized = Hct.from_hct(hct.hue, ceiling, hct.tone).to_int()
+            term_hct = Hct.from_int(harmonized)
+            if term_hct.chroma > ceiling:
+                harmonized = Hct.from_hct(term_hct.hue, ceiling, term_hct.tone).to_int()
 
         # Apply additional softening if requested
         if args.soften and args.scheme not in [
