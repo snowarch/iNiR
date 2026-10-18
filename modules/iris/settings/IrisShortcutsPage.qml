@@ -447,7 +447,22 @@ Flickable {
         property string combo: ""
         property string action: ""
         property string options: ""
+        // Stays open until niri accepts the bind, so a rejected one keeps what was typed.
+        property bool saving: false
+        property string error: ""
         signal done()
+        Connections {
+            target: NiriKeybinds
+            enabled: editor.saving
+            function onBindSaved(keyCombo) {
+                editor.saving = false
+                // New keys on an existing bind move it instead of leaving a copy behind.
+                if (editor.combo.length > 0 && keyCombo !== editor.combo)
+                    NiriKeybinds.removeBind(editor.combo)
+                editor.done()
+            }
+            function onBindError(message) { editor.saving = false; editor.error = message }
+        }
         readonly property string conflict: {
             const v = comboField.text.trim()
             if (!v || v === editor.combo) return ""
@@ -467,8 +482,18 @@ Flickable {
             font.pixelSize: IrisStyle.typeMeta
             wrapMode: Text.WordWrap
         }
-        EditorField { id: actionField; label: Translation.tr("Action"); text: editor.action; placeholder: "toggle-overview" }
+        EditorField { id: actionField; label: Translation.tr("Action"); text: editor.action; placeholder: "toggle-overview · firefox" }
         EditorField { id: optionsField; label: Translation.tr("Options"); text: editor.options; placeholder: "repeat=false" }
+        IrisText {
+            visible: editor.error.length > 0
+            Layout.leftMargin: root.markInset
+            Layout.rightMargin: 14 * root.d
+            Layout.fillWidth: true
+            text: editor.error
+            color: IrisStyle.danger
+            font.pixelSize: IrisStyle.typeMeta
+            wrapMode: Text.WordWrap
+        }
         RowLayout {
             Layout.leftMargin: root.markInset
             Layout.rightMargin: 14 * root.d
@@ -479,10 +504,10 @@ Flickable {
             IrisButton {
                 text: Translation.tr("Save")
                 emphasized: true
-                enabled: comboField.text.trim().length > 0 && actionField.text.trim().length > 0
+                enabled: !editor.saving && comboField.text.trim().length > 0 && actionField.text.trim().length > 0
                 onClicked: {
-                    NiriKeybinds.setBind(comboField.text.trim(), actionField.text.trim(), optionsField.text.trim())
-                    editor.done()
+                    editor.error = ""
+                    editor.saving = NiriKeybinds.setBind(comboField.text.trim(), actionField.text.trim(), optionsField.text.trim())
                 }
             }
         }

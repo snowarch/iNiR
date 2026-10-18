@@ -29,10 +29,19 @@ ContentPage {
     property string _statusMsg: ""
     property string _statusType: ""   // "saved" | "removed" | "error"
     property bool _statusVisible: false
+    // Add and edit forms keep what was typed until niri accepts the bind.
+    property bool _addSaving: false
+    property string _addError: ""
 
     Connections {
         target: NiriKeybinds
         function onBindSaved(keyCombo) {
+            if (root._addSaving) {
+                root._addSaving = false
+                addKeyComboField.text = ""
+                addActionField.text = ""
+                addOptionsField.text = ""
+            }
             root._statusMsg = Translation.tr("Saved: ") + keyCombo
             root._statusType = "saved"
             root._statusVisible = true
@@ -45,6 +54,10 @@ ContentPage {
             statusHideTimer.restart()
         }
         function onBindError(message) {
+            if (root._addSaving) {
+                root._addSaving = false
+                root._addError = message
+            }
             root._statusMsg = message
             root._statusType = "error"
             root._statusVisible = true
@@ -308,7 +321,7 @@ ContentPage {
                 MaterialTextField {
                     id: addActionField
                     Layout.fillWidth: true
-                    placeholderText: "toggle-overview"
+                    placeholderText: "toggle-overview · firefox"
                     enableSettingsSearch: false
                 }
             }
@@ -332,20 +345,28 @@ ContentPage {
                 }
             }
 
+            StyledText {
+                visible: root._addError.length > 0
+                text: root._addError
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colError
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+            }
+
             // Buttons
             RowLayout {
                 spacing: 8
 
                 DialogButton {
                     buttonText: Translation.tr("Add")
+                    enabled: !root._addSaving
                     releaseAction: () => {
                         const combo = addKeyComboField.text.trim()
                         const action = addActionField.text.trim()
                         if (combo.length > 0 && action.length > 0) {
-                            NiriKeybinds.setBind(combo, action, addOptionsField.text.trim())
-                            addKeyComboField.text = ""
-                            addActionField.text = ""
-                            addOptionsField.text = ""
+                            root._addError = ""
+                            root._addSaving = NiriKeybinds.setBind(combo, action, addOptionsField.text.trim())
                         }
                     }
                 }
@@ -353,6 +374,7 @@ ContentPage {
                 DialogButton {
                     buttonText: Translation.tr("Cancel")
                     releaseAction: () => {
+                        root._addError = ""
                         addKeyComboField.text = ""
                         addActionField.text = ""
                         addOptionsField.text = ""
@@ -444,6 +466,24 @@ ContentPage {
 
         // State: "display" | "editing" | "confirmDelete"
         property string editState: "display"
+        property bool saving: false
+        property string editError: ""
+
+        Connections {
+            target: NiriKeybinds
+            enabled: kbRow.saving
+            function onBindSaved(keyCombo) {
+                kbRow.saving = false
+                // New keys on an existing bind move it instead of leaving a copy behind.
+                if (kbRow.keyCombo.length > 0 && keyCombo !== kbRow.keyCombo)
+                    NiriKeybinds.removeBind(kbRow.keyCombo)
+                kbRow.editState = "display"
+            }
+            function onBindError(message) {
+                kbRow.saving = false
+                kbRow.editError = message
+            }
+        }
 
         readonly property bool isExpanded: editState !== "display"
 
@@ -666,7 +706,7 @@ ContentPage {
                                         id: editActionField
                                         Layout.fillWidth: true
                                         text: kbRow.actionRaw
-                                        placeholderText: "toggle-overview"
+                                        placeholderText: "toggle-overview · firefox"
                                         enableSettingsSearch: false
                                     }
                                 }
@@ -691,25 +731,35 @@ ContentPage {
                                     }
                                 }
 
+                                StyledText {
+                                    visible: kbRow.editError.length > 0
+                                    text: kbRow.editError
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: Appearance.colors.colError
+                                    wrapMode: Text.WordWrap
+                                    Layout.fillWidth: true
+                                }
+
                                 // Save / Cancel
                                 RowLayout {
                                     spacing: 8
 
                                     DialogButton {
                                         buttonText: Translation.tr("Save")
+                                        enabled: !kbRow.saving
                                         releaseAction: () => {
                                             const combo = editKeyField.text.trim()
                                             const act = editActionField.text.trim()
                                             if (combo.length > 0 && act.length > 0) {
-                                                NiriKeybinds.setBind(combo, act, editOptionsField.text.trim())
-                                                kbRow.editState = "display"
+                                                kbRow.editError = ""
+                                                kbRow.saving = NiriKeybinds.setBind(combo, act, editOptionsField.text.trim())
                                             }
                                         }
                                     }
 
                                     DialogButton {
                                         buttonText: Translation.tr("Cancel")
-                                        releaseAction: () => { kbRow.editState = "display" }
+                                        releaseAction: () => { kbRow.editError = ""; kbRow.editState = "display" }
                                     }
                                 }
                             }

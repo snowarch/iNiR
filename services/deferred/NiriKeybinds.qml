@@ -51,10 +51,11 @@ Singleton {
         enrichedBindsLoader.running = true
     }
 
-    function setBind(keyCombo: string, action: string, options: string): void {
+    // False when a save is already in flight; the result comes back as bindSaved or bindError.
+    function setBind(keyCombo: string, action: string, options: string): bool {
         if (setBindProcess.running) {
             console.warn("[NiriKeybinds] setBind: process already running, ignoring")
-            return
+            return false
         }
         root._pendingSetCombo = keyCombo
         const args = ["/usr/bin/python3", root.niriConfigScript, "set-bind", keyCombo, action]
@@ -62,6 +63,19 @@ Singleton {
             args.push("--options", options)
         setBindProcess.command = args
         setBindProcess.running = true
+        return true
+    }
+
+    // niri-config.py prints {"error", "detail"} JSON on a non-zero exit too.
+    function _failureText(output: string, fallback: string): string {
+        try {
+            const result = JSON.parse(output)
+            if (result?.detail)
+                console.warn("[NiriKeybinds] niri said:", result.detail)
+            return result?.error ?? fallback
+        } catch (e) {
+            return output.length > 0 ? output : fallback
+        }
     }
 
     function removeBind(keyCombo: string): void {
@@ -208,7 +222,7 @@ Singleton {
                         root.bindSaved(combo)
                     } else {
                         const msg = result.error ?? "set-bind returned failure"
-                        console.warn("[NiriKeybinds] setBind failed:", msg)
+                        console.warn("[NiriKeybinds] setBind failed:", combo, msg, result.detail ?? "")
                         root.errorMessage = msg
                         root.bindError(msg)
                     }
@@ -219,7 +233,7 @@ Singleton {
                     root.bindSaved(combo)
                 }
             } else {
-                const msg = output.length > 0 ? output : ("set-bind exited " + exitCode)
+                const msg = root._failureText(output, "set-bind exited " + exitCode)
                 console.warn("[NiriKeybinds] setBind failed:", msg)
                 root.errorMessage = msg
                 root.bindError(msg)
@@ -260,7 +274,7 @@ Singleton {
                     root.bindRemoved(combo)
                 }
             } else {
-                const msg = output.length > 0 ? output : ("remove-bind exited " + exitCode)
+                const msg = root._failureText(output, "remove-bind exited " + exitCode)
                 console.warn("[NiriKeybinds] removeBind failed:", msg)
                 root.errorMessage = msg
                 root.bindError(msg)
