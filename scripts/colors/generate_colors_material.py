@@ -209,10 +209,11 @@ def _auto_detect_scheme(pil_image):
     r, g, b = R / 255.0, G / 255.0, B / 255.0
     maxc = np.maximum(np.maximum(r, g), b)
     minc = np.minimum(np.minimum(r, g), b)
-    s = np.where(maxc > 0, (maxc - minc) / maxc, 0.0) * 255
     delta = maxc - minc
     h = np.zeros_like(r)
     with np.errstate(invalid="ignore", divide="ignore"):
+        # Black pixels divide 0 by 0 here; np.where drops that branch, but numpy warned on every dark wallpaper.
+        s = np.where(maxc > 0, (maxc - minc) / maxc, 0.0) * 255
         mask = delta > 0
         idx = (maxc == r) & mask
         h[idx] = 30.0 * (((g[idx] - b[idx]) / delta[idx]) % 6)
