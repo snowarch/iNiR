@@ -1,5 +1,5 @@
 module qs.modules.ii.sidebarLeft.plugins
 
-# DISABLED: webapps — requires quickshell-webengine rebuild
-# WebAppView 1.0 WebAppView.qml
+# WebAppView.qml is created by URL only (SidebarLeftContent.openWebApp), so the module still
+# loads where QtWebEngine is not installed.
 PluginsTab 1.0 PluginsTab.qml

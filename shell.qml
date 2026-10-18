@@ -1,7 +1,5 @@
 //@ pragma UseQApplication
 //@ pragma ShellId inir
-// DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
-//-@ pragma EnableQtWebEngineQuick
 //@ pragma Env QS_NO_RELOAD_POPUP=1
 //@ pragma DefaultEnv QT_LOGGING_RULES=quickshell.dbus.properties=false;qt.qpa.wayland.textinput.warning=false
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
@@ -9,8 +7,8 @@
 //@ pragma Env QSG_RENDER_LOOP=threaded
 //@ pragma DefaultEnv QS_DROP_EXPENSIVE_FONTS=1
 // Launcher keeps QT_SCALE_FACTOR=1; shell scaling lives in appearance.typography.sizeScale
-// DISABLED: webapps — requires quickshell-webengine rebuild
-//-@ pragma Env QTWEBENGINE_CHROMIUM_FLAGS=--disable-features=ThirdPartyCookieBlocking,StorageAccessAPI
+// Web apps (sidebar): logins like Discord's need third-party cookies
+//@ pragma Env QTWEBENGINE_CHROMIUM_FLAGS=--disable-features=ThirdPartyCookieBlocking,StorageAccessAPI
 
 import qs.modules.common
 import qs.modules.ii.settings

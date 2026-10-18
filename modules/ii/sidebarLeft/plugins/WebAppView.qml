@@ -2,8 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-// DISABLED: webapps — requires quickshell-webengine rebuild
-// import QtWebEngine
+import QtWebEngine
 import Qt5Compat.GraphicalEffects as GE
 import qs.modules.common
 import qs.modules.common.widgets

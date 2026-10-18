@@ -11,8 +11,7 @@ import qs.modules.ii.sidebarLeft.animeSchedule
 import qs.modules.ii.sidebarLeft.innertune
 import qs.modules.ii.sidebarLeft.news
 import qs.modules.common.pill
-// DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
-// import qs.modules.ii.sidebarLeft.plugins
+import qs.modules.ii.sidebarLeft.plugins
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -43,8 +42,9 @@ Item {
     property bool toolsEnabled: Config.options?.sidebar?.tools?.enable ?? false
     property bool softwareEnabled: Config.options?.sidebar?.software?.enable ?? false
     property bool ytMusicEnabled: Config.options?.sidebar?.ytmusic?.enable ?? false
-    // DISABLED: webapps — requires quickshell-webengine
-    property bool pluginsEnabled: false // Config.options?.sidebar?.plugins?.enable ?? false
+    // Web apps need a runtime that can host Chromium (qs-rs; stock Quickshell crashes on a WebEngineView).
+    readonly property bool webAppsAvailable: Quickshell.hasVersion(0, 3, ["webengine"])
+    property bool pluginsEnabled: webAppsAvailable && (Config.options?.sidebar?.plugins?.enable ?? false)
 
     // Tabs exposing contentPreferredHeight (Widgets) can let the panel hug
     // their content instead of reserving the full output height.
@@ -65,35 +65,141 @@ Item {
     readonly property real minimumUsefulWidth: 320
     readonly property real maximumUsefulWidth: 900
 
-    // ─── WebApp state — DISABLED (requires quickshell-webengine) ─────
+    // ─── WebApp state (lives HERE, survives contentReady resets) ──────
+    // Currently active webapp plugin id (empty = no webapp showing)
     property string _activeWebAppId: ""
-    property bool pluginViewActive: false // _activeWebAppId !== ""
+    // Signals to SidebarHost for width resize
+    property bool pluginViewActive: _activeWebAppId !== ""
 
     // Persistent cache: pluginId → WebAppView instance
     property var _webViewCache: ({})
     property int _webViewCount: 0  // for reactivity
 
-    // DISABLED: webapps — all functions below are stubs until quickshell-webengine is available
+    // Persistent cache: pluginId → WebEngineProfilePrototype, created BEFORE the
+    // WebAppView so storageName is set from the start (no off-the-record →
+    // disk transition, which broke localStorage in injected scripts).
     property var _profileCache: ({})
 
-    function _getOrCreateProfile(id: string): QtObject { return null }
+    function _getOrCreateProfile(id: string): QtObject {
+        const cached = root._profileCache[id]
+        if (cached) return cached.instance()
+        const escaped = id.replace(/"/g, '\\"')
+        const proto = Qt.createQmlObject(
+            'import QtWebEngine; WebEngineProfilePrototype { storageName: "' + escaped + '"; httpCacheType: WebEngineProfile.DiskHttpCache; persistentCookiesPolicy: WebEngineProfile.ForcePersistentCookies }',
+            root, "pluginProfileProto_" + id
+        )
+        root._profileCache[id] = proto
+        return proto.instance()
+    }
 
-    // ─── WebApp management functions (DISABLED) ──────────────────────
+    // ─── WebApp management functions ─────────────────────────────────
 
-    function openWebApp(id: string, url: string, name: string, icon: string, userscriptSources): void {}
-    function closeWebApp(): void {}
-    function removeWebApp(id: string): void {}
-    function _freezeAllWebApps(): void {}
-    function _resumeActiveWebApp(): void {}
+    function openWebApp(id: string, url: string, name: string, icon: string, userscriptSources): void {
+        // Hide previously active webapp (but keep it running in background)
+        if (root._activeWebAppId && root._webViewCache[root._activeWebAppId]) {
+            root._webViewCache[root._activeWebAppId].visible = false
+        }
 
-    // ─── Restore last active plugin (DISABLED) ──────────────────────
+        let view = root._webViewCache[id]
+        if (!view) {
+            const profile = root._getOrCreateProfile(id)
+            const comp = Qt.createComponent("plugins/WebAppView.qml")
+            if (comp.status !== Component.Ready) {
+                console.error("[Plugins] Failed to create WebAppView:", comp.errorString())
+                return
+            }
+            view = comp.createObject(webAppOverlay, {
+                pluginId: id,
+                pluginUrl: url,
+                pluginName: name,
+                pluginIcon: icon,
+                webProfile: profile,
+                userscriptSources: userscriptSources ?? [],
+                visible: false
+            })
+            if (!view) {
+                console.error("[Plugins] createObject returned null for", id)
+                return
+            }
+            view.anchors.fill = webAppOverlay
+            view.closeRequested.connect(() => root.closeWebApp())
+            root._webViewCache[id] = view
+            root._webViewCount++
+        }
+
+        view.visible = true
+        root._activeWebAppId = id
+        // Saved so the next sidebar open restores it
+        Config.setNestedValue("sidebar.plugins.lastActivePlugin", id)
+    }
+    function closeWebApp(): void {
+        if (root._activeWebAppId && root._webViewCache[root._activeWebAppId]) {
+            root._webViewCache[root._activeWebAppId].visible = false
+        }
+        root._activeWebAppId = ""
+    }
+    function removeWebApp(id: string): void {
+        const view = root._webViewCache[id]
+        if (view) {
+            view.destroy()
+            delete root._webViewCache[id]
+            root._webViewCount--
+        }
+        // Destroying the prototype cleans up its profile instance too
+        const cached = root._profileCache[id]
+        if (cached) {
+            cached.destroy()
+            delete root._profileCache[id]
+        }
+        if (root._activeWebAppId === id) {
+            root._activeWebAppId = ""
+            Config.setNestedValue("sidebar.plugins.lastActivePlugin", "")
+        }
+    }
+
+    // ─── Restore last active plugin ──────────────────────────────────
+    // On the first sidebar open, not at shell start: Chromium costs ~100 MB per app.
     property bool _restoredLastPlugin: false
-    function _tryRestoreLastPlugin(): void {}
-    function _doRestoreLastPlugin(): void {}
+    function _tryRestoreLastPlugin(): void {
+        if (root._restoredLastPlugin || !root.pluginsEnabled || !Config.ready) return
+        root._restoredLastPlugin = true
+        if (!(Config.options?.sidebar?.plugins?.lastActivePlugin ?? "")) return
+        restoreProcess.running = true
+    }
+
+    Process {
+        id: restoreProcess
+        command: ["/usr/bin/python3", Quickshell.shellPath("scripts/scan-plugins.py")]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const lastId = Config.options?.sidebar?.plugins?.lastActivePlugin ?? ""
+                    const plugin = JSON.parse(text).find(p => p.id === lastId)
+                    if (plugin) root.openWebApp(plugin.id, plugin.url ?? "", plugin.name ?? plugin.id,
+                        plugin.icon ?? "language", plugin.userscriptSources ?? [])
+                } catch (e) {
+                    console.warn("[Plugins] Failed to restore last plugin:", e)
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: GlobalStates
+        function onSidebarLeftOpenChanged() {
+            if (GlobalStates.sidebarLeftOpen) root._tryRestoreLastPlugin()
+        }
+    }
+    Connections {
+        target: Config
+        function onReadyChanged() {
+            if (GlobalStates.sidebarLeftOpen) root._tryRestoreLastPlugin()
+        }
+    }
 
     readonly property var _tabDefaultOrder: [
         "widgets", "ai", "translator", "anime", "animeSchedule",
-        "wallhaven", "news", "ytmusic", "tools", "software"
+        "wallhaven", "news", "ytmusic", "tools", "software", "plugins"
     ]
     readonly property var resolvedTabOrder: {
         const result = []
@@ -128,8 +234,7 @@ Item {
         if (root.ytMusicEnabled) result.push({ id: "ytmusic", icon: "library_music", name: Translation.tr("YT Music") })
         if (root.toolsEnabled) result.push({ id: "tools", icon: "build", name: Translation.tr("Tools") })
         if (root.softwareEnabled) result.push({ id: "software", icon: "store", name: Translation.tr("Software") })
-        // DISABLED: webapps — requires quickshell-webengine rebuild
-        // if (root.pluginsEnabled) result.push({ id: "plugins", icon: "extension", name: Translation.tr("Web Apps") })
+        if (root.pluginsEnabled) result.push({ id: "plugins", icon: "extension", name: Translation.tr("Web Apps") })
         result.sort((a, b) => root.resolvedTabOrder.indexOf(a.id) - root.resolvedTabOrder.indexOf(b.id))
         return result
     }
@@ -192,6 +297,8 @@ Item {
 
     Component.onCompleted: {
         root.applyDevDestination()
+        // This content is created on the first open, so it may already be open here.
+        if (GlobalStates.sidebarLeftOpen) root._tryRestoreLastPlugin()
         Qt.callLater(() => {
             root.selectedTabId = root.tabButtonList[swipeView.currentIndex]?.id ?? ""
         })
@@ -676,8 +783,7 @@ Item {
                                     case "library_music": return ytMusicComp
                                     case "build": return toolsComp
                                     case "store": return softwareComp
-                                    // DISABLED: webapps
-                                    // case "extension": return pluginsComp
+                                    case "extension": return pluginsComp
                                     default: return null
                                 }
                             }
@@ -714,16 +820,15 @@ Item {
         Component { id: ytMusicComp; InnerTuneView {} }
         Component { id: toolsComp; ToolsView {} }
         Component { id: softwareComp; SoftwareView {} }
-        // DISABLED: webapps — requires quickshell-webengine rebuild
-        // Component {
-        //     id: pluginsComp
-        //     PluginsTab {
-        //         activePluginId: root._activeWebAppId
-        //         onPluginRequested: (id, url, name, icon, userscriptSources) => root.openWebApp(id, url, name, icon, userscriptSources)
-        //         onPluginCloseRequested: root.closeWebApp()
-        //         onPluginRemoved: (id) => root.removeWebApp(id)
-        //     }
-        // }
+        Component {
+            id: pluginsComp
+            PluginsTab {
+                activePluginId: root._activeWebAppId
+                onPluginRequested: (id, url, name, icon, userscriptSources) => root.openWebApp(id, url, name, icon, userscriptSources)
+                onPluginCloseRequested: root.closeWebApp()
+                onPluginRemoved: (id) => root.removeWebApp(id)
+            }
+        }
 
         Keys.onPressed: (event) => {
             if (event.key === Qt.Key_Escape) {
@@ -773,20 +878,4 @@ Item {
         enabled: sidebarLeftBackground.height < root.height - 1
         onClicked: GlobalStates.sidebarLeftOpen = false
     }
-
-    // ── Restore last active plugin (DISABLED — webapps) ────────────
-    // Connections {
-    //     target: Config
-    //     function onReadyChanged() {
-    //         if (Config.ready && root.pluginsEnabled) {
-    //             root._tryRestoreLastPlugin()
-    //         }
-    //     }
-    // }
-
-    // Component.onCompleted: {
-    //     if (Config.ready && root.pluginsEnabled) {
-    //         root._tryRestoreLastPlugin()
-    //     }
-    // }
 }

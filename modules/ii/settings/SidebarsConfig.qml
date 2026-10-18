@@ -359,16 +359,17 @@ ContentPage {
                     }
                 }
 
-                // DISABLED: webapps — requires quickshell-webengine rebuild
-                // SettingsSwitch {
-                //     buttonIcon: "extension"
-                //     text: Translation.tr("Web Apps")
-                //     checked: Config.options?.sidebar?.plugins?.enable ?? false
-                //     onCheckedChanged: Config.setNestedValue("sidebar.plugins.enable", checked)
-                //     StyledToolTip {
-                //         text: Translation.tr("Embed web apps like Discord, YouTube Music and more in the sidebar (requires quickshell-webengine)")
-                //     }
-                // }
+                // Only where the runtime can host Chromium (SidebarLeftContent.webAppsAvailable)
+                SettingsSwitch {
+                    visible: Quickshell.hasVersion(0, 3, ["webengine"])
+                    buttonIcon: "extension"
+                    text: Translation.tr("Web Apps")
+                    checked: Config.options?.sidebar?.plugins?.enable ?? false
+                    onCheckedChanged: Config.setNestedValue("sidebar.plugins.enable", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Embed web apps like Discord, YouTube Music and more in the sidebar")
+                    }
+                }
             }
 
         }
