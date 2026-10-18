@@ -2487,8 +2487,65 @@ def _set_window_rules(config_dir, key, value):
 # ─── Surgical helpers ─────────────────────────────────────────────────
 
 
+def _validate_candidate(filepath, content):
+    """Validate content as if it were filepath, on a scratch copy of the niri
+    config dir, so the live file (which niri watches) never holds a broken
+    version. Returns None when the file is outside the config dir."""
+    config_dir = get_niri_config_dir()
+    config_file = get_niri_config_path()
+    try:
+        rel = Path(filepath).resolve().relative_to(config_dir.resolve())
+    except (ValueError, OSError):
+        return None
+    if not config_file.exists():
+        return True, ""
+    import tempfile
+
+    with tempfile.TemporaryDirectory(prefix="inir-niri-validate-") as tmp:
+        scratch = Path(tmp) / "niri"
+        shutil.copytree(config_dir, scratch, symlinks=True)
+        target = scratch / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content)
+        try:
+            r = subprocess.run(
+                ["niri", "validate", "-c", str(scratch / config_file.name)],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+        except Exception:
+            return True, ""  # can't validate, proceed anyway
+        return r.returncode == 0, (r.stdout + r.stderr).strip()
+
+
+def _validation_summary(err):
+    """The one line of niri's miette report a person can act on."""
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", err)
+    lines = [re.sub(r"^Error:\s*", "", l.strip()) for l in plain.splitlines()]
+    reasons = [re.sub(r"^[×╰─▶ ]+", "", l) for l in lines if l.startswith(("×", "╰─▶"))]
+    generic = ("error loading config", "error parsing", "failed to parse included config")
+    specific = [r for r in reasons if r and not r.startswith(generic)]
+    labels = [re.sub(r"^[·╰─ ]+", "", l) for l in lines if "╰──" in l]
+    summary = specific[-1] if specific else (reasons[-1] if reasons else "invalid config")
+    if labels and labels[-1] and labels[-1] not in summary:
+        summary = f"{summary} ({labels[-1]})"
+    return summary
+
+
 def _write_validated(filepath, content):
-    """Write content to file, then validate. If invalid, restore original and report error."""
+    """Validate content first, then write it. Files outside the config dir
+    fall back to write, validate and restore."""
+    checked = _validate_candidate(filepath, content)
+    if checked is not None:
+        valid, err = checked
+        if not valid:
+            print(json.dumps({"success": False, "error": _validation_summary(err), "detail": err}))
+            return 1
+        filepath.write_text(content)
+        print(json.dumps({"success": True, "file": str(filepath)}))
+        return 0
+
     backup = filepath.read_text() if filepath.exists() else None
     filepath.write_text(content)
 
@@ -2498,7 +2555,7 @@ def _write_validated(filepath, content):
             filepath.write_text(backup)
         else:
             filepath.unlink(missing_ok=True)
-        print(json.dumps({"success": False, "error": f"Validation failed: {err}"}))
+        print(json.dumps({"success": False, "error": _validation_summary(err), "detail": err}))
         return 1
 
     print(json.dumps({"success": True, "file": str(filepath)}))
@@ -2785,6 +2842,47 @@ _KB_TERMINALS = [
 ]
 _KB_FILE_MANAGERS = ["dolphin", "nautilus", "thunar", "nemo", "pcmanfm", "ranger"]
 _KB_BROWSERS = ["firefox", "zen-browser", "chromium", "brave", "vivaldi"]
+
+
+# Bind actions that `niri msg action --help` doesn't list (recent-windows binds).
+_KB_CONFIG_ONLY_ACTIONS = {"next-window", "previous-window"}
+
+
+def _kb_niri_actions():
+    """Action names this niri knows, from its own CLI help. Empty if niri is missing."""
+    try:
+        r = subprocess.run(
+            ["niri", "msg", "action", "--help"], capture_output=True, text=True, timeout=3
+        )
+    except Exception:
+        return set()
+    names = set()
+    listing = False
+    for line in r.stdout.splitlines():
+        if line.startswith("Actions:"):
+            listing = True
+        elif listing and line and not line.startswith(" "):
+            break
+        elif listing:
+            m = re.match(r"^  ([a-z][a-z0-9-]*)\b", line)
+            if m:
+                names.add(m.group(1))
+    return names | _KB_CONFIG_ONLY_ACTIONS if names else names
+
+
+def _kb_normalize_action(action: str) -> str:
+    """Settings has one Action field for both niri actions and commands: text that
+    doesn't start with a niri action is a command, so `code` becomes
+    `spawn-sh "code"` instead of an action niri rejects."""
+    action = action.strip().rstrip(";").strip()
+    if not action or any(c in action for c in "{};"):
+        return action
+    known = _kb_niri_actions()
+    first = action.split(None, 1)[0]
+    if not known or first in known:
+        return action
+    escaped = action.replace("\\", "\\\\").replace('"', '\\"')
+    return f'spawn-sh "{escaped}"'
 
 
 def _kb_parse_inir_action(action: str):
@@ -3205,7 +3303,7 @@ def cmd_set_bind(args):
         return 1
 
     key_combo = args[0]
-    action = args[1]
+    action = _kb_normalize_action(args[1])
     options = ""
     idx = 2
     while idx < len(args):
