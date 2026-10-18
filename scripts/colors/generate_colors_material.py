@@ -681,7 +681,9 @@ if args.path is not None:
     # Auto-detect scheme from the already-resized image (avoids separate Python process)
     if args.scheme == "auto":
         args.scheme = _auto_detect_scheme(image)
-    colors = QuantizeCelebi(list(image.getdata()), 128)
+    # Pillow 12.3 deprecates getdata (gone in 14) and warned on every wallpaper change; older Pillows lack the new name.
+    pixels = getattr(image, "get_flattened_data", None) or image.getdata
+    colors = QuantizeCelebi(list(pixels()), 128)
     argb = Score.score(colors)[0]
 
     if args.cache is not None:
