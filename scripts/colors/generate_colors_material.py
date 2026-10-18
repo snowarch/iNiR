@@ -1434,16 +1434,17 @@ if args.render_templates:
         """Convert camelCase to snake_case for compatibility template aliases."""
         return re.sub(r"(?<=[a-z0-9])([A-Z])", r"_\1", name).lower()
 
-    for tok in all_tokens:
+    for tok in sorted(all_tokens):
         dk = dark_palette.get(tok, "#000000")
         lt = light_palette.get(tok, "#000000")
         df = default_palette.get(tok, "#000000")
-        token_obj = _Token(dk, lt, df)
-        # Register under both camelCase and snake_case keys
-        colors_ns[tok] = token_obj
+        colors_ns[tok] = _Token(dk, lt, df)
+    # A name a palette spells out wins over another token's snake_case alias: surface_dim is the app palette's window,
+    # surfaceDim the raw scheme's. Walking a set let either land last, so one wallpaper rendered two GTK themes.
+    for tok in sorted(all_tokens):
         snake = _camel_to_snake(tok)
         if snake != tok:
-            colors_ns[snake] = token_obj
+            colors_ns.setdefault(snake, colors_ns[tok])
 
     # Regex to resolve {{colors.TOKEN.MODE.PROP}} and {{image}}
     _VAR_RE = re.compile(r"\{\{\s*(.*?)\s*\}\}")
