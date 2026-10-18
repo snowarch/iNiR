@@ -490,7 +490,13 @@ Item {
         Wallhaven.topRange = "1w"
         root.syncSelectionsFromService()
         root.selectedRankingIndex = 0
-        Qt.callLater(() => root.selectProvider(root.selectedProviderIndex))
+        initialProvider.start()
+    }
+    // Not Qt.callLater: a queued call outlives this view when a reload tears it down first.
+    Timer {
+        id: initialProvider
+        interval: 0
+        onTriggered: root.selectProvider(root.selectedProviderIndex)
     }
 
     function requireWallhavenMode(): bool {
