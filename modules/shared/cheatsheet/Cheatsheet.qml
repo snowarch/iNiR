@@ -310,7 +310,7 @@ Scope {
                             model: root.pages.length
                             delegate: Loader {
                                 anchors.fill: parent
-                                active: true
+                                active: index === root.currentPage
                                 source: root.pages[index].component
                                 visible: index === root.currentPage
                                 opacity: visible ? 1 : 0
