@@ -19,8 +19,8 @@ Item {
     property real verticalMargin: verticalPadding
 
     function setContentShown(shown: bool): void {
-        if (root.contentItem && root.contentItem.shown !== undefined)
-            root.contentItem.shown = shown
+        if (root._content && root._content.shown !== undefined)
+            root._content.shown = shown
     }
     
     function updateAnchor() {
@@ -42,17 +42,29 @@ Item {
     property var anchorEdges: Edges.Top
     property var anchorGravity: anchorEdges
 
-    property Item contentItem: StyledToolTipContent {
-        id: contentItem
-        anchors.centerIn: parent
-        text: root.text
-        shown: false
-        position: root.anchorEdges === Edges.Top ? "top"
-                : root.anchorEdges === Edges.Left ? "left"
-                : root.anchorEdges === Edges.Right ? "right"
-                : "bottom"
-        horizontalPadding: root.horizontalPadding
-        verticalPadding: root.verticalPadding
+    // The tooltip body is built when the tooltip shows, not with its owner: the shell
+    // declares ~800 tooltips and almost none are ever hovered. A prebuilt Item still
+    // works through contentItem (it then lives as long as its owner).
+    property Item contentItem: null
+    property Component contentComponent: Component {
+        StyledToolTipContent {
+            anchors.centerIn: parent
+            text: root.text
+            shown: false
+            position: root.anchorEdges === Edges.Top ? "top"
+                    : root.anchorEdges === Edges.Left ? "left"
+                    : root.anchorEdges === Edges.Right ? "right"
+                    : "bottom"
+            horizontalPadding: root.horizontalPadding
+            verticalPadding: root.verticalPadding
+        }
+    }
+    readonly property Item _content: root.contentItem ?? contentLoader.item
+
+    Loader {
+        id: contentLoader
+        active: root.contentItem === null && (tooltipLoader.active || fallbackLoader.active)
+        sourceComponent: root.contentComponent
     }
 
     // Whether we can use PopupWindow (requires QsWindow, i.e. PanelWindow context)
@@ -96,10 +108,10 @@ Item {
             }
 
             color: "transparent"
-            implicitWidth: root.contentItem.implicitWidth + root.horizontalMargin * 2
-            implicitHeight: root.contentItem.implicitHeight + root.verticalMargin * 2
+            implicitWidth: (root._content?.implicitWidth ?? 0) + root.horizontalMargin * 2
+            implicitHeight: (root._content?.implicitHeight ?? 0) + root.verticalMargin * 2
 
-            data: [root.contentItem]
+            data: root._content ? [root._content] : []
         }
     }
 
@@ -124,8 +136,8 @@ Item {
             parent: root.Window.window?.contentItem ?? root.parent ?? root
             z: 1000
 
-            readonly property real tooltipW: root.contentItem.implicitWidth + root.horizontalMargin * 2
-            readonly property real tooltipH: root.contentItem.implicitHeight + root.verticalMargin * 2
+            readonly property real tooltipW: (root._content?.implicitWidth ?? 0) + root.horizontalMargin * 2
+            readonly property real tooltipH: (root._content?.implicitHeight ?? 0) + root.verticalMargin * 2
 
             width: tooltipW
             height: tooltipH
@@ -161,7 +173,7 @@ Item {
             y: Math.max(viewportMargin, Math.min(preferredY,
                 Math.max(viewportMargin, (parent?.height ?? tooltipH) - tooltipH - viewportMargin)))
 
-            data: [root.contentItem]
+            data: root._content ? [root._content] : []
         }
     }
 }

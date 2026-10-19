@@ -17,14 +17,15 @@ PopupToolTip {
         : Edges.Bottom
     anchorGravity: anchorEdges
 
-    contentItem: StyledToolTipContent {
-        id: contentItem
-        anchors.centerIn: parent
-        font: root.font
-        text: root.text
-        shown: false
-        position: root.position
-        horizontalPadding: root.horizontalPadding
-        verticalPadding: root.verticalPadding
+    contentComponent: Component {
+        StyledToolTipContent {
+            anchors.centerIn: parent
+            font: root.font
+            text: root.text
+            shown: false
+            position: root.position
+            horizontalPadding: root.horizontalPadding
+            verticalPadding: root.verticalPadding
+        }
     }
 }

@@ -26,9 +26,11 @@ RippleButton {
         delay: 300
         extraVisibleCondition: root.element.type !== "empty"
         anchorEdges: Edges.Top
-        contentItem: ElementTooltip {
-            element: root.element
-            shown: false
+        contentComponent: Component {
+            ElementTooltip {
+                element: root.element
+                shown: false
+            }
         }
     }
 
