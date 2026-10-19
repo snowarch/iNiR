@@ -189,3 +189,5 @@ OrganicScreenEdge 1.0 OrganicScreenEdge.qml
 singleton OrganicIdleClock 1.0 OrganicIdleClock.qml
 NotificationStatusButton 1.0 NotificationStatusButton.qml
 SettingsNativeDialogGuard 1.0 SettingsNativeDialogGuard.qml
+LiveWindowCapture 1.0 LiveWindowCapture.qml
+LiveWindowCaptureView 1.0 LiveWindowCaptureView.qml
