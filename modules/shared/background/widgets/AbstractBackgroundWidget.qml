@@ -1086,8 +1086,8 @@ AbstractWidget {
         }
         x: root._editControlsGeometry.toolbarX - (editToolbar.hosted ? 0 : root.x)
         y: root._editControlsGeometry.toolbarY - (editToolbar.hosted ? 0 : root.y)
-        width: Math.min(root.quickControlsAvailableWidth, toolbarRow.naturalWidth + 16)
-        height: toolbarRow.implicitHeight + 16
+        width: Math.min(root.quickControlsAvailableWidth, (toolbarLoader.item?.naturalWidth ?? 0) + 16)
+        height: (toolbarLoader.item?.implicitHeight ?? 0) + 16
 
         Behavior on x {
             enabled: Appearance.animationsEnabled && !root._irisGesture && editToolbar.opacity > 0
@@ -1123,64 +1123,76 @@ AbstractWidget {
             propagateComposedEvents: false
         }
 
-        Toolbar {
+        // The action bar exists only in edit mode: every desktop widget built its own
+        // (glass toolbar and three buttons) for a mode most sessions never enter.
+        Loader {
+            id: toolbarLoader
             anchors.fill: parent
-            padding: 0
-            spacing: 0
-            transparent: root.widgetIrisFamily
-            screenX: (editToolbar.hosted ? 0 : root.x) + editToolbar.x
-            screenY: (editToolbar.hosted ? 0 : root.y) + editToolbar.y
-        }
-        Rectangle {
-            anchors.fill: parent
-            visible: root.widgetIrisFamily
-            radius: height / 2
-            color: IrisStyle.surface
-            border.width: 1
-            border.color: IrisStyle.hairlineStrong
-        }
+            active: GlobalStates.widgetEditMode
+            sourceComponent: Item {
+                readonly property real naturalWidth: toolbarRow.naturalWidth
+                implicitHeight: toolbarRow.implicitHeight
 
-        Flow {
-            id: toolbarRow
-            anchors.centerIn: parent
-            readonly property real naturalWidth: lockAction.implicitWidth + moreAction.implicitWidth + 4
-                + (root.locked ? 0 : styleAction.implicitWidth + 4)
-            width: Math.min(root.quickControlsAvailableWidth - 16, naturalWidth)
-            spacing: 4
-
-            WidgetEditAction {
-                id: lockAction
-                iconName: root.locked ? "lock" : "lock_open"
-                label: root.locked ? Translation.tr("Unlock") : Translation.tr("Lock")
-                compact: true
-                toggled: root.locked
-                onClicked: root._setOutputValue("locked", !root.locked)
-            }
-            WidgetEditAction {
-                id: styleAction
-                visible: !root.locked
-                iconName: "tune"
-                label: Translation.tr("Edit")
-                compact: root.quickControlsAvailableWidth < 380
-                toggled: editPopoverPanel.open && root._quickTab !== root._arrangeTab
-                onClicked: {
-                    if (toggled)
-                        root.closeQuickControls()
-                    else
-                        root.openQuickControls("widget")
+                Toolbar {
+                    anchors.fill: parent
+                    padding: 0
+                    spacing: 0
+                    transparent: root.widgetIrisFamily
+                    screenX: (editToolbar.hosted ? 0 : root.x) + editToolbar.x
+                    screenY: (editToolbar.hosted ? 0 : root.y) + editToolbar.y
                 }
-            }
-            WidgetEditAction {
-                id: moreAction
-                iconName: "more_horiz"
-                label: Translation.tr("More actions")
-                compact: true
-                toggled: editPopoverPanel.open && root._quickTab === root._arrangeTab
-                onClicked: {
-                    if (toggled)
-                        root.closeQuickControls()
-                    else
-                        root.openQuickControls(root._arrangeTab)
+                Rectangle {
+                    anchors.fill: parent
+                    visible: root.widgetIrisFamily
+                    radius: height / 2
+                    color: IrisStyle.surface
+                    border.width: 1
+                    border.color: IrisStyle.hairlineStrong
+                }
+
+                Flow {
+                    id: toolbarRow
+                    anchors.centerIn: parent
+                    readonly property real naturalWidth: lockAction.implicitWidth + moreAction.implicitWidth + 4
+                        + (root.locked ? 0 : styleAction.implicitWidth + 4)
+                    width: Math.min(root.quickControlsAvailableWidth - 16, naturalWidth)
+                    spacing: 4
+
+                    WidgetEditAction {
+                        id: lockAction
+                        iconName: root.locked ? "lock" : "lock_open"
+                        label: root.locked ? Translation.tr("Unlock") : Translation.tr("Lock")
+                        compact: true
+                        toggled: root.locked
+                        onClicked: root._setOutputValue("locked", !root.locked)
+                    }
+                    WidgetEditAction {
+                        id: styleAction
+                        visible: !root.locked
+                        iconName: "tune"
+                        label: Translation.tr("Edit")
+                        compact: root.quickControlsAvailableWidth < 380
+                        toggled: editPopoverPanel.open && root._quickTab !== root._arrangeTab
+                        onClicked: {
+                            if (toggled)
+                                root.closeQuickControls()
+                            else
+                                root.openQuickControls("widget")
+                        }
+                    }
+                    WidgetEditAction {
+                        id: moreAction
+                        iconName: "more_horiz"
+                        label: Translation.tr("More actions")
+                        compact: true
+                        toggled: editPopoverPanel.open && root._quickTab === root._arrangeTab
+                        onClicked: {
+                            if (toggled)
+                                root.closeQuickControls()
+                            else
+                                root.openQuickControls(root._arrangeTab)
+                        }
+                    }
                 }
             }
         }
