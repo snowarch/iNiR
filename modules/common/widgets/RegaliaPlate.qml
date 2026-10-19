@@ -17,11 +17,15 @@ Item {
     property bool hovered: false
     property bool glassEnabled: false
     property real glassScreenX: {
+        if (!root._glassActive)
+            return 0
         void root.width
         void root.height
         return root.mapToItem(null, 0, 0).x
     }
     property real glassScreenY: {
+        if (!root._glassActive)
+            return 0
         void root.width
         void root.height
         return root.mapToItem(null, 0, 0).y
@@ -44,66 +48,74 @@ Item {
     readonly property color _paintFieldColor: root._glassActive
         ? ColorUtils.applyAlpha(root._fieldColor, root._glassFieldOpacity) : root._fieldColor
 
-    GlassBackground {
+    // Most plates sit hidden behind a Global Style that is not active; building their
+    // gradients anyway cost ~12 objects each, thousands across the shell.
+    Loader {
         anchors.fill: parent
-        visible: root._glassActive
-        forceBackdrop: true
-        blurStrength: Appearance.regalia.glassBlur
-        saturationStrength: Appearance.regalia.glassSaturation
-        auroraTransparency: Appearance.regalia.glassTintTransparency
-        radius: root.radius
-        screenX: root.glassScreenX
-        screenY: root.glassScreenY
-        screenWidth: root.glassScreenWidth
-        screenHeight: root.glassScreenHeight
-    }
+        active: root.visible
+        sourceComponent: Item {
+            GlassBackground {
+                anchors.fill: parent
+                visible: root._glassActive
+                forceBackdrop: true
+                blurStrength: Appearance.regalia.glassBlur
+                saturationStrength: Appearance.regalia.glassSaturation
+                auroraTransparency: Appearance.regalia.glassTintTransparency
+                radius: root.radius
+                screenX: root.glassScreenX
+                screenY: root.glassScreenY
+                screenWidth: root.glassScreenWidth
+                screenHeight: root.glassScreenHeight
+            }
 
-    Rectangle {
-        id: chassis
-        anchors.fill: parent
-        radius: root.radius
-        gradient: Gradient {
-            GradientStop {
-                position: 0
-                color: root._glassActive
-                    ? ColorUtils.applyAlpha(root.elevated ? Appearance.regalia.chassisLight : root._frameColor, root._glassFrameOpacity)
-                    : (root.elevated ? Appearance.regalia.chassisLight : root._frameColor)
+            Rectangle {
+                id: chassis
+                anchors.fill: parent
+                radius: root.radius
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: root._glassActive
+                            ? ColorUtils.applyAlpha(root.elevated ? Appearance.regalia.chassisLight : root._frameColor, root._glassFrameOpacity)
+                            : (root.elevated ? Appearance.regalia.chassisLight : root._frameColor)
+                    }
+                    GradientStop { position: 0.42; color: root._paintFrameColor }
+                    GradientStop {
+                        position: 1
+                        color: root._glassActive
+                            ? ColorUtils.applyAlpha(Appearance.regalia.chassisShade, root._glassFrameOpacity)
+                            : Appearance.regalia.chassisShade
+                    }
+                }
             }
-            GradientStop { position: 0.42; color: root._paintFrameColor }
-            GradientStop {
-                position: 1
-                color: root._glassActive
-                    ? ColorUtils.applyAlpha(Appearance.regalia.chassisShade, root._glassFrameOpacity)
-                    : Appearance.regalia.chassisShade
-            }
-        }
-    }
 
-    Rectangle {
-        id: field
-        anchors.fill: parent
-        anchors.margins: root.inset
-        radius: Math.max(0, root.radius - root.inset)
-        color: root._paintFieldColor
-        gradient: Gradient {
-            GradientStop {
-                position: 0
-                color: root._glassActive
-                    ? ColorUtils.applyAlpha(ColorUtils.mix(root._fieldColor, Appearance.regalia.onColor, 0.965), root._glassFieldOpacity)
-                    : ColorUtils.mix(root._fieldColor, Appearance.regalia.onColor, 0.965)
-            }
-            GradientStop { position: 0.52; color: root._paintFieldColor }
-            GradientStop {
-                position: 1
-                color: root._glassActive
-                    ? ColorUtils.applyAlpha(ColorUtils.mix(root._fieldColor, Appearance.m3colors.m3shadow, 0.94), root._glassFieldOpacity)
-                    : ColorUtils.mix(root._fieldColor, Appearance.m3colors.m3shadow, 0.94)
-            }
-        }
+            Rectangle {
+                id: field
+                anchors.fill: parent
+                anchors.margins: root.inset
+                radius: Math.max(0, root.radius - root.inset)
+                color: root._paintFieldColor
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: root._glassActive
+                            ? ColorUtils.applyAlpha(ColorUtils.mix(root._fieldColor, Appearance.regalia.onColor, 0.965), root._glassFieldOpacity)
+                            : ColorUtils.mix(root._fieldColor, Appearance.regalia.onColor, 0.965)
+                    }
+                    GradientStop { position: 0.52; color: root._paintFieldColor }
+                    GradientStop {
+                        position: 1
+                        color: root._glassActive
+                            ? ColorUtils.applyAlpha(ColorUtils.mix(root._fieldColor, Appearance.m3colors.m3shadow, 0.94), root._glassFieldOpacity)
+                            : ColorUtils.mix(root._fieldColor, Appearance.m3colors.m3shadow, 0.94)
+                    }
+                }
 
-        Behavior on color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.regalia.stateDuration; easing.type: Easing.OutCubic }
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.regalia.stateDuration; easing.type: Easing.OutCubic }
+                }
+            }
         }
     }
 }

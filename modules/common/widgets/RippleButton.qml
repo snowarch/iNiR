@@ -251,28 +251,34 @@ Button {
             }
         }
 
-        Rectangle {
+        // Style chrome is built only under its own Global Style: thousands of buttons
+        // carried every style's pieces hidden.
+        Loader {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 3
-            width: root.toggled ? Math.min(24, Math.max(0, parent.width - 16)) : 0
-            height: 2
-            radius: 1
-            visible: Appearance.editorialEverywhere && root.enabled
-            color: Appearance.editorial.accent
-            Behavior on width {
-                enabled: Appearance.animationsEnabled && root.stateTransitionsEnabled
-                NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+            active: Appearance.editorialEverywhere && root.enabled
+            sourceComponent: Rectangle {
+                width: root.toggled ? Math.min(24, Math.max(0, buttonBackground.width - 16)) : 0
+                height: 2
+                radius: 1
+                color: Appearance.editorial.accent
+                Behavior on width {
+                    enabled: Appearance.animationsEnabled && root.stateTransitionsEnabled
+                    NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                }
             }
         }
 
-        RegaliaControlFace {
+        Loader {
             anchors.fill: parent
-            visible: Appearance.regaliaEverywhere
-            fillColor: root.buttonColor
-            radius: root.buttonEffectiveRadius
-            selected: root.toggled
-            focused: root.visualFocus
+            active: Appearance.regaliaEverywhere
+            sourceComponent: RegaliaControlFace {
+                fillColor: root.buttonColor
+                radius: root.buttonEffectiveRadius
+                selected: root.toggled
+                focused: root.visualFocus
+            }
         }
 
         Loader {
@@ -330,12 +336,16 @@ Button {
                 animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
             }
 
-            RadialGradient {
+            // Only while a ripple shows: most buttons are never clicked in a session.
+            Loader {
                 anchors.fill: parent
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: root.rippleColor }
-                    GradientStop { position: 0.3; color: root.rippleColor }
-                    GradientStop { position: 0.5; color: Qt.rgba(root.rippleColor.r, root.rippleColor.g, root.rippleColor.b, 0) }
+                active: ripple.visible && ripple.opacity > 0
+                sourceComponent: RadialGradient {
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: root.rippleColor }
+                        GradientStop { position: 0.3; color: root.rippleColor }
+                        GradientStop { position: 0.5; color: Qt.rgba(root.rippleColor.r, root.rippleColor.g, root.rippleColor.b, 0) }
+                    }
                 }
             }
 

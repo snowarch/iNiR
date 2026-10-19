@@ -24,87 +24,96 @@ Item {
 
     visible: Appearance.angelEverywhere
 
-    // Top edge — from left, fades to transparent at right end
-    Rectangle {
-        anchors.top: parent.top
-        anchors.left: parent.left
-        width: parent.width * root.coverage
-        height: root.borderWidth
-        radius: root.targetRadius > 0 ? root.targetRadius : 0
+    // The edges exist only while the angel style shows them.
+    Loader {
+        anchors.fill: parent
+        active: root.visible
+        sourceComponent: Item {
 
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: root.borderColor }
-            GradientStop { position: 0.7; color: root.borderColor }
-            GradientStop { position: 1.0; color: "transparent" }
-        }
+            // Top edge — from left, fades to transparent at right end
+            Rectangle {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                width: root.width * root.coverage
+                height: root.borderWidth
+                radius: root.targetRadius > 0 ? root.targetRadius : 0
 
-        Behavior on width {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
-        }
-    }
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: root.borderColor }
+                    GradientStop { position: 0.7; color: root.borderColor }
+                    GradientStop { position: 1.0; color: "transparent" }
+                }
 
-    // Left edge — from top, fades to transparent at bottom end
-    Rectangle {
-        anchors.top: parent.top
-        anchors.left: parent.left
-        width: root.borderWidth
-        height: parent.height * root.coverage
-        radius: root.targetRadius > 0 ? root.targetRadius : 0
+                Behavior on width {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                }
+            }
 
-        gradient: Gradient {
-            orientation: Gradient.Vertical
-            GradientStop { position: 0.0; color: root.borderColor }
-            GradientStop { position: 0.7; color: root.borderColor }
-            GradientStop { position: 1.0; color: "transparent" }
-        }
+            // Left edge — from top, fades to transparent at bottom end
+            Rectangle {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                width: root.borderWidth
+                height: root.height * root.coverage
+                radius: root.targetRadius > 0 ? root.targetRadius : 0
 
-        Behavior on height {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
-        }
-    }
+                gradient: Gradient {
+                    orientation: Gradient.Vertical
+                    GradientStop { position: 0.0; color: root.borderColor }
+                    GradientStop { position: 0.7; color: root.borderColor }
+                    GradientStop { position: 1.0; color: "transparent" }
+                }
 
-    // Bottom edge — from right, fades to transparent at left end
-    Rectangle {
-        anchors.bottom: parent.bottom
-        anchors.right: parent.right
-        width: parent.width * root.coverage
-        height: root.borderWidth
-        radius: root.targetRadius > 0 ? root.targetRadius : 0
+                Behavior on height {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                }
+            }
 
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: "transparent" }
-            GradientStop { position: 0.3; color: root.borderColor }
-            GradientStop { position: 1.0; color: root.borderColor }
-        }
+            // Bottom edge — from right, fades to transparent at left end
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                width: root.width * root.coverage
+                height: root.borderWidth
+                radius: root.targetRadius > 0 ? root.targetRadius : 0
 
-        Behavior on width {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
-        }
-    }
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: "transparent" }
+                    GradientStop { position: 0.3; color: root.borderColor }
+                    GradientStop { position: 1.0; color: root.borderColor }
+                }
 
-    // Right edge — from bottom, fades to transparent at top end
-    Rectangle {
-        anchors.bottom: parent.bottom
-        anchors.right: parent.right
-        width: root.borderWidth
-        height: parent.height * root.coverage
-        radius: root.targetRadius > 0 ? root.targetRadius : 0
+                Behavior on width {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                }
+            }
 
-        gradient: Gradient {
-            orientation: Gradient.Vertical
-            GradientStop { position: 0.0; color: "transparent" }
-            GradientStop { position: 0.3; color: root.borderColor }
-            GradientStop { position: 1.0; color: root.borderColor }
-        }
+            // Right edge — from bottom, fades to transparent at top end
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                width: root.borderWidth
+                height: root.height * root.coverage
+                radius: root.targetRadius > 0 ? root.targetRadius : 0
 
-        Behavior on height {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                gradient: Gradient {
+                    orientation: Gradient.Vertical
+                    GradientStop { position: 0.0; color: "transparent" }
+                    GradientStop { position: 0.3; color: root.borderColor }
+                    GradientStop { position: 1.0; color: root.borderColor }
+                }
+
+                Behavior on height {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                }
+            }
+
         }
     }
 }

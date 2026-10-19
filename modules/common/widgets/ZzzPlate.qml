@@ -46,74 +46,86 @@ Item {
     // y de baja calidad" while square stayed crisp. Drawing the hairline on
     // the same kind of antialiased Shape path the square renderer uses makes
     // round-mode edges read just as clean.
-    Rectangle {
+    // Only the renderer in use is built, and only while the plate shows: hidden plates
+    // under other Global Styles cost two Shapes and a dozen path elements each.
+    Loader {
         anchors.fill: parent
-        visible: root._rounded
-        radius: root.radius
-        color: root.fillColor
-        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
-        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
-    }
-    Shape {
-        id: outline
-        anchors.fill: parent
-        visible: root._rounded && root.strokeWidth > 0
-        preferredRendererType: Shape.CurveRenderer
-        antialiasing: true
-        // Inset so the stroke centerline sits half a pixel inside the bounds
-        // (Rectangle.border draws fully inside; this matches that and keeps
-        // the hairline from being clipped at the item edge).
-        readonly property real inset: root.strokeWidth / 2
-        readonly property real r: Math.max(0, Math.min(root.radius, root.width / 2 - outline.inset, root.height / 2 - outline.inset))
-        ShapePath {
-            fillColor: "transparent"
-            strokeColor: root.strokeColor
-            strokeWidth: root.strokeWidth
-            joinStyle: ShapePath.RoundJoin
-            capStyle: ShapePath.RoundCap
-            startX: outline.inset + outline.r
-            startY: outline.inset
-            PathLine { x: root.width - outline.inset - outline.r; y: outline.inset }
-            PathArc { x: root.width - outline.inset; y: outline.inset + outline.r; radiusX: outline.r; radiusY: outline.r }
-            PathLine { x: root.width - outline.inset; y: root.height - outline.inset - outline.r }
-            PathArc { x: root.width - outline.inset - outline.r; y: root.height - outline.inset; radiusX: outline.r; radiusY: outline.r }
-            PathLine { x: outline.inset + outline.r; y: root.height - outline.inset }
-            PathArc { x: outline.inset; y: root.height - outline.inset - outline.r; radiusX: outline.r; radiusY: outline.r }
-            PathLine { x: outline.inset; y: outline.inset + outline.r }
-            PathArc { x: outline.inset + outline.r; y: outline.inset; radiusX: outline.r; radiusY: outline.r }
+        active: root.visible && root._rounded
+        sourceComponent: Item {
+            Rectangle {
+                anchors.fill: parent
+                radius: root.radius
+                color: root.fillColor
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
+            }
+            Shape {
+                id: outline
+                anchors.fill: parent
+                visible: root.strokeWidth > 0
+                preferredRendererType: Shape.CurveRenderer
+                antialiasing: true
+                // Inset so the stroke centerline sits half a pixel inside the bounds
+                // (Rectangle.border draws fully inside; this matches that and keeps
+                // the hairline from being clipped at the item edge).
+                readonly property real inset: root.strokeWidth / 2
+                readonly property real r: Math.max(0, Math.min(root.radius, root.width / 2 - outline.inset, root.height / 2 - outline.inset))
+                ShapePath {
+                    fillColor: "transparent"
+                    strokeColor: root.strokeColor
+                    strokeWidth: root.strokeWidth
+                    joinStyle: ShapePath.RoundJoin
+                    capStyle: ShapePath.RoundCap
+                    startX: outline.inset + outline.r
+                    startY: outline.inset
+                    PathLine { x: root.width - outline.inset - outline.r; y: outline.inset }
+                    PathArc { x: root.width - outline.inset; y: outline.inset + outline.r; radiusX: outline.r; radiusY: outline.r }
+                    PathLine { x: root.width - outline.inset; y: root.height - outline.inset - outline.r }
+                    PathArc { x: root.width - outline.inset - outline.r; y: root.height - outline.inset; radiusX: outline.r; radiusY: outline.r }
+                    PathLine { x: outline.inset + outline.r; y: root.height - outline.inset }
+                    PathArc { x: outline.inset; y: root.height - outline.inset - outline.r; radiusX: outline.r; radiusY: outline.r }
+                    PathLine { x: outline.inset; y: outline.inset + outline.r }
+                    PathArc { x: outline.inset + outline.r; y: outline.inset; radiusX: outline.r; radiusY: outline.r }
+                }
+            }
         }
     }
 
     // ── Chamfered renderer (square mode) ── true 45° cut geometry.
-    Shape {
-        id: outline_chamfer
+    Loader {
         anchors.fill: parent
-        visible: !root._rounded
-        preferredRendererType: Shape.CurveRenderer
-        antialiasing: true
-        // Inset so the stroke centerline sits half a pixel inside the bounds,
-        // same as the rounded renderer. Without this, the 1px hairline gets
-        // clipped at the item edge and renders as broken dots/segments on the
-        // vertical edges above the cut corner.
-        readonly property real inset: root.strokeWidth / 2
+        active: root.visible && !root._rounded
+        sourceComponent: Item {
+            Shape {
+                id: outline_chamfer
+                anchors.fill: parent
+                preferredRendererType: Shape.CurveRenderer
+                antialiasing: true
+                // Inset so the stroke centerline sits half a pixel inside the bounds,
+                // same as the rounded renderer. Without this, the 1px hairline gets
+                // clipped at the item edge and renders as broken dots/segments on the
+                // vertical edges above the cut corner.
+                readonly property real inset: root.strokeWidth / 2
 
-        ShapePath {
-            fillColor: root._rounded ? "transparent" : root.fillColor
-            strokeColor: root._rounded ? "transparent" : root.strokeColor
-            strokeWidth: root._rounded ? 0 : root.strokeWidth
-            joinStyle: ShapePath.MiterJoin
+                ShapePath {
+                    fillColor: root._rounded ? "transparent" : root.fillColor
+                    strokeColor: root._rounded ? "transparent" : root.strokeColor
+                    strokeWidth: root._rounded ? 0 : root.strokeWidth
+                    joinStyle: ShapePath.MiterJoin
 
-            startX: (root.chamferTopLeft ? root._ch : 0) + outline_chamfer.inset
-            startY: outline_chamfer.inset
+                    startX: (root.chamferTopLeft ? root._ch : 0) + outline_chamfer.inset
+                    startY: outline_chamfer.inset
 
-            PathLine { x: root.width - (root.chamferTopRight ? root._ch : 0) - outline_chamfer.inset; y: outline_chamfer.inset }
-            PathLine { x: root.width - outline_chamfer.inset; y: (root.chamferTopRight ? root._ch : 0) + outline_chamfer.inset }
-            PathLine { x: root.width - outline_chamfer.inset; y: root.height - (root.chamferBottomRight ? root._ch : 0) - outline_chamfer.inset }
-            PathLine { x: root.width - (root.chamferBottomRight ? root._ch : 0) - outline_chamfer.inset; y: root.height - outline_chamfer.inset }
-            PathLine { x: (root.chamferBottomLeft ? root._ch : 0) + outline_chamfer.inset; y: root.height - outline_chamfer.inset }
-            PathLine { x: outline_chamfer.inset; y: root.height - (root.chamferBottomLeft ? root._ch : 0) - outline_chamfer.inset }
-            PathLine { x: outline_chamfer.inset; y: (root.chamferTopLeft ? root._ch : 0) + outline_chamfer.inset }
-            PathLine { x: (root.chamferTopLeft ? root._ch : 0) + outline_chamfer.inset; y: outline_chamfer.inset }
+                    PathLine { x: root.width - (root.chamferTopRight ? root._ch : 0) - outline_chamfer.inset; y: outline_chamfer.inset }
+                    PathLine { x: root.width - outline_chamfer.inset; y: (root.chamferTopRight ? root._ch : 0) + outline_chamfer.inset }
+                    PathLine { x: root.width - outline_chamfer.inset; y: root.height - (root.chamferBottomRight ? root._ch : 0) - outline_chamfer.inset }
+                    PathLine { x: root.width - (root.chamferBottomRight ? root._ch : 0) - outline_chamfer.inset; y: root.height - outline_chamfer.inset }
+                    PathLine { x: (root.chamferBottomLeft ? root._ch : 0) + outline_chamfer.inset; y: root.height - outline_chamfer.inset }
+                    PathLine { x: outline_chamfer.inset; y: root.height - (root.chamferBottomLeft ? root._ch : 0) - outline_chamfer.inset }
+                    PathLine { x: outline_chamfer.inset; y: (root.chamferTopLeft ? root._ch : 0) + outline_chamfer.inset }
+                    PathLine { x: (root.chamferTopLeft ? root._ch : 0) + outline_chamfer.inset; y: outline_chamfer.inset }
+                }
+            }
         }
     }
 
