@@ -263,14 +263,12 @@ Item {
 
     // Edge scroll: the M3 bar honours the same keys as the classic bar, so
     // brightness and volume stay where the user learned them.
-    property var brightnessMonitor: Brightness.getMonitorForScreen(root.screen)
     readonly property string leftAction: Config.options?.bar?.leftScrollAction ?? "brightness"
     readonly property string rightAction: Config.options?.bar?.rightScrollAction ?? "volume"
 
     function performScrollAction(action: string, isUp: bool): void {
         if (action === "brightness") {
-            const step = 0.05;
-            root.brightnessMonitor?.setBrightness(root.brightnessMonitor.brightness + (isUp ? step : -step));
+            Brightness.stepBrightness(root.screen, isUp ? 0.05 : -0.05);
         } else if (action === "volume") {
             if (isUp) Audio.incrementVolume();
             else Audio.decrementVolume();

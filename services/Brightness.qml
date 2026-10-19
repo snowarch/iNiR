@@ -222,7 +222,19 @@ Singleton {
     }
 
     function getMonitorForScreen(screen: ShellScreen): var {
-        return monitors.find(m => m.screen === screen);
+        if (!screen)
+            return null;
+        return monitors.find(m => m.screen === screen)
+            ?? monitors.find(m => m.screen?.name && m.screen.name === screen.name)
+            ?? null;
+    }
+
+    // Wheel and key steps from a surface. Its window may not know its screen yet (or
+    // ever, on a runtime that registers windows late), so the focused output answers.
+    function stepBrightness(screen: var, delta: real): void {
+        const monitor = root.getMonitorForScreen(screen) ?? root._focusedMonitor();
+        if (monitor)
+            monitor.setBrightness(Math.max(0, Math.min(1, monitor.brightness + delta)));
     }
 
     function _focusedMonitor(): var {

@@ -21,7 +21,6 @@ Scope {
 
     component CornerPanelWindow: PanelWindow {
         id: cornerPanelWindow
-        property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
         property bool fullscreen
         property var corner
 
@@ -224,7 +223,7 @@ Scope {
                         if (!(Config.options?.sidebar?.cornerOpen?.valueScroll ?? false))
                             return;
                         if (cornerWidget.isLeft)
-                            cornerPanelWindow.brightnessMonitor.setBrightness(cornerPanelWindow.brightnessMonitor.brightness - 0.05);
+                            Brightness.stepBrightness(cornerPanelWindow.screen, -0.05);
                         else {
                             Audio.decrementVolume();
                         }
@@ -233,7 +232,7 @@ Scope {
                         if (!(Config.options?.sidebar?.cornerOpen?.valueScroll ?? false))
                             return;
                         if (cornerWidget.isLeft)
-                            cornerPanelWindow.brightnessMonitor.setBrightness(cornerPanelWindow.brightnessMonitor.brightness + 0.05);
+                            Brightness.stepBrightness(cornerPanelWindow.screen, 0.05);
                         else {
                             Audio.incrementVolume();
                         }

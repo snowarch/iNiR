@@ -21,7 +21,6 @@ Item { // Bar content region
     layer.effect: ShellDesaturationEffect {}
 
     property var screen: root.QsWindow.window?.screen
-    property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
     property alias backgroundItem: barBackground
     property bool nativeBlurAllowed: true
 
@@ -328,8 +327,7 @@ Item { // Bar content region
 
     function performScrollAction(action: string, isUp: bool): void {
         if (action === "brightness") {
-            const step = 0.05;
-            root.brightnessMonitor.setBrightness(root.brightnessMonitor.brightness + (isUp ? step : -step));
+            Brightness.stepBrightness(root.screen, isUp ? 0.05 : -0.05);
         } else if (action === "volume") {
             if (isUp) Audio.incrementVolume();
             else Audio.decrementVolume();

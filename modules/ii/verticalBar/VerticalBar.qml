@@ -44,7 +44,6 @@ Scope {
                 screen: barLoader.modelData
                 visible: true
 
-                property var brightnessMonitor: Brightness.getMonitorForScreen(barLoader.modelData)
                 
                 Timer {
                     id: showBarTimer

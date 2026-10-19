@@ -17,7 +17,6 @@ Item { // Bar content region
     id: root
 
     property var screen: root.QsWindow.window?.screen
-    property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
     property alias backgroundItem: barBackground
     property bool nativeBlurAllowed: true
     readonly property string nativeBlurTopology: Appearance.blurTopology.roundedRectangle
@@ -377,8 +376,8 @@ Item { // Bar content region
         height: Math.min(root.height, implicitHeight)
         width: Appearance.sizes.verticalBarWidth
 
-        onScrollDown: root.brightnessMonitor.setBrightness(root.brightnessMonitor.brightness - 0.05)
-        onScrollUp: root.brightnessMonitor.setBrightness(root.brightnessMonitor.brightness + 0.05)
+        onScrollDown: Brightness.stepBrightness(root.screen, -0.05)
+        onScrollUp: Brightness.stepBrightness(root.screen, 0.05)
         onMovedAway: GlobalStates.osdBrightnessOpen = false
         onPressed: event => {
             if (event.button === Qt.LeftButton)
