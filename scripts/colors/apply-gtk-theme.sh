@@ -36,7 +36,7 @@ enable_apps_shell="true"
 enable_qt_apps="true"
 if [[ -f "$SHELL_CONFIG_FILE" ]] && command -v jq &>/dev/null; then
     enable_apps_shell=$(jq -r '.appearance.wallpaperTheming.enableAppsAndShell // true' "$SHELL_CONFIG_FILE")
-    enable_qt_apps=$(jq -r '.appearance.wallpaperTheming.enableQtApps // true' "$SHELL_CONFIG_FILE")
+    enable_qt_apps=$(jq -r 'if .appearance.wallpaperTheming.enableQtApps == null then true else .appearance.wallpaperTheming.enableQtApps end' "$SHELL_CONFIG_FILE")
 fi
 
 # Exit only when both shell/GTK and Qt app theming are disabled
@@ -723,6 +723,14 @@ if [[ "$enable_qt_apps" != "false" ]]; then
     # Generate Darkly color scheme for Qt style
     mkdir -p "$(dirname "$DARKLY_COLORS")"
     generate_darkly_colors > "$DARKLY_COLORS"
+
+    FALLBACK_ICON_THEME="Adwaita"
+    if [[ -d "$XDG_DATA_HOME/icons/WhiteSur-dark" || -d "/usr/share/icons/WhiteSur-dark" ]]; then
+        FALLBACK_ICON_THEME=$("$SCRIPT_DIR/icon-theme-for-mode.sh" WhiteSur-dark "$THEME_MODE")
+    fi
+    # KDE .colors files cannot be read as qtct's ordered QPalette role lists.
+    python3 "$SCRIPT_DIR/apply-qtct-theme.py" "$DARKLY_COLORS" \
+        --icon-theme "$APPLIED_ICON_THEME" --fallback-icon-theme "$FALLBACK_ICON_THEME"
 fi
 
 # Generate Pywalfox colors for Firefox theming
@@ -1019,47 +1027,6 @@ EOF
 then
     gtk_css_changed=true
 fi
-
-# Configure qt6ct to use the Darkly color scheme (fixes Dolphin and other Qt apps being white)
-# qt6ct is the platform theme (QT_QPA_PLATFORMTHEME=qt6ct) — it needs a color scheme
-QT6CT_CONF="$HOME/.config/qt6ct/qt6ct.conf"
-mkdir -p "$(dirname "$QT6CT_CONF")"
-touch "$QT6CT_CONF"
-CURRENT_ICON_THEME="$APPLIED_ICON_THEME"
-[[ -z "$CURRENT_ICON_THEME" ]] && CURRENT_ICON_THEME=$(grep '^icon_theme=' "$QT6CT_CONF" 2>/dev/null | cut -d= -f2 || true)
-if [[ -z "$CURRENT_ICON_THEME" ]]; then
-    if [[ -d "$HOME/.local/share/icons/WhiteSur-dark" || -d "/usr/share/icons/WhiteSur-dark" ]]; then
-        CURRENT_ICON_THEME=$("$SCRIPT_DIR/icon-theme-for-mode.sh" WhiteSur-dark "$THEME_MODE")
-    else
-        CURRENT_ICON_THEME="Adwaita"
-    fi
-fi
-CURRENT_QT_STYLE=$(grep '^style=' "$QT6CT_CONF" 2>/dev/null | cut -d= -f2 || true)
-[[ -z "$CURRENT_QT_STYLE" ]] && CURRENT_QT_STYLE="Darkly"
-cat > "$QT6CT_CONF" << EOF
-[Appearance]
-color_scheme_path=${DARKLY_COLORS}
-custom_palette=true
-icon_theme=${CURRENT_ICON_THEME}
-style=${CURRENT_QT_STYLE}
-EOF
-
-# Configure qt5ct to use the Darkly color scheme (mirrors qt6ct setup above)
-QT5CT_CONF="$HOME/.config/qt5ct/qt5ct.conf"
-mkdir -p "$(dirname "$QT5CT_CONF")"
-touch "$QT5CT_CONF"
-CURRENT_QT5_ICON_THEME="$APPLIED_ICON_THEME"
-[[ -z "$CURRENT_QT5_ICON_THEME" ]] && CURRENT_QT5_ICON_THEME=$(grep '^icon_theme=' "$QT5CT_CONF" 2>/dev/null | cut -d= -f2 || true)
-[[ -z "$CURRENT_QT5_ICON_THEME" ]] && CURRENT_QT5_ICON_THEME="$CURRENT_ICON_THEME"
-CURRENT_QT5_STYLE=$(grep '^style=' "$QT5CT_CONF" 2>/dev/null | cut -d= -f2 || true)
-[[ -z "$CURRENT_QT5_STYLE" ]] && CURRENT_QT5_STYLE="Darkly"
-cat > "$QT5CT_CONF" << EOF
-[Appearance]
-color_scheme_path=${DARKLY_COLORS}
-custom_palette=true
-icon_theme=${CURRENT_QT5_ICON_THEME}
-style=${CURRENT_QT5_STYLE}
-EOF
 
 # Keep static GTK settings aligned with GSettings. GTK applications are split
 # between the desktop settings service and settings.ini readers, so stale files

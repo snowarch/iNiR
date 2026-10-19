@@ -4293,6 +4293,9 @@ if command -v python3 &>/dev/null && [[ -f "$runtime_root/scripts/lib/generate-i
     step "App theming runs on a machine without Steam or Spotify"
     python3 "$runtime_root/scripts/test-applycolor-fingerprint.py"
 
+    step "Qt5ct and Qt6ct consume generated palettes without losing settings"
+    python3 "$runtime_root/scripts/test-qtct-palette.py"
+
     step "Terminal prose reads and nothing outshines it"
     python3 "$runtime_root/scripts/test-terminal-palette.py"
 
