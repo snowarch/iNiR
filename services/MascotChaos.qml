@@ -76,6 +76,7 @@ Singleton {
     // Put every displaced widget back where it was before the chaos started
     function tidy(): void {
         const updates = {}
+        const restored = Object.keys(root.originals).length
         for (const key in root.originals) {
             const o = root.originals[key]
             if (o.output.length > 0) {
@@ -89,6 +90,8 @@ Singleton {
             Config.setNestedValues(updates)
         root.originals = ({})
         root.tidied()
-        console.log("[MascotChaos] tidy: restored", Object.keys(updates).length / 2, "widgets")
+        // Fullscreen and game mode tidy on every toggle; only a real restore is worth a line.
+        if (restored > 0)
+            console.log("[MascotChaos] tidy: restored", restored, "widgets")
     }
 }
