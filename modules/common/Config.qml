@@ -519,6 +519,25 @@ Singleton {
         onTriggered: configFileView.reload()
     }
 
+    // JSON in the layout the adapter writes (Qt's indented form: sorted keys, empty containers on two lines, a final
+    // newline). The mirror wrote JSON.stringify's layout right after each adapter save, so every start rewrote the whole
+    // file into the other form with the same values.
+    function _qtJson(value, depth = 0): string {
+        const pad = "    ".repeat(depth), inner = "    ".repeat(depth + 1);
+        if (Array.isArray(value)) {
+            if (value.length === 0) return "[\n" + pad + "]";
+            return "[\n" + value.map(v => inner + root._qtJson(v === undefined || typeof v === "function" ? null : v, depth + 1))
+                .join(",\n") + "\n" + pad + "]";
+        }
+        if (value !== null && typeof value === "object") {
+            const keys = Object.keys(value).filter(k => value[k] !== undefined && typeof value[k] !== "function").sort();
+            if (keys.length === 0) return "{\n" + pad + "}";
+            return "{\n" + keys.map(k => inner + JSON.stringify(k) + ": " + root._qtJson(value[k], depth + 1)).join(",\n")
+                + "\n" + pad + "}";
+        }
+        return JSON.stringify(value) ?? "null";
+    }
+
     // Fallback: write the mirror directly when writeAdapter() doesn't emit onSaved.
     function _writeMirrorToDisk(): void {
         if (!root.ready) return;
@@ -535,7 +554,7 @@ Singleton {
                 if (!obj.background.widgets) obj.background.widgets = {};
                 obj.background.widgets.mascotInstances = root.mascotInstances;
             }
-            configFileView.setText(JSON.stringify(obj, null, 4));
+            configFileView.setText(root._qtJson(obj) + "\n");
         } catch (e) {
             console.warn("[Config] mirror write failed:", e.message);
         }
@@ -563,7 +582,7 @@ Singleton {
                 root._mascotSnapshotForInject = ({});
             }
             root._writeInFlight = true;
-            configFileView.setText(JSON.stringify(root._jsonMirror, null, 4));
+            configFileView.setText(root._qtJson(root._jsonMirror) + "\n");
         } catch (e) { root._writeInFlight = false; }
     }
 
