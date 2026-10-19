@@ -657,6 +657,11 @@ Singleton {
                 root._endWriteFlight("");
                 return;
             }
+            // The file already holds the mirror byte for byte: a write that changes nothing is never acknowledged.
+            if (configFileView.text() === root._qtJson(root._jsonMirror) + "\n") {
+                root._endWriteFlight("");
+                return;
+            }
             if (root._writeRetries >= 2) {
                 root._endWriteFlight("write never acknowledged");
                 return;
