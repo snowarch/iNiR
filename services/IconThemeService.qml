@@ -73,19 +73,67 @@ Singleton {
             return []
         }
         
+        // Once the theme is indexed, the answer is the one file that exists (or none, and
+        // the caller falls back to the system theme). Probing guessed paths through Image
+        // loads logged a "Cannot open" for every miss, on every delegate recycle.
+        if (root._dockIndexTheme === root.dockTheme) {
+            const hit = root._dockIndex[iconName]
+            return hit ? [`file://${hit}`] : []
+        }
+
+        return root._dockDirs(root.dockTheme).map(d => `file://${d}/${iconName}${d.endsWith("scalable") || d.endsWith("scalable/apps") ? ".svg" : ".png"}`)
+    }
+
+    // Where a dock theme keeps app icons, in the order they win.
+    function _dockDirs(theme: string): list<string> {
         const home = Quickshell.env("HOME")
-        const theme = root.dockTheme
-        
         return [
-            `file://${home}/.local/share/icons/${theme}/apps/scalable/${iconName}.svg`,
-            `file:///usr/share/icons/${theme}/apps/scalable/${iconName}.svg`,
-            `file://${home}/.local/share/icons/${theme}/scalable/apps/${iconName}.svg`,
-            `file:///usr/share/icons/${theme}/scalable/apps/${iconName}.svg`,
-            `file://${home}/.local/share/icons/${theme}/apps/256x256/${iconName}.png`,
-            `file:///usr/share/icons/${theme}/apps/256x256/${iconName}.png`,
-            `file://${home}/.local/share/icons/${theme}/256x256/apps/${iconName}.png`,
-            `file:///usr/share/icons/${theme}/256x256/apps/${iconName}.png`,
+            `${home}/.local/share/icons/${theme}/apps/scalable`,
+            `/usr/share/icons/${theme}/apps/scalable`,
+            `${home}/.local/share/icons/${theme}/scalable/apps`,
+            `/usr/share/icons/${theme}/scalable/apps`,
+            `${home}/.local/share/icons/${theme}/apps/256x256`,
+            `/usr/share/icons/${theme}/apps/256x256`,
+            `${home}/.local/share/icons/${theme}/256x256/apps`,
+            `/usr/share/icons/${theme}/256x256/apps`,
         ]
+    }
+
+    property var _dockIndex: ({})
+    property string _dockIndexTheme: ""
+    onDockThemeChanged: {
+        dockIndexProc.running = false
+        if (!root.dockTheme)
+            return
+        dockIndexProc.theme = root.dockTheme
+        dockIndexProc.command = ["sh", "-c", 'for d in "$@"; do [ -d "$d" ] && find -L "$d" -maxdepth 1 -type f \\( -name "*.svg" -o -name "*.png" \\) -printf "%h/%f\\n"; done', "sh", ...root._dockDirs(root.dockTheme)]
+        dockIndexProc.running = true
+    }
+
+    Process {
+        id: dockIndexProc
+        property string theme: ""
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const index = {}
+                const dirs = root._dockDirs(dockIndexProc.theme)
+                const rank = path => dirs.indexOf(path.substring(0, path.lastIndexOf("/")))
+                for (const path of text.split("\n")) {
+                    if (!path)
+                        continue
+                    const file = path.substring(path.lastIndexOf("/") + 1)
+                    const ext = file.endsWith(".svg") ? ".svg" : ".png"
+                    // Same order as the guesses: svg dirs come first, then the 256 px pngs.
+                    if (ext === ".svg" && rank(path) > 3 || ext === ".png" && rank(path) < 4)
+                        continue
+                    const name = file.slice(0, -4)
+                    if (!(name in index) || rank(path) < rank(index[name]))
+                        index[name] = path
+                }
+                root._dockIndex = index
+                root._dockIndexTheme = dockIndexProc.theme
+            }
+        }
     }
 
     function ensureInitialized(): void {
