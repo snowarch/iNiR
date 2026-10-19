@@ -56,6 +56,25 @@ def _merged_panels(current: object, base: list[str]) -> list[str]:
     return values
 
 
+def _qt_json(value: object, depth: int = 0) -> str:
+    """JSON the way the shell's own writer lays it out (Qt's indented form).
+
+    The shell rewrites config.json in its own layout as soon as it starts; matching it byte for byte keeps a family
+    switch from rewriting the whole file twice (Python writes empty containers as `[]`, Qt as `[` newline `]`).
+    """
+    pad, inner = "    " * depth, "    " * (depth + 1)
+    if isinstance(value, dict):
+        if not value:
+            return "{\n" + pad + "}"
+        items = (f"{inner}{json.dumps(k, ensure_ascii=False)}: {_qt_json(v, depth + 1)}" for k, v in value.items())
+        return "{\n" + ",\n".join(items) + "\n" + pad + "}"
+    if isinstance(value, list):
+        if not value:
+            return "[\n" + pad + "]"
+        return "[\n" + ",\n".join(inner + _qt_json(v, depth + 1) for v in value) + "\n" + pad + "]"
+    return json.dumps(value, ensure_ascii=False)
+
+
 def _write_atomic(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     mode = path.stat().st_mode & 0o777 if path.exists() else 0o600
@@ -63,8 +82,7 @@ def _write_atomic(path: Path, data: dict) -> None:
     tmp_path = Path(tmp_name)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(data, handle, indent=4, ensure_ascii=False)
-            handle.write("\n")
+            handle.write(_qt_json(data) + "\n")
             handle.flush()
             os.fsync(handle.fileno())
         os.chmod(tmp_path, mode)
