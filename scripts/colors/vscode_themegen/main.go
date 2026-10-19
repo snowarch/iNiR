@@ -273,6 +273,11 @@ func withContrast(hex, bg string, ratio float64, dark bool) string {
 // solid colour that does: a comment stays quiet on any editor background, never under the ratio.
 func mutedInk(fg, bg string, alpha int, dark bool) string {
 	fg, bg = "#"+strings.TrimPrefix(fg, "#"), "#"+strings.TrimPrefix(bg, "#")
+	// A hand-edited or hub palette can carry a short or broken colour: keep it as given, as hexToHSL does,
+	// instead of slicing past its end halfway through writing the theme.
+	if len(fg) < 7 || len(bg) < 7 {
+		return fg
+	}
 	a := float64(alpha) / 255
 	mix := func(i int) int {
 		return clampInt(int(float64(hexByte(fg[i:i+2]))*a+float64(hexByte(bg[i:i+2]))*(1-a)+0.5), 0, 255)
