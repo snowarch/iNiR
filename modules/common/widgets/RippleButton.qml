@@ -102,15 +102,16 @@ Button {
 
     function startRipple(x, y) {
         const stateY = buttonBackground.y;
-        rippleAnim.x = x;
-        rippleAnim.y = y - stateY;
-
         const dist = (ox,oy) => ox*ox + oy*oy
         const stateEndY = stateY + buttonBackground.height
-        rippleAnim.radius = Math.sqrt(Math.max(dist(0, stateY), dist(0, stateEndY), dist(width, stateY), dist(width, stateEndY)))
+        // The ripple and its animations are built on the first press: most buttons are never clicked in a session.
+        rippleLoader.active = true;
+        rippleLoader.item.start(x, y - stateY,
+            Math.sqrt(Math.max(dist(0, stateY), dist(0, stateEndY), dist(width, stateY), dist(width, stateEndY))));
+    }
 
-        rippleFadeAnim.complete();
-        rippleAnim.restart();
+    function fadeRipple() {
+        if (rippleLoader.item) rippleLoader.item.fade();
     }
 
     component RippleAnim: NumberAnimation {
@@ -156,54 +157,14 @@ Button {
             if (root.releaseAction) root.releaseAction();
             root.click() // Because the MouseArea already consumed the event
             if (!root.rippleEnabled) return;
-            rippleFadeAnim.restart();
+            root.fadeRipple();
         }
         onCanceled: (event) => {
             root.down = false
             if (root.cancelAction) root.cancelAction(event)
             else if (root.releaseAction) root.releaseAction();
             if (!root.rippleEnabled) return;
-            rippleFadeAnim.restart();
-        }
-    }
-
-    RippleAnim {
-        id: rippleFadeAnim
-        duration: rippleDuration * 2
-        target: ripple
-        property: "opacity"
-        to: 0
-    }
-
-    SequentialAnimation {
-        id: rippleAnim
-
-        property real x
-        property real y
-        property real radius
-
-        PropertyAction {
-            target: ripple
-            property: "x"
-            value: rippleAnim.x
-        }
-        PropertyAction {
-            target: ripple
-            property: "y"
-            value: rippleAnim.y
-        }
-        PropertyAction {
-            target: ripple
-            property: "opacity"
-            value: 1
-        }
-        ParallelAnimation {
-            RippleAnim {
-                target: ripple
-                properties: "rippleWidth,rippleHeight"
-                from: 0
-                to: rippleAnim.radius * 2
-            }
+            root.fadeRipple();
         }
     }
 
@@ -297,7 +258,7 @@ Button {
             }
         }
 
-        layer.enabled: ripple.opacity > 0
+        layer.enabled: rippleLoader.item !== null && rippleLoader.item.opacity > 0
         layer.effect: OpacityMask {
             maskSource: Item {
                 width: buttonBackground.width
@@ -321,37 +282,62 @@ Button {
             }
         }
 
-        Item {
-            id: ripple
-            width: ripple.rippleWidth
-            height: ripple.rippleHeight
-            opacity: 0
-            visible: width > 0 && height > 0
+        Loader {
+            id: rippleLoader
+            active: false
+            sourceComponent: Item {
+                id: ripple
+                width: ripple.rippleWidth
+                height: ripple.rippleHeight
+                opacity: 0
+                visible: width > 0 && height > 0
 
-            property real rippleWidth: 0
-            property real rippleHeight: 0
+                property real rippleWidth: 0
+                property real rippleHeight: 0
 
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-            }
+                // Direct writes, as the PropertyActions before them: the ripple shows at once and only fades.
+                function start(px, py, radius) {
+                    rippleFadeAnim.complete();
+                    ripple.x = px;
+                    ripple.y = py;
+                    ripple.opacity = 1;
+                    rippleGrow.to = radius * 2;
+                    rippleGrow.restart();
+                }
 
-            // Only while a ripple shows: most buttons are never clicked in a session.
-            Loader {
-                anchors.fill: parent
-                active: ripple.visible && ripple.opacity > 0
-                sourceComponent: RadialGradient {
+                function fade() {
+                    rippleFadeAnim.restart();
+                }
+
+                RippleAnim {
+                    id: rippleGrow
+                    target: ripple
+                    properties: "rippleWidth,rippleHeight"
+                    from: 0
+                }
+
+                RippleAnim {
+                    id: rippleFadeAnim
+                    duration: root.rippleDuration * 2
+                    target: ripple
+                    property: "opacity"
+                    to: 0
+                }
+
+                RadialGradient {
+                    anchors.fill: parent
+                    visible: ripple.opacity > 0
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: root.rippleColor }
                         GradientStop { position: 0.3; color: root.rippleColor }
                         GradientStop { position: 0.5; color: Qt.rgba(root.rippleColor.r, root.rippleColor.g, root.rippleColor.b, 0) }
                     }
                 }
-            }
 
-            transform: Translate {
-                x: -ripple.width / 2
-                y: -ripple.height / 2
+                transform: Translate {
+                    x: -ripple.width / 2
+                    y: -ripple.height / 2
+                }
             }
         }
     }

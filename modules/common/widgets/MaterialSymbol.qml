@@ -75,18 +75,20 @@ Item {
         }
     }
 
-    Rectangle {
-        id: gradientFill
+    // Built only for the icons that ask for it: a few hundred icons carried a hidden gradient each.
+    Loader {
         anchors.fill: iconText
-        visible: root.gradientActive
-        gradient: Gradient {
-            orientation: Gradient.Vertical
-            GradientStop { position: 0.0; color: Qt.lighter(root.color, 1.45) }
-            GradientStop { position: 1.0; color: Qt.darker(root.color, 1.18) }
+        active: root.gradientActive
+        sourceComponent: Rectangle {
+            gradient: Gradient {
+                orientation: Gradient.Vertical
+                GradientStop { position: 0.0; color: Qt.lighter(root.color, 1.45) }
+                GradientStop { position: 1.0; color: Qt.darker(root.color, 1.18) }
+            }
+            layer.enabled: true
+            layer.smooth: true
+            layer.effect: GE.OpacityMask { maskSource: iconText }
         }
-        layer.enabled: root.gradientActive
-        layer.smooth: true
-        layer.effect: GE.OpacityMask { maskSource: iconText }
     }
 
     Behavior on fill {

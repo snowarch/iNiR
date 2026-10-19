@@ -9,12 +9,19 @@ Text {
 
     property real _slideX: 0
     property real _slideY: 0
-    Translate {
-        id: slideTransform
-        x: root._slideX
-        y: root._slideY
+    // The slide and its animation are built for the texts that animate a change, on the first one that asks.
+    property SequentialAnimation _textChange: null
+    // A binding, not the property itself: its first evaluation signals, so a text built animating builds its change too.
+    readonly property bool _changeAnimated: root.animateChange
+    on_ChangeAnimatedChanged: if (root._changeAnimated) root._buildTextChange()
+    transform: root._changeAnimated && root._textChange ? [root._textChange.slide] : []
+    function _buildTextChange(): void {
+        if (!root._textChange) {
+            root._textChange = Qt.createComponent("StyledTextChange.qml").createObject(root, { text: root })
+            // A Behavior takes its animation once: from then on it runs whenever it is enabled.
+            textBehavior.animation = root._textChange
+        }
     }
-    transform: root.animateChange ? [slideTransform] : []
 
     renderType: Text.NativeRendering
     verticalAlignment: Text.AlignVCenter
@@ -37,64 +44,8 @@ Text {
     color: Appearance?.colors.colOnLayer0 ?? "black"
     linkColor: Appearance?.colors.colPrimary
 
-    component Anim: NumberAnimation {
-        target: root
-        duration: Appearance.animation.elementMoveFast.duration
-        easing.type: Easing.BezierSpline
-        easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-    }
-
     Behavior on text {
-        enabled: root.animateChange && Appearance.animationsEnabled
-
-        SequentialAnimation {
-            alwaysRunToEnd: true
-
-            ParallelAnimation {
-                Anim {
-                    property: "_slideX"
-                    to: -root.animationDistanceX
-                    easing.type: Easing.InSine
-                }
-                Anim {
-                    property: "_slideY"
-                    to: -root.animationDistanceY
-                    easing.type: Easing.InSine
-                }
-                Anim {
-                    property: "opacity"
-                    to: 0
-                    easing.type: Easing.InSine
-                }
-            }
-            PropertyAction {} // Tie the text update to this point (we don't want it to happen during the first slide+fade)
-            PropertyAction {
-                target: root
-                property: "_slideX"
-                value: root.animationDistanceX
-            }
-            PropertyAction {
-                target: root
-                property: "_slideY"
-                value: root.animationDistanceY
-            }
-            ParallelAnimation {
-                Anim {
-                    property: "_slideX"
-                    to: 0
-                    easing.type: Easing.OutSine
-                }
-                Anim {
-                    property: "_slideY"
-                    to: 0
-                    easing.type: Easing.OutSine
-                }
-                Anim {
-                    property: "opacity"
-                    to: 1
-                    easing.type: Easing.OutSine
-                }
-            }
-        }
+        id: textBehavior
+        enabled: root._changeAnimated && root._textChange !== null && Appearance.animationsEnabled
     }
 }

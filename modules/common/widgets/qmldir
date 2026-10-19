@@ -146,6 +146,7 @@ StyledSlider 1.0 StyledSlider.qml
 StyledSpinBox 1.0 StyledSpinBox.qml
 StyledSwitch 1.0 StyledSwitch.qml
 StyledTextArea 1.0 StyledTextArea.qml
+StyledTextChange 1.0 StyledTextChange.qml
 StyledTextInput 1.0 StyledTextInput.qml
 StyledText 1.0 StyledText.qml
 StyledToolTipContent 1.0 StyledToolTipContent.qml
