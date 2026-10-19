@@ -2933,31 +2933,36 @@ Scope {
                         NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
                     }
 
-                    DesktopEditToolbar {
-                        id: editControlsBar
-                        // iRiS hosts the toolbar in its chassis (IrisWidgetBar) so it joins the frame.
-                        visible: !editControlsBar.iris
-                        enabled: !editControlsBar.iris
-                        availableWidth: Math.max(0, editGridOverlay.safeWidth - 16)
-                        availableHeight: editGridOverlay.safeHeight
-                        outputName: bgRoot.screenName
-                        hasSelection: editGridOverlay.hasSelection
-                        libraryOpen: widgetManagerPanel.shown
-                        x: Math.round(editGridOverlay.safeLeft
-                            + (editGridOverlay.safeWidth - width) / 2)
-                        // iRiS: the Dock steps aside while editing and the toolbar takes the
-                        // edge opposite the Island, so it never lands on the Island.
-                        readonly property bool irisTopEdge: (Config.options?.panelFamily ?? "ii") === "iris"
-                            && editGridOverlay.workArea?.insets?.barEdge === "bottom"
-                        attachedTopEdge: irisTopEdge
-                        y: editControlsBar.iris ? (irisTopEdge ? IrisFrame.band : parent.height - height - IrisFrame.band)
-                            : Math.max(editGridOverlay.safeTop, editGridOverlay.safeBottom - height - 12)
-                        onLibraryRequested: widgetManagerPanel.shown = !widgetManagerPanel.shown
-                        onEdgeSettingsRequested: GlobalStates.openSettingsAt("widgets", "Organic edge")
-                        onSettingsRequested: GlobalStates.openSettingsAt("widgets")
-                        onDoneRequested: {
-                            widgetManagerPanel.shown = false
-                            GlobalStates.setWidgetEditMode(false)
+                    // iRiS hosts the toolbar in its chassis (IrisWidgetBar); here it exists only while editing outside iRiS.
+                    readonly property bool irisHost: (Config.options?.panelFamily ?? "ii") === "iris"
+                    Loader {
+                        anchors.fill: parent
+                        active: editControlsOverlay.visible && !editControlsOverlay.irisHost
+                        sourceComponent: Item {
+                            DesktopEditToolbar {
+                                id: editControlsBar
+                                availableWidth: Math.max(0, editGridOverlay.safeWidth - 16)
+                                availableHeight: editGridOverlay.safeHeight
+                                outputName: bgRoot.screenName
+                                hasSelection: editGridOverlay.hasSelection
+                                libraryOpen: widgetManagerPanel.shown
+                                x: Math.round(editGridOverlay.safeLeft
+                                    + (editGridOverlay.safeWidth - width) / 2)
+                                // iRiS: the Dock steps aside while editing and the toolbar takes the
+                                // edge opposite the Island, so it never lands on the Island.
+                                readonly property bool irisTopEdge: (Config.options?.panelFamily ?? "ii") === "iris"
+                                    && editGridOverlay.workArea?.insets?.barEdge === "bottom"
+                                attachedTopEdge: irisTopEdge
+                                y: editControlsBar.iris ? (irisTopEdge ? IrisFrame.band : parent.height - height - IrisFrame.band)
+                                    : Math.max(editGridOverlay.safeTop, editGridOverlay.safeBottom - height - 12)
+                                onLibraryRequested: widgetManagerPanel.shown = !widgetManagerPanel.shown
+                                onEdgeSettingsRequested: GlobalStates.openSettingsAt("widgets", "Organic edge")
+                                onSettingsRequested: GlobalStates.openSettingsAt("widgets")
+                                onDoneRequested: {
+                                    widgetManagerPanel.shown = false
+                                    GlobalStates.setWidgetEditMode(false)
+                                }
+                            }
                         }
                     }
 
@@ -2978,14 +2983,14 @@ Scope {
                         }
                         active: shown
                         visible: shown
-                        enabled: shown && (!editControlsBar.iris || geometryReady)
-                        opacity: editControlsBar.iris && !geometryReady ? 0 : 1
+                        enabled: shown && (!editControlsOverlay.irisHost || geometryReady)
+                        opacity: editControlsOverlay.irisHost && !geometryReady ? 0 : 1
                         z: 150
                         x: 0
                         y: 0
 
                         Behavior on opacity {
-                            enabled: editControlsBar.iris && IrisStyle.motionEnabled
+                            enabled: editControlsOverlay.irisHost && IrisStyle.motionEnabled
                             NumberAnimation {
                                 duration: IrisStyle.revealDuration
                                 easing.type: Easing.BezierSpline
