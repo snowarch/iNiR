@@ -19,7 +19,7 @@ Item {
         width: stream.crop ? Math.max(view.width, view.height * stream.aspect) : Math.min(view.width, view.height * stream.aspect)
         height: stream.width / stream.aspect
         niriWindowId: view.host ? view.host.windowId : -1
-        live: view.host?.live ?? false
+        live: view.host?.effectiveLive ?? false
         visible: stream.hasContent
     }
 }
