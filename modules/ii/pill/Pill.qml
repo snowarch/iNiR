@@ -604,33 +604,22 @@ Item {
         if (hovered) {
             hoverLatch = true;
             graceTimer.stop();
-            graceRetries = 0;
         } else {
-            graceRetries = 0;
             graceTimer.restart();
         }
     }
 
     /**
-     * The grace timer waits for the morph to settle before collapsing. A pill
-     * whose target geometry keeps moving (a workspace appearing, a tray icon
-     * arriving) never reaches the threshold and would stay expanded forever.
-     * Give the settle a bounded number of chances, then collapse regardless.
+     * A short grace before collapsing absorbs a pointer that grazes the
+     * edge. The input region already spans the geometry the pill is heading
+     * to (PillBar `pillRegion`), so leaving it is leaving the pill: waiting
+     * for the morph to settle held the collapse 300 ms to 2 s after the
+     * pointer had gone.
      */
-    property int graceRetries: 0
-
     Timer {
         id: graceTimer
-        interval: 300
-        onTriggered: {
-            if (pill.morphCloseness < 0.95 && pill.graceRetries < 6) {
-                pill.graceRetries++;
-                graceTimer.restart();
-                return;
-            }
-            pill.graceRetries = 0;
-            pill.hoverLatch = false;
-        }
+        interval: 100
+        onTriggered: pill.hoverLatch = false
     }
 
     Timer {
