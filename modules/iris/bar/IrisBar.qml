@@ -927,7 +927,8 @@ Scope {
                 // Arriving, the chassis is scaled; the compositor's region follows geometry, not
                 // transforms, so it waits for the arrival instead of blurring beside the bodies.
                 readonly property var blurShapes: barWindow.canvasSuppressed || IrisStyle.arriving ? []
-                    : (barWindow.fieldShapes ?? []).filter(shape => chassisField.glassOf(shape) === 2)
+                    // The compositor's blur is all or nothing: a body joins it once half frosted, its tint carries the rest.
+                    : (barWindow.fieldShapes ?? []).filter(shape => chassisField.glassOf(shape) === 2 && !(shape.frost < 0.5))
                 readonly property bool frameBlurred: !barWindow.canvasSuppressed && !IrisStyle.arriving
                     && IrisFrame.framed && chassisField.frameGlass === 2
                 // The family grows inward: everything the chassis draws comes in from just past the

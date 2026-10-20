@@ -18,6 +18,8 @@ Item {
     height: root.screen?.height ?? 0
     readonly property bool ready: view.ready
     readonly property Item texture: blurred
+    // The same picture before the blur: a body materialises by going from this to the blurred one (`frost`).
+    readonly property Item clearTexture: grade.item?.texture ?? view.textureItem
 
     // Hidden by opacity, not visibility: a hidden subtree never renders a video frame into the texture.
     opacity: 0

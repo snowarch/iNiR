@@ -40,15 +40,18 @@ Item {
     // edge, and `grow` ("top", "left"…) to extend the body under that edge by its radius.
     property string chassisKey: ""
     property var chassisJoin: ({})
+    // Glass materialises by its blur, as Liquid Glass does, not by fading: over the first three quarters of the
+    // movement the body goes from the clear wallpaper to its full frost and tint (`IrisField` reads it per body).
+    readonly property real frost: { const t = Math.max(0, Math.min(1, root.presentation / 0.75)); return 1 - (1 - t) * (1 - t) }
     readonly property var chassisBodies: {
         if (!root.visible || root.opacity <= 0 || !root.fieldBacked || root.chassisKey.length === 0 || !(root.armed || root.presentation > 0)) return []
-        void (root.x + root.y + chassis.x + chassis.y + chassis.width + chassis.height + chassis.radius + (root.parent?.x ?? 0) + (root.parent?.y ?? 0))
+        void (root.x + root.y + chassis.x + chassis.y + chassis.width + chassis.height + chassis.radius + (root.parent?.x ?? 0) + (root.parent?.y ?? 0) + root.frost)
         const at = chassis.mapToItem(null, 0, 0)
         const join = root.chassisJoin ?? {}
         const r = chassis.radius
         const body = { x: at.x + root.windowOffset.x, y: at.y + root.windowOffset.y, width: chassis.width, height: chassis.height, radius: r,
             id: join.id ?? root.chassisKey, joins: join.joins ?? "", fuse: join.fuse ?? 0, paints: true,
-            glass: root.glass ? IrisStyle.surfaceGlass(root.motionSurface) : "solid" }
+            glass: root.glass ? IrisStyle.surfaceGlass(root.motionSurface) : "solid", frost: root.frost }
         if (join.grow === "top") { body.y -= r; body.height += r }
         else if (join.grow === "bottom") body.height += r
         else if (join.grow === "left") { body.x -= r; body.width += r }

@@ -191,7 +191,9 @@ Item {
                 join.push(slot(s, 0))
                 also.push(slot(s, 1))
                 paints.push(s && s.paints ? 1 : 0)
-                glass.push(root.glassOf(s))
+                // A glass body still materialising carries its frost in the fraction: 1 - 0.4 * (1 - frost).
+                const g = root.glassOf(s)
+                glass.push(g > 0 && s.frost !== undefined ? g - 0.4 * (1 - Math.max(0, Math.min(1, Number(s.frost)))) : g)
             }
             const blocks = values => {
                 const out = []
@@ -303,5 +305,6 @@ Item {
         readonly property color shade: IrisStyle.shadow
         readonly property vector4d shadeShape: Qt.vector4d(root.shadowFall, root.shadowBlur, root.casts ? 1 : 0, 0)
         readonly property Item backdrop: pass.backdropReady ? root.backdropSource.texture : noBackdrop
+        readonly property Item clearBackdrop: pass.backdropReady ? (root.backdropSource.clearTexture ?? root.backdropSource.texture) : noBackdrop
     }
 }

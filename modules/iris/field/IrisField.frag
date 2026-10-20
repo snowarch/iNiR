@@ -131,6 +131,8 @@ layout(std140, binding = 0) uniform buf {
     vec4 leakHue0; vec4 leakHue1; vec4 leakHue2;
 } u;
 layout(binding = 1) uniform sampler2D backdrop;
+// The wallpaper before the blur: glass materialises from it to `backdrop` as its frost rises.
+layout(binding = 2) uniform sampler2D clearBackdrop;
 
 const float FAR = 1e8;
 
@@ -363,11 +365,15 @@ void main() {
     // Material is blended by a soft minimum of distances, so where a solid body
     // melts into glass the fillet shades from one to the other instead of cutting.
     vec3 weights = vec3(0.0);
+    // How far the glass under this pixel has materialised: glass comes in by its blur, not by fading. A body still
+    // arriving carries it in its material's fraction (1 - 0.4 * (1 - frost)); everything else is fully frosted.
+    float frostSum = 0.0;
     // Every material solid (the default) skips twenty exponentials a pixel: the branch is uniform.
     bool anyGlass = u.glass.y > 0.5 || dot(u.glassA + u.glassB + u.glassC + u.glassD + u.glassE, vec4(1.0)) > 0.5;
     if (anyGlass && u.field.y > 0.5) {
         float w = exp(-clamp(frameDistance, -40.0, 40.0) / 2.0);
         weights += w * vec3(u.glass.y < 0.5 ? 1.0 : 0.0, u.glass.y > 0.5 && u.glass.y < 1.5 ? 1.0 : 0.0, u.glass.y > 1.5 ? 1.0 : 0.0);
+        frostSum += u.glass.y > 0.5 ? w : 0.0;
     }
     float bodies[20];
     // What the compositor's blur region holds (IrisBlurRegion): the compositor-glass bodies and their joins with
@@ -389,6 +395,7 @@ void main() {
         if (anyGlass) {
             float w = exp(-clamp(bodies[i], -40.0, 40.0) / 2.0);
             weights += w * vec3(m < 0.5 ? 1.0 : 0.0, m > 0.5 && m < 1.5 ? 1.0 : 0.0, m > 1.5 ? 1.0 : 0.0);
+            frostSum += m > 0.5 ? w * clamp(1.0 - (floor(m + 0.5) - m) / 0.4, 0.0, 1.0) : 0.0;
         }
     }
     // The joins, each only between a body and the one it belongs to. A smooth
@@ -490,6 +497,8 @@ void main() {
     vec3 colour = u.tint.rgb * fillAlpha;
     float alpha = fillAlpha;
     vec3 share = anyGlass ? weights / max(1e-4, weights.x + weights.y + weights.z) : vec3(1.0, 0.0, 0.0);
+    float frosting = weights.y + weights.z > 1e-4 ? clamp(frostSum / (weights.y + weights.z), 0.0, 1.0) : 1.0;
+    float frostTint = u.glass.z * frosting;
     // With the frame in another material (the music frame's wallpaper glass, whose band moves every frame) the
     // region carries no band and no join to it, so compositor glass there was a thin tint over the unblurred scene:
     // the fillets under a body and the band beside it showed sharp through. There the band's own material holds.
@@ -501,12 +510,15 @@ void main() {
         if (u.glass.y > 0.5) share.y += given; else share.x += given;
     }
     if (u.glass.x < 0.5) { share.x += share.y; share.y = 0.0; }
-    vec3 behind = share.y > 0.0 ? texture(backdrop, clamp((p + u.scene.xy) / max(u.scene.zw, vec2(1.0)), 0.0, 1.0)).rgb : vec3(0.0);
+    vec2 sceneAt = clamp((p + u.scene.xy) / max(u.scene.zw, vec2(1.0)), 0.0, 1.0);
+    vec3 behind = share.y > 0.0 ? texture(backdrop, sceneAt).rgb : vec3(0.0);
+    if (share.y > 0.0 && frosting < 0.999)
+        behind = mix(texture(clearBackdrop, sceneAt).rgb, behind, frosting);
     if (share.x < 0.999) {
         float a = coverage * u.qt_Opacity;
         vec4 solid = vec4(u.tint.rgb, 1.0) * u.tint.a;
-        vec4 glassy = vec4(mix(behind, u.tint.rgb, u.glass.z), 1.0);
-        vec4 blurred = vec4(u.tint.rgb * u.glass.z, u.glass.z);
+        vec4 glassy = vec4(mix(behind, u.tint.rgb, frostTint), 1.0);
+        vec4 blurred = vec4(u.tint.rgb * frostTint, frostTint);
         vec4 mixed = (solid * share.x + glassy * share.y + blurred * share.z) * a;
         colour = mixed.rgb;
         alpha = mixed.a;
@@ -687,7 +699,7 @@ void main() {
             vec3 spectrum = leakRamp(band);
             const vec3 lumaW = vec3(0.2126, 0.7152, 0.0722);
             vec3 base = u.tint.rgb;
-            vec3 frost = mix(behind, u.tint.rgb, u.glass.z);
+            vec3 frost = mix(behind, u.tint.rgb, frostTint);
             float a = coverage * u.qt_Opacity;
             vec3 solidC = vec3(0.0);
             vec3 glassC = vec3(0.0);
@@ -746,7 +758,7 @@ void main() {
             vec4 glassOut = vec4(clamp(glassC + edgeLight + dither, 0.0, 1.0), 1.0);
             // Compositor glass: the material at the glass tint, and the light lit in the blur under it too (a light layer
             // over the compositor's blur, the only way to reach it).
-            vec4 heldOut = vec4(clamp(glassC + edgeLight + dither, 0.0, 1.0) * u.glass.z, u.glass.z);
+            vec4 heldOut = vec4(clamp(glassC + edgeLight + dither, 0.0, 1.0) * frostTint, frostTint);
             heldOut.rgb += clamp((leak * (0.3 + 0.7 * facing * exp(-depth / (8.0 * lip))) + wash * 0.05 * grained) * light, 0.0, 1.0)
                 * (1.0 - u.glass.z) * 0.6;
             vec4 body = (solidOut * share.x + glassOut * share.y + heldOut * share.z) * a;
@@ -776,7 +788,7 @@ void main() {
         // screen pixel at any output scale.
         float px = max(u.edge.z, 0.05);
         float lip = coverage * (1.0 - smoothstep((u.edgeGlass.z - 0.5) * px, (u.edgeGlass.z + 0.5) * px, depth));
-        float seal = lip * mix(u.edgeGlass.y, u.edgeGlass.x, facing * facing) * glassShare * u.sheen.a * u.qt_Opacity;
+        float seal = lip * mix(u.edgeGlass.y, u.edgeGlass.x, facing * facing) * glassShare * u.sheen.a * u.qt_Opacity * frosting;
         colour = u.sheen.rgb * seal + colour * (1.0 - seal);
         alpha = seal + alpha * (1.0 - seal);
     }
