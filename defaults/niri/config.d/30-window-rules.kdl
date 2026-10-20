@@ -11,9 +11,12 @@
 // ── Global defaults ─────────────────────────────────────────────────────────
 // Round every window's corners and clip content to match.
 // Works best with prefer-no-csd (set in config.kdl).
+// Borders and the focus ring follow that shape instead of filling in behind
+// the window: a see-through app that draws its own title bar stays see-through.
 window-rule {
     geometry-corner-radius 16
     clip-to-geometry true
+    draw-border-with-background false
 }
 
 // iNiR Settings as a window (iRiS "iNiR Settings", Material and Waffle "Settings — iNiR"): two thirds of the screen,
