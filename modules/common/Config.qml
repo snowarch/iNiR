@@ -3114,6 +3114,8 @@ Singleton {
                 property list<string> screenList: []
                 // App/service names dropped at notification ingress. Empty = allow all.
                 property list<string> blockedApps: []
+                // Apps delivered quietly: kept in the history, with no banner, sound or unread mark (their app keys).
+                property list<string> silentApps: []
                 // Daily window where popups are suppressed. History is unaffected.
                 // A window whose end is before its start wraps past midnight.
                 property JsonObject quietHours: JsonObject {

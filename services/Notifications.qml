@@ -41,6 +41,8 @@ Singleton {
         property bool isTransient: notification?.hints.transient ?? false
         property string appIcon: notification?.appIcon ?? ""
         property string appName: notification?.appName ?? ""
+        // The sender's desktop entry (the protocol's desktop-entry hint), when it gives one: the app's identity.
+        property string desktopEntry: notification?.desktopEntry ?? ""
         property string body: notification?.body ?? ""
         property string image: notification?.image ?? ""
         property string summary: notification?.summary ?? ""
@@ -65,6 +67,7 @@ Singleton {
             "actions": notif.actions,
             "appIcon": notif.appIcon,
             "appName": notif.appName,
+            "desktopEntry": notif.desktopEntry,
             "body": notif.body,
             "image": notif.image,
             "summary": notif.summary,
@@ -277,10 +280,30 @@ Singleton {
         return String(name ?? "").toLowerCase().replace(/[^a-z0-9]/g, "")
     }
 
+    // One app, one key, whatever name it sends today: its desktop entry when it gives one, else the entry its name
+    // resolves to, else the name itself. "Firefox" and "firefox", or a client that renames itself, stay one app.
+    function appKey(source): string {
+        const hinted = String(source?.desktopEntry ?? "").replace(/\.desktop$/, "")
+        if (hinted.length > 0)
+            return root._normalizeAppKey(DesktopEntries.byId(hinted)?.id ?? hinted)
+        const name = String(source?.appName ?? "")
+        const found = name.length > 0 ? DesktopEntries.heuristicLookup(name) : null
+        return root._normalizeAppKey(found?.id ?? (name.length > 0 ? name : source?.appIcon))
+    }
+
+    // Delivered quietly (Apple's term): into the history, with no banner, sound, unread mark or reaction.
+    function _notificationQuiet(notification): bool {
+        const quiet = Config.options?.notifications?.silentApps ?? []
+        return quiet.length > 0 && quiet.includes(root.appKey(notification))
+    }
+
     function _notificationBlocked(notification): bool {
         const blocked = Config.options?.notifications?.blockedApps ?? []
         if (!blocked || blocked.length === 0)
             return false
+        // Settings writes an app's key; a token typed by hand (Waffle) still matches the name as before.
+        if (blocked.includes(root.appKey(notification)))
+            return true
 
         const appName = root._normalizeAppKey(notification?.appName)
         // appName is the notification protocol's application identity. Fall
@@ -460,6 +483,11 @@ Singleton {
                 return
             }
             root.list = [...root.list, newNotifObject];
+
+            if (root._notificationQuiet(notification)) {
+                notifFileView.setText(stringifyList(root.list));
+                return
+            }
 
             // Optional notification sound
             if ((Config.options?.sounds?.notifications ?? true) && !root.silent) {
@@ -775,6 +803,7 @@ Singleton {
                     "actions": [], // Notification actions are meaningless if they're not tracked by the server or the sender is dead
                     "appIcon": notif.appIcon,
                     "appName": notif.appName,
+                    "desktopEntry": notif.desktopEntry ?? "",
                     "body": notif.body,
                     "image": notif.image,
                     "summary": notif.summary,
