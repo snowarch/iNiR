@@ -9518,5 +9518,13 @@
   "Lock & Login": "잠금 및 로그인",
   "Quietly": "조용히",
   "Apps that notify": "알림을 보내는 앱",
-  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "알림을 보낸 모든 앱. 조용히는 배너와 소리 없이 오늘에 보관하고, 안 함은 버립니다."
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "알림을 보낸 모든 앱. 조용히는 배너와 소리 없이 오늘에 보관하고, 안 함은 버립니다.",
+  "Sound plays on": "소리 출력",
+  "Pick where the sound goes; the volume is the one in use.": "소리가 나갈 곳을 고르세요. 볼륨은 사용 중인 장치의 것입니다.",
+  "Pick the microphone apps hear; the level is the one in use.": "앱이 듣는 마이크를 고르세요. 레벨은 사용 중인 마이크의 것입니다.",
+  "Apps playing": "재생 중인 앱",
+  "Volume per app": "앱별 볼륨",
+  "Every app making sound now. Another mixer moving one moves it here too.": "지금 소리를 내는 모든 앱. 다른 믹서가 바꾸면 여기서도 바뀝니다.",
+  "No microphone found.": "마이크를 찾을 수 없습니다.",
+  "No speakers or headphones found.": "스피커나 헤드폰을 찾을 수 없습니다."
 }

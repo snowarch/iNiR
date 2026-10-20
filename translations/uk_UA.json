@@ -9518,5 +9518,13 @@
   "Lock & Login": "Блокування і вхід",
   "Quietly": "Без звуку",
   "Apps that notify": "Застосунки зі сповіщеннями",
-  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Кожен застосунок, що щось надсилав. «Без звуку» лишає сповіщення в «Сьогодні» без банера й звуку; «Ніколи» відкидає його."
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Кожен застосунок, що щось надсилав. «Без звуку» лишає сповіщення в «Сьогодні» без банера й звуку; «Ніколи» відкидає його.",
+  "Sound plays on": "Звук іде через",
+  "Pick where the sound goes; the volume is the one in use.": "Виберіть, куди йде звук; гучність стосується пристрою, що використовується.",
+  "Pick the microphone apps hear; the level is the one in use.": "Виберіть мікрофон, який чують застосунки; рівень стосується того, що використовується.",
+  "Apps playing": "Застосунки, що грають",
+  "Volume per app": "Гучність застосунків",
+  "Every app making sound now. Another mixer moving one moves it here too.": "Кожен застосунок, що зараз звучить. Якщо інший мікшер змінює один, тут він теж змінюється.",
+  "No microphone found.": "Мікрофон не знайдено.",
+  "No speakers or headphones found.": "Динаміки чи навушники не знайдено."
 }

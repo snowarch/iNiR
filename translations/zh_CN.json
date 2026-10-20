@@ -9518,5 +9518,13 @@
   "Lock & Login": "锁屏与登录",
   "Quietly": "静默",
   "Apps that notify": "发送通知的应用",
-  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "每个给你发过通知的应用。静默会保留在“今天”中，不弹横幅也不响铃；从不则直接丢弃。"
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "每个给你发过通知的应用。静默会保留在“今天”中，不弹横幅也不响铃；从不则直接丢弃。",
+  "Sound plays on": "声音输出到",
+  "Pick where the sound goes; the volume is the one in use.": "选择声音从哪里输出；音量是正在使用的设备的。",
+  "Pick the microphone apps hear; the level is the one in use.": "选择应用听到的麦克风；电平是正在使用的麦克风的。",
+  "Apps playing": "正在播放的应用",
+  "Volume per app": "每个应用的音量",
+  "Every app making sound now. Another mixer moving one moves it here too.": "现在正在发声的每个应用。其他混音器调整它时，这里也会跟着变。",
+  "No microphone found.": "未找到麦克风。",
+  "No speakers or headphones found.": "未找到扬声器或耳机。"
 }

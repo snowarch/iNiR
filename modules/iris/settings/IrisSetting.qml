@@ -568,6 +568,8 @@ Item {
             active: root.spec.kind === "list"
             visible: active
             source: active ? root.spec.view : ""
+            // The view reads its own spec (Output and Input share one view).
+            onLoaded: if (item && "spec" in item) item.spec = root.spec
         }
 
         Loader {

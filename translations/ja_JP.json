@@ -9518,5 +9518,13 @@
   "Lock & Login": "ロックとログイン",
   "Quietly": "サイレント",
   "Apps that notify": "通知するアプリ",
-  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "通知を送ってきたすべてのアプリ。サイレントはバナーや音なしで「今日」に残し、しないは破棄します。"
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "通知を送ってきたすべてのアプリ。サイレントはバナーや音なしで「今日」に残し、しないは破棄します。",
+  "Sound plays on": "サウンドの出力先",
+  "Pick where the sound goes; the volume is the one in use.": "サウンドの出力先を選びます。音量は使用中のデバイスのものです。",
+  "Pick the microphone apps hear; the level is the one in use.": "アプリが聞くマイクを選びます。レベルは使用中のマイクのものです。",
+  "Apps playing": "再生中のアプリ",
+  "Volume per app": "アプリごとの音量",
+  "Every app making sound now. Another mixer moving one moves it here too.": "今サウンドを出しているすべてのアプリ。別のミキサーで変えると、ここも変わります。",
+  "No microphone found.": "マイクが見つかりません。",
+  "No speakers or headphones found.": "スピーカーやヘッドホンが見つかりません。"
 }

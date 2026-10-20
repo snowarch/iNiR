@@ -9518,5 +9518,13 @@
   "Lock & Login": "Kilit ve Oturum Açma",
   "Quietly": "Sessizce",
   "Apps that notify": "Bildirim gönderen uygulamalar",
-  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Size bir şey gönderen her uygulama. Sessizce, afiş ve ses olmadan Bugün'de tutar; Asla, yok sayar."
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Size bir şey gönderen her uygulama. Sessizce, afiş ve ses olmadan Bugün'de tutar; Asla, yok sayar.",
+  "Sound plays on": "Ses buradan çıkıyor",
+  "Pick where the sound goes; the volume is the one in use.": "Sesin nereye gideceğini seç; ses seviyesi kullanılan cihazındır.",
+  "Pick the microphone apps hear; the level is the one in use.": "Uygulamaların duyduğu mikrofonu seç; seviye kullanılanındır.",
+  "Apps playing": "Ses çalan uygulamalar",
+  "Volume per app": "Uygulama başına ses",
+  "Every app making sound now. Another mixer moving one moves it here too.": "Şu anda ses çıkaran her uygulama. Başka bir mikser birini değiştirirse burada da değişir.",
+  "No microphone found.": "Mikrofon bulunamadı.",
+  "No speakers or headphones found.": "Hoparlör veya kulaklık bulunamadı."
 }

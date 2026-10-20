@@ -9518,5 +9518,13 @@
   "Lock & Login": "Bloqueio e login",
   "Quietly": "Em silêncio",
   "Apps that notify": "Apps que notificam",
-  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Cada app que te enviou algo. Em silêncio guarda em Hoje sem aviso nem som; Nunca descarta."
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Cada app que te enviou algo. Em silêncio guarda em Hoje sem aviso nem som; Nunca descarta.",
+  "Sound plays on": "O som sai por",
+  "Pick where the sound goes; the volume is the one in use.": "Escolha para onde o som vai; o volume é o do que está em uso.",
+  "Pick the microphone apps hear; the level is the one in use.": "Escolha o microfone que os apps ouvem; o nível é o do que está em uso.",
+  "Apps playing": "Apps tocando",
+  "Volume per app": "Volume por app",
+  "Every app making sound now. Another mixer moving one moves it here too.": "Cada app que faz som agora. Se outro mixer mover um, ele se move aqui também.",
+  "No microphone found.": "Nenhum microfone encontrado.",
+  "No speakers or headphones found.": "Nenhum alto-falante ou fone encontrado."
 }

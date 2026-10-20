@@ -9518,5 +9518,13 @@
   "Lock & Login": "लॉक और लॉगिन",
   "Quietly": "चुपचाप",
   "Apps that notify": "सूचना भेजने वाले ऐप",
-  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "हर ऐप जिसने आपको कुछ भेजा। चुपचाप उसे बिना बैनर या आवाज़ के आज में रखता है; कभी नहीं उसे हटा देता है।"
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "हर ऐप जिसने आपको कुछ भेजा। चुपचाप उसे बिना बैनर या आवाज़ के आज में रखता है; कभी नहीं उसे हटा देता है।",
+  "Sound plays on": "आवाज़ यहाँ से आती है",
+  "Pick where the sound goes; the volume is the one in use.": "चुनें कि आवाज़ कहाँ जाए; वॉल्यूम उपयोग में लगे डिवाइस का है।",
+  "Pick the microphone apps hear; the level is the one in use.": "वह माइक्रोफ़ोन चुनें जो ऐप्स सुनते हैं; स्तर उपयोग में लगे का है।",
+  "Apps playing": "बज रहे ऐप्स",
+  "Volume per app": "हर ऐप का वॉल्यूम",
+  "Every app making sound now. Another mixer moving one moves it here too.": "अभी आवाज़ कर रहा हर ऐप। कोई और मिक्सर इसे बदले तो यहाँ भी बदलता है।",
+  "No microphone found.": "कोई माइक्रोफ़ोन नहीं मिला।",
+  "No speakers or headphones found.": "कोई स्पीकर या हेडफ़ोन नहीं मिला।"
 }

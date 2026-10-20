@@ -9518,5 +9518,13 @@
   "Lock & Login": "Lock & Login",
   "Quietly": "Quietly",
   "Apps that notify": "Apps that notify",
-  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it."
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.",
+  "Sound plays on": "Sound plays on",
+  "Pick where the sound goes; the volume is the one in use.": "Pick where the sound goes; the volume is the one in use.",
+  "Pick the microphone apps hear; the level is the one in use.": "Pick the microphone apps hear; the level is the one in use.",
+  "Apps playing": "Apps playing",
+  "Volume per app": "Volume per app",
+  "Every app making sound now. Another mixer moving one moves it here too.": "Every app making sound now. Another mixer moving one moves it here too.",
+  "No microphone found.": "No microphone found.",
+  "No speakers or headphones found.": "No speakers or headphones found."
 }

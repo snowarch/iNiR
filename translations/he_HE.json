@@ -9518,5 +9518,13 @@
   "Lock & Login": "נעילה והתחברות",
   "Quietly": "בשקט",
   "Apps that notify": "אפליקציות ששולחות התראות",
-  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "כל אפליקציה ששלחה לך משהו. ״בשקט״ שומר אותה ב״היום״ בלי באנר וצליל; ״אף פעם״ מתעלם ממנה."
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "כל אפליקציה ששלחה לך משהו. ״בשקט״ שומר אותה ב״היום״ בלי באנר וצליל; ״אף פעם״ מתעלם ממנה.",
+  "Sound plays on": "הצליל יוצא דרך",
+  "Pick where the sound goes; the volume is the one in use.": "בחרו לאן הצליל הולך; עוצמת הקול היא של ההתקן שבשימוש.",
+  "Pick the microphone apps hear; the level is the one in use.": "בחרו את המיקרופון שהאפליקציות שומעות; הרמה היא של זה שבשימוש.",
+  "Apps playing": "אפליקציות שמשמיעות",
+  "Volume per app": "עוצמה לכל אפליקציה",
+  "Every app making sound now. Another mixer moving one moves it here too.": "כל אפליקציה שמשמיעה צליל עכשיו. אם מערבל אחר משנה אחת, היא משתנה גם כאן.",
+  "No microphone found.": "לא נמצא מיקרופון.",
+  "No speakers or headphones found.": "לא נמצאו רמקולים או אוזניות."
 }

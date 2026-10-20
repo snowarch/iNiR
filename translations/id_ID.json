@@ -9518,5 +9518,13 @@
   "Lock & Login": "Kunci & Masuk",
   "Quietly": "Diam-diam",
   "Apps that notify": "Aplikasi yang memberi notifikasi",
-  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Setiap aplikasi yang mengirimi Anda sesuatu. Diam-diam menyimpannya di Hari ini tanpa banner atau suara; Jangan pernah membuangnya."
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Setiap aplikasi yang mengirimi Anda sesuatu. Diam-diam menyimpannya di Hari ini tanpa banner atau suara; Jangan pernah membuangnya.",
+  "Sound plays on": "Suara keluar lewat",
+  "Pick where the sound goes; the volume is the one in use.": "Pilih ke mana suara pergi; volumenya milik perangkat yang dipakai.",
+  "Pick the microphone apps hear; the level is the one in use.": "Pilih mikrofon yang didengar aplikasi; levelnya milik yang dipakai.",
+  "Apps playing": "Aplikasi yang berbunyi",
+  "Volume per app": "Volume per aplikasi",
+  "Every app making sound now. Another mixer moving one moves it here too.": "Setiap aplikasi yang bersuara sekarang. Jika mixer lain mengubahnya, di sini ikut berubah.",
+  "No microphone found.": "Mikrofon tidak ditemukan.",
+  "No speakers or headphones found.": "Speaker atau headphone tidak ditemukan."
 }

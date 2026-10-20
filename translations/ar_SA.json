@@ -9518,5 +9518,13 @@
   "Lock & Login": "القفل وتسجيل الدخول",
   "Quietly": "بهدوء",
   "Apps that notify": "التطبيقات التي ترسل إشعارات",
-  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "كل تطبيق أرسل لك شيئًا. «بهدوء» يحفظه في «اليوم» بلا لافتة ولا صوت؛ و«أبدًا» يتجاهله."
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "كل تطبيق أرسل لك شيئًا. «بهدوء» يحفظه في «اليوم» بلا لافتة ولا صوت؛ و«أبدًا» يتجاهله.",
+  "Sound plays on": "يخرج الصوت عبر",
+  "Pick where the sound goes; the volume is the one in use.": "اختر أين يذهب الصوت؛ مستوى الصوت هو للجهاز المستخدم.",
+  "Pick the microphone apps hear; the level is the one in use.": "اختر الميكروفون الذي تسمعه التطبيقات؛ المستوى هو للمستخدم حاليًا.",
+  "Apps playing": "تطبيقات تشغّل الصوت",
+  "Volume per app": "مستوى الصوت لكل تطبيق",
+  "Every app making sound now. Another mixer moving one moves it here too.": "كل تطبيق يصدر صوتًا الآن. إذا غيّره مازج آخر يتغيّر هنا أيضًا.",
+  "No microphone found.": "لم يُعثر على ميكروفون.",
+  "No speakers or headphones found.": "لم يُعثر على مكبرات صوت أو سماعات."
 }

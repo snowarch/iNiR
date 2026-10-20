@@ -363,6 +363,8 @@ Item {
     }
     function valueText(spec: var): string {
         if (spec.summary === false) return ""
+        // A list says what it holds now (the speakers in use, how many apps play).
+        if (typeof spec.summary === "function") return String(spec.summary() ?? "")
         const value = IrisOptions.currentValue(spec)
         switch (spec.kind) {
         case "switch": {

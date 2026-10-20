@@ -9518,5 +9518,13 @@
   "Lock & Login": "Khóa và đăng nhập",
   "Quietly": "Im lặng",
   "Apps that notify": "Ứng dụng gửi thông báo",
-  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Mỗi ứng dụng đã gửi cho bạn thứ gì đó. Im lặng giữ nó trong Hôm nay mà không có biểu ngữ hay âm thanh; Không bao giờ thì bỏ qua."
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Mỗi ứng dụng đã gửi cho bạn thứ gì đó. Im lặng giữ nó trong Hôm nay mà không có biểu ngữ hay âm thanh; Không bao giờ thì bỏ qua.",
+  "Sound plays on": "Âm thanh phát qua",
+  "Pick where the sound goes; the volume is the one in use.": "Chọn nơi âm thanh phát ra; âm lượng là của thiết bị đang dùng.",
+  "Pick the microphone apps hear; the level is the one in use.": "Chọn micrô mà ứng dụng nghe; mức là của micrô đang dùng.",
+  "Apps playing": "Ứng dụng đang phát",
+  "Volume per app": "Âm lượng từng ứng dụng",
+  "Every app making sound now. Another mixer moving one moves it here too.": "Mọi ứng dụng đang phát âm thanh. Nếu bộ trộn khác thay đổi một ứng dụng, ở đây cũng thay đổi theo.",
+  "No microphone found.": "Không tìm thấy micrô.",
+  "No speakers or headphones found.": "Không tìm thấy loa hoặc tai nghe."
 }
