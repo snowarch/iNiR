@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import Quickshell.Widgets
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -72,12 +73,20 @@ Item {
             visible: opacity > 0.001
             Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
         }
+        // The window itself, streamed over the still while Orbit is open.
+        LiveWindowCapture {
+            id: liveShot
+            anchors.fill: parent
+            windowId: root.windowId
+            active: GlobalStates.irisOrbitOpen && root.previews
+            opacity: root.minimised ? 0.55 : 1
+        }
         SmartAppIcon {
             anchors.centerIn: parent
             icon: IrisPieces.appIcon(root.appId)
             fallback: "application-x-executable"
             iconSize: Math.max(16, Math.min(56, Math.round(Math.min(root.width, root.height) * 0.36)))
-            opacity: 1 - shot.opacity
+            opacity: liveShot.streaming ? 0 : 1 - shot.opacity
             visible: opacity > 0.001
         }
 

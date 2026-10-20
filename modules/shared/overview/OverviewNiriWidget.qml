@@ -1197,6 +1197,14 @@ Item {
                             }
                         }
 
+                        // The window itself, streamed over the cached still while the overview is open.
+                        LiveWindowCapture {
+                            anchors.fill: windowPreview
+                            windowId: windowItem.windowId || -1
+                            active: GlobalStates.overviewOpen && parent.showPreviews
+                            fillMode: windowPreview.fillMode
+                        }
+
                         Rectangle {
                             anchors.fill: parent
                             anchors.margins: 2

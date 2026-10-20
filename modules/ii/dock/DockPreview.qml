@@ -252,6 +252,7 @@ PopupWindow {
                     delegate: DockWindowPreview {
                         required property var modelData
                         toplevel: modelData?.toplevel ?? null
+                        live: root.visible
                         onWindowActivated: {
                             if (!(Config.options?.dock?.keepPreviewOnClick ?? false))
                                 root.close()

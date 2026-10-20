@@ -17,6 +17,8 @@ Button {
     required property var toplevel
     property real previewWidthConstraint: 200
     property real previewHeightConstraint: 110
+    // Whether the preview is on screen: only then does the window stream.
+    property bool live: false
     padding: 6
     Layout.fillHeight: true
 
@@ -231,6 +233,18 @@ Button {
                         height: windowPreview.height
                         radius: Appearance.rounding.small
                     }
+                }
+            }
+
+            // The window itself, streamed over the still while the preview is open.
+            ClippingRectangle {
+                anchors.fill: windowPreview
+                radius: Appearance.rounding.small
+                color: "transparent"
+                LiveWindowCapture {
+                    anchors.fill: parent
+                    windowId: previewArea.windowId || -1
+                    active: root.live
                 }
             }
 
