@@ -1703,6 +1703,7 @@ run_logs() {
 ###############################################################################
 show_reboot_notice() {
     local reasons=("${INIR_REBOOT_REASONS[@]}") reason
+    for reason in "${reasons[@]}"; do inir_event reboot "$reason"; done
     local bar="══════════════════════════════════════════════════════════════"
     local reboot_cmd="systemctl reboot"
     if [[ "${OS_GROUP_ID:-}" == void ]]; then
@@ -1786,6 +1787,7 @@ run_install() {
     source ./sdata/subcmd-install/0.greeting.sh
 
     # Check conflicts
+    inir_event stage conflicts
     check_conflicts
 
     # Show tasuku-style task overview before starting
@@ -1803,6 +1805,7 @@ run_install() {
         tui_task_run 0 "packages, runtime, compositor"
         tui_task_finalize
         tui_step 1 3 "Installing dependencies" "Package managers, shell runtime pieces, and compositor requirements."
+        inir_event stage deps
         if ! source ./sdata/subcmd-install/1.deps-router.sh; then
             tui_error "Dependency installation failed"
             return 1
@@ -1826,6 +1829,7 @@ run_install() {
         tui_task_run 1 "groups, services, permissions"
         tui_task_finalize
         tui_step 2 3 "System configuration" "Groups, services, permissions, and machine-level integration."
+        inir_event stage system
         source ./sdata/subcmd-install/2.setups.sh
         echo ""
         tui_task_init \
@@ -1847,6 +1851,7 @@ run_install() {
         tui_task_run 2 "configs, backups, theming"
         tui_task_finalize
         tui_step 3 3 "Installing config files" "User configs, backups, wallpaper defaults, and generated theme inputs."
+        inir_event stage files
         source ./sdata/subcmd-install/3.files.sh
         echo ""
         tui_task_init \
@@ -1932,6 +1937,7 @@ run_install() {
     fi
 
     # Set version tracking for a real install.
+    inir_event stage finish
     tui_task_run 3 "recording version"
     set_installed_version "$(get_repo_version)" "$(get_repo_commit)" "setup"
     tui_task_done 3 "$(get_repo_version)"
@@ -3115,7 +3121,22 @@ fi
 # Run
 ###############################################################################
 case "$COMMAND" in
-    install) run_install ;;
+    install)
+        # A person at a terminal gets the inir binary's install wizard when it is here:
+        # it asks everything first and runs this same pipeline back (INIR_CLI_DELEGATED).
+        if [[ -z "${INIR_CLI_DELEGATED:-}" && -z "${INIR_NO_CLI:-}" ]] && $ask && [ -t 1 ]; then
+            _cli_args=(install "${SUBCMD_ARGS[@]}")
+            [[ "${INIR_SET_DEFAULT_SHELL:-}" == true ]] && _cli_args+=(--set-default-shell)
+            for _inir_cli in "${INIR_CLI:-}" "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" \
+                             /usr/local/lib/inir/inir /usr/lib/inir/inir; do
+                [[ -n "$_inir_cli" && -f "$_inir_cli" && -x "$_inir_cli" ]] || continue
+                shopt -s execfail
+                INIR_SETUP_DIR="$SCRIPT_DIR" exec "$_inir_cli" "${_cli_args[@]}"
+                shopt -u execfail
+            done
+        fi
+        run_install
+        ;;
     reinstall)
         for _arg in "${SUBCMD_ARGS[@]}"; do
             case "$_arg" in

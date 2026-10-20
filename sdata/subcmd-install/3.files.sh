@@ -92,8 +92,12 @@ esac
 #####################################################################################
 function auto_backup_configs(){
   local backup=false
-  case $ask in
-    false) [[ ! -d "$BACKUP_DIR" ]] && backup=true ;;
+  # INIR_BACKUP_CONFIGS (and the other INIR_* answers below) carry what the person
+  # already picked in the inir install wizard.
+  case "${INIR_BACKUP_CONFIGS:-}:$ask" in
+    yes:*) backup=true ;;
+    no:*) ;;
+    *:false) [[ ! -d "$BACKUP_DIR" ]] && backup=true ;;
     *)
       if tui_confirm "Backup existing configs to ${BACKUP_DIR}?" "yes"; then
         backup=true
@@ -388,8 +392,10 @@ fi
 # This MUST run AFTER theming templates are deployed above, because the distributed
 # config includes the SDDM sync post_hook template.
 if command -v sddm &>/dev/null; then
-  if [[ "${INSTALL_FIRSTRUN}" == true ]]; then
-    if [[ "${ask}" == "true" ]]; then
+  if [[ "${INSTALL_FIRSTRUN}" == true && "${INIR_INSTALL_SDDM_THEME:-}" == no ]]; then
+    log_info "Skipping ii-pixel-sddm setup"
+  elif [[ "${INSTALL_FIRSTRUN}" == true ]]; then
+    if [[ "${ask}" == "true" && -z "${INIR_INSTALL_SDDM_THEME:-}" ]]; then
       tui_info "Recommended: install ii-pixel-sddm login theme (matches iNiR lockscreen)."
       if tui_confirm "Install ii-pixel-sddm now?" "yes"; then
         extras_install_sddm_theme "yes" no
@@ -942,12 +948,12 @@ fi
 
 # Optional extra wallpapers (fresh install interactive only)
 INIR_WALLS_DEFAULT_OVERRIDE=""
-if [[ "${INSTALL_FIRSTRUN}" == true && "${ask}" == "true" ]]; then
-  if tui_confirm "Download and install iNiR-Walls wallpapers?" "no"; then
+if [[ "${INSTALL_FIRSTRUN}" == true && ( "${INIR_INSTALL_WALLS:-}" == yes || ( "${ask}" == "true" && -z "${INIR_INSTALL_WALLS:-}" ) ) ]]; then
+  if [[ "${INIR_INSTALL_WALLS:-}" == yes ]] || tui_confirm "Download and install iNiR-Walls wallpapers?" "no"; then
     EXTRAS_INIR_WALLS_FIRST_IMAGE=""
     extras_install_inir_walls
     INIR_WALLS_FIRST="${EXTRAS_INIR_WALLS_FIRST_IMAGE}"
-    if [[ -n "$INIR_WALLS_FIRST" ]] && tui_confirm "Replace iNiR default wallpaper selection with an iNiR-Walls wallpaper?" "yes"; then
+    if [[ -n "$INIR_WALLS_FIRST" ]] && { [[ "${INIR_INSTALL_WALLS:-}" == yes ]] || tui_confirm "Replace iNiR default wallpaper selection with an iNiR-Walls wallpaper?" "yes"; }; then
       INIR_WALLS_DEFAULT_OVERRIDE="$INIR_WALLS_FIRST"
       log_success "Default wallpaper source switched to iNiR-Walls"
     fi
@@ -957,8 +963,10 @@ fi
 # Optional monochrome icon theme (YAMIS by dirn-typo).
 # Preinstalled on fresh installs, but non-intrusive: only places the theme files
 # in user-scope. Does NOT change the user's icon theme — they switch via Settings.
-if [[ "${INSTALL_FIRSTRUN}" == true ]]; then
-  if [[ "${ask}" == "true" ]]; then
+if [[ "${INSTALL_FIRSTRUN}" == true && "${INIR_INSTALL_YAMIS:-}" == no ]]; then
+  log_info "Skipping YAMIS icons (can install later via './setup extras')"
+elif [[ "${INSTALL_FIRSTRUN}" == true ]]; then
+  if [[ "${ask}" == "true" && -z "${INIR_INSTALL_YAMIS:-}" ]]; then
     if tui_confirm "Install YAMIS monochrome icon theme? (~23 MiB, GPL-3, optional)" "yes"; then
       extras_install_yamis_icons
     else

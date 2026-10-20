@@ -115,23 +115,35 @@ function command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+# The inir binary's install wizard runs setup quietly and follows it through the
+# descriptor in INIR_EVENTS_FD: one "kind<TAB>text" line per thing worth showing.
+function inir_event() {
+  [[ -n "${INIR_EVENTS_FD:-}" ]] || return 0
+  local text="${2//$'\n'/ }"
+  printf '%s\t%s\n' "$1" "${text//$'\t'/ }" >&"${INIR_EVENTS_FD}" 2>/dev/null || true
+}
+
 function log_info() {
+  inir_event info "$1"
   if ! ${quiet:-false}; then
     echo -e "  ${STY_BLUE}→${STY_RST} $1"
   fi
 }
 
 function log_success() {
+  inir_event ok "$1"
   if ! ${quiet:-false}; then
     echo -e "  ${STY_GREEN}✓${STY_RST} $1"
   fi
 }
 
 function log_warning() {
+  inir_event warn "$1"
   echo -e "  ${STY_YELLOW}⚠${STY_RST} $1"
 }
 
 function log_error() {
+  inir_event error "$1"
   echo -e "  ${STY_RED}✗${STY_RST} $1" >&2
 }
 

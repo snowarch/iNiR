@@ -240,6 +240,7 @@ tui_subtitle() {
 
 tui_success() {
     local text="$1"
+    inir_event ok "$text"
     if $HAS_GUM; then
         echo "$ICON_CHECK $text" | gum style --foreground "$(_tui_color_value success)"
     else
@@ -249,6 +250,7 @@ tui_success() {
 
 tui_error() {
     local text="$1"
+    inir_event error "$text"
     if $HAS_GUM; then
         echo "$ICON_CROSS $text" | gum style --foreground "$(_tui_color_value error)"
     else
@@ -258,6 +260,7 @@ tui_error() {
 
 tui_warn() {
     local text="$1"
+    inir_event warn "$text"
     if $HAS_GUM; then
         echo "$ICON_WARN $text" | gum style --foreground "$(_tui_color_value warning)"
     else
@@ -267,6 +270,7 @@ tui_warn() {
 
 tui_info() {
     local text="$1"
+    inir_event info "$text"
     if $HAS_GUM; then
         echo "$ICON_INFO $text" | gum style --foreground "$(_tui_color_value info)"
     else
