@@ -1817,10 +1817,19 @@ Item {
                 else if (groupRow.folds) root.fold(groupRow.foldKey)
                 else root.openGroupNamed(groupRow.modelData.title)
             }
+            // Concentric with the card the rows lie in; cut like it under a chamfer.
+            IrisCutPlate {
+                anchors.fill: headerPlate
+                visible: IrisStyle.fieldChamfer
+                cutLength: IrisStyle.nestedCut(IrisStyle.chamferCut, headerPlate.anchors.margins)
+                color: headerPlate.color
+            }
             Rectangle {
+                id: headerPlate
                 anchors.fill: parent
                 anchors.margins: 3 * root.d
-                radius: IrisStyle.radiusRow
+                visible: !IrisStyle.fieldChamfer
+                radius: IrisStyle.concentric(IrisStyle.radiusTile, headerPlate.anchors.margins, IrisStyle.radiusRow)
                 color: header.pressed ? IrisStyle.fillActive : header.containsMouse ? IrisStyle.fillQuiet : "transparent"
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
             }
@@ -1963,10 +1972,18 @@ Item {
         Accessible.role: Accessible.Button
         Accessible.name: tune.open ? Translation.tr("Fewer settings") : Translation.tr("Fine-tune")
         Accessible.description: tune.names.join(", ")
+        IrisCutPlate {
+            anchors.fill: tunePlate
+            visible: IrisStyle.fieldChamfer
+            cutLength: IrisStyle.nestedCut(IrisStyle.chamferCut, tunePlate.anchors.margins)
+            color: tunePlate.color
+        }
         Rectangle {
+            id: tunePlate
             anchors.fill: parent
             anchors.margins: Math.round(4 * root.d)
-            radius: IrisStyle.radiusRow
+            visible: !IrisStyle.fieldChamfer
+            radius: IrisStyle.concentric(IrisStyle.radiusTile, tunePlate.anchors.margins, IrisStyle.radiusRow)
             color: tune.pressed ? IrisStyle.fillActive : tune.containsMouse ? IrisStyle.fillQuiet : "transparent"
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
         }

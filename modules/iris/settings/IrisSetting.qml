@@ -134,12 +134,20 @@ Item {
     implicitHeight: Math.max(Math.round(50 * root.d), layout.implicitHeight + Math.round(22 * root.d))
     enabled: !root.locked
 
+    IrisCutPlate {
+        anchors.fill: glow
+        visible: IrisStyle.fieldChamfer
+        opacity: glow.opacity
+        cutLength: IrisStyle.nestedCut(IrisStyle.chamferCut, glow.anchors.margins)
+        color: IrisStyle.tintFillHover(IrisStyle.accent)
+    }
     Rectangle {
         id: glow
         anchors.fill: parent
         anchors.margins: Math.round(4 * root.d)
-        radius: IrisStyle.radiusRow
-        color: IrisStyle.tintFillHover(IrisStyle.accent)
+        // Concentric with the group's card; cut like it under a chamfer (the plate above).
+        radius: IrisStyle.concentric(IrisStyle.radiusTile, glow.anchors.margins, IrisStyle.radiusRow)
+        color: IrisStyle.fieldChamfer ? "transparent" : IrisStyle.tintFillHover(IrisStyle.accent)
         opacity: 0
         SequentialAnimation {
             id: landingGlow

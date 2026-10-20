@@ -704,10 +704,22 @@ QtObject {
         const k = Math.max(0, Math.min(1, (reference.r + reference.g + reference.b) / 3 / 0.96))
         return ColorUtils.mix(root.text, root.surfaceOpaque, k)
     }
+    // The sheerest ink that lands on `target` over `base`: a fill instead of a plate. Laid on the body it reads the same
+    // as the opaque colour, and what the body draws under it (its lit edge, the light off the wallpaper) still shows.
+    function liftOver(target: color, base: color): color {
+        const t = Qt.color(target), b = Qt.color(base)
+        const need = (tc, bc) => tc > bc ? (tc - bc) / Math.max(0.0001, 1 - bc) : tc < bc ? (bc - tc) / Math.max(0.0001, bc) : 0
+        const a = Math.max(need(t.r, b.r), need(t.g, b.g), need(t.b, b.b))
+        if (a < 0.002) return Qt.rgba(b.r, b.g, b.b, 0)
+        const ink = (tc, bc) => Math.max(0, Math.min(1, bc + (tc - bc) / a))
+        return Qt.rgba(ink(t.r, b.r), ink(t.g, b.g), ink(t.b, b.b), Math.min(1, a) * t.a)
+    }
+    // Rules are ink, never paint: on solid the scheme's rule as the fill it is over the body, so Lines at 0 draws no
+    // line (it drew the body's own colour, a dark crack across every card and over the lit edge).
     readonly property color hairline: root.glassy ? ColorUtils.applyAlpha(root.text, Math.min(0.3, 0.08 * root.tweak("lines", 0, 2)))
-        : root.line(root.ruleOf(Qt.color(root.preset.hairline)))
+        : root.liftOver(root.line(root.ruleOf(Qt.color(root.preset.hairline))), root.surfaceOpaque)
     readonly property color hairlineStrong: root.glassy ? ColorUtils.applyAlpha(root.text, Math.min(0.45, 0.14 * root.tweak("lines", 0, 2)))
-        : root.line(root.ruleOf(Qt.color(root.preset.hairlineStrong)))
+        : root.liftOver(root.line(root.ruleOf(Qt.color(root.preset.hairlineStrong))), root.surfaceOpaque)
     readonly property color selection: root.accentContainer
     readonly property color selectionHover: root.tintFillHover(root.accent)
     readonly property color selectionText: root.inkOnAccentContainer
@@ -915,9 +927,12 @@ QtObject {
         return Lume.plateOver(root.glassTint, root.legibleVeil("glass", level, spread, 0))
     }
     readonly property color readingPlate: ColorUtils.applyAlpha(root.surfaceOpaque, root.placePlate)
-    readonly property color readingCard: root.glassy ? Lume.stack(root.readingPlate, root.surfaceHigh) : root.surfaceHigh
+    // On solid a reading surface is a fill too, the same colour on the bare body: as an opaque plate the sidebar hid the
+    // body's lit edge and its light on one half of the window and kept them on the other.
+    readonly property color readingCard: root.glassy ? Lume.stack(root.readingPlate, root.surfaceHigh)
+        : root.textured ? root.surfaceHigh : root.liftOver(root.surfaceHigh, root.surfaceOpaque)
     readonly property color readingSidebar: root.glassy
-        ? ColorUtils.applyAlpha(root.surfaceOpaque, Math.max(root.wallpaperVeil, root.placePlate)) : root.surfaceHigh
+        ? ColorUtils.applyAlpha(root.surfaceOpaque, Math.max(root.wallpaperVeil, root.placePlate)) : root.readingCard
 
     // Fixed meanings (a category, a section, today): one band of lightness and chroma for every hue, solved per scheme.
     readonly property var identitySet: root.washi?.identity ?? ({})
@@ -948,6 +963,18 @@ QtObject {
     }
     function concentricPad(outerRadius: real, floor: real): int {
         return Math.max(Math.round(floor), Math.round(outerRadius * 0.3 + 7 * root.density))
+    }
+    // A plate inset `inset` inside a body of radius `outer` rounds by what is left, so the gap stays even round the
+    // curve (a fixed radius there pinched or flared it); `floor` is its corner when that would vanish (HIG: concentric
+    // with a fallback). Under a chamfer every plate is square and the cut nests instead (`nestedCut`).
+    function concentric(outer: real, inset: real, floor: real): int {
+        if (root.fieldChamfer) return 0
+        return Math.max(Math.round(floor), Math.round(outer - inset))
+    }
+    // A 45° cut inset `inset` inside a cut of `outer`: the parallel edge, so the band between them is as wide on the
+    // diagonal as along the sides (outer − inset·(2 − √2)).
+    function nestedCut(outer: real, inset: real): int {
+        return Math.max(2, Math.round(outer - inset * (2 - Math.SQRT2)))
     }
     readonly property int radiusPanel: root.corner(30)   // Control Center, Settings frame
     readonly property int radiusSheet: root.corner(26)   // Spotlight, media card, wallpaper picker
