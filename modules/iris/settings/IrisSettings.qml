@@ -45,12 +45,45 @@ Item {
     readonly property real rowsMost: Math.round(760 * root.d)
     readonly property real besideGap: Math.round(20 * root.d)
     readonly property real besideMargin: Math.round(28 * root.d)
-    // By measure: stacked, the scene keeps the screen's proportions above rows of its own width and edges; only when the
-    // rows would not fit under it (a long area) does it go beside them, as tall as they run. A short area beside its
-    // scene left the scene a portrait crop and half the column bare (Notifications).
-    readonly property bool heroBeside: root.heroPinned && !root.split && !root.sceneDrawn && !root.landing && pageHero.stageAvailable
-        && detailBody.width - 2 * root.besideMargin - root.besideGap - root.rowsMost >= Math.round(340 * root.d)
-        && settingsRows.implicitHeight > detailBody.height - root.rowsMost * root.screenShape - root.stageCaption - Math.round(40 * root.d)
+    // The scene always keeps the screen's proportions; how it shares the page with the rows is measured, not fixed
+    // (DI38): stacked, one column as wide as the scene that fits above the rows; beside, the scene as large as the rows
+    // leave or as tall as the panel. Whichever leaves the least of the page bare wins (`relayout`).
+    property string pageMode: ""
+    property real besideSide: 0
+    property real besideRows: root.rowsMost
+    property real stackWidth: root.rowsMost
+    readonly property bool layoutable: root.heroPinned && !root.split && !root.sceneDrawn && !root.landing && pageHero.stageAvailable
+    readonly property bool heroBeside: root.layoutable && root.pageMode === "beside"
+    readonly property bool heroStacked: root.layoutable && root.pageMode === "stack"
+    readonly property var layoutInputs: [detailBody.width, detailBody.height, settingsRows.implicitHeight, root.layoutable, root.section, root.blocksShown]
+    onLayoutInputsChanged: Qt.callLater(root.relayout)
+    function relayout(): void {
+        // A page still arriving block by block is measured once it is whole.
+        if (!root.layoutable || (root.fedPage === root.pageKey && root.blocksShown < root.shownGroups.length)) {
+            if (!root.layoutable) root.pageMode = ""
+            return
+        }
+        const d = root.d
+        const W = detailBody.width, H = detailBody.height, k = root.screenShape, words = root.stageCaption
+        const rows = settingsRows.implicitHeight
+        const options = []
+        const column = Math.min(root.columnMost, W - 56 * d, (H - rows - words - 78 * d) / k)
+        if (column >= 520 * d) options.push({ mode: "stack", width: column, empty: W * H - column * (column * k + words + rows) })
+        for (const wanted of [root.rowsMost, 520 * d]) {
+            const side = Math.min(W - 2 * root.besideMargin - root.besideGap - wanted, (H - words - 26 * d) / k)
+            if (side < 340 * d) continue
+            const rowsWidth = Math.min(root.rowsMost, W - 2 * root.besideMargin - root.besideGap - side)
+            options.push({ mode: "beside", side: side, rows: rowsWidth, empty: W * H - side * (side * k + words) - rowsWidth * Math.min(rows, H) })
+        }
+        if (options.length === 0) { root.pageMode = ""; return }
+        let best = options.reduce((a, b) => b.empty < a.empty ? b : a)
+        // A layout already on screen stays unless the other is clearly better: rows rewrap when their width changes.
+        const kept = options.find(option => option.mode === root.pageMode)
+        if (kept && kept.empty <= best.empty * 1.05) best = kept
+        root.pageMode = best.mode
+        if (best.mode === "stack") root.stackWidth = Math.round(best.width)
+        else { root.besideSide = Math.round(best.side); root.besideRows = Math.round(best.rows) }
+    }
     readonly property real screenShape: {
         const screen = GlobalStates.focusedScreen
         return screen ? screen.height / Math.max(1, screen.width) : 0.5625
@@ -159,6 +192,7 @@ Item {
         // A scene is a picture of the screen: it may grow to the screen's own proportions, never taller.
         const screen = GlobalStates.focusedScreen
         const shape = screen ? screen.height / Math.max(1, screen.width) : 0.5625
+        if (root.heroStacked) return Math.round(root.stackWidth * shape)
         if (!root.split) {
             // iRiS's own head (DI38): a short area's scene takes the height its few rows leave empty.
             const room = detailBody.height - settingsRows.implicitHeight - pageHero.wordsHeight - Math.round(84 * root.d)
@@ -1395,7 +1429,7 @@ Item {
                                 visible: settingsFlick.visible && root.heroBeside
                                 x: root.besideMargin
                                 y: Math.round(6 * root.d)
-                                width: detailBody.width - 2 * root.besideMargin - root.besideGap - root.rowsMost
+                                width: root.besideSide
                                 height: detailBody.height - y - Math.round(20 * root.d)
 
                                 // Under the scene, the page's groups as its index: the one being read is marked as the rows
@@ -1492,7 +1526,7 @@ Item {
                                 anchors.fill: parent
                                 anchors.topMargin: root.heroPinned && !root.heroBeside ? heroPinSlot.y + heroPinSlot.height + Math.round(12 * root.d) : 0
                                 // Beside the scene the rows end a margin short of the window's edge (their column is centred in this).
-                                anchors.leftMargin: root.heroBeside ? detailBody.width - 2 * root.besideMargin - root.rowsMost : 0
+                                anchors.leftMargin: root.heroBeside ? detailBody.width - 2 * root.besideMargin - root.besideRows : 0
                                 // The pane's corners stay its own: the last rows stop short of the curve.
                                 anchors.bottomMargin: root.split ? Math.round(detailPane.radius / 2) : 0
                                 // Rows pass under the pinned head, never over it.
@@ -1519,7 +1553,8 @@ Item {
                                     id: settingsRows
                                     y: 6 * root.d
                                     // In the pane the rows run its width (their own inset keeps the text off its edge).
-                                    width: root.split ? settingsFlick.width - Math.round(16 * root.d) : Math.min(settingsFlick.width - 56 * root.d, root.generalHome ? root.columnMost : root.rowsMost)
+                                    width: root.split ? settingsFlick.width - Math.round(16 * root.d) : root.heroBeside ? root.besideRows : root.heroStacked ? root.stackWidth
+                                        : Math.min(settingsFlick.width - 56 * root.d, root.generalHome ? root.columnMost : root.rowsMost)
                                     x: Math.round((settingsFlick.width - width) / 2)
                                     spacing: 18 * root.d
 
