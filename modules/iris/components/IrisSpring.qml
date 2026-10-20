@@ -23,9 +23,11 @@ Item {
 
     property real target: 0
     property var segments: []
-    property real lastTime: 0
-    property real startedAt: 0
+    property real lastClock: -1
 
+    // The clock is the animation driver's own time (one loop a second), the time the step is drawn for. The wall
+    // clock read inside the tick wandered with whatever ran before it, so a frame could carry half a step and the
+    // next one and a half; FrameAnimation.frameTime is that same wall clock.
     property real clock: 0
     NumberAnimation on clock {
         running: root.running
@@ -65,8 +67,7 @@ Item {
     // tick that stepped nothing started every motion a frame late.
     function start(): void {
         if (root.running) return
-        root.lastTime = 0
-        root.startedAt = Date.now()
+        root.lastClock = -1
         root.running = true
     }
     function kick(): void {
@@ -93,10 +94,10 @@ Item {
 
     onClockChanged: {
         if (!root.running) return
-        const now = Date.now()
-        if (root.lastTime <= 0) root.lastTime = now - Math.min(16, now - root.startedAt)
-        const dt = Math.min(0.034, Math.max(0, (now - root.lastTime) / 1000))
-        root.lastTime = now
+        const at = root.clock
+        const ms = root.lastClock < 0 ? Math.min(16, at * 1000) : ((at - root.lastClock + 1) % 1) * 1000
+        root.lastClock = at
+        const dt = Math.min(0.034, ms / 1000)
         if (dt <= 0) return
         const p = root.params(root.to >= root.value ? "emerge" : "recede")
         if (p.response <= 0) { root.jump(); return }
