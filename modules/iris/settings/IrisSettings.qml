@@ -814,14 +814,14 @@ Item {
         y: root.windowed ? 0 : Math.round((parent.height - height) / 2)
         width: root.windowed ? parent.width
             // Wide enough for the columns to breathe (the group column and a pane where rows keep their answer column), never
-            // more than three quarters of the screen: Settings sits on the desktop, it does not replace it.
+            // more than four fifths of the screen: Settings sits on the desktop, it does not replace it.
             : Math.round(Math.min(parent.width - 32 - IrisFrame.musicReach("left") - IrisFrame.musicReach("right"),
-                Math.max(1000 * root.d, parent.width * 0.74), 1320 * root.d))
+                Math.max(1000 * root.d, parent.width * 0.8), 1560 * root.d))
         height: root.windowed ? parent.height
-            // As tall as the sidebar's list of every section (an area under the fold is an area nobody finds): its text
-            // keeps its size at any density, so the height is measured, never a number; the screen is the limit.
+            // Most of the screen's height, and never shorter than the sidebar's list: measured by the list alone, ten
+            // categories left a 640 px strip that cut every page at its second row.
             : Math.round(Math.min(parent.height - 48 - IrisFrame.musicReach("top") - IrisFrame.musicReach("bottom"),
-                Math.max(640 * root.d, root.sidebarNeed)))
+                Math.max(640 * root.d, parent.height * 0.86, root.sidebarNeed)))
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.BackButton | Qt.ForwardButton
@@ -1423,7 +1423,7 @@ Item {
                                     id: settingsRows
                                     y: 6 * root.d
                                     // In the pane the rows run its width (their own inset keeps the text off its edge).
-                                    width: root.split ? settingsFlick.width - Math.round(16 * root.d) : Math.min(settingsFlick.width - 56 * root.d, 820 * root.d)
+                                    width: root.split ? settingsFlick.width - Math.round(16 * root.d) : Math.min(settingsFlick.width - 56 * root.d, 1040 * root.d)
                                     x: Math.round((settingsFlick.width - width) / 2)
                                     spacing: 18 * root.d
 
@@ -1732,7 +1732,7 @@ Item {
         GridLayout {
             id: mosaic
             y: Math.round(8 * root.d)
-            width: root.split ? categoryPage.width - Math.round(16 * root.d) : Math.min(categoryPage.width - 56 * root.d, 860 * root.d)
+            width: root.split ? categoryPage.width - Math.round(16 * root.d) : Math.min(categoryPage.width - 56 * root.d, 1080 * root.d)
             x: Math.round((categoryPage.width - width) / 2)
             columns: 2
             columnSpacing: Math.round(12 * root.d)
