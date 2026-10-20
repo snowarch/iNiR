@@ -945,6 +945,7 @@ Scope {
                     id: glassBlurRegion
                     window: barWindow
                     shapes: barWindow.blurShapes
+                    beforeTake: () => islandLoader.item?.flushShapes?.()
                     framed: barWindow.frameBlurred
                     windowWidth: barWindow.width
                     windowHeight: barWindow.height

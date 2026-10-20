@@ -42,7 +42,10 @@ Region {
         root.settled = false
         settle.restart()
     }
+    // Lets a source that coalesces its own table bring it up to date before the region reads it.
+    property var beforeTake: null
     function take(): void {
+        root.beforeTake?.()
         if (!root.dirty) return
         root.dirty = false
         perFrame.stop()

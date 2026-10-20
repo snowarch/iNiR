@@ -1355,13 +1355,29 @@ Item {
         utility: root.auxiliary !== "none" && !root.floatsAlone(root.auxiliary)
             && (root.auxiliary !== "tray" || root.trayItems.length > 0) ? root.auxiliary : ""
     })
+    // Every moving part notifies on its own, about eleven times a frame in a morph, and each rebuilt the whole chassis
+    // chain. The table is rebuilt once per frame instead: before the chassis takes its blur (`flushShapes` from its
+    // polish) or, failing that, after the animations and before the field syncs. Same frame, never a turn later.
+    readonly property string shapeKey: [root.x, root.y, root.parent?.x ?? 0, root.parent?.y ?? 0,
+        chassis.x, chassis.width, chassis.bodyHeight, chassis.radius,
+        extension.x, extension.y, extension.width, extension.height,
+        leftSatellite.x, rightSatellite.x, auxiliarySatellite.x, leftSatellite.width,
+        badgePill.x, badgePill.y, badgePill.bodyWidth, badgePill.visible,
+        compactColumn.y, compactColumn.height].join()
+    property bool shapesDirty: false
+    property int shapeRevision: 0
+    onShapeKeyChanged: root.shapesDirty = true
+    function flushShapes(): void {
+        if (!root.shapesDirty) return
+        root.shapesDirty = false
+        root.shapeRevision++
+    }
+    Connections {
+        target: root.Window.window
+        function onAfterAnimating(): void { root.flushShapes() }
+    }
     readonly property var fieldShapes: {
-        void (root.x + root.y + (root.parent?.x ?? 0) + (root.parent?.y ?? 0)
-            + chassis.x + chassis.width + chassis.bodyHeight + chassis.radius
-            + extension.x + extension.y + extension.width + extension.height
-            + leftSatellite.x + rightSatellite.x + auxiliarySatellite.x + leftSatellite.width
-            + badgePill.x + badgePill.y + badgePill.bodyWidth + (badgePill.visible ? 1 : 0)
-            + compactColumn.y + compactColumn.height)
+        void root.shapeRevision
         const out = []
         if (root.suppressed || root.opacity <= 0.01) return out
         const melt = Math.min(1, Math.max(0, root.notchness))
