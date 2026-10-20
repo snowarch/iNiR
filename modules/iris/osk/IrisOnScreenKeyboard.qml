@@ -93,7 +93,7 @@ Scope {
             windowHeight: oskWindow.height
         }
 
-        RectangularShadow {
+        IrisBodyShadow {
             readonly property var rect: body.bodyRect
             x: rect.x
             y: rect.y + 6 * root.d * body.progress

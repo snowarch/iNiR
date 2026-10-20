@@ -385,7 +385,7 @@ Item {
                 return { glyph: "subject", tint: IrisStyle.identity.teal }
             }
 
-            RectangularShadow {
+            IrisBodyShadow {
                 x: surface.x + surface.lerp(surface.from.x, 0)
                 y: surface.y + surface.lerp(surface.from.y, 0) + 8 * stage.d * surface.progress
                 width: surface.lerp(surface.from.width, surface.width)

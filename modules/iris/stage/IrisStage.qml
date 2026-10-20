@@ -1399,7 +1399,7 @@ Item {
     }
     Shortcut { sequence: "Escape"; enabled: root.cardOpen; onActivated: root.closeCard() }
 
-    RectangularShadow {
+    IrisBodyShadow {
         readonly property var body: card.bodyRect
         x: body?.x ?? 0
         y: (body?.y ?? 0) + 6 * root.d

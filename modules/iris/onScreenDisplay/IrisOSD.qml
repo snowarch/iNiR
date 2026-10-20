@@ -257,7 +257,7 @@ Scope {
         IrisSpring { id: widthSpring; intent: "move"; surface: "osd"; to: osdWindow.targetWidth; animate: body.presentation > 0 }
         IrisSpring { id: heightSpring; intent: "move"; surface: "osd"; to: osdWindow.targetHeight; animate: body.presentation > 0 }
 
-        RectangularShadow {
+        IrisBodyShadow {
             readonly property var rect: body.bodyRect
             x: rect.x
             y: rect.y + (root.atTop ? 4 : 6) * osdWindow.d * body.progress

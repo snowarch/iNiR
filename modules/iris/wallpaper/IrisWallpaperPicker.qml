@@ -694,7 +694,7 @@ Item {
     Shortcut { sequence: "Alt+Up"; enabled: root.morphOpen && !root.online; onActivated: Wallpapers.navigateUp() }
 
 
-    RectangularShadow {
+    IrisBodyShadow {
         x: surface.x + surface.lerp(surface.from.x, 0)
         y: surface.y + surface.lerp(surface.from.y, 0) + 8 * root.d * surface.progress
         width: surface.lerp(surface.from.width, surface.width)

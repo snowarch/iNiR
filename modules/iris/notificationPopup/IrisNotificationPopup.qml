@@ -194,7 +194,7 @@ PanelWindow {
                 onCanceled: banner.settleSwipe()
             }
 
-            RectangularShadow {
+            IrisBodyShadow {
                 x: plate.x
                 y: plate.y + 4 * root.d
                 width: plate.width
