@@ -101,6 +101,10 @@ Singleton {
     function modeOf(output: var): string {
         return output ? `${output.current_resolution}@${output.current_rate_string}` : ""
     }
+    // Niri reports "Flipped90" and reads "flipped-90" in its config: one spelling, the config's.
+    function transformOf(out: var): string {
+        return String(out?.transform ?? "Normal").toLowerCase().replace(/^flipped(\d)/, "flipped-$1")
+    }
     function displayValue(key: string): var {
         const out = root.output
         if (key === "screen") return out?.name ?? ""
@@ -108,7 +112,7 @@ Singleton {
         if (key === "resolution") return out.current_resolution
         if (key === "rate") return out.current_rate_string
         if (key === "scale") return Number(out.scale)
-        if (key === "transform") return String(out.transform ?? "Normal").toLowerCase()
+        if (key === "transform") return root.transformOf(out)
         if (key === "vrr") return out.vrr_enabled ? String(out.vrr_mode ?? "on") : "off"
         if (key === "place") return root.placeOf(out, root.neighbour(out))
         return ""
@@ -119,7 +123,7 @@ Singleton {
     }
     function logicalRect(out: var): var {
         const size = String(out?.current_resolution ?? "0x0").split("x").map(Number)
-        const turned = ["90", "270", "flipped-90", "flipped-270"].includes(String(out?.transform ?? "").toLowerCase())
+        const turned = ["90", "270", "flipped-90", "flipped-270"].includes(root.transformOf(out))
         const scale = Number(out?.scale ?? 1) || 1
         return { x: Number(out?.position?.x ?? 0), y: Number(out?.position?.y ?? 0),
             width: Math.round((turned ? size[1] : size[0]) / scale), height: Math.round((turned ? size[0] : size[1]) / scale) }
@@ -147,7 +151,13 @@ Singleton {
             if (!base.includes(Number(out.scale))) base.push(Number(out.scale))
             return base.sort((a, b) => a - b).map(scale => ({ label: `${Math.round(scale * 100)} %`, value: scale }))
         }
-        if (key === "transform") return [{ label: "Normal", value: "normal" }, { label: "90°", value: "90" }, { label: "180°", value: "180" }, { label: "270°", value: "270" }]
+        if (key === "transform") {
+            const turns = [{ label: "Normal", value: "normal" }, { label: "90°", value: "90" }, { label: "180°", value: "180" }, { label: "270°", value: "270" }]
+            // A mirrored screen names its own turn instead of reading Custom.
+            const current = root.transformOf(out)
+            if (current.startsWith("flipped")) turns.push({ label: "Mirrored" + (current === "flipped" ? "" : " " + current.slice(8) + "°"), value: current })
+            return turns
+        }
         if (key === "vrr") return [{ label: "Off", value: "off" }, { label: "In games", value: "on-demand" }, { label: "Always", value: "on" }]
         if (key === "place") return [{ label: "Left", value: "left", glyph: "west" }, { label: "Right", value: "right", glyph: "east" }, { label: "Above", value: "above", glyph: "north" }, { label: "Below", value: "below", glyph: "south" }]
         return []
@@ -172,7 +182,7 @@ Singleton {
             wanted = `${out.current_resolution}@${wanted}`
             previous = root.modeOf(out)
         } else if (key === "scale") previous = String(out.scale)
-        else if (key === "transform") previous = String(out.transform ?? "Normal").toLowerCase()
+        else if (key === "transform") previous = root.transformOf(out)
         else if (key === "vrr") previous = out.vrr_enabled ? String(out.vrr_mode ?? "on") : "off"
         if (wanted === previous) return
         root.pending = { output: out.name, key: setting, value: wanted, previous: previous }
