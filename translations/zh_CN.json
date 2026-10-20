@@ -9507,5 +9507,6 @@
   "Hold to confirm": "长按确认",
   "%1 brings its own material.": "%1 自带材质。",
   "Show this block": "显示此区块",
-  "%1 brings its own layout.": "%1 自带布局。"
+  "%1 brings its own layout.": "%1 自带布局。",
+  "In screen pixels: 1 is the finest line your screen can draw.": "以屏幕像素计：1 是屏幕能画出的最细线条。"
 }

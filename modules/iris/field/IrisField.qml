@@ -13,7 +13,7 @@ Item {
     property var shapes: []
     property color tint: IrisStyle.bodySurface
     property color rim: IrisStyle.rim
-    property real rimWidth: IrisStyle.rimWidth
+    property real rimWidth: IrisStyle.edgeWidth
     property color sheen: IrisStyle.glassEdgeColour
     property real smoothing: IrisStyle.fuse
     property bool framed: IrisFrame.framed
@@ -216,8 +216,9 @@ Item {
         readonly property color rim: root.rim
         readonly property color sheen: root.sheen
         readonly property vector4d edgeGlass: IrisStyle.afterglow ? Qt.vector4d(0, 0, 1, 0)
-            : Qt.vector4d(IrisStyle.glassEdgeLight, IrisStyle.glassEdgeLine, Math.max(1, Math.round(IrisStyle.glassEdgeWidth * IrisStyle.density)), IrisStyle.edgeLit ? 1 : 0)
-        readonly property vector4d edge: Qt.vector4d(root.rimWidth, root.rim.a > 0 ? 1 : 0, 0, 0)
+            : Qt.vector4d(IrisStyle.glassEdgeLight, IrisStyle.glassEdgeLine, IrisStyle.edgeWidth, IrisStyle.edgeLit ? 1 : 0)
+        // z: one device pixel in the field's units; both edges are drawn that many pixels wide.
+        readonly property vector4d edge: Qt.vector4d(root.rimWidth, root.rim.a > 0 ? 1 : 0, IrisStyle.devicePx, 0)
         readonly property vector4d glowMix: IrisStyle.afterglowMix
         readonly property vector4d glowShadow: IrisStyle.afterglowShadow
         readonly property vector4d glowLight: IrisStyle.afterglowLight

@@ -9507,5 +9507,6 @@
   "Hold to confirm": "길게 눌러 확인",
   "%1 brings its own material.": "%1은(는) 자체 소재를 사용합니다.",
   "Show this block": "이 블록 표시",
-  "%1 brings its own layout.": "%1은(는) 자체 레이아웃을 사용합니다."
+  "%1 brings its own layout.": "%1은(는) 자체 레이아웃을 사용합니다.",
+  "In screen pixels: 1 is the finest line your screen can draw.": "화면 픽셀 단위: 1은 화면이 그릴 수 있는 가장 얇은 선입니다."
 }

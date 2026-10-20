@@ -9507,5 +9507,6 @@
   "Hold to confirm": "Nhấn giữ để xác nhận",
   "%1 brings its own material.": "%1 có chất liệu riêng.",
   "Show this block": "Hiện khối này",
-  "%1 brings its own layout.": "%1 có bố cục riêng."
+  "%1 brings its own layout.": "%1 có bố cục riêng.",
+  "In screen pixels: 1 is the finest line your screen can draw.": "Tính bằng điểm ảnh màn hình: 1 là nét mảnh nhất màn hình của bạn có thể vẽ."
 }

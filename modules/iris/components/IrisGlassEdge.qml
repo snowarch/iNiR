@@ -10,7 +10,7 @@ import qs.modules.iris.style
 Item {
     id: root
     property real radius: 0
-    readonly property real lineWidth: Math.max(1, Math.round(IrisStyle.glassEdgeWidth * IrisStyle.density))
+    readonly property real lineWidth: IrisStyle.edgeWidth * IrisStyle.devicePx
     readonly property bool shown: IrisStyle.glassEdgeLight > 0 || IrisStyle.glassEdgeLine > 0
     visible: root.shown
 

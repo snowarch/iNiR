@@ -9507,5 +9507,6 @@
   "Hold to confirm": "اضغط مطولًا للتأكيد",
   "%1 brings its own material.": "يأتي %1 بمادته الخاصة.",
   "Show this block": "إظهار هذه الكتلة",
-  "%1 brings its own layout.": "يأتي %1 بتخطيطه الخاص."
+  "%1 brings its own layout.": "يأتي %1 بتخطيطه الخاص.",
+  "In screen pixels: 1 is the finest line your screen can draw.": "بكسلات الشاشة: 1 هو أرفع خط يمكن لشاشتك رسمه."
 }

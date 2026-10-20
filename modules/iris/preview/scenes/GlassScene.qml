@@ -61,7 +61,7 @@ PreviewScene {
         radius: IrisStyle.radiusSheet
         color: IrisStyle.glassy ? "transparent" : IrisStyle.bodySurface
         // Edges › Style Line: the rim a real body wears, in the same colour and width.
-        border.width: IrisStyle.rim.a > 0 ? IrisStyle.rimWidth : 0
+        border.width: IrisStyle.rim.a > 0 ? IrisStyle.edgeWidth : 0
         border.color: IrisStyle.rim
         ShaderEffectSource {
             id: paneSource
@@ -124,7 +124,7 @@ PreviewScene {
         // On the Edges page the head names the edge; on Glass, what the glass lies over.
         text: glassRoot.group === "Edges"
             ? (IrisStyle.edgeLit ? Translation.tr("Lit edges, like glass catching the light")
-                : IrisStyle.rim.a > 0 ? Translation.tr("A %1 px line round every surface").arg(IrisStyle.rimWidth)
+                : IrisStyle.rim.a > 0 ? Translation.tr("A %1 px line round every surface").arg(IrisStyle.edgeWidth)
                 : IrisStyle.edgeStyle === "line" ? Translation.tr("No line: Lines is at 0 %")
                 : Translation.tr("No edge line"))
             : glassRoot.viaNiri ? Translation.tr("Blur over your windows")

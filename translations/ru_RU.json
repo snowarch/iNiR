@@ -9507,5 +9507,6 @@
   "Hold to confirm": "Удерживайте для подтверждения",
   "%1 brings its own material.": "%1 приносит свой материал.",
   "Show this block": "Показать этот блок",
-  "%1 brings its own layout.": "%1 приносит свой макет."
+  "%1 brings its own layout.": "%1 приносит свой макет.",
+  "In screen pixels: 1 is the finest line your screen can draw.": "В пикселях экрана: 1 — самая тонкая линия, которую может нарисовать ваш экран."
 }

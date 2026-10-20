@@ -9507,5 +9507,6 @@
   "Hold to confirm": "Tahan untuk mengonfirmasi",
   "%1 brings its own material.": "%1 membawa materialnya sendiri.",
   "Show this block": "Tampilkan blok ini",
-  "%1 brings its own layout.": "%1 membawa tata letaknya sendiri."
+  "%1 brings its own layout.": "%1 membawa tata letaknya sendiri.",
+  "In screen pixels: 1 is the finest line your screen can draw.": "Dalam piksel layar: 1 adalah garis tertipis yang bisa digambar layar Anda."
 }

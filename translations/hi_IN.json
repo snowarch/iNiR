@@ -9507,5 +9507,6 @@
   "Hold to confirm": "पुष्टि के लिए दबाए रखें",
   "%1 brings its own material.": "%1 अपनी सामग्री लाता है।",
   "Show this block": "यह ब्लॉक दिखाएँ",
-  "%1 brings its own layout.": "%1 अपना लेआउट लाता है।"
+  "%1 brings its own layout.": "%1 अपना लेआउट लाता है।",
+  "In screen pixels: 1 is the finest line your screen can draw.": "स्क्रीन पिक्सेल में: 1 सबसे पतली रेखा है जो आपकी स्क्रीन बना सकती है।"
 }

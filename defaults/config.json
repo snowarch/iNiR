@@ -2488,7 +2488,6 @@
                 "blur": 100,
                 "edgeLight": 34,
                 "edgeLine": 10,
-                "edgeWidth": 1.5,
                 "edgeColour": "scene"
             },
             "theme": {

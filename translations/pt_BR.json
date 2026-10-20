@@ -9507,5 +9507,6 @@
   "Hold to confirm": "Segure para confirmar",
   "%1 brings its own material.": "%1 traz seu próprio material.",
   "Show this block": "Mostrar este bloco",
-  "%1 brings its own layout.": "%1 traz sua própria disposição."
+  "%1 brings its own layout.": "%1 traz sua própria disposição.",
+  "In screen pixels: 1 is the finest line your screen can draw.": "Em pixels da tela: 1 é a linha mais fina que sua tela consegue desenhar."
 }

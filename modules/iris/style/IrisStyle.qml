@@ -517,7 +517,6 @@ QtObject {
     // The cut edge of Blur glass (IrisField.frag): lit where it faces up, a line elsewhere.
     readonly property real glassEdgeLight: Math.max(0, Math.min(1, Number(root.glassOptions?.edgeLight ?? 34) / 100))
     readonly property real glassEdgeLine: Math.max(0, Math.min(0.6, Number(root.glassOptions?.edgeLine ?? 10) / 100))
-    readonly property real glassEdgeWidth: Math.max(0.5, Math.min(3, Number(root.glassOptions?.edgeWidth ?? 1.5)))
     readonly property color glassEdgeColour: {
         const name = String(root.glassOptions?.edgeColour ?? "scene")
         if (name === "white") return Qt.rgba(1, 1, 1, 1)
@@ -773,7 +772,13 @@ QtObject {
         : root.rimTint === "accent" ? ColorUtils.applyAlpha(root.accent, Math.min(0.9, 0.3 + 0.3 * root.tweak("lines", 0, 2)))
         : root.rimTint === "highlight" ? ColorUtils.applyAlpha(root.secondaryAccent, Math.min(0.9, 0.3 + 0.3 * root.tweak("lines", 0, 2)))
         : root.border
-    readonly property int rimWidth: Math.max(1, Math.round(Math.max(1, Math.min(3, Number(root.theme?.rimWidth ?? 1))) * root.density))
+    // One edge width for every body, the line and the lit glass edge alike, counted in device pixels: 1 is the sharpest
+    // line the screen can draw at any scale (a logical pixel at 1.5x was a smeared 1.5 px band). Two knobs used to
+    // disagree: the line at 1 px, the glass edge at 2.
+    readonly property int edgeWidth: Math.max(1, Math.min(3, Math.round(Number(root.theme?.rimWidth ?? 1))))
+    // One device pixel in logical pixels, on the densest screen (a finer line on the others beats a blurred one there).
+    readonly property real deviceRatio: Math.max(1, ...(Quickshell.screens ?? []).map(s => Number(s?.devicePixelRatio ?? 1) || 1))
+    readonly property real devicePx: 1 / root.deviceRatio
     readonly property real glow: Math.max(0, Math.min(1, Number(root.theme?.glow ?? 0) / 100))
     readonly property color onTint: "#ffffff"
     readonly property color inkOnPale: "#101318"

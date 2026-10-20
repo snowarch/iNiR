@@ -9507,5 +9507,6 @@
   "Hold to confirm": "長押しで確定",
   "%1 brings its own material.": "%1 は独自の材質を使います。",
   "Show this block": "このブロックを表示",
-  "%1 brings its own layout.": "%1 は独自のレイアウトを使います。"
+  "%1 brings its own layout.": "%1 は独自のレイアウトを使います。",
+  "In screen pixels: 1 is the finest line your screen can draw.": "画面のピクセル単位：1 が画面に描ける最も細い線です。"
 }

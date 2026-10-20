@@ -4171,7 +4171,7 @@ Singleton {
                         property bool rim: true     // the hairline around the field's silhouette
                         property string edges: "line" // the edge every body wears: "line" (the hairline) or "light" (lit from above like glass); rim false turns it off
                         property string rimTint: "neutral" // that hairline's ink: "neutral", "accent" or "highlight"
-                        property int rimWidth: 1    // its width, 1-3 px
+                        property int rimWidth: 1    // the width of every body's edge, line or lit glass: 1-3 device pixels
                         property int glow: 0        // how much shadows take the accent colour, 0-100
                         property int accentHue: 212    // accent "custom": its hue, 0-359
                         property int highlightHue: 32  // highlight "custom": its hue, 0-359
@@ -4205,11 +4205,9 @@ Singleton {
                         property string mode: "off" // "off", "wallpaper" (the output's wallpaper, blurred) or "compositor" (Niri blurs what is below)
                         property int tint: 58       // how much of the material stays over the glass, 0-100
                         property int blur: 100      // wallpaper glass blur, % of the maximum
-                        // The cut edge of Blur glass: light where it faces up, a line elsewhere (%), its width (px)
-                        // and colour ("scene" = the wallpaper's light, "white", "accent", "highlight").
+                        // The cut edge of Blur glass: light where it faces up, a line elsewhere (%) and colour ("scene" = the wallpaper's light, "white", "accent", "highlight").
                         property int edgeLight: 34
                         property int edgeLine: 10
-                        property real edgeWidth: 1.5
                         property string edgeColour: "scene"
                     }
                     // Per surface: its own corners (0 = the family's) and its light

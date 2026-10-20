@@ -772,7 +772,10 @@ void main() {
         float depth = -united;
         vec2 g = unitedSlope;
         float facing = clamp(-g.y / max(length(g), 1e-4), 0.0, 1.0);
-        float lip = coverage * (1.0 - smoothstep(u.edgeGlass.z - 0.5, u.edgeGlass.z + 0.5, depth));
+        // Both edges are counted in device pixels (u.edge.z: one of them in the field's units), so 1 stays one crisp
+        // screen pixel at any output scale.
+        float px = max(u.edge.z, 0.05);
+        float lip = coverage * (1.0 - smoothstep((u.edgeGlass.z - 0.5) * px, (u.edgeGlass.z + 0.5) * px, depth));
         float seal = lip * mix(u.edgeGlass.y, u.edgeGlass.x, facing * facing) * glassShare * u.sheen.a * u.qt_Opacity;
         colour = u.sheen.rgb * seal + colour * (1.0 - seal);
         alpha = seal + alpha * (1.0 - seal);
@@ -780,7 +783,8 @@ void main() {
     if (u.edge.y > 0.5) {
         // A band just inside the silhouette, so it lands on the body's own edge
         // rather than half outside it.
-        float inner = 1.0 - smoothstep(-0.7, 0.7, united + max(0.5, u.edge.x));
+        float px = max(u.edge.z, 0.05);
+        float inner = 1.0 - smoothstep(-0.7 * px, 0.7 * px, united + max(0.5, u.edge.x) * px);
         float rimAlpha = max(0.0, coverage - inner) * u.rim.a * u.qt_Opacity;
         colour = u.rim.rgb * rimAlpha + colour * (1.0 - rimAlpha);
         alpha = rimAlpha + alpha * (1.0 - rimAlpha);
