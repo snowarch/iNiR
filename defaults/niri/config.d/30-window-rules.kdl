@@ -47,13 +47,10 @@ window-rule {
     default-column-width {}
 }
 
-// Firefox / Zen: picture-in-picture window opens floating.
+// Picture-in-picture opens floating: Firefox and Zen title it "Picture-in-Picture", Chromium browsers
+// "Picture in picture" and, before Brave 1.96, with no app-id at all, so the title alone decides.
 window-rule {
-    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
-    open-floating true
-}
-window-rule {
-    match app-id=r#"zen$"# title="^Picture-in-Picture$"
+    match title=r#"(?i)^picture.in.picture$"#
     open-floating true
 }
 
