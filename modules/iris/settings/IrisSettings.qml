@@ -1671,7 +1671,7 @@ Item {
             radius: IrisStyle.plateSelection ? 0 : sectionRow.washRadius
             color: sectionRow.selected && !sectionRow.travels ? (IrisStyle.plateSelection ? IrisStyle.selectionFill : IrisStyle.tintFillHover(IrisStyle.accent))
                 : sectionRow.selected ? "transparent"
-                : sectionRow.containsMouse ? IrisStyle.fillHover : "transparent"
+                : sectionRow.containsMouse ? IrisStyle.fillQuiet : "transparent"
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
             IrisSquircle {
                 id: sectionMark
@@ -1745,6 +1745,8 @@ Item {
         property bool wide: false
         readonly property bool pictured: scene.item?.available ?? false
         readonly property real round: IrisStyle.fieldChamfer ? 0 : IrisStyle.radiusTile + Math.round(6 * root.d)
+        readonly property real inset: Math.round(6 * root.d)
+        readonly property real band: Math.round(62 * root.d)
         Layout.columnSpan: tile.wide ? 2 : 1
         Layout.fillWidth: true
         Layout.preferredWidth: 1
@@ -1758,10 +1760,16 @@ Item {
         scale: tile.pressed ? 0.985 : 1
         Behavior on scale { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
 
-        // An area with no scene of its own wears its hue as a wash with its mark large in it.
         Rectangle {
             anchors.fill: parent
             radius: tile.round
+            color: tile.containsMouse ? IrisStyle.fillQuiet : IrisStyle.readingCard
+            Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+        }
+        // An area with no scene of its own wears its hue as a wash with its mark large in it.
+        Rectangle {
+            anchors.fill: scene
+            radius: IrisStyle.concentric(tile.round, tile.inset, IrisStyle.radiusRow)
             visible: !tile.pictured
             gradient: Gradient {
                 orientation: Gradient.Vertical
@@ -1779,36 +1787,29 @@ Item {
         }
         Loader {
             id: scene
+            // The scene inset in the tile like a picture in its mount, concentric with it; the words have the band under it.
             anchors.fill: parent
+            anchors.margins: tile.inset
+            anchors.bottomMargin: tile.band
             asynchronous: true
             sourceComponent: IrisGroupPreview {
                 compact: true
                 niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
                 niriRevision: IrisNiri.revision
-                radius: tile.round
+                radius: IrisStyle.concentric(tile.round, tile.inset, IrisStyle.radiusRow)
                 section: tile.modelData.id
                 group: ""
                 playing: tile.containsMouse && root.landing && GlobalStates.settingsOverlayOpen
-            }
-        }
-        // The name reads over the picture on a shade that rises from the tile's foot.
-        Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: Math.round(parent.height * 0.5)
-            bottomLeftRadius: tile.round
-            bottomRightRadius: tile.round
-            gradient: Gradient {
-                GradientStop { position: 0; color: "transparent" }
-                GradientStop { position: 1; color: Qt.rgba(0, 0, 0, tile.pictured ? 0.62 : 0) } // iris-literal: a shade under words on a picture
             }
         }
         ColumnLayout {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.margins: Math.round(16 * root.d)
+            anchors.leftMargin: Math.round(14 * root.d)
+            anchors.rightMargin: Math.round(14 * root.d)
+            anchors.bottomMargin: Math.round((tile.band - tileWords.implicitHeight) / 2)
+            id: tileWords
             spacing: Math.round(2 * root.d)
             RowLayout {
                 spacing: Math.round(8 * root.d)
@@ -1821,7 +1822,6 @@ Item {
                 IrisText {
                     Layout.fillWidth: true
                     text: Translation.tr(tile.modelData.title)
-                    color: tile.pictured ? "white" : IrisStyle.text // iris-literal: words on the shade
                     font.family: IrisStyle.fontTitle
                     font.pixelSize: IrisStyle.typeTitle
                     font.weight: IrisStyle.weight(Font.Bold)
@@ -1832,7 +1832,7 @@ Item {
             IrisText {
                 Layout.fillWidth: true
                 text: Translation.tr(tile.modelData.subtitle ?? "")
-                color: tile.pictured ? Qt.rgba(1, 1, 1, 0.78) : IrisStyle.muted // iris-literal: words on the shade
+                color: IrisStyle.muted
                 font.pixelSize: IrisStyle.typeMeta
                 elide: Text.ElideRight
             }
@@ -1934,8 +1934,11 @@ Item {
         // Measured on the pane, not on itself: its width follows whether it is pinned, which follows this.
         readonly property bool staged: hero.stageAvailable && (hero.column || (root.split ? detailBody.width : settingsRows.width) > 560 * root.d)
         // In the pane or the column: the scene across the top, its line under it.
-        readonly property bool banner: (root.split && hero.staged) || hero.column
-        readonly property real stageH: hero.column ? root.columnStageHeight : root.stageHeight
+        // On iRiS's own page too (DI24b): the scene across the head at a size that shows it, its words on a band of their
+        // own under it, never over the picture nor squeezed beside a thumbnail.
+        readonly property bool wideHead: !root.sceneDrawn && !hero.column && !root.split && hero.staged
+        readonly property bool banner: (root.split && hero.staged) || hero.column || hero.wideHead
+        readonly property real stageH: hero.column ? root.columnStageHeight : hero.wideHead ? Math.round(196 * root.d) : root.stageHeight
         // On a Design's page the scene stands alone: the page already says what it shows.
         readonly property bool bare: root.sceneDrawn && hero.column
         Layout.fillWidth: true
