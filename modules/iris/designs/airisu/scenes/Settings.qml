@@ -79,15 +79,17 @@ Item {
         const most = ground + (sheet - ground) * 0.45 // iris-literal: the ground stands under the sheet by half their step
         return glass <= most || glass - ground < 0.001 ? 0 : Math.min(1, (glass - most) / (glass - ground))
     }
+    // The glass's lit edge: a band this wide shows all round the window, the index's side too (the cover stood flush
+    // and cut the band off on three sides of it).
+    readonly property int lip: IrisStyle.glassy ? 2 * Airisu.hair : 0
     ALacquer {
-        readonly property int lip: IrisStyle.glassy ? 2 * Airisu.hair : 0
         visible: IrisStyle.glassy || !IrisStyle.light
-        x: lip
-        y: lip
-        width: edge.x - lip
-        height: root.height - 2 * lip
+        x: root.lip
+        y: root.lip
+        width: edge.x - root.lip
+        height: root.height - 2 * root.lip
         lacquer: ColorUtils.applyAlpha(root.floor, Math.max(IrisStyle.placePlate, root.floorPlate))
-        cut: Airisu.chamfer - Math.round(lip * (2 - Math.SQRT2))
+        cut: IrisStyle.nestedCut(Airisu.chamfer, root.lip)
         cutTopRight: false
     }
 
@@ -115,6 +117,7 @@ Item {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.right: parent.right
+        anchors.margins: root.lip
         width: Math.max(root.u(44), Math.min(root.u(58), Math.ceil(edge.names) + root.u(11) + root.u(4)))
         FontMetrics {
             id: tabFont
@@ -123,7 +126,7 @@ Item {
             font.weight: Font.Medium
         }
         lacquer: edge.stock
-        cut: Airisu.chamfer
+        cut: IrisStyle.nestedCut(Airisu.chamfer, root.lip)
         // Cut only where the body is: its upper-right corner. Its foot stands inside the body's square edge.
         cutBottomLeft: false
 

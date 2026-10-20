@@ -30,7 +30,10 @@ Item {
     readonly property int cells: root.nearby.length + 1
     readonly property real cellW: Math.floor((root.width - (root.cells - 1) * root.u(2)) / Math.max(1, root.cells))
     readonly property real cellH: Math.round(root.cellW * 10 / 16)
-    implicitHeight: root.plateH + Airisu.offset + (root.nearby.length > 1 ? root.u(5) + root.cellH + root.u(1) : 0)
+    // The head is as tall as the taller of the plate and the words: a narrow sheet wraps the keys under each other, and
+    // words centred on a shorter plate rose over the sheet's top and lost the greeting to its edge.
+    readonly property real headH: Math.max(root.plateH + Airisu.offset, words.implicitHeight)
+    implicitHeight: root.headH + (root.nearby.length > 1 ? root.u(5) + root.cellH + root.u(1) : 0)
 
     // ── The plate: the desktop now.
     ALacquer {
@@ -81,8 +84,8 @@ Item {
     Column {
         id: words
         x: root.plateW + root.u(7)
+        y: Math.max(0, Math.round((root.plateH - words.implicitHeight) / 2))
         width: root.width - x
-        anchors.verticalCenter: plate.verticalCenter
         spacing: 0
         AText {
             width: parent.width
@@ -116,7 +119,8 @@ Item {
             size: IrisStyle.typeMeta
             text: String(root.host?.facts ?? "")
         }
-        Row {
+        Flow {
+            width: parent.width
             topPadding: root.u(4)
             spacing: root.u(1.5)
             Key {
@@ -137,7 +141,7 @@ Item {
     // ── The strip: the wallpapers next in the folder, and the way to all of them.
     Row {
         visible: root.nearby.length > 1
-        y: root.plateH + Airisu.offset + root.u(5)
+        y: root.headH + root.u(5)
         spacing: root.u(2)
         Repeater {
             model: root.nearby
