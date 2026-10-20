@@ -43,7 +43,7 @@ Item {
     readonly property color inkSecond: Airisu.inkSecondOn(root.lacquer)
     readonly property color inkThird: Airisu.inkThirdOn(root.lacquer)
     readonly property color caution: Airisu.tape
-    readonly property int head: root.critical ? Airisu.u(1) : Airisu.strong
+    readonly property real head: root.critical ? Airisu.u(1) : Airisu.strong
     readonly property int foot: root.critical ? 0 : Math.max(2, Math.round(3 * root.d))
     readonly property int stubHeight: Airisu.u(9)
     readonly property bool stubbed: root.actions.length > 0

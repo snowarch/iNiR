@@ -140,8 +140,11 @@ QtObject {
     function cutFor(h: real): int { return Math.max(2, Math.min(2 * root.m, Math.round(h / 4))) }
 
     // ── Strokes.
-    readonly property int hair: Math.max(1, Math.round(root.d))
-    readonly property int strong: Math.max(2, Math.round(2 * root.d))
+    // Counted in screen pixels, like IrisStyle.edgeWidth: a logical pixel at 1.5x printed every rule as a smeared band.
+    readonly property real hair: Math.max(1, Math.round(root.d)) * IrisStyle.devicePx
+    readonly property real strong: Math.max(2, Math.round(2 * root.d)) * IrisStyle.devicePx
+    // How far a pressed print slips off its register: a move, so it stays on the logical grid.
+    readonly property int nudge: Math.max(1, Math.round(root.d))
     readonly property int offset: Math.max(2, Math.round(2 * root.d))  // a print's hard offset shadow
     // ── Chosen (選). What is picked among choices (a box of a form, the switch's taken cell, the open tab of an index) is
     // lacquered in the selection's pigment with its ink cut out of it, as a lit control is. A plate in the ink's own colour

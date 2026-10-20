@@ -10,7 +10,7 @@ Item {
     property color color: Airisu.ink
     property int gap: Airisu.m
     property int arm: Math.max(3, Math.min(2 * Airisu.m, Math.round(Math.min(root.width, root.height) / 3)))
-    property int stroke: Airisu.hair
+    property real stroke: Airisu.hair
 
     property real reach: root.shown ? root.gap : 2 * root.gap
     Behavior on reach {

@@ -65,7 +65,7 @@ Item {
             readonly property string swatch: String(box.modelData.swatch ?? "")
             readonly property color ink: box.chosen ? (root.available ? Airisu.inkOnChosen : Airisu.ink)
                 : root.available ? Airisu.inkSecond : Airisu.inkThird
-            readonly property int run: root.pressedIndex === box.index && root.available ? Airisu.hair : 0
+            readonly property int run: root.pressedIndex === box.index && root.available ? Airisu.nudge : 0
             x: root.edge(box.index)
             width: root.edge(box.index + 1) - x
             height: root.height

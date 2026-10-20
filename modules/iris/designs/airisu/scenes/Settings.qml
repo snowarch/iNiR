@@ -81,7 +81,7 @@ Item {
     }
     // The glass's lit edge: a band this wide shows all round the window, the index's side too (the cover stood flush
     // and cut the band off on three sides of it).
-    readonly property int lip: IrisStyle.glassy ? 2 * Airisu.hair : 0
+    readonly property real lip: IrisStyle.glassy ? 2 * Airisu.hair : 0
     ALacquer {
         visible: IrisStyle.glassy || !IrisStyle.light
         x: root.lip

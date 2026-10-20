@@ -24,7 +24,7 @@ Item {
     readonly property real d: Airisu.d
     readonly property int glyphSize: Math.round((root.compact ? 15 : 17) * root.d)
     readonly property color ink: root.usable ? Airisu.ink : Airisu.inkThird
-    readonly property int shift: root.pressed ? Airisu.hair : 0
+    readonly property int shift: root.pressed ? Airisu.nudge : 0
     implicitWidth: row.implicitWidth + Airisu.u(6)
 
     ALacquer {

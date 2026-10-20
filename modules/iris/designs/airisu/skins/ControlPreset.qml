@@ -24,7 +24,7 @@ Item {
     readonly property int pad: Airisu.u(3)
     readonly property color face: root.chosen ? IrisStyle.selectionFill : Airisu.groundRaised
     readonly property color mark: root.chosen ? Airisu.inkSecondOn(root.face) : Airisu.inkThird
-    readonly property int run: root.pressed ? Airisu.hair : 0
+    readonly property int run: root.pressed ? Airisu.nudge : 0
 
     AKey {
         anchors.fill: parent

@@ -161,8 +161,8 @@ Item {
                     width: parent.width
                     height: root.cellH
                     // The pointer and the press move the print, never shrink it: a hair up, then down and right.
-                    y: shot.pressed ? Airisu.hair : shot.containsMouse && !shot.chosen ? -Airisu.hair : 0
-                    x: shot.pressed ? Airisu.hair : 0
+                    y: shot.pressed ? Airisu.nudge : shot.containsMouse && !shot.chosen ? -Airisu.nudge : 0
+                    x: shot.pressed ? Airisu.nudge : 0
                     layer.enabled: true
                     layer.effect: MultiEffect {
                         maskEnabled: true
@@ -210,7 +210,7 @@ Item {
             }
             Column {
                 anchors.centerIn: parent
-                spacing: Airisu.hair
+                spacing: Airisu.nudge
                 MaterialSymbol {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "grid_view"

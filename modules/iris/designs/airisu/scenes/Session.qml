@@ -85,7 +85,7 @@ Item {
                     // How much of the coat is laid while it is held (0 to 1); a stand-in host (the Design proof) may
                     // show a hold under way.
                     property real ink: (root.host?.held?.index ?? -1) === ticket.index ? Number(root.host.held.ink) : 0
-                    readonly property int run: ticket.pressed ? Airisu.hair : 0
+                    readonly property int run: ticket.pressed ? Airisu.nudge : 0
                     readonly property color pigment: root.pigmentOf(String(ticket.modelData.id ?? ""))
                     readonly property color lacquer: Airisu.lacquerOf(ticket.pigment)
                     readonly property color coat: Airisu.vivid(ticket.pigment)

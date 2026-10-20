@@ -31,7 +31,7 @@ Item {
     readonly property color placeholderColour: Airisu.inkThird
     readonly property color selectionColour: Airisu.seal
     readonly property color selectedTextColour: Airisu.inkOnSeal
-    readonly property int ruleWeight: Airisu.hair
+    readonly property real ruleWeight: Airisu.hair
     readonly property color ruleColour: Airisu.rule
     readonly property int ruleInset: root.pad
 

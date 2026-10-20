@@ -18,7 +18,7 @@ Item {
     readonly property bool keyed: root.host?.keyed ?? false
     readonly property bool reversed: root.host?.reversed ?? false
     readonly property int inset: Math.max(2, Math.round(2 * Airisu.d))
-    readonly property int run: root.pressed && root.available ? Airisu.hair : 0
+    readonly property int run: root.pressed && root.available ? Airisu.nudge : 0
     readonly property int cut: Math.max(2, Math.round(root.height / 4))
     readonly property color rule: root.reversed ? IrisStyle.selectionDetail : Airisu.inkThird
     readonly property color plate: root.on ? (root.reversed ? IrisStyle.selectionLabel : Airisu.seal)
