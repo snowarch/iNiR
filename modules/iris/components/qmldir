@@ -40,6 +40,7 @@ IrisTrayStrip 1.0 IrisTrayStrip.qml
 IrisImage 1.0 IrisImage.qml
 IrisScrollBar 1.0 IrisScrollBar.qml
 IrisScrollEdge 1.0 IrisScrollEdge.qml
+IrisTypeAhead 1.0 IrisTypeAhead.qml
 IrisSwitch 1.0 IrisSwitch.qml
 IrisSegmented 1.0 IrisSegmented.qml
 IrisChip 1.0 IrisChip.qml

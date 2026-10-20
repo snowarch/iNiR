@@ -717,6 +717,7 @@ Item {
             if (!GlobalStates.settingsOverlayOpen) return
             IrisNiri.ensure()
             root.applyRequest()
+            if (!searchField.activeFocus) root.forceActiveFocus()
         }
     }
     // A Design's scene sets its own page; the engine's slide would only move chrome nobody sees.
@@ -737,6 +738,9 @@ Item {
         }
     }
     Shortcut { sequence: "Ctrl+F"; enabled: GlobalStates.settingsOverlayOpen; onActivated: searchField.forceActiveFocus() }
+    // Typing anywhere on the page searches: a letter no control takes reaches the page and goes to the field.
+    Keys.onPressed: event => typeAhead.take(event)
+    IrisTypeAhead { id: typeAhead; field: searchField }
     // The other host opens where this one stands.
     function switchHost(): void {
         GlobalStates.settingsOverlayRequestedSection = root.advancedPage < 0 ? root.section + (root.group.length > 0 ? "/" + root.group : "") : ""
