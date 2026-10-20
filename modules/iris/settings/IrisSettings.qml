@@ -184,6 +184,18 @@ Item {
     // A section reads whole (its groups under captions) up to about fifteen rows; a longer one lists its groups and opens
     // one at a time, as the compact window of 2026-10-05 did. A Design's scene reads whole beside its own index.
     readonly property bool readsWhole: root.columns || root.essentialCount <= 15
+    // Beside its index a long section reads one of its blocks at a time, the index pointing into every block: read whole,
+    // AIRISU's pane put Appearance's 61 rows or the Lock's 58 on one scroll (the maintainer: "tantos settings juntos en
+    // una pantallita te volés loco"). General, the side panels and the Hub keep their own panes.
+    readonly property bool pagesPane: root.columns && root.essentialCount > 15 && root.groupChunks.length > 1
+        && !["general", "sidebars", "system"].includes(root.section)
+    property int paneChunk: 0
+    readonly property int shownChunk: root.pagesPane ? Math.min(root.paneChunk, root.groupChunks.length - 1) : -1
+    function chunkOf(wanted: string): int {
+        const lower = wanted.toLowerCase()
+        return root.groupChunks.findIndex(chunk => chunk.groups.some(entry => entry.key === wanted || entry.title === wanted
+            || entry.key.toLowerCase() === lower || entry.title.toLowerCase() === lower))
+    }
     readonly property int essentialCount: {
         let count = 0
         for (const group of root.groups) {
@@ -205,7 +217,7 @@ Item {
         // In columns the pane reads in the column's order, and every group is a place with its name: the column points at
         // each one, so none hides inside a neighbour's card.
         if (root.split) {
-            for (const chunk of root.groupChunks)
+            for (const chunk of root.shownChunk >= 0 ? [root.groupChunks[root.shownChunk]] : root.groupChunks)
                 for (const group of chunk.groups)
                     out.push({ title: group.title, caption: group.title, key: group.key, rows: group.rows.slice(), loose: false })
             return out
@@ -397,6 +409,14 @@ Item {
         return out
     }
     function scrollToGroup(wanted: string): void {
+        const chunk = root.pagesPane ? root.chunkOf(wanted) : -1
+        if (chunk >= 0 && chunk !== root.shownChunk) {
+            root.paneChunk = chunk
+            settingsFlick.contentY = 0
+            root.pendingGroup = wanted
+            pendingScroll.restart()
+            return
+        }
         const lower = wanted.toLowerCase()
         const match = root.groups.find(entry => entry.key === wanted || entry.title === wanted
             || entry.key.toLowerCase() === lower || entry.title.toLowerCase() === lower)
@@ -516,6 +536,7 @@ Item {
         root.landingPath = land ? String(spec.path ?? "") : ""
         landingClear.restart()
         root.go({ section: spec.section, group: root.sectionIsFlat(spec.section) ? "" : Translation.tr(spec.group ?? ""), advancedPage: -1 })
+        if (root.pagesPane) root.paneChunk = Math.max(0, root.chunkOf(Translation.tr(spec.group ?? "")))
     }
     function reveal(row: Item): void {
         const top = row.mapToItem(settingsRows, 0, 0).y
@@ -700,7 +721,7 @@ Item {
     }
     // A Design's scene sets its own page; the engine's slide would only move chrome nobody sees.
     function enterPage(): void { if (!root.sceneDesigned) pageEnter.restart() }
-    onSectionChanged: { settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
+    onSectionChanged: { root.paneChunk = 0; settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
     onPageKeyChanged: Qt.callLater(root.feedPage)
     onOpenGroupChanged: { settingsFlick.contentY = 0; root.enterPage() }
     onAdvancedPageChanged: root.enterPage()
