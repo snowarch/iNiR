@@ -1727,7 +1727,7 @@ apply_niri_app_environment() {
     for name in XDG_MENU_PREFIX QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME \
                 QT_STYLE_OVERRIDE ELECTRON_OZONE_PLATFORM_HINT; do
         value="$(_niri_app_environment_value "$name" "$cfg")"
-        [[ -n "$value" ]] && export "${name}=${value}"
+        if [[ -n "$value" ]]; then export "${name}=${value}"; fi
     done
 }
 
