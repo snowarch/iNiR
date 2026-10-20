@@ -1316,6 +1316,9 @@ Item {
     readonly property real cardEdge: Math.round(8 * root.d) + IrisFrame.band
     // How far a card stands off the piece it grew from. 0 keeps them welded.
     readonly property real cardGap: IrisStyle.cardGap
+    // A card hung from the Island either melts into it (sunk by the weld) or stands off by the air every other body keeps
+    // (`cardPlacement`): sunk without melting, the two met along a straight seam, two parts fitted together.
+    readonly property real cardHangOffset: IrisStyle.cardJoins ? -IrisStyle.weld : Math.max(IrisFrame.bodyAir, root.cardGap)
     readonly property bool cardFromSatellite: root.cardSource.startsWith("island-") && !root.cardHangs && !root.cardFromIslandPiece
     readonly property var cardOrigin: {
         const a = root.cardAnchor
@@ -1431,15 +1434,15 @@ Item {
         height: Math.round(Math.min(root.height * 0.72, cardContent.contentHeight + (cardContent.bleeds ? 0 : root.cardPad * 2)))
         x: !root.cardAnchor ? (root.width - width) / 2
             : root.cardHangs && root.islandSide ? (root.islandEdge === "left"
-                ? (root.cardAnchor?.bandX ?? 0) + (root.cardAnchor?.bandWidth ?? 0) - IrisStyle.weld + root.cardGap
-                : (root.cardAnchor?.bandX ?? root.width) - width + IrisStyle.weld - root.cardGap)
+                ? (root.cardAnchor?.bandX ?? 0) + (root.cardAnchor?.bandWidth ?? 0) + root.cardHangOffset
+                : (root.cardAnchor?.bandX ?? root.width) - width - root.cardHangOffset)
             : root.cardHangs ? root.clampX(root.cardAnchorCX - width / 2)
             : root.cardPlacement?.x ?? 0
         y: !root.cardAnchor ? root.cardEdge
             : !root.cardHangs ? root.cardPlacement?.y ?? 0
             : root.islandSide ? Math.max(root.edgeClear("top"), Math.min(root.height - height - root.edgeClear("bottom"), root.cardAnchorCY - height / 2))
-            : root.barBottom ? Math.max(root.edgeClear("top"), root.cardBandTop - height + IrisStyle.weld - root.cardGap)
-            : Math.min(root.height - height - root.edgeClear("bottom"), root.cardBandTop + root.cardBandHeight - IrisStyle.weld + root.cardGap)
+            : root.barBottom ? Math.max(root.edgeClear("top"), root.cardBandTop - height - root.cardHangOffset)
+            : Math.min(root.height - height - root.edgeClear("bottom"), root.cardBandTop + root.cardBandHeight + root.cardHangOffset)
         Behavior on height {
             enabled: card.settled
             NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
