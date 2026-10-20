@@ -5,7 +5,6 @@ import QtQuick
 import Quickshell
 import qs
 import qs.modules.common
-import qs.modules.iris.frame
 
 Singleton {
     id: root
@@ -303,6 +302,15 @@ Singleton {
 
     // iRiS: the Island owns one horizontal edge and the Dock the opposite one.
     // Mirrors the geometry in modules/iris/bar/IrisBar.qml and dock/IrisDock.qml.
+    // IrisFrame.band from config, so services keep out of the iris folder.
+    function _irisFrameBand(): real {
+        const iris = Config.options?.iris ?? {}
+        if (!(iris.surround?.enable ?? false))
+            return 0
+        const density = Math.max(0.8, Math.min(1.35, Number(iris.appearance?.density ?? 1)))
+        return Math.max(1, Math.round(Number(iris.surround?.thickness ?? 10) * density))
+    }
+
     function _irisDesktopInsets(outputName: string, result: var): var {
         const iris = Config.options?.iris ?? {}
         const density = Math.max(0.8, Math.min(1.35, Number(iris.appearance?.density ?? 1)))
@@ -321,10 +329,10 @@ Singleton {
             const gap = (iris.dock?.notch ?? false) ? 0 : 10 * density
             root._applyInset(result, result.dockEdge, icon + 18 * density + gap * 2)
         }
-        // The frame holds every edge (its band, the island and the dock in it): nothing on the
-        // desktop goes under it.
+        // The frame holds every edge: nothing on the desktop goes under its band.
+        const band = root._irisFrameBand()
         for (const edge of ["left", "top", "right", "bottom"])
-            result[edge] = Math.max(result[edge], IrisFrame.inset(edge))
+            result[edge] = Math.max(result[edge], band)
         return result
     }
 
@@ -353,7 +361,7 @@ Singleton {
         const panelInsets = root.desktopInsets(outputName)
         // Free placement may cover panels on purpose, never the iRiS frame's band: under it a
         // widget is cut by the chassis.
-        const band = root.activeFamily === "iris" ? IrisFrame.band : 0
+        const band = root.activeFamily === "iris" ? root._irisFrameBand() : 0
         return root._workAreaFromInsets({
             left: band,
             top: band,
