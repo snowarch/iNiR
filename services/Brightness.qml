@@ -249,17 +249,13 @@ Singleton {
     }
 
     function increaseBrightness(): void {
-        const focusedName = CompositorService.isNiri ? NiriService.currentOutput : Hyprland.focusedMonitor?.name;
-        if (!focusedName) return;
-        const monitor = monitors.find(m => focusedName === m.screen.name);
+        const monitor = root._focusedMonitor();
         if (monitor)
             monitor.setBrightness(monitor.brightness + 0.05);
     }
 
     function decreaseBrightness(): void {
-        const focusedName = CompositorService.isNiri ? NiriService.currentOutput : Hyprland.focusedMonitor?.name;
-        if (!focusedName) return;
-        const monitor = monitors.find(m => focusedName === m.screen.name);
+        const monitor = root._focusedMonitor();
         if (monitor)
             monitor.setBrightness(monitor.brightness - 0.05);
     }
