@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs.modules.common
+import qs.services
 
 Item {
     id: root
@@ -25,6 +26,8 @@ Item {
         menu.requestOpen()
     }
     function close(): void { menu.close() }
+    // An entry the app already took back (a new layout, or the app went away): its wrapper outlives it.
+    function alive(entry): bool { return !!entry && typeof entry.triggered === "function" }
     function label(text: string): string {
         return String(text ?? "").replace(/__/g, "\u0000").replace(/_/g, "").replace(/\u0000/g, "_")
     }
@@ -32,6 +35,11 @@ Item {
     QsMenuOpener {
         id: opener
         menu: root.current
+    }
+    // Holds the whole menu while a submenu shows: with only the submenu referenced, the runtime let the root
+    // go, and with it every entry under it, the submenu included (it opened empty, titled "Back").
+    QsMenuOpener {
+        menu: root.handle
     }
 
     readonly property var entries: {
@@ -58,7 +66,9 @@ Item {
                 checked: toggles ? entry.checkState === Qt.Checked : undefined,
                 submenu: nested,
                 keepOpen: nested,
-                action: nested ? () => root.trail = root.trail.concat([entry]) : () => entry.triggered()
+                dbusEntry: entry,
+                action: nested ? () => root.trail = root.trail.concat([entry])
+                    : () => { if (root.alive(entry)) entry.triggered() }
             })
         }
         while (rows.length > 0 && rows[rows.length - 1].type === "separator") rows.pop()
@@ -67,6 +77,22 @@ Item {
         if (root.trail.length === 0 && root.extra.length > 0)
             return (rows.length > 0 ? rows.concat([{ type: "separator" }]) : rows).concat(root.extra)
         return rows
+    }
+
+    // The open menu keeps the rows it opened with, so a layout the app replaces under it would leave rows of entries
+    // that no longer exist. Once the new layout lands, rows that are not in it reopen the menu on the new one.
+    readonly property var liveEntries: opener.children?.values ?? []
+    onLiveEntriesChanged: if (root.opened) staleCheck.restart()
+    Timer {
+        id: staleCheck
+        // After a submenu step has swapped the rows (it does so on the next tick) and the old entries are gone.
+        interval: 50
+        onTriggered: {
+            if (root.trail.some(entry => !root.alive(entry))) root.trail = []
+            if (!root.opened) return
+            const live = root.liveEntries
+            if ((menu.shown ?? []).some(row => row?.dbusEntry && !live.includes(row.dbusEntry))) menu.requestOpen()
+        }
     }
 
     IrisDesktopMenu {
