@@ -417,6 +417,14 @@ AbstractBackgroundWidget {
                 fillRatio: root.vizType === "organic" ? root.organicRange
                     : Config.getNestedValue("background.widgets.visualizer.fillRatio", 90) / 100
                 barCount: Config.getNestedValue("background.widgets.visualizer.barCount", 48)
+                // A visible plate rounds the box, so bars and waves take its corners; bare, they keep the full
+                // rect, and organic keeps its halo overscan either way.
+                readonly property real plateRadius: cardBg.shown && root.vizType !== "organic"
+                    ? Math.max(0, cardBg.surfaceRadius - anchors.margins) : -1
+                topLeftRadius: plateRadius
+                topRightRadius: plateRadius
+                bottomLeftRadius: plateRadius
+                bottomRightRadius: plateRadius
                 barSpacing: Config.getNestedValue("background.widgets.visualizer.barSpacing", 2)
                 barMinHeight: Config.getNestedValue("background.widgets.visualizer.barMinHeight", 1)
                 barRadius: Config.getNestedValue("background.widgets.visualizer.barRadius", 2)
