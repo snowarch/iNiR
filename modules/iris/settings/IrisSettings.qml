@@ -1753,11 +1753,11 @@ Item {
         readonly property bool pictured: scene.item?.available ?? false
         readonly property real round: IrisStyle.fieldChamfer ? 0 : IrisStyle.radiusTile + Math.round(6 * root.d)
         readonly property real inset: Math.round(6 * root.d)
-        readonly property real band: Math.round(62 * root.d)
+        readonly property real band: Math.round(76 * root.d)
         Layout.columnSpan: tile.wide ? 2 : 1
         Layout.fillWidth: true
         Layout.preferredWidth: 1
-        Layout.preferredHeight: Math.round((tile.wide ? 236 : 196) * root.d)
+        Layout.preferredHeight: Math.round((tile.wide ? 250 : 210) * root.d)
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
@@ -1841,7 +1841,9 @@ Item {
                 text: Translation.tr(tile.modelData.subtitle ?? "")
                 color: IrisStyle.muted
                 font.pixelSize: IrisStyle.typeMeta
-                elide: Text.ElideRight
+                // The whole line, on two lines when the tile is narrow: a cut-off line says less than none.
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
             }
         }
         // Hover lights the tile's edge in the accent, as a focused body is lit.
