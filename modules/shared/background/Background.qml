@@ -509,8 +509,9 @@ Scope {
 
         required property var modelData
         // An iRiS texture filter (Afterglow's grade, Light leak's exposure) draws the container (and hides it): glass copies
-        // what is seen.
-        readonly property Item wallpaperLayer: textureLoader.item ?? wallpaperContainer
+        // what is seen. While awww shows the picture the container draws nothing, and a glass copying it was empty: the
+        // wallpaper came through unblurred. Then there is no layer and the glass reads the picture itself.
+        readonly property Item wallpaperLayer: bgRoot.externalMainWallpaperActive ? null : textureLoader.item ?? wallpaperContainer
         // Bumped whenever what the wallpaper layer shows can change (picture, parallax, Afterglow arriving): iRiS glass
         // copies the layer only after a bump instead of every frame the desktop redraws.
         property int wallpaperLayerRevision: 0

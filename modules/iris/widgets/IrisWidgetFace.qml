@@ -165,7 +165,9 @@ Item {
             visible: glassPane.desktopLayer !== null || wallpaper.status === Image.Ready
             radius: root.radius
             color: "transparent"
-            readonly property real margin: root.dp(24)
+            // Wide enough for the blur to find picture all round: a narrower margin blurred the edge into transparent
+            // and the face darkened toward its rim.
+            readonly property real margin: Math.ceil(2 * IrisStyle.glassBlurMax * IrisStyle.glassBlurAmount) + root.dp(8)
 
             Image {
                 id: wallpaper
@@ -192,7 +194,10 @@ Item {
                 sourceRect: Qt.rect(glassPane.at.x - glassPane.margin, glassPane.at.y - glassPane.margin, crop.width, crop.height)
                 textureSize: Qt.size(Math.max(1, Math.round(crop.width / 2)), Math.max(1, Math.round(crop.height / 2)))
                 smooth: true
+                // The field's recipe: blurred at half resolution, so blurMax reaches as far on screen as the field's
+                // glass does (at full size it reached half as far and the face read as clear, not frosted).
                 layer.enabled: true
+                layer.textureSize: crop.textureSize
                 layer.effect: MultiEffect {
                     blurEnabled: true
                     blur: IrisStyle.glassBlurAmount
