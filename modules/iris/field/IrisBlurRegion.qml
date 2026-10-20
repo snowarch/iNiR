@@ -280,6 +280,53 @@ Region {
         }
         flush()
     }
+    // A round Design's large corner is a squircle (IrisField.frag squircleBox): the quartic over SQUIRCLE_REACH times the
+    // radius. A round Rect region blurred up to 0.85 px past its shoulder (at a radius of 30), so the body is blurred as
+    // its rows, as a cut body is: one rect for the square middle, one per row of the corners (every third row while it
+    // moves, the narrowest of the three). Capsules and discs keep their round Rect, as the shader keeps their arcs.
+    readonly property real squircleReach: 1.8409
+    function squircles(s: var): bool {
+        const m = Math.min(s.width, s.height) / 2
+        const r = Math.min(Number(s.radius ?? 0), m)
+        return r >= 0.5 && r < m - 0.5
+    }
+    // How far in from the side a squircle corner of `reach` stands at `t` from its top or bottom edge.
+    function squircleInset(t: real, reach: real): real {
+        if (t >= reach) return 0
+        const v = reach - Math.max(0, t)
+        return reach - Math.pow(Math.max(0, Math.pow(reach, 4) - Math.pow(v, 4)), 0.25)
+    }
+    function squircled(s: var, exact: bool, out: var): void {
+        const i = root.inset
+        const m = Math.min(s.width, s.height) / 2
+        const reach = Math.min(Number(s.radius ?? 0) * root.squircleReach, m) - i
+        const top = root.lo(s.y + i), bottom = root.hi(s.y + s.height - i)
+        const left = root.lo(s.x + i), right = root.hi(s.x + s.width - i)
+        if (bottom <= top || right <= left) return
+        const span = n => {
+            const cy = n + 0.5
+            const k = root.squircleInset(Math.min(cy - s.y - i, s.y + s.height - i - cy), reach)
+            return [Math.max(left, root.hi(s.x + i + k)), Math.min(right, root.lo(s.x + s.width - i - k))]
+        }
+        const step = exact ? 1 : 3
+        let open = null
+        const flush = () => {
+            if (open && open.b > open.a) out.push({ x: open.a, y: open.from, width: open.b - open.a, height: open.to - open.from })
+            open = null
+        }
+        for (let n = top; n < bottom; n += step) {
+            const end = Math.min(bottom, n + step)
+            let a = left, b = right
+            for (let q = n; q < end; q++) {
+                const row = span(q)
+                a = Math.max(a, row[0])
+                b = Math.min(b, row[1])
+            }
+            if (open && open.a === a && open.b === b) open.to = end
+            else { flush(); open = { a: a, b: b, from: n, to: end } }
+        }
+        flush()
+    }
     // IrisField.cutMask, for the same window: which corners a welded body's blade takes (0 the Design's pair).
     function cutMaskOf(s: var): int {
         const list = !s.joins ? [] : Array.isArray(s.joins) ? s.joins : [s.joins]
@@ -336,6 +383,7 @@ Region {
         for (const s of list) {
             const i = root.inset
             if (cut > 0) root.chamfered(s, cut, exact, runs)
+            else if (root.squircles(s)) root.squircled(s, exact, runs)
             else out.push({ x: s.x + i, y: s.y + i, width: s.width - 2 * i, height: s.height - 2 * i, radius: Math.max(0, Number(s.radius ?? 0) - i) })
             const joins = !s.joins ? [] : Array.isArray(s.joins) ? s.joins : [s.joins]
             for (const id of joins) {
@@ -357,6 +405,7 @@ Region {
     // the square corners, past any band, and left the band's blades unblurred. The blades' rows are held half a pixel
     // inside the drawn edge along its normal, as a cut body's are.
     function frameCuts(runs: var): void {
+        if (root.framed && !IrisStyle.fieldChamfer) { root.frameShoulders(runs); return }
         if (!root.framed || !IrisStyle.fieldChamfer) return
         const edge = root.hi(root.band - root.inset)
         const x0 = edge, y0 = edge
@@ -372,6 +421,29 @@ Region {
             const reach = c - (y1 - n - 0.5) - lean
             const b = root.lo(x0 + reach)
             if (reach > 0 && b > x0) runs.push({ x: x0, y: n, width: b - x0, height: 1 })
+        }
+    }
+
+    // A round Design's opening is a squircle too (IrisField.frag frameBox): the band reaches further in along its
+    // shoulders than the round hole cut from the region, so those rows of band are put back, held half a pixel inside
+    // the drawn edge.
+    function frameShoulders(runs: var): void {
+        const edge = root.hi(root.band - root.inset)
+        const x1 = Math.round(root.windowWidth) - edge, y1 = Math.round(root.windowHeight) - edge
+        const m = Math.min(root.windowWidth - 2 * root.band, root.windowHeight - 2 * root.band) / 2
+        const r = Math.min(root.cornerRadius, m)
+        if (r < 0.5 || r >= m - 0.5) return
+        const reach = Math.min(r * root.squircleReach, m)
+        const band = root.band, far = root.windowHeight - band
+        for (let n = edge; n < edge + Math.ceil(reach); n++) {
+            for (const row of [n, y1 - 1 - (n - edge)]) {
+                const t = row === n ? row + 0.5 - band : far - (row + 0.5)
+                const k = root.squircleInset(t, reach) - root.inset
+                if (k <= 0) continue
+                const a = root.hi(band + k), b = root.lo(root.windowWidth - band - k)
+                if (a > edge) runs.push({ x: edge, y: row, width: a - edge, height: 1 })
+                if (b < x1) runs.push({ x: b, y: row, width: x1 - b, height: 1 })
+            }
         }
     }
 

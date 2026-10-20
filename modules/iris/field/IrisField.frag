@@ -142,7 +142,31 @@ float roundedBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
 }
 
-// A body's own outline. Round is the rounded box. Chamfer (a Design's `field.corner`) cuts the upper-right and
+// A large round corner is continuous (a squircle, Apple's continuous corner): the curve leaves the straight edge with
+// no jump in curvature, where a circular arc starts bending at once. It is the quartic superellipse |x|^4 + |y|^4 = R^4
+// over SQUIRCLE_REACH times the radius, which puts its apex where the circle's is (1 - 1/sqrt2 = k (1 - 2^-1/4)), so a
+// body looks as round as its radius says and only the shoulder softens. The quartic's value is divided by its gradient
+// to read as a distance near the edge (the rims and the glass lip sit there). A capsule's ends stay circular, as Apple's
+// do. IrisBlurRegion.squircled draws the same corner by rows.
+const float SQUIRCLE_REACH = 1.8409;
+
+float squircleBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
+    float m = min(halfSize.x, halfSize.y);
+    float r = min(radius, m);
+    if (r < 0.5 || r >= m - 0.5)
+        return roundedBox(p, centre, halfSize, radius);
+    float reach = min(r * SQUIRCLE_REACH, m);
+    vec2 q = abs(p - centre) - (halfSize - reach);
+    if (q.x <= 0.0 || q.y <= 0.0)
+        return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - reach;
+    vec2 q2 = q * q;
+    vec2 q4 = q2 * q2;
+    float l = sqrt(sqrt(q4.x + q4.y));
+    vec2 gradient = q2 * q / (l * l * l);
+    return (l - reach) / length(gradient);
+}
+
+// A body's own outline. Round is the squircle box. Chamfer (a Design's `field.corner`) cuts the upper-right and
 // lower-left corners at 45° by `options.z` (never more than half the body) and keeps the other two square: a sticker cut
 // with a blade. The cut is a half-plane intersected with the square box, so joins, rims and shadows that read the
 // distance follow it like any other edge.
@@ -169,7 +193,7 @@ float cutBox(vec2 p, vec2 centre, vec2 halfSize, float cut, float mask) {
 
 float bodyBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
     if (u.options.y < 0.5)
-        return roundedBox(p, centre, halfSize, radius);
+        return squircleBox(p, centre, halfSize, radius);
     return cutBox(p, centre, halfSize, u.options.z, radius < -0.5 ? radius : 0.0);
 }
 
@@ -177,7 +201,7 @@ float bodyBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
 // chamfered Design never shows a round corner around its bodies.
 float frameBox(vec2 p, vec2 centre, vec2 halfSize, float radius) {
     if (u.options.y < 0.5)
-        return roundedBox(p, centre, halfSize, radius);
+        return squircleBox(p, centre, halfSize, radius);
     return cutBox(p, centre, halfSize, radius, 0.0);
 }
 
