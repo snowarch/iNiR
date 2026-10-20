@@ -369,29 +369,28 @@ Singleton {
 
     property var _ffPending: ({})
 
-    function ensureVideoFirstFrame(videoPath: string) {
-        if (!videoPath || !isVideoFile(videoPath)) return
-        if (root.videoFirstFrames[videoPath]) return
-        if (root._ffPending[videoPath]) return
+    // The one still a video has, wherever it shows: switchwall writes the same file for theming.
+    function videoFramePath(videoPath: string): string {
+        const clean = FileUtils.trimFileProtocol(String(videoPath ?? ""))
+        return clean ? root._videoThumbDir + "/" + MD5.hash(clean) + ".jpg" : ""
+    }
 
-        // Check config thumbnailPath (global wallpaper match)
-        const configWp = Config.options?.background?.wallpaperPath ?? ""
-        const configThumb = Config.options?.background?.thumbnailPath ?? ""
-        if (configWp === videoPath && configThumb) {
-            const expected = root._videoThumbDir + "/" + MD5.hash(videoPath) + ".jpg"
-            const thumbPath = FileUtils.trimFileProtocol(configThumb)
-            if (thumbPath === expected) {
-                _cacheFirstFrame(videoPath, expected)
-                return
-            }
+    function ensureVideoFirstFrame(videoPath: string, replace = false) {
+        if (!videoPath || !isVideoFile(videoPath)) return
+        if (root._ffPending[videoPath]) return
+        if (replace) {
+            const copy = Object.assign({}, root.videoFirstFrames)
+            delete copy[videoPath]
+            root.videoFirstFrames = copy
+        } else if (root.videoFirstFrames[videoPath]) {
+            return
         }
 
-        // Queue async check → generate (with dedup)
+        // A video that would not give a frame is not asked again this session, unless replaced.
+        if (root._ffFailed[videoPath] && !replace) return
+
         root._ffPending[videoPath] = true
-        // Use md5 hash of full path to match switchwall.sh and avoid basename collisions
-        const hash = MD5.hash(videoPath)
-        const expectedPath = root._videoThumbDir + "/" + hash + ".jpg"
-        root._ffQueue.push({ videoPath: videoPath, outputPath: expectedPath })
+        root._ffQueue.push({ videoPath: videoPath, outputPath: root.videoFramePath(videoPath), replace: replace })
         if (!_ffGenProc.running) _processNextFF()
     }
 
@@ -406,6 +405,7 @@ Singleton {
     }
 
     property var _ffQueue: []
+    property var _ffFailed: ({})
 
     function _processNextFF() {
         if (root._ffQueue.length === 0) return
@@ -415,10 +415,10 @@ Singleton {
         // Wallpaper loops usually fade in from black, so frame 0 gives this file a nearly black
         // palette, and this frame is what theming quantizes: pick a representative one.
         _ffGenProc.command = ["sh", "-c",
-            '[ -s "$2" ] && exit 0; mkdir -p "$(dirname "$2")" || exit 1; '
+            '[ "$3" != 1 ] && [ -s "$2" ] && exit 0; mkdir -p "$(dirname "$2")" || exit 1; '
             + 'ffmpeg -hide_banner -loglevel error -y -ss 1 -i "$1" -vf thumbnail=n=30 -frames:v 1 -update 1 -q:v 2 "$2" '
             + '|| ffmpeg -hide_banner -loglevel error -y -i "$1" -vframes 1 -update 1 -q:v 2 "$2"',
-            "sh", item.videoPath, item.outputPath]
+            "sh", item.videoPath, item.outputPath, item.replace ? "1" : "0"]
         _ffGenProc.running = true
     }
 
@@ -427,8 +427,15 @@ Singleton {
         property string _videoPath
         property string _outputPath
         onExited: (exitCode) => {
+            const videoPath = _ffGenProc._videoPath
+            delete root._ffPending[videoPath]
             if (exitCode === 0) {
-                root._cacheFirstFrame(_ffGenProc._videoPath, _ffGenProc._outputPath)
+                delete root._ffFailed[videoPath]
+                root._cacheFirstFrame(videoPath, _ffGenProc._outputPath)
+                root.rememberThumbnail(_ffGenProc._outputPath)
+                root.thumbnailGeneratedFile(videoPath)
+            } else {
+                root._ffFailed[videoPath] = true
             }
             root._processNextFF()
         }
@@ -1255,33 +1262,6 @@ Singleton {
         root._pendingThumbnailSize = size
         root._pendingThumbnailDir = FileUtils.trimFileProtocol(root.directory)
         thumbgenDebounce.restart()
-    }
-
-    // A still frame owned by iNiR, not the shared freedesktop thumbnail cache.
-    // Both write to ~/.cache/thumbnails/<size>/<md5>.png, and the desktop's own
-    // video thumbnailer decorates its output with a film-strip border — whoever
-    // wrote first won, so a surface that wants a clean frame could not rely on
-    // that path. The generator here is the same ffmpeg call, private location.
-    function videoStillPath(filePath: string): string {
-        const clean = FileUtils.trimFileProtocol(String(filePath ?? ""))
-        if (!clean) return ""
-        return `${Directories.stateUserPath}/generated/wallpaper/still-${MD5.hash(clean)}.png`
-    }
-
-    function ensureVideoStill(filePath: string, replace = false): void {
-        const clean = FileUtils.trimFileProtocol(String(filePath ?? ""))
-        if (!clean || !root.isVideoFile(clean)) return
-        const outputPath = root.videoStillPath(clean)
-        if (!outputPath || (!replace && root.thumbnailFailed(outputPath))) return
-
-        const key = `still:${clean}`
-        if (root._singleThumbPending[key]) return
-        const pending = Object.assign({}, root._singleThumbPending)
-        pending[key] = true
-        root._singleThumbPending = pending
-        root._singleThumbQueue.push({ key: key, filePath: clean, size: "large", outputPath: outputPath, replace: replace })
-        if (!_singleThumbProc.running)
-            _processNextSingleThumb()
     }
 
     function ensureThumbnailForPath(filePath: string, size = "large", replace = false) {

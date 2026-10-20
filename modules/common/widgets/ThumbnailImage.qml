@@ -16,7 +16,7 @@ StyledImage {
     required property string sourcePath
     property string thumbnailSizeName: Images.thumbnailSizeNameForDimensions(sourceSize.width, sourceSize.height)
     property bool isVideo: Images.isValidVideoByName(sourcePath)
-    // Videos use iNiR's own still: the shared freedesktop cache may hold a film-strip frame.
+    // Videos use iNiR's own still (Wallpapers.videoFramePath): the shared freedesktop cache may hold a film-strip frame.
     property bool cleanVideoStill: false
     readonly property bool _ownsStill: root.cleanVideoStill && root.isVideo
     property bool thumbnailAvailable: false
@@ -27,7 +27,7 @@ StyledImage {
     property bool _repairTried: false
     property string thumbnailPath: {
         if (sourcePath.length === 0) return ""
-        if (root._ownsStill) return Wallpapers.videoStillPath(sourcePath)
+        if (root._ownsStill) return Wallpapers.videoFramePath(sourcePath)
 
         let cleanPath = FileUtils.trimFileProtocol(String(sourcePath ?? ""))
         if (!cleanPath.startsWith("/"))
@@ -65,7 +65,7 @@ StyledImage {
         if (!root.generateThumbnail) return
         if (!root.sourcePath || root.sourcePath.length === 0) return
         // Batch generator already running — it will emit thumbnailGeneratedFile
-        if (root._ownsStill) { Wallpapers.ensureVideoStill(root.sourcePath); return }
+        if (root._ownsStill) { Wallpapers.ensureVideoFirstFrame(FileUtils.trimFileProtocol(root.sourcePath)); return }
         if (Wallpapers.thumbnailGenerationRunning) return
         Wallpapers.ensureThumbnailForPath(root.sourcePath, root.thumbnailSizeName)
     }
@@ -75,7 +75,7 @@ StyledImage {
         Wallpapers.forgetThumbnail(root.thumbnailPath)
         root._clearResolvedThumbnail()
         if (!root.generateThumbnail) return
-        if (root._ownsStill) Wallpapers.ensureVideoStill(root.sourcePath, true)
+        if (root._ownsStill) Wallpapers.ensureVideoFirstFrame(FileUtils.trimFileProtocol(root.sourcePath), true)
         else Wallpapers.ensureThumbnailForPath(root.sourcePath, root.thumbnailSizeName, true)
     }
 

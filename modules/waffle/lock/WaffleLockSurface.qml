@@ -72,23 +72,8 @@ MouseArea {
         return wBg?.wallpaperPath ?? Config.options?.background?.wallpaperPath ?? ""
     }
     
-    // Detect if it's a video or gif and use thumbnail
-    readonly property string _wallpaperPath: {
-        const path = _wallpaperSource;
-        if (!path) return "";
-        
-        const lowerPath = path.toLowerCase();
-        const isVideo = lowerPath.endsWith(".mp4") || lowerPath.endsWith(".webm") || lowerPath.endsWith(".mkv") || lowerPath.endsWith(".avi") || lowerPath.endsWith(".mov");
-        const isGif = lowerPath.endsWith(".gif");
-        
-        if (isVideo || isGif) {
-            // Use waffle's own thumbnail if available, otherwise fall back to main thumbnail
-            const waffleThumbnail = Config.options?.waffles?.background?.thumbnailPath ?? "";
-            const mainThumbnail = Config.options?.background?.thumbnailPath ?? "";
-            return waffleThumbnail || mainThumbnail || path;
-        }
-        return path;
-    }
+    // The file itself, or a video's still frame
+    readonly property string _wallpaperPath: Wallpapers.stillUrlFor(_wallpaperSource)
     
     readonly property bool wallpaperIsVideo: {
         const lowerPath = _wallpaperSource.toLowerCase();

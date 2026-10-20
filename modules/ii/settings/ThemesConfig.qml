@@ -513,9 +513,7 @@ ContentPage {
 
                 ColorQuantizer {
                     id: wallpaperQuantizer
-                    property string wallpaperPath: Config.options?.background?.wallpaperPath ?? ""
-                    property bool isVideo: wallpaperPath.endsWith(".mp4") || wallpaperPath.endsWith(".webm")
-                    source: wallpaperPath.length > 0 ? Qt.resolvedUrl(isVideo ? Config.options?.background?.thumbnailPath : wallpaperPath) : ""
+                    source: Wallpapers.stillUrlFor(Config.options?.background?.wallpaperPath ?? "")
                     depth: 3  // 2^3 = 8 colors
                     rescaleSize: 64
                 }

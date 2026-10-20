@@ -839,7 +839,6 @@ Scope {
             // whichever engine already owns this wallpaper keeps owning it.
             return Wallpapers.internalPreviewFor(monitorName, configuredPath)
         }
-        readonly property string wallpaperThumbnailPath: bgRoot.backgroundOptions.thumbnailPath ?? bgRoot.wallpaperPathRaw
         readonly property bool enableAnimation: bgRoot.backgroundOptions.enableAnimation ?? true
         // True while ii is the family actually painting the screen. The family
         // LazyLoader can retain the inactive tree, so every heavy source in here

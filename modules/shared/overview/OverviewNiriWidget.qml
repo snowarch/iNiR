@@ -69,7 +69,6 @@ Item {
         : (overviewOptions.showWorkspaceNumbers ?? true)
 
     readonly property string wallpaperPathRaw: Config.options?.background?.wallpaperPath ?? ""
-    readonly property string wallpaperThumbnailPath: Config.options?.background?.thumbnailPath ?? wallpaperPathRaw
 
     readonly property int workspacesShown: root.overviewRows * root.overviewColumns
     readonly property string outputName: panelWindow?.screen?.name ?? ""
@@ -135,15 +134,10 @@ Item {
     property bool keepOverviewOpenOnWindowClick: root.overviewKeepOpenOnWindowClick
     property bool showWorkspaceNumber: root.overviewShowWorkspaceNumbers
 
-    // Wallpaper de fondo a reutilizar en cada workspace
-    property bool wallpaperIsVideo: wallpaperPathRaw.endsWith(".mp4")
-                                    || wallpaperPathRaw.endsWith(".webm")
-                                    || wallpaperPathRaw.endsWith(".mkv")
-                                    || wallpaperPathRaw.endsWith(".avi")
-                                    || wallpaperPathRaw.endsWith(".mov")
+    // The wallpaper behind every workspace: a still, so a live one shows its frame instead of nothing.
     property string wallpaperPath: root.orbitMode
         ? WallpaperListener.wallpaperUrlForScreen(root.panelWindow?.screen ?? null)
-        : (wallpaperIsVideo ? wallpaperThumbnailPath : wallpaperPathRaw)
+        : Wallpapers.stillUrlFor(wallpaperPathRaw)
 
     property var outputs: NiriService.outputs
 

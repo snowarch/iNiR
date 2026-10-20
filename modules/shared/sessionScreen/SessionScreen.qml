@@ -134,33 +134,7 @@ Scope {
             readonly property string _monitorName: root.focusedScreen?.name ?? ""
             readonly property real _screenScale: root.focusedScreen?.scale ?? 1
             readonly property string _wallpaperSource: Wallpapers.currentThemingWallpaperPath(_monitorName)
-            readonly property string _wallpaperPath: {
-                const path = FileUtils.trimFileProtocol(String(_wallpaperSource ?? ""));
-                if (!path) return "";
-                const isVideo = WallpaperListener.isVideoPath(path);
-                const isGif = WallpaperListener.isGifPath(path);
-                if (isVideo || isGif) {
-                    const thumbnail = Wallpapers.getExpectedThumbnailPath(path, "x-large");
-                    return thumbnail || path;
-                }
-                return path;
-            }
-
-            function ensureWallpaperThumbnail(): void {
-                const path = FileUtils.trimFileProtocol(String(sessionRoot._wallpaperSource ?? ""))
-                if (!path) return
-                if (WallpaperListener.isVideoPath(path) || WallpaperListener.isGifPath(path))
-                    Wallpapers.ensureThumbnailForPath(path, "x-large")
-            }
-
-            Component.onCompleted: ensureWallpaperThumbnail()
-
-            Connections {
-                target: Wallpapers
-                function onChanged() {
-                    sessionRoot.ensureWallpaperThumbnail()
-                }
-            }
+            readonly property string _wallpaperPath: Wallpapers.stillUrlFor(_wallpaperSource)
             
             // Background wallpaper with blur (like lock screen)
             Image {

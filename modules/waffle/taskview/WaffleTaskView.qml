@@ -50,7 +50,7 @@ Scope {
                     const path = (wBg.useMainWallpaper ?? true)
                         ? Config.options?.background?.wallpaperPath ?? ""
                         : wBg.wallpaperPath ?? Config.options?.background?.wallpaperPath ?? ""
-                    return path ? "file://" + path : ""
+                    return Wallpapers.stillUrlFor(path)
                 }
                 fillMode: Image.PreserveAspectCrop
                 // Blur source: decode at the screen's pixels, not the file's

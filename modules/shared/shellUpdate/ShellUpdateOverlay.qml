@@ -181,11 +181,7 @@ Scope {
             Image {
                 id: wallpaperSource
                 anchors.fill: parent
-                source: {
-                    const wpPath = Config.options?.background?.wallpaperPath ?? ""
-                    const isVideo = wpPath.endsWith(".mp4") || wpPath.endsWith(".webm") || wpPath.endsWith(".mkv") || wpPath.endsWith(".avi") || wpPath.endsWith(".mov")
-                    return isVideo ? (Config.options?.background?.thumbnailPath ?? wpPath) : wpPath
-                }
+                source: Wallpapers.stillUrlFor(Config.options?.background?.wallpaperPath ?? "")
                 fillMode: Image.PreserveAspectCrop
                 visible: false
                 cache: true

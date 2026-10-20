@@ -290,7 +290,7 @@ Item {
                 id: wallpaperSource
                 anchors.fill: parent
                 anchors.margins: 1
-                source: root.wallpaperPath ? "file://" + root.wallpaperPath : ""
+                source: Wallpapers.stillUrlFor(root.wallpaperPath)
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 sourceSize: Qt.size(

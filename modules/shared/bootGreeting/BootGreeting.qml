@@ -31,25 +31,11 @@ Scope {
 
     // Wallpaper
     readonly property string wallpaperPath: Config.options?.background?.wallpaperPath ?? ""
-    readonly property bool wallpaperIsVideo: WallpaperListener.isVideoPath(wallpaperPath)
-    readonly property string wallpaperPreviewPath: {
-        if (!wallpaperIsVideo)
-            return wallpaperPath
-        const cachedFrame = Wallpapers.getVideoFirstFramePath(wallpaperPath)
-        if (cachedFrame.length > 0)
-            return cachedFrame
-        return Config.options?.background?.thumbnailPath ?? ""
-    }
+    readonly property string wallpaperPreviewPath: Wallpapers.stillUrlFor(wallpaperPath)
 
     Component.onCompleted: {
-        if (wallpaperIsVideo)
-            Wallpapers.ensureVideoFirstFrame(wallpaperPath)
         if (GlobalStates.bootGreetingOpen)
             root.beginEntrance()
-    }
-    onWallpaperPathChanged: {
-        if (wallpaperIsVideo)
-            Wallpapers.ensureVideoFirstFrame(wallpaperPath)
     }
 
     // ── Organic morphing: entrance cascade state ──

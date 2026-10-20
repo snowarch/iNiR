@@ -115,10 +115,8 @@ Scope {
             // Side effect kept out of the source binding: make sure the still
             // for a video/GIF wallpaper exists before the overlay asks for it.
             const wp = Config.options?.background?.wallpaperPath ?? ""
-            if (wp) {
+            if (wp)
                 Wallpapers.ensureVideoFirstFrame(FileUtils.trimFileProtocol(wp))
-                Wallpapers.ensureVideoStill(wp)
-            }
 
             // Cancel any running exit
             fadeOut.stop()
@@ -305,13 +303,8 @@ Scope {
                             // binding loop. _beginTransition() requests it.
                             // The full-size first frame, not the 256 px thumbnail still: iRiS
                             // barely blurs it, and a stretched thumbnail read as pixelated.
-                            if (/\.(mp4|webm|mkv|avi|mov)$/i.test(path)) {
-                                const frame = Wallpapers.stillUrlFor(path)
-                                if (frame) return frame
-                                const still = Wallpapers.videoStillPath(path)
-                                if (!still) return ""
-                                return still.startsWith("file://") ? still : "file://" + still
-                            }
+                            if (/\.(mp4|webm|mkv|avi|mov)$/i.test(path))
+                                return Wallpapers.stillUrlFor(path)
                             return path.startsWith("file://") ? path : "file://" + path
                         }
                         fillMode: Image.PreserveAspectCrop

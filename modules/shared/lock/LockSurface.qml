@@ -49,18 +49,13 @@ MouseArea {
     
     // Wallpaper path resolution
     readonly property string _wallpaperSource: Config.options?.background?.wallpaperPath ?? ""
-    readonly property string _wallpaperThumbnail: Config.options?.background?.thumbnailPath ?? ""
     readonly property bool wallpaperIsVideo: {
         const lp = _wallpaperSource.toLowerCase();
         return lp.endsWith(".mp4") || lp.endsWith(".webm") || lp.endsWith(".mkv") || lp.endsWith(".avi") || lp.endsWith(".mov");
     }
     readonly property bool wallpaperIsGif: _wallpaperSource.toLowerCase().endsWith(".gif")
-    // Static image source: use raw path for normal wallpapers, thumbnail for video/gif
-    readonly property string _staticWallpaperPath: {
-        if (!_wallpaperSource) return "";
-        if (wallpaperIsVideo || wallpaperIsGif) return _wallpaperThumbnail || _wallpaperSource;
-        return _wallpaperSource;
-    }
+    // Static image source: the file itself, a video's still frame, a gif's first frame
+    readonly property string _staticWallpaperPath: Wallpapers.stillUrlFor(_wallpaperSource)
     
     // Safe fallback background color (prevents red screen on errors)
     Rectangle {

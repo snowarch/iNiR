@@ -52,10 +52,8 @@ Variants {
             return Wallpapers.internalPreviewFor(_monitorName, configuredPath);
         }
 
-        readonly property string wallpaperThumbnail: {
-            if (wBg.useMainWallpaper ?? true) return Config.options?.background?.thumbnailPath ?? ""
-            return wBg.thumbnailPath ?? (Config.options?.background?.thumbnailPath ?? "")
-        }
+        // A still of this wallpaper as a plain path: a video's frame, else the file itself
+        readonly property string wallpaperThumbnail: CF.FileUtils.trimFileProtocol(Wallpapers.stillUrlFor(wallpaperSourceRaw))
         readonly property bool enableAnimation: wBg.enableAnimation ?? true
         readonly property bool enableAnimatedBlur: wEffects.enableAnimatedBlur ?? false
         readonly property bool webWallpaperActive: WebWallpaper.active
