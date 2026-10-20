@@ -24,6 +24,10 @@ Item {
     property real target: 0
     property var segments: []
     property real lastClock: -1
+    // A curve retargeted mid-flight is chased by a critically damped spring from the speed it had (`chase`, its
+    // response in ms): a new segment launched at the curve's own speed on top of the old one, so Spotlight turned
+    // from 0.31 to -0.84 of its peak speed in one frame. A spring never jumps; the old momentum carries it on a bit.
+    property real chase: 0
 
     // The clock is the animation driver's own time (one loop a second), the time the step is drawn for. The wall
     // clock read inside the tick wandered with whatever ran before it, so a frame could carry half a step and the
@@ -57,6 +61,7 @@ Item {
     onIntentChanged: root.forget()
     function jump(): void {
         root.running = false
+        root.chase = 0
         root.segments = []
         root.velocity = 0
         root.target = root.to
@@ -77,7 +82,11 @@ Item {
             root.jump()
             return
         }
-        if (p.curve) {
+        if (p.curve && root.running && (root.segments.length > 0 || root.chase > 0)) {
+            root.segments = []
+            root.target = root.to
+            root.chase = p.response
+        } else if (p.curve) {
             const delta = root.to - (root.segments.length > 0 ? root.target : root.value)
             root.target = root.to
             if (Math.abs(delta) >= root.epsilon)
@@ -102,7 +111,7 @@ Item {
         const p = root.params(root.to >= root.value ? "emerge" : "recede")
         if (p.response <= 0) { root.jump(); return }
 
-        if (root.segments.length > 0 || p.curve) {
+        if (root.chase <= 0 && (root.segments.length > 0 || p.curve)) {
             let offset = 0
             const alive = []
             for (const segment of root.segments) {
@@ -123,8 +132,8 @@ Item {
             }
         }
 
-        const w = 2 * Math.PI / (p.response / 1000)
-        const zeta = 1 - p.bounce
+        const w = 2 * Math.PI / ((root.chase > 0 ? root.chase : p.response) / 1000)
+        const zeta = root.chase > 0 ? 1 : 1 - p.bounce
         const x0 = root.value - root.to
         const v0 = root.velocity
         let x, v
