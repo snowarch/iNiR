@@ -413,7 +413,12 @@ func (v solver) fill(seed LCH, need float64) RGB {
 
 // mark solves a seed as a figure or glyph: readMark on every ground.
 func (v solver) mark(h, c, dl float64) RGB {
-	return solve(v.s, h, c, v.s.markL+dl, readsOn(readMark, v.grounds...))
+	from := v.s.markL + dl
+	if v.s.dark && h >= 85 && h <= 125 {
+		// Yellow is only yellow when light: at the band's lightness kihada turned olive (#b1b300) on a night widget.
+		from = math.Max(from, 0.86)
+	}
+	return solve(v.s, h, c, from, readsOn(readMark, v.grounds...))
 }
 
 func (v solver) highlight(seed LCH) RGB {
@@ -913,7 +918,7 @@ func styleIDs() []string {
 
 // Version changes whenever a solve would give other colours for the same request; IrisWashi.qml asks again when it
 // differs (TestShellKnowsVersion keeps the two equal).
-const Version = 31
+const Version = 32
 
 // solveSchemes is the palette alone, without the other styles' swatches.
 func solveSchemes(req Request, key string) Output {

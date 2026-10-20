@@ -15,7 +15,7 @@ Singleton {
     id: root
 
     // The solver's version (scripts/colors/washi Version): a newer solver answers the same request again.
-    readonly property int version: 31
+    readonly property int version: 32
     readonly property string cachePath: `${Directories.stateUserPath}/generated/iris-washi.json`
     readonly property var appearance: Config.options?.iris?.appearance ?? ({})
     readonly property bool followsTheme: String(ThemeService.currentTheme ?? "auto") !== "auto" && Boolean(root.appearance?.followTheme ?? true)
