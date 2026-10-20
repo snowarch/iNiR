@@ -2625,7 +2625,7 @@ show_logs() {
     fi
 
     local lines=50
-    if [[ "${1:-}" == "-n" && -n "${2:-}" ]]; then
+    if [[ ( "${1:-}" == "-n" || "${1:-}" == "--lines" ) && -n "${2:-}" ]]; then
         lines="$2"
     fi
     "$qs_bin" -p "$config_dir" log | tail -n "$lines"
