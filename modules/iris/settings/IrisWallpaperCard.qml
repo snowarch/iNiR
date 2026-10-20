@@ -22,11 +22,12 @@ ClippingRectangle {
 
     readonly property real d: IrisStyle.settingsDensity
     readonly property int pad: Math.round(14 * card.d)
-    readonly property int stageHeight: Math.round(228 * card.d)
+    // A page with room to spare gives the desk more of it (General's welcome, DI38).
+    property int stageHeight: Math.round(228 * card.d)
     // The desk takes at most a third of a narrow card and leaves when the card cannot hold it beside a readable
     // column (a Settings window, a large text scale): the strip under it still shows the wallpapers.
     readonly property bool deskShown: card.width >= 520 * card.d
-    readonly property real deskHeight: Math.round(Math.min(168 * card.d, card.width * 0.36 * desk.screenH / Math.max(1, desk.screenW)))
+    readonly property real deskHeight: Math.round(Math.min(card.stageHeight - 60 * card.d, card.width * 0.54 * desk.screenH / Math.max(1, desk.screenW)))
     property var screen: GlobalStates.focusedScreen
     readonly property string current: Wallpapers.effectiveWallpaperPath
     readonly property string kind: Wallpapers.isVideoFile(card.current) ? Translation.tr("Live")
@@ -94,6 +95,8 @@ ClippingRectangle {
         font.weight: IrisStyle.weight(Font.Medium)
     }
 
+    // What the strip of nearby wallpapers adds under the stage, for a page that sizes the stage to its room.
+    readonly property real stripRoom: strip.visible ? strip.height + 2 * card.pad : 0
     Layout.fillWidth: true
     implicitHeight: welcome.active ? Number(welcome.item?.implicitHeight ?? 0) : card.stageHeight + (strip.visible ? strip.height + 2 * card.pad : 0)
     radius: IrisStyle.radiusTile
@@ -161,10 +164,12 @@ ClippingRectangle {
 
         ColumnLayout {
             id: column
-            anchors.left: card.deskShown ? desk.right : parent.left
-            anchors.leftMargin: Math.round(28 * card.d)
-            anchors.right: parent.right
-            anchors.rightMargin: Math.round(24 * card.d)
+            // Beside the desk the words sit in the middle of the room it leaves, not against it with that room bare on their
+            // right (DI38); they never shrink under what they need.
+            readonly property real room: parent.width - (card.deskShown ? desk.x + desk.width : 0) - Math.round(52 * card.d)
+            readonly property real measure: Math.min(column.room, Math.max(column.implicitWidth, Math.round(260 * card.d)))
+            x: (card.deskShown ? desk.x + desk.width : 0) + Math.round(28 * card.d) + Math.max(0, Math.round((column.room - column.measure) / 2))
+            width: column.measure
             anchors.verticalCenter: parent.verticalCenter
             spacing: 0
             RowLayout {
@@ -247,6 +252,17 @@ ClippingRectangle {
                 Layout.topMargin: Math.round(12 * card.d)
                 text: card.facts
                 color: IrisStyle.onMediaSecondary
+                font.pixelSize: IrisStyle.typeLabel
+                elide: Text.ElideRight
+            }
+            // What the desk wears, by name: the picture beside it says which, this says what it is.
+            IrisText {
+                Layout.fillWidth: true
+                Layout.topMargin: Math.round(4 * card.d)
+                visible: card.title.length > 0
+                text: card.kind + "  ·  " + card.title
+                color: IrisStyle.onMediaSecondary
+                opacity: 0.8
                 font.pixelSize: IrisStyle.typeLabel
                 elide: Text.ElideRight
             }

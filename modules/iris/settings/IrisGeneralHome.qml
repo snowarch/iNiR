@@ -29,13 +29,18 @@ ColumnLayout {
     readonly property var shown: root.only.length > 0 ? root.entries.filter(entry => entry.key === root.only) : root.entries
     readonly property bool fillets: IrisStyle.plateSelection
     readonly property int columns: root.only.length > 0 ? 1 : root.width >= 620 * root.d ? 3 : 2
+    // The height the page gives the welcome: what the facts leave goes to the desk (DI38: a 1080p window left a third empty).
+    property real room: 0
 
     spacing: Math.round(14 * root.d)
 
     IrisWallpaperCard {
+        id: welcomeCard
         visible: root.only.length === 0
         Layout.fillWidth: true
         screen: root.screen
+        stageHeight: Math.round(Math.max(228 * root.d, Math.min(440 * root.d,
+            root.room - (root.facts ? grid.implicitHeight : 0) - root.spacing - welcomeCard.stripRoom)))
     }
 
     // A Design that lists General's groups beside its page greets with the desktop and the three choices that change how

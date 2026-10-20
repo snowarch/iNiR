@@ -38,6 +38,23 @@ Item {
     property int travel: 1
     property string requestedSection: ""
     readonly property real d: IrisStyle.settingsDensity
+    // The widest a page's column gets: on a 1080p screen the window's pane is its width less a gutter of air.
+    readonly property real columnMost: Math.round(1200 * root.d)
+    // Rows never run that wide (DI38): a label 1200 px from its switch is read and aimed worse. Past their width the
+    // page's scene takes the side of the window and its whole height, so a wide window fills with what the rows change.
+    readonly property real rowsMost: Math.round(760 * root.d)
+    readonly property real besideGap: Math.round(20 * root.d)
+    readonly property real besideMargin: Math.round(28 * root.d)
+    // By measure: stacked, the scene keeps the screen's proportions above rows of its own width and edges; only when the
+    // rows would not fit under it (a long area) does it go beside them, as tall as they run. A short area beside its
+    // scene left the scene a portrait crop and half the column bare (Notifications).
+    readonly property bool heroBeside: root.heroPinned && !root.split && !root.sceneDrawn && !root.landing && pageHero.stageAvailable
+        && detailBody.width - 2 * root.besideMargin - root.besideGap - root.rowsMost >= Math.round(340 * root.d)
+        && settingsRows.implicitHeight > detailBody.height - root.rowsMost * root.screenShape - root.stageCaption - Math.round(40 * root.d)
+    readonly property real screenShape: {
+        const screen = GlobalStates.focusedScreen
+        return screen ? screen.height / Math.max(1, screen.width) : 0.5625
+    }
     // A section about hardware this machine lacks is not offered (Battery on a desktop); `inir battery simulate` brings it back.
     readonly property var sections: IrisOptions.sections.filter(section => section.id !== "battery" || Battery.available)
     // Sources and the Community Hub sit in a footer under the list, always in view.
@@ -132,19 +149,28 @@ Item {
     // A Design's page holds the scene in a place of its own beside the rows, whatever the section.
     readonly property bool stageInColumn: root.sceneDrawn && !root.landing && pageHero.shown && pageHero.stageAvailable
     readonly property bool heroPinned: !root.stageInColumn && pageHero.shown && pageHero.staged
-        && detailBody.height >= (root.split ? root.stageMin + root.stageCaption : pageHero.implicitHeight) + Math.round(260 * root.d)
+        && detailBody.height >= (root.split ? root.stageMin : Math.round(196 * root.d)) + root.stageCaption + Math.round(260 * root.d)
     // In the pane the scene is a stage across its width that takes the room the rows leave: a short group shows what it
     // makes large, a long one keeps it small and in view while the rows pass under it.
     readonly property real stageCaption: Math.round(52 * root.d)
     readonly property real stageMin: Math.round(168 * root.d)
     readonly property real stageHeight: {
-        if (!root.split || !root.heroPinned) return Math.round(150 * root.d)
+        if (!root.heroPinned) return Math.round((root.split ? 150 : 196) * root.d)
         // A scene is a picture of the screen: it may grow to the screen's own proportions, never taller.
         const screen = GlobalStates.focusedScreen
-        const most = Math.round((detailPane.width - Math.round(24 * root.d)) * (screen ? screen.height / Math.max(1, screen.width) : 0.5625))
+        const shape = screen ? screen.height / Math.max(1, screen.width) : 0.5625
+        if (!root.split) {
+            // iRiS's own head (DI38): a short area's scene takes the height its few rows leave empty.
+            const room = detailBody.height - settingsRows.implicitHeight - pageHero.wordsHeight - Math.round(84 * root.d)
+            return Math.round(Math.max(196 * root.d, Math.min(settingsRows.width * shape, room)))
+        }
+        const most = Math.round((detailPane.width - Math.round(24 * root.d)) * shape)
         const room = detailBody.height - settingsRows.implicitHeight - root.stageCaption - Math.round(48 * root.d)
         return Math.round(Math.max(root.stageMin, Math.min(most, room)))
     }
+    // Beside the rows the scene keeps the screen's proportions too: a column-tall crop of a 16:9 desktop is not that desktop.
+    readonly property real besideStageHeight: Math.round(Math.min(heroBesideSlot.width * root.screenShape,
+        heroBesideSlot.height - pageHero.wordsHeight - Math.round(16 * root.d)))
     function shown(spec: var): bool { return IrisOptions.shown(spec) }
 
     readonly property int searchLimit: 24
@@ -967,6 +993,9 @@ Item {
                         id: sidebarFlick
                         Layout.fillWidth: true
                         Layout.fillHeight: true
+                        // As tall as the list, so the foot follows it instead of leaving a hole above itself (DI38); a short
+                        // window still scrolls it.
+                        Layout.maximumHeight: sidebarColumn.implicitHeight
                         clip: true
                         contentHeight: sidebarColumn.implicitHeight
                         // What the list asks for: the window's height comes from it (`root.sidebarNeed`).
@@ -1130,6 +1159,7 @@ Item {
                             SectionRow { list: []; gapAbove: false }
                         }
                     }
+                    Item { Layout.fillHeight: true }
                 }
             }
             }
@@ -1342,7 +1372,7 @@ Item {
                             // lands, however far down the row is. One head, moved between this slot and the top of the rows.
                             Item {
                                 id: heroPinSlot
-                                visible: settingsFlick.visible && root.heroPinned
+                                visible: settingsFlick.visible && root.heroPinned && !root.heroBeside
                                 x: Math.round((detailBody.width - width) / 2)
                                 y: root.split ? 0 : Math.round(6 * root.d)
                                 // In the pane the stage runs edge to edge, concentric with the pane's corners.
@@ -1359,6 +1389,69 @@ Item {
                                 }
                             }
 
+                            // Beside the rows when the window is wider than they read (`root.heroBeside`).
+                            Item {
+                                id: heroBesideSlot
+                                visible: settingsFlick.visible && root.heroBeside
+                                x: root.besideMargin
+                                y: Math.round(6 * root.d)
+                                width: detailBody.width - 2 * root.besideMargin - root.besideGap - root.rowsMost
+                                height: detailBody.height - y - Math.round(20 * root.d)
+
+                                // Under the scene, the page's groups as its index: the one being read is marked as the rows
+                                // scroll, a click brings one up (the column AIRISU keeps beside its sheet).
+                                Column {
+                                    y: pageHero.height + Math.round(18 * root.d)
+                                    width: parent.width
+                                    visible: root.flatSection && root.heroBeside
+                                    Repeater {
+                                        model: root.flatSection && root.heroBeside ? root.groups : []
+                                        MouseArea {
+                                            id: indexEntry
+                                            required property var modelData
+                                            readonly property bool current: String(indexEntry.modelData.key) === root.readGroup
+                                            width: parent.width
+                                            height: Math.round(34 * root.d)
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            Accessible.role: Accessible.Button
+                                            Accessible.name: indexEntry.modelData.title
+                                            onClicked: {
+                                                root.heldGroup = String(indexEntry.modelData.key)
+                                                root.readGroup = root.heldGroup
+                                                root.scrollToGroup(root.heldGroup)
+                                            }
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                radius: IrisStyle.radiusRow
+                                                color: indexEntry.containsMouse ? IrisStyle.fillQuiet : "transparent"
+                                                Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+                                            }
+                                            Rectangle {
+                                                x: Math.round(4 * root.d)
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: Math.round(3 * root.d)
+                                                height: Math.round(16 * root.d)
+                                                radius: width / 2
+                                                color: IrisStyle.accent
+                                                opacity: indexEntry.current ? 1 : 0
+                                                Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+                                            }
+                                            IrisText {
+                                                x: Math.round(16 * root.d)
+                                                width: parent.width - x - Math.round(8 * root.d)
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: indexEntry.modelData.title
+                                                color: indexEntry.current ? IrisStyle.text : IrisStyle.muted
+                                                font.pixelSize: IrisStyle.typeBody
+                                                font.weight: IrisStyle.weight(indexEntry.current ? Font.DemiBold : Font.Normal)
+                                                elide: Text.ElideRight
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             StageHero {
                                 id: pageHero
                                 readonly property bool groupPage: !root.searching && root.openGroup.length > 0 && root.advancedPage < 0
@@ -1367,8 +1460,9 @@ Item {
                                 readonly property string key: pageHero.spying ? root.spyGroup : String(root.shownGroups[0]?.key ?? "")
                                 // A group with no scene has no head: the toolbar already names it.
                                 readonly property bool shown: pageHero.sectionPage || (pageHero.groupPage && pageHero.stageAvailable)
-                                parent: root.stageInColumn ? root.scene.stageSlot : root.heroPinned ? heroPinSlot : heroFlowSlot
-                                width: root.stageInColumn ? root.columnStageWidth : root.split && root.heroPinned ? detailBody.width : settingsRows.width
+                                parent: root.stageInColumn ? root.scene.stageSlot : root.heroBeside ? heroBesideSlot : root.heroPinned ? heroPinSlot : heroFlowSlot
+                                width: root.stageInColumn ? root.columnStageWidth : root.heroBeside ? heroBesideSlot.width
+                                    : root.heroPinned ? heroPinSlot.width : settingsRows.width
                                 // A Design's page names the page itself: the head is only its scene there.
                                 visible: pageHero.shown && !root.landing && (!root.sceneDrawn || root.stageInColumn)
                                 tint: pageHero.groupPage || pageHero.spying ? (IrisOptions.groupTints[pageHero.key] ?? root.currentSection.tint) : root.currentSection.tint
@@ -1396,7 +1490,9 @@ Item {
                             Flickable {
                                 id: settingsFlick
                                 anchors.fill: parent
-                                anchors.topMargin: root.heroPinned ? heroPinSlot.y + heroPinSlot.height + Math.round(12 * root.d) : 0
+                                anchors.topMargin: root.heroPinned && !root.heroBeside ? heroPinSlot.y + heroPinSlot.height + Math.round(12 * root.d) : 0
+                                // Beside the scene the rows end a margin short of the window's edge (their column is centred in this).
+                                anchors.leftMargin: root.heroBeside ? detailBody.width - 2 * root.besideMargin - root.rowsMost : 0
                                 // The pane's corners stay its own: the last rows stop short of the curve.
                                 anchors.bottomMargin: root.split ? Math.round(detailPane.radius / 2) : 0
                                 // Rows pass under the pinned head, never over it.
@@ -1423,7 +1519,7 @@ Item {
                                     id: settingsRows
                                     y: 6 * root.d
                                     // In the pane the rows run its width (their own inset keeps the text off its edge).
-                                    width: root.split ? settingsFlick.width - Math.round(16 * root.d) : Math.min(settingsFlick.width - 56 * root.d, 1040 * root.d)
+                                    width: root.split ? settingsFlick.width - Math.round(16 * root.d) : Math.min(settingsFlick.width - 56 * root.d, root.generalHome ? root.columnMost : root.rowsMost)
                                     x: Math.round((settingsFlick.width - width) / 2)
                                     spacing: 18 * root.d
 
@@ -1431,7 +1527,7 @@ Item {
                                     Item {
                                         id: heroFlowSlot
                                         Layout.fillWidth: true
-                                        visible: pageHero.shown && !root.heroPinned && !root.stageInColumn && !root.sceneDrawn
+                                        visible: pageHero.shown && !root.heroPinned && !root.stageInColumn && !root.heroBeside && !root.sceneDrawn
                                         implicitHeight: visible ? pageHero.implicitHeight : 0
                                     }
 
@@ -1447,6 +1543,7 @@ Item {
                                     IrisGeneralHome {
                                         Layout.fillWidth: true
                                         Layout.topMargin: Math.round(2 * root.d)
+                                        room: settingsFlick.height - Math.round(48 * root.d)
                                         screen: root.screen
                                         visible: root.generalHome && (root.browsing || root.openGroup.length > 0) && root.advancedPage < 0 && !root.searching
                                         only: root.browsing ? "" : String(root.shownGroups[0]?.key ?? "")
@@ -1656,7 +1753,7 @@ Item {
         Component.onCompleted: if (sectionRow.selected && sectionRow.travels) root.travelRow = sectionRow
         Component.onDestruction: if (root.travelRow === sectionRow) root.travelRow = null
         readonly property bool dimmed: root.searching && !sectionRow.members.some(id => root.matchedSections.has(id))
-        readonly property real rowHeight: Math.round(28 * root.d * Math.max(1, IrisStyle.typeScale))
+        readonly property real rowHeight: Math.round(32 * root.d * Math.max(1, IrisStyle.typeScale))
         // Where the row's own line starts under the air of a break; the wash lands there.
         readonly property real washY: sectionRow.clusterStart ? Math.round(8 * root.d) : 0
         width: parent ? parent.width : 0
@@ -1724,23 +1821,119 @@ Item {
     // area changes, its name over the picture. You choose by what you see, not by a list of icons.
     component CategoryPage: Flickable {
         id: categoryPage
-        readonly property var areas: (root.landingCategory?.sections ?? []).map(id => IrisOptions.sectionById(id)).filter(area => !!area)
+        readonly property var all: (root.landingCategory?.sections ?? []).map(id => IrisOptions.sectionById(id)).filter(area => !!area)
+        // Only an area with a scene of its own grows to fill the page: one without stays a compact strip under the
+        // mosaic (an empty tile stretched to fill read as padding, DI38).
+        readonly property bool previews: Config.options?.iris?.appearance?.previews ?? true
+        readonly property var areas: categoryPage.all.filter(area => categoryPage.previews && sceneProbe.sceneFor(area.id, "").length > 0)
+        readonly property var plain: categoryPage.all.filter(area => !categoryPage.areas.includes(area))
+        readonly property real stripHeight: Math.round(64 * root.d)
         clip: true
-        contentHeight: mosaic.implicitHeight + Math.round(40 * root.d)
+        contentHeight: mosaicColumn.implicitHeight + Math.round(24 * root.d)
         boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: IrisScrollBar {}
+        // The mosaic fills the page (DI38: fixed 210 px tiles covered under half of a 1080p window). Its columns are the
+        // ones whose scenes come closest to the screen's own shape: two areas stack as two wide views of the desktop,
+        // three or four share two columns; a tile only scrolls the page once it would get shorter than a readable scene.
+        readonly property real gap: Math.round(12 * root.d)
+        readonly property real band: Math.round(76 * root.d)
+        readonly property real room: categoryPage.height - Math.round(24 * root.d)
+            - categoryPage.plain.length * (categoryPage.stripHeight + categoryPage.gap)
+        readonly property real screenShape: {
+            const screen = GlobalStates.focusedScreen
+            return screen ? screen.width / Math.max(1, screen.height) : 16 / 9
+        }
+        function rowsFor(columns: int): int { return Math.ceil(categoryPage.areas.length / columns) }
+        function misfit(columns: int): real {
+            const width = (mosaic.width - (columns - 1) * categoryPage.gap) / columns
+            const height = (categoryPage.room - (categoryPage.rowsFor(columns) - 1) * categoryPage.gap) / categoryPage.rowsFor(columns)
+            return Math.abs(Math.log(Math.max(1, width) / Math.max(1, height - categoryPage.band) / categoryPage.screenShape))
+        }
+        readonly property int columns: categoryPage.areas.length < 2 || categoryPage.misfit(1) <= categoryPage.misfit(2) ? 1 : 2
+        readonly property real tileHeight: Math.max(Math.round(210 * root.d),
+            Math.floor((categoryPage.room - (categoryPage.rowsFor(categoryPage.columns) - 1) * categoryPage.gap) / categoryPage.rowsFor(categoryPage.columns)))
+        ColumnLayout {
+            id: mosaicColumn
+            y: Math.round(8 * root.d)
+            width: root.split ? categoryPage.width - Math.round(16 * root.d) : Math.min(categoryPage.width - 56 * root.d, root.columnMost)
+            x: Math.round((categoryPage.width - width) / 2)
+            spacing: categoryPage.gap
         GridLayout {
             id: mosaic
-            y: Math.round(8 * root.d)
-            width: root.split ? categoryPage.width - Math.round(16 * root.d) : Math.min(categoryPage.width - 56 * root.d, 1080 * root.d)
-            x: Math.round((categoryPage.width - width) / 2)
-            columns: 2
-            columnSpacing: Math.round(12 * root.d)
-            rowSpacing: Math.round(12 * root.d)
+            Layout.fillWidth: true
+            visible: categoryPage.areas.length > 0
+            columns: categoryPage.columns
+            columnSpacing: categoryPage.gap
+            rowSpacing: categoryPage.gap
             Repeater {
                 model: categoryPage.areas
                 // An odd count leads with one tile across the page: the mosaic never ends on a hole.
-                AreaTile { wide: categoryPage.areas.length % 2 === 1 && index === 0 }
+                AreaTile { wide: categoryPage.columns === 2 && categoryPage.areas.length % 2 === 1 && index === 0; Layout.preferredHeight: categoryPage.tileHeight }
+            }
+        }
+            Repeater {
+                model: categoryPage.plain
+                AreaStrip { Layout.fillWidth: true; Layout.preferredHeight: categoryPage.stripHeight }
+            }
+        }
+    }
+
+    // An area without a scene: its mark, name and line on one strip, opening it as a tile does.
+    component AreaStrip: MouseArea {
+        id: strip
+        required property var modelData
+        readonly property real round: IrisStyle.fieldChamfer ? 0 : IrisStyle.radiusTile + Math.round(6 * root.d)
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        Accessible.role: Accessible.Button
+        Accessible.name: Translation.tr(strip.modelData.title)
+        Accessible.description: Translation.tr(strip.modelData.subtitle ?? "")
+        onClicked: root.selectSection(strip.modelData.id)
+        scale: strip.pressed ? 0.985 : 1
+        Behavior on scale { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
+        Rectangle {
+            anchors.fill: parent
+            radius: strip.round
+            color: strip.containsMouse ? IrisStyle.fillQuiet : IrisStyle.readingCard
+            border.width: Math.max(1, Math.round(1.5 * root.d))
+            border.color: strip.containsMouse ? IrisStyle.tintBorder(IrisStyle.accent) : IrisStyle.hairline
+            Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+        }
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Math.round(14 * root.d)
+            anchors.rightMargin: Math.round(14 * root.d)
+            spacing: Math.round(12 * root.d)
+            IrisSquircle {
+                implicitWidth: Math.round(32 * root.d)
+                implicitHeight: implicitWidth
+                tint: strip.modelData.tint
+                glyph: strip.modelData.icon
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 0
+                IrisText {
+                    Layout.fillWidth: true
+                    text: Translation.tr(strip.modelData.title)
+                    font.family: IrisStyle.fontTitle
+                    font.pixelSize: IrisStyle.typeTitle
+                    font.weight: IrisStyle.weight(Font.Bold)
+                    font.capitalization: IrisStyle.lowerTitles ? Font.AllLowercase : Font.MixedCase
+                    elide: Text.ElideRight
+                }
+                IrisText {
+                    Layout.fillWidth: true
+                    text: Translation.tr(strip.modelData.subtitle ?? "")
+                    color: IrisStyle.muted
+                    font.pixelSize: IrisStyle.typeMeta
+                    elide: Text.ElideRight
+                }
+            }
+            MaterialSymbol {
+                text: "chevron_right"
+                iconSize: Math.round(20 * root.d)
+                color: IrisStyle.muted
             }
         }
     }
@@ -1757,7 +1950,6 @@ Item {
         Layout.columnSpan: tile.wide ? 2 : 1
         Layout.fillWidth: true
         Layout.preferredWidth: 1
-        Layout.preferredHeight: Math.round((tile.wide ? 250 : 210) * root.d)
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
@@ -1799,6 +1991,8 @@ Item {
             anchors.margins: tile.inset
             anchors.bottomMargin: tile.band
             asynchronous: true
+            // An area with no scene (Widgets, Gaming) drew the preview's empty plate over its own mark: a blank slab.
+            visible: tile.pictured
             sourceComponent: IrisGroupPreview {
                 compact: true
                 niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
@@ -1940,15 +2134,16 @@ Item {
         readonly property bool stageAvailable: stageLoader.item?.available ?? false
         readonly property string caption: stageLoader.item?.caption ?? ""
         // In the group column: the scene at the column's width, its line under it.
-        readonly property bool column: root.stageInColumn
+        readonly property bool column: root.stageInColumn || root.heroBeside
+        readonly property real wordsHeight: heroText.implicitHeight
         // Measured on the pane, not on itself: its width follows whether it is pinned, which follows this.
-        readonly property bool staged: hero.stageAvailable && (hero.column || (root.split ? detailBody.width : settingsRows.width) > 560 * root.d)
+        readonly property bool staged: hero.stageAvailable && (root.stageInColumn || (root.split ? detailBody.width : detailBody.width - 56 * root.d) > 560 * root.d)
         // In the pane or the column: the scene across the top, its line under it.
         // On iRiS's own page too (DI24b): the scene across the head at a size that shows it, its words on a band of their
         // own under it, never over the picture nor squeezed beside a thumbnail.
         readonly property bool wideHead: !root.sceneDrawn && !hero.column && !root.split && hero.staged
         readonly property bool banner: (root.split && hero.staged) || hero.column || hero.wideHead
-        readonly property real stageH: hero.column ? root.columnStageHeight : hero.wideHead ? Math.round(196 * root.d) : root.stageHeight
+        readonly property real stageH: hero.column ? (root.heroBeside ? root.besideStageHeight : root.columnStageHeight) : root.stageHeight
         // On a Design's page the scene stands alone: the page already says what it shows.
         readonly property bool bare: root.sceneDrawn && hero.column
         Layout.fillWidth: true
