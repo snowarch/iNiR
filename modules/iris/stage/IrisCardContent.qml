@@ -1007,12 +1007,9 @@ Item {
             readonly property color tint: IrisStyle.artTintOf(tintQuantizer.colors)
             // The artwork is the card's material, edge to edge in its own contour; the player sits on it at the card's margin.
             readonly property real inset: Math.max(0, IrisStyle.cardPad - Math.round(14 * root.d))
+            // Without artwork the card's own body is the material (solid, glass or blur, one silhouette when it joins the
+            // Island): a lighter plate here was a second material, a seam against the Island and the frame.
             implicitHeight: card.implicitHeight + player.inset * 2
-            Rectangle {
-                anchors.fill: parent
-                color: IrisStyle.surfaceHigh
-                visible: !artLoader.active
-            }
             Loader {
                 id: artLoader
                 anchors.fill: parent
