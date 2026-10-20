@@ -2351,20 +2351,43 @@ Item {
             height: Math.round(50 * root.d)
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onContainsMouseChanged: {
+            // The keyboard walks the rows as the pointer does: Tab or the arrows move, Enter or Space opens, and a row
+            // in focus previews its scene as a rested pointer does.
+            activeFocusOnTab: true
+            readonly property bool groupHeader: true
+            function wanted(): void {
                 const key = String(groupRow.modelData.key)
-                if (header.containsMouse && groupRow.staged) root.hoverWanted = key
+                if ((header.containsMouse || header.activeFocus) && groupRow.staged) root.hoverWanted = key
                 else if (root.hoverWanted === key) root.hoverWanted = ""
+            }
+            function activate(): void {
+                if (groupRow.lone) IrisOptions.commit(groupRow.rows[0], groupRow.rows[0].invert ? groupRow.loneOn : !groupRow.loneOn)
+                else if (groupRow.folds) root.fold(groupRow.foldKey)
+                else root.openGroupNamed(groupRow.modelData.title)
+            }
+            onContainsMouseChanged: header.wanted()
+            onActiveFocusChanged: {
+                header.wanted()
+                if (header.activeFocus) root.reveal(groupRow)
+            }
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                    header.activate()
+                    event.accepted = true
+                } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
+                    // The arrows go row to row; a row's own switch is for Tab.
+                    let next = header.nextItemInFocusChain(event.key === Qt.Key_Down)
+                    for (let hops = 0; next && next !== header && next.groupHeader !== true && hops < 64; hops++)
+                        next = next.nextItemInFocusChain(event.key === Qt.Key_Down)
+                    if (next && next.groupHeader === true) next.forceActiveFocus(event.key === Qt.Key_Down ? Qt.TabFocusReason : Qt.BacktabFocusReason)
+                    event.accepted = true
+                }
             }
             Component.onDestruction: if (root.hoverWanted === String(groupRow.modelData.key)) root.hoverWanted = ""
             Accessible.role: Accessible.Button
             Accessible.name: groupRow.modelData.title
             Accessible.description: groupRow.summary
-            onClicked: {
-                if (groupRow.lone) IrisOptions.commit(groupRow.rows[0], groupRow.rows[0].invert ? groupRow.loneOn : !groupRow.loneOn)
-                else if (groupRow.folds) root.fold(groupRow.foldKey)
-                else root.openGroupNamed(groupRow.modelData.title)
-            }
+            onClicked: header.activate()
             // Concentric with the card the rows lie in; cut like it under a chamfer.
             IrisCutPlate {
                 anchors.fill: headerPlate
@@ -2378,7 +2401,9 @@ Item {
                 anchors.margins: 3 * root.d
                 visible: !IrisStyle.fieldChamfer
                 radius: IrisStyle.concentric(IrisStyle.radiusTile, headerPlate.anchors.margins, IrisStyle.radiusRow)
-                color: header.pressed ? IrisStyle.fillActive : header.containsMouse ? IrisStyle.fillQuiet : "transparent"
+                color: header.pressed ? IrisStyle.fillActive : header.containsMouse || header.activeFocus ? IrisStyle.fillQuiet : "transparent"
+                border.width: header.activeFocus ? Math.max(1, Math.round(1.5 * root.d)) : 0
+                border.color: IrisStyle.tintBorder(IrisStyle.accent)
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
             }
             // No mark per row (DI24b): fifteen squircles of one hue said nothing the names do not; the scene beside the
