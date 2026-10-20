@@ -61,7 +61,7 @@ Region {
     readonly property var built: root.build(root.held ?? [], root.settled)
     readonly property var pieces: root.built.bodies
     readonly property bool empty: root.pieces.length === 0 && root.built.runs.length === 0 && !root.framed
-    onBuiltChanged: root.placeRuns()
+    onBuiltChanged: { root.placePieces(); root.placeRuns() }
 
     // The window this region blurs. The region publishes itself, as DMS's WindowBlur does: nothing
     // while the window is hidden, a fresh commit once the shape settles (a nested Region can change
@@ -288,7 +288,22 @@ Region {
         if (s.x <= reach) return -4
         return 0
     }
-    // Runs past the declared pieces live in a pool of child regions, grown on demand and zeroed when unused.
+    // Bodies and runs live in pools of child regions, grown on demand and emptied when unused. Ninety-six bound
+    // pieces re-read the whole table on every build, a moving body's every frame, for the handful a scene uses.
+    readonly property Component pieceComponent: Component { Piece {} }
+    property var piecePool: []
+    property int piecesPlaced: 0
+    function placePieces(): void {
+        const pieces = root.built?.bodies ?? [], pool = root.piecePool
+        while (pool.length < pieces.length) {
+            const made = root.pieceComponent.createObject(root)
+            root.regions.push(made)
+            pool.push(made)
+        }
+        const reach = Math.max(root.piecesPlaced, pieces.length)
+        for (let n = 0; n < reach; n++) pool[n].p = pieces[n] ?? null
+        root.piecesPlaced = pieces.length
+    }
     readonly property Component runComponent: Component { Region {} }
     property var runPool: []
     function placeRuns(): void {
@@ -359,8 +374,7 @@ Region {
 
     component Piece: Region {
         id: piece
-        required property int index
-        readonly property var p: root.pieces[piece.index] ?? null
+        property var p: null
         x: piece.p ? root.lo(piece.p.x) : 0
         y: piece.p ? root.lo(piece.p.y) : 0
         width: piece.p ? Math.max(0, root.hi(piece.p.x + piece.p.width) - root.lo(piece.p.x)) : 0
@@ -389,100 +403,4 @@ Region {
     }
     // Empty: its only job is to make the region change, which schedules the window's polish.
     Region { id: poke; width: 0; height: 0 }
-    Piece { index: 0 }
-    Piece { index: 1 }
-    Piece { index: 2 }
-    Piece { index: 3 }
-    Piece { index: 4 }
-    Piece { index: 5 }
-    Piece { index: 6 }
-    Piece { index: 7 }
-    Piece { index: 8 }
-    Piece { index: 9 }
-    Piece { index: 10 }
-    Piece { index: 11 }
-    Piece { index: 12 }
-    Piece { index: 13 }
-    Piece { index: 14 }
-    Piece { index: 15 }
-    Piece { index: 16 }
-    Piece { index: 17 }
-    Piece { index: 18 }
-    Piece { index: 19 }
-    Piece { index: 20 }
-    Piece { index: 21 }
-    Piece { index: 22 }
-    Piece { index: 23 }
-    Piece { index: 24 }
-    Piece { index: 25 }
-    Piece { index: 26 }
-    Piece { index: 27 }
-    Piece { index: 28 }
-    Piece { index: 29 }
-    Piece { index: 30 }
-    Piece { index: 31 }
-    Piece { index: 32 }
-    Piece { index: 33 }
-    Piece { index: 34 }
-    Piece { index: 35 }
-    Piece { index: 36 }
-    Piece { index: 37 }
-    Piece { index: 38 }
-    Piece { index: 39 }
-    Piece { index: 40 }
-    Piece { index: 41 }
-    Piece { index: 42 }
-    Piece { index: 43 }
-    Piece { index: 44 }
-    Piece { index: 45 }
-    Piece { index: 46 }
-    Piece { index: 47 }
-    Piece { index: 48 }
-    Piece { index: 49 }
-    Piece { index: 50 }
-    Piece { index: 51 }
-    Piece { index: 52 }
-    Piece { index: 53 }
-    Piece { index: 54 }
-    Piece { index: 55 }
-    Piece { index: 56 }
-    Piece { index: 57 }
-    Piece { index: 58 }
-    Piece { index: 59 }
-    Piece { index: 60 }
-    Piece { index: 61 }
-    Piece { index: 62 }
-    Piece { index: 63 }
-    Piece { index: 64 }
-    Piece { index: 65 }
-    Piece { index: 66 }
-    Piece { index: 67 }
-    Piece { index: 68 }
-    Piece { index: 69 }
-    Piece { index: 70 }
-    Piece { index: 71 }
-    Piece { index: 72 }
-    Piece { index: 73 }
-    Piece { index: 74 }
-    Piece { index: 75 }
-    Piece { index: 76 }
-    Piece { index: 77 }
-    Piece { index: 78 }
-    Piece { index: 79 }
-    Piece { index: 80 }
-    Piece { index: 81 }
-    Piece { index: 82 }
-    Piece { index: 83 }
-    Piece { index: 84 }
-    Piece { index: 85 }
-    Piece { index: 86 }
-    Piece { index: 87 }
-    Piece { index: 88 }
-    Piece { index: 89 }
-    Piece { index: 90 }
-    Piece { index: 91 }
-    Piece { index: 92 }
-    Piece { index: 93 }
-    Piece { index: 94 }
-    Piece { index: 95 }
 }

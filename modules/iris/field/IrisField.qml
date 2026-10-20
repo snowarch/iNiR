@@ -164,52 +164,44 @@ Item {
         fragmentShader: Qt.resolvedUrl("IrisField.frag.qsb")
         blending: true
 
-        function shapeAt(i: int): var {
-            const s = root.shapes[i]
-            return s ? Qt.vector4d(s.x + s.width / 2, s.y + s.height / 2, s.width / 2, s.height / 2)
-                : Qt.vector4d(0, 0, 0, 0)
-        }
-        function radiusBlock(block: int): var {
-            const r = i => {
-                const s = root.shapes[block * 4 + i]
-                return !s ? 0 : IrisStyle.fieldChamfer ? root.cutMask(s) : Number(s.radius ?? 0)
-            }
-            return Qt.vector4d(r(0), r(1), r(2), r(3))
-        }
-        function fuseBlock(block: int): var {
-            const k = i => {
-                const s = root.shapes[block * 4 + i]
-                return s ? Number(s.fuse ?? root.smoothing) : 0
-            }
-            return Qt.vector4d(k(0), k(1), k(2), k(3))
-        }
-        readonly property var indexOf: {
-            const map = {}
+        // Every per-body uniform in one pass over the table. A moving body rewrites `shapes` every frame, and as ~55
+        // bindings (one per uniform, each with its own closures and lookups) that pass cost several times the work.
+        readonly property var packed: {
             const list = root.shapes ?? []
-            for (let i = 0; i < Math.min(list.length, root.capacity); i++)
-                if (list[i]?.id) map[list[i].id] = i
-            return map
-        }
-        function joinBlock(block: int, which: int): var {
-            const j = i => {
-                const s = root.shapes[block * 4 + i]
-                const list = !s || !s.joins ? [] : Array.isArray(s.joins) ? s.joins : [s.joins]
-                const name = list[which]
+            const n = Math.min(list.length, root.capacity)
+            const chamfer = IrisStyle.fieldChamfer
+            const zero = Qt.vector4d(0, 0, 0, 0)
+            const index = {}
+            for (let i = 0; i < n; i++)
+                if (list[i]?.id) index[list[i].id] = i
+            const geometry = [], radius = [], fuse = [], join = [], also = [], paints = [], glass = []
+            const slot = (s, which) => {
+                const names = !s || !s.joins ? [] : Array.isArray(s.joins) ? s.joins : [s.joins]
+                const name = names[which]
                 if (!name) return 0
                 if (name === "frame") return root.framed ? -1 : 0
-                const index = pass.indexOf[name]
-                return index === undefined ? 0 : index + 1
+                const at = index[name]
+                return at === undefined ? 0 : at + 1
             }
-            return Qt.vector4d(j(0), j(1), j(2), j(3))
-        }
-        function paintsBlock(block: int): var {
-            const f = i => {
-                const s = root.shapes[block * 4 + i]
-                return s && s.paints ? 1 : 0
+            for (let i = 0; i < root.capacity; i++) {
+                const s = list[i]
+                geometry.push(s ? Qt.vector4d(s.x + s.width / 2, s.y + s.height / 2, s.width / 2, s.height / 2) : zero)
+                radius.push(!s ? 0 : chamfer ? root.cutMask(s) : Number(s.radius ?? 0))
+                fuse.push(s ? Number(s.fuse ?? root.smoothing) : 0)
+                join.push(slot(s, 0))
+                also.push(slot(s, 1))
+                paints.push(s && s.paints ? 1 : 0)
+                glass.push(root.glassOf(s))
             }
-            return Qt.vector4d(f(0), f(1), f(2), f(3))
+            const blocks = values => {
+                const out = []
+                for (let b = 0; b < root.capacity / 4; b++)
+                    out.push(Qt.vector4d(values[b * 4], values[b * 4 + 1], values[b * 4 + 2], values[b * 4 + 3]))
+                return out
+            }
+            return { geometry: geometry, radius: blocks(radius), fuse: blocks(fuse), join: blocks(join), also: blocks(also),
+                paints: blocks(paints), glass: blocks(glass) }
         }
-
         readonly property vector4d viewport: Qt.vector4d(pass.x, pass.y,
             Math.max(1, pass.width), Math.max(1, pass.height))
         readonly property vector2d screen: Qt.vector2d(Math.max(1, root.width), Math.max(1, root.height))
@@ -249,60 +241,56 @@ Item {
         readonly property vector4d leakHue0: IrisStyle.leakHue0
         readonly property vector4d leakHue1: IrisStyle.leakHue1
         readonly property vector4d leakHue2: IrisStyle.leakHue2
-        readonly property vector4d shape0: pass.shapeAt(0)
-        readonly property vector4d shape1: pass.shapeAt(1)
-        readonly property vector4d shape2: pass.shapeAt(2)
-        readonly property vector4d shape3: pass.shapeAt(3)
-        readonly property vector4d shape4: pass.shapeAt(4)
-        readonly property vector4d shape5: pass.shapeAt(5)
-        readonly property vector4d shape6: pass.shapeAt(6)
-        readonly property vector4d shape7: pass.shapeAt(7)
-        readonly property vector4d shape8: pass.shapeAt(8)
-        readonly property vector4d shape9: pass.shapeAt(9)
-        readonly property vector4d shape10: pass.shapeAt(10)
-        readonly property vector4d shape11: pass.shapeAt(11)
-        readonly property vector4d shape12: pass.shapeAt(12)
-        readonly property vector4d shape13: pass.shapeAt(13)
-        readonly property vector4d shape14: pass.shapeAt(14)
-        readonly property vector4d shape15: pass.shapeAt(15)
-        readonly property vector4d shape16: pass.shapeAt(16)
-        readonly property vector4d shape17: pass.shapeAt(17)
-        readonly property vector4d shape18: pass.shapeAt(18)
-        readonly property vector4d shape19: pass.shapeAt(19)
-        readonly property vector4d radiiA: pass.radiusBlock(0)
-        readonly property vector4d radiiB: pass.radiusBlock(1)
-        readonly property vector4d radiiC: pass.radiusBlock(2)
-        readonly property vector4d radiiD: pass.radiusBlock(3)
-        readonly property vector4d radiiE: pass.radiusBlock(4)
-        readonly property vector4d fuseA: pass.fuseBlock(0)
-        readonly property vector4d fuseB: pass.fuseBlock(1)
-        readonly property vector4d fuseC: pass.fuseBlock(2)
-        readonly property vector4d fuseD: pass.fuseBlock(3)
-        readonly property vector4d fuseE: pass.fuseBlock(4)
-        readonly property vector4d joinA: pass.joinBlock(0, 0)
-        readonly property vector4d alsoA: pass.joinBlock(0, 1)
-        readonly property vector4d joinB: pass.joinBlock(1, 0)
-        readonly property vector4d alsoB: pass.joinBlock(1, 1)
-        readonly property vector4d joinC: pass.joinBlock(2, 0)
-        readonly property vector4d alsoC: pass.joinBlock(2, 1)
-        readonly property vector4d joinD: pass.joinBlock(3, 0)
-        readonly property vector4d alsoD: pass.joinBlock(3, 1)
-        readonly property vector4d joinE: pass.joinBlock(4, 0)
-        readonly property vector4d alsoE: pass.joinBlock(4, 1)
-        readonly property vector4d paintsA: pass.paintsBlock(0)
-        readonly property vector4d paintsB: pass.paintsBlock(1)
-        readonly property vector4d paintsC: pass.paintsBlock(2)
-        readonly property vector4d paintsD: pass.paintsBlock(3)
-        readonly property vector4d paintsE: pass.paintsBlock(4)
-        function glassBlock(block: int): var {
-            const g = i => root.glassOf(root.shapes[block * 4 + i])
-            return Qt.vector4d(g(0), g(1), g(2), g(3))
-        }
-        readonly property vector4d glassA: pass.glassBlock(0)
-        readonly property vector4d glassB: pass.glassBlock(1)
-        readonly property vector4d glassC: pass.glassBlock(2)
-        readonly property vector4d glassD: pass.glassBlock(3)
-        readonly property vector4d glassE: pass.glassBlock(4)
+        readonly property vector4d shape0: pass.packed.geometry[0]
+        readonly property vector4d shape1: pass.packed.geometry[1]
+        readonly property vector4d shape2: pass.packed.geometry[2]
+        readonly property vector4d shape3: pass.packed.geometry[3]
+        readonly property vector4d shape4: pass.packed.geometry[4]
+        readonly property vector4d shape5: pass.packed.geometry[5]
+        readonly property vector4d shape6: pass.packed.geometry[6]
+        readonly property vector4d shape7: pass.packed.geometry[7]
+        readonly property vector4d shape8: pass.packed.geometry[8]
+        readonly property vector4d shape9: pass.packed.geometry[9]
+        readonly property vector4d shape10: pass.packed.geometry[10]
+        readonly property vector4d shape11: pass.packed.geometry[11]
+        readonly property vector4d shape12: pass.packed.geometry[12]
+        readonly property vector4d shape13: pass.packed.geometry[13]
+        readonly property vector4d shape14: pass.packed.geometry[14]
+        readonly property vector4d shape15: pass.packed.geometry[15]
+        readonly property vector4d shape16: pass.packed.geometry[16]
+        readonly property vector4d shape17: pass.packed.geometry[17]
+        readonly property vector4d shape18: pass.packed.geometry[18]
+        readonly property vector4d shape19: pass.packed.geometry[19]
+        readonly property vector4d radiiA: pass.packed.radius[0]
+        readonly property vector4d radiiB: pass.packed.radius[1]
+        readonly property vector4d radiiC: pass.packed.radius[2]
+        readonly property vector4d radiiD: pass.packed.radius[3]
+        readonly property vector4d radiiE: pass.packed.radius[4]
+        readonly property vector4d fuseA: pass.packed.fuse[0]
+        readonly property vector4d fuseB: pass.packed.fuse[1]
+        readonly property vector4d fuseC: pass.packed.fuse[2]
+        readonly property vector4d fuseD: pass.packed.fuse[3]
+        readonly property vector4d fuseE: pass.packed.fuse[4]
+        readonly property vector4d joinA: pass.packed.join[0]
+        readonly property vector4d alsoA: pass.packed.also[0]
+        readonly property vector4d joinB: pass.packed.join[1]
+        readonly property vector4d alsoB: pass.packed.also[1]
+        readonly property vector4d joinC: pass.packed.join[2]
+        readonly property vector4d alsoC: pass.packed.also[2]
+        readonly property vector4d joinD: pass.packed.join[3]
+        readonly property vector4d alsoD: pass.packed.also[3]
+        readonly property vector4d joinE: pass.packed.join[4]
+        readonly property vector4d alsoE: pass.packed.also[4]
+        readonly property vector4d paintsA: pass.packed.paints[0]
+        readonly property vector4d paintsB: pass.packed.paints[1]
+        readonly property vector4d paintsC: pass.packed.paints[2]
+        readonly property vector4d paintsD: pass.packed.paints[3]
+        readonly property vector4d paintsE: pass.packed.paints[4]
+        readonly property vector4d glassA: pass.packed.glass[0]
+        readonly property vector4d glassB: pass.packed.glass[1]
+        readonly property vector4d glassC: pass.packed.glass[2]
+        readonly property vector4d glassD: pass.packed.glass[3]
+        readonly property vector4d glassE: pass.packed.glass[4]
         readonly property bool backdropReady: root.backdropSource?.ready ?? false
         readonly property vector4d glass: Qt.vector4d(pass.backdropReady ? 1 : 0, root.framed ? root.frameGlass : 0,
             IrisStyle.glassTint, IrisStyle.glassLip)
