@@ -10,6 +10,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.iris.style
+import qs.modules.iris.components
 import qs.modules.iris.settings
 import "../components"
 
@@ -141,6 +142,23 @@ Item {
             interactive: contentHeight > height
             boundsBehavior: Flickable.StopAtBounds
             clip: true
+            layer.enabled: tabsEdge.active
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: tabsEdge.mask
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 1
+            }
+            // The tabs past either end fade off instead of being cut mid-letter (IrisScrollEdge, the fade alone: a
+            // blurred band inside the masked list would be masked away with it).
+            IrisScrollEdge {
+                id: tabsEdge
+                parent: mainTabs
+                flick: mainTabs
+                anchors.fill: parent
+                blurs: false
+                reach: root.u(5)
+            }
             Column {
                 id: mainColumn
                 width: parent.width
@@ -373,6 +391,22 @@ Item {
                     clip: true
                     contentHeight: contentsColumn.implicitHeight
                     boundsBehavior: Flickable.StopAtBounds
+                    layer.enabled: contentsEdge.active
+                    layer.effect: MultiEffect {
+                        maskEnabled: true
+                        maskSource: contentsEdge.mask
+                        maskThresholdMin: 0.5
+                        maskSpreadAtMin: 1
+                    }
+                    // So do the contents' entries.
+                    IrisScrollEdge {
+                        id: contentsEdge
+                        parent: contents
+                        flick: contents
+                        anchors.fill: parent
+                        blurs: false
+                        reach: root.u(5)
+                    }
                     Column {
                         id: contentsColumn
                         width: parent.width

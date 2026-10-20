@@ -906,11 +906,10 @@ Item {
                         ScrollBar.vertical: IrisScrollBar {}
                         // The list itself fades under the footer: a gradient painted over it read as a square
                         // shadow on glass.
-                        readonly property bool fades: sidebarFlick.contentY + sidebarFlick.height < sidebarFlick.contentHeight - 1
-                        layer.enabled: sidebarFlick.fades
+                        layer.enabled: sidebarEdge.active
                         layer.effect: MultiEffect {
                             maskEnabled: true
-                            maskSource: sidebarFade
+                            maskSource: sidebarEdge.mask
                             maskThresholdMin: 0.5
                             maskSpreadAtMin: 1
                         }
@@ -1034,20 +1033,14 @@ Item {
                             }
                         }
 
-                        Item {
-                            id: sidebarFade
+                        IrisScrollEdge {
+                            id: sidebarEdge
                             parent: sidebarFlick
+                            flick: sidebarFlick
                             anchors.fill: parent
-                            visible: false
-                            layer.enabled: true
-                            Rectangle {
-                                anchors.fill: parent
-                                gradient: Gradient {
-                                    GradientStop { position: 0; color: "white" }
-                                    GradientStop { position: Math.max(0, 1 - 28 * root.d / Math.max(1, sidebarFade.height)); color: "white" }
-                                    GradientStop { position: 1; color: "transparent" }
-                                }
-                            }
+                            // Inside the masked list a blurred band would be masked away with it: the fade alone.
+                            blurs: false
+                            reach: Math.round(28 * root.d)
                         }
                     }
 
@@ -1323,28 +1316,14 @@ Item {
                                 // Rows pass under the pinned head, never over it.
                                 clip: root.heroPinned || root.split
                                 onMovingChanged: if (moving) root.heldGroup = ""
-                                // and fade into the air under it instead of ending on a cut, as the sidebar's list does at its foot.
-                                layer.enabled: root.heroPinned && settingsFlick.contentY > 1
+                                // and soften into the air under it instead of ending on a cut (IrisScrollEdge), and so does the
+                                // pane's foot with rows past it.
+                                layer.enabled: (root.heroPinned || root.split) && rowsEdge.active
                                 layer.effect: MultiEffect {
                                     maskEnabled: true
-                                    maskSource: rowsFade
+                                    maskSource: rowsEdge.mask
                                     maskThresholdMin: 0.5
                                     maskSpreadAtMin: 1
-                                }
-                                Item {
-                                    id: rowsFade
-                                    parent: settingsFlick
-                                    anchors.fill: parent
-                                    visible: false
-                                    layer.enabled: true
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        gradient: Gradient {
-                                            GradientStop { position: 0; color: "transparent" }
-                                            GradientStop { position: Math.min(1, 18 * root.d / Math.max(1, rowsFade.height)); color: "white" }
-                                            GradientStop { position: 1; color: "white" }
-                                        }
-                                    }
                                 }
                                 visible: root.advancedPage < 0
                                 onContentYChanged: if (root.flatSection) spyPace.start()
@@ -1490,6 +1469,13 @@ Item {
                                         MoreGroup {}
                                     }
                                 }
+                            }
+                            IrisScrollEdge {
+                                id: rowsEdge
+                                flick: settingsFlick
+                                anchors.fill: settingsFlick
+                                visible: settingsFlick.visible && (root.heroPinned || root.split)
+                                reach: Math.round(28 * root.d)
                             }
 
                         }
