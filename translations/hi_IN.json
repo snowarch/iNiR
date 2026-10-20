@@ -9508,5 +9508,12 @@
   "%1 brings its own material.": "%1 अपनी सामग्री लाता है।",
   "Show this block": "यह ब्लॉक दिखाएँ",
   "%1 brings its own layout.": "%1 अपना लेआउट लाता है।",
-  "In screen pixels: 1 is the finest line your screen can draw.": "स्क्रीन पिक्सेल में: 1 सबसे पतली रेखा है जो आपकी स्क्रीन बना सकती है।"
+  "In screen pixels: 1 is the finest line your screen can draw.": "स्क्रीन पिक्सेल में: 1 सबसे पतली रेखा है जो आपकी स्क्रीन बना सकती है।",
+  "Island & Dock": "आइलैंड और डॉक",
+  "Desktop & Widgets": "डेस्कटॉप और विजेट",
+  "Windows & Panels": "विंडो और पैनल",
+  "Spotlight & Tools": "Spotlight और टूल",
+  "Sound & Media": "ध्वनि और मीडिया",
+  "Display & Input": "डिस्प्ले और इनपुट",
+  "Lock & Login": "लॉक और लॉगिन"
 }

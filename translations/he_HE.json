@@ -9508,5 +9508,12 @@
   "%1 brings its own material.": "‏%1 מגיע עם חומר משלו.",
   "Show this block": "הצגת הבלוק הזה",
   "%1 brings its own layout.": "‏%1 מגיע עם פריסה משלו.",
-  "In screen pixels: 1 is the finest line your screen can draw.": "בפיקסלים של המסך: 1 הוא הקו הדק ביותר שהמסך שלך יכול לצייר."
+  "In screen pixels: 1 is the finest line your screen can draw.": "בפיקסלים של המסך: 1 הוא הקו הדק ביותר שהמסך שלך יכול לצייר.",
+  "Island & Dock": "אי ומעגן",
+  "Desktop & Widgets": "שולחן עבודה ווידג'טים",
+  "Windows & Panels": "חלונות ולוחות",
+  "Spotlight & Tools": "Spotlight וכלים",
+  "Sound & Media": "צליל ומדיה",
+  "Display & Input": "תצוגה וקלט",
+  "Lock & Login": "נעילה והתחברות"
 }

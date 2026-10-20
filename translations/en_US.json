@@ -9508,5 +9508,12 @@
   "%1 brings its own material.": "%1 brings its own material.",
   "Show this block": "Show this block",
   "%1 brings its own layout.": "%1 brings its own layout.",
-  "In screen pixels: 1 is the finest line your screen can draw.": "In screen pixels: 1 is the finest line your screen can draw."
+  "In screen pixels: 1 is the finest line your screen can draw.": "In screen pixels: 1 is the finest line your screen can draw.",
+  "Island & Dock": "Island & Dock",
+  "Desktop & Widgets": "Desktop & Widgets",
+  "Windows & Panels": "Windows & Panels",
+  "Spotlight & Tools": "Spotlight & Tools",
+  "Sound & Media": "Sound & Media",
+  "Display & Input": "Display & Input",
+  "Lock & Login": "Lock & Login"
 }

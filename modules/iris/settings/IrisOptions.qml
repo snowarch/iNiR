@@ -1217,7 +1217,7 @@ QtObject {
     // Settings' sidebar, in the order and clusters it shows. `tip` is the one line a section opens on.
     readonly property var sections: [
         { id: "general", cluster: 0, title: "General", subtitle: "Time, language and how iRiS behaves", icon: "settings", get tint() { return IrisStyle.identity.gray }, tip: "Settings that shape the whole shell, whichever surface shows them." },
-        { id: "appearance", cluster: 0, title: "Appearance", subtitle: "Look, material, shape and type", icon: "style", get tint() { return IrisStyle.identity.purple }, tip: "Customize edits the same values live, on top of your desktop." },
+        { id: "appearance", cluster: 0, title: "Style", subtitle: "Look, material, shape and type", icon: "style", get tint() { return IrisStyle.identity.purple }, tip: "Customize edits the same values live, on top of your desktop." },
         { id: "colour", cluster: 0, title: "Colour", subtitle: "Light or dark, accent, highlight and your apps", icon: "palette", get tint() { return IrisStyle.identity.pink }, tip: "Colour can come from your wallpaper, from a theme, or be one you pick." },
         { id: "wallpaper", cluster: 0, title: "Wallpaper", subtitle: "Shuffle, live wallpapers, the gallery and the overview", icon: "wallpaper", get tint() { return IrisStyle.identity.teal }, tip: "Next wallpaper in the desktop menu changes it once; Shuffle keeps changing it." },
         { id: "motion", cluster: 0, title: "Motion", subtitle: "How every shape grows, moves and settles", icon: "animation", get tint() { return IrisStyle.identity.indigo }, tip: "Shorter durations feel snappier; the curve stays the same." },
@@ -1245,6 +1245,24 @@ QtObject {
         { id: "sources", cluster: 6, title: "Sources", subtitle: "Where the Island gets what it shows", icon: "cloud_sync", get tint() { return IrisStyle.identity.yellow }, tip: "A setting belongs here when an iRiS surface puts its data on screen." },
         { id: "system", cluster: 6, title: "Community Hub", subtitle: "Widgets, themes and web apps from other people", icon: "storefront", get tint() { return IrisStyle.identity.pink }, tip: "What people who use iNiR share, reviewed before it is published." }
     ]
+    // How Settings is navigated (2026-10-20, DI24): ten categories in the sidebar, each opening its areas as a second level.
+    // An area stays the owner of its rows, its search hits, its IPC name and its history; a category only groups them.
+    readonly property var categories: [
+        { id: "general", cluster: 0, title: "General", icon: "settings", get tint() { return IrisStyle.identity.gray }, sections: ["general"] },
+        { id: "look", cluster: 0, title: "Appearance", icon: "style", get tint() { return IrisStyle.identity.purple }, sections: ["appearance", "colour", "wallpaper", "motion"] },
+        { id: "islandDock", cluster: 1, title: "Island & Dock", icon: "pill", get tint() { return IrisStyle.identity.blue }, sections: ["bar", "bubbles", "dock"] },
+        { id: "desk", cluster: 1, title: "Desktop & Widgets", icon: "widgets", get tint() { return IrisStyle.identity.yellow }, sections: ["desktop", "widgets"] },
+        { id: "panels", cluster: 1, title: "Windows & Panels", icon: "select_window", get tint() { return IrisStyle.identity.orange }, sections: ["windows", "sidebars", "controlCenter"] },
+        { id: "tools", cluster: 2, title: "Spotlight & Tools", icon: "search", get tint() { return IrisStyle.identity.indigo }, sections: ["spotlight", "orbit", "capture"] },
+        { id: "notifications", cluster: 2, title: "Notifications", icon: "notifications", get tint() { return IrisStyle.identity.red }, sections: ["notifications"] },
+        { id: "media", cluster: 2, title: "Sound & Media", icon: "volume_up", get tint() { return IrisStyle.identity.pink }, sections: ["sound", "player", "anime"] },
+        { id: "devices", cluster: 3, title: "Display & Input", icon: "monitor", get tint() { return IrisStyle.identity.teal }, sections: ["display", "keyboard", "battery", "gaming"] },
+        { id: "lockLogin", cluster: 3, title: "Lock & Login", icon: "lock", get tint() { return IrisStyle.identity.gray }, sections: ["lock", "login"] },
+        { id: "foot", cluster: 6, title: "", icon: "", get tint() { return IrisStyle.identity.gray }, sections: ["sources", "system"], foot: true }
+    ]
+    function categoryOf(sectionId: string): var {
+        return root.categories.find(category => category.sections.includes(sectionId)) ?? root.categories[0]
+    }
     // The shared iNiR pages that still act under iRiS, as the Hub entry lists them. Pages for other families stay out.
     readonly property var morePages: [
         { group: "Shell", key: "hub", label: "Community Hub", detail: "Widgets, themes and web apps from other people", icon: "storefront", tintName: "pink", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["hub", "community", "plugins", "extensions", "widgets", "themes", "store", "download", "install", "comunidad"] },

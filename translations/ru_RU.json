@@ -9508,5 +9508,12 @@
   "%1 brings its own material.": "%1 приносит свой материал.",
   "Show this block": "Показать этот блок",
   "%1 brings its own layout.": "%1 приносит свой макет.",
-  "In screen pixels: 1 is the finest line your screen can draw.": "В пикселях экрана: 1 — самая тонкая линия, которую может нарисовать ваш экран."
+  "In screen pixels: 1 is the finest line your screen can draw.": "В пикселях экрана: 1 — самая тонкая линия, которую может нарисовать ваш экран.",
+  "Island & Dock": "Остров и Dock",
+  "Desktop & Widgets": "Рабочий стол и виджеты",
+  "Windows & Panels": "Окна и панели",
+  "Spotlight & Tools": "Spotlight и инструменты",
+  "Sound & Media": "Звук и медиа",
+  "Display & Input": "Экран и ввод",
+  "Lock & Login": "Блокировка и вход"
 }

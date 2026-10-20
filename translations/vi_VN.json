@@ -9508,5 +9508,12 @@
   "%1 brings its own material.": "%1 có chất liệu riêng.",
   "Show this block": "Hiện khối này",
   "%1 brings its own layout.": "%1 có bố cục riêng.",
-  "In screen pixels: 1 is the finest line your screen can draw.": "Tính bằng điểm ảnh màn hình: 1 là nét mảnh nhất màn hình của bạn có thể vẽ."
+  "In screen pixels: 1 is the finest line your screen can draw.": "Tính bằng điểm ảnh màn hình: 1 là nét mảnh nhất màn hình của bạn có thể vẽ.",
+  "Island & Dock": "Đảo và Dock",
+  "Desktop & Widgets": "Màn hình nền và tiện ích",
+  "Windows & Panels": "Cửa sổ và bảng",
+  "Spotlight & Tools": "Spotlight và công cụ",
+  "Sound & Media": "Âm thanh và đa phương tiện",
+  "Display & Input": "Màn hình và nhập liệu",
+  "Lock & Login": "Khóa và đăng nhập"
 }

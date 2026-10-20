@@ -9508,5 +9508,12 @@
   "%1 brings its own material.": "%1 membawa materialnya sendiri.",
   "Show this block": "Tampilkan blok ini",
   "%1 brings its own layout.": "%1 membawa tata letaknya sendiri.",
-  "In screen pixels: 1 is the finest line your screen can draw.": "Dalam piksel layar: 1 adalah garis tertipis yang bisa digambar layar Anda."
+  "In screen pixels: 1 is the finest line your screen can draw.": "Dalam piksel layar: 1 adalah garis tertipis yang bisa digambar layar Anda.",
+  "Island & Dock": "Island & Dock",
+  "Desktop & Widgets": "Desktop & Widget",
+  "Windows & Panels": "Jendela & Panel",
+  "Spotlight & Tools": "Spotlight & Alat",
+  "Sound & Media": "Suara & Media",
+  "Display & Input": "Layar & Input",
+  "Lock & Login": "Kunci & Masuk"
 }

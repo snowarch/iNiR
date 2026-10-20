@@ -9508,5 +9508,12 @@
   "%1 brings its own material.": "%1 porta il suo materiale.",
   "Show this block": "Mostra questo blocco",
   "%1 brings its own layout.": "%1 porta la sua disposizione.",
-  "In screen pixels: 1 is the finest line your screen can draw.": "In pixel dello schermo: 1 è la linea più sottile che il tuo schermo può disegnare."
+  "In screen pixels: 1 is the finest line your screen can draw.": "In pixel dello schermo: 1 è la linea più sottile che il tuo schermo può disegnare.",
+  "Island & Dock": "Isola e Dock",
+  "Desktop & Widgets": "Scrivania e widget",
+  "Windows & Panels": "Finestre e pannelli",
+  "Spotlight & Tools": "Spotlight e strumenti",
+  "Sound & Media": "Suono e media",
+  "Display & Input": "Schermo e input",
+  "Lock & Login": "Blocco e accesso"
 }

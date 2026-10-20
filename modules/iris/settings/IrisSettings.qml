@@ -44,6 +44,27 @@ Item {
     readonly property int footerCluster: 6
     readonly property var specifications: IrisOptions.settings
     readonly property var currentSection: IrisOptions.sectionById(root.section)
+    // The sidebar lists ten categories (DI24, after macOS System Settings): a category of one area opens it, one of
+    // several opens a page of its own that lists them. An area keeps owning its rows, its search hits, its IPC name and
+    // its history; a category only groups them. Areas this machine does not offer (Battery on a desktop) drop out.
+    readonly property var categories: IrisOptions.categories.map(category => Object.assign({}, category, {
+        tint: category.tint, sections: category.sections.filter(id => root.sections.some(section => section.id === id)) }))
+    readonly property var mainCategories: root.categories.filter(category => !category.foot)
+    readonly property var currentCategory: root.categories.find(category => category.sections.includes(root.section)) ?? root.categories[0]
+    // A category's own page holds its first area underneath, so every binding on the section stays valid while it shows.
+    property string category: ""
+    readonly property bool landing: root.category.length > 0 && !root.searching && root.advancedPage < 0
+    readonly property var landingCategory: root.categories.find(category => category.id === root.category) ?? null
+    // The areas of a category are chosen in the toolbar, on a capsule whose glass puck slides between them (the Island's
+    // own gesture), with the category as the page's name; a group page keeps its own name and the area under it.
+    readonly property bool areaSwitchShown: !root.sceneDrawn && !root.searching && !root.landing && root.advancedPage < 0
+        && root.group.length === 0 && root.currentCategory.sections.length > 1
+    function openCategory(id: string): void {
+        const category = root.categories.find(entry => entry.id === id)
+        if (!category || category.sections.length === 0) return
+        if (category.sections.length === 1) root.selectSection(category.sections[0])
+        else root.go({ section: category.sections[0], group: "", advancedPage: -1, category: id })
+    }
     readonly property bool searching: root.query.length > 0
     // A Design may lay the whole page out its own way (DESIGNS.md › Composiciones): its `settingsPage` draws the areas,
     // the head and the foot, and holds this file's search, scene, rows and shared pages in its slots. The model, the
@@ -563,10 +584,13 @@ Item {
     readonly property var studioTargets: ({ bar: "island", bubbles: "pieces", dock: "dock", appearance: "material", colour: "colour", motion: "motion",
         desktop: "desktop", sidebars: "places", controlCenter: "bodies", spotlight: "places", sound: "transients", notifications: "transients", player: "bodies" })
 
-    function here(): var { return { section: root.section, group: root.group, advancedPage: root.advancedPage } }
-    function same(a: var, b: var): bool { return a.section === b.section && a.group === b.group && a.advancedPage === b.advancedPage }
+    function here(): var { return { section: root.section, group: root.group, advancedPage: root.advancedPage, category: root.landing ? root.category : "" } }
+    function same(a: var, b: var): bool {
+        return a.section === b.section && a.group === b.group && a.advancedPage === b.advancedPage && (a.category ?? "") === (b.category ?? "")
+    }
     function arrive(place: var, direction: int): void {
         root.travel = direction
+        root.category = place.category ?? ""
         root.section = place.section
         root.advancedPage = root.landingPage(place.section, place.advancedPage)
         root.showGroup(place.group)
@@ -701,6 +725,11 @@ Item {
             // A place asked for by name is where you want to be, not a filter over it.
             if (searchField.text.length > 0) searchField.text = ""
         }
+        // A category's name opens its page (`inir iris settings look`); an area's own name always wins.
+        const named = own < 0 && !root.sections.some(s => s.id === root.requestedSection)
+            ? root.categories.find(category => category.id === root.requestedSection && category.sections.length > 1) : null
+        if (named) section = named.sections[0]
+        root.category = named ? named.id : ""
         root.advancedPage = root.landingPage(section, own)
         root.section = section
         root.backStack = []
@@ -816,14 +845,21 @@ Item {
                 Layout.preferredWidth: root.sidebarFull
             Rectangle {
                 id: sidebar
-                readonly property int pad: IrisStyle.concentricPad(frame.radius, 12 * root.d)
-                height: parent.height
-                width: sidebarSlot.width
+                // A pane of its own floating inside the window (macOS 26): inset on three sides, concentric with the
+                // window's corners, its edge a hairline all round instead of a rule between it and the page.
+                readonly property int float: Math.round(8 * root.d)
+                readonly property int pad: IrisStyle.concentricPad(sidebar.radius, 10 * root.d)
+                x: sidebar.float
+                y: sidebar.float
+                height: parent.height - 2 * sidebar.float
+                width: sidebarSlot.width - sidebar.float
                 clip: true
-                topLeftRadius: frame.radius
-                bottomLeftRadius: frame.radius
+                radius: IrisStyle.fieldChamfer ? 0 : Math.max(IrisStyle.radiusTile, frame.radius - sidebar.float)
                 color: IrisStyle.readingSidebar
+                border.width: 1
+                border.color: IrisStyle.hairline
                 Rectangle {
+                    visible: false
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
@@ -949,7 +985,7 @@ Item {
                             property bool travels: false
                             x: sidebarColumn.x
                             width: sidebarColumn.width
-                            y: travelWash.row ? sidebarColumn.y + travelWash.row.y + travelWash.row.height - travelWash.row.rowHeight : 0
+                            y: travelWash.row ? sidebarColumn.y + travelWash.row.y + travelWash.row.washY : 0
                             height: travelWash.row ? travelWash.row.rowHeight : 0
                             radius: IrisStyle.plateSelection ? 0 : travelWash.row ? travelWash.row.washRadius : 0
                             // A plate-selection Design (AIRISU) puts where you are on the solid plate of the accent.
@@ -1054,8 +1090,8 @@ Item {
                             }
 
                             Repeater {
-                                model: root.sceneDesigned ? [] : root.sections.filter(section => section.cluster < root.footerCluster)
-                                SectionRow { list: root.sections.filter(section => section.cluster < root.footerCluster) }
+                                model: root.sceneDesigned ? [] : root.mainCategories
+                                SectionRow { list: root.mainCategories }
                             }
                         }
 
@@ -1113,10 +1149,13 @@ Item {
                         return headRow.width - fixed - headRow.spacing - 6 * root.d
                     }
                     IrisIconButton {
+                        // With no history (opened by name), back climbs to the category the area belongs to.
+                        readonly property bool climbs: root.backStack.length === 0 && !root.landing && !root.searching
+                            && root.advancedPage < 0 && root.currentCategory.sections.length > 1
                         materialIcon: "chevron_left"
-                        enabled: root.backStack.length > 0
+                        enabled: root.backStack.length > 0 || climbs
                         opacity: enabled ? 1 : 0.35
-                        onClicked: root.goBack()
+                        onClicked: climbs ? root.openCategory(root.currentCategory.id) : root.goBack()
                         Accessible.name: Translation.tr("Back")
                     }
                     IrisIconButton {
@@ -1136,6 +1175,8 @@ Item {
                             Layout.fillWidth: true
                             text: root.searching ? Translation.tr("Results for “%1”").arg(root.query)
                                 : root.advancedPage >= 0 ? root.pageTitle(root.advancedPage)
+                                : root.landing ? Translation.tr(root.landingCategory?.title ?? "")
+                                : root.areaSwitchShown ? Translation.tr(root.currentCategory.title)
                                 : root.columns ? Translation.tr(root.currentSection.title)
                                 : root.openGroup.length > 0 ? root.openGroup
                                 : Translation.tr(root.currentSection.title)
@@ -1148,18 +1189,25 @@ Item {
                         }
                         IrisText {
                             Layout.fillWidth: true
-                            visible: !root.searching && !root.columns && root.openGroup.length > 0 && root.advancedPage < 0
-                                && root.openGroup !== Translation.tr(root.currentSection.title)
+                            visible: !root.searching && !root.columns && !root.landing && !root.areaSwitchShown && root.advancedPage < 0
+                                && root.openGroup.length > 0 && root.openGroup !== Translation.tr(root.currentSection.title)
                             text: Translation.tr(root.currentSection.title)
                             color: IrisStyle.muted
                             font.pixelSize: IrisStyle.typeMeta
                             elide: Text.ElideRight
                         }
                     }
+                    AreaSwitch {
+                        visible: root.areaSwitchShown
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.rightMargin: Math.round(6 * root.d)
+                    }
                     // The actions keep their words while the page's name still reads whole beside them (up to 260·d of
                     // it); measured in the language on screen, never a fixed window width.
                     RowLayout {
                         id: toolbarActions
+                        // A category's page changes nothing itself: its areas carry the actions.
+                        visible: !root.landing
                         spacing: 4 * root.d
                         // Fold one at a time, the least used first, only as many as the name needs.
                         readonly property var foldOrder: [restoreAction, customizeAction, rehearseAction].filter(action => action.shown)
@@ -1315,7 +1363,7 @@ Item {
                                 parent: root.stageInColumn ? root.scene.stageSlot : root.heroPinned ? heroPinSlot : heroFlowSlot
                                 width: root.stageInColumn ? root.columnStageWidth : root.split && root.heroPinned ? detailBody.width : settingsRows.width
                                 // A Design's page names the page itself: the head is only its scene there.
-                                visible: pageHero.shown && (!root.sceneDrawn || root.stageInColumn)
+                                visible: pageHero.shown && !root.landing && (!root.sceneDrawn || root.stageInColumn)
                                 tint: pageHero.groupPage || pageHero.spying ? (IrisOptions.groupTints[pageHero.key] ?? root.currentSection.tint) : root.currentSection.tint
                                 glyph: pageHero.groupPage || pageHero.spying ? (IrisOptions.groupGlyphs[pageHero.key] ?? root.currentSection.icon) : root.currentSection.icon
                                 title: !pageHero.groupPage && !pageHero.spying ? Translation.tr(root.currentSection.subtitle)
@@ -1323,6 +1371,11 @@ Item {
                                 text: pageHero.groupPage ? "" : Translation.tr(root.currentSection.tip ?? "")
                                 sceneSection: pageHero.sectionPage || pageHero.groupPage ? root.section : ""
                                 sceneGroup: pageHero.groupPage || pageHero.spying ? pageHero.key : ""
+                            }
+
+                            CategoryPage {
+                                anchors.fill: parent
+                                visible: root.landing
                             }
 
                             NumberAnimation {
@@ -1351,7 +1404,7 @@ Item {
                                     maskThresholdMin: 0.5
                                     maskSpreadAtMin: 1
                                 }
-                                visible: root.advancedPage < 0
+                                visible: root.advancedPage < 0 && !root.landing
                                 onContentYChanged: if (root.flatSection) spyPace.start()
                                 // Rows laid after the section changed (a Place opening, a fold) move every head: the reading is taken again.
                                 onContentHeightChanged: if (root.flatSection) spyPace.restart()
@@ -1586,27 +1639,31 @@ Item {
         // The profile above is a cluster of its own: the first row takes the same air as every other break.
         readonly property bool clusterStart: sectionRow.gapAbove && (sectionRow.index === 0
             || sectionRow.list[sectionRow.index - 1]?.cluster !== sectionRow.modelData.cluster)
-        readonly property bool selected: !root.searching && root.section === sectionRow.modelData.id
+        // A category row stands for every area it groups; a footer row for its own.
+        readonly property var members: sectionRow.modelData.sections ?? [sectionRow.modelData.id]
+        readonly property bool selected: !root.searching && sectionRow.members.includes(root.section)
         // Main-list rows hand their selection to the travelling wash (travelWash); footer rows paint their own.
         readonly property bool travels: sectionRow.gapAbove
         readonly property real washRadius: Math.min(sectionRow.rowHeight / 2, IrisStyle.iconRadius(sectionMark.width) + sectionMark.x)
         onSelectedChanged: if (sectionRow.selected && sectionRow.travels) root.travelRow = sectionRow
         Component.onCompleted: if (sectionRow.selected && sectionRow.travels) root.travelRow = sectionRow
         Component.onDestruction: if (root.travelRow === sectionRow) root.travelRow = null
-        readonly property bool dimmed: root.searching && !root.matchedSections.has(sectionRow.modelData.id)
-        readonly property real rowHeight: Math.round(27 * root.d * Math.max(1, IrisStyle.typeScale))
+        readonly property bool dimmed: root.searching && !sectionRow.members.some(id => root.matchedSections.has(id))
+        readonly property real rowHeight: Math.round(28 * root.d * Math.max(1, IrisStyle.typeScale))
+        // Where the row's own line starts under the air of a break; the wash lands there.
+        readonly property real washY: sectionRow.clusterStart ? Math.round(8 * root.d) : 0
         width: parent ? parent.width : 0
-        height: sectionRow.rowHeight + (sectionRow.clusterStart ? Math.round(8 * root.d) : 0)
+        height: sectionRow.washY + sectionRow.rowHeight
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
         Accessible.name: Translation.tr(sectionRow.modelData.title)
-        onClicked: root.selectSection(sectionRow.modelData.id)
+        onClicked: sectionRow.modelData.sections ? root.openCategory(sectionRow.modelData.id) : root.selectSection(sectionRow.modelData.id)
         opacity: sectionRow.dimmed ? 0.4 : 1
         Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
         Rectangle {
             anchors.left: parent.left
-            anchors.bottom: parent.bottom
+            y: sectionRow.washY
             width: parent.width
             height: sectionRow.rowHeight
             // Concentric with the mark it holds; where you are is a wash of the accent, as light as a hover, never a
@@ -1623,7 +1680,7 @@ Item {
                 visible: !sectionMark.numbered
                 x: Math.round(6 * root.d)
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.round(20 * root.d)
+                width: Math.round(22 * root.d)
                 height: width
                 tint: sectionRow.modelData.tint
                 glyph: sectionRow.modelData.icon
@@ -1633,7 +1690,7 @@ Item {
                 visible: sectionMark.numbered
                 anchors.centerIn: sectionMark
                 // The folio runs on through the footer, as a catalogue's pages do: Sources follows the last area.
-                text: IrisStyle.indexLabel(Math.max(0, root.sections.findIndex(section => section.id === sectionRow.modelData.id)))
+                text: IrisStyle.indexLabel(sectionRow.modelData.sections ? sectionRow.index : root.mainCategories.length + sectionRow.index)
                 color: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.selectionDetail : IrisStyle.textTertiary
                 font.family: IrisStyle.fontMono
                 font.pixelSize: IrisStyle.typeFootnote
@@ -1652,6 +1709,211 @@ Item {
                 font.pixelSize: IrisStyle.typeLabel
                 font.weight: IrisStyle.weight(sectionRow.selected ? Font.DemiBold : Font.Medium)
                 elide: Text.ElideRight
+            }
+        }
+    }
+
+    // A category's own page (DI24): its areas as a mosaic of their own live scenes, each tile the shell doing what that
+    // area changes, its name over the picture. You choose by what you see, not by a list of icons.
+    component CategoryPage: Flickable {
+        id: categoryPage
+        readonly property var areas: (root.landingCategory?.sections ?? []).map(id => IrisOptions.sectionById(id)).filter(area => !!area)
+        clip: true
+        contentHeight: mosaic.implicitHeight + Math.round(40 * root.d)
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: IrisScrollBar {}
+        GridLayout {
+            id: mosaic
+            y: Math.round(8 * root.d)
+            width: root.split ? categoryPage.width - Math.round(16 * root.d) : Math.min(categoryPage.width - 56 * root.d, 860 * root.d)
+            x: Math.round((categoryPage.width - width) / 2)
+            columns: 2
+            columnSpacing: Math.round(12 * root.d)
+            rowSpacing: Math.round(12 * root.d)
+            Repeater {
+                model: categoryPage.areas
+                // An odd count leads with one tile across the page: the mosaic never ends on a hole.
+                AreaTile { wide: categoryPage.areas.length % 2 === 1 && index === 0 }
+            }
+        }
+    }
+
+    component AreaTile: MouseArea {
+        id: tile
+        required property var modelData
+        required property int index
+        property bool wide: false
+        readonly property bool pictured: scene.item?.available ?? false
+        readonly property real round: IrisStyle.fieldChamfer ? 0 : IrisStyle.radiusTile + Math.round(6 * root.d)
+        Layout.columnSpan: tile.wide ? 2 : 1
+        Layout.fillWidth: true
+        Layout.preferredWidth: 1
+        Layout.preferredHeight: Math.round((tile.wide ? 236 : 196) * root.d)
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        Accessible.role: Accessible.Button
+        Accessible.name: Translation.tr(tile.modelData.title)
+        Accessible.description: Translation.tr(tile.modelData.subtitle ?? "")
+        onClicked: root.selectSection(tile.modelData.id)
+        scale: tile.pressed ? 0.985 : 1
+        Behavior on scale { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
+
+        // An area with no scene of its own wears its hue as a wash with its mark large in it.
+        Rectangle {
+            anchors.fill: parent
+            radius: tile.round
+            visible: !tile.pictured
+            gradient: Gradient {
+                orientation: Gradient.Vertical
+                GradientStop { position: 0; color: IrisStyle.tintFillHover(tile.modelData.tint) }
+                GradientStop { position: 1; color: IrisStyle.readingCard }
+            }
+            MaterialSymbol {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: -Math.round(18 * root.d)
+                text: tile.modelData.icon
+                fill: 1
+                iconSize: Math.round(64 * root.d)
+                color: tile.modelData.tint
+            }
+        }
+        Loader {
+            id: scene
+            anchors.fill: parent
+            asynchronous: true
+            sourceComponent: IrisGroupPreview {
+                compact: true
+                niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
+                niriRevision: IrisNiri.revision
+                radius: tile.round
+                section: tile.modelData.id
+                group: ""
+                playing: tile.containsMouse && root.landing && GlobalStates.settingsOverlayOpen
+            }
+        }
+        // The name reads over the picture on a shade that rises from the tile's foot.
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: Math.round(parent.height * 0.5)
+            bottomLeftRadius: tile.round
+            bottomRightRadius: tile.round
+            gradient: Gradient {
+                GradientStop { position: 0; color: "transparent" }
+                GradientStop { position: 1; color: Qt.rgba(0, 0, 0, tile.pictured ? 0.62 : 0) } // iris-literal: a shade under words on a picture
+            }
+        }
+        ColumnLayout {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: Math.round(16 * root.d)
+            spacing: Math.round(2 * root.d)
+            RowLayout {
+                spacing: Math.round(8 * root.d)
+                IrisSquircle {
+                    implicitWidth: Math.round(22 * root.d)
+                    implicitHeight: implicitWidth
+                    tint: tile.modelData.tint
+                    glyph: tile.modelData.icon
+                }
+                IrisText {
+                    Layout.fillWidth: true
+                    text: Translation.tr(tile.modelData.title)
+                    color: tile.pictured ? "white" : IrisStyle.text // iris-literal: words on the shade
+                    font.family: IrisStyle.fontTitle
+                    font.pixelSize: IrisStyle.typeTitle
+                    font.weight: IrisStyle.weight(Font.Bold)
+                    font.capitalization: IrisStyle.lowerTitles ? Font.AllLowercase : Font.MixedCase
+                    elide: Text.ElideRight
+                }
+            }
+            IrisText {
+                Layout.fillWidth: true
+                text: Translation.tr(tile.modelData.subtitle ?? "")
+                color: tile.pictured ? Qt.rgba(1, 1, 1, 0.78) : IrisStyle.muted // iris-literal: words on the shade
+                font.pixelSize: IrisStyle.typeMeta
+                elide: Text.ElideRight
+            }
+        }
+        // Hover lights the tile's edge in the accent, as a focused body is lit.
+        Rectangle {
+            anchors.fill: parent
+            radius: tile.round
+            color: "transparent"
+            border.width: Math.max(1, Math.round(1.5 * root.d))
+            border.color: tile.containsMouse ? IrisStyle.tintBorder(IrisStyle.accent) : IrisStyle.hairline
+            Behavior on border.color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+        }
+    }
+
+    // The areas of the open category on one capsule: a glass puck slides to the one you read, with the morph's curve.
+    component AreaSwitch: Item {
+        id: areaSwitch
+        readonly property var areas: root.currentCategory.sections.map(id => IrisOptions.sectionById(id)).filter(area => !!area)
+        readonly property int chosen: areaSwitch.areas.findIndex(area => area.id === root.section)
+        readonly property real pad: Math.round(3 * root.d)
+        // The segment being read hands itself over (as a sidebar row hands the wash its place): a lookup by index ran
+        // before the row had laid its segments out and left the puck nowhere.
+        property Item chosenItem: null
+        implicitHeight: Math.round(32 * root.d)
+        implicitWidth: switchRow.implicitWidth + 2 * areaSwitch.pad
+        Rectangle {
+            anchors.fill: parent
+            radius: IrisStyle.fieldChamfer ? 0 : height / 2
+            color: IrisStyle.fillQuiet
+            border.width: 1
+            border.color: IrisStyle.hairline
+        }
+        Rectangle {
+            id: puck
+            visible: areaSwitch.chosenItem !== null
+            y: areaSwitch.pad
+            height: parent.height - 2 * areaSwitch.pad
+            x: areaSwitch.pad + (areaSwitch.chosenItem?.x ?? 0)
+            width: areaSwitch.chosenItem?.width ?? 0
+            radius: IrisStyle.fieldChamfer ? 0 : height / 2
+            color: IrisStyle.plateSelection ? IrisStyle.selectionFill : IrisStyle.tintFillHover(IrisStyle.accent)
+            border.width: 1
+            border.color: IrisStyle.plateSelection ? "transparent" : IrisStyle.tintBorder(IrisStyle.accent)
+            Behavior on x { enabled: IrisStyle.motionEnabled; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+            Behavior on width { enabled: IrisStyle.motionEnabled; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        }
+        Row {
+            id: switchRow
+            x: areaSwitch.pad
+            y: areaSwitch.pad
+            height: parent.height - 2 * areaSwitch.pad
+            Repeater {
+                id: switchRepeater
+                model: areaSwitch.areas
+                MouseArea {
+                    id: segment
+                    required property var modelData
+                    required property int index
+                    readonly property bool here: segment.index === areaSwitch.chosen
+                    onHereChanged: if (segment.here) areaSwitch.chosenItem = segment
+                    Component.onCompleted: if (segment.here) areaSwitch.chosenItem = segment
+                    Component.onDestruction: if (areaSwitch.chosenItem === segment) areaSwitch.chosenItem = null
+                    width: segmentLabel.implicitWidth + Math.round(26 * root.d)
+                    height: switchRow.height
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    Accessible.role: Accessible.Button
+                    Accessible.name: Translation.tr(segment.modelData.title)
+                    onClicked: root.selectSection(segment.modelData.id)
+                    IrisText {
+                        id: segmentLabel
+                        anchors.centerIn: parent
+                        text: Translation.tr(segment.modelData.title)
+                        color: segment.here ? (IrisStyle.plateSelection ? IrisStyle.selectionLabel : IrisStyle.text)
+                            : segment.containsMouse ? IrisStyle.text : IrisStyle.muted
+                        font.pixelSize: IrisStyle.typeMeta
+                        font.weight: IrisStyle.weight(segment.here ? Font.DemiBold : Font.Medium)
+                        Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+                    }
+                }
             }
         }
     }

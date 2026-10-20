@@ -9508,5 +9508,12 @@
   "%1 brings its own material.": "%1 自带材质。",
   "Show this block": "显示此区块",
   "%1 brings its own layout.": "%1 自带布局。",
-  "In screen pixels: 1 is the finest line your screen can draw.": "以屏幕像素计：1 是屏幕能画出的最细线条。"
+  "In screen pixels: 1 is the finest line your screen can draw.": "以屏幕像素计：1 是屏幕能画出的最细线条。",
+  "Island & Dock": "岛与程序坞",
+  "Desktop & Widgets": "桌面与小组件",
+  "Windows & Panels": "窗口与面板",
+  "Spotlight & Tools": "聚焦与工具",
+  "Sound & Media": "声音与媒体",
+  "Display & Input": "显示与输入",
+  "Lock & Login": "锁屏与登录"
 }

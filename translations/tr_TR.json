@@ -9508,5 +9508,12 @@
   "%1 brings its own material.": "%1 kendi materyalini getirir.",
   "Show this block": "Bu bloğu göster",
   "%1 brings its own layout.": "%1 kendi düzenini getirir.",
-  "In screen pixels: 1 is the finest line your screen can draw.": "Ekran pikseli olarak: 1, ekranınızın çizebileceği en ince çizgidir."
+  "In screen pixels: 1 is the finest line your screen can draw.": "Ekran pikseli olarak: 1, ekranınızın çizebileceği en ince çizgidir.",
+  "Island & Dock": "Ada ve Dock",
+  "Desktop & Widgets": "Masaüstü ve Widget'lar",
+  "Windows & Panels": "Pencereler ve Paneller",
+  "Spotlight & Tools": "Spotlight ve Araçlar",
+  "Sound & Media": "Ses ve Medya",
+  "Display & Input": "Ekran ve Giriş",
+  "Lock & Login": "Kilit ve Oturum Açma"
 }

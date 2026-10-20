@@ -9508,5 +9508,12 @@
   "%1 brings its own material.": "%1 は独自の材質を使います。",
   "Show this block": "このブロックを表示",
   "%1 brings its own layout.": "%1 は独自のレイアウトを使います。",
-  "In screen pixels: 1 is the finest line your screen can draw.": "画面のピクセル単位：1 が画面に描ける最も細い線です。"
+  "In screen pixels: 1 is the finest line your screen can draw.": "画面のピクセル単位：1 が画面に描ける最も細い線です。",
+  "Island & Dock": "アイランドとDock",
+  "Desktop & Widgets": "デスクトップとウィジェット",
+  "Windows & Panels": "ウインドウとパネル",
+  "Spotlight & Tools": "Spotlightとツール",
+  "Sound & Media": "サウンドとメディア",
+  "Display & Input": "ディスプレイと入力",
+  "Lock & Login": "ロックとログイン"
 }

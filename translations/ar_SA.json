@@ -9508,5 +9508,12 @@
   "%1 brings its own material.": "يأتي %1 بمادته الخاصة.",
   "Show this block": "إظهار هذه الكتلة",
   "%1 brings its own layout.": "يأتي %1 بتخطيطه الخاص.",
-  "In screen pixels: 1 is the finest line your screen can draw.": "بكسلات الشاشة: 1 هو أرفع خط يمكن لشاشتك رسمه."
+  "In screen pixels: 1 is the finest line your screen can draw.": "بكسلات الشاشة: 1 هو أرفع خط يمكن لشاشتك رسمه.",
+  "Island & Dock": "الجزيرة والشريط",
+  "Desktop & Widgets": "سطح المكتب والأدوات",
+  "Windows & Panels": "النوافذ واللوحات",
+  "Spotlight & Tools": "Spotlight والأدوات",
+  "Sound & Media": "الصوت والوسائط",
+  "Display & Input": "الشاشة والإدخال",
+  "Lock & Login": "القفل وتسجيل الدخول"
 }
