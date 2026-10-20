@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import qs
 import qs.modules.common
+import qs.modules.iris.frame
 
 Singleton {
     id: root
@@ -320,6 +321,10 @@ Singleton {
             const gap = (iris.dock?.notch ?? false) ? 0 : 10 * density
             root._applyInset(result, result.dockEdge, icon + 18 * density + gap * 2)
         }
+        // The frame holds every edge (its band, the island and the dock in it): nothing on the
+        // desktop goes under it.
+        for (const edge of ["left", "top", "right", "bottom"])
+            result[edge] = Math.max(result[edge], IrisFrame.inset(edge))
         return result
     }
 
@@ -346,11 +351,14 @@ Singleton {
     function desktopWorkArea(outputName: string, screenWidth: real,
             screenHeight: real): var {
         const panelInsets = root.desktopInsets(outputName)
+        // Free placement may cover panels on purpose, never the iRiS frame's band: under it a
+        // widget is cut by the chassis.
+        const band = root.activeFamily === "iris" ? IrisFrame.band : 0
         return root._workAreaFromInsets({
-            left: 0,
-            top: 0,
-            right: 0,
-            bottom: 0,
+            left: band,
+            top: band,
+            right: band,
+            bottom: band,
             barEdge: panelInsets.barEdge ?? "",
             dockEdge: panelInsets.dockEdge ?? ""
         }, screenWidth, screenHeight)
