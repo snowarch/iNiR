@@ -1812,10 +1812,11 @@ Item {
         ColumnLayout {
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.bottom: parent.bottom
+            // Hung from the top of the band: neighbours' names stay on one line whatever their lines wrap to.
+            anchors.top: scene.bottom
+            anchors.topMargin: Math.round(10 * root.d)
             anchors.leftMargin: Math.round(14 * root.d)
             anchors.rightMargin: Math.round(14 * root.d)
-            anchors.bottomMargin: Math.round((tile.band - tileWords.implicitHeight) / 2)
             id: tileWords
             spacing: Math.round(2 * root.d)
             RowLayout {
