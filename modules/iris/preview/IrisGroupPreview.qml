@@ -101,7 +101,8 @@ ClippingRectangle {
         readonly property real tall: (sceneLoader.item?.lowest ?? 0) > 0 ? sceneLoader.item.lowest : sceneLoader.item?.naturalHeight ?? 1
         readonly property real fit: Math.min(1, root.width / Math.max(1, world.wide),
             sceneLoader.item?.cropBottom ? 1 : root.height / Math.max(1, world.tall))
-        readonly property real k: world.fit >= 0.85 ? 1 : world.fit
+        // Any shortfall shrinks it: kept at 1 down to 0.85, a scene a few percent too wide cut its words at the edge.
+        readonly property real k: world.fit
         width: root.width / world.k
         height: root.height / world.k
         scale: world.k
