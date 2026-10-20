@@ -29,7 +29,7 @@ IrisWidgetFace {
 
     // A Design may print its own clock (AIRISU's date stamp): the dial and the figures step aside for it.
     designFace: IrisDesign.skin("widgetClock")
-    padding: root.analog && root.small ? root.dp(8) : root.dp(16)
+    padding: root.analog && root.small ? root.dp(8) : root.edgePad
 
     SystemClock {
         id: clock

@@ -35,7 +35,7 @@ IrisWidgetFace {
 
     light: root.small || root.art.length === 0 ? (root.resting && !root.small ? IrisStyle.identity.pink : "transparent")
         : root.artLight
-    padding: root.small && root.art.length > 0 ? 0 : root.dp(16)
+    padding: root.small && root.art.length > 0 ? 0 : root.edgePad
 
     onLyricsWantedChanged: root.lyricsWanted ? LyricsService.subscribe() : LyricsService.unsubscribe()
     Component.onDestruction: if (root.lyricsWanted) LyricsService.unsubscribe()

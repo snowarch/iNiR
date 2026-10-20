@@ -212,10 +212,12 @@ PanelWindow {
 
         ColumnLayout {
             id: panelLayout
+            // The cards inside stay concentric with the panel (DI29): a rounder panel pushes them in, never under its curve.
+            readonly property real edgePad: Math.max(18 * root.d, IrisStyle.surfaceRadius("panels", IrisStyle.radius) - IrisStyle.radiusCard)
             anchors.fill: parent
-            anchors.margins: 18 * root.d
-            anchors.leftMargin: 18 * root.d + (root.left ? root.notchOverflow : 0)
-            anchors.rightMargin: 18 * root.d + (root.left ? 0 : root.notchOverflow)
+            anchors.margins: edgePad
+            anchors.leftMargin: edgePad + (root.left ? root.notchOverflow : 0)
+            anchors.rightMargin: edgePad + (root.left ? 0 : root.notchOverflow)
             spacing: 14 * root.d
             RowLayout {
                 Layout.fillWidth: true

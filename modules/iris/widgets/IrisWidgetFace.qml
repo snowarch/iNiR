@@ -27,7 +27,11 @@ Item {
     readonly property string stockSkin: root.designed ? "" : IrisDesign.skin("widgetStock")
     readonly property bool stocked: root.stockSkin.length > 0
     readonly property bool ownPlate: root.designed || root.stocked
-    property real padding: root.dp(16)
+    // Content clears the corner (DI29): a chip in the corner keeps a concentric curve only while the padding is at least
+    // the card's radius less the chip's (10), so a rounder card pushes its content in. A fixed 16 left the weather's
+    // icon touching a 30 px corner.
+    readonly property real edgePad: Math.max(root.dp(16), Math.round(root.radius - root.dp(10)))
+    property real padding: root.edgePad
     default property alias content: body.data
 
     readonly property string size: root.widget.irisSize
