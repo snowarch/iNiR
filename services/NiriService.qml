@@ -1144,7 +1144,9 @@ Singleton {
     }
 
     // True when the tiled columns of the output's active workspace span its width,
-    // so only gaps of the wallpaper remain visible.
+    // so only gaps of the wallpaper remain visible. Measured against the whole output, not
+    // the working area niri does not report: a maximized column under the iRiS frame
+    // reaches 92.7% of it, Material's vertical bar leaves ~96%, a 2/3 column 66%.
     function activeWorkspaceCovers(outputName: string): bool {
         const workspace = Object.values(root.workspaces ?? {}).find(entry => entry?.is_active && entry.output === outputName)
         const width = Number(root.outputs?.[outputName]?.logical?.width ?? 0)
@@ -1155,7 +1157,7 @@ Singleton {
             if (window?.workspace_id !== workspace.id || window.is_floating || window.is_minimized || !pos) continue
             columns[pos[0]] = Math.max(columns[pos[0]] ?? 0, Number(window.layout?.tile_size?.[0] ?? 0))
         }
-        return Object.values(columns).reduce((sum, column) => sum + column, 0) >= width * 0.95
+        return Object.values(columns).reduce((sum, column) => sum + column, 0) >= width * 0.9
     }
 
     function filterCurrentWorkspace(toplevels, screenName) {
