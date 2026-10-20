@@ -22,6 +22,14 @@ Item {
     property real radius: IrisStyle.radius
     property color color: IrisStyle.surface
     property color light: "transparent"
+    // How awake the glass is: 1 in front, 0 in a window that lost the focus. Unfocused, glass loses energy instead of
+    // vanishing, as a Liquid Glass window does behind another: its tint fills in toward the solid surface (less of the
+    // backdrop shows through) and its light quietens. Solid bodies have nothing to lower.
+    property real energy: 1
+    Behavior on energy { NumberAnimation { duration: IrisStyle.duration(220); easing.type: Easing.OutCubic } }
+    function energised(tint: color): color {
+        return Qt.rgba(tint.r, tint.g, tint.b, tint.a + (1 - tint.a) * 0.5 * (1 - root.energy))
+    }
     property string lightFrom: "top"
     property real contentScaleFrom: 0.965
     property real contentFadeStart: IrisStyle.contentRise
@@ -312,7 +320,7 @@ Item {
             ? root.lerp(Math.min(Math.min(root.start.width, root.start.height) / 2, root.fromRadius * root.originShare), root.radius)
             : root.lerp(root.fromRadius, root.radius))
         color: root.material === "field" ? IrisStyle.bodyClip
-            : root.material === "compositor" ? IrisStyle.placeSurface : root.color
+            : root.material === "compositor" ? root.energised(IrisStyle.placeSurface) : root.color
         // Visible from the request: forceActiveFocus() is ignored on invisible subtrees.
         visible: root.open || root.presentation > 0
         opacity: root.warming ? root.warmth : root.armed || root.presentation > 0 ? root.emergence : 0
@@ -335,7 +343,7 @@ Item {
             shapeRadius: chassis.radius
             light: root.light
             from: root.lightFrom
-            presence: Math.max(0, Math.min(1, root.presentation))
+            presence: Math.max(0, Math.min(1, root.presentation)) * (0.4 + 0.6 * root.energy)
         }
 
         Item {

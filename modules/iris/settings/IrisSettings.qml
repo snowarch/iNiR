@@ -771,6 +771,7 @@ Item {
         glass: !root.windowed || IrisStyle.glassCompositor
         id: frame
         compositorBlurred: true
+        energy: root.windowed && GlobalStates.settingsWindowBehind ? 0 : 1
         contentReady: !root.sceneDesigned || root.sceneDrawn
         open: root.windowed || GlobalStates.settingsOverlayOpen
         color: IrisStyle.surface
