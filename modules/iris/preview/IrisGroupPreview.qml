@@ -95,8 +95,12 @@ ClippingRectangle {
 
     Item {
         id: world
-        readonly property real fit: Math.min(1, root.width / Math.max(1, sceneLoader.item?.naturalWidth ?? 1),
-            sceneLoader.item?.cropBottom ? 1 : root.height / Math.max(1, sceneLoader.item?.naturalHeight ?? 1))
+        // A scene that reflows (`narrowest`, `lowest`) is laid out at the size it is drawn at, down to those: shrunk whole
+        // from its natural size, AIRISU's 308 px column scaled the Dock to 0.41 and its 40 px icons came out 16 px and soft.
+        readonly property real wide: (sceneLoader.item?.narrowest ?? 0) > 0 ? sceneLoader.item.narrowest : sceneLoader.item?.naturalWidth ?? 1
+        readonly property real tall: (sceneLoader.item?.lowest ?? 0) > 0 ? sceneLoader.item.lowest : sceneLoader.item?.naturalHeight ?? 1
+        readonly property real fit: Math.min(1, root.width / Math.max(1, world.wide),
+            sceneLoader.item?.cropBottom ? 1 : root.height / Math.max(1, world.tall))
         readonly property real k: world.fit >= 0.85 ? 1 : world.fit
         width: root.width / world.k
         height: root.height / world.k

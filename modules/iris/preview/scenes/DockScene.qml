@@ -18,6 +18,9 @@ PreviewScene {
     readonly property bool vertical: dockRoot.edge === "left" || dockRoot.edge === "right"
     readonly property real naturalWidth: Math.round((dockRoot.vertical ? 620 : 760) * dockRoot.d)
     readonly property real naturalHeight: dockRoot.vertical ? Math.max(Math.round(300 * dockRoot.d), Math.round(dockRoot.length + 64 * dockRoot.d)) : Math.round(300 * dockRoot.d)
+    // The desk reflows around the Dock: it needs the Dock's length and the window's first rows, not the whole 760 px.
+    narrowest: dockRoot.vertical ? Math.round(dockRoot.reach + 240 * dockRoot.d) : Math.round(dockRoot.length + 80 * dockRoot.d)
+    lowest: dockRoot.vertical ? dockRoot.naturalHeight : Math.round(dockRoot.reach + 110 * dockRoot.d)
     readonly property bool enabledDock: dockRoot.opt("iris.dock.enable", true)
     readonly property bool autoHide: dockRoot.opt("iris.dock.autoHide", true)
     readonly property bool reserve: !dockRoot.autoHide && dockRoot.opt("iris.dock.reserveSpace", true)

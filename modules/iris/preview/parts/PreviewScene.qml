@@ -10,6 +10,10 @@ Item {
     id: scene
 
     required property Item preview
+    // The smallest size the scene still reads at when its parts follow its size: drawn smaller than its natural size it
+    // is laid out at the drawn size and shrunk only below these. 0: that side is shrunk whole from its natural size.
+    property real narrowest: 0
+    property real lowest: 0
     readonly property real d: IrisStyle.density
     readonly property int rev: Config.revision
     // A scene moves while it is seen and awake (IrisGroupPreview.awake), then rests on what it shows.
