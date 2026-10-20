@@ -9515,5 +9515,8 @@
   "Spotlight & Tools": "Spotlightとツール",
   "Sound & Media": "サウンドとメディア",
   "Display & Input": "ディスプレイと入力",
-  "Lock & Login": "ロックとログイン"
+  "Lock & Login": "ロックとログイン",
+  "Quietly": "サイレント",
+  "Apps that notify": "通知するアプリ",
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "通知を送ってきたすべてのアプリ。サイレントはバナーや音なしで「今日」に残し、しないは破棄します。"
 }

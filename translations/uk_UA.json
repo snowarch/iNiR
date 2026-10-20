@@ -9515,5 +9515,8 @@
   "Spotlight & Tools": "Spotlight та інструменти",
   "Sound & Media": "Звук і медіа",
   "Display & Input": "Екран і введення",
-  "Lock & Login": "Блокування і вхід"
+  "Lock & Login": "Блокування і вхід",
+  "Quietly": "Без звуку",
+  "Apps that notify": "Застосунки зі сповіщеннями",
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Кожен застосунок, що щось надсилав. «Без звуку» лишає сповіщення в «Сьогодні» без банера й звуку; «Ніколи» відкидає його."
 }

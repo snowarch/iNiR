@@ -9515,5 +9515,8 @@
   "Spotlight & Tools": "Spotlight וכלים",
   "Sound & Media": "צליל ומדיה",
   "Display & Input": "תצוגה וקלט",
-  "Lock & Login": "נעילה והתחברות"
+  "Lock & Login": "נעילה והתחברות",
+  "Quietly": "בשקט",
+  "Apps that notify": "אפליקציות ששולחות התראות",
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "כל אפליקציה ששלחה לך משהו. ״בשקט״ שומר אותה ב״היום״ בלי באנר וצליל; ״אף פעם״ מתעלם ממנה."
 }

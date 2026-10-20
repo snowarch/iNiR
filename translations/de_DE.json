@@ -9515,5 +9515,8 @@
   "Spotlight & Tools": "Spotlight & Werkzeuge",
   "Sound & Media": "Ton & Medien",
   "Display & Input": "Anzeige & Eingabe",
-  "Lock & Login": "Sperre & Anmeldung"
+  "Lock & Login": "Sperre & Anmeldung",
+  "Quietly": "Still",
+  "Apps that notify": "Apps mit Mitteilungen",
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Jede App, die dir etwas geschickt hat. Still behält es in Heute ohne Banner und Ton; Nie verwirft es."
 }

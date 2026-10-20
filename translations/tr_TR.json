@@ -9515,5 +9515,8 @@
   "Spotlight & Tools": "Spotlight ve Araçlar",
   "Sound & Media": "Ses ve Medya",
   "Display & Input": "Ekran ve Giriş",
-  "Lock & Login": "Kilit ve Oturum Açma"
+  "Lock & Login": "Kilit ve Oturum Açma",
+  "Quietly": "Sessizce",
+  "Apps that notify": "Bildirim gönderen uygulamalar",
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Size bir şey gönderen her uygulama. Sessizce, afiş ve ses olmadan Bugün'de tutar; Asla, yok sayar."
 }

@@ -9515,5 +9515,8 @@
   "Spotlight & Tools": "Spotlight và công cụ",
   "Sound & Media": "Âm thanh và đa phương tiện",
   "Display & Input": "Màn hình và nhập liệu",
-  "Lock & Login": "Khóa và đăng nhập"
+  "Lock & Login": "Khóa và đăng nhập",
+  "Quietly": "Im lặng",
+  "Apps that notify": "Ứng dụng gửi thông báo",
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Mỗi ứng dụng đã gửi cho bạn thứ gì đó. Im lặng giữ nó trong Hôm nay mà không có biểu ngữ hay âm thanh; Không bao giờ thì bỏ qua."
 }

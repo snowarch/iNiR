@@ -9515,5 +9515,8 @@
   "Spotlight & Tools": "Spotlight والأدوات",
   "Sound & Media": "الصوت والوسائط",
   "Display & Input": "الشاشة والإدخال",
-  "Lock & Login": "القفل وتسجيل الدخول"
+  "Lock & Login": "القفل وتسجيل الدخول",
+  "Quietly": "بهدوء",
+  "Apps that notify": "التطبيقات التي ترسل إشعارات",
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "كل تطبيق أرسل لك شيئًا. «بهدوء» يحفظه في «اليوم» بلا لافتة ولا صوت؛ و«أبدًا» يتجاهله."
 }

@@ -9515,5 +9515,8 @@
   "Spotlight & Tools": "Spotlight et outils",
   "Sound & Media": "Son et médias",
   "Display & Input": "Écran et saisie",
-  "Lock & Login": "Verrouillage et connexion"
+  "Lock & Login": "Verrouillage et connexion",
+  "Quietly": "Discrètement",
+  "Apps that notify": "Apps qui notifient",
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Chaque app qui vous a envoyé quelque chose. Discrètement la garde dans Aujourd'hui sans bannière ni son ; Jamais l'ignore."
 }

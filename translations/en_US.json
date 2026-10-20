@@ -9515,5 +9515,8 @@
   "Spotlight & Tools": "Spotlight & Tools",
   "Sound & Media": "Sound & Media",
   "Display & Input": "Display & Input",
-  "Lock & Login": "Lock & Login"
+  "Lock & Login": "Lock & Login",
+  "Quietly": "Quietly",
+  "Apps that notify": "Apps that notify",
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it."
 }

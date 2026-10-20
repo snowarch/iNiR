@@ -305,7 +305,8 @@ Item {
             return out
         }
         for (const group of root.groups) {
-            const single = group.rows.length === 1
+            // A list is a group of its own: it reads under its name, not inside a neighbour's card.
+            const single = group.rows.length === 1 && group.rows[0].kind !== "list"
             const previous = out[out.length - 1]
             if (single && previous?.loose && !root.split) { previous.rows = previous.rows.concat(group.rows); continue }
             out.push({ title: single ? "\u200b" + group.key : group.title, caption: single ? "" : group.title, key: group.key, rows: group.rows.slice(), loose: single })

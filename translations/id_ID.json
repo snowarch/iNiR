@@ -9515,5 +9515,8 @@
   "Spotlight & Tools": "Spotlight & Alat",
   "Sound & Media": "Suara & Media",
   "Display & Input": "Layar & Input",
-  "Lock & Login": "Kunci & Masuk"
+  "Lock & Login": "Kunci & Masuk",
+  "Quietly": "Diam-diam",
+  "Apps that notify": "Aplikasi yang memberi notifikasi",
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "Setiap aplikasi yang mengirimi Anda sesuatu. Diam-diam menyimpannya di Hari ini tanpa banner atau suara; Jangan pernah membuangnya."
 }

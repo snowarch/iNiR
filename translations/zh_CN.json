@@ -9515,5 +9515,8 @@
   "Spotlight & Tools": "聚焦与工具",
   "Sound & Media": "声音与媒体",
   "Display & Input": "显示与输入",
-  "Lock & Login": "锁屏与登录"
+  "Lock & Login": "锁屏与登录",
+  "Quietly": "静默",
+  "Apps that notify": "发送通知的应用",
+  "Every app that sent you something. Quietly keeps it in Today with no banner or sound; Never drops it.": "每个给你发过通知的应用。静默会保留在“今天”中，不弹横幅也不响铃；从不则直接丢弃。"
 }
