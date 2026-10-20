@@ -25,6 +25,21 @@ Window {
         return localPath.startsWith("file://") ? localPath : "file://" + localPath
     }
 
+    // A layer surface stays on the output it was created on, and Qt picks that output from where the window sits when
+    // it is shown: a window left at (0,0) went to the first screen whatever `screen` said. It starts inside its own.
+    readonly property var targetScreen: {
+        for (let i = 0; i < Qt.application.screens.length; ++i) {
+            if (Qt.application.screens[i].name === root.screenName)
+                return Qt.application.screens[i]
+        }
+        return null
+    }
+    screen: root.targetScreen ?? Qt.application.screens[0]
+    x: root.targetScreen?.virtualX ?? 0
+    y: root.targetScreen?.virtualY ?? 0
+    width: root.targetScreen?.width ?? 1920
+    height: root.targetScreen?.height ?? 1080
+
     visible: !root.probeMode
     color: "black"
     title: "iNiR Web Wallpaper"
@@ -53,14 +68,6 @@ Window {
         if (root.probeMode) {
             Qt.callLater(Qt.quit)
             return
-        }
-        if (root.screenName.length > 0) {
-            for (let i = 0; i < Qt.application.screens.length; ++i) {
-                if (Qt.application.screens[i].name === root.screenName) {
-                    root.screen = Qt.application.screens[i]
-                    break
-                }
-            }
         }
     }
 

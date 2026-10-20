@@ -21,7 +21,11 @@ Singleton {
     property string lastError: ""
     property int revision: 0
 
+    // Deferred: from inside availableChanged, `active` still reads the old value, and every host saw "off".
     function refresh(): void {
+        Qt.callLater(root.bump)
+    }
+    function bump(): void {
         root.revision++
     }
 
@@ -32,9 +36,10 @@ Singleton {
 
     Process {
         id: runnerProbeProc
+        // Not a login shell: whatever a profile prints (a fetch banner) became the runner path.
         command: [
-            "/usr/bin/bash", "-lc",
-            "command -v qml6 || command -v qml || { [ -x /usr/lib/qt6/bin/qml ] && printf '%s\\n' /usr/lib/qt6/bin/qml; }"
+            "/usr/bin/bash", "-c",
+            "command -v qml6 || command -v qml || { for q in /usr/lib/qt6/bin/qml /usr/lib64/qt6/bin/qml; do [ -x \"$q\" ] && printf '%s\\n' \"$q\" && exit 0; done; exit 1; }"
         ]
         stdout: StdioCollector { id: probeOut }
         stderr: StdioCollector { id: probeErr }
