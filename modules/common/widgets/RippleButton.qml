@@ -157,14 +157,15 @@ Button {
             if (root.releaseAction) root.releaseAction();
             root.click() // Because the MouseArea already consumed the event
             if (!root.rippleEnabled) return;
-            root.fadeRipple();
+            // The click may have closed what holds this button: same tear-down race as on press.
+            if (typeof root.fadeRipple === "function") root.fadeRipple();
         }
         onCanceled: (event) => {
             root.down = false
             if (root.cancelAction) root.cancelAction(event)
             else if (root.releaseAction) root.releaseAction();
             if (!root.rippleEnabled) return;
-            root.fadeRipple();
+            if (typeof root.fadeRipple === "function") root.fadeRipple();
         }
     }
 
