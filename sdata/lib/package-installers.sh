@@ -16,7 +16,7 @@ _is_graphical_env() {
 # Detect available privilege escalation methods
 _detect_privilege_method() {
   local method=""
-  
+
   # Check for graphical methods first (polkit-based)
   if command -v pkexec &>/dev/null && [[ -n "${DBUS_SESSION_BUS_ADDRESS}" ]]; then
     # Test if polkit can authenticate
@@ -24,12 +24,12 @@ _detect_privilege_method() {
       method="pkexec"
     fi
   fi
-  
+
   # Check for elevate (available in some graphical environments)
   if [[ -z "$method" ]] && command -v elevate &>/dev/null; then
     method="elevate"
   fi
-  
+
   # Check for sudo
   if [[ -z "$method" ]] && command -v sudo &>/dev/null; then
     # Test if user has sudo permissions (non-interactive)
@@ -37,22 +37,22 @@ _detect_privilege_method() {
       method="sudo"
     fi
   fi
-  
+
   # Check for su (requires root password, not sudo password)
   if [[ -z "$method" ]] && command -v su &>/dev/null && [[ -r /etc/shadow || $(id -u) -eq 0 ]]; then
     method="su"
   fi
-  
+
   echo "$method"
 }
 
 # Show environment-specific instructions
 _show_privilege_instructions() {
   local reason="$1"
-  
+
   echo -e "${STY_RED}Error: $reason${STY_RST}" >&2
   echo "" >&2
-  
+
   if _is_graphical_env; then
     # Graphical environment detected
     echo -e "${STY_YELLOW}Detected: Graphical environment (Wayland/X11)${STY_RST}" >&2
@@ -91,7 +91,7 @@ _show_privilege_instructions() {
     fi
     echo "" >&2
   fi
-  
+
   # Common configuration instructions
   echo -e "${STY_CYAN}After installing sudo, configure it:${STY_RST}" >&2
   echo "  sudo visudo" >&2
@@ -112,7 +112,7 @@ pkg_sudo() {
     elevate "$@"
     return $?
   fi
-  
+
   # Priority 2: Try sudo first (standard method)
   if command -v sudo &>/dev/null; then
     # Try non-interactive first (already has cached credentials)
@@ -124,7 +124,7 @@ pkg_sudo() {
     sudo "$@"
     return $?
   fi
-  
+
   # Priority 3: Fallback to pkexec (polkit) - works in graphical environments
   # without requiring sudo configuration
   if command -v pkexec &>/dev/null; then
@@ -139,7 +139,7 @@ pkg_sudo() {
       fi
     fi
   fi
-  
+
   # Priority 4: Fallback to su (for TTY/console environments)
   # su requires the root password configured by the installed distribution.
   if command -v su &>/dev/null; then
@@ -151,13 +151,13 @@ pkg_sudo() {
       return $?
     fi
   fi
-  
+
   # Priority 5: Fallback to elevate if not already tried
   if type elevate &>/dev/null; then
     elevate "$@"
     return $?
   fi
-  
+
   # No privilege escalation method available
   _show_privilege_instructions "No privilege escalation method available (tried: sudo, pkexec, elevate)"
   return 1
@@ -983,7 +983,7 @@ if status is-interactive
 
     # Aliases
     if command -v eza > /dev/null
-        alias ls 'eza --icons'
+        alias ls 'eza --icons=auto'
     end
     alias clear "printf '\033[2J\033[3J\033[1;1H'"
     alias q 'inir run'
@@ -1024,9 +1024,9 @@ fi
 
 # Aliases
 if command -v eza &> /dev/null; then
-    alias ls='eza --icons'
+    alias ls='eza --icons=auto'
 elif [[ -x ~/.local/bin/eza ]]; then
-    alias ls='~/.local/bin/eza --icons'
+    alias ls='~/.local/bin/eza --icons=auto'
 fi
 alias q='inir run'
 
@@ -1079,9 +1079,9 @@ fi
 
 # Aliases
 if command -v eza &> /dev/null; then
-    alias ls='eza --icons'
+    alias ls='eza --icons=auto'
 elif [[ -x ~/.local/bin/eza ]]; then
-    alias ls='~/.local/bin/eza --icons'
+    alias ls='~/.local/bin/eza --icons=auto'
 fi
 alias q='inir run'
 
