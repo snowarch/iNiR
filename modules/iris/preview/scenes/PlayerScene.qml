@@ -21,6 +21,8 @@ PreviewScene {
     readonly property bool pinned: playerRoot.opt("iris.player.cardPinned", false)
     readonly property real naturalWidth: Math.round(560 * playerRoot.d)
     readonly property real naturalHeight: Math.round(290 * playerRoot.d)
+    narrowest: Math.round(420 * playerRoot.d)
+    lowest: Math.round(220 * playerRoot.d)
     // A Design that draws the player card shows its own here, on a stand-in of the record that plays (its keys do nothing).
     readonly property string cardUrl: IrisDesign.skin("mediaCard")
     readonly property var standIn: ({

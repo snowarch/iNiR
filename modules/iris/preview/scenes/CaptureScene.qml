@@ -18,6 +18,8 @@ PreviewScene {
     readonly property string sound: String(snipRoot.opt("screenRecord.audioMode", "system"))
     readonly property real naturalWidth: Math.round(640 * snipRoot.d)
     readonly property real naturalHeight: Math.round(320 * snipRoot.d)
+    narrowest: Math.round(320 * snipRoot.d)
+    lowest: Math.round(220 * snipRoot.d)
     property real grow: 0
     Loop on grow { running: snipRoot.playing; rest: 1600 }
 

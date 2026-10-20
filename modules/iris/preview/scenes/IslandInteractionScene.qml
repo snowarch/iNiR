@@ -14,6 +14,8 @@ PreviewScene {
     id: actRoot
     readonly property real naturalWidth: Math.round(620 * actRoot.d)
     readonly property real naturalHeight: Math.round(280 * actRoot.d)
+    narrowest: Math.round(320 * actRoot.d)
+    lowest: Math.round(170 * actRoot.d)
     readonly property bool hover: actRoot.opt("iris.bar.hoverExpand", true)
     readonly property int delay: Math.max(120, Math.min(800, Number(actRoot.opt("iris.bar.hoverDelay", 300))))
     readonly property string scroll: String(actRoot.opt("iris.bar.scrollAction", "volume"))

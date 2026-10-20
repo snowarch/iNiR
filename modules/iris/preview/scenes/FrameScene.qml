@@ -13,6 +13,8 @@ PreviewScene {
     id: framePreview
     readonly property real naturalWidth: Math.round(540 * framePreview.d)
     readonly property real naturalHeight: Math.round(280 * framePreview.d)
+    narrowest: Math.round(360 * framePreview.d)
+    lowest: Math.round(180 * framePreview.d)
     readonly property bool wave: framePreview.section === "frameMusic" && framePreview.opt("background.edgeWidgets.organic.enable", false) && String(framePreview.opt("iris.surround.music", "widget")) === "widget"
     readonly property bool music: framePreview.section === "frameMusic"
         && framePreview.opt("background.edgeWidgets.organic.enable", false)

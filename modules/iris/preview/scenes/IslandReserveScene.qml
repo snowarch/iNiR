@@ -10,6 +10,8 @@ PreviewScene {
     id: reserveRoot
     readonly property real naturalWidth: Math.round(640 * reserveRoot.d)
     readonly property real naturalHeight: Math.round(280 * reserveRoot.d)
+    narrowest: Math.round(400 * reserveRoot.d)
+    lowest: Math.round(200 * reserveRoot.d)
     readonly property bool reserve: reserveRoot.opt("iris.bar.reserveSpace", true)
     readonly property string edge: IrisFrame.islandEdge
     readonly property bool bottomEdge: reserveRoot.edge === "bottom"

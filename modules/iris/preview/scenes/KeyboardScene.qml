@@ -19,6 +19,8 @@ PreviewScene {
     readonly property real cursorSize: Math.max(16, Math.min(64, Number(keysRoot.niri("input", "cursor.xcursor-size", 24))))
     readonly property real naturalWidth: Math.round(600 * keysRoot.d)
     readonly property real naturalHeight: Math.round(280 * keysRoot.d)
+    narrowest: Math.round(360 * keysRoot.d)
+    lowest: Math.round(200 * keysRoot.d)
 
     component Keycap: Rectangle {
         id: cap

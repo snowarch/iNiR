@@ -23,6 +23,8 @@ PreviewScene {
     readonly property int recentCount: Math.max(2, Math.min(8, Number(orbitRoot.opt("iris.orbit.recentCount", 5))))
     readonly property real naturalWidth: Math.round(640 * orbitRoot.d)
     readonly property real naturalHeight: Math.round(360 * orbitRoot.d)
+    narrowest: Math.round(400 * orbitRoot.d)
+    lowest: Math.round(240 * orbitRoot.d)
 
     IslandPill {
         id: orbitIsland

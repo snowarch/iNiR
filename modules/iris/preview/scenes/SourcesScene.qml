@@ -19,6 +19,8 @@ PreviewScene {
     readonly property bool calendars: sourcesRoot.opt("calendar.externalSync.enable", false) === true
     readonly property real naturalWidth: Math.round(600 * sourcesRoot.d)
     readonly property real naturalHeight: Math.round(260 * sourcesRoot.d)
+    narrowest: Math.round(420 * sourcesRoot.d)
+    lowest: Math.round(180 * sourcesRoot.d)
 
     component Piece: Rectangle {
         id: piece

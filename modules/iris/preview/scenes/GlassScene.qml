@@ -14,6 +14,8 @@ PreviewScene {
     id: glassRoot
     readonly property real naturalWidth: Math.round(620 * glassRoot.d)
     readonly property real naturalHeight: Math.round(280 * glassRoot.d)
+    narrowest: Math.round(380 * glassRoot.d)
+    lowest: Math.round(170 * glassRoot.d)
     readonly property string mode: String(glassRoot.opt("iris.appearance.glass.mode", "off"))
     // Blur (beta): Niri blurs what is behind the glass, windows included. The values are the Niri rows' own
     // (IrisCompositorBlur); with Niri blur off the pane keeps the window sharp behind its tint.

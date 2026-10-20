@@ -10,6 +10,8 @@ PreviewScene {
     id: backdropRoot
     readonly property real naturalWidth: Math.round(640 * backdropRoot.d)
     readonly property real naturalHeight: Math.round(260 * backdropRoot.d)
+    narrowest: Math.round(340 * backdropRoot.d)
+    lowest: Math.round(170 * backdropRoot.d)
     readonly property bool on: backdropRoot.opt("background.backdrop.enable", true)
     readonly property real blurAmount: Math.max(0, Math.min(100, Number(backdropRoot.opt("background.backdrop.blurRadius", 40))))
     readonly property real dim: Math.max(0, Math.min(100, Number(backdropRoot.opt("background.backdrop.dim", 40)))) / 100

@@ -24,6 +24,8 @@ PreviewScene {
     readonly property string rate: String(displayRoot.niri("display", "rate", ""))
     readonly property real naturalWidth: Math.round(620 * displayRoot.d)
     readonly property real naturalHeight: Math.round(300 * displayRoot.d)
+    narrowest: Math.round(400 * displayRoot.d)
+    lowest: Math.round(220 * displayRoot.d)
 
     // Night Light: the wallpaper under a warm wash, as strong as the warmth asked for.
     Rectangle {

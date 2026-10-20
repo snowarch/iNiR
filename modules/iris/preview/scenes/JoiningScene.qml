@@ -13,6 +13,8 @@ PreviewScene {
     id: joinRoot
     readonly property real naturalWidth: Math.round(640 * joinRoot.d)
     readonly property real naturalHeight: Math.round(300 * joinRoot.d)
+    narrowest: Math.round(500 * joinRoot.d)
+    lowest: Math.round(240 * joinRoot.d)
     readonly property bool along: String(joinRoot.opt("iris.appearance.theme.placement", "auto")) === "along"
     readonly property real air: IrisFrame.bodyAir
     readonly property real bubble: IrisFrame.islandBand

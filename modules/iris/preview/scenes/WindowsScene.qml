@@ -27,6 +27,8 @@ PreviewScene {
     readonly property real dim: Math.max(0.2, Math.min(1, Number(winRoot.niri("window-rules", "inactive-opacity", 1))))
     readonly property real naturalWidth: Math.round(680 * winRoot.d)
     readonly property real naturalHeight: Math.round(320 * winRoot.d)
+    narrowest: Math.round(400 * winRoot.d)
+    lowest: Math.round(220 * winRoot.d)
 
     Repeater {
         // The column on the left runs off the screen as Niri's strip does; the focused one sits in the middle.

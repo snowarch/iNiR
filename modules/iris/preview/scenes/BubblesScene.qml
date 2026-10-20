@@ -14,6 +14,8 @@ PreviewScene {
     id: bubRoot
     readonly property real naturalWidth: Math.round(760 * bubRoot.d)
     readonly property real naturalHeight: Math.round(300 * bubRoot.d)
+    narrowest: Math.round(420 * bubRoot.d)
+    lowest: Math.round(220 * bubRoot.d)
     readonly property bool snap: bubRoot.opt("iris.bubbles.snap", true)
     readonly property bool attach: bubRoot.opt("iris.bubbles.attach", true)
     readonly property bool cluster: bubRoot.opt("iris.bubbles.cluster", true)

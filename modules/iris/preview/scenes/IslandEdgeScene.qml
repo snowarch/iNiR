@@ -13,6 +13,8 @@ PreviewScene {
     id: edgeRoot
     readonly property real naturalWidth: Math.round(640 * edgeRoot.d)
     readonly property real naturalHeight: Math.round(320 * edgeRoot.d)
+    narrowest: Math.round(400 * edgeRoot.d)
+    lowest: Math.round(220 * edgeRoot.d)
     readonly property string edge: IrisFrame.islandEdge
     readonly property bool vertical: edgeRoot.edge === "left" || edgeRoot.edge === "right"
     readonly property bool notch: edgeRoot.opt("iris.bar.notch", false)

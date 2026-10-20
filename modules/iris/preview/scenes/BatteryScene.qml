@@ -20,6 +20,8 @@ PreviewScene {
     readonly property real limit: Number(batteryRoot.opt("battery.chargeLimit.threshold", 80))
     readonly property real naturalWidth: Math.round(600 * batteryRoot.d)
     readonly property real naturalHeight: Math.round(280 * batteryRoot.d)
+    narrowest: Math.round(340 * batteryRoot.d)
+    lowest: Math.round(180 * batteryRoot.d)
     property real drain: 0
     Loop on drain { running: batteryRoot.playing; rest: 1400 }
     readonly property real level: Math.round((batteryRoot.limited ? batteryRoot.limit : 100) - batteryRoot.drain * ((batteryRoot.limited ? batteryRoot.limit : 100) - batteryRoot.critical + 1))

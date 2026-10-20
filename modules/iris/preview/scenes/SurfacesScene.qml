@@ -17,6 +17,8 @@ PreviewScene {
     // Laid tight, so the labels read at the head's size.
     readonly property real naturalWidth: Math.round(460 * surfaces.d)
     readonly property real naturalHeight: Math.round(270 * surfaces.d)
+    narrowest: Math.round(360 * surfaces.d)
+    lowest: Math.round(200 * surfaces.d)
     readonly property int columns: 4
     readonly property real margin: Math.round(16 * surfaces.d)
     readonly property real gap: Math.round(10 * surfaces.d)

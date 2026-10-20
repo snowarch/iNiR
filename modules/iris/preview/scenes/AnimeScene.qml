@@ -22,6 +22,8 @@ PreviewScene {
         IrisStyle.identity.orange, IrisStyle.identity.indigo, IrisStyle.identity.red, IrisStyle.identity.green]
     readonly property real naturalWidth: Math.round(640 * animeRoot.d)
     readonly property real naturalHeight: Math.round(320 * animeRoot.d)
+    narrowest: Math.round(400 * animeRoot.d)
+    lowest: Math.round(200 * animeRoot.d)
 
     Plate {
         id: airingCard

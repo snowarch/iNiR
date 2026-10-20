@@ -19,6 +19,8 @@ PreviewScene {
     // Laid tight, so the bodies read at the head's size.
     readonly property real naturalWidth: Math.round(460 * mat.d)
     readonly property real naturalHeight: Math.round(230 * mat.d)
+    narrowest: Math.round(380 * mat.d)
+    lowest: Math.round(200 * mat.d)
     // Re-reads when a per-surface row changes.
     readonly property string cardsMaterial: String(mat.opt("iris.appearance.surfaces.cards.material", ""))
     readonly property string panelsMaterial: String(mat.opt("iris.appearance.surfaces.panels.material", ""))

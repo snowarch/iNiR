@@ -18,6 +18,8 @@ PreviewScene {
     id: widgetsRoot
     readonly property real naturalWidth: Math.round(620 * widgetsRoot.d)
     readonly property real naturalHeight: Math.round(260 * widgetsRoot.d)
+    narrowest: Math.round(480 * widgetsRoot.d)
+    lowest: Math.round(190 * widgetsRoot.d)
     readonly property bool on: widgetsRoot.opt("iris.modules.desktopWidgets", true)
     readonly property string design: DesktopWidgetDesign.current
     readonly property bool iris: widgetsRoot.design === "iris"

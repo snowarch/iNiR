@@ -14,6 +14,8 @@ PreviewScene {
     id: menuRoot
     readonly property real naturalWidth: Math.round(480 * menuRoot.d)
     readonly property real naturalHeight: Math.round(300 * menuRoot.d)
+    narrowest: Math.round(320 * menuRoot.d)
+    lowest: Math.round(260 * menuRoot.d)
     // The real menu's numbers (IrisDesktopMenu): Menus › Size moves every one of them.
     readonly property bool compact: IrisStyle.menuCompact
     readonly property int pad: Math.round((menuRoot.compact ? 4 : 6) * menuRoot.d)

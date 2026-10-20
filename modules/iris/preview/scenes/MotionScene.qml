@@ -10,6 +10,8 @@ PreviewScene {
     id: motionRoot
     readonly property real naturalWidth: Math.round(540 * motionRoot.d)
     readonly property real naturalHeight: Math.round(280 * motionRoot.d)
+    narrowest: Math.round(420 * motionRoot.d)
+    lowest: Math.round(200 * motionRoot.d)
     IrisMotionLab {
         anchors.fill: parent
         anchors.margins: Math.round(12 * motionRoot.d)

@@ -13,6 +13,8 @@ PreviewScene {
     id: lightRoot
     readonly property real naturalWidth: Math.round(620 * lightRoot.d)
     readonly property real naturalHeight: Math.round(290 * lightRoot.d)
+    narrowest: Math.round(360 * lightRoot.d)
+    lowest: Math.round(220 * lightRoot.d)
     readonly property string aura: String(lightRoot.opt("iris.appearance.aura", "subtle"))
     readonly property real reach: Number(lightRoot.opt("iris.appearance.theme.lightReach", 100))
     readonly property real glow: Number(lightRoot.opt("iris.appearance.theme.glow", 0))

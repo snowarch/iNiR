@@ -22,6 +22,8 @@ PreviewScene {
     id: login
     readonly property real naturalWidth: Math.round(560 * login.d)
     readonly property real naturalHeight: Math.round(280 * login.d)
+    narrowest: Math.round(320 * login.d)
+    lowest: Math.round(170 * login.d)
 
     // ── What the rows say ──
     readonly property string screen: String(login.opt("lock.loginScreen", "auto")) === "classic" ? "classic" : "iris"

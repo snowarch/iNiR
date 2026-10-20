@@ -11,6 +11,8 @@ PreviewScene {
     id: zonesRoot
     readonly property real naturalWidth: Math.round(680 * zonesRoot.d)
     readonly property real naturalHeight: Math.round(220 * zonesRoot.d)
+    narrowest: Math.round(360 * zonesRoot.d)
+    lowest: Math.round(150 * zonesRoot.d)
     readonly property var names: ({ island: "Island", workspaces: "Workspaces", window: "Window", time: "Time", tray: "Tray",
         notifications: "Notifications", sound: "Sound", controls: "Controls", mic: "Mic", weather: "Weather", tools: "Tools", media: "Media" })
     function listOf(path: string, fallback: var): var { return Array.from(zonesRoot.opt(path, fallback) ?? []).map(kind => String(kind)) }
