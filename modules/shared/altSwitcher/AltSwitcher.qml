@@ -930,9 +930,18 @@ Scope {
                                 smooth: true
                                 asynchronous: true
                                 cache: false
-                                visible: status === Image.Ready && source.toString().length > 0
+                                visible: status === Image.Ready && source.toString().length > 0 && !liveShot.streaming
                                 sourceSize.width: root.skewExpandedWidth
                                 sourceSize.height: root.skewSliceHeight
+                            }
+
+                            // The window itself over the still: the slice in front moves, the others hold a frame.
+                            LiveWindowCapture {
+                                id: liveShot
+                                anchors.fill: parent
+                                windowId: skewSlice.modelData?.id ?? -1
+                                active: GlobalStates.altSwitcherOpen && root.skewStyle
+                                live: skewSlice.isCurrent
                             }
 
                             Rectangle {

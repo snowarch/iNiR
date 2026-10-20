@@ -178,7 +178,7 @@ Button {
                 Rectangle {
                     id: shimmer
                     visible: !previewArea.hasDisplayedPreview
-                        && previewArea.previewUrl.length === 0
+                        && previewArea.previewUrl.length === 0 && !liveShot.streaming
                     width: parent.width * 0.4
                     height: parent.height
                     x: -width
@@ -219,7 +219,7 @@ Button {
                 // window. 2x the drawn size keeps it crisp under mipmap.
                 sourceSize.width: Math.max(1, Math.round(windowPreview.width * 2))
                 sourceSize.height: Math.max(1, Math.round(windowPreview.height * 2))
-                opacity: previewArea.previewUrl.length > 0 ? 1 : 0
+                opacity: previewArea.previewUrl.length > 0 && !liveShot.streaming ? 1 : 0
 
                 onStatusChanged: {
                     if (status === Image.Ready)
@@ -242,6 +242,7 @@ Button {
                 radius: Appearance.rounding.small
                 color: "transparent"
                 LiveWindowCapture {
+                    id: liveShot
                     anchors.fill: parent
                     windowId: previewArea.windowId || -1
                     active: root.live

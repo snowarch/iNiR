@@ -1001,8 +1001,8 @@ Item {
                                     sourceSize.width: root.previewDecodeWidth
                                     sourceSize.height: root.previewDecodeHeight
                                     visible: opacity > 0.001
-                                    opacity: status === Image.Ready
-                                        || (status === Image.Loading && hadReadyFrame) ? 1 : 0
+                                    opacity: !liveShot.streaming && (status === Image.Ready
+                                        || (status === Image.Loading && hadReadyFrame)) ? 1 : 0
 
                                     onStatusChanged: {
                                         if (status === Image.Ready)
@@ -1019,6 +1019,16 @@ Item {
                                             easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
                                         }
                                     }
+                                }
+
+                                // The window itself, streamed over the still while the overview is open: the
+                                // workspace in front moves, the satellites hold a frame.
+                                LiveWindowCapture {
+                                    id: liveShot
+                                    anchors.fill: parent
+                                    windowId: windowItem.windowId
+                                    active: GlobalStates.overviewOpen && (workspaceCard.isCore || root.satellitePreviews)
+                                    live: workspaceCard.isCore
                                 }
 
                                 Connections {

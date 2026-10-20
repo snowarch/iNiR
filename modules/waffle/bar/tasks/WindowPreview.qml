@@ -5,6 +5,7 @@ import Qt5Compat.GraphicalEffects
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
+import qs.modules.common.widgets
 import qs.modules.waffle.looks
 import qs.modules.waffle.bar
 import Quickshell
@@ -15,6 +16,8 @@ Button {
     required property var toplevel
     property real previewWidthConstraint: Looks.dp(200)
     property real previewHeightConstraint: Looks.dp(110)
+    // Whether the preview is on screen: only then does the window stream.
+    property bool live: false
     padding: Looks.dp(5)
     Layout.fillHeight: true
 
@@ -99,7 +102,7 @@ Button {
                 // Fallback icon when preview not available
                 WAppIcon {
                     anchors.centerIn: parent
-                    visible: !previewImage.hasPreview
+                    visible: !previewImage.hasPreview && !liveShot.streaming
                     iconName: root.toplevel ? AppSearch.guessIcon(root.toplevel.appId) : ""
                     implicitSize: Looks.dp(64)
                     opacity: 0.5
@@ -117,7 +120,7 @@ Button {
                     fillMode: Image.PreserveAspectFit
                     smooth: true
                     mipmap: true
-                    visible: hasPreview
+                    visible: hasPreview && !liveShot.streaming
                     opacity: hasPreview ? 1 : 0
 
                     Behavior on opacity {
@@ -156,8 +159,17 @@ Button {
                     }
                 }
 
+                // The window itself, streamed over the still while the preview is open.
+                LiveWindowCapture {
+                    id: liveShot
+                    anchors.fill: parent
+                    windowId: root.niriWindowId
+                    active: root.live
+                    fillMode: Image.PreserveAspectFit
+                }
+
                 // Rounded corners mask
-                layer.enabled: previewImage.hasPreview
+                layer.enabled: previewImage.hasPreview || liveShot.streaming
                 layer.effect: OpacityMask {
                     maskSource: Rectangle {
                         width: previewContainer.width

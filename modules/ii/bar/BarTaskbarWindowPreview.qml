@@ -18,6 +18,8 @@ Button {
     id: root
 
     required property var toplevel
+    // Whether the preview is on screen: only then does the window stream.
+    property bool live: false
     padding: 6
     Layout.fillHeight: true
 
@@ -139,7 +141,7 @@ Button {
                 color: Appearance.inirEverywhere
                     ? (Appearance.inir?.colLayer1 ?? Appearance.colors.colSurfaceContainerLow)
                     : Appearance.colors.colSurfaceContainerLow
-                visible: windowPreview.status !== Image.Ready
+                visible: windowPreview.status !== Image.Ready && !liveShot.streaming
 
                 Rectangle {
                     id: shimmer
@@ -171,7 +173,7 @@ Button {
                 anchors.centerIn: parent
                 source: appIcon.source
                 implicitSize: Math.min(48, parent.width * 0.4)
-                opacity: windowPreview.status === Image.Ready ? 0 : 0.7
+                opacity: windowPreview.status === Image.Ready || liveShot.streaming ? 0 : 0.7
                 mipmap: true
                 smooth: true
 
@@ -195,7 +197,7 @@ Button {
                 // window. 2x the drawn size keeps it crisp under mipmap.
                 sourceSize.width: Math.max(1, Math.round(windowPreview.width * 2))
                 sourceSize.height: Math.max(1, Math.round(windowPreview.height * 2))
-                opacity: status === Image.Ready ? 1 : 0
+                opacity: status === Image.Ready && !liveShot.streaming ? 1 : 0
 
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
@@ -209,6 +211,19 @@ Button {
                         height: windowPreview.height
                         radius: Appearance.rounding.small
                     }
+                }
+            }
+
+            // The window itself, streamed over the still while the preview is open.
+            ClippingRectangle {
+                anchors.fill: windowPreview
+                radius: Appearance.rounding.small
+                color: "transparent"
+                LiveWindowCapture {
+                    id: liveShot
+                    anchors.fill: parent
+                    windowId: CompositorService.isNiri && previewArea.windowId > 0 ? previewArea.windowId : -1
+                    active: root.live
                 }
             }
 

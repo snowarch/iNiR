@@ -169,6 +169,7 @@ PopupWindow {
                 delegate: WindowPreview {
                     required property var modelData
                     toplevel: modelData
+                    live: root.visible
                 }
             }
         }

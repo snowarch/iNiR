@@ -1159,8 +1159,9 @@ Item {
                             sourceSize.width: root.previewDecodeWidth
                             sourceSize.height: root.previewDecodeHeight
                             visible: parent.showPreviews && opacity > 0.001
-                            opacity: status === Image.Ready
-                                || (status === Image.Loading && hadReadyFrame) ? 1 : 0
+                            // Under a stream the still steps aside: a translucent window would show both.
+                            opacity: !liveShot.streaming && (status === Image.Ready
+                                || (status === Image.Loading && hadReadyFrame)) ? 1 : 0
 
                             onStatusChanged: {
                                 if (status === Image.Ready)
@@ -1193,6 +1194,7 @@ Item {
 
                         // The window itself, streamed over the cached still while the overview is open.
                         LiveWindowCapture {
+                            id: liveShot
                             anchors.fill: windowPreview
                             windowId: windowItem.windowId || -1
                             active: GlobalStates.overviewOpen && parent.showPreviews
@@ -1222,7 +1224,7 @@ Item {
                             id: windowIcon
                             anchors.centerIn: parent
                             width: {
-                                var size = Math.min(parent.width, parent.height) * (windowPreview.visible ? 0.25 : 0.35);
+                                var size = Math.min(parent.width, parent.height) * (windowPreview.visible || liveShot.streaming ? 0.25 : 0.35);
                                 const min = root.overviewOptions.iconMinSize ?? 0;
                                 const max = root.overviewOptions.iconMaxSize ?? 0;
                                 if (min > 0) size = Math.max(size, min);
@@ -1233,7 +1235,7 @@ Item {
                             source: AppSearch.getIconSource(windowData.app_id || windowData.appId || "")
                             asynchronous: true
                             fillMode: Image.PreserveAspectFit
-                            opacity: windowPreview.opacity > 0.001 ? (root.orbitMode ? 0 : 0.6) : 1.0
+                            opacity: windowPreview.opacity > 0.001 || liveShot.streaming ? (root.orbitMode ? 0 : 0.6) : 1.0
                             Behavior on opacity {
                                 enabled: Appearance.animationsEnabled
                                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic }

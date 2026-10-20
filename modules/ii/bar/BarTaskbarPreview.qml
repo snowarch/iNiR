@@ -191,6 +191,7 @@ PopupWindow {
                     delegate: BarTaskbarWindowPreview {
                         required property var modelData
                         toplevel: modelData
+                        live: root.visible
                         onWindowActivated: {
                             if (!(Config.options?.dock?.keepPreviewOnClick ?? false))
                                 root.close()

@@ -9,6 +9,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
+import qs.modules.common.widgets
 import qs.modules.waffle.looks
 import qs.modules.waffle.bar
 
@@ -234,7 +235,7 @@ Item {
                     id: shimmerBg
                     anchors.fill: parent
                     color: Looks.colors.bg2Base
-                    visible: windowPreview.status !== Image.Ready
+                    visible: windowPreview.status !== Image.Ready && !liveShot.streaming
 
                     Rectangle {
                         id: shimmer
@@ -269,7 +270,7 @@ Item {
                     source: Quickshell.iconPath(root.windowData?.app_id ?? "", "application-x-executable")
                     implicitWidth: Math.min(64, parent.width * 0.5)
                     implicitHeight: implicitWidth
-                    opacity: windowPreview.status === Image.Ready ? 0 : 0.8
+                    opacity: windowPreview.status === Image.Ready || liveShot.streaming ? 0 : 0.8
 
                     Behavior on opacity {
                         NumberAnimation {
@@ -289,7 +290,7 @@ Item {
                     mipmap: true
                     anchors.fill: parent
                     anchors.margins: 2
-                    opacity: status === Image.Ready ? 1 : 0
+                    opacity: status === Image.Ready && !liveShot.streaming ? 1 : 0
 
                     Behavior on opacity {
                         NumberAnimation {
@@ -297,6 +298,14 @@ Item {
                             easing.type: Easing.OutQuad
                         }
                     }
+                }
+
+                // The window itself, streamed over the still while Task View is open.
+                LiveWindowCapture {
+                    id: liveShot
+                    anchors.fill: windowPreview
+                    windowId: previewArea.windowId > 0 ? previewArea.windowId : -1
+                    active: GlobalStates.waffleTaskViewOpen
                 }
 
                 // Listen for preview updates

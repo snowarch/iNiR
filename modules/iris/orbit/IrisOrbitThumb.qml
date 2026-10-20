@@ -69,7 +69,8 @@ Item {
             mipmap: false
             retainWhileLoading: true
             sourceSize: root.decodeSize
-            opacity: status === Image.Ready ? (root.minimised ? 0.55 : 1) : 0
+            // Under a stream the still steps aside: a translucent window would show both.
+            opacity: status === Image.Ready && !liveShot.streaming ? (root.minimised ? 0.55 : 1) : 0
             visible: opacity > 0.001
             Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
         }

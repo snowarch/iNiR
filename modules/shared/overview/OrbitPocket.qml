@@ -180,14 +180,23 @@ PanelSurface {
                                 sourceSize.width: Math.round((root.listMode ? 384 : 512) * root.previewDpr)
                                 sourceSize.height: Math.round((root.listMode ? 216 : 288) * root.previewDpr)
                                 visible: opacity > 0.001
-                                opacity: status === Image.Ready
-                                    || (status === Image.Loading && hadReadyFrame) ? 1 : 0
+                                opacity: !liveShot.streaming && (status === Image.Ready
+                                    || (status === Image.Loading && hadReadyFrame)) ? 1 : 0
                                 onStatusChanged: {
                                     if (status === Image.Ready)
                                         hadReadyFrame = true
                                     else if (status === Image.Error || status === Image.Null)
                                         hadReadyFrame = false
                                 }
+                            }
+
+                            // A set-aside window barely changes: one fresh frame over the still is enough.
+                            LiveWindowCapture {
+                                id: liveShot
+                                anchors.fill: parent
+                                windowId: pocketCard.windowData?.id ?? -1
+                                active: GlobalStates.overviewOpen && root.showPreviews
+                                live: false
                             }
 
                             Image {
@@ -197,7 +206,7 @@ PanelSurface {
                                 source: AppSearch.getIconSource(pocketCard.windowData?.app_id
                                     || pocketCard.info?.appId || "")
                                 fillMode: Image.PreserveAspectFit
-                                visible: previewImage.opacity <= 0.001
+                                visible: previewImage.opacity <= 0.001 && !liveShot.streaming
                             }
                         }
 
