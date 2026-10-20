@@ -9526,5 +9526,7 @@
   "Volume per app": "Volume por app",
   "Every app making sound now. Another mixer moving one moves it here too.": "Cada app que faz som agora. Se outro mixer mover um, ele se move aqui também.",
   "No microphone found.": "Nenhum microfone encontrado.",
-  "No speakers or headphones found.": "Nenhum alto-falante ou fone encontrado."
+  "No speakers or headphones found.": "Nenhum alto-falante ou fone encontrado.",
+  "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "Arraste um para movê-lo no Dock. Com um em foco, Alt e as setas o movem e Delete o desafixa.",
+  "Nothing pinned. Right-click an app in the Dock to keep it there.": "Nada fixado. Clique com o botão direito em um app no Dock para mantê-lo lá."
 }

@@ -9526,5 +9526,7 @@
   "Volume per app": "Громкость приложений",
   "Every app making sound now. Another mixer moving one moves it here too.": "Каждое приложение, которое сейчас звучит. Если другой микшер меняет одно, здесь оно тоже меняется.",
   "No microphone found.": "Микрофон не найден.",
-  "No speakers or headphones found.": "Динамики или наушники не найдены."
+  "No speakers or headphones found.": "Динамики или наушники не найдены.",
+  "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "Перетащите, чтобы переместить в Доке. С выбранным: Alt и стрелки двигают, Delete открепляет.",
+  "Nothing pinned. Right-click an app in the Dock to keep it there.": "Ничего не закреплено. Щёлкните правой кнопкой по приложению в Доке, чтобы оставить его там."
 }

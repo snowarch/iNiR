@@ -9526,5 +9526,7 @@
   "Volume per app": "每个应用的音量",
   "Every app making sound now. Another mixer moving one moves it here too.": "现在正在发声的每个应用。其他混音器调整它时，这里也会跟着变。",
   "No microphone found.": "未找到麦克风。",
-  "No speakers or headphones found.": "未找到扬声器或耳机。"
+  "No speakers or headphones found.": "未找到扬声器或耳机。",
+  "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "拖动以在程序坞中移动。选中时，Alt 加方向键移动，Delete 取消固定。",
+  "Nothing pinned. Right-click an app in the Dock to keep it there.": "没有固定的应用。在程序坞中右键点击应用即可固定。"
 }

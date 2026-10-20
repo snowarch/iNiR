@@ -9526,5 +9526,7 @@
   "Volume per app": "앱별 볼륨",
   "Every app making sound now. Another mixer moving one moves it here too.": "지금 소리를 내는 모든 앱. 다른 믹서가 바꾸면 여기서도 바뀝니다.",
   "No microphone found.": "마이크를 찾을 수 없습니다.",
-  "No speakers or headphones found.": "스피커나 헤드폰을 찾을 수 없습니다."
+  "No speakers or headphones found.": "스피커나 헤드폰을 찾을 수 없습니다.",
+  "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "끌어서 Dock에서 옮기세요. 선택된 상태에서 Alt와 화살표로 옮기고 Delete로 고정을 풉니다.",
+  "Nothing pinned. Right-click an app in the Dock to keep it there.": "고정된 앱이 없습니다. Dock의 앱을 오른쪽 클릭해 고정하세요."
 }

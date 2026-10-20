@@ -9526,5 +9526,7 @@
   "Volume per app": "עוצמה לכל אפליקציה",
   "Every app making sound now. Another mixer moving one moves it here too.": "כל אפליקציה שמשמיעה צליל עכשיו. אם מערבל אחר משנה אחת, היא משתנה גם כאן.",
   "No microphone found.": "לא נמצא מיקרופון.",
-  "No speakers or headphones found.": "לא נמצאו רמקולים או אוזניות."
+  "No speakers or headphones found.": "לא נמצאו רמקולים או אוזניות.",
+  "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "גררו אחת כדי להזיז אותה ב-Dock. כשאחת בפוקוס, Alt והחצים מזיזים אותה ו-Delete מבטל הצמדה.",
+  "Nothing pinned. Right-click an app in the Dock to keep it there.": "אין דבר מוצמד. לחצו לחיצה ימנית על אפליקציה ב-Dock כדי להשאיר אותה שם."
 }

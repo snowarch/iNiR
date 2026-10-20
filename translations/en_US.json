@@ -9526,5 +9526,7 @@
   "Volume per app": "Volume per app",
   "Every app making sound now. Another mixer moving one moves it here too.": "Every app making sound now. Another mixer moving one moves it here too.",
   "No microphone found.": "No microphone found.",
-  "No speakers or headphones found.": "No speakers or headphones found."
+  "No speakers or headphones found.": "No speakers or headphones found.",
+  "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.",
+  "Nothing pinned. Right-click an app in the Dock to keep it there.": "Nothing pinned. Right-click an app in the Dock to keep it there."
 }

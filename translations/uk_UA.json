@@ -9526,5 +9526,7 @@
   "Volume per app": "Гучність застосунків",
   "Every app making sound now. Another mixer moving one moves it here too.": "Кожен застосунок, що зараз звучить. Якщо інший мікшер змінює один, тут він теж змінюється.",
   "No microphone found.": "Мікрофон не знайдено.",
-  "No speakers or headphones found.": "Динаміки чи навушники не знайдено."
+  "No speakers or headphones found.": "Динаміки чи навушники не знайдено.",
+  "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "Перетягніть, щоб перемістити в Доку. З вибраним: Alt і стрілки рухають, Delete відкріплює.",
+  "Nothing pinned. Right-click an app in the Dock to keep it there.": "Нічого не закріплено. Клацніть правою кнопкою по застосунку в Доку, щоб залишити його там."
 }

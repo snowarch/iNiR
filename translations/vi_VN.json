@@ -9526,5 +9526,7 @@
   "Volume per app": "Âm lượng từng ứng dụng",
   "Every app making sound now. Another mixer moving one moves it here too.": "Mọi ứng dụng đang phát âm thanh. Nếu bộ trộn khác thay đổi một ứng dụng, ở đây cũng thay đổi theo.",
   "No microphone found.": "Không tìm thấy micrô.",
-  "No speakers or headphones found.": "Không tìm thấy loa hoặc tai nghe."
+  "No speakers or headphones found.": "Không tìm thấy loa hoặc tai nghe.",
+  "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "Kéo một ứng dụng để di chuyển trong Dock. Khi đang chọn, Alt và phím mũi tên di chuyển, Delete bỏ ghim.",
+  "Nothing pinned. Right-click an app in the Dock to keep it there.": "Chưa ghim gì. Nhấp chuột phải vào ứng dụng trong Dock để giữ nó ở đó."
 }
