@@ -456,6 +456,15 @@ Item {
     // On a page shown whole, the pinned head follows the group being read: its scene, mark and caption, as a group page
     // would show them, while the rows scroll under it. Groups without a scene leave the section's own.
     property string spyGroup: ""
+    // A group row under the pointer shows its scene beside the rows before it is opened (DI24): what Material, Glass or
+    // Shape change is seen on the hover, not after the click. Only beside, where the rows never move under the pointer;
+    // a short dwell both ways, so passing over the rows does not flick the scene.
+    property string hoverWanted: ""
+    property string hoverGroup: ""
+    readonly property string leadGroup: root.hoverGroup.length > 0 ? root.hoverGroup : root.spyGroup
+    onHoverWantedChanged: hoverDwell.restart()
+    Timer { id: hoverDwell; interval: 140; onTriggered: root.hoverGroup = root.heroBeside ? root.hoverWanted : "" }
+    onHeroBesideChanged: if (!root.heroBeside) { root.hoverWanted = ""; root.hoverGroup = "" }
     function spy(): void {
         if (!root.flatSection) { root.spyGroup = ""; root.readGroup = ""; return }
         let found = ""
@@ -1490,8 +1499,8 @@ Item {
                                 id: pageHero
                                 readonly property bool groupPage: !root.searching && root.openGroup.length > 0 && root.advancedPage < 0
                                 readonly property bool sectionPage: root.browsing && root.section !== "system" && root.section !== "general" && root.section !== "gaming"
-                                readonly property bool spying: !pageHero.groupPage && root.spyGroup.length > 0
-                                readonly property string key: pageHero.spying ? root.spyGroup : String(root.shownGroups[0]?.key ?? "")
+                                readonly property bool spying: !pageHero.groupPage && root.leadGroup.length > 0
+                                readonly property string key: pageHero.spying ? root.leadGroup : String(root.shownGroups[0]?.key ?? "")
                                 // A group with no scene has no head: the toolbar already names it.
                                 readonly property bool shown: pageHero.sectionPage || (pageHero.groupPage && pageHero.stageAvailable)
                                 parent: root.stageInColumn ? root.scene.stageSlot : root.heroBeside ? heroBesideSlot : root.heroPinned ? heroPinSlot : heroFlowSlot
@@ -1502,7 +1511,7 @@ Item {
                                 tint: pageHero.groupPage || pageHero.spying ? (IrisOptions.groupTints[pageHero.key] ?? root.currentSection.tint) : root.currentSection.tint
                                 glyph: pageHero.groupPage || pageHero.spying ? (IrisOptions.groupGlyphs[pageHero.key] ?? root.currentSection.icon) : root.currentSection.icon
                                 title: !pageHero.groupPage && !pageHero.spying ? Translation.tr(root.currentSection.subtitle)
-                                    : pageHero.caption.length > 0 ? pageHero.caption : pageHero.spying ? Translation.tr(root.spyGroup) : root.openGroup
+                                    : pageHero.caption.length > 0 ? pageHero.caption : pageHero.spying ? Translation.tr(root.leadGroup) : root.openGroup
                                 text: pageHero.groupPage ? "" : Translation.tr(root.currentSection.tip ?? "")
                                 sceneSection: pageHero.sectionPage || pageHero.groupPage ? root.section : ""
                                 sceneGroup: pageHero.groupPage || pageHero.spying ? pageHero.key : ""
@@ -2323,9 +2332,15 @@ Item {
         MouseArea {
             id: header
             width: parent.width
-            height: Math.round(46 * root.d)
+            height: Math.round(50 * root.d)
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
+            onContainsMouseChanged: {
+                const key = String(groupRow.modelData.key)
+                if (header.containsMouse && groupRow.staged) root.hoverWanted = key
+                else if (root.hoverWanted === key) root.hoverWanted = ""
+            }
+            Component.onDestruction: if (root.hoverWanted === String(groupRow.modelData.key)) root.hoverWanted = ""
             Accessible.role: Accessible.Button
             Accessible.name: groupRow.modelData.title
             Accessible.description: groupRow.summary
@@ -2350,21 +2365,12 @@ Item {
                 color: header.pressed ? IrisStyle.fillActive : header.containsMouse ? IrisStyle.fillQuiet : "transparent"
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
             }
-            IrisSquircle {
-                id: groupMark
-                anchors.left: parent.left
-                anchors.leftMargin: 14 * root.d
-                anchors.verticalCenter: parent.verticalCenter
-                width: Math.round(26 * root.d)
-                height: width
-                // One hue per page, the section's: the sidebar is where colour tells areas apart.
-                tint: root.currentSection.tint
-                glyph: IrisOptions.groupGlyphs[groupRow.modelData.key] ?? root.currentSection.icon
-            }
+            // No mark per row (DI24b): fifteen squircles of one hue said nothing the names do not; the scene beside the
+            // rows shows what a group is, on the hover.
             IrisText {
                 id: groupTitle
-                anchors.left: groupMark.right
-                anchors.leftMargin: 12 * root.d
+                anchors.left: parent.left
+                anchors.leftMargin: 16 * root.d
                 anchors.verticalCenter: parent.verticalCenter
                 // The summary gets the rest of the row; with nothing to summarise (a lone switch) the name takes it all.
                 width: Math.ceil(Math.min(implicitWidth, groupRow.lone || groupRow.summary.length === 0
