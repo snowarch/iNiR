@@ -298,7 +298,8 @@ Singleton {
         }
 
         root._rampTarget = clamped;
-        root._rampTimer.restart();
+        // Start, never restart: a slider dragged faster than 16 ms per event kept pushing the first step back.
+        if (!root._rampTimer.running) root._rampTimer.start();
     }
 
     // Ramp helper (prevents "Illegal increment" when user clicks far away on slider)
