@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.common
+import qs.services
 import qs.modules.common.widgets
 
 Item {

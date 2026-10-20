@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.common
+import qs.services
 
 QtObject {
     id: root
