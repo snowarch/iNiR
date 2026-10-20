@@ -21,6 +21,7 @@ Singleton {
         settings: { surface: "settings", open: () => GlobalStates.openSettings(), close: () => GlobalStates.settingsOverlayOpen = false },
         focus: { surface: "panels", open: () => GlobalStates.openSidebarLeft(GlobalStates.focusedScreen?.name ?? ""), close: () => GlobalStates.closeSidebarLeft() },
         today: { surface: "panels", open: () => GlobalStates.openSidebarRight(GlobalStates.focusedScreen?.name ?? ""), close: () => GlobalStates.closeSidebarRight() },
+        island: { surface: "island", open: () => GlobalStates.irisIslandPageRequest = "desktop", close: () => GlobalStates.irisIslandPageRequest = "collapse" },
         card: { surface: "cards", open: () => { GlobalStates.irisBubbleCardRequest = ""; GlobalStates.irisBubbleCardRequest = "media" }, close: () => GlobalStates.irisBubbleCard = null }
     })
 
@@ -84,7 +85,8 @@ Singleton {
         refresh.running = true
         root.targets[name].close()
         root.islandWasExpanded = GlobalStates.irisIslandExpanded
-        GlobalStates.irisIslandPageRequest = "desktop"
+        // The Places open from the expanded Island; the Island itself starts collapsed.
+        if (name !== "island") GlobalStates.irisIslandPageRequest = "desktop"
         root.phase = "prepare"
         step.interval = 900
         step.restart()
@@ -148,7 +150,7 @@ Singleton {
             case "clean":
                 root.phase = ""
                 root.result = root.report(t)
-                if (!root.islandWasExpanded) GlobalStates.irisIslandPageRequest = "collapse"
+                if (!root.islandWasExpanded && root.target !== "island") GlobalStates.irisIslandPageRequest = "collapse"
                 break
             }
         }
@@ -217,6 +219,8 @@ Singleton {
         const firstMoved = frames.find((f, i) => i > 0 && ["x", "y", "width", "height"].some(k => Math.abs(f.rect[k] - r0[k]) > 0.5))
         out.latency = firstMoved ? firstMoved.t - run.requested : -1
         out.gaps = gaps.slice(0, 8)
+        // Every frame as drawn: ms from the request, presentation, width, height.
+        out.trace = frames.map(f => [f.t - run.requested, Math.round(f.presentation * 1000) / 1000, Math.round(f.rect.width), Math.round(f.rect.height)])
         out.maxGap = gaps.length ? Math.max(...gaps) : 0
         out.dropped = gaps.filter(g => g > vb * 1.5).length
         out.dropsAt = []

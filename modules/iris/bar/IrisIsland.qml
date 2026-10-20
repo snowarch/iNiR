@@ -1566,6 +1566,19 @@ Item {
         }
     }
 
+    // `inir iris motion island`: one sample per frame of the chassis window, the body as it is drawn.
+    Connections {
+        target: root.Window.window
+        enabled: IrisMotionMeter.watching("island") && root.focusedOutput
+        function onAfterAnimating(): void {
+            const at = chassis.mapToItem(null, 0, 0)
+            const source = { settles: true, presentation: chassis.presentation, open: root.inlineExpanded }
+            IrisMotionMeter.sample({ source: source, presentation: chassis.presentation,
+                rect: { x: at.x, y: at.y, width: chassis.width, height: chassis.height },
+                opacity: 1, wantsBlur: false, blurred: false, sameWindow: true, above: false, island: null })
+        }
+    }
+
     ClippingRectangle {
         id: chassis
         // ClippingRectangle does not re-mask when per-corner radii change live.
