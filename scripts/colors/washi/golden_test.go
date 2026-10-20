@@ -10,7 +10,7 @@ import (
 
 // goldenSum is the fingerprint of every scheme goldenMatrix solves (the colours alone, not the version or the other
 // styles' swatches). A refactor keeps it; a change that gives other colours updates it together with Version.
-const goldenSum = "3ecb810abddce4a8b68d09dfa36cb0c741daa83231bd95d2a5756f910d928ba1"
+const goldenSum = "3d78c9d84e40706d17b0204ab00bdd83e6637679db3ee9a2ebcd990f25340aa6"
 
 func goldenMatrix() []Request {
 	seedSets := []Seeds{

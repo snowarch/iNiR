@@ -116,7 +116,7 @@ type spec struct {
 var washi = Language{
 	name: "washi", schemes: schemes, materialNames: []string{"black", "graphite", "midnight", "wallpaper", "theme"},
 	accentSeeds: accentSeeds, highlightSeeds: highlightSeeds, identity: identitySeeds, identityPull: 12,
-	neutralHue: sumiHue, onColour: white, darkOn: [2]float64{0.2, 0.03}, fillFrom: [2]float64{0.66, 0.52}, fillC: [2]float64{0.09, 0.15},
+	neutralHue: sumiHue, onColour: white, darkOn: [2]float64{0.2, 0.03}, fillFrom: [2]float64{0.66, 0.52}, fillC: [2]float64{0.12, 0.18},
 	paper: paper, ramp: rampOf, container: washiContainer, inkChroma: washiInk,
 }
 
@@ -127,21 +127,21 @@ var schemes = []spec{
 		name: "dark", dark: true,
 		materials: map[string]LCH{"black": {0, 0, 0}, "graphite": {0.215, 0.011, 72}, "midnight": {0.19, 0.028, 258}},
 		paperL:    0.18, paperC: 0.03, steps: [2]float64{0.055, 0.11}, inkL: 0.94,
-		accentL: 0.66, accentC: [2]float64{0.04, 0.085}, markL: 0.7, markC: 0.1, widgets: 1,
+		accentL: 0.72, accentC: [2]float64{0.13, 0.18}, markL: 0.74, markC: 0.15, widgets: 1,
 	},
 	{
 		// Ink: torinoko washi and sumi. Warm fibre, never grey; colours are pigments, quieter than Light's.
 		name:      "ink",
 		materials: map[string]LCH{"black": {0.905, 0.018, 88}, "graphite": {0.865, 0.03, 72}, "midnight": {0.89, 0.014, 232}},
 		paperL:    0.9, paperC: 0.035, steps: [2]float64{-0.035, -0.07}, inkL: 0.25,
-		accentL: 0.56, accentC: [2]float64{0.05, 0.1}, markL: 0.62, markC: 0.12, widgets: 1,
+		accentL: 0.56, accentC: [2]float64{0.11, 0.16}, markL: 0.62, markC: 0.16, widgets: 1,
 	},
 	{
 		// Light: shironeri, washi bleached to almost white. Still paper, not a screen's blank white.
 		name:      "light",
 		materials: map[string]LCH{"black": {0.975, 0.011, 88}, "graphite": {0.935, 0.007, 85}, "midnight": {0.95, 0.014, 240}},
 		paperL:    0.965, paperC: 0.025, steps: [2]float64{-0.03, -0.06}, inkL: 0.21,
-		accentL: 0.6, accentC: [2]float64{0.06, 0.115}, markL: 0.65, markC: 0.13, widgets: 1.1,
+		accentL: 0.6, accentC: [2]float64{0.12, 0.17}, markL: 0.65, markC: 0.17, widgets: 1.1,
 	},
 }
 
@@ -603,6 +603,16 @@ func build(req Request, name string) Palette {
 	default:
 		highlightSeed = v.seedOf(highlightChoice, 0, lang.highlightSeeds, "orange")
 	}
+	if highlightChoice == "wallpaper" && lang == &washi && hueDistance(highlightSeed.H, al.H) < 30 {
+		// A wallpaper of one hue gave accent and highlight the same red: the screen read as one dye. The highlight takes
+		// the mineral pigment farthest from the accent (gunjo, rokusho, ki), as the widgets' second series does.
+		far := 0.0
+		for _, h := range []float64{262, 160, 85} {
+			if d := hueDistance(h, al.H); d > far {
+				far, highlightSeed = d, LCH{0.72, 0.15, h}
+			}
+		}
+	}
 	if highlightChoice != "accent" {
 		highlight = v.highlight(highlightSeed)
 	}
@@ -769,7 +779,7 @@ func (v solver) apps(p Palette, accent, highlight, danger, cont RGB) map[string]
 		// Under glass the shell reads as frost over the wallpaper: a window beside it carries that frost's hue, not a
 		// neutral that looks foreign next to it. Ink keeps its paper: that is what Ink is.
 		frost := paperOf(v.lang, s, "wallpaper", v.req)
-		base.H, base.C = frost.H, math.Max(base.C, math.Min(frost.C, map[bool]float64{true: 0.024, false: 0.018}[s.dark]))
+		base.H, base.C = frost.H, math.Max(base.C, math.Min(frost.C, map[bool]float64{true: 0.008, false: 0.006}[s.dark]))
 		pc.H = frost.H
 	}
 	at := func(d, cScale float64) string {
@@ -778,7 +788,7 @@ func (v solver) apps(p Palette, accent, highlight, danger, cont RGB) map[string]
 			d *= appsNightStep
 		}
 		q.L = clampF(q.L+sign*d, 0, 1)
-		q.C = math.Min(0.05, q.C*cScale)
+		q.C = math.Min(0.012, q.C*cScale)
 		return q.RGB().Hex()
 	}
 	al, hl, dl := accent.LCH(), highlight.LCH(), danger.LCH()
@@ -859,7 +869,7 @@ func (v solver) apps(p Palette, accent, highlight, danger, cont RGB) map[string]
 
 // The most colour an app's filled primary and alert carry, on paper and at night (Material You's own primary sits
 // near 0.07 on paper).
-var appsFillC = [2]float64{0.085, 0.12}
+var appsFillC = [2]float64{0.12, 0.17}
 
 // paperFillC is the most colour the shell's own filled shapes keep on paper.
 const paperFillC = 0.12
@@ -903,7 +913,7 @@ func styleIDs() []string {
 
 // Version changes whenever a solve would give other colours for the same request; IrisWashi.qml asks again when it
 // differs (TestShellKnowsVersion keeps the two equal).
-const Version = 30
+const Version = 31
 
 // solveSchemes is the palette alone, without the other styles' swatches.
 func solveSchemes(req Request, key string) Output {
