@@ -57,8 +57,9 @@ Item {
     readonly property var landingCategory: root.categories.find(category => category.id === root.category) ?? null
     // The areas of a category are chosen in the toolbar, on a capsule whose glass puck slides between them (the Island's
     // own gesture), with the category as the page's name; a group page keeps its own name and the area under it.
-    readonly property bool areaSwitchShown: !root.sceneDrawn && !root.searching && !root.landing && root.advancedPage < 0
+    readonly property bool areaChoice: !root.searching && !root.landing && root.advancedPage < 0
         && root.group.length === 0 && root.currentCategory.sections.length > 1
+    readonly property bool areaSwitchShown: !root.sceneDrawn && root.areaChoice
     function openCategory(id: string): void {
         const category = root.categories.find(entry => entry.id === id)
         if (!category || category.sections.length === 0) return
@@ -129,7 +130,7 @@ Item {
     readonly property real columnStageWidth: root.sceneDrawn ? Number(root.scene.stageWidth ?? 0) : 0
     readonly property real columnStageHeight: root.sceneDrawn ? Number(root.scene.stageHeight ?? 0) : 0
     // A Design's page holds the scene in a place of its own beside the rows, whatever the section.
-    readonly property bool stageInColumn: root.sceneDrawn && pageHero.shown && pageHero.stageAvailable
+    readonly property bool stageInColumn: root.sceneDrawn && !root.landing && pageHero.shown && pageHero.stageAvailable
     readonly property bool heroPinned: !root.stageInColumn && pageHero.shown && pageHero.staged
         && detailBody.height >= (root.split ? root.stageMin + root.stageCaption : pageHero.implicitHeight) + Math.round(260 * root.d)
     // In the pane the scene is a stage across its width that takes the room the rows leave: a short group shows what it
@@ -457,7 +458,7 @@ Item {
     // What the column lists: the section's groups in their blocks (captions, or air between unnamed blocks), General's
     // welcome first, the side panels' editors, and the links that leave the page at its foot.
     readonly property var navEntries: {
-        if (!root.columns) return []
+        if (!root.columns || root.landing) return []
         const out = []
         if (root.section === "general") out.push({ type: "you", key: "@welcome", title: "@welcome" })
         let first = root.section !== "general"
@@ -576,7 +577,7 @@ Item {
         return entry ? Translation.tr(entry.label) : ""
     }
     // What a Design's page offers at its foot, and its name for the page: the toolbar's, as this layout reads them.
-    readonly property var pageActions: [rehearseAction, customizeAction, restoreAction].filter(action => action.shown)
+    readonly property var pageActions: root.landing ? [] : [rehearseAction, customizeAction, restoreAction].filter(action => action.shown)
     readonly property string titleText: pageTitle.text
     function close(): void { GlobalStates.settingsOverlayOpen = false }
     readonly property var editTargets: ({ bar: "island", player: "bodies", bubbles: "pieces", dock: "dock", appearance: "material", colour: "colour",
@@ -832,6 +833,12 @@ Item {
 
 
         IrisSkin { id: pageScene; part: "settingsPage"; wanted: root.sceneFits; host: root }
+        // A Design's page holds the capsule of areas in its own head, in its own parts (plate, cut).
+        AreaSwitch {
+            parent: root.scene?.switchSlot ?? frame
+            visible: root.sceneDrawn && root.areaChoice && parent !== frame
+            anchors.verticalCenter: parent.verticalCenter
+        }
 
         RowLayout {
             anchors.fill: parent

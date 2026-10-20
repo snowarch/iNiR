@@ -28,11 +28,13 @@ Item {
 
     // What the engine fills, and the room it reads to lay its rows.
     readonly property alias searchSlot: searchSlot
+    // Where the engine sets the capsule of the open category's areas (DI24).
+    readonly property alias switchSlot: switchSlot
     readonly property alias stageSlot: stageSlot
     readonly property alias rowsSlot: rowsSlot
     readonly property real pageWidth: page.width
     // As tall as the index needs to print every tab at its full height: the engine sizes the body from it.
-    readonly property real need: root.sections.length * root.u(6.5) + edge.breaks * root.u(3) + 2 * root.u(6)
+    readonly property real need: (edge.main.length + edge.foot.length) * root.u(6.5) + edge.breaks * root.u(3) + 2 * root.u(6)
     readonly property real stageWidth: left.width
     readonly property real aspect: {
         const screen = GlobalStates.focusedScreen
@@ -46,6 +48,9 @@ Item {
     readonly property int pageIndex: root.sections.findIndex(entry => entry.id === root.section)
     readonly property var currentSection: root.host?.currentSection ?? ({})
     readonly property bool sharedPage: Number(root.host?.advancedPage ?? -1) >= 0
+    // A category's own page: its name heads the spread and its areas run as the ruby over it.
+    readonly property bool landing: root.host?.landing ?? false
+    readonly property var landingCategory: root.host?.landingCategory ?? null
     readonly property int hits: (root.host?.matches?.length ?? 0) + (root.host?.pageMatches?.length ?? 0)
 
     // A page arrives as a detent: the spread is set again where it stands, never slid in. Opening is the Place's own
@@ -98,11 +103,12 @@ Item {
     ALacquer {
         id: edge
         readonly property int footerCluster: Number(root.host?.footerCluster ?? 99)
-        readonly property var main: root.sections.filter(entry => entry.cluster < edge.footerCluster)
+        // The index tabs the engine's categories (DI24): ten, not twenty-five; a tab stands for every area it groups.
+        readonly property var main: root.host?.mainCategories ?? root.sections.filter(entry => entry.cluster < edge.footerCluster)
         readonly property var foot: root.sections.filter(entry => entry.cluster >= edge.footerCluster)
         readonly property int breaks: new Set(edge.main.map(entry => entry.cluster)).size - 1 + (edge.foot.length > 0 ? 1 : 0)
         readonly property real tab: Math.max(root.u(6), Math.min(root.u(8),
-            Math.floor((edge.height - 2 * root.u(6) - edge.breaks * root.u(3)) / Math.max(1, root.sections.length))))
+            Math.floor((edge.height - 2 * root.u(6) - edge.breaks * root.u(3)) / Math.max(1, edge.main.length + edge.foot.length))))
         // The fore-edge is the cover the pages are bound in, a step under the body; the open tab is the cover's reverse.
         readonly property color stock: Airisu.cover
         readonly property color open: Airisu.seal
@@ -114,7 +120,7 @@ Item {
         readonly property color rule: ColorUtils.mix(edge.ink, Airisu.solid(edge.stock), 0.16) // iris-literal: a hairline on the cover
         // As wide as the longest area's name needs at rest (a long locale stops at the cap and elides): the open tab
         // stands out of the edge by its own step and fits its larger name to what that leaves.
-        readonly property real names: Math.max(0, ...root.sections.map(entry => tabFont.advanceWidth(Translation.tr(String(entry.title ?? "")))))
+        readonly property real names: Math.max(0, ...edge.main.concat(edge.foot).map(entry => tabFont.advanceWidth(Translation.tr(String(entry.title ?? "")))))
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.right: parent.right
@@ -234,6 +240,12 @@ Item {
                 width: left.measure - x
                 height: parent.height
             }
+            Item {
+                id: switchSlot
+                x: searchSlot.x + searchSlot.width + root.u(4)
+                width: Math.max(0, host.x - x - root.u(2))
+                height: parent.height
+            }
             GlyphKey {
                 id: host
                 anchors.right: close.left
@@ -291,6 +303,7 @@ Item {
                         color: Airisu.sealText
                         text: root.searching ? "“" + String(root.host?.query ?? "") + "”"
                             : root.sharedPage ? Translation.tr(String(root.currentSection.title ?? ""))
+                            : root.landing ? (root.landingCategory?.sections ?? []).map(id => Translation.tr(String(root.sections.find(entry => entry.id === id)?.title ?? ""))).join(" / ")
                             : Translation.tr(String(root.currentSection.subtitle ?? ""))
                     }
                     AText {
@@ -304,7 +317,7 @@ Item {
                         wrapMode: Text.WordWrap
                         maximumLineCount: 2
                         text: root.searching ? (root.hits > 0 ? Translation.tr("%1 results").arg(root.hits) : Translation.tr("No results"))
-                            : root.sharedPage ? String(root.host?.titleText ?? "")
+                            : root.sharedPage || root.landing ? String(root.host?.titleText ?? "")
                             : Translation.tr(String(root.currentSection.title ?? ""))
                         TextMetrics {
                             id: longest
@@ -318,7 +331,7 @@ Item {
                     AText {
                         width: parent.width
                         topPadding: root.u(1)
-                        visible: text.length > 0 && !root.searching && !root.sharedPage
+                        visible: text.length > 0 && !root.searching && !root.sharedPage && !root.landing
                         size: IrisStyle.typeLabel
                         font.weight: Font.Normal
                         color: Airisu.inkSecond
@@ -544,8 +557,9 @@ Item {
         required property int index
         property var list: []
         readonly property bool clusterStart: tab.list.length > 0 && tab.index > 0 && tab.list[tab.index - 1]?.cluster !== tab.modelData.cluster
-        readonly property bool chosen: !root.searching && root.section === tab.modelData.id
-        readonly property int found: root.searching ? (root.host?.matches ?? []).filter(spec => spec.section === tab.modelData.id).length : 0
+        readonly property var members: tab.modelData.sections ?? [tab.modelData.id]
+        readonly property bool chosen: !root.searching && tab.members.includes(root.section)
+        readonly property int found: root.searching ? (root.host?.matches ?? []).filter(spec => tab.members.includes(spec.section)).length : 0
         readonly property bool dimmed: root.searching && tab.found === 0
         readonly property real line: edge.tab
         width: edge.width
@@ -554,7 +568,7 @@ Item {
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
         Accessible.name: Translation.tr(tab.modelData.title)
-        onClicked: root.host.selectSection(tab.modelData.id)
+        onClicked: tab.modelData.sections ? root.host.openCategory(tab.modelData.id) : root.host.selectSection(tab.modelData.id)
 
         Rectangle {
             visible: tab.clusterStart
