@@ -2236,12 +2236,13 @@ _reexec_update_after_repo_change() {
 _step_phase_start() {
     local step="$1" msg="$2"
     _report_progress "$step" "$msg"
+    inir_event stage "$step"
     tui_step_start "$step" "$_update_total_steps" "$msg"
 }
 
-_step_phase_done() { tui_step_done "${1:-}"; }
-_step_phase_fail() { tui_step_fail "${1:-}"; }
-_step_phase_warn() { tui_step_warn "${1:-}"; }
+_step_phase_done() { [[ -n "${1:-}" ]] && inir_event ok "$1"; tui_step_done "${1:-}"; }
+_step_phase_fail() { inir_event error "${1:-failed}"; tui_step_fail "${1:-}"; }
+_step_phase_warn() { [[ -n "${1:-}" ]] && inir_event warn "$1"; tui_step_warn "${1:-}"; }
 _step_phase_skip() { tui_step_skip "${1:-}"; }
 
 # Header-only variant: writes the status marker AND prints the dot indicator +
@@ -2251,6 +2252,7 @@ _step_phase_skip() { tui_step_skip "${1:-}"; }
 _step_phase_header() {
     local step="$1" msg="$2"
     _report_progress "$step" "$msg"
+    inir_event stage "$step"
     local dots
     dots="$(_tui_step_dots "$step" "$_update_total_steps")"
     printf '\n  %b %b[%d/%d]%b %b%s%b\n\n' \
@@ -3120,21 +3122,25 @@ fi
 ###############################################################################
 # Run
 ###############################################################################
+# A person at a terminal gets the inir binary's wizard when it is here: it asks
+# everything first and runs this same pipeline back (INIR_CLI_DELEGATED).
+hand_to_inir_cli() {
+    [[ -z "${INIR_CLI_DELEGATED:-}" && -z "${INIR_NO_CLI:-}" ]] && $ask && [ -t 1 ] || return 0
+    local cli
+    for cli in "${INIR_CLI:-}" "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" \
+               /usr/local/lib/inir/inir /usr/lib/inir/inir; do
+        [[ -n "$cli" && -f "$cli" && -x "$cli" ]] || continue
+        shopt -s execfail
+        INIR_SETUP_DIR="$SCRIPT_DIR" exec "$cli" "$@"
+        shopt -u execfail
+    done
+}
+
 case "$COMMAND" in
     install)
-        # A person at a terminal gets the inir binary's install wizard when it is here:
-        # it asks everything first and runs this same pipeline back (INIR_CLI_DELEGATED).
-        if [[ -z "${INIR_CLI_DELEGATED:-}" && -z "${INIR_NO_CLI:-}" ]] && $ask && [ -t 1 ]; then
-            _cli_args=(install "${SUBCMD_ARGS[@]}")
-            [[ "${INIR_SET_DEFAULT_SHELL:-}" == true ]] && _cli_args+=(--set-default-shell)
-            for _inir_cli in "${INIR_CLI:-}" "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" \
-                             /usr/local/lib/inir/inir /usr/lib/inir/inir; do
-                [[ -n "$_inir_cli" && -f "$_inir_cli" && -x "$_inir_cli" ]] || continue
-                shopt -s execfail
-                INIR_SETUP_DIR="$SCRIPT_DIR" exec "$_inir_cli" "${_cli_args[@]}"
-                shopt -u execfail
-            done
-        fi
+        _cli_args=(install "${SUBCMD_ARGS[@]}")
+        [[ "${INIR_SET_DEFAULT_SHELL:-}" == true ]] && _cli_args+=(--set-default-shell)
+        hand_to_inir_cli "${_cli_args[@]}"
         run_install
         ;;
     reinstall)
@@ -3194,6 +3200,7 @@ case "$COMMAND" in
                 --skip-deps) export SKIP_ALLDEPS=true ;;
             esac
         done
+        hand_to_inir_cli update "${SUBCMD_ARGS[@]}"
         run_update
         ;;
     migrate) run_migrate ;;
