@@ -456,6 +456,26 @@ Item {
     // On a page shown whole, the pinned head follows the group being read: its scene, mark and caption, as a group page
     // would show them, while the rows scroll under it. Groups without a scene leave the section's own.
     property string spyGroup: ""
+    // The index under a scene beside the rows: a page read whole lists its groups, a page of group rows its named blocks.
+    readonly property var besideIndex: root.flatSection ? root.groups.map(entry => ({ key: entry.key, title: entry.title, chunk: -1 }))
+        : root.groupChunks.map((chunk, at) => ({ key: "", title: chunk.caption, chunk: at })).filter(entry => entry.title.length > 0)
+    property int readChunk: 0
+    function scrollToChunk(at: int): void {
+        const item = chunkRepeater.itemAt(at)
+        if (!item) return
+        root.readChunk = at
+        const end = Math.max(0, settingsFlick.contentHeight - settingsFlick.height)
+        revealMotion.to = Math.max(0, Math.min(end, item.mapToItem(settingsFlick.contentItem, 0, 0).y - Math.round(8 * root.d)))
+        revealMotion.restart()
+    }
+    function spyChunk(): void {
+        let found = 0
+        for (let at = 0; at < chunkRepeater.count; at++) {
+            const item = chunkRepeater.itemAt(at)
+            if (item && item.mapToItem(settingsFlick.contentItem, 0, 0).y - settingsFlick.contentY <= settingsFlick.height * 0.2) found = at
+        }
+        root.readChunk = found
+    }
     // A group row under the pointer shows its scene beside the rows before it is opened (DI24): what Material, Glass or
     // Shape change is seen on the hover, not after the click. Only beside, where the rows never move under the pointer;
     // a short dwell both ways, so passing over the rows does not flick the scene.
@@ -821,7 +841,7 @@ Item {
     }
     // A Design's scene sets its own page; the engine's slide would only move chrome nobody sees.
     function enterPage(): void { if (!root.sceneDesigned) pageEnter.restart() }
-    onSectionChanged: { root.paneChunk = 0; settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
+    onSectionChanged: { root.readChunk = 0; root.paneChunk = 0; settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
     onPageKeyChanged: Qt.callLater(root.feedPage)
     onOpenGroupChanged: { settingsFlick.contentY = 0; root.enterPage() }
     onAdvancedPageChanged: root.enterPage()
@@ -1446,13 +1466,15 @@ Item {
                                 Column {
                                     y: pageHero.height + Math.round(18 * root.d)
                                     width: parent.width
-                                    visible: root.flatSection && root.heroBeside
+                                    visible: root.heroBeside
                                     Repeater {
-                                        model: root.flatSection && root.heroBeside ? root.groups : []
+                                        model: root.heroBeside ? root.besideIndex : []
                                         MouseArea {
                                             id: indexEntry
                                             required property var modelData
-                                            readonly property bool current: String(indexEntry.modelData.key) === root.readGroup
+                                            required property int index
+                                            readonly property bool current: indexEntry.modelData.chunk >= 0 ? indexEntry.modelData.chunk === root.readChunk
+                                                : String(indexEntry.modelData.key) === root.readGroup
                                             width: parent.width
                                             height: Math.round(34 * root.d)
                                             hoverEnabled: true
@@ -1460,6 +1482,7 @@ Item {
                                             Accessible.role: Accessible.Button
                                             Accessible.name: indexEntry.modelData.title
                                             onClicked: {
+                                                if (indexEntry.modelData.chunk >= 0) { root.scrollToChunk(indexEntry.modelData.chunk); return }
                                                 root.heldGroup = String(indexEntry.modelData.key)
                                                 root.readGroup = root.heldGroup
                                                 root.scrollToGroup(root.heldGroup)
@@ -1551,7 +1574,7 @@ Item {
                                     maskSpreadAtMin: 1
                                 }
                                 visible: root.advancedPage < 0 && !root.landing
-                                onContentYChanged: if (root.flatSection) spyPace.start()
+                                onContentYChanged: if (root.flatSection) spyPace.start(); else if (root.heroBeside) root.spyChunk()
                                 // Rows laid after the section changed (a Place opening, a fold) move every head: the reading is taken again.
                                 onContentHeightChanged: if (root.flatSection) spyPace.restart()
                                 contentHeight: settingsRows.implicitHeight + 32 * root.d
@@ -1611,6 +1634,7 @@ Item {
                                     }
 
                                     Repeater {
+                                        id: chunkRepeater
                                         model: ScriptModel { values: root.browsing && !root.flatSection && root.section !== "system" && !root.generalHome ? root.groupChunks : [] }
                                         GroupList {}
                                     }
@@ -2180,6 +2204,9 @@ Item {
         // In the group column: the scene at the column's width, its line under it.
         readonly property bool column: root.stageInColumn || root.heroBeside
         readonly property real wordsHeight: heroText.implicitHeight
+        // Beside the rows the words under the scene keep one box, two lines of name and two of line, whatever the group
+        // the hover shows: the index under them never jumps.
+        readonly property real wordsBox: root.heroBeside ? Math.max(heroText.implicitHeight, Math.round(84 * root.d)) : heroText.implicitHeight
         // Measured on the pane, not on itself: its width follows whether it is pinned, which follows this.
         readonly property bool staged: hero.stageAvailable && (root.stageInColumn || (root.split ? detailBody.width : detailBody.width - 56 * root.d) > 560 * root.d)
         // In the pane or the column: the scene across the top, its line under it.
@@ -2191,7 +2218,7 @@ Item {
         // On a Design's page the scene stands alone: the page already says what it shows.
         readonly property bool bare: root.sceneDrawn && hero.column
         Layout.fillWidth: true
-        implicitHeight: hero.bare ? hero.stageH : hero.banner ? (hero.column ? 0 : hero.pad) + hero.stageH + Math.round(10 * root.d) + heroText.implicitHeight + Math.round(6 * root.d)
+        implicitHeight: hero.bare ? hero.stageH : hero.banner ? (hero.column ? 0 : hero.pad) + hero.stageH + Math.round(10 * root.d) + hero.wordsBox + Math.round(6 * root.d)
             // Beside the scene the words decide the height when they need more than the scene's: a head never cuts its line.
             : hero.staged ? Math.max(Math.round(150 * root.d) + 2 * hero.pad, heroText.implicitHeight + 2 * hero.pad) : heroText.implicitHeight + 28 * root.d
         radius: hero.column ? IrisStyle.radiusTile : root.split ? detailPane.radius : IrisStyle.radiusTile
@@ -2203,7 +2230,7 @@ Item {
             // The same inset as the rows below, so every mark on the page sits on one column.
             x: hero.column ? Math.round(4 * root.d) : hero.banner ? Math.round(24 * root.d) : Math.round(14 * root.d)
             y: hero.banner ? stageLoader.y + stageLoader.height + Math.round(10 * root.d) : Math.round((hero.height - height) / 2)
-            width: hero.banner ? hero.width - x - Math.round(16 * root.d)
+            width: hero.banner ? hero.width - x - (hero.column ? 0 : Math.round(16 * root.d))
                 : (stageLoader.visible ? stageLoader.x : hero.width) - x - Math.round(16 * root.d)
             spacing: (hero.banner ? 12 : 14) * root.d
             IrisSquircle {
@@ -2225,7 +2252,7 @@ Item {
                     font.weight: IrisStyle.weight(Font.DemiBold)
                     // A half-screen window leaves the title beside the scene a third of the page: it wraps, never cuts.
                     wrapMode: Text.WordWrap
-                    maximumLineCount: 4
+                    maximumLineCount: root.heroBeside ? 2 : 4
                     elide: Text.ElideRight
                 }
                 IrisText {
@@ -2235,7 +2262,7 @@ Item {
                     color: IrisStyle.subtext
                     font.pixelSize: IrisStyle.typeLabel
                     wrapMode: Text.WordWrap
-                    maximumLineCount: 6
+                    maximumLineCount: root.heroBeside ? 2 : 6
                     elide: Text.ElideRight
                 }
             }
@@ -2280,17 +2307,6 @@ Item {
             radius: IrisStyle.radiusTile
             color: IrisStyle.fieldChamfer ? "transparent" : IrisStyle.readingCard
             IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: IrisStyle.readingCard }
-            // A block whose groups feed one another (colour: source, mode, accent, material, apps) threads its marks
-            // together, under them, from the first to the last.
-            Rectangle {
-                visible: list.modelData.flow ?? false
-                x: Math.round(27 * root.d - width / 2)
-                y: Math.round(23 * root.d)
-                width: Math.max(1, Math.round(2 * root.d))
-                height: Math.max(0, parent.height - 46 * root.d)
-                radius: IrisStyle.capsule(width)
-                color: IrisStyle.hairlineStrong
-            }
             Column {
                 id: listColumn
                 width: parent.width
