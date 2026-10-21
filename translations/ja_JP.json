@@ -9535,5 +9535,7 @@
   "Four round controls on one plate.": "1 枚のプレートに丸いコントロールが 4 つ。",
   "Slim sliders side by side.": "細いスライダーを横に並べます。",
   "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "パネルに載るすべてのコントロールを、表示される順に並べます。サイズはその場で配置して変えます。",
-  "Up to four round switches, in this order.": "丸いスイッチを最大 4 つ、この順で。"
+  "Up to four round switches, in this order.": "丸いスイッチを最大 4 つ、この順で。",
+  "How smoothly the movement is drawn.": "動きをどれだけなめらかに描くか。",
+  "Animate the change": "切り替えをアニメーション"
 }

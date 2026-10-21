@@ -9535,5 +9535,7 @@
   "Four round controls on one plate.": "एक प्लेट पर चार गोल कंट्रोल।",
   "Slim sliders side by side.": "पास-पास पतले स्लाइडर।",
   "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "पैनल के सभी कंट्रोल, उसी क्रम में जिसमें वह उन्हें दिखाता है। आकार बदलने के लिए उसे वहीं व्यवस्थित करें।",
-  "Up to four round switches, in this order.": "इस क्रम में अधिकतम चार गोल स्विच।"
+  "Up to four round switches, in this order.": "इस क्रम में अधिकतम चार गोल स्विच।",
+  "How smoothly the movement is drawn.": "गति कितनी सहजता से बनाई जाती है।",
+  "Animate the change": "बदलाव को एनिमेट करें"
 }

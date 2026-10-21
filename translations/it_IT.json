@@ -9535,5 +9535,7 @@
   "Four round controls on one plate.": "Quattro controlli rotondi su una piastra.",
   "Slim sliders side by side.": "Cursori sottili affiancati.",
   "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "Ogni controllo del pannello, nell'ordine in cui li mostra. Sistemalo sul posto per cambiarne le dimensioni.",
-  "Up to four round switches, in this order.": "Fino a quattro interruttori rotondi, in quest'ordine."
+  "Up to four round switches, in this order.": "Fino a quattro interruttori rotondi, in quest'ordine.",
+  "How smoothly the movement is drawn.": "Quanto fluido viene disegnato il movimento.",
+  "Animate the change": "Anima il cambio"
 }

@@ -9535,5 +9535,7 @@
   "Four round controls on one plate.": "Bốn nút tròn trên một tấm.",
   "Slim sliders side by side.": "Các thanh trượt mảnh đặt cạnh nhau.",
   "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "Mọi điều khiển trên bảng, theo thứ tự bảng hiển thị. Sắp xếp tại chỗ để đổi kích thước.",
-  "Up to four round switches, in this order.": "Tối đa bốn công tắc tròn, theo thứ tự này."
+  "Up to four round switches, in this order.": "Tối đa bốn công tắc tròn, theo thứ tự này.",
+  "How smoothly the movement is drawn.": "Chuyển động được vẽ mượt đến đâu.",
+  "Animate the change": "Tạo hiệu ứng khi đổi"
 }

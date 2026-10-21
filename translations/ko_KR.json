@@ -9535,5 +9535,7 @@
   "Four round controls on one plate.": "한 판에 둥근 컨트롤 네 개.",
   "Slim sliders side by side.": "나란히 놓인 얇은 슬라이더.",
   "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "패널에 있는 모든 컨트롤을 보여지는 순서대로. 크기는 제자리에서 배치해 바꿉니다.",
-  "Up to four round switches, in this order.": "이 순서로 최대 네 개의 둥근 스위치."
+  "Up to four round switches, in this order.": "이 순서로 최대 네 개의 둥근 스위치.",
+  "How smoothly the movement is drawn.": "움직임을 얼마나 부드럽게 그릴지.",
+  "Animate the change": "바뀔 때 애니메이션"
 }

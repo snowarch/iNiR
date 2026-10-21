@@ -9535,5 +9535,7 @@
   "Four round controls on one plate.": "Tek plakada dört yuvarlak kontrol.",
   "Slim sliders side by side.": "Yan yana ince kaydırıcılar.",
   "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "Panelin taşıdığı her kontrol, gösterdiği sırayla. Boyutlarını değiştirmek için yerinde düzenle.",
-  "Up to four round switches, in this order.": "Bu sırayla en fazla dört yuvarlak anahtar."
+  "Up to four round switches, in this order.": "Bu sırayla en fazla dört yuvarlak anahtar.",
+  "How smoothly the movement is drawn.": "Hareketin ne kadar akıcı çizildiği.",
+  "Animate the change": "Değişimi canlandır"
 }

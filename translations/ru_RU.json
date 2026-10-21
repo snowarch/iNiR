@@ -9535,5 +9535,7 @@
   "Four round controls on one plate.": "Четыре круглых переключателя на одной панели.",
   "Slim sliders side by side.": "Тонкие ползунки рядом.",
   "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "Все элементы панели в том порядке, в каком она их показывает. Расставьте на месте, чтобы изменить размеры.",
-  "Up to four round switches, in this order.": "До четырёх круглых переключателей, в этом порядке."
+  "Up to four round switches, in this order.": "До четырёх круглых переключателей, в этом порядке.",
+  "How smoothly the movement is drawn.": "Насколько плавно рисуется движение.",
+  "Animate the change": "Анимировать смену"
 }

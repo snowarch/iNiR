@@ -369,7 +369,8 @@ Item {
         switch (spec.kind) {
         case "switch": {
             const on = spec.invert ? !value : value
-            if (spec.label === spec.group) return on ? "" : Translation.tr("Off")
+            // The group's own on and off (named after it, or `master`): off says Off, on lets the next row answer.
+            if (spec.label === spec.group || spec.master) return on ? "" : Translation.tr("Off")
             // A switch's name answers when it is short; a sentence ("Close the shell around the screen") reads as On.
             const name = Translation.tr(spec.label)
             return !on ? "" : name.length <= 24 ? name : Translation.tr("On")
@@ -2335,7 +2336,17 @@ Item {
         }
         readonly property bool staged: sceneProbe.sceneFor(root.section, String(groupRow.modelData.key)).length > 0
         readonly property bool lone: !groupRow.staged && groupRow.rows.length === 1 && groupRow.rows[0].kind === "switch"
-        readonly property bool folds: !groupRow.staged && !groupRow.lone && groupRow.rows.length <= 3
+        // A group opens in place when what it needs at once fits in a few rows: only its essentials count, the
+        // fine-tuning waits behind its own row inside the fold (as on the group's page). Wallpaper › Transition was a
+        // whole page for a switch, a style and a duration. A group with a scene folds too: the scene still shows on
+        // hover. A gallery or an editable list keeps its page, it needs the width.
+        readonly property var tuned: groupRow.rows.filter(spec => IrisOptions.fineTune(spec) && !IrisOptions.changed(spec))
+        readonly property bool tuneFolds: groupRow.tuned.length >= 2
+        readonly property var essentials: groupRow.tuneFolds ? groupRow.rows.filter(spec => !groupRow.tuned.includes(spec)) : groupRow.rows
+        readonly property bool folds: !groupRow.lone && groupRow.essentials.length <= 3
+            && !groupRow.rows.some(spec => ["widgets", "pieces", "niriMotion", "list"].includes(spec.kind))
+        readonly property string tuneKey: "tune:" + root.section + "/" + String(groupRow.modelData.key ?? groupRow.modelData.title)
+        readonly property bool tuneOpen: groupRow.tuneFolds && (root.tuneAll || (root.unfolded[groupRow.tuneKey] ?? false))
         readonly property string foldKey: root.section + "/" + groupRow.modelData.title
         readonly property bool unfolded: groupRow.folds && (root.unfolded[groupRow.foldKey] ?? false)
         readonly property bool loneOn: {
@@ -2482,7 +2493,7 @@ Item {
             width: parent.width - x
             visible: groupRow.unfolded
             Repeater {
-                model: ScriptModel { objectProp: "modelKey"; values: groupRow.unfolded ? groupRow.rows : [] }
+                model: ScriptModel { objectProp: "modelKey"; values: !groupRow.unfolded ? [] : groupRow.tuneOpen ? groupRow.rows : groupRow.essentials }
                 IrisSetting {
                     required property var modelData
                     required property int index
@@ -2497,6 +2508,21 @@ Item {
                         height: 1
                         color: IrisStyle.hairline
                     }
+                }
+            }
+            FineTuneRow {
+                visible: groupRow.unfolded && groupRow.tuneFolds
+                width: foldColumn.width
+                open: groupRow.tuneOpen
+                names: groupRow.tuned.map(spec => Translation.tr(String(spec.label ?? "")))
+                onClicked: root.fold(groupRow.tuneKey)
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 16 * root.d
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    height: 1
+                    color: IrisStyle.hairline
                 }
             }
         }

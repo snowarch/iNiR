@@ -9535,5 +9535,7 @@
   "Four round controls on one plate.": "أربعة مفاتيح دائرية على لوح واحد.",
   "Slim sliders side by side.": "منزلقات رفيعة جنبًا إلى جنب.",
   "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "كل عنصر تحكم يحمله اللوح، بالترتيب الذي يعرضه. رتّبه في مكانه لتغيير الأحجام.",
-  "Up to four round switches, in this order.": "حتى أربعة مفاتيح دائرية، بهذا الترتيب."
+  "Up to four round switches, in this order.": "حتى أربعة مفاتيح دائرية، بهذا الترتيب.",
+  "How smoothly the movement is drawn.": "مدى سلاسة رسم الحركة.",
+  "Animate the change": "تحريك التبديل"
 }
