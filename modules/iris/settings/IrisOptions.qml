@@ -1570,6 +1570,12 @@ QtObject {
     // How a section's page reads: named blocks of groups, by what someone came to change.
     readonly property var groupClusters: ({
         widgets: IrisWidgetRows.clusters,
+        sources: [
+            { caption: "Internet", groups: ["Weather", "Calendar", "Network"] },
+            { caption: "Connections", groups: ["Hotspot", "VPN"] },
+            { caption: "Updates", groups: ["Updates", "New iNiR"] },
+            { caption: "This computer", groups: ["System readings"] }
+        ],
         appearance: [
             { caption: "Look", groups: ["Look", "Themes"] },
             { caption: "Surfaces", groups: ["Material", "Glass", "Texture", "Edges", "Light", "Adaptive"] },

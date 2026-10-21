@@ -391,7 +391,12 @@ Item {
             const name = Translation.tr(spec.label)
             return !on ? "" : name.length <= 24 ? name : Translation.tr("On")
         }
-        case "text": return spec.numeric && Number(value ?? 0) === 0 ? "" : String(value ?? "")
+        case "text": {
+            if (spec.numeric && Number(value ?? 0) === 0) return ""
+            // A name answers ("iNiR Hotspot"); a long string (a browser's user agent, a command) is no answer at a glance.
+            const text = String(value ?? "")
+            return text.length <= 24 ? text : ""
+        }
         case "niriMotion": return NiriAnimationPresets.activePreset?.name ?? ""
         case "icon": return String(value ?? "").length > 0 ? Translation.tr("Custom") : ""
         case "zone":
@@ -1301,7 +1306,8 @@ Item {
                             text: root.searching ? Translation.tr("Results for “%1”").arg(root.query)
                                 : root.advancedPage >= 0 ? root.pageTitle(root.advancedPage)
                                 : root.landing ? Translation.tr(root.landingCategory?.title ?? "")
-                                : root.areaSwitchShown ? Translation.tr(root.currentCategory.title)
+                                // The foot's areas (Sources) share no category name: each names itself.
+                                : root.areaSwitchShown && root.currentCategory.title.length > 0 ? Translation.tr(root.currentCategory.title)
                                 : root.columns ? Translation.tr(root.currentSection.title)
                                 : root.openGroup.length > 0 ? root.openGroup
                                 : Translation.tr(root.currentSection.title)
