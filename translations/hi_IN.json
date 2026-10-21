@@ -9530,5 +9530,10 @@
   "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "Dock में खिसकाने के लिए किसी को खींचें। फ़ोकस में होने पर Alt और तीर उसे खिसकाते हैं और Delete अनपिन करता है।",
   "Nothing pinned. Right-click an app in the Dock to keep it there.": "कुछ भी पिन नहीं है। किसी ऐप को वहाँ रखने के लिए Dock में उस पर राइट-क्लिक करें।",
   "Not installed": "इंस्टॉल नहीं है",
-  "1 notification": "1 सूचना"
+  "1 notification": "1 सूचना",
+  "Full. Remove one to add another.": "भरा हुआ। दूसरा जोड़ने के लिए एक हटाएँ।",
+  "Four round controls on one plate.": "एक प्लेट पर चार गोल कंट्रोल।",
+  "Slim sliders side by side.": "पास-पास पतले स्लाइडर।",
+  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "पैनल के सभी कंट्रोल, उसी क्रम में जिसमें वह उन्हें दिखाता है। आकार बदलने के लिए उसे वहीं व्यवस्थित करें।",
+  "Up to four round switches, in this order.": "इस क्रम में अधिकतम चार गोल स्विच।"
 }

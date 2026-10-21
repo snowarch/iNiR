@@ -9530,5 +9530,10 @@
   "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "끌어서 Dock에서 옮기세요. 선택된 상태에서 Alt와 화살표로 옮기고 Delete로 고정을 풉니다.",
   "Nothing pinned. Right-click an app in the Dock to keep it there.": "고정된 앱이 없습니다. Dock의 앱을 오른쪽 클릭해 고정하세요.",
   "Not installed": "설치되지 않음",
-  "1 notification": "알림 1개"
+  "1 notification": "알림 1개",
+  "Full. Remove one to add another.": "가득 찼습니다. 다른 것을 추가하려면 하나를 빼세요.",
+  "Four round controls on one plate.": "한 판에 둥근 컨트롤 네 개.",
+  "Slim sliders side by side.": "나란히 놓인 얇은 슬라이더.",
+  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "패널에 있는 모든 컨트롤을 보여지는 순서대로. 크기는 제자리에서 배치해 바꿉니다.",
+  "Up to four round switches, in this order.": "이 순서로 최대 네 개의 둥근 스위치."
 }

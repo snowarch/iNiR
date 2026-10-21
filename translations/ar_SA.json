@@ -9530,5 +9530,10 @@
   "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "اسحب تطبيقًا لنقله في الشريط. مع تحديد أحدها، يحرّكه Alt والأسهم ويلغي Delete تثبيته.",
   "Nothing pinned. Right-click an app in the Dock to keep it there.": "لا شيء مثبّت. انقر بزر الفأرة الأيمن على تطبيق في الشريط لإبقائه هناك.",
   "Not installed": "غير مثبّت",
-  "1 notification": "إشعار واحد"
+  "1 notification": "إشعار واحد",
+  "Full. Remove one to add another.": "ممتلئ. أزل واحدًا لإضافة آخر.",
+  "Four round controls on one plate.": "أربعة مفاتيح دائرية على لوح واحد.",
+  "Slim sliders side by side.": "منزلقات رفيعة جنبًا إلى جنب.",
+  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "كل عنصر تحكم يحمله اللوح، بالترتيب الذي يعرضه. رتّبه في مكانه لتغيير الأحجام.",
+  "Up to four round switches, in this order.": "حتى أربعة مفاتيح دائرية، بهذا الترتيب."
 }

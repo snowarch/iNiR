@@ -9530,5 +9530,10 @@
   "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "Dock'ta taşımak için birini sürükle. Odaktayken Alt ve oklar taşır, Delete sabitlemeyi kaldırır.",
   "Nothing pinned. Right-click an app in the Dock to keep it there.": "Sabitlenmiş bir şey yok. Orada tutmak için Dock'taki bir uygulamaya sağ tıkla.",
   "Not installed": "Yüklü değil",
-  "1 notification": "1 bildirim"
+  "1 notification": "1 bildirim",
+  "Full. Remove one to add another.": "Dolu. Başka birini eklemek için birini kaldır.",
+  "Four round controls on one plate.": "Tek plakada dört yuvarlak kontrol.",
+  "Slim sliders side by side.": "Yan yana ince kaydırıcılar.",
+  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "Panelin taşıdığı her kontrol, gösterdiği sırayla. Boyutlarını değiştirmek için yerinde düzenle.",
+  "Up to four round switches, in this order.": "Bu sırayla en fazla dört yuvarlak anahtar."
 }

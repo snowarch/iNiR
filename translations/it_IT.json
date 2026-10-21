@@ -9530,5 +9530,10 @@
   "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "Trascinane una per spostarla nel Dock. Con una a fuoco, Alt e le frecce la spostano e Canc la sblocca.",
   "Nothing pinned. Right-click an app in the Dock to keep it there.": "Niente fissato. Clic destro su un'app nel Dock per tenerla lì.",
   "Not installed": "Non installata",
-  "1 notification": "1 notifica"
+  "1 notification": "1 notifica",
+  "Full. Remove one to add another.": "Pieno. Rimuovine uno per aggiungerne un altro.",
+  "Four round controls on one plate.": "Quattro controlli rotondi su una piastra.",
+  "Slim sliders side by side.": "Cursori sottili affiancati.",
+  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "Ogni controllo del pannello, nell'ordine in cui li mostra. Sistemalo sul posto per cambiarne le dimensioni.",
+  "Up to four round switches, in this order.": "Fino a quattro interruttori rotondi, in quest'ordine."
 }

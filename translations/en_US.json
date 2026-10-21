@@ -9530,5 +9530,10 @@
   "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.",
   "Nothing pinned. Right-click an app in the Dock to keep it there.": "Nothing pinned. Right-click an app in the Dock to keep it there.",
   "Not installed": "Not installed",
-  "1 notification": "1 notification"
+  "1 notification": "1 notification",
+  "Full. Remove one to add another.": "Full. Remove one to add another.",
+  "Four round controls on one plate.": "Four round controls on one plate.",
+  "Slim sliders side by side.": "Slim sliders side by side.",
+  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.",
+  "Up to four round switches, in this order.": "Up to four round switches, in this order."
 }

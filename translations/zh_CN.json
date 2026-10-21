@@ -9530,5 +9530,10 @@
   "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "拖动以在程序坞中移动。选中时，Alt 加方向键移动，Delete 取消固定。",
   "Nothing pinned. Right-click an app in the Dock to keep it there.": "没有固定的应用。在程序坞中右键点击应用即可固定。",
   "Not installed": "未安装",
-  "1 notification": "1 条通知"
+  "1 notification": "1 条通知",
+  "Full. Remove one to add another.": "已满。移除一个才能添加其他。",
+  "Four round controls on one plate.": "一块面板上的四个圆形控件。",
+  "Slim sliders side by side.": "并排的细滑块。",
+  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "面板上的所有控件，按显示顺序排列。在原处排列以调整大小。",
+  "Up to four round switches, in this order.": "最多四个圆形开关，按此顺序。"
 }

@@ -12,7 +12,7 @@ QtObject {
 
     // shapes: "<columns>x<rows>", "F" = full width, first = resting.
     readonly property var catalogue: [
-        { id: "platter", label: "Connections", glyph: "hub", category: "connect", description: "Four round controls on one plate; pick them on the Panel page.", kind: "platter", shapes: ["2x2", "Fx1"] },
+        { id: "platter", label: "Connections", glyph: "hub", category: "connect", description: "Four round controls on one plate.", kind: "platter", shapes: ["2x2", "Fx1"] },
         { id: "network", label: "Network", glyph: "wifi", category: "connect", description: "Wi-Fi and Ethernet.", kind: "toggle", shapes: ["1x1", "2x1"] },
         { id: "bluetooth", label: "Bluetooth", glyph: "bluetooth", category: "connect", description: "The adapter and what is connected.", kind: "toggle", shapes: ["1x1", "2x1"] },
         { id: "vpn", label: "VPN", glyph: "vpn_key", category: "connect", description: "NetworkManager profiles and Tailscale.", kind: "toggle", shapes: ["1x1", "2x1"] },
@@ -25,7 +25,7 @@ QtObject {
         { id: "darkMode", label: "Dark", glyph: "contrast", category: "display", description: "Dark or light across the shell.", kind: "toggle", shapes: ["1x1", "2x1"] },
         { id: "nightLight", label: "Night light", glyph: "nightlight", category: "display", description: "Warms the screen after dark.", kind: "toggle", shapes: ["1x1", "2x1"] },
         { id: "antiFlashbang", label: "Flashbang", glyph: "flare", category: "display", description: "Dims a screen that turns white on you.", kind: "toggle", shapes: ["1x1", "2x1"] },
-        { id: "levels", label: "Levels", glyph: "tune", category: "sound", description: "Slim sliders side by side; pick them on the Panel page.", kind: "levels", shapes: ["2x2", "2x3", "Fx1", "Fx2"] },
+        { id: "levels", label: "Levels", glyph: "tune", category: "sound", description: "Slim sliders side by side.", kind: "levels", shapes: ["2x2", "2x3", "Fx1", "Fx2"] },
         { id: "brightness", label: "Brightness", glyph: "light_mode", category: "display", description: "This screen's backlight.", kind: "level", shapes: ["1x2", "2x1", "Fx1"] },
         { id: "volume", label: "Volume", glyph: "volume_up", category: "sound", description: "The output level; its glyph mutes.", kind: "level", shapes: ["1x2", "2x1", "Fx1"] },
         { id: "microphone", label: "Microphone", glyph: "mic", category: "sound", description: "The input level; its glyph mutes.", kind: "level", shapes: ["1x2", "2x1", "Fx1"] },
@@ -49,6 +49,11 @@ QtObject {
         { id: "tools", label: "Tools" }
     ]
     readonly property var catalogueIds: root.catalogue.map(entry => entry.id)
+    // The catalogue's entries for some ids, in that order, as a Settings list reads them.
+    function choicesFor(ids: var): var {
+        return Array.from(ids ?? []).map(id => root.catalogue.find(entry => entry.id === id)).filter(entry => entry)
+            .map(entry => ({ value: entry.id, label: entry.label, glyph: entry.glyph, description: entry.description, category: entry.category }))
+    }
     readonly property var aliases: ({ connectivity: ["platter"] })
 
     readonly property var legacySeed: ({

@@ -9530,5 +9530,10 @@
   "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "Перетащите, чтобы переместить в Доке. С выбранным: Alt и стрелки двигают, Delete открепляет.",
   "Nothing pinned. Right-click an app in the Dock to keep it there.": "Ничего не закреплено. Щёлкните правой кнопкой по приложению в Доке, чтобы оставить его там.",
   "Not installed": "Не установлено",
-  "1 notification": "1 уведомление"
+  "1 notification": "1 уведомление",
+  "Full. Remove one to add another.": "Заполнено. Уберите один, чтобы добавить другой.",
+  "Four round controls on one plate.": "Четыре круглых переключателя на одной панели.",
+  "Slim sliders side by side.": "Тонкие ползунки рядом.",
+  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "Все элементы панели в том порядке, в каком она их показывает. Расставьте на месте, чтобы изменить размеры.",
+  "Up to four round switches, in this order.": "До четырёх круглых переключателей, в этом порядке."
 }
