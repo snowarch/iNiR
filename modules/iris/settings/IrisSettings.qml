@@ -450,7 +450,11 @@ Item {
         Config.revision
         const rows = entry.rows.filter(spec => root.shown(spec))
         const parts = [...new Set(rows.map(spec => root.valueText(spec)).filter(text => text.length > 0))]
-        if (parts.length === 0 && rows.length > 0 && rows.every(spec => spec.kind === "switch")) return Translation.tr("Off")
+        // Switches that all keep quiet answer for themselves: a group's own switch on ("Notch") said Off when no row followed it.
+        if (parts.length === 0 && rows.length > 0 && rows.every(spec => spec.kind === "switch")) {
+            const on = rows.some(spec => { const value = IrisOptions.currentValue(spec); return spec.invert ? !value : !!value })
+            return on ? Translation.tr("On") : Translation.tr("Off")
+        }
         // One answer, the group's first: two read as a list of unrelated words ("Off, Own", "iRiS, iRiS, Material").
         return parts[0] ?? ""
     }
@@ -514,19 +518,27 @@ Item {
     // The index under a scene beside the rows: a page read whole lists its groups; a page read a block at a time lists its
     // blocks, the one shown opened on its groups; a page of group rows lists its named blocks.
     readonly property var besideIndex: {
+        // Every entry answers on a second line (DI48-R3): a group its value now ("Black", "Auto"), a block not shown what is
+        // in it ("Material · Glass · Texture"), so the index is the area's overview and nothing needs opening to be read.
         if (root.pagesPane) {
             const out = []
             root.groupChunks.forEach((chunk, at) => {
-                out.push({ key: "", title: chunk.caption.length > 0 ? chunk.caption : chunk.groups[0].title, chunk: at, block: true })
+                const title = chunk.caption.length > 0 ? chunk.caption : chunk.groups[0].title
+                const named = chunk.groups.filter(group => group.title !== title)
+                const open = at === root.shownChunk && chunk.groups.length > 1
+                // A block shown on one group answers with that group's value.
+                const detail = open ? "" : chunk.groups.length === 1 ? root.summaryOf(chunk.groups[0])
+                    : named.map(group => group.title).join(" · ")
+                out.push({ key: "", title: title, chunk: at, block: true, detail: detail })
                 // A group named as its block is the block's own line: "Look" under "Look" says nothing twice.
-                if (at === root.shownChunk && chunk.groups.length > 1)
-                    for (const group of chunk.groups.filter(group => group.title !== chunk.caption))
-                        out.push({ key: group.key, title: group.title, chunk: -1, block: false })
+                if (open)
+                    for (const group of named)
+                        out.push({ key: group.key, title: group.title, chunk: -1, block: false, detail: root.summaryOf(group) })
             })
             return out
         }
-        return root.flatSection ? root.groups.map(entry => ({ key: entry.key, title: entry.title, chunk: -1, block: false }))
-            : root.groupChunks.map((chunk, at) => ({ key: "", title: chunk.caption, chunk: at, block: false })).filter(entry => entry.title.length > 0)
+        return root.flatSection ? root.groups.map(entry => ({ key: entry.key, title: entry.title, chunk: -1, block: false, detail: root.summaryOf(entry) }))
+            : root.groupChunks.map((chunk, at) => ({ key: "", title: chunk.caption, chunk: at, block: false, detail: "" })).filter(entry => entry.title.length > 0)
     }
     // Another block of a long section takes the rows' place where they stand (DI48-R1): the page never changes, the
     // rows lift into place as the new block arrives.
@@ -1580,7 +1592,11 @@ Item {
                                     clip: interactive
                                     readonly property real blockHeight: Math.round(34 * root.d)
                                     readonly property real groupHeight: Math.round(30 * root.d)
-                                    function heightOf(entry: var): real { return entry.block || entry.chunk >= 0 || !root.pagesPane ? blockHeight : groupHeight }
+                                    readonly property real answerHeight: Math.round(16 * root.d)
+                                    function heightOf(entry: var): real {
+                                        return (entry.block || entry.chunk >= 0 || !root.pagesPane ? blockHeight : groupHeight)
+                                            + (String(entry.detail ?? "").length > 0 ? answerHeight : 0)
+                                    }
                                     function isCurrent(entry: var): bool {
                                         if (entry.chunk >= 0) return root.pagesPane ? entry.chunk === root.shownChunk : entry.chunk === root.readChunk
                                         return String(entry.key) === root.readGroup
@@ -1611,7 +1627,8 @@ Item {
                                         y: indexFlick.pillY
                                         height: indexFlick.pillAt >= 0 ? indexFlick.heightOf(root.besideIndex[indexFlick.pillAt]) : 0
                                         radius: IrisStyle.plateSelection ? 0 : Math.min(IrisStyle.radiusRow, height / 2)
-                                        color: IrisStyle.plateSelection ? IrisStyle.selectionFill : IrisStyle.tintFillHover(indexFlick.tint)
+                                        // The area's own colour, strong enough to read as it on black (a hover-light wash read grey).
+                                        color: IrisStyle.plateSelection ? IrisStyle.selectionFill : ColorUtils.applyAlpha(indexFlick.tint, IrisStyle.fillAlpha(0.3))
                                         opacity: indexFlick.pillAt >= 0 ? 1 : 0
                                         // It lands where it first shows and travels from then on, as the sidebar's wash does.
                                         onOpacityChanged: if (opacity === 1) pillArm.restart()
@@ -1656,15 +1673,28 @@ Item {
                                                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
                                                 }
                                                 IrisText {
+                                                    id: indexTitle
                                                     x: Math.round((indexEntry.sub ? 28 : 14) * root.d)
                                                     width: parent.width - x - Math.round(10 * root.d)
                                                     anchors.verticalCenter: parent.verticalCenter
+                                                    anchors.verticalCenterOffset: indexAnswer.text.length > 0 ? -Math.round(indexFlick.answerHeight / 2) : 0
                                                     text: indexEntry.modelData.title
                                                     color: indexEntry.current || (indexEntry.modelData.block && indexEntry.modelData.chunk === root.shownChunk)
                                                         ? IrisStyle.text : IrisStyle.muted
                                                     font.pixelSize: indexEntry.sub ? IrisStyle.typeMeta : IrisStyle.typeBody
                                                     font.weight: IrisStyle.weight(indexEntry.current || (indexEntry.modelData.block && indexEntry.modelData.chunk === root.shownChunk)
                                                         ? Font.DemiBold : Font.Normal)
+                                                    elide: Text.ElideRight
+                                                }
+                                                IrisText {
+                                                    id: indexAnswer
+                                                    x: indexTitle.x
+                                                    y: indexTitle.y + indexTitle.height
+                                                    width: indexTitle.width
+                                                    text: String(indexEntry.modelData.detail ?? "")
+                                                    visible: text.length > 0
+                                                    color: IrisStyle.muted
+                                                    font.pixelSize: IrisStyle.typeMeta
                                                     elide: Text.ElideRight
                                                 }
                                             }
