@@ -485,7 +485,12 @@ Item {
     // a short dwell both ways, so passing over the rows does not flick the scene.
     property string hoverWanted: ""
     property string hoverGroup: ""
-    readonly property string leadGroup: root.hoverGroup.length > 0 ? root.hoverGroup : root.spyGroup
+    // Only a group of the page in view leads: a hover or a read group left from the area before asked the new area's
+    // scene for a group it lacks, the scene went, heroBeside fell and cleared the hover inside that same scene pass.
+    readonly property string leadGroup: {
+        const own = key => key.length > 0 && root.groups.some(entry => entry.key === key)
+        return own(root.hoverGroup) ? root.hoverGroup : own(root.spyGroup) ? root.spyGroup : ""
+    }
     onHoverWantedChanged: hoverDwell.restart()
     Timer { id: hoverDwell; interval: 140; onTriggered: root.hoverGroup = root.heroBeside ? root.hoverWanted : "" }
     onHeroBesideChanged: if (!root.heroBeside) { root.hoverWanted = ""; root.hoverGroup = "" }
