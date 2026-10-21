@@ -28,7 +28,6 @@ ClippingRectangle {
         target: Config
         function onRevisionChanged(): void { root.wake() }
     }
-    onSceneChanged: root.wake()
     onPlayingChanged: if (root.playing) root.wake()
     property bool compact: false
     property string caption: ""
@@ -38,7 +37,45 @@ ClippingRectangle {
     readonly property real d: IrisStyle.density
     readonly property string scene: root.sceneFor(root.section, root.group)
     readonly property bool available: (Config.options?.iris?.appearance?.previews ?? true) && root.scene.length > 0
-    readonly property real wantedHeight: Math.round(Math.min(420 * root.d, Math.max(260 * root.d, Number(sceneLoader.item?.naturalHeight ?? 0))))
+    readonly property real wantedHeight: Math.round(Math.min(420 * root.d, Math.max(260 * root.d, Number(root.sceneItem?.naturalHeight ?? 0))))
+    // Another group's scene takes the last one's place (DI48-R2): the old one leaves in the first 40 % (fading as it
+    // settles back a little), and only then the new one, loaded in the free slot, grows in from just under its size: two
+    // legible scenes never overlap. The old one is destroyed the moment the change ends, so two scenes are never alive
+    // at rest. A scene that took more than a frame to build skips the change (that frame was the change's).
+    property string sceneA: root.scene
+    property string sceneB: ""
+    property bool onB: false
+    property real cross: 1
+    readonly property real leaving: Math.min(1, root.cross / 0.4)
+    readonly property real arriving: 1 - Math.pow(1 - Math.max(0, (root.cross - 0.4) / 0.6), 3)
+    readonly property Item sceneItem: root.onB ? loaderB.item : loaderA.item
+    onSceneChanged: {
+        root.wake()
+        const showing = root.onB ? root.sceneB : root.sceneA
+        if (root.scene === showing) return
+        crossMotion.stop()
+        if (!IrisStyle.motionEnabled || !root.visible || showing.length === 0 || root.scene.length === 0) {
+            if (root.onB) { root.sceneB = root.scene; root.sceneA = "" } else { root.sceneA = root.scene; root.sceneB = "" }
+            root.cross = 1
+            return
+        }
+        const started = Date.now()
+        if (root.onB) root.sceneA = root.scene
+        else root.sceneB = root.scene
+        root.onB = !root.onB
+        root.cross = Date.now() - started > 16 ? 1 : 0
+        if (root.cross < 1) crossMotion.start()
+        else root.dropHidden()
+    }
+    function dropHidden(): void { if (root.onB) root.sceneA = ""; else root.sceneB = "" }
+    NumberAnimation {
+        id: crossMotion
+        target: root
+        property: "cross"
+        to: 1
+        duration: IrisStyle.morphDuration
+        onFinished: root.dropHidden()
+    }
     readonly property string wallpaper: WallpaperListener.wallpaperUrlForScreen(GlobalStates.focusedScreen)
     readonly property Item wallpaperView: wallpaperImage
 
@@ -80,6 +117,20 @@ ClippingRectangle {
         })[key] ?? ""
     }
 
+    function componentFor(name: string): var {
+        return ({
+                typography: typographyScene, frame: frameScene, lock: lockScene, motion: motionScene,
+                texture: textureScene, dock: dockScene, widgets: widgetsScene, backdrop: backdropScene, gallery: galleryScene,
+                spotlight: spotlightScene, controlCenter: controlCenterScene, cards: cardsScene, menus: menusScene,
+                settings: settingsScene, panels: panelsScene, joining: joiningScene, feedback: feedbackScene, sound: soundScene,
+                tray: trayScene, player: playerScene, islandReserve: islandReserveScene, islandEdge: islandEdgeScene, barZones: barZonesScene,
+                light: lightScene, palette: paletteScene, fusion: fusionScene, shapes: shapesScene, glass: glassScene,
+                islandInteraction: islandInteractionScene, islandPage: islandPageScene, bubbles: bubblesScene,
+                highlight: highlightScene, login: loginScene, material: materialScene, surfaces: surfacesScene,
+                windows: windowsScene, display: displayScene, keyboard: keyboardScene, orbit: orbitScene, capture: captureScene,
+                anime: animeScene, sources: sourcesScene, battery: batteryScene
+        })[name] ?? null
+    }
     radius: IrisStyle.radiusTile
     color: IrisStyle.surfaceHigh
 
@@ -98,10 +149,10 @@ ClippingRectangle {
         id: world
         // A scene that reflows (`narrowest`, `lowest`) is laid out at the size it is drawn at, down to those: shrunk whole
         // from its natural size, AIRISU's 308 px column scaled the Dock to 0.41 and its 40 px icons came out 16 px and soft.
-        readonly property real wide: (sceneLoader.item?.narrowest ?? 0) > 0 ? sceneLoader.item.narrowest : sceneLoader.item?.naturalWidth ?? 1
-        readonly property real tall: (sceneLoader.item?.lowest ?? 0) > 0 ? sceneLoader.item.lowest : sceneLoader.item?.naturalHeight ?? 1
+        readonly property real wide: (root.sceneItem?.narrowest ?? 0) > 0 ? root.sceneItem.narrowest : root.sceneItem?.naturalWidth ?? 1
+        readonly property real tall: (root.sceneItem?.lowest ?? 0) > 0 ? root.sceneItem.lowest : root.sceneItem?.naturalHeight ?? 1
         readonly property real fit: Math.min(1, root.width / Math.max(1, world.wide),
-            sceneLoader.item?.cropBottom ? 1 : root.height / Math.max(1, world.tall))
+            root.sceneItem?.cropBottom ? 1 : root.height / Math.max(1, world.tall))
         // Any shortfall shrinks it: kept at 1 down to 0.85, a scene a few percent too wide cut its words at the edge.
         readonly property real k: world.fit
         width: root.width / world.k
@@ -115,21 +166,22 @@ ClippingRectangle {
         layer.textureSize: Qt.size(Math.max(1, Math.ceil(root.width * 2)), Math.max(1, Math.ceil(root.height * 2)))
 
         Loader {
-            id: sceneLoader
+            id: loaderA
             anchors.fill: parent
-            active: root.available && root.visible
-            sourceComponent: ({
-                typography: typographyScene, frame: frameScene, lock: lockScene, motion: motionScene,
-                texture: textureScene, dock: dockScene, widgets: widgetsScene, backdrop: backdropScene, gallery: galleryScene,
-                spotlight: spotlightScene, controlCenter: controlCenterScene, cards: cardsScene, menus: menusScene,
-                settings: settingsScene, panels: panelsScene, joining: joiningScene, feedback: feedbackScene, sound: soundScene,
-                tray: trayScene, player: playerScene, islandReserve: islandReserveScene, islandEdge: islandEdgeScene, barZones: barZonesScene,
-                light: lightScene, palette: paletteScene, fusion: fusionScene, shapes: shapesScene, glass: glassScene,
-                islandInteraction: islandInteractionScene, islandPage: islandPageScene, bubbles: bubblesScene,
-                highlight: highlightScene, login: loginScene, material: materialScene, surfaces: surfacesScene,
-                windows: windowsScene, display: displayScene, keyboard: keyboardScene, orbit: orbitScene, capture: captureScene,
-                anime: animeScene, sources: sourcesScene, battery: batteryScene
-            })[root.scene] ?? null
+            active: root.available && root.visible && root.sceneA.length > 0
+            opacity: root.onB ? 1 - root.leaving : root.arriving
+            scale: root.onB ? 1 - 0.015 * root.leaving : 0.97 + 0.03 * root.arriving
+            visible: opacity > 0
+            sourceComponent: root.componentFor(root.sceneA)
+        }
+        Loader {
+            id: loaderB
+            anchors.fill: parent
+            active: root.available && root.visible && root.sceneB.length > 0
+            opacity: root.onB ? root.arriving : 1 - root.leaving
+            scale: root.onB ? 0.97 + 0.03 * root.arriving : 1 - 0.015 * root.leaving
+            visible: opacity > 0
+            sourceComponent: root.componentFor(root.sceneB)
         }
     }
 
