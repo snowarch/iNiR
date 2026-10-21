@@ -643,7 +643,7 @@ Item {
         const rows = root.specifications.filter(spec => spec.section === id && root.shown(spec))
         const groups = new Set(rows.map(spec => String(spec.group ?? "")))
         return id !== "system" && groups.size > 1 && ((root.sceneDrawn && root.paneable)
-            || (rows.length <= 15 && !rows.some(spec => ["widgets", "pieces", "niriMotion", "list"].includes(spec.kind))))
+            || (rows.length <= 15 && !rows.some(spec => ["widgets", "pieces", "niriMotion", "list"].includes(spec.kind) && spec.bare !== true)))
     }
     function openResult(spec: var, land: bool): void {
         searchField.text = ""

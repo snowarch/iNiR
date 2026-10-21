@@ -168,6 +168,8 @@ Item {
         spacing: 10 * root.d
 
         RowLayout {
+            // A bare list (Display's screens) names what it shows itself: a heading over it only repeats the group.
+            visible: !(root.spec.kind === "list" && root.spec.bare === true)
             Layout.fillWidth: true
             spacing: 12 * root.d
 

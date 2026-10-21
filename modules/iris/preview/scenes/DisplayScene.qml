@@ -19,9 +19,11 @@ PreviewScene {
     readonly property string until: String(displayRoot.opt("light.night.to", "06:30"))
     readonly property real kelvin: Number(displayRoot.opt("light.night.colorTemperature", 5000))
     readonly property bool soften: displayRoot.opt("light.antiFlashbang.enable", false) === true
-    readonly property var screen: GlobalStates.focusedScreen
-    readonly property string mode: displayRoot.screen ? `${displayRoot.screen.width} × ${displayRoot.screen.height}` : ""
-    readonly property string rate: String(displayRoot.niri("display", "rate", ""))
+    // The screen the rows below change, in its own pixels (the shell's screen size is logical, smaller when scaled), at
+    // the rate people read: "74.97 Hz", never Niri's "60.000" (IrisNiri.rateLabel says it the same way).
+    readonly property string mode: String(displayRoot.niri("display", "resolution", "")).replace("x", " × ")
+    readonly property real hz: Number(displayRoot.niri("display", "rate", 0)) || 0
+    readonly property string rate: displayRoot.hz > 0 ? `${Math.round(displayRoot.hz * 100) / 100} Hz` : ""
     readonly property real naturalWidth: Math.round(620 * displayRoot.d)
     readonly property real naturalHeight: Math.round(300 * displayRoot.d)
     narrowest: Math.round(400 * displayRoot.d)

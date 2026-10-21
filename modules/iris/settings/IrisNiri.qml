@@ -101,6 +101,31 @@ Singleton {
     function modeOf(output: var): string {
         return output ? `${output.current_resolution}@${output.current_rate_string}` : ""
     }
+    // Niri says "60.000" and "74.973"; people read "60 Hz" and "74.97 Hz". Two decimals at most, never rounded to a
+    // whole number the screen does not run at.
+    function rateLabel(rate: var): string {
+        const hz = Number(rate)
+        return hz > 0 ? `${Math.round(hz * 100) / 100} Hz` : ""
+    }
+    function resolutionLabel(output: var): string {
+        return String(output?.current_resolution ?? "").replace("x", " × ")
+    }
+    // The name on the box: "LG Electronics" sells as LG. The connector stands in when the EDID names nothing.
+    function screenName(output: var): string {
+        const make = String(output?.make ?? "").replace(/\s+(Electronics|Electronic|Electric Company|Display|Displays|Technology|Corporation|Corp\.?|Co\.?,? Ltd\.?|Inc\.?)$/i, "").trim()
+        return `${make} ${String(output?.model ?? "").trim()}`.trim() || String(output?.name ?? "")
+    }
+    // The diagonal from the EDID's millimetres; 0 when the screen does not say (projectors, some TVs, nested outputs).
+    function inchesOf(output: var): real {
+        const size = output?.physical_size ?? [0, 0]
+        const mm = Math.hypot(Number(size?.[0] ?? 0), Number(size?.[1] ?? 0))
+        return mm > 0 ? mm / 25.4 : 0
+    }
+    // Width over height as the screen shows it now, rotation included.
+    function aspectOf(output: var): real {
+        const rect = root.logicalRect(output)
+        return rect.width > 0 && rect.height > 0 ? rect.width / rect.height : 16 / 9
+    }
     // Niri reports "Flipped90" and reads "flipped-90" in its config: one spelling, the config's.
     function transformOf(out: var): string {
         return String(out?.transform ?? "Normal").toLowerCase().replace(/^flipped(\d)/, "flipped-$1")
@@ -144,7 +169,7 @@ Singleton {
         if (key === "resolution") return (out.resolutions ?? []).map(entry => ({ label: `${entry.width} × ${entry.height}`, value: `${entry.width}x${entry.height}` }))
         if (key === "rate") {
             const res = (out.resolutions ?? []).find(entry => `${entry.width}x${entry.height}` === out.current_resolution)
-            return (res?.rates ?? []).slice().sort((a, b) => b.rate - a.rate).map(entry => ({ label: `${Math.round(entry.rate * 100) / 100} Hz`, value: entry.rate_string }))
+            return (res?.rates ?? []).slice().sort((a, b) => b.rate - a.rate).map(entry => ({ label: root.rateLabel(entry.rate), value: entry.rate_string }))
         }
         if (key === "scale") {
             const base = [1, 1.25, 1.5, 1.75, 2]
