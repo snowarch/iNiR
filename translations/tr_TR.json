@@ -9537,5 +9537,7 @@
   "Up to four round switches, in this order.": "Bu sırayla en fazla dört yuvarlak anahtar.",
   "How smoothly the movement is drawn.": "Hareketin ne kadar akıcı çizildiği.",
   "Animate the change": "Değişimi canlandır",
-  "Every control the panel holds. Drag to reorder; the panel follows this order.": "Panelin taşıdığı her kontrol. Sıralamak için sürükle; panel bu sırayı izler."
+  "Every control the panel holds. Drag to reorder; the panel follows this order.": "Panelin taşıdığı her kontrol. Sıralamak için sürükle; panel bu sırayı izler.",
+  "Everything shows": "Her şey görünür",
+  "Quiet while you play": "Oynarken sessiz"
 }

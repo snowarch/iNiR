@@ -9537,5 +9537,7 @@
   "Up to four round switches, in this order.": "最多四个圆形开关，按此顺序。",
   "How smoothly the movement is drawn.": "动画绘制的流畅程度。",
   "Animate the change": "切换时播放动画",
-  "Every control the panel holds. Drag to reorder; the panel follows this order.": "面板上的所有控件。拖动以重新排序，面板会按此顺序排列。"
+  "Every control the panel holds. Drag to reorder; the panel follows this order.": "面板上的所有控件。拖动以重新排序，面板会按此顺序排列。",
+  "Everything shows": "全部显示",
+  "Quiet while you play": "游戏时保持安静"
 }

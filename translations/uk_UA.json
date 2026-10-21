@@ -9537,5 +9537,7 @@
   "Up to four round switches, in this order.": "До чотирьох круглих перемикачів, у цьому порядку.",
   "How smoothly the movement is drawn.": "Наскільки плавно малюється рух.",
   "Animate the change": "Анімувати зміну",
-  "Every control the panel holds. Drag to reorder; the panel follows this order.": "Усі елементи панелі. Перетягніть, щоб змінити порядок; панель його дотримується."
+  "Every control the panel holds. Drag to reorder; the panel follows this order.": "Усі елементи панелі. Перетягніть, щоб змінити порядок; панель його дотримується.",
+  "Everything shows": "Усе показується",
+  "Quiet while you play": "Тихо, поки ти граєш"
 }

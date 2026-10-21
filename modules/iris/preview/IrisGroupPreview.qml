@@ -86,7 +86,7 @@ ClippingRectangle {
             return ({ dock: "dock", player: "player", desktop: "widgets", widgets: "widgets", sidebars: "panels", controlCenter: "controlCenter", spotlight: "spotlight", bubbles: "bubbles",
                 bar: "islandEdge", appearance: "fusion", colour: "palette", wallpaper: "gallery", login: "login", motion: "motion", lock: "lock", notifications: "feedback", sound: "sound",
                 windows: "windows", display: "display", keyboard: "keyboard", orbit: "orbit", capture: "capture", anime: "anime",
-                sources: "sources", battery: "battery" })[section] ?? ""
+                sources: "sources", battery: "battery", gaming: "gaming" })[section] ?? ""
         const key = section + "/" + group
         return ({
             "bar/Visibility": "islandReserve", "bar/Interaction": "islandInteraction",
@@ -115,7 +115,8 @@ ClippingRectangle {
             "sidebars/Panel look": "panels",
             "notifications/Banners": "feedback", "sound/Feedback": "feedback",
             "sound/Output": "sound", "sound/Input": "sound", "sound/Apps playing": "sound", "sound/Volume": "sound", "sound/Alert sounds": "sound",
-            "player/Player": "player", "player/Bubble": "player"
+            "player/Player": "player", "player/Bubble": "player",
+            "gaming/Fullscreen": "gaming", "gaming/Game mode": "gaming"
         })[key] ?? ""
     }
 
@@ -130,7 +131,7 @@ ClippingRectangle {
                 islandInteraction: islandInteractionScene, islandPage: islandPageScene, bubbles: bubblesScene,
                 highlight: highlightScene, login: loginScene, material: materialScene, surfaces: surfacesScene,
                 windows: windowsScene, display: displayScene, keyboard: keyboardScene, orbit: orbitScene, capture: captureScene,
-                anime: animeScene, sources: sourcesScene, battery: batteryScene
+                anime: animeScene, sources: sourcesScene, battery: batteryScene, gaming: gamingScene
         })[name] ?? null
     }
     radius: IrisStyle.radiusTile
@@ -206,6 +207,7 @@ ClippingRectangle {
     Component { id: animeScene; AnimeScene { preview: root } }
     Component { id: sourcesScene; SourcesScene { preview: root } }
     Component { id: batteryScene; BatteryScene { preview: root } }
+    Component { id: gamingScene; GamingScene { preview: root } }
     Component { id: barZonesScene; BarZonesScene { preview: root } }
     Component { id: bubblesScene; BubblesScene { preview: root } }
     Component { id: cardsScene; CardsScene { preview: root } }

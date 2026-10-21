@@ -9537,5 +9537,7 @@
   "Up to four round switches, in this order.": "이 순서로 최대 네 개의 둥근 스위치.",
   "How smoothly the movement is drawn.": "움직임을 얼마나 부드럽게 그릴지.",
   "Animate the change": "바뀔 때 애니메이션",
-  "Every control the panel holds. Drag to reorder; the panel follows this order.": "패널의 모든 컨트롤. 끌어서 순서를 바꾸면 패널이 이 순서를 따릅니다."
+  "Every control the panel holds. Drag to reorder; the panel follows this order.": "패널의 모든 컨트롤. 끌어서 순서를 바꾸면 패널이 이 순서를 따릅니다.",
+  "Everything shows": "모두 표시",
+  "Quiet while you play": "게임 중에는 조용히"
 }

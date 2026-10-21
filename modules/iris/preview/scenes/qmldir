@@ -42,3 +42,4 @@ AnimeScene 1.0 AnimeScene.qml
 SoundScene 1.0 SoundScene.qml
 SourcesScene 1.0 SourcesScene.qml
 BatteryScene 1.0 BatteryScene.qml
+GamingScene 1.0 GamingScene.qml

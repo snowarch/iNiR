@@ -9537,5 +9537,7 @@
   "Up to four round switches, in this order.": "丸いスイッチを最大 4 つ、この順で。",
   "How smoothly the movement is drawn.": "動きをどれだけなめらかに描くか。",
   "Animate the change": "切り替えをアニメーション",
-  "Every control the panel holds. Drag to reorder; the panel follows this order.": "パネルに載るすべてのコントロール。ドラッグで並べ替え、パネルはこの順に従います。"
+  "Every control the panel holds. Drag to reorder; the panel follows this order.": "パネルに載るすべてのコントロール。ドラッグで並べ替え、パネルはこの順に従います。",
+  "Everything shows": "すべて表示",
+  "Quiet while you play": "プレイ中は静かに"
 }

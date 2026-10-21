@@ -9537,5 +9537,7 @@
   "Up to four round switches, in this order.": "حتى أربعة مفاتيح دائرية، بهذا الترتيب.",
   "How smoothly the movement is drawn.": "مدى سلاسة رسم الحركة.",
   "Animate the change": "تحريك التبديل",
-  "Every control the panel holds. Drag to reorder; the panel follows this order.": "كل عنصر تحكم يحمله اللوح. اسحب لإعادة الترتيب؛ يتبع اللوح هذا الترتيب."
+  "Every control the panel holds. Drag to reorder; the panel follows this order.": "كل عنصر تحكم يحمله اللوح. اسحب لإعادة الترتيب؛ يتبع اللوح هذا الترتيب.",
+  "Everything shows": "يظهر كل شيء",
+  "Quiet while you play": "هدوء أثناء اللعب"
 }
