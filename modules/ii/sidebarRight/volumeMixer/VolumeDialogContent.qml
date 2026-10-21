@@ -180,11 +180,7 @@ ColumnLayout {
         clip: true
         spacing: 4
         animateAppearance: false
-
-        highlightRangeMode: ListView.StrictlyEnforceRange
-        preferredHighlightBegin: height * 0.5 - 34
-        preferredHighlightEnd: height * 0.5 + 34
-        highlightMoveDuration: Appearance.animationsEnabled ? Appearance.calcEffectiveDuration(180) : 0
-        highlightFollowsCurrentItem: true
+        // A mixer lists from the top. Holding the current row in the middle (a picker's strict range) pushed the first
+        // app halfway down the dialog and the last one out of sight.
     }
 }
