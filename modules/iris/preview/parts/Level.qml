@@ -19,13 +19,15 @@ Rectangle {
         visible: level.stepped
         spacing: Math.max(1, Math.round(2 * IrisStyle.density))
         readonly property int count: Math.max(4, Math.floor((level.width + spacing) / (Math.round(5 * IrisStyle.density) + spacing)))
+        // Built only when stepped: a plain bar built every step anyway, hidden, and a step torn down with its level
+        // read it as null.
         Repeater {
-            model: parent.count
+            model: level.stepped ? parent.count : 0
             Rectangle {
                 required property int index
                 width: Math.round(5 * IrisStyle.density)
-                height: level.height
-                color: index < Math.round(level.value * parent.count) ? level.tint : IrisStyle.fill
+                height: level?.height ?? 0
+                color: !level ? "transparent" : index < Math.round(level.value * (parent?.count ?? 0)) ? level.tint : IrisStyle.fill
                 antialiasing: false
             }
         }

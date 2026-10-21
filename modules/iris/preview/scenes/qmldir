@@ -39,5 +39,6 @@ KeyboardScene 1.0 KeyboardScene.qml
 OrbitScene 1.0 OrbitScene.qml
 CaptureScene 1.0 CaptureScene.qml
 AnimeScene 1.0 AnimeScene.qml
+SoundScene 1.0 SoundScene.qml
 SourcesScene 1.0 SourcesScene.qml
 BatteryScene 1.0 BatteryScene.qml

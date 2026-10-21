@@ -45,7 +45,7 @@ ClippingRectangle {
     function sceneFor(section: string, group: string): string {
         if (group.length === 0)
             return ({ dock: "dock", player: "player", desktop: "widgets", widgets: "widgets", sidebars: "panels", controlCenter: "controlCenter", spotlight: "spotlight", bubbles: "bubbles",
-                bar: "islandEdge", appearance: "fusion", colour: "palette", wallpaper: "gallery", login: "login", motion: "motion", lock: "lock", notifications: "feedback", sound: "feedback",
+                bar: "islandEdge", appearance: "fusion", colour: "palette", wallpaper: "gallery", login: "login", motion: "motion", lock: "lock", notifications: "feedback", sound: "sound",
                 windows: "windows", display: "display", keyboard: "keyboard", orbit: "orbit", capture: "capture", anime: "anime",
                 sources: "sources", battery: "battery" })[section] ?? ""
         const key = section + "/" + group
@@ -75,6 +75,7 @@ ClippingRectangle {
             "spotlight/Spotlight": "spotlight", "controlCenter/Control Center": "controlCenter",
             "sidebars/Panel look": "panels",
             "notifications/Banners": "feedback", "sound/Feedback": "feedback",
+            "sound/Output": "sound", "sound/Input": "sound", "sound/Apps playing": "sound", "sound/Volume": "sound", "sound/Alert sounds": "sound",
             "player/Player": "player", "player/Bubble": "player"
         })[key] ?? ""
     }
@@ -121,7 +122,7 @@ ClippingRectangle {
                 typography: typographyScene, frame: frameScene, lock: lockScene, motion: motionScene,
                 texture: textureScene, dock: dockScene, widgets: widgetsScene, backdrop: backdropScene, gallery: galleryScene,
                 spotlight: spotlightScene, controlCenter: controlCenterScene, cards: cardsScene, menus: menusScene,
-                settings: settingsScene, panels: panelsScene, joining: joiningScene, feedback: feedbackScene,
+                settings: settingsScene, panels: panelsScene, joining: joiningScene, feedback: feedbackScene, sound: soundScene,
                 tray: trayScene, player: playerScene, islandReserve: islandReserveScene, islandEdge: islandEdgeScene, barZones: barZonesScene,
                 light: lightScene, palette: paletteScene, fusion: fusionScene, shapes: shapesScene, glass: glassScene,
                 islandInteraction: islandInteractionScene, islandPage: islandPageScene, bubbles: bubblesScene,
@@ -156,6 +157,7 @@ ClippingRectangle {
     Component { id: controlCenterScene; ControlCenterScene { preview: root } }
     Component { id: dockScene; DockScene { preview: root } }
     Component { id: feedbackScene; FeedbackScene { preview: root } }
+    Component { id: soundScene; SoundScene { preview: root } }
     Component { id: frameScene; FrameScene { preview: root } }
     Component { id: fusionScene; FusionScene { preview: root } }
     Component { id: galleryScene; GalleryScene { preview: root } }
