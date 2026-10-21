@@ -55,7 +55,7 @@ Item {
     readonly property bool layoutable: root.heroPinned && !root.split && !root.sceneDrawn && !root.landing && pageHero.stageAvailable
     readonly property bool heroBeside: root.layoutable && root.pageMode === "beside"
     readonly property bool heroStacked: root.layoutable && root.pageMode === "stack"
-    readonly property var layoutInputs: [detailBody.width, detailBody.height, settingsRows.implicitHeight, root.layoutable, root.section, root.blocksShown]
+    readonly property var layoutInputs: [detailBody.width, detailBody.height, settingsRows.implicitHeight, root.layoutable, root.section, root.blocksShown, root.pagesPane]
     onLayoutInputsChanged: Qt.callLater(root.relayout)
     function relayout(): void {
         // A page still arriving block by block is measured once it is whole.
@@ -72,13 +72,19 @@ Item {
         for (const wanted of [root.rowsMost, 520 * d]) {
             const side = Math.min(W - 2 * root.besideMargin - root.besideGap - wanted, (H - words - 26 * d) / k)
             if (side < 340 * d) continue
+            // Read a block at a time, the rows keep their full width on every block: sized by the block in view, the scene
+            // grew and shrank at each swap.
+            if (root.pagesPane && options.some(option => option.mode === "beside")) continue
             const rowsWidth = Math.min(root.rowsMost, W - 2 * root.besideMargin - root.besideGap - side)
             options.push({ mode: "beside", side: side, rows: rowsWidth, empty: W * H - side * (side * k + words) - rowsWidth * Math.min(rows, H) })
         }
         if (options.length === 0) { root.pageMode = ""; return }
-        let best = options.reduce((a, b) => b.empty < a.empty ? b : a)
+        // An area read a block at a time keeps its index beside the scene on every block: a page that flipped to a stack
+        // on a short block moved the index from under the scene to over the rows at each swap.
+        const pool = root.pagesPane && options.some(option => option.mode === "beside") ? options.filter(option => option.mode === "beside") : options
+        let best = pool.reduce((a, b) => b.empty < a.empty ? b : a)
         // A layout already on screen stays unless the other is clearly better: rows rewrap when their width changes.
-        const kept = options.find(option => option.mode === root.pageMode)
+        const kept = pool.find(option => option.mode === root.pageMode)
         if (kept && kept.empty <= best.empty * 1.05) best = kept
         root.pageMode = best.mode
         if (best.mode === "stack") root.stackWidth = Math.round(best.width)
@@ -263,13 +269,14 @@ Item {
     // captioned cards and nothing is behind a click; galleries and editors read whole too, as they do in the pane. What
     // counts is what shows: rows folded behind a group's Fine-tune take no room (a modified one never folds). An index of
     // a few groups is a few rows over an empty page: those sections read whole up to twice as long.
-    // A section reads whole (its groups under captions) up to about fifteen rows; a longer one lists its groups and opens
-    // one at a time, as the compact window of 2026-10-05 did. A Design's scene reads whole beside its own index.
-    readonly property bool readsWhole: root.columns || root.essentialCount <= 15
-    // Beside its index a long section reads one of its blocks at a time, the index pointing into every block: read whole,
-    // AIRISU's pane put Appearance's 61 rows or the Lock's 58 on one scroll (the maintainer: "tantos settings juntos en
-    // una pantallita te volés loco"). General, the side panels and the Hub keep their own panes.
-    readonly property bool pagesPane: root.columns && root.essentialCount > 15 && root.groupChunks.length > 1
+    // Every area reads its rows in line (DI48-R1): a list of groups that each open a page to pick one value hid the answer
+    // a click away. Only a window too narrow for the engine's page keeps the old list of groups for a long area.
+    readonly property bool readsWhole: root.columns || (!root.sceneDrawn && root.wideEnough) || root.essentialCount <= 15
+    // A long section reads one of its blocks at a time, the index pointing into every block: read whole, Appearance's 61
+    // rows or the Lock's 58 sat on one scroll (the maintainer: "tantos settings juntos en una pantallita te volés loco").
+    // General, the side panels and the Hub keep their own panes.
+    readonly property bool pagesPane: (root.columns || (!root.sceneDrawn && root.wideEnough && !root.searching))
+        && root.essentialCount > 15 && root.groupChunks.length > 1
         && !["general", "sidebars", "system"].includes(root.section)
     property int paneChunk: 0
     readonly property int shownChunk: root.pagesPane ? Math.min(root.paneChunk, root.groupChunks.length - 1) : -1
@@ -298,20 +305,34 @@ Item {
         const out = []
         // In columns the pane reads in the column's order, and every group is a place with its name: the column points at
         // each one, so none hides inside a neighbour's card.
-        if (root.split) {
-            for (const chunk of root.shownChunk >= 0 ? [root.groupChunks[root.shownChunk]] : root.groupChunks)
-                for (const group of chunk.groups)
-                    out.push({ title: group.title, caption: group.title, key: group.key, rows: group.rows.slice(), loose: false })
-            return out
-        }
-        for (const group of root.groups) {
-            // A list is a group of its own: it reads under its name, not inside a neighbour's card.
-            const single = group.rows.length === 1 && group.rows[0].kind !== "list"
-            const previous = out[out.length - 1]
-            if (single && previous?.loose && !root.split) { previous.rows = previous.rows.concat(group.rows); continue }
-            out.push({ title: single ? "\u200b" + group.key : group.title, caption: single ? "" : group.title, key: group.key, rows: group.rows.slice(), loose: single })
+        // Read a block at a time, the blocks already built stay (hidden) after the shown one: going back to one is a swap of
+        // what shows, and building one costs four stalled frames.
+        const chunks = root.shownChunk < 0 ? [-1]
+            : [root.shownChunk].concat(root.builtChunks.filter(at => at !== root.shownChunk && at < root.groupChunks.length))
+        for (const at of chunks) {
+            const groups = at < 0 ? root.groups : root.groupChunks[at].groups
+            if (root.split) {
+                for (const group of groups)
+                    out.push({ title: group.title, caption: group.title, key: group.key, rows: group.rows.slice(), loose: false, chunk: at })
+                continue
+            }
+            let previous = null
+            for (const group of groups) {
+                // A list is a group of its own: it reads under its name, not inside a neighbour's card.
+                const single = group.rows.length === 1 && group.rows[0].kind !== "list"
+                if (single && previous?.loose) { previous.rows = previous.rows.concat(group.rows); continue }
+                previous = { title: single ? "\u200b" + group.key : group.title, caption: single ? "" : group.title, key: group.key, rows: group.rows.slice(), loose: single, chunk: at }
+                out.push(previous)
+            }
         }
         return out
+    }
+    // The blocks of the area built so far: the ones shown, and the one under the pointer in the index (built while the
+    // pointer rests on it, so the click only swaps). What is never asked for is never built.
+    property var builtChunks: []
+    function buildChunk(at: int): void {
+        if (at < 0 || root.builtChunks.includes(at)) return
+        root.builtChunks = root.builtChunks.concat([at])
     }
     // A group of one switch reads as that switch, named by its own label ("Confirm before closing windows" says more
     // than "Closing"); where that label repeats across the area (every widget's "On the desktop") it names nothing, and
@@ -338,13 +359,18 @@ Item {
     readonly property string pageKey: root.section + "/" + root.openGroup + "/" + root.advancedPage
     property string fedPage: ""
     property int blocksShown: 1
+    // The page has arrived whole: a block built later (another block of a long area) comes in at once, never by trimming
+    // the ones already there.
+    property bool fedAll: false
     readonly property var fedGroups: {
         if (root.searching || root.landingPath.length > 0) return root.shownGroups
+        if (root.fedAll && root.fedPage === root.pageKey) return root.shownGroups
         const shown = root.fedPage === root.pageKey ? root.blocksShown : 1
         return shown >= root.shownGroups.length ? root.shownGroups : root.shownGroups.slice(0, shown)
     }
     function feedPage(): void {
         root.fedPage = root.pageKey
+        root.fedAll = false
         root.blocksShown = 1
         blockFeed.restart()
     }
@@ -353,7 +379,7 @@ Item {
         interval: 16
         repeat: true
         onTriggered: {
-            if (root.blocksShown >= root.shownGroups.length) stop()
+            if (root.blocksShown >= root.shownGroups.length) { stop(); root.fedAll = true }
             else root.blocksShown += 1
         }
     }
@@ -485,9 +511,49 @@ Item {
     // On a page shown whole, the pinned head follows the group being read: its scene, mark and caption, as a group page
     // would show them, while the rows scroll under it. Groups without a scene leave the section's own.
     property string spyGroup: ""
-    // The index under a scene beside the rows: a page read whole lists its groups, a page of group rows its named blocks.
-    readonly property var besideIndex: root.flatSection ? root.groups.map(entry => ({ key: entry.key, title: entry.title, chunk: -1 }))
-        : root.groupChunks.map((chunk, at) => ({ key: "", title: chunk.caption, chunk: at })).filter(entry => entry.title.length > 0)
+    // The index under a scene beside the rows: a page read whole lists its groups; a page read a block at a time lists its
+    // blocks, the one shown opened on its groups; a page of group rows lists its named blocks.
+    readonly property var besideIndex: {
+        if (root.pagesPane) {
+            const out = []
+            root.groupChunks.forEach((chunk, at) => {
+                out.push({ key: "", title: chunk.caption.length > 0 ? chunk.caption : chunk.groups[0].title, chunk: at, block: true })
+                // A group named as its block is the block's own line: "Look" under "Look" says nothing twice.
+                if (at === root.shownChunk && chunk.groups.length > 1)
+                    for (const group of chunk.groups.filter(group => group.title !== chunk.caption))
+                        out.push({ key: group.key, title: group.title, chunk: -1, block: false })
+            })
+            return out
+        }
+        return root.flatSection ? root.groups.map(entry => ({ key: entry.key, title: entry.title, chunk: -1, block: false }))
+            : root.groupChunks.map((chunk, at) => ({ key: "", title: chunk.caption, chunk: at, block: false })).filter(entry => entry.title.length > 0)
+    }
+    // Another block of a long section takes the rows' place where they stand (DI48-R1): the page never changes, the
+    // rows lift into place as the new block arrives.
+    function showChunk(at: int): void {
+        if (at === root.shownChunk) { root.scrollToGroup(String(root.groupChunks[at]?.groups[0]?.key ?? "")); return }
+        root.heldGroup = ""
+        root.swapChunk(at)
+        spyPace.restart()
+    }
+    function swapChunk(at: int): void {
+        root.buildChunk(root.shownChunk)
+        root.paneChunk = at
+        settingsFlick.contentY = 0
+        chunkSwap.stop()
+        root.chunkIn = 0
+        chunkSwap.start()
+    }
+    property real chunkIn: 1
+    NumberAnimation {
+        id: chunkSwap
+        target: root
+        property: "chunkIn"
+        to: 1
+        duration: IrisStyle.morphDuration
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: IrisStyle.morphCurve
+    }
     property int readChunk: 0
     function scrollToChunk(at: int): void {
         const item = chunkRepeater.itemAt(at)
@@ -525,9 +591,11 @@ Item {
         // At the foot of the page the last groups can never rise to the reading line: the last one in view wins.
         const atEnd = settingsFlick.contentY >= settingsFlick.contentHeight - settingsFlick.height - 2 && settingsFlick.contentY > 0
         const targets = root.spyTargets()
-        // Before any head reaches the line, the first block on the page is the one being read (the column's order).
+        // Before any head reaches the line, the first block on the page is the one being read (the column's order); at the
+        // top of the page it still is, however short it is: a one-row group at the top let the next head pass the line.
         if (root.section !== "general" && targets.length > 0) found = targets[0].key
-        for (const target of targets) {
+        const atTop = settingsFlick.contentY < 1 && root.section !== "general"
+        for (const target of atTop ? [] : targets) {
             const top = target.item.mapToItem(settingsFlick.contentItem, 0, 0).y - settingsFlick.contentY
             // The group whose head has reached the upper fifth is the one being read; at the foot, the last one in view.
             if (top > settingsFlick.height * (atEnd ? 0.92 : 0.2)) break
@@ -556,8 +624,7 @@ Item {
     function scrollToGroup(wanted: string): void {
         const chunk = root.pagesPane ? root.chunkOf(wanted) : -1
         if (chunk >= 0 && chunk !== root.shownChunk) {
-            root.paneChunk = chunk
-            settingsFlick.contentY = 0
+            root.swapChunk(chunk)
             root.pendingGroup = wanted
             pendingScroll.restart()
             return
@@ -673,7 +740,7 @@ Item {
     function sectionIsFlat(id: string): bool {
         const rows = root.specifications.filter(spec => spec.section === id && root.shown(spec))
         const groups = new Set(rows.map(spec => String(spec.group ?? "")))
-        return id !== "system" && groups.size > 1 && ((root.sceneDrawn && root.paneable)
+        return id !== "system" && groups.size > 1 && ((root.sceneDrawn && root.paneable) || (!root.sceneDrawn && root.wideEnough)
             || (rows.length <= 15 && !rows.some(spec => ["widgets", "pieces", "niriMotion", "list"].includes(spec.kind) && spec.bare !== true)))
     }
     function openResult(spec: var, land: bool): void {
@@ -877,7 +944,7 @@ Item {
     }
     // A Design's scene sets its own page; the engine's slide would only move chrome nobody sees.
     function enterPage(): void { if (!root.sceneDesigned) pageEnter.restart() }
-    onSectionChanged: { root.readChunk = 0; root.paneChunk = 0; settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
+    onSectionChanged: { root.readChunk = 0; root.paneChunk = 0; root.builtChunks = []; settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
     onPageKeyChanged: Qt.callLater(root.feedPage)
     onOpenGroupChanged: { settingsFlick.contentY = 0; root.enterPage() }
     onAdvancedPageChanged: root.enterPage()
@@ -1498,57 +1565,108 @@ Item {
                                 width: root.besideSide
                                 height: detailBody.height - y - Math.round(20 * root.d)
 
-                                // Under the scene, the page's groups as its index: the one being read is marked as the rows
-                                // scroll, a click brings one up (the column AIRISU keeps beside its sheet).
-                                Column {
+                                // Under the scene, the page's index: the group being read carries the area's pill, which travels
+                                // on the morph curve as the rows scroll; a long area lists its blocks, the one shown opened on
+                                // its groups (DI48-R1). A click brings a group up or swaps the block in place.
+                                Flickable {
+                                    id: indexFlick
                                     y: pageHero.height + Math.round(18 * root.d)
                                     width: parent.width
+                                    height: Math.max(0, parent.height - y)
                                     visible: root.heroBeside
-                                    Repeater {
-                                        model: root.heroBeside ? root.besideIndex : []
-                                        MouseArea {
-                                            id: indexEntry
-                                            required property var modelData
-                                            required property int index
-                                            readonly property bool current: indexEntry.modelData.chunk >= 0 ? indexEntry.modelData.chunk === root.readChunk
-                                                : String(indexEntry.modelData.key) === root.readGroup
-                                            width: parent.width
-                                            height: Math.round(34 * root.d)
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            Accessible.role: Accessible.Button
-                                            Accessible.name: indexEntry.modelData.title
-                                            onClicked: {
-                                                if (indexEntry.modelData.chunk >= 0) { root.scrollToChunk(indexEntry.modelData.chunk); return }
-                                                root.heldGroup = String(indexEntry.modelData.key)
-                                                root.readGroup = root.heldGroup
-                                                root.scrollToGroup(root.heldGroup)
-                                            }
-                                            Rectangle {
-                                                anchors.fill: parent
-                                                radius: IrisStyle.radiusRow
-                                                color: indexEntry.containsMouse ? IrisStyle.fillQuiet : "transparent"
-                                                Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
-                                            }
-                                            Rectangle {
-                                                x: Math.round(4 * root.d)
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                width: Math.round(3 * root.d)
-                                                height: Math.round(16 * root.d)
-                                                radius: width / 2
-                                                color: IrisStyle.accent
-                                                opacity: indexEntry.current ? 1 : 0
-                                                Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
-                                            }
-                                            IrisText {
-                                                x: Math.round(16 * root.d)
-                                                width: parent.width - x - Math.round(8 * root.d)
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                text: indexEntry.modelData.title
-                                                color: indexEntry.current ? IrisStyle.text : IrisStyle.muted
-                                                font.pixelSize: IrisStyle.typeBody
-                                                font.weight: IrisStyle.weight(indexEntry.current ? Font.DemiBold : Font.Normal)
-                                                elide: Text.ElideRight
+                                    contentHeight: indexColumn.height
+                                    interactive: contentHeight > height
+                                    boundsBehavior: Flickable.StopAtBounds
+                                    clip: interactive
+                                    readonly property real blockHeight: Math.round(34 * root.d)
+                                    readonly property real groupHeight: Math.round(30 * root.d)
+                                    function heightOf(entry: var): real { return entry.block || entry.chunk >= 0 || !root.pagesPane ? blockHeight : groupHeight }
+                                    function isCurrent(entry: var): bool {
+                                        if (entry.chunk >= 0) return root.pagesPane ? entry.chunk === root.shownChunk : entry.chunk === root.readChunk
+                                        return String(entry.key) === root.readGroup
+                                    }
+                                    // The pill rests on the group being read, or on the block when it has no groups listed.
+                                    readonly property int pillAt: {
+                                        const entries = root.heroBeside ? root.besideIndex : []
+                                        const group = entries.findIndex(entry => entry.chunk < 0 && indexFlick.isCurrent(entry))
+                                        return group >= 0 ? group : entries.findIndex(entry => entry.chunk >= 0 && indexFlick.isCurrent(entry))
+                                    }
+                                    readonly property real pillY: {
+                                        let top = 0
+                                        for (let at = 0; at < indexFlick.pillAt; at++) top += indexFlick.heightOf(root.besideIndex[at])
+                                        return top
+                                    }
+                                    readonly property color tint: IrisStyle.plainMarks ? IrisStyle.accent : (root.currentSection?.tint ?? IrisStyle.accent)
+                                    onPillYChanged: {
+                                        if (!indexFlick.interactive) return
+                                        const pillHeight = indexFlick.pillAt >= 0 ? indexFlick.heightOf(root.besideIndex[indexFlick.pillAt]) : 0
+                                        if (indexFlick.pillY < indexFlick.contentY) indexFlick.contentY = indexFlick.pillY
+                                        else if (indexFlick.pillY + pillHeight > indexFlick.contentY + indexFlick.height)
+                                            indexFlick.contentY = indexFlick.pillY + pillHeight - indexFlick.height
+                                    }
+                                    Rectangle {
+                                        id: indexPill
+                                        property bool travels: false
+                                        width: parent.width
+                                        y: indexFlick.pillY
+                                        height: indexFlick.pillAt >= 0 ? indexFlick.heightOf(root.besideIndex[indexFlick.pillAt]) : 0
+                                        radius: IrisStyle.plateSelection ? 0 : Math.min(IrisStyle.radiusRow, height / 2)
+                                        color: IrisStyle.plateSelection ? IrisStyle.selectionFill : IrisStyle.tintFillHover(indexFlick.tint)
+                                        opacity: indexFlick.pillAt >= 0 ? 1 : 0
+                                        // It lands where it first shows and travels from then on, as the sidebar's wash does.
+                                        onOpacityChanged: if (opacity === 1) pillArm.restart()
+                                        Timer { id: pillArm; interval: 0; onTriggered: indexPill.travels = IrisStyle.motionEnabled }
+                                        Behavior on y { enabled: indexPill.travels; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+                                        Behavior on height { enabled: indexPill.travels; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+                                        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+                                    }
+                                    Column {
+                                        id: indexColumn
+                                        width: parent.width
+                                        Repeater {
+                                            model: root.heroBeside ? root.besideIndex : []
+                                            MouseArea {
+                                                id: indexEntry
+                                                required property var modelData
+                                                required property int index
+                                                readonly property bool current: indexFlick.isCurrent(indexEntry.modelData)
+                                                readonly property bool sub: !indexEntry.modelData.block && indexEntry.modelData.chunk < 0 && root.pagesPane
+                                                width: parent.width
+                                                height: indexFlick.heightOf(indexEntry.modelData)
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                Accessible.role: Accessible.Button
+                                                Accessible.name: indexEntry.modelData.title
+                                                onContainsMouseChanged: if (containsMouse && root.pagesPane && indexEntry.modelData.chunk >= 0) indexBuild.restart()
+                                                Timer { id: indexBuild; interval: 90; onTriggered: if (indexEntry.containsMouse) root.buildChunk(indexEntry.modelData.chunk) }
+                                                onClicked: {
+                                                    if (indexEntry.modelData.chunk >= 0) {
+                                                        if (root.pagesPane) root.showChunk(indexEntry.modelData.chunk)
+                                                        else root.scrollToChunk(indexEntry.modelData.chunk)
+                                                        return
+                                                    }
+                                                    root.heldGroup = String(indexEntry.modelData.key)
+                                                    root.readGroup = root.heldGroup
+                                                    root.scrollToGroup(root.heldGroup)
+                                                }
+                                                Rectangle {
+                                                    anchors.fill: parent
+                                                    radius: Math.min(IrisStyle.radiusRow, height / 2)
+                                                    color: indexEntry.containsMouse && indexFlick.pillAt !== indexEntry.index ? IrisStyle.fillQuiet : "transparent"
+                                                    Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+                                                }
+                                                IrisText {
+                                                    x: Math.round((indexEntry.sub ? 28 : 14) * root.d)
+                                                    width: parent.width - x - Math.round(10 * root.d)
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: indexEntry.modelData.title
+                                                    color: indexEntry.current || (indexEntry.modelData.block && indexEntry.modelData.chunk === root.shownChunk)
+                                                        ? IrisStyle.text : IrisStyle.muted
+                                                    font.pixelSize: indexEntry.sub ? IrisStyle.typeMeta : IrisStyle.typeBody
+                                                    font.weight: IrisStyle.weight(indexEntry.current || (indexEntry.modelData.block && indexEntry.modelData.chunk === root.shownChunk)
+                                                        ? Font.DemiBold : Font.Normal)
+                                                    elide: Text.ElideRight
+                                                }
                                             }
                                         }
                                     }
@@ -1626,6 +1744,9 @@ Item {
                                         : Math.min(settingsFlick.width - 56 * root.d, root.generalHome ? root.columnMost : root.rowsMost)
                                     x: Math.round((settingsFlick.width - width) / 2)
                                     spacing: 18 * root.d
+                                    // Another block lifts into the place of the last one (DI48-R1), its rows arriving as it rises.
+                                    opacity: root.chunkIn
+                                    transform: Translate { y: Math.round((1 - root.chunkIn) * 14 * root.d) }
 
                                     // The head reads here only when it carries no scene, or the window is too short to keep one in view.
                                     Item {
@@ -1633,6 +1754,16 @@ Item {
                                         Layout.fillWidth: true
                                         visible: pageHero.shown && !root.heroPinned && !root.stageInColumn && !root.heroBeside && !root.sceneDrawn
                                         implicitHeight: visible ? pageHero.implicitHeight : 0
+                                    }
+
+                                    // Without an index beside the rows, a long area's blocks are a segmented control over them.
+                                    IrisSegmented {
+                                        Layout.fillWidth: true
+                                        visible: root.pagesPane && !root.heroBeside && !root.split
+                                        options: visible ? root.groupChunks.map((chunk, at) => ({ value: at, label: chunk.caption.length > 0 ? chunk.caption : chunk.groups[0].title })) : []
+                                        current: root.shownChunk
+                                        accessibleName: Translation.tr(root.currentSection.title)
+                                        onPicked: value => root.showChunk(value)
                                     }
 
                                     IrisGameModeCard {
@@ -1691,6 +1822,7 @@ Item {
                                             id: blockLoader
                                             required property var modelData
                                             Layout.fillWidth: true
+                                            visible: (blockLoader.modelData.chunk ?? -1) === root.shownChunk
                                             asynchronous: !root.searching && root.landingPath.length === 0
                                             sourceComponent: GroupBlock { modelData: blockLoader.modelData }
                                         }

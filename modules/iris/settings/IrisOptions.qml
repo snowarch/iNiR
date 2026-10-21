@@ -1600,6 +1600,19 @@ QtObject {
             { caption: "Changing it", groups: ["Wallpaper shuffle", "Transition", "Live wallpapers", "Wallpaper gallery", "Library"] },
             { caption: "How it sits", groups: ["Scaling", "Behind windows", "Parallax", "Overview backdrop"] }
         ],
+        motion: [
+            { caption: "Motion", groups: ["Motion", "Curve", "Timing", "Touch"] },
+            { caption: "Per surface", groups: ["Per surface", "Style per surface"] }
+        ],
+        orbit: [
+            { caption: "Orbit", groups: ["Orbit", "Size", "Look"] },
+            { caption: "Behaviour", groups: ["Behaviour", "Shelf", "Hot corner"] }
+        ],
+        windows: [
+            { caption: "Layout", groups: ["Layout", "Room for iRiS", "Closing"] },
+            { caption: "Look", groups: ["Borders", "Shape", "Glass behind apps"] },
+            { caption: "Movement", groups: ["Movement"] }
+        ],
         lock: [
             { caption: "Locking", groups: ["When idle", "Security"] },
             { caption: "Look", groups: ["Scene", "Clock", "Type"] },
