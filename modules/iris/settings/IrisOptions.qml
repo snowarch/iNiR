@@ -1219,7 +1219,7 @@ QtObject {
         { label: "Island", value: "island" }, { label: "Workspaces", value: "workspaces" },
         { label: "Current window", value: "window" }, { label: "Time", value: "time" }
     ].concat(IrisPieces.extras.filter(piece => piece.id !== "workspaces").map(piece => ({ label: piece.label, value: piece.id })))
-    // Settings' sidebar, in the order and clusters it shows. `tip` is the one line a section opens on.
+    // Every area, in the sidebar's order (the categories' below). `tip` is the one line a section opens on.
     readonly property var sections: [
         { id: "general", cluster: 0, title: "General", subtitle: "Time, language and how iRiS behaves", icon: "settings", get tint() { return IrisStyle.identity.gray }, tip: "Settings that shape the whole shell, whichever surface shows them." },
         { id: "appearance", cluster: 0, title: "Style", subtitle: "Look, material, shape and type", icon: "style", get tint() { return IrisStyle.identity.purple }, tip: "Customize edits the same values live, on top of your desktop." },
@@ -1236,22 +1236,22 @@ QtObject {
         { id: "controlCenter", cluster: 2, title: "Control Center", subtitle: "What it carries and how it looks", icon: "toggle_on", get tint() { return IrisStyle.identity.gray }, tip: "Arrange it in place from the button beside the lock in its header." },
         { id: "spotlight", cluster: 2, title: "Spotlight", subtitle: "Search apps, files, the clipboard and more", icon: "search", get tint() { return IrisStyle.identity.blue }, tip: "Prefixes: ; clipboard, = calculator, / actions." },
         { id: "orbit", cluster: 2, title: "Orbit", subtitle: "Every workspace and window, and the way to any of them", icon: "workspaces", get tint() { return IrisStyle.identity.indigo }, tip: "Type to light up where a window is; ↵ takes you to it. Bind inir orbit toggle." },
+        { id: "capture", cluster: 2, title: "Screenshots & Recording", subtitle: "Snip, annotate, read Japanese and record", icon: "screenshot_region", get tint() { return IrisStyle.identity.orange }, tip: "Super+Shift+S snips; the toolbar switches to text, search or recording." },
         { id: "notifications", cluster: 2, title: "Notifications", subtitle: "Banners, quiet hours and Do Not Disturb", icon: "notifications", get tint() { return IrisStyle.identity.red }, tip: "Hover a banner to keep it; swipe it away to dismiss." },
         { id: "sound", cluster: 2, title: "Sound & Feedback", subtitle: "Volume, alert sounds and what the OSD shows", icon: "volume_up", get tint() { return IrisStyle.identity.pink }, tip: "Scroll on the Island for volume; Ctrl for the microphone." },
-        { id: "capture", cluster: 2, title: "Screenshots & Recording", subtitle: "Snip, annotate, read Japanese and record", icon: "screenshot_region", get tint() { return IrisStyle.identity.orange }, tip: "Super+Shift+S snips; the toolbar switches to text, search or recording." },
+        { id: "player", cluster: 5, title: "Now Playing", subtitle: "Music in the Island, on the lock screen and on the frame", icon: "music_note", get tint() { return IrisStyle.identity.pink }, tip: "Middle-click the Island to play or pause." },
+        { id: "anime", cluster: 5, title: "Anime", subtitle: "Airing, Continue and the anime colour layer", icon: "live_tv", get tint() { return IrisStyle.identity.purple }, tip: "Airing tracks what is coming; Continue resumes what you were watching." },
         { id: "display", cluster: 3, title: "Display", subtitle: "Resolution, scale, night light and bright flashes", icon: "brightness_6", get tint() { return IrisStyle.identity.blue }, tip: "Shift and scroll on the Island for brightness." },
         { id: "keyboard", cluster: 3, title: "Keyboard & Mouse", subtitle: "Layouts, repeat, pointer speed and cursor", icon: "keyboard", get tint() { return IrisStyle.identity.gray }, tip: "Your shortcuts are in General, Keyboard shortcuts." },
         { id: "battery", cluster: 3, title: "Battery", subtitle: "Warnings, suspend and charge limit", icon: "battery_full", get tint() { return IrisStyle.identity.green }, tip: "Only matters on a machine with a battery." },
         { id: "gaming", cluster: 3, title: "Gaming & Fullscreen", subtitle: "What iRiS steps back from while you play", icon: "sports_esports", get tint() { return IrisStyle.identity.purple }, tip: "Game mode turns on by itself for fullscreen games." },
         { id: "lock", cluster: 4, title: "Lock Screen", subtitle: "What it shows, when it locks and how it reads", icon: "lock", get tint() { return IrisStyle.identity.gray }, tip: "Rehearse it: the real surface, editable, with nothing to unlock." },
         { id: "login", cluster: 4, title: "Login Screen", subtitle: "Where you sign in after starting the computer", icon: "login", get tint() { return IrisStyle.identity.indigo }, tip: "A change shows the next time you sign in." },
-        { id: "player", cluster: 5, title: "Now Playing", subtitle: "Music in the Island, on the lock screen and on the frame", icon: "music_note", get tint() { return IrisStyle.identity.pink }, tip: "Middle-click the Island to play or pause." },
-        { id: "anime", cluster: 5, title: "Anime", subtitle: "Airing, Continue and the anime colour layer", icon: "live_tv", get tint() { return IrisStyle.identity.purple }, tip: "Airing tracks what is coming; Continue resumes what you were watching." },
         { id: "sources", cluster: 6, title: "Sources", subtitle: "Where the Island gets what it shows", icon: "cloud_sync", get tint() { return IrisStyle.identity.yellow }, tip: "A setting belongs here when an iRiS surface puts its data on screen." },
         { id: "system", cluster: 6, title: "Community Hub", subtitle: "Widgets, themes and web apps from other people", icon: "storefront", get tint() { return IrisStyle.identity.pink }, tip: "What people who use iNiR share, reviewed before it is published." }
     ]
-    // How Settings is navigated (2026-10-20, DI24): ten categories in the sidebar, each opening its areas as a second level.
-    // An area stays the owner of its rows, its search hits, its IPC name and its history; a category only groups them.
+    // The sidebar's groups (DI49g, 2026-10-21): each names the areas under it, which the sidebar lists directly; a
+    // category's id still opens its first area (`inir iris settings look`).
     readonly property var categories: [
         { id: "general", cluster: 0, title: "General", icon: "settings", get tint() { return IrisStyle.identity.gray }, sections: ["general"] },
         { id: "look", cluster: 0, title: "Appearance", icon: "style", get tint() { return IrisStyle.identity.purple }, sections: ["appearance", "colour", "wallpaper", "motion"] },
