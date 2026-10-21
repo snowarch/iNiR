@@ -39,30 +39,22 @@ MouseArea {
             ColorAnimation { duration: IrisStyle.duration(110) }
         }
     }
-    IrisSquircle {
+    // The link's glyph in its area's colour, without a tile under it, as the sidebar marks its areas: a column of
+    // coloured squares is every settings app, and the colour alone already tells the links apart.
+    MaterialSymbol {
         id: mark
-        visible: root.tinted
         anchors.left: parent.left
         anchors.leftMargin: 14 * IrisStyle.settingsDensity
         anchors.verticalCenter: parent.verticalCenter
         width: Math.round(26 * IrisStyle.settingsDensity)
-        height: width
-        tint: root.entry.tint ?? IrisStyle.identity.gray
-        glyph: root.entry.icon ?? "chevron_right"
-    }
-    MaterialSymbol {
-        id: glyph
-        visible: !root.tinted
-        anchors.left: parent.left
-        anchors.leftMargin: 18 * IrisStyle.settingsDensity
-        anchors.verticalCenter: parent.verticalCenter
+        horizontalAlignment: Text.AlignHCenter
         text: root.entry.icon ?? "chevron_right"
-        iconSize: Math.round(18 * IrisStyle.settingsDensity)
-        color: IrisStyle.subtext
+        iconSize: Math.round(19 * IrisStyle.settingsDensity)
+        color: !root.tinted || IrisStyle.plainMarks ? IrisStyle.textSecondary : (root.entry.tint ?? IrisStyle.identity.gray)
     }
     IrisText {
         id: label
-        anchors.left: mark.visible ? mark.right : glyph.right
+        anchors.left: mark.right
         anchors.leftMargin: 12 * IrisStyle.settingsDensity
         anchors.right: value.visible ? value.left : chevron.left
         anchors.rightMargin: value.visible ? 8 * IrisStyle.settingsDensity : 0
