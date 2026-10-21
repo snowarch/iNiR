@@ -32,7 +32,9 @@ Rectangle {
     property var order: []
     function syncOrder(): void {
         const kept = root.order.filter(id => root.sections.includes(id))
-        if (kept.length === root.sections.length && kept.every((id, i) => id === root.sections[i])) return
+        // The order always holds the whole catalogue: with every section off it was empty and kept nothing to switch on.
+        if (root.order.length === root.catalog.length && kept.length === root.sections.length
+            && kept.every((id, i) => id === root.sections[i])) return
         root.order = root.sections.concat(root.catalog.map(s => s.id).filter(id => !root.sections.includes(id)))
     }
     onSectionsChanged: root.syncOrder()
@@ -79,15 +81,17 @@ Rectangle {
                 width: list.width
                 height: Math.round(46 * root.d)
 
-                IrisSquircle {
+                // The section's glyph in its colour, no tile under it: the same mark Settings gives its areas and links.
+                MaterialSymbol {
                     id: mark
                     anchors.left: parent.left
                     anchors.leftMargin: Math.round(14 * root.d)
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.round(26 * root.d)
-                    height: width
-                    tint: row.modelData.tint
-                    glyph: row.modelData.icon
+                    horizontalAlignment: Text.AlignHCenter
+                    text: row.modelData.icon
+                    iconSize: Math.round(19 * root.d)
+                    color: IrisStyle.plainMarks ? IrisStyle.textSecondary : row.modelData.tint
                     opacity: row.shown ? 1 : 0.4
                     Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                 }
