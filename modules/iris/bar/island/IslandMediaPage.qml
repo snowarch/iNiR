@@ -312,7 +312,7 @@ GridLayout {
                         when: appLevel.live
                         restoreMode: Binding.RestoreNone
                         value: appLevel.nodes.length > 0
-                            ? Quickshell.iconPath(MprisController.streamIconName(appLevel.nodes[0]) ?? "", "audio-x-generic") ?? "" : ""
+                            ? MprisController.streamIconSource(appLevel.nodes[0], "audio-x-generic") : ""
                     }
                     opacity: appLevel.muted ? 0.45 : 1
                 }

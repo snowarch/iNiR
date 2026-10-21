@@ -44,7 +44,7 @@ Item {
     }
     function nameOf(window: var): string {
         const id = String(window?.app_id ?? "")
-        const app = AppSearch.lookupDesktopEntry(id)?.name ?? id
+        const app = AppSearch.appName(id)
         if (!root.preferTitles) return app
         const title = String(window?.title ?? "").trim()
         return title.length > 0 ? title : app

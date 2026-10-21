@@ -34,14 +34,18 @@ ColumnLayout {
             const app = byKey[key] ?? (byKey[key] = { key: key, name: "", icon: "", count: 0, time: 0 })
             app.count += 1
             if (notif.time >= app.time) {
-                const entry = DesktopEntries.heuristicLookup(String(notif.desktopEntry || notif.appName || ""))
+                const who = AppSearch.appIdentity([notif.desktopEntry, notif.appName], "")
                 app.time = notif.time
-                app.name = entry?.name ?? String(notif.appName || key)
-                app.icon = AppSearch.getIconSource(String(notif.appIcon || entry?.icon || ""), app.name)
+                app.name = who.entry ? who.name : String(notif.appName || key)
+                // The icon the notification names first (a path or a theme name), then the app's own.
+                app.icon = AppSearch.iconSource([notif.appIcon, who.entry?.icon, notif.desktopEntry, String(notif.appName ?? "").toLowerCase()], "")
             }
         }
         for (const key of root.blocked.concat(root.quiet))
-            if (!byKey[key] && /^[a-z0-9]+$/.test(String(key))) byKey[key] = { key: key, name: key, icon: AppSearch.getIconSource(key, key), count: 0, time: -1 }
+            if (!byKey[key] && /^[a-z0-9]+$/.test(String(key))) {
+                const who = AppSearch.appIdentity(key, "")
+                byKey[key] = { key: key, name: who.name, icon: who.icon, count: 0, time: -1 }
+            }
         return Object.values(byKey).sort((a, b) => b.time - a.time)
     }
     function modeOf(key: string): string { return root.blocked.includes(key) ? "never" : root.quiet.includes(key) ? "quiet" : "banners" }
@@ -91,7 +95,7 @@ ColumnLayout {
                 IrisText {
                     Layout.fillWidth: true
                     visible: appRow.modelData.count > 0
-                    text: Translation.tr("%1 notifications").arg(appRow.modelData.count) + "  ·  " + NotificationUtils.getFriendlyNotifTimeString(appRow.modelData.time)
+                    text: (appRow.modelData.count === 1 ? Translation.tr("1 notification") : Translation.tr("%1 notifications").arg(appRow.modelData.count)) + "  ·  " + NotificationUtils.getFriendlyNotifTimeString(appRow.modelData.time)
                     color: IrisStyle.muted
                     font.pixelSize: IrisStyle.typeMeta
                     elide: Text.ElideRight

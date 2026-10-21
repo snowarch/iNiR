@@ -148,7 +148,7 @@ Item {
             const windows = app.toplevels ?? []
             return {
                 appId: app.appId,
-                name: entry?.name ?? app.appId,
+                name: AppSearch.cleanAppName(entry?.name) || app.appId,
                 iconName: IrisPieces.appIcon(app.appId),
                 iconType: LauncherSearchResult.IconType.System,
                 running: windows.length > 0,

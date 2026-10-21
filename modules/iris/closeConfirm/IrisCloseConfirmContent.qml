@@ -43,7 +43,7 @@ Item {
         MouseArea { anchors.fill: parent; onClicked: root.cancel() }
     }
 
-    readonly property string appName: root.desktopEntry?.name ?? (root.appId.length > 0 ? root.appId : Translation.tr("this app"))
+    readonly property string appName: AppSearch.cleanAppName(root.desktopEntry?.name) || (root.appId.length > 0 ? root.appId : Translation.tr("this app"))
 
     IrisSurface {
         anchors.centerIn: parent

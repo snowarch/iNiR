@@ -1402,15 +1402,26 @@ Singleton {
 	}
 
 	function streamIconName(node): string {
+		return root._streamIcon(node) || "application-x-executable";
+	}
+
+	// What a mixer row draws for a stream: AppSearch.iconSource, so an entry whose icon the theme lacks falls to the
+	// stream's own hints and then to the fallback, never to an empty or checkerboard square.
+	function streamIconSource(node, fallback): string {
+		return node ? AppSearch.iconSource([root._streamIcon(node)], fallback) : "";
+	}
+
+	function _streamIcon(node): string {
 		const entry = root.streamDesktopEntry(node);
-		if (entry?.icon) return String(entry.icon);
+		const declared = String(entry?.icon ?? "");
+		if (declared.startsWith("/") || AppSearch.iconExists(declared)) return declared;
 		const props = node?.properties ?? {};
-		const hints = [props["application.icon-name"], props["application.id"], props["application.process.binary"], props["node.name"]];
+		const hints = [props["application.icon-name"], entry?.id, props["application.id"], props["application.process.binary"], props["node.name"]];
 		for (const hint of hints) {
 			const icon = AppSearch.guessIcon(String(hint ?? ""));
 			if (AppSearch.iconExists(icon)) return icon;
 		}
-		return "application-x-executable";
+		return "";
 	}
 
 	function compactStreamDisplayName(node, maxChars: int): string {

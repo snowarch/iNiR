@@ -1195,7 +1195,7 @@ Loader {
                             required property var modelData
                             width: Math.round(22 * root.d)
                             height: width
-                            source: modelData ? Quickshell.iconPath(MprisController.streamIconName(modelData), "audio-x-generic") : ""
+                            source: modelData ? MprisController.streamIconSource(modelData, "audio-x-generic") : ""
                         }
                     }
                 }
@@ -1212,7 +1212,7 @@ Loader {
                     IrisImage {
                         Layout.preferredWidth: Math.round(26 * root.d)
                         Layout.preferredHeight: Layout.preferredWidth
-                        source: stream.modelData ? Quickshell.iconPath(MprisController.streamIconName(stream.modelData), "audio-x-generic") : ""
+                        source: stream.modelData ? MprisController.streamIconSource(stream.modelData, "audio-x-generic") : ""
                         opacity: stream.muted ? 0.45 : 1
                     }
                     ColumnLayout {

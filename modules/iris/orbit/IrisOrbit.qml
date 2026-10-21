@@ -122,7 +122,7 @@ Item {
     readonly property bool searching: root.query.trim().length > 0
     function nameOf(window: var): string {
         const id = String(window?.app_id ?? "")
-        return AppSearch.lookupDesktopEntry(id)?.name ?? id
+        return AppSearch.appName(id)
     }
     function titleOf(window: var): string {
         const title = String(window?.title ?? "").trim()

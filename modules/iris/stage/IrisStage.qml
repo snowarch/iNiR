@@ -1107,7 +1107,7 @@ Item {
         slot = root.ownerSlot(slot)
         if (root.isApp(slot)) {
             const appId = IrisPieces.appIdOf(slot)
-            return AppSearch.lookupDesktopEntry(appId)?.name ?? appId
+            return AppSearch.appName(appId)
         }
         return IrisPieces.labelOf(root.isExtra(slot) ? slot.slice(6) : slot)
     }

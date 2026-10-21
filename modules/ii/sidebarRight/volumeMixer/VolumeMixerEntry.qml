@@ -26,7 +26,7 @@ Item {
             visible: source != ""
             sourceSize.width: size
             sourceSize.height: size
-            source: root.node ? Quickshell.iconPath(MprisController.streamIconName(root.node), "image-missing") : ""
+            source: root.node ? MprisController.streamIconSource(root.node, "image-missing") : ""
         }
 
         ColumnLayout {

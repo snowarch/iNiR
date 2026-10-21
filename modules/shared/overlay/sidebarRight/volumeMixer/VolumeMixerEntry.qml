@@ -53,7 +53,7 @@ Rectangle {
                 anchors.centerIn: parent
                 sourceSize.width: 24
                 sourceSize.height: 24
-                source: root.node ? Quickshell.iconPath(MprisController.streamIconName(root.node), "image-missing") : ""
+                source: root.node ? MprisController.streamIconSource(root.node, "image-missing") : ""
             }
         }
 

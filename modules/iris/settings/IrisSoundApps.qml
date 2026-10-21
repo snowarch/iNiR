@@ -56,7 +56,7 @@ ColumnLayout {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.round(32 * root.d)
                 height: width
-                source: stream.modelData ? Quickshell.iconPath(MprisController.streamIconName(stream.modelData), "audio-x-generic") : ""
+                source: stream.modelData ? MprisController.streamIconSource(stream.modelData, "audio-x-generic") : ""
                 fillMode: Image.PreserveAspectFit
                 opacity: stream.muted ? 0.45 : 1
             }

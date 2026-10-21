@@ -716,7 +716,7 @@ Item {
                                 visible: !entry.separator
                                 slotIndex: entry.index + (root.showLauncher ? 1 : 0)
                                 readonly property var desktopEntry: entry.separator ? null : AppSearch.lookupDesktopEntry(entry.modelData.appId)
-                                readonly property string appName: appSlot.desktopEntry?.name ?? entry.modelData.appId
+                                readonly property string appName: AppSearch.cleanAppName(appSlot.desktopEntry?.name) || entry.modelData.appId
                                 readonly property bool running: (entry.app.toplevels?.length ?? 0) > 0
                                 readonly property bool focused: (entry.app.toplevels ?? []).some(t => CompositorService.isNiri
                                     ? t.niriWindowId !== undefined && t.niriWindowId === (NiriService.activeWindow?.id ?? -1)
@@ -1227,7 +1227,7 @@ Item {
                         }
                         IrisText {
                             Layout.fillWidth: true
-                            text: AppSearch.lookupDesktopEntry(menu.app?.appId ?? "")?.name ?? (menu.app?.appId ?? "")
+                            text: AppSearch.appName(menu.app?.appId ?? "")
                             elide: Text.ElideRight
                             font.pixelSize: IrisStyle.typeLabel
                             font.weight: IrisStyle.weight(Font.DemiBold)
@@ -1506,7 +1506,7 @@ Item {
                         spacing: 12 * root.d
                         IrisText {
                             Layout.fillWidth: true
-                            text: AppSearch.lookupDesktopEntry(menu.app?.appId ?? "")?.name ?? (menu.app?.appId ?? "")
+                            text: AppSearch.appName(menu.app?.appId ?? "")
                             elide: Text.ElideRight
                             font.pixelSize: IrisStyle.typeLabel
                             font.weight: IrisStyle.weight(Font.DemiBold)
