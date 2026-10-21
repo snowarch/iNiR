@@ -55,7 +55,7 @@ Item {
     readonly property bool layoutable: root.heroPinned && !root.split && !root.sceneDrawn && pageHero.stageAvailable
     readonly property bool heroBeside: root.layoutable && root.pageMode === "beside"
     readonly property bool heroStacked: root.layoutable && root.pageMode === "stack"
-    readonly property var layoutInputs: [detailBody.width, detailBody.height, settingsRows.implicitHeight, root.layoutable, root.section, root.blocksShown, root.fedAll, root.pagesPane]
+    readonly property var layoutInputs: [detailBody.width, detailBody.height, settingsRows.implicitHeight, root.layoutable, root.section, root.blocksShown, root.fedAll]
     onLayoutInputsChanged: Qt.callLater(root.relayout)
     function relayout(): void {
         // A page still arriving block by block is measured once it is whole.
@@ -73,16 +73,11 @@ Item {
         for (const wanted of [root.rowsMost, 520 * d]) {
             const side = Math.min(W - 2 * root.besideMargin - root.besideGap - wanted, (H - words - 26 * d) / k)
             if (side < 340 * d) continue
-            // Read a block at a time, the rows keep their full width on every block: sized by the block in view, the scene
-            // grew and shrank at each swap.
-            if (root.pagesPane && options.some(option => option.mode === "beside")) continue
             const rowsWidth = Math.min(root.rowsMost, W - 2 * root.besideMargin - root.besideGap - side)
             options.push({ mode: "beside", side: side, rows: rowsWidth, empty: W * H - side * (side * k + words) - rowsWidth * Math.min(rows, H) })
         }
         if (options.length === 0) { root.pageMode = ""; return }
-        // An area read a block at a time keeps its index beside the scene on every block: a page that flipped to a stack
-        // on a short block moved the index from under the scene to over the rows at each swap.
-        const pool = root.pagesPane && options.some(option => option.mode === "beside") ? options.filter(option => option.mode === "beside") : options
+        const pool = options
         let best = pool.reduce((a, b) => b.empty < a.empty ? b : a)
         // A layout already on screen stays unless the other is clearly better: rows rewrap when their width changes.
         const kept = pool.find(option => option.mode === root.pageMode)
@@ -268,19 +263,9 @@ Item {
     // Every area reads its rows in line (DI48-R1): a list of groups that each open a page to pick one value hid the answer
     // a click away. Only a window too narrow for the engine's page keeps the old list of groups for a long area.
     readonly property bool readsWhole: root.columns || (!root.sceneDrawn && root.wideEnough) || root.essentialCount <= 15
-    // A long section reads one of its blocks at a time, the index pointing into every block: read whole, Appearance's 61
-    // rows or the Lock's 58 sat on one scroll (the maintainer: "tantos settings juntos en una pantallita te volés loco").
-    // General, the side panels and the Hub keep their own panes.
-    readonly property bool pagesPane: (root.columns || (!root.sceneDrawn && root.wideEnough && !root.searching))
-        && root.essentialCount > 15 && root.groupChunks.length > 1
-        && !["general", "sidebars", "system"].includes(root.section)
-    property int paneChunk: 0
-    readonly property int shownChunk: root.pagesPane ? Math.min(root.paneChunk, root.groupChunks.length - 1) : -1
-    function chunkOf(wanted: string): int {
-        const lower = wanted.toLowerCase()
-        return root.groupChunks.findIndex(chunk => chunk.groups.some(entry => entry.key === wanted || entry.title === wanted
-            || entry.key.toLowerCase() === lower || entry.title.toLowerCase() === lower))
-    }
+    // A long area reads whole on one scroll too (DI49d, 2026-10-21): read a block at a time, a block of three rows left
+    // most of the page bare and every other block was a click away behind an index that swapped pages. Fine-tune keeps
+    // the rare rows folded, and the index beside the scene keeps the way through.
     readonly property int essentialCount: {
         let count = 0
         for (const group of root.groups) {
@@ -301,34 +286,20 @@ Item {
         const out = []
         // In columns the pane reads in the column's order, and every group is a place with its name: the column points at
         // each one, so none hides inside a neighbour's card.
-        // Read a block at a time, the blocks already built stay (hidden) after the shown one: going back to one is a swap of
-        // what shows, and building one costs four stalled frames.
-        const chunks = root.shownChunk < 0 ? [-1]
-            : [root.shownChunk].concat(root.builtChunks.filter(at => at !== root.shownChunk && at < root.groupChunks.length))
-        for (const at of chunks) {
-            const groups = at < 0 ? root.groups : root.groupChunks[at].groups
-            if (root.split) {
-                for (const group of groups)
-                    out.push({ title: group.title, caption: group.title, key: group.key, rows: group.rows.slice(), loose: false, chunk: at })
-                continue
-            }
-            let previous = null
-            for (const group of groups) {
-                // A list is a group of its own: it reads under its name, not inside a neighbour's card.
-                const single = group.rows.length === 1 && group.rows[0].kind !== "list"
-                if (single && previous?.loose) { previous.rows = previous.rows.concat(group.rows); continue }
-                previous = { title: single ? "\u200b" + group.key : group.title, caption: single ? "" : group.title, key: group.key, rows: group.rows.slice(), loose: single, chunk: at }
-                out.push(previous)
-            }
+        if (root.split) {
+            for (const group of root.groups)
+                out.push({ title: group.title, caption: group.title, key: group.key, rows: group.rows.slice(), loose: false })
+            return out
+        }
+        let previous = null
+        for (const group of root.groups) {
+            // A list is a group of its own: it reads under its name, not inside a neighbour's card.
+            const single = group.rows.length === 1 && group.rows[0].kind !== "list"
+            if (single && previous?.loose) { previous.rows = previous.rows.concat(group.rows); continue }
+            previous = { title: single ? "\u200b" + group.key : group.title, caption: single ? "" : group.title, key: group.key, rows: group.rows.slice(), loose: single }
+            out.push(previous)
         }
         return out
-    }
-    // The blocks of the area built so far: the ones shown, and the one under the pointer in the index (built while the
-    // pointer rests on it, so the click only swaps). What is never asked for is never built.
-    property var builtChunks: []
-    function buildChunk(at: int): void {
-        if (at < 0 || root.builtChunks.includes(at)) return
-        root.builtChunks = root.builtChunks.concat([at])
     }
     // A group of one switch reads as that switch, named by its own label ("Confirm before closing windows" says more
     // than "Closing"); where that label repeats across the area (every widget's "On the desktop") it names nothing, and
@@ -511,56 +482,39 @@ Item {
     // On a page shown whole, the pinned head follows the group being read: its scene, mark and caption, as a group page
     // would show them, while the rows scroll under it. Groups without a scene leave the section's own.
     property string spyGroup: ""
-    // The index under a scene beside the rows: a page read whole lists its groups; a page read a block at a time lists its
-    // blocks, the one shown opened on its groups; a page of group rows lists its named blocks.
+    // The index under a scene beside the rows: the area's groups, under the names of its blocks (Look, Surfaces …) where
+    // it has them. Every entry answers on a second line (DI48-R3): a group its value now ("Black", "Auto"), so the index
+    // is the area's overview. It fits its column without a scroll of its own: when every group would not, the blocks
+    // stay named and only the one being read opens on its groups, following the rows.
     readonly property var besideIndex: {
-        // Every entry answers on a second line (DI48-R3): a group its value now ("Black", "Auto"), a block not shown what is
-        // in it ("Material · Glass · Texture"), so the index is the area's overview and nothing needs opening to be read.
-        if (root.pagesPane) {
-            const out = []
-            root.groupChunks.forEach((chunk, at) => {
-                const title = chunk.caption.length > 0 ? chunk.caption : chunk.groups[0].title
-                const named = chunk.groups.filter(group => group.title !== title)
-                const open = at === root.shownChunk && chunk.groups.length > 1
-                // A block shown on one group answers with that group's value.
-                const detail = open ? "" : chunk.groups.length === 1 ? root.summaryOf(chunk.groups[0])
-                    : named.map(group => group.title).join(" · ")
-                out.push({ key: "", title: title, chunk: at, block: true, detail: detail })
-                // A group named as its block is the block's own line: "Look" under "Look" says nothing twice.
-                if (open)
-                    for (const group of named)
-                        out.push({ key: group.key, title: group.title, chunk: -1, block: false, detail: root.summaryOf(group) })
-            })
-            return out
+        if (!root.flatSection)
+            return root.groupChunks.map((chunk, at) => ({ key: "", title: chunk.caption, chunk: at, block: false, list: true, detail: "" }))
+                .filter(entry => entry.title.length > 0)
+        const groupEntry = group => ({ key: String(group.key), title: group.title, chunk: -1, block: false, detail: root.summaryOf(group) })
+        if (root.groupChunks.filter(chunk => chunk.caption.length > 0).length < 2) return root.groups.map(groupEntry)
+        const reading = root.chunkOfKey(root.readGroup)
+        const out = []
+        root.groupChunks.forEach((chunk, at) => {
+            // A group named as its block is the block's own line: "Look" under "Look" says nothing twice.
+            const named = chunk.groups.filter(group => group.title !== chunk.caption)
+            const open = (root.indexRoomy || at === reading) && named.length > 0
+            const detail = open ? "" : named.length === 0 ? root.summaryOf(chunk.groups[0]) : named.map(group => group.title).join(" · ")
+            out.push({ key: String(chunk.groups[0].key), title: chunk.caption, chunk: at, block: true, detail: detail })
+            if (open) for (const group of named) out.push(groupEntry(group))
+        })
+        return out
+    }
+    function chunkOfKey(key: string): int {
+        return root.groupChunks.findIndex(chunk => chunk.groups.some(group => String(group.key) === key))
+    }
+    // Every block open fits the column under the scene.
+    readonly property bool indexRoomy: {
+        let need = 0
+        for (const chunk of root.groupChunks) {
+            need += indexFlick.blockHeight
+            need += chunk.groups.filter(group => group.title !== chunk.caption).length * (indexFlick.groupHeight + indexFlick.answerHeight)
         }
-        return root.flatSection ? root.groups.map(entry => ({ key: entry.key, title: entry.title, chunk: -1, block: false, detail: root.summaryOf(entry) }))
-            : root.groupChunks.map((chunk, at) => ({ key: "", title: chunk.caption, chunk: at, block: false, detail: "" })).filter(entry => entry.title.length > 0)
-    }
-    // Another block of a long section takes the rows' place where they stand (DI48-R1): the page never changes, the
-    // rows lift into place as the new block arrives.
-    function showChunk(at: int): void {
-        if (at === root.shownChunk) { root.scrollToGroup(String(root.groupChunks[at]?.groups[0]?.key ?? "")); return }
-        root.heldGroup = ""
-        root.swapChunk(at)
-        spyPace.restart()
-    }
-    function swapChunk(at: int): void {
-        root.buildChunk(root.shownChunk)
-        root.paneChunk = at
-        settingsFlick.contentY = 0
-        chunkSwap.stop()
-        root.chunkIn = 0
-        chunkSwap.start()
-    }
-    property real chunkIn: 1
-    NumberAnimation {
-        id: chunkSwap
-        target: root
-        property: "chunkIn"
-        to: 1
-        duration: IrisStyle.morphDuration
-        easing.type: Easing.BezierSpline
-        easing.bezierCurve: IrisStyle.morphCurve
+        return need <= indexFlick.height
     }
     property int readChunk: 0
     function scrollToChunk(at: int): void {
@@ -591,6 +545,11 @@ Item {
         return own(root.hoverGroup) ? root.hoverGroup : own(root.spyGroup) ? root.spyGroup : ""
     }
     onHoverWantedChanged: hoverDwell.restart()
+    // A group under the pointer, on the rows or in the index, leads the scene when it has one of its own.
+    function hoverOver(key: string, over: bool): void {
+        if (over && key.length > 0 && sceneProbe.sceneFor(root.section, key).length > 0) root.hoverWanted = key
+        else if (root.hoverWanted === key || over) root.hoverWanted = ""
+    }
     Timer { id: hoverDwell; interval: 140; onTriggered: root.hoverGroup = root.heroBeside ? root.hoverWanted : "" }
     onHeroBesideChanged: if (!root.heroBeside) { root.hoverWanted = ""; root.hoverGroup = "" }
     function spy(): void {
@@ -633,13 +592,6 @@ Item {
         return out
     }
     function scrollToGroup(wanted: string): void {
-        const chunk = root.pagesPane ? root.chunkOf(wanted) : -1
-        if (chunk >= 0 && chunk !== root.shownChunk) {
-            root.swapChunk(chunk)
-            root.pendingGroup = wanted
-            pendingScroll.restart()
-            return
-        }
         const lower = wanted.toLowerCase()
         const match = root.groups.find(entry => entry.key === wanted || entry.title === wanted
             || entry.key.toLowerCase() === lower || entry.title.toLowerCase() === lower)
@@ -759,7 +711,6 @@ Item {
         root.landingPath = land ? String(spec.path ?? "") : ""
         landingClear.restart()
         root.go({ section: spec.section, group: root.sectionIsFlat(spec.section) ? "" : Translation.tr(spec.group ?? ""), advancedPage: -1 })
-        if (root.pagesPane) root.paneChunk = Math.max(0, root.chunkOf(Translation.tr(spec.group ?? "")))
     }
     function reveal(row: Item): void {
         const top = row.mapToItem(settingsRows, 0, 0).y
@@ -955,7 +906,7 @@ Item {
     }
     // A Design's scene sets its own page; the engine's slide would only move chrome nobody sees.
     function enterPage(): void { if (!root.sceneDesigned) pageEnter.restart() }
-    onSectionChanged: { root.readChunk = 0; root.paneChunk = 0; root.builtChunks = []; settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
+    onSectionChanged: { root.readChunk = 0; settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
     onPageKeyChanged: Qt.callLater(root.feedPage)
     onOpenGroupChanged: { settingsFlick.contentY = 0; root.enterPage() }
     onAdvancedPageChanged: root.enterPage()
@@ -1080,7 +1031,7 @@ Item {
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     anchors.leftMargin: sidebar.pad
-                    anchors.topMargin: sidebar.pad + 4 * root.d
+                    anchors.topMargin: sidebar.pad
                     anchors.bottomMargin: sidebar.pad
                     width: root.sidebarFull - 2 * sidebar.pad + 4 * root.d
                     spacing: 0
@@ -1090,7 +1041,7 @@ Item {
                         visible: !root.sceneDrawn
                         Layout.fillWidth: true
                         Layout.rightMargin: 4 * root.d
-                        Layout.bottomMargin: 10 * root.d
+                        Layout.bottomMargin: 6 * root.d
                         implicitHeight: Math.round(32 * root.d)
                     }
                     // One search field: in the sidebar when there is one, in the header otherwise.
@@ -1268,8 +1219,8 @@ Item {
 
                     Rectangle {
                         Layout.preferredWidth: sidebarLayout.width - 4 * root.d
-                        Layout.topMargin: 6 * root.d
-                        Layout.bottomMargin: 6 * root.d
+                        Layout.topMargin: 4 * root.d
+                        Layout.bottomMargin: 4 * root.d
                         implicitHeight: 1
                         color: IrisStyle.hairline
                     }
@@ -1511,8 +1462,9 @@ Item {
                                 height: detailBody.height - y - Math.round(20 * root.d)
 
                                 // Under the scene, the page's index: the group being read carries the area's pill, which travels
-                                // on the morph curve as the rows scroll; a long area lists its blocks, the one shown opened on
-                                // its groups (DI48-R1). A click brings a group up or swaps the block in place.
+                                // on the morph curve as the rows scroll. A click scrolls the rows to the group; the page never
+                                // changes. A short page keeps it too: it is the area's answers at a glance, and the column under
+                                // the scene was left bare without it. Resting on a group shows its scene, as its rows do.
                                 Flickable {
                                     id: indexFlick
                                     y: pageHero.height + Math.round(18 * root.d)
@@ -1523,22 +1475,23 @@ Item {
                                     interactive: contentHeight > height
                                     boundsBehavior: Flickable.StopAtBounds
                                     clip: interactive
-                                    readonly property real blockHeight: Math.round(34 * root.d)
+                                    // A block's name heads its groups as a caption does, with more air above it than under it.
+                                    readonly property real blockHeight: Math.round(30 * root.d)
                                     readonly property real groupHeight: Math.round(30 * root.d)
                                     readonly property real answerHeight: Math.round(16 * root.d)
                                     function heightOf(entry: var): real {
-                                        return (entry.block || entry.chunk >= 0 || !root.pagesPane ? blockHeight : groupHeight)
-                                            + (String(entry.detail ?? "").length > 0 ? answerHeight : 0)
+                                        return (entry.block ? blockHeight : groupHeight) + (String(entry.detail ?? "").length > 0 ? answerHeight : 0)
                                     }
                                     function isCurrent(entry: var): bool {
-                                        if (entry.chunk >= 0) return root.pagesPane ? entry.chunk === root.shownChunk : entry.chunk === root.readChunk
+                                        if (entry.list) return entry.chunk === root.readChunk
+                                        if (entry.block) return entry.chunk === root.chunkOfKey(root.readGroup)
                                         return String(entry.key) === root.readGroup
                                     }
-                                    // The pill rests on the group being read, or on the block when it has no groups listed.
+                                    // The pill rests on the group being read, or on its block when the block is closed or is that group.
                                     readonly property int pillAt: {
                                         const entries = root.heroBeside ? root.besideIndex : []
-                                        const group = entries.findIndex(entry => entry.chunk < 0 && indexFlick.isCurrent(entry))
-                                        return group >= 0 ? group : entries.findIndex(entry => entry.chunk >= 0 && indexFlick.isCurrent(entry))
+                                        const group = entries.findIndex(entry => !entry.block && indexFlick.isCurrent(entry))
+                                        return group >= 0 ? group : entries.findIndex(entry => entry.block && indexFlick.isCurrent(entry))
                                     }
                                     readonly property real pillY: {
                                         let top = 0
@@ -1580,24 +1533,22 @@ Item {
                                                 required property var modelData
                                                 required property int index
                                                 readonly property bool current: indexFlick.isCurrent(indexEntry.modelData)
-                                                readonly property bool sub: !indexEntry.modelData.block && indexEntry.modelData.chunk < 0 && root.pagesPane
+                                                // A block's name reads as a caption until it is where you are.
+                                                readonly property bool heading: indexEntry.modelData.block === true && !indexEntry.current
                                                 width: parent.width
                                                 height: indexFlick.heightOf(indexEntry.modelData)
                                                 hoverEnabled: true
                                                 cursorShape: Qt.PointingHandCursor
                                                 Accessible.role: Accessible.Button
                                                 Accessible.name: indexEntry.modelData.title
-                                                onContainsMouseChanged: if (containsMouse && root.pagesPane && indexEntry.modelData.chunk >= 0) indexBuild.restart()
-                                                Timer { id: indexBuild; interval: 90; onTriggered: if (indexEntry.containsMouse) root.buildChunk(indexEntry.modelData.chunk) }
+                                                onContainsMouseChanged: if (!indexEntry.modelData.list) root.hoverOver(String(indexEntry.modelData.key), indexEntry.containsMouse)
                                                 onClicked: {
-                                                    if (indexEntry.modelData.chunk >= 0) {
-                                                        if (root.pagesPane) root.showChunk(indexEntry.modelData.chunk)
-                                                        else root.scrollToChunk(indexEntry.modelData.chunk)
-                                                        return
-                                                    }
+                                                    if (indexEntry.modelData.list) { root.scrollToChunk(indexEntry.modelData.chunk); return }
                                                     root.heldGroup = String(indexEntry.modelData.key)
                                                     root.readGroup = root.heldGroup
                                                     root.scrollToGroup(root.heldGroup)
+                                                    // A page that does not scroll takes no reading from the scroll: the pick leads the scene now.
+                                                    spyPace.restart()
                                                 }
                                                 Rectangle {
                                                     anchors.fill: parent
@@ -1605,18 +1556,19 @@ Item {
                                                     color: indexEntry.containsMouse && indexFlick.pillAt !== indexEntry.index ? IrisStyle.fillQuiet : "transparent"
                                                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
                                                 }
+                                                // Three voices (DI49i): a block's name as a caption, a group's name, and its answer in the area's
+                                                // colour, so the index reads as a summary instead of a column of one grey.
                                                 IrisText {
                                                     id: indexTitle
-                                                    x: Math.round((indexEntry.sub ? 28 : 14) * root.d)
+                                                    x: Math.round(14 * root.d)
                                                     width: parent.width - x - Math.round(10 * root.d)
                                                     anchors.verticalCenter: parent.verticalCenter
-                                                    anchors.verticalCenterOffset: indexAnswer.text.length > 0 ? -Math.round(indexFlick.answerHeight / 2) : 0
+                                                    anchors.verticalCenterOffset: (indexAnswer.text.length > 0 ? -Math.round(indexFlick.answerHeight / 2) : 0)
+                                                        + (indexEntry.heading ? Math.round(3 * root.d) : 0)
+                                                    role: indexEntry.heading ? IrisText.Group : IrisText.Name
                                                     text: indexEntry.modelData.title
-                                                    color: indexEntry.current || (indexEntry.modelData.block && indexEntry.modelData.chunk === root.shownChunk)
-                                                        ? IrisStyle.text : IrisStyle.muted
-                                                    font.pixelSize: indexEntry.sub ? IrisStyle.typeMeta : IrisStyle.typeBody
-                                                    font.weight: IrisStyle.weight(indexEntry.current || (indexEntry.modelData.block && indexEntry.modelData.chunk === root.shownChunk)
-                                                        ? Font.DemiBold : Font.Normal)
+                                                    color: indexEntry.heading ? IrisStyle.textTertiary : indexEntry.current ? root.tintInk(indexFlick.tint) : IrisStyle.text
+                                                    font.weight: IrisStyle.weight(indexEntry.heading ? Font.Bold : indexEntry.current ? Font.DemiBold : Font.Medium)
                                                     elide: Text.ElideRight
                                                 }
                                                 IrisText {
@@ -1626,7 +1578,9 @@ Item {
                                                     width: indexTitle.width
                                                     text: String(indexEntry.modelData.detail ?? "")
                                                     visible: text.length > 0
-                                                    color: IrisStyle.muted
+                                                    // A closed block lists what is in it; a group says what it is set to.
+                                                    role: indexEntry.modelData.block ? IrisText.Detail : IrisText.Value
+                                                    tone: root.tintInk(indexFlick.tint)
                                                     font.pixelSize: IrisStyle.typeMeta
                                                     elide: Text.ElideRight
                                                 }
@@ -1702,9 +1656,6 @@ Item {
                                         : Math.min(settingsFlick.width - 56 * root.d, root.generalHome ? root.columnMost : root.rowsMost)
                                     x: Math.round((settingsFlick.width - width) / 2)
                                     spacing: 18 * root.d
-                                    // Another block lifts into the place of the last one (DI48-R1), its rows arriving as it rises.
-                                    opacity: root.chunkIn
-                                    transform: Translate { y: Math.round((1 - root.chunkIn) * 14 * root.d) }
 
                                     // The head reads here only when it carries no scene, or the window is too short to keep one in view.
                                     Item {
@@ -1712,16 +1663,6 @@ Item {
                                         Layout.fillWidth: true
                                         visible: pageHero.shown && !root.heroPinned && !root.stageInColumn && !root.heroBeside && !root.sceneDrawn
                                         implicitHeight: visible ? pageHero.implicitHeight : 0
-                                    }
-
-                                    // Without an index beside the rows, a long area's blocks are a segmented control over them.
-                                    IrisSegmented {
-                                        Layout.fillWidth: true
-                                        visible: root.pagesPane && !root.heroBeside && !root.split
-                                        options: visible ? root.groupChunks.map((chunk, at) => ({ value: at, label: chunk.caption.length > 0 ? chunk.caption : chunk.groups[0].title })) : []
-                                        current: root.shownChunk
-                                        accessibleName: Translation.tr(root.currentSection.title)
-                                        onPicked: value => root.showChunk(value)
                                     }
 
                                     IrisGameModeCard {
@@ -1780,7 +1721,6 @@ Item {
                                             id: blockLoader
                                             required property var modelData
                                             Layout.fillWidth: true
-                                            visible: (blockLoader.modelData.chunk ?? -1) === root.shownChunk
                                             asynchronous: !root.searching && root.landingPath.length === 0
                                             sourceComponent: GroupBlock { modelData: blockLoader.modelData }
                                         }
@@ -1951,9 +1891,10 @@ Item {
         Component.onCompleted: if (sectionRow.selected && sectionRow.travels) root.travelRow = sectionRow
         Component.onDestruction: if (root.travelRow === sectionRow) root.travelRow = null
         readonly property bool dimmed: root.searching && !root.matchedSections.has(sectionRow.modelData.id)
-        // Twenty-seven areas and their captions fit a 1080p window's sidebar without scrolling (DI49g).
+        // Twenty-seven areas and their captions fit a 1080p window's sidebar without scrolling (DI49g). A caption
+        // heads the group under it: more air above than below, or it reads as the foot of the row before.
         readonly property real rowHeight: Math.round(26 * root.d * Math.max(1, IrisStyle.typeScale))
-        readonly property real captionHeight: Math.round(20 * root.d * Math.max(1, IrisStyle.typeScale))
+        readonly property real captionHeight: Math.round(22 * root.d * Math.max(1, IrisStyle.typeScale))
         // Where the row's own line starts under the air or the caption of a break; the wash lands there.
         readonly property real washY: sectionRow.caption.length > 0 ? sectionRow.captionHeight : sectionRow.clusterStart ? Math.round(8 * root.d) : 0
         width: parent ? parent.width : 0
@@ -2463,6 +2404,11 @@ Item {
         required property var modelData
         Layout.fillWidth: true
         spacing: 6 * root.d
+        HoverHandler {
+            enabled: root.flatSection && root.heroBeside
+            onHoveredChanged: root.hoverOver(String(group.modelData.key ?? ""), hovered)
+        }
+        Component.onDestruction: if (root.hoverWanted === String(group.modelData.key ?? "")) root.hoverWanted = ""
         MouseArea {
             id: resultSection
             readonly property var section: IrisOptions.sectionById(String(group.modelData.rows[0]?.section ?? ""))
