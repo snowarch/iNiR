@@ -9528,5 +9528,7 @@
   "No microphone found.": "Мікрофон не знайдено.",
   "No speakers or headphones found.": "Динаміки чи навушники не знайдено.",
   "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "Перетягніть, щоб перемістити в Доку. З вибраним: Alt і стрілки рухають, Delete відкріплює.",
-  "Nothing pinned. Right-click an app in the Dock to keep it there.": "Нічого не закріплено. Клацніть правою кнопкою по застосунку в Доку, щоб залишити його там."
+  "Nothing pinned. Right-click an app in the Dock to keep it there.": "Нічого не закріплено. Клацніть правою кнопкою по застосунку в Доку, щоб залишити його там.",
+  "Not installed": "Не встановлено",
+  "1 notification": "1 сповіщення"
 }

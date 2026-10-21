@@ -9528,5 +9528,7 @@
   "No microphone found.": "لم يُعثر على ميكروفون.",
   "No speakers or headphones found.": "لم يُعثر على مكبرات صوت أو سماعات.",
   "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "اسحب تطبيقًا لنقله في الشريط. مع تحديد أحدها، يحرّكه Alt والأسهم ويلغي Delete تثبيته.",
-  "Nothing pinned. Right-click an app in the Dock to keep it there.": "لا شيء مثبّت. انقر بزر الفأرة الأيمن على تطبيق في الشريط لإبقائه هناك."
+  "Nothing pinned. Right-click an app in the Dock to keep it there.": "لا شيء مثبّت. انقر بزر الفأرة الأيمن على تطبيق في الشريط لإبقائه هناك.",
+  "Not installed": "غير مثبّت",
+  "1 notification": "إشعار واحد"
 }

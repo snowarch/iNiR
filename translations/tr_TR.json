@@ -9528,5 +9528,7 @@
   "No microphone found.": "Mikrofon bulunamadı.",
   "No speakers or headphones found.": "Hoparlör veya kulaklık bulunamadı.",
   "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "Dock'ta taşımak için birini sürükle. Odaktayken Alt ve oklar taşır, Delete sabitlemeyi kaldırır.",
-  "Nothing pinned. Right-click an app in the Dock to keep it there.": "Sabitlenmiş bir şey yok. Orada tutmak için Dock'taki bir uygulamaya sağ tıkla."
+  "Nothing pinned. Right-click an app in the Dock to keep it there.": "Sabitlenmiş bir şey yok. Orada tutmak için Dock'taki bir uygulamaya sağ tıkla.",
+  "Not installed": "Yüklü değil",
+  "1 notification": "1 bildirim"
 }

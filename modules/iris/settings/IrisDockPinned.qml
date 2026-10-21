@@ -19,6 +19,9 @@ Item {
     readonly property real rowHeight: Math.round(52 * root.d)
     property int dragFrom: -1
     property int dragTo: -1
+    // The pin the keyboard was on: a move or an unpin rebuilds its row, and the focus goes back to it (or, after an
+    // unpin, to the one that took its place) instead of falling out of the list after the first press.
+    property string keyed: ""
 
     implicitHeight: Math.max(1, root.pinned.length) * root.rowHeight
 
@@ -35,9 +38,22 @@ Item {
         const moved = next.splice(from, 1)[0]
         next.splice(to, 0, moved)
         Config.setNestedValue("dock.pinnedApps", next)
+        root.refocus(moved)
     }
     function unpin(id: string): void {
-        Config.setNestedValue("dock.pinnedApps", root.pinned.filter(value => value !== id))
+        const at = root.pinned.indexOf(id)
+        const rest = root.pinned.filter(value => value !== id)
+        Config.setNestedValue("dock.pinnedApps", rest)
+        if (root.keyed === id) root.refocus(rest[Math.min(at, rest.length - 1)] ?? "")
+    }
+    function refocus(id: string): void {
+        root.keyed = id
+        Qt.callLater(() => {
+            for (let i = 0; i < rows.count; i++) {
+                const item = rows.itemAt(i)
+                if (item && item.modelData === root.keyed) { item.forceActiveFocus(); return }
+            }
+        })
     }
 
     IrisText {
@@ -51,13 +67,16 @@ Item {
     }
 
     Repeater {
-        model: root.pinned
+        id: rows
+        model: ScriptModel { values: root.pinned }
         Item {
             id: row
             required property string modelData
             required property int index
-            readonly property var entry: DesktopEntries.byId(row.modelData) ?? DesktopEntries.heuristicLookup(row.modelData)
-            readonly property string name: row.entry?.name ?? row.modelData
+            // The Dock's own answer for the id (AppSearch.lookupDesktopEntry finds "code" by its Exec), so a pin reads
+            // here as it does there. One whose app is gone keeps its place with a generic icon until it is unpinned.
+            readonly property var who: AppSearch.appIdentity(row.modelData, "")
+            readonly property string name: row.who.name
             readonly property bool dragged: root.dragFrom === row.index
             property real dragY: 0
 
@@ -72,7 +91,8 @@ Item {
 
             activeFocusOnTab: true
             Accessible.role: Accessible.ListItem
-            Accessible.name: row.name
+            Accessible.name: row.who.installed ? row.name : row.name + ", " + Translation.tr("Not installed")
+            onActiveFocusChanged: if (activeFocus) root.keyed = row.modelData
             Keys.onPressed: event => {
                 if ((event.modifiers & Qt.AltModifier) && (event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
                     root.move(row.index, row.index + (event.key === Qt.Key_Up ? -1 : 1))
@@ -116,18 +136,30 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.round(32 * root.d)
                 height: width
-                source: AppSearch.getIconSource(String(row.entry?.icon ?? row.modelData), row.name)
+                source: row.who.icon
                 fillMode: Image.PreserveAspectFit
+                opacity: row.who.installed ? 1 : 0.45
             }
             IrisText {
                 anchors.left: mark.right
                 anchors.leftMargin: Math.round(12 * root.d)
-                anchors.right: remove.left
+                anchors.right: gone.visible ? gone.left : remove.left
                 anchors.rightMargin: Math.round(12 * root.d)
                 anchors.verticalCenter: parent.verticalCenter
                 text: row.name
+                color: row.who.installed ? IrisStyle.text : IrisStyle.muted
                 font.pixelSize: IrisStyle.typeBody
                 elide: Text.ElideRight
+            }
+            IrisText {
+                id: gone
+                visible: !row.who.installed
+                anchors.right: remove.left
+                anchors.rightMargin: Math.round(8 * root.d)
+                anchors.verticalCenter: parent.verticalCenter
+                text: Translation.tr("Not installed")
+                color: IrisStyle.muted
+                font.pixelSize: IrisStyle.typeMeta
             }
 
             MouseArea {

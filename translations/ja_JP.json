@@ -9528,5 +9528,7 @@
   "No microphone found.": "マイクが見つかりません。",
   "No speakers or headphones found.": "スピーカーやヘッドホンが見つかりません。",
   "Drag one to move it in the Dock. With one in focus, Alt and the arrows move it and Delete unpins it.": "ドラッグして Dock 内で移動します。選択中は Alt と矢印キーで移動、Delete で固定を外します。",
-  "Nothing pinned. Right-click an app in the Dock to keep it there.": "固定されたものはありません。Dock のアプリを右クリックすると固定できます。"
+  "Nothing pinned. Right-click an app in the Dock to keep it there.": "固定されたものはありません。Dock のアプリを右クリックすると固定できます。",
+  "Not installed": "未インストール",
+  "1 notification": "通知 1 件"
 }
