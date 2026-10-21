@@ -817,6 +817,8 @@ Item {
     // A request names a page: "iris" (or any page iRiS has no copy of) opens its sections, at the place or verb the
     // section part carries; one of its own pages opens that page.
     function applyRequest(): void {
+        // Switching hosts, the one leaving still hears the request and took it: the other opened on General.
+        if (root.windowed !== ((Config.options?.iris?.appearance?.settingsHost ?? "overlay") === "window")) return
         let key = String(GlobalStates.settingsOverlayRequestedKey ?? "")
         if (key.length === 0) return
         let asked = String(GlobalStates.settingsOverlayRequestedSection ?? "")
