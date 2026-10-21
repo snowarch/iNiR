@@ -1062,14 +1062,14 @@ Item {
                 id: sidebar
                 // A pane of its own floating inside the window (macOS 26): inset on three sides, concentric with the
                 // window's corners, its edge a hairline all round instead of a rule between it and the page.
-                readonly property int float: Math.round(8 * root.d)
+                readonly property int inset: Math.round(8 * root.d)
                 readonly property int pad: IrisStyle.concentricPad(sidebar.radius, 10 * root.d)
-                x: sidebar.float
-                y: sidebar.float
-                height: parent.height - 2 * sidebar.float
-                width: sidebarSlot.width - sidebar.float
+                x: sidebar.inset
+                y: sidebar.inset
+                height: parent.height - 2 * sidebar.inset
+                width: sidebarSlot.width - sidebar.inset
                 clip: true
-                radius: IrisStyle.fieldChamfer ? 0 : Math.max(IrisStyle.radiusTile, frame.radius - sidebar.float)
+                radius: IrisStyle.fieldChamfer ? 0 : Math.max(IrisStyle.radiusTile, frame.radius - sidebar.inset)
                 color: IrisStyle.readingSidebar
                 border.width: 1
                 border.color: IrisStyle.hairline
