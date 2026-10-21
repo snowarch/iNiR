@@ -11,6 +11,9 @@ FloatingWindow {
     id: root
     title: Translation.tr("iNiR Settings")
     visible: GlobalStates.settingsOverlayOpen
+    // Blur turns this window see-through while it is open. Quickshell keeps the alpha it was shown with (an opaque
+    // window stays opaque, black where the body leaves it clear), so it is always made with alpha.
+    surfaceFormat: ({ opaque: false })
     color: body.frame.material === "compositor" ? "transparent" : IrisStyle.surface
     implicitWidth: Math.round(1180 * IrisStyle.density)
     implicitHeight: Math.round(820 * IrisStyle.density)
