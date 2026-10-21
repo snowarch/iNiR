@@ -342,11 +342,13 @@ ClippingRectangle {
                 x: root.dock ? root.dock.x + (root.dock.width - width) / 2 : 0
                 y: root.dock ? root.dock.y + (root.dock.height - height) / 2 : 0
                 spacing: Math.round(10 * root.d)
+                // Ids, not the apps: an app entry holds its windows' toplevels, and a delegate built from one copied a
+                // toplevel that closed meanwhile (closing the Settings window crashed the shell, 2026-10-21).
                 Repeater {
-                    model: root.apps.slice(0, parent.fits)
+                    model: root.apps.slice(0, parent.fits).map(app => String(app.appId))
                     SmartAppIcon {
-                        required property var modelData
-                        icon: IrisPieces.appIcon(modelData.appId)
+                        required property string modelData
+                        icon: IrisPieces.appIcon(modelData)
                         fallback: "application-x-executable"
                         iconSize: Math.round(IrisFrame.dockIcon)
                     }

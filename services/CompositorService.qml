@@ -110,7 +110,14 @@ Singleton {
     Connections {
         target: ToplevelManager.toplevels
         enabled: root.sortingActive
-        function onValuesChanged() { root.scheduleSort() }
+        // Only the reordering waits for the timer: a window that closed leaves the list at once, since anything built
+        // from the list in those 100 ms (a dock icon) kept a toplevel that was already gone.
+        function onValuesChanged() {
+            const live = Array.from(ToplevelManager.toplevels.values ?? [])
+            if (root.sortedToplevels.some(toplevel => !live.includes(toplevel)))
+                root.sortedToplevels = root.sortedToplevels.filter(toplevel => live.includes(toplevel))
+            root.scheduleSort()
+        }
     }
     Connections {
         target: root.isHyprland ? Hyprland.toplevels : null
