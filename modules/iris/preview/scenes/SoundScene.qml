@@ -10,7 +10,8 @@ import qs.modules.iris.components
 import qs.modules.iris.preview.parts
 
 // Sound as the Island's card holds it: where sound goes and what hears you, each with its level, and the apps playing
-// now. Real devices and streams when PipeWire has them; stand-ins otherwise. The group being read lights its part.
+// now. Only what PipeWire has: a machine without speakers says so, as the page under it does, instead of a made-up
+// "Speakers 60 %" over "No speakers or headphones found". The group being read lights its part.
 PreviewScene {
     id: soundRoot
     readonly property real naturalWidth: Math.round(460 * soundRoot.d)
@@ -25,15 +26,11 @@ PreviewScene {
     readonly property var apps: (Audio.outputAppNodes ?? []).slice(0, 2).map(node => ({
         name: Audio.appNodeDisplayName(node), icon: MprisController.streamIconSource(node, "audio-x-generic"), glyph: "",
         level: Math.min(1, node?.audio?.volume ?? 0) }))
-    readonly property var standIns: [
-        { name: Translation.tr("Music"), icon: "", glyph: "music_note", level: 0.72 },
-        { name: Translation.tr("Browser"), icon: "", glyph: "public", level: 0.45 }
-    ]
     // The apps that fit whole under the devices: a frame lower than the card drops a row instead of cutting the plate.
     readonly property real appRowHeight: Math.round(22 * soundRoot.d) + soundColumn.spacing
     readonly property int appsFit: Math.max(0, Math.min(2, Math.floor((soundRoot.height - soundPlate.y - outputDevice.height
         - inputDevice.height - 3 * soundColumn.spacing - 1 - Math.round(36 * soundRoot.d)) / soundRoot.appRowHeight)))
-    readonly property var shownApps: (soundRoot.apps.length > 0 ? soundRoot.apps : soundRoot.standIns).slice(0, soundRoot.appsFit)
+    readonly property var shownApps: soundRoot.apps.slice(0, soundRoot.appsFit)
 
     IslandPill { id: soundIsland; anchors.horizontalCenter: parent.horizontalCenter; y: IrisFrame.band }
     Plate {
@@ -53,18 +50,27 @@ PreviewScene {
             Device {
                 id: outputDevice
                 glyph: /head|bluez|airpod|buds/i.test(String(Audio.sink?.name ?? "") + String(Audio.sink?.description ?? "")) ? "headphones" : "speaker"
-                name: Audio.sink ? Audio.friendlyDeviceName(Audio.sink) : Translation.tr("Speakers")
-                level: Audio.sink ? Math.min(1, Audio.value) : 0.6
+                present: !!Audio.sink
+                name: Audio.sink ? Audio.friendlyDeviceName(Audio.sink) : Translation.tr("No speakers or headphones found.")
+                level: Audio.sink ? Math.min(1, Audio.value) : 0
                 opacity: soundRoot.lit("output")
             }
             Device {
                 id: inputDevice
                 glyph: Audio.micMuted ? "mic_off" : "mic"
-                name: Audio.source ? Audio.friendlyDeviceName(Audio.source) : Translation.tr("Microphone")
-                level: Audio.source ? Math.min(1, Audio.micVolume) : 0.5
+                present: !!Audio.source
+                name: Audio.source ? Audio.friendlyDeviceName(Audio.source) : Translation.tr("No microphone found.")
+                level: Audio.source ? Math.min(1, Audio.micVolume) : 0
                 opacity: soundRoot.lit("input")
             }
             Rectangle { visible: soundRoot.appsFit > 0; Layout.fillWidth: true; implicitHeight: 1; color: IrisStyle.hairline }
+            IrisText {
+                visible: soundRoot.appsFit > 0 && soundRoot.apps.length === 0
+                Layout.fillWidth: true
+                opacity: soundRoot.lit("apps")
+                role: IrisText.Detail
+                text: Translation.tr("Nothing playing")
+            }
             Repeater {
                 model: soundRoot.shownApps
                 RowLayout {
@@ -107,17 +113,18 @@ PreviewScene {
         property string glyph: ""
         property string name: ""
         property real level: 0
+        property bool present: true
         Layout.fillWidth: true
         spacing: Math.round(6 * soundRoot.d)
         Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
         RowLayout {
             Layout.fillWidth: true
             spacing: Math.round(8 * soundRoot.d)
-            MaterialSymbol { text: device.glyph; fill: 1; iconSize: Math.round(18 * soundRoot.d); color: IrisStyle.text }
-            IrisText { Layout.fillWidth: true; text: device.name; font.weight: IrisStyle.weight(Font.DemiBold); elide: Text.ElideRight }
-            IrisText { text: Math.round(device.level * 100) + " %"; color: IrisStyle.textSecondary; font.family: IrisStyle.fontNumbers }
+            MaterialSymbol { text: device.glyph; fill: device.present ? 1 : 0; iconSize: Math.round(18 * soundRoot.d); color: device.present ? IrisStyle.text : IrisStyle.muted }
+            IrisText { Layout.fillWidth: true; text: device.name; role: device.present ? IrisText.Name : IrisText.Detail; elide: Text.ElideRight }
+            IrisText { visible: device.present; text: Math.round(device.level * 100) + " %"; role: IrisText.Value; tone: IrisStyle.accent }
         }
-        Level { value: device.level; tint: IrisStyle.accent }
+        Level { visible: device.present; value: device.level; tint: IrisStyle.accent }
     }
     Caption {
         glyph: "graphic_eq"
