@@ -44,7 +44,7 @@ ClippingRectangle {
 
     function sceneFor(section: string, group: string): string {
         if (group.length === 0)
-            return ({ dock: "dock", player: "player", desktop: "widgets", sidebars: "panels", controlCenter: "controlCenter", spotlight: "spotlight", bubbles: "bubbles",
+            return ({ dock: "dock", player: "player", desktop: "widgets", widgets: "widgets", sidebars: "panels", controlCenter: "controlCenter", spotlight: "spotlight", bubbles: "bubbles",
                 bar: "islandEdge", appearance: "fusion", colour: "palette", wallpaper: "gallery", login: "login", motion: "motion", lock: "lock", notifications: "feedback", sound: "feedback",
                 windows: "windows", display: "display", keyboard: "keyboard", orbit: "orbit", capture: "capture", anime: "anime",
                 sources: "sources", battery: "battery" })[section] ?? ""

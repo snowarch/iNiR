@@ -389,7 +389,11 @@ Item {
             if (spec.label === spec.group || spec.master) return on ? "" : Translation.tr("Off")
             // A switch's name answers when it is short; a sentence ("Close the shell around the screen") reads as On.
             const name = Translation.tr(spec.label)
-            return !on ? "" : name.length <= 24 ? name : Translation.tr("On")
+            // A label the area repeats (every widget's "On the desktop") or that repeats its group's name ("Enable power
+            // saving" under Power saving) names nothing either.
+            const group = String(spec.group ?? "").toLowerCase()
+            const echoes = root.sharedLoneLabels[spec.label] || (group.length > 0 && spec.label.toLowerCase().includes(group))
+            return !on ? "" : name.length <= 24 && !echoes ? name : Translation.tr("On")
         }
         case "text": {
             if (spec.numeric && Number(value ?? 0) === 0) return ""
