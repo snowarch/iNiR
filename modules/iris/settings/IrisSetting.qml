@@ -502,7 +502,9 @@ Item {
                 id: choiceGrid
                 width: parent.width
                 active: root.listOpen || root.listProgress > 0
-                opacity: root.listProgress
+                // The cells come in past the middle of the growth (DI48-R4): from the first frame they slid in under the
+                // edge still moving, half-read; closing, they are gone before the row folds back into the button.
+                opacity: IrisStyle.ramp(root.listProgress, 0.5, 0.5)
                 sourceComponent: choiceGridComponent
             }
         }
