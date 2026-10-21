@@ -1093,7 +1093,7 @@ Item {
                             radius: IrisStyle.plateSelection ? 0 : travelWash.row ? travelWash.row.washRadius : 0
                             // A plate-selection Design (AIRISU) puts where you are on the solid plate of the accent.
                             color: IrisStyle.plateSelection ? IrisStyle.selectionFill
-                                : IrisStyle.tintFillHover(IrisStyle.accent)
+                                : IrisStyle.tintFillHover(travelWash.row?.own ?? IrisStyle.accent)
                             opacity: travelWash.shown ? 1 : 0
                             // It lands where it first appears and travels from then on. Moving the selection hides it for a
                             // moment (the old row lets go before the new one takes it): only a hide that lasts stops the travel.
@@ -1820,6 +1820,10 @@ Item {
         readonly property bool selected: !root.searching && sectionRow.members.includes(root.section)
         // Main-list rows hand their selection to the travelling wash (travelWash); footer rows paint their own.
         readonly property bool travels: sectionRow.gapAbove
+        // Where you are speaks one colour, the area's own: its glyph fills, the wash under it takes a tint of it and the
+        // name stays in ink, a step heavier. The accent there too read as three colours on one row, and an area whose
+        // colour is the accent's (Desktop, Sources) looked chosen when it was not.
+        readonly property color own: IrisStyle.plainMarks ? IrisStyle.accent : sectionRow.modelData.tint
         readonly property real washRadius: Math.min(sectionRow.rowHeight / 2, IrisStyle.iconRadius(sectionMark.width) + sectionMark.x)
         onSelectedChanged: if (sectionRow.selected && sectionRow.travels) root.travelRow = sectionRow
         Component.onCompleted: if (sectionRow.selected && sectionRow.travels) root.travelRow = sectionRow
@@ -1845,22 +1849,30 @@ Item {
             // Concentric with the mark it holds; where you are is a wash of the accent, as light as a hover, never a
             // solid block heavier than the buttons around it.
             radius: IrisStyle.plateSelection ? 0 : sectionRow.washRadius
-            color: sectionRow.selected && !sectionRow.travels ? (IrisStyle.plateSelection ? IrisStyle.selectionFill : IrisStyle.tintFillHover(IrisStyle.accent))
+            color: sectionRow.selected && !sectionRow.travels ? (IrisStyle.plateSelection ? IrisStyle.selectionFill : IrisStyle.tintFillHover(sectionRow.own))
                 : sectionRow.selected ? "transparent"
                 : sectionRow.containsMouse ? IrisStyle.fillQuiet : "transparent"
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
-            IrisSquircle {
+            // The area's glyph in its own colour, without a tile under it: a column of coloured squares is every
+            // settings app's sidebar, and the colour alone already tells the areas apart.
+            Item {
                 id: sectionMark
                 // An indexed Design numbers the areas instead (a parts catalogue).
                 readonly property bool numbered: IrisStyle.indexed
-                visible: !sectionMark.numbered
                 x: Math.round(6 * root.d)
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.round(22 * root.d)
                 height: width
-                tint: sectionRow.modelData.tint
-                glyph: sectionRow.modelData.icon
-                ink: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.selectionInk : IrisStyle.plainMarks ? IrisStyle.textSecondary : IrisStyle.onTint
+                MaterialSymbol {
+                    visible: !sectionMark.numbered
+                    anchors.centerIn: parent
+                    text: sectionRow.modelData.icon
+                    iconSize: Math.round(19 * root.d)
+                    fill: sectionRow.selected ? 1 : 0
+                    color: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.selectionInk
+                        : IrisStyle.plainMarks ? IrisStyle.textSecondary : sectionRow.modelData.tint
+                    Behavior on fill { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+                }
             }
             IrisText {
                 visible: sectionMark.numbered
@@ -1878,9 +1890,9 @@ Item {
                 anchors.rightMargin: 8 * root.d
                 anchors.verticalCenter: parent.verticalCenter
                 text: Translation.tr(sectionRow.modelData.title)
-                // Where you are reads in the accent and a step heavier; the wash under it only supports that. On a plate
-                // (AIRISU) it is the plate's own ink.
-                color: sectionRow.selected ? (IrisStyle.plateSelection ? IrisStyle.selectionLabel : IrisStyle.accent) : IrisStyle.text
+                // Where you are reads a step heavier; the colour is the glyph's and the wash's. On a plate (AIRISU) it is
+                // the plate's own ink.
+                color: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.selectionLabel : IrisStyle.text
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                 font.pixelSize: IrisStyle.typeLabel
                 font.weight: IrisStyle.weight(sectionRow.selected ? Font.DemiBold : Font.Medium)
