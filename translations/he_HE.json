@@ -9534,8 +9534,8 @@
   "Full. Remove one to add another.": "מלא. הסירו אחד כדי להוסיף אחר.",
   "Four round controls on one plate.": "ארבעה מתגים עגולים על לוח אחד.",
   "Slim sliders side by side.": "מחוונים דקים זה לצד זה.",
-  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "כל פקד שהלוח נושא, בסדר שבו הוא מציג אותם. סדרו במקום כדי לשנות גדלים.",
   "Up to four round switches, in this order.": "עד ארבעה מתגים עגולים, בסדר הזה.",
   "How smoothly the movement is drawn.": "כמה חלק התנועה מצוירת.",
-  "Animate the change": "הנפשת ההחלפה"
+  "Animate the change": "הנפשת ההחלפה",
+  "Every control the panel holds. Drag to reorder; the panel follows this order.": "כל פקד שהלוח נושא. גררו כדי לסדר מחדש; הלוח עוקב אחרי הסדר הזה."
 }

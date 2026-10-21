@@ -9534,8 +9534,8 @@
   "Full. Remove one to add another.": "已满。移除一个才能添加其他。",
   "Four round controls on one plate.": "一块面板上的四个圆形控件。",
   "Slim sliders side by side.": "并排的细滑块。",
-  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "面板上的所有控件，按显示顺序排列。在原处排列以调整大小。",
   "Up to four round switches, in this order.": "最多四个圆形开关，按此顺序。",
   "How smoothly the movement is drawn.": "动画绘制的流畅程度。",
-  "Animate the change": "切换时播放动画"
+  "Animate the change": "切换时播放动画",
+  "Every control the panel holds. Drag to reorder; the panel follows this order.": "面板上的所有控件。拖动以重新排序，面板会按此顺序排列。"
 }

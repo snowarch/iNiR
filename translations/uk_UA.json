@@ -9534,8 +9534,8 @@
   "Full. Remove one to add another.": "Заповнено. Приберіть один, щоб додати інший.",
   "Four round controls on one plate.": "Чотири круглі перемикачі на одній панелі.",
   "Slim sliders side by side.": "Тонкі повзунки поруч.",
-  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "Усі елементи панелі в тому порядку, у якому вона їх показує. Розставте на місці, щоб змінити розміри.",
   "Up to four round switches, in this order.": "До чотирьох круглих перемикачів, у цьому порядку.",
   "How smoothly the movement is drawn.": "Наскільки плавно малюється рух.",
-  "Animate the change": "Анімувати зміну"
+  "Animate the change": "Анімувати зміну",
+  "Every control the panel holds. Drag to reorder; the panel follows this order.": "Усі елементи панелі. Перетягніть, щоб змінити порядок; панель його дотримується."
 }

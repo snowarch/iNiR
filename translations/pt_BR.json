@@ -9534,8 +9534,8 @@
   "Full. Remove one to add another.": "Cheio. Remova um para adicionar outro.",
   "Four round controls on one plate.": "Quatro controles redondos em uma placa.",
   "Slim sliders side by side.": "Controles deslizantes finos lado a lado.",
-  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "Cada controle que o painel leva, na ordem em que os mostra. Organize no lugar para mudar os tamanhos.",
   "Up to four round switches, in this order.": "Até quatro interruptores redondos, nesta ordem.",
   "How smoothly the movement is drawn.": "Quão suave o movimento é desenhado.",
-  "Animate the change": "Animar a troca"
+  "Animate the change": "Animar a troca",
+  "Every control the panel holds. Drag to reorder; the panel follows this order.": "Cada controle que o painel leva. Arraste para reordenar; o painel segue esta ordem."
 }

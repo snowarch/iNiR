@@ -9534,8 +9534,8 @@
   "Full. Remove one to add another.": "Full. Remove one to add another.",
   "Four round controls on one plate.": "Four round controls on one plate.",
   "Slim sliders side by side.": "Slim sliders side by side.",
-  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.",
   "Up to four round switches, in this order.": "Up to four round switches, in this order.",
   "How smoothly the movement is drawn.": "How smoothly the movement is drawn.",
-  "Animate the change": "Animate the change"
+  "Animate the change": "Animate the change",
+  "Every control the panel holds. Drag to reorder; the panel follows this order.": "Every control the panel holds. Drag to reorder; the panel follows this order."
 }

@@ -9534,8 +9534,8 @@
   "Full. Remove one to add another.": "भरा हुआ। दूसरा जोड़ने के लिए एक हटाएँ।",
   "Four round controls on one plate.": "एक प्लेट पर चार गोल कंट्रोल।",
   "Slim sliders side by side.": "पास-पास पतले स्लाइडर।",
-  "Every control the panel holds, in the order it shows them. Arrange it in place to resize them.": "पैनल के सभी कंट्रोल, उसी क्रम में जिसमें वह उन्हें दिखाता है। आकार बदलने के लिए उसे वहीं व्यवस्थित करें।",
   "Up to four round switches, in this order.": "इस क्रम में अधिकतम चार गोल स्विच।",
   "How smoothly the movement is drawn.": "गति कितनी सहजता से बनाई जाती है।",
-  "Animate the change": "बदलाव को एनिमेट करें"
+  "Animate the change": "बदलाव को एनिमेट करें",
+  "Every control the panel holds. Drag to reorder; the panel follows this order.": "पैनल के सभी कंट्रोल। क्रम बदलने के लिए खींचें; पैनल इसी क्रम पर चलता है।"
 }
