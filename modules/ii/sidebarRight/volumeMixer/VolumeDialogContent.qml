@@ -6,16 +6,38 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import qs.modules.shared.overlay.sidebarRight.volumeMixer as SharedMixer
 
 ColumnLayout {
     id: root
     required property bool isSink
     required property bool dialogShown
-    readonly property list<var> appPwNodes: isSink ? MprisController.mixerAppNodes : Audio.inputAppNodes
+    // By name, so a row keeps its place between openings: PipeWire lists streams in the order they last reshuffled.
+    readonly property list<var> appPwNodes: (isSink ? MprisController.mixerAppNodes : Audio.inputAppNodes).slice()
+        .sort((a, b) => MprisController.streamDisplayName(a).localeCompare(MprisController.streamDisplayName(b)))
     readonly property list<var> devices: isSink ? Audio.outputDevices : Audio.inputDevices
     readonly property bool hasApps: appPwNodes.length > 0
     readonly property var currentDevice: isSink ? Audio.defaultSink : Audio.source
     spacing: 16
+
+    // PipeWire reshuffles its nodes when a stream comes or goes, and the app list reads empty for a moment (measured
+    // 2026-10-20: two apps, then none, then one, within 20 ms). The empty state waits for the list to stay empty, or it
+    // flashes over the rows and fades out.
+    property bool emptyShown: !hasApps
+    onHasAppsChanged: {
+        if (hasApps) {
+            emptyShown = false
+            emptyWait.stop()
+        } else {
+            emptyWait.restart()
+        }
+    }
+    Timer {
+        id: emptyWait
+        interval: 300
+        onTriggered: root.emptyShown = !root.hasApps
+    }
+
 
     onDialogShownChanged: {
         if (!dialogShown && devicePopup.visible)
@@ -145,18 +167,20 @@ ColumnLayout {
         model: ScriptModel {
             values: root.appPwNodes
         }
-        delegate: VolumeMixerEntry {
+        delegate: SharedMixer.VolumeMixerEntry {
             anchors {
                 left: parent?.left
                 right: parent?.right
             }
             required property var modelData
             node: modelData
+            flat: true
+            capture: !root.isSink
         }
         MaterialPlaceholderMessage {
             anchors.centerIn: parent
             maximumWidth: 320
-            shown: !root.hasApps
+            shown: root.emptyShown
             icon: "widgets"
             text: Translation.tr("No applications")
             explanation: root.isSink

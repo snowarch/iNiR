@@ -11,11 +11,32 @@ ColumnLayout {
     id: root
     required property bool isSink
     required property bool dialogShown
-    readonly property list<var> appPwNodes: isSink ? MprisController.mixerAppNodes : Audio.inputAppNodes
+    // By name, so a row keeps its place between openings: PipeWire lists streams in the order they last reshuffled.
+    readonly property list<var> appPwNodes: (isSink ? MprisController.mixerAppNodes : Audio.inputAppNodes).slice()
+        .sort((a, b) => MprisController.streamDisplayName(a).localeCompare(MprisController.streamDisplayName(b)))
     readonly property list<var> devices: isSink ? Audio.outputDevices : Audio.inputDevices
     readonly property bool hasApps: appPwNodes.length > 0
     readonly property var currentDevice: isSink ? Audio.defaultSink : Audio.source
     spacing: Appearance.sizes.spacingMedium
+
+    // PipeWire reshuffles its nodes when a stream comes or goes, and the app list reads empty for a moment (measured
+    // 2026-10-20: two apps, then none, then one, within 20 ms). The empty state waits for the list to stay empty, or it
+    // flashes over the rows and fades out.
+    property bool emptyShown: !hasApps
+    onHasAppsChanged: {
+        if (hasApps) {
+            emptyShown = false
+            emptyWait.stop()
+        } else {
+            emptyWait.restart()
+        }
+    }
+    Timer {
+        id: emptyWait
+        interval: 300
+        onTriggered: root.emptyShown = !root.hasApps
+    }
+
 
     onDialogShownChanged: {
         if (!dialogShown && devicePopup.visible)
@@ -146,12 +167,13 @@ ColumnLayout {
             width: ListView.view.width
             required property var modelData
             node: modelData
+            capture: !root.isSink
         }
 
         // Empty state
         StyledText {
             anchors.centerIn: parent
-            opacity: root.appPwNodes.length === 0 ? 1 : 0
+            opacity: root.emptyShown ? 1 : 0
             visible: opacity > 0
             text: root.isSink ? Translation.tr("No apps playing audio") : Translation.tr("No apps using microphone")
             color: Appearance.colors.colSubtext

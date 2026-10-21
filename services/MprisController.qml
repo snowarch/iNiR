@@ -1401,6 +1401,18 @@ Singleton {
 		return root._cleanDisplayName(props["application.name"] || node.description || node.name || Translation.tr("Unknown"));
 	}
 
+	// What a stream says beyond its app: the media name, unless it repeats the app ("Firefox • Firefox") or is a
+	// placeholder a toolkit sets for every stream ("AudioStream", "Playback").
+	function streamDetail(node): string {
+		const media = String(node?.properties?.["media.name"] ?? "").trim();
+		if (media.length === 0) return "";
+		const app = root.streamDisplayName(node).toLowerCase();
+		const lower = media.toLowerCase();
+		if (app.length > 0 && (lower.includes(app) || app.includes(lower))) return "";
+		if (/^(audio ?stream|playback|capture|record(ing)?|(rec|play) ?stream|output|input|alsa (playback|capture)|webrtc voiceengine|simple directmedia layer)$/i.test(media)) return "";
+		return media;
+	}
+
 	function streamIconName(node): string {
 		return root._streamIcon(node) || "application-x-executable";
 	}
