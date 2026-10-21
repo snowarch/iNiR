@@ -24,7 +24,8 @@ Rectangle {
     color: caption.tagged ? "transparent" : IrisStyle.veilHeavy
     IrisCutPlate { anchors.fill: parent; visible: caption.tagged; color: IrisStyle.veilHeavy; cutLength: Math.round(caption.height / 3) }
     visible: caption.text.length > 0 && !(caption.preview?.compact ?? false)
-    Binding { target: caption.preview; property: "caption"; value: caption.text }
+    // Only the scene on show speaks: while one group's scene hands over to the next, both are alive and both would write.
+    Binding { target: caption.preview; property: "caption"; value: caption.text; when: caption.preview !== null && caption.preview.sceneItem === caption.parent }
     RowLayout {
         id: captionRow
         anchors.centerIn: parent
