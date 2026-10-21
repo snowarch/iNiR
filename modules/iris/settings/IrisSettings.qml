@@ -55,11 +55,12 @@ Item {
     readonly property bool layoutable: root.heroPinned && !root.split && !root.sceneDrawn && !root.landing && pageHero.stageAvailable
     readonly property bool heroBeside: root.layoutable && root.pageMode === "beside"
     readonly property bool heroStacked: root.layoutable && root.pageMode === "stack"
-    readonly property var layoutInputs: [detailBody.width, detailBody.height, settingsRows.implicitHeight, root.layoutable, root.section, root.blocksShown, root.pagesPane]
+    readonly property var layoutInputs: [detailBody.width, detailBody.height, settingsRows.implicitHeight, root.layoutable, root.section, root.blocksShown, root.fedAll, root.pagesPane]
     onLayoutInputsChanged: Qt.callLater(root.relayout)
     function relayout(): void {
         // A page still arriving block by block is measured once it is whole.
-        if (!root.layoutable || (root.fedPage === root.pageKey && root.blocksShown < root.shownGroups.length)) {
+        // Once whole, a page that later grows (another block built, a long area read by blocks) is never "arriving" again.
+        if (!root.layoutable || (root.fedPage === root.pageKey && !root.fedAll && root.blocksShown < root.shownGroups.length)) {
             if (!root.layoutable) root.pageMode = ""
             return
         }
