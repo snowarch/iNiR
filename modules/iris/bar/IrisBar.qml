@@ -119,8 +119,14 @@ Scope {
                 return "list | apply:<id> | colours:<id> | save:<name> | import:<path> | export[:<id>] | folder"
             }
         }
-        function settings(section: string): void {
+        function settings(section: string): string {
+            // An area for hardware this computer lacks is not in Settings: opening it fell to General without a word.
+            if (section.split("/")[0] === "battery" && !Battery.available) {
+                GlobalStates.openSettingsAt("iris", "display")
+                return "No battery on this computer: opened Display & Input"
+            }
             GlobalStates.openSettingsAt("iris", section)
+            return ""
         }
         // Closes iRiS Settings in either host (over the desktop or a window); does nothing when it is closed.
         function settingsClose(): string {
