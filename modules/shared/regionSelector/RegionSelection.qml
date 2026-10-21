@@ -302,7 +302,7 @@ PanelWindow {
     Process {
         id: checkRecordingProc
         running: isRecording
-        command: ["/usr/bin/pidof", "wf-recorder"]
+        command: [Directories.recorderPidsScriptPath]
         onExited: (exitCode, exitStatus) => {
             root.preparationDone = !screenshotProc.running
             root.recordingShouldStop = (exitCode === 0);

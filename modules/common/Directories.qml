@@ -122,6 +122,7 @@ Singleton {
     property string aiChats: `${Directories.stateUserPath}/ai/chats`
     property string aiTranslationScriptPath: `${Directories.scriptsPath}/ai/gemini-translate.sh`
     property string recordScriptPath: `${Directories.scriptsPath}/videos/record.sh`
+    property string recorderPidsScriptPath: `${Directories.scriptsPath}/videos/recorder-pids.sh`
 
     function shortHomePath(path: string): string {
         const cleaned = FileUtils.trimFileProtocol(path)

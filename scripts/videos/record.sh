@@ -660,23 +660,43 @@ run_recorder_process() {
     return "$status"
 }
 
+# wf-recorder processes capturing this session's screen; a nested test compositor's are not ours.
+own_recorder_pids() {
+    "$SCRIPT_DIR/recorder-pids.sh"
+}
+
+# SIGINT lets wf-recorder finish the file. One whose compositor went away ignores SIGINT and
+# SIGTERM alike and would count up forever, so it gets SIGKILL once the grace period runs out.
+signal_recorder() {
+    local pid="$1" signal
+    for signal in INT TERM KILL; do
+        kill -s "$signal" "$pid" 2>/dev/null || return 0
+        for _ in {1..20}; do
+            kill -0 "$pid" 2>/dev/null || return 0
+            sleep 0.25
+        done
+    done
+}
+
 stop_running_recorder() {
-    local recorder_pid=""
+    local recorder_pid="" pid
+    local -a pids=()
     recorder_pid="$(cat "$RECORDER_PID_FILE" 2>/dev/null || true)"
     if [[ "$recorder_pid" =~ ^[0-9]+$ ]] && kill -0 "$recorder_pid" 2>/dev/null; then
         if [[ "$(cat "/proc/$recorder_pid/comm" 2>/dev/null || true)" == "wf-recorder" ]]; then
             : > "$RECORDER_STOP_FILE"
-            kill -SIGINT "$recorder_pid" 2>/dev/null || true
+            signal_recorder "$recorder_pid"
             return 0
         fi
     fi
 
     rm -f "$RECORDER_PID_FILE" "$RECORDER_STOP_FILE"
-    if pgrep -x wf-recorder >/dev/null 2>&1; then
-        pkill -SIGINT -x wf-recorder 2>/dev/null || true
-        return 0
-    fi
-    return 1
+    mapfile -t pids < <(own_recorder_pids)
+    [[ ${#pids[@]} -gt 0 ]] || return 1
+    for pid in "${pids[@]}"; do
+        signal_recorder "$pid" &
+    done
+    wait
 }
 
 start_recording_command() {
@@ -895,7 +915,7 @@ done
 # Stopping stays silent: the recording process itself notifies once the file is
 # written, and two toasts a second apart for one action is noise.
 if [[ $STOP_ONLY -eq 1 ]]; then
-    if pgrep -x wf-recorder >/dev/null 2>&1; then
+    if own_recorder_pids >/dev/null; then
         stop_running_recorder || true
     elif is_truthy "$SHOW_NOTIFICATIONS"; then
         notify-send "Recorder" "No active recording" -a 'Recorder' & disown
@@ -903,7 +923,7 @@ if [[ $STOP_ONLY -eq 1 ]]; then
     exit 0
 fi
 
-if pgrep -x wf-recorder >/dev/null 2>&1; then
+if own_recorder_pids >/dev/null; then
     stop_running_recorder || true
     exit 0
 fi

@@ -233,7 +233,7 @@ Singleton {
 
     Process {
         id: checkProcess
-        command: ["/usr/bin/pgrep", "-xo", "wf-recorder"]
+        command: [Directories.recorderPidsScriptPath]
         stdout: StdioCollector {
             id: recorderPidCollector
         }
