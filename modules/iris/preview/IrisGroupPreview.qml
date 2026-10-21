@@ -79,6 +79,8 @@ ClippingRectangle {
     readonly property string wallpaper: WallpaperListener.wallpaperUrlForScreen(GlobalStates.focusedScreen)
     readonly property Item wallpaperView: wallpaperImage
 
+    // Two sizes, never one per width: a page settling passes its scene through several widths, and each asked for a decode.
+    function decodeFor(width: real): size { return Qt.size(width * 2 <= 1024 ? 1024 : 2048, 0) }
     function sceneFor(section: string, group: string): string {
         if (group.length === 0)
             return ({ dock: "dock", player: "player", desktop: "widgets", widgets: "widgets", sidebars: "panels", controlCenter: "controlCenter", spotlight: "spotlight", bubbles: "bubbles",
@@ -141,7 +143,8 @@ ClippingRectangle {
         active: root.available && root.visible
         screen: GlobalStates.focusedScreen
         provideTexture: true
-        decodeSize: Qt.size(Math.round(root.width * 2), 0)
+        // At least twice the frame, in one of two sizes Settings keeps decoded: the picture comes from the image cache.
+        decodeSize: root.decodeFor(root.width)
         opacity: root.scene !== "backdrop" ? 1 : 0
     }
 

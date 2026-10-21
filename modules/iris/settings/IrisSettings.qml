@@ -199,9 +199,15 @@ Item {
         const room = detailBody.height - settingsRows.implicitHeight - root.stageCaption - Math.round(48 * root.d)
         return Math.round(Math.max(root.stageMin, Math.min(most, room)))
     }
-    // Beside the rows the scene keeps the screen's proportions too: a column-tall crop of a 16:9 desktop is not that desktop.
-    readonly property real besideStageHeight: Math.round(Math.min(heroBesideSlot.width * root.screenShape,
+    // Beside the rows the scene is at least the screen's proportions, and grows into what the index leaves under it, up
+    // to a square (P3): a short area left most of the column bare under a 16:9 strip. Never column-tall: a crop of a
+    // 16:9 desktop that tall is not that desktop.
+    readonly property real besideStageLeast: Math.round(Math.min(heroBesideSlot.width * root.screenShape,
         heroBesideSlot.height - pageHero.wordsHeight - Math.round(16 * root.d)))
+    readonly property real besideStageHeight: {
+        const left = heroBesideSlot.height - pageHero.wordsBox - Math.round(34 * root.d) - (indexFlick.visible ? indexColumn.implicitHeight : 0)
+        return Math.round(Math.max(root.besideStageLeast, Math.min(heroBesideSlot.width, left)))
+    }
     function shown(spec: var): bool { return IrisOptions.shown(spec) }
 
     readonly property int searchLimit: 24
@@ -444,6 +450,21 @@ Item {
         root.unfolded = next
     }
     IrisGroupPreview { id: sceneProbe; visible: false; section: ""; group: "" }
+    // The wallpaper every scene is drawn on, decoded once in each of the two sizes a scene asks for (IrisGroupPreview
+    // `decodeFor`) while Settings is open: a scene arriving takes it from the image cache in the same frame. Measured: the
+    // scene drew in 40 ms and its wallpaper landed 150-220 ms later, decoded again at each width the page passed through
+    // while it settled.
+    Repeater {
+        model: [1, 1024]
+        IrisWallpaperView {
+            required property int modelData
+            visible: false
+            live: false
+            screen: GlobalStates.focusedScreen
+            provideTexture: true
+            decodeSize: sceneProbe.decodeFor(modelData)
+        }
+    }
     readonly property var morePages: IrisOptions.morePages.filter(entry => root.pages.some(page => page.key === entry.key))
     readonly property var moreGroups: [...new Set(root.morePages.map(entry => Translation.tr(entry.group)))]
     // iRiS's own pages (General's links) are found by search as the shared ones are.
@@ -514,7 +535,8 @@ Item {
             need += indexFlick.blockHeight
             need += chunk.groups.filter(group => group.title !== chunk.caption).length * (indexFlick.groupHeight + indexFlick.answerHeight)
         }
-        return need <= indexFlick.height
+        // Measured under the least scene: the scene grows from what the index leaves, never the other way round.
+        return need <= heroBesideSlot.height - root.besideStageLeast - pageHero.wordsBox - Math.round(34 * root.d)
     }
     property int readChunk: 0
     function scrollToChunk(at: int): void {
