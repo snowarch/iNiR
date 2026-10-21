@@ -18,17 +18,22 @@ PreviewScene {
     readonly property string aura: String(lightRoot.opt("iris.appearance.aura", "subtle"))
     readonly property real reach: Number(lightRoot.opt("iris.appearance.theme.lightReach", 100))
     readonly property real glow: Number(lightRoot.opt("iris.appearance.theme.glow", 0))
-    readonly property real bodyWidth: Math.round(236 * lightRoot.d)
-    readonly property real bodyHeight: Math.round(176 * lightRoot.d)
-    readonly property real gutter: Math.round((lightRoot.width - 2 * lightRoot.bodyWidth) / 3)
+    // The two bodies share what the frame gives: at a column's width their natural 236 px overran both edges and cut
+    // Weather's words and Control Center's tiles. Without a caption under them (a compact hero) they sit centred.
+    readonly property bool compact: lightRoot.preview.compact ?? false
+    readonly property real gutter: Math.round(16 * lightRoot.d)
+    readonly property real bodyWidth: Math.min(Math.round(236 * lightRoot.d), Math.floor((lightRoot.width - 3 * lightRoot.gutter) / 2))
+    readonly property real bodyHeight: Math.min(Math.round(176 * lightRoot.d), lightRoot.height - 2 * lightRoot.gutter)
+    readonly property real bodyY: lightRoot.compact ? Math.round((lightRoot.height - lightRoot.bodyHeight) / 2) : Math.round(26 * lightRoot.d)
+    readonly property real side: Math.round((lightRoot.width - 2 * lightRoot.bodyWidth - lightRoot.gutter) / 2)
     property real t: 0
     Loop on t { running: lightRoot.playing }
     readonly property real grown: IrisFrame.islandBand + (lightRoot.bodyHeight - IrisFrame.islandBand) * lightRoot.t
     readonly property real wide: IrisFrame.islandBand * 2 + (lightRoot.bodyWidth - IrisFrame.islandBand * 2) * lightRoot.t
 
     LitBody {
-        x: lightRoot.gutter + (lightRoot.bodyWidth - width) / 2
-        y: Math.round(26 * lightRoot.d)
+        x: lightRoot.side + (lightRoot.bodyWidth - width) / 2
+        y: lightRoot.bodyY
         width: lightRoot.wide
         height: lightRoot.grown
         restWidth: lightRoot.bodyWidth
@@ -54,8 +59,8 @@ PreviewScene {
         }
     }
     LitBody {
-        x: 2 * lightRoot.gutter + lightRoot.bodyWidth + (lightRoot.bodyWidth - width) / 2
-        y: Math.round(26 * lightRoot.d)
+        x: lightRoot.side + lightRoot.gutter + lightRoot.bodyWidth + (lightRoot.bodyWidth - width) / 2
+        y: lightRoot.bodyY
         width: lightRoot.wide
         height: lightRoot.grown
         restWidth: lightRoot.bodyWidth

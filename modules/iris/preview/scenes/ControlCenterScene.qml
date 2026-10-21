@@ -26,8 +26,17 @@ PreviewScene {
         return IrisControlOptions.pack(ccRoot.ids, shapes, ccRoot.columns)
     }
     readonly property real naturalWidth: ccRoot.plateWidth + Math.round(120 * ccRoot.d)
-    readonly property real naturalHeight: ccPlate.y + ccPlate.height + Math.round(24 * ccRoot.d)
+    // The whole panel, every row: what the scene asks for, whatever part of it the frame shows.
+    readonly property real naturalHeight: ccPlate.y + ccTitle.height + ccGrid.fullHeight
+        + (ccRoot.listed ? Math.round(62 * ccRoot.d) : 0) + Math.round(62 * ccRoot.d)
     readonly property bool cropBottom: true
+    // A frame lower than the panel shows the rows that fit whole and closes the plate under them: cut across, its last
+    // tiles read as broken. The notifications row comes back only with every row shown.
+    readonly property int shownRows: {
+        const free = ccRoot.height - ccPlate.y - ccTitle.height - Math.round(48 * ccRoot.d) + ccGrid.gap
+        return Math.max(1, Math.min(ccRoot.packed.rows, Math.floor(free / (ccGrid.unit + ccGrid.gap))))
+    }
+    readonly property bool trimmed: ccRoot.shownRows < ccRoot.packed.rows
     IslandPill {
         id: ccIsland
         anchors.horizontalCenter: parent.horizontalCenter
@@ -70,14 +79,15 @@ PreviewScene {
             x: Math.round(14 * ccRoot.d); y: Math.round(14 * ccRoot.d)
             width: parent.width - 2 * x
             spacing: Math.round(10 * ccRoot.d)
-            IrisText { text: Translation.tr("Control Center"); font.weight: IrisStyle.weight(Font.DemiBold); font.pixelSize: IrisStyle.typeHeadline }
+            IrisText { id: ccTitle; text: Translation.tr("Control Center"); font.weight: IrisStyle.weight(Font.DemiBold); font.pixelSize: IrisStyle.typeHeadline }
             Item {
                 id: ccGrid
                 readonly property real gap: Math.round(8 * ccRoot.d)
                 readonly property real cell: (width - (ccRoot.columns - 1) * gap) / ccRoot.columns
                 readonly property real unit: Math.round((ccRoot.opt("iris.controlCenter.labels", false) ? 70 : 64) * ccRoot.d)
                 Layout.fillWidth: true
-                implicitHeight: ccRoot.packed.rows * unit + Math.max(0, ccRoot.packed.rows - 1) * gap
+                readonly property real fullHeight: ccRoot.packed.rows * unit + Math.max(0, ccRoot.packed.rows - 1) * gap
+                implicitHeight: ccRoot.shownRows * unit + Math.max(0, ccRoot.shownRows - 1) * gap
                 Repeater {
                     model: ccRoot.ids
                     Rectangle {
@@ -89,6 +99,7 @@ PreviewScene {
                         readonly property bool wide: !["media", "level", "levels", "platter"].includes(block.kind) && block.spot.w > 1
                         readonly property bool grouped: block.kind === "levels" || block.kind === "platter"
                         readonly property bool upright: block.spot.h > block.spot.w
+                        visible: block.spot.row + block.spot.h <= ccRoot.shownRows
                         x: Math.round(block.spot.col * (ccGrid.cell + ccGrid.gap))
                         y: Math.round(block.spot.row * (ccGrid.unit + ccGrid.gap))
                         width: Math.round(block.spot.w * ccGrid.cell + (block.spot.w - 1) * ccGrid.gap)
@@ -202,7 +213,7 @@ PreviewScene {
             }
             Rectangle {
                 Layout.fillWidth: true
-                visible: ccRoot.listed
+                visible: ccRoot.listed && !ccRoot.trimmed
                 implicitHeight: Math.round(52 * ccRoot.d)
                 radius: IrisStyle.radiusPlate
                 color: IrisStyle.fillQuiet
