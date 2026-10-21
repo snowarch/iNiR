@@ -617,8 +617,11 @@ Item {
         if (found.length === 0) found = root.section === "general" ? "@welcome" : String(root.groups[0]?.key ?? "")
         if (root.heldGroup.length === 0) root.readGroup = found
         // The scene follows only where the head already carries one: one appearing mid-scroll would pin the head and move the rows.
-        root.spyGroup = sceneProbe.sceneFor(root.section, "").length > 0 && found.length > 0
-            && sceneProbe.sceneFor(root.section, found).length > 0 ? found : ""
+        // A group picked in the index leads the scene while the rows travel to it: the groups passing on the way changed
+        // the scene once more for each.
+        const lead = root.heldGroup.length > 0 ? root.heldGroup : found
+        root.spyGroup = sceneProbe.sceneFor(root.section, "").length > 0 && lead.length > 0
+            && sceneProbe.sceneFor(root.section, lead).length > 0 ? lead : ""
     }
     // The column of a section shown whole is its index: a group scrolls into view instead of opening alone.
     // What the page shows, in order, each with the column entry it answers to.
