@@ -313,6 +313,22 @@ Item {
         }
         return out
     }
+    // A group of one switch reads as that switch, named by its own label ("Confirm before closing windows" says more
+    // than "Closing"); where that label repeats across the area (every widget's "On the desktop") it names nothing, and
+    // each row takes its group's name instead.
+    readonly property var sharedLoneLabels: {
+        Config.revision
+        IrisNiri.revision
+        const seen = {}, shared = {}
+        for (const group of root.groups) {
+            const rows = group.rows.filter(spec => root.shown(spec))
+            if (rows.length !== 1 || rows[0].kind !== "switch") continue
+            const label = String(rows[0].label)
+            if (seen[label]) shared[label] = true
+            seen[label] = true
+        }
+        return shared
+    }
     readonly property var shownGroups: root.searching ? root.groups
         : root.openGroup.length > 0 ? root.groups.filter(entry => entry.title === root.openGroup)
         : root.flatBlocks
@@ -2447,7 +2463,7 @@ Item {
                 // The summary gets the rest of the row; with nothing to summarise (a lone switch) the name takes it all.
                 width: Math.ceil(Math.min(implicitWidth, groupRow.lone || groupRow.summary.length === 0
                     ? parent.width - x - trailing.width - Math.round(28 * root.d) : parent.width * 0.42))
-                text: groupRow.lone ? Translation.tr(groupRow.rows[0].label) : groupRow.modelData.title
+                text: groupRow.lone && !root.sharedLoneLabels[groupRow.rows[0].label] ? Translation.tr(groupRow.rows[0].label) : groupRow.modelData.title
                 font.pixelSize: IrisStyle.typeBody
                 font.weight: IrisStyle.weight(groupRow.unfolded ? Font.DemiBold : Font.Normal)
                 elide: Text.ElideRight
