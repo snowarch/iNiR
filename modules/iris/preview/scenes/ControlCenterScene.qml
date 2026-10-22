@@ -12,6 +12,7 @@ import qs.modules.iris.preview.parts
 
 PreviewScene {
     id: ccRoot
+    subject: Qt.rect(ccPlate.x, ccPlate.y, ccPlate.width, ccPlate.height)
     readonly property bool on: ccRoot.opt("iris.modules.controlCenter", true)
     readonly property bool fromIsland: String(ccRoot.opt("iris.controlCenter.opens", "island")) === "island"
     readonly property bool round: String(ccRoot.opt("iris.controlCenter.controls", "tiles")) === "round"

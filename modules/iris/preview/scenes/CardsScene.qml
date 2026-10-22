@@ -12,6 +12,7 @@ import qs.modules.iris.preview.parts
 
 PreviewScene {
     id: cardRoot
+    subject: Qt.rect(cardPlate.x, cardPlate.y, cardPlate.width, cardPlate.height)
     readonly property real cardWidth: Number(cardRoot.opt("iris.appearance.surfaces.cards.width", 0)) > 0
         ? Number(cardRoot.opt("iris.appearance.surfaces.cards.width", 0)) * cardRoot.d : Math.round(340 * cardRoot.d)
     readonly property bool header: cardRoot.opt("iris.appearance.surfaces.cards.header", true)

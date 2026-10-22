@@ -16,6 +16,7 @@ import qs.modules.iris.preview.parts
 
 PreviewScene {
     id: pageRoot
+    subject: Qt.rect(islandBody.x, islandBody.y, islandBody.width, islandBody.height)
     readonly property string mode: pageRoot.group === "Player page" ? "media" : pageRoot.group === "Pages" ? "pages" : "desktop"
     readonly property real pageW: Math.max(360, Math.min(600, Number(pageRoot.opt("iris.bar.pageWidth", 440)))) * pageRoot.d
     readonly property bool banner: String(pageRoot.opt("iris.bar.desktopBanner", "wallpaper")) === "wallpaper"

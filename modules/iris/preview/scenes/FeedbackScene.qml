@@ -11,6 +11,7 @@ import qs.modules.iris.preview.parts
 
 PreviewScene {
     id: feedRoot
+    subject: Qt.rect(bannerPlate.x, bannerPlate.y, bannerPlate.width, bannerPlate.height)
     readonly property bool banners: feedRoot.opt("iris.modules.notificationPopup", true)
     readonly property bool osd: feedRoot.opt("iris.modules.osd", true)
     readonly property real bannerWidth: Math.max(340, Math.min(560, Number(feedRoot.opt("iris.notifications.width", 380)))) * feedRoot.d

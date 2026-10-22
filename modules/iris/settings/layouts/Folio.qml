@@ -12,6 +12,7 @@ import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.preview
 import qs.modules.iris.settings
+import qs.modules.iris.settings.layouts.folio as Skins // so Quickshell mirrors the skins IrisSkin loads by url
 
 // Folio (Pliego): Settings read as a printed sheet. The areas are a rail of words with the open one set large and the
 // others fading out to both sides, a ruler of every area under it in its clusters; the left of the sheet is the area's
@@ -160,7 +161,8 @@ Item {
             x: Math.round(rail.width / 2)
             spacing: root.u(root.compact ? 26 : 34)
             height: rail.height
-            readonly property Item chosen: wordRepeater.itemAt(root.current)
+            // itemAt() never says when the Repeater fills in, so a bound `chosen` stayed null and the rail sat at 0.
+            property Item chosen: null
             Repeater {
                 id: wordRepeater
                 model: root.sections
@@ -170,6 +172,9 @@ Item {
                     required property int index
                     readonly property int distance: Math.abs(word.index - root.current)
                     readonly property bool chosen: word.distance === 0 && !(root.host?.searching ?? false)
+                    readonly property bool here: word.distance === 0
+                    onHereChanged: if (word.here) words.chosen = word
+                    Component.onCompleted: if (word.here) words.chosen = word
                     readonly property int noted: Number(root.host?.noteCounts?.[word.modelData.id] ?? 0)
                     readonly property bool found: !(root.host?.searching ?? false) || (root.host?.matchedSections?.has(word.modelData.id) ?? false)
                     width: wordText.implicitWidth + (word.noted > 0 ? sup.implicitWidth + root.u(3) : 0)
@@ -350,7 +355,7 @@ Item {
                     anchors.topMargin: root.u(38)
                     anchors.leftMargin: root.u(18)
                     anchors.rightMargin: root.u(18)
-                    anchors.bottomMargin: plateNote.visible ? root.u(40) : root.u(18)
+                    anchors.bottomMargin: (plateNote.visible ? root.u(40) : root.u(18)) + (callouts.visible ? root.u(34) : 0) // never on the side picked: that reads the stage's size back
                     visible: stage.available
                     standIn: true
                     section: root.host?.searching ? "" : root.section
@@ -376,33 +381,82 @@ Item {
                         font.pixelSize: IrisStyle.typeLabel
                     }
                 }
-                // Callouts printed on the plate: the lead group's values where the stage shows them.
-                Row {
-                    visible: stage.available && !(root.host?.searching ?? false)
-                    anchors.right: parent.right
-                    anchors.rightMargin: root.u(28)
-                    y: root.u(48)
-                    spacing: root.u(14)
-                    Repeater {
-                        model: (root.host?.tellingRows(6, "") ?? []).filter(spec => spec.kind !== "switch" && root.answer(spec).split(" ").length <= 2).slice(0, 2)
-                        Rectangle {
-                            required property var modelData
-                            width: callout.implicitWidth + root.u(14)
-                            height: callout.implicitHeight + root.u(8)
-                            radius: root.u(4)
-                            color: Qt.rgba(IrisStyle.surfaceOpaque.r, IrisStyle.surfaceOpaque.g, IrisStyle.surfaceOpaque.b, 0.78)
-                            border.width: 1
-                            border.color: Qt.rgba(IrisStyle.accent.r, IrisStyle.accent.g, IrisStyle.accent.b, 0.5)
-                            IrisText {
-                                id: callout
-                                anchors.centerIn: parent
-                                textFormat: Text.StyledText
-                                text: Translation.tr(String(parent.modelData.label ?? "")) + "  <font color='" + IrisStyle.accent + "'>" + root.answer(parent.modelData) + "</font>"
-                                color: IrisStyle.subtext
-                                font.family: IrisStyle.fontMono
-                                font.pixelSize: IrisStyle.typeCaption
-                                font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.14)
-                                font.capitalization: Font.AllUppercase
+                // Callouts printed beside what they measure: a rule along the stage's subject, the values on the side
+                // with room (over a piece at the bottom, under one at the top). A stage with no subject sets them in a
+                // line in the plate's margin under it, never over the scene's own caption.
+                Item {
+                    id: callouts
+                    readonly property rect at: stage.subject
+                    // The side of the subject with room for the notes: its long sides first (a tall or small piece is read
+                    // from beside it), then the others; none with room and they go to the plate's margin.
+                    readonly property string side: {
+                        const r = callouts.at
+                        if (r.width <= 0) return ""
+                        const needW = root.u(240), needH = calloutList.count * root.u(26) + root.u(20) // never the grid's own size: its columns follow the side
+                        const room = { top: r.y, bottom: stage.height - r.y - r.height, left: r.x, right: stage.width - r.x - r.width }
+                        const across = r.height > r.width * 1.4 || r.width < stage.width * 0.3
+                        const lr = room.left > room.right ? ["left", "right"] : ["right", "left"]
+                        const tb = room.top > room.bottom ? ["top", "bottom"] : ["bottom", "top"]
+                        return (across ? lr.concat(tb) : tb.concat(lr)).find(side => room[side] >= (side === "left" || side === "right" ? needW : needH)) ?? ""
+                    }
+                    readonly property bool pinned: callouts.side.length > 0
+                    readonly property bool vertical: callouts.side === "left" || callouts.side === "right"
+                    readonly property bool over: callouts.side === "top"
+                    readonly property bool leftOf: callouts.side === "left"
+                    visible: stage.available && !(root.host?.searching ?? false) && calloutList.count > 0
+                    x: stage.x
+                    y: stage.y
+                    width: stage.width
+                    height: stage.height
+                    z: 2
+                    // The rule: as long as the subject, a tick at each end, set off it by the gap.
+                    Item {
+                        id: rule
+                        visible: callouts.pinned
+                        readonly property real off: root.u(6)
+                        x: callouts.vertical ? (callouts.leftOf ? callouts.at.x - rule.off - 1 : callouts.at.x + callouts.at.width + rule.off) : callouts.at.x
+                        y: callouts.vertical ? callouts.at.y : (callouts.over ? callouts.at.y - rule.off - 1 : callouts.at.y + callouts.at.height + rule.off)
+                        width: callouts.vertical ? 1 : callouts.at.width
+                        height: callouts.vertical ? callouts.at.height : 1
+                        Rectangle { anchors.fill: parent; color: IrisStyle.accent; opacity: 0.8 }
+                        Rectangle { x: callouts.vertical ? -root.u(3) : 0; y: callouts.vertical ? 0 : -root.u(3); width: callouts.vertical ? root.u(7) : 1; height: callouts.vertical ? 1 : root.u(7); color: IrisStyle.accent }
+                        Rectangle { x: callouts.vertical ? -root.u(3) : parent.width - 1; y: callouts.vertical ? parent.height - 1 : -root.u(3); width: callouts.vertical ? root.u(7) : 1; height: callouts.vertical ? 1 : root.u(7); color: IrisStyle.accent }
+                    }
+                    Grid {
+                        id: calloutColumn
+                        columns: callouts.pinned ? 1 : 2
+                        rowSpacing: root.u(4)
+                        columnSpacing: root.u(10)
+                        readonly property real wantX: !callouts.pinned ? 0
+                            : callouts.vertical ? (callouts.leftOf ? rule.x - root.u(8) - calloutColumn.width : rule.x + root.u(8))
+                            : rule.x
+                        readonly property real wantY: !callouts.pinned ? callouts.height + root.u(9)
+                            : callouts.vertical ? rule.y + rule.height / 2 - calloutColumn.height / 2
+                            : callouts.over ? rule.y - root.u(6) - calloutColumn.height : rule.y + root.u(6)
+                        x: !callouts.pinned ? 0 : Math.round(Math.max(root.u(6), Math.min(callouts.width - calloutColumn.width - root.u(6), calloutColumn.wantX)))
+                        y: !callouts.pinned ? calloutColumn.wantY : Math.round(Math.max(root.u(6), Math.min(callouts.height - calloutColumn.height - root.u(6), calloutColumn.wantY)))
+                        Repeater {
+                            id: calloutList
+                            model: (root.host?.tellingRows(6, "") ?? []).filter(spec => spec.kind !== "switch" && root.answer(spec).split(" ").length <= 2).slice(0, 2)
+                            Rectangle {
+                                required property var modelData
+                                width: callout.implicitWidth + root.u(14)
+                                height: callout.implicitHeight + root.u(8)
+                                radius: root.u(4)
+                                color: Qt.rgba(IrisStyle.surfaceOpaque.r, IrisStyle.surfaceOpaque.g, IrisStyle.surfaceOpaque.b, 0.82)
+                                border.width: 1
+                                border.color: Qt.rgba(IrisStyle.accent.r, IrisStyle.accent.g, IrisStyle.accent.b, 0.5)
+                                IrisText {
+                                    id: callout
+                                    anchors.centerIn: parent
+                                    textFormat: Text.StyledText
+                                    text: Translation.tr(String(parent.modelData.label ?? "")) + "  <font color='" + IrisStyle.accent + "'>" + root.answer(parent.modelData) + "</font>"
+                                    color: IrisStyle.subtext
+                                    font.family: IrisStyle.fontMono
+                                    font.pixelSize: IrisStyle.typeCaption
+                                    font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.14)
+                                    font.capitalization: Font.AllUppercase
+                                }
                             }
                         }
                     }
@@ -436,7 +490,11 @@ Item {
                 font.pixelSize: root.u(root.compact ? 19 : 23)
                 lineHeight: 1.28
                 text: {
-                    const rows = (root.host?.tellingRows(8, "") ?? []).filter(spec => spec.kind === "switch" || root.answer(spec).split(" ").length <= 2).slice(0, root.compact ? 3 : 4)
+                    // One that ends on a bare verb ("Media bubble opens", "Tray bubble rests") has no way into the sentence.
+                    const bare = spec => /\s(opens|rests|sits|stays|follows|shows|hides|starts|moves|lives|appears|closes|keeps|leads|lands|goes)$/i.test(String(spec.label ?? ""))
+                        // and so does an order ("Turn the screen off after"): only "Opens as" reads as "it opens as".
+                        || (/\s(as|at|on|in|to|by|from|with|for|into|after|before|under|over)$/i.test(String(spec.label ?? "")) && !/^\S+s\s/.test(String(spec.label ?? "")))
+                    const rows = (root.host?.tellingRows(8, "") ?? []).filter(spec => spec.kind === "switch" || (!bare(spec) && root.answer(spec).split(" ").length <= 2)).slice(0, root.compact ? 3 : 4)
                     if (rows.length === 0) return ""
                     const esc = value => String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;")
                     const area = Translation.tr(String(root.area.title ?? ""))
@@ -448,12 +506,16 @@ Item {
                     // Values are said with their names, switches by name alone, grouped by on and off.
                     const clauses = []
                     // A value that is itself a phrase ("Keep pinned place") never reads mid-sentence: it is left to its row.
+                    const twins = root.twins(rows)
+                    const named = spec => root.inline(root.named(spec, area, twins))
+                    // A label that ends on its preposition ("Opens as") is a verb: "it opens as a sheet", never "the opens as are".
+                    const verb = spec => /\s(as|at|on|in|to|by|from|with|for|into|after|before|under|over)$/i.test(String(spec.label ?? ""))
                     const values = rows.filter(spec => spec.kind !== "switch" && root.answer(spec).split(" ").length <= 2)
-                        .map(spec => Translation.tr(/[^su]s$/.test(String(spec.label ?? "")) ? "the %1 are %2" : "the %1 is %2").arg(esc(root.inline(root.named(spec, area)))).arg(link(spec, root.inline(root.answer(spec)))))
+                        .map(spec => Translation.tr(verb(spec) ? "it %1 %2" : /[^su]s$/.test(String(spec.label ?? "")) ? "the %1 are %2" : "the %1 is %2").arg(esc(named(spec))).arg(link(spec, root.inline(root.answer(spec)))))
                     if (values.length > 0) clauses.push(list(values))
-                    const lit = rows.filter(spec => spec.kind === "switch" && on(spec)).map(spec => link(spec, root.inline(root.named(spec, area))))
+                    const lit = rows.filter(spec => spec.kind === "switch" && on(spec)).map(spec => link(spec, named(spec)))
                     if (lit.length > 0) clauses.push(Translation.tr("with %1 on").arg(list(lit)))
-                    const dark = rows.filter(spec => spec.kind === "switch" && !on(spec)).map(spec => link(spec, root.inline(root.named(spec, area))))
+                    const dark = rows.filter(spec => spec.kind === "switch" && !on(spec)).map(spec => link(spec, named(spec)))
                     if (dark.length > 0) clauses.push(Translation.tr("%1 off").arg(list(dark)))
                     return Translation.tr("In %1, %2.").arg(esc(area)).arg(clauses.reduce((all, part) => Translation.tr("%1, %2").arg(all).arg(part)))
                 }
@@ -506,7 +568,7 @@ Item {
                                 id: changeText
                                 anchors.verticalCenter: parent.verticalCenter
                                 textFormat: Text.StyledText
-                                text: Translation.tr(String(change.modelData.label)) + "  <font color='" + IrisStyle.textTertiary + "'><s>" + root.fallbackOf(change.modelData) + "</s>  →</font>  " + root.answer(change.modelData)
+                                text: root.named(change.modelData, "", root.twins(changes.rows)) + "  <font color='" + IrisStyle.textTertiary + "'><s>" + root.fallbackOf(change.modelData) + "</s>  →</font>  " + root.answer(change.modelData)
                                 color: IrisStyle.subtext
                                 font.pixelSize: IrisStyle.typeLabel
                             }
@@ -568,16 +630,25 @@ Item {
     }
 
     // A row's name inside its own area drops the area's name: "Dock notch" in Dock is the notch.
-    function named(spec: var, area: string): string {
+    // Two groups may hold a row of the same name (Side Panels' two "Alignment"s): those are said with their group.
+    function twins(rows: var): var {
+        const seen = {}
+        for (const spec of rows) { const key = String(spec.label ?? ""); seen[key] = (seen[key] ?? 0) + 1 }
+        return Object.keys(seen).filter(key => seen[key] > 1)
+    }
+    function named(spec: var, area: string, twins: var): string {
         const label = Translation.tr(String(spec.label ?? ""))
-        return label.toLowerCase().startsWith(area.toLowerCase() + " ") ? label.slice(area.length + 1) : label
+        if ((twins ?? []).includes(String(spec.label ?? "")) && spec.group)
+            return Translation.tr(String(spec.group)) + " " + root.inline(label)
+        return area.length > 0 && label.toLowerCase().startsWith(area.toLowerCase() + " ") ? label.slice(area.length + 1) : label
     }
     // A label or a value read mid-sentence: "Icon size" becomes "icon size"; names and acronyms ("GPU", "Wi-Fi") keep
     // their case, and so does German, where every noun is capitalised.
     function inline(text: string): string {
         if (Translation.languageCode.startsWith("de") || text.length < 2) return text
         const second = text.charAt(1)
-        if (second !== second.toLocaleLowerCase() || /[A-Z]/.test(text.slice(1).split(" ")[0])) return text
+        // A name set in title case ("Do Not Disturb") keeps it too.
+        if (second !== second.toLocaleLowerCase() || /[A-Z]/.test(text.slice(1).split(" ")[0]) || /\s[A-Z]/.test(text)) return text
         return text.charAt(0).toLocaleLowerCase() + text.slice(1)
     }
 

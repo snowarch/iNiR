@@ -16,6 +16,7 @@ import qs.modules.iris.preview.parts
 // the real surface resolves it (IrisStyle.surfaceGlass, so a per-surface override shows here too).
 PreviewScene {
     id: mat
+    subject: Qt.rect(matCard.x, matCard.y, matCard.width, matCard.height)
     // Laid tight, so the bodies read at the head's size.
     readonly property real naturalWidth: Math.round(460 * mat.d)
     readonly property real naturalHeight: Math.round(230 * mat.d)

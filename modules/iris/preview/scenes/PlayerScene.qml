@@ -12,6 +12,7 @@ import qs.modules.iris.preview.parts
 
 PreviewScene {
     id: playerRoot
+    subject: Qt.rect(playerCard.x, playerCard.y, playerCard.width, playerCard.height)
     readonly property var player: MprisController.activePlayer
     readonly property string art: String(MprisController.artUrlOf(playerRoot.player) ?? "")
     readonly property string cover: playerRoot.art.length > 0 ? playerRoot.art : playerRoot.wallpaper

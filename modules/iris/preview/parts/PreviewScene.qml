@@ -14,6 +14,8 @@ Item {
     // is laid out at the drawn size and shrunk only below these. 0: that side is shrunk whole from its natural size.
     property real narrowest: 0
     property real lowest: 0
+    // Where the piece the scene is about rests, in its own frame: Settings prints its notes beside it. Empty: nowhere in particular.
+    property rect subject: Qt.rect(0, 0, 0, 0)
     readonly property real d: IrisStyle.density
     readonly property int rev: Config.revision
     // A scene moves while it is seen and awake (IrisGroupPreview.awake), then rests on what it shows.

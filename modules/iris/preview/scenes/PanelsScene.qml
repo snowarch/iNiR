@@ -11,10 +11,12 @@ import qs.modules.iris.preview.parts
 
 PreviewScene {
     id: panelRoot
+    subject: Qt.rect(panelPlate.x, panelPlate.y, panelPlate.width, panelPlate.height)
     readonly property real panelWidth: Math.max(300, Math.min(560, Number(panelRoot.opt("iris.sidebars.right.width", 380)))) * panelRoot.d
     readonly property real naturalWidth: panelRoot.panelWidth * 2.2
     readonly property real naturalHeight: Math.round(420 * panelRoot.d)
     Plate {
+        id: panelPlate
         surface: "panels"
         fallbackRadius: IrisStyle.radiusPanel
         anchors.right: parent.right

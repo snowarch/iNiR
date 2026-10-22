@@ -14,6 +14,7 @@ import qs.modules.iris.preview.parts
 // let them, its name, and the shelf of recent windows when it is on.
 PreviewScene {
     id: orbitRoot
+    subject: Qt.rect(orbitPlate.x, orbitPlate.y, orbitPlate.width, orbitPlate.height)
     readonly property bool on: orbitRoot.opt("iris.orbit.enable", true) === true
     readonly property bool fromIsland: String(orbitRoot.opt("iris.orbit.opens", "island")) === "island"
     readonly property real peek: Math.max(0, Number(orbitRoot.opt("iris.orbit.peek", 56)))

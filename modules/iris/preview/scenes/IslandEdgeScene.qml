@@ -11,6 +11,7 @@ import qs.modules.iris.preview.parts
 
 PreviewScene {
     id: edgeRoot
+    subject: { const r = edgeRoot.place(edgeRoot.along, edgeRoot.length, edgeRoot.inset, edgeRoot.thick); return Qt.rect(r.x, r.y, r.width, r.height) }
     readonly property real naturalWidth: Math.round(640 * edgeRoot.d)
     readonly property real naturalHeight: Math.round(320 * edgeRoot.d)
     narrowest: Math.round(400 * edgeRoot.d)

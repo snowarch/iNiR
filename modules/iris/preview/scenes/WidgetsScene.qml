@@ -16,6 +16,7 @@ import qs.modules.iris.preview.parts
 
 PreviewScene {
     id: widgetsRoot
+    subject: Qt.rect(widgetsRoot.plateX, widgetsRoot.plateY, widgetsRoot.wide + widgetsRoot.gap + widgetsRoot.unit, widgetsRoot.unit)
     readonly property real naturalWidth: Math.round(620 * widgetsRoot.d)
     readonly property real naturalHeight: Math.round(260 * widgetsRoot.d)
     narrowest: Math.round(480 * widgetsRoot.d)

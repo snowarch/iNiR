@@ -13,6 +13,7 @@ import qs.modules.iris.preview.parts
 
 PreviewScene {
     id: spotRoot
+    subject: Qt.rect(spotPlate.x, spotPlate.y, spotPlate.width, spotPlate.height)
     readonly property bool on: spotRoot.opt("iris.modules.palette", true)
     readonly property bool fromIsland: String(spotRoot.opt("iris.palette.opens", "floating")) === "island"
     readonly property bool hints: spotRoot.opt("iris.palette.showHints", true)

@@ -14,6 +14,7 @@ import qs.modules.iris.preview.parts
 
 PreviewScene {
     id: dockRoot
+    subject: Qt.rect(dockRoot.plateX, dockRoot.plateY, dockRoot.plateW, dockRoot.plateH)
     readonly property string edge: IrisFrame.dockEdge
     readonly property bool vertical: dockRoot.edge === "left" || dockRoot.edge === "right"
     readonly property real naturalWidth: Math.round((dockRoot.vertical ? 620 : 760) * dockRoot.d)

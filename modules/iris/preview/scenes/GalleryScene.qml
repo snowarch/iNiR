@@ -9,6 +9,7 @@ import qs.modules.iris.preview.parts
 
 PreviewScene {
     id: galleryRoot
+    subject: Qt.rect(galleryPlate.x, galleryPlate.y, galleryPlate.width, galleryPlate.height)
     readonly property real galleryWidth: Math.max(640, Math.min(1400, Number(galleryRoot.opt("iris.wallpaper.width", 960)))) * galleryRoot.d
     readonly property real thumb: Math.max(160, Math.min(320, Number(galleryRoot.opt("iris.wallpaper.thumbnailSize", 228)))) * galleryRoot.d
     readonly property bool live: galleryRoot.opt("iris.wallpaper.livePreview", true)

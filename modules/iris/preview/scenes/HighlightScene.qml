@@ -14,6 +14,7 @@ import qs.modules.iris.preview.parts
 // ink, so the one colour that moves with the row is the one the eye lands on.
 PreviewScene {
     id: hl
+    subject: Qt.rect(hlPlate.x, hlPlate.y, hlPlate.width, hlPlate.height)
     // Laid tight, so the three marks read at the head's size instead of floating in air.
     readonly property real naturalWidth: Math.round(460 * hl.d)
     readonly property real naturalHeight: Math.round(230 * hl.d)

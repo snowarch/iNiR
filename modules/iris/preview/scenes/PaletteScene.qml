@@ -13,6 +13,7 @@ import qs.modules.iris.preview.parts
 // painted with the roles the solver hands the apps, so a choice shows in both at once.
 PreviewScene {
     id: pal
+    subject: Qt.rect(palPlate.x, palPlate.y, palPlate.width, palPlate.height)
     readonly property real naturalWidth: Math.round(620 * pal.d)
     readonly property real naturalHeight: Math.round(300 * pal.d)
     readonly property var apps: { pal.rev; return IrisStyle.washi?.apps ?? ({}) }

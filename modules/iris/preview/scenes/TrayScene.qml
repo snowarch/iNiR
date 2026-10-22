@@ -10,6 +10,7 @@ import qs.modules.iris.preview.parts
 
 PreviewScene {
     id: trayRoot
+    subject: Qt.rect(trayPlate.x, trayPlate.y, trayPlate.width, trayPlate.height)
     readonly property int columns: Math.max(2, Math.min(6, Number(trayRoot.opt("iris.tray.columns", 4))))
     readonly property bool labels: trayRoot.opt("iris.tray.labels", true)
     readonly property bool hidePassive: trayRoot.opt("iris.tray.hidePassive", false)
