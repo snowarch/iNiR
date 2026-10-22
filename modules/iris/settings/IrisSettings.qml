@@ -852,6 +852,68 @@ Item {
                         }
                     }
 
+                    // Your own desktop is the map: point at a piece of it and that piece lights up; a click opens its area.
+                    Item {
+                        id: shellMap
+                        readonly property var pieces: ["island", "dock"]
+                        readonly property var sectionOf: ({ island: "bar", dock: "dock", desktop: "desktop" })
+                        readonly property string current: ({ bar: "island", bubbles: "island", dock: "dock", desktop: "desktop", widgets: "desktop", wallpaper: "desktop" })[root.section] ?? ""
+                        readonly property string hovered: mapPointer.containsMouse ? shellMap.pieceAt(mapPointer.mouseX, mapPointer.mouseY) : ""
+                        readonly property string lit: shellMap.hovered.length > 0 ? shellMap.hovered : shellMap.current
+                        Layout.fillWidth: true
+                        Layout.topMargin: Math.round(4 * root.d)
+                        Layout.preferredHeight: Math.round(width * mapView.screenH / mapView.screenW)
+                        visible: !root.searching && !IrisStyle.indexed
+                        function rectOf(piece: string): rect { return piece === "island" ? mapView.islandReach : piece === "dock" ? mapView.dockReach : Qt.rect(0, 0, 0, 0) }
+                        function pieceAt(x: real, y: real): string {
+                            const sx = x / mapView.s + mapView.view.x, sy = y / mapView.s + mapView.view.y
+                            for (const piece of shellMap.pieces) {
+                                const r = shellMap.rectOf(piece)
+                                if (sx >= r.x && sx <= r.x + r.width && sy >= r.y && sy <= r.y + r.height) return piece
+                            }
+                            return "desktop"
+                        }
+                        IrisScreenPreview {
+                            id: mapView
+                            anchors.fill: parent
+                            screen: root.screen
+                            radius: IrisStyle.radiusRow
+                        }
+                        Repeater {
+                            model: shellMap.pieces
+                            Rectangle {
+                                required property string modelData
+                                readonly property rect reach: shellMap.rectOf(modelData)
+                                x: Math.round((reach.x - mapView.view.x) * mapView.s)
+                                y: Math.round((reach.y - mapView.view.y) * mapView.s)
+                                width: Math.round(reach.width * mapView.s)
+                                height: Math.round(reach.height * mapView.s)
+                                radius: Math.min(IrisStyle.radiusRow, height / 2)
+                                color: Qt.alpha(IrisStyle.accent, 0.32)
+                                border.width: Math.max(2, Math.round(2 * root.d))
+                                border.color: IrisStyle.accent
+                                opacity: shellMap.lit === modelData ? 1 : 0
+                                Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+                            }
+                        }
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: mapView.radius
+                            color: "transparent"
+                            border.width: Math.max(1, Math.round(1.5 * root.d))
+                            border.color: IrisStyle.accent
+                            opacity: shellMap.lit === "desktop" ? 1 : 0
+                            Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+                        }
+                        MouseArea {
+                            id: mapPointer
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: mouse => root.selectSection(shellMap.sectionOf[shellMap.pieceAt(mouse.x, mouse.y)])
+                        }
+                    }
+
                     Flickable {
                         id: sidebarFlick
                         Layout.fillWidth: true
@@ -1467,21 +1529,23 @@ Item {
                 : sectionRow.selected ? "transparent"
                 : sectionRow.containsMouse ? IrisStyle.fillQuiet : "transparent"
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
-            // Vivid tiles: the colour is how the eye finds an area, whatever material sits behind.
             Item {
                 id: sectionMark
                 // An indexed Design numbers the areas instead (a parts catalogue).
                 readonly property bool numbered: IrisStyle.indexed
-                x: Math.round(5 * root.d)
+                x: Math.round(6 * root.d)
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.round(22 * root.d)
+                width: Math.round(20 * root.d)
                 height: width
-                IrisSquircle {
+                MaterialSymbol {
                     visible: !sectionMark.numbered
-                    anchors.fill: parent
-                    tint: sectionRow.modelData.tint
-                    glyph: sectionRow.modelData.icon
-                    reversed: sectionRow.selected && IrisStyle.plateSelection
+                    anchors.centerIn: parent
+                    text: sectionRow.modelData.icon
+                    iconSize: Math.round(18 * root.d)
+                    fill: sectionRow.selected ? 1 : 0
+                    color: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.selectionInk
+                        : IrisStyle.plainMarks ? IrisStyle.textSecondary : sectionRow.modelData.tint
+                    Behavior on fill { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                 }
             }
             IrisText {
