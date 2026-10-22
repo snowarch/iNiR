@@ -18,8 +18,8 @@ Item {
     function widthFor(label: string): real { return Math.ceil(metrics.advanceWidth(label)) + Math.round(24 * root.d) }
     Rectangle {
         anchors.fill: parent
-        radius: Math.round(14 * root.d)
-        color: Qt.rgba(0, 0, 0, IrisStyle.light ? 0.06 : 0.24)
+        radius: IrisStyle.radiusTile
+        color: Qt.rgba(0, 0, 0, IrisStyle.light ? 0.06 : 0.24) // iris-literal: the track is sunk into the card
         border.width: 1
         border.color: IrisStyle.hairline
     }
@@ -29,7 +29,7 @@ Item {
         y: 3
         width: root.span(Math.max(0, root.chosen)) - 2
         height: root.height - 6
-        radius: Math.round(11 * root.d)
+        radius: IrisStyle.radiusRow
         color: IrisStyle.fill
         Rectangle { x: parent.radius / 2; width: parent.width - parent.radius; height: 1; color: IrisStyle.hairline }
         Behavior on x { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }

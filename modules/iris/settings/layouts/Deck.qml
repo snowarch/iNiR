@@ -201,7 +201,7 @@ Item {
             visible: root.windowed
             anchors.fill: parent
             radius: root.u(22)
-            color: Qt.rgba(0, 0, 0, IrisStyle.light ? 0.04 : 0.15)
+            color: Qt.rgba(0, 0, 0, IrisStyle.light ? 0.04 : 0.15) // iris-literal: the fold sits a step under the card
             border.width: 1
             border.color: IrisStyle.hairline
         }
@@ -452,7 +452,7 @@ Item {
         Rectangle {
             anchors.fill: parent
             radius: root.u(20)
-            color: spine.near ? IrisStyle.fillQuiet : Qt.rgba(0, 0, 0, IrisStyle.light ? 0.03 : 0.15)
+            color: spine.near ? IrisStyle.fillQuiet : Qt.rgba(0, 0, 0, IrisStyle.light ? 0.03 : 0.15) // iris-literal: a far spine sits a step under the card
             border.width: 1
             border.color: IrisStyle.hairline
         }
