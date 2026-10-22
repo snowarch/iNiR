@@ -9562,5 +9562,8 @@
   "open": "open",
   "switch": "switch",
   "the %1 is %2": "the %1 is %2",
-  "the %1 are %2": "the %1 are %2"
+  "the %1 are %2": "the %1 are %2",
+  "move": "move",
+  "area": "area",
+  "it %1 %2": "it %1 %2"
 }

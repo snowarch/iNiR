@@ -9562,5 +9562,8 @@
   "open": "buka",
   "switch": "alihkan",
   "the %1 is %2": "%1 adalah %2",
-  "the %1 are %2": "%1 adalah %2"
+  "the %1 are %2": "%1 adalah %2",
+  "move": "pindah",
+  "area": "area",
+  "it %1 %2": "%1 %2"
 }

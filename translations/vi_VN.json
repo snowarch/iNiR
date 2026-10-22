@@ -9562,5 +9562,8 @@
   "open": "mở",
   "switch": "bật/tắt",
   "the %1 is %2": "%1 là %2",
-  "the %1 are %2": "%1 là %2"
+  "the %1 are %2": "%1 là %2",
+  "move": "di chuyển",
+  "area": "khu vực",
+  "it %1 %2": "%1 %2"
 }

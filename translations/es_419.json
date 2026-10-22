@@ -9562,5 +9562,8 @@
   "open": "abrir",
   "switch": "alternar",
   "the %1 is %2": "%1 es %2",
-  "the %1 are %2": "%1 son %2"
+  "the %1 are %2": "%1 son %2",
+  "move": "mover",
+  "area": "área",
+  "it %1 %2": "%1 %2"
 }

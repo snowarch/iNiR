@@ -9562,5 +9562,8 @@
   "open": "aç",
   "switch": "aç/kapat",
   "the %1 is %2": "%1: %2",
-  "the %1 are %2": "%1: %2"
+  "the %1 are %2": "%1: %2",
+  "move": "gez",
+  "area": "alan",
+  "it %1 %2": "%1 %2"
 }

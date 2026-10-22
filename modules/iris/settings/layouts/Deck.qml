@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import qs
@@ -11,6 +12,7 @@ import qs.modules.iris.frame
 import qs.modules.iris.components
 import qs.modules.iris.preview
 import qs.modules.iris.settings
+import qs.modules.iris.settings.layouts.deck as Skins // so Quickshell mirrors the skins IrisSkin loads by url
 
 // Deck (Baraja): the areas as a deck of cards. Over the desktop the head is the Island grown down from its edge, the
 // open area a tall card under it, its neighbours cards on both sides and the far ones half off the screen; in a window
@@ -357,7 +359,8 @@ Item {
             visible: root.windowed
             anchors.fill: parent
             radius: root.u(22)
-            color: Qt.rgba(0, 0, 0, IrisStyle.light ? 0.04 : 0.15) // iris-literal: the fold sits a step under the card
+            // Over glass the rows get the reading plate, so the wallpaper never reaches the type.
+            color: IrisStyle.glassy ? IrisStyle.readingSidebar : Qt.rgba(0, 0, 0, IrisStyle.light ? 0.04 : 0.15) // iris-literal: the fold sits a step under the card
             border.width: 1
             border.color: IrisStyle.hairline
         }
@@ -370,9 +373,11 @@ Item {
             radius: root.u(20)
             color: IrisStyle.readingCard
             clip: true
+            // The stage keeps clear of the title: full-bleed, Lock's clock and the Control Center sat under its words.
             IrisGroupPreview {
                 id: stage
                 anchors.fill: parent
+                anchors.leftMargin: Math.round(hero.width * 0.42)
                 visible: stage.available
                 standIn: true
                 section: root.host?.searching ? "" : root.section
@@ -382,9 +387,8 @@ Item {
                 anchors.fill: parent
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
-                    GradientStop { position: 0; color: Qt.rgba(IrisStyle.surfaceOpaque.r, IrisStyle.surfaceOpaque.g, IrisStyle.surfaceOpaque.b, 0.92) }
-                    GradientStop { position: 0.34; color: Qt.rgba(IrisStyle.surfaceOpaque.r, IrisStyle.surfaceOpaque.g, IrisStyle.surfaceOpaque.b, 0.7) }
-                    GradientStop { position: 0.55; color: "transparent" }
+                    GradientStop { position: 0.4; color: Qt.rgba(IrisStyle.surfaceOpaque.r, IrisStyle.surfaceOpaque.g, IrisStyle.surfaceOpaque.b, 0.6) }
+                    GradientStop { position: 0.52; color: "transparent" }
                 }
             }
             Row {
@@ -404,6 +408,12 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: root.u(4)
                     IrisText {
+                        id: heroTitle
+                        width: Math.round(hero.width * 0.42) - parent.x - root.u(26 + 24)
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        fontSizeMode: Text.HorizontalFit
+                        minimumPixelSize: root.u(26)
                         text: Translation.tr(String(root.area.title ?? ""))
                         color: IrisStyle.text
                         font.family: IrisStyle.fontTitle
@@ -412,7 +422,7 @@ Item {
                         font.letterSpacing: -Math.round(root.u(44) * 0.02)
                     }
                     IrisText {
-                        width: hero.width * 0.36
+                        width: heroTitle.width
                         wrapMode: Text.WordWrap
                         text: Translation.tr(String(root.area.subtitle ?? ""))
                         color: IrisStyle.subtext
@@ -488,7 +498,7 @@ Item {
             spacing: root.u(8)
             visible: !(root.host?.searching ?? false)
             Repeater {
-                model: (root.host?.tellingRows(9, "") ?? []).map(spec => ({ spec: spec, text: root.chipOf(spec) })).filter(entry => entry.text.length > 0).slice(0, 5)
+                model: (root.host?.tellingRows(9, "") ?? []).map(spec => ({ spec: spec, text: root.chipOf(spec) })).filter((entry, at, all) => entry.text.length > 0 && all.findIndex(other => other.text === entry.text) === at).slice(0, 5)
                 Chip {
                     required property var modelData
                     text: "<font color='" + IrisStyle.text + "'>" + modelData.text + "</font>"
@@ -510,7 +520,7 @@ Item {
             x: card.inset - root.u(4)
             y: (chips.visible ? chips.y + chips.height : hero.y + hero.height) + root.u(10)
             width: card.width - 2 * card.inset + root.u(8)
-            height: card.height - y - root.u(4)
+            height: card.height - y - root.u(4) - (hintBar.visible ? hintBar.height + root.u(6) : 0)
             clip: true
             // The console focus: the row lifts on a lit plate with the accent's bar at its side; held, arrows flank it.
             Rectangle {
@@ -525,28 +535,47 @@ Item {
                 Behavior on y { NumberAnimation { duration: IrisStyle.duration(160); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
                 Behavior on height { NumberAnimation { duration: IrisStyle.duration(160); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
                 Rectangle { x: -1; y: root.u(12); width: root.u(4); height: parent.height - root.u(24); radius: width / 2; color: IrisStyle.accent }
-                Rectangle {
-                    anchors.right: parent.right
-                    anchors.rightMargin: root.u(16)
-                    y: parent.height - height / 2
-                    width: hint.implicitWidth + root.u(12)
-                    height: hint.implicitHeight + root.u(4)
-                    radius: height / 2
-                    color: IrisStyle.surfaceOpaque
-                    IrisText {
-                        id: hint
-                        anchors.centerIn: parent
-                        readonly property var spec: root.focused()?.spec ?? null
-                        text: root.engaged ? "◀ ▶  " + Translation.tr("change") + "  ·  ⏎  " + Translation.tr("done")
-                            : root.focused()?.deckStop === true ? "⏎  " + (root.focused()?.open ? Translation.tr("fold") : Translation.tr("open"))
-                            : hint.spec?.kind === "switch" ? "⏎  " + Translation.tr("switch")
-                            : "⏎  " + Translation.tr("change")
-                        color: IrisStyle.accent
-                        font.family: IrisStyle.fontMono
-                        font.pixelSize: IrisStyle.typeCaption
-                        font.weight: Font.DemiBold
-                        font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.12)
-                        font.capitalization: Font.AllUppercase
+            }
+        }
+        // What the keys do now, said under the rows like a console's button bar: never over a row's text.
+        Rectangle {
+            id: hintBar
+            visible: root.driving && ring.shown
+            x: card.inset
+            width: card.width - 2 * card.inset
+            height: root.u(34)
+            y: card.height - card.inset - hintBar.height
+            radius: height / 2
+            color: IrisStyle.fillQuiet
+            Row {
+                anchors.centerIn: parent
+                spacing: root.u(22)
+                Repeater {
+                    model: {
+                        const spec = root.focused()?.spec ?? null
+                        const enter = root.engaged ? Translation.tr("done") : root.focused()?.deckStop === true ? (root.focused()?.open ? Translation.tr("fold") : Translation.tr("open"))
+                            : spec?.kind === "switch" ? Translation.tr("switch") : Translation.tr("change")
+                        return root.engaged ? [["◀ ▶", Translation.tr("change")], ["⏎", enter]]
+                            : [["▲ ▼", Translation.tr("move")], ["◀ ▶", Translation.tr("area")], ["⏎", enter]]
+                    }
+                    Row {
+                        required property var modelData
+                        spacing: root.u(7)
+                        IrisText {
+                            text: parent.modelData[0]
+                            color: IrisStyle.accent
+                            font.family: IrisStyle.fontMono
+                            font.pixelSize: IrisStyle.typeCaption
+                            font.weight: Font.DemiBold
+                        }
+                        IrisText {
+                            text: parent.modelData[1]
+                            color: IrisStyle.subtext
+                            font.family: IrisStyle.fontMono
+                            font.pixelSize: IrisStyle.typeCaption
+                            font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.12)
+                            font.capitalization: Font.AllUppercase
+                        }
                     }
                 }
             }
@@ -561,7 +590,17 @@ Item {
         if (spec.kind === "range") return answer
         if (spec.kind === "switch") return answer === Translation.tr("On") && words.length <= 3 ? label : ""
         if (answer.split(" ").length > 2) return ""
-        const noun = words.length >= 2 ? words[words.length - 1].toLowerCase() : ""
+        // "Tray bubble rests" + "Top right" has no short way to be said: left to its row.
+        if (/\s(opens|rests|sits|stays|follows|shows|hides|starts|moves|lives|appears|closes|keeps|leads|lands|goes)$/i.test(String(spec.label ?? ""))) return ""
+        // A one-word label is the noun itself: "Off" alone says nothing, "Glass off" does.
+        // "Search the web with" + "Google": the value says it.
+        if (/\s(as|at|on|in|to|by|from|with|for|into)$/i.test(label)) return answer
+        if (words.length === 1) {
+            if (answer.toLowerCase().includes(label.toLowerCase())) return answer
+            const plain = [Translation.tr("Off"), Translation.tr("On"), Translation.tr("Auto"), Translation.tr("None")].includes(answer)
+            return plain ? label + " " + answer.toLowerCase() : answer + " " + label.toLowerCase()
+        }
+        const noun = words[words.length - 1].toLowerCase()
         return noun.length > 0 && !answer.toLowerCase().includes(noun) ? answer + " " + noun : answer
     }
 
@@ -630,7 +669,22 @@ Item {
         Accessible.role: Accessible.Button
         Accessible.name: Translation.tr(String(side.entry?.title ?? ""))
         onClicked: root.host.selectSection(side.entry.id)
+        // Taller than the card, its body fades out above the footer; the rest is one click (or a key) away.
+        Item {
+            id: sideBody
+            width: parent.width
+            height: parent.height - root.u(side.near ? 58 : 16)
+            clip: true
+            readonly property bool spills: sideColumn.height > sideBody.height - sideColumn.y
+            layer.enabled: sideBody.spills
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: sideFade
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 1
+            }
         Column {
+            id: sideColumn
             readonly property real pad: root.u(side.near ? 24 : 16)
             x: (side.box.x < 0 ? -side.box.x : 0) + pad
             y: root.u(26)
@@ -672,17 +726,37 @@ Item {
                 IrisGroupPreview { id: neighbourStage; anchors.fill: parent; standIn: true; section: side.near ? String(side.entry?.id ?? "") : ""; playing: false }
             }
             Repeater {
-                model: side.near && side.entry ? root.host.tellingRows(5, side.entry.id) : []
+                model: {
+                    const rows = side.near && side.entry ? root.host.tellingRows(5, side.entry.id) : []
+                    const count = {}
+                    for (const spec of rows) count[spec.label] = (count[spec.label] ?? 0) + 1
+                    // Two groups' rows of one name (Side Panels' "Alignment"s) are told apart by their group.
+                    return rows.map(spec => ({ spec: spec, label: count[spec.label] > 1 && spec.group
+                        ? Translation.tr(String(spec.group)) + " · " + Translation.tr(String(spec.label)) : Translation.tr(String(spec.label)) }))
+                }
                 Item {
                     required property var modelData
                     width: parent?.width ?? 0
                     height: root.u(42)
                     IrisText { anchors.verticalCenter: parent.verticalCenter; width: parent.width * 0.6; elide: Text.ElideRight
-                        text: Translation.tr(String(parent.modelData.label)); color: IrisStyle.subtext; font.pixelSize: IrisStyle.typeLabel }
+                        text: parent.modelData.label; color: IrisStyle.subtext; font.pixelSize: IrisStyle.typeLabel }
                     IrisText { anchors.verticalCenter: parent.verticalCenter; anchors.right: parent.right; width: Math.min(implicitWidth, parent.width * 0.38); elide: Text.ElideRight
-                        text: root.host.answerOf(parent.modelData); color: IrisStyle.text; font.pixelSize: IrisStyle.typeLabel; font.weight: Font.Medium }
+                        text: root.host.answerOf(parent.modelData.spec); color: IrisStyle.text; font.pixelSize: IrisStyle.typeLabel; font.weight: Font.Medium }
                     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: IrisStyle.hairline }
                 }
+            }
+        }
+        }
+        Rectangle {
+            id: sideFade
+            visible: false
+            layer.enabled: true
+            width: sideBody.width
+            height: sideBody.height
+            gradient: Gradient {
+                GradientStop { position: 0; color: "white" }
+                GradientStop { position: Math.max(0, 1 - root.u(72) / Math.max(1, sideBody.height)); color: "white" }
+                GradientStop { position: 1; color: "transparent" }
             }
         }
         IrisText {

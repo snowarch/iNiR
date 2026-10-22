@@ -9562,5 +9562,8 @@
   "open": "öffnen",
   "switch": "umschalten",
   "the %1 is %2": "%1 ist %2",
-  "the %1 are %2": "%1 sind %2"
+  "the %1 are %2": "%1 sind %2",
+  "move": "bewegen",
+  "area": "Bereich",
+  "it %1 %2": "%1 %2"
 }
