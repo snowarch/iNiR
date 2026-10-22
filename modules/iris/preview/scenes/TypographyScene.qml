@@ -20,7 +20,7 @@ PreviewScene {
             anchors.margins: Math.round(24 * typeRoot.d)
             spacing: Math.round(6 * typeRoot.d)
             IrisText { text: Translation.tr("A little room to breathe"); font.family: IrisStyle.fontTitle; font.pixelSize: IrisStyle.typeTitleLarge; font.weight: IrisStyle.weight(Font.Medium) }
-            IrisClock { pixelSize: 56 * IrisStyle.typeScale; separatorColor: IrisStyle.secondaryAccent }
+            IrisClock { pixelSize: IrisStyle.typeDotL; separatorColor: IrisStyle.secondaryAccent }
             Rectangle { Layout.fillWidth: true; height: 1; color: IrisStyle.hairline }
             RowLayout {
                 Layout.fillWidth: true

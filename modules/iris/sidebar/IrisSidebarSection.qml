@@ -992,7 +992,7 @@ Loader {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 0
-                    IrisText { text: Weather.data.temp; color: IrisStyle.text; font.family: IrisStyle.fontNumbers; font.features: ({ "tnum": 1 }); font.pixelSize: IrisStyle.typeHero; font.weight: IrisStyle.figureWeight }
+                    IrisText { text: Weather.data.temp; color: IrisStyle.text; font.family: IrisStyle.fontDot; font.features: ({ "tnum": 1 }); font.pixelSize: IrisStyle.typeHero; font.weight: Font.Normal}
                     IrisText { Layout.fillWidth: true; text: Weather.data.description; color: IrisStyle.textSecondary; font.pixelSize: IrisStyle.typeLabel; wrapMode: Text.WordWrap }
                 }
                 MaterialSymbol { text: Icons.getWeatherIcon(Weather.data.wCode, Weather.isNightNow()) ?? "cloud"; fill: 1; iconSize: 46 * root.d; color: weather.night ? IrisStyle.identity.lavender : IrisStyle.secondaryAccent }
@@ -1106,10 +1106,10 @@ Loader {
                 IrisText {
                     text: focusTimer.clock
                     color: focusTimer.ticking ? focusTimer.phaseTint : IrisStyle.text
-                    font.family: IrisStyle.fontNumbers
+                    font.family: IrisStyle.fontDot
                     font.features: ({ "tnum": 1 })
                     font.pixelSize: IrisStyle.typeTitleLarge
-                    font.weight: IrisStyle.figureWeight
+                    font.weight: Font.Normal
                 }
                 IrisText { Layout.fillWidth: true; text: focusTimer.phase; color: IrisStyle.textSecondary; font.pixelSize: IrisStyle.typeMeta; font.weight: IrisStyle.weight(Font.Medium) }
                 IrisIconButton {
@@ -1136,10 +1136,10 @@ Loader {
                         text: focusTimer.clock
                         // While it runs the figure is what is read, in the phase's tint; the phase's name steps back.
                         color: focusTimer.ticking ? focusTimer.phaseTint : IrisStyle.text
-                        font.family: IrisStyle.fontNumbers
+                        font.family: IrisStyle.fontDot
                         font.features: ({ "tnum": 1 })
                         font.pixelSize: IrisStyle.typeDisplay
-                        font.weight: IrisStyle.figureWeight
+                        font.weight: Font.Normal
                     }
                     IrisText { anchors.horizontalCenter: parent.horizontalCenter; text: focusTimer.phase; color: IrisStyle.textSecondary; font.pixelSize: IrisStyle.typeMeta; font.weight: IrisStyle.weight(Font.Medium) }
                 }

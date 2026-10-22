@@ -63,7 +63,7 @@ Rectangle {
             spacing: 3 * root.u
             Text { text: "アイリス"; color: "#e9e6df"; font.family: "Noto Sans CJK JP"; font.weight: Font.Bold; font.pixelSize: 5 * root.u } // iris-literal: 胡粉
             Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 8 * root.u; height: 1; color: "#5a5a5e" } // iris-literal: a rule
-            Text { text: "NIGHT SPEC"; color: "#a5a29b"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 4.4 * root.u; font.letterSpacing: 1.4 * root.u } // iris-literal: data
+            Text { text: "NIGHT SPEC"; color: "#a5a29b"; font.family: IrisStyle.fontLabel; font.pixelSize: 4.4 * root.u; font.letterSpacing: 1.4 * root.u } // iris-literal: data
         }
     }
 

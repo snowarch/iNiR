@@ -47,7 +47,7 @@ PreviewScene {
         shapes: [{ x: width / 2 - 66 * framePreview.d, y: 0, width: 132 * framePreview.d, height: 30 * framePreview.d,
             radius: IrisStyle.radiusTile, id: "island", joins: "frame", fuse: IrisStyle.fuse }]
     }
-    IrisClock { anchors.centerIn: parent; pixelSize: 48 * IrisStyle.typeScale; separatorColor: IrisStyle.secondaryAccent }
+    IrisClock { anchors.centerIn: parent; pixelSize: IrisStyle.typeDotL; separatorColor: IrisStyle.secondaryAccent }
     Shape {
         anchors.fill: parent
         visible: framePreview.wave

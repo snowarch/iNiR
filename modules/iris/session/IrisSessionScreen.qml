@@ -218,7 +218,7 @@ Variants {
 
                     IrisClock {
                         Layout.alignment: Qt.AlignHCenter
-                        pixelSize: Math.round(64 * IrisStyle.typeScale)
+                        pixelSize: IrisStyle.typeDotXL
                         color: IrisStyle.onMedia
                         separatorColor: IrisStyle.highlightOnMedia
                     }

@@ -1018,7 +1018,7 @@ Item {
                     color: root.legible(IrisStyle.identity.pink, 3)
                     style: Text.Outline
                     styleColor: IrisStyle.bodySurface
-                    font.pixelSize: 8 * IrisStyle.typeScale
+                    font.pixelSize: IrisStyle.typeCaption
                     font.weight: IrisStyle.weight(Font.Black)
                 }
                 Glyph {

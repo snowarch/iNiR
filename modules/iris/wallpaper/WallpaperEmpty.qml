@@ -27,7 +27,7 @@ ColumnLayout {
         visible: root.shrug
         text: "(´・ω・`)"
         color: IrisStyle.subtext
-        font.pixelSize: 22 * IrisStyle.typeScale
+        font.pixelSize: IrisStyle.typeDotS
     }
     IrisText {
         Layout.fillWidth: true

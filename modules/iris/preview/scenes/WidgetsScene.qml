@@ -142,7 +142,7 @@ PreviewScene {
             spacing: Math.round(2 * widgetsRoot.d)
             MaterialSymbol { text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"; fill: 1; iconSize: Math.round(30 * widgetsRoot.d); color: widgetsRoot.ink }
             Item { Layout.fillHeight: true }
-            IrisText { text: String(Weather.data?.temp ?? "18°"); font.family: IrisStyle.fontNumbers; font.weight: widgetsRoot.weight; font.pixelSize: 34 * IrisStyle.typeScale }
+            IrisText { text: String(Weather.data?.temp ?? "18°"); font.family: IrisStyle.fontDot; font.weight: Font.Normal; font.pixelSize: IrisStyle.typeDotM }
             IrisText { text: Weather.data?.city ?? Translation.tr("Weather"); color: IrisStyle.subtext; elide: Text.ElideRight; Layout.fillWidth: true }
         }
     }

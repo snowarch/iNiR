@@ -51,8 +51,8 @@ PreviewScene {
                 IrisText {
                     id: timeText
                     text: generalRoot.time
-                    font.family: IrisStyle.fontNumbers
-                    font.weight: IrisStyle.figureWeight
+                    font.family: IrisStyle.fontDot
+                    font.weight: Font.Normal
                     font.pixelSize: Math.round(IrisStyle.typeDisplay * 1.3)
                     font.features: { "tnum": 1 }
                 }

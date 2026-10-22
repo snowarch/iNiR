@@ -107,9 +107,9 @@ ColumnLayout {
                 text: dial.figure
                 // A preset is ink; only the one that runs takes the highlight (its ring already marks the length).
                 color: dial.running ? IrisStyle.secondaryAccent : IrisStyle.text
-                font.family: IrisStyle.fontNumbers
+                font.family: IrisStyle.fontDot
                 font.pixelSize: IrisStyle.typeTitleLarge
-                font.weight: IrisStyle.figureWeight
+                font.weight: Font.Normal
                 font.features: ({ "tnum": 1 })
             }
             MaterialSymbol {

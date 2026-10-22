@@ -12,7 +12,7 @@ Item {
     property string separator: ":"
     property int rows: 3
     property real rowHeight: Math.round(32 * IrisStyle.density)
-    property real figureSize: 22 * IrisStyle.typeScale
+    property real figureSize: IrisStyle.typeDotS
     signal moved(int column, int index)
 
     readonly property real d: IrisStyle.density

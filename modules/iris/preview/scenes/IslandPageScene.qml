@@ -244,7 +244,7 @@ PreviewScene {
                                 font.pixelSize: IrisStyle.typeLabel
                                 font.weight: IrisStyle.weight(Font.Medium)
                             }
-                            IrisClock { pixelSize: 46 * IrisStyle.typeScale }
+                            IrisClock { pixelSize: IrisStyle.typeHero }
                         }
                         ColumnLayout {
                             visible: pageRoot.weatherReady
@@ -258,7 +258,7 @@ PreviewScene {
                                     readonly property string raw: String(Weather.data?.temp ?? "")
                                     value: raw.replace(/°?[CF]$/, "")
                                     unit: raw.length > value.length ? raw.slice(value.length) : ""
-                                    pixelSize: 26 * IrisStyle.typeScale
+                                    pixelSize: IrisStyle.typeTitleL
                                     weight: Font.DemiBold
                                 }
                             }

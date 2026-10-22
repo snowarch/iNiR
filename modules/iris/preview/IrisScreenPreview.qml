@@ -255,7 +255,7 @@ ClippingRectangle {
                 IslandStackedClock {
                     visible: root.island.vertical
                     anchors.centerIn: parent
-                    pixelSize: 15 * IrisStyle.typeScale * root.clockScale
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
                     accent: root.clockAccent
                     showDay: root.clockStyle === "dateTime"
                 }
@@ -295,7 +295,7 @@ ClippingRectangle {
                     DateMark {
                         visible: root.clockStyle === "dateTime"
                         Layout.alignment: Qt.AlignVCenter
-                        pixelSize: 12 * IrisStyle.typeScale * root.clockScale
+                        pixelSize: IrisStyle.typeMeta * root.clockScale
                         dayColor: root.clockAccent
                     }
                     Glyph {
@@ -313,7 +313,7 @@ ClippingRectangle {
                     }
                     IrisClock {
                         Layout.alignment: Qt.AlignVCenter
-                        pixelSize: 15 * IrisStyle.typeScale * root.clockScale
+                        pixelSize: IrisStyle.typeHeadline * root.clockScale
                         separatorColor: root.clockAccent
                     }
                 }

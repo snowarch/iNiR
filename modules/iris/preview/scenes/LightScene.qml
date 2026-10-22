@@ -52,7 +52,7 @@ PreviewScene {
                 text: "18°"
                 font.family: IrisStyle.fontNumbers
                 font.weight: IrisStyle.figureWeight
-                font.pixelSize: 40 * IrisStyle.typeScale
+                font.pixelSize: IrisStyle.typeDotL
             }
             IrisText { text: Translation.tr("Partly cloudy"); color: IrisStyle.muted; font.pixelSize: IrisStyle.typeMeta }
             Item { Layout.fillHeight: true }

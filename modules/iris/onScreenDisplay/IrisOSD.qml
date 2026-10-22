@@ -310,7 +310,7 @@ Scope {
                     style: root.levelStyle
                     showValue: root.levelFigure
                     glyphSize: 20 * osdWindow.d
-                    figureSize: 15 * IrisStyle.typeScale
+                    figureSize: IrisStyle.typeHeadline
                     barFill: IrisStyle.text
                 }
             }

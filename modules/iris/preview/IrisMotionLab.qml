@@ -179,7 +179,7 @@ Item {
             text: "22:43"
             font.family: IrisStyle.fontNumbers
             font.weight: IrisStyle.weight(Font.Bold)
-            font.pixelSize: Math.round(13 * root.d)
+            font.pixelSize: IrisStyle.typeBody
         }
         Column {
             x: Math.round(14 * root.d)

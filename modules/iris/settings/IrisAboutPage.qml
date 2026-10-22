@@ -52,7 +52,7 @@ Flickable {
                 Layout.alignment: Qt.AlignHCenter
                 text: "iNiR"
                 font.family: IrisStyle.fontTitle
-                font.pixelSize: 26 * IrisStyle.typeScale
+                font.pixelSize: IrisStyle.typeTitleL
                 font.weight: IrisStyle.weight(Font.Bold)
             }
             IrisText {

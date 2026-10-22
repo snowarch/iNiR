@@ -713,10 +713,10 @@ Item {
                                     }
                                     IrisText {
                                         text: String(slot.ws.idx ?? "–").padStart(2, "0")
-                                        font.family: IrisStyle.fontNumbers
+                                        font.family: IrisStyle.fontDot
                                         font.features: ({ "tnum": 1 })
                                         font.pixelSize: IrisStyle.typeHero
-                                        font.weight: IrisStyle.figureWeight
+                                        font.weight: Font.Normal
                                         font.letterSpacing: IrisStyle.tracking(IrisStyle.typeHero)
                                         color: IrisStyle.text
                                     }

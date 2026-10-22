@@ -100,13 +100,13 @@ Item {
                     }
                     ColumnLayout {
                         spacing: 0
-                        IrisText { text: Translation.tr("Studio"); font.family: IrisStyle.fontTitle; font.weight: Font.Bold; font.pixelSize: 19 * IrisStyle.typeScale }
+                        IrisText { text: Translation.tr("Studio"); font.family: IrisStyle.fontTitle; font.weight: Font.Bold; font.pixelSize: IrisStyle.typeTitle }
                         IrisText { text: Translation.tr("How every surface looks"); color: IrisStyle.textSecondary; font.pixelSize: IrisStyle.typeMeta }
                     }
                     Item { Layout.fillWidth: true }
                     IrisNumber {
                         text: Translation.locale.toString(DateTime.clock.date, "hh:mm")
-                        pixelSize: 30 * IrisStyle.typeScale
+                        pixelSize: IrisStyle.typeDotM
                         weight: IrisStyle.figureWeight
                     }
                 }
@@ -276,7 +276,7 @@ Item {
                 anchors.fill: parent
                 anchors.margins: Math.round(16 * root.d)
                 spacing: Math.round(10 * root.d)
-                IrisText { text: root.scene === "widget" ? Translation.tr("Widget") : Translation.tr("Today"); font.family: IrisStyle.fontTitle; font.weight: Font.Bold; font.pixelSize: 18 * IrisStyle.typeScale }
+                IrisText { text: root.scene === "widget" ? Translation.tr("Widget") : Translation.tr("Today"); font.family: IrisStyle.fontTitle; font.weight: Font.Bold; font.pixelSize: IrisStyle.typeTitle }
                 Repeater {
                     model: root.scene === "widget" ? 1 : 3
                     Rectangle {
