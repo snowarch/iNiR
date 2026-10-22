@@ -656,8 +656,10 @@ PanelWindow {
                 z: 9999
                 implicitWidth: controlsLoader.implicitWidth
                 implicitHeight: controlsLoader.implicitHeight
-                opacity: 0
-                
+                // Bound, not set on visibleChanged: a selector already visible when its window maps never got the
+                // change, and the menu stayed at opacity 0.
+                opacity: root.visible ? 1 : 0
+
                 readonly property bool useWaffle: Config.options?.panelFamily === "waffle"
 
                 // Position: waffle = top center, material and iRiS = bottom center
@@ -668,29 +670,8 @@ PanelWindow {
                     horizontalCenter: parent.horizontalCenter
                     top: useWaffle ? parent.top : undefined
                     bottom: useWaffle ? undefined : parent.bottom
-                    topMargin: useWaffle ? -height : 0
-                    bottomMargin: useWaffle ? 0 : -height
-                }
-
-                Connections {
-                    target: root
-                    function onVisibleChanged() {
-                        if (!visible) return;
-                        if (regionSelectionControls.useWaffle) {
-                            regionSelectionControls.anchors.topMargin = regionSelectionControls.restTopMargin;
-                        } else {
-                            regionSelectionControls.anchors.bottomMargin = regionSelectionControls.restBottomMargin;
-                        }
-                        regionSelectionControls.opacity = 1;
-                    }
-                }
-                onRestBottomMarginChanged: {
-                    if (root.visible && !regionSelectionControls.useWaffle)
-                        regionSelectionControls.anchors.bottomMargin = regionSelectionControls.restBottomMargin;
-                }
-                onRestTopMarginChanged: {
-                    if (root.visible && regionSelectionControls.useWaffle)
-                        regionSelectionControls.anchors.topMargin = regionSelectionControls.restTopMargin;
+                    topMargin: useWaffle ? (root.visible ? restTopMargin : -height) : 0
+                    bottomMargin: useWaffle ? 0 : (root.visible ? restBottomMargin : -height)
                 }
                 Behavior on opacity {
                     animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
