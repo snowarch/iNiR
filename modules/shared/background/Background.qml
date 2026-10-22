@@ -1937,6 +1937,13 @@ Scope {
                 // already reliably gets right-clicks regardless, so reuse it.
                 acceptedButtons: Qt.RightButton | Qt.LeftButton
                 onClicked: function(mouse) {
+                    // iRiS: a click while customizing grows the desktop's inspector (the frame's, on its band).
+                    if ((Config.options?.panelFamily ?? "ii") === "iris" && GlobalStates.irisEdit) {
+                        GlobalStates.irisEditSelection = ""
+                        GlobalStates.irisEditTarget = "desktop@" + Math.round(mouse.x) + "," + Math.round(mouse.y) + ",1,1"
+                        GlobalStates.irisEdit = true
+                        return
+                    }
                     if (mouse.button === Qt.LeftButton) {
                         desktopFocusSink.forceActiveFocus()
                         // A click on the bare desktop is not typing: Niri gave this
@@ -1955,6 +1962,25 @@ Scope {
                     if ((Config.options?.panelFamily ?? "ii") === "iris") irisDesktopMenu.requestOpen()
                     else desktopContextMenu.requestOpen()
                 }
+            }
+
+            // iRiS: Mod+Alt+click on the bare desktop, when no widget under the pointer answered.
+            HoverHandler { id: desktopHover; enabled: (Config.options?.panelFamily ?? "ii") === "iris" }
+            Timer {
+                id: desktopInspect
+                interval: 60
+                onTriggered: {
+                    if (!desktopHover.hovered || GlobalStates.irisInspectClaimed === GlobalStates.irisInspectRequest) return
+                    const p = desktopHover.point.position
+                    GlobalStates.irisInspectClaimed = GlobalStates.irisInspectRequest
+                    GlobalStates.irisEditSelection = ""
+                    GlobalStates.irisEditTarget = "desktop@" + Math.round(p.x) + "," + Math.round(p.y) + ",1,1"
+                    GlobalStates.irisEdit = true
+                }
+            }
+            Connections {
+                target: GlobalStates
+                function onIrisInspectRequestChanged(): void { if (desktopHover.enabled) desktopInspect.restart() }
             }
 
             Item {

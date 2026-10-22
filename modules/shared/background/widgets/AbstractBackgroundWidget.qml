@@ -1047,6 +1047,29 @@ AbstractWidget {
         event.accepted = true
     }
 
+    // iRiS: Mod+Alt+click on this widget, or a click while customizing, grows its inspector out of it.
+    function inspectHere(): void {
+        const at = root.mapToItem(null, 0, 0)
+        const size = root.mapToItem(null, root.width, root.height)
+        GlobalStates.irisInspectClaimed = GlobalStates.irisInspectRequest
+        GlobalStates.irisEditSelection = ""
+        GlobalStates.irisEditTarget = "widget:" + root.configEntryName.split(".")[0] + "@" + [at.x, at.y, size.x - at.x, size.y - at.y].map(Math.round).join(",")
+        GlobalStates.irisEdit = true
+    }
+    readonly property bool irisFamily: (Config.options?.panelFamily ?? "ii") === "iris"
+    HoverHandler { id: inspectHover; enabled: root.irisFamily }
+    Connections {
+        target: GlobalStates
+        enabled: root.irisFamily
+        function onIrisInspectRequestChanged(): void { if (inspectHover.hovered && root.visible) root.inspectHere() }
+    }
+    TapHandler {
+        enabled: root.irisFamily && GlobalStates.irisEdit && !GlobalStates.widgetEditMode
+        acceptedButtons: Qt.LeftButton
+        gesturePolicy: TapHandler.WithinBounds
+        onTapped: root.inspectHere()
+    }
+
     // Locked widgets intentionally disable AbstractWidget's drag MouseArea.
     // Keep selection available through a separate tap handler so locking a
     // widget never makes it unreachable from the desktop editor.

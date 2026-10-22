@@ -414,6 +414,9 @@ Singleton {
     // What the edit bar is inspecting: a piece slot ("extra:vitals", "left",
     // "app:kitty"), a surface ("island", "dock", "cards"…) or "" for the family.
     property string irisEditSelection: ""
+    // `inir iris inspect` (Mod+Alt+click): the surface under the pointer answers with its piece's inspector.
+    property real irisInspectRequest: 0
+    property real irisInspectClaimed: 0
     // A Studio target the edit bar should inspect ("" = keep what it shows).
     property string irisEditTarget: ""
     property int irisChassisEpoch: 0

@@ -35,24 +35,23 @@ Item {
 
     // ── What is open ─────────────────────────────────────────────────────
     property string tool: ""
-    property string lookTab: "material"
+    // The Look sheet is the Look room's inspector: Style, Colour, Motion.
+    property string lookArea: "appearance"
     onToolChanged: sheetFlick.contentY = 0
-    onLookTabChanged: sheetFlick.contentY = 0
-    readonly property var lookTabs: [
-        { id: "material", label: "Material" }, { id: "colour", label: "Colour" }, { id: "type", label: "Type" },
-        { id: "motion", label: "Motion" }, { id: "bodies", label: "Cards" }, { id: "places", label: "Panels" },
-        { id: "transients", label: "Feedback" }, { id: "desktop", label: "Desktop" }
-    ]
+    // Customize's old tabs still land: the look ones on the Look sheet, the rest on the piece they shape.
+    readonly property var lookTargets: ({ material: "appearance", type: "appearance", colour: "colour", motion: "motion" })
+    readonly property var pieceTargets: ({ bodies: "controlCenter", places: "sidebars", transients: "notifications", desktop: "desktop" })
     function openTool(name: string): void {
         GlobalStates.irisEditSelection = ""
-        if (GlobalStates.irisEditTarget === "island" || GlobalStates.irisEditTarget === "dock") GlobalStates.irisEditTarget = ""
+        if (root.selectedId.length > 0) GlobalStates.irisEditTarget = ""
         root.tool = root.tool === name ? "" : name
     }
     function route(target: string): void {
-        if (target.length === 0 || target === "island" || target === "dock") return
+        if (target.length === 0 || root.inspectable(target)) return
         if (target === "themes") root.tool = "themes"
         else if (target === "pieces") root.tool = "pieces"
-        else if (root.lookTabs.some(tab => tab.id === target)) { root.lookTab = target; root.tool = "look" }
+        else if (root.lookTargets[target]) { root.lookArea = root.lookTargets[target]; root.tool = "look" }
+        else if (root.pieceTargets[target]) GlobalStates.irisEditTarget = root.pieceTargets[target] + "@"
     }
     Connections {
         target: GlobalStates
@@ -71,9 +70,18 @@ Item {
     }
 
     // ── Selection on screen ──────────────────────────────────────────────
+    // Pieces touched on screen beyond the Island's own: Alt+click (IrisInspectTap) or a click in this mode names them
+    // with where they were, `<id>@x,y,w,h`; with nothing after the @ they grow from the capsule.
+    readonly property var touchable: ["frame", "desktop", "sidebars", "controlCenter", "notifications", "spotlight", "orbit"]
+    function inspectable(target: string): bool {
+        const id = target.split("@")[0]
+        return id === "island" || id === "dock" || root.touchable.includes(id) || id.startsWith("widget:")
+    }
     function labelFor(id: string): string {
         if (id === "island") return Translation.tr("Island")
         if (id === "dock") return Translation.tr("Dock")
+        if (root.touchable.includes(id)) return IrisOptions.entryLabel(IrisOptions.entryById(id))
+        if (id.startsWith("widget:")) return Translation.tr(IrisWidgetRows.groups[id.slice(7)] ?? id.slice(7))
         if (id.startsWith("satellite:")) return Translation.tr(IrisPieces.labelOf(id.slice(10)))
         if (id.startsWith("piece:")) {
             const slot = id.slice(6)
@@ -82,8 +90,13 @@ Item {
         return ""
     }
     readonly property string selectedId: {
-        const target = GlobalStates.irisEditTarget
-        if (target === "island" || target === "dock") return target
+        const target = GlobalStates.irisEditTarget.split("@")[0]
+        // The desktop touched on the frame's band is the frame.
+        if (target === "desktop" && root.touchedRect && IrisFrame.framed) {
+            const r = root.touchedRect, edge = IrisFrame.band + Math.round(8 * root.d)
+            if (r.x < edge || r.y < edge || r.x > root.width - edge || r.y > root.height - edge) return "frame"
+        }
+        if (root.inspectable(target)) return target
         const selection = GlobalStates.irisEditSelection
         if (selection.length === 0) return ""
         if (["left", "right", "utility"].includes(selection)) return "satellite:" + selection
@@ -116,27 +129,46 @@ Item {
     }
     // A piece that is not on screen (off, or carried out of sight) is still selectable: its inspector grows from
     // the capsule, with no ring and no knob, so it can be switched on or placed.
+    readonly property var touchedRect: {
+        const at = GlobalStates.irisEditTarget.split("@")[1] ?? ""
+        const n = at.split(",").map(Number)
+        return n.length === 4 && n.every(Number.isFinite) ? { x: n[0], y: n[1], width: n[2], height: n[3] } : null
+    }
     readonly property var selected: {
         if (!root.present || root.selectedId.length === 0) return null
         const face = root.shapeOf(root.selectedId)
+        if (!face && (root.touchable.includes(root.selectedId) || root.selectedId.startsWith("widget:"))) {
+            const r = root.touchedRect
+            // The frame and the bare desktop are everywhere: grown from where they were touched, ringed nowhere.
+            const whole = root.selectedId === "frame" || root.selectedId === "desktop"
+            const radius = Math.min(r?.width ?? 0, r?.height ?? 0) < 64 ? Math.min(r?.width ?? 0, r?.height ?? 0) / 2 : IrisStyle.radiusCard
+            return r ? Object.assign({ id: root.selectedId, orphan: whole, radius: radius }, whole && r.width < 4 ? { x: r.x - 20, y: r.y - 20, width: 40, height: 40 } : r)
+                : { id: root.selectedId, orphan: true, x: root.capsuleX, y: root.capsuleY, width: root.capsuleW, height: root.capsuleH, radius: root.capsuleH / 2 }
+        }
         if (face || !root.selectedId.startsWith("piece:")) return face
         return { id: root.selectedId, orphan: true, x: root.capsuleX, y: root.capsuleY, width: root.capsuleW, height: root.capsuleH, radius: root.capsuleH / 2 }
     }
     readonly property bool inspecting: root.selected !== null
     onInspectingChanged: if (root.inspecting) root.tool = ""
     readonly property string selectionKind: GlobalStates.irisEditSelection.replace(/^extra[:-]/, "")
-    readonly property var inspectorSpecs: {
-        Config.revision
+    // What the inspector holds: the piece's whole areas, a bubble's own behaviour first.
+    readonly property var inspectEntry: {
         const id = root.selectedId
         // An app or piece in the Dock is shaped by the Dock: its inspector is the Dock's.
-        if (id === "dock" || root.selected?.inDock) return IrisOptions.studio.filter(spec => spec.target === "dock")
-        if (id === "island") return IrisOptions.studio.filter(spec => spec.target === "island")
-        if (id.length === 0) return []
-        const own = IrisPieces.isApp(GlobalStates.irisEditSelection) ? []
-            : IrisOptions.behaviour.filter(spec => spec.piece === root.selectionKind)
-                .map(spec => Object.assign({}, spec, { group: spec.group ?? root.labelFor(id) }))
-        return own.length > 0 ? own : IrisOptions.studio.filter(spec => spec.target === "pieces")
+        if (id === "dock" || root.selected?.inDock) return IrisOptions.entryById("dock")
+        if (id.startsWith("widget:")) return IrisOptions.entryById("widget")
+        if (id.startsWith("piece:") || id.startsWith("satellite:")) return IrisOptions.entryById("bubble")
+        return IrisOptions.entryById(id)
     }
+    readonly property var inspectLead: {
+        Config.revision
+        const id = root.selectedId
+        if (!(id.startsWith("piece:") || id.startsWith("satellite:")) || root.selected?.inDock || IrisPieces.isApp(GlobalStates.irisEditSelection)) return []
+        return IrisOptions.behaviour.filter(spec => spec.piece === root.selectionKind)
+            .map(spec => Object.assign({ modelKey: "lead:" + spec.path }, spec, { section: "bubbles", group: spec.group ?? root.labelFor(id) }))
+    }
+    // The inspector's search and the Look sheet's rows take the keyboard while they're open.
+    readonly property bool wantsKeys: root.shown && (root.inspecting || root.tool === "look")
     HoverHandler { id: pointer; enabled: root.present }
     Outline { shape: root.selected?.orphan ? null : root.selected; strong: true }
     Outline { shape: root.hovered && root.hovered.id !== root.selectedId ? root.hovered : null; strong: false }
@@ -153,9 +185,14 @@ Item {
     readonly property real capsuleW: Math.round(capsuleRow.implicitWidth + 12 * root.d)
     readonly property real capsuleH: Math.round(44 * root.d)
     readonly property real islandX: root.island ? root.island.x : root.width / 2
-    readonly property real islandY: root.island ? root.island.y : 0
+    readonly property real islandY: GlobalStates.controlPanelOpen && root.edge === "bottom" && root.shapeOf("island") ? root.shapeOf("island").y : root.island ? root.island.y : 0
     readonly property real islandW: root.island ? root.island.width : 0
-    readonly property real islandH: root.island ? root.island.height : Math.round(40 * root.d)
+    // The Control Center is the Island grown open: the capsule waits under it, not over its head.
+    readonly property real islandH: {
+        const rest = root.island ? root.island.height : Math.round(40 * root.d)
+        const body = GlobalStates.controlPanelOpen && !root.vertical ? root.shapeOf("island") : null
+        return body ? Math.max(rest, body.height) : rest
+    }
     readonly property real capsuleRestX: root.edge === "left" ? root.islandX + root.islandW + root.gap
         : root.edge === "right" ? root.islandX - root.gap - root.capsuleW
         : root.clampX(root.islandX + root.islandW / 2 - root.capsuleW / 2, root.capsuleW)
@@ -166,13 +203,13 @@ Item {
     readonly property real capsuleY: root.capsuleRestY
 
     readonly property bool sheetShown: root.shown && root.tool.length > 0
-    readonly property real sheetW: Math.min(root.width - 2 * root.lo, Math.round((root.tool === "themes" ? 640 : root.tool === "look" ? 600 : 520) * root.d))
+    readonly property real sheetW: Math.min(root.width - 2 * root.lo, Math.round((root.tool === "themes" ? 640 : root.tool === "look" ? 580 * IrisStyle.settingsDensity / root.d : 520) * root.d))
     // Room on the side the sheet grows toward: away from the edge the Island rests on.
     readonly property real sheetRoom: root.vertical ? root.height
         : root.edge === "bottom" ? root.capsuleRestY - root.gap - root.lo
         : root.height - root.capsuleRestY - root.capsuleH
     readonly property real sheetMaxH: Math.round(Math.min(root.sheetRoom, root.height * 0.62))
-    readonly property real sheetFullH: Math.min(root.sheetMaxH, sheetContent.implicitHeight + Math.round(32 * root.d))
+    readonly property real sheetFullH: root.tool === "look" ? root.sheetMaxH : Math.min(root.sheetMaxH, sheetContent.implicitHeight + Math.round(32 * root.d))
     readonly property real sheetLiveW: root.sheetW
     readonly property real sheetH: Math.round(root.sheetFullH)
     readonly property real sheetX: root.edge === "left" ? root.capsuleX + root.capsuleW + root.gap
@@ -228,13 +265,18 @@ Item {
         near.sort((p, q) => p.gap - q.gap)
         return near[0].side
     }
-    readonly property real inspectorW: Math.min(root.width - 2 * root.lo, Math.round(380 * root.d))
+    readonly property real inspectorW: Math.min(root.width - 2 * root.lo, Math.round(540 * IrisStyle.settingsDensity))
     // Room on the side it grows toward, past the capsule when the capsule is in the way.
+    // A Dock on the far edge is not run over: the inspector stops short of it.
+    readonly property real floorY: {
+        const dock = root.shapeOf("dock")
+        return dock && dock.y > root.height / 2 && root.a.y + root.a.height < dock.y ? dock.y - root.gap : root.height - root.lo
+    }
     readonly property real inspectorRoom: root.inspectorSide === "up" ? root.a.y - root.gap - root.lo
-        : root.inspectorSide === "down" ? root.height - root.lo - (root.a.y + root.a.height + root.gap)
+        : root.inspectorSide === "down" ? root.floorY - (root.a.y + root.a.height + root.gap)
         : root.height - 2 * root.lo
-    readonly property real inspectorFullH: Math.max(Math.round(120 * root.d), Math.min(Math.round(root.height * 0.64), root.inspectorRoom,
-        inspectorContent.implicitHeight + Math.round(28 * root.d)))
+    readonly property real inspectorFullH: Math.max(Math.round(120 * root.d), Math.min(Math.round(root.height * 0.72), root.inspectorRoom,
+        inspectorBody.fullHeight))
     readonly property real inspectorH: Math.round(Math.max(Math.round(36 * root.d), root.inspectorFullH * root.inspectorP))
     readonly property real inspectorRawX: root.inspectorSide === "right" ? Math.round(root.a.x + root.a.width + root.gap)
         : root.inspectorSide === "left" ? Math.round(root.a.x - root.gap - root.inspectorW)
@@ -293,7 +335,7 @@ Item {
                 materialIcon: "view_sidebar"
                 Accessible.name: Translation.tr("Open in Studio")
                 onClicked: {
-                    GlobalStates.irisStudioTarget = root.tool === "look" ? root.lookTab : root.tool
+                    GlobalStates.irisStudioTarget = root.tool === "look" ? ({ appearance: "material", colour: "colour", motion: "motion" })[root.lookArea] : root.tool
                     GlobalStates.irisStudioOpen = true
                 }
             }
@@ -330,8 +372,16 @@ Item {
             anchors.bottom: root.edge === "bottom" ? parent.bottom : undefined
             width: root.sheetW
             height: root.sheetFullH
+            IrisInspector {
+                anchors.fill: parent
+                anchors.margins: Math.round(4 * root.d)
+                visible: root.tool === "look"
+                entry: root.tool === "look" ? IrisOptions.entryById("look") : null
+                area: root.lookArea
+            }
             Flickable {
                 id: sheetFlick
+                visible: root.tool !== "look"
                 anchors.fill: parent
                 anchors.margins: Math.round(16 * root.d)
                 contentHeight: sheetContent.implicitHeight
@@ -347,12 +397,6 @@ Item {
                         active: root.tool === "themes"
                         visible: active
                         sourceComponent: themesSheet
-                    }
-                    Loader {
-                        Layout.fillWidth: true
-                        active: root.tool === "look"
-                        visible: active
-                        sourceComponent: lookSheet
                     }
                     Loader {
                         Layout.fillWidth: true
@@ -379,40 +423,25 @@ Item {
         clip: true
         opacity: IrisStyle.contentAt(root.inspectorP)
         MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
-        Flickable {
-            id: inspectorFlick
+        IrisInspector {
+            id: inspectorBody
             anchors.fill: parent
-            anchors.margins: Math.round(14 * root.d)
-            contentHeight: inspectorContent.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
-            clip: true
-            ScrollBar.vertical: IrisScrollBar {}
-            ColumnLayout {
-                id: inspectorContent
-                width: inspectorFlick.width
-                spacing: Math.round(10 * root.d)
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Math.round(8 * root.d)
-                    IrisText {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: Math.round(4 * root.d)
-                        text: root.labelFor(String(root.anchorShape?.id ?? ""))
-                        font.family: IrisStyle.fontTitle
-                        font.pixelSize: IrisStyle.typeHeadline
-                        font.weight: IrisStyle.weight(Font.DemiBold)
-                        elide: Text.ElideRight
+            entry: root.inspectEntry
+            widget: root.selectedId.startsWith("widget:") ? root.selectedId.slice(7) : ""
+            lead: root.inspectLead
+            closable: true
+            onCloseRequested: { GlobalStates.irisEditSelection = ""; GlobalStates.irisEditTarget = "" }
+            onOpenArea: (section, group, path) => GlobalStates.openSettingsAt("iris", section + (group.length > 0 ? "/" + group : ""))
+            extra: Component {
+                IrisIconButton {
+                    // The same piece on the map, with the rest of Settings around it.
+                    materialIcon: "open_in_new"
+                    Accessible.name: Translation.tr("Open in Settings")
+                    onClicked: {
+                        const area = inspectorBody.currentArea
+                        GlobalStates.irisEdit = false
+                        GlobalStates.openSettingsAt("iris", area)
                     }
-                    IrisIconButton {
-                        materialIcon: "close"
-                        Accessible.name: Translation.tr("Close")
-                        onClicked: { GlobalStates.irisEditSelection = ""; GlobalStates.irisEditTarget = "" }
-                    }
-                }
-                IrisEditRows {
-                    Layout.fillWidth: true
-                    specs: root.inspectorSpecs
-                    tint: IrisOptions.customizeArea(root.selectedId === "dock" ? "dock" : root.selectedId === "island" ? "island" : "pieces").tint
                 }
             }
         }
@@ -472,46 +501,6 @@ Item {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    Component {
-        id: lookSheet
-        ColumnLayout {
-            spacing: Math.round(12 * root.d)
-            Flow {
-                Layout.fillWidth: true
-                spacing: Math.round(4 * root.d)
-                Repeater {
-                    model: root.lookTabs
-                    ToolChip {
-                        required property var modelData
-                        glyph: ""
-                        label: Translation.tr(modelData.label)
-                        on: root.lookTab === modelData.id
-                        onActivated: root.lookTab = modelData.id
-                    }
-                }
-            }
-            RowLayout {
-                visible: root.lookTab === "material"
-                Layout.fillWidth: true
-                spacing: Math.round(6 * root.d)
-                Repeater {
-                    model: ["iris", "soft", "round", "crisp", "angular", "contrast"]
-                    IrisPresetTile {
-                        required property string modelData
-                        Layout.fillWidth: true
-                        name: modelData
-                    }
-                }
-            }
-            TipLine { Layout.fillWidth: true; area: root.lookTab }
-            IrisEditRows {
-                Layout.fillWidth: true
-                specs: IrisOptions.studio.filter(spec => spec.target === root.lookTab)
-                tint: IrisOptions.customizeArea(root.lookTab).tint
             }
         }
     }

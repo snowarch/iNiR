@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 dev/tools/generate-ipc-registry.py
-# IPC.md hash: cb2b4a630ab0c6ba
+# IPC.md hash: 6156f152d69adf89
 # Targets: 74
 
 declare -gA IPC_TARGET_DESC=(
@@ -186,7 +186,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [globalActions]="run runWithArgs list search open"
   [globalStyle]="set get list"
   [hub]="refresh install remove update use openItem status changed"
-  [iris]="open page close toggle card theme settings settingsClose bubble dock dockApp dockMove appBubble focus today controlCenter pin layout strip edge dockEdge zone barPiece arrange edit studio notch surround accent spotlight gallerySource orbit orbitCorner orbitClose spotlightClose bubbleCard tap bubbleMenu morph activity activities set adaptive tokens options preview proof palette preset icon control lock utility watch watchPick desktopAction desktopMenu menuClose watchSubs watchSeek watchSkip motion motioned status"
+  [iris]="open page close toggle card theme settings settingsClose bubble dock dockApp dockMove appBubble focus today controlCenter pin layout strip edge dockEdge zone barPiece arrange inspect edit studio notch surround accent spotlight gallerySource orbit orbitCorner orbitClose spotlightClose bubbleCard tap bubbleMenu morph activity activities set adaptive tokens options preview proof palette preset icon control lock utility watch watchPick desktopAction desktopMenu menuClose watchSubs watchSeek watchSkip motion motioned status"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
   [lock]="activate prepareSleep deactivate status focus"
   [loginScreen]="set style status sync"
@@ -400,7 +400,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["iris:zone"]="What a full-width Island carries in a zone: \`start\`, \`center\` or \`end\`, then kinds joined by \`+\` (\`island\`, \`workspaces\`, \`window\`, \`time\` or a piece kind), or \`none\`"
   ["iris:barPiece"]="Turn one of the Island's own pieces on or off: \`weather\`, \`notifications\`, \`controls\`, \`sound\`, \`mic\`, \`tools\`, \`media\`, \`visualizer\` or \`tray\`, plus \`on\`, \`off\` or \`toggle\`"
   ["iris:arrange"]="Arrange the Island's desktop page in place — move, remove and add its blocks: \`on\`, \`off\` or \`toggle\`"
-  ["iris:edit"]="Customize iRiS on the shell itself: the Island grows a capsule (Themes, Look, Pieces, undo, Done) and whatever you click (a piece, the Island, the Dock) grows its own options: \`on\`, \`off\`, \`toggle\`, a sheet (\`themes\`, \`pieces\`, or a Look tab: \`material\`, \`colour\`, \`type\`, \`motion\`, \`bodies\`, \`places\`, \`transients\`, \`desktop\`), \`island\`, \`dock\` or a piece to inspect (\`vitals\`, \`left\`, \`app:kitty\`)"
+  ["iris:inspect"]="Grow the inspector of whatever is under the pointer (the Island, a bubble, the Dock, a panel, a widget, the frame or the desktop) out of it; Mod+Alt+click is bound to it"
+  ["iris:edit"]="Customize iRiS on the shell itself: the Island grows a capsule (Themes, Look, Pieces, undo, Done) and whatever you click (a piece, the Island, the Dock) grows its own options: \`on\`, \`off\`, \`toggle\`, a sheet (\`themes\`, \`pieces\`, or the Look sheet on \`material\`, \`colour\`, \`type\` or \`motion\`), or a piece whose inspector grows out of it with every row of its areas: \`island\`, \`dock\`, \`frame\`, \`desktop\`, \`sidebars\`, \`controlCenter\`, \`notifications\`, \`spotlight\`, \`orbit\`, \`widget:<id>\` (\`widget:clock\`) or a bubble (\`vitals\`, \`left\`, \`app:kitty\`); \`bodies\`, \`places\` and \`transients\` still land on the Control Center, the side panels and notifications"
   ["iris:studio"]="Customize as a panel beside the screen (Studio): \`on\`, \`off\`, \`toggle\`, an area to open it on (\`material\`, \`colour\`, \`type\`, \`motion\`, \`island\`, \`pieces\`, \`bodies\`, \`places\`, \`transients\`, \`dock\`, \`desktop\`, \`themes\`) or \`search:<words>\` to open it with a search typed"
   ["iris:notch"]="Melt the Island into its edge (or into the Surround band): \`on\`, \`off\` or \`toggle\`"
   ["iris:surround"]="Close the shell around the screen with a band on every edge: \`on\`, \`off\` or \`toggle\`"
@@ -879,7 +880,7 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["iris:zone"]="start center end island workspaces window time none"
   ["iris:barPiece"]="weather notifications controls sound mic tools media visualizer tray on off toggle"
   ["iris:arrange"]="on off toggle"
-  ["iris:edit"]="on off toggle themes pieces material colour type motion bodies places transients desktop island dock vitals left"
+  ["iris:edit"]="on off toggle themes pieces material colour type motion island dock frame desktop sidebars controlCenter notifications spotlight orbit widget: vitals left bodies places transients"
   ["iris:studio"]="on off toggle material colour type motion island pieces bodies places transients dock desktop themes search:"
   ["iris:notch"]="on off toggle"
   ["iris:surround"]="on off toggle"

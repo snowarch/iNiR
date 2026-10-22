@@ -382,4 +382,11 @@ PanelWindow {
             }
         }
     }
+
+    // Mod+Alt+click grows the side panels' inspector out of the panel.
+    IrisInspectPoint {
+        // The whole panel, so its inspector grows beside it instead of over it.
+        resolve: (x, y) => ({ id: "sidebars", x: frame.x, y: frame.y, width: frame.width, height: frame.height })
+    }
+
 }
