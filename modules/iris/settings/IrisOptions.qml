@@ -1308,10 +1308,35 @@ QtObject {
     }
     // Where each setting lands on screen and what can overrule it, read off the shell's code by hand (DI59).
     // Longest prefix wins; `over` are settings that win over this one while they're on.
+    readonly property var everySurface: ["bar", "bubbles", "dock", "sidebars", "controlCenter", "spotlight", "orbit", "lock"]
     readonly property var reach: [
+        { prefix: "iris.appearance.density", surfaces: root.everySurface.concat(["windows"]) },
+        { prefix: "iris.appearance.fontFamily", surfaces: root.everySurface.concat(["apps"]) },
+        { prefix: "iris.appearance.theme.linkShapes", surfaces: ["bar", "bubbles", "dock"] },
+        { prefix: "iris.appearance.theme.pieceShape", surfaces: ["bar", "bubbles", "dock"] },
+        { prefix: "iris.appearance.surfaces.island", surfaces: ["bar"] },
+        { prefix: "iris.appearance.surfaces.cards", surfaces: ["bubbles"] },
+        { prefix: "iris.appearance.surfaces.controlCenter", surfaces: ["controlCenter"] },
+        { prefix: "iris.appearance.surfaces.panels", surfaces: ["sidebars"] },
+        { prefix: "iris.appearance.surfaces.spotlight", surfaces: ["spotlight"] },
+        { prefix: "iris.appearance.surfaces.orbit", surfaces: ["orbit"] },
+        { prefix: "iris.appearance.surfaces.settings", surfaces: [] },
+        { prefix: "iris.appearance.surfaces.menus", surfaces: ["desktop", "bar", "dock"] },
+        { prefix: "iris.appearance.surfaces.gallery", surfaces: ["wallpaper"] },
+        { prefix: "iris.appearance.surfaces.osd", surfaces: ["bar", "sound"] },
+        { prefix: "iris.surround.enable", surfaces: ["desktop", "bar", "windows"] },
+        { prefix: "iris.surround.thickness", surfaces: ["desktop", "bar", "windows"] },
+        { prefix: "iris.bar.position", surfaces: ["bar", "dock", "windows"] },
+        { prefix: "iris.bar.height", surfaces: ["bar", "windows"] },
+        { prefix: "iris.bar.margin", surfaces: ["bar", "windows"] },
+        { prefix: "iris.bar.notch", surfaces: ["bar", "windows"] },
+        { prefix: "iris.dock.position", surfaces: ["dock", "bar", "windows"] },
+        { prefix: "iris.dock.enable", surfaces: ["dock", "windows"] },
+        { prefix: "iris.dock.iconSize", surfaces: ["dock", "windows"] },
+        { prefix: "iris.dock.notch", surfaces: ["dock", "windows"] },
         { prefix: "iris.appearance.glass", surfaces: ["appearance"], over: ["gameMode.disableEffects", "performance.lowPower"] },
         { prefix: "iris.appearance.motion", surfaces: ["motion"], over: ["gameMode.disableAnimations", "performance.lowPower"] },
-        { prefix: "iris.appearance.", surfaces: ["bar", "bubbles", "dock", "sidebars", "controlCenter", "spotlight", "orbit", "lock"] },
+        { prefix: "iris.appearance.", surfaces: root.everySurface },
         { prefix: "iris.bar.screenList", surfaces: ["bar", "display"] },
         { prefix: "iris.bar.reserveSpace", surfaces: ["bar", "windows"] },
         { prefix: "iris.bar.", surfaces: ["bar"] },
@@ -1356,14 +1381,18 @@ QtObject {
         { prefix: "performance.lowPower", surfaces: ["appearance", "motion", "desktop"] }
     ]
     function settingAt(path: string): var { return root.settings.find(spec => spec.path === path) ?? null }
-    function on(path: string): bool { return Boolean(Config.getNestedValue(path, false)) }
+    // Game mode's switches only hold anything back while a game runs.
+    // A choice (Fullscreen's pill) only holds back while its moment comes, so it's never shown as holding now.
+    function on(path: string): bool { return Config.getNestedValue(path, false) === true && (!path.startsWith("gameMode.") || GameMode.active) }
     function relationsOf(spec: var): var {
         const path = String(spec.path ?? "")
         const rule = root.reach.filter(r => path.startsWith(r.prefix)).sort((a, b) => b.prefix.length - a.prefix.length)[0] ?? { surfaces: [] }
-        const touches = rule.surfaces.filter(id => id !== spec.section).map(id => ({ id: id, label: root.sectionById(id).title }))
+        // "apps" is outside the shell: GTK and Qt apps take the font too.
+        const touches = rule.surfaces.filter(id => id !== spec.section).map(id => id === "apps" ? { id: "", label: "Your apps" } : { id: id, label: root.sectionById(id).title })
         const over = (rule.over ?? []).filter(p => p !== path).map(p => {
             const other = root.settingAt(p)
-            return other ? { id: other.section, label: other.label, active: root.on(p) } : null
+            // Named with its group: "Stop glass and blur" alone doesn't say it's Game mode's.
+            return other ? { id: other.section, label: other.group && other.group !== other.label ? Translation.tr(other.group) + " · " + Translation.tr(other.label) : other.label, active: root.on(p) } : null
         }).filter(o => o !== null)
         const when = String(spec.visibleWhen ?? "")
         const gate = when.length > 0 ? root.settingAt(when.replace(/^!/, "").split("=")[0]) : null
@@ -1372,6 +1401,17 @@ QtObject {
         const alsoIn = root.settings.filter(o => o.path === path && o.section !== spec.section && path.length > 0)
             .filter(o => !seen[o.section] && (seen[o.section] = true)).map(o => ({ id: o.section, label: root.sectionById(o.section).title }))
         return { touches: touches, over: over, needs: needs, alsoIn: alsoIn }
+    }
+    // A group's or an area's reach: every piece its rows land on beyond it, and what can overrule them.
+    function reachOf(rows: var): var {
+        const touches = [], over = []
+        // A mirror answers where it lives; here it would claim its home area's reach.
+        for (const spec of rows.filter(spec => !spec.mirror)) {
+            const rel = root.relationsOf(spec)
+            for (const one of rel.touches) if (!touches.some(other => other.label === one.label)) touches.push(one)
+            for (const one of rel.over) if (!over.some(other => other.label === one.label)) over.push(one)
+        }
+        return { touches: touches, over: over }
     }
     function sectionById(id: string): var {
         return root.sections.find(section => section.id === id) ?? root.sections[0]

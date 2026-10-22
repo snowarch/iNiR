@@ -247,14 +247,13 @@ Item {
                         onClicked: description.full = !description.full
                     }
                 }
-                // What this setting reaches and what reaches it; each name opens its area (DI59).
+                // Where it lands is said once, on its group's head; a row only says what holds it back (DI59).
                 Flow {
                     id: branch
                     readonly property var rel: { Config.revision; return IrisOptions.relationsOf(root.spec) }
                     readonly property var links: [].concat(
-                        branch.rel.touches.map(r => ({ id: r.id, text: Translation.tr(r.label), glyph: "arrow_outward", tone: 0 })),
                         branch.rel.needs.map(r => ({ id: r.id, text: Translation.tr("Needs %1").arg(Translation.tr(r.label)), glyph: "link", tone: 0 })),
-                        branch.rel.over.map(r => ({ id: r.id, text: Translation.tr(r.label), glyph: r.active ? "block" : "shield", tone: r.active ? 2 : 1 })),
+                        branch.rel.over.filter(r => r.active).map(r => ({ id: r.id, text: Translation.tr("Held by %1").arg(Translation.tr(r.label)), glyph: "block", tone: 2 })),
                         branch.rel.alsoIn.map(r => ({ id: r.id, text: Translation.tr("Also in %1").arg(Translation.tr(r.label)), glyph: "content_copy", tone: 0 })))
                     Layout.fillWidth: true
                     Layout.topMargin: Math.round(3 * root.d)
