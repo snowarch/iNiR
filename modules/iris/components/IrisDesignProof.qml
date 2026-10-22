@@ -287,6 +287,7 @@ PanelWindow {
             x: sheet.pad
             y: sheet.pad
             spacing: Math.round(18 * root.d)
+            IrisControlSpecimen {}
             Row {
                 Item { width: root.labelWidth; height: 1 }
                 Repeater {
