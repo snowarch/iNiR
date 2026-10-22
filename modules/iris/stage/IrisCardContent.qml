@@ -125,14 +125,16 @@ Item {
                     Layout.fillWidth: true
                     text: vpnRow.label
                     elide: Text.ElideRight
+                    // On, the connection's name reads first; off, it steps back (SYSTEM.md §4). Green stays on the switch.
+                    color: vpnRow.on ? IrisStyle.text : IrisStyle.textSecondary
                     font.pixelSize: IrisStyle.typeLabel
-                    font.weight: vpnRow.on ? Font.DemiBold : Font.Normal
+                    font.weight: IrisStyle.weight(vpnRow.on ? Font.DemiBold : Font.Medium)
                 }
                 IrisText {
                     Layout.fillWidth: true
                     visible: vpnRow.detail.length > 0
                     text: vpnRow.detail
-                    color: IrisStyle.muted
+                    color: IrisStyle.textSecondary
                     elide: Text.ElideRight
                     font.pixelSize: IrisStyle.typeFootnote
                 }
@@ -243,9 +245,10 @@ Item {
             detail: Audio.friendlyDeviceName(level.input ? Audio.source : Audio.defaultSink)
             IrisNumber {
                 text: Math.round(level.value * 100) + "%"
-                color: IrisStyle.subtext
-                pixelSize: IrisStyle.typeLabel
-                weight: Font.DemiBold
+                // The level is the head's figure: it reads before the device under the title.
+                color: level.muted ? IrisStyle.textTertiary : IrisStyle.text
+                pixelSize: IrisStyle.typeHeadline
+                weight: IrisStyle.figureWeight
             }
         }
         IrisCapsuleSlider {
@@ -447,8 +450,9 @@ Item {
                         value: vital.modelData.value
                         unit: vital.modelData.unit
                         pixelSize: IrisStyle.typeHeadline
-                        weight: Font.Bold
-                        color: vital.tint
+                        weight: IrisStyle.figureWeight
+                        // A reading is ink; its tint stays on the glyph beside its name.
+                        color: IrisStyle.text
                     }
                 }
             }
@@ -540,9 +544,10 @@ Item {
             IrisNumber {
                 Layout.alignment: Qt.AlignHCenter
                 text: Updates.count
-                pixelSize: 44 * IrisStyle.typeScale
-                weight: Font.Bold
-                color: Updates.count > 0 ? IrisStyle.secondaryAccent : IrisStyle.identity.green
+                // The card's own figure: the hero size, in the highlight only while something waits.
+                pixelSize: IrisStyle.typeHero
+                weight: IrisStyle.figureWeight
+                color: Updates.count > 0 ? IrisStyle.secondaryAccent : IrisStyle.text
             }
             IrisButton {
                 Layout.fillWidth: true
@@ -626,7 +631,7 @@ Item {
                 text: Vpn.available
                     ? Translation.tr("OpenVPN and WireGuard profiles you add in NetworkManager show up here too.")
                     : Translation.tr("No VPN yet. Add an OpenVPN or WireGuard profile in NetworkManager, or install Tailscale.")
-                color: IrisStyle.muted
+                color: IrisStyle.textSecondary
                 wrapMode: Text.WordWrap
                 font.pixelSize: IrisStyle.typeMeta
             }

@@ -22,7 +22,7 @@ Text {
         : root.v === "mono" ? Font.Medium : root.v === "kana" ? Font.Bold : Font.DemiBold
     font.letterSpacing: root.v === "figure" ? -Math.round(root.size * 0.03)
         : root.v === "mono" ? Math.round(root.size * 0.16) : 0
-    // `mono` is the first pass's capitals, kept only until its last consumer is rebuilt.
+    // `mono` is the label (表示): an area's or a group's name over what it holds, in spaced capitals; never a datum.
     font.capitalization: root.v === "mono" ? Font.AllUppercase : Font.MixedCase
     font.features: root.v === "figure" || root.v === "data" ? { "tnum": 1 } : ({})
     elide: Text.ElideRight

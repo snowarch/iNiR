@@ -992,7 +992,7 @@ Loader {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 0
-                    IrisText { text: Weather.data.temp; color: IrisStyle.text; font.family: IrisStyle.fontNumbers; font.pixelSize: 44 * IrisStyle.typeScale; font.weight: IrisStyle.weight(Font.Light) }
+                    IrisText { text: Weather.data.temp; color: IrisStyle.text; font.family: IrisStyle.fontNumbers; font.features: ({ "tnum": 1 }); font.pixelSize: IrisStyle.typeHero; font.weight: IrisStyle.figureWeight }
                     IrisText { Layout.fillWidth: true; text: Weather.data.description; color: IrisStyle.textSecondary; font.pixelSize: IrisStyle.typeLabel; wrapMode: Text.WordWrap }
                 }
                 MaterialSymbol { text: Icons.getWeatherIcon(Weather.data.wCode, Weather.isNightNow()) ?? "cloud"; fill: 1; iconSize: 46 * root.d; color: weather.night ? IrisStyle.identity.lavender : IrisStyle.secondaryAccent }
@@ -1107,10 +1107,11 @@ Loader {
                     text: focusTimer.clock
                     color: focusTimer.ticking ? focusTimer.phaseTint : IrisStyle.text
                     font.family: IrisStyle.fontNumbers
-                    font.pixelSize: 20 * IrisStyle.typeScale
-                    font.weight: IrisStyle.weight(Font.Bold)
+                    font.features: ({ "tnum": 1 })
+                    font.pixelSize: IrisStyle.typeTitleLarge
+                    font.weight: IrisStyle.figureWeight
                 }
-                IrisText { Layout.fillWidth: true; text: focusTimer.phase; color: IrisStyle.muted; font.pixelSize: IrisStyle.typeMeta }
+                IrisText { Layout.fillWidth: true; text: focusTimer.phase; color: IrisStyle.textSecondary; font.pixelSize: IrisStyle.typeMeta; font.weight: IrisStyle.weight(Font.Medium) }
                 IrisIconButton {
                     materialIcon: focusTimer.ticking ? "pause" : "play_arrow"
                     Accessible.name: focusTimer.ticking ? Translation.tr("Pause") : Translation.tr("Start")
@@ -1133,11 +1134,14 @@ Loader {
                     IrisText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: focusTimer.clock
+                        // While it runs the figure is what is read, in the phase's tint; the phase's name steps back.
+                        color: focusTimer.ticking ? focusTimer.phaseTint : IrisStyle.text
                         font.family: IrisStyle.fontNumbers
-                        font.pixelSize: 28 * IrisStyle.typeScale
-                        font.weight: IrisStyle.weight(Font.Bold)
+                        font.features: ({ "tnum": 1 })
+                        font.pixelSize: IrisStyle.typeDisplay
+                        font.weight: IrisStyle.figureWeight
                     }
-                    IrisText { anchors.horizontalCenter: parent.horizontalCenter; text: focusTimer.phase; color: focusTimer.phaseTint; font.pixelSize: IrisStyle.typeMeta; font.weight: IrisStyle.weight(Font.DemiBold) }
+                    IrisText { anchors.horizontalCenter: parent.horizontalCenter; text: focusTimer.phase; color: IrisStyle.textSecondary; font.pixelSize: IrisStyle.typeMeta; font.weight: IrisStyle.weight(Font.Medium) }
                 }
             }
             Row {

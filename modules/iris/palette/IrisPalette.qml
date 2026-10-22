@@ -1086,7 +1086,8 @@ Item {
                                                             active: result.modelData?.iconType === LauncherSearchResult.IconType.Text
                                                             sourceComponent: IrisText {
                                                                 text: result.modelData?.iconName ?? ""
-                                                                font.pixelSize: Math.round((result.topHit ? 26 : 19) * IrisStyle.typeScale)
+                                                                // A text mark (an emoji, a symbol) is a glyph: it fills its lead as an icon would.
+                                                                font.pixelSize: Math.round(lead.size * 0.75)
                                                             }
                                                         }
                                                         IrisSquircle {
@@ -1118,13 +1119,15 @@ Item {
                                                             : emphasise ? stage.emphasised(String(result.modelData?.name ?? ""),
                                                                 result.selected ? IrisStyle.rowSelectionDetail : IrisStyle.textSecondary)
                                                             : String(result.modelData?.name ?? "")
-                                                        font.family: result.mathHit ? IrisStyle.fontMain
+                                                        // A sum's answer is a figure; the top hit is the one name that leads; every
+                                                        // other result is read by its match, set heavier than the rest of the name.
+                                                        font.family: result.mathHit ? IrisStyle.fontNumbers
                                                             : result.modelData?.fontType === LauncherSearchResult.FontType.Monospace
                                                             ? Appearance.font.family.monospace : IrisStyle.fontMain
                                                         font.features: result.mathHit ? ({ "tnum": 1 }) : ({})
-                                                        font.pixelSize: Math.round((result.mathHit ? 28 : result.topHit ? 16 : 13.5) * IrisStyle.typeScale)
-                                                        font.weight: result.mathHit ? Font.Bold : result.topHit ? Font.DemiBold : Font.Normal
-                                                        font.letterSpacing: result.mathHit ? -1 : 0
+                                                        font.pixelSize: result.mathHit ? IrisStyle.typeDisplay : result.topHit ? IrisStyle.typeHeadline : IrisStyle.typeBody
+                                                        font.weight: result.mathHit ? IrisStyle.figureWeight : IrisStyle.weight(result.topHit ? Font.DemiBold : Font.Normal)
+                                                        font.letterSpacing: result.mathHit ? IrisStyle.tracking(IrisStyle.typeDisplay) : 0
                                                         elide: Text.ElideRight
                                                     }
                                                     IrisText {

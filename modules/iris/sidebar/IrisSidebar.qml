@@ -227,10 +227,11 @@ PanelWindow {
                 Text {
                     visible: !root.left && !root.editing
                     text: String(DateTime.clock.date.getDate())
-                    color: IrisStyle.identity.red
+                    // Today's head is the day as a figure, in the accent the person chose for the clock.
+                    color: IrisStyle.clockAccent
                     font.family: IrisStyle.fontNumbers
-                    font.pixelSize: 40 * IrisStyle.typeScale
-                    font.weight: IrisStyle.weight(Font.Light)
+                    font.pixelSize: IrisStyle.typeDisplay
+                    font.weight: IrisStyle.figureWeight
                     font.features: ({ "tnum": 1 })
                     Layout.alignment: Qt.AlignVCenter
                     Layout.rightMargin: 6 * root.d

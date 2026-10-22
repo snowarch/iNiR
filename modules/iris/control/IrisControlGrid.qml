@@ -451,6 +451,19 @@ Item {
         }
     }
 
+    // The name under a disc. A switch says its state in its name (SYSTEM.md §4): on, it reads first; off, it steps
+    // back. The accent stays on the disc.
+    component DiscCaption: IrisText {
+        property var control
+        visible: IrisControlOptions.labelled
+        text: control?.caption ?? ""
+        horizontalAlignment: Text.AlignHCenter
+        elide: Text.ElideRight
+        color: !(control?.ready ?? false) ? IrisStyle.textTertiary : control.lit ? IrisStyle.text : IrisStyle.textSecondary
+        font.pixelSize: IrisStyle.typeFootnote
+        font.weight: IrisStyle.weight(control?.lit ? Font.DemiBold : Font.Medium)
+    }
+
     component ControlFace: Item {
         id: face
         property string moduleId: ""
@@ -466,18 +479,13 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Math.round((face.height - height - face.labelHeight) / 2)
         }
-        IrisText {
+        DiscCaption {
+            control: faceState
             visible: face.disc && IrisControlOptions.labelled
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: Math.round(2 * root.d)
             width: Math.min(implicitWidth, face.width - 4 * root.d)
-            text: faceState.caption
-            horizontalAlignment: Text.AlignHCenter
-            elide: Text.ElideRight
-            color: faceState.ready ? IrisStyle.subtext : IrisStyle.textTertiary
-            font.pixelSize: IrisStyle.typeFootnote
-            font.weight: IrisStyle.weight(Font.Medium)
         }
 
         IrisButton {
@@ -525,12 +533,13 @@ Item {
                 visible: IrisControlOptions.labelled
                 text: faceState.label
                 horizontalAlignment: Text.AlignHCenter
+                // A long name fits by one step of the ladder before it elides.
                 fontSizeMode: Text.HorizontalFit
-                minimumPixelSize: Math.round(8 * IrisStyle.typeScale)
+                minimumPixelSize: IrisStyle.typeCaption
                 elide: Text.ElideRight
-                color: faceState.lit ? faceState.ink : faceState.ready ? IrisStyle.subtext : IrisStyle.textTertiary
-                font.pixelSize: IrisStyle.typeCaption
-                font.weight: IrisStyle.weight(Font.Medium)
+                color: faceState.lit ? faceState.ink : faceState.ready ? IrisStyle.textSecondary : IrisStyle.textTertiary
+                font.pixelSize: IrisStyle.typeFootnote
+                font.weight: IrisStyle.weight(faceState.lit ? Font.DemiBold : Font.Medium)
             }
         }
 
@@ -629,19 +638,13 @@ Item {
                             size: platter.discSize
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
-                        IrisText {
-                            visible: IrisControlOptions.labelled
+                        DiscCaption {
+                            control: slotControl
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.bottom: parent.bottom
                             width: Math.min(implicitWidth, platterSlot.width - 4 * root.d)
-                            text: slotControl.caption
-                            horizontalAlignment: Text.AlignHCenter
                             fontSizeMode: Text.HorizontalFit
                             minimumPixelSize: IrisStyle.typeCaption
-                            elide: Text.ElideRight
-                            color: slotControl.ready ? IrisStyle.subtext : IrisStyle.textTertiary
-                            font.pixelSize: IrisStyle.typeFootnote
-                            font.weight: IrisStyle.weight(Font.Medium)
                         }
                     }
                 }
@@ -880,7 +883,8 @@ Item {
                         font.pixelSize: nowPlaying.wide ? IrisStyle.typeBody : IrisStyle.typeLabel
                         font.weight: IrisStyle.weight(Font.DemiBold)
                         wrapMode: playing.across ? Text.NoWrap : Text.Wrap
-                        maximumLineCount: playing.across ? 1 : 3
+                        // Two lines at most, so the artist under it is always read whole.
+                        maximumLineCount: playing.across ? 1 : 2
                         elide: Text.ElideRight
                     }
                     IrisText {

@@ -135,7 +135,7 @@ Item {
         color: ink
         font.family: IrisStyle.fontNumbers
         font.features: ({ "tnum": 1 })
-        font.weight: IrisStyle.weight(Font.DemiBold)
+        font.weight: IrisStyle.figureWeight
         font.pixelSize: IrisStyle.typeMeta
     }
 }

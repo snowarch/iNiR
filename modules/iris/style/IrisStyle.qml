@@ -642,6 +642,10 @@ QtObject {
         return root.animeEnabled && root.animeHighlightOn
             ? root.animeHighlight(base, root.animePaletteName, root.animeStrength) : base
     }
+    // The clock's own accent, the one the person picked for its separator and day (`iris.bar.clockAccent`): every
+    // surface that sets the day as a figure wears it, so the Control Center and Today never disagree with the Island.
+    readonly property color clockAccent: ({ accent: root.accent, plain: root.text })[String(root.options?.bar?.clockAccent ?? "highlight")]
+        ?? root.secondaryAccent
     // A wallpaper or theme accent already is the apps' palette.
     readonly property bool appsShareAccent: !root.followsTheme && Boolean(root.appearance?.accentForApps ?? true)
         && !["theme", "wallpaper"].includes(String(root.appearance?.accent ?? "blue"))

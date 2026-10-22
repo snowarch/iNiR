@@ -121,9 +121,11 @@ ColumnLayout {
                     IrisText {
                         text: Qt.formatDate(DateTime.clock.date, "d")
                         role: IrisText.Title
-                        color: IrisStyle.secondaryAccent
+                        // The day is the clock's figure: the accent the person chose for it, as on the Island.
+                        color: IrisStyle.clockAccent
                         font.family: IrisStyle.fontNumbers
-                        font.weight: IrisStyle.weight(Font.Bold)
+                        font.weight: IrisStyle.figureWeight
+                        font.features: ({ "tnum": 1 })
                     }
                     Item { Layout.fillWidth: true }
                 }

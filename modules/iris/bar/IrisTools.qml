@@ -105,10 +105,11 @@ ColumnLayout {
                 anchors.centerIn: parent
                 visible: dial.figure.length > 0 && !face.skinned
                 text: dial.figure
-                color: IrisStyle.secondaryAccent
+                // A preset is ink; only the one that runs takes the highlight (its ring already marks the length).
+                color: dial.running ? IrisStyle.secondaryAccent : IrisStyle.text
                 font.family: IrisStyle.fontNumbers
-                font.pixelSize: 19 * IrisStyle.typeScale
-                font.weight: IrisStyle.weight(Font.Bold)
+                font.pixelSize: IrisStyle.typeTitleLarge
+                font.weight: IrisStyle.figureWeight
                 font.features: ({ "tnum": 1 })
             }
             MaterialSymbol {
@@ -117,7 +118,7 @@ ColumnLayout {
                 text: dial.glyph
                 fill: dial.running ? 1 : 0
                 iconSize: 22 * root.d
-                color: IrisStyle.secondaryAccent
+                color: dial.running ? IrisStyle.secondaryAccent : IrisStyle.text
             }
         }
         MouseArea {
