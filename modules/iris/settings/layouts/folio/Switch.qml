@@ -3,47 +3,50 @@ import qs.services
 import qs.modules.iris.style
 import qs.modules.iris.components
 
-// Folio's switch: the two words in one ruled capsule, the one taken filled; on is the accent, off a quiet plate.
+// Folio's switch: the two words printed side by side, the taken one in the ink behind its dot: lit in the accent for
+// on, a hollow ring for off. A click anywhere swaps them.
 Item {
     id: root
     property Item host
-    readonly property real wantWidth: 98
-    readonly property real wantHeight: 30
     readonly property bool on: root.host?.on ?? false
     readonly property real d: IrisStyle.settingsDensity
-    readonly property real cell: (root.width - 4) / 2
-    Rectangle {
-        anchors.fill: parent
-        radius: height / 2
-        color: "transparent"
-        border.width: 1
-        border.color: (root.host?.hovered ?? false) || (root.host?.keyed ?? false) ? IrisStyle.hairlineStrong : IrisStyle.hairline
-    }
-    Rectangle {
-        x: root.on ? 2 : 2 + root.cell
-        y: 2
-        width: root.cell
-        height: root.height - 4
-        radius: height / 2
-        color: root.on ? IrisStyle.accent : IrisStyle.fill
-        Behavior on x { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-        Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
-    }
+    FontMetrics { id: metrics; font.family: IrisStyle.fontMain; font.pixelSize: IrisStyle.typeLabel; font.weight: Font.DemiBold }
+    readonly property real dot: Math.round(7 * root.d)
+    readonly property real cellOn: Math.ceil(metrics.advanceWidth(Translation.tr("On"))) + root.dot + Math.round(8 * root.d)
+    readonly property real cellOff: Math.ceil(metrics.advanceWidth(Translation.tr("Off"))) + root.dot + Math.round(8 * root.d)
+    readonly property real wantWidth: (root.cellOn + root.cellOff) / root.d + 16
+    readonly property real wantHeight: 30
+    readonly property bool lit: (root.host?.hovered ?? false) || (root.host?.keyed ?? false)
     Repeater {
         model: [{ on: true, word: Translation.tr("On") }, { on: false, word: Translation.tr("Off") }]
-        IrisText {
+        Item {
+            id: cell
             required property var modelData
             required property int index
-            x: 2 + index * root.cell
-            width: root.cell
+            readonly property bool taken: cell.modelData.on === root.on
+            x: cell.index === 0 ? 0 : root.width - width
+            width: cell.index === 0 ? root.cellOn : root.cellOff
             height: root.height
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            text: modelData.word
-            readonly property bool taken: modelData.on === root.on
-            color: taken && root.on ? IrisStyle.inkOnAccent : taken ? IrisStyle.text : IrisStyle.muted
-            font.pixelSize: IrisStyle.typeLabel
-            font.weight: taken ? Font.DemiBold : Font.Normal
+            Rectangle {
+                id: mark
+                visible: cell.taken
+                anchors.verticalCenter: parent.verticalCenter
+                width: root.dot
+                height: width
+                radius: width / 2
+                color: root.on ? IrisStyle.accent : "transparent"
+                border.width: root.on ? 0 : Math.max(1, Math.round(1.5 * root.d))
+                border.color: IrisStyle.muted
+            }
+            IrisText {
+                anchors.verticalCenter: parent.verticalCenter
+                x: root.dot + Math.round(7 * root.d)
+                text: cell.modelData.word
+                color: cell.taken ? IrisStyle.text : root.lit ? IrisStyle.muted : IrisStyle.textTertiary
+                font.pixelSize: IrisStyle.typeLabel
+                font.weight: cell.taken ? Font.DemiBold : Font.Normal
+                Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+            }
         }
     }
 }
