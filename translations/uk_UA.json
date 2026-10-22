@@ -9563,5 +9563,7 @@
   "Shared pieces": "Спільні частини",
   "Shell root": "Корінь оболонки",
   "Defaults": "Типові",
-  "Shell, no file named": "Оболонка, файл не вказано"
+  "Shell, no file named": "Оболонка, файл не вказано",
+  "Held by %1": "Утримує: %1",
+  "Your apps": "Ваші застосунки"
 }

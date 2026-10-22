@@ -103,9 +103,9 @@ Item {
     property string readGroup: ""
     property string heldGroup: ""
     readonly property bool browsing: !root.searching && root.openGroup.length === 0 && root.advancedPage < 0
-    readonly property bool heroPinned: pageHero.shown && (pageHero.staged || pageHero.titled)
+    readonly property bool heroPinned: pageHero.shown && pageHero.implicitHeight > 0
     // The scene stays in view over the rows and never takes more than a third of the page from them.
-    readonly property real stageHeight: Math.round(Math.max(150 * root.d, Math.min(settingsRows.width * root.screenShape, detailBody.height * 0.3)))
+    readonly property real stageHeight: Math.round(Math.max(104 * root.d, Math.min(150 * root.d, detailBody.height * 0.22)))
     function shown(spec: var): bool { return IrisOptions.shown(spec) }
 
     readonly property int searchLimit: 24
@@ -177,11 +177,9 @@ Item {
     readonly property var areaReach: { Config.revision; return IrisOptions.reachOf(root.entries) }
     // The areas the pointer's group reaches: the sidebar's map lights them.
     property var reachHover: []
-    readonly property bool lift: { Config.revision; return Config.getNestedValue("iris.appearance.surfaces.settings.lift", true) !== false }
-    readonly property bool switchCards: { Config.revision; return Config.getNestedValue("iris.appearance.surfaces.settings.switches", "cards") !== "rows" }
     // With nothing pointed at, the map shows what the group being read reaches.
     readonly property var readReach: {
-        const read = root.lift && root.flatSection ? root.groups.find(entry => entry.key === root.readGroup) : undefined
+        const read = root.flatSection ? root.groups.find(entry => entry.key === root.readGroup) : undefined
         return read ? [root.section].concat(IrisOptions.reachOf(read.rows).touches.map(r => r.id)) : []
     }
     property string reachOwner: ""
@@ -1286,13 +1284,13 @@ Item {
                                 }
                             }
 
-                            StageHero {
+                            Stage {
                                 id: pageHero
                                 readonly property bool groupPage: !root.searching && root.openGroup.length > 0 && root.advancedPage < 0
                                 readonly property bool sectionPage: root.browsing && root.section !== "system" && root.section !== "general"
                                 readonly property bool spying: !pageHero.groupPage && root.leadGroup.length > 0
                                 readonly property string key: pageHero.spying ? root.leadGroup : String(root.shownGroups[0]?.key ?? "")
-                                readonly property bool shown: pageHero.sectionPage || (pageHero.groupPage && (pageHero.stageAvailable || pageHero.titled))
+                                readonly property bool shown: pageHero.sectionPage || (pageHero.groupPage && pageHero.stageAvailable)
                                 parent: heroPinSlot
                                 width: heroPinSlot.width
                                 visible: pageHero.shown
@@ -1610,57 +1608,17 @@ Item {
         }
     }
 
-    // The area's map: what it is, where it lands beyond itself and what can hold it back, beside its live scene. A long
-    // area's blocks are tabs under it. Under a Design that draws its own head (AIRISU) only the scene stays, as a band.
-    component StageHero: Item {
-        id: hero
+    // The area's live scene, held over its rows while they scroll; a long area's blocks are tabs under it. No words on
+    // it: the toolbar names the page and each row says the rest.
+    component Stage: Item {
+        id: stage
         property string sceneSection: ""
         property string sceneGroup: ""
         readonly property bool stageAvailable: stageLoader.item?.available ?? false
-        readonly property bool staged: hero.stageAvailable && detailBody.width > 560 * root.d
-        readonly property bool titled: !root.sceneDrawn
         readonly property bool grouped: !root.searching && root.openGroup.length > 0 && root.advancedPage < 0
-        readonly property var reach: hero.grouped ? IrisOptions.reachOf(root.groups.find(entry => entry.title === root.openGroup)?.rows ?? []) : root.areaReach
-        readonly property bool tabbed: root.blocked && !hero.grouped
-        readonly property real stageHeight: Math.round(150 * root.d)
-        readonly property real tabsHeight: hero.tabbed ? blockTabs.implicitHeight + Math.round(16 * root.d) : 0
-        implicitHeight: (hero.titled ? Math.max(hero.staged ? hero.stageHeight : 0, facts.implicitHeight) : root.stageHeight) + hero.tabsHeight
-        Column {
-            id: facts
-            visible: hero.titled
-            anchors.left: parent.left
-            anchors.leftMargin: Math.round(6 * root.d)
-            anchors.right: stageLoader.visible ? stageLoader.left : parent.right
-            anchors.rightMargin: Math.round(28 * root.d)
-            y: hero.staged ? Math.max(0, Math.round((hero.stageHeight - facts.implicitHeight) / 2)) : 0
-            spacing: Math.round(4 * root.d)
-            IrisText {
-                width: parent.width
-                text: hero.grouped ? root.openGroup : Translation.tr(root.currentSection.subtitle ?? root.currentSection.title)
-                font.family: IrisStyle.fontTitle
-                font.pixelSize: IrisStyle.typeTitleLarge
-                font.weight: IrisStyle.weight(Font.DemiBold)
-                font.letterSpacing: -Math.round(IrisStyle.typeTitleLarge * 0.01 * 10) / 10
-                wrapMode: Text.WordWrap
-                maximumLineCount: 2
-                elide: Text.ElideRight
-            }
-            IrisText {
-                width: parent.width
-                visible: text.length > 0
-                text: hero.grouped ? "" : Translation.tr(root.currentSection.tip ?? "")
-                color: IrisStyle.textSecondary
-                font.pixelSize: IrisStyle.typeMeta
-                wrapMode: Text.WordWrap
-                maximumLineCount: 2
-                elide: Text.ElideRight
-                bottomPadding: Math.round(6 * root.d)
-            }
-            Overline { visible: hero.reach.touches.length > 0; text: Translation.tr("Also changes") }
-            ReachChips { width: parent.width; links: root.chipsOf(hero.reach.touches, [], 0) }
-            Overline { visible: hero.reach.over.length > 0; text: Translation.tr("Can be held back by"); topPadding: Math.round(6 * root.d) }
-            ReachChips { width: parent.width; links: root.chipsOf([], hero.reach.over, 0) }
-        }
+        readonly property bool tabbed: root.blocked && !stage.grouped
+        implicitHeight: (stage.stageAvailable ? root.stageHeight : 0)
+            + (stage.tabbed ? blockTabs.implicitHeight + (stage.stageAvailable ? Math.round(14 * root.d) : 0) : 0)
         IrisCutPlate {
             id: stageDie
             visible: false
@@ -1671,11 +1629,10 @@ Item {
         }
         Loader {
             id: stageLoader
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: hero.titled ? hero.stageHeight : parent.height - hero.tabsHeight
-            width: hero.titled ? Math.round(height / Math.max(0.3, root.screenShape)) : parent.width
-            active: hero.sceneSection.length > 0
+            width: parent.width
+            height: root.stageHeight
+            active: stage.sceneSection.length > 0
+            visible: stage.stageAvailable
             // Under a chamfered field the scene is cut by the body's die (a mask, so glass shows through the corners).
             layer.enabled: IrisStyle.fieldChamfer && stageLoader.visible && width > 0
             layer.smooth: true
@@ -1685,207 +1642,26 @@ Item {
                 maskThresholdMin: 0.5
                 maskSpreadAtMin: 1
             }
-            visible: hero.staged
             sourceComponent: IrisGroupPreview {
                 compact: true
                 niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
                 niriRevision: IrisNiri.revision
                 radius: IrisStyle.radiusTile
-                section: hero.sceneSection
-                group: hero.sceneGroup
-                playing: hero.visible && hero.staged && GlobalStates.settingsOverlayOpen
+                section: stage.sceneSection
+                group: stage.sceneGroup
+                playing: stage.visible && stage.stageAvailable && GlobalStates.settingsOverlayOpen
             }
         }
         IrisSegmented {
             id: blockTabs
-            visible: hero.tabbed
+            visible: stage.tabbed
             anchors.left: parent.left
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: Math.round(4 * root.d)
             width: Math.min(parent.width, blockTabs.fitWidth)
             options: root.groupChunks.map((chunk, index) => ({ label: chunk.caption, value: index }))
             current: Math.min(root.block, root.groupChunks.length - 1)
             accessibleName: Translation.tr(root.currentSection.title)
             onPicked: value => root.block = value
-        }
-    }
-
-    // A caption over the head's chips, in the area's own colour.
-    component Overline: IrisText {
-        color: IrisStyle.plainMarks ? IrisStyle.textTertiary : root.tintInk(root.currentSection.tint)
-        font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontMain
-        font.pixelSize: IrisStyle.typeCaption
-        font.weight: IrisStyle.weight(Font.DemiBold)
-        font.capitalization: Font.AllUppercase
-        font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.12 * 10) / 10
-    }
-
-    // Chips for what a setting reaches (`touches`) and what overrules it (`over`): past `limit` the rest is one "+N".
-    function chipsOf(touches: var, over: var, limit: int): var {
-        const whole = IrisOptions.everySurface.every(id => touches.some(r => r.id === id))
-        if (whole) touches = [{ id: "", label: "Every surface" }].concat(touches.filter(r => !IrisOptions.everySurface.includes(r.id)))
-        const all = [].concat(
-            over.filter(r => r.active).map(r => ({ id: r.id, text: Translation.tr("Held by %1").arg(Translation.tr(r.label)), glyph: "block", tone: 2 })),
-            touches.map(r => ({ id: r.id, text: Translation.tr(r.label), glyph: r.id.length > 0 ? "arrow_outward" : r.label === "Every surface" ? "select_all" : "apps", tone: 0 })),
-            over.filter(r => !r.active).map(r => ({ id: r.id, text: Translation.tr(r.label), glyph: "shield", tone: 1 })))
-        if (limit <= 0 || all.length <= limit) return all
-        return all.slice(0, limit - 1).concat([{ id: "", text: "+" + (all.length - limit + 1), glyph: "", tone: 1,
-            more: all.slice(limit - 1).map(link => link.text).join(", ") }])
-    }
-    component ReachChips: Flow {
-        id: chips
-        property var links: []
-        visible: chips.links.length > 0
-        spacing: Math.round(6 * root.d)
-        Repeater { model: chips.links; ReachChip {} }
-    }
-    component ReachLine: Row {
-        id: line
-        property var links: []
-        visible: line.links.length > 0
-        spacing: Math.round(6 * root.d)
-        Repeater { model: line.links; ReachChip {} }
-    }
-    component ReachChip: MouseArea {
-        id: link
-        required property var modelData
-        readonly property bool live: link.modelData.id.length > 0 && link.modelData.id !== root.section
-        readonly property color ink: link.modelData.tone === 2 ? IrisStyle.danger : link.containsMouse && link.live ? IrisStyle.text : IrisStyle.textSecondary
-        width: linkRow.implicitWidth + Math.round(16 * root.d)
-        height: Math.round(24 * root.d)
-        hoverEnabled: true
-        cursorShape: link.live ? Qt.PointingHandCursor : Qt.ArrowCursor
-        Accessible.role: link.live ? Accessible.Link : Accessible.StaticText
-        Accessible.name: link.modelData.more ?? link.modelData.text
-        onClicked: if (link.live) root.selectSection(link.modelData.id)
-        onContainsMouseChanged: {
-            if (link.containsMouse && link.live) { root.reachOwner = "chip"; root.reachHover = [link.modelData.id] }
-            else if (!link.containsMouse && root.reachOwner === "chip") { root.reachOwner = ""; root.reachHover = [] }
-        }
-        Rectangle {
-            anchors.fill: parent
-            radius: IrisStyle.fieldChamfer ? 0 : IrisStyle.capsule(height)
-            color: link.modelData.tone === 2 ? IrisStyle.tintFill(IrisStyle.danger) : link.containsMouse && link.live ? IrisStyle.fillActive : IrisStyle.fillQuiet
-            Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
-        }
-        Row {
-            id: linkRow
-            anchors.centerIn: parent
-            spacing: Math.round(4 * root.d)
-            MaterialSymbol {
-                visible: link.modelData.glyph.length > 0
-                anchors.verticalCenter: parent.verticalCenter
-                text: link.modelData.glyph
-                iconSize: Math.round(14 * root.d)
-                color: link.ink
-            }
-            IrisText {
-                anchors.verticalCenter: parent.verticalCenter
-                text: link.modelData.text
-                color: link.ink
-                font.pixelSize: IrisStyle.typeFootnote
-                font.weight: IrisStyle.weight(Font.Medium)
-            }
-        }
-    }
-
-    // A switch as a card: the whole card toggles, its plate takes the accent while on (DI86).
-    component SwitchTile: MouseArea {
-        id: tile
-        required property var modelData
-        readonly property var spec: tile.modelData
-        readonly property bool on: { Config.revision; const value = Boolean(IrisOptions.currentValue(tile.spec)); return tile.spec.invert ? !value : value }
-        readonly property bool locked: { Config.revision; return tile.spec.locked ? Boolean(tile.spec.locked()) : false }
-        readonly property var held: { Config.revision; return IrisOptions.relationsOf(tile.spec).over.filter(r => r.active) }
-        readonly property bool landing: root.landingPath.length > 0 && String(tile.spec.path ?? "") === root.landingPath
-        readonly property bool plated: IrisStyle.plateSelection
-        Layout.fillWidth: true
-        Layout.preferredWidth: 1
-        Layout.fillHeight: true
-        implicitHeight: Math.max(Math.round(72 * root.d), tileText.implicitHeight + Math.round(24 * root.d))
-        hoverEnabled: true
-        enabled: !tile.locked
-        opacity: tile.locked ? 0.42 : 1
-        cursorShape: Qt.PointingHandCursor
-        activeFocusOnTab: true
-        Accessible.role: Accessible.CheckBox
-        Accessible.checkable: true
-        Accessible.checked: tile.on
-        Accessible.name: Translation.tr(tile.spec.label)
-        Accessible.description: tile.spec.description ? Translation.tr(tile.spec.description) : ""
-        function toggle(): void { IrisOptions.commit(tile.spec, tile.spec.invert ? tile.on : !tile.on) }
-        onClicked: tile.toggle()
-        Keys.onSpacePressed: tile.toggle()
-        Keys.onReturnPressed: tile.toggle()
-        onLandingChanged: if (tile.landing) landingReveal.restart()
-        Timer { id: landingReveal; interval: 120; onTriggered: root.reveal(tile) }
-        IrisCutPlate {
-            anchors.fill: parent
-            visible: IrisStyle.fieldChamfer
-            cutLength: IrisStyle.nestedCut(IrisStyle.chamferCut, Math.round(10 * root.d))
-            color: plate.color
-        }
-        Rectangle {
-            id: plate
-            anchors.fill: parent
-            visible: !IrisStyle.fieldChamfer
-            radius: IrisStyle.concentric(IrisStyle.radiusTile, Math.round(10 * root.d), IrisStyle.radiusRow)
-            color: tile.on ? (tile.plated ? ColorUtils.mix(IrisStyle.text, IrisStyle.surfaceOpaque, 0.12) // iris-literal: one step of ink
-                    : tile.containsMouse ? IrisStyle.tintFillHover(IrisStyle.accent) : IrisStyle.tintFill(IrisStyle.accent))
-                : tile.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
-            border.width: tile.activeFocus || tile.landing ? Math.max(2, Math.round(2 * root.d)) : 0
-            border.color: IrisStyle.accent
-            Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
-        }
-        Column {
-            id: tileText
-            anchors.left: parent.left
-            anchors.right: statePill.left
-            anchors.top: parent.top
-            anchors.margins: Math.round(12 * root.d)
-            anchors.rightMargin: Math.round(8 * root.d)
-            spacing: Math.round(2 * root.d)
-            IrisText {
-                width: parent.width
-                text: Translation.tr(tile.spec.label)
-                color: tile.on && !tile.plated ? root.tintInk(IrisStyle.accent) : IrisStyle.text
-                font.pixelSize: IrisStyle.typeLabel
-                font.weight: IrisStyle.weight(Font.DemiBold)
-                wrapMode: Text.WordWrap
-                maximumLineCount: 2
-                elide: Text.ElideRight
-            }
-            IrisText {
-                width: parent.width
-                visible: text.length > 0
-                text: tile.held.length > 0 ? Translation.tr("Held by %1").arg(Translation.tr(tile.held[0].label))
-                    : tile.spec.description ? Translation.tr(tile.spec.description) : ""
-                color: tile.held.length > 0 ? IrisStyle.danger : IrisStyle.muted
-                font.pixelSize: IrisStyle.typeFootnote
-                wrapMode: Text.WordWrap
-                maximumLineCount: 3
-                elide: Text.ElideRight
-            }
-        }
-        // The state, said in a word on its own capsule.
-        Rectangle {
-            id: statePill
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: Math.round(10 * root.d)
-            width: stateText.implicitWidth + Math.round(16 * root.d)
-            height: Math.round(20 * root.d)
-            radius: IrisStyle.fieldChamfer ? 0 : height / 2
-            color: tile.on ? IrisStyle.accent : IrisStyle.fill
-            Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
-            IrisText {
-                id: stateText
-                anchors.centerIn: parent
-                text: tile.on ? Translation.tr("On") : Translation.tr("Off")
-                color: tile.on ? IrisStyle.onTint : IrisStyle.textSecondary
-                font.pixelSize: IrisStyle.typeCaption
-                font.weight: IrisStyle.weight(Font.DemiBold)
-            }
         }
     }
 
@@ -1911,7 +1687,8 @@ Item {
         id: tune
         property bool open: false
         property var names: []
-        implicitHeight: Math.round((tune.open ? 44 : 54) * root.d)
+        property string title: ""
+        implicitHeight: Math.round(44 * root.d)
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
@@ -1941,18 +1718,10 @@ Item {
             spacing: Math.round(2 * root.d)
             IrisText {
                 Layout.fillWidth: true
-                text: tune.open ? Translation.tr("Fewer settings") : Translation.tr("Fine-tune")
-                color: tune.containsMouse ? IrisStyle.text : IrisStyle.textSecondary
-                font.pixelSize: IrisStyle.typeLabel
+                text: tune.title.length > 0 ? tune.title : tune.open ? Translation.tr("Fewer settings") : Translation.tr("Fine-tune")
+                color: tune.containsMouse || tune.title.length > 0 ? IrisStyle.text : IrisStyle.textSecondary
+                font.pixelSize: tune.title.length > 0 ? IrisStyle.typeBody : IrisStyle.typeLabel
                 font.weight: IrisStyle.weight(Font.Medium)
-                elide: Text.ElideRight
-            }
-            IrisText {
-                Layout.fillWidth: true
-                visible: !tune.open
-                text: tune.names.join(", ")
-                color: IrisStyle.textTertiary
-                font.pixelSize: IrisStyle.typeFootnote
                 elide: Text.ElideRight
             }
         }
@@ -1973,8 +1742,6 @@ Item {
         id: group
         required property var modelData
         readonly property var reach: { Config.revision; return IrisOptions.reachOf(group.modelData.rows) }
-        // A group says where it lands only where that isn't the whole area's answer already.
-        readonly property bool ownReach: group.reach.touches.map(r => r.label).sort().join() !== root.areaReach.touches.map(r => r.label).sort().join()
         Layout.fillWidth: true
         spacing: 6 * root.d
         HoverHandler {
@@ -2038,7 +1805,7 @@ Item {
             readonly property bool reading: root.readGroup === String(group.modelData.key ?? "")
             readonly property int folio: root.groups.findIndex(entry => entry.key === group.modelData.key)
             readonly property string glyph: IrisOptions.groupGlyphs[String(group.modelData.key ?? "")] ?? root.currentSection.icon ?? "settings"
-            visible: root.flatSection && groupHead.title.length > 0 && headSkin.active
+            visible: root.flatSection && groupHead.title.length > 0 && headSkin.active && !group.allTuned
             Layout.fillWidth: true
             // The rows' own inset, so the head's switch stands in their control column.
             Layout.leftMargin: 16 * root.d
@@ -2058,7 +1825,7 @@ Item {
             }
         }
         RowLayout {
-            visible: root.flatSection && String(group.modelData.caption ?? "").length > 0 && !headSkin.active
+            visible: root.flatSection && String(group.modelData.caption ?? "").length > 0 && !headSkin.active && !group.allTuned
             Layout.leftMargin: 16 * root.d
             Layout.topMargin: 14 * root.d
             Layout.fillWidth: true
@@ -2072,10 +1839,6 @@ Item {
                 font.weight: IrisStyle.weight(Font.DemiBold)
                 elide: Text.ElideRight
             }
-            ReachLine {
-                Layout.rightMargin: group.loneSwitch ? 0 : 16 * root.d
-                links: root.chipsOf(group.ownReach ? group.reach.touches : [], group.reach.over.filter(r => r.active), 4)
-            }
             IrisSwitch {
                 visible: group.loneSwitch
                 // On the rows' column: a row's switch sits 16·d in from the card's edge.
@@ -2088,6 +1851,24 @@ Item {
         // A long group reads as captioned cards, one per `part` its rows name; search shows one card. Keyed by caption,
         // so a write (a slider mid-drag) never rebuilds a card under the pointer.
         function partOf(spec: var): string { return root.searching ? "" : String(spec.part ?? "") }
+        function gateOf(spec: var): string { return String(spec.visibleWhen ?? "").replace(/^!/, "").split("=")[0] }
+        // A row that hangs on another row of its card reads right under it, set in (GNOME's expander, iOS's sub-rows).
+        function hangs(spec: var, rows: var): bool {
+            // Shown while its gate is off ("!"), it stands in for it rather than under it.
+            const gate = String(spec.visibleWhen ?? "").startsWith("!") ? "" : group.gateOf(spec)
+            return !root.searching && gate.length > 0 && rows.some(other => other !== spec && String(other.path ?? "") === gate)
+        }
+        function nested(rows: var): var {
+            if (root.searching) return rows
+            const out = rows.filter(spec => !group.hangs(spec, rows))
+            for (let i = 0; i < out.length; i++) {
+                const kids = rows.filter(spec => spec !== out[i] && group.hangs(spec, rows) && group.gateOf(spec) === String(out[i].path ?? ""))
+                out.splice(i + 1, 0, ...kids)
+                i += kids.length
+            }
+            // A row whose gate sits in another card keeps its place.
+            return out.concat(rows.filter(spec => !out.includes(spec)))
+        }
         // Essentials first: the group's fine-tuning (IrisOptions.fineTune) waits behind one row at its foot that names
         // what it holds. Only worth it with two or more such rows; a group that is all fine-tuning (Spotlight's prefixes)
         // is its caption over that one row. A search shows everything, and a row you changed stays out where you left it.
@@ -2098,6 +1879,8 @@ Item {
             return group.modelData.rows.filter(spec => IrisOptions.fineTune(spec) && !IrisOptions.changed(spec))
         }
         readonly property bool folds: group.tuned.length >= 2
+        // All fine-tuning (Spotlight's prefixes): the group is one row by its own name that opens in place, no caption.
+        readonly property bool allTuned: group.folds && group.modelData.rows.every(spec => group.tuned.includes(spec))
         readonly property bool tuneOpen: group.folds && (root.tuneAll || (root.unfolded[group.tuneKey] ?? false))
         readonly property var shownRows: group.folds && !group.tuneOpen ? group.modelData.rows.filter(spec => !group.tuned.includes(spec)) : group.modelData.rows
         // A search result or a link to a folded row opens the fold first, so the row can glow where it lives.
@@ -2111,37 +1894,13 @@ Item {
             return root.flatSection && String(group.modelData.caption ?? "").length > 0 && !group.folds
                 && group.shownRows.length === 1 && group.shownRows[0].kind === "switch"
         }
-        // The group being read stands over the others (DI85).
-        readonly property bool reading: root.lift && root.flatSection && root.shownGroups.length > 1 && root.readGroup === String(group.modelData.key ?? "")
-        // A switch other rows hang on stays a row; two or more free switches in a row read as cards you tap (DI86).
-        function segmentsOf(rows: var): var {
-            const gates = new Set(group.modelData.rows.map(spec => String(spec.visibleWhen ?? "").replace(/^!/, "").split("=")[0]).filter(path => path.length > 0))
-            const free = spec => root.switchCards && spec.kind === "switch" && !gates.has(String(spec.path ?? ""))
-            const out = []
-            for (const spec of rows) {
-                const tile = free(spec)
-                const last = out[out.length - 1]
-                if (last && last.tiles === tile) last.rows.push(spec)
-                else out.push({ tiles: tile, rows: [spec] })
-            }
-            // A lone free switch stays a row: one card alone is a button with no neighbours to read against.
-            const merged = []
-            for (const segment of out) {
-                if (segment.tiles && segment.rows.length < 2) segment.tiles = false
-                const last = merged[merged.length - 1]
-                if (last && !last.tiles && !segment.tiles) last.rows = last.rows.concat(segment.rows)
-                else merged.push(segment)
-            }
-            return merged.map(segment => Object.assign(segment, { key: (segment.tiles ? "t:" : "r:") + String(segment.rows[0].modelKey ?? segment.rows[0].path ?? segment.rows[0].label) }))
-        }
         Repeater {
             model: ScriptModel { values: group.loneSwitch ? [] : group.parts }
             ColumnLayout {
                 id: part
                 required property string modelData
                 required property int index
-                readonly property var rows: group.shownRows.filter(spec => group.partOf(spec) === part.modelData)
-                readonly property var segments: group.segmentsOf(part.rows)
+                readonly property var rows: group.nested(group.shownRows.filter(spec => group.partOf(spec) === part.modelData))
                 readonly property bool lastPart: part.index === group.parts.length - 1
                 Layout.fillWidth: true
                 Layout.topMargin: part.index > 0 ? 12 * root.d : 0
@@ -2174,12 +1933,11 @@ Item {
                         visible: card.raised
                         anchors.fill: parent
                         radius: card.radius
-                        offset.y: Math.round((group.reading ? 8 : 4) * root.d)
-                        blur: Math.round((group.reading ? 28 : 16) * root.d)
+                        offset.y: Math.round(4 * root.d)
+                        blur: Math.round(18 * root.d)
                         spread: 0
                         color: IrisStyle.shadow
-                        opacity: group.reading ? 1 : 0.55
-                        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing } }
+                        opacity: 0.6
                     }
                     IrisCutPlate { anchors.fill: parent; visible: !root.split && IrisStyle.fieldChamfer; color: IrisStyle.readingCard }
                     ColumnLayout {
@@ -2187,55 +1945,37 @@ Item {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         spacing: 0
+                        FineTuneRow {
+                            visible: part.index === 0 && group.allTuned
+                            Layout.fillWidth: true
+                            open: group.tuneOpen
+                            title: String(group.modelData.caption ?? group.modelData.title ?? "")
+                            onClicked: root.fold(group.tuneKey)
+                        }
                         Repeater {
-                            model: ScriptModel { objectProp: "key"; values: part.segments }
-                            ColumnLayout {
-                                id: segment
+                            model: ScriptModel { objectProp: "modelKey"; values: part.rows }
+                            IrisSetting {
+                                id: settingRow
                                 required property var modelData
                                 required property int index
-                                readonly property bool closing: segment.index === part.segments.length - 1
                                 Layout.fillWidth: true
-                                spacing: 0
-                                Repeater {
-                                    model: ScriptModel { objectProp: "modelKey"; values: segment.modelData.tiles ? [] : segment.modelData.rows }
-                                    IrisSetting {
-                                        id: settingRow
-                                        required property var modelData
-                                        required property int index
-                                        Layout.fillWidth: true
-                                        spec: modelData
-                                        highlight: root.query
-                                        last: index === segment.modelData.rows.length - 1
-                                            && (!segment.closing || !(part.lastPart && group.folds))
-                                        landing: root.landingPath.length > 0 && String(modelData.path ?? "") === root.landingPath
-                                        onLandingChanged: if (landing) landingReveal.restart()
-                                        // A row unfolded under the pointer arrives softly; one created already landed still glows.
-                                        Component.onCompleted: {
-                                            if (landing) landingReveal.restart()
-                                            if (group.tuned.includes(modelData) && group.tuneOpen) arrive.restart()
-                                        }
-                                        NumberAnimation { id: arrive; target: settingRow; property: "opacity"; from: 0; to: 1; duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing }
-                                        Timer { id: landingReveal; interval: 120; onTriggered: root.reveal(settingRow) }
-                                    }
+                                spec: modelData
+                                nested: group.hangs(modelData, part.rows)
+                                highlight: root.query
+                                last: index === part.rows.length - 1 && !(part.lastPart && group.folds && !group.allTuned)
+                                landing: root.landingPath.length > 0 && String(modelData.path ?? "") === root.landingPath
+                                onLandingChanged: if (landing) landingReveal.restart()
+                                // A row unfolded under the pointer arrives softly; one created already landed still glows.
+                                Component.onCompleted: {
+                                    if (landing) landingReveal.restart()
+                                    if (group.tuned.includes(modelData) && group.tuneOpen) arrive.restart()
                                 }
-                                GridLayout {
-                                    id: tileGrid
-                                    readonly property real inset: Math.round(10 * root.d)
-                                    visible: segment.modelData.tiles
-                                    Layout.fillWidth: true
-                                    Layout.margins: tileGrid.inset
-                                    columns: Math.max(1, Math.min(segment.modelData.rows.length === 4 ? 2 : 3, Math.floor((card.width - 2 * tileGrid.inset) / (210 * root.d))))
-                                    columnSpacing: Math.round(8 * root.d)
-                                    rowSpacing: Math.round(8 * root.d)
-                                    Repeater {
-                                        model: ScriptModel { objectProp: "modelKey"; values: segment.modelData.tiles ? segment.modelData.rows : [] }
-                                        SwitchTile {}
-                                    }
-                                }
+                                NumberAnimation { id: arrive; target: settingRow; property: "opacity"; from: 0; to: 1; duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing }
+                                Timer { id: landingReveal; interval: 120; onTriggered: root.reveal(settingRow) }
                             }
                         }
                         FineTuneRow {
-                            visible: part.lastPart && group.folds
+                            visible: part.lastPart && group.folds && !group.allTuned
                             Layout.fillWidth: true
                             open: group.tuneOpen
                             names: group.tuned.map(spec => Translation.tr(String(spec.label ?? "")))

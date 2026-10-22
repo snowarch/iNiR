@@ -2581,9 +2581,7 @@
                     "light": "inherit",
                     "speed": 100,
                     "morph": "",
-                    "material": "",
-                    "switches": "cards",
-                    "lift": true
+                    "material": ""
                 },
                 "gallery": {
                     "radius": 0,

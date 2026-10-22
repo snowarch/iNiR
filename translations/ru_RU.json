@@ -9563,5 +9563,7 @@
   "Shared pieces": "Общие части",
   "Shell root": "Корень оболочки",
   "Defaults": "По умолчанию",
-  "Shell, no file named": "Оболочка, файл не указан"
+  "Shell, no file named": "Оболочка, файл не указан",
+  "Held by %1": "Удерживается: %1",
+  "Your apps": "Ваши приложения"
 }

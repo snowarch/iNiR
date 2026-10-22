@@ -9563,5 +9563,7 @@
   "Shared pieces": "Piezas compartidas",
   "Shell root": "Raíz de la shell",
   "Defaults": "Valores por defecto",
-  "Shell, no file named": "Shell, sin archivo"
+  "Shell, no file named": "Shell, sin archivo",
+  "Held by %1": "Detenido por %1",
+  "Your apps": "Tus apps"
 }

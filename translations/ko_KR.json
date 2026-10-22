@@ -9563,5 +9563,7 @@
   "Shared pieces": "공유 부품",
   "Shell root": "셸 루트",
   "Defaults": "기본값",
-  "Shell, no file named": "셸, 파일 이름 없음"
+  "Shell, no file named": "셸, 파일 이름 없음",
+  "Held by %1": "%1 때문에 멈춤",
+  "Your apps": "내 앱"
 }

@@ -9563,5 +9563,7 @@
   "Shared pieces": "Gemeinsame Teile",
   "Shell root": "Shell-Wurzel",
   "Defaults": "Standardwerte",
-  "Shell, no file named": "Shell, keine Datei genannt"
+  "Shell, no file named": "Shell, keine Datei genannt",
+  "Held by %1": "Angehalten durch %1",
+  "Your apps": "Deine Apps"
 }

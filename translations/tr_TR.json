@@ -9563,5 +9563,7 @@
   "Shared pieces": "Ortak parçalar",
   "Shell root": "Kabuk kökü",
   "Defaults": "Varsayılanlar",
-  "Shell, no file named": "Kabuk, dosya belirtilmemiş"
+  "Shell, no file named": "Kabuk, dosya belirtilmemiş",
+  "Held by %1": "%1 tarafından durduruldu",
+  "Your apps": "Uygulamaların"
 }

@@ -9563,5 +9563,7 @@
   "Shared pieces": "共享部件",
   "Shell root": "Shell 根目录",
   "Defaults": "默认值",
-  "Shell, no file named": "Shell，未指明文件"
+  "Shell, no file named": "Shell，未指明文件",
+  "Held by %1": "被 %1 暂停",
+  "Your apps": "你的应用"
 }

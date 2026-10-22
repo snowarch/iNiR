@@ -9563,5 +9563,7 @@
   "Shared pieces": "Shared pieces",
   "Shell root": "Shell root",
   "Defaults": "Defaults",
-  "Shell, no file named": "Shell, no file named"
+  "Shell, no file named": "Shell, no file named",
+  "Held by %1": "Held by %1",
+  "Your apps": "Your apps"
 }

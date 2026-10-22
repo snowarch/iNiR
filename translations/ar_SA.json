@@ -9563,5 +9563,7 @@
   "Shared pieces": "قطع مشتركة",
   "Shell root": "جذر الواجهة",
   "Defaults": "الافتراضيات",
-  "Shell, no file named": "الواجهة، بلا ملف"
+  "Shell, no file named": "الواجهة، بلا ملف",
+  "Held by %1": "يوقفه %1",
+  "Your apps": "تطبيقاتك"
 }

@@ -9563,5 +9563,7 @@
   "Shared pieces": "共有パーツ",
   "Shell root": "シェルのルート",
   "Defaults": "デフォルト",
-  "Shell, no file named": "シェル（ファイル名なし）"
+  "Shell, no file named": "シェル（ファイル名なし）",
+  "Held by %1": "%1 により停止中",
+  "Your apps": "あなたのアプリ"
 }

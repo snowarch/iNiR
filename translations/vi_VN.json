@@ -9563,5 +9563,7 @@
   "Shared pieces": "Thành phần dùng chung",
   "Shell root": "Gốc của shell",
   "Defaults": "Mặc định",
-  "Shell, no file named": "Shell, không có tên tệp"
+  "Shell, no file named": "Shell, không có tên tệp",
+  "Held by %1": "Bị %1 tạm dừng",
+  "Your apps": "Ứng dụng của bạn"
 }
