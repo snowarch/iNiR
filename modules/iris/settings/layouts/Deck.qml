@@ -412,7 +412,7 @@ Item {
                 model: side.near && side.entry ? root.host.tellingRows(5, side.entry.id) : []
                 Item {
                     required property var modelData
-                    width: parent.width
+                    width: parent?.width ?? 0
                     height: root.u(42)
                     IrisText { anchors.verticalCenter: parent.verticalCenter; width: parent.width * 0.6; elide: Text.ElideRight
                         text: Translation.tr(String(parent.modelData.label)); color: IrisStyle.subtext; font.pixelSize: IrisStyle.typeLabel }
