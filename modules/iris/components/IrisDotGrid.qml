@@ -8,7 +8,7 @@ Canvas {
     id: root
 
     property real pitch: Math.round(8 * IrisStyle.density)
-    property real dotSize: Math.max(1, Math.round(1.2 * IrisStyle.density * 10) / 10)
+    property real dotSize: Math.max(1.5, Math.round(2 * IrisStyle.density * 2) / 2)
     property color ink: IrisStyle.paperDot
 
     renderStrategy: Canvas.Cooperative

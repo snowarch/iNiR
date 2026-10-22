@@ -332,7 +332,7 @@ QtObject {
     // S4's inks: an empty dot of a meter, the hairline ring of an off switch, the 8 px paper grid behind a stage.
     readonly property color dotEmpty: ColorUtils.applyAlpha(root.text, 0.2) // iris-literal: an unlit dot still reads
     readonly property color ringInk: ColorUtils.applyAlpha(root.text, 0.42) // iris-literal: the off switch's hairline
-    readonly property color paperDot: ColorUtils.applyAlpha(root.text, root.light ? 0.08 : 0.07) // iris-literal: S3's 6-8 %
+    readonly property color paperDot: ColorUtils.applyAlpha(root.text, 0.08) // iris-literal: S3's 6-8 %
 
     // A tonal container of any colour and the same hue as ink on it (Material's filled tonal): the calm way to say "on".
     function containerOf(c: color): color { return ColorUtils.mix(root.surfaceOpaque, c, root.light ? 0.8 : 0.72) }
