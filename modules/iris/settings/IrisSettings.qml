@@ -399,6 +399,17 @@ Item {
         { key: "hub", component: Qt.resolvedUrl("IrisHubPage.qml") }
     ]
     property var unfolded: ({})
+    // A layout that folds its groups (Deck) opens the first two; the rest wait under their heads.
+    readonly property bool groupsFold: root.sceneDrawn && (root.scene.folds ?? false) && !root.searching && root.flatSection
+    function groupOpen(key: string): bool {
+        const kept = root.unfolded["open:" + root.section + "/" + key]
+        return kept !== undefined ? kept : root.groups.findIndex(entry => entry.key === key) < 2
+    }
+    function toggleGroup(key: string): void {
+        const next = Object.assign({}, root.unfolded)
+        next["open:" + root.section + "/" + key] = !root.groupOpen(key)
+        root.unfolded = next
+    }
     // Every Fine-tune fold on the page at once (`inir iris settings tune:open`); a section change folds them again.
     property bool tuneAll: false
     function fold(key: string): void {
@@ -703,6 +714,7 @@ Item {
         if (GlobalStates.settingsOverlayOpen) root.applyRequest()
         // The window host is built on open: the page takes the keys then, or ↑ ↓ and typing reached nothing (DI49a).
         if (root.windowed) root.forceActiveFocus()
+        else takeKeys.restart()
     }
     Connections {
         target: GlobalStates
@@ -712,8 +724,25 @@ Item {
             IrisNiri.ensure()
             root.applyRequest()
             if (!searchField.activeFocus) root.forceActiveFocus()
+            takeKeys.restart()
         }
     }
+    // The overlay's surface gets the keyboard a beat after it maps: focus taken on open alone landed nowhere, and the
+    // arrows and typing reached nothing until the search was clicked.
+    // A console layout's keys as window shortcuts: on the overlay's layer surface the arrows never reached Keys (letters
+    // did). A field with text keeps its arrows; an empty search hands them over.
+    readonly property bool consoleKeys: (root.windowed || GlobalStates.settingsOverlayOpen) && typeof root.scene?.takeKey === "function"
+        && (root.Window.activeFocusItem?.cursorPosition === undefined || (searchField.activeFocus && searchField.text.length === 0))
+    function consoleKey(key: int): void {
+        if (searchField.activeFocus) root.forceActiveFocus()
+        root.scene.takeKey({ key: key, modifiers: Qt.NoModifier })
+    }
+    Shortcut { sequence: "Up"; enabled: root.consoleKeys; onActivated: root.consoleKey(Qt.Key_Up) }
+    Shortcut { sequence: "Down"; enabled: root.consoleKeys; onActivated: root.consoleKey(Qt.Key_Down) }
+    Shortcut { sequence: "Left"; enabled: root.consoleKeys; onActivated: root.consoleKey(Qt.Key_Left) }
+    Shortcut { sequence: "Right"; enabled: root.consoleKeys; onActivated: root.consoleKey(Qt.Key_Right) }
+    Shortcut { sequences: ["Return", "Enter", "Space"]; enabled: root.consoleKeys && !searchField.activeFocus && Number(root.scene?.cursor ?? -1) >= 0; onActivated: root.consoleKey(Qt.Key_Return) }
+    Timer { id: takeKeys; interval: 160; onTriggered: if (!searchField.activeFocus && GlobalStates.settingsOverlayOpen) root.forceActiveFocus() }
     // A Design's scene sets its own page; the engine's slide would only move chrome nobody sees.
     function enterPage(): void { if (!root.sceneDesigned) pageEnter.restart() }
     onSectionChanged: { settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
@@ -726,6 +755,7 @@ Item {
         enabled: GlobalStates.settingsOverlayOpen
         onActivated: {
             // An open list of choices closes first, as a menu would (DI49a: Esc left it open).
+            if (root.scene?.release && root.scene.release()) return
             if (IrisOptions.openList.length > 0) IrisOptions.openList = ""
             else if (root.searching) searchField.text = ""
             else if (root.group.length > 0 && !root.split) root.leaveGroup()
@@ -933,13 +963,14 @@ Item {
                             }
                             Keys.onReturnPressed: root.openFirstResult()
                             // The field holds the keys while Settings is open: with nothing typed, ↑ ↓ walk the areas from here too.
-                            Keys.onUpPressed: event => { if (text.length === 0) root.stepSection(-1); else event.accepted = false }
-                            Keys.onDownPressed: event => { if (text.length === 0) root.stepSection(1); else event.accepted = false }
+                            // An empty field hands the arrows to the page: a console layout walks from its head into its rows.
+                            Keys.onUpPressed: event => { if (text.length > 0) event.accepted = false; else if (root.scene?.takeKey) { root.forceActiveFocus(); root.scene.takeKey(event) } else root.stepSection(-1) }
+                            Keys.onDownPressed: event => { if (text.length > 0) event.accepted = false; else if (root.scene?.takeKey) { root.forceActiveFocus(); root.scene.takeKey(event) } else root.stepSection(1) }
                             Timer { id: searchDelay; interval: 160; onTriggered: root.query = searchField.text }
                             IrisText {
                                 anchors.verticalCenter: parent.verticalCenter
                                 visible: searchField.text.length === 0
-                                text: Translation.tr("Search settings")
+                                text: String(root.scene?.searchHint ?? "") || Translation.tr("Search settings")
                                 color: searchSkin.item?.placeholderColour ?? IrisStyle.muted
                                 font.pixelSize: searchField.font.pixelSize
                             }
@@ -1321,11 +1352,11 @@ Item {
                                 // The pane's corners stay its own: the last rows stop short of the curve.
                                 anchors.bottomMargin: root.split ? Math.round(detailPane.radius / 2) : 0
                                 // Rows pass under the pinned head, never over it.
-                                clip: root.heroPinned || root.split
+                                clip: root.heroPinned || root.split || root.sceneDrawn
                                 onMovingChanged: if (moving) root.heldGroup = ""
                                 // and soften into the air under it instead of ending on a cut (IrisScrollEdge), and so does the
                                 // pane's foot with rows past it.
-                                layer.enabled: (root.heroPinned || root.split) && rowsEdge.active
+                                layer.enabled: (root.heroPinned || root.split || root.sceneDrawn) && rowsEdge.active
                                 layer.effect: MultiEffect {
                                     maskEnabled: true
                                     maskSource: rowsEdge.mask
@@ -1455,7 +1486,7 @@ Item {
                                 id: rowsEdge
                                 flick: settingsFlick
                                 anchors.fill: settingsFlick
-                                visible: settingsFlick.visible && (root.heroPinned || root.split)
+                                visible: settingsFlick.visible && (root.heroPinned || root.split || root.sceneDrawn)
                                 reach: Math.round(28 * root.d)
                             }
 
@@ -2092,6 +2123,17 @@ Item {
             readonly property bool reading: root.readGroup === String(group.modelData.key ?? "")
             readonly property int folio: root.groups.findIndex(entry => entry.key === group.modelData.key)
             readonly property string glyph: IrisOptions.groupGlyphs[String(group.modelData.key ?? "")] ?? root.currentSection.icon ?? "settings"
+            // For a layout that folds: whether the rows show, what they hold in a line, and the group's notes.
+            readonly property bool deckStop: true
+            readonly property bool folds: root.groupsFold
+            readonly property bool open: !group.shut
+            readonly property string summary: {
+                Config.revision
+                return group.modelData.rows.filter(spec => ["switch", "range", "choice"].includes(spec.kind) && spec.path).slice(0, 3)
+                    .map(spec => spec.kind === "switch" ? Translation.tr(String(spec.label ?? "")) + " " + root.answerOf(spec).toLowerCase() : root.answerOf(spec)).join(" · ")
+            }
+            readonly property var notes: root.notesHere.filter(note => String(note.group ?? "") === String(group.modelData.key ?? ""))
+            function toggle(): void { root.toggleGroup(String(group.modelData.key ?? "")) }
             visible: root.flatSection && groupHead.title.length > 0 && headSkin.active
             Layout.fillWidth: true
             // The rows' own inset, so the head's switch stands in their control column.
@@ -2155,6 +2197,8 @@ Item {
         // A group that is all fine-tuning still has one card: its Fine-tune row.
         readonly property var parts: group.shownRows.length === 0 ? [""] : [...new Set(group.shownRows.map(spec => group.partOf(spec)))]
         // A group that is only a switch (a widget not on the desktop) is its head: the name and its switch, no card.
+        readonly property bool shut: root.groupsFold && String(group.modelData.caption ?? "").length > 0 && !group.loneSwitch
+            && !root.groupOpen(String(group.modelData.key ?? ""))
         readonly property bool loneSwitch: {
             Config.revision
             return root.flatSection && String(group.modelData.caption ?? "").length > 0 && !group.folds
@@ -2168,6 +2212,7 @@ Item {
                 required property int index
                 readonly property var rows: group.shownRows.filter(spec => group.partOf(spec) === part.modelData)
                 readonly property bool lastPart: part.index === group.parts.length - 1
+                visible: !group.shut
                 Layout.fillWidth: true
                 Layout.topMargin: part.index > 0 ? 12 * root.d : 0
                 spacing: 6 * root.d

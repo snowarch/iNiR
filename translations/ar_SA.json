@@ -9553,5 +9553,14 @@
   "%1 off": "%1 متوقف",
   "%1 are %2": "%1 هو %2",
   "or click": "أو انقر",
-  "click or": "انقر أو"
+  "click or": "انقر أو",
+  "Search, or say what to change": "ابحث، أو قل ما تريد تغييره",
+  "Click an edge to move it": "انقر على حافة لنقله",
+  "change": "تغيير",
+  "done": "تم",
+  "fold": "طي",
+  "open": "فتح",
+  "switch": "تبديل",
+  "the %1 is %2": "%1: %2",
+  "the %1 are %2": "%1: %2"
 }

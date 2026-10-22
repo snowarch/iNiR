@@ -35,7 +35,11 @@ ClippingRectangle {
     property var niriValue: null
     property int niriRevision: 0
     readonly property real d: IrisStyle.density
+    // A layout that always shows a stage (Folio's plate, Deck's hero) asks for a neighbour's scene where its area has none.
+    property bool standIn: false
     readonly property string scene: root.sceneFor(root.section, root.group)
+        || (root.standIn && root.group.length === 0 ? (({ general: "fusion", capture: "windows", sound: "feedback", anime: "player", display: "frame",
+            keyboard: "spotlight", battery: "controlCenter", gaming: "windows", sources: "gallery", system: "settings" })[root.section] ?? "") : "")
     readonly property bool available: (Config.options?.iris?.appearance?.previews ?? true) && root.scene.length > 0
     readonly property real wantedHeight: Math.round(Math.min(420 * root.d, Math.max(260 * root.d, Number(root.sceneItem?.naturalHeight ?? 0))))
     // Another group's scene takes the last one's place (DI48-R2): the old one leaves in the first 40 % (fading as it

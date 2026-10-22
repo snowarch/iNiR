@@ -9553,5 +9553,14 @@
   "%1 off": "%1はオフ",
   "%1 are %2": "%1は%2",
   "or click": "またはクリック",
-  "click or": "クリックまたは"
+  "click or": "クリックまたは",
+  "Search, or say what to change": "検索、または変えたいことを入力",
+  "Click an edge to move it": "端をクリックして移動",
+  "change": "変更",
+  "done": "完了",
+  "fold": "たたむ",
+  "open": "開く",
+  "switch": "切り替え",
+  "the %1 is %2": "%1は%2",
+  "the %1 are %2": "%1は%2"
 }

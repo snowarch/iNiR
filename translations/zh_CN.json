@@ -9553,5 +9553,14 @@
   "%1 off": "%1已关闭",
   "%1 are %2": "%1为%2",
   "or click": "或点击",
-  "click or": "点击或"
+  "click or": "点击或",
+  "Search, or say what to change": "搜索，或说出要改什么",
+  "Click an edge to move it": "点击边缘来移动它",
+  "change": "更改",
+  "done": "完成",
+  "fold": "折叠",
+  "open": "展开",
+  "switch": "切换",
+  "the %1 is %2": "%1为%2",
+  "the %1 are %2": "%1为%2"
 }

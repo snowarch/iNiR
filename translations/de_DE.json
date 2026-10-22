@@ -9553,5 +9553,14 @@
   "%1 off": "%1 aus",
   "%1 are %2": "%1 sind %2",
   "or click": "oder klicken",
-  "click or": "klicken oder"
+  "click or": "klicken oder",
+  "Search, or say what to change": "Suchen oder sagen, was sich ändern soll",
+  "Click an edge to move it": "Klicke auf einen Rand, um es zu verschieben",
+  "change": "ändern",
+  "done": "fertig",
+  "fold": "einklappen",
+  "open": "öffnen",
+  "switch": "umschalten",
+  "the %1 is %2": "%1 ist %2",
+  "the %1 are %2": "%1 sind %2"
 }
