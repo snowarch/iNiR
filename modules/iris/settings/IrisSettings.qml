@@ -318,11 +318,12 @@ Item {
         Config.revision
         return entry.rows.some(spec => IrisOptions.modified(spec))
     }
-    // The pages iRiS keeps beside its sections, asked for by name ("about", "shortcuts", "hub"). Each scrolls itself.
+    // The pages iRiS keeps beside its sections, asked for by name ("about", "shortcuts", "hub", "errors"). Each scrolls itself.
     readonly property var pages: [
         { key: "about", component: Qt.resolvedUrl("IrisAboutPage.qml") },
         { key: "shortcuts", component: Qt.resolvedUrl("IrisShortcutsPage.qml") },
-        { key: "hub", component: Qt.resolvedUrl("IrisHubPage.qml") }
+        { key: "hub", component: Qt.resolvedUrl("IrisHubPage.qml") },
+        { key: "errors", component: Qt.resolvedUrl("IrisErrorsPage.qml") }
     ]
     property var unfolded: ({})
     // Every Fine-tune fold on the page at once (`inir iris settings tune:open`); a section change folds them again.
@@ -1105,7 +1106,7 @@ Item {
                         id: toolbarActions
                         spacing: 4 * root.d
                         // Fold one at a time, the least used first, only as many as the name needs.
-                        readonly property var foldOrder: [restoreAction, customizeAction, rehearseAction].filter(action => action.shown)
+                        readonly property var foldOrder: [restoreAction, customizeAction, rehearseAction, errorsAction].filter(action => action.shown)
                         readonly property var folded: {
                             const room = headRow.sharedRoom - Math.min(pageTitle.implicitWidth, 260 * root.d)
                             let need = toolbarActions.foldOrder.reduce((sum, action) => sum + action.fullWidth, 0)
@@ -1118,6 +1119,15 @@ Item {
                             }
                             return out
                         }
+                    // On every page, as soon as the shell or qs-rs logs something: the count opens the list.
+                    ToolbarAction {
+                        id: errorsAction
+                        shown: ShellErrors.count > 0 && root.advancedPage !== root.pageIndexOf("errors")
+                        glyph: "error"
+                        glyphColor: IrisStyle.danger
+                        label: ShellErrors.count === 1 ? Translation.tr("1 error") : Translation.tr("%1 errors").arg(ShellErrors.count)
+                        onClicked: root.go({ section: "system", group: "", advancedPage: root.pageIndexOf("errors") })
+                    }
                     ToolbarAction {
                         id: rehearseAction
                         readonly property bool rehearses: root.section === "lock"
@@ -1451,6 +1461,7 @@ Item {
         property string glyph: ""
         property string label: ""
         property bool shown: true
+        property color glyphColor: IrisStyle.subtext
         visible: action.shown
         // When the page's name would lose its room, actions fold to their glyphs one at a time (toolbarActions.folded).
         readonly property bool folded: toolbarActions.folded.includes(action)
@@ -1470,7 +1481,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: action.glyph
                 iconSize: Math.round(16 * root.d)
-                color: IrisStyle.subtext
+                color: action.glyphColor
             }
             IrisText {
                 visible: !action.folded

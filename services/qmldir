@@ -80,3 +80,4 @@ singleton WidgetPowerManager 1.0 WidgetPowerManager.qml
 singleton WindowPreviewService 1.0 WindowPreviewService.qml
 singleton WorldClock 1.0 WorldClock.qml
 singleton YtMusic 1.0 YtMusic.qml
+singleton ShellErrors 1.0 ShellErrors.qml
