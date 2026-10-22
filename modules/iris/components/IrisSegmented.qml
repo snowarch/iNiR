@@ -3,10 +3,12 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import qs.services
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.iris.style
 
-// One segmented control for iRiS: a quiet track, the chosen segment lifted off it as a thumb.
+// One segmented control for iRiS (DESIGN.md S4): a quiet capsule track and the chosen segment as an inverted capsule
+// (ink fill, paper word) that slides on a spring and keeps its velocity when the choice changes mid-flight.
 // options: [{ value, label, glyph?, swatch? }]. `pictured` stacks glyph over label in a taller
 // tile; `glyphOnly` draws square glyph segments sized by the track height.
 Rectangle {
@@ -76,26 +78,34 @@ Rectangle {
         return root.inset + Math.round(index * root.slot)
     }
 
-    RectangularShadow {
-        visible: thumb.visible && !root.skinned
-        anchors.fill: thumb
-        radius: thumb.radius
-        offset.y: root.d
-        blur: 3 * root.d
-        color: IrisStyle.shadow
+    // The thumb rides an index, not pixels: a resize keeps it on its slot, a new choice springs from wherever it is.
+    IrisSpring {
+        id: travel
+        intent: "move"
+        to: Math.max(0, root.selectedIndex)
+        animate: IrisStyle.motionEnabled && root.visible
+    }
+    Component.onCompleted: travel.jump()
+    readonly property real thumbAt: Math.max(-0.15, Math.min(root.count - 0.85, travel.value))
+    function edgeAt(position: real): real {
+        const base = Math.max(0, Math.min(root.count - 1, Math.floor(position)))
+        const t = position - base
+        return root.slotX(base) + (root.slotX(base + 1) - root.slotX(base)) * t
+    }
+    // How chosen a segment reads (0..1) while the thumb travels: its word inverts as the capsule passes under it.
+    function chosenness(index: int): real { return root.selectedIndex < 0 ? 0 : Math.max(0, 1 - Math.abs(root.thumbAt - index)) }
+    function inkFor(index: int): color {
+        return ColorUtils.mix(IrisStyle.selectionLabel, IrisStyle.subtext, root.chosenness(index))
     }
     Rectangle {
         id: thumb
         visible: root.selectedIndex >= 0 && !root.skinned
         y: root.inset
         height: root.height - 2 * root.inset
-        x: root.slotX(Math.max(0, root.selectedIndex))
-        // From the target slot, not from the animating x: tied to x the thumb stretched past the new slot first.
-        width: root.slotX(Math.max(0, root.selectedIndex) + 1) - root.slotX(Math.max(0, root.selectedIndex))
+        x: Math.round(root.edgeAt(root.thumbAt))
+        width: Math.round(root.edgeAt(root.thumbAt + 1)) - x
         radius: root.thumbRadius
-        color: IrisStyle.raised
-        Behavior on x { NumberAnimation { duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve } }
-        Behavior on width { NumberAnimation { duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve } }
+        color: IrisStyle.selectionFill
     }
 
     Repeater {
@@ -116,6 +126,8 @@ Rectangle {
             Accessible.name: (root.accessibleName.length > 0 ? root.accessibleName + ": " : "") + Translation.tr(String(segment.modelData.label ?? ""))
             Accessible.checked: segment.selected
             Keys.onSpacePressed: root.picked(segment.modelData.value)
+            Keys.onLeftPressed: if (segment.index > 0) root.picked(root.options[segment.index - 1].value)
+            Keys.onRightPressed: if (segment.index < root.count - 1) root.picked(root.options[segment.index + 1].value)
             Keys.onReturnPressed: root.picked(segment.modelData.value)
             onClicked: root.picked(segment.modelData.value)
             onContainsMouseChanged: if (segment.containsMouse) root.hoveredIndex = segment.index
@@ -131,7 +143,7 @@ Rectangle {
                 // Under a skin the hover and the focus are the skin's to draw.
                 color: !segment.selected && segment.containsMouse && !root.skinned ? IrisStyle.fillQuiet : "transparent"
                 border.width: segment.activeFocus && !root.skinned ? 1 : 0
-                border.color: IrisStyle.accent
+                border.color: IrisStyle.text
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
             }
             MaterialSymbol {
@@ -140,7 +152,7 @@ Rectangle {
                 text: String(segment.modelData.glyph ?? "")
                 fill: segment.selected ? 1 : 0
                 iconSize: Math.round(16 * root.d)
-                color: segment.selected ? IrisStyle.accent : IrisStyle.subtext
+                color: root.inkFor(segment.index)
             }
             Column {
                 visible: root.pictured && !root.skinned
@@ -152,7 +164,7 @@ Rectangle {
                     text: String(segment.modelData.glyph ?? "")
                     iconSize: Math.round(20 * root.d)
                     fill: segment.selected ? 1 : 0
-                    color: segment.selected ? IrisStyle.accent : IrisStyle.subtext
+                    color: root.inkFor(segment.index)
                 }
                 IrisText {
                     width: parent.width
@@ -160,7 +172,7 @@ Rectangle {
                     text: Translation.tr(String(segment.modelData.label ?? ""))
                     font.pixelSize: IrisStyle.typeFootnote
                     font.weight: IrisStyle.weight(segment.selected ? Font.DemiBold : Font.Normal)
-                    color: segment.selected ? IrisStyle.accent : IrisStyle.subtext
+                    color: root.inkFor(segment.index)
                     elide: Text.ElideRight
                 }
             }
@@ -187,7 +199,7 @@ Rectangle {
                     font.family: root.fontFor ? root.fontFor(segment.modelData) : IrisStyle.fontMain
                     font.pixelSize: IrisStyle.typeMeta
                     font.weight: IrisStyle.weight(segment.selected ? Font.DemiBold : Font.Normal)
-                    color: segment.selected ? IrisStyle.accent : IrisStyle.subtext
+                    color: root.inkFor(segment.index)
                 }
             }
         }
