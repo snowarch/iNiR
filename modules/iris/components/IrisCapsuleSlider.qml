@@ -13,7 +13,7 @@ Item {
     property string icon: "volume_up"
     property bool muted: false
     property bool vertical: false
-    property color fillColor: IrisStyle.fillStrong
+    property color fillColor: IrisStyle.text
     property bool readout: false
     // The level's name, for a Design that sets it in words beside the level (AIRISU's rule).
     property string label: ""
@@ -47,26 +47,23 @@ Item {
         Behavior on scale { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
 
         Readout { ink: IrisStyle.textSecondary }
-        Item {
-            id: fillClip
-            property real length: root.span * root.shownValue
-            Behavior on length {
-                enabled: root.dragValue < 0
-                NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing }
-            }
-            y: root.vertical ? track.height - fillClip.length : 0
-            width: root.vertical ? track.width : fillClip.length
-            height: root.vertical ? fillClip.length : track.height
-            clip: true
-            Rectangle {
-                id: fillFace
-                y: -fillClip.y
-                width: track.width
-                height: track.height
-                radius: root.corner
-                color: root.muted ? IrisStyle.textTertiary : root.fillColor
-                Readout { ink: IrisStyle.surface }
-            }
+        // Signal (DESIGN.md S4): the level is a run of dots past the glyph's pocket, filled to the value, the knob a
+        // larger dot; muted, the dots go quiet but keep the level.
+        IrisDotStrip {
+            id: dots
+            readonly property real inset: Math.round(14 * IrisStyle.density)
+            readonly property real readoutRoom: root.readout && !root.vertical ? Math.round(30 * IrisStyle.density) : 0
+            vertical: root.vertical
+            x: root.vertical ? 0 : root.pocket
+            y: root.vertical ? (root.readout ? Math.round(34 * IrisStyle.density) : dots.inset) : 0
+            width: root.vertical ? track.width : track.width - root.pocket - dots.inset - dots.readoutRoom
+            height: root.vertical ? track.height - root.pocket - y : track.height
+            value: root.shownValue
+            stagger: root.dragValue < 0
+            dotSize: Math.max(3, Math.round(4 * IrisStyle.density))
+            gap: Math.max(3, Math.round(5 * IrisStyle.density))
+            knobSize: Math.round((pointer.pressed ? 13 : 11) * IrisStyle.density)
+            fillColor: root.muted ? IrisStyle.textTertiary : root.fillColor
         }
 
         MaterialSymbol {
@@ -75,9 +72,7 @@ Item {
             text: root.icon
             fill: 1
             iconSize: Math.round((root.vertical ? 19 : 20) * IrisStyle.density)
-            readonly property bool overFill: !root.muted && fillClip.length >= root.pocket * 0.72
-            color: overFill ? IrisStyle.surface : IrisStyle.text
-            Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+            color: root.muted ? IrisStyle.textTertiary : IrisStyle.text
         }
     }
 
@@ -128,14 +123,11 @@ Item {
     component Readout: IrisText {
         property color ink: IrisStyle.text
         readonly property real inset: Math.round(14 * IrisStyle.density)
-        visible: root.readout && (root.vertical || pointer.containsMouse || root.dragValue >= 0)
+        visible: root.readout
         x: root.vertical ? (track.width - width) / 2 : track.width - width - inset
         y: root.vertical ? inset : (track.height - height) / 2
         text: Math.round(root.shownValue * 100)
         color: ink
-        font.family: IrisStyle.fontNumbers
-        font.features: ({ "tnum": 1 })
-        font.weight: IrisStyle.figureWeight
-        font.pixelSize: IrisStyle.typeMeta
+        role: IrisText.Value
     }
 }

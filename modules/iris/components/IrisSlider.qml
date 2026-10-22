@@ -1,12 +1,12 @@
 import QtQuick
-import qs.modules.common.widgets
 import qs.modules.iris.style
 
+// A plain range (a display's brightness): the family's dot scrubber with its knob, wheel and arrow keys.
 Item {
     id: root
 
-    property alias value: slider.value
-    readonly property alias pressed: slider.pressed
+    property real value: 0
+    readonly property bool pressed: scrubber.dragging
     // What a skin draws from: the pointer over it.
     readonly property bool hovered: hover.hovered
     signal moved(real value)
@@ -14,28 +14,17 @@ Item {
     implicitWidth: 220
     implicitHeight: Math.round(34 * IrisStyle.density)
 
-    StyledSlider {
-        id: slider
+    IrisScrubber {
+        id: scrubber
         anchors.fill: parent
         // Under a Design's skin the slider keeps its input and draws nothing.
         opacity: skin.active ? 0 : 1
         enabled: root.enabled
-        enableSettingsSearch: false
-        configuration: StyledSlider.Configuration.XS
-        trackWidth: 4
-        trackRadius: 2
-        handleHeight: 12
-        handleDefaultWidth: 12
-        handlePressedWidth: 14
-        handleMargins: 0
-        stopIndicatorValues: []
-        highlightColor: IrisStyle.accent
-        handleColor: IrisStyle.accent
-        trackColor: IrisStyle.accentContainer
-        dotColor: IrisStyle.subtext
-        dotColorHighlighted: IrisStyle.inkOnAccentContainer
-        scrollable: true
-        onMoved: root.moved(slider.value)
+        seekable: root.enabled
+        knob: true
+        value: root.value
+        fillColor: IrisStyle.text
+        onMoved: next => root.moved(next)
     }
     HoverHandler { id: hover; enabled: skin.active }
     IrisSkin { id: skin; part: "slider"; host: root }

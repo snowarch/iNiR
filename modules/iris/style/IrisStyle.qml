@@ -329,6 +329,10 @@ QtObject {
     // The signal as text: moved only as far as 4.5:1 on the paper needs (the pure red is a mark, 3:1, not a word).
     readonly property color signalInk: root.readableAccent(root.signal)
     readonly property color inkOnSignal: root.onTintFor(root.signal)
+    // S4's inks: an empty dot of a meter, the hairline ring of an off switch, the 8 px paper grid behind a stage.
+    readonly property color dotEmpty: ColorUtils.applyAlpha(root.text, 0.2) // iris-literal: an unlit dot still reads
+    readonly property color ringInk: ColorUtils.applyAlpha(root.text, 0.42) // iris-literal: the off switch's hairline
+    readonly property color paperDot: ColorUtils.applyAlpha(root.text, root.light ? 0.08 : 0.07) // iris-literal: S3's 6-8 %
 
     // A tonal container of any colour and the same hue as ink on it (Material's filled tonal): the calm way to say "on".
     function containerOf(c: color): color { return ColorUtils.mix(root.surfaceOpaque, c, root.light ? 0.8 : 0.72) }
