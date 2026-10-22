@@ -80,12 +80,15 @@ Item {
                     font.pixelSize: probe.font.pixelSize
                     font.letterSpacing: IrisStyle.dotTracking(probe.font.pixelSize)
                     font.features: ({ "tnum": 1 })
+                    renderType: Text.NativeRendering
                 }
                 Text {
                     id: now
                     text: slot.shown
                     y: slot.sign * (1 - slot.progress) * slot.height
                     opacity: slot.progress < 1 ? slot.progress : 1
+                    // Native: Qt's distance fields antialias in subpixel colour here and fringe every dot.
+                    renderType: Text.NativeRendering
                     color: root.color
                     font.family: root.family
                     font.pixelSize: probe.font.pixelSize
