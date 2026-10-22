@@ -1305,6 +1305,73 @@ QtObject {
         if (area.tip) return Translation.tr(area.tip)
         return area.tipOf.length > 0 ? Translation.tr(root.sectionById(area.tipOf).tip ?? "") : ""
     }
+    // Where each setting lands on screen and what can overrule it, read off the shell's code by hand (DI59).
+    // Longest prefix wins; `over` are settings that win over this one while they're on.
+    readonly property var reach: [
+        { prefix: "iris.appearance.glass", surfaces: ["appearance"], over: ["gameMode.disableEffects", "performance.lowPower"] },
+        { prefix: "iris.appearance.motion", surfaces: ["motion"], over: ["gameMode.disableAnimations", "performance.lowPower"] },
+        { prefix: "iris.appearance.", surfaces: ["bar", "bubbles", "dock", "sidebars", "controlCenter", "spotlight", "orbit", "lock"] },
+        { prefix: "iris.bar.screenList", surfaces: ["bar", "display"] },
+        { prefix: "iris.bar.reserveSpace", surfaces: ["bar", "windows"] },
+        { prefix: "iris.bar.", surfaces: ["bar"] },
+        { prefix: "iris.player.", surfaces: ["bar", "player"] },
+        { prefix: "iris.bubbles.", surfaces: ["bubbles"] },
+        { prefix: "iris.tray.", surfaces: ["bubbles"] },
+        { prefix: "iris.dock.reserveSpace", surfaces: ["dock", "windows"] },
+        { prefix: "iris.dock.", surfaces: ["dock"] },
+        { prefix: "iris.osd.", surfaces: ["bar", "sound"], over: ["iris.osd.fullscreen"] },
+        { prefix: "iris.modules.osd", surfaces: ["bar", "sound"] },
+        { prefix: "osd.connections", surfaces: ["bar"] },
+        { prefix: "iris.notifications.", surfaces: ["notifications"], over: ["notifications.silent", "gameMode.suppressNotifications"] },
+        { prefix: "iris.modules.notificationPopup", surfaces: ["notifications", "gaming"] },
+        { prefix: "notifications.", surfaces: ["notifications"], over: ["gameMode.suppressNotifications"] },
+        { prefix: "iris.orbit.", surfaces: ["orbit"] },
+        { prefix: "iris.palette.", surfaces: ["spotlight"] },
+        { prefix: "search.", surfaces: ["spotlight"] },
+        { prefix: "iris.lock.", surfaces: ["lock"] },
+        { prefix: "lock.", surfaces: ["lock", "login"] },
+        { prefix: "idle.", surfaces: ["lock", "battery"] },
+        { prefix: "iris.surround.", surfaces: ["player", "desktop"] },
+        { prefix: "background.edgeWidgets", surfaces: ["player", "desktop"] },
+        { prefix: "background.effects.enableBlur", surfaces: ["desktop"], over: ["gameMode.disableEffects", "performance.lowPower"] },
+        { prefix: "background.enableAnimation", surfaces: ["desktop", "wallpaper"], over: ["background.videoPause", "gameMode.disableAnimations"] },
+        { prefix: "background.transition", surfaces: ["wallpaper"], over: ["gameMode.disableAnimations"] },
+        { prefix: "background.widgets", surfaces: ["widgets", "display"] },
+        { prefix: "background.", surfaces: ["desktop", "wallpaper"] },
+        { prefix: "wallpapers.", surfaces: ["wallpaper"] },
+        { prefix: "iris.wallpaper.", surfaces: ["wallpaper"] },
+        { prefix: "iris.modules.desktopWidgets", surfaces: ["desktop", "widgets"] },
+        { prefix: "iris.modules.controlCenter", surfaces: ["controlCenter"] },
+        { prefix: "iris.modules.palette", surfaces: ["spotlight"] },
+        { prefix: "iris.anime.", surfaces: ["anime", "bubbles"] },
+        { prefix: "time.", surfaces: ["bar", "lock", "desktop"] },
+        { prefix: "light.", surfaces: ["display"] },
+        { prefix: "gameMode.", surfaces: ["gaming"] },
+        { prefix: "sounds.", surfaces: ["sound"] },
+        { prefix: "audio.", surfaces: ["sound"] },
+        { prefix: "screenRecord.", surfaces: ["capture", "bar"] },
+        { prefix: "regionSelector.", surfaces: ["capture"] },
+        { prefix: "battery.", surfaces: ["battery"] },
+        { prefix: "performance.lowPower", surfaces: ["appearance", "motion", "desktop"] }
+    ]
+    function settingAt(path: string): var { return root.settings.find(spec => spec.path === path) ?? null }
+    function on(path: string): bool { return Boolean(Config.getNestedValue(path, false)) }
+    function relationsOf(spec: var): var {
+        const path = String(spec.path ?? "")
+        const rule = root.reach.filter(r => path.startsWith(r.prefix)).sort((a, b) => b.prefix.length - a.prefix.length)[0] ?? { surfaces: [] }
+        const touches = rule.surfaces.filter(id => id !== spec.section).map(id => ({ id: id, label: root.sectionById(id).title }))
+        const over = (rule.over ?? []).filter(p => p !== path).map(p => {
+            const other = root.settingAt(p)
+            return other ? { id: other.section, label: other.label, active: root.on(p) } : null
+        }).filter(o => o !== null)
+        const when = String(spec.visibleWhen ?? "")
+        const gate = when.length > 0 ? root.settingAt(when.replace(/^!/, "").split("=")[0]) : null
+        const needs = gate && gate !== spec ? [{ id: gate.section, label: gate.label }] : []
+        const seen = {}
+        const alsoIn = root.settings.filter(o => o.path === path && o.section !== spec.section && path.length > 0)
+            .filter(o => !seen[o.section] && (seen[o.section] = true)).map(o => ({ id: o.section, label: root.sectionById(o.section).title }))
+        return { touches: touches, over: over, needs: needs, alsoIn: alsoIn }
+    }
     function sectionById(id: string): var {
         return root.sections.find(section => section.id === id) ?? root.sections[0]
     }

@@ -9537,5 +9537,7 @@
   "Where you sign in after starting the computer.": "コンピューターの起動後にサインインする画面です。",
   "Which end of the Island carries them.": "アイランドのどちらの端に付けるか。",
   "Windows keep clear of the bubbles resting on an edge.": "縁にあるバブルを避けてウィンドウを配置します。",
-  "Adds the graphics card to what Vitals shows.": "Vitals にグラフィックカードを加えます。"
+  "Adds the graphics card to what Vitals shows.": "Vitals にグラフィックカードを加えます。",
+  "Needs %1": "%1 が必要",
+  "Also in %1": "%1 にもあります"
 }

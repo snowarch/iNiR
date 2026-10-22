@@ -9537,5 +9537,7 @@
   "Where you sign in after starting the computer.": "Тут ви входите після ввімкнення комп’ютера.",
   "Which end of the Island carries them.": "Який кінець Острова їх несе.",
   "Windows keep clear of the bubbles resting on an edge.": "Вікна тримаються осторонь бульбашок на краї.",
-  "Adds the graphics card to what Vitals shows.": "Додає відеокарту до Vitals."
+  "Adds the graphics card to what Vitals shows.": "Додає відеокарту до Vitals.",
+  "Needs %1": "Потрібно: %1",
+  "Also in %1": "Також у %1"
 }

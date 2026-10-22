@@ -9537,5 +9537,7 @@
   "Where you sign in after starting the computer.": "حيث تسجّل الدخول بعد تشغيل الحاسوب.",
   "Which end of the Island carries them.": "أي طرف من الجزيرة يحملها.",
   "Windows keep clear of the bubbles resting on an edge.": "تبتعد النوافذ عن الفقاعات المستقرة على حافة.",
-  "Adds the graphics card to what Vitals shows.": "يضيف بطاقة الرسوميات إلى Vitals."
+  "Adds the graphics card to what Vitals shows.": "يضيف بطاقة الرسوميات إلى Vitals.",
+  "Needs %1": "يحتاج %1",
+  "Also in %1": "موجود أيضًا في %1"
 }

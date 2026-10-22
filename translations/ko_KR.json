@@ -9537,5 +9537,7 @@
   "Where you sign in after starting the computer.": "컴퓨터를 켠 뒤 로그인하는 화면입니다.",
   "Which end of the Island carries them.": "아일랜드의 어느 쪽 끝에 둘지.",
   "Windows keep clear of the bubbles resting on an edge.": "창이 가장자리에 놓인 버블을 피합니다.",
-  "Adds the graphics card to what Vitals shows.": "Vitals에 그래픽 카드를 추가합니다."
+  "Adds the graphics card to what Vitals shows.": "Vitals에 그래픽 카드를 추가합니다.",
+  "Needs %1": "%1 필요",
+  "Also in %1": "%1에도 있음"
 }

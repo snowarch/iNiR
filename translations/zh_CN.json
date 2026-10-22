@@ -9537,5 +9537,7 @@
   "Where you sign in after starting the computer.": "开机后登录的界面。",
   "Which end of the Island carries them.": "由岛屿的哪一端承载。",
   "Windows keep clear of the bubbles resting on an edge.": "窗口会避开停靠在边缘的气泡。",
-  "Adds the graphics card to what Vitals shows.": "在 Vitals 中加入显卡。"
+  "Adds the graphics card to what Vitals shows.": "在 Vitals 中加入显卡。",
+  "Needs %1": "需要 %1",
+  "Also in %1": "也在 %1 中"
 }

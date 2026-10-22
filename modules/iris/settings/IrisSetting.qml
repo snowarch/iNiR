@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell.Widgets
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
@@ -244,6 +245,59 @@ Item {
                         enabled: description.truncated || description.full
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                         onClicked: description.full = !description.full
+                    }
+                }
+                // What this setting reaches and what reaches it; each name opens its area (DI59).
+                Flow {
+                    id: branch
+                    readonly property var rel: { Config.revision; return IrisOptions.relationsOf(root.spec) }
+                    readonly property var links: [].concat(
+                        branch.rel.touches.map(r => ({ id: r.id, text: Translation.tr(r.label), glyph: "arrow_outward", tone: 0 })),
+                        branch.rel.needs.map(r => ({ id: r.id, text: Translation.tr("Needs %1").arg(Translation.tr(r.label)), glyph: "link", tone: 0 })),
+                        branch.rel.over.map(r => ({ id: r.id, text: Translation.tr(r.label), glyph: r.active ? "block" : "shield", tone: r.active ? 2 : 1 })),
+                        branch.rel.alsoIn.map(r => ({ id: r.id, text: Translation.tr("Also in %1").arg(Translation.tr(r.label)), glyph: "content_copy", tone: 0 })))
+                    Layout.fillWidth: true
+                    Layout.topMargin: Math.round(3 * root.d)
+                    visible: branch.links.length > 0 && root.spec.kind !== "list"
+                    spacing: Math.round(6 * root.d)
+                    Repeater {
+                        model: branch.links
+                        MouseArea {
+                            id: link
+                            required property var modelData
+                            readonly property color ink: link.modelData.tone === 2 ? IrisStyle.danger : link.containsMouse ? IrisStyle.text : IrisStyle.textSecondary
+                            width: linkRow.implicitWidth + Math.round(14 * root.d)
+                            height: Math.round(22 * root.d)
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            Accessible.role: Accessible.Link
+                            Accessible.name: link.modelData.text
+                            onClicked: GlobalStates.openSettingsAt("iris", link.modelData.id)
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: IrisStyle.fieldChamfer ? 0 : IrisStyle.capsule(height)
+                                color: link.modelData.tone === 2 ? IrisStyle.tintFill(IrisStyle.danger) : link.containsMouse ? IrisStyle.fillActive : IrisStyle.fillQuiet
+                                Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+                            }
+                            Row {
+                                id: linkRow
+                                anchors.centerIn: parent
+                                spacing: Math.round(4 * root.d)
+                                MaterialSymbol {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: link.modelData.glyph
+                                    iconSize: Math.round(13 * root.d)
+                                    color: link.ink
+                                }
+                                IrisText {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: link.modelData.text
+                                    color: link.ink
+                                    font.pixelSize: IrisStyle.typeFootnote
+                                    font.weight: IrisStyle.weight(Font.Medium)
+                                }
+                            }
+                        }
                     }
                 }
                 RowLayout {
