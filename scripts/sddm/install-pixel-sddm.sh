@@ -171,6 +171,21 @@ for font in "$FONTS_SRC"/rubik/Rubik-*.ttf "$FONTS_SRC"/inter/Inter-{Regular,Med
     fi
 done
 
+# Icons come from the Material Symbols the shell already installs, not a second 14 MB copy in the theme.
+symbols_src="$(fc-match -f '%{file}' 'Material Symbols Rounded:style=Regular' 2>/dev/null || true)"
+if [[ -f "$symbols_src" && "$(fc-query -f '%{family}' "$symbols_src" 2>/dev/null)" == *"Material Symbols Rounded"* ]]; then
+    target="${THEME_DIR}/fonts/MaterialSymbolsRounded.ttf"
+    if ! cmp -s "$symbols_src" "$target"; then
+        if [[ -O "${THEME_DIR}" ]]; then
+            install -Dm644 "$symbols_src" "$target"
+        else
+            elevate install -Dm644 "$symbols_src" "$target"
+        fi
+    fi
+else
+    log_warn "Material Symbols Rounded is not installed; login icons will be missing"
+fi
+
 # Create a placeholder background (symlinked to wallpaper later by sync script)
 if [[ ! -f "${THEME_DIR}/assets/background.png" ]]; then
     log_info "No background.png yet — creating placeholder..."
