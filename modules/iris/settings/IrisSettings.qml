@@ -173,8 +173,6 @@ Item {
         ? root.groupChunks.findIndex(chunk => chunk.groups.some(entry => entry.rows.some(spec => String(spec.path ?? "") === root.landingPath))) : -1
     onLandingBlockChanged: if (root.landingBlock >= 0) root.block = root.landingBlock
     onBlockChanged: { settingsFlick.contentY = 0; root.heldGroup = ""; spyPace.restart() }
-    // What the area reaches beyond itself, and what can overrule it (IrisOptions.reach).
-    readonly property var areaReach: { Config.revision; return IrisOptions.reachOf(root.entries) }
     // The areas the pointer's group reaches: the sidebar's map lights them.
     property var reachHover: []
     // With nothing pointed at, the map shows what the group being read reaches.
@@ -1686,14 +1684,12 @@ Item {
     component FineTuneRow: MouseArea {
         id: tune
         property bool open: false
-        property var names: []
         property string title: ""
         implicitHeight: Math.round(44 * root.d)
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
         Accessible.name: tune.open ? Translation.tr("Fewer settings") : Translation.tr("Fine-tune")
-        Accessible.description: tune.names.join(", ")
         IrisCutPlate {
             anchors.fill: tunePlate
             visible: IrisStyle.fieldChamfer
@@ -1978,7 +1974,6 @@ Item {
                             visible: part.lastPart && group.folds && !group.allTuned
                             Layout.fillWidth: true
                             open: group.tuneOpen
-                            names: group.tuned.map(spec => Translation.tr(String(spec.label ?? "")))
                             onClicked: root.fold(group.tuneKey)
                         }
                     }

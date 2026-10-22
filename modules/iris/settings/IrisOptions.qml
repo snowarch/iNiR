@@ -1394,13 +1394,7 @@ QtObject {
             // Named with its group: "Stop glass and blur" alone doesn't say it's Game mode's.
             return other ? { id: other.section, label: other.group && other.group !== other.label ? Translation.tr(other.group) + " · " + Translation.tr(other.label) : other.label, active: root.on(p) } : null
         }).filter(o => o !== null)
-        const when = String(spec.visibleWhen ?? "")
-        const gate = when.length > 0 ? root.settingAt(when.replace(/^!/, "").split("=")[0]) : null
-        const needs = gate && gate !== spec ? [{ id: gate.section, label: gate.label }] : []
-        const seen = {}
-        const alsoIn = root.settings.filter(o => o.path === path && o.section !== spec.section && path.length > 0)
-            .filter(o => !seen[o.section] && (seen[o.section] = true)).map(o => ({ id: o.section, label: root.sectionById(o.section).title }))
-        return { touches: touches, over: over, needs: needs, alsoIn: alsoIn }
+        return { touches: touches, over: over }
     }
     // A group's or an area's reach: every piece its rows land on beyond it, and what can overrule them.
     function reachOf(rows: var): var {
