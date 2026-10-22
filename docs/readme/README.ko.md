@@ -282,7 +282,7 @@ sudo make install       # system-wide instead of your home
 
 ## 배경화면
 
-배경화면 15장이 기본으로 들어 있습니다. 더 원하면 Material You와 잘 어울리는 엄선 컬렉션 [iNiR-Walls](https://github.com/snowarch/iNiR-Walls)를 보세요.
+배경화면 3장이 기본으로 들어 있습니다. 더 원하면 Material You와 잘 어울리는 엄선 컬렉션 [iNiR-Walls](https://github.com/snowarch/iNiR-Walls)를 보세요.
 
 ---
 

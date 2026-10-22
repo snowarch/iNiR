@@ -86,8 +86,8 @@ extras_install_sddm_theme() {
 # - sets global EXTRAS_INIR_WALLS_FIRST_IMAGE to first copied/available image path (or empty)
 extras_install_inir_walls() {
   local walls_repo_url="https://github.com/snowarch/iNiR-Walls.git"
-  local walls_estimated_count=148
-  local walls_estimated_bytes=663709943
+  local walls_estimated_count=151
+  local walls_estimated_bytes=667279754
   local walls_estimated_mib
   walls_estimated_mib=$(awk "BEGIN { printf \"%.1f\", ${walls_estimated_bytes}/1024/1024 }")
 

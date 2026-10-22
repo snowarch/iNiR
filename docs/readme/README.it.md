@@ -282,7 +282,7 @@ Elenco completo: [Scorciatoie](https://github.com/snowarch/inir/wiki/KEYBINDS)
 
 ## Sfondi
 
-Sono inclusi 15 sfondi. Per averne altri, guarda [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), una raccolta curata che funziona bene con Material You.
+Sono inclusi 3 sfondi. Per averne altri, guarda [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), una raccolta curata che funziona bene con Material You.
 
 ---
 

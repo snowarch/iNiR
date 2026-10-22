@@ -282,7 +282,7 @@ sudo make install       # system-wide instead of your home
 
 ## 壁纸
 
-自带 15 张壁纸。想要更多，可以看看 [iNiR-Walls](https://github.com/snowarch/iNiR-Walls)，一个和 Material You 配合很好的精选合集。
+自带 3 张壁纸。想要更多，可以看看 [iNiR-Walls](https://github.com/snowarch/iNiR-Walls)，一个和 Material You 配合很好的精选合集。
 
 ---
 

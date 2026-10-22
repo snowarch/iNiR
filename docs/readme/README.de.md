@@ -282,7 +282,7 @@ Vollständige Liste: [Tastenkürzel](https://github.com/snowarch/inir/wiki/KEYBI
 
 ## Hintergründe
 
-15 Hintergründe sind dabei. Mehr gibt es in [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), einer kuratierten Sammlung, die gut mit Material You funktioniert.
+3 Hintergründe sind dabei. Mehr gibt es in [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), einer kuratierten Sammlung, die gut mit Material You funktioniert.
 
 ---
 

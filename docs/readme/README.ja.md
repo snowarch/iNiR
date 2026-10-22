@@ -282,7 +282,7 @@ sudo make install       # system-wide instead of your home
 
 ## 壁紙
 
-15 枚の壁紙が同梱されています。もっと欲しければ、Material You と相性のいい厳選コレクション [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) をどうぞ。
+3 枚の壁紙が同梱されています。もっと欲しければ、Material You と相性のいい厳選コレクション [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) をどうぞ。
 
 ---
 

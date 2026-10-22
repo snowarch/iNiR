@@ -282,7 +282,7 @@ Liste complète : [Raccourcis](https://github.com/snowarch/inir/wiki/KEYBINDS)
 
 ## Fonds d'écran
 
-15 fonds d'écran sont inclus. Pour plus, va voir [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), une collection choisie qui marche bien avec Material You.
+3 fonds d'écran sont inclus. Pour plus, va voir [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), une collection choisie qui marche bien avec Material You.
 
 ---
 

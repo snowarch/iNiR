@@ -282,7 +282,7 @@ sudo make install       # system-wide instead of your home
 
 ## वॉलपेपर
 
-15 वॉलपेपर साथ आते हैं। और चाहिए तो [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) देखें, एक चुना हुआ संग्रह जो Material You के साथ अच्छा चलता है।
+3 वॉलपेपर साथ आते हैं। और चाहिए तो [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) देखें, एक चुना हुआ संग्रह जो Material You के साथ अच्छा चलता है।
 
 ---
 

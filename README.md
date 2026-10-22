@@ -298,7 +298,7 @@ Full list: [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS)
 
 ## Wallpapers
 
-15 wallpapers ship bundled. For more, check [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), a curated collection that works well with the Material You pipeline.
+3 wallpapers ship bundled. For more, check [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), a curated collection that works well with the Material You pipeline.
 
 ---
 

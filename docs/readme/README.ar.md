@@ -300,7 +300,7 @@ sudo make install       # system-wide instead of your home
 
 ## الخلفيات
 
-تأتي 15 خلفية مضمّنة. للمزيد، اطّلع على [iNiR-Walls](https://github.com/snowarch/iNiR-Walls)، مجموعة مختارة تعمل جيدًا مع Material You.
+تأتي 3 خلفيات مضمّنة. للمزيد، اطّلع على [iNiR-Walls](https://github.com/snowarch/iNiR-Walls)، مجموعة مختارة تعمل جيدًا مع Material You.
 
 ---
 

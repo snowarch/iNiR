@@ -282,7 +282,7 @@ Lista completa: [Atalhos](https://github.com/snowarch/inir/wiki/KEYBINDS)
 
 ## Wallpapers
 
-15 wallpapers vêm incluídos. Para mais, veja o [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), uma coleção selecionada que combina bem com o Material You.
+3 wallpapers vêm incluídos. Para mais, veja o [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), uma coleção selecionada que combina bem com o Material You.
 
 ---
 

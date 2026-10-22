@@ -282,7 +282,7 @@ sudo make install       # system-wide instead of your home
 
 ## Обои
 
-В комплекте 15 обоев. Больше — в [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), отобранной коллекции, которая хорошо работает с Material You.
+В комплекте 3 фона. Больше — в [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), отобранной коллекции, которая хорошо работает с Material You.
 
 ---
 
