@@ -9565,5 +9565,8 @@
   "Defaults": "Varsayılanlar",
   "Shell, no file named": "Kabuk, dosya belirtilmemiş",
   "Held by %1": "%1 tarafından durduruldu",
-  "Your apps": "Uygulamaların"
+  "Your apps": "Uygulamaların",
+  "%1 more": "%1 tane daha",
+  "Edit on the desktop": "Masaüstünde düzenle",
+  "Open in Settings": "Ayarlarda aç"
 }

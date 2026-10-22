@@ -9565,5 +9565,8 @@
   "Defaults": "Mặc định",
   "Shell, no file named": "Shell, không có tên tệp",
   "Held by %1": "Bị %1 tạm dừng",
-  "Your apps": "Ứng dụng của bạn"
+  "Your apps": "Ứng dụng của bạn",
+  "%1 more": "thêm %1",
+  "Edit on the desktop": "Chỉnh sửa trên màn hình",
+  "Open in Settings": "Mở trong Cài đặt"
 }

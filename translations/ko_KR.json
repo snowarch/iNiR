@@ -9565,5 +9565,8 @@
   "Defaults": "기본값",
   "Shell, no file named": "셸, 파일 이름 없음",
   "Held by %1": "%1 때문에 멈춤",
-  "Your apps": "내 앱"
+  "Your apps": "내 앱",
+  "%1 more": "%1개 더",
+  "Edit on the desktop": "바탕 화면에서 편집",
+  "Open in Settings": "설정에서 열기"
 }

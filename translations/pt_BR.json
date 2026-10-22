@@ -9565,5 +9565,8 @@
   "Defaults": "Padrões",
   "Shell, no file named": "Shell, sem arquivo",
   "Held by %1": "Pausado por %1",
-  "Your apps": "Seus apps"
+  "Your apps": "Seus apps",
+  "%1 more": "mais %1",
+  "Edit on the desktop": "Editar na área de trabalho",
+  "Open in Settings": "Abrir nas Configurações"
 }

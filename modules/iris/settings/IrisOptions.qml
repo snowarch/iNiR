@@ -1273,6 +1273,59 @@ QtObject {
         { group: "Shell", key: "errors", home: "general", label: "Shell errors", detail: "What the shell and qs-rs logged, and a check of every file", icon: "bug_report", tintName: "red", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["errors", "warnings", "log", "logs", "bugs", "qs-rs", "debug", "errores"] },
     ]
     readonly property var sectionOrder: root.sections.map(section => section.id)
+    // Settings is your desktop: each piece on it holds the areas that shape it, and its inspector grows out of it.
+    // What has no piece on screen is a room of the map. An area opens in the first entry that leads with it.
+    readonly property var pieces: [
+        { id: "island", label: "Island", glyph: "pill", areas: ["bar", "bubbles", "player"] },
+        { id: "bubble", label: "Bubbles", glyph: "bubble_chart", areas: ["bubbles"] },
+        { id: "dock", label: "Dock", glyph: "dock_to_bottom", areas: ["dock"] },
+        { id: "frame", label: "Frame", glyph: "crop_free", areas: ["appearance"], lead: ["Frame", "Material", "Glass", "Edges"] },
+        { id: "desktop", label: "Desktop", glyph: "wallpaper", areas: ["wallpaper", "desktop", "widgets"] },
+        { id: "widget", label: "Widgets", glyph: "dashboard_customize", areas: ["widgets"] },
+        { id: "sidebars", label: "Side Panels", glyph: "dock_to_right", areas: ["sidebars"] },
+        { id: "controlCenter", label: "Control Center", glyph: "toggle_on", areas: ["controlCenter"] },
+        { id: "notifications", label: "Notifications", glyph: "notifications", areas: ["notifications"] },
+        { id: "spotlight", label: "Spotlight", glyph: "search", areas: ["spotlight"] },
+        { id: "orbit", label: "Orbit", glyph: "workspaces", areas: ["orbit"] },
+        { id: "windows", label: "Windows", glyph: "select_window", areas: ["windows"] }
+    ]
+    readonly property var rooms: [
+        { id: "look", label: "Look", glyph: "style", areas: ["appearance", "colour", "motion"] },
+        { id: "general", areas: ["general"] },
+        { id: "sound", areas: ["sound"] },
+        { id: "display", areas: ["display"] },
+        { id: "keyboard", areas: ["keyboard"] },
+        { id: "battery", areas: ["battery"] },
+        { id: "gaming", areas: ["gaming"] },
+        { id: "capture", areas: ["capture"] },
+        { id: "lock", areas: ["lock", "login"] },
+        { id: "anime", areas: ["anime"] },
+        { id: "sources", areas: ["sources"] },
+        { id: "hub", page: "hub", label: "Community Hub", glyph: "storefront", tintName: "pink" },
+        { id: "shortcuts", page: "shortcuts", label: "Shortcuts", glyph: "keyboard_command_key", tintName: "gray" },
+        { id: "errors", page: "errors", label: "Shell errors", glyph: "bug_report", tintName: "red" },
+        { id: "about", page: "about", label: "About", glyph: "info", tintName: "gray" }
+    ]
+    function entryById(id: string): var {
+        return root.pieces.find(entry => entry.id === id) ?? root.rooms.find(entry => entry.id === id) ?? null
+    }
+    function entryLabel(entry: var): string {
+        if (!entry) return ""
+        return Translation.tr(entry.label ?? root.sectionById(entry.areas?.[0] ?? "").title)
+    }
+    function entryGlyph(entry: var): string { return entry?.glyph ?? root.sectionById(entry?.areas?.[0] ?? "").icon ?? "settings" }
+    function entryTint(entry: var): color {
+        if (entry?.tintName) return IrisStyle.identity[entry.tintName]
+        return root.sectionById(entry?.areas?.[0] ?? "").tint
+    }
+    // Where an area lives: a piece that leads with that group (the frame's own groups of Style), else the entry that
+    // leads with the area, else the first that holds it.
+    function ownerOf(section: string, group: string): var {
+        const all = root.pieces.concat(root.rooms)
+        return all.find(entry => entry.areas?.[0] === section && (entry.lead ?? []).includes(group ?? ""))
+            ?? all.find(entry => entry.areas?.[0] === section && !entry.lead)
+            ?? all.find(entry => (entry.areas ?? []).includes(section)) ?? null
+    }
     // Customize's areas (Studio's rail, the capsule's sheets): identity, what each is, one line worth knowing.
     readonly property var customizeAreas: [
         { id: "material", label: "Material", glyph: "layers", get tint() { return IrisStyle.identity.purple }, tipOf: "", tip: "Character sets corners, fills and contrast at once; the rows below fine-tune it.",

@@ -9565,5 +9565,8 @@
   "Defaults": "Valores por defecto",
   "Shell, no file named": "Shell, sin archivo",
   "Held by %1": "Detenido por %1",
-  "Your apps": "Tus apps"
+  "Your apps": "Tus apps",
+  "%1 more": "%1 más",
+  "Edit on the desktop": "Editar en el escritorio",
+  "Open in Settings": "Abrir en Configuración"
 }

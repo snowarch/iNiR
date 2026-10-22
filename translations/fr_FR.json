@@ -9565,5 +9565,8 @@
   "Defaults": "Valeurs par défaut",
   "Shell, no file named": "Shell, sans fichier",
   "Held by %1": "Bloqué par %1",
-  "Your apps": "Tes applis"
+  "Your apps": "Tes applis",
+  "%1 more": "%1 de plus",
+  "Edit on the desktop": "Modifier sur le bureau",
+  "Open in Settings": "Ouvrir dans les paramètres"
 }

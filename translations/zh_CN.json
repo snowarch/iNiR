@@ -9565,5 +9565,8 @@
   "Defaults": "默认值",
   "Shell, no file named": "Shell，未指明文件",
   "Held by %1": "被 %1 暂停",
-  "Your apps": "你的应用"
+  "Your apps": "你的应用",
+  "%1 more": "另外 %1 项",
+  "Edit on the desktop": "在桌面上编辑",
+  "Open in Settings": "在设置中打开"
 }

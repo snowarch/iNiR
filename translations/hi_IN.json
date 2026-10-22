@@ -9565,5 +9565,8 @@
   "Defaults": "डिफ़ॉल्ट",
   "Shell, no file named": "शेल, कोई फ़ाइल नहीं",
   "Held by %1": "%1 ने रोका है",
-  "Your apps": "आपके ऐप्स"
+  "Your apps": "आपके ऐप्स",
+  "%1 more": "%1 और",
+  "Edit on the desktop": "डेस्कटॉप पर संपादित करें",
+  "Open in Settings": "सेटिंग्स में खोलें"
 }

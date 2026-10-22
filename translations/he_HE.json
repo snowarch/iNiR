@@ -9565,5 +9565,8 @@
   "Defaults": "ברירות מחדל",
   "Shell, no file named": "מעטפת, בלי קובץ",
   "Held by %1": "מושהה על ידי %1",
-  "Your apps": "האפליקציות שלך"
+  "Your apps": "האפליקציות שלך",
+  "%1 more": "%1 נוספות",
+  "Edit on the desktop": "עריכה בשולחן העבודה",
+  "Open in Settings": "פתיחה בהגדרות"
 }

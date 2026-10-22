@@ -9565,5 +9565,8 @@
   "Defaults": "الافتراضيات",
   "Shell, no file named": "الواجهة، بلا ملف",
   "Held by %1": "يوقفه %1",
-  "Your apps": "تطبيقاتك"
+  "Your apps": "تطبيقاتك",
+  "%1 more": "%1 إضافية",
+  "Edit on the desktop": "التعديل على سطح المكتب",
+  "Open in Settings": "فتح في الإعدادات"
 }

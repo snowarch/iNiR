@@ -9565,5 +9565,8 @@
   "Defaults": "デフォルト",
   "Shell, no file named": "シェル（ファイル名なし）",
   "Held by %1": "%1 により停止中",
-  "Your apps": "あなたのアプリ"
+  "Your apps": "あなたのアプリ",
+  "%1 more": "他 %1 件",
+  "Edit on the desktop": "デスクトップで編集",
+  "Open in Settings": "設定で開く"
 }
