@@ -171,7 +171,7 @@ Flickable {
                                     text: item.modelData.text
                                     font.family: IrisStyle.fontMono
                                     font.pixelSize: IrisStyle.typeMeta
-                                    wrapMode: Text.WrapAnywhere
+                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     maximumLineCount: 4
                                     elide: Text.ElideRight
                                 }

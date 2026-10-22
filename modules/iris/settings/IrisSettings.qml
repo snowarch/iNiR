@@ -1398,9 +1398,11 @@ Item {
                                         tinted: true
                                         links: [
                                             { key: "about", label: Translation.tr("About iNiR"), icon: "info", tint: IrisStyle.identity.lavender },
-                                            { key: "shortcuts", label: Translation.tr("Keyboard shortcuts"), icon: "keyboard", tint: IrisStyle.identity.indigo }
+                                            { key: "shortcuts", label: Translation.tr("Keyboard shortcuts"), icon: "keyboard", tint: IrisStyle.identity.indigo },
+                                            { key: "errors", label: Translation.tr("Shell errors"), icon: "bug_report", tint: IrisStyle.identity.red,
+                                                value: !ShellErrors.available ? "" : ShellErrors.count > 0 ? String(ShellErrors.count) : Translation.tr("None") }
                                         ].filter(link => root.pages.some(page => page.key === link.key)).map(link => ({
-                                            label: link.label, icon: link.icon, tint: link.tint,
+                                            label: link.label, value: link.value ?? "", icon: link.icon, tint: link.tint,
                                             action: () => root.go({ section: "general", group: "", advancedPage: root.pageIndexOf(link.key) })
                                         }))
                                     }

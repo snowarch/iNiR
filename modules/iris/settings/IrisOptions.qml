@@ -1270,7 +1270,7 @@ QtObject {
     // The shared iNiR pages that still act under iRiS, as the Hub entry lists them. Pages for other families stay out.
     readonly property var morePages: [
         { group: "Shell", key: "hub", label: "Community Hub", detail: "Widgets, themes and web apps from other people", icon: "storefront", tintName: "pink", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["hub", "community", "plugins", "extensions", "widgets", "themes", "store", "download", "install", "comunidad"] },
-        { group: "Shell", key: "errors", label: "Shell errors", detail: "What the shell and qs-rs logged, and a check of every file", icon: "bug_report", tintName: "red", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["errors", "warnings", "log", "logs", "bugs", "qs-rs", "debug", "errores"] },
+        { group: "Shell", key: "errors", home: "general", label: "Shell errors", detail: "What the shell and qs-rs logged, and a check of every file", icon: "bug_report", tintName: "red", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["errors", "warnings", "log", "logs", "bugs", "qs-rs", "debug", "errores"] },
     ]
     readonly property var sectionOrder: root.sections.map(section => section.id)
     // Customize's areas (Studio's rail, the capsule's sheets): identity, what each is, one line worth knowing.
