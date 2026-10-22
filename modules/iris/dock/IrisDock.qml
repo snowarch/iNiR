@@ -1200,7 +1200,8 @@ Item {
                 onLiveWindowsChanged: {
                     if (menu.liveWindows === null) return
                     menu.windows = menu.liveWindows.slice()
-                    if (menu.mode === "windows" && menu.windows.length === 0) window.menuApp = null
+                    // later: closing re-reads liveWindows inside its own change handler (binding loop)
+                    if (menu.mode === "windows" && menu.windows.length === 0) Qt.callLater(() => { window.menuApp = null })
                 }
                 MouseArea { anchors.fill: parent }
 
