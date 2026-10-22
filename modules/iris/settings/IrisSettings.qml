@@ -1257,7 +1257,7 @@ Item {
                                 parent: heroPinSlot
                                 width: heroPinSlot.width
                                 visible: pageHero.shown
-                                sceneSection: pageHero.shown ? root.section : ""
+                                sceneSection: pageHero.sectionPage || pageHero.groupPage ? root.section : ""
                                 sceneGroup: pageHero.groupPage || pageHero.spying ? pageHero.key : ""
                             }
 
