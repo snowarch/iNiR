@@ -689,20 +689,24 @@ Item {
                             border.color: IrisStyle.hairlineStrong
                             Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                         }
-                        Row {
+                        // Side by side when the tile is wide, the mark over its name when it is not.
+                        Grid {
+                            readonly property bool wide: shape.width >= root.u(124)
                             anchors.centerIn: parent
-                            spacing: root.u(8)
+                            columns: wide ? 2 : 1
+                            columnSpacing: root.u(8)
+                            rowSpacing: root.u(6)
+                            horizontalItemAlignment: Grid.AlignHCenter
+                            verticalItemAlignment: Grid.AlignVCenter
                             MaterialSymbol {
                                 visible: String(shape.modelData.glyph ?? "").length > 0
-                                anchors.verticalCenter: parent.verticalCenter
                                 text: String(shape.modelData.glyph ?? "")
                                 iconSize: root.u(20)
                                 color: shape.on ? IrisStyle.surfaceOpaque : IrisStyle.muted
                             }
                             IrisText {
                                 id: shapeName
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: Math.min(implicitWidth, shape.width - root.u(40))
+                                width: Math.min(implicitWidth, shape.width - root.u(parent.wide ? 40 : 10))
                                 elide: Text.ElideRight
                                 text: Translation.tr(String(shape.modelData.label ?? ""))
                                 color: shape.on ? IrisStyle.surfaceOpaque : IrisStyle.muted
