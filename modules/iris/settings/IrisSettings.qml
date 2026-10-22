@@ -94,14 +94,14 @@ Item {
     }
     // The clusters the areas are kept in, named for a layout that prints them (Folio's ruler, Console's grid).
     readonly property var clusterNames: ["Look", "Desktop", "Tools", "Devices", "Security", "Media", "Sources"]
-    // Every area's notes (IrisOptions.notes), counted once per change for the layouts that mark them.
-    readonly property var noteCounts: {
-        Config.revision
-        const out = {}
-        for (const entry of root.sections) out[entry.id] = IrisOptions.notes(entry.id).length
-        return out
-    }
-    readonly property var notesHere: { Config.revision; return IrisOptions.notes(root.section) }
+    // Every area's notes (IrisOptions.notesBySection), taken when Settings has opened and after each config change.
+    property var notes: ({})
+    readonly property var noteCounts: { const out = {}; for (const id in root.notes) out[id] = root.notes[id].length; return out }
+    readonly property var notesHere: root.notes[root.section] ?? []
+    Timer { id: notesLater; interval: 300; onTriggered: root.notes = IrisOptions.notesBySection() }
+    Connections { target: Config; function onRevisionChanged(): void { notesLater.restart() } }
+    // Read once the body has landed: a 30 ms pass mid-morph is a dropped frame.
+    Connections { target: frame; function onSettledChanged(): void { if (frame.settled) root.notes = IrisOptions.notesBySection() } }
     // Takes you to the first note of the area, or of the next area that has one.
     function openNote(): void {
         const here = root.notesHere

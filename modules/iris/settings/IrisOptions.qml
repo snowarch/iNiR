@@ -259,19 +259,22 @@ QtObject {
     }
     // What an area has to say before you ask: rows that cannot answer and why, settings that cancel each other, pinned
     // apps that are gone. Every Settings layout marks these where it marks trouble.
-    function notes(section: string): var {
-        Config.revision
-        const out = []
+    // Every area's notes in one pass ({ section: [note] }). Notes read live state (moods, apps, the frame), so the caller
+    // takes them when it wants them, never as a binding: bound, they were redone every frame of Settings' morph.
+    function notesBySection(): var {
+        const out = {}
         for (const spec of root.settings) {
-            if (spec.section !== section || spec.mirror || !root.shown(spec)) continue
+            if (spec.mirror || !root.shown(spec)) continue
+            const section = String(spec.section ?? "")
             const text = spec.note ? String(spec.note() ?? "") : ""
             const locked = spec.locked ? Boolean(spec.locked()) : false
+            const add = note => (out[section] = out[section] ?? []).push(note)
             if (text.length > 0 && (locked || spec.warns === true))
-                out.push({ path: String(spec.path ?? ""), group: String(spec.group ?? ""), label: String(spec.label ?? ""), text: text })
+                add({ path: String(spec.path ?? ""), group: String(spec.group ?? ""), label: String(spec.label ?? ""), text: text })
             if (String(spec.view ?? "").endsWith("IrisDockPinned.qml")) {
                 for (const id of (Config.options?.dock?.pinnedApps ?? []).map(String)) {
                     const who = AppSearch.appIdentity(id, "")
-                    if (!who.installed) out.push({ path: "dock.pinnedApps", group: String(spec.group ?? ""), label: String(spec.label ?? ""), app: id,
+                    if (!who.installed) add({ path: "dock.pinnedApps", group: String(spec.group ?? ""), label: String(spec.label ?? ""), app: id,
                         text: Translation.tr("%1 is pinned but no longer installed.").arg(String(who.name || id)) })
                 }
             }
