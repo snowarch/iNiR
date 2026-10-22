@@ -183,7 +183,6 @@ Item {
                         width: parent.width
                         height: needsBody.implicitHeight + needsCard.headroom + needsCard.pad
                         caption: Translation.tr("Needs you")
-                        live: root.needs.length > 0
                         Column {
                             id: needsBody
                             x: needsCard.pad

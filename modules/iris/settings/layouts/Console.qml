@@ -337,7 +337,8 @@ Item {
                             required property var modelData
                             readonly property var tuned: root.folded(group.modelData)
                             readonly property bool open: root.opened[root.section + "/" + group.modelData.key] === true
-                            readonly property var shown: group.tuned.length >= 2 && !group.open ? group.modelData.rows.filter(spec => !group.tuned.includes(spec)) : group.modelData.rows
+                            readonly property bool folds: group.tuned.length >= 2 && group.tuned.length < group.modelData.rows.length
+                            readonly property var shown: group.folds && !group.open ? group.modelData.rows.filter(spec => !group.tuned.includes(spec)) : group.modelData.rows
                             width: boardColumn.width
                             spacing: root.gap
                             Mono {
@@ -361,7 +362,7 @@ Item {
                                     }
                                 }
                                 Tile {
-                                    visible: group.tuned.length >= 2
+                                    visible: group.folds
                                     width: parent.unit
                                     caption: group.open ? Translation.tr("Less") : Translation.tr("More")
                                     text: group.open ? Translation.tr("Fold") : Translation.tr("%1 more").arg(group.tuned.length)

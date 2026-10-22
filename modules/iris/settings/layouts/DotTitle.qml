@@ -33,6 +33,7 @@ Item {
         visible: !root.typed
         text: root.text
         color: root.color
+        offColor: "transparent"
         pitch: Math.max(3, Math.round(root.size / 7.5))
         fit: root.fit
     }
