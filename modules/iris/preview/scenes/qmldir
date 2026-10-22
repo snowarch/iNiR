@@ -34,12 +34,4 @@ TrayScene 1.0 TrayScene.qml
 TypographyScene 1.0 TypographyScene.qml
 WidgetsScene 1.0 WidgetsScene.qml
 WindowsScene 1.0 WindowsScene.qml
-DisplayScene 1.0 DisplayScene.qml
-KeyboardScene 1.0 KeyboardScene.qml
 OrbitScene 1.0 OrbitScene.qml
-CaptureScene 1.0 CaptureScene.qml
-AnimeScene 1.0 AnimeScene.qml
-SoundScene 1.0 SoundScene.qml
-SourcesScene 1.0 SourcesScene.qml
-BatteryScene 1.0 BatteryScene.qml
-GamingScene 1.0 GamingScene.qml

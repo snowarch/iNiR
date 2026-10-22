@@ -84,9 +84,8 @@ ClippingRectangle {
     function sceneFor(section: string, group: string): string {
         if (group.length === 0)
             return ({ dock: "dock", player: "player", desktop: "widgets", widgets: "widgets", sidebars: "panels", controlCenter: "controlCenter", spotlight: "spotlight", bubbles: "bubbles",
-                bar: "islandEdge", appearance: "fusion", colour: "palette", wallpaper: "gallery", login: "login", motion: "motion", lock: "lock", notifications: "feedback", sound: "sound",
-                windows: "windows", display: "display", keyboard: "keyboard", orbit: "orbit", capture: "capture", anime: "anime",
-                sources: "sources", battery: "battery", gaming: "gaming" })[section] ?? ""
+                bar: "islandEdge", appearance: "fusion", colour: "palette", wallpaper: "gallery", login: "login", motion: "motion", lock: "lock", notifications: "feedback",
+                windows: "windows", orbit: "orbit" })[section] ?? ""
         const key = section + "/" + group
         return ({
             "bar/Visibility": "islandReserve", "bar/Interaction": "islandInteraction",
@@ -114,9 +113,7 @@ ClippingRectangle {
             "spotlight/Spotlight": "spotlight", "controlCenter/Control Center": "controlCenter",
             "sidebars/Panel look": "panels",
             "notifications/Banners": "feedback", "sound/Feedback": "feedback",
-            "sound/Output": "sound", "sound/Input": "sound", "sound/Apps playing": "sound", "sound/Volume": "sound", "sound/Alert sounds": "sound",
             "player/Player": "player", "player/Bubble": "player",
-            "gaming/Fullscreen": "gaming", "gaming/Game mode": "gaming"
         })[key] ?? ""
     }
 
@@ -125,13 +122,12 @@ ClippingRectangle {
                 typography: typographyScene, frame: frameScene, lock: lockScene, motion: motionScene,
                 texture: textureScene, dock: dockScene, widgets: widgetsScene, backdrop: backdropScene, gallery: galleryScene,
                 spotlight: spotlightScene, controlCenter: controlCenterScene, cards: cardsScene, menus: menusScene,
-                settings: settingsScene, panels: panelsScene, joining: joiningScene, feedback: feedbackScene, sound: soundScene,
+                settings: settingsScene, panels: panelsScene, joining: joiningScene, feedback: feedbackScene,
                 tray: trayScene, player: playerScene, islandReserve: islandReserveScene, islandEdge: islandEdgeScene, barZones: barZonesScene,
                 light: lightScene, palette: paletteScene, fusion: fusionScene, shapes: shapesScene, glass: glassScene,
                 islandInteraction: islandInteractionScene, islandPage: islandPageScene, bubbles: bubblesScene,
                 highlight: highlightScene, login: loginScene, material: materialScene, surfaces: surfacesScene,
-                windows: windowsScene, display: displayScene, keyboard: keyboardScene, orbit: orbitScene, capture: captureScene,
-                anime: animeScene, sources: sourcesScene, battery: batteryScene, gaming: gamingScene
+                windows: windowsScene, orbit: orbitScene
         })[name] ?? null
     }
     radius: IrisStyle.radiusTile
@@ -200,21 +196,13 @@ ClippingRectangle {
 
     Component { id: backdropScene; BackdropScene { preview: root } }
     Component { id: windowsScene; WindowsScene { preview: root } }
-    Component { id: displayScene; DisplayScene { preview: root } }
-    Component { id: keyboardScene; KeyboardScene { preview: root } }
     Component { id: orbitScene; OrbitScene { preview: root } }
-    Component { id: captureScene; CaptureScene { preview: root } }
-    Component { id: animeScene; AnimeScene { preview: root } }
-    Component { id: sourcesScene; SourcesScene { preview: root } }
-    Component { id: batteryScene; BatteryScene { preview: root } }
-    Component { id: gamingScene; GamingScene { preview: root } }
     Component { id: barZonesScene; BarZonesScene { preview: root } }
     Component { id: bubblesScene; BubblesScene { preview: root } }
     Component { id: cardsScene; CardsScene { preview: root } }
     Component { id: controlCenterScene; ControlCenterScene { preview: root } }
     Component { id: dockScene; DockScene { preview: root } }
     Component { id: feedbackScene; FeedbackScene { preview: root } }
-    Component { id: soundScene; SoundScene { preview: root } }
     Component { id: frameScene; FrameScene { preview: root } }
     Component { id: fusionScene; FusionScene { preview: root } }
     Component { id: galleryScene; GalleryScene { preview: root } }
