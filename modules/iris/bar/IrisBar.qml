@@ -266,8 +266,6 @@ Scope {
             GlobalStates.irisArrange = wanted
             return wanted ? "on" : "off"
         }
-        // What is under the pointer grows its inspector (Mod+Alt+click).
-        function inspect(): void { GlobalStates.irisInspectRequest = Date.now() }
         function edit(action: string): string {
             if (action.startsWith("tab:")) {
                 const targets = { pieces: "pieces", look: "material", motion: "motion", layout: "island" }
@@ -778,7 +776,6 @@ Scope {
                 WlrLayershell.keyboardFocus: barWindow.pinned || stage.cardOpen || (controlCentreLoader.item?.morphOpen ?? false)
                     || (dockLoader.item?.menuOpen ?? false) || (spotlightLoader.item?.here && GlobalStates.searchOpen)
                     || (galleryLoader.item?.morphOpen ?? false) || (orbitLoader.item?.wanted ?? false) || (widgetBarLoader.item?.holdsKeyboard ?? false)
-                    || (barWindow.editHere && (editLoader.item?.wantsKeys ?? false))
                     ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
                 anchors { left: true; right: true; top: true; bottom: true }
                 readonly property bool suppressed: islandLoader.active
@@ -1034,26 +1031,6 @@ Scope {
                             last = p
                             islandInput.release()
                         }
-                    }
-                }
-
-                IrisParts.IrisInspectPoint {
-                    hover: canvasHover
-                    readonly property var aliases: [["control", "controlCenter"], ["banner", "notifications"], ["spotlight", "spotlight"],
-                        ["orbit", "orbit"], ["place", "sidebars"]]
-                    resolve: (x, y) => {
-                        let best = null
-                        for (const shape of barWindow.fieldShapes ?? []) {
-                            const id = String(shape.id ?? "")
-                            const named = id === "island" || id === "dock" || id.startsWith("piece:") || id.startsWith("satellite:") ? id
-                                : (aliases.find(pair => id.startsWith(pair[0]))?.[1] ?? "")
-                            if (named.length === 0 || x < shape.x || y < shape.y || x > shape.x + shape.width || y > shape.y + shape.height) continue
-                            if (!best || shape.width * shape.height < best.width * best.height) best = Object.assign({}, shape, { id: named })
-                        }
-                        // The Control Center is the Island grown open: below its resting band, it's the Control Center.
-                        if (best?.id === "island" && GlobalStates.controlPanelOpen && y > best.y + IrisFrame.islandBand + 8 && y < best.y + best.height - IrisFrame.islandBand - 8)
-                            return Object.assign({}, best, { id: "controlCenter" })
-                        return best
                     }
                 }
 

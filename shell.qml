@@ -127,7 +127,6 @@ ShellRoot {
         root._log("[Boot] Tier 0: startup-critical singletons");
         FirstRunExperience.load();
         ConflictKiller.load();
-        ShellErrors.load();
         // Force MemoryPressureService instantiation for IPC (#164)
         void MemoryPressureService.enabled;
         // Same reason: GlobalActions owns the `globalActions` IPC target and is

@@ -1558,17 +1558,11 @@
      ]
     },
     {
-     "name": "inspect",
-     "args": [],
-     "description": "Grow the inspector of whatever is under the pointer (the Island, a bubble, the Dock, a panel, a widget, the frame or the desktop) out of it; Mod+Alt+click is bound to it",
-     "values": []
-    },
-    {
      "name": "edit",
      "args": [
       "action"
      ],
-     "description": "Customize iRiS on the shell itself: the Island grows a capsule (Themes, Look, Pieces, undo, Done) and whatever you click (a piece, the Island, the Dock) grows its own options: `on`, `off`, `toggle`, a sheet (`themes`, `pieces`, or the Look sheet on `material`, `colour`, `type` or `motion`), or a piece whose inspector grows out of it with every row of its areas: `island`, `dock`, `frame`, `desktop`, `sidebars`, `controlCenter`, `notifications`, `spotlight`, `orbit`, `widget:<id>` (`widget:clock`) or a bubble (`vitals`, `left`, `app:kitty`); `bodies`, `places` and `transients` still land on the Control Center, the side panels and notifications",
+     "description": "Customize iRiS on the shell itself: the Island grows a capsule (Themes, Look, Pieces, undo, Done) and whatever you click (a piece, the Island, the Dock) grows its own options: `on`, `off`, `toggle`, a sheet (`themes`, `pieces`, or a Look tab: `material`, `colour`, `type`, `motion`, `bodies`, `places`, `transients`, `desktop`), `island`, `dock` or a piece to inspect (`vitals`, `left`, `app:kitty`)",
      "values": [
       "on",
       "off",
@@ -1579,21 +1573,14 @@
       "colour",
       "type",
       "motion",
-      "island",
-      "dock",
-      "frame",
-      "desktop",
-      "sidebars",
-      "controlCenter",
-      "notifications",
-      "spotlight",
-      "orbit",
-      "widget:",
-      "vitals",
-      "left",
       "bodies",
       "places",
-      "transients"
+      "transients",
+      "desktop",
+      "island",
+      "dock",
+      "vitals",
+      "left"
      ]
     },
     {

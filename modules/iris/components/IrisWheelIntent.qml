@@ -39,15 +39,9 @@ Item {
         latch.restart()
     }
     Timer { id: latch; interval: root.latchMs; onTriggered: root.latched = false }
-    property real lastExtent: -1
     Connections {
         target: root.scroller
-        function onContentYChanged(): void {
-            // Rows folding or arriving move the page without anyone scrolling it: that never latches the wheel (DI82).
-            const extent = root.scroller.contentHeight
-            if (extent !== root.lastExtent) { root.lastExtent = extent; return }
-            root.scrolled()
-        }
+        function onContentYChanged(): void { root.scrolled() }
         function onContentXChanged(): void { root.scrolled() }
     }
 

@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell.Widgets
-import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
@@ -17,14 +16,6 @@ Item {
     id: root
     required property var spec
     property bool last: false
-    // Hangs on the row above it (its switch or choice): set in under it.
-    property bool nested: false
-    readonly property real inset: Math.round((root.nested ? 40 : 16) * root.d)
-    // What a row does is asked for (the info mark), or shown when a search found it there.
-    property bool asked: false
-    readonly property string descriptionText: root.spec.description ? Translation.tr(root.spec.description) : ""
-    readonly property bool explained: root.descriptionText.length > 0 && (root.asked || root.spec.explain === true
-        || root.highlight.trim().split(/\s+/).some(term => term.length > 1 && root.descriptionText.toLowerCase().includes(term.toLowerCase())))
     property string highlight: ""
     // Arrived at from a search: the row glows once in the accent, then settles.
     property bool landing: false
@@ -83,12 +74,6 @@ Item {
     // A row can say why it does not answer right now (`locked`) and what state it is in (`note`), so it never reads as broken.
     readonly property bool locked: { Config.revision; return root.spec.locked ? Boolean(root.spec.locked()) : false }
     readonly property string noteText: { Config.revision; return root.spec.note ? String(root.spec.note() ?? "") : "" }
-    // Only what holds it back right now is said; what could, or where else it lives, is the area map's to show.
-    readonly property string heldText: {
-        Config.revision
-        const held = IrisOptions.relationsOf(root.spec).over.filter(r => r.active)
-        return held.length > 0 ? Translation.tr("Held by %1").arg(Translation.tr(held[0].label)) : ""
-    }
     readonly property real controlOpacity: root.locked ? 0.42 : 1
     readonly property bool resettable: IrisOptions.resettable(root.spec)
     readonly property bool modified: root.resettable && !IrisOptions.same(root.value, root.spec.fallback)
@@ -121,15 +106,10 @@ Item {
         : root.choices.length * (Math.max(...root.choices.map(choice => choiceMetrics.advanceWidth(Translation.tr(String(choice.label ?? ""))))) + 26 * root.d) + 4
     readonly property bool inlineChoice: root.spec.kind === "choice" && root.roomy && root.choices.length >= 2 && root.choices.length <= 4
         && !root.swatched && !root.tiled && !root.carded && root.segmentNatural <= root.controlWidth
-    // Places and shapes too wide for a named track answer as glyphs in the column, their name beside them (a full-width
-    // strip of big glyph tiles per row was most of a page's height). Anything else past the track is a pop-up.
-    readonly property bool inlineGlyphs: root.spec.kind === "choice" && root.spec.glyphs === true && root.roomy && !root.inlineChoice && root.pictured
-        && root.choices.length >= 2 && root.choices.length <= 6 && root.choices.every(choice => String(choice.glyph ?? "").length > 0)
-        && !root.swatched && !root.tiled && !root.carded && root.choices.length * 34 * root.d <= root.controlWidth
     // A flat list the column's track cannot hold (HIG: past a few choices, or names too long to share it) answers as a
     // pop-up button in the same column. Pictures stay pictures: up to five glyph choices keep their track under the text.
-    readonly property bool menuChoice: root.spec.kind === "choice" && root.choices.length > 0 && !root.inlineChoice && !root.inlineGlyphs
-        && !root.swatched && !root.tiled && !root.carded && !(root.pictured && !root.roomy && root.choices.length <= 5)
+    readonly property bool menuChoice: root.spec.kind === "choice" && root.choices.length > 0 && !root.inlineChoice
+        && !root.swatched && !root.tiled && !root.carded && !(root.pictured && root.choices.length <= 5)
     // A typeface from the installed ones: the list's last entry opens a search under the row.
     property bool fontSearch: false
     // The list a menu choice opens in place under the row (IrisStyle.choiceList); one open on the page at a time.
@@ -178,59 +158,11 @@ Item {
         }
     }
 
-    // The row under the pointer is where you are: a quiet plate, concentric with the card.
-    HoverHandler { id: rowHover }
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: Math.round(4 * root.d)
-        anchors.leftMargin: root.inset - Math.round(12 * root.d)
-        radius: IrisStyle.fieldChamfer ? 0 : IrisStyle.concentric(IrisStyle.radiusTile, anchors.margins, IrisStyle.radiusRow)
-        color: IrisStyle.fillQuiet
-        opacity: rowHover.hovered && root.spec.kind !== "list" ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
-    }
-    // The answer's column takes the wheel as a slider does: a range steps, a choice moves to its neighbour. Under the
-    // controls, so a control with its own wheel keeps it, and clicks pass through (DI82).
-    MouseArea {
-        id: wheelColumn
-        readonly property bool steps: !root.locked && ((root.spec.kind === "range" && root.inlineRange)
-            || (root.spec.kind === "choice" && (root.inlineChoice || root.inlineGlyphs || root.menuChoice || root.inlineSwatch)))
-        enabled: wheelColumn.steps
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.rightMargin: Math.round(8 * root.d)
-        width: root.controlWidth + Math.round(16 * root.d)
-        acceptedButtons: Qt.NoButton
-        property real wheelAccumulator: 0
-        // The controls on top take the hover first; the row's own handler (an ancestor) always hears it.
-        IrisWheelIntent { id: columnIntent; hovered: rowHover.hovered }
-        onWheel: wheel => {
-            if (!columnIntent.take(wheel)) return
-            const delta = (wheel.angleDelta.y || wheel.angleDelta.x) || (wheel.pixelDelta.y || wheel.pixelDelta.x) * 4
-            wheelColumn.wheelAccumulator += delta
-            const steps = Math.trunc(wheelColumn.wheelAccumulator / 120)
-            if (steps === 0) return
-            wheelColumn.wheelAccumulator -= steps * 120
-            if (root.spec.kind === "range") {
-                const step = Number(root.spec.step ?? 1)
-                const next = Math.max(root.spec.min, Math.min(root.spec.max, Number(root.value) + steps * step))
-                if (next !== Number(root.value)) root.commit(Number(next.toFixed(4)))
-                return
-            }
-            const list = root.choices
-            const at = list.findIndex(choice => choice.value === root.value || IrisOptions.same(choice.value, root.value))
-            // Down walks a choice forward, as down a list.
-            const next = Math.max(0, Math.min(list.length - 1, (at < 0 ? 0 : at) - steps))
-            if (next !== at) root.commit(list[next].value)
-        }
-    }
-
     ColumnLayout {
         id: layout
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: root.inset
+        anchors.leftMargin: 16 * root.d
         anchors.rightMargin: 16 * root.d
         anchors.verticalCenter: parent.verticalCenter
         spacing: 10 * root.d
@@ -249,7 +181,7 @@ Item {
                     implicitHeight: label.implicitHeight
                     IrisText {
                         id: label
-                        width: Math.min(implicitWidth, parent.width - resetMark.width - infoMark.width - Math.round(12 * root.d))
+                        width: Math.min(implicitWidth, parent.width - resetMark.width - Math.round(6 * root.d))
                         text: root.highlight.length > 0 ? root.marked(Translation.tr(root.spec.label)) : Translation.tr(root.spec.label)
                         textFormat: root.highlight.length > 0 ? Text.StyledText : Text.PlainText
                         font.pixelSize: IrisStyle.typeBody
@@ -293,41 +225,13 @@ Item {
                             onClicked: root.commit(root.spec.fallback)
                         }
                     }
-                    // What the row does, on demand: shown while the row is pointed at, kept lit while it's open.
-                    MouseArea {
-                        id: infoMark
-                        x: (root.modified ? resetMark.x + resetMark.width : label.x + Math.min(label.contentWidth, label.width)) + Math.round(6 * root.d)
-                        y: Math.round(label.baselineOffset - labelMetrics.xHeight / 2 - height / 2)
-                        width: Math.round(18 * root.d)
-                        height: width
-                        readonly property bool wanted: root.descriptionText.length > 0 && root.spec.explain !== true
-                        visible: infoMark.wanted
-                        enabled: infoMark.wanted
-                        opacity: root.asked || rowHover.hovered || infoMark.activeFocus ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        activeFocusOnTab: infoMark.wanted
-                        Accessible.role: Accessible.Button
-                        Accessible.name: Translation.tr("Details")
-                        Accessible.description: root.descriptionText
-                        onClicked: root.asked = !root.asked
-                        Keys.onSpacePressed: root.asked = !root.asked
-                        MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "info"
-                            fill: root.asked ? 1 : 0
-                            iconSize: Math.round(15 * root.d)
-                            color: root.asked ? IrisStyle.accent : infoMark.containsMouse ? IrisStyle.text : IrisStyle.textTertiary
-                        }
-                    }
                 }
                 IrisText {
                     id: description
-                    readonly property bool full: root.asked
+                    property bool full: false
                     Layout.fillWidth: true
-                    visible: root.explained
-                    text: root.descriptionText
+                    visible: text.length > 0
+                    text: root.spec.description ? Translation.tr(root.spec.description) : ""
                     // A chamfered Design prints its row in two inks, the name in the ink and what it does a tone down: at
                     // the shared subtext (nine tenths of the ink) both read as one black block.
                     color: IrisStyle.fieldChamfer ? IrisStyle.muted : IrisStyle.subtext
@@ -337,24 +241,24 @@ Item {
                     elide: Text.ElideRight
                     MouseArea {
                         anchors.fill: parent
-                        enabled: root.asked
+                        enabled: description.truncated || description.full
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onClicked: root.asked = false
+                        onClicked: description.full = !description.full
                     }
                 }
                 RowLayout {
                     Layout.fillWidth: true
-                    visible: root.noteText.length > 0 || root.heldText.length > 0
+                    visible: root.noteText.length > 0
                     spacing: Math.round(6 * root.d)
                     MaterialSymbol {
                         Layout.alignment: Qt.AlignTop
-                        text: root.noteText.length === 0 ? "pause_circle" : root.locked ? "link" : "info"
+                        text: root.locked ? "link" : "info"
                         iconSize: Math.round(14 * root.d)
                         color: IrisStyle.accent
                     }
                     IrisText {
                         Layout.fillWidth: true
-                        text: root.noteText.length > 0 ? root.noteText : root.heldText
+                        text: root.noteText
                         color: IrisStyle.accent
                         font.pixelSize: IrisStyle.typeMeta
                         wrapMode: Text.WordWrap
@@ -364,12 +268,11 @@ Item {
 
             // A trailing value reads on the title's line, in the interface face: the title leads, the value answers.
             IrisText {
-                readonly property int pointed: glyphLoader.item?.hoveredIndex ?? -1
-                visible: root.swatched || root.inlineGlyphs
-                Layout.alignment: root.inlineSwatch || root.inlineGlyphs ? Qt.AlignVCenter : Qt.AlignTop
-                Layout.preferredHeight: root.inlineSwatch || root.inlineGlyphs ? -1 : label.implicitHeight
+                visible: root.swatched
+                Layout.alignment: root.inlineSwatch ? Qt.AlignVCenter : Qt.AlignTop
+                Layout.preferredHeight: root.inlineSwatch ? -1 : label.implicitHeight
                 verticalAlignment: Text.AlignVCenter
-                text: Translation.tr(String((pointed >= 0 ? root.choices[pointed] : root.choices.find(choice => choice.value === root.value))?.label ?? ""))
+                text: Translation.tr(String(root.choices.find(choice => choice.value === root.value)?.label ?? ""))
                 color: IrisStyle.subtext
                 font.pixelSize: IrisStyle.typeLabel
             }
@@ -419,21 +322,6 @@ Item {
                 visible: active
                 Layout.alignment: Qt.AlignVCenter
                 sourceComponent: popupComponent
-            }
-
-            Loader {
-                id: glyphLoader
-                opacity: root.controlOpacity
-                active: root.inlineGlyphs
-                visible: active
-                Layout.alignment: Qt.AlignVCenter
-                sourceComponent: IrisSegmented {
-                    options: root.choices
-                    current: root.value
-                    glyphOnly: true
-                    accessibleName: Translation.tr(root.spec.label)
-                    onPicked: value => root.commit(value)
-                }
             }
 
             Loader {
@@ -599,7 +487,7 @@ Item {
         Loader {
             opacity: root.controlOpacity
             Layout.fillWidth: true
-            active: root.spec.kind === "choice" && !root.inlineChoice && !root.inlineGlyphs && !root.swatched && !root.menuChoice && !root.tiled && !root.carded
+            active: root.spec.kind === "choice" && !root.inlineChoice && !root.swatched && !root.menuChoice && !root.tiled && !root.carded
             visible: active
             sourceComponent: segmentedComponent
         }
@@ -727,7 +615,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.leftMargin: root.inset
+        anchors.leftMargin: 16 * root.d
         height: 1
         visible: !root.last
         color: IrisStyle.hairline

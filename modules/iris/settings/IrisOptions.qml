@@ -388,10 +388,10 @@ QtObject {
         { target: "material", group: "Shape", label: "Base corners", description: "Corners of panels, buttons and fields that don't set their own.", path: "iris.appearance.expandedRadius", kind: "range", fallback: 28, min: 16, max: 40, unit: " px", keywords: ["expanded", "radius", "buttons", "fields", "panels", "round"] },
         { target: "material", group: "Shape", label: "Corners", description: "Every radius in the family; nested corners keep stepping down.", path: "iris.appearance.theme.shape", kind: "range", fallback: 100, min: 30, max: 160, step: 5, unit: " %" },
         { target: "material", group: "Shape", label: "One shape for all", mirror: true, description: "The Island, the Dock and the bubbles share the bubbles' shape.", path: "iris.appearance.theme.linkShapes", kind: "switch", fallback: false, keywords: ["same", "match", "link", "linked", "together", "sync", "unify", "everything", "one shape", "mismo", "igual", "todo", "juntos", "vincular"] },
-        { target: "material", group: "Shape", label: "All shapes", mirror: true, visibleWhen: "iris.appearance.theme.linkShapes", path: "iris.appearance.theme.pieceShape", kind: "choice", glyphs: true, fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
-        { target: "material", group: "Shape", label: "Bubble shape", mirror: true, visibleWhen: "!iris.appearance.theme.linkShapes", path: "iris.appearance.theme.pieceShape", kind: "choice", glyphs: true, fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "capsule", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
-        { target: "material", group: "Shape", label: "Island shape", mirror: true, visibleWhen: "!iris.appearance.theme.linkShapes", path: "iris.bar.shape", kind: "choice", glyphs: true, fallback: "auto", choices: [{label:"Auto",value:"auto",glyph:"auto_awesome"},{label:"Round",value:"round",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "capsule", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
-        { target: "material", group: "Shape", label: "Dock shape", mirror: true, visibleWhen: "!iris.appearance.theme.linkShapes", path: "iris.dock.shape", kind: "choice", glyphs: true, fallback: "auto", choices: [{label:"Auto",value:"auto",glyph:"auto_awesome"},{label:"Round",value:"round",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "capsule", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
+        { target: "material", group: "Shape", label: "All shapes", mirror: true, visibleWhen: "iris.appearance.theme.linkShapes", path: "iris.appearance.theme.pieceShape", kind: "choice", fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
+        { target: "material", group: "Shape", label: "Bubble shape", mirror: true, visibleWhen: "!iris.appearance.theme.linkShapes", path: "iris.appearance.theme.pieceShape", kind: "choice", fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "capsule", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
+        { target: "material", group: "Shape", label: "Island shape", mirror: true, visibleWhen: "!iris.appearance.theme.linkShapes", path: "iris.bar.shape", kind: "choice", fallback: "auto", choices: [{label:"Auto",value:"auto",glyph:"auto_awesome"},{label:"Round",value:"round",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "capsule", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
+        { target: "material", group: "Shape", label: "Dock shape", mirror: true, visibleWhen: "!iris.appearance.theme.linkShapes", path: "iris.dock.shape", kind: "choice", fallback: "auto", choices: [{label:"Auto",value:"auto",glyph:"auto_awesome"},{label:"Round",value:"round",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "capsule", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
         { target: "material", group: "Shape", label: "Fusion", description: "How deeply shapes melt where they meet.", path: "iris.appearance.theme.melt", kind: "range", fallback: 0, min: 0, max: 200, step: 5, unit: " %" },
         { target: "material", group: "Shape", label: "Spacing", description: "Padding, gaps and control sizes.", path: "iris.appearance.density", kind: "range", fallback: 1, min: 0.8, max: 1.35, step: 0.05, unit: "×" },
         { target: "material", group: "Icons", label: "Icon pack", description: "How iRiS draws its icon plates.", path: "iris.appearance.icons.style", kind: "choice", fallback: "iris", choices: [{label:"iRiS",value:"iris",glyph:"apps"},{label:"Tiles",value:"tile",glyph:"gradient"}], keywords: ["icons", "glyphs", "symbols", "material symbols", "pack", "tile", "tiles", "plate", "gradient", "depth", "app icon", "iconos", "glifos", "paquete", "degradado", "placa"] },
@@ -459,13 +459,13 @@ QtObject {
         { target: "motion", group: "Motion", label: "Duration", visibleWhen: "iris.appearance.motion", description: "How long a shape takes to grow out of what opened it.", path: "iris.appearance.motionDuration", kind: "range", fallback:220,min:100,max:400,step:10,unit:" ms" },
         { target: "motion", group: "Motion", label: "Bounce", visibleWhen: "iris.appearance.motion", description: "How far arrivals and moves pass their place before settling, as a share of the style's own. 0 never bounces; leaving never does.", path: "iris.appearance.theme.bounce", kind: "range", fallback: 100, min: 0, max: 200, step: 10, unit: " %" },
         { target: "island", group: "Layout", label: "Island layout", description: "Hug its content in the middle, hug one end, span the whole edge as a bar, or run a thin menu bar with the Island hanging from it as a notch.", path: "iris.bar.layout", kind: "choice", fallback: "island", choices: [{label:"Island",value:"island",glyph:"pill"},{label:"Left",value:"left",glyph:"align_horizontal_left"},{label:"Right",value:"right",glyph:"align_horizontal_right"},{label:"Full width",value:"full",glyph:"width_full"},{label:"Menu bar",value:"menubar",glyph:"toolbar"}], keywords: ["menu bar", "notch", "macbook", "mac", "strip", "bar"] },
-        { target: "island", group: "Layout", label: "Screen edge", path: "iris.bar.position", kind: "choice", glyphs: true, fallback: "top", choices: [{label:"Top",value:"top",glyph:"vertical_align_top"},{label:"Bottom",value:"bottom",glyph:"vertical_align_bottom"},{label:"Left",value:"left",glyph:"align_horizontal_left"},{label:"Right",value:"right",glyph:"align_horizontal_right"}] },
+        { target: "island", group: "Layout", label: "Screen edge", path: "iris.bar.position", kind: "choice", fallback: "top", choices: [{label:"Top",value:"top",glyph:"vertical_align_top"},{label:"Bottom",value:"bottom",glyph:"vertical_align_bottom"},{label:"Left",value:"left",glyph:"align_horizontal_left"},{label:"Right",value:"right",glyph:"align_horizontal_right"}] },
         { target: "island", group: "Layout", label: "Height", description: "The resting Island, and how deep its notch melts into the edge.", path: "iris.bar.height", kind: "range", fallback: 42, min: 32, max: 64, unit: " px" },
         { target: "island", group: "Layout", label: "Gap from the edge", path: "iris.bar.margin", kind: "range", fallback:8,min:0,max:24,unit:" px" },
         { target: "island", group: "Layout", label: "Menu bar strip", visibleWhen: "iris.bar.layout=menubar", description: "Transparent leaves your items on the wallpaper, like macOS; Band lays a bar under them.", path: "iris.bar.strip", kind: "choice", fallback: "clear", choices: [{label:"Transparent",value:"clear",glyph:"blur_off"},{label:"Band",value:"band",glyph:"toolbar"}], keywords: ["transparent", "clear", "macos", "tahoe", "menu bar", "strip", "band", "background"] },
         { target: "island", group: "Shape", label: "One shape for all", description: "The Island, the Dock and the bubbles share the bubbles' shape.", path: "iris.appearance.theme.linkShapes", kind: "switch", fallback: false, keywords: ["same", "match", "link", "linked", "together", "sync", "unify", "everything", "one shape", "mismo", "igual", "todo", "juntos", "vincular"] },
-        { target: "island", group: "Shape", label: "Island shape", visibleWhen: "!iris.appearance.theme.linkShapes", description: "Auto keeps the iRiS capsule.", path: "iris.bar.shape", kind: "choice", glyphs: true, fallback: "auto", choices: [{label:"Auto",value:"auto",glyph:"auto_awesome"},{label:"Round",value:"round",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "capsule", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
-        { target: "island", group: "Shape", label: "All shapes", mirror: true, visibleWhen: "iris.appearance.theme.linkShapes", path: "iris.appearance.theme.pieceShape", kind: "choice", glyphs: true, fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
+        { target: "island", group: "Shape", label: "Island shape", visibleWhen: "!iris.appearance.theme.linkShapes", description: "Auto keeps the iRiS capsule.", path: "iris.bar.shape", kind: "choice", fallback: "auto", choices: [{label:"Auto",value:"auto",glyph:"auto_awesome"},{label:"Round",value:"round",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "capsule", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
+        { target: "island", group: "Shape", label: "All shapes", mirror: true, visibleWhen: "iris.appearance.theme.linkShapes", path: "iris.appearance.theme.pieceShape", kind: "choice", fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
         { target: "island", group: "Notch", label: "Notch", description: "The Island melts into the screen edge, like the notch it grows from.", path: "iris.bar.notch", kind: "switch", fallback: true, keywords: ["notch", "attach", "melt", "edge", "dynamic island", "float", "floating", "muesca"] },
         { target: "island", group: "Shape", label: "Notch curve", visibleWhen: "iris.bar.notch", description: "How wide the shoulders are where the Island turns into its edge.", path: "iris.bar.notchCurve", kind: "range", fallback: 100, min: 20, max: 200, step: 5, unit: " %" },
         { target: "island", group: "Shape", label: "Open corners", description: "Auto follows the Island's shape; a size here overrides it.", path: "iris.appearance.surfaces.island.radius", kind: "range", fallback: 0, min: 0, max: 44, unit: " px", zeroLabel: "Auto", keywords: ["corners", "radius", "round", "expanded", "open"] },
@@ -490,8 +490,8 @@ QtObject {
         { target: "island", group: "Player page", label: "Blocks", description: "What the player page shows, in the order you switch them on.", path: "iris.bar.mediaBlocks", kind: "pieces", fallback: ["player", "timeline", "transport", "players", "levels"], choices: [{label:"Now playing",value:"player"},{label:"Timeline",value:"timeline"},{label:"Controls",value:"transport"},{label:"Other players",value:"players"},{label:"App volume",value:"levels"}] },
         { target: "pieces", group: "Size", label: "Bubble size", description: "Bubbles off the Island, as a share of the Island's height.", path: "iris.bubbles.scale", kind: "range", fallback: 100, min: 60, max: 140, step: 5, unit: " %" },
         { target: "pieces", group: "Size", label: "One shape for all", mirror: true, description: "The Island, the Dock and the bubbles share the bubbles' shape.", path: "iris.appearance.theme.linkShapes", kind: "switch", fallback: false, keywords: ["same", "match", "link", "linked", "together", "sync", "unify", "everything", "one shape", "mismo", "igual", "todo", "juntos", "vincular"] },
-        { target: "pieces", group: "Size", label: "Bubble shape", visibleWhen: "!iris.appearance.theme.linkShapes", description: "The profile of every bubble, bar and satellite.", keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"], path: "iris.appearance.theme.pieceShape", kind: "choice", glyphs: true, fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}] },
-        { target: "pieces", group: "Size", label: "All shapes", mirror: true, visibleWhen: "iris.appearance.theme.linkShapes", path: "iris.appearance.theme.pieceShape", kind: "choice", glyphs: true, fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
+        { target: "pieces", group: "Size", label: "Bubble shape", visibleWhen: "!iris.appearance.theme.linkShapes", description: "The profile of every bubble, bar and satellite.", keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"], path: "iris.appearance.theme.pieceShape", kind: "choice", fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}] },
+        { target: "pieces", group: "Size", label: "All shapes", mirror: true, visibleWhen: "iris.appearance.theme.linkShapes", path: "iris.appearance.theme.pieceShape", kind: "choice", fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
         { target: "pieces", group: "On the contour", label: "Group into a bar", description: "Bubbles resting in the same place share one plate and read as a small bar; off, each one floats as its own disc.", path: "iris.bubbles.cluster", kind: "switch", fallback: true },
         { target: "pieces", group: "On the contour", label: "Keep them on the frame", description: "Bubbles in a corner or on an edge sit on the shell's own edge, where they read as a swelling of it, instead of floating over your windows.", path: "iris.bubbles.attach", kind: "switch", fallback: true },
         { target: "pieces", group: "On the contour", label: "Meet the edge", description: "Notch: they melt into the edge with the Island's curved shoulders.", path: "iris.bubbles.join", visibleWhen: "iris.bubbles.attach", kind: "choice", fallback: "notch", choices: [{label:"Notch",value:"notch"},{label:"Weld",value:"weld"},{label:"Gap",value:"gap"}] },
@@ -515,7 +515,7 @@ QtObject {
         { target: "bodies", group: "Control Center", label: "What it carries", description: "Every control the panel holds.", path: "iris.controlCenter.modules", kind: "list", view: Qt.resolvedUrl("IrisOrderedPieces.qml"), current: () => IrisControlOptions.modules, groups: IrisControlOptions.categories, fallback: ["platter", "media", "darkMode", "nightLight", "levels", "idle", "snip", "devices", "record", "notifications"], choices: IrisControlOptions.choicesFor(IrisControlOptions.catalogueIds), summary: () => String(IrisControlOptions.modules.length) },
         { target: "bodies", group: "Control Center", label: "Columns", description: "How many controls fit across.", path: "iris.controlCenter.columns", kind: "range", fallback: 4, min: 3, max: 6, keywords: ["grid", "layout"] },
         { target: "bodies", group: "Control Center", label: "Names under the controls", description: "Off shows a name in the header while you point at it.", path: "iris.controlCenter.labels", kind: "switch", fallback: true },
-        { target: "bodies", group: "Control Center", label: "Control shape", description: "Round draws each switch as a disc with its name under it; Tiles are rounded squares.", path: "iris.controlCenter.controls", kind: "choice", glyphs: true, fallback: "tiles", choices: [{label:"Tiles",value:"tiles",glyph:"grid_view"},{label:"Round",value:"round",glyph:"radio_button_checked"}] },
+        { target: "bodies", group: "Control Center", label: "Control shape", description: "Round draws each switch as a disc with its name under it; Tiles are rounded squares.", path: "iris.controlCenter.controls", kind: "choice", fallback: "tiles", choices: [{label:"Tiles",value:"tiles",glyph:"grid_view"},{label:"Round",value:"round",glyph:"radio_button_checked"}] },
         { target: "bodies", group: "Control Center", label: "Accent", description: "What a switch lights up with.", path: "iris.controlCenter.accent", kind: "choice", fallback: "system", choices: [{label:"Accent",value:"system"},{label:"Colourful",value:"colourful"},{label:"Mono",value:"mono"}], keywords: ["colour", "color", "tint", "toggle"] },
         { target: "bodies", group: "Control Center", label: "Slider fill", path: "iris.controlCenter.sliders", kind: "choice", fallback: "neutral", choices: [{label:"Neutral",value:"neutral"},{label:"Accent",value:"accent"}], keywords: ["brightness", "volume", "level"] },
         { target: "bodies", group: "Control Center", label: "Connections plate", description: "Up to four round switches, in this order.", path: "iris.controlCenter.platter", kind: "list", view: Qt.resolvedUrl("IrisOrderedPieces.qml"), current: () => IrisControlOptions.platterIds, limit: 4, groups: IrisControlOptions.categories, fallback: ["network", "bluetooth", "focus", "gameMode"], choices: IrisControlOptions.choicesFor(["network", "bluetooth", "vpn", "hotspot", "warp", "focus", "gameMode", "profiles", "idle", "darkMode", "nightLight", "audio", "mic"]), summary: () => String(IrisControlOptions.platterIds.length), keywords: ["wifi", "bluetooth", "platter"] },
@@ -554,13 +554,13 @@ QtObject {
         { target: "transients", group: "Feedback", label: "Pill corners", description: "Auto keeps it a capsule.", path: "iris.appearance.surfaces.osd.radius", visibleWhen: "iris.modules.osd", kind: "range", fallback: 0, min: 0, max: 32, unit: " px", zeroLabel: "Auto", keywords: ["osd", "radius", "shape"] },
         { target: "transients", group: "Feedback", label: "Pill light", tune: true, description: "Own lights volume indigo, the mic orange and brightness in the highlight.", path: "iris.appearance.surfaces.osd.light", visibleWhen: "iris.modules.osd", kind: "choice", fallback: "inherit", choices: [{label:"Own",value:"inherit",glyph:"auto_awesome"},{label:"Wallpaper",value:"wallpaper",glyph:"wallpaper"},{label:"Off",value:"off",glyph:"light_off"}], keywords: ["osd", "colour", "color", "glow", "tint"] },
         { target: "transients", group: "Feedback", label: "OSD width", path: "iris.osd.width", visibleWhen: "iris.modules.osd", kind: "range", fallback: 320, min: 260, max: 520, step: 10, unit: " px" },
-        { target: "transients", group: "Feedback", label: "OSD position", tune: true, description: "Where the level pill shows when the Island is not there to answer, like over a fullscreen game.", path: "iris.osd.position", visibleWhen: "iris.modules.osd", kind: "choice", glyphs: true, fallback: "bottom", choices: [{label:"Bottom",value:"bottom",glyph:"vertical_align_bottom"},{label:"Top",value:"top",glyph:"vertical_align_top"}], keywords: ["osd", "volume", "pill", "edge", "place"] },
+        { target: "transients", group: "Feedback", label: "OSD position", tune: true, description: "Where the level pill shows when the Island is not there to answer, like over a fullscreen game.", path: "iris.osd.position", visibleWhen: "iris.modules.osd", kind: "choice", fallback: "bottom", choices: [{label:"Bottom",value:"bottom",glyph:"vertical_align_bottom"},{label:"Top",value:"top",glyph:"vertical_align_top"}], keywords: ["osd", "volume", "pill", "edge", "place"] },
         { target: "transients", group: "Feedback", label: "Distance from the edge", path: "iris.osd.offset", visibleWhen: "iris.modules.osd", kind: "range", fallback: 18, min: 0, max: 240, step: 2, unit: " px", keywords: ["osd", "margin", "offset", "gap"] },
         { target: "transients", group: "Feedback", label: "Time on screen", description: "Songs and warnings stay a little longer so they can be read.", path: "iris.osd.duration", visibleWhen: "iris.modules.osd", kind: "range", fallback: 1500, min: 800, max: 5000, step: 100, unit: " ms", keywords: ["osd", "timeout", "duration", "hide"] },
-        { target: "dock", group: "Look", label: "Screen edge", description: "Auto keeps the Dock on the edge opposite the Island.", path: "iris.dock.position", kind: "choice", glyphs: true, fallback: "auto", choices: root.dockEdgeChoices },
+        { target: "dock", group: "Look", label: "Screen edge", description: "Auto keeps the Dock on the edge opposite the Island.", path: "iris.dock.position", kind: "choice", fallback: "auto", choices: root.dockEdgeChoices },
         { target: "dock", group: "Look", label: "One shape for all", mirror: true, description: "The Island, the Dock and the bubbles share the bubbles' shape.", path: "iris.appearance.theme.linkShapes", kind: "switch", fallback: false, keywords: ["same", "match", "link", "linked", "together", "sync", "unify", "everything", "one shape", "mismo", "igual", "todo", "juntos", "vincular"] },
-        { target: "dock", group: "Look", label: "All shapes", mirror: true, visibleWhen: "iris.appearance.theme.linkShapes", path: "iris.appearance.theme.pieceShape", kind: "choice", glyphs: true, fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
-        { target: "dock", group: "Look", label: "Dock shape", visibleWhen: "!iris.appearance.theme.linkShapes", description: "Auto keeps the iRiS capsule.", path: "iris.dock.shape", kind: "choice", glyphs: true, fallback: "auto", choices: [{label:"Auto",value:"auto",glyph:"auto_awesome"},{label:"Round",value:"round",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "capsule", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
+        { target: "dock", group: "Look", label: "All shapes", mirror: true, visibleWhen: "iris.appearance.theme.linkShapes", path: "iris.appearance.theme.pieceShape", kind: "choice", fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
+        { target: "dock", group: "Look", label: "Dock shape", visibleWhen: "!iris.appearance.theme.linkShapes", description: "Auto keeps the iRiS capsule.", path: "iris.dock.shape", kind: "choice", fallback: "auto", choices: [{label:"Auto",value:"auto",glyph:"auto_awesome"},{label:"Round",value:"round",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "capsule", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
         { target: "dock", group: "Notch", label: "Dock notch", description: "The Dock melts into its screen edge like the Island's notch.", path: "iris.dock.notch", kind: "switch", fallback: true, keywords: ["notch", "attach", "melt", "edge", "float", "floating", "muesca"] },
         // A body welded to the frame is the frame's material (IrisField.glassOf): its own material shows while it floats.
         { target: "dock", group: "Look", label: "Material", description: "Follow iRiS, stay solid, glass over the blurred wallpaper, or real blur of the windows below (Niri 26.04+).", path: "iris.dock.material", showIf: () => !(IrisFrame.framed && (Config.options?.iris?.dock?.notch ?? false)), kind: "choice", fallback: "inherit", choices: [{label:"iRiS",value:"inherit"},{label:"Solid",value:"solid"},{label:"Glass",value:"glass"},{label:"Blur (beta)",value:"blur"}] },
@@ -862,7 +862,7 @@ QtObject {
         { section: "orbit", group: "Behaviour", label: "Bring windows back to", description: "Where a set-aside window returns to: the workspace it left, or the one you are on.", path: "iris.orbit.stashRestore", kind: "choice", fallback: "original", choices: [{label:"Where it was",value:"original",glyph:"undo"},{label:"Where I am",value:"current",glyph:"my_location"}], visibleWhen: "iris.orbit.showMinimised" },
         { section: "orbit", group: "Behaviour", label: "Arrow keys", description: "Niri: up and down change workspace, left and right change window.", path: "iris.orbit.keys", tune: true, kind: "choice", fallback: "niri", choices: [{label:"Niri",value:"niri",glyph:"swap_vert"},{label:"Swapped",value:"swapped",glyph:"swap_horiz"}], visibleWhen: "iris.orbit.enable" },
         { section: "orbit", group: "Hot corner", label: "Hot corner", description: "Rest the pointer in a corner of the screen and Orbit opens.", path: "iris.orbit.hotCorner", kind: "switch", fallback: true, visibleWhen: "iris.orbit.enable", keywords: ["corner", "pointer", "mouse", "gesture", "open"] },
-        { section: "orbit", group: "Hot corner", label: "Corner", description: "Auto picks a free one: a corner Niri's overview doesn't use and where none of your pieces sits. Niri's own corner is never taken.", path: "iris.orbit.hotCornerAt", kind: "choice", glyphs: true, fallback: "auto", choices: [{label:"Auto",value:"auto",glyph:"auto_awesome"},{label:"Top left",value:"topLeft",glyph:"north_west"},{label:"Top right",value:"topRight",glyph:"north_east"},{label:"Bottom left",value:"bottomLeft",glyph:"south_west"},{label:"Bottom right",value:"bottomRight",glyph:"south_east"}], visibleWhen: "iris.orbit.hotCorner" },
+        { section: "orbit", group: "Hot corner", label: "Corner", description: "Auto picks a free one: a corner Niri's overview doesn't use and where none of your pieces sits. Niri's own corner is never taken.", path: "iris.orbit.hotCornerAt", kind: "choice", fallback: "auto", choices: [{label:"Auto",value:"auto",glyph:"auto_awesome"},{label:"Top left",value:"topLeft",glyph:"north_west"},{label:"Top right",value:"topRight",glyph:"north_east"},{label:"Bottom left",value:"bottomLeft",glyph:"south_west"},{label:"Bottom right",value:"bottomRight",glyph:"south_east"}], visibleWhen: "iris.orbit.hotCorner" },
         { section: "orbit", group: "Hot corner", label: "Corner size", path: "iris.orbit.hotCornerSize", kind: "range", fallback: 12, min: 4, max: 40, step: 2, unit: " px", visibleWhen: "iris.orbit.hotCorner" },
         { section: "orbit", group: "Hot corner", label: "Wait before opening", description: "How long the pointer rests in the corner.", path: "iris.orbit.hotCornerDelay", kind: "range", fallback: 150, min: 0, max: 600, step: 10, unit: " ms", zeroLabel: "At once", visibleWhen: "iris.orbit.hotCorner" },
         { section: "controlCenter", group: "Control Center", label: "Control Center", path: "iris.modules.controlCenter", kind: "switch", fallback:true },
@@ -1270,62 +1270,8 @@ QtObject {
     // The shared iNiR pages that still act under iRiS, as the Hub entry lists them. Pages for other families stay out.
     readonly property var morePages: [
         { group: "Shell", key: "hub", label: "Community Hub", detail: "Widgets, themes and web apps from other people", icon: "storefront", tintName: "pink", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["hub", "community", "plugins", "extensions", "widgets", "themes", "store", "download", "install", "comunidad"] },
-        { group: "Shell", key: "errors", home: "general", label: "Shell errors", detail: "What the shell and qs-rs logged, and a check of every file", icon: "bug_report", tintName: "red", get tint() { return IrisStyle.identity[this.tintName] }, keywords: ["errors", "warnings", "log", "logs", "bugs", "qs-rs", "debug", "errores"] },
     ]
     readonly property var sectionOrder: root.sections.map(section => section.id)
-    // Settings is your desktop: each piece on it holds the areas that shape it, and its inspector grows out of it.
-    // What has no piece on screen is a room of the map. An area opens in the first entry that leads with it.
-    readonly property var pieces: [
-        { id: "island", label: "Island", glyph: "pill", areas: ["bar", "bubbles", "player"] },
-        { id: "bubble", label: "Bubbles", glyph: "bubble_chart", areas: ["bubbles"] },
-        { id: "dock", label: "Dock", glyph: "dock_to_bottom", areas: ["dock"] },
-        { id: "frame", label: "Frame", glyph: "crop_free", areas: ["appearance"], lead: ["Frame", "Material", "Glass", "Edges"] },
-        { id: "desktop", label: "Desktop", glyph: "wallpaper", areas: ["wallpaper", "desktop", "widgets"] },
-        { id: "widget", label: "Widgets", glyph: "dashboard_customize", areas: ["widgets"] },
-        { id: "sidebars", label: "Side Panels", glyph: "dock_to_right", areas: ["sidebars"] },
-        { id: "controlCenter", label: "Control Center", glyph: "toggle_on", areas: ["controlCenter"] },
-        { id: "notifications", label: "Notifications", glyph: "notifications", areas: ["notifications"] },
-        { id: "spotlight", label: "Spotlight", glyph: "search", areas: ["spotlight"] },
-        { id: "orbit", label: "Orbit", glyph: "workspaces", areas: ["orbit"] },
-        { id: "windows", label: "Windows", glyph: "select_window", areas: ["windows"] }
-    ]
-    readonly property var rooms: [
-        { id: "look", label: "Look", glyph: "style", areas: ["appearance", "colour", "motion"] },
-        { id: "general", areas: ["general"] },
-        { id: "sound", areas: ["sound"] },
-        { id: "display", areas: ["display"] },
-        { id: "keyboard", areas: ["keyboard"] },
-        { id: "battery", areas: ["battery"] },
-        { id: "gaming", areas: ["gaming"] },
-        { id: "capture", areas: ["capture"] },
-        { id: "lock", areas: ["lock", "login"] },
-        { id: "anime", areas: ["anime"] },
-        { id: "sources", areas: ["sources"] },
-        { id: "hub", page: "hub", label: "Community Hub", glyph: "storefront", tintName: "pink" },
-        { id: "shortcuts", page: "shortcuts", label: "Shortcuts", glyph: "keyboard_command_key", tintName: "gray" },
-        { id: "errors", page: "errors", label: "Shell errors", glyph: "bug_report", tintName: "red" },
-        { id: "about", page: "about", label: "About", glyph: "info", tintName: "gray" }
-    ]
-    function entryById(id: string): var {
-        return root.pieces.find(entry => entry.id === id) ?? root.rooms.find(entry => entry.id === id) ?? null
-    }
-    function entryLabel(entry: var): string {
-        if (!entry) return ""
-        return Translation.tr(entry.label ?? root.sectionById(entry.areas?.[0] ?? "").title)
-    }
-    function entryGlyph(entry: var): string { return entry?.glyph ?? root.sectionById(entry?.areas?.[0] ?? "").icon ?? "settings" }
-    function entryTint(entry: var): color {
-        if (entry?.tintName) return IrisStyle.identity[entry.tintName]
-        return root.sectionById(entry?.areas?.[0] ?? "").tint
-    }
-    // Where an area lives: a piece that leads with that group (the frame's own groups of Style), else the entry that
-    // leads with the area, else the first that holds it.
-    function ownerOf(section: string, group: string): var {
-        const all = root.pieces.concat(root.rooms)
-        return all.find(entry => entry.areas?.[0] === section && (entry.lead ?? []).includes(group ?? ""))
-            ?? all.find(entry => entry.areas?.[0] === section && !entry.lead)
-            ?? all.find(entry => (entry.areas ?? []).includes(section)) ?? null
-    }
     // Customize's areas (Studio's rail, the capsule's sheets): identity, what each is, one line worth knowing.
     readonly property var customizeAreas: [
         { id: "material", label: "Material", glyph: "layers", get tint() { return IrisStyle.identity.purple }, tipOf: "", tip: "Character sets corners, fills and contrast at once; the rows below fine-tune it.",
@@ -1358,107 +1304,6 @@ QtObject {
         const area = root.customizeArea(id)
         if (area.tip) return Translation.tr(area.tip)
         return area.tipOf.length > 0 ? Translation.tr(root.sectionById(area.tipOf).tip ?? "") : ""
-    }
-    // Where each setting lands on screen and what can overrule it, read off the shell's code by hand (DI59).
-    // Longest prefix wins; `over` are settings that win over this one while they're on.
-    readonly property var everySurface: ["bar", "bubbles", "dock", "sidebars", "controlCenter", "spotlight", "orbit", "lock"]
-    readonly property var reach: [
-        { prefix: "iris.appearance.density", surfaces: root.everySurface.concat(["windows"]) },
-        { prefix: "iris.appearance.fontFamily", surfaces: root.everySurface.concat(["apps"]) },
-        { prefix: "iris.appearance.theme.linkShapes", surfaces: ["bar", "bubbles", "dock"] },
-        { prefix: "iris.appearance.theme.pieceShape", surfaces: ["bar", "bubbles", "dock"] },
-        { prefix: "iris.appearance.surfaces.island", surfaces: ["bar"] },
-        { prefix: "iris.appearance.surfaces.cards", surfaces: ["bubbles"] },
-        { prefix: "iris.appearance.surfaces.controlCenter", surfaces: ["controlCenter"] },
-        { prefix: "iris.appearance.surfaces.panels", surfaces: ["sidebars"] },
-        { prefix: "iris.appearance.surfaces.spotlight", surfaces: ["spotlight"] },
-        { prefix: "iris.appearance.surfaces.orbit", surfaces: ["orbit"] },
-        { prefix: "iris.appearance.surfaces.settings", surfaces: [] },
-        { prefix: "iris.appearance.surfaces.menus", surfaces: ["desktop", "bar", "dock"] },
-        { prefix: "iris.appearance.surfaces.gallery", surfaces: ["wallpaper"] },
-        { prefix: "iris.appearance.surfaces.osd", surfaces: ["bar", "sound"] },
-        { prefix: "iris.surround.enable", surfaces: ["desktop", "bar", "windows"] },
-        { prefix: "iris.surround.thickness", surfaces: ["desktop", "bar", "windows"] },
-        { prefix: "iris.bar.position", surfaces: ["bar", "dock", "windows"] },
-        { prefix: "iris.bar.height", surfaces: ["bar", "windows"] },
-        { prefix: "iris.bar.margin", surfaces: ["bar", "windows"] },
-        { prefix: "iris.bar.notch", surfaces: ["bar", "windows"] },
-        { prefix: "iris.dock.position", surfaces: ["dock", "bar", "windows"] },
-        { prefix: "iris.dock.enable", surfaces: ["dock", "windows"] },
-        { prefix: "iris.dock.iconSize", surfaces: ["dock", "windows"] },
-        { prefix: "iris.dock.notch", surfaces: ["dock", "windows"] },
-        { prefix: "iris.appearance.glass", surfaces: ["appearance"], over: ["gameMode.disableEffects", "performance.lowPower"] },
-        { prefix: "iris.appearance.motion", surfaces: ["motion"], over: ["gameMode.disableAnimations", "performance.lowPower"] },
-        { prefix: "iris.appearance.", surfaces: root.everySurface },
-        { prefix: "iris.bar.screenList", surfaces: ["bar", "display"] },
-        { prefix: "iris.bar.reserveSpace", surfaces: ["bar", "windows"] },
-        { prefix: "iris.bar.", surfaces: ["bar"] },
-        { prefix: "iris.player.", surfaces: ["bar", "player"] },
-        { prefix: "iris.bubbles.", surfaces: ["bubbles"] },
-        { prefix: "iris.tray.", surfaces: ["bubbles"] },
-        { prefix: "iris.dock.reserveSpace", surfaces: ["dock", "windows"] },
-        { prefix: "iris.dock.", surfaces: ["dock"] },
-        { prefix: "iris.osd.", surfaces: ["bar", "sound"], over: ["iris.osd.fullscreen"] },
-        { prefix: "iris.modules.osd", surfaces: ["bar", "sound"] },
-        { prefix: "osd.connections", surfaces: ["bar"] },
-        { prefix: "iris.notifications.", surfaces: ["notifications"], over: ["notifications.silent", "gameMode.suppressNotifications"] },
-        { prefix: "iris.modules.notificationPopup", surfaces: ["notifications", "gaming"] },
-        { prefix: "notifications.", surfaces: ["notifications"], over: ["gameMode.suppressNotifications"] },
-        { prefix: "iris.orbit.", surfaces: ["orbit"] },
-        { prefix: "iris.palette.", surfaces: ["spotlight"] },
-        { prefix: "search.", surfaces: ["spotlight"] },
-        { prefix: "iris.lock.", surfaces: ["lock"] },
-        { prefix: "lock.", surfaces: ["lock", "login"] },
-        { prefix: "idle.", surfaces: ["lock", "battery"] },
-        { prefix: "iris.surround.", surfaces: ["player", "desktop"] },
-        { prefix: "background.edgeWidgets", surfaces: ["player", "desktop"] },
-        { prefix: "background.effects.enableBlur", surfaces: ["desktop"], over: ["gameMode.disableEffects", "performance.lowPower"] },
-        { prefix: "background.enableAnimation", surfaces: ["desktop", "wallpaper"], over: ["background.videoPause", "gameMode.disableAnimations"] },
-        { prefix: "background.transition", surfaces: ["wallpaper"], over: ["gameMode.disableAnimations"] },
-        { prefix: "background.widgets", surfaces: ["widgets", "display"] },
-        { prefix: "background.", surfaces: ["desktop", "wallpaper"] },
-        { prefix: "wallpapers.", surfaces: ["wallpaper"] },
-        { prefix: "iris.wallpaper.", surfaces: ["wallpaper"] },
-        { prefix: "iris.modules.desktopWidgets", surfaces: ["desktop", "widgets"] },
-        { prefix: "iris.modules.controlCenter", surfaces: ["controlCenter"] },
-        { prefix: "iris.modules.palette", surfaces: ["spotlight"] },
-        { prefix: "iris.anime.", surfaces: ["anime", "bubbles"] },
-        { prefix: "time.", surfaces: ["bar", "lock", "desktop"] },
-        { prefix: "light.", surfaces: ["display"] },
-        { prefix: "gameMode.", surfaces: ["gaming"] },
-        { prefix: "sounds.", surfaces: ["sound"] },
-        { prefix: "audio.", surfaces: ["sound"] },
-        { prefix: "screenRecord.", surfaces: ["capture", "bar"] },
-        { prefix: "regionSelector.", surfaces: ["capture"] },
-        { prefix: "battery.", surfaces: ["battery"] },
-        { prefix: "performance.lowPower", surfaces: ["appearance", "motion", "desktop"] }
-    ]
-    function settingAt(path: string): var { return root.settings.find(spec => spec.path === path) ?? null }
-    // Game mode's switches only hold anything back while a game runs.
-    // A choice (Fullscreen's pill) only holds back while its moment comes, so it's never shown as holding now.
-    function on(path: string): bool { return Config.getNestedValue(path, false) === true && (!path.startsWith("gameMode.") || GameMode.active) }
-    function relationsOf(spec: var): var {
-        const path = String(spec.path ?? "")
-        const rule = root.reach.filter(r => path.startsWith(r.prefix)).sort((a, b) => b.prefix.length - a.prefix.length)[0] ?? { surfaces: [] }
-        // "apps" is outside the shell: GTK and Qt apps take the font too.
-        const touches = rule.surfaces.filter(id => id !== spec.section).map(id => id === "apps" ? { id: "", label: "Your apps" } : { id: id, label: root.sectionById(id).title })
-        const over = (rule.over ?? []).filter(p => p !== path).map(p => {
-            const other = root.settingAt(p)
-            // Named with its group: "Stop glass and blur" alone doesn't say it's Game mode's.
-            return other ? { id: other.section, label: other.group && other.group !== other.label ? Translation.tr(other.group) + " · " + Translation.tr(other.label) : other.label, active: root.on(p) } : null
-        }).filter(o => o !== null)
-        return { touches: touches, over: over }
-    }
-    // A group's or an area's reach: every piece its rows land on beyond it, and what can overrule them.
-    function reachOf(rows: var): var {
-        const touches = [], over = []
-        // A mirror answers where it lives; here it would claim its home area's reach.
-        for (const spec of rows.filter(spec => !spec.mirror)) {
-            const rel = root.relationsOf(spec)
-            for (const one of rel.touches) if (!touches.some(other => other.label === one.label)) touches.push(one)
-            for (const one of rel.over) if (!over.some(other => other.label === one.label)) over.push(one)
-        }
-        return { touches: touches, over: over }
     }
     function sectionById(id: string): var {
         return root.sections.find(section => section.id === id) ?? root.sections[0]

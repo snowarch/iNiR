@@ -44,6 +44,7 @@ PanelWindow {
         { part: "scrubber", name: "scrubber · knob", w: 150, h: 20, look: ({ shownValue: 0.7, knob: true }) },
         { part: "ring", name: "ring", w: 34, h: 34, look: ({ progress: 0.66, stroke: 3 }) },
         { part: "cardHeader", name: "card head", w: 150, h: 46, look: ({ title: "Bluetooth", detail: "2 connected" }) },
+        { part: "groupHeader", name: "group head", w: 150, h: 30, look: ({ title: "Notifications" }) },
         { part: "controlTile", name: "control · on", w: 84, h: 70, look: ({ skinData: ({ shape: "tile",
             control: ({ lit: true, ready: true, glyph: "dark_mode", label: "Dark", tint: IrisStyle.accent, moduleId: "darkMode" }) }) }) },
         { part: "controlTile", name: "control · off", w: 84, h: 70, look: ({ skinData: ({ shape: "tile",

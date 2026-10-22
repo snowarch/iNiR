@@ -57,8 +57,6 @@ binds {
     // Wallpaper picker, settings, cheatsheet, panel family switch.
     Ctrl+Alt+T { spawn "inir" "wallpaperSelector" "toggle"; }
     Mod+Comma { spawn "inir" "settings"; }
-    // iRiS: the piece under the pointer grows its settings out of itself.
-    Mod+Alt+MouseLeft { spawn "inir" "iris" "inspect"; }
     Mod+Slash { spawn "inir" "cheatsheet" "toggle"; }
     Mod+Shift+W { spawn "inir" "panelFamily" "cycle"; }
 
