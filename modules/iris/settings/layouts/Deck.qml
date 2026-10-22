@@ -201,12 +201,13 @@ Item {
     readonly property real gap: root.u(24)
     readonly property rect headRect: {
         if (root.windowed) return Qt.rect(0, 0, root.width, root.u(60))
+        // under the Island, never over it: the resting Island and its side bubbles stay in view
         const w = Math.min(root.u(760), root.room.width)
-        return Qt.rect(Math.round((root.width - w) / 2), Math.max(root.u(4), IrisFrame.band - root.u(2)), w, root.u(50))
+        return Qt.rect(Math.round((root.width - w) / 2), root.room.y, w, root.u(50))
     }
     readonly property rect cardRect: {
         if (root.windowed) return Qt.rect(deckRow.x + cardSlot.x, deckRow.y, cardSlot.width, deckRow.height)
-        const top = Math.max(root.room.y, root.headRect.y + root.headRect.height + root.u(16))
+        const top = root.headRect.y + root.headRect.height + root.u(14)
         const w = Math.round(Math.max(Math.min(root.u(640), root.room.width), Math.min(root.u(820), root.room.width * 0.46)))
         return Qt.rect(Math.round((root.width - w) / 2), top, w, Math.max(0, root.room.y + root.room.height - top))
     }
@@ -232,10 +233,10 @@ Item {
         const h = root.headRect
         out.push({ id: "deckHead", x: h.x, y: h.y, width: h.width, height: h.height, radius: h.height / 2 })
         const c = root.cardRect
-        out.push({ id: "deckCard", x: c.x + root.shift, y: c.y, width: c.width, height: c.height, radius: root.u(30) })
+        out.push({ id: "deckCard", x: c.x + root.shift, y: c.y, width: c.width, height: c.height, radius: IrisStyle.fieldChamfer ? 0 : root.u(30) })
         for (const step of root.steps) {
             const r = root.sideRect(step)
-            out.push({ id: "deckSide" + step, x: r.x + root.shift, y: r.y, width: r.width, height: r.height, radius: root.u(28) })
+            out.push({ id: "deckSide" + step, x: r.x + root.shift, y: r.y, width: r.width, height: r.height, radius: IrisStyle.fieldChamfer ? 0 : root.u(28) })
         }
         return out
     }
@@ -294,7 +295,7 @@ Item {
         Rectangle {
             visible: root.windowed
             anchors.fill: parent
-            radius: root.u(22)
+            radius: IrisStyle.fieldChamfer ? 0 : root.u(22)
             color: IrisStyle.glassy ? IrisStyle.readingSidebar : Qt.rgba(0, 0, 0, IrisStyle.light ? 0.04 : 0.15) // iris-literal: the fold sits a step under the card
             border.width: 1
             border.color: IrisStyle.hairline
@@ -322,7 +323,7 @@ Item {
             y: card.inset
             width: card.width - 2 * card.inset
             height: Math.round(Math.min(root.u(300), card.height * 0.36))
-            radius: root.u(root.windowed ? 22 : 30) - card.inset
+            radius: IrisStyle.fieldChamfer ? 0 : root.u(root.windowed ? 22 : 30) - card.inset
             color: IrisStyle.readingCard
             MouseArea { anchors.fill: parent; acceptedButtons: Qt.NoButton; onWheel: wheel => root.wheel(wheel) }
             DotTitle {
@@ -348,16 +349,31 @@ Item {
                 id: stage
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.bottom: parent.bottom
+                anchors.bottom: stageLine.top
                 anchors.top: heroLine.bottom
                 anchors.margins: root.u(12)
-                radius: Math.max(IrisStyle.radiusRow, hero.radius - root.u(12))
+                anchors.bottomMargin: root.u(8)
+                radius: IrisStyle.fieldChamfer ? 0 : Math.max(IrisStyle.radiusRow, hero.radius - root.u(12))
                 visible: stage.available
                 standIn: true
+                captionOutside: true
                 section: root.searching || root.home ? "" : root.section
                 niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
                 niriRevision: IrisNiri.revision
                 group: String(root.host?.leadGroup ?? "")
+            }
+            // What the stage shows now, under it instead of on it.
+            IrisText {
+                id: stageLine
+                x: root.u(16)
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: root.u(10)
+                width: hero.width - 2 * x
+                height: stage.caption.length > 0 ? implicitHeight : 0
+                elide: Text.ElideRight
+                text: stage.caption
+                color: IrisStyle.muted
+                font.pixelSize: IrisStyle.typeMeta
             }
         }
         Home {
@@ -383,7 +399,7 @@ Item {
                 property bool shown: false
                 z: 10
                 visible: ring.shown && root.driving
-                radius: root.u(16)
+                radius: IrisStyle.fieldChamfer ? 0 : root.u(16)
                 color: Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, 0.05)
                 border.width: Math.max(2, root.u(2))
                 border.color: root.engaged ? root.signal : IrisStyle.text
@@ -399,7 +415,7 @@ Item {
             width: card.width - 2 * card.inset
             height: root.u(34)
             y: card.height - (root.windowed ? card.inset : root.u(36)) - hintBar.height
-            radius: height / 2
+            radius: IrisStyle.capsule(height)
             color: IrisStyle.fillQuiet
             Row {
                 anchors.centerIn: parent
@@ -480,7 +496,7 @@ Item {
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
         Accessible.name: key.name
-        Rectangle { anchors.fill: parent; radius: height / 2; color: key.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet }
+        Rectangle { anchors.fill: parent; radius: IrisStyle.capsule(height); color: key.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet }
         MaterialSymbol { anchors.centerIn: parent; text: key.glyph; iconSize: root.u(18); color: IrisStyle.text }
     }
     // The area before or after, named in the Label voice with its arrow.
@@ -495,7 +511,7 @@ Item {
         Accessible.role: Accessible.Button
         Accessible.name: Translation.tr(String(stepKey.entry?.title ?? ""))
         onClicked: root.host.stepSection(stepKey.step)
-        Rectangle { anchors.fill: parent; radius: height / 2; color: stepKey.containsMouse ? IrisStyle.fillHover : "transparent" }
+        Rectangle { anchors.fill: parent; radius: IrisStyle.capsule(height); color: stepKey.containsMouse ? IrisStyle.fillHover : "transparent" }
         Row {
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: stepKey.step < 0 ? parent.left : undefined
@@ -566,13 +582,54 @@ Item {
                 font.pixelSize: IrisStyle.typeMeta
             }
             IrisGroupPreview {
+                id: sideStage
                 visible: side.near && available
                 width: parent.width
                 height: root.u(200)
-                radius: root.u(18)
+                radius: IrisStyle.fieldChamfer ? 0 : root.u(18)
                 standIn: true
+                captionOutside: true
                 section: side.near && side.entry?.id !== "home" ? String(side.entry?.id ?? "") : ""
                 playing: false
+            }
+            // Its first values, as the card would show them, read through the distance.
+            Column {
+                id: sideRows
+                readonly property int fit: Math.max(0, Math.min(12, Math.floor((side.height - root.u(370)) / root.u(44))))
+                readonly property var rows: { Config.revision; return side.near && side.entry && side.entry.id !== "home" && sideRows.fit > 0 ? (root.host?.tellingRows(sideRows.fit, side.entry.id) ?? []) : [] }
+                visible: sideRows.rows.length > 0
+                width: parent.width
+                topPadding: root.u(6)
+                opacity: 0.72
+                Repeater {
+                    model: sideRows.rows
+                    Item {
+                        id: sideRow
+                        required property var modelData
+                        required property int index
+                        width: sideRows.width
+                        height: root.u(44)
+                        Rectangle { visible: sideRow.index > 0; width: parent.width; height: 1; color: IrisStyle.hairline }
+                        IrisText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width * 0.6
+                            elide: Text.ElideRight
+                            text: Translation.tr(String(sideRow.modelData.label ?? ""))
+                            color: IrisStyle.subtext
+                            font.pixelSize: IrisStyle.typeMeta
+                        }
+                        IrisText {
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.min(implicitWidth, parent.width * 0.38)
+                            elide: Text.ElideRight
+                            text: { Config.revision; return root.host?.answerOf(sideRow.modelData) ?? "" }
+                            color: IrisStyle.text
+                            font.pixelSize: IrisStyle.typeMeta
+                            font.weight: IrisStyle.weight(Font.DemiBold)
+                        }
+                    }
+                }
             }
         }
     }
@@ -593,7 +650,7 @@ Item {
         onWheel: wheel => root.wheel(wheel)
         Rectangle {
             anchors.fill: parent
-            radius: root.u(20)
+            radius: IrisStyle.fieldChamfer ? 0 : root.u(20)
             color: spine.near ? IrisStyle.fillQuiet : "transparent"
             border.width: 1
             border.color: IrisStyle.hairline

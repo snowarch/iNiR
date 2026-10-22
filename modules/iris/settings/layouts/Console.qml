@@ -73,6 +73,7 @@ Item {
     readonly property var claims: root.searching ? [] : IrisOptions.settings.filter(spec => spec.section === root.section)
     property var opened: ({})
     function folded(group: var): var { return group.rows.filter(spec => IrisOptions.fineTune(spec) && !IrisOptions.changed(spec)) }
+    function unitsOf(kind: string): int { return kind === "switch" ? 1 : kind === "row" ? 4 : 2 }
     function shape(spec: var): string {
         if (spec.kind === "switch") return "switch"
         if (spec.kind === "range" && Number.isFinite(Number(spec.min)) && Number.isFinite(Number(spec.max))) return "range"
@@ -220,7 +221,7 @@ Item {
                                 onClicked: root.host.selectSection(key.modelData.id)
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: root.u(16)
+                                    radius: IrisStyle.fieldChamfer ? 0 : root.u(16)
                                     color: key.on ? IrisStyle.text : key.containsMouse ? IrisStyle.fillHover : root.plate
                                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                                 }
@@ -326,10 +327,14 @@ Item {
             Column {
                 id: board
                 width: boardFlick.width
-                Column {
+                // Groups pack like tiles: a short group (up to three units, no full-width row) stands beside the next one
+                // instead of leaving the rest of its line as air.
+                Flow {
                     id: boardColumn
                     width: parent.width
-                    spacing: root.u(18)
+                    spacing: root.gap
+                    readonly property real unit: Math.floor((width - 3 * root.gap) / 4)
+                    function span(units: int): real { return units * boardColumn.unit + (units - 1) * root.gap }
                     Repeater {
                         model: root.groups
                         Column {
@@ -339,10 +344,15 @@ Item {
                             readonly property bool open: root.opened[root.section + "/" + group.modelData.key] === true
                             readonly property bool folds: group.tuned.length >= 2 && group.tuned.length < group.modelData.rows.length
                             readonly property var shown: group.folds && !group.open ? group.modelData.rows.filter(spec => !group.tuned.includes(spec)) : group.modelData.rows
-                            width: boardColumn.width
+                            readonly property int units: group.shown.reduce((sum, spec) => sum + root.unitsOf(root.shape(spec)), group.folds ? 1 : 0)
+                            readonly property bool short: group.units <= 3 && !group.shown.some(spec => root.shape(spec) === "row")
+                            width: group.short ? boardColumn.span(group.units) : boardColumn.width
                             spacing: root.gap
+                            bottomPadding: root.u(8)
                             Mono {
                                 visible: group.modelData.key.length > 0
+                                width: parent.width
+                                elide: Text.ElideRight
                                 text: Translation.tr(group.modelData.key)
                                 color: IrisStyle.textTertiary
                             }
@@ -350,14 +360,14 @@ Item {
                                 id: flow
                                 width: parent.width
                                 spacing: root.gap
-                                readonly property real unit: Math.floor((width - 3 * root.gap) / 4)
+                                readonly property real unit: boardColumn.unit
                                 Repeater {
                                     model: ScriptModel { values: group.shown; objectProp: "label" }
                                     Loader {
                                         id: cell
                                         required property var modelData
                                         readonly property string kind: root.shape(cell.modelData)
-                                        width: cell.kind === "switch" ? flow.unit : cell.kind === "row" ? flow.width : 2 * flow.unit + root.gap
+                                        width: cell.kind === "row" ? flow.width : boardColumn.span(root.unitsOf(cell.kind))
                                         sourceComponent: cell.kind === "switch" ? switchTile : cell.kind === "range" ? rangeTile : cell.kind === "choice" ? choiceTile : rowTile
                                         onLoaded: item.spec = cell.modelData
                                     }
@@ -411,25 +421,26 @@ Item {
         readonly property bool focusedHere: root.focused() === tile
         readonly property bool noted: { Config.revision; return tile.spec?.note && (tile.spec?.locked?.() || tile.spec?.warns === true) ? String(tile.spec.note() ?? "").length > 0 : false }
         function act(): void {}
-        height: root.u(84)
+        height: root.u(88)
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
         Accessible.name: tile.text
         onClicked: { root.cursor = root.stops().indexOf(tile); tile.act() }
+        // On is said by an ink ring and the switch's own knob, not a white plate: a page of ons stays a page.
         Rectangle {
             anchors.fill: parent
-            radius: root.u(20)
-            color: tile.on ? IrisStyle.text : tile.dashed ? "transparent" : tile.containsMouse ? IrisStyle.fillHover : root.plate
-            border.width: tile.dashed ? 1 : 0
-            border.color: IrisStyle.hairlineStrong
+            radius: IrisStyle.fieldChamfer ? 0 : root.u(20)
+            color: tile.dashed ? "transparent" : tile.containsMouse ? IrisStyle.fillHover : root.plate
+            border.width: tile.dashed ? 1 : tile.on ? Math.max(1, root.u(1.5)) : 0
+            border.color: tile.dashed ? IrisStyle.hairlineStrong : IrisStyle.text
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
         }
         // The key focus: a ring of ink, of signal while a value is held.
         Rectangle {
             anchors.fill: parent
             anchors.margins: -root.u(3)
-            radius: root.u(23)
+            radius: IrisStyle.fieldChamfer ? 0 : root.u(23)
             visible: tile.focusedHere
             color: "transparent"
             border.width: Math.max(2, root.u(2))
@@ -451,7 +462,7 @@ Item {
             width: parent.width - root.u(40)
             elide: Text.ElideRight
             text: tile.caption
-            color: tile.on ? Qt.rgba(IrisStyle.surfaceOpaque.r, IrisStyle.surfaceOpaque.g, IrisStyle.surfaceOpaque.b, 0.62) : IrisStyle.muted
+            color: tile.on ? IrisStyle.text : IrisStyle.muted
         }
         IrisText {
             x: root.u(16)
@@ -462,7 +473,7 @@ Item {
             maximumLineCount: 2
             wrapMode: Text.WordWrap
             text: tile.text
-            color: tile.on ? IrisStyle.surfaceOpaque : IrisStyle.text
+            color: IrisStyle.text
             font.pixelSize: IrisStyle.typeBody
             font.weight: Font.DemiBold
         }
@@ -478,6 +489,31 @@ Item {
             Accessible.role: Accessible.CheckBox
             Accessible.checked: sw.lit
             function act(): void { IrisOptions.commit(sw.spec, sw.spec.invert ? sw.lit : !sw.lit) }
+            // S4's switch in small: hairline ring and hollow knob off, ink track and paper knob on, the knob springs over.
+            Rectangle {
+                id: mini
+                anchors.right: parent.right
+                anchors.rightMargin: root.u(14)
+                y: root.u(12)
+                width: root.u(34)
+                height: root.u(20)
+                radius: IrisStyle.capsule(height)
+                color: sw.lit ? IrisStyle.text : "transparent"
+                border.width: sw.lit ? 0 : 1
+                border.color: IrisStyle.ringInk
+                Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
+                Rectangle {
+                    width: root.u(14)
+                    height: width
+                    radius: IrisStyle.capsule(width)
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: sw.lit ? parent.width - width - root.u(3) : root.u(3)
+                    color: sw.lit ? IrisStyle.surfaceOpaque : "transparent"
+                    border.width: sw.lit ? 0 : 1
+                    border.color: IrisStyle.ringInk
+                    Behavior on x { SpringAnimation { spring: 4; damping: 0.32; epsilon: 0.25 } }
+                }
+            }
         }
     }
     Component {
@@ -497,7 +533,6 @@ Item {
             readonly property int dots: 15
             readonly property real fraction: range.hi > range.lo ? Math.max(0, Math.min(1, (range.value - range.lo) / (range.hi - range.lo))) : 0
             readonly property int knob: Math.round(range.fraction * (range.dots - 1))
-            height: root.u(108)
             caption: Translation.tr(String(range.spec?.label ?? ""))
             Accessible.role: Accessible.Slider
             Accessible.name: range.caption
@@ -510,9 +545,9 @@ Item {
             MouseArea {
                 id: scrub
                 x: root.u(16)
-                y: root.u(46)
+                y: root.u(42)
                 width: parent.width * 0.62 - x
-                height: root.u(36)
+                height: root.u(34)
                 cursorShape: Qt.PointingHandCursor
                 preventStealing: true
                 function at(x: real): real { return range.snap(range.lo + Math.max(0, Math.min(1, x / width)) * (range.hi - range.lo)) }
@@ -553,7 +588,6 @@ Item {
             readonly property bool holds: true
             readonly property var options: IrisOptions.choicesOf(choice.spec ?? {})
             readonly property var now: { Config.revision; IrisNiri.revision; return IrisOptions.currentValue(choice.spec ?? {}) }
-            height: root.u(108)
             caption: Translation.tr(String(choice.spec?.label ?? ""))
             function adjust(delta: int): void {
                 const at = choice.options.findIndex(entry => IrisOptions.same(entry.value, choice.now))
@@ -579,9 +613,42 @@ Item {
         Rectangle {
             id: rowPlate
             property var spec: null
-            radius: root.u(20)
+            // A keyboard stop like any tile: Enter switches or runs it; a choice or a range is held and ◀ ▶ step it.
+            readonly property bool consoleStop: rowPlate.spec !== null
+            readonly property bool holds: ["choice", "range"].includes(String(rowPlate.spec?.kind))
+            readonly property bool focusedHere: root.focused() === rowPlate
+            function act(): void {
+                const spec = rowPlate.spec
+                if (!spec) return
+                if (spec.kind === "switch") { const v = !!IrisOptions.currentValue(spec); IrisOptions.commit(spec, !v) }
+                else if (spec.kind === "action" && typeof spec.run === "function") spec.run()
+                else rowItem.forceActiveFocus(Qt.TabFocusReason)
+            }
+            function adjust(delta: int): void {
+                const spec = rowPlate.spec
+                if (spec?.kind === "choice") {
+                    const list = IrisOptions.choicesOf(spec)
+                    const at = list.findIndex(entry => IrisOptions.same(entry.value, IrisOptions.currentValue(spec)))
+                    const next = list[Math.max(0, Math.min(list.length - 1, at + delta))]
+                    if (next) IrisOptions.commit(spec, next.value)
+                } else if (spec?.kind === "range") {
+                    const step = Number(spec.step ?? 1)
+                    const next = Math.max(Number(spec.min), Math.min(Number(spec.max), Number(IrisOptions.currentValue(spec)) + delta * step))
+                    IrisOptions.commit(spec, Number(next.toFixed(4)))
+                }
+            }
+            radius: IrisStyle.fieldChamfer ? 0 : root.u(20)
             color: root.plate
             height: Math.max(root.u(64), rowItem.implicitHeight + root.u(8))
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -root.u(3)
+                radius: IrisStyle.fieldChamfer ? 0 : root.u(23)
+                visible: rowPlate.focusedHere
+                color: "transparent"
+                border.width: Math.max(2, root.u(2))
+                border.color: root.engaged ? root.signal : IrisStyle.text
+            }
             IrisSetting {
                 id: rowItem
                 visible: rowPlate.spec !== null
@@ -605,7 +672,7 @@ Item {
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
         Accessible.name: key.name
-        Rectangle { anchors.fill: parent; radius: width / 2; color: key.containsMouse ? IrisStyle.fillHover : root.plate }
+        Rectangle { anchors.fill: parent; radius: IrisStyle.capsule(width); color: key.containsMouse ? IrisStyle.fillHover : root.plate }
         MaterialSymbol { anchors.centerIn: parent; text: key.glyph; iconSize: root.u(18); color: IrisStyle.text }
     }
 }

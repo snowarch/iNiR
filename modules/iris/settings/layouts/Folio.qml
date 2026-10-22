@@ -8,6 +8,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.preview
@@ -50,7 +51,7 @@ Item {
         y: root.u(8)
         width: root.u(root.compact ? 216 : 244)
         height: root.height - 2 * root.u(8)
-        radius: Math.max(root.u(12), IrisStyle.radiusPanel - root.u(8))
+        radius: IrisStyle.fieldChamfer ? 0 : Math.max(root.u(12), IrisStyle.radiusPanel - root.u(8))
         color: IrisStyle.glassy ? IrisStyle.readingSidebar : Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, IrisStyle.light ? 0.03 : 0.035) // iris-literal: the index sits a step off the sheet
         Flickable {
             id: indexFlick
@@ -59,17 +60,39 @@ Item {
             contentHeight: indexColumn.implicitHeight
             boundsBehavior: Flickable.StopAtBounds
             clip: true
+            // The open area's capsule: one pill that slides from key to key; each key's ink follows how much of the pill
+            // covers it, so the words turn as the pill arrives instead of before it.
+            Rectangle {
+                id: pill
+                readonly property real target: {
+                    indexColumn.implicitHeight
+                    const at = root.sections.findIndex(entry => entry.id === root.section)
+                    const entry = at >= 0 ? indexRepeater.itemAt(at) : null
+                    return entry ? entry.y + entry.keyY : 0
+                }
+                property bool placed: false
+                visible: !root.searching && root.sections.length > 0
+                width: indexColumn.width
+                height: root.u(34)
+                radius: IrisStyle.capsule(height)
+                color: IrisStyle.text
+                y: pill.target
+                Behavior on y { enabled: pill.placed && IrisStyle.motionEnabled; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+                Timer { running: true; interval: 400; onTriggered: pill.placed = true }
+            }
             Column {
                 id: indexColumn
                 width: indexFlick.width
                 spacing: root.u(2)
                 Repeater {
+                    id: indexRepeater
                     model: root.sections
                     Column {
                         id: entry
                         required property var modelData
                         required property int index
                         readonly property bool starts: entry.index > 0 && root.sections[entry.index - 1]?.cluster !== entry.modelData.cluster
+                        readonly property real keyY: entry.starts ? root.u(34) : 0
                         width: indexColumn.width
                         Item {
                             visible: entry.starts
@@ -93,6 +116,8 @@ Item {
                             readonly property bool on: entry.modelData.id === root.section && !root.searching
                             readonly property bool found: !root.searching || (root.host?.matchedSections?.has(entry.modelData.id) ?? false)
                             readonly property int noted: Number(root.noteCounts[entry.modelData.id] ?? 0)
+                            readonly property real lit: pill.visible ? Math.max(0, Math.min(1, 1 - Math.abs(pill.y - entry.y - entry.keyY) / key.height)) : 0
+                            readonly property color ink: ColorUtils.mix(IrisStyle.surfaceOpaque, IrisStyle.text, key.lit)
                             width: parent.width
                             height: root.u(34)
                             hoverEnabled: true
@@ -104,9 +129,9 @@ Item {
                             onClicked: root.host.selectSection(entry.modelData.id)
                             Rectangle {
                                 anchors.fill: parent
-                                radius: height / 2
-                                color: key.on ? IrisStyle.text : key.containsMouse ? IrisStyle.fillHover : "transparent"
-                                Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
+                                radius: IrisStyle.capsule(height)
+                                color: key.containsMouse && key.lit < 0.5 ? IrisStyle.fillHover : "transparent"
+                                Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
                             }
                             MaterialSymbol {
                                 id: glyph
@@ -114,8 +139,8 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: String(entry.modelData.icon ?? "settings")
                                 iconSize: root.u(18)
-                                fill: key.on ? 1 : 0
-                                color: key.on ? IrisStyle.surfaceOpaque : IrisStyle.text
+                                fill: key.lit > 0.5 ? 1 : 0
+                                color: key.ink
                             }
                             IrisText {
                                 x: glyph.x + root.u(30)
@@ -123,9 +148,9 @@ Item {
                                 width: parent.width - x - root.u(key.noted > 0 ? 28 : 12)
                                 elide: Text.ElideRight
                                 text: Translation.tr(String(entry.modelData.title ?? ""))
-                                color: key.on ? IrisStyle.surfaceOpaque : IrisStyle.text
+                                color: key.ink
                                 font.pixelSize: IrisStyle.typeBody
-                                font.weight: key.on ? Font.DemiBold : Font.Normal
+                                font.weight: key.lit > 0.5 ? Font.DemiBold : Font.Normal
                             }
                             Rectangle {
                                 visible: key.noted > 0
@@ -245,16 +270,32 @@ Item {
                         anchors.margins: root.u(12)
                         radius: Math.max(IrisStyle.radiusRow, IrisStyle.radiusSheet - root.u(12))
                         standIn: true
+                        captionOutside: true
                         section: root.searching || root.home ? "" : root.section
                         niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
                         niriRevision: IrisNiri.revision
                         group: String(root.host?.leadGroup ?? "")
                     }
                 }
-                // What can be done to the page (rehearse, customise, restore), under the stage.
-                Flow {
+                // Under the stage: what it shows now, what can be done to the page, then the area at a glance.
+                Column {
+                    id: underStage
                     visible: areaBox.staged
-                    y: plate.height + root.u(12)
+                    y: plate.height + root.u(14)
+                    width: plate.width
+                    spacing: root.u(14)
+                IrisText {
+                    visible: stage.caption.length > 0
+                    x: root.u(4)
+                    width: parent.width - x
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
+                    elide: Text.ElideRight
+                    text: stage.caption
+                    color: IrisStyle.muted
+                    font.pixelSize: IrisStyle.typeMeta
+                }
+                Flow {
                     width: plate.width
                     spacing: root.u(6)
                     Repeater {
@@ -269,7 +310,7 @@ Item {
                             Accessible.role: Accessible.Button
                             Accessible.name: String(act.modelData.label ?? "")
                             onClicked: act.modelData.clicked()
-                            Rectangle { anchors.fill: parent; radius: height / 2; color: act.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet }
+                            Rectangle { anchors.fill: parent; radius: IrisStyle.capsule(height); color: act.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet }
                             Row {
                                 id: actRow
                                 anchors.centerIn: parent
@@ -279,6 +320,63 @@ Item {
                             }
                         }
                     }
+                }
+                // The area at a glance: its telling values, each a link to its row.
+                Column {
+                    id: facts
+                    readonly property int fit: Math.max(0, Math.min(6, Math.floor((areaBox.height - plate.height - root.u(150)) / root.u(40))))
+                    readonly property var rows: { Config.revision; return facts.fit > 0 && !root.home && !root.searching ? (root.host?.tellingRows(facts.fit, root.section) ?? []) : [] }
+                    visible: facts.rows.length > 0
+                    width: plate.width
+                    IrisText {
+                        x: root.u(4)
+                        bottomPadding: root.u(6)
+                        text: Translation.tr("At a glance")
+                        color: IrisStyle.textTertiary
+                        font.family: IrisStyle.fontMono
+                        font.pixelSize: Math.max(10, IrisStyle.typeCaption)
+                        font.weight: Font.Medium
+                        font.capitalization: Font.AllUppercase
+                        font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
+                    }
+                    Repeater {
+                        model: facts.rows
+                        MouseArea {
+                            id: fact
+                            required property var modelData
+                            required property int index
+                            width: facts.width
+                            height: root.u(40)
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            Accessible.role: Accessible.Link
+                            Accessible.name: Translation.tr(String(fact.modelData.label ?? ""))
+                            onClicked: root.host.landOn(String(fact.modelData.path ?? ""))
+                            Rectangle { anchors.fill: parent; radius: IrisStyle.fieldChamfer ? 0 : root.u(10); color: fact.containsMouse ? IrisStyle.fillHover : "transparent" }
+                            Rectangle { visible: fact.index > 0; x: root.u(4); width: parent.width - 2 * x; height: 1; color: IrisStyle.hairline }
+                            IrisText {
+                                x: root.u(4)
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width * 0.6 - x
+                                elide: Text.ElideRight
+                                text: Translation.tr(String(fact.modelData.label ?? ""))
+                                color: IrisStyle.subtext
+                                font.pixelSize: IrisStyle.typeMeta
+                            }
+                            IrisText {
+                                anchors.right: parent.right
+                                anchors.rightMargin: root.u(4)
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.min(implicitWidth, parent.width * 0.4)
+                                elide: Text.ElideRight
+                                text: { Config.revision; return root.host?.answerOf(fact.modelData) ?? "" }
+                                color: IrisStyle.text
+                                font.pixelSize: IrisStyle.typeMeta
+                                font.weight: IrisStyle.weight(Font.DemiBold)
+                            }
+                        }
+                    }
+                }
                 }
                 Rectangle {
                     id: sheet
@@ -355,7 +453,7 @@ Item {
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
         Accessible.name: key.name
-        Rectangle { anchors.fill: parent; radius: height / 2; color: key.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet }
+        Rectangle { anchors.fill: parent; radius: IrisStyle.capsule(height); color: key.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet }
         MaterialSymbol { anchors.centerIn: parent; text: key.glyph; iconSize: root.u(18); color: IrisStyle.text }
     }
 }

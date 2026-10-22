@@ -4,7 +4,7 @@ import qs.modules.iris.style
 import "../components"
 
 // AIRISU's group head in a Settings page: the group's glyph, as the column shows it, and its name. The group being read
-// is set large in the figure voice with its glyph filled in the seal's ink, the others a step over their rows in the
+// is set large in the figure voice with its glyph filled in ink, the others a step over their rows in the
 // ink (smaller or greyer than the rows, a head read as a caption), so the eye finds the block in focus the way a
 // catalogue sets the entry it is on. The line is always as tall as
 // the large setting: the reading moving down a page never moves the rows under it. A group that is one switch keeps it
@@ -26,7 +26,8 @@ Item {
         text: root.glyph
         fill: root.reading ? 1 : 0
         iconSize: Math.round((root.reading ? 20 : 16) * Airisu.d)
-        color: Airisu.sealText
+        // ink, not the seal: the seal is kept for what is live or needs you (Signal S1)
+        color: Airisu.ink
     }
     AText {
         id: name

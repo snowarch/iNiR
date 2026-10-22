@@ -21,7 +21,7 @@ Rectangle {
     readonly property bool mono: root.voice === "console"
     implicitHeight: Math.round((root.mono ? 40 : 36) * root.d)
     implicitWidth: keyRow.implicitWidth + 6
-    radius: height / 2
+    radius: IrisStyle.capsule(height)
     color: root.mono ? IrisStyle.fillQuiet : "transparent"
     border.width: root.mono ? 0 : 1
     border.color: IrisStyle.hairline
@@ -48,7 +48,7 @@ Rectangle {
                 onClicked: root.host.setLayout(key.modelData.id)
                 Rectangle {
                     anchors.fill: parent
-                    radius: height / 2
+                    radius: IrisStyle.capsule(height)
                     color: key.on ? (root.mono ? IrisStyle.text : IrisStyle.fill) : key.containsMouse ? IrisStyle.fillQuiet : "transparent"
                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                 }

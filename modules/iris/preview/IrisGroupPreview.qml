@@ -31,6 +31,8 @@ ClippingRectangle {
     onPlayingChanged: if (root.playing) root.wake()
     property bool compact: false
     property string caption: ""
+    // The host prints the caption beside the stage: inside it a chip would sit on what it describes.
+    property bool captionOutside: false
     // Niri's values for the scenes that draw them (windows, keyboard, the screen); Settings passes its reader in.
     property var niriValue: null
     property int niriRevision: 0

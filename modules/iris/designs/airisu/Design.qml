@@ -21,9 +21,6 @@ QtObject {
         islandArtBackdrop: "island/ArtBackdrop.qml",
         spotlightHead: "skins/SpotlightHead.qml",
         sectionTab: "skins/SectionTab.qml",
-        // Settings as a lacquered catalogue: the thumb index down the fore-edge, the spread, its head and foot; the
-        // engine's search field sits in it as a slot cut into the body.
-        settingsPage: "scenes/Settings.qml",
         settingsSearch: "skins/SettingsSearch.qml",
         // General's head: the desktop printed as the frontispiece beside the person's name.
         welcomeCard: "skins/WelcomeCard.qml",

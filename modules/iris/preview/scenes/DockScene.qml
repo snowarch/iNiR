@@ -225,6 +225,9 @@ PreviewScene {
 
     OffState { visible: !dockRoot.enabledDock; text: Translation.tr("Dock off") }
     Caption {
+        // a bottom Dock takes the lower edge: the line goes to the top corner instead of over the icons
+        anchors.bottom: dockRoot.edge === "bottom" ? undefined : parent.bottom
+        anchors.top: dockRoot.edge === "bottom" ? parent.top : undefined
         anchors.leftMargin: dockRoot.edge === "left" ? dockRoot.restInset + dockRoot.thick + Math.round(14 * dockRoot.d) : Math.round(14 * dockRoot.d)
         glyph: dockRoot.autoHide ? "unfold_less" : !dockRoot.reserve ? "layers"
             : ({ top: "vertical_align_top", left: "align_horizontal_left", right: "align_horizontal_right" })[dockRoot.edge] ?? "vertical_align_bottom"
