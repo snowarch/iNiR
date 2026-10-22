@@ -28,6 +28,9 @@ Item {
     readonly property string voice: "deck"
     readonly property bool ownsStage: true
     readonly property bool readsWhole: true
+    // Its groups fold under their heads, the first two open (IrisSettings.groupOpen).
+    readonly property bool folds: true
+    readonly property string searchHint: Translation.tr("Search, or say what to change")
 
     readonly property bool windowed: Boolean(root.host?.windowed ?? true)
     readonly property var sections: root.host?.sections ?? []
@@ -38,6 +41,156 @@ Item {
     readonly property var noteCounts: root.host?.noteCounts ?? ({})
     readonly property int noteTotal: Object.keys(root.noteCounts).reduce((sum, id) => sum + Number(root.noteCounts[id] ?? 0), 0)
     function neighbour(step: int): var { return root.sections[root.current + step] ?? null }
+
+    // ── Travel: a new area slides in from where its card stood, the whole deck moving one pitch with the morph curve.
+    property real shift: 0
+    property int was: -1
+    readonly property real pitch: root.windowed ? Math.round(root.cardRect.width * 0.22) : Math.round((root.cardRect.width + root.sideWidth) / 2 + root.gap)
+    onCurrentChanged: {
+        if (root.was >= 0 && root.was !== root.current) {
+            const delta = root.current - root.was
+            travel.from = Math.sign(delta) * Math.min(Math.abs(delta), 2) * root.pitch
+            travel.restart()
+        }
+        root.was = root.current
+        root.engaged = false
+        root.cursor = -1
+        if (root.driving) enterRows.restart()
+    }
+    Component.onCompleted: root.was = root.current
+    NumberAnimation { id: travel; target: root; property: "shift"; to: 0; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
+    // The rows of a new area build in slices: the focus lands once they stand.
+    Timer { id: enterRows; interval: 260; onTriggered: { root.cursor = root.stops().length > 0 ? 0 : -1; root.place() } }
+
+    // ── Driven like a console menu: ◀ ▶ turn the deck, ▲ ▼ walk the head and the rows, ⏎ or Space change the focused
+    // row in place (a choice or a range is held: ◀ ▶ then step it, live), Esc lets go.
+    property bool driving: false
+    property int cursor: -1
+    property bool engaged: false
+    readonly property Item flick: {
+        root.section
+        return root.findFlick(rowsSlot)
+    }
+    function findFlick(item: Item): Item {
+        for (const child of item?.children ?? []) {
+            if (child.contentY !== undefined && child.contentHeight !== undefined && child.visible) return child
+            const deeper = root.findFlick(child)
+            if (deeper) return deeper
+        }
+        return null
+    }
+    function collect(item: Item, out: var): void {
+        for (const child of item?.children ?? []) {
+            if (!child.visible || child === ring) continue
+            if (child.deckStop === true) { out.push(child); continue }
+            if (child.spec !== undefined && typeof child.commit === "function" && ["switch", "choice", "range", "action"].includes(String(child.spec?.kind))) { out.push(child); continue }
+            root.collect(child, out)
+        }
+    }
+    function stops(): var {
+        const out = []
+        root.collect(rowsSlot, out)
+        return out.map(item => ({ item: item, y: item.mapToItem(rowsSlot, 0, 0).y })).sort((a, b) => a.y - b.y).map(entry => entry.item)
+    }
+    function focused(): Item { return root.cursor >= 0 ? (root.stops()[root.cursor] ?? null) : null }
+    function place(): void {
+        const item = root.focused()
+        if (!item) { ring.shown = false; return }
+        const at = item.mapToItem(rowsSlot, 0, 0)
+        const out = item.deckStop === true ? root.u(10) : -root.u(2)
+        ring.x = at.x - out
+        ring.y = at.y + (item.deckStop === true ? 0 : root.u(3))
+        ring.width = item.width + 2 * out
+        ring.height = item.height - (item.deckStop === true ? 0 : root.u(6))
+        ring.shown = true
+    }
+    function reveal(item: Item): void {
+        if (!root.flick || !item) return
+        const top = item.mapToItem(root.flick.contentItem, 0, 0).y
+        const pad = root.u(24)
+        const end = Math.max(0, root.flick.contentHeight - root.flick.height)
+        let to = root.flick.contentY
+        if (top - pad < to) to = top - pad
+        else if (top + item.height + pad > to + root.flick.height) to = top + item.height + pad - root.flick.height
+        to = Math.max(0, Math.min(end, to))
+        if (Math.abs(to - root.flick.contentY) < 1) return
+        scrollTo.target = root.flick
+        scrollTo.to = to
+        scrollTo.restart()
+    }
+    NumberAnimation { id: scrollTo; property: "contentY"; duration: IrisStyle.duration(220); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
+    Connections { target: root.flick; ignoreUnknownSignals: true; function onContentYChanged(): void { root.place() } }
+    Timer { id: replace; interval: 60; onTriggered: { root.place(); root.reveal(root.focused()) } }
+    function move(delta: int): void {
+        const list = root.stops()
+        root.engaged = false
+        root.cursor = Math.max(-1, Math.min(list.length - 1, root.cursor + delta))
+        root.place()
+        root.reveal(root.focused())
+    }
+    function activate(): void {
+        const item = root.focused()
+        if (!item) return
+        if (item.deckStop === true) { item.toggle(); replace.restart(); return }
+        const spec = item.spec
+        if (spec.kind === "switch") {
+            const on = spec.invert ? !item.value : !!item.value
+            item.commit(spec.invert ? on : !on)
+        } else if (spec.kind === "action") spec.run()
+        else root.engaged = !root.engaged
+    }
+    function adjust(delta: int): void {
+        const item = root.focused()
+        const spec = item?.spec
+        if (!spec) return
+        if (spec.kind === "range") {
+            const step = Number(spec.step ?? 1)
+            const next = Math.max(spec.min, Math.min(spec.max, Number(item.value) + delta * step))
+            item.commit(Number(next.toFixed(4)))
+        } else if (spec.kind === "choice") {
+            const list = item.choices ?? []
+            const at = list.findIndex(entry => IrisOptions.same(entry.value, item.value))
+            const next = list[Math.max(0, Math.min(list.length - 1, at + delta))]
+            if (next) item.commit(next.value)
+        }
+    }
+    function takeKey(event: var): bool {
+        if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.KeypadModifier) return false
+        const key = event.key
+        if (key === Qt.Key_Left || key === Qt.Key_Right) {
+            root.driving = true
+            const delta = key === Qt.Key_Left ? -1 : 1
+            if (root.engaged) root.adjust(delta)
+            else root.host.stepSection(delta)
+            return true
+        }
+        if (key === Qt.Key_Up || key === Qt.Key_Down) {
+            root.driving = true
+            root.move(key === Qt.Key_Up ? -1 : 1)
+            return true
+        }
+        if ((key === Qt.Key_Return || key === Qt.Key_Enter || key === Qt.Key_Space) && root.cursor >= 0) {
+            root.activate()
+            return true
+        }
+        return false
+    }
+    function release(): bool {
+        if (!root.engaged) return false
+        root.engaged = false
+        return true
+    }
+    // The wheel over the deck's sides turns it, a notch a card.
+    property real wheelAcc: 0
+    Timer { id: wheelRest; interval: 320 }
+    function wheel(event: var): void {
+        const delta = event.angleDelta.x !== 0 ? -event.angleDelta.x : -event.angleDelta.y
+        root.wheelAcc += delta
+        if (wheelRest.running || Math.abs(root.wheelAcc) < 60) return
+        root.host.stepSection(root.wheelAcc > 0 ? 1 : -1)
+        root.wheelAcc = 0
+        wheelRest.restart()
+    }
     function tint(entry: var, alpha: real): color { const c = entry?.tint ?? IrisStyle.accent; return Qt.rgba(c.r, c.g, c.b, alpha) }
 
     // The head hangs from the top edge when the Island is a body there; anywhere else it floats like the cards.
@@ -77,10 +230,10 @@ Item {
         out.push({ id: "deckHead", joins: root.hangs ? "deckWall" : "", fuse: root.hangs ? root.u(28) : 0,
             x: h.x, y: h.y, width: h.width, height: h.height, radius: root.hangs ? root.u(30) : h.height / 2 })
         const c = root.cardRect
-        out.push({ id: "deckCard", x: c.x, y: c.y, width: c.width, height: c.height, radius: root.u(30) })
+        out.push({ id: "deckCard", x: c.x + root.shift, y: c.y, width: c.width, height: c.height, radius: root.u(30) })
         for (const step of root.steps) {
             const r = root.sideRect(step)
-            out.push({ id: "deckSide" + step, x: r.x, y: r.y, width: r.width, height: r.height, radius: root.u(30) })
+            out.push({ id: "deckSide" + step, x: r.x + root.shift, y: r.y, width: r.width, height: r.height, radius: root.u(30) })
         }
         return out
     }
@@ -192,11 +345,14 @@ Item {
     // ── The open area: its stage, what it says, its rows.
     Item {
         id: card
-        x: root.cardRect.x
+        x: root.cardRect.x + (root.windowed ? 0 : root.shift)
         y: root.cardRect.y
         width: root.cardRect.width
         height: root.cardRect.height
         readonly property real inset: root.u(root.windowed ? 8 : 12)
+        // In a window the card's insides slide within it; over the desktop the card itself travels.
+        clip: root.windowed
+        transform: Translate { x: root.windowed ? root.shift : 0 }
         Rectangle {
             visible: root.windowed
             anchors.fill: parent
@@ -217,8 +373,8 @@ Item {
             IrisGroupPreview {
                 id: stage
                 anchors.fill: parent
-                anchors.leftMargin: Math.round(parent.width * 0.3)
                 visible: stage.available
+                standIn: true
                 section: root.host?.searching ? "" : root.section
                 group: String(root.host?.leadGroup ?? "")
             }
@@ -265,6 +421,64 @@ Item {
                 }
             }
         }
+        // The hero's edges: where the area's piece lives is lit, a click on another edge moves it there.
+        Item {
+            id: edges
+            readonly property var spec: (root.host?.entries ?? []).find(spec => spec.kind === "choice" && spec.path
+                && ["top", "bottom", "left", "right"].every(side => IrisOptions.choicesOf(spec).some(entry => entry.value === side))) ?? null
+            readonly property string at: { Config.revision; return edges.spec ? String(IrisOptions.currentValue(edges.spec)) : "" }
+            visible: edges.spec !== null && !(root.host?.searching ?? false)
+            anchors.fill: hero
+            z: 2
+            Rectangle {
+                anchors.right: parent.right
+                anchors.rightMargin: root.u(30)
+                y: root.u(30)
+                width: edgeCap.implicitWidth + root.u(16)
+                height: edgeCap.implicitHeight + root.u(8)
+                radius: height / 2
+                color: Qt.rgba(IrisStyle.surfaceOpaque.r, IrisStyle.surfaceOpaque.g, IrisStyle.surfaceOpaque.b, 0.8)
+            }
+            IrisText {
+                id: edgeCap
+                anchors.right: parent.right
+                anchors.rightMargin: root.u(38)
+                y: root.u(34)
+                text: Translation.tr("Click an edge to move it")
+                color: IrisStyle.accent
+                font.family: IrisStyle.fontMono
+                font.pixelSize: IrisStyle.typeCaption
+                font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.18)
+                font.capitalization: Font.AllUppercase
+            }
+            Repeater {
+                model: ["top", "bottom", "left", "right"]
+                MouseArea {
+                    id: bar
+                    required property string modelData
+                    readonly property bool across: bar.modelData === "top" || bar.modelData === "bottom"
+                    readonly property bool lit: edges.at === bar.modelData
+                    readonly property real thick: root.u(22)
+                    x: bar.across ? Math.round(parent.width * 0.3) : bar.modelData === "left" ? 0 : parent.width - bar.thick
+                    y: !bar.across ? Math.round(parent.height * 0.24) : bar.modelData === "top" ? 0 : parent.height - bar.thick
+                    width: bar.across ? Math.round(parent.width * 0.4) : bar.thick
+                    height: bar.across ? bar.thick : Math.round(parent.height * 0.52)
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    Accessible.role: Accessible.Button
+                    Accessible.name: edges.spec ? Translation.tr(String(IrisOptions.choicesOf(edges.spec).find(entry => entry.value === bar.modelData)?.label ?? bar.modelData)) : ""
+                    onClicked: IrisOptions.commit(edges.spec, bar.modelData)
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: bar.across ? parent.width : root.u(bar.lit || bar.containsMouse ? 6 : 4)
+                        height: bar.across ? root.u(bar.lit || bar.containsMouse ? 6 : 4) : parent.height
+                        radius: Math.min(width, height) / 2
+                        color: bar.lit ? IrisStyle.accent : Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, bar.containsMouse ? 0.6 : 0.28)
+                        Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
+                    }
+                }
+            }
+        }
         // What the area holds now, in a few chips, and its notes in red: each lands on its row.
         Flow {
             id: chips
@@ -274,14 +488,11 @@ Item {
             spacing: root.u(8)
             visible: !(root.host?.searching ?? false)
             Repeater {
-                model: root.host?.tellingRows(5, "") ?? []
+                model: (root.host?.tellingRows(9, "") ?? []).map(spec => ({ spec: spec, text: root.chipOf(spec) })).filter(entry => entry.text.length > 0).slice(0, 5)
                 Chip {
                     required property var modelData
-                    readonly property bool on: modelData.kind !== "switch" || root.host.answerOf(modelData) === Translation.tr("On")
-                    text: modelData.kind === "switch"
-                        ? Translation.tr(String(modelData.label)) + (on ? "" : " · " + Translation.tr("Off"))
-                        : "<font color='" + IrisStyle.text + "'>" + root.host.answerOf(modelData) + "</font>  " + Translation.tr(String(modelData.label))
-                    onClicked: root.host.landOn(String(modelData.path))
+                    text: "<font color='" + IrisStyle.text + "'>" + modelData.text + "</font>"
+                    onClicked: root.host.landOn(String(modelData.spec.path))
                 }
             }
             Repeater {
@@ -301,7 +512,57 @@ Item {
             width: card.width - 2 * card.inset + root.u(8)
             height: card.height - y - root.u(4)
             clip: true
+            // The console focus: the row lifts on a lit plate with the accent's bar at its side; held, arrows flank it.
+            Rectangle {
+                id: ring
+                property bool shown: false
+                z: 10
+                visible: ring.shown && root.driving
+                radius: root.u(16)
+                color: Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, 0.05)
+                border.width: Math.max(2, root.u(2))
+                border.color: IrisStyle.accent
+                Behavior on y { NumberAnimation { duration: IrisStyle.duration(160); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+                Behavior on height { NumberAnimation { duration: IrisStyle.duration(160); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+                Rectangle { x: -1; y: root.u(12); width: root.u(4); height: parent.height - root.u(24); radius: width / 2; color: IrisStyle.accent }
+                Rectangle {
+                    anchors.right: parent.right
+                    anchors.rightMargin: root.u(16)
+                    y: parent.height - height / 2
+                    width: hint.implicitWidth + root.u(12)
+                    height: hint.implicitHeight + root.u(4)
+                    radius: height / 2
+                    color: IrisStyle.surfaceOpaque
+                    IrisText {
+                        id: hint
+                        anchors.centerIn: parent
+                        readonly property var spec: root.focused()?.spec ?? null
+                        text: root.engaged ? "◀ ▶  " + Translation.tr("change") + "  ·  ⏎  " + Translation.tr("done")
+                            : root.focused()?.deckStop === true ? "⏎  " + (root.focused()?.open ? Translation.tr("fold") : Translation.tr("open"))
+                            : hint.spec?.kind === "switch" ? "⏎  " + Translation.tr("switch")
+                            : "⏎  " + Translation.tr("change")
+                        color: IrisStyle.accent
+                        font.family: IrisStyle.fontMono
+                        font.pixelSize: IrisStyle.typeCaption
+                        font.weight: Font.DemiBold
+                        font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.12)
+                        font.capitalization: Font.AllUppercase
+                    }
+                }
+            }
         }
+    }
+
+    // A chip says a value as you would: "40 px", "Bottom edge", "Hides itself"; a switch that is off says nothing.
+    function chipOf(spec: var): string {
+        const answer = root.host.answerOf(spec)
+        const label = Translation.tr(String(spec.label ?? ""))
+        const words = label.split(" ")
+        if (spec.kind === "range") return answer
+        if (spec.kind === "switch") return answer === Translation.tr("On") && words.length <= 3 ? label : ""
+        if (answer.split(" ").length > 2) return ""
+        const noun = words.length >= 2 ? words[words.length - 1].toLowerCase() : ""
+        return noun.length > 0 && !answer.toLowerCase().includes(noun) ? answer + " " + noun : answer
     }
 
     component RoundKey: MouseArea {
@@ -359,8 +620,10 @@ Item {
         readonly property rect box: root.sideRect(side.step)
         readonly property real shown: Math.min(side.box.x + side.box.width, root.width) - Math.max(side.box.x, 0)
         readonly property int notes: Number(root.noteCounts[side.entry?.id] ?? 0)
-        x: side.box.x
+        x: side.box.x + root.shift
         y: side.box.y
+        clip: true
+        onWheel: wheel => root.wheel(wheel)
         width: side.box.width
         height: side.box.height
         cursorShape: Qt.PointingHandCursor
@@ -406,7 +669,7 @@ Item {
                 radius: root.u(18)
                 color: IrisStyle.readingCard
                 clip: true
-                IrisGroupPreview { id: neighbourStage; anchors.fill: parent; section: side.near ? String(side.entry?.id ?? "") : ""; playing: false }
+                IrisGroupPreview { id: neighbourStage; anchors.fill: parent; standIn: true; section: side.near ? String(side.entry?.id ?? "") : ""; playing: false }
             }
             Repeater {
                 model: side.near && side.entry ? root.host.tellingRows(5, side.entry.id) : []
@@ -449,6 +712,7 @@ Item {
         Accessible.role: Accessible.Button
         Accessible.name: Translation.tr(String(spine.entry?.title ?? ""))
         onClicked: root.host.selectSection(spine.entry.id)
+        onWheel: wheel => root.wheel(wheel)
         Rectangle {
             anchors.fill: parent
             radius: root.u(20)
