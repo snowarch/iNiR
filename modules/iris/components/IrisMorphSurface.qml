@@ -92,9 +92,11 @@ Item {
     readonly property bool settled: root.presentation >= 1
     // Nothing throws when a surface opens and stays invisible (the gallery's body came up with no content after a
     // broken reload), so the surface says it itself: `inir logs` and `qs errors` then list it.
+    // Counted from the first frame, not from `open`: a heavy surface (Settings) spends most of 900 ms building
+    // before its spring even starts, and the warning fired on a morph sitting at 0.99 of a normal run.
     Timer {
-        interval: 900
-        running: root.open
+        interval: 600 + Math.max(IrisStyle.moveDuration, IrisStyle.emergeDuration)
+        running: root.open && root.launched
         onTriggered: {
             const name = root.motionSurface || root.objectName || "surface"
             if (!root.settled)
