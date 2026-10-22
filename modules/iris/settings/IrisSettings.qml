@@ -1565,6 +1565,14 @@ Item {
                 elide: Text.ElideRight
             }
         }
+        IrisCutPlate {
+            id: stageDie
+            visible: false
+            anchors.fill: stageLoader
+            cutLength: IrisStyle.chamferCut
+            color: "white"
+            layer.enabled: IrisStyle.fieldChamfer
+        }
         Loader {
             id: stageLoader
             anchors.right: parent.right
@@ -1573,6 +1581,15 @@ Item {
             anchors.margins: hero.titled ? hero.pad : 0
             width: hero.titled ? Math.round(height / Math.max(0.3, root.screenShape)) : parent.width
             active: hero.sceneSection.length > 0
+            // Under a chamfered field the scene is cut by the body's die (a mask, so glass shows through the corners).
+            layer.enabled: IrisStyle.fieldChamfer && stageLoader.visible && width > 0
+            layer.smooth: true
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: stageDie
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 1
+            }
             visible: hero.staged
             sourceComponent: IrisGroupPreview {
                 compact: true
