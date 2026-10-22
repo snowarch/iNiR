@@ -60,7 +60,17 @@ Item {
     readonly property bool barLevel: root.mode === "feedback" && root.levelStyle === "bar"
     // A level fills the strip as a meter does; anything else that runs is a band of shu along its foot.
     readonly property bool fills: root.mode === "feedback" && !root.barLevel
-    readonly property color coatColour: root.taped ? Airisu.tape : root.fills ? Airisu.coat(root.pigment) : Airisu.vivid(root.pigment)
+    readonly property color coatColour: root.taped ? Airisu.tape : root.fills ? Airisu.levelCoat(root.pigment, root.seenLacquer) : Airisu.vivid(root.pigment)
+    // The lacquer as the eye sees it under a level: on glass it is the body's tint over the wallpaper behind the strip
+    // (the computed solid rung read 1.35:1 off a coat that showed 1.05:1 over a red wallpaper).
+    readonly property color seenLacquer: {
+        void Lume.revision
+        if (!root.fills) return Airisu.solid(root.surface)
+        if (root.surface.a > 0.99 || !IrisStyle.glassy) return Airisu.solid(root.surface)
+        const p = root.mapToItem(null, 0, 0)
+        const sample = Lume.read(String(root.island?.targetScreen?.name ?? ""), p.x, p.y, Math.max(1, root.width), Math.max(1, root.height))
+        return sample ? Lume.stack(sample.color, IrisStyle.bodyTint) : Airisu.solid(root.surface)
+    }
     // Type over a coat that runs the whole height takes the ink that reads on both coats.
     readonly property color ink: root.run > 0 && root.fills ? Airisu.inkOver(root.surface, root.coatColour) : Airisu.inkOn(root.surface)
     readonly property color inkSecond: ColorUtils.mix(root.ink, root.surface, 0.74) // iris-literal: second tone on lacquer
@@ -393,14 +403,19 @@ Item {
         }
         Item { Layout.fillWidth: true; Layout.preferredWidth: Math.round(120 * root.d) }
         AText {
+            id: levelFigure
             visible: root.island?.levelFigure ?? true
-            Layout.preferredWidth: Math.round(root.figure * 1.9)
+            // Its box is the widest level it can say ("100") plus the lean of its top, so a figure is never elided
+            // and the strip keeps its width while the level moves.
+            Layout.preferredWidth: Math.ceil(levelWidest.advanceWidth + Airisu.lean * levelFigure.height)
             horizontalAlignment: Text.AlignRight
+            elide: Text.ElideNone
             voice: "figure"
             lean: Airisu.lean
             size: root.figure
             color: level.muted ? root.inkSecond : root.ink
             text: Math.round((root.island?.feedbackValue ?? 0) * 100)
+            TextMetrics { id: levelWidest; font: levelFigure.font; text: "100" }
         }
     }
 }

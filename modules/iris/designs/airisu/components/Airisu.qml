@@ -51,6 +51,17 @@ QtObject {
     // The second coat, under type (the 45° band): the rule rung with a little more of the pigment, so whatever is set on
     // it still reads and the band is told from the panel by a step of the ladder, not by a colour.
     function coat(pigment: color): color { return ColorUtils.mix(pigment, root.iron, 0.14) } // iris-literal: the coat's pigment
+    // A level's coat (the strip a volume or brightness fills) is the reading itself: it has to stand off the bare lacquer
+    // at a glance. The rule rung's coat measured 1.03:1 on paper, so the level takes more of its pigment, in steps,
+    // until it stands 1.35:1 off the lacquer as it is seen (`seen`: on glass, the wallpaper under its tint).
+    function levelCoat(pigment: color, seen: color): color {
+        const under = root.solid(seen)
+        for (let load = 0.14; load < 0.62; load += 0.04) {
+            const c = ColorUtils.mix(pigment, under, load) // iris-literal: pigment load of a level
+            if (ColorUtils.contrastRatio(c, under) >= 1.35) return c
+        }
+        return ColorUtils.mix(pigment, under, 0.62) // iris-literal: the most a level carries
+    }
     // The pigment at full strength, where nothing is set on it (a level's run, a mark).
     function vivid(pigment: color): color {
         // By day a pigment is deepened to read on paper, but a yellow printed on paper is yellow with sumi on it: deepened it
