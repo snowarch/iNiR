@@ -34,7 +34,8 @@ Variants {
         anchors.right: true
 
         color: "transparent"
-        visible: true
+        // Niri only shows the backdrop in the overview; mapped all the time it held a full-screen swapchain for nothing.
+        visible: !CompositorService.isNiri || NiriService.inOverview
 
         // Material ii backdrop config (independent)
         readonly property var iiBackdrop: Config.options?.background?.backdrop ?? {}
@@ -47,7 +48,9 @@ Variants {
         // Include the blur-overflow margin so the source is never upscaled merely
         // to feed the edge-compensation area.
         readonly property int backdropDecodeOverflow: 64
-        readonly property real backdropDecodeScale: Math.max(1, backdropWindow.devicePixelRatio ?? 1)
+        // Blurred past 16 px a quarter of the pixels looks the same; sharp backdrops keep the full decode.
+        readonly property real backdropDecodeScale: backdropWindow.backdropBlurRadius >= 16 ? 0.25
+            : Math.max(1, backdropWindow.devicePixelRatio ?? 1)
         readonly property size backdropSourceSize: Qt.size(
             Math.ceil(((screen?.width ?? 1920) + backdropDecodeOverflow * 2) * backdropDecodeScale),
             Math.ceil(((screen?.height ?? 1080) + backdropDecodeOverflow * 2) * backdropDecodeScale))

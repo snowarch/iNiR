@@ -87,9 +87,13 @@ Rectangle {
         // so Qt's QPixmapCache serves a single decoded pixmap to all of them.
         cache: true
         asynchronous: true
-        // Constrain decoded size to screen dimensions — the blur doesn't need more.
-        sourceSize.width: root.screenWidth
-        sourceSize.height: root.screenHeight
+        // Blurred anyway: a quarter of the screen looks the same and every instance kept a full layer.
+        readonly property real blur: Appearance.effectsEnabled
+            ? (root.angelEverywhere ? Appearance.angel.blurIntensity : root.blurStrength) : 0
+        readonly property real grain: blur >= 0.3 ? 0.25 : 1
+        sourceSize.width: Math.round(root.screenWidth * grain)
+        sourceSize.height: Math.round(root.screenHeight * grain)
+        layer.textureSize: Qt.size(Math.round(width * grain), Math.round(height * grain))
 
         // CRITICAL: Only enable blur layer when VISIBLE AND enabled.
         // This releases the FBO when the panel is hidden, saving ~16 MiB per instance.
@@ -102,9 +106,7 @@ Rectangle {
                 : (Appearance.effectsEnabled ? root.saturationStrength : 0)
             blurEnabled: Appearance.effectsEnabled
             blurMax: 64
-            blur: Appearance.effectsEnabled
-                ? (root.angelEverywhere ? Appearance.angel.blurIntensity : root.blurStrength)
-                : 0
+            blur: blurredWallpaper.blur
         }
     }
 

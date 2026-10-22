@@ -123,19 +123,22 @@ Item {
             fillMode: Image.PreserveAspectCrop
             cache: true
             asynchronous: true
-            sourceSize.width: Math.round(root._screenWidth)
-            sourceSize.height: Math.round(root._screenHeight)
+            // Blurred anyway: a quarter of the screen looks the same and every surface kept a full copy (8 MB each).
+            readonly property real grain: blur >= 0.3 ? 0.25 : 1
+            readonly property real blur: root.editorialGlassActive ? Appearance.editorial.glassBlur
+                : (Config.options?.appearance?.island?.glassBlur ?? 1)
+            sourceSize.width: Math.round(root._screenWidth * grain)
+            sourceSize.height: Math.round(root._screenHeight * grain)
 
             layer.enabled: root.glassActive
+            layer.textureSize: Qt.size(Math.round(width * grain), Math.round(height * grain))
             layer.effect: MultiEffect {
                 source: glassWallpaper
                 anchors.fill: source
                 saturation: root.editorialGlassActive ? 0.04 : 0.15
                 blurEnabled: true
                 blurMax: 64
-                blur: root.editorialGlassActive
-                    ? Appearance.editorial.glassBlur
-                    : (Config.options?.appearance?.island?.glassBlur ?? 1)
+                blur: glassWallpaper.blur
             }
         }
     }

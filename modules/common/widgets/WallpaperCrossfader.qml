@@ -812,7 +812,8 @@ Item {
         anchors.fill: parent
         visible: false
         live: root._shaderTexturePrimePending
-        sourceItem: img0
+        // A settled wallpaper kept two full-screen copies here for good; it only needs them for a transition.
+        sourceItem: root._shaderTexturePrimePending || root._shaderRequestedActive ? img0 : null
     }
 
     ShaderEffectSource {
@@ -820,7 +821,8 @@ Item {
         anchors.fill: parent
         visible: false
         live: root._shaderTexturePrimePending
-        sourceItem: img1
+        // A settled wallpaper kept two full-screen copies here for good; it only needs them for a transition.
+        sourceItem: root._shaderTexturePrimePending || root._shaderRequestedActive ? img1 : null
     }
 
 
