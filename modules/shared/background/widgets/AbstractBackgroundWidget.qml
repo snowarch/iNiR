@@ -1894,7 +1894,7 @@ AbstractWidget {
     Component {
         id: _irisPopoverRef
         // Its plates lie 12 px inside the sheet's corner (popoverLoader's margins).
-        IrisWidgetControls { widget: root; plateRadius: IrisStyle.concentric(IrisStyle.radiusCard, 12, IrisStyle.radiusChip) }
+        IrisWidgetControls { widget: root; plateRadius: IrisStyle.concentric(IrisStyle.radiusCard, 12, IrisStyle.radiusChip); plateCut: IrisStyle.nestedCut(IrisStyle.chamferCut, 12) }
     }
 
     Component {

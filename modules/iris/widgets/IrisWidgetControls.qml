@@ -26,6 +26,8 @@ ColumnLayout {
     readonly property real d: IrisStyle.density
     // The corner of its plates: the sheet that hosts it sets it, so they stay concentric with that sheet (DI29).
     property real plateRadius: IrisStyle.radiusRow
+    // Under a chamfered Design the plates take the cut instead, nested in the sheet's (`IrisStyle.nestedCut`).
+    property real plateCut: IrisStyle.chamferCut
     readonly property var pages: [
         { value: "widget", label: Translation.tr("Widget") },
         { value: "look", label: Translation.tr("Look") },
@@ -94,9 +96,11 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: Math.round(36 * IrisStyle.density)
         radius: root.plateRadius
-        color: actionTap.pressed ? (action.danger ? IrisStyle.tintFillHover(IrisStyle.danger) : IrisStyle.fillActive)
+        readonly property color stuff: actionTap.pressed ? (action.danger ? IrisStyle.tintFillHover(IrisStyle.danger) : IrisStyle.fillActive)
             : actionHover.hovered ? (action.danger ? IrisStyle.tintFill(IrisStyle.danger) : IrisStyle.fillHover) : "transparent"
+        color: IrisStyle.fieldChamfer ? "transparent" : action.stuff
         Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+        IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; cutLength: root.plateCut; color: action.stuff }
 
         MaterialSymbol {
             id: actionGlyph
@@ -199,11 +203,20 @@ ColumnLayout {
                         Layout.maximumWidth: Number.POSITIVE_INFINITY
                         Layout.preferredHeight: Math.round(78 * root.d)
                         radius: root.plateRadius
-                        color: sizeTile.chosen ? IrisStyle.tintFill(IrisStyle.accent)
+                        readonly property color stuff: sizeTile.chosen ? IrisStyle.tintFill(IrisStyle.accent)
                             : tileHover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
-                        border.width: sizeTile.chosen ? 1 : 0
+                        color: IrisStyle.fieldChamfer ? "transparent" : sizeTile.stuff
+                        border.width: sizeTile.chosen && !IrisStyle.fieldChamfer ? 1 : 0
                         border.color: IrisStyle.tintBorder(IrisStyle.accent)
                         Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+                        IrisCutPlate {
+                            anchors.fill: parent
+                            visible: IrisStyle.fieldChamfer
+                            cutLength: root.plateCut
+                            color: sizeTile.stuff
+                            stroke: IrisStyle.tintBorder(IrisStyle.accent)
+                            strokeWidth: sizeTile.chosen ? 1 : 0
+                        }
 
                         Rectangle {
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -273,12 +286,15 @@ ColumnLayout {
                     }
                 }
                 Rectangle {
+                    id: optionPlate
                     visible: !option.choice
                     Layout.fillWidth: true
                     implicitHeight: Math.round(40 * root.d)
                     radius: root.plateRadius
-                    color: optionHover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
+                    readonly property color stuff: optionHover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
+                    color: IrisStyle.fieldChamfer ? "transparent" : optionPlate.stuff
                     Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+                    IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; cutLength: root.plateCut; color: optionPlate.stuff }
 
                     MaterialSymbol {
                         id: optionGlyph
