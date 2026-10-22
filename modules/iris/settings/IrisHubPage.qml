@@ -168,6 +168,7 @@ Flickable {
                 anchors.verticalCenter: parent.verticalCenter
                 color: IrisStyle.text
                 selectionColor: IrisStyle.accentContainer
+                selectedTextColor: IrisStyle.inkOnAccentContainer
                 font.family: IrisStyle.fontMain
                 font.pixelSize: IrisStyle.typeLabel
                 clip: true
@@ -331,6 +332,7 @@ Flickable {
                         anchors.verticalCenter: parent.verticalCenter
                         color: IrisStyle.text
                         selectionColor: IrisStyle.accentContainer
+                        selectedTextColor: IrisStyle.inkOnAccentContainer
                         font.family: IrisStyle.fontMain
                         font.pixelSize: IrisStyle.typeLabel
                         clip: true

@@ -966,7 +966,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             color: IrisStyle.text
                             selectionColor: searchSkin.item?.selectionColour ?? IrisStyle.accentContainer
-                            selectedTextColor: searchSkin.item?.selectedTextColour ?? IrisStyle.text
+                            selectedTextColor: searchSkin.item?.selectedTextColour ?? IrisStyle.inkOnAccentContainer
                             font.family: IrisStyle.fontMain
                             font.pixelSize: IrisStyle.typeLabel
                             clip: true

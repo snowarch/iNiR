@@ -301,7 +301,34 @@ QtObject {
     readonly property var washi: IrisWashi.palette(root.scheme)
     readonly property var washiDark: IrisWashi.palette("dark")
     readonly property var washiLight: IrisWashi.palette("light")
-    function role(name: string, fallback: string): color { return Qt.color(root.washi?.[name] ?? fallback) }
+    // Signal (DESIGN.md S1): the body is monochrome, ink on paper with no hue, and colour means one thing. A colour theme
+    // the person follows, the anime layer and the Midnight material are choices of colour and keep theirs.
+    readonly property bool mono: !root.followsTheme && !root.animeEnabled
+    readonly property bool neutralBody: root.mono && !["midnight", "wallpaper", "theme"].includes(root.materialName)
+    readonly property var neutralRoles: ["surface", "surfaceHigh", "surfaceHighest", "text", "textSecondary", "textTertiary", "fillInk"]
+    // The same light, no hue: a warm paper or a wallpaper-tinted black reads as its grey.
+    function neutral(c: color): color {
+        const v = Math.pow(ColorUtils.relativeLuminance(c), 1 / 2.2)
+        return Qt.rgba(v, v, v, c.a)
+    }
+    function role(name: string, fallback: string): color {
+        const c = Qt.color(root.washi?.[name] ?? fallback)
+        return root.neutralBody && root.neutralRoles.includes(name) ? root.neutral(c) : c
+    }
+    // The paper under inverted ink: what a chosen segment's label, an on tile's glyph and a primary button's word wear.
+    readonly property color paper: root.surfaceOpaque
+    // The one colour: live, needs you, an error, a verb that can't be undone. Nothing's red by default, the wallpaper's
+    // own vivid colour, or a hex the person picked.
+    readonly property color signalRed: "#d71921" // iris-literal: Nothing's red
+    // iris-literal: the signal colours Settings offers beside Nothing's red and the wallpaper's.
+    readonly property var signalSwatches: ({ orange: "#ff8a00", blue: "#2f7bf6", green: "#36c46b", pink: "#ff4fa3" })
+    readonly property string signalChoice: String(root.appearance?.signal ?? "nothing")
+    readonly property color signal: root.signalChoice === "wallpaper"
+        ? root.vividHighlight(Appearance.wallpaperDominantColor, root.vividHighlight(Appearance.colors.colPrimary, root.signalRed))
+        : /^#[0-9a-fA-F]{6}$/.test(root.signalChoice) ? Qt.color(root.signalChoice) : root.signalRed
+    // The signal as text: moved only as far as 4.5:1 on the paper needs (the pure red is a mark, 3:1, not a word).
+    readonly property color signalInk: root.readableAccent(root.signal)
+    readonly property color inkOnSignal: root.onTintFor(root.signal)
 
     // A tonal container of any colour and the same hue as ink on it (Material's filled tonal): the calm way to say "on".
     function containerOf(c: color): color { return ColorUtils.mix(root.surfaceOpaque, c, root.light ? 0.8 : 0.72) }
@@ -323,7 +350,10 @@ QtObject {
     // iris-literal: the HSL hue each identity colour is known by, to map a named colour onto the palette.
     readonly property var identityHues: ({ red: 0.01, orange: 0.09, yellow: 0.14, green: 0.37, teal: 0.52, sky: 0.55,
         blue: 0.6, indigo: 0.67, purple: 0.78, pink: 0.95 })
-    function materialSwatch(name: string): color { return Qt.color(root.washi?.materials?.[name] ?? "#000000") }
+    function materialSwatch(name: string): color {
+        const c = Qt.color(root.washi?.materials?.[name] ?? "#000000")
+        return root.mono && ["black", "graphite"].includes(name) ? root.neutral(c) : c
+    }
     readonly property string materialName: root.followsTheme ? "theme" : String(root.theme?.surface ?? "black")
     // What each scheme calls its materials (Settings, the previews): the three stored names stay black, graphite, midnight.
     readonly property var materialLabels: root.ink ? ({ black: "Washi", graphite: "Kraft", midnight: "Mist" })
@@ -652,22 +682,27 @@ QtObject {
     readonly property bool animeHighlightOn: Boolean(root.animeLayer?.highlight ?? false)
     // The accent: actions, selection, links, live marks. 4.5:1 on every ground, and on paper a fill under white ink.
     readonly property color baseAccent: root.accentFrom(root.followsTheme ? "theme" : String(root.appearance?.accent ?? "blue"), root.appearance?.theme?.accentHue ?? 212)
+    // Under Signal the accent is the ink itself: what was an accent mark reads as ink, and an accent fill with its
+    // own ink on it turns into the inverted plate (ink fill, paper word), Nothing's "chosen".
     readonly property color accent: root.animeEnabled
-        ? root.animeAccent(root.baseAccent, root.animePaletteName, root.animeStrength) : root.baseAccent
-    readonly property color inkOnAccent: root.animeEnabled ? root.onTintFor(root.accent) : root.role("onAccent", "#101318")
+        ? root.animeAccent(root.baseAccent, root.animePaletteName, root.animeStrength) : root.mono ? root.text : root.baseAccent
+    readonly property color inkOnAccent: root.animeEnabled ? root.onTintFor(root.accent) : root.mono ? root.paper : root.role("onAccent", "#101318")
     // Colour over imagery (the lock, artwork veils), which stays dark in every scheme: the night palette's roles.
-    readonly property color accentOnMedia: root.animeEnabled ? Lume.mark(root.accent, 0.35, 0, false, 3) : Qt.color(root.washiDark?.accent ?? "#a8c7fa")
-    readonly property color highlightOnMedia: Qt.color(root.washiDark?.highlight ?? "#ff9f0a")
+    readonly property color mediaInk: root.neutral(Qt.color(root.washiDark?.text ?? "#f2f2f0"))
+    readonly property color accentOnMedia: root.animeEnabled ? Lume.mark(root.accent, 0.35, 0, false, 3)
+        : root.mono ? root.mediaInk : Qt.color(root.washiDark?.accent ?? "#a8c7fa")
+    readonly property color highlightOnMedia: root.mono ? root.mediaInk : Qt.color(root.washiDark?.highlight ?? "#ff9f0a")
     // Where you are: the accent's tonal container, and the accent's hue as ink on it.
     // A filled accent under the pointer: a tenth of its own ink over it.
     readonly property color accentHover: ColorUtils.mix(root.accent, root.inkOnAccent, 0.9)
     // The lit top of a tile's gradient (squircle icons, section marks): one step for every tile.
     function tileTop(c: color): color { return Qt.lighter(c, 1.18) }
-    readonly property color accentContainer: root.role("accentContainer", "#1f3a5f")
-    readonly property color inkOnAccentContainer: root.role("onAccentContainer", "#d6e3ff")
+    readonly property color accentContainer: root.mono ? root.text : root.role("accentContainer", "#1f3a5f")
+    readonly property color inkOnAccentContainer: root.mono ? root.paper : root.role("onAccentContainer", "#d6e3ff")
     // The highlight: the glanced detail (a clock separator, a day number, a timer). A figure: 3:1 on every ground.
     readonly property color baseSecondaryAccent: root.highlightFrom(root.followsTheme ? "theme" : String(root.appearance?.highlight ?? "orange"), root.appearance?.theme?.highlightHue ?? 32, root.baseAccent)
     readonly property color secondaryAccent: {
+        if (root.mono && !(root.animeEnabled && root.animeHighlightOn)) return root.text
         const base = root.baseSecondaryAccent
         return root.animeEnabled && root.animeHighlightOn
             ? root.animeHighlight(base, root.animePaletteName, root.animeStrength) : base
@@ -718,19 +753,20 @@ QtObject {
     readonly property color badgeInk: root.badgeStyle === "alert" ? root.danger
         : root.badgeStyle === "neutral" ? root.text : root.badge
     // Status: done and alert read as text (4.5:1), a warning as a mark (3:1); the same hues in every scheme.
-    readonly property color success: root.role("success", "#8de0a3")
-    readonly property color warning: root.role("warning", "#ffb340")
-    readonly property color danger: root.role("danger", "#ff6961")
+    // Under Signal done is ink, and a warning and an error are the signal: one colour that means "look".
+    readonly property color success: root.mono ? root.text : root.role("success", "#8de0a3")
+    readonly property color warning: root.mono ? root.signalInk : root.role("warning", "#ffb340")
+    readonly property color danger: root.mono ? root.signalInk : root.role("danger", "#ff6961")
     // The night palette's red: a veil over imagery stays dark in every scheme.
-    readonly property color dangerOnMedia: Qt.color(root.washiDark?.danger ?? "#ff6961")
-    readonly property color inkOnDanger: root.role("onDanger", "#160000")
+    readonly property color dangerOnMedia: root.mono ? Lume.mark(root.signal, 0.35, 0, false, 4.5) : Qt.color(root.washiDark?.danger ?? "#ff6961")
+    readonly property color inkOnDanger: root.mono ? root.onTintFor(root.signalInk) : root.role("onDanger", "#160000")
     // A filled alert (a badge): the shu pigment with its own ink; `danger` stays the red that reads as text.
     // The accent as a filled shape (a seal, a lit plate): the solver's pigment, which a Design palette keeps exact
     // (AIRISU's vermilion hanko) where the accent that is text has to move to read.
-    readonly property color accentFill: root.washi?.accentFill ? Qt.color(root.washi.accentFill) : root.accent
-    readonly property color inkOnAccentFill: root.washi?.onAccentFill ? Qt.color(root.washi.onAccentFill) : root.inkOnAccent
-    readonly property color dangerFill: root.role("dangerFill", "#e57766")
-    readonly property color inkOnDangerFill: root.role("onDangerFill", "#22110d")
+    readonly property color accentFill: root.mono || !root.washi?.accentFill ? root.accent : Qt.color(root.washi.accentFill)
+    readonly property color inkOnAccentFill: root.mono || !root.washi?.onAccentFill ? root.inkOnAccent : Qt.color(root.washi.onAccentFill)
+    readonly property color dangerFill: root.mono ? root.signal : root.role("dangerFill", "#e57766")
+    readonly property color inkOnDangerFill: root.mono ? root.inkOnSignal : root.role("onDangerFill", "#22110d")
     function line(base: color): color {
         const t = root.tweak("lines", 0, 2)
         return t <= 1 ? ColorUtils.mix(base, root.surfaceOpaque, t) : ColorUtils.mix(root.text, base, (t - 1) * 0.35)
@@ -764,7 +800,7 @@ QtObject {
     // Fills are the ink itself at low alpha: sumi in the paper's hue darkens paper in its own colour, never a grey film.
     readonly property color fillInk: root.afterglow && !root.light
         ? ColorUtils.mix(Qt.color(root.afterglowPalette.light), root.text, 0.5 * root.afterglowAtmosphere)
-        : root.tinted(Qt.color(root.washi?.fillInk ?? root.text), 0.22)
+        : root.tinted(root.role("fillInk", root.text.toString()), 0.22)
     readonly property color fillQuiet: ColorUtils.applyAlpha(root.fillInk, root.fillAlpha(0.08))
     readonly property color fill: ColorUtils.applyAlpha(root.fillInk, root.fillAlpha(0.12))
     // A plate Design (AIRISU `hover: "plate"`) answers the pointer with an opaque plate of ink laid on the body, clearly
@@ -1061,7 +1097,7 @@ QtObject {
     // body at 45° by `chamferCut` and squares the other two; the plates inside go square (`corner`).
     readonly property bool fieldChamfer: IrisDesign.fieldCorner === "chamfer"
     // The active Design's traits (IrisDesign.traits), as primitives the surfaces bind to.
-    readonly property bool plainMarks: IrisDesign.trait("marks") === "glyph"
+    readonly property bool plainMarks: IrisDesign.trait("marks") === "glyph" || root.mono
     readonly property bool plateSelection: IrisDesign.trait("selection") === "plate"
     readonly property bool indexed: IrisDesign.trait("index") === true
     // Signal: every caption and group head speaks in the Label voice, in every Design.
@@ -1074,17 +1110,19 @@ QtObject {
     // Where you are and what is chosen (a row, a cell, a tile): the accent wash in iRiS, a solid plate of the accent with
     // its own ink in a plate Design (never the text colour as a plate: a white slab on every chosen row).
     // `selectionInk` marks (the chosen glyph, a check), `selectionLabel` the label on it.
-    readonly property color selectionFill: root.plateSelection ? root.accentFill : root.tintFill(root.accent)
-    readonly property color selectionInk: root.plateSelection ? root.inkOnAccentFill : root.accent
-    readonly property color selectionLabel: root.plateSelection ? root.inkOnAccentFill : root.text
+    // Signal: chosen is inverted in every Design (ink plate, paper word); the current row of a list is one step of ink.
+    readonly property bool invertSelection: root.plateSelection || root.mono
+    readonly property color selectionFill: root.invertSelection ? root.accentFill : root.tintFill(root.accent)
+    readonly property color selectionInk: root.invertSelection ? root.inkOnAccentFill : root.accent
+    readonly property color selectionLabel: root.invertSelection ? root.inkOnAccentFill : root.text
     // A detail on the chosen row (its comment, its verb): the second tone of the plate's ink in a plate Design.
-    readonly property color selectionDetail: root.plateSelection ? ColorUtils.mix(root.inkOnAccentFill, root.accentFill, 0.72) : root.subtext
+    readonly property color selectionDetail: root.invertSelection ? ColorUtils.mix(root.inkOnAccentFill, root.accentFill, 0.72) : root.subtext
     // The current row of a list (Spotlight's result, a browse tile): a plate Design lays it one step of ink over the body
     // and keeps the ink, leaving the seal to what marks it; a whole row of the accent read as an alarm bar on every query.
-    readonly property color rowSelectionFill: root.plateSelection ? ColorUtils.mix(root.text, root.surfaceOpaque, 0.12) : root.selectionFill // iris-literal: one step of ink
-    readonly property color rowSelectionLabel: root.plateSelection ? root.text : root.selectionLabel
-    readonly property color rowSelectionDetail: root.plateSelection ? root.subtext : root.selectionDetail
-    readonly property color rowSelectionInk: root.plateSelection ? root.accent : root.selectionInk
+    readonly property color rowSelectionFill: root.invertSelection ? ColorUtils.mix(root.text, root.surfaceOpaque, 0.12) : root.selectionFill // iris-literal: one step of ink
+    readonly property color rowSelectionLabel: root.invertSelection ? root.text : root.selectionLabel
+    readonly property color rowSelectionDetail: root.invertSelection ? root.subtext : root.selectionDetail
+    readonly property color rowSelectionInk: root.invertSelection ? root.accent : root.selectionInk
     // A list's place as a part number: 01, 02… (indexed Designs).
     function indexLabel(i: int): string { return (i + 1 < 10 ? "0" : "") + (i + 1) }
     readonly property int chamferCut: Math.round(10 * root.density)

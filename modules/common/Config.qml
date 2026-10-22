@@ -4149,9 +4149,11 @@ Singleton {
                     }
                     property int expandedRadius: 28
                     property int motionDuration: 220
-                    property string fontFamily: "" // Empty = Inter (bundled)
-                    property string titleFontFamily: "" // Empty = Inter Display (bundled)
-                    property string numbersFontFamily: "" // Empty = Rubik (bundled; clocks, timers, levels)
+                    property string fontFamily: "" // Empty = Geist (bundled)
+                    property string titleFontFamily: "" // Empty = Geist (bundled)
+                    property string numbersFontFamily: "" // Empty = Geist Pixel Circle (bundled; the Dot voice)
+                    // The one colour of Signal (live, needs you, errors): "nothing" (#D71921), "wallpaper" or a #rrggbb.
+                    property string signal: "nothing"
                     property real density: 1.0
                     property bool motion: true
                     // iRiS Studio: the user's own tweaks on top of the preset. Every
