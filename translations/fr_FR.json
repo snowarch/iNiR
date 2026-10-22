@@ -9544,5 +9544,12 @@
   "%1 is pinned but no longer installed.": "%1 est épinglé mais n’est plus installé.",
   "Defaults": "Par défaut",
   "1 note": "1 note",
-  "%1 notes": "%1 notes"
+  "%1 notes": "%1 notes",
+  "In %1, %2.": "Dans %1, %2.",
+  "%1 is %2": "%1 est sur %2",
+  "%1 and %2": "%1 et %2",
+  "%1, %2": "%1, %2",
+  "with %1 on": "avec %1 activé",
+  "%1 off": "%1 désactivé",
+  "%1 are %2": "%1 sont sur %2"
 }

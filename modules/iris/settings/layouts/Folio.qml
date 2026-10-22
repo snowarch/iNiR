@@ -340,7 +340,7 @@ Item {
                 }
             }
 
-            // What the area holds, said once: every group's answer, each a link to its rows.
+            // What the area holds, said once as a sentence: its most telling values, each a link that lands on its row.
             IrisText {
                 id: say
                 Layout.fillWidth: true
@@ -354,16 +354,27 @@ Item {
                 font.pixelSize: root.u(root.compact ? 19 : 23)
                 lineHeight: 1.28
                 text: {
-                    Config.revision
-                    const groups = (root.host?.groups ?? []).filter(entry => String(entry.title).length > 0).slice(0, 6)
-                    return groups.map(entry => {
-                        const answer = String(root.host.summaryOf(entry) ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;")
-                        const title = String(entry.title).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-                        return title + " <a style='text-decoration:none; color:" + IrisStyle.text + "; font-weight:500' href='"
-                            + encodeURIComponent(String(entry.title)) + "'>" + answer + "</a>"
-                    }).join("<font color='" + IrisStyle.textTertiary + "'>  ·  </font>")
+                    const rows = root.host?.tellingRows(root.compact ? 3 : 4) ?? []
+                    if (rows.length === 0) return ""
+                    const esc = value => String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                    const area = Translation.tr(String(root.area.title ?? ""))
+                    const link = (spec, words) => "<a style='text-decoration:none; color:" + (IrisOptions.modified(spec) ? IrisStyle.accent : IrisStyle.text)
+                        + "; font-weight:500' href='" + encodeURIComponent(String(spec.path)) + "'>" + esc(words) + "</a>"
+                    const list = parts => parts.length === 1 ? parts[0]
+                        : Translation.tr("%1 and %2").arg(parts.slice(0, -1).reduce((all, part) => Translation.tr("%1, %2").arg(all).arg(part))).arg(parts[parts.length - 1])
+                    const on = spec => { const value = IrisOptions.currentValue(spec); return spec.invert ? !value : !!value }
+                    // Values are said with their names, switches by name alone, grouped by on and off.
+                    const clauses = []
+                    const values = rows.filter(spec => spec.kind !== "switch")
+                        .map(spec => Translation.tr(/[^su]s$/.test(String(spec.label ?? "")) ? "%1 are %2" : "%1 is %2").arg(esc(root.inline(root.named(spec, area)))).arg(link(spec, root.inline(root.answer(spec)))))
+                    if (values.length > 0) clauses.push(list(values))
+                    const lit = rows.filter(spec => spec.kind === "switch" && on(spec)).map(spec => link(spec, root.inline(root.named(spec, area))))
+                    if (lit.length > 0) clauses.push(Translation.tr("with %1 on").arg(list(lit)))
+                    const dark = rows.filter(spec => spec.kind === "switch" && !on(spec)).map(spec => link(spec, root.inline(root.named(spec, area))))
+                    if (dark.length > 0) clauses.push(Translation.tr("%1 off").arg(list(dark)))
+                    return Translation.tr("In %1, %2.").arg(esc(area)).arg(clauses.reduce((all, part) => Translation.tr("%1, %2").arg(all).arg(part)))
                 }
-                onLinkActivated: link => root.host.scrollToGroup(decodeURIComponent(link))
+                onLinkActivated: link => root.host.landOn(decodeURIComponent(link))
                 HoverHandler { cursorShape: say.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor }
             }
 
@@ -469,6 +480,20 @@ Item {
         if (spec.kind === "range") return Translation.tr(IrisOptions.rangeText(spec, value))
         const choice = IrisOptions.choicesOf(spec).find(entry => IrisOptions.same(entry.value, value))
         return choice ? Translation.tr(String(choice.label ?? "")) : String(value ?? "")
+    }
+
+    // A row's name inside its own area drops the area's name: "Dock notch" in Dock is the notch.
+    function named(spec: var, area: string): string {
+        const label = Translation.tr(String(spec.label ?? ""))
+        return label.toLowerCase().startsWith(area.toLowerCase() + " ") ? label.slice(area.length + 1) : label
+    }
+    // A label or a value read mid-sentence: "Icon size" becomes "icon size"; names and acronyms ("GPU", "Wi-Fi") keep
+    // their case, and so does German, where every noun is capitalised.
+    function inline(text: string): string {
+        if (Translation.languageCode.startsWith("de") || text.length < 2) return text
+        const second = text.charAt(1)
+        if (second !== second.toLocaleLowerCase() || /[A-Z]/.test(text.slice(1).split(" ")[0])) return text
+        return text.charAt(0).toLocaleLowerCase() + text.slice(1)
     }
 
     component RoundKey: MouseArea {

@@ -355,6 +355,29 @@ Item {
         // Nothing to answer with (lists, defaults): say what's inside instead of leaving the row mute.
         return rows.slice(0, 2).map(spec => Translation.tr(spec.label)).join(", ")
     }
+    // The rows that tell an area best at a glance: what was changed here first, then each group's lead row.
+    function tellingRows(count: int): var {
+        Config.revision
+        const usable = root.entries.filter(spec => spec.path && !spec.mirror && !(spec.locked && spec.locked())
+            && ["switch", "range", "choice", "zone"].includes(spec.kind) && Translation.tr(String(spec.label ?? "")).length <= 26)
+        const leads = []
+        const seen = new Set()
+        // A group is told by its first value (edge, size, style) before its first switch.
+        const essentials = usable.filter(spec => !IrisOptions.fineTune(spec))
+        for (const spec of essentials.filter(spec => spec.kind !== "switch").concat(essentials.filter(spec => spec.kind === "switch"))) {
+            const group = String(spec.group ?? "")
+            if (!seen.has(group)) { seen.add(group); leads.push(spec) }
+        }
+        const out = []
+        for (const spec of usable.filter(spec => IrisOptions.modified(spec)).concat(leads))
+            if (!out.includes(spec) && out.length < count) out.push(spec)
+        return out
+    }
+    // Puts a row in view and lights it, as a search result lands.
+    function landOn(path: string): void {
+        root.landingPath = path
+        landingClear.restart()
+    }
     function modifiedIn(entry: var): bool {
         Config.revision
         return entry.rows.some(spec => IrisOptions.modified(spec))

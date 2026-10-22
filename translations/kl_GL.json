@@ -7592,5 +7592,12 @@
   "What the Updates bubble runs in your terminal.": "Nutarterinerit puallaasaata terminalimi ingerlattagaa.",
   "Where shuffle picks from.": "Tunngavik qinersivik.",
   "Where you sign in after starting the computer.": "Qarasaasiaq aallartereerlugu login-imi iserfik.",
-  "Adds the graphics card to what Vitals shows.": "Vitals-imut GPU ilanngussaaq."
+  "Adds the graphics card to what Vitals shows.": "Vitals-imut GPU ilanngussaaq.",
+  "In %1, %2.": "%1-mi, %2.",
+  "%1 is %2": "%1: %2",
+  "%1 and %2": "%1 aamma %2",
+  "%1, %2": "%1, %2",
+  "with %1 on": "%1 ikkussimalluni",
+  "%1 off": "%1 qamitsinneqarpoq",
+  "%1 are %2": "%1: %2"
 }
