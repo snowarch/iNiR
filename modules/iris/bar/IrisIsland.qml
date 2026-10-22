@@ -1767,14 +1767,14 @@ Item {
                 DateMark {
                     visible: root.clockStyle === "dateTime"
                     Layout.alignment: Qt.AlignVCenter
-                    pixelSize: 12 * IrisStyle.typeScale * root.clockScale
+                    pixelSize: IrisStyle.typeMeta * root.clockScale
                     dayColor: root.clockAccent
                 }
                 Item { Layout.fillWidth: true }
                 IrisClock {
                     id: idleClock
                     Layout.alignment: Qt.AlignVCenter
-                    pixelSize: 15 * IrisStyle.typeScale * root.clockScale
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
                     separatorColor: root.clockAccent
                     opacity: clockFlight.hides(idleClock) ? 0 : 1
                 }
@@ -1799,7 +1799,7 @@ Item {
                     IrisText {
                         Layout.fillWidth: true
                         text: root.title
-                        font.pixelSize: (root.zoned ? 14 : 13) * IrisStyle.typeScale
+                        font.pixelSize: root.zoned ? IrisStyle.typeBody : IrisStyle.typeLabel
                         font.weight: IrisStyle.weight(Font.DemiBold)
                         elide: Text.ElideRight
                     }
@@ -1807,7 +1807,7 @@ Item {
                         Layout.fillWidth: true
                         visible: root.zoned && text.length > 0
                         text: root.ytMusic ? YtMusic.currentArtist : String(MprisController.artistOf(root.player) ?? "")
-                        color: IrisStyle.subtext
+                        color: IrisStyle.textSecondary
                         font.pixelSize: IrisStyle.typeFootnote
                         elide: Text.ElideRight
                     }
@@ -1827,8 +1827,8 @@ Item {
                 }
                 Tabular {
                     text: DateTime.timeDisplay
-                    color: IrisStyle.subtext
-                    font.pixelSize: (root.zoned ? 13 : 12) * IrisStyle.typeScale
+                    color: IrisStyle.textSecondary
+                    font.pixelSize: root.zoned ? IrisStyle.typeLabel : IrisStyle.typeMeta
                     font.weight: IrisStyle.weight(Font.Medium)
                 }
                 IrisVisualizer {
@@ -1845,15 +1845,17 @@ Item {
                 IrisText {
                     Layout.fillWidth: true
                     text: Translation.tr("Recording")
+                    color: IrisStyle.textSecondary
                     font.pixelSize: IrisStyle.typeLabel
-                    font.weight: IrisStyle.weight(Font.DemiBold)
+                    font.weight: IrisStyle.weight(Font.Medium)
                     elide: Text.ElideRight
                 }
+                // While something runs, its figure is what the row says (DI49j): the word steps back.
                 IrisNumber {
                     text: root.clockText(RecorderStatus.elapsedSeconds)
                     color: IrisStyle.danger
-                    pixelSize: IrisStyle.typeLabel
-                    weight: Font.DemiBold
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
+                    weight: IrisStyle.figureWeight
                 }
             }
 
@@ -1868,16 +1870,17 @@ Item {
                 IrisText {
                     Layout.fillWidth: true
                     text: root.timerLabel
-                    font.pixelSize: IrisStyle.typeMeta
-                    font.weight: IrisStyle.weight(Font.DemiBold)
+                    color: IrisStyle.textSecondary
+                    font.pixelSize: IrisStyle.typeLabel
+                    font.weight: IrisStyle.weight(Font.Medium)
                     elide: Text.ElideRight
                 }
                 IrisNumber {
                     text: root.clockText(root.timerSeconds)
                     countDown: root.timerKind !== "stopwatch"
-                    color: root.timerPaused ? IrisStyle.subtext : IrisStyle.secondaryAccent
-                    pixelSize: IrisStyle.typeLabel
-                    weight: Font.DemiBold
+                    color: root.timerPaused ? IrisStyle.textSecondary : IrisStyle.secondaryAccent
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
+                    weight: IrisStyle.figureWeight
                 }
             }
 
@@ -1893,16 +1896,18 @@ Item {
                     Layout.fillWidth: true
                     Layout.maximumWidth: Math.round(190 * root.d)
                     text: String(root.task?.title ?? "")
-                    font.pixelSize: IrisStyle.typeMeta
-                    font.weight: IrisStyle.weight(Font.DemiBold)
+                    // Without a figure the name is what the row says; with one, it steps back.
+                    color: Number(root.task?.progress ?? -1) >= 0 ? IrisStyle.textSecondary : IrisStyle.text
+                    font.pixelSize: IrisStyle.typeLabel
+                    font.weight: IrisStyle.weight(Number(root.task?.progress ?? -1) >= 0 ? Font.Medium : Font.DemiBold)
                     elide: Text.ElideRight
                 }
                 IrisNumber {
                     visible: Number(root.task?.progress ?? -1) >= 0
                     text: Math.round(Number(root.task?.progress ?? 0) * 100) + "%"
                     color: root.taskTint
-                    pixelSize: IrisStyle.typeLabel
-                    weight: Font.DemiBold
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
+                    weight: IrisStyle.figureWeight
                 }
                 RecordDot {
                     visible: Number(root.task?.progress ?? -1) < 0
@@ -1919,7 +1924,7 @@ Item {
                     visible: root.clockStyle === "dateTime"
                     Layout.alignment: Qt.AlignVCenter
                     Layout.rightMargin: 2 * root.d
-                    pixelSize: 12 * IrisStyle.typeScale * root.clockScale
+                    pixelSize: IrisStyle.typeMeta * root.clockScale
                     dayColor: root.clockAccent
                 }
                 Glyph {
@@ -1938,7 +1943,7 @@ Item {
                 IrisClock {
                     id: clusterClock
                     Layout.alignment: Qt.AlignVCenter
-                    pixelSize: 15 * IrisStyle.typeScale * root.clockScale
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
                     separatorColor: root.clockAccent
                     opacity: clockFlight.hides(clusterClock) ? 0 : 1
                 }
@@ -2046,7 +2051,7 @@ Item {
                     value: Math.round(root.event.value * 100)
                     unit: "%"
                     pixelSize: IrisStyle.typeBody
-                    weight: Font.Bold
+                    weight: IrisStyle.figureWeight
                     color: root.event.tint
                 }
                 ProgressRing {
@@ -2743,7 +2748,7 @@ Item {
                 value: Math.round(root.event.value * 100)
                 unit: "%"
                 pixelSize: IrisStyle.typeBody
-                weight: Font.Bold
+                weight: IrisStyle.figureWeight
                 color: root.event.tint
             }
         }

@@ -19,7 +19,7 @@ Item {
     property string clockStyle: "dateTime"
 
     readonly property real d: IrisStyle.density
-    readonly property real figure: 12 * IrisStyle.typeScale
+    readonly property real figure: IrisStyle.typeMeta
     readonly property Item current: ({ idle: clockStack, clock: clockStack, media: mediaStack, record: recordStack,
         timer: timerStack, task: taskStack, edit: editStack })[column.mode] ?? clockStack
     implicitWidth: column.thickness
@@ -40,7 +40,7 @@ Item {
     component Figure: IrisNumber {
         anchors.horizontalCenter: parent.horizontalCenter
         pixelSize: text.length > 5 ? Math.round(column.figure * 0.8) : column.figure
-        weight: Font.DemiBold
+        weight: IrisStyle.figureWeight
     }
 
     Stack {
@@ -55,7 +55,7 @@ Item {
         }
         IslandStackedClock {
             anchors.horizontalCenter: parent.horizontalCenter
-            pixelSize: 15 * IrisStyle.typeScale * column.clockScale
+            pixelSize: IrisStyle.typeHeadline * column.clockScale
             accent: column.clockAccent
             showDay: column.clockStyle === "dateTime"
         }
@@ -81,7 +81,7 @@ Item {
         // On its side there is room for the time under what plays.
         IslandStackedClock {
             anchors.horizontalCenter: parent.horizontalCenter
-            pixelSize: 13 * IrisStyle.typeScale * column.clockScale
+            pixelSize: IrisStyle.typeLabel * column.clockScale
             accent: column.clockAccent
             showDay: false
         }

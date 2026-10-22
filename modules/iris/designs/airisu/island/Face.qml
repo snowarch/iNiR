@@ -29,7 +29,7 @@ Item {
     readonly property real contentWidth: (root.rows[root.mode]?.implicitWidth ?? 0) + 2 * root.pad - Math.round(29 * root.d)
     readonly property var rows: ({ idle: idle, clock: idle, media: media, record: record, timer: timer, task: task,
         edit: edit, event: event, feedback: level })
-    readonly property real figure: Math.round(IrisStyle.typeHeadline * IrisStyle.typeScale * (root.island?.clockScale ?? 1))
+    readonly property real figure: Math.round(IrisStyle.typeHeadline * (root.island?.clockScale ?? 1))
     // A strip tall enough stacks a second line under the first; a slim one keeps everything on one line.
     readonly property bool stacks: root.h >= Math.round(34 * root.d)
 
@@ -107,6 +107,20 @@ Item {
         text: String(DateTime.timeDisplay)
     }
 
+    // What goes with the subject is ruby (ルビ), set small over it the way furigana sits over its word; a slim strip
+    // keeps it on the line, before. The subject stays in the strip's ink; the ruby takes the second (SYSTEM.md §5).
+    component Ruby: AText {
+        voice: "ruby"
+        font.weight: Font.Bold
+        color: root.inkSecond
+    }
+    component Gloss: AText {
+        Layout.alignment: Qt.AlignVCenter
+        size: IrisStyle.typeMeta
+        font.weight: Font.Bold
+        color: root.inkSecond
+    }
+
     // A small mark: AIRISU draws marks in the strip's ink, never on a plate of their own.
     component Mark: MaterialSymbol {
         iconSize: Math.round(17 * root.d)
@@ -148,23 +162,16 @@ Item {
         // The date is ruby (ルビ): set small over the time where the strip stacks, the way furigana sits over its word;
         // a slim strip and the weather keep it on the line, before the figure.
         readonly property bool ruby: idle.style === "dateTime" && root.stacks
-        AText {
+        Gloss {
             visible: idle.gloss.length > 0 && !idle.ruby
-            Layout.alignment: Qt.AlignVCenter
             Layout.rightMargin: Airisu.u(0.5)
-            size: IrisStyle.typeMeta
-            font.weight: Font.Bold
             text: idle.gloss
-            color: root.inkSecond
         }
         Column {
             Layout.alignment: Qt.AlignVCenter
             spacing: Math.round(-2 * root.d)
-            AText {
+            Ruby {
                 visible: idle.ruby && idle.gloss.length > 0
-                voice: "ruby"
-                font.weight: Font.Bold
-                color: root.inkSecond
                 text: idle.gloss
             }
             Time {}
@@ -192,20 +199,17 @@ Item {
             Layout.maximumWidth: Math.round(200 * root.d)
             Layout.alignment: Qt.AlignVCenter
             spacing: Math.round(-1 * root.d)
+            Ruby {
+                visible: root.stacks && text.length > 0
+                width: Math.min(implicitWidth, Math.round(200 * root.d))
+                text: String(MprisController.artistOf(root.island?.player) ?? "")
+            }
             AText {
                 width: Math.min(implicitWidth, Math.round(200 * root.d))
                 text: StringUtils.cleanMusicTitle(root.island?.title ?? "")
                 size: IrisStyle.typeLabel
                 font.weight: Font.Bold
                 color: root.ink
-            }
-            AText {
-                visible: root.stacks && text.length > 0
-                width: Math.min(implicitWidth, Math.round(200 * root.d))
-                text: String(MprisController.artistOf(root.island?.player) ?? "")
-                size: IrisStyle.typeMeta
-                font.weight: Font.Medium
-                color: root.inkSecond
             }
         }
         Mark {
@@ -234,19 +238,25 @@ Item {
                 PauseAnimation { duration: 500 }
             }
         }
-        AText {
-            Layout.fillWidth: true
+        Gloss {
+            visible: !root.stacks
             text: Translation.tr("Recording")
-            size: IrisStyle.typeLabel
-            font.weight: Font.Bold
-            color: root.ink
         }
-        AText {
-            voice: "figure"
-            lean: Airisu.lean
-            size: root.figure
-            color: root.ink
-            text: root.island?.clockText(RecorderStatus.elapsedSeconds) ?? ""
+        Column {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
+            spacing: Math.round(-2 * root.d)
+            Ruby {
+                visible: root.stacks
+                text: Translation.tr("Recording")
+            }
+            AText {
+                voice: "figure"
+                lean: Airisu.lean
+                size: root.figure
+                color: root.ink
+                text: root.island?.clockText(RecorderStatus.elapsedSeconds) ?? ""
+            }
         }
     }
 
@@ -257,20 +267,25 @@ Item {
             text: timer.paused ? "pause" : (root.island?.timerGlyph ?? "timer")
             color: timer.paused ? root.inkSecond : root.ink
         }
-        AText {
+        Gloss {
+            visible: !root.stacks
+            text: root.island?.timerLabel ?? ""
+        }
+        Column {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
-            text: root.island?.timerLabel ?? ""
-            size: IrisStyle.typeMeta
-            font.weight: Font.Bold
-            color: root.inkSecond
-        }
-        AText {
-            voice: "figure"
-            lean: Airisu.lean
-            size: root.figure
-            color: timer.paused ? root.inkSecond : root.ink
-            text: root.island?.clockText(root.island?.timerSeconds ?? 0) ?? ""
+            spacing: Math.round(-2 * root.d)
+            Ruby {
+                visible: root.stacks
+                text: root.island?.timerLabel ?? ""
+            }
+            AText {
+                voice: "figure"
+                lean: Airisu.lean
+                size: root.figure
+                color: timer.paused ? root.inkSecond : root.ink
+                text: root.island?.clockText(root.island?.timerSeconds ?? 0) ?? ""
+            }
         }
     }
 
@@ -282,20 +297,17 @@ Item {
             Layout.maximumWidth: Math.round(200 * root.d)
             Layout.alignment: Qt.AlignVCenter
             spacing: Math.round(-1 * root.d)
+            Ruby {
+                visible: root.stacks && text.length > 0
+                width: Math.min(implicitWidth, Math.round(200 * root.d))
+                text: String(root.island?.task?.detail ?? "")
+            }
             AText {
                 width: Math.min(implicitWidth, Math.round(200 * root.d))
                 text: String(root.island?.task?.title ?? "")
                 size: IrisStyle.typeLabel
                 font.weight: Font.Bold
                 color: root.ink
-            }
-            AText {
-                visible: root.stacks && text.length > 0
-                width: Math.min(implicitWidth, Math.round(200 * root.d))
-                text: String(root.island?.task?.detail ?? "")
-                size: IrisStyle.typeMeta
-                font.weight: Font.Medium
-                color: root.inkSecond
             }
         }
         AText {

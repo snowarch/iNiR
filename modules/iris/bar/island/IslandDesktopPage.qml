@@ -399,7 +399,7 @@ ColumnLayout {
                 spacing: -2 * IrisStyle.density
                 IrisText {
                     textFormat: Text.StyledText
-                    text: "<font color='" + (page.showBanner ? IrisStyle.textStrong : IrisStyle.secondaryAccent) + "'><b>"
+                    text: "<font color='" + (page.showBanner ? IrisStyle.textStrong : page.island.clockAccent) + "'><b>"
                         + Translation.locale.toString(DateTime.clock.date, "dddd") + "</b></font> "
                         + Translation.locale.toString(DateTime.clock.date, "d MMMM")
                     color: (page.showBanner ? IrisStyle.textStrong : IrisStyle.textSecondary)
@@ -408,7 +408,9 @@ ColumnLayout {
                 }
                 IrisClock {
                     id: heroClock
-                    pixelSize: 46 * IrisStyle.typeScale
+                    pixelSize: IrisStyle.typeHero
+                    // The accent the person chose for the clock, the same one the Island wears at rest.
+                    separatorColor: page.island.clockAccent
                     opacity: page.island.clockFlightItem.hides(heroClock) ? 0 : 1
                     Component.onCompleted: page.island.heroClock = heroClock
                 }
@@ -428,8 +430,8 @@ ColumnLayout {
                         readonly property string raw: String(Weather.data?.temp ?? "")
                         value: raw.replace(/°?[CF]$/, "")
                         unit: raw.length > value.length ? raw.slice(value.length) : ""
-                        pixelSize: 26 * IrisStyle.typeScale
-                        weight: Font.DemiBold
+                        pixelSize: IrisStyle.typeDisplay
+                        weight: IrisStyle.figureWeight
                     }
                 }
                 IrisText {
@@ -700,7 +702,7 @@ ColumnLayout {
                             text: hour.index === 0 ? Translation.tr("Now") : String(hour.modelData.label).slice(0, 2)
                             color: hour.index === 0 ? IrisStyle.text : IrisStyle.textTertiary
                             font.pixelSize: IrisStyle.typeFootnote
-                            font.weight: hour.index === 0 ? Font.DemiBold : Font.Medium
+                            font.weight: IrisStyle.weight(hour.index === 0 ? Font.DemiBold : Font.Medium)
                             font.features: { "tnum": 1 }
                         }
                         Glyph {
@@ -763,8 +765,9 @@ ColumnLayout {
                     IrisText {
                         Layout.alignment: Qt.AlignHCenter
                         text: Translation.locale.toString(agenda.when, "ddd").toUpperCase()
-                        color: IrisStyle.danger
-                        font.pixelSize: 8.5 * IrisStyle.typeScale
+                        // The calendar's red marks today only; another day is just its name.
+                        color: agenda.when.toDateString() === DateTime.clock.date.toDateString() ? IrisStyle.danger : IrisStyle.textSecondary
+                        font.pixelSize: IrisStyle.typeCaption
                         font.weight: IrisStyle.weight(Font.Bold)
                     }
                     IrisText {
@@ -914,7 +917,7 @@ ColumnLayout {
                                 value: vital.reading.value
                                 unit: vital.reading.unit
                                 pixelSize: IrisStyle.typeLabel
-                                weight: Font.Bold
+                                weight: IrisStyle.figureWeight
                             }
                         }
                         Item { Layout.fillWidth: true }

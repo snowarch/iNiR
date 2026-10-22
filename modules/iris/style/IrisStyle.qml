@@ -92,6 +92,8 @@ QtObject {
     readonly property int typeTitle: Math.round(17 * root.typeScale)
     readonly property int typeTitleLarge: Math.round(21 * root.typeScale)
     readonly property int typeDisplay: Math.round(28 * root.typeScale)
+    // The one figure that owns a surface (the Island's desktop clock): read from across the room, nothing beside it competes.
+    readonly property int typeHero: Math.round(46 * root.typeScale)
     // Inter's optical tracking (a + b·e^(c·size) em) in whole pixels: 0 to 25 px, −1 from 26, −2 from 68.
     function tracking(px: real): int {
         return Math.round(px * (-0.0223 + 0.185 * Math.exp(-0.1745 * px)))

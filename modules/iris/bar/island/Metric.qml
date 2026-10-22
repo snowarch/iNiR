@@ -12,7 +12,7 @@ Row {
     property string value: ""
     property string unit: ""
     property real pixelSize: IrisStyle.typeHeadline
-    property int weight: Font.DemiBold
+    property int weight: IrisStyle.figureWeight
     property color color: IrisStyle.text
     IrisText {
         id: metricValue
@@ -30,7 +30,7 @@ Row {
         leftPadding: metric.pixelSize * 0.06
         text: metric.unit
         color: IrisStyle.secondaryOf(metric.color)
-        font.pixelSize: Math.max(9, metric.pixelSize * 0.6)
+        font.pixelSize: Math.max(IrisStyle.typeCaption, Math.round(metric.pixelSize * 0.6))
         font.weight: IrisStyle.weight(Font.DemiBold)
     }
 }

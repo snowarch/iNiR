@@ -61,9 +61,9 @@ ColumnLayout {
         IrisNumber {
             text: page.island.clockText(RecorderStatus.elapsedSeconds)
             color: IrisStyle.danger
-            pixelSize: 28 * IrisStyle.typeScale
-            weight: Font.Bold
-            letterSpacing: -1
+            pixelSize: IrisStyle.typeDisplay
+            weight: IrisStyle.figureWeight
+            letterSpacing: IrisStyle.tracking(IrisStyle.typeDisplay)
         }
         GlyphButton {
             glyph: "stop"
@@ -129,9 +129,9 @@ ColumnLayout {
             text: page.island.clockText(page.island.timerSeconds)
             countDown: page.island.timerKind !== "stopwatch"
             color: page.island.timerPaused ? IrisStyle.subtext : IrisStyle.secondaryAccent
-            pixelSize: 28 * IrisStyle.typeScale
-            weight: Font.Bold
-            letterSpacing: -1
+            pixelSize: IrisStyle.typeDisplay
+            weight: IrisStyle.figureWeight
+            letterSpacing: IrisStyle.tracking(IrisStyle.typeDisplay)
         }
         GlyphButton {
             glyph: page.island.timerPaused ? "play_arrow" : "pause"
@@ -223,9 +223,9 @@ ColumnLayout {
                     visible: taskEntry.progress >= 0
                     text: Math.round(taskEntry.progress * 100) + "%"
                     color: taskEntry.tint
-                    pixelSize: 28 * IrisStyle.typeScale
-                    weight: Font.Bold
-                    letterSpacing: -1
+                    pixelSize: IrisStyle.typeDisplay
+                    weight: IrisStyle.figureWeight
+                    letterSpacing: IrisStyle.tracking(IrisStyle.typeDisplay)
                 }
                 GlyphButton {
                     glyph: "close"

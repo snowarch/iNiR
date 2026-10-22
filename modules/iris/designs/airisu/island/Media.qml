@@ -141,7 +141,7 @@ GridLayout {
                     voice: "figure"
                     size: IrisStyle.typeLabel
                     text: "/ " + (page.island?.clockText(media.effectiveLength) ?? "")
-                    color: page.inkThird
+                    color: page.inkSecond
                 }
             }
         }

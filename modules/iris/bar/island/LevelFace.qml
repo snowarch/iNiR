@@ -13,7 +13,7 @@ Item {
     property string style: "bar"
     property bool showValue: true
     property real glyphSize: 18 * IrisStyle.density
-    property real figureSize: 14 * IrisStyle.typeScale
+    property real figureSize: IrisStyle.typeBody
     property color barFill: IrisStyle.fillStrong
 
     readonly property real d: IrisStyle.density
@@ -42,7 +42,7 @@ Item {
             value: Math.round(face.value * 100)
             unit: "%"
             pixelSize: face.figureSize
-            weight: Font.Bold
+            weight: IrisStyle.figureWeight
             color: face.ink
         }
     }

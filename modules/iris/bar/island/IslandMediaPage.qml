@@ -79,7 +79,7 @@ GridLayout {
                 IrisText {
                     Layout.fillWidth: true
                     text: media.effectiveTitle
-                    font.pixelSize: IrisStyle.typeHeadline
+                    font.pixelSize: IrisStyle.typeTitle
                     font.weight: IrisStyle.weight(Font.DemiBold)
                     wrapMode: Text.Wrap
                     maximumLineCount: 2

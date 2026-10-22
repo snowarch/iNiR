@@ -17,7 +17,7 @@ Row {
         id: weekdayText
         text: Translation.locale.toString(DateTime.clock.date, "ddd").replace(/\.$/, "")
         color: dateMark.inkColor
-        font.pixelSize: dateMark.pixelSize * 0.92
+        font.pixelSize: dateMark.pixelSize
         font.weight: IrisStyle.weight(Font.Medium)
     }
     IrisText {

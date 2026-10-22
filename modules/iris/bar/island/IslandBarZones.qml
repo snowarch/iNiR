@@ -409,13 +409,13 @@ Item {
                 DateMark {
                     visible: zones.clockStyle === "dateTime"
                     anchors.verticalCenter: parent.verticalCenter
-                    pixelSize: 12 * IrisStyle.typeScale * zones.clockScale
+                    pixelSize: IrisStyle.typeMeta * zones.clockScale
                     dayColor: IrisStyle.markOn(zones.clockAccent, time.backdrop, time.light, 4.5)
                     inkColor: time.light ? IrisStyle.inkOnLightMuted : IrisStyle.muted
                 }
                 IrisClock {
                     anchors.verticalCenter: parent.verticalCenter
-                    pixelSize: 14 * IrisStyle.typeScale * zones.clockScale
+                    pixelSize: IrisStyle.typeHeadline * zones.clockScale
                     color: time.light ? IrisStyle.inkOnLight : IrisStyle.text
                     separatorColor: IrisStyle.markOn(zones.clockAccent, time.backdrop, time.light, 3)
                 }
@@ -424,7 +424,7 @@ Item {
                 id: column
                 visible: zones.vertical
                 anchors.centerIn: parent
-                pixelSize: 14 * IrisStyle.typeScale * zones.clockScale
+                pixelSize: IrisStyle.typeHeadline * zones.clockScale
                 accent: zones.clockAccent
                 showDay: zones.clockStyle === "dateTime"
             }
