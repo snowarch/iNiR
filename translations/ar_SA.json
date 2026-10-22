@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "حيث تسجّل الدخول بعد تشغيل الحاسوب.",
   "Which end of the Island carries them.": "أي طرف من الجزيرة يحملها.",
   "Windows keep clear of the bubbles resting on an edge.": "تبتعد النوافذ عن الفقاعات المستقرة على حافة.",
-  "Adds the graphics card to what Vitals shows.": "يضيف بطاقة الرسوميات إلى Vitals."
+  "Adds the graphics card to what Vitals shows.": "يضيف بطاقة الرسوميات إلى Vitals.",
+  "Folio": "ورقة",
+  "Console": "لوحة التحكم",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "الورقة تُقرأ كصفحة، والمجموعة توزّع الأقسام كبطاقات، ولوحة التحكم تضعها كمربعات.",
+  "%1 is pinned but no longer installed.": "%1 مثبّت لكنه لم يعد مُثبَّتًا على النظام.",
+  "Defaults": "الافتراضي",
+  "1 note": "ملاحظة واحدة",
+  "%1 notes": "%1 ملاحظات"
 }

@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "Здесь вы входите в систему после включения компьютера.",
   "Which end of the Island carries them.": "Какой конец Острова их несёт.",
   "Windows keep clear of the bubbles resting on an edge.": "Окна держатся подальше от пузырей на краю.",
-  "Adds the graphics card to what Vitals shows.": "Добавляет видеокарту в Vitals."
+  "Adds the graphics card to what Vitals shows.": "Добавляет видеокарту в Vitals.",
+  "Folio": "Лист",
+  "Console": "Пульт",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Лист читается как страница, Колода раздаёт разделы картами, Пульт раскладывает их плитками.",
+  "%1 is pinned but no longer installed.": "%1 закреплено, но больше не установлено.",
+  "Defaults": "По умолчанию",
+  "1 note": "1 заметка",
+  "%1 notes": "Заметок: %1"
 }

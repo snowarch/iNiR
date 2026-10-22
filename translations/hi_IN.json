@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "कंप्यूटर चालू करने के बाद जहाँ आप साइन इन करते हैं।",
   "Which end of the Island carries them.": "द्वीप का कौन-सा सिरा उन्हें रखता है।",
   "Windows keep clear of the bubbles resting on an edge.": "विंडो किसी किनारे पर टिके बबल से दूर रहती हैं।",
-  "Adds the graphics card to what Vitals shows.": "Vitals में ग्राफ़िक्स कार्ड जोड़ता है।"
+  "Adds the graphics card to what Vitals shows.": "Vitals में ग्राफ़िक्स कार्ड जोड़ता है।",
+  "Folio": "पन्ना",
+  "Console": "कंसोल",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "पन्ना एक पेज की तरह पढ़ा जाता है, गड्डी क्षेत्रों को कार्ड की तरह बाँटती है, कंसोल उन्हें टाइलों में रखता है।",
+  "%1 is pinned but no longer installed.": "%1 पिन है पर अब इंस्टॉल नहीं है।",
+  "Defaults": "डिफ़ॉल्ट",
+  "1 note": "1 नोट",
+  "%1 notes": "%1 नोट"
 }

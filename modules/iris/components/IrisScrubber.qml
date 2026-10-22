@@ -18,6 +18,9 @@ Item {
     // Whether what it scrubs is running now (a playing track): a Design may mark the head with it.
     property bool live: true
     property real stepSize: 0.05
+    property string voice: ""
+    // What a voiced skin prints the value from (Folio's ruler, Console's dots): the row's own numbers.
+    property var range: null
     activeFocusOnTab: root.seekable
 
     property real dragValue: -1
@@ -44,7 +47,7 @@ Item {
     }
 
     // The active Design may draw it (AIRISU: a meter for a level, a light trail for time); input stays here.
-    IrisSkin { id: skin; part: "scrubber"; host: root }
+    IrisSkin { id: skin; part: "scrubber"; host: root; voice: root.voice }
     Item {
         id: track
         visible: !skin.active

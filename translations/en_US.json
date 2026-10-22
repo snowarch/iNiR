@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "Where you sign in after starting the computer.",
   "Which end of the Island carries them.": "Which end of the Island carries them.",
   "Windows keep clear of the bubbles resting on an edge.": "Windows keep clear of the bubbles resting on an edge.",
-  "Adds the graphics card to what Vitals shows.": "Adds the graphics card to what Vitals shows."
+  "Adds the graphics card to what Vitals shows.": "Adds the graphics card to what Vitals shows.",
+  "Folio": "Folio",
+  "Console": "Console",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.",
+  "%1 is pinned but no longer installed.": "%1 is pinned but no longer installed.",
+  "Defaults": "Defaults",
+  "1 note": "1 note",
+  "%1 notes": "%1 notes"
 }

@@ -68,6 +68,14 @@ Item {
     }
     onChassisBodiesChanged: IrisFrame.publishPlace(root.chassisKey, root.QsWindow.window?.screen?.name ?? "", root.chassisBodies)
     Component.onDestruction: IrisFrame.publishPlace(root.chassisKey, "", [])
+    // Several bodies in one surface (Settings' Deck): rects in the surface's own frame, drawn and blurred each as a body
+    // of its own with the gaps between them clear. A pane with `edge` is a wall it melts into, never blurred.
+    property var panes: []
+    function paneShapes(origin: point): var {
+        const sx = chassis.width / Math.max(1, root.width), sy = chassis.height / Math.max(1, root.height)
+        return root.panes.map(p => Object.assign({}, p, { x: origin.x + p.x * sx, y: origin.y + p.y * sy,
+            width: p.width * sx, height: p.height * sy, radius: Number(p.radius ?? 0) }))
+    }
     property bool compositorBlurred: false
     property bool glass: true
     readonly property string surfaceMaterial: IrisStyle.surfaceMaterial(root.motionSurface)
@@ -109,6 +117,7 @@ Item {
         if (!root.blurWhileReceding && !root.open) return []
         void (root.x + root.y + chassis.x + chassis.y + chassis.width + chassis.height + chassis.radius + (root.parent?.x ?? 0) + (root.parent?.y ?? 0))
         const at = chassis.mapToItem(null, 0, 0)
+        if (root.panes.length > 0) return root.paneShapes(at).filter(p => !p.edge).map(p => ({ x: p.x, y: p.y, width: p.width, height: p.height, radius: p.radius }))
         return [{ x: at.x, y: at.y, width: chassis.width, height: chassis.height, radius: chassis.radius }]
     }
     signal closed()
@@ -315,9 +324,10 @@ Item {
             }
             sceneSize: Qt.size(root.QsWindow.window?.screen?.width ?? 0, root.QsWindow.window?.screen?.height ?? 0)
             // From arming, with its blur: waiting for its content it drew its first rect unblurred.
-            shapes: root.drawsOwnField && (root.armed || root.presentation > 0)
-                ? [Object.assign({ paints: true, fuse: 0, id: "place", glass: root.glass ? IrisStyle.surfaceGlass(root.motionSurface) : "solid" }, root.bodyRect)]
-                : []
+            shapes: !root.drawsOwnField || !(root.armed || root.presentation > 0) ? []
+                : root.panes.length > 0 ? root.paneShapes(Qt.point(root.bodyRect.x, root.bodyRect.y)).map(p => Object.assign({ paints: true, fuse: 0, frost: root.frost,
+                    glass: root.glass ? IrisStyle.surfaceGlass(root.motionSurface) : "solid" }, p))
+                : [Object.assign({ paints: true, fuse: 0, id: "place", glass: root.glass ? IrisStyle.surfaceGlass(root.motionSurface) : "solid" }, root.bodyRect)]
         }
     }
 
@@ -352,6 +362,7 @@ Item {
         }
 
         IrisLightWash {
+            visible: root.panes.length === 0
             anchors.fill: parent
             shapeRadius: chassis.radius
             light: root.light

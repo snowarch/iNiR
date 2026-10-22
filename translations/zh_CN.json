@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "开机后登录的界面。",
   "Which end of the Island carries them.": "由岛屿的哪一端承载。",
   "Windows keep clear of the bubbles resting on an edge.": "窗口会避开停靠在边缘的气泡。",
-  "Adds the graphics card to what Vitals shows.": "在 Vitals 中加入显卡。"
+  "Adds the graphics card to what Vitals shows.": "在 Vitals 中加入显卡。",
+  "Folio": "版面",
+  "Console": "控制台",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "版面像一页纸一样阅读，卡组把各区域发成卡片，控制台把它们排成方块。",
+  "%1 is pinned but no longer installed.": "%1 已固定，但已不再安装。",
+  "Defaults": "默认",
+  "1 note": "1 条提示",
+  "%1 notes": "%1 条提示"
 }

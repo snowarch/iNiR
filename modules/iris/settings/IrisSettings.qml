@@ -68,6 +68,46 @@ Item {
     // A Design may lay the whole page out its own way (DESIGNS.md › Composiciones): its `settingsPage` draws the areas,
     // the head and the foot, and holds this file's search, scene, rows and shared pages in its slots. The model, the
     // history and every row stay here.
+    // iRiS lays the page in the layout chosen in Settings (Folio, Deck, Console); a Design with its own page keeps it.
+    readonly property var layouts: ({ folio: "Folio", deck: "Deck", console: "Console" })
+    readonly property string layout: {
+        if (IrisDesign.skin("settingsPage").length > 0) return ""
+        const wanted = String(Config.options?.iris?.appearance?.settingsLayout ?? "folio")
+        return root.layouts[wanted] ? wanted : "folio"
+    }
+    function setLayout(name: string): void {
+        if (!root.layouts[name] || name === root.layout) return
+        reshape.restart()
+        Config.setNestedValue("iris.appearance.settingsLayout", name)
+    }
+    // While a layout gives way to another the body glides to its new box instead of jumping.
+    Timer { id: reshape; interval: IrisStyle.morphDuration + 120 }
+    // The voice the layout gives its rows' controls and group heads.
+    readonly property string voice: root.sceneDrawn ? String(root.scene.voice ?? "") : ""
+    // The overlay's free box: clear of the band, the Island, the Dock and the pieces on their edges.
+    readonly property var room: {
+        const gap = Math.round(14 * root.d)
+        const side = edge => Math.max(0, IrisFrame.safeClear(edge) - IrisFrame.band) + gap
+        const left = side("left"), right = side("right"), top = side("top"), bottom = side("bottom")
+        return { x: left, y: top, width: Math.max(0, root.width - left - right), height: Math.max(0, root.height - top - bottom) }
+    }
+    // The clusters the areas are kept in, named for a layout that prints them (Folio's ruler, Console's grid).
+    readonly property var clusterNames: ["Look", "Desktop", "Tools", "Devices", "Security", "Media", "Sources"]
+    // Every area's notes (IrisOptions.notes), counted once per change for the layouts that mark them.
+    readonly property var noteCounts: {
+        Config.revision
+        const out = {}
+        for (const entry of root.sections) out[entry.id] = IrisOptions.notes(entry.id).length
+        return out
+    }
+    readonly property var notesHere: { Config.revision; return IrisOptions.notes(root.section) }
+    // Takes you to the first note of the area, or of the next area that has one.
+    function openNote(): void {
+        const here = root.notesHere
+        if (here.length > 0) { root.showGroup(Translation.tr(here[0].group)); return }
+        const next = root.sections.find(entry => (root.noteCounts[entry.id] ?? 0) > 0)
+        if (next) root.selectSection(next.id)
+    }
     readonly property Item scene: pageScene.item
     readonly property bool sceneDrawn: root.scene !== null
     // Narrower than this a Design's page squeezes its sheet: the engine's page is used. Frame width, never the page's.
@@ -103,7 +143,7 @@ Item {
     property string readGroup: ""
     property string heldGroup: ""
     readonly property bool browsing: !root.searching && root.openGroup.length === 0 && root.advancedPage < 0
-    readonly property bool heroPinned: pageHero.shown && (pageHero.staged || pageHero.titled)
+    readonly property bool heroPinned: pageHero.shown && (pageHero.staged || pageHero.titled) && !(root.scene?.ownsStage ?? false)
     // The scene stays in view over the rows and never takes more than a third of the page from them.
     readonly property real stageHeight: Math.round(Math.max(150 * root.d, Math.min(settingsRows.width * root.screenShape, detailBody.height * 0.3)))
     function shown(spec: var): bool { return IrisOptions.shown(spec) }
@@ -162,7 +202,7 @@ Item {
     }
     // A short area reads whole; a long one is a list of its groups, each saying its value and opening in place or
     // on its own page (main's way: one long scroll was the most-complained-about change).
-    readonly property bool readsWhole: root.essentialCount <= 10
+    readonly property bool readsWhole: (root.scene?.readsWhole ?? false) || root.essentialCount <= 10
     // Rows folded behind a group's Fine-tune take no room (a modified one never folds).
     readonly property int essentialCount: {
         let count = 0
@@ -701,16 +741,28 @@ Item {
         open: root.windowed || GlobalStates.settingsOverlayOpen
         color: IrisStyle.surface
         light: IrisStyle.surfaceLight("settings", IrisStyle.wallpaperLight)
-        radius: root.windowField ? Number(IrisNiri.data["window-rules"]?.corner_radius ?? 16)
+        radius: frame.spread ? 0 : root.windowField ? Number(IrisNiri.data["window-rules"]?.corner_radius ?? 16)
             : root.windowed ? 0 : IrisStyle.surfaceRadius("settings", IrisStyle.radiusPanel)
         onClosed: GlobalStates.irisMorphOwner = ""
         // Whole pixels: a body centred on a half pixel draws every line of its text soft.
-        x: root.windowed ? 0 : Math.round((parent.width - width) / 2)
-        y: root.windowed ? 0 : Math.round((parent.height - height) / 2)
+        // A layout's body sits in the room the Island and the Dock leave: Folio and Console as a sheet in the middle of
+        // it, Deck across the whole screen, its cards laid inside that room by the layout itself.
+        readonly property bool laid: root.layout.length > 0 && !root.windowed
+        readonly property bool spread: frame.laid && root.layout === "deck"
+        panes: root.sceneDrawn && frame.spread ? (root.scene.panes ?? []) : []
+        Behavior on x { enabled: reshape.running; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        Behavior on y { enabled: reshape.running; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        Behavior on width { enabled: reshape.running; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        Behavior on height { enabled: reshape.running; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        x: root.windowed || frame.spread ? 0 : frame.laid ? Math.round(root.room.x + (root.room.width - width) / 2) : Math.round((parent.width - width) / 2)
+        y: root.windowed || frame.spread ? 0 : frame.laid ? Math.round(root.room.y + (root.room.height - height) / 2) : Math.round((parent.height - height) / 2)
         width: root.windowed ? parent.width
+            : frame.spread ? parent.width
+            : frame.laid ? Math.round(Math.min(root.room.width, 1480 * root.d))
             // The sidebar and the rows at their measure; Settings sits on the desktop, it does not replace it.
             : Math.round(Math.min(parent.width - 32 - IrisFrame.musicReach("left") - IrisFrame.musicReach("right"), 1240 * root.d))
-        height: root.windowed ? parent.height
+        height: root.windowed || frame.spread ? parent.height
+            : frame.laid ? Math.round(Math.min(root.room.height, 900 * root.d))
             // Most of the screen's height, and never shorter than the sidebar's list: measured by the list alone, ten
             // categories left a 640 px strip that cut every page at its second row.
             : Math.round(Math.min(parent.height - 48 - IrisFrame.musicReach("top") - IrisFrame.musicReach("bottom"),
@@ -722,10 +774,28 @@ Item {
                 if (mouse.button === Qt.BackButton) root.goBack()
                 else if (mouse.button === Qt.ForwardButton) root.goForward()
             }
+            // Between Deck's cards is the desktop: a click there closes, as a click past any other body does.
+            onClicked: mouse => {
+                if (frame.panes.length === 0 || mouse.button !== Qt.LeftButton) return
+                if (!frame.panes.some(p => !p.edge && mouse.x >= p.x && mouse.x <= p.x + p.width && mouse.y >= p.y && mouse.y <= p.y + p.height)) root.close()
+            }
         }
 
 
-        IrisSkin { id: pageScene; part: "settingsPage"; wanted: root.sceneFits; host: root }
+        IrisSkin {
+            id: pageScene
+            part: "settingsPage"
+            wanted: root.sceneFits
+            host: root
+            fallback: root.layout.length > 0 ? Qt.resolvedUrl("layouts/" + root.layouts[root.layout] + ".qml") : ""
+            // A new layout settles in from the old one's place: it rises out of a slightly smaller page, never pops.
+            onLoaded: if (root.layout.length > 0 && frame.settled) layoutArrive.restart()
+            ParallelAnimation {
+                id: layoutArrive
+                NumberAnimation { target: pageScene.item; property: "opacity"; from: 0; to: 1; duration: IrisStyle.duration(260); easing.type: IrisStyle.feedbackEasing }
+                NumberAnimation { target: pageScene.item; property: "scale"; from: 0.97; to: 1; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
+            }
+        }
         RowLayout {
             anchors.fill: parent
             visible: !root.sceneDesigned
@@ -1993,7 +2063,7 @@ Item {
             Layout.topMargin: 18 * root.d
             Layout.bottomMargin: 4 * root.d
             implicitHeight: headSkin.item?.implicitHeight ?? 0
-            IrisSkin { id: headSkin; part: "groupHeader"; host: groupHead }
+            IrisSkin { id: headSkin; part: "groupHeader"; host: groupHead; voice: root.voice }
             IrisSwitch {
                 id: headSwitch
                 visible: group.loneSwitch && headSkin.active
@@ -2080,7 +2150,8 @@ Item {
                     implicitHeight: groupRows.implicitHeight
                     radius: IrisStyle.radiusTile
                     // In the pane the pane is the card: rows sit on it, parts apart by their caption and air.
-                    color: root.split || IrisStyle.fieldChamfer ? "transparent" : IrisStyle.readingCard
+                    color: root.sceneDrawn && root.scene.groupFill !== undefined ? root.scene.groupFill
+                        : root.split || IrisStyle.fieldChamfer ? "transparent" : IrisStyle.readingCard
                     IrisCutPlate { anchors.fill: parent; visible: !root.split && IrisStyle.fieldChamfer; color: IrisStyle.readingCard }
                     ColumnLayout {
                         id: groupRows
@@ -2095,6 +2166,7 @@ Item {
                                 required property int index
                                 Layout.fillWidth: true
                                 spec: modelData
+                                voice: root.voice
                                 highlight: root.query
                                 last: index === part.rows.length - 1 && !(part.lastPart && group.folds)
                                 landing: root.landingPath.length > 0 && String(modelData.path ?? "") === root.landingPath

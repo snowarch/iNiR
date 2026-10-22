@@ -18,6 +18,7 @@ Rectangle {
     property bool glyphOnly: false
     property string accessibleName: ""
     property var fontFor: null
+    property string voice: ""
     readonly property real d: IrisStyle.density
     readonly property int inset: 2
     readonly property int count: Math.max(1, root.options.length)
@@ -46,14 +47,14 @@ Rectangle {
         font.weight: IrisStyle.weight(Font.DemiBold)
     }
 
-    implicitHeight: Math.round((root.pictured ? 52 : root.glyphOnly ? 32 : 28) * root.d)
+    implicitHeight: Math.round((skin.item?.wantHeight ?? (root.pictured ? 52 : root.glyphOnly ? 32 : 28)) * root.d)
     implicitWidth: root.glyphOnly ? root.count * (root.implicitHeight - 2 * root.inset) + 2 * root.inset : 0
     readonly property real thumbRadius: root.pictured ? IrisStyle.radiusTile - root.inset
         : IrisStyle.controlPlated ? IrisStyle.pieceRadius(root.height - 2 * root.inset) : (root.height - 2 * root.inset) / 2
     radius: root.pictured ? IrisStyle.radiusTile : IrisStyle.controlPlated ? root.thumbRadius + root.inset : height / 2
     color: root.skinned ? "transparent" : IrisStyle.controlPlated ? IrisStyle.plateFillFor(IrisStyle.controlPlate) : IrisStyle.fillQuiet
 
-    IrisSkin { id: skin; part: "segmented" }
+    IrisSkin { id: skin; part: "segmented"; voice: root.voice }
     IrisGlassEdge {
         anchors.fill: parent
         visible: !root.skinned && (IrisStyle.controlPlate === "glass" || (IrisStyle.controlPlated && IrisStyle.edgeLit)) && shown

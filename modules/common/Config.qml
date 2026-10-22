@@ -4197,6 +4197,8 @@ Singleton {
                     // Choosing a theme takes only its colours; its shapes, layout and motion stay as they are.
                     property bool themeColoursOnly: false
                     property string settingsHost: "overlay"
+                    // How iRiS Settings lays its page: "folio", "deck" or "console" (a Design with its own page keeps it).
+                    property string settingsLayout: "folio"
                     // Looks saved from iRiS Studio: [{ name, values: { "iris.…": value } }].
                     property list<var> saved: []
                     property string themeId: "iris" // the iRiS theme last applied (curated id or a file in ~/.config/inir/iris/themes)

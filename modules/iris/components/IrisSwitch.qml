@@ -16,10 +16,11 @@ Rectangle {
     readonly property bool keyed: root.activeFocus
     // Set on a chosen row's plate in a plate Design: the skin prints it in the plate's reverse ink.
     property bool reversed: false
+    property string voice: ""
     signal toggled()
 
-    implicitWidth: Math.round((root.skinned ? Number(IrisDesign.surface("switch", "width", 76)) : 40) * root.d)
-    implicitHeight: Math.round((root.skinned ? Number(IrisDesign.surface("switch", "height", 26)) : 24) * root.d)
+    implicitWidth: Math.round((skin.item?.wantWidth ?? (root.skinned ? Number(IrisDesign.surface("switch", "width", 76)) : 40)) * root.d)
+    implicitHeight: Math.round((skin.item?.wantHeight ?? (root.skinned ? Number(IrisDesign.surface("switch", "height", 26)) : 24)) * root.d)
     radius: root.skinned ? 0 : height / 2
     color: root.skinned ? "transparent" : root.on ? IrisStyle.accent : IrisStyle.fillHover
     Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
@@ -33,7 +34,7 @@ Rectangle {
     Keys.onReturnPressed: root.toggled()
 
     // Held, the thumb stretches toward where it will travel, as a finger pressing a capsule does.
-    IrisSkin { id: skin; part: "switch" }
+    IrisSkin { id: skin; part: "switch"; voice: root.voice }
     RectangularShadow {
         visible: !root.skinned
         anchors.fill: thumb

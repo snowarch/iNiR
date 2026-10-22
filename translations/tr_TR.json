@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "Bilgisayarı açtıktan sonra oturum açtığınız yer.",
   "Which end of the Island carries them.": "Onları Ada'nın hangi ucunun taşıdığı.",
   "Windows keep clear of the bubbles resting on an edge.": "Pencereler bir kenarda duran baloncuklardan uzak durur.",
-  "Adds the graphics card to what Vitals shows.": "Ekran kartını Vitals’a ekler."
+  "Adds the graphics card to what Vitals shows.": "Ekran kartını Vitals’a ekler.",
+  "Folio": "Sayfa",
+  "Console": "Konsol",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Sayfa bir sayfa gibi okunur, Deste alanları kart olarak dağıtır, Konsol onları döşeme olarak dizer.",
+  "%1 is pinned but no longer installed.": "%1 sabitlenmiş ama artık yüklü değil.",
+  "Defaults": "Varsayılan",
+  "1 note": "1 not",
+  "%1 notes": "%1 not"
 }

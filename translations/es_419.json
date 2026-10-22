@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "Donde inicias sesión al encender la computadora.",
   "Which end of the Island carries them.": "Qué extremo de la Isla las lleva.",
   "Windows keep clear of the bubbles resting on an edge.": "Las ventanas se apartan de las burbujas que reposan en un borde.",
-  "Adds the graphics card to what Vitals shows.": "Suma la tarjeta gráfica a lo que muestra Vitals."
+  "Adds the graphics card to what Vitals shows.": "Suma la tarjeta gráfica a lo que muestra Vitals.",
+  "Folio": "Pliego",
+  "Console": "Consola",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Pliego se lee como una página, Baraja reparte las áreas como cartas, Consola las pone en mosaicos.",
+  "%1 is pinned but no longer installed.": "%1 está fijada pero ya no está instalada.",
+  "Defaults": "Predeterminado",
+  "1 note": "1 nota",
+  "%1 notes": "%1 notas"
 }

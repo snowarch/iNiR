@@ -5645,7 +5645,7 @@
   "Date font": "Fonte da data",
   "Date size (px)": "Tamanho da data (px)",
   "Decides the bar surface style. Islands works in horizontal and vertical bars; the rest are horizontal only.": "Define o estilo da superfície da barra. Ilhas funciona em barras horizontais e verticais; os demais estilos são apenas horizontais.",
-  "Deck": "Deck",
+  "Deck": "Baralho",
   "Deck base gap": "Espaçamento base do Deck",
   "Deck download failed": "Falha ao baixar o Deck",
   "Deck downloaded; opening with the default app": "Deck baixado; abrindo com o aplicativo padrão",
@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "Onde você entra depois de ligar o computador.",
   "Which end of the Island carries them.": "Qual ponta da Ilha as carrega.",
   "Windows keep clear of the bubbles resting on an edge.": "As janelas ficam longe das bolhas paradas numa borda.",
-  "Adds the graphics card to what Vitals shows.": "Adiciona a placa de vídeo ao que o Vitals mostra."
+  "Adds the graphics card to what Vitals shows.": "Adiciona a placa de vídeo ao que o Vitals mostra.",
+  "Folio": "Folha",
+  "Console": "Console",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Folha se lê como uma página, Baralho distribui as áreas como cartas, Console as dispõe em blocos.",
+  "%1 is pinned but no longer installed.": "%1 está fixado, mas não está mais instalado.",
+  "Defaults": "Padrão",
+  "1 note": "1 nota",
+  "%1 notes": "%1 notas"
 }

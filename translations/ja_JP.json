@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "コンピューターの起動後にサインインする画面です。",
   "Which end of the Island carries them.": "アイランドのどちらの端に付けるか。",
   "Windows keep clear of the bubbles resting on an edge.": "縁にあるバブルを避けてウィンドウを配置します。",
-  "Adds the graphics card to what Vitals shows.": "Vitals にグラフィックカードを加えます。"
+  "Adds the graphics card to what Vitals shows.": "Vitals にグラフィックカードを加えます。",
+  "Folio": "紙面",
+  "Console": "コンソール",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "紙面は1ページのように読め、カードは各項目をカードとして並べ、コンソールはタイルとして配置します。",
+  "%1 is pinned but no longer installed.": "%1 は固定されていますが、もうインストールされていません。",
+  "Defaults": "既定",
+  "1 note": "注記 1 件",
+  "%1 notes": "注記 %1 件"
 }

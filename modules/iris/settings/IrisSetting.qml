@@ -33,6 +33,8 @@ Item {
     // A picked card: iRiS tints it and sets its name in the accent; a Design that selects with a plate (AIRISU) lays the
     // picked one a step of ink over the others and rules its die in the seal: a card is never a plate of the ink itself
     // (a white card on lacquer), and its name stays in the ink.
+    // The Settings layout that hosts this row (Folio, Console): its controls take that voice.
+    property string voice: ""
     readonly property bool platePick: IrisStyle.plateSelection
     function pickFill(selected: bool, hovered: bool): color {
         if (selected && root.platePick)
@@ -88,7 +90,8 @@ Item {
     // text at full width.
     readonly property bool roomy: layout.width >= 480 * root.d
     // 43 %: in the Settings pane (about 700·d of row) the column still reaches its 300·d, so a three-way choice keeps it.
-    readonly property real controlWidth: Math.round(Math.min(300 * root.d, Math.max(200 * root.d, layout.width * 0.43)))
+    // A layout's voice sets choices as words, not boxes: its column holds five of them.
+    readonly property real controlWidth: Math.round(Math.min((root.voice.length > 0 ? 400 : 300) * root.d, Math.max(200 * root.d, layout.width * 0.43)))
     FontMetrics {
         id: choiceMetrics
         font.family: IrisStyle.fontMain
@@ -104,7 +107,7 @@ Item {
     // Segments share the track evenly, so the widest name sets every slot.
     readonly property real segmentNatural: root.spec.kind !== "choice" || root.choices.length === 0 ? 0
         : root.choices.length * (Math.max(...root.choices.map(choice => choiceMetrics.advanceWidth(Translation.tr(String(choice.label ?? ""))))) + 26 * root.d) + 4
-    readonly property bool inlineChoice: root.spec.kind === "choice" && root.roomy && root.choices.length >= 2 && root.choices.length <= 4
+    readonly property bool inlineChoice: root.spec.kind === "choice" && root.roomy && root.choices.length >= 2 && root.choices.length <= (root.voice.length > 0 ? 5 : 4)
         && !root.swatched && !root.tiled && !root.carded && root.segmentNatural <= root.controlWidth
     // A flat list the column's track cannot hold (HIG: past a few choices, or names too long to share it) answers as a
     // pop-up button in the same column. Pictures stay pictures: up to five glyph choices keep their track under the text.
@@ -290,6 +293,7 @@ Item {
 
             IrisSwitch {
                 id: toggle
+                voice: root.voice
                 opacity: root.controlOpacity
                 visible: root.spec.kind === "switch"
                 on: root.spec.invert ? !Boolean(root.value) : Boolean(root.value)
@@ -457,6 +461,9 @@ Item {
             visible: root.spec.kind === "range"
             opacity: root.controlOpacity
             knob: true
+            voice: root.voice
+            range: root.spec.kind === "range" ? { min: root.spec.min, max: root.spec.max, step: root.spec.step ?? 1, value: Number(root.shownValue),
+                text: Translation.tr(IrisOptions.rangeText(root.spec, root.shownValue)) } : null
             Accessible.name: Translation.tr(root.spec.label)
             stepSize: (root.spec.step ?? 1) / Math.max(1, root.spec.max - root.spec.min)
             fillColor: IrisStyle.accent
@@ -1716,6 +1723,7 @@ Item {
         id: segmentedComponent
 
         IrisSegmented {
+            voice: root.voice
             options: root.choices
             current: root.value
             // In the row's column the names carry the choice; glyphs stack only in the full-width track.

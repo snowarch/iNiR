@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "Nơi bạn đăng nhập sau khi bật máy.",
   "Which end of the Island carries them.": "Đầu nào của Đảo mang chúng.",
   "Windows keep clear of the bubbles resting on an edge.": "Cửa sổ tránh xa các bong bóng nằm trên một cạnh.",
-  "Adds the graphics card to what Vitals shows.": "Thêm card đồ họa vào Vitals."
+  "Adds the graphics card to what Vitals shows.": "Thêm card đồ họa vào Vitals.",
+  "Folio": "Tờ",
+  "Console": "Bảng điều khiển",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Tờ đọc như một trang, Bộ bài chia các mục thành thẻ, Bảng điều khiển xếp chúng thành ô.",
+  "%1 is pinned but no longer installed.": "%1 được ghim nhưng không còn được cài đặt.",
+  "Defaults": "Mặc định",
+  "1 note": "1 ghi chú",
+  "%1 notes": "%1 ghi chú"
 }

@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "컴퓨터를 켠 뒤 로그인하는 화면입니다.",
   "Which end of the Island carries them.": "아일랜드의 어느 쪽 끝에 둘지.",
   "Windows keep clear of the bubbles resting on an edge.": "창이 가장자리에 놓인 버블을 피합니다.",
-  "Adds the graphics card to what Vitals shows.": "Vitals에 그래픽 카드를 추가합니다."
+  "Adds the graphics card to what Vitals shows.": "Vitals에 그래픽 카드를 추가합니다.",
+  "Folio": "지면",
+  "Console": "콘솔",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "지면은 한 페이지처럼 읽히고, 카드는 영역을 카드로 나누며, 콘솔은 타일로 배치합니다.",
+  "%1 is pinned but no longer installed.": "%1이(가) 고정되어 있지만 더 이상 설치되어 있지 않습니다.",
+  "Defaults": "기본값",
+  "1 note": "알림 1개",
+  "%1 notes": "알림 %1개"
 }

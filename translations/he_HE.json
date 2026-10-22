@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "המקום שבו נכנסים אחרי הפעלת המחשב.",
   "Which end of the Island carries them.": "איזה קצה של האיילנד נושא אותן.",
   "Windows keep clear of the bubbles resting on an edge.": "חלונות מתרחקים מבועות שנחות על שוליים.",
-  "Adds the graphics card to what Vitals shows.": "מוסיף את כרטיס המסך ל־Vitals."
+  "Adds the graphics card to what Vitals shows.": "מוסיף את כרטיס המסך ל־Vitals.",
+  "Folio": "גיליון",
+  "Console": "קונסולה",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "גיליון נקרא כמו עמוד, חפיסה מחלקת את האזורים כקלפים, קונסולה מסדרת אותם כאריחים.",
+  "%1 is pinned but no longer installed.": "%1 מוצמד אבל כבר לא מותקן.",
+  "Defaults": "ברירת מחדל",
+  "1 note": "הערה אחת",
+  "%1 notes": "%1 הערות"
 }

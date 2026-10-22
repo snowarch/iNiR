@@ -9537,5 +9537,12 @@
   "Where you sign in after starting the computer.": "Tempat Anda masuk setelah komputer dinyalakan.",
   "Which end of the Island carries them.": "Ujung Pulau yang membawanya.",
   "Windows keep clear of the bubbles resting on an edge.": "Jendela menjauh dari gelembung yang diam di tepi.",
-  "Adds the graphics card to what Vitals shows.": "Menambahkan kartu grafis ke Vitals."
+  "Adds the graphics card to what Vitals shows.": "Menambahkan kartu grafis ke Vitals.",
+  "Folio": "Lembar",
+  "Console": "Konsol",
+  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Lembar dibaca seperti halaman, Tumpukan membagi area sebagai kartu, Konsol menatanya sebagai ubin.",
+  "%1 is pinned but no longer installed.": "%1 disematkan tetapi sudah tidak terpasang.",
+  "Defaults": "Bawaan",
+  "1 note": "1 catatan",
+  "%1 notes": "%1 catatan"
 }

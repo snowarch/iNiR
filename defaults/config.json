@@ -2479,6 +2479,7 @@
             "customize": "shell",
             "themeColoursOnly": false,
             "settingsHost": "overlay",
+            "settingsLayout": "folio",
             "saved": [],
             "themeId": "iris",
             "design": "iris",

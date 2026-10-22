@@ -257,6 +257,27 @@ QtObject {
     function loginNote(): string {
         return MaterialThemeLoader.loginScreenInstalled ? "" : Translation.tr("Not installed yet: run iNiR's setup and choose Extras, Install ii-pixel-sddm.")
     }
+    // What an area has to say before you ask: rows that cannot answer and why, settings that cancel each other, pinned
+    // apps that are gone. Every Settings layout marks these where it marks trouble.
+    function notes(section: string): var {
+        Config.revision
+        const out = []
+        for (const spec of root.settings) {
+            if (spec.section !== section || spec.mirror || !root.shown(spec)) continue
+            const text = spec.note ? String(spec.note() ?? "") : ""
+            const locked = spec.locked ? Boolean(spec.locked()) : false
+            if (text.length > 0 && (locked || spec.warns === true))
+                out.push({ path: String(spec.path ?? ""), group: String(spec.group ?? ""), label: String(spec.label ?? ""), text: text })
+            if (String(spec.view ?? "").endsWith("IrisDockPinned.qml")) {
+                for (const id of (Config.options?.dock?.pinnedApps ?? []).map(String)) {
+                    const who = AppSearch.appIdentity(id, "")
+                    if (!who.installed) out.push({ path: "dock.pinnedApps", group: String(spec.group ?? ""), label: String(spec.label ?? ""), app: id,
+                        text: Translation.tr("%1 is pinned but no longer installed.").arg(String(who.name || id)) })
+                }
+            }
+        }
+        return out
+    }
     function glassNote(): string {
         const mode = String(Config.getNestedValue("iris.appearance.glass.mode", "off"))
         return mode === "off" && IrisStyle.glassy ? Translation.tr("Off here, but Lume frost is on for the %1 scheme, so surfaces are frost anyway.").arg(root.schemeName(IrisStyle.scheme)) : ""
@@ -379,7 +400,7 @@ QtObject {
         { target: "material", group: "Glass", niri: "blur", key: "strength", label: "Blur strength", visibleWhen: "iris.appearance.glass.mode=compositor", showIf: () => IrisCompositorBlur.usable, kind: "choice", fallback: "balanced", choices: [{label:"Light",value:"light"},{label:"Balanced",value:"balanced"},{label:"Strong",value:"strong"}], keywords: ["niri", "blur", "radius", "passes"] },
         { target: "material", group: "Glass", niri: "blur", key: "saturation", label: "Colour behind", description: "Above 1 makes what is blurred more vivid.", visibleWhen: "iris.appearance.glass.mode=compositor", showIf: () => IrisCompositorBlur.usable, kind: "range", fallback: 1.5, min: 0.5, max: 2.5, step: 0.1, unit: "×", keywords: ["saturation", "vibrancy"] },
         { target: "material", group: "Glass", niri: "blur", key: "noise", label: "Grain", description: "A little noise hides banding in soft gradients.", visibleWhen: "iris.appearance.glass.mode=compositor", showIf: () => IrisCompositorBlur.usable, kind: "range", fallback: 0.02, min: 0, max: 0.1, step: 0.01, scale: 100, unit: " %", keywords: ["noise", "grain", "banding"] },
-        { target: "material", group: "Edges", label: "Style", showIf: () => !IrisStyle.afterglow, description: "Line is an even hairline.", note: () => root.edgeNote(), kind: "choice", bundle: ["iris.appearance.theme.rim", "iris.appearance.theme.edges"], choices: [{label:"None",value:"none",glyph:"crop_free",values:[false,"line"]},{label:"Line",value:"line",glyph:"crop_square",values:[true,"line"]},{label:"Lit",value:"light",glyph:"light_mode",values:[true,"light"]}], keywords: ["edge", "edges", "border", "outline", "rim", "hairline", "light", "glass", "borde", "bordes", "contorno"] },
+        { target: "material", group: "Edges", label: "Style", showIf: () => !IrisStyle.afterglow, description: "Line is an even hairline.", warns: true, note: () => root.edgeNote(), kind: "choice", bundle: ["iris.appearance.theme.rim", "iris.appearance.theme.edges"], choices: [{label:"None",value:"none",glyph:"crop_free",values:[false,"line"]},{label:"Line",value:"line",glyph:"crop_square",values:[true,"line"]},{label:"Lit",value:"light",glyph:"light_mode",values:[true,"light"]}], keywords: ["edge", "edges", "border", "outline", "rim", "hairline", "light", "glass", "borde", "bordes", "contorno"] },
         { target: "material", group: "Edges", label: "Outline colour", path: "iris.appearance.theme.rimTint", showIf: () => IrisStyle.edgeStyle === "line", kind: "choice", tune: true, fallback: "neutral", choices: [{label:"Neutral",value:"neutral"},{label:"Accent",value:"accent"},{label:"Highlight",value:"highlight"}] },
         { target: "material", group: "Edges", label: "Edge light", description: "How much light the top edge catches.", path: "iris.appearance.glass.edgeLight", showIf: () => (!IrisStyle.afterglow && (IrisStyle.edgeStyle === "light" || IrisStyle.glassy)) || root.widgetGlass, kind: "range", fallback: 34, min: 0, max: 100, step: 2, unit: " %", zeroLabel: "Off", keywords: ["edge", "rim", "highlight", "border", "outline", "shine", "borde", "filo", "brillo"] },
         { target: "material", group: "Edges", label: "Edge line", description: "The edge away from the light.", path: "iris.appearance.glass.edgeLine", showIf: () => (!IrisStyle.afterglow && (IrisStyle.edgeStyle === "light" || IrisStyle.glassy)) || root.widgetGlass, kind: "range", fallback: 10, min: 0, max: 60, step: 2, unit: " %", zeroLabel: "Off", keywords: ["edge", "border", "outline", "jagged", "aliasing", "borde", "serrucho"] },
@@ -960,6 +981,7 @@ QtObject {
         { section: "general", group: "At login", label: "Startup file", description: "The Niri file these lines live in, for the ones written by hand.", kind: "action", button: "Open", run: () => Quickshell.execDetached(["xdg-open", Autostart.startupFilePath]), showIf: () => Autostart.isNiri && Autostart.startupFilePath.length > 0, tune: true, keywords: ["startup", "niri", "config", "kdl", "file"] },
         { section: "general", group: "Apps", label: "Terminal", description: "Where Spotlight's commands, package installs and anime playback open.", path: "apps.terminal", kind: "text", placeholder: "kitty", fallback: "kitty", keywords: ["terminal", "kitty", "foot", "alacritty", "ghostty", "wezterm", "default apps"] },
         { section: "general", group: "Settings window", label: "Opens as", description: "Over the desktop previews every change on the screen behind it.", path: "iris.appearance.settingsHost", kind: "choice", fallback: "overlay", choices: [{ label: "Over the desktop", value: "overlay", glyph: "layers" }, { label: "Window", value: "window", glyph: "web_asset" }], keywords: ["settings", "window", "overlay", "floating", "tile", "maximize"] },
+        { section: "general", group: "Settings window", label: "Layout", description: "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.", path: "iris.appearance.settingsLayout", kind: "choice", fallback: "folio", showIf: () => IrisDesign.skin("settingsPage").length === 0, choices: [{ label: "Folio", value: "folio", glyph: "article" }, { label: "Deck", value: "deck", glyph: "view_carousel" }, { label: "Console", value: "console", glyph: "grid_view" }], keywords: ["settings", "layout", "folio", "deck", "console", "pliego", "baraja", "consola", "cards", "tiles"] },
         { section: "general", group: "Performance", label: "Low power", description: "Turns glass, blur and heavy wallpaper effects off everywhere.", path: "performance.lowPower", kind: "switch", fallback: false, keywords: ["performance", "battery", "effects", "glass", "blur", "rendimiento"] },
         { section: "general", group: "Shell family", label: "Family", description: "The whole shell's look.", path: "panelFamily", kind: "choice", fallback: "iris", choices: [{label:"iRiS",value:"iris",glyph:"visibility"},{label:"Material",value:"ii",glyph:"dashboard"},{label:"Windows 11",value:"waffle",glyph:"window"}], keywords: ["family", "material", "waffle", "windows", "ii", "switch", "familia"] },
         { section: "general", group: "Shell family", label: "Switch shortcut goes through", description: "The families the switch keybind steps through, in the order you turn them on.", path: "familyCycle", kind: "pieces", tune: true, fallback: ["ii", "waffle", "iris"], choices: [{label:"iRiS",value:"iris"},{label:"Material",value:"ii"},{label:"Windows 11",value:"waffle"}], keywords: ["family", "cycle", "shortcut", "keybind", "switch"] },
@@ -1119,7 +1141,7 @@ QtObject {
         { section: "lock", group: "When idle", label: "On battery, lock after", path: "idle.onBattery.lockTimeout", visibleWhen: "idle.onBattery.enable", kind: "choice", fallback: 300, choices: root.idleChoices },
         { section: "lock", group: "When idle", label: "On battery, suspend after", path: "idle.onBattery.suspendTimeout", visibleWhen: "idle.onBattery.enable", kind: "choice", fallback: 600, choices: root.idleChoices },
         { section: "lock", group: "Security", label: "Unlock the keyring", description: "Your password also opens the login keyring, so apps stop asking for it.", path: "lock.security.unlockKeyring", kind: "switch", fallback: true },
-        { section: "login", group: "Login Screen", label: "Login screen", description: "Where you sign in after starting the computer.", path: "lock.loginScreen", locked: () => !MaterialThemeLoader.loginScreenInstalled, note: () => root.loginNote(), kind: "choice", fallback: "auto", choices: [{label:"Automatic",value:"auto"},{label:"iRiS",value:"iris"},{label:"Classic",value:"classic"}], keywords: ["login", "sddm", "greeter", "sign in", "boot", "startup", "password", "classic"] },
+        { section: "login", group: "Login Screen", label: "Login screen", description: "Where you sign in after starting the computer.", path: "lock.loginScreen", locked: () => !MaterialThemeLoader.loginScreenInstalled, warns: true, note: () => root.loginNote(), kind: "choice", fallback: "auto", choices: [{label:"Automatic",value:"auto"},{label:"iRiS",value:"iris"},{label:"Classic",value:"classic"}], keywords: ["login", "sddm", "greeter", "sign in", "boot", "startup", "password", "classic"] },
         { section: "login", group: "Login Screen", label: "Login style", description: "Cover shows your picture sharp, Frame hangs it in a mat, Lens cuts the time out of it.", path: "lock.loginStyle", showIf: () => ["iris", "auto"].indexOf(Config.options?.lock?.loginScreen ?? "auto") >= 0, locked: () => !MaterialThemeLoader.loginScreenInstalled, kind: "choice", fallback: "lens", choices: [{label:"Cover",value:"cover"},{label:"Frame",value:"frame"},{label:"Lens",value:"lens"}], keywords: ["login", "sddm", "greeter", "sign in", "style", "cover", "frame", "lens", "mat", "picture", "clock", "blur", "portada", "marco", "lente"] }
     ]
 
