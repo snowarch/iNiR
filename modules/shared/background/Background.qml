@@ -1159,10 +1159,18 @@ Scope {
             onTriggered: bgRoot._blurTransitionFactor = 1
         }
 
+        // Settings opened over the desktop softens the wallpaper under it; the pieces above it stay sharp.
+        property real settingsVeil: GlobalStates.settingsOverlayOpen && !GlobalStates.screenLocked ? 1 : 0
+        Behavior on settingsVeil {
+            enabled: Appearance.animationsEnabled
+            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        readonly property bool focusBlurOn: (bgRoot.effectsOptions?.enableBlur ?? false) && (bgRoot.effectsOptions?.blurRadius ?? 0) > 0
+        // One radius for both, so the veil never re-blurs mid-fade: the person's own, else a light one.
+        readonly property int blurRadiusNow: bgRoot.focusBlurOn ? bgRoot.effectsOptions.blurRadius : 14
         property real blurProgress: {
-            const effects = bgRoot.effectsOptions;
-            if (!(effects?.enableBlur && (effects?.blurRadius ?? 0) > 0)) return 0;
-            return focusPresenceProgress * _blurTransitionFactor;
+            const focus = bgRoot.focusBlurOn ? focusPresenceProgress : 0;
+            return Math.max(focus, settingsVeil) * _blurTransitionFactor;
         }
 
         Connections {
@@ -1500,9 +1508,7 @@ Scope {
                 readonly property bool showInternalStaticWallpaper: !bgRoot.externalMainWallpaperActive
                 readonly property bool localBlurNeedsStaticTexture: Appearance.effectsEnabled
                     && bgRoot.blurProgress > 0
-                    && (bgRoot.effectsOptions.enableBlur ?? false)
                     && !Config.options?.performance?.lowPower
-                    && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
                 readonly property bool lockBlurNeedsStaticTexture: (bgRoot.lockBlurOptions.enable ?? false)
                     && (GlobalStates.screenLocked || scaleAnim.running)
                 readonly property bool needsStaticTexture: !bgRoot.backdropActive
@@ -1780,9 +1786,7 @@ Scope {
                 active: Appearance.effectsEnabled
                         && !bgRoot.webWallpaperActive
                         && (bgRoot.blurProgress > 0)
-                        && (bgRoot.effectsOptions.enableBlur ?? false)
                         && !Config.options?.performance?.lowPower
-                        && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
                         && !blurLoader.active
                         && !bgRoot.backdropActive
                         && (!(bgRoot.wallpaperIsGif || bgRoot.wallpaperIsVideo) || (bgRoot.effectsOptions.enableAnimatedBlur ?? false))
@@ -1795,7 +1799,7 @@ Scope {
                         anchors.fill: parent
                         source: textureLoader.item ?? (bgRoot.wallpaperIsVideo ? videoWallpaper
                             : bgRoot.wallpaperIsGif ? gifWallpaper : wallpaper)
-                        radius: bgRoot.effectsOptions.blurRadius ?? 32
+                        radius: bgRoot.blurRadiusNow
                         // See #159 — cap samples to bound fragment shader cost
                         samples: Math.min(33, radius * 2 + 1)
                         // A still wallpaper blurs once: any shell animation repaints this window, and without the
