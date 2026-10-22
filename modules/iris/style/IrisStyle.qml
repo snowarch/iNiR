@@ -83,21 +83,33 @@ QtObject {
     readonly property real settingsDensity: root.density
     // Density scales geometry only; type has its own scale.
     readonly property real typeScale: Math.max(0.75, Math.min(1.6, (Appearance.fontSizeScale ?? 1.0) * root.tweak("text", 0.85, 1.25)))
+    // The Signal scale (DESIGN.md S2). Read: title-l 24, title 18, headline 15, body 14, meta 12. Label (mono caps): 11,
+    // 10 at its smallest. Dot: 72 / 48 / 32 / 22, never under 22. The older names are kept and land on the scale.
+    readonly property int typeDotXL: Math.round(72 * root.typeScale)
+    readonly property int typeDotL: Math.round(48 * root.typeScale)
+    readonly property int typeDotM: Math.round(32 * root.typeScale)
+    readonly property int typeDotS: Math.round(22 * root.typeScale)
+    readonly property int typeTitleL: Math.round(24 * root.typeScale)
+    readonly property int typeLabelMono: Math.round(11 * root.typeScale)
     readonly property int typeCaption: Math.round(10 * root.typeScale)
     readonly property int typeFootnote: Math.round(11 * root.typeScale)
     readonly property int typeMeta: Math.round(12 * root.typeScale)
-    readonly property int typeLabel: Math.round(13 * root.typeScale)
+    // A row's name: body size, the one most surfaces read at.
+    readonly property int typeLabel: Math.round(14 * root.typeScale)
     readonly property int typeBody: Math.round(14 * root.typeScale)
     readonly property int typeHeadline: Math.round(15 * root.typeScale)
-    readonly property int typeTitle: Math.round(17 * root.typeScale)
-    readonly property int typeTitleLarge: Math.round(21 * root.typeScale)
-    readonly property int typeDisplay: Math.round(28 * root.typeScale)
+    readonly property int typeTitle: Math.round(18 * root.typeScale)
+    readonly property int typeTitleLarge: root.typeTitleL
+    readonly property int typeDisplay: root.typeDotM
     // The one figure that owns a surface (the Island's desktop clock): read from across the room, nothing beside it competes.
-    readonly property int typeHero: Math.round(46 * root.typeScale)
-    // Inter's optical tracking (a + b·e^(c·size) em) in whole pixels: 0 to 25 px, −1 from 26, −2 from 68.
+    readonly property int typeHero: root.typeDotL
+    // Geist's tracking in whole pixels: none up to 15 px, -2 % to 23, -3.5 % from 24 (Vercel's heading steps, softened).
     function tracking(px: real): int {
-        return Math.round(px * (-0.0223 + 0.185 * Math.exp(-0.1745 * px)))
+        return px < 16 ? 0 : Math.round(-px * (px < 24 ? 0.02 : 0.035))
     }
+    // The Label voice's air between capitals (+0.08 em) and the Dot voice's (+0.02 em), in pixels.
+    function labelTracking(px: real): real { return Math.round(px * 0.08 * 10) / 10 }
+    function dotTracking(px: real): real { return Math.round(px * 0.02 * 10) / 10 }
 
     readonly property var theme: root.appearance?.theme ?? ({})
     function wrapHue(hue, fallback: real): real {
@@ -207,9 +219,19 @@ QtObject {
             source: Quickshell.shellPath(`assets/fonts/${modelData}.ttf`)
         }
     }
-    readonly property string faceText: "Inter"
-    readonly property string faceTitle: "Inter Display"
-    readonly property string faceFigures: "Rubik"
+    // One family in three voices (DESIGN.md S2): Geist to read, Geist Mono for labels, Geist Pixel Circle for the
+    // one number. Loaded from the shell itself, so it does not wait on fontconfig; a missing file falls back to the
+    // bundled Inter and the system mono instead of a blank face.
+    readonly property FontLoader geistRead: FontLoader { source: Quickshell.shellPath("assets/fonts/geist/Geist.ttf") }
+    readonly property FontLoader geistMono: FontLoader { source: Quickshell.shellPath("assets/fonts/geist/GeistMono.ttf") }
+    readonly property FontLoader geistDot: FontLoader { source: Quickshell.shellPath("assets/fonts/geist/GeistPixel-Circle.ttf") }
+    function loadedFace(loader: FontLoader, fallback: string): string {
+        return loader.status === FontLoader.Ready && loader.name.length > 0 ? loader.name : fallback
+    }
+    readonly property string faceText: root.loadedFace(root.geistRead, "Inter")
+    readonly property string faceTitle: root.faceText
+    readonly property string faceLabel: root.loadedFace(root.geistMono, "JetBrainsMono Nerd Font")
+    readonly property string faceFigures: root.loadedFace(root.geistDot, root.faceText)
     readonly property var defaultFaces: ({
         "iris.appearance.fontFamily": root.faceText,
         "iris.appearance.titleFontFamily": root.faceTitle,
@@ -234,9 +256,17 @@ QtObject {
         return steps[Math.max(0, Math.min(steps.length - 1, at + root.weightShift))]
     }
     readonly property int figureWeight: ({ light: Font.Light, regular: Font.Normal })[root.appearance?.figureWeight ?? "bold"] ?? Font.Bold
-    readonly property string fontNumbers: IrisDesign.font("numbers") || root.face("iris.appearance.numbersFontFamily", root.appearance?.numbersFontFamily)
-    // Data and labels in capitals: a Design's mono voice, or the system's.
-    readonly property string fontMono: IrisDesign.font("mono") || "JetBrainsMono Nerd Font"
+    // The Dot voice: clock digits, a widget's one number, area titles. The Figures row picks it; never under 22 px.
+    readonly property string fontDot: IrisDesign.font("dot") || root.face("iris.appearance.numbersFontFamily", root.appearance?.numbersFontFamily)
+    // Small figures (a count, a percentage in a row) read in the Read voice with tabular digits, unless the person
+    // chose a face of their own for figures; past 22 px a figure takes the Dot voice (`figureFace`).
+    readonly property string fontNumbers: IrisDesign.font("numbers")
+        || (String(root.appearance?.numbersFontFamily ?? "").length > 0 ? root.fontDot : root.fontMain)
+    function figureFace(px: real): string { return px >= 22 ? root.fontDot : root.fontNumbers }
+    // The Label voice: data and labels in capitals.
+    readonly property string fontMono: IrisDesign.font("mono") || root.faceLabel
+    readonly property string fontRead: root.fontMain
+    readonly property string fontLabel: root.fontMono
 
     readonly property color canvas: Appearance.colors.colLayer0Base
     // iRiS is dark by construction. The light scheme turns its material and ink over; Ink sits between them, washi
@@ -1034,7 +1064,8 @@ QtObject {
     readonly property bool plainMarks: IrisDesign.trait("marks") === "glyph"
     readonly property bool plateSelection: IrisDesign.trait("selection") === "plate"
     readonly property bool indexed: IrisDesign.trait("index") === true
-    readonly property bool monoCaptions: IrisDesign.trait("captions") === "mono"
+    // Signal: every caption and group head speaks in the Label voice, in every Design.
+    readonly property bool monoCaptions: true
     // A side panel's section is headed by a bar of its line colour, as a station sign marks a line, instead of a glyph.
     readonly property bool lineSections: IrisDesign.trait("sections") === "line"
     // The shell's shared toasts (reloaded, copied, failed) take the Design's own toast under iRiS when it has one.

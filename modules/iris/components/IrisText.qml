@@ -6,46 +6,46 @@ import qs.modules.iris.style
 StyledText {
     id: root
 
-    // Roles, not sizes (DI49i, 2026-10-21): a row's name, the value it holds, what it explains and the title of its group
-    // read as four voices, so a page is scanned by what each line is, not read line by line in one grey.
-    //   Name    what a row or an area is called: text, Medium.
-    //   Value   what it is set to now: the figures face, tabular, a step heavier, in `tone` (the area's colour).
-    //   Detail  what it explains: smaller, regular, quiet.
-    //   Group   the title over a group: the title face, capitals, tracked out, quiet; a Design's mono voice when it has one.
-    enum Role { Body, Meta, Eyebrow, Title, Display, Metric, Name, Value, Detail, Group }
+    // Roles, not sizes, in the three Signal voices (DESIGN.md S2):
+    //   Read   Body, Meta, Name, Detail, Title, Display: Geist, sentence case, hierarchy by size then weight then ink.
+    //   Label  Eyebrow, Group, Value, Label: Geist Mono caps, tracked +0.08 em, quiet ink, three words at most.
+    //   Dot    Metric, Dot: Geist Pixel Circle, a figure of 22 px or more and nothing else.
+    enum Role { Body, Meta, Eyebrow, Title, Display, Metric, Name, Value, Detail, Group, Label, Dot }
     property int role: IrisText.Body
-    // The colour a Value speaks in: the area's own, so the answers on a page read as one family of marks.
-    property color tone: IrisStyle.accent
+    // A Value's ink. Quiet by default: a value is read after its name, it does not shout. Signal only when it needs you.
+    property color tone: IrisStyle.subtext
 
-    color: role === IrisText.Meta || role === IrisText.Eyebrow ? IrisStyle.subtext
-        : role === IrisText.Detail ? IrisStyle.muted
+    readonly property bool labelVoice: role === IrisText.Eyebrow || role === IrisText.Group || role === IrisText.Value
+        || role === IrisText.Label
+    readonly property bool dotVoice: role === IrisText.Metric || role === IrisText.Dot
+    readonly property int voiceSize: role === IrisText.Meta || role === IrisText.Detail ? IrisStyle.typeMeta
+        : role === IrisText.Name || role === IrisText.Body ? IrisStyle.typeBody
+        : role === IrisText.Group ? IrisStyle.typeCaption
+        : root.labelVoice ? IrisStyle.typeLabelMono
+        : role === IrisText.Title ? IrisStyle.typeTitle
+        : role === IrisText.Display ? IrisStyle.typeTitleL
+        : role === IrisText.Dot ? IrisStyle.typeDotM
+        : role === IrisText.Metric ? IrisStyle.typeDotS : IrisStyle.typeBody
+
+    color: role === IrisText.Meta || role === IrisText.Detail || role === IrisText.Eyebrow || role === IrisText.Label ? IrisStyle.subtext
         : role === IrisText.Group ? IrisStyle.textTertiary
         : role === IrisText.Value ? root.tone : IrisStyle.text
-    defaultFont: (role === IrisText.Title || role === IrisText.Display)
-        ? IrisStyle.fontTitle
-        : role === IrisText.Group ? (IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontTitle)
-        : role === IrisText.Metric || role === IrisText.Value ? IrisStyle.fontNumbers
-        : IrisStyle.fontMain
+    defaultFont: root.labelVoice ? IrisStyle.fontLabel
+        : root.dotVoice ? IrisStyle.fontDot
+        : role === IrisText.Title || role === IrisText.Display ? IrisStyle.fontTitle
+        : IrisStyle.fontRead
     font.family: defaultFont
-    font.pixelSize: role === IrisText.Meta || role === IrisText.Detail ? IrisStyle.typeMeta
-        : role === IrisText.Name || role === IrisText.Value ? IrisStyle.typeLabel
-        : role === IrisText.Group ? IrisStyle.typeCaption
-        : role === IrisText.Eyebrow ? IrisStyle.typeFootnote
-        : role === IrisText.Title ? IrisStyle.typeTitle
-        : role === IrisText.Display ? IrisStyle.typeDisplay
-        : role === IrisText.Metric ? IrisStyle.typeTitleLarge : IrisStyle.typeBody
-    font.weight: IrisStyle.weight(role === IrisText.Meta || role === IrisText.Detail ? Font.Normal
-        : role === IrisText.Group ? Font.Bold
-        : role === IrisText.Value ? Font.DemiBold
-        : role === IrisText.Eyebrow ? Font.DemiBold
-        : role === IrisText.Title ? Font.DemiBold
-        : role === IrisText.Display || role === IrisText.Metric ? Font.Bold : Font.Medium)
-    font.capitalization: role === IrisText.Group ? Font.AllUppercase : Font.MixedCase
-    // Capitals want air between them; figures in a column want one width each.
-    font.features: role === IrisText.Value || role === IrisText.Metric ? ({ "tnum": 1 }) : ({})
-    font.letterSpacing: role === IrisText.Group ? Math.max(1, Math.round(IrisStyle.typeCaption * 0.12))
-        : role === IrisText.Display ? IrisStyle.tracking(IrisStyle.typeDisplay)
-        : role === IrisText.Metric ? IrisStyle.tracking(IrisStyle.typeTitleLarge) : 0
+    font.pixelSize: root.voiceSize
+    font.weight: root.dotVoice ? Font.Normal
+        : root.labelVoice ? IrisStyle.weight(Font.Medium)
+        : IrisStyle.weight(role === IrisText.Title || role === IrisText.Display ? Font.DemiBold
+            : role === IrisText.Name ? Font.Medium : Font.Normal)
+    font.capitalization: root.labelVoice ? Font.AllUppercase : Font.MixedCase
+    // Figures in a column want one width each.
+    font.features: role === IrisText.Value || root.dotVoice ? ({ "tnum": 1 }) : ({})
+    font.letterSpacing: root.labelVoice ? IrisStyle.labelTracking(root.voiceSize)
+        : root.dotVoice ? IrisStyle.dotTracking(root.voiceSize)
+        : IrisStyle.tracking(root.voiceSize)
     font.variableAxes: ({})
     // Whole-pixel size: a text's fractional natural size puts every neighbour after it off the pixel grid.
     width: Math.ceil(implicitWidth)

@@ -97,8 +97,8 @@ QtObject {
     // Every body is cut with a blade (IrisField.frag bodyBox): 45° off two opposite corners, gussets where bodies meet.
     readonly property var field: ({ corner: "chamfer" })
     readonly property string preset: "night"
-    readonly property var fonts: ({ text: "Archivo", title: "Archivo SemiExpanded", numbers: "Archivo SemiExpanded",
-        mono: "JetBrainsMono Nerd Font" })
+    // Signal: the same three voices as iRiS (Geist, Geist Mono, Geist Pixel). AIRISU differs in cut, lacquer and detents.
+    readonly property var fonts: ({})
     readonly property var motion: ({ morph: "tuned", duration: 220 })
     // How it reads: glyphs without tinted plates; the chosen row lacquered in the accent; lists that can be typed
     // numbered; Island pages hang under the strip as a panel of their own; a level runs along a piece's cut edge; the

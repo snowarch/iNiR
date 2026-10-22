@@ -13,7 +13,7 @@ Row {
     property int weight: IrisStyle.figureWeight
     property color color: IrisStyle.text
     property color separatorColor: IrisStyle.secondaryAccent
-    property string family: IrisStyle.fontNumbers
+    property string family: IrisStyle.figureFace(root.pixelSize)
     property real minorScale: 0.58
 
     readonly property var parts: {
@@ -37,7 +37,7 @@ Row {
         transform: Translate { x: Math.round(figure.x) - figure.x; y: Math.round(figure.y) - figure.y }
         font.family: root.family
         font.pixelSize: root.pixelSize
-        font.weight: root.weight
+        font.weight: root.family === IrisStyle.fontDot ? Font.Normal : root.weight
         font.features: ({ "tnum": 1 })
         font.letterSpacing: Math.round(-root.pixelSize * 0.02)
         color: root.color
@@ -50,7 +50,7 @@ Row {
         transform: Translate { x: Math.round(minor.x) - minor.x; y: Math.round(minor.y) - minor.y }
         font.family: root.family
         font.pixelSize: Math.round(root.pixelSize * root.minorScale)
-        font.weight: IrisStyle.weight(Font.DemiBold)
+        font.weight: root.family === IrisStyle.fontDot ? Font.Normal : IrisStyle.weight(Font.DemiBold)
         font.features: ({ "tnum": 1 })
         color: IrisStyle.secondaryOf(root.color)
         renderType: Text.NativeRendering

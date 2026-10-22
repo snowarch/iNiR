@@ -7,7 +7,7 @@ Item {
     id: root
 
     property string text: ""
-    property string family: IrisStyle.fontNumbers
+    property string family: IrisStyle.figureFace(root.pixelSize)
     property real pixelSize: IrisStyle.typeHeadline
     property int weight: Font.Normal
     property real letterSpacing: 0
@@ -27,7 +27,7 @@ Item {
         text: "0"
         font.family: root.family
         font.pixelSize: root.pixelSize
-        font.weight: root.weight
+        font.weight: root.family === IrisStyle.fontDot ? Font.Normal : root.weight
         font.features: ({ "tnum": 1 })
     }
 
@@ -35,7 +35,7 @@ Item {
         width: Math.ceil(implicitWidth)
         font.family: root.family
         font.pixelSize: root.pixelSize
-        font.weight: root.weight
+        font.weight: root.family === IrisStyle.fontDot ? Font.Normal : root.weight
         font.letterSpacing: root.letterSpacing
         font.features: ({ "tnum": 1 })
         color: root.color
