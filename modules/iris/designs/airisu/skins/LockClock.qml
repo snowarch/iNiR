@@ -5,9 +5,11 @@ import "../components"
 // AIRISU's lock clock: the time as a race number is cut, leaning, the figures four times the display size, in
 // the ink Clock colour names, with a hard shadow of sumi cut a step down and to the right of them so they hold on a
 // bright picture without a glow; the date over them, a step smaller in the media's second ink. Every Type and Clock row
-// comes resolved from the engine's block; Date off leaves the time alone. Over the lower end of the figures the session
-// is postmarked (APostmark): the machine's name, the day and the minute it was locked, in the seal, a stamp's turn off
-// square. It is the only shu on the clock: the lock is the moment that was sealed.
+// comes resolved from the engine's block; Date off leaves the time alone. Beside the foot of the figures the session is
+// postmarked (APostmark): the machine's name, the day and the minute it was locked, in the seal, a stamp's turn off
+// square. It is the only shu on the clock: the lock is the moment that was sealed. The stamp stands clear of the figures
+// and their lean, and the box makes room for it on both sides, so the time keeps its axis; a clock too small to hold
+// the stamp's date, or too wide to leave it room on screen, gets neither.
 Item {
     id: root
     property var host
@@ -18,8 +20,20 @@ Item {
     readonly property int dateSize: Math.max(IrisStyle.typeLabel, Math.round(root.size * 0.16))
     readonly property int dateGap: Math.round(root.size * 0.02)
 
-    implicitWidth: ink.implicitWidth + root.step
-    implicitHeight: ink.implicitHeight + root.step
+    // How far the lean carries the figures' top corner past their box, and the air between it and the stamp.
+    readonly property int overhang: Math.ceil(Airisu.lean * ink.figureItem.height / 2)
+    readonly property int stampGap: Math.max(Airisu.m, Math.round(root.size * 0.08))
+    readonly property int stampRoom: root.overhang + root.stampGap + postmark.width
+    // The date and the time keep the block's middle, the axis the other blocks stand on, so the stamp's room is kept
+    // on both sides; a stamp that would run past the screen's edge is left off.
+    readonly property real screenWidth: root.Window.window?.width ?? 0
+    readonly property real reachable: root.screenWidth > 0 ? root.screenWidth / 2 - root.stampGap : Infinity
+    readonly property bool stamped: String(root.host?.lockedText ?? "").length > 0 && postmark.drawn
+        && ink.width / 2 + root.step + root.stampRoom <= root.reachable
+    readonly property int wing: root.step + (root.stamped ? root.stampRoom : 0)
+
+    implicitWidth: ink.implicitWidth + 2 * root.wing
+    implicitHeight: Math.max(ink.implicitHeight + root.step, root.stamped ? postmark.y + postmark.height : 0)
 
     component Plate: Column {
         id: plate
@@ -27,6 +41,7 @@ Item {
         property color timeInk
         // Small type takes a small step, or it reads doubled.
         property int dateShift: 0
+        readonly property alias figureItem: figure
         spacing: root.dateGap
         AText {
             transform: Translate { x: plate.dateShift; y: plate.dateShift }
@@ -58,7 +73,7 @@ Item {
     }
 
     Plate {
-        x: root.step
+        x: root.wing + root.step
         y: root.step
         dateInk: IrisStyle.veilStrong
         timeInk: IrisStyle.veilStrong
@@ -66,15 +81,17 @@ Item {
     }
     Plate {
         id: ink
+        x: root.wing
         dateInk: IrisStyle.onMediaSecondary
         timeInk: root.host?.colour ?? IrisStyle.onMedia
     }
     APostmark {
-        visible: String(root.host?.lockedText ?? "").length > 0
+        id: postmark
+        visible: root.stamped
         width: Math.round(root.size * 1.3)
         height: width
-        x: ink.width - Math.round(width * 0.55)
-        y: ink.height - Math.round(height * 0.6)
+        x: ink.x + ink.width + root.step + root.overhang + root.stampGap
+        y: Math.max(0, ink.height + root.step - height)
         colour: Airisu.sealOnMedia
         over: String(root.host?.machine ?? "").toUpperCase()
         date: root.host?.lockedAt ? Qt.formatDate(root.host.lockedAt, "dd·MM·yy") : ""

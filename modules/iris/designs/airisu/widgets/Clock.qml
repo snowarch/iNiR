@@ -127,7 +127,8 @@ Item {
     // ── Analog: the date stamp (丸型日付印), struck now. A heavy ring and a fine one; across the middle the band ruled
     // from rim to rim, the time set in it where a post office sets the date; the weekday in the upper segment and the
     // date in figures in the lower one, as the stamp's own line. While seconds run they stand after the time in shu, the
-    // one live thing. No hands: a stamp tells the minute it was struck.
+    // one live thing. No hands: a stamp tells the minute it was struck. A segment's line is cut whole inside the fine
+    // ring or left off, the weekday first, then the date; the band always carries the time.
     Item {
         id: stamp
         visible: root.analog
@@ -146,6 +147,18 @@ Item {
         readonly property real rule: Math.max(1, Math.round(stamp.heavy * 0.6))
         readonly property real innerX: Math.sqrt(Math.max(0, stamp.inner * stamp.inner - stamp.b * stamp.b))
         readonly property real rimX: Math.sqrt(Math.max(0, Math.pow(stamp.r - stamp.heavy / 2, 2) - stamp.b * stamp.b))
+        // How wide a line may run whose far edge sits `far` from the middle: the fine ring's chord there, a ring's
+        // breadth in. A segment's line also keeps clear of the band's rule.
+        function chord(far: real): real {
+            const room = stamp.inner - 2 * stamp.fine
+            return far >= room ? 0 : 2 * Math.sqrt(room * room - far * far)
+        }
+        function holds(line: Item, middle: real): bool {
+            return line.implicitHeight / 2 <= middle - stamp.b - stamp.rule
+                && line.implicitWidth <= stamp.chord(middle + line.implicitHeight / 2)
+        }
+        readonly property bool dateFits: stamp.holds(stampDate, stamp.b + stamp.r * 0.21)
+        readonly property bool weekdayFits: stamp.dateFits && stamp.holds(weekdayLine, stamp.b + stamp.r * 0.2)
 
         Shape {
             anchors.fill: parent
@@ -183,9 +196,11 @@ Item {
 
         // The upper segment: the weekday, spaced as a stamp's lettering is cut.
         AText {
+            id: weekdayLine
+            visible: stamp.weekdayFits
             anchors.horizontalCenter: parent.horizontalCenter
             y: Math.round(stamp.r - stamp.b - stamp.r * 0.2 - height / 2)
-            width: Math.min(implicitWidth, stamp.innerX * 2 - 2 * stamp.heavy)
+            elide: Text.ElideNone
             size: Math.max(IrisStyle.typeCaption, Math.round(stamp.r * 0.13))
             font.weight: Font.Bold
             font.letterSpacing: Math.round(size * 0.12)
@@ -200,14 +215,22 @@ Item {
                         y: Math.round(stamp.r - bandTime.height / 2 + bandTime.size * 0.04)
             spacing: Math.round(bandTime.size * 0.06)
             readonly property real room: 2 * stamp.innerX - 2 * stamp.heavy
+            // Solved at the nominal size, so the band never measures what it sizes. The seconds come along only while
+            // the time and they, both at their floors, still fit the band; otherwise the band carries the time alone.
+            function fitted(width: real): int {
+                return Math.max(IrisStyle.typeCaption, Math.floor(Math.min(bandTime.nominal, bandTime.nominal * struck.room / Math.max(1, width))))
+            }
+            readonly property int withSeconds: struck.fitted(bandMeasure.advanceWidth + secondsMeasure.advanceWidth + bandTime.nominal * 0.06)
+            readonly property int secondsSize: Math.max(IrisStyle.typeCaption, Math.round(struck.withSeconds * 0.4))
+            readonly property bool secondsFit: root.ticking
+                && bandMeasure.advanceWidth * struck.withSeconds / bandTime.nominal + Math.round(struck.withSeconds * 0.06)
+                    + secondsMeasure.advanceWidth * struck.secondsSize / secondsMeasure.font.pixelSize <= struck.room
             AText {
                 id: bandTime
                 readonly property real nominal: Math.floor(stamp.b * 2 * 0.86 / 0.74)
                 voice: "figure"
                 lean: Airisu.lean
-                // Solved at the nominal size with the seconds counted in, so the band never measures what it sizes.
-                size: Math.max(IrisStyle.typeCaption, Math.floor(Math.min(bandTime.nominal, bandTime.nominal * struck.room
-                    / Math.max(1, bandMeasure.advanceWidth + (seconds.visible ? secondsMeasure.advanceWidth + bandTime.nominal * 0.06 : 0)))))
+                size: struck.secondsFit ? struck.withSeconds : struck.fitted(bandMeasure.advanceWidth)
                 color: stock.ink
                 text: String(root.face?.timeText ?? "")
                 TextMetrics {
@@ -230,20 +253,22 @@ Item {
             }
             AText {
                 id: seconds
-                visible: root.ticking
+                visible: struck.secondsFit
                 anchors.baseline: bandTime.baseline
                 voice: "figure"
                 lean: Airisu.lean
-                size: Math.max(IrisStyle.typeCaption, Math.round(bandTime.size * 0.4))
+                size: struck.secondsSize
                 color: stock.vivid
                 text: String(root.now.getSeconds()).padStart(2, "0")
             }
         }
         // The lower segment: the date in figures, day · month · year, as the stamp's band would carry it.
         AText {
+            id: stampDate
+            visible: stamp.dateFits
             anchors.horizontalCenter: parent.horizontalCenter
             y: Math.round(stamp.r + stamp.b + stamp.r * 0.21 - height / 2)
-            width: Math.min(implicitWidth, stamp.innerX * 2 - 2 * stamp.heavy)
+            elide: Text.ElideNone
             voice: "figure"
             size: Math.max(IrisStyle.typeCaption, Math.round(stamp.r * 0.15))
             color: stock.ink
