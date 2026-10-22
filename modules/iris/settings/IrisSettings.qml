@@ -19,6 +19,7 @@ import qs.modules.iris.field as Field
 import qs.modules.iris.pieces
 import qs.modules.iris.sidebar
 import qs.modules.iris.preview
+import qs.modules.iris.settings.layouts as Layouts // in Quickshell's import graph: the page loads them by url
 import qs.modules.iris.widgets
 
 Item {
