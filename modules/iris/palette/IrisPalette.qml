@@ -641,7 +641,7 @@ Item {
                                 x: Math.min(root.selectedIndex, root.suggestions.length - 1) * tiles.tileWidth + 2 * stage.d
                                 width: tiles.tileWidth - 4 * stage.d
                                 height: tiles.height
-                                radius: IrisStyle.radiusTile
+                                radius: IrisStyle.concentric(surface.radius, 18 * stage.d, IrisStyle.radiusRow)
                                 color: IrisStyle.rowSelectionFill
                                 Behavior on x { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                             }
@@ -776,8 +776,8 @@ Item {
                                     Layout.fillWidth: true
                                     Layout.preferredWidth: 1
                                     implicitHeight: Math.round(34 * stage.d)
-                                    buttonRadius: IrisStyle.radiusRow
-                                    buttonRadiusPressed: IrisStyle.radiusRow
+                                    buttonRadius: IrisStyle.concentric(surface.radius, 16 * stage.d, IrisStyle.radiusRow)
+                                    buttonRadiusPressed: hint.buttonRadius
                                     // A Design's skin draws it as its quiet button (its own pointer marks).
                                     quiet: hint.skinned
                                     colBackground: "transparent"
@@ -882,7 +882,8 @@ Item {
                                 width: parent.width - 16 * stage.d
                                 y: resultColumn.y + (target ? target.y + target.rowY : 0)
                                 height: target?.rowHeight ?? 0
-                                radius: IrisStyle.radiusTile
+                                // 8 px inside the body: it rounds by what that leaves of the body's corner (DI29).
+                                radius: IrisStyle.concentric(surface.radius, 8 * stage.d, IrisStyle.radiusRow)
                                 color: IrisStyle.rowSelectionFill
                                 // A Design may mark the current row its own way (IrisDesign part `listMark`).
                                 IrisSkin { part: "listMark"; host: highlight }

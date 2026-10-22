@@ -24,6 +24,8 @@ ColumnLayout {
         else root.widget.closeQuickControls()
     }
     readonly property real d: IrisStyle.density
+    // The corner of its plates: the sheet that hosts it sets it, so they stay concentric with that sheet (DI29).
+    property real plateRadius: IrisStyle.radiusRow
     readonly property var pages: [
         { value: "widget", label: Translation.tr("Widget") },
         { value: "look", label: Translation.tr("Look") },
@@ -91,7 +93,7 @@ ColumnLayout {
         readonly property color ink: action.danger ? IrisStyle.danger : IrisStyle.text
         Layout.fillWidth: true
         implicitHeight: Math.round(36 * IrisStyle.density)
-        radius: IrisStyle.radiusRow
+        radius: root.plateRadius
         color: actionTap.pressed ? (action.danger ? IrisStyle.tintFillHover(IrisStyle.danger) : IrisStyle.fillActive)
             : actionHover.hovered ? (action.danger ? IrisStyle.tintFill(IrisStyle.danger) : IrisStyle.fillHover) : "transparent"
         Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
@@ -196,7 +198,7 @@ ColumnLayout {
                         Layout.preferredWidth: 1
                         Layout.maximumWidth: Number.POSITIVE_INFINITY
                         Layout.preferredHeight: Math.round(78 * root.d)
-                        radius: IrisStyle.radiusTile
+                        radius: root.plateRadius
                         color: sizeTile.chosen ? IrisStyle.tintFill(IrisStyle.accent)
                             : tileHover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
                         border.width: sizeTile.chosen ? 1 : 0
@@ -274,7 +276,7 @@ ColumnLayout {
                     visible: !option.choice
                     Layout.fillWidth: true
                     implicitHeight: Math.round(40 * root.d)
-                    radius: IrisStyle.radiusRow
+                    radius: root.plateRadius
                     color: optionHover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
                     Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
 
@@ -322,6 +324,7 @@ ColumnLayout {
     IrisStackControls {
         visible: root.page === "stack"
         widget: root.widget
+        rowRadius: root.plateRadius
         part: "manage"
     }
 
@@ -409,7 +412,7 @@ ColumnLayout {
 
                             Rectangle {
                                 anchors.fill: parent
-                                radius: IrisStyle.radiusTile
+                                radius: root.plateRadius
                                 color: "transparent"
                                 border.width: swatch.chosen ? 2 : 0
                                 border.color: IrisStyle.accent
@@ -417,7 +420,7 @@ ColumnLayout {
                             ClippingRectangle {
                                 anchors.fill: parent
                                 anchors.margins: Math.round(3 * root.d)
-                                radius: IrisStyle.radiusTile - Math.round(3 * root.d)
+                                radius: IrisStyle.concentric(root.plateRadius, 3 * root.d, IrisStyle.radiusMicro)
                                 color: IrisStyle.fillQuiet
 
                                 IrisImage {
@@ -627,6 +630,7 @@ ColumnLayout {
 
         IrisStackControls {
             widget: root.widget
+            rowRadius: root.plateRadius
             part: "join"
         }
 

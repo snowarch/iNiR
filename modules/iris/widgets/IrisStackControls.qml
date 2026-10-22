@@ -17,6 +17,8 @@ ColumnLayout {
 
     required property var widget
     property string part: "manage"
+    // Its rows' corner: the sheet it lies in sets it.
+    property real rowRadius: IrisStyle.radiusRow
     readonly property real d: IrisStyle.density
     readonly property var stack: root.widget.stack
     readonly property var others: root.stack ? [] : DesktopWidgetStacks.candidates(root.widget.outputName, root.widget.configEntryName)
@@ -67,7 +69,7 @@ ColumnLayout {
                 readonly property bool shown: root.stack !== null && root.stack.shownIndex === page.index
                 Layout.fillWidth: true
                 implicitHeight: Math.round(40 * root.d)
-                radius: IrisStyle.radiusRow
+                radius: root.rowRadius
                 color: page.shown ? IrisStyle.tintFill(IrisStyle.accent)
                     : pageHover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
                 Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }

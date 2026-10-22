@@ -22,6 +22,8 @@ Loader {
     property bool morphing: false
     // The card's corner; a side panel sets it concentric with its own.
     property real plateRadius: IrisStyle.radiusCard
+    // Notices lie at the section's pad inside that corner (bare, the corner of the body the section fills).
+    readonly property real noticeRadius: IrisStyle.concentric(root.plateRadius, Math.round(14 * root.d), IrisStyle.radiusRow)
     readonly property real d: IrisStyle.density
     signal navigate()
     signal toggleRequested()
@@ -188,7 +190,7 @@ Loader {
         function dismiss(): void { Notifications.discardNotification(notice.notification.notificationId) }
         function invoke(identifier: string): void { Notifications.attemptInvokeAction(notice.notification.notificationId, identifier); root.navigate() }
         implicitHeight: notice.skinned ? (noticeSkin.item?.implicitHeight ?? 0) : noticeBody.implicitHeight + 20 * root.d
-        radius: IrisStyle.radiusRow
+        radius: root.noticeRadius
         color: notice.skinned ? "transparent" : IrisStyle.surfaceHighest
         IrisSkin { id: noticeSkin; part: "noticeCard"; host: notice; z: 1 }
 

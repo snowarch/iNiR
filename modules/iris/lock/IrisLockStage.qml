@@ -242,6 +242,9 @@ Item {
             return IrisLockOptions.entry(body.blockId)
         }
         readonly property real blockScale: IrisLockOptions.scaleOf(body.blockId)
+        // The plate the block wears, if any: the arranging ring rounds by it grown by the gap, so the two stay parallel.
+        readonly property real plateRadius: body.blockId === "media" && String(body.entry?.style ?? "card") !== "bare" ? IrisStyle.radiusSheet
+            : body.blockId === "activity" ? IrisStyle.radiusPlate : 0
         readonly property bool on: Boolean(body.entry?.enable ?? false)
         readonly property bool picked: root.editing && root.selected === body.blockId
         // What a Design's edit marks read: the pointer over the block, its name and its switch.
@@ -277,7 +280,7 @@ Item {
             visible: root.arranging && !body.skinned
             anchors.fill: parent
             anchors.margins: -Math.round(8 * root.d)
-            radius: IrisStyle.radiusPlate
+            radius: body.plateRadius > 0 ? Math.round(body.plateRadius * body.blockScale) + Math.round(8 * root.d) : IrisStyle.radiusPlate
             color: body.picked ? IrisStyle.tintFill(IrisStyle.accentOnMedia)
                 : grip.containsMouse ? IrisStyle.onMediaFill : "transparent"
             border.width: body.picked || grip.containsMouse ? Math.max(1, Math.round(1.5 * root.d)) : 0

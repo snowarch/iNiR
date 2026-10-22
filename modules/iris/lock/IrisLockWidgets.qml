@@ -67,7 +67,10 @@ Item {
         y: (root.selectedItem?.y ?? 0) - pad
         width: (root.selectedItem?.width ?? 0) + pad * 2
         height: (root.selectedItem?.height ?? 0) + pad * 2
-        radius: IrisStyle.radiusPlate
+        // Round the widget it rings, grown by the gap (IrisWidgetFace's corner), so the two stay parallel.
+        readonly property real faceRadius: (root.selectedItem?.cornerRadiusOverride ?? -1) >= 0 ? root.selectedItem.cornerRadiusOverride
+            : Math.round((root.selectedItem?.widgetCardRadius ?? IrisStyle.radiusPlate) * (root.selectedItem?.scaleFactor ?? 1))
+        radius: IrisStyle.fieldChamfer ? 0 : faceRadius + pad
         color: "transparent"
         border.width: Math.max(1, Math.round(1.5 * d))
         border.color: IrisStyle.accentOnMedia

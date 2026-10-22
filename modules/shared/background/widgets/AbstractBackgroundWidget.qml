@@ -1290,11 +1290,19 @@ AbstractWidget {
 
             Rectangle {
                 anchors.fill: parent
-                visible: root.widgetIrisFamily
-                radius: Math.round(18 * IrisStyle.density)
+                visible: root.widgetIrisFamily && !IrisStyle.fieldChamfer
+                radius: IrisStyle.radiusCard
                 color: IrisStyle.surface
                 border.width: 1
                 border.color: IrisStyle.hairlineStrong
+            }
+            // Under a chamfered Design the sheet takes the cut like every other body.
+            IrisCutPlate {
+                anchors.fill: parent
+                visible: root.widgetIrisFamily && IrisStyle.fieldChamfer
+                color: IrisStyle.surface
+                stroke: IrisStyle.hairlineStrong
+                strokeWidth: 1
             }
             PanelSurface {
                 id: editPopoverSurface
@@ -1885,7 +1893,8 @@ AbstractWidget {
 
     Component {
         id: _irisPopoverRef
-        IrisWidgetControls { widget: root }
+        // Its plates lie 12 px inside the sheet's corner (popoverLoader's margins).
+        IrisWidgetControls { widget: root; plateRadius: IrisStyle.concentric(IrisStyle.radiusCard, 12, IrisStyle.radiusChip) }
     }
 
     Component {

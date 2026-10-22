@@ -23,6 +23,8 @@ Item {
     // The box the card may fill at its largest.
     property real fitWidth: 1200
     property real fitHeight: 480
+    // The owner's body sets it, so the desktop stays concentric with the body it lies in.
+    property real cornerRadius: IrisStyle.radiusCard
     property int cursorId: -1
     // null = not searching; else { windowId: true } for the windows that match.
     property var matches: null
@@ -136,7 +138,7 @@ Item {
     ClippingRectangle {
         id: face
         anchors.fill: parent
-        radius: IrisStyle.radiusCard
+        radius: root.cornerRadius
         color: IrisStyle.fillQuiet
 
         Image {

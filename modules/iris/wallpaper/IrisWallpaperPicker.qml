@@ -1020,7 +1020,7 @@ Item {
                 visible: root.showcase
                 picker: root
                 entry: root.showcase ? root.selectedEntry : null
-                radius: Math.max(IrisStyle.radiusTile, surface.radius - surface.pad)
+                radius: IrisStyle.concentric(surface.radius, surface.pad, IrisStyle.radiusRow)
             }
 
             ScriptModel {
@@ -1083,7 +1083,8 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         anchors.margins: Math.round(4 * root.d)
-                        radius: IrisStyle.radiusCard
+                        // Round the tile it rings (4 px in from here): its corner grown by the gap, so the two stay parallel.
+                        radius: IrisStyle.fieldChamfer ? 0 : IrisStyle.radiusTile + Math.round(4 * root.d)
                         color: "transparent"
                         border.width: Math.max(2, Math.round(2.5 * root.d))
                         border.color: IrisStyle.accent

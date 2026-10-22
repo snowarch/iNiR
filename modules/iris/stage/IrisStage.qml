@@ -1529,6 +1529,8 @@ Item {
                 IrisCardContent {
                     id: cardContent
                     width: cardScroller.width
+                    bodyRadius: card.radius
+                    bodyInset: root.cardPad
                     kind: root.cardKind
                     screenName: root.screenName
                     contentActive: root.cardPresent

@@ -16,6 +16,8 @@ import qs.modules.iris.bar.island
 ColumnLayout {
     id: continuing
     readonly property real d: IrisStyle.density
+    // Its rows' corner: the card it lies in sets it, so they stay concentric with the card's body.
+    property real plateRadius: IrisStyle.radiusTile
     signal closeRequested()
     readonly property var entries: AnimeWatch.shows
     spacing: 8 * continuing.d
@@ -57,7 +59,7 @@ ColumnLayout {
         visible: !AnimeWatch.canTarget
         enabled: AnimeWatch.available
         text: AnimeWatch.available ? Translation.tr("Resume in %1").arg(AnimeWatch.cli) : Translation.tr("Resume")
-        buttonRadius: IrisStyle.radiusTile
+        buttonRadius: continuing.plateRadius
         implicitHeight: Math.round(38 * continuing.d)
         onClicked: { continuing.closeRequested(); AnimeWatch.resume(null) }
     }
@@ -116,7 +118,7 @@ ColumnLayout {
                 onClicked: AnimeWatch.choose(AnimeWatch.pickValue(showPick.modelData))
                 Rectangle {
                     anchors.fill: parent
-                    radius: IrisStyle.radiusTile
+                    radius: continuing.plateRadius
                     color: showPick.containsMouse ? IrisStyle.fillHover : "transparent"
                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                 }
@@ -278,7 +280,7 @@ ColumnLayout {
             onClicked: AnimeWatch.resume(watchRow.modelData)
             Rectangle {
                 anchors.fill: parent
-                radius: IrisStyle.radiusTile
+                radius: continuing.plateRadius
                 color: watchRow.pressed ? IrisStyle.fillActive : watchRow.containsMouse ? IrisStyle.fillHover : "transparent"
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
             }

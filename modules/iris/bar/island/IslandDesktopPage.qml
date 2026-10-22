@@ -27,6 +27,11 @@ ColumnLayout {
     readonly property bool current: page.island.effectivePage === "desktop"
     readonly property bool grouped: String(page.island.options?.blockStyle ?? "plain") === "grouped"
     property real navOffset: 0
+    // The Island it lies in (IrisIsland sets both): a block on the page's edge rounds by what the inset leaves of the
+    // Island's corner, so the band between them is as wide round the curve as along the sides (DI29).
+    property real bodyRadius: IrisStyle.radiusPanel
+    property real bodyInset: Math.round(20 * IrisStyle.density)
+    readonly property real plateRadius: IrisStyle.concentric(page.bodyRadius, page.bodyInset, IrisStyle.radiusRow)
     spacing: 14 * IrisStyle.density
 
     component DesktopBlock: Item {
@@ -68,7 +73,7 @@ ColumnLayout {
         Rectangle {
             anchors.fill: parent
             anchors.margins: -Math.round(6 * IrisStyle.density)
-            radius: IrisStyle.radiusTile
+            radius: IrisStyle.concentric(page.bodyRadius, page.bodyInset - Math.round(6 * IrisStyle.density), IrisStyle.radiusRow)
             color: block.carried ? IrisStyle.fillHover : IrisStyle.fillQuiet
             opacity: page.island.studio ? 1 : 0
             visible: opacity > 0
@@ -663,7 +668,7 @@ ColumnLayout {
             anchors.rightMargin: page.island.studio ? page.island.studioHandlesWidth : 0
             enabled: !page.island.studio
             implicitHeight: Math.round((page.grouped ? 74 : 58) * IrisStyle.density)
-            radius: IrisStyle.radiusTile
+            radius: page.plateRadius
             color: page.grouped ? IrisStyle.fillQuiet : "transparent"
             RowLayout {
                 anchors.fill: parent
@@ -839,7 +844,7 @@ ColumnLayout {
             anchors.rightMargin: page.island.studio ? page.island.studioHandlesWidth : 0
             enabled: !page.island.studio
             implicitHeight: Math.round((page.grouped ? 44 : 34) * IrisStyle.density)
-            radius: IrisStyle.radiusTile
+            radius: page.plateRadius
             color: page.grouped ? IrisStyle.fillQuiet : "transparent"
             readonly property bool polling: page.current && page.island.visualExpanded
             property bool holdingSensors: false

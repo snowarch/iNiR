@@ -416,6 +416,8 @@ Item {
                     // The field sits on the Island's side of the body: at the bottom when the Island is.
                     readonly property bool fieldLast: root.fromIsland && root.islandBottom
                     readonly property real pad: Math.round(18 * root.d)
+                    // A desktop on the stage is a plate at `pad` from the body: it rounds by what that leaves of the corner.
+                    readonly property real cardRadius: IrisStyle.concentric(surface.radius, scene.pad, IrisStyle.radiusRow)
                     readonly property real headerH: Math.round(52 * root.d)
                     readonly property real labelH: Math.round(30 * root.d)
                     readonly property real peek: Math.max(0, Math.round(Number(root.options?.peek ?? 56) * root.d))
@@ -643,7 +645,7 @@ Item {
                                     y: Math.round(slot.centerY - slot.shownH / 2 + Math.round(6 * root.d))
                                     width: Math.round(slot.shownW)
                                     height: Math.round(slot.shownH)
-                                    radius: IrisStyle.radiusCard * slot.cardScale
+                                    radius: scene.cardRadius * slot.cardScale
                                     blur: Math.round(28 * root.d)
                                     spread: -Math.round(6 * root.d)
                                     color: IrisStyle.plateShadow
@@ -661,6 +663,7 @@ Item {
                                         outputWidth: root.outputWidth
                                         outputHeight: root.outputHeight
                                         fitWidth: scene.stageW
+                                        cornerRadius: scene.cardRadius
                                         fitHeight: scene.heroMax - scene.captionRow
                                         windows: root.outputWindows.filter(window => window.workspace_id === slot.ws.id)
                                         cursorId: slot.hero ? root.cursorId : -1

@@ -26,6 +26,14 @@ Item {
     property string screenName: ""
     property bool contentActive: true
     readonly property real d: IrisStyle.density
+    // The card's body (IrisStage sets both): every plate on its edge rounds by what the inset leaves of the body's corner,
+    // so the band between them is as wide round the curve as along the sides (DI29).
+    property real bodyRadius: IrisStyle.radiusSheet
+    property real bodyInset: IrisStyle.cardPad
+    readonly property real edgeInset: root.bleeds ? 0 : root.bodyInset
+    readonly property real plateRadius: IrisStyle.concentric(root.bodyRadius, root.edgeInset, IrisStyle.radiusRow)
+    // The pickers' rows reach 6 px past the content's edge.
+    readonly property real listRadius: IrisStyle.concentric(root.bodyRadius, root.edgeInset - 6 * root.d, IrisStyle.radiusRow)
     readonly property bool bleeds: ["weather", "notifications", "media", "visualizer"].includes(root.kind)
         || root.kind === "media" || root.kind === "calendar"
     readonly property real contentHeight: body.item?.implicitHeight ?? 0
@@ -101,7 +109,7 @@ Item {
         onClicked: vpnRow.toggled()
         Rectangle {
             anchors.fill: parent
-            radius: IrisStyle.radiusTile
+            radius: root.plateRadius
             color: vpnRow.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
         }
@@ -165,7 +173,7 @@ Item {
         Accessible.name: fact.label + " " + fact.shown
         Rectangle {
             anchors.fill: parent
-            radius: IrisStyle.radiusRow
+            radius: IrisStyle.concentric(root.plateRadius, 4 * root.d, IrisStyle.radiusChip)
             color: fact.containsMouse ? IrisStyle.fillHover : ColorUtils.applyAlpha(IrisStyle.fillHover, 0)
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
         }
@@ -201,7 +209,7 @@ Item {
     component VpnFacts: Rectangle {
         default property alias facts: factColumn.data
         implicitHeight: factColumn.implicitHeight + Math.round(8 * root.d)
-        radius: IrisStyle.radiusTile
+        radius: root.plateRadius
         color: IrisStyle.fillQuiet
         ColumnLayout {
             id: factColumn
@@ -213,6 +221,7 @@ Item {
 
     component SectionCard: IrisSidebarSection {
         bare: true
+        plateRadius: root.plateRadius
         expanded: true
         contentActive: root.contentActive
         onNavigate: root.close()
@@ -251,6 +260,7 @@ Item {
             onIconClicked: level.input ? Audio.toggleMicMute() : Audio.toggleMute()
         }
         IrisDeviceList {
+            rowRadius: root.listRadius
             visible: root.cardOptions?.devices ?? true
             Layout.fillWidth: true
             Layout.leftMargin: -6 * root.d
@@ -282,6 +292,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.leftMargin: -14 * root.d
                 Layout.rightMargin: -14 * root.d
+                plateRadius: IrisStyle.concentric(root.bodyRadius, root.edgeInset - 14 * root.d, IrisStyle.radiusRow)
                 kind: "mixer"
             }
         }
@@ -349,6 +360,7 @@ Item {
                 }
             }
             IrisNetworkList {
+                rowRadius: root.listRadius
                 Layout.fillWidth: true
                 Layout.leftMargin: -6 * root.d
                 Layout.rightMargin: -6 * root.d
@@ -374,6 +386,7 @@ Item {
                 }
             }
             IrisBluetoothList {
+                rowRadius: root.listRadius
                 Layout.fillWidth: true
                 Layout.leftMargin: -6 * root.d
                 Layout.rightMargin: -6 * root.d
@@ -535,7 +548,7 @@ Item {
                 Layout.fillWidth: true
                 visible: Updates.count > 0
                 text: Translation.tr("Update now")
-                buttonRadius: IrisStyle.radiusTile
+                buttonRadius: root.plateRadius
                 implicitHeight: Math.round(38 * root.d)
                 onClicked: {
                     root.close()
@@ -632,7 +645,7 @@ Item {
                 enabled: !Vpn.signingIn
                 emphasized: true
                 text: Vpn.signingIn ? Translation.tr("Finish in your browser…") : Translation.tr("Sign in to Tailscale")
-                buttonRadius: IrisStyle.radiusTile
+                buttonRadius: root.plateRadius
                 implicitHeight: Math.round(34 * root.d)
                 onClicked: Vpn.signInTailscale()
             }
@@ -672,7 +685,7 @@ Item {
                         Accessible.name: device.modelData.name
                         Rectangle {
                             anchors.fill: parent
-                            radius: IrisStyle.radiusRow
+                            radius: root.plateRadius
                             color: device.containsMouse ? IrisStyle.fillHover : ColorUtils.applyAlpha(IrisStyle.fillHover, 0)
                             Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                         }
@@ -798,7 +811,7 @@ Item {
                     visible: Vpn.canCreate
                     enabled: !Vpn.busy
                     text: Vpn.hasEditor ? Translation.tr("New WireGuard…") : Translation.tr("New VPN…")
-                    buttonRadius: IrisStyle.radiusTile
+                    buttonRadius: root.plateRadius
                     onClicked: Vpn.newProfile("wireguard")
                 }
                 IrisButton {
@@ -806,14 +819,14 @@ Item {
                     visible: Vpn.hasEditor && Vpn.hasVpnPlugins
                     enabled: !Vpn.busy
                     text: Translation.tr("Other VPN…")
-                    buttonRadius: IrisStyle.radiusTile
+                    buttonRadius: root.plateRadius
                     onClicked: Vpn.newProfile("vpn")
                 }
                 IrisButton {
                     Layout.fillWidth: true
                     enabled: !Vpn.busy
                     text: Translation.tr("Import a file…")
-                    buttonRadius: IrisStyle.radiusTile
+                    buttonRadius: root.plateRadius
                     onClicked: Vpn.chooseProfileFile()
                 }
             }
@@ -822,7 +835,7 @@ Item {
                 visible: Vpn.needsTailscaleOperator
                 enabled: !Vpn.busy
                 text: Translation.tr("Let me control Tailscale")
-                buttonRadius: IrisStyle.radiusTile
+                buttonRadius: root.plateRadius
                 implicitHeight: Math.round(34 * root.d)
                 onClicked: Vpn.fixTailscaleOperator()
             }
@@ -865,7 +878,7 @@ Item {
                 enabled: !ShellUpdates.isUpdating
                 text: ShellUpdates.isUpdating ? Translation.tr("Updating…")
                     : ShellUpdates.repoDiverged ? Translation.tr("Repair & Update") : Translation.tr("Update now")
-                buttonRadius: IrisStyle.radiusTile
+                buttonRadius: root.plateRadius
                 implicitHeight: Math.round(38 * root.d)
                 onClicked: { root.close(); ShellUpdates.performUpdate() }
             }
@@ -873,7 +886,7 @@ Item {
                 Layout.fillWidth: true
                 quiet: true
                 text: Translation.tr("Not now")
-                buttonRadius: IrisStyle.radiusTile
+                buttonRadius: root.plateRadius
                 implicitHeight: Math.round(32 * root.d)
                 onClicked: { root.close(); ShellUpdates.dismiss() }
             }
@@ -920,7 +933,7 @@ Item {
                     onClicked: IrisPieces.animeToggleFollow(showRow.modelData.id)
                     Rectangle {
                         anchors.fill: parent
-                        radius: IrisStyle.radiusTile
+                        radius: root.plateRadius
                         color: showRow.containsMouse ? IrisStyle.fillHover : "transparent"
                         Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                     }
@@ -991,6 +1004,7 @@ Item {
     Component {
         id: watchingCard
         IrisWatchingCard {
+            plateRadius: root.plateRadius
             onCloseRequested: root.close()
         }
     }

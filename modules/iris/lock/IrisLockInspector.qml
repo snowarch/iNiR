@@ -60,13 +60,16 @@ Item {
     Item {
         id: panel
         readonly property real radius: IrisStyle.radiusSheet
+        // Its plates lie 18 px in: they round by what that leaves of the panel's corner (DI29).
+        readonly property real plateRadius: IrisStyle.concentric(panel.radius, Math.round(18 * root.d), IrisStyle.radiusRow)
         anchors.verticalCenter: parent.verticalCenter
         // Anchors that flip at runtime leave stale ones behind, so x is bound instead.
         x: Math.round(root.onRight ? root.width - panel.width : 0) - panel.radius
         Behavior on x { NumberAnimation { duration: IrisStyle.duration(220); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
         width: Math.round(392 * root.d) + panel.radius
-        // Querying the list's contentHeight here would size the list from itself.
-        readonly property real chrome: Math.round(56 * root.d) + header.implicitHeight + chips.implicitHeight
+        // Querying the list's contentHeight here would size the list from itself. The column's two margins and two gaps:
+        // four pixels short of them scrolled the list and cut its last card flat against the panel's edge.
+        readonly property real chrome: 2 * Math.round(18 * root.d) + 2 * Math.round(12 * root.d) + header.implicitHeight + chips.implicitHeight
         height: Math.min(Math.round(root.height * 0.82), panel.chrome + rowColumn.implicitHeight)
         opacity: root.peeking ? 0 : 1
         visible: panel.opacity > 0.01
@@ -182,6 +185,7 @@ Item {
                         sourceComponent: IrisWidgetControls {
                             width: rowColumn.width
                             widget: root.widget
+                            plateRadius: panel.plateRadius
                             onLock: true
                             onCloseRequested: GlobalStates.irisLockSelection = ""
                         }
@@ -227,7 +231,7 @@ Item {
         readonly property real unit: card.miniWidth / 112
         width: rowColumn.width
         height: Math.max(cardText.implicitHeight, card.miniHeight) + Math.round(24 * root.d)
-        radius: IrisStyle.radiusTile
+        radius: panel.plateRadius
         color: card.current ? IrisStyle.tintFill(IrisStyle.accent) : cardArea.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
         border.width: card.current ? Math.max(1, Math.round(1.5 * root.d)) : 0
         border.color: IrisStyle.tintBorder(IrisStyle.accent)

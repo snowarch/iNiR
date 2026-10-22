@@ -2590,6 +2590,8 @@ Item {
                             IslandDesktopPage {
                                 width: desktopLoader.width
                                 island: root
+                                bodyRadius: chassis.openRadius
+                                bodyInset: root.padding
                                 navOffset: (root.navUrl.length > 0 ? designNav.height : navFrame.height) + expandedContent.rowSpacing
                             }
                         }
