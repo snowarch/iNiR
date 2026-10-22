@@ -14,6 +14,8 @@ ColumnLayout {
     property bool inputs: true
     readonly property bool headings: root.outputs && root.inputs
     readonly property real d: IrisStyle.density
+    // Its rows' corner: the plate it lies in sets it, so the rows stay concentric with that plate.
+    property real rowRadius: IrisStyle.radiusTile
     spacing: 2 * root.d
 
     Repeater {
@@ -44,7 +46,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     quiet: true
                     implicitHeight: Math.round(36 * root.d)
-                    buttonRadius: IrisStyle.radiusTile
+                    buttonRadius: root.rowRadius
                     onClicked: {
                         if (deviceRow.input) Audio.setDefaultSource(deviceRow.modelData)
                         else Audio.setDefaultSink(deviceRow.modelData)

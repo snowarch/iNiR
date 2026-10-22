@@ -190,7 +190,7 @@ PanelWindow {
         radius: IrisStyle.surfaceRadius("panels", IrisStyle.radius)
         width: Math.round(Math.min(root.width - root.edgeGap * 2, Math.max(300, Math.min(600, root.options.width ?? 380)) * root.d)) + root.notchOverflow
         height: Math.round(Math.min(root.availableHeight * Math.max(0.45, Math.min(1, (root.options.height ?? 88) / 100)),
-            panelLayout.implicitHeight + 36 * root.d))
+            panelLayout.implicitHeight + 2 * panelLayout.edgePad))
         x: root.left ? root.edgeGap - root.notchOverflow : root.width - width - root.edgeGap + root.notchOverflow
         y: root.holding
             ? Math.round(Math.max(root.topInset, Math.min(root.heldTop, root.topInset + root.availableHeight - height)))
@@ -212,8 +212,10 @@ PanelWindow {
 
         ColumnLayout {
             id: panelLayout
-            // The cards inside stay concentric with the panel (DI29): a rounder panel pushes them in, never under its curve.
-            readonly property real edgePad: Math.max(18 * root.d, IrisStyle.surfaceRadius("panels", IrisStyle.radius) - IrisStyle.radiusCard)
+            // The cards inside stay concentric with the panel (DI29): a concentric margin, and each card rounds by what it
+            // leaves of the panel's corner, so the band between them is as wide round the curve as along the sides.
+            readonly property real edgePad: IrisStyle.concentricPad(frame.radius, 16 * root.d)
+            readonly property real cardRadius: IrisStyle.concentric(frame.radius, edgePad, IrisStyle.radiusRow)
             anchors.fill: parent
             anchors.margins: edgePad
             anchors.leftMargin: edgePad + (root.left ? root.notchOverflow : 0)
@@ -337,7 +339,7 @@ PanelWindow {
                         visible: active
                         sourceComponent: ColumnLayout {
                             spacing: 16 * root.d
-                            IrisSidebarEditor { Layout.fillWidth: true; side: root.side; plate: IrisStyle.fillQuiet }
+                            IrisSidebarEditor { Layout.fillWidth: true; side: root.side; plate: IrisStyle.fillQuiet; radius: panelLayout.cardRadius }
                             IrisButton {
                                 id: layoutButton
                                 Layout.fillWidth: true
@@ -359,6 +361,7 @@ PanelWindow {
                             visible: active
                             sourceComponent: IrisSidebarSection {
                                 kind: modelData
+                                plateRadius: panelLayout.cardRadius
                                 contentActive: root.open
                                 expanded: root.expandedSections.includes(modelData)
                                 onNavigate: root.close()

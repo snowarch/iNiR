@@ -15,6 +15,8 @@ ColumnLayout {
     id: root
 
     readonly property real d: IrisStyle.density
+    // Its rows' corner: the plate it lies in sets it, so the rows stay concentric with that plate.
+    property real rowRadius: IrisStyle.radiusTile
     spacing: 2 * root.d
 
     NotificationToggle { id: focus }
@@ -22,6 +24,7 @@ ColumnLayout {
     IdleInhibitorToggle { id: awake }
 
     IrisControlRow {
+        plateRadius: root.rowRadius
         glyph: "do_not_disturb_on"
         label: Translation.tr("Do Not Disturb")
         detail: focus.toggled ? Translation.tr("Banners wait in Today") : Translation.tr("Banners come in")
@@ -30,6 +33,7 @@ ColumnLayout {
         onToggled: focus.mainAction()
     }
     IrisControlRow {
+        plateRadius: root.rowRadius
         glyph: "sports_esports"
         label: Translation.tr("Game mode")
         detail: Translation.tr("The shell steps back while you play")
@@ -39,6 +43,7 @@ ColumnLayout {
         onToggled: game.mainAction()
     }
     IrisControlRow {
+        plateRadius: root.rowRadius
         glyph: "coffee"
         label: Translation.tr("Stay awake")
         detail: Translation.tr("The screen never sleeps on its own")

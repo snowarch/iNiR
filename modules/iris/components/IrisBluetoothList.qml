@@ -12,6 +12,8 @@ ColumnLayout {
     id: root
 
     readonly property real d: IrisStyle.density
+    // Its rows' corner: the plate it lies in sets it, so the rows stay concentric with that plate.
+    property real rowRadius: IrisStyle.radiusTile
     readonly property var devices: (Bluetooth.defaultAdapter?.devices?.values ?? [])
         .filter(device => device && (device.paired || device.connected || device.trusted))
     spacing: 2 * root.d
@@ -39,7 +41,7 @@ ColumnLayout {
             Layout.fillWidth: true
             quiet: true
             implicitHeight: Math.round(40 * root.d)
-            buttonRadius: IrisStyle.radiusTile
+            buttonRadius: root.rowRadius
             onClicked: {
                 if (deviceRow.modelData.connected) deviceRow.modelData.disconnect()
                 else deviceRow.modelData.connect()

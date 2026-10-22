@@ -17,7 +17,13 @@ ColumnLayout {
     onVisibleChanged: if (visible) Brightness.getMonitorForScreen(root.targetScreen)?.refresh()
     property var targetScreen
     readonly property real d: IrisStyle.density
-    readonly property real blockRadius: IrisStyle.radiusPlate
+    // The body it lies in (the Control Center, the Island's controls page): every plate on its edge rounds by what the
+    // inset leaves of that body's corner, so the band between them is as wide round the curve as along the sides.
+    property real bodyRadius: IrisStyle.radiusPanel
+    property real bodyInset: IrisStyle.concentricPad(IrisStyle.radiusPanel, 16 * IrisStyle.density)
+    readonly property real blockRadius: IrisStyle.concentric(root.bodyRadius, root.bodyInset, IrisStyle.radiusRow)
+    // A picker's rows sit 6 px inside their block.
+    readonly property real listRadius: IrisStyle.concentric(root.blockRadius, 6 * root.d, IrisStyle.radiusChip)
     readonly property color blockColor: IrisStyle.fillQuiet
     readonly property string picker: grid.picker
     readonly property string hint: grid.hint
@@ -252,6 +258,7 @@ ColumnLayout {
                 Layout.topMargin: 2 * root.d
                 targetScreen: root.targetScreen
                 removeZone: library
+                plateRadius: root.blockRadius
             }
 
             Block {
@@ -270,11 +277,11 @@ ColumnLayout {
                         : root.picker === "bluetooth" ? bluetoothList.implicitHeight
                         : root.picker === "display" ? displayList.implicitHeight
                         : root.picker === "system" ? systemList.implicitHeight : deviceList.implicitHeight
-                    IrisDeviceList { id: deviceList; width: parent.width; visible: root.picker === "devices" }
+                    IrisDeviceList { id: deviceList; rowRadius: root.listRadius; width: parent.width; visible: root.picker === "devices" }
                     IrisDisplayList { id: displayList; width: parent.width; visible: root.picker === "display"; targetScreen: root.targetScreen }
-                    IrisSystemList { id: systemList; width: parent.width; visible: root.picker === "system" }
-                    IrisNetworkList { id: networkList; width: parent.width; visible: root.picker === "network" }
-                    IrisBluetoothList { id: bluetoothList; width: parent.width; visible: root.picker === "bluetooth" }
+                    IrisSystemList { id: systemList; rowRadius: root.listRadius; width: parent.width; visible: root.picker === "system" }
+                    IrisNetworkList { id: networkList; rowRadius: root.listRadius; width: parent.width; visible: root.picker === "network" }
+                    IrisBluetoothList { id: bluetoothList; rowRadius: root.listRadius; width: parent.width; visible: root.picker === "bluetooth" }
                 }
             }
 
@@ -393,7 +400,7 @@ ColumnLayout {
                                 anchors.fill: parent
                                 anchors.leftMargin: -Math.round(6 * root.d)
                                 visible: !groupRow.skinned
-                                radius: IrisStyle.radiusRow
+                                radius: IrisStyle.concentric(root.blockRadius, 8 * root.d, IrisStyle.radiusChip)
                                 color: rowHover.hovered && !root.editing ? IrisStyle.fillHover : "transparent"
                                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
                             }
@@ -513,7 +520,7 @@ ColumnLayout {
                 visible: removeDrop.shown
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: IrisStyle.radiusPlate
+                radius: root.blockRadius
                 color: grid.overRemove ? IrisStyle.tintFill(IrisStyle.danger) : IrisStyle.fillQuiet
                 border.width: Math.max(1, Math.round(1.5 * root.d))
                 border.color: grid.overRemove ? IrisStyle.danger : IrisStyle.border
@@ -781,7 +788,7 @@ ColumnLayout {
 
         width: shelfColumn.width
         height: Math.max(cardText.implicitHeight, card.miniHeight) + Math.round(24 * root.d)
-        radius: IrisStyle.radiusTile
+        radius: root.blockRadius
         color: presetSkin.active ? "transparent"
             : card.current ? IrisStyle.tintFill(IrisStyle.accent) : cardArea.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
         border.width: card.current && !presetSkin.active ? Math.max(1, Math.round(1.5 * root.d)) : 0

@@ -2504,7 +2504,7 @@ Item {
                             active: controlsPage.resident
                             asynchronous: !controlsPage.current
                             visible: active
-                            sourceComponent: IrisQuickPanel { width: controlsLoader.width; targetScreen: root.targetScreen }
+                            sourceComponent: IrisQuickPanel { width: controlsLoader.width; targetScreen: root.targetScreen; bodyRadius: chassis.openRadius; bodyInset: root.padding }
                         }
                     }
                     Page {

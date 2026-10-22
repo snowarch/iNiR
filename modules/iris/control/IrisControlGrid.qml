@@ -47,7 +47,9 @@ Item {
     readonly property real gap: Math.round(8 * root.d)
     readonly property real unit: Math.round((IrisControlOptions.labelled ? 70 : 64) * root.d)
     readonly property real cell: Math.max(1, (root.width - (root.columns - 1) * root.gap) / root.columns)
-    readonly property real tileRadius: IrisStyle.radiusTile
+    // Set by the panel: the tiles are concentric with the body they lie in.
+    property real plateRadius: IrisStyle.radiusTile
+    readonly property real tileRadius: root.plateRadius
     // A Design that draws the controls itself (AIRISU: boxes on a printed form) gets each one's state; the grid keeps
     // the clicks, the lists, the carrying and the sizes.
     readonly property bool designed: IrisDesign.has("controlTile")
@@ -607,7 +609,7 @@ Item {
                 platter.inRow ? platter.height - 2 * platter.pad - platter.captionHeight
                     : (platter.height - 2 * platter.pad - platter.rowGap) / 2 - platter.captionHeight))
             readonly property string plateKind: "group"
-            radius: IrisStyle.radiusPlate
+            radius: root.tileRadius
             color: platterPlate.active ? "transparent" : IrisStyle.fillQuiet
             IrisSkin { id: platterPlate; part: "controlPlate"; host: platter; z: -1 }
             Grid {
@@ -761,7 +763,7 @@ Item {
             // Nothing playing: the whole tile is a button for the music app you use most.
             readonly property bool offersMusic: !nowPlaying.hasPlayer && IrisPieces.musicAppName.length > 0
             readonly property string plateKind: "media"
-            radius: nowPlaying.strip && IrisControlOptions.roundControls ? height / 2 : IrisStyle.radiusPlate
+            radius: nowPlaying.strip && IrisControlOptions.roundControls ? height / 2 : root.tileRadius
             color: nowPlaying.hasPlayer && !mediaPlate.active ? IrisStyle.fillQuiet : "transparent"
             clip: true
             IrisSkin { id: mediaPlate; part: "controlPlate"; host: nowPlaying; visible: nowPlaying.hasPlayer; z: -1 }

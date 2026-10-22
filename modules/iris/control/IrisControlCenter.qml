@@ -180,7 +180,7 @@ Item {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 active: root.scene.length === 0
-                sourceComponent: IrisQuickPanel { targetScreen: root.screenData }
+                sourceComponent: IrisQuickPanel { targetScreen: root.screenData; bodyRadius: root.baseRadius; bodyInset: root.contentPadding }
             }
             Loader {
                 id: designScene

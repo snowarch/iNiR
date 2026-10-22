@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
@@ -382,10 +383,27 @@ Loader {
                                 Accessible.name: row.modelData?.text ?? ""
                                 onContainsMouseChanged: if (containsMouse) popup.focusStop(row.index, -1)
                                 onClicked: popup.choose(row.modelData)
+                                // Under a chamfer the picture sits in the menu's cut corner: it is cut by the parallel edge
+                                // (`nestedCut`), so the band round it stays as wide on the diagonal as along the sides.
+                                IrisCutPlate {
+                                    id: heroDie
+                                    anchors.fill: parent
+                                    visible: false
+                                    layer.enabled: IrisStyle.fieldChamfer
+                                    cutLength: IrisStyle.nestedCut(IrisStyle.chamferCut, root.pad)
+                                    color: "white" // iris-literal: a mask, never shown
+                                }
                                 ClippingRectangle {
                                     anchors.fill: parent
-                                    radius: IrisStyle.fieldChamfer ? 0 : Math.max(IrisStyle.radiusMicro, menu.radius - root.pad)
+                                    radius: IrisStyle.fieldChamfer ? 0 : IrisStyle.concentric(menu.radius, root.pad, IrisStyle.radiusMicro)
                                     color: IrisStyle.fillQuiet
+                                    layer.enabled: IrisStyle.fieldChamfer
+                                    layer.effect: MultiEffect {
+                                        maskEnabled: true
+                                        maskSource: heroDie
+                                        maskThresholdMin: 0.5
+                                        maskSpreadAtMin: 1
+                                    }
                                     scale: hero.pressed ? IrisStyle.pressScale(0.98) : 1
                                     Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
                                     IrisWallpaperView {
@@ -421,7 +439,8 @@ Loader {
                                         anchors.bottomMargin: Math.round(6 * root.d)
                                         width: heroWords.implicitWidth + Math.round(16 * root.d)
                                         height: heroWords.implicitHeight + Math.round(10 * root.d)
-                                        cutLength: Math.round(height / 4)
+                                        // It sits in the picture's cut corner, so it takes the parallel edge too.
+                                        cutLength: IrisStyle.nestedCut(heroDie.cutLength, x)
                                         color: hero.lit ? IrisStyle.veil : IrisStyle.veilStrong
                                     }
                                     RowLayout {
@@ -526,7 +545,7 @@ Loader {
                                 Rectangle {
                                     visible: !menuItem.skinned
                                     anchors.fill: parent
-                                    radius: IrisStyle.plateSelection ? 0 : IrisStyle.radiusRow
+                                    radius: IrisStyle.plateSelection ? 0 : IrisStyle.concentric(menu.radius, root.pad, IrisStyle.radiusChip)
                                     color: menuItem.plate ? IrisStyle.selectionFill : menuItem.danger
                                         ? (menuItem.lit ? IrisStyle.tintFill(IrisStyle.danger) : ColorUtils.applyAlpha(IrisStyle.danger, 0))
                                         : (menuItem.lit ? IrisStyle.tintFill(IrisStyle.accent) : ColorUtils.applyAlpha(IrisStyle.accent, 0))

@@ -12,6 +12,8 @@ ColumnLayout {
     id: root
 
     readonly property real d: IrisStyle.density
+    // Its rows' corner: the plate it lies in sets it, so the rows stay concentric with that plate.
+    property real rowRadius: IrisStyle.radiusTile
     readonly property var networks: (Network.wifiNetworks ?? []).slice()
         .sort((a, b) => (b.active ? 1 : 0) - (a.active ? 1 : 0) || b.strength - a.strength)
         .slice(0, 8)
@@ -53,7 +55,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 quiet: true
                 implicitHeight: Math.round(40 * root.d)
-                buttonRadius: IrisStyle.radiusTile
+                buttonRadius: root.rowRadius
                 // As Material does: a tap connects, and the row waits while NetworkManager works.
                 enabled: !networkEntry.connecting
                 onClicked: Network.connectToWifiNetwork(networkEntry.modelData)
@@ -181,7 +183,7 @@ ColumnLayout {
         Layout.topMargin: 2 * root.d
         quiet: true
         implicitHeight: Math.round(34 * root.d)
-        buttonRadius: IrisStyle.radiusTile
+        buttonRadius: root.rowRadius
         text: Translation.tr("Details")
         onClicked: {
             AppLauncher.launchNetworkSettings(Network.ethernet)

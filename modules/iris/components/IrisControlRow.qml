@@ -17,6 +17,7 @@ Item {
     property color tint: IrisStyle.accent
     signal toggled()
     readonly property real d: IrisStyle.density
+    property real plateRadius: IrisStyle.radiusTile
 
     Layout.fillWidth: true
     implicitHeight: Math.round(44 * row.d)
@@ -24,7 +25,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: IrisStyle.radiusTile
+        radius: row.plateRadius
         color: tap.pressed ? IrisStyle.fillActive : hover.hovered && row.available ? IrisStyle.fillQuiet : "transparent"
         Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
     }

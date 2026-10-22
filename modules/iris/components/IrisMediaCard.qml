@@ -16,6 +16,8 @@ Item {
     property bool active: visible
     property bool showBackground: true
     property real headerReserve: 0
+    // The plate's corner; a side panel sets it concentric with its own.
+    property real plateRadius: IrisStyle.radiusSmall
     property bool showPlayers: true
     // On a veil over imagery (the lock), which stays dark in every scheme: media ink instead of the scheme's.
     property bool overMedia: false
@@ -77,12 +79,12 @@ Item {
     Item {
         anchors.fill: parent
         visible: root.showBackground
-        Rectangle { anchors.fill: parent; visible: !root.skinned; radius: IrisStyle.radiusSmall; color: IrisStyle.surfaceHigh }
+        Rectangle { anchors.fill: parent; visible: !root.skinned; radius: root.plateRadius; color: IrisStyle.surfaceHigh }
         Loader {
             anchors.fill: parent
             active: root.active && root.showBackground && (Config.options?.iris?.player?.artworkBackground ?? true)
                 && media.displayedArtFilePath.length > 0
-            sourceComponent: IrisMediaBackdrop { source: media.displayedArtFilePath; radius: IrisStyle.radiusSmall; strength: 0.5 }
+            sourceComponent: IrisMediaBackdrop { source: media.displayedArtFilePath; radius: root.plateRadius; strength: 0.5 }
         }
     }
     ColumnLayout {

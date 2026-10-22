@@ -20,6 +20,8 @@ Loader {
     property bool expanded: false
     property bool bare: false
     property bool morphing: false
+    // The card's corner; a side panel sets it concentric with its own.
+    property real plateRadius: IrisStyle.radiusCard
     readonly property real d: IrisStyle.density
     signal navigate()
     signal toggleRequested()
@@ -69,7 +71,7 @@ Loader {
         }
         Binding { target: root; property: "morphing"; value: morph.running }
         implicitHeight: section.shownHeight
-        radius: root.bare ? 0 : IrisStyle.radiusCard
+        radius: root.bare ? 0 : root.plateRadius
         color: root.bare ? "transparent" : IrisStyle.surfaceHigh
         clip: true
 
@@ -370,6 +372,7 @@ Loader {
             IrisMediaCard {
                 id: mediaCard
                 width: parent.width
+                plateRadius: root.plateRadius
                 active: root.contentActive
                 showBackground: true
                 compact: !root.expanded
