@@ -357,7 +357,7 @@ Scope {
                         visible: root.mediaArtist.length > 0
                         text: root.mediaArtist
                         elide: Text.ElideRight
-                        color: IrisStyle.muted
+                        color: IrisStyle.textSecondary
                         font.pixelSize: IrisStyle.typeMeta
                     }
                 }
@@ -365,7 +365,7 @@ Scope {
                     visible: root.mediaAction.length > 0
                     text: root.mediaIcon
                     iconSize: 20 * osdWindow.d
-                    color: IrisStyle.accent
+                    color: IrisStyle.text
                 }
             }
 
@@ -392,15 +392,17 @@ Scope {
                         visible: text.length > 0
                         text: root.connection?.detail ?? ""
                         elide: Text.ElideRight
-                        color: IrisStyle.muted
+                        color: IrisStyle.textSecondary
                         font.pixelSize: IrisStyle.typeMeta
                     }
                 }
                 IrisText {
                     visible: (root.connection?.value ?? -1) >= 0
                     text: (root.connection?.value ?? 0) + "%"
-                    color: IrisStyle.muted
-                    font.pixelSize: IrisStyle.typeMeta
+                    color: IrisStyle.text
+                    font.family: IrisStyle.fontNumbers
+                    font.pixelSize: IrisStyle.typeHeadline
+                    font.weight: IrisStyle.figureWeight
                     font.features: ({ "tnum": 1 })
                 }
             }
@@ -428,7 +430,7 @@ Scope {
                         visible: root.warningText.length > 0
                         text: root.warningText
                         elide: Text.ElideRight
-                        color: IrisStyle.muted
+                        color: IrisStyle.textSecondary
                         font.pixelSize: IrisStyle.typeMeta
                     }
                 }

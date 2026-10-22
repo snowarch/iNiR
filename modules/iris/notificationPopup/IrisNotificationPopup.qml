@@ -288,15 +288,17 @@ PanelWindow {
                                         : seconds < 3600 ? Translation.tr("%1m").arg(Math.floor(seconds / 60))
                                         : Translation.tr("%1h").arg(Math.floor(seconds / 3600))
                                 }
-                                color: IrisStyle.muted
+                                color: IrisStyle.textTertiary
                                 font.pixelSize: IrisStyle.typeMeta
+                                font.weight: IrisStyle.weight(Font.Medium)
+                                font.features: ({ "tnum": 1 })
                             }
                         }
                         IrisText {
                             Layout.fillWidth: true
                             visible: text.length > 0
                             text: String(banner.notification?.body ?? "").replace(/<[^>]*>/g, "")
-                            color: IrisStyle.subtext
+                            color: IrisStyle.textSecondary
                             font.pixelSize: IrisStyle.typeLabel
                             wrapMode: Text.Wrap
                             maximumLineCount: banner.hovered ? 8 : 2
@@ -306,8 +308,9 @@ PanelWindow {
                             Layout.fillWidth: true
                             visible: text.length > 0 && text !== String(banner.notification?.summary ?? "")
                             text: String(banner.notification?.appName ?? "")
-                            color: IrisStyle.muted
+                            color: IrisStyle.textTertiary
                             font.pixelSize: IrisStyle.typeFootnote
+                            font.weight: IrisStyle.weight(Font.Medium)
                             elide: Text.ElideRight
                         }
 

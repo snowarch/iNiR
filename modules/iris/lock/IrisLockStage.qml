@@ -35,6 +35,8 @@ Item {
     property bool onCentreY: false
     readonly property real d: IrisStyle.density
     readonly property real typeScale: IrisStyle.typeScale * IrisLockOptions.typeScale
+    // A scale token at the lock's own text size: every lock text names its role through one (DI49j).
+    function lockType(size: int): int { return Math.round(size * IrisLockOptions.typeScale) }
     readonly property real margin: Math.round(56 * root.d)
     // When this lock went up: the stage is made when the session locks (or the rehearsal opens).
     readonly property date lockedAt: new Date()
@@ -157,7 +159,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: reading.label
             color: IrisStyle.onMediaSecondary
-            font.pixelSize: Math.round(13 * reading.typeScale)
+            font.pixelSize: root.lockType(IrisStyle.typeLabel)
             font.weight: IrisStyle.weight(Font.Medium)
         }
         }
@@ -207,17 +209,17 @@ Item {
             IrisText {
                 Layout.fillWidth: true
                 text: plate.label
-                color: IrisStyle.onMedia
-                font.pixelSize: Math.round(15 * root.typeScale)
-                font.weight: IrisStyle.weight(Font.DemiBold)
+                color: plate.figure.length > 0 ? IrisStyle.onMediaSecondary : IrisStyle.onMedia
+                font.pixelSize: root.lockType(IrisStyle.typeBody)
+                font.weight: IrisStyle.weight(plate.figure.length > 0 ? Font.Medium : Font.DemiBold)
                 elide: Text.ElideRight
             }
             IrisNumber {
                 text: plate.figure
                 countDown: plate.countDown
                 color: plate.tint
-                pixelSize: Math.round(26 * root.typeScale)
-                weight: Font.Bold
+                pixelSize: root.lockType(IrisStyle.typeDisplay)
+                weight: IrisStyle.figureWeight
                 letterSpacing: -1
             }
         }
@@ -561,9 +563,9 @@ Item {
                 anchors.horizontalCenter: clockColumn.horizontalCenter
                 visible: clock.showDate
                 text: clock.dateText
-                color: IrisStyle.onMedia
-                font.pixelSize: Math.round(21 * root.typeScale)
-                font.weight: IrisStyle.weight(Font.DemiBold)
+                color: IrisStyle.onMediaSecondary
+                font.pixelSize: root.lockType(IrisStyle.typeTitleLarge)
+                font.weight: IrisStyle.weight(Font.Medium)
             }
             IrisText {
 
@@ -633,8 +635,8 @@ Item {
                 color: IrisStyle.onMedia
                 font.family: IrisStyle.fontNumbers
                 font.features: ({ "tnum": 1 })
-                font.weight: IrisStyle.weight(Font.DemiBold)
-                font.pixelSize: Math.round(15 * root.typeScale)
+                font.weight: IrisStyle.figureWeight
+                font.pixelSize: root.lockType(IrisStyle.typeHeadline)
             }
             IrisText {
 
@@ -646,7 +648,7 @@ Item {
                 elide: Text.ElideRight
                 color: IrisStyle.onMediaSecondary
                 font.weight: IrisStyle.weight(Font.Medium)
-                font.pixelSize: Math.round(13 * root.typeScale)
+                font.pixelSize: root.lockType(IrisStyle.typeLabel)
             }
         }
     }
@@ -872,7 +874,7 @@ Item {
                     visible: avatarImage.status !== Image.Ready
                     text: (SystemInfo.displayName || SystemInfo.username || "?").charAt(0).toUpperCase()
                     color: IrisStyle.onMedia
-                    font.pixelSize: Math.round(34 * root.typeScale)
+                    font.pixelSize: Math.round(avatar.width * 0.4) // a glyph in its box, not a line of text
                     font.weight: IrisStyle.weight(Font.DemiBold)
                 }
                 }
@@ -886,7 +888,7 @@ Item {
                 height: visible ? implicitHeight : 0
                 text: SystemInfo.displayName || SystemInfo.username
                 color: IrisStyle.onMedia
-                font.pixelSize: Math.round(18 * root.typeScale)
+                font.pixelSize: root.lockType(IrisStyle.typeTitle)
                 font.weight: IrisStyle.weight(Font.DemiBold)
             }
             Item { width: 1; height: Math.round(16 * root.d) }
@@ -990,7 +992,7 @@ Item {
                 height: visible ? implicitHeight : 0
                 text: session.hint || " "
                 color: root.context.showFailure ? IrisStyle.dangerOnMedia : IrisStyle.onMediaSecondary
-                font.pixelSize: Math.round(12 * root.typeScale)
+                font.pixelSize: root.lockType(IrisStyle.typeMeta)
             }
             }
             // A Design that sets the whole sign-in on one plate (a card) gets the lock's plate under it.
@@ -1018,7 +1020,7 @@ Item {
                 selectionColor: session.skinned ? "transparent" : IrisStyle.onMediaFillHover
                 selectedTextColor: session.skinned ? "transparent" : IrisStyle.onMedia
                 font.family: IrisStyle.fontMain
-                font.pixelSize: Math.round(14 * root.typeScale)
+                font.pixelSize: root.lockType(IrisStyle.typeBody)
                 font.letterSpacing: 1
                 clip: true
                 enabled: !root.context.unlockInProgress && !root.editing
@@ -1035,7 +1037,7 @@ Item {
                     visible: !session.skinned && passwordInput.text.length === 0
                     text: root.context.fingerprintsConfigured ? Translation.tr("Password or fingerprint") : Translation.tr("Enter Password")
                     color: IrisStyle.onMediaSecondary
-                    font.pixelSize: Math.round(13 * root.typeScale)
+                    font.pixelSize: root.lockType(IrisStyle.typeLabel)
                 }
             }
         }

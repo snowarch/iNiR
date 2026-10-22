@@ -312,7 +312,7 @@ Item {
                 text: Translation.tr(card.modelData.label)
                 font.pixelSize: IrisStyle.typeLabel
                 font.weight: IrisStyle.weight(Font.DemiBold)
-                color: card.current ? IrisStyle.accent : IrisStyle.text
+                color: IrisStyle.text
                 elide: Text.ElideRight
             }
             IrisText {

@@ -709,16 +709,15 @@ Item {
                                         text: slot.wsName.length > 0 ? slot.wsName
                                             : slot.ws.is_active ? Translation.tr("You are here") : Translation.tr("Workspace")
                                         role: IrisText.Eyebrow
-                                        color: slot.ws.is_active ? IrisStyle.accent : IrisStyle.subtext
                                         elide: Text.ElideRight
                                     }
                                     IrisText {
                                         text: String(slot.ws.idx ?? "–").padStart(2, "0")
                                         font.family: IrisStyle.fontNumbers
                                         font.features: ({ "tnum": 1 })
-                                        font.pixelSize: Math.round(IrisStyle.typeDisplay * 1.75)
-                                        font.weight: IrisStyle.weight(Font.Bold)
-                                        font.letterSpacing: IrisStyle.tracking(Math.round(IrisStyle.typeDisplay * 1.75))
+                                        font.pixelSize: IrisStyle.typeHero
+                                        font.weight: IrisStyle.figureWeight
+                                        font.letterSpacing: IrisStyle.tracking(IrisStyle.typeHero)
                                         color: IrisStyle.text
                                     }
                                     IrisText {
@@ -741,7 +740,7 @@ Item {
                                         font.family: IrisStyle.fontNumbers
                                         font.features: ({ "tnum": 1 })
                                         font.pixelSize: IrisStyle.typeTitle
-                                        font.weight: IrisStyle.weight(Font.Bold)
+                                        font.weight: IrisStyle.figureWeight
                                         color: IrisStyle.subtext
                                     }
                                     IrisText {
