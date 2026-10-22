@@ -88,13 +88,6 @@ Item {
         width: root.width - x
         spacing: 0
         AText {
-            width: parent.width
-            size: IrisStyle.typeHeadline
-            font.weight: Font.Medium
-            color: Airisu.inkSecond
-            text: String(root.host?.greeting ?? "")
-        }
-        AText {
             id: name
             readonly property int most: Math.round(IrisStyle.typeDisplay * 1.35)
             width: parent.width
@@ -117,7 +110,7 @@ Item {
             topPadding: root.u(1.5)
             voice: "ruby"
             size: IrisStyle.typeMeta
-            text: String(root.host?.facts ?? "")
+            text: [String(root.host?.kind ?? ""), String(root.host?.title ?? "")].filter(part => part.length > 0).join(" · ")
         }
         Flow {
             width: parent.width

@@ -23,7 +23,7 @@ ClippingRectangle {
     readonly property real d: IrisStyle.settingsDensity
     readonly property int pad: Math.round(14 * card.d)
     // A page with room to spare gives the desk more of it (General's welcome, DI38).
-    property int stageHeight: Math.round(228 * card.d)
+    property int stageHeight: Math.round(196 * card.d)
     // The desk takes at most a third of a narrow card and leaves when the card cannot hold it beside a readable
     // column (a Settings window, a large text scale): the strip under it still shows the wallpapers.
     readonly property bool deskShown: card.width >= 520 * card.d
@@ -40,16 +40,6 @@ ClippingRectangle {
         return words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
     }
     readonly property string name: SystemInfo.displayName || SystemInfo.username
-    readonly property string greeting: {
-        const hour = DateTime.clock.date.getHours()
-        return hour < 5 ? Translation.tr("Still up,") : hour < 12 ? Translation.tr("Good morning,")
-            : hour < 19 ? Translation.tr("Good afternoon,") : Translation.tr("Good evening,")
-    }
-    readonly property string facts: [
-        ShellUpdates.localVersion.length > 0 ? "iNiR " + ShellUpdates.localVersion : "iNiR",
-        SystemInfo.distroName !== "Unknown" ? SystemInfo.distroName : "",
-        card.screen ? `${desk.screenW} × ${desk.screenH}` : ""
-    ].filter(part => part.length > 0).join("  ·  ")
     readonly property var nearby: {
         const all = (Wallpapers.wallpapers ?? []).filter(path => Wallpapers.extensions.includes(String(path).split(".").pop().toLowerCase()))
         if (all.length === 0) return []
@@ -231,15 +221,6 @@ ClippingRectangle {
                     spacing: 0
                     IrisText {
                         Layout.fillWidth: true
-                        text: card.greeting
-                        color: IrisStyle.onMediaSecondary
-                        font.family: IrisStyle.fontTitle
-                        font.pixelSize: IrisStyle.typeTitleLarge
-                        font.weight: IrisStyle.weight(Font.Normal)
-                        elide: Text.ElideRight
-                    }
-                    IrisText {
-                        Layout.fillWidth: true
                         role: IrisText.Display
                         text: card.name
                         color: IrisStyle.accentOnMedia
@@ -247,18 +228,10 @@ ClippingRectangle {
                     }
                 }
             }
-            IrisText {
-                Layout.fillWidth: true
-                Layout.topMargin: Math.round(12 * card.d)
-                text: card.facts
-                color: IrisStyle.onMediaSecondary
-                font.pixelSize: IrisStyle.typeLabel
-                elide: Text.ElideRight
-            }
             // What the desk wears, by name: the picture beside it says which, this says what it is.
             IrisText {
                 Layout.fillWidth: true
-                Layout.topMargin: Math.round(4 * card.d)
+                Layout.topMargin: Math.round(12 * card.d)
                 visible: card.title.length > 0
                 text: card.kind + "  ·  " + card.title
                 color: IrisStyle.onMediaSecondary

@@ -28,17 +28,10 @@ Item {
 
     // What the engine fills, and the room it reads to lay its rows.
     readonly property alias searchSlot: searchSlot
-    readonly property alias stageSlot: stageSlot
     readonly property alias rowsSlot: rowsSlot
     readonly property real pageWidth: page.width
     // As tall as the index needs to print every tab at its full height: the engine sizes the body from it.
     readonly property real need: (edge.main.length + edge.foot.length) * root.u(6.5) + edge.breaks * root.u(3) + 2 * root.u(6)
-    readonly property real stageWidth: left.width
-    readonly property real aspect: {
-        const screen = GlobalStates.focusedScreen
-        return screen ? screen.height / Math.max(1, screen.width) : 0.5625
-    }
-    readonly property real stageHeight: Math.max(0, Math.min(Math.round(left.width * root.aspect), left.plateRoom))
 
     readonly property var sections: root.host?.sections ?? []
     readonly property string section: String(root.host?.section ?? "")
@@ -231,8 +224,7 @@ Item {
             Item {
                 id: searchSlot
                 x: forward.x + forward.width + root.u(3)
-                // The column's measure, never the plate's width: the head stays put from page to page.
-                width: left.measure - x
+                width: Math.round(Math.max(root.u(62), Math.min(root.u(84), page.width * 0.31))) - x
                 height: parent.height
             }
             GlyphKey {
@@ -268,164 +260,42 @@ Item {
             anchors.bottomMargin: root.u(3)
             width: parent.width
 
-            // The left of the spread: the page's name with its ruby, the plate of what is being read, the contents.
-            Item {
-                id: left
-                // The column's measure; the name is always set to it, so the plate can widen without rewrapping the name.
-                readonly property real measure: Math.round(Math.max(root.u(62), Math.min(root.u(84), page.width * 0.31)))
-                // What the plate may take: the column's height less the name, the caption and the contents. A short page
-                // gives its air to the plate (wider, so the picture keeps the screen's proportions) instead of leaving
-                // the foot of the column bare; a long one keeps the plate at a third of the spread.
-                readonly property real plateRoom: Math.max(Math.round(spread.height * 0.36),
-                    spread.height - nameBlock.height - contentsColumn.implicitHeight - caption.implicitHeight - root.u(6 + 2 + 5 + 4))
-                width: plate.shown ? Math.round(Math.max(left.measure, Math.min(page.width * 0.42, left.plateRoom / root.aspect))) : left.measure
-                height: parent.height
-
-                Column {
-                    id: nameBlock
-                    width: left.measure
-                    spacing: root.u(1)
-                    AText {
-                        width: parent.width
-                        visible: text.length > 0
-                        voice: "ruby"
-                        color: Airisu.sealText
-                        text: root.searching ? "“" + String(root.host?.query ?? "") + "”"
-                            : root.sharedPage ? Translation.tr(String(root.currentSection.title ?? ""))
-                            : Translation.tr(String(root.currentSection.subtitle ?? ""))
-                    }
-                    AText {
-                        id: name
-                        // The largest step of AIRISU's heads, down to the display size where one word of the name would not fit.
-                        readonly property int most: Math.round(IrisStyle.typeDisplay * 1.5)
-                        width: parent.width
-                        voice: "figure"
-                        size: Math.max(IrisStyle.typeDisplay, Math.min(name.most, Math.floor(name.most * width / Math.max(1, longest.advanceWidth))))
-                        lineHeight: 0.96
-                        wrapMode: Text.WordWrap
-                        maximumLineCount: 2
-                        text: root.searching ? (root.hits > 0 ? Translation.tr("%1 results").arg(root.hits) : Translation.tr("No results"))
-                            : root.sharedPage ? String(root.host?.titleText ?? "")
-                            : Translation.tr(String(root.currentSection.title ?? ""))
-                        TextMetrics {
-                            id: longest
-                            font.family: name.font.family
-                            font.weight: name.font.weight
-                            font.pixelSize: name.most
-                            font.letterSpacing: -Math.round(name.most * 0.03)
-                            text: name.text.split(/\s+/).reduce((a, b) => b.length > a.length ? b : a, "")
-                        }
-                    }
-                    AText {
-                        width: parent.width
-                        topPadding: root.u(1)
-                        visible: text.length > 0 && !root.searching && !root.sharedPage
-                        size: IrisStyle.typeLabel
-                        font.weight: Font.Normal
-                        color: Airisu.inkSecond
-                        wrapMode: Text.WordWrap
-                        maximumLineCount: 3
-                        text: Translation.tr(String(root.currentSection.tip ?? ""))
-                    }
-                }
-
-                // The plate (図版): the engine's scene of the group being read, its name under it.
-                Item {
-                    id: plate
-                    readonly property bool shown: root.host?.stageInColumn ?? false
-                    anchors.top: nameBlock.bottom
-                    anchors.topMargin: plate.shown ? root.u(6) : 0
+            // The page's name, set large with what it holds as ruby over it.
+            Column {
+                id: nameBlock
+                width: parent.width
+                spacing: root.u(1)
+                AText {
                     width: parent.width
-                    height: plate.shown ? stageSlot.height + caption.height + root.u(2) : 0
-                    visible: plate.shown
-                    // Tipped in: the print stands off the cover on its offset shadow, cut by the body's die.
-                    ALacquer {
-                        x: Airisu.offset
-                        y: Airisu.offset
-                        width: stageSlot.width
-                        height: stageSlot.height
-                        lacquer: Airisu.shade
-                        cut: Airisu.chamfer
-                    }
-                    // The picture is cut by the body's die itself (a mask, not corners painted in the body's colour, which
-                    // showed as patches over glass); the preview's own frame stays off under a chamfered field.
-                    Item {
-                        id: stageSlot
-                        width: parent.width
-                        height: root.stageHeight
-                        layer.enabled: plate.shown && width > 0
-                        layer.smooth: true
-                        layer.effect: MultiEffect {
-                            maskEnabled: true
-                            maskSource: stageDie
-                            maskThresholdMin: 0.5
-                            maskSpreadAtMin: 1
-                        }
-                    }
-                    ADie {
-                        id: stageDie
-                        visible: false
-                        width: stageSlot.width
-                        height: stageSlot.height
-                        kind: "chamfer"
-                        cut: Airisu.chamfer
-                        fill: "white"
-                        layer.enabled: true
-                    }
-                    AText {
-                        id: caption
-                        anchors.top: stageSlot.bottom
-                        anchors.topMargin: root.u(2)
-                        width: parent.width
-                        voice: "ruby"
-                        text: String(root.host?.heroCaption ?? "")
-                    }
+                    visible: text.length > 0
+                    voice: "ruby"
+                    color: Airisu.sealText
+                    text: root.searching ? "“" + String(root.host?.query ?? "") + "”"
+                        : root.sharedPage ? Translation.tr(String(root.currentSection.title ?? ""))
+                        : Translation.tr(String(root.currentSection.subtitle ?? ""))
                 }
-
-                // The contents (目次): the page's groups and the links at its foot, numbered as the index is.
-                Flickable {
-                    id: contents
-                    anchors.top: plate.bottom
-                    anchors.topMargin: root.u(5)
-                    anchors.bottom: parent.bottom
+                AText {
+                    id: name
+                    readonly property int most: Math.round(IrisStyle.typeDisplay * 1.5)
                     width: parent.width
-                    clip: true
-                    contentHeight: contentsColumn.implicitHeight
-                    boundsBehavior: Flickable.StopAtBounds
-                    layer.enabled: contentsEdge.active
-                    layer.effect: MultiEffect {
-                        maskEnabled: true
-                        maskSource: contentsEdge.mask
-                        maskThresholdMin: 0.5
-                        maskSpreadAtMin: 1
-                    }
-                    // So do the contents' entries.
-                    IrisScrollEdge {
-                        id: contentsEdge
-                        parent: contents
-                        flick: contents
-                        anchors.fill: parent
-                        blurs: false
-                        reach: root.u(5)
-                    }
-                    Column {
-                        id: contentsColumn
-                        width: parent.width
-                        Repeater {
-                            model: ScriptModel { objectProp: "key"; values: root.searching ? [] : (root.host?.navEntries ?? []) }
-                            ContentsEntry {}
-                        }
-                    }
+                    voice: "figure"
+                    size: name.most
+                    lineHeight: 0.96
+                    elide: Text.ElideRight
+                    text: root.searching ? (root.hits > 0 ? Translation.tr("%1 results").arg(root.hits) : Translation.tr("No results"))
+                        : root.sharedPage ? String(root.host?.titleText ?? "")
+                        : Translation.tr(String(root.currentSection.title ?? ""))
                 }
             }
 
             // The right of the spread: the rows, or a shared page, with what waits for an answer over them.
             Item {
                 id: right
-                anchors.left: left.right
-                anchors.leftMargin: root.u(8)
+                anchors.top: nameBlock.bottom
+                anchors.topMargin: root.u(5)
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
                 anchors.right: parent.right
-                height: parent.height
                 // The page being read: a sheet laid on the lacquer cover, standing off it on its offset shadow, as long as
                 // its rows (a short page is a short sheet, never a slab with its lower half bare).
                 readonly property real sheetHeight: Number(root.host?.rowsExtent ?? -1) < 0 ? right.height
@@ -629,133 +499,6 @@ Item {
             size: IrisStyle.typeFootnote
             color: edge.ink
             text: String(tab.found)
-        }
-    }
-
-    // A line of the contents: a group, General's welcome, or a link; captions name the engine's blocks, air parts them.
-    // The group being read is set large in the figure voice with its glyph filled in the seal's ink, as its head is in the
-    // rows.
-    component ContentsEntry: MouseArea {
-        id: entry
-        required property var modelData
-        readonly property string type: String(entry.modelData.type ?? "")
-        readonly property bool row: entry.type === "group" || entry.type === "you" || entry.type === "link"
-        readonly property bool chosen: root.host?.navSelected(entry.modelData) ?? false
-        readonly property bool modified: entry.type === "group" && entry.modelData.rows !== undefined && (root.host?.modifiedIn(entry.modelData) ?? false)
-        readonly property bool leaves: entry.type === "link" && !(root.host?.navHoldsPage(entry.modelData) ?? false)
-        readonly property color stock: Airisu.ground
-        width: parent ? parent.width : 0
-        height: entry.type === "caption" ? root.u(8) : entry.type === "gap" ? root.u(3) : root.u(7)
-        enabled: entry.row
-        hoverEnabled: entry.row
-        cursorShape: entry.row ? Qt.PointingHandCursor : Qt.ArrowCursor
-        Accessible.role: entry.row ? Accessible.Button : Accessible.StaticText
-        Accessible.name: label.text
-        onClicked: root.host.openNav(entry.modelData)
-        onChosenChanged: if (entry.chosen) contentsFollow.restart()
-
-        Timer {
-            id: contentsFollow
-            interval: 0
-            onTriggered: {
-                const top = entry.y - root.u(7), bottom = entry.y + entry.height + root.u(7)
-                const end = Math.max(0, contents.contentHeight - contents.height)
-                if (top < contents.contentY) contents.contentY = Math.max(0, top)
-                else if (bottom > contents.contentY + contents.height) contents.contentY = Math.min(end, bottom - contents.height)
-            }
-        }
-        AText {
-            visible: entry.type === "caption"
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: root.u(1.5)
-            width: parent.width
-            size: IrisStyle.typeFootnote
-            font.weight: Font.Bold
-            color: Airisu.inkSecond
-            text: String(entry.modelData.text ?? "")
-        }
-        // The row's rung under the pointer, built only while the pointer is on it: forty empty shapes in the index cost
-        // their first sync on every opening of Settings.
-        Loader {
-            anchors.fill: parent
-            active: entry.row && !entry.chosen && (entry.containsMouse || entry.pressed)
-            sourceComponent: ALacquer {
-                lacquer: "transparent"
-                coat: entry.pressed ? Airisu.underPlate(entry.stock) : Airisu.step(entry.stock, Airisu.hoverStep)
-                share: 1
-                travel: 0
-                cut: Airisu.cutFor(height)
-            }
-        }
-        MaterialSymbol {
-            visible: entry.row && entry.type !== "you"
-            x: root.u(2)
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.host?.navGlyph(entry.modelData) ?? ""
-            fill: entry.chosen ? 1 : 0
-            iconSize: Math.round(16 * root.d)
-            color: Airisu.sealText
-        }
-        MaterialSymbol {
-            visible: entry.type === "you"
-            x: root.u(2)
-            anchors.verticalCenter: parent.verticalCenter
-            text: "person"
-            fill: entry.chosen ? 1 : 0
-            iconSize: Math.round(15 * root.d)
-            color: entry.chosen ? Airisu.inkOn(entry.stock) : Airisu.inkSecond
-        }
-        AText {
-            id: label
-            visible: entry.row
-            x: root.u(9)
-            // The name keeps what it needs; the answer takes the rest of the line and elides.
-            width: Math.min(implicitWidth, parent.width - x - trail.width - root.u(3) - (answer.text.length > 0 ? root.u(16) : 0))
-            anchors.verticalCenter: parent.verticalCenter
-            voice: entry.chosen ? "figure" : "text"
-            size: entry.chosen ? IrisStyle.typeTitle : IrisStyle.typeLabel
-            font.weight: entry.chosen ? Font.ExtraBold : Font.Medium
-            color: Airisu.ink
-            text: entry.type === "you" ? (SystemInfo.displayName || SystemInfo.username)
-                : String(entry.modelData.label ?? entry.modelData.title ?? "")
-        }
-        // What the group answers (its first value), as a catalogue's contents set the page beside each title.
-        AText {
-            id: answer
-            visible: entry.row && text.length > 0
-            anchors.left: label.right
-            anchors.leftMargin: root.u(3)
-            anchors.right: trail.left
-            anchors.rightMargin: trail.width > 0 ? root.u(2) : 0
-            anchors.verticalCenter: parent.verticalCenter
-            horizontalAlignment: Text.AlignRight
-            size: IrisStyle.typeFootnote
-            font.weight: Font.Medium
-            color: entry.chosen ? Airisu.ink : Airisu.inkSecond
-            text: entry.type === "you" ? "" : (root.host?.navDetail(entry.modelData) ?? "")
-        }
-        Item {
-            id: trail
-            anchors.right: parent.right
-            anchors.rightMargin: root.u(2)
-            anchors.verticalCenter: parent.verticalCenter
-            width: entry.leaves ? Math.round(15 * root.d) : entry.modified ? root.u(1.5) : 0
-            height: Math.round(15 * root.d)
-            // A group you changed: a square of its ink, never a second seal.
-            Rectangle {
-                visible: entry.modified && !entry.leaves
-                anchors.centerIn: parent
-                width: root.u(1.5)
-                height: width
-                color: entry.chosen ? Airisu.inkOn(entry.stock) : Airisu.inkSecond
-            }
-            MaterialSymbol {
-                visible: entry.leaves
-                anchors.centerIn: parent
-                text: entry.modelData.page ? "chevron_right" : "arrow_outward"
-                iconSize: Math.round(15 * root.d)
-                color: entry.containsMouse ? Airisu.ink : Airisu.inkThird
-            }
         }
     }
 
