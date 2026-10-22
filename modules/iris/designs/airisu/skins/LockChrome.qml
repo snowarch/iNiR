@@ -22,7 +22,7 @@ Item {
         visible: root.arranging && (root.hovered || root.picked)
         kind: "chamfer"
         cut: Airisu.cutFor(height)
-        stroke: root.picked ? Airisu.sealOnMedia : IrisStyle.onMedia
+        stroke: root.picked ? Airisu.chosenOnMedia : IrisStyle.onMedia
         strokeWidth: root.picked ? Airisu.strong : Airisu.hair
     }
 
@@ -38,7 +38,7 @@ Item {
             height: Airisu.u(6)
             ALacquer {
                 anchors.fill: parent
-                lacquer: root.picked ? Airisu.seal : IrisStyle.mediaScrim
+                lacquer: root.picked ? Airisu.chosenOnMedia : IrisStyle.mediaScrim
             }
             AText {
                 id: name

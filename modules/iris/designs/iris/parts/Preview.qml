@@ -1,4 +1,5 @@
 import QtQuick
+import qs.modules.iris.style
 
 // iRiS's picture in Settings › Design, in its own pigments whatever Design is on: the Island melted into the top
 // edge, round, with the ring mark and the time, and a Control Center hanging from it over a soft night.
@@ -18,11 +19,11 @@ Rectangle {
         Rectangle {
             x: 4 * root.u; anchors.verticalCenter: parent.verticalCenter
             width: 6 * root.u; height: width; radius: width / 2
-            color: "transparent"; border.width: Math.max(1, 0.9 * root.u); border.color: "#8ab4ff" // iris-literal: iRiS accent
+            color: "transparent"; border.width: Math.max(1, 0.9 * root.u); border.color: "#d71921" // iris-literal: the signal, a live mark
         }
         Text {
             anchors.right: parent.right; anchors.rightMargin: 5 * root.u; anchors.verticalCenter: parent.verticalCenter
-            text: "9:41"; color: "#f2f2f7"; font.family: "Inter Display"; font.weight: Font.DemiBold; font.pixelSize: 5.6 * root.u // iris-literal: iRiS ink
+            text: "9:41"; color: "#f2f2f7"; font.family: IrisStyle.fontRead; font.weight: Font.DemiBold; font.pixelSize: 5.6 * root.u // iris-literal: iRiS ink
         }
     }
     Rectangle {
@@ -38,7 +39,7 @@ Rectangle {
                 Rectangle {
                     required property int index
                     width: 29 * root.u; height: 12 * root.u; radius: height / 2
-                    color: index === 0 ? "#8ab4ff" : "#1c1c1e" // iris-literal: iRiS accent and fill
+                    color: index === 0 ? "#f2f2f0" : "#1c1c1e" // iris-literal: chosen is inverted, and the fill
                 }
             }
         }
@@ -49,6 +50,6 @@ Rectangle {
     }
     Text {
         x: 6 * root.u; anchors.bottom: parent.bottom; anchors.bottomMargin: 5 * root.u
-        text: "iRiS"; color: "#f2f2f7"; font.family: "Inter Display"; font.weight: Font.Bold; font.pixelSize: 11 * root.u // iris-literal: iRiS ink
+        text: "iRiS"; color: "#f2f2f7"; font.family: IrisStyle.fontRead; font.weight: Font.DemiBold; font.pixelSize: 11 * root.u // iris-literal: iRiS ink
     }
 }

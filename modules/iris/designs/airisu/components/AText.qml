@@ -1,9 +1,9 @@
 import QtQuick
 import qs.modules.iris.style
 
-// AIRISU's voices (SYSTEM.md §5). `figure`: Archivo SemiExpanded ExtraBold, −3 %, tabular, for figures and page heads
-// (only from typeTitle up); `text`: Archivo, everything that is read; `ruby`: the small datum set over the main one
-// (Archivo Medium, the second ink), AIRISU's label; `data`: mono, only for values compared column by column; `kana`:
+// AIRISU's voices are iRiS's three (DESIGN.md S2). `figure`: the Dot voice from 22 px up (a page head, a hero
+// figure), Geist 600 below it; `text`: Geist, everything that is read; `ruby`: the small datum set over the main one
+// (Geist Medium, the second ink); `mono`: the Label voice; `data`: Geist Mono for values compared column by column; `kana`:
 // the bundled Japanese layer, always beside the person's own words. Sizes come from iRiS's ladder. A surface's hero figure
 // leans forward by `lean` (`Airisu.lean`), the way a number is painted on a livery: sheared about its middle, so it keeps
 // its box, set in curves since a sheared glyph cache blurs.
@@ -15,13 +15,15 @@ Text {
     property int size: root.v === "ruby" ? IrisStyle.typeFootnote : root.v === "data" || root.v === "mono" ? IrisStyle.typeMeta
         : root.v === "figure" ? IrisStyle.typeTitle : IrisStyle.typeBody
     color: root.v === "ruby" ? Airisu.inkSecond : Airisu.ink
-    font.family: root.v === "figure" ? Airisu.figureFace : root.v === "data" || root.v === "mono" ? Airisu.dataFace
+    readonly property bool dot: root.v === "figure" && root.size >= IrisStyle.typeDotS
+    font.family: root.dot ? IrisStyle.fontDot : root.v === "figure" ? Airisu.textFace
+        : root.v === "data" || root.v === "mono" ? Airisu.dataFace
         : root.v === "kana" ? Airisu.kanaFace : Airisu.textFace
     font.pixelSize: root.size
-    font.weight: root.v === "figure" ? Font.ExtraBold : root.v === "ruby" ? Font.Medium
-        : root.v === "mono" ? Font.Medium : root.v === "kana" ? Font.Bold : Font.DemiBold
-    font.letterSpacing: root.v === "figure" ? -Math.round(root.size * 0.03)
-        : root.v === "mono" ? Math.round(root.size * 0.16) : 0
+    font.weight: root.dot ? Font.Normal : root.v === "figure" ? Font.DemiBold : root.v === "ruby" ? Font.Medium
+        : root.v === "mono" ? Font.Medium : root.v === "kana" ? Font.Bold : Font.Normal
+    font.letterSpacing: root.dot ? IrisStyle.dotTracking(root.size) : root.v === "figure" ? IrisStyle.tracking(root.size)
+        : root.v === "mono" ? IrisStyle.labelTracking(root.size) : 0
     // `mono` is the label (表示): an area's or a group's name over what it holds, in spaced capitals; never a datum.
     font.capitalization: root.v === "mono" ? Font.AllUppercase : Font.MixedCase
     font.features: root.v === "figure" || root.v === "data" ? { "tnum": 1 } : ({})

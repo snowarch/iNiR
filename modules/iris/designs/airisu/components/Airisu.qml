@@ -126,12 +126,15 @@ QtObject {
     function recordPigment(tint: color): color { return Qt.colorEqual(tint, IrisStyle.text) ? root.pigment("music") : tint }
 
     // The surfaces of the first pass that printed on a light "sticker" stock now take the person's lacquer, with its inks.
-    readonly property color sticker: root.lacquerOf(IrisStyle.accentFill)
-    readonly property color seal: IrisStyle.accentFill              // 朱: only the seal, what is live or signs
-    readonly property color inkOnSeal: IrisStyle.inkOnAccentFill
-    readonly property color sealText: IrisStyle.accent              // 朱 set as type, solved to read on the stock
-    readonly property color sealOnMedia: IrisStyle.accentOnMedia    // 朱 over a picture (the lock), in every scheme
-    readonly property color caution: IrisStyle.secondaryAccent      // 山吹: only caution
+    readonly property color sticker: IrisStyle.mono ? root.raised : root.lacquerOf(IrisStyle.accentFill)
+    // Under Signal the seal is the one signal colour: what is live or signs; caution is the same mark, never a second hue.
+    readonly property color seal: IrisStyle.mono ? IrisStyle.signal : IrisStyle.accentFill              // 朱
+    readonly property color inkOnSeal: IrisStyle.mono ? IrisStyle.inkOnSignal : IrisStyle.inkOnAccentFill
+    readonly property color sealText: IrisStyle.mono ? IrisStyle.signalInk : IrisStyle.accent           // 朱 set as type
+    readonly property color sealOnMedia: IrisStyle.mono ? IrisStyle.dangerOnMedia : IrisStyle.accentOnMedia
+    // What is picked over a picture (a lock key held, the seat under the pointer): inverted on the media, not sealed.
+    readonly property color chosenOnMedia: IrisStyle.mono ? IrisStyle.onMedia : root.sealOnMedia
+    readonly property color caution: IrisStyle.mono ? IrisStyle.signalInk : IrisStyle.secondaryAccent  // 山吹
     // The caution band (山吹の帯): the one way yamabuki is laid wide, a band along an edge or a die ruled in it; never a
     // plate.
     readonly property color tape: root.vivid(root.pigment("caution"))
@@ -158,8 +161,7 @@ QtObject {
     readonly property int nudge: Math.max(1, Math.round(root.d))
     readonly property int offset: Math.max(2, Math.round(2 * root.d))  // a print's hard offset shadow
     // ── Chosen (選). What is picked among choices (a box of a form, the switch's taken cell, the open tab of an index) is
-    // lacquered in the selection's pigment with its ink cut out of it, as a lit control is. A plate in the ink's own colour
-    // read as a white (or black) block on the lacquer, the one thing AIRISU never lays.
+    // inverted, as everywhere in Signal: an ink plate with the stock's colour cut out of it.
     readonly property color chosen: IrisStyle.selectionFill
     readonly property color inkOnChosen: IrisStyle.selectionInk
     // A box that holds something but is not chosen (the switch's off cell, the group being read): one step of ink on the stock.
@@ -180,9 +182,9 @@ QtObject {
     // ── Faces.
     // How far a hero figure leans (tan of its slope, about 11°).
     readonly property real lean: 0.2
-    readonly property string figureFace: "Archivo SemiExpanded"
-    readonly property string textFace: "Archivo"
-    readonly property string dataFace: IrisStyle.fontMono
+    readonly property string figureFace: IrisStyle.fontDot
+    readonly property string textFace: IrisStyle.fontRead
+    readonly property string dataFace: IrisStyle.fontLabel
     readonly property string kanaFace: "Airisu Kana"
     // The Japanese layer: a subset of Noto Sans CJK JP Bold renamed so it never shadows the system's (OFL, assets/).
     readonly property FontLoader kana: FontLoader { source: Qt.resolvedUrl("../assets/fonts/AirisuKana-Bold.otf") }

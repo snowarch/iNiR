@@ -20,7 +20,7 @@ Item {
     readonly property color under: root.host?.skinData?.under ?? Airisu.ground
     readonly property bool tag: !root.quiet && (!root.available || !(root.emphasized || root.selected))
     readonly property color lacquer: !root.available || root.tag ? "transparent"
-        : root.emphasized ? (root.danger ? Airisu.danger : Airisu.seal)
+        : root.emphasized ? (root.danger ? Airisu.danger : Airisu.chosen) // Signal: the main action is inverted, the seal stays for what is live
         : root.selected ? IrisStyle.selectionFill : "transparent"
     readonly property color ink: !root.available ? Airisu.inkThirdOn(root.under)
         : root.emphasized || root.selected ? Airisu.inkOn(root.lacquer)

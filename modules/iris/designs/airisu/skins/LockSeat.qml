@@ -12,7 +12,7 @@ Item {
     ALacquer {
         anchors.fill: parent
         cut: Airisu.cutFor(root.height)
-        lacquer: root.hot ? Airisu.sealOnMedia : IrisStyle.mediaScrim
+        lacquer: root.hot ? Airisu.chosenOnMedia : IrisStyle.mediaScrim
     }
     // A free seat keeps its die's edge in the media's ink, so it reads on a dark picture as on a bright one.
     ADie {

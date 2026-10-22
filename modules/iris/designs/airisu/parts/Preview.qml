@@ -1,4 +1,5 @@
 import QtQuick
+import qs.modules.iris.style
 import QtQuick.Shapes
 
 // AIRISU's picture in Settings › Design, in its own pigments whatever Design is on (a Design shows what it is): the
@@ -38,7 +39,7 @@ Rectangle {
     Plate { x: root.width - width - 4 * root.u; y: 4 * root.u; width: 34 * root.u; height: 11 * root.u; leftCut: false }
     Text {
         anchors.right: parent.right; anchors.rightMargin: 7 * root.u; y: 5.2 * root.u
-        text: "23:59"; color: "#e9e6df"; font.family: "Archivo SemiExpanded"; font.weight: Font.ExtraBold; font.pixelSize: 6.6 * root.u // iris-literal: 胡粉
+        text: "23:59"; color: "#e9e6df"; font.family: IrisStyle.fontDot; font.weight: Font.Normal; font.pixelSize: 6.6 * root.u // iris-literal: 胡粉
     }
 
     // The mark.
@@ -55,7 +56,7 @@ Rectangle {
         spacing: 1.5 * root.u
         Text {
             text: "airisu"; color: "#e9e6df" // iris-literal: 胡粉
-            font.family: "Archivo SemiExpanded"; font.weight: Font.ExtraBold; font.pixelSize: 22 * root.u
+            font.family: IrisStyle.fontRead; font.weight: Font.DemiBold; font.pixelSize: 22 * root.u
             font.letterSpacing: -0.9 * root.u
         }
         Row {

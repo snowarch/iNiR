@@ -79,7 +79,7 @@ Item {
         height: h
         preferredRendererType: Shape.CurveRenderer
         ShapePath {
-            fillColor: root.held ? Airisu.seal : Airisu.ink
+            fillColor: root.held ? Airisu.chosen : Airisu.ink
             strokeColor: "transparent"
             strokeWidth: 0
             PathPolyline { path: [Qt.point(0, 0), Qt.point(pointer.w, 0), Qt.point(pointer.w / 2, pointer.h), Qt.point(0, 0)] }

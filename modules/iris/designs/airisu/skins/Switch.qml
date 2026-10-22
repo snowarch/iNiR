@@ -21,9 +21,10 @@ Item {
     readonly property int run: root.pressed && root.available ? Airisu.nudge : 0
     readonly property int cut: Math.max(2, Math.round(root.height / 4))
     readonly property color rule: root.reversed ? IrisStyle.selectionDetail : Airisu.inkThird
-    readonly property color plate: root.on ? (root.reversed ? IrisStyle.selectionLabel : Airisu.seal)
+    // Signal: on is the inverted plate (ink under the I), as every chosen thing; the seal is kept for what is live.
+    readonly property color plate: root.on ? (root.reversed ? IrisStyle.selectionLabel : Airisu.chosen)
         : (root.reversed ? IrisStyle.selectionDetail : Airisu.cell)
-    readonly property color plateInk: root.on ? (root.reversed ? IrisStyle.selectionFill : Airisu.inkOnSeal)
+    readonly property color plateInk: root.on ? (root.reversed ? IrisStyle.selectionFill : Airisu.inkOnChosen)
         : (root.reversed ? IrisStyle.selectionLabel : Airisu.ink)
     readonly property color idleInk: root.reversed ? IrisStyle.selectionDetail : Airisu.inkThird
     readonly property real cellWidth: (root.width - 2 * root.inset) / 2

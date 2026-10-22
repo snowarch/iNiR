@@ -190,8 +190,8 @@ Item {
                     readonly property bool lit: root.host?.oskVisible ?? false
                     width: root.keySize
                     height: root.keySize
-                    lacquer: keyboardKey.lit ? Airisu.sealOnMedia : IrisStyle.mediaScrim
-                    coat: keyboardKey.lit ? Airisu.step(Airisu.sealOnMedia, keyboardArea.pressed ? Airisu.pressStep : Airisu.hoverStep)
+                    lacquer: keyboardKey.lit ? Airisu.chosenOnMedia : IrisStyle.mediaScrim
+                    coat: keyboardKey.lit ? Airisu.step(Airisu.chosenOnMedia, keyboardArea.pressed ? Airisu.pressStep : Airisu.hoverStep)
                         : keyboardArea.pressed ? IrisStyle.onMediaFillHover : IrisStyle.onMediaFill
                     hovered: keyboardArea.containsMouse
                     pressed: keyboardArea.pressed
@@ -202,7 +202,7 @@ Item {
                         anchors.verticalCenterOffset: keyboardKey.shift
                         text: "keyboard"
                         iconSize: Math.round(18 * root.d)
-                        color: keyboardKey.lit ? IrisStyle.onTintFor(Airisu.sealOnMedia) : IrisStyle.onMedia
+                        color: keyboardKey.lit ? IrisStyle.onTintFor(Airisu.chosenOnMedia) : IrisStyle.onMedia
                     }
                     MouseArea {
                         id: keyboardArea
@@ -252,7 +252,7 @@ Item {
                                 height: root.lean
                                 preferredRendererType: Shape.CurveRenderer
                                 ShapePath {
-                                    fillColor: mark.chosen ? Airisu.sealOnMedia : IrisStyle.onMedia
+                                    fillColor: mark.chosen ? Airisu.chosenOnMedia : IrisStyle.onMedia
                                     strokeColor: "transparent"
                                     strokeWidth: 0
                                     // Leaning forward at the die's 45° over its own height.
@@ -326,7 +326,7 @@ Item {
                         anchors.verticalCenterOffset: unlockKey.shift
                         text: "arrow_forward"
                         iconSize: Math.round(20 * root.d)
-                        color: root.typed > 0 || root.working ? IrisStyle.onTintFor(Airisu.sealOnMedia) : IrisStyle.onMediaTertiary
+                        color: root.typed > 0 || root.working ? IrisStyle.onTintFor(Airisu.chosenOnMedia) : IrisStyle.onMediaTertiary
                     }
                     MouseArea {
                         id: unlockArea

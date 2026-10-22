@@ -47,7 +47,7 @@ Item {
             width: Airisu.u(2)
             voice: "data"
             size: IrisStyle.typeCaption
-            color: root.lit ? Airisu.sealText : Airisu.inkThird
+            color: root.lit ? Airisu.ink : Airisu.inkThird
             text: root.code
         }
         Item {
