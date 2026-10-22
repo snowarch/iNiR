@@ -69,7 +69,8 @@ Item {
     // the head and the foot, and holds this file's search, scene, rows and shared pages in its slots. The model, the
     // history and every row stay here.
     // iRiS lays the page in the layout chosen in Settings (Folio, Deck, Console); a Design with its own page keeps it.
-    readonly property var layouts: ({ folio: "Folio", deck: "Deck", console: "Console" })
+    // Only layouts whose page exists: a missing one would leave the body waiting for its scene forever.
+    readonly property var layouts: ({ folio: "Folio" })
     readonly property string layout: {
         if (IrisDesign.skin("settingsPage").length > 0) return ""
         const wanted = String(Config.options?.iris?.appearance?.settingsLayout ?? "folio")
