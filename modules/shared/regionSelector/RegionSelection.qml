@@ -659,6 +659,12 @@ PanelWindow {
                 // Bound, not set on visibleChanged: a selector already visible when its window maps never got the
                 // change, and the menu stayed at opacity 0.
                 opacity: root.visible ? 1 : 0
+                Timer {
+                    interval: 900
+                    running: root.visible
+                    onTriggered: if (regionSelectionControls.opacity < 0.5 || controlsLoader.status !== Loader.Ready)
+                        console.warn("UI: the snip menu is open but not shown")
+                }
 
                 readonly property bool useWaffle: Config.options?.panelFamily === "waffle"
 

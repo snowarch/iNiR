@@ -82,6 +82,19 @@ Item {
             width: chassis.width, height: chassis.height, radius: chassis.radius }
     }
     readonly property bool settled: root.presentation >= 1
+    // Nothing throws when a surface opens and stays invisible (the gallery's body came up with no content after a
+    // broken reload), so the surface says it itself: `inir logs` and `qs errors` then list it.
+    Timer {
+        interval: 900
+        running: root.open
+        onTriggered: {
+            const name = root.motionSurface || root.objectName || "surface"
+            if (!root.settled)
+                console.warn("UI: " + name + " is open but its morph never finished (presentation " + root.presentation.toFixed(2) + ")")
+            else if (contentHost.opacity < 0.5 || !contentHost.visible)
+                console.warn("UI: " + name + " is open but its content is invisible")
+        }
+    }
     // In a window above its origin a body cannot pass under it, so it fades out as it reaches it instead of covering it.
     property bool behindOrigin: !root.fieldBacked && !root.settles && (root.originItem !== null || root.origin !== null || root.originScene !== null)
     property real emergenceSpan: 0.24
