@@ -4221,7 +4221,7 @@ Singleton {
                         property JsonObject panels: JsonObject { property int radius: 0; property string light: "inherit"; property int speed: 100; property string morph: ""; property string material: "" }
                         property JsonObject spotlight: JsonObject { property int radius: 0; property string light: "inherit"; property int speed: 100; property string morph: ""; property string material: "" }
                         property JsonObject orbit: JsonObject { property int radius: 0; property string light: "inherit"; property int speed: 100; property string morph: ""; property string material: "" }
-                        property JsonObject settings: JsonObject { property int radius: 0; property string light: "inherit"; property int speed: 100; property string morph: ""; property string material: "" }
+                        property JsonObject settings: JsonObject { property int radius: 0; property string light: "inherit"; property int speed: 100; property string morph: ""; property string material: ""; property string switches: "cards"; property bool lift: true }
                         property JsonObject gallery: JsonObject { property int radius: 0; property string light: "inherit"; property int speed: 100; property string morph: ""; property string material: "" }
                         property JsonObject menus: JsonObject { property int radius: 0; property string light: "inherit"; property int speed: 100; property string morph: ""; property string material: ""; property string density: "compact" }
                         property JsonObject osd: JsonObject { property int radius: 0; property string light: "inherit"; property int speed: 100; property string morph: ""; property string material: "" }

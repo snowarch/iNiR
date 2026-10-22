@@ -159,6 +159,53 @@ Item {
         }
     }
 
+    // The row under the pointer is where you are: a quiet plate, concentric with the card.
+    HoverHandler { id: rowHover }
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: Math.round(4 * root.d)
+        radius: IrisStyle.fieldChamfer ? 0 : IrisStyle.concentric(IrisStyle.radiusTile, anchors.margins, IrisStyle.radiusRow)
+        color: IrisStyle.fillQuiet
+        opacity: rowHover.hovered && root.spec.kind !== "list" ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+    }
+    // The answer's column takes the wheel as a slider does: a range steps, a choice moves to its neighbour. Under the
+    // controls, so a control with its own wheel keeps it, and clicks pass through (DI82).
+    MouseArea {
+        id: wheelColumn
+        readonly property bool steps: !root.locked && ((root.spec.kind === "range" && root.inlineRange)
+            || (root.spec.kind === "choice" && (root.inlineChoice || root.menuChoice || root.inlineSwatch)))
+        enabled: wheelColumn.steps
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: Math.round(8 * root.d)
+        width: root.controlWidth + Math.round(16 * root.d)
+        acceptedButtons: Qt.NoButton
+        property real wheelAccumulator: 0
+        // The controls on top take the hover first; the row's own handler (an ancestor) always hears it.
+        IrisWheelIntent { id: columnIntent; hovered: rowHover.hovered }
+        onWheel: wheel => {
+            if (!columnIntent.take(wheel)) return
+            const delta = (wheel.angleDelta.y || wheel.angleDelta.x) || (wheel.pixelDelta.y || wheel.pixelDelta.x) * 4
+            wheelColumn.wheelAccumulator += delta
+            const steps = Math.trunc(wheelColumn.wheelAccumulator / 120)
+            if (steps === 0) return
+            wheelColumn.wheelAccumulator -= steps * 120
+            if (root.spec.kind === "range") {
+                const step = Number(root.spec.step ?? 1)
+                const next = Math.max(root.spec.min, Math.min(root.spec.max, Number(root.value) + steps * step))
+                if (next !== Number(root.value)) root.commit(Number(next.toFixed(4)))
+                return
+            }
+            const list = root.choices
+            const at = list.findIndex(choice => choice.value === root.value || IrisOptions.same(choice.value, root.value))
+            // Down walks a choice forward, as down a list.
+            const next = Math.max(0, Math.min(list.length - 1, (at < 0 ? 0 : at) - steps))
+            if (next !== at) root.commit(list[next].value)
+        }
+    }
+
     ColumnLayout {
         id: layout
         anchors.left: parent.left

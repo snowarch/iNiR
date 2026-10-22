@@ -163,7 +163,8 @@ Item {
     // Every row reads in place, no list of groups to open one by one. A long area reads one block at a time, its blocks
     // are the head's tabs ("tantos settings juntos en una pantallita te volés loco").
     property int block: 0
-    readonly property bool blocked: !root.searching && root.essentialCount > 14 && root.groupChunks.length > 1
+    readonly property bool blocked: !root.searching && root.essentialCount > 12 && root.groupChunks.length > 1
+        && root.groupChunks.every(chunk => chunk.caption.length > 0)
     readonly property var blockGroups: root.blocked ? (root.groupChunks[Math.min(root.block, root.groupChunks.length - 1)]?.groups ?? root.groups) : root.groups
     function blockOf(key: string): int {
         return root.blocked ? root.groupChunks.findIndex(chunk => chunk.groups.some(entry => entry.key === key || entry.title === key)) : -1
@@ -176,6 +177,13 @@ Item {
     readonly property var areaReach: { Config.revision; return IrisOptions.reachOf(root.entries) }
     // The areas the pointer's group reaches: the sidebar's map lights them.
     property var reachHover: []
+    readonly property bool lift: { Config.revision; return Config.getNestedValue("iris.appearance.surfaces.settings.lift", true) !== false }
+    readonly property bool switchCards: { Config.revision; return Config.getNestedValue("iris.appearance.surfaces.settings.switches", "cards") !== "rows" }
+    // With nothing pointed at, the map shows what the group being read reaches.
+    readonly property var readReach: {
+        const read = root.lift && root.flatSection ? root.groups.find(entry => entry.key === root.readGroup) : undefined
+        return read ? [root.section].concat(IrisOptions.reachOf(read.rows).touches.map(r => r.id)) : []
+    }
     property string reachOwner: ""
     // Rows folded behind a group's Fine-tune take no room (a modified one never folds).
     readonly property int essentialCount: {
@@ -880,7 +888,7 @@ Item {
                         readonly property string hovered: mapPointer.containsMouse ? shellMap.pieceAt(mapPointer.mouseX, mapPointer.mouseY) : ""
                         readonly property var pieceOf: ({ bar: "island", bubbles: "island", player: "island", notifications: "island", dock: "dock",
                             desktop: "desktop", widgets: "desktop", wallpaper: "desktop", windows: "desktop" })
-                        readonly property var reached: [...new Set(root.reachHover.map(id => shellMap.pieceOf[id] ?? "").filter(piece => piece.length > 0))]
+                        readonly property var reached: [...new Set((root.reachHover.length > 0 ? root.reachHover : root.readReach).map(id => shellMap.pieceOf[id] ?? "").filter(piece => piece.length > 0))]
                         readonly property var lit: shellMap.hovered.length > 0 ? [shellMap.hovered] : shellMap.reached.length > 0 ? shellMap.reached : [shellMap.current]
                         Layout.fillWidth: true
                         Layout.topMargin: Math.round(4 * root.d)
@@ -1781,6 +1789,106 @@ Item {
         }
     }
 
+    // A switch as a card: the whole card toggles, its plate takes the accent while on (DI86).
+    component SwitchTile: MouseArea {
+        id: tile
+        required property var modelData
+        readonly property var spec: tile.modelData
+        readonly property bool on: { Config.revision; const value = Boolean(IrisOptions.currentValue(tile.spec)); return tile.spec.invert ? !value : value }
+        readonly property bool locked: { Config.revision; return tile.spec.locked ? Boolean(tile.spec.locked()) : false }
+        readonly property var held: { Config.revision; return IrisOptions.relationsOf(tile.spec).over.filter(r => r.active) }
+        readonly property bool landing: root.landingPath.length > 0 && String(tile.spec.path ?? "") === root.landingPath
+        readonly property bool plated: IrisStyle.plateSelection
+        Layout.fillWidth: true
+        Layout.preferredWidth: 1
+        Layout.fillHeight: true
+        implicitHeight: Math.max(Math.round(72 * root.d), tileText.implicitHeight + Math.round(24 * root.d))
+        hoverEnabled: true
+        enabled: !tile.locked
+        opacity: tile.locked ? 0.42 : 1
+        cursorShape: Qt.PointingHandCursor
+        activeFocusOnTab: true
+        Accessible.role: Accessible.CheckBox
+        Accessible.checkable: true
+        Accessible.checked: tile.on
+        Accessible.name: Translation.tr(tile.spec.label)
+        Accessible.description: tile.spec.description ? Translation.tr(tile.spec.description) : ""
+        function toggle(): void { IrisOptions.commit(tile.spec, tile.spec.invert ? tile.on : !tile.on) }
+        onClicked: tile.toggle()
+        Keys.onSpacePressed: tile.toggle()
+        Keys.onReturnPressed: tile.toggle()
+        onLandingChanged: if (tile.landing) landingReveal.restart()
+        Timer { id: landingReveal; interval: 120; onTriggered: root.reveal(tile) }
+        IrisCutPlate {
+            anchors.fill: parent
+            visible: IrisStyle.fieldChamfer
+            cutLength: IrisStyle.nestedCut(IrisStyle.chamferCut, Math.round(10 * root.d))
+            color: plate.color
+        }
+        Rectangle {
+            id: plate
+            anchors.fill: parent
+            visible: !IrisStyle.fieldChamfer
+            radius: IrisStyle.concentric(IrisStyle.radiusTile, Math.round(10 * root.d), IrisStyle.radiusRow)
+            color: tile.on ? (tile.plated ? ColorUtils.mix(IrisStyle.text, IrisStyle.surfaceOpaque, 0.12) // iris-literal: one step of ink
+                    : tile.containsMouse ? IrisStyle.tintFillHover(IrisStyle.accent) : IrisStyle.tintFill(IrisStyle.accent))
+                : tile.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
+            border.width: tile.activeFocus || tile.landing ? Math.max(2, Math.round(2 * root.d)) : 0
+            border.color: IrisStyle.accent
+            Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+        }
+        Column {
+            id: tileText
+            anchors.left: parent.left
+            anchors.right: statePill.left
+            anchors.top: parent.top
+            anchors.margins: Math.round(12 * root.d)
+            anchors.rightMargin: Math.round(8 * root.d)
+            spacing: Math.round(2 * root.d)
+            IrisText {
+                width: parent.width
+                text: Translation.tr(tile.spec.label)
+                color: tile.on && !tile.plated ? root.tintInk(IrisStyle.accent) : IrisStyle.text
+                font.pixelSize: IrisStyle.typeLabel
+                font.weight: IrisStyle.weight(Font.DemiBold)
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
+                elide: Text.ElideRight
+            }
+            IrisText {
+                width: parent.width
+                visible: text.length > 0
+                text: tile.held.length > 0 ? Translation.tr("Held by %1").arg(Translation.tr(tile.held[0].label))
+                    : tile.spec.description ? Translation.tr(tile.spec.description) : ""
+                color: tile.held.length > 0 ? IrisStyle.danger : IrisStyle.muted
+                font.pixelSize: IrisStyle.typeFootnote
+                wrapMode: Text.WordWrap
+                maximumLineCount: 3
+                elide: Text.ElideRight
+            }
+        }
+        // The state, said in a word on its own capsule.
+        Rectangle {
+            id: statePill
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Math.round(10 * root.d)
+            width: stateText.implicitWidth + Math.round(16 * root.d)
+            height: Math.round(20 * root.d)
+            radius: IrisStyle.fieldChamfer ? 0 : height / 2
+            color: tile.on ? IrisStyle.accent : IrisStyle.fill
+            Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+            IrisText {
+                id: stateText
+                anchors.centerIn: parent
+                text: tile.on ? Translation.tr("On") : Translation.tr("Off")
+                color: tile.on ? IrisStyle.onTint : IrisStyle.textSecondary
+                font.pixelSize: IrisStyle.typeCaption
+                font.weight: IrisStyle.weight(Font.DemiBold)
+            }
+        }
+    }
+
     component MoreGroup: ColumnLayout {
         id: moreGroup
         required property string modelData
@@ -2003,6 +2111,29 @@ Item {
             return root.flatSection && String(group.modelData.caption ?? "").length > 0 && !group.folds
                 && group.shownRows.length === 1 && group.shownRows[0].kind === "switch"
         }
+        // The group being read stands over the others (DI85).
+        readonly property bool reading: root.lift && root.flatSection && root.shownGroups.length > 1 && root.readGroup === String(group.modelData.key ?? "")
+        // A switch other rows hang on stays a row; two or more free switches in a row read as cards you tap (DI86).
+        function segmentsOf(rows: var): var {
+            const gates = new Set(group.modelData.rows.map(spec => String(spec.visibleWhen ?? "").replace(/^!/, "").split("=")[0]).filter(path => path.length > 0))
+            const free = spec => root.switchCards && spec.kind === "switch" && !gates.has(String(spec.path ?? ""))
+            const out = []
+            for (const spec of rows) {
+                const tile = free(spec)
+                const last = out[out.length - 1]
+                if (last && last.tiles === tile) last.rows.push(spec)
+                else out.push({ tiles: tile, rows: [spec] })
+            }
+            // A lone free switch stays a row: one card alone is a button with no neighbours to read against.
+            const merged = []
+            for (const segment of out) {
+                if (segment.tiles && segment.rows.length < 2) segment.tiles = false
+                const last = merged[merged.length - 1]
+                if (last && !last.tiles && !segment.tiles) last.rows = last.rows.concat(segment.rows)
+                else merged.push(segment)
+            }
+            return merged.map(segment => Object.assign(segment, { key: (segment.tiles ? "t:" : "r:") + String(segment.rows[0].modelKey ?? segment.rows[0].path ?? segment.rows[0].label) }))
+        }
         Repeater {
             model: ScriptModel { values: group.loneSwitch ? [] : group.parts }
             ColumnLayout {
@@ -2010,6 +2141,7 @@ Item {
                 required property string modelData
                 required property int index
                 readonly property var rows: group.shownRows.filter(spec => group.partOf(spec) === part.modelData)
+                readonly property var segments: group.segmentsOf(part.rows)
                 readonly property bool lastPart: part.index === group.parts.length - 1
                 Layout.fillWidth: true
                 Layout.topMargin: part.index > 0 ? 12 * root.d : 0
@@ -2026,36 +2158,90 @@ Item {
                     font.letterSpacing: IrisStyle.monoCaptions ? Math.round(IrisStyle.typeCaption * 0.16) : 0
                 }
                 Rectangle {
+                    id: card
+                    readonly property bool raised: !root.split && !IrisStyle.fieldChamfer
                     Layout.fillWidth: true
                     implicitHeight: groupRows.implicitHeight
                     radius: IrisStyle.radiusTile
                     // In the pane the pane is the card: rows sit on it, parts apart by their caption and air.
                     color: root.split || IrisStyle.fieldChamfer ? "transparent" : IrisStyle.readingCard
+                    // A hairline gives the card its edge on a black page, where no shadow shows.
+                    border.width: card.raised ? Math.max(1, Math.round(root.d)) : 0
+                    border.color: IrisStyle.hairline
+                    // Depth: the card sits a step over the page; the one being read a step higher.
+                    RectangularShadow {
+                        z: -1
+                        visible: card.raised
+                        anchors.fill: parent
+                        radius: card.radius
+                        offset.y: Math.round((group.reading ? 8 : 4) * root.d)
+                        blur: Math.round((group.reading ? 28 : 16) * root.d)
+                        spread: 0
+                        color: IrisStyle.shadow
+                        opacity: group.reading ? 1 : 0.55
+                        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing } }
+                    }
                     IrisCutPlate { anchors.fill: parent; visible: !root.split && IrisStyle.fieldChamfer; color: IrisStyle.readingCard }
+                    Rectangle {
+                        anchors.fill: parent
+                        visible: card.raised
+                        radius: card.radius
+                        color: Qt.alpha(IrisStyle.text, 0.03)
+                        border.width: Math.max(1, Math.round(root.d))
+                        border.color: Qt.alpha(IrisStyle.accent, 0.4)
+                        opacity: group.reading ? 1 : 0
+                        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing } }
+                    }
                     ColumnLayout {
                         id: groupRows
                         anchors.left: parent.left
                         anchors.right: parent.right
                         spacing: 0
                         Repeater {
-                            model: ScriptModel { objectProp: "modelKey"; values: part.rows }
-                            IrisSetting {
-                                id: settingRow
+                            model: ScriptModel { objectProp: "key"; values: part.segments }
+                            ColumnLayout {
+                                id: segment
                                 required property var modelData
                                 required property int index
+                                readonly property bool closing: segment.index === part.segments.length - 1
                                 Layout.fillWidth: true
-                                spec: modelData
-                                highlight: root.query
-                                last: index === part.rows.length - 1 && !(part.lastPart && group.folds)
-                                landing: root.landingPath.length > 0 && String(modelData.path ?? "") === root.landingPath
-                                onLandingChanged: if (landing) landingReveal.restart()
-                                // A row unfolded under the pointer arrives softly; one created already landed still glows.
-                                Component.onCompleted: {
-                                    if (landing) landingReveal.restart()
-                                    if (group.tuned.includes(modelData) && group.tuneOpen) arrive.restart()
+                                spacing: 0
+                                Repeater {
+                                    model: ScriptModel { objectProp: "modelKey"; values: segment.modelData.tiles ? [] : segment.modelData.rows }
+                                    IrisSetting {
+                                        id: settingRow
+                                        required property var modelData
+                                        required property int index
+                                        Layout.fillWidth: true
+                                        spec: modelData
+                                        highlight: root.query
+                                        last: index === segment.modelData.rows.length - 1
+                                            && (!segment.closing || !(part.lastPart && group.folds))
+                                        landing: root.landingPath.length > 0 && String(modelData.path ?? "") === root.landingPath
+                                        onLandingChanged: if (landing) landingReveal.restart()
+                                        // A row unfolded under the pointer arrives softly; one created already landed still glows.
+                                        Component.onCompleted: {
+                                            if (landing) landingReveal.restart()
+                                            if (group.tuned.includes(modelData) && group.tuneOpen) arrive.restart()
+                                        }
+                                        NumberAnimation { id: arrive; target: settingRow; property: "opacity"; from: 0; to: 1; duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing }
+                                        Timer { id: landingReveal; interval: 120; onTriggered: root.reveal(settingRow) }
+                                    }
                                 }
-                                NumberAnimation { id: arrive; target: settingRow; property: "opacity"; from: 0; to: 1; duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing }
-                                Timer { id: landingReveal; interval: 120; onTriggered: root.reveal(settingRow) }
+                                GridLayout {
+                                    id: tileGrid
+                                    readonly property real inset: Math.round(10 * root.d)
+                                    visible: segment.modelData.tiles
+                                    Layout.fillWidth: true
+                                    Layout.margins: tileGrid.inset
+                                    columns: Math.max(1, Math.min(segment.modelData.rows.length === 4 ? 2 : 3, Math.floor((card.width - 2 * tileGrid.inset) / (210 * root.d))))
+                                    columnSpacing: Math.round(8 * root.d)
+                                    rowSpacing: Math.round(8 * root.d)
+                                    Repeater {
+                                        model: ScriptModel { objectProp: "modelKey"; values: segment.modelData.tiles ? segment.modelData.rows : [] }
+                                        SwitchTile {}
+                                    }
+                                }
                             }
                         }
                         FineTuneRow {
