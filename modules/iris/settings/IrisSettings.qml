@@ -103,7 +103,7 @@ Item {
     property string readGroup: ""
     property string heldGroup: ""
     readonly property bool browsing: !root.searching && root.openGroup.length === 0 && root.advancedPage < 0
-    readonly property bool heroPinned: pageHero.shown && pageHero.staged
+    readonly property bool heroPinned: pageHero.shown && (pageHero.staged || pageHero.titled)
     // The scene stays in view over the rows and never takes more than a third of the page from them.
     readonly property real stageHeight: Math.round(Math.max(150 * root.d, Math.min(settingsRows.width * root.screenShape, detailBody.height * 0.3)))
     function shown(spec: var): bool { return IrisOptions.shown(spec) }
@@ -160,8 +160,9 @@ Item {
         }
         return out
     }
-    // Every area reads its rows in line (DI48-R1); only a narrow window keeps a list of groups for a long area.
-    readonly property bool readsWhole: root.wideEnough || root.essentialCount <= 15
+    // A short area reads whole; a long one is a list of its groups, each saying its value and opening in place or
+    // on its own page (main's way: one long scroll was the most-complained-about change).
+    readonly property bool readsWhole: root.essentialCount <= 10
     // Rows folded behind a group's Fine-tune take no room (a modified one never folds).
     readonly property int essentialCount: {
         let count = 0
@@ -309,8 +310,9 @@ Item {
             const on = rows.some(spec => { const value = IrisOptions.currentValue(spec); return spec.invert ? !value : !!value })
             return on ? Translation.tr("On") : Translation.tr("Off")
         }
-        // One answer, the group's first: two read as a list of unrelated words ("Off, Own", "iRiS, iRiS, Material").
-        return parts[0] ?? ""
+        if (parts.length > 0) return parts.slice(0, 2).join(", ")
+        // Nothing to answer with (lists, defaults): say what's inside instead of leaving the row mute.
+        return rows.slice(0, 2).map(spec => Translation.tr(spec.label)).join(", ")
     }
     function modifiedIn(entry: var): bool {
         Config.revision
@@ -1189,7 +1191,7 @@ Item {
                                 readonly property bool sectionPage: root.browsing && root.section !== "system" && root.section !== "general"
                                 readonly property bool spying: !pageHero.groupPage && root.leadGroup.length > 0
                                 readonly property string key: pageHero.spying ? root.leadGroup : String(root.shownGroups[0]?.key ?? "")
-                                readonly property bool shown: pageHero.sectionPage || (pageHero.groupPage && pageHero.stageAvailable)
+                                readonly property bool shown: pageHero.sectionPage || (pageHero.groupPage && (pageHero.stageAvailable || pageHero.titled))
                                 parent: heroPinSlot
                                 width: heroPinSlot.width
                                 visible: pageHero.shown
@@ -1465,25 +1467,21 @@ Item {
                 : sectionRow.selected ? "transparent"
                 : sectionRow.containsMouse ? IrisStyle.fillQuiet : "transparent"
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
-            // The area's glyph in its own colour, without a tile under it: a column of coloured squares is every
-            // settings app's sidebar, and the colour alone already tells the areas apart.
+            // Vivid tiles: the colour is how the eye finds an area, whatever material sits behind.
             Item {
                 id: sectionMark
                 // An indexed Design numbers the areas instead (a parts catalogue).
                 readonly property bool numbered: IrisStyle.indexed
-                x: Math.round(6 * root.d)
+                x: Math.round(5 * root.d)
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.round(20 * root.d)
+                width: Math.round(22 * root.d)
                 height: width
-                MaterialSymbol {
+                IrisSquircle {
                     visible: !sectionMark.numbered
-                    anchors.centerIn: parent
-                    text: sectionRow.modelData.icon
-                    iconSize: Math.round(18 * root.d)
-                    fill: sectionRow.selected ? 1 : 0
-                    color: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.selectionInk
-                        : IrisStyle.plainMarks ? IrisStyle.textSecondary : sectionRow.modelData.tint
-                    Behavior on fill { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+                    anchors.fill: parent
+                    tint: sectionRow.modelData.tint
+                    glyph: sectionRow.modelData.icon
+                    reversed: sectionRow.selected && IrisStyle.plateSelection
                 }
             }
             IrisText {
@@ -1504,7 +1502,7 @@ Item {
                 text: Translation.tr(sectionRow.modelData.title)
                 // Where you are takes the area's colour, lifted to read on the wash; on a plate (AIRISU) the plate's ink.
                 color: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.selectionLabel
-                    : sectionRow.selected ? root.tintInk(sectionRow.own) : IrisStyle.text
+                    : IrisStyle.text
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                 font.weight: IrisStyle.weight(sectionRow.selected ? Font.Bold : Font.Medium)
                 elide: Text.ElideRight
@@ -1519,17 +1517,68 @@ Item {
         property string sceneGroup: ""
         readonly property bool stageAvailable: stageLoader.item?.available ?? false
         readonly property bool staged: hero.stageAvailable && detailBody.width > 560 * root.d
-        implicitHeight: root.stageHeight
+        // The engine's page heads the area like main did: its tile, what it covers, one line, and the live scene small
+        // at the right. A Design that draws its own head (AIRISU) keeps only the scene, as a band.
+        readonly property bool titled: !root.sceneDrawn
+        readonly property bool grouped: !root.searching && root.openGroup.length > 0 && root.advancedPage < 0
+        readonly property real pad: Math.round(10 * root.d)
+        implicitHeight: Math.round(132 * root.d)
+        Rectangle {
+            anchors.fill: parent
+            visible: hero.titled
+            radius: IrisStyle.radiusTile
+            color: IrisStyle.readingCard
+        }
+        IrisSquircle {
+            id: heroMark
+            visible: hero.titled
+            x: Math.round(20 * root.d)
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.round(44 * root.d)
+            height: width
+            tint: hero.grouped ? (IrisOptions.groupTints[hero.sceneGroup] ?? root.currentSection.tint) : root.currentSection.tint
+            glyph: hero.grouped ? (IrisOptions.groupGlyphs[hero.sceneGroup] ?? root.currentSection.icon) : root.currentSection.icon
+        }
+        Column {
+            visible: hero.titled
+            anchors.left: heroMark.right
+            anchors.leftMargin: Math.round(16 * root.d)
+            anchors.right: stageLoader.visible ? stageLoader.left : parent.right
+            anchors.rightMargin: Math.round(20 * root.d)
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Math.round(4 * root.d)
+            IrisText {
+                width: parent.width
+                text: hero.grouped ? root.openGroup : Translation.tr(root.currentSection.subtitle ?? root.currentSection.title)
+                font.pixelSize: IrisStyle.typeTitle
+                font.weight: IrisStyle.weight(Font.DemiBold)
+                elide: Text.ElideRight
+            }
+            IrisText {
+                width: parent.width
+                visible: text.length > 0
+                text: hero.grouped ? "" : Translation.tr(root.currentSection.tip ?? "")
+                color: IrisStyle.textSecondary
+                font.pixelSize: IrisStyle.typeMeta
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
+                elide: Text.ElideRight
+            }
+        }
         Loader {
             id: stageLoader
-            anchors.fill: parent
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.margins: hero.titled ? hero.pad : 0
+            width: hero.titled ? Math.round(height / Math.max(0.3, root.screenShape)) : parent.width
             active: hero.sceneSection.length > 0
             visible: hero.staged
             sourceComponent: IrisGroupPreview {
                 compact: true
                 niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
                 niriRevision: IrisNiri.revision
-                radius: IrisStyle.radiusTile
+                radius: hero.titled ? IrisStyle.concentric(IrisStyle.radiusTile, hero.pad, IrisStyle.radiusRow) : IrisStyle.radiusTile
                 section: hero.sceneSection
                 group: hero.sceneGroup
                 playing: hero.visible && hero.staged && GlobalStates.settingsOverlayOpen
@@ -1655,11 +1704,20 @@ Item {
                 border.color: IrisStyle.tintBorder(IrisStyle.accent)
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
             }
-            // No mark per row (DI24b): fifteen squircles of one hue said nothing the names do not.
+            IrisSquircle {
+                id: groupMark
+                anchors.left: parent.left
+                anchors.leftMargin: 12 * root.d
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.round(26 * root.d)
+                height: width
+                tint: IrisOptions.groupTints[groupRow.modelData.key] ?? root.currentSection.tint
+                glyph: IrisOptions.groupGlyphs[groupRow.modelData.key] ?? root.currentSection.icon
+            }
             IrisText {
                 id: groupTitle
-                anchors.left: parent.left
-                anchors.leftMargin: 16 * root.d
+                anchors.left: groupMark.right
+                anchors.leftMargin: 12 * root.d
                 anchors.verticalCenter: parent.verticalCenter
                 // The summary gets the rest of the row; with nothing to summarise (a lone switch) the name takes it all.
                 width: Math.ceil(Math.min(implicitWidth, groupRow.lone || groupRow.summary.length === 0
