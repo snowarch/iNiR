@@ -286,8 +286,6 @@ Recommended validation order:
 5. Verify NetworkManager, BlueZ, Power Profiles, PipeWire, ydotool and any
    selected optional providers.
 6. Exercise package search/install/remove and both panel families.
-7. Run the versioned `scripts/check-void-*.sh` contracts when changing a
-   provider or lifecycle boundary.
 
 ## FAQ / gotchas
 
