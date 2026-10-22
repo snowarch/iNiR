@@ -1735,8 +1735,8 @@ Item {
             voice: root.voice
             options: root.choices
             current: root.value
-            // In the row's column the names carry the choice; glyphs stack only in the full-width track.
-            pictured: root.pictured && !root.inlineChoice
+            // Segmented controls speak in words only, in every layout (a glyph over each name was a second language).
+            pictured: false
             accessibleName: Translation.tr(root.spec.label)
             fontFor: choice => root.previewFace(choice)
             onPicked: value => root.commit(value)

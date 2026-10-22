@@ -9630,5 +9630,12 @@
   "just now": "방금",
   "yesterday": "어제",
   "Music & Anime": "음악 및 애니",
-  "Notifications & Sound": "알림 및 소리"
+  "Notifications & Sound": "알림 및 소리",
+  "%1 automatic": "%1 자동",
+  "%1 and %2 automatic": "%1, %2 자동",
+  "All off": "모두 끔",
+  "Middle": "가운데",
+  "Most visited": "자주 여는 곳",
+  "No output": "출력 없음",
+  "Set this wallpaper": "이 배경화면으로 설정"
 }

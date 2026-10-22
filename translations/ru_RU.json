@@ -9630,5 +9630,12 @@
   "just now": "только что",
   "yesterday": "вчера",
   "Music & Anime": "Музыка и аниме",
-  "Notifications & Sound": "Уведомления и звук"
+  "Notifications & Sound": "Уведомления и звук",
+  "%1 automatic": "%1 — автоматически",
+  "%1 and %2 automatic": "%1 и %2 — автоматически",
+  "All off": "Всё выключено",
+  "Middle": "Посередине",
+  "Most visited": "Часто открываемые",
+  "No output": "Нет вывода",
+  "Set this wallpaper": "Поставить эти обои"
 }

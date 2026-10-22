@@ -9630,5 +9630,12 @@
   "just now": "gerade eben",
   "yesterday": "gestern",
   "Music & Anime": "Musik & Anime",
-  "Notifications & Sound": "Mitteilungen & Ton"
+  "Notifications & Sound": "Mitteilungen & Ton",
+  "%1 automatic": "%1 automatisch",
+  "%1 and %2 automatic": "%1 und %2 automatisch",
+  "All off": "Alles aus",
+  "Middle": "Mitte",
+  "Most visited": "Oft besucht",
+  "No output": "Keine Ausgabe",
+  "Set this wallpaper": "Dieses Hintergrundbild setzen"
 }

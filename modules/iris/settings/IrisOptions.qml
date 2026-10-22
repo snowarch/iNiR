@@ -98,6 +98,25 @@ QtObject {
         printErrors: false
         onLoaded: { try { const list = JSON.parse(text()); if (Array.isArray(list)) root.recent = list } catch (e) {} }
     }
+    // Home's "Most visited": how often each area was opened, kept beside the recent rows.
+    property var visits: ({})
+    function visit(id: string): void {
+        if (!id || id === "home") return
+        const next = Object.assign({}, root.visits)
+        next[id] = Number(next[id] ?? 0) + 1
+        root.visits = next
+        visitsFile.setText(JSON.stringify(next))
+    }
+    function mostVisited(count: int, fallback: var): var {
+        const known = id => root.sections.some(entry => entry.id === id)
+        const ranked = Object.keys(root.visits).filter(known).sort((a, b) => root.visits[b] - root.visits[a])
+        return ranked.concat(fallback.filter(id => known(id) && !ranked.includes(id))).slice(0, count)
+    }
+    readonly property FileView visitsFile: FileView {
+        path: Directories.statePath + "/user/iris-settings-visits.json"
+        printErrors: false
+        onLoaded: { try { const read = JSON.parse(text()); if (read && typeof read === "object" && !Array.isArray(read)) root.visits = read } catch (e) {} }
+    }
     function write(spec: var, next: var): void {
         // A family switch goes through the shell's transition, never a bare config write.
         if (spec.path === "panelFamily") Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "panelFamily", "set", String(next)])
@@ -314,12 +333,30 @@ QtObject {
             if (String(spec.view ?? "").endsWith("IrisDockPinned.qml")) {
                 for (const id of (Config.options?.dock?.pinnedApps ?? []).map(String)) {
                     const who = AppSearch.appIdentity(id, "")
-                    if (!who.installed) add({ path: "dock.pinnedApps", group: String(spec.group ?? ""), label: String(spec.label ?? ""), app: id,
-                        text: Translation.tr("%1 is pinned but no longer installed.").arg(String(who.name || id)) })
+                    if (!who.installed) {
+                        const told = root.appNameOf(id)
+                        add({ path: "dock.pinnedApps", group: String(spec.group ?? ""), label: String(spec.label ?? ""), app: id, kind: told.kind,
+                            text: Translation.tr("%1 is pinned but no longer installed.").arg(who.name && who.name !== id ? String(who.name) : told.name) })
+                    }
                 }
             }
         }
         return out
+    }
+    // An app id said as people say it: "com.valvesoftware.Steam" or "steam-flatpak" is Steam, and how it came (Flatpak).
+    function appNameOf(id: string): var {
+        let raw = String(id ?? "").replace(/\.desktop$/i, "")
+        let kind = ""
+        if (/^[a-z0-9-]+(\.[A-Za-z0-9_-]+){2,}$/.test(raw)) { kind = "Flatpak"; raw = raw.split(".").pop() }
+        const packaging = { flatpak: "Flatpak", snap: "Snap", appimage: "AppImage" }
+        const noise = ["bin", "git", "desktop", "stable", "beta", "nightly", "missing", "native", "wayland", "x11", "app"]
+        const words = raw.split(/[-_ .]+/).filter(word => {
+            const low = word.toLowerCase()
+            if (packaging[low]) { kind = kind || packaging[low]; return false }
+            return word.length > 0 && !noise.includes(low)
+        })
+        const name = (words.length > 0 ? words : [raw]).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
+        return { name: name, kind: kind }
     }
     function glassNote(): string {
         const mode = String(Config.getNestedValue("iris.appearance.glass.mode", "off"))
@@ -478,7 +515,7 @@ QtObject {
         { section: "player", group: "Frame finish", label: "Light colour", description: "Pearl follows iRiS ink; the other choices follow your theme and wallpaper.", path: "iris.surround.musicColour", visibleWhen: "iris.surround.music=frame", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) && Boolean(Config.options?.iris?.surround?.enable) && String(Config.options?.iris?.surround?.musicAppearance ?? "etched") !== "sculpted", tune: true, kind: "choice", fallback: "pearl", choices: [{label:"Pearl",value:"pearl",get swatch() { return IrisStyle.text }},{label:"Accent",value:"accent",get swatch() { return IrisStyle.accent }},{label:"Highlight",value:"highlight",get swatch() { return IrisStyle.secondaryAccent }},{label:"Wallpaper",value:"wallpaper",get swatch() { return IrisStyle.wallpaperLight }}] },
         { section: "player", group: "Frame finish", label: "Light", description: "How much of the chosen colour rests on the moving frame.", path: "iris.surround.musicLight", visibleWhen: "iris.surround.music=frame", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) && Boolean(Config.options?.iris?.surround?.enable) && String(Config.options?.iris?.surround?.musicAppearance ?? "etched") !== "sculpted", kind: "range", fallback: 35, min: 0, max: 100, step: 5, unit: " %", zeroLabel: "Off" },
         { section: "player", group: "Frame finish", label: "Light width", description: "A hairline for Etched, or a wider falloff for Satin.", path: "iris.surround.musicLightWidth", visibleWhen: "iris.surround.music=frame", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) && Boolean(Config.options?.iris?.surround?.enable) && String(Config.options?.iris?.surround?.musicAppearance ?? "etched") !== "sculpted", kind: "range", fallback: 5, min: 1, max: 18, unit: " px" },
-        { target: "colour", group: "Signal", label: "Signal", description: "The one colour iRiS uses: something live, something that needs you, an action you can't undo.", path: "iris.appearance.signal", kind: "choice", fallback: "nothing", choices: [{label:"Nothing red",value:"nothing",get swatch() { return IrisStyle.signalRed }},{label:"From wallpaper",value:"wallpaper",get swatch() { return IrisStyle.vividHighlight(Appearance.wallpaperDominantColor, IrisStyle.signalRed) }},{label:"Orange",get value() { return IrisStyle.signalSwatches.orange },get swatch() { return IrisStyle.signalSwatches.orange }},{label:"Blue",get value() { return IrisStyle.signalSwatches.blue },get swatch() { return IrisStyle.signalSwatches.blue }},{label:"Green",get value() { return IrisStyle.signalSwatches.green },get swatch() { return IrisStyle.signalSwatches.green }},{label:"Pink",get value() { return IrisStyle.signalSwatches.pink },get swatch() { return IrisStyle.signalSwatches.pink }}], keywords: ["signal", "accent", "red", "colour", "color", "live", "alert", "nothing", "senal", "rojo", "acento"] },
+        { target: "colour", group: "Signal", label: "Signal", description: "The one colour iRiS uses: something live, something that needs you, an action you can't undo.", path: "iris.appearance.signal", kind: "choice", fallback: "nothing", choices: [{label:"Nothing red",value:"nothing",get swatch() { return IrisStyle.signalRed }},{label:"Ink",value:"ink",get swatch() { return IrisStyle.text }},{label:"From wallpaper",value:"wallpaper",get swatch() { return IrisStyle.vividHighlight(Appearance.wallpaperDominantColor, IrisStyle.signalRed) }},{label:"Orange",get value() { return IrisStyle.signalSwatches.orange },get swatch() { return IrisStyle.signalSwatches.orange }},{label:"Blue",get value() { return IrisStyle.signalSwatches.blue },get swatch() { return IrisStyle.signalSwatches.blue }},{label:"Green",get value() { return IrisStyle.signalSwatches.green },get swatch() { return IrisStyle.signalSwatches.green }},{label:"Pink",get value() { return IrisStyle.signalSwatches.pink },get swatch() { return IrisStyle.signalSwatches.pink }}], keywords: ["signal", "accent", "red", "ink", "monochrome", "colour", "color", "live", "alert", "nothing", "senal", "rojo", "acento"] },
         { target: "colour", group: "Accent", label: "System accent", description: "What your apps wear. iRiS itself stays ink, with the signal for what is live.", path: "iris.appearance.accent", kind: "choice", sources: true, fallback: "blue", get choices() { return root.designChoice("accents").concat([{label:"Blue",value:"blue",get swatch() { return IrisStyle.accents.blue }},{label:"Mint",value:"mint",get swatch() { return IrisStyle.accents.mint }},{label:"Rose",value:"rose",get swatch() { return IrisStyle.accents.rose }},{label:"Lilac",value:"lilac",get swatch() { return IrisStyle.accents.lilac }},{label:"Theme",value:"theme",get swatch() { return IrisStyle.accents.theme }},{label:"Wallpaper",value:"wallpaper",get swatch() { return IrisStyle.accents.wallpaper }},{label:"Custom",value:"custom"}]) }, locked: () => IrisStyle.followsTheme, note: () => root.followNote() },
         { target: "colour", group: "Accent", label: "Accent hue", visibleWhen: "iris.appearance.accent=custom", path: "iris.appearance.theme.accentHue", kind: "hue", fallback: 212, locked: () => IrisStyle.followsTheme, note: () => root.followNote() },
         { target: "colour", group: "Highlight", label: "Highlight", showIf: () => !IrisStyle.mono, description: "The glanced detail: clock separator, day number, timers.", path: "iris.appearance.highlight", kind: "choice", sources: true, fallback: "orange", get choices() { return root.designChoice("highlights").concat([{label:"Orange",value:"orange",get swatch() { return IrisStyle.highlights.orange }},{label:"Yellow",value:"yellow",get swatch() { return IrisStyle.highlights.yellow }},{label:"Red",value:"red",get swatch() { return IrisStyle.highlights.red }},{label:"Pink",value:"pink",get swatch() { return IrisStyle.highlights.pink }},{label:"Green",value:"green",get swatch() { return IrisStyle.highlights.green }},{label:"Accent",value:"accent",get swatch() { return IrisStyle.accent }},{label:"Theme",value:"theme",get swatch() { return IrisStyle.highlights.theme }},{label:"Wallpaper",value:"wallpaper",get swatch() { return IrisStyle.highlights.wallpaper }},{label:"Custom",value:"custom"}]) }, locked: () => IrisStyle.followsTheme, note: () => root.followNote() },
@@ -626,7 +663,7 @@ QtObject {
         { target: "dock", group: "Look", label: "One shape for all", mirror: true, description: "The Island, the Dock and the bubbles share the bubbles' shape.", path: "iris.appearance.theme.linkShapes", kind: "switch", fallback: false, keywords: ["same", "match", "link", "linked", "together", "sync", "unify", "everything", "one shape", "mismo", "igual", "todo", "juntos", "vincular"] },
         { target: "dock", group: "Look", label: "All shapes", mirror: true, visibleWhen: "iris.appearance.theme.linkShapes", path: "iris.appearance.theme.pieceShape", kind: "choice", fallback: "circle", choices: [{label:"Circle",value:"circle",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
         { target: "dock", group: "Look", label: "Dock shape", visibleWhen: "!iris.appearance.theme.linkShapes", description: "Auto keeps the iRiS capsule.", path: "iris.dock.shape", kind: "choice", fallback: "auto", choices: [{label:"Auto",value:"auto",glyph:"auto_awesome"},{label:"Round",value:"round",glyph:"circle"},{label:"Squircle",value:"squircle",glyph:"rounded_corner"},{label:"Square",value:"square",glyph:"square"}], keywords: ["square", "squared", "boxy", "rectangle", "sharp", "round", "rounded", "capsule", "pill", "circle", "squircle", "corners", "radius", "curves", "cuadrado", "cuadrada", "redondo", "redonda", "esquinas", "curvas", "forma"] },
-        { target: "dock", group: "Notch", label: "Dock notch", description: "The Dock melts into its screen edge like the Island's notch.", path: "iris.dock.notch", kind: "switch", fallback: true, keywords: ["notch", "attach", "melt", "edge", "float", "floating", "muesca"] },
+        { target: "dock", group: "Look", label: "Dock notch", description: "The Dock melts into its screen edge like the Island's notch.", path: "iris.dock.notch", kind: "switch", fallback: true, keywords: ["notch", "attach", "melt", "edge", "float", "floating", "muesca"] },
         // A body welded to the frame is the frame's material (IrisField.glassOf): its own material shows while it floats.
         { target: "dock", group: "Look", label: "Material", description: "Follow iRiS, stay solid, glass over the blurred wallpaper, or real blur of the windows below (Niri 26.04+).", path: "iris.dock.material", showIf: () => !(IrisFrame.framed && (Config.options?.iris?.dock?.notch ?? false)), kind: "choice", fallback: "inherit", choices: [{label:"iRiS",value:"inherit"},{label:"Solid",value:"solid"},{label:"Glass",value:"glass"},{label:"Blur (beta)",value:"blur"}] },
         { target: "dock", group: "Icons", label: "Icon size", path: "iris.dock.iconSize", kind: "range", fallback:40,min:28,max:64,unit:" px" },

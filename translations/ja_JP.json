@@ -9630,5 +9630,12 @@
   "just now": "たった今",
   "yesterday": "昨日",
   "Music & Anime": "音楽とアニメ",
-  "Notifications & Sound": "通知とサウンド"
+  "Notifications & Sound": "通知とサウンド",
+  "%1 automatic": "%1は自動",
+  "%1 and %2 automatic": "%1と%2は自動",
+  "All off": "すべてオフ",
+  "Middle": "中央",
+  "Most visited": "よく開く項目",
+  "No output": "出力なし",
+  "Set this wallpaper": "この壁紙にする"
 }

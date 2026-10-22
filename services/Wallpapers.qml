@@ -218,7 +218,34 @@ Singleton {
     // of the wallpapers folder (else a bundled one) and the person is told once.
     readonly property string _mainWallpaperPathSetting: Config.ready ? (Config.options?.background?.wallpaperPath ?? "") : ""
     property string _missingWallpaperNotified: ""
-    on_MainWallpaperPathSettingChanged: _missingWallpaperCheckTimer.restart()
+    on_MainWallpaperPathSettingChanged: {
+        _missingWallpaperCheckTimer.restart()
+        root._remember(root._mainWallpaperPathSetting)
+    }
+
+    // The last wallpapers set, newest first, kept in the state dir: Settings' Home lays them out to go back in one click.
+    property var recentWallpapers: []
+    readonly property int recentWallpapersMost: 8
+    function _remember(raw: string): void {
+        const path = FileUtils.trimFileProtocol(String(raw ?? ""))
+        if (path.length === 0 || root.recentWallpapers[0] === path) return
+        root.recentWallpapers = [path].concat(root.recentWallpapers.filter(entry => entry !== path)).slice(0, root.recentWallpapersMost)
+        if (_recentWallpapersFile.loadedOnce) _recentWallpapersFile.setText(JSON.stringify(root.recentWallpapers))
+    }
+    FileView {
+        id: _recentWallpapersFile
+        property bool loadedOnce: false
+        path: Directories.stateUserPath + "/recent-wallpapers.json"
+        onLoaded: {
+            let list = []
+            try { const read = JSON.parse(text()); if (Array.isArray(read)) list = read.map(String) } catch (e) {}
+            // what was set before the file came in leads
+            root.recentWallpapers = root.recentWallpapers.concat(list.filter(entry => !root.recentWallpapers.includes(entry))).slice(0, root.recentWallpapersMost)
+            loadedOnce = true
+            root._remember(root._mainWallpaperPathSetting)
+        }
+        onLoadFailed: { loadedOnce = true; setText(JSON.stringify(root.recentWallpapers)) }
+    }
 
     Timer {
         id: _missingWallpaperCheckTimer
@@ -1383,6 +1410,12 @@ Singleton {
     readonly property bool autoWallpaperGenerateColors: Config.options?.background?.autoWallpaper?.generateColors ?? true
     readonly property string autoWallpaperFolder: Config.options?.background?.autoWallpaper?.folder ?? ""
     readonly property int shuffleCount: shuffleModel.count
+    // The first files of the wallpapers folder, for a strip that has fewer recent ones than it can show.
+    function folderSample(count: int): var {
+        const out = []
+        for (let i = 0; i < shuffleModel.count && out.length < count; i++) out.push(String(shuffleModel.get(i, "filePath")))
+        return out
+    }
     readonly property string shuffleFolder: {
         const own = FileUtils.trimFileProtocol(root.autoWallpaperFolder).replace(/^~(?=\/|$)/, Directories.homePath)
         if (own.length > 0) return own

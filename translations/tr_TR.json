@@ -9630,5 +9630,12 @@
   "just now": "az önce",
   "yesterday": "dün",
   "Music & Anime": "Müzik ve Anime",
-  "Notifications & Sound": "Bildirimler ve Ses"
+  "Notifications & Sound": "Bildirimler ve Ses",
+  "%1 automatic": "%1 otomatik",
+  "%1 and %2 automatic": "%1 ve %2 otomatik",
+  "All off": "Hepsi kapalı",
+  "Middle": "Orta",
+  "Most visited": "En çok açılanlar",
+  "No output": "Çıkış yok",
+  "Set this wallpaper": "Bu duvar kağıdını ayarla"
 }

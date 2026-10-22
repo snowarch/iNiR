@@ -273,6 +273,18 @@ Item {
         const shown = root.fedPage === root.pageKey ? root.blocksShown : 1
         return shown >= root.shownGroups.length ? root.shownGroups : root.shownGroups.slice(0, shown)
     }
+    // The page is still building (blocks fed a frame apart, each built in slices): its ghost rows hold the place.
+    property int blockTick: 0
+    readonly property bool rowsPending: {
+        root.blockTick
+        if (root.searching || !root.browsing || root.shownGroups.length === 0) return false
+        if (root.shownGroups.length > 1 && !(root.fedAll && root.fedPage === root.pageKey)) return true
+        for (let i = 0; i < blockRepeater.count; i++) {
+            const block = blockRepeater.itemAt(i)
+            if (block && (block.status !== Loader.Ready || !block.landed)) return true
+        }
+        return false
+    }
     function feedPage(): void {
         root.fedPage = root.pageKey
         root.fedAll = false
@@ -383,6 +395,29 @@ Item {
         for (const spec of usable.filter(spec => IrisOptions.modified(spec)).concat(leads))
             if (!out.includes(spec) && out.length < count) out.push(spec)
         return out
+    }
+    // A folded group said in a line people would say: what is on, what was picked, and what is left to itself
+    // ("Dock notch, round dock shape, screen edge automatic"); never "Auto · off · Auto".
+    function sayGroup(rows: var): string {
+        const named = spec => Translation.tr(String(spec.label ?? ""))
+        const lower = text => text.length > 1 && text[1] === text[1].toLowerCase() ? text.charAt(0).toLowerCase() + text.slice(1) : text
+        const parts = [], autos = []
+        for (const spec of rows.filter(spec => ["switch", "range", "choice"].includes(spec.kind) && spec.path && root.shown(spec))) {
+            const value = IrisOptions.currentValue(spec)
+            if (spec.kind === "switch") {
+                if (spec.invert ? !value : !!value) parts.push(named(spec))
+            } else if (spec.kind === "choice") {
+                const choice = IrisOptions.choicesOf(spec).find(entry => IrisOptions.same(entry.value, value))
+                if (!choice) continue
+                if (String(choice.value) === "auto" || String(choice.label) === "Auto") autos.push(lower(named(spec)))
+                else parts.push(Translation.tr("%1 %2").arg(Translation.tr(String(choice.label ?? ""))).arg(lower(named(spec))))
+            } else parts.push(Translation.tr("%1 %2").arg(named(spec)).arg(root.answerOf(spec)))
+        }
+        const said = parts.slice(0, 2).map((part, at) => at === 0 ? part : lower(part))
+        if (autos.length > 0) said.push(autos.length === 1 ? Translation.tr("%1 automatic").arg(autos[0])
+            : Translation.tr("%1 and %2 automatic").arg(autos.slice(0, Math.min(2, autos.length) - 1).join(", ")).arg(autos[Math.min(2, autos.length) - 1]))
+        const line = said.join(", ")
+        return line.length > 0 ? line.charAt(0).toUpperCase() + line.slice(1) : Translation.tr("All off")
     }
     // A row's value as a word or a figure: On, Bottom, 40 px.
     function answerOf(spec: var): string {
@@ -759,7 +794,7 @@ Item {
     Timer { id: takeKeys; interval: 160; onTriggered: if (!searchField.activeFocus && GlobalStates.settingsOverlayOpen) root.forceActiveFocus() }
     // A Design's scene sets its own page; the engine's slide would only move chrome nobody sees.
     function enterPage(): void { if (!root.sceneDesigned) pageEnter.restart() }
-    onSectionChanged: { settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
+    onSectionChanged: { IrisOptions.visit(root.section); settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
     onPageKeyChanged: Qt.callLater(root.feedPage)
     onOpenGroupChanged: { settingsFlick.contentY = 0; root.enterPage() }
     onAdvancedPageChanged: root.enterPage()
@@ -1433,6 +1468,60 @@ Item {
                                             Layout.fillWidth: true
                                             asynchronous: !root.searching && root.landingPath.length === 0
                                             sourceComponent: GroupBlock { modelData: blockLoader.modelData }
+                                            onStatusChanged: root.blockTick++
+                                            // Each block lands as it is built: up from just below, out of the ghosts' place. It waits
+                                            // a beat after loading so its own rows have laid out (a first frame stacked every head at 0).
+                                            readonly property bool moves: blockLoader.asynchronous && IrisStyle.motionEnabled
+                                            property bool landed: !blockLoader.moves
+                                            opacity: blockLoader.moves ? 0 : 1
+                                            transform: Translate { id: blockRise }
+                                            onLoaded: if (blockLoader.moves) blockSettle.restart()
+                                            property Timer blockSettle: Timer {
+                                                interval: 90
+                                                onTriggered: { blockLoader.landed = true; root.blockTick++; blockLoader.blockIn.restart() }
+                                            }
+                                            property ParallelAnimation blockIn: ParallelAnimation {
+                                                NumberAnimation { target: blockLoader; property: "opacity"; from: 0; to: 1; duration: IrisStyle.duration(200); easing.type: Easing.OutCubic }
+                                                NumberAnimation { target: blockRise; property: "y"; from: Math.round(14 * root.d); to: 0; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
+                                            }
+                                        }
+                                    }
+
+                                    // Ghost rows: where the rest of the page is coming, breathing until it does.
+                                    Item {
+                                        id: ghostRows
+                                        visible: root.rowsPending
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: ghostColumn.height
+                                        property real breath: 1
+                                        SequentialAnimation on breath {
+                                            running: ghostRows.visible && IrisStyle.motionEnabled
+                                            loops: Animation.Infinite
+                                            NumberAnimation { to: 0.55; duration: 700; easing.type: Easing.InOutSine }
+                                            NumberAnimation { to: 1; duration: 700; easing.type: Easing.InOutSine }
+                                        }
+                                        Column {
+                                            id: ghostColumn
+                                            width: parent.width
+                                            opacity: ghostRows.breath
+                                            Repeater {
+                                                model: Math.max(3, Math.min(7, 2 * (root.shownGroups.length - root.fedGroups.length) + 2))
+                                                Item {
+                                                    id: ghostRow
+                                                    required property int index
+                                                    width: ghostColumn.width
+                                                    height: Math.round(56 * root.d)
+                                                    readonly property real reach: [0.32, 0.24, 0.38, 0.28, 0.2, 0.34, 0.26][ghostRow.index % 7]
+                                                    Rectangle { x: Math.round(16 * root.d); y: Math.round(17 * root.d); width: Math.round(ghostColumn.width * ghostRow.reach); height: Math.round(9 * root.d); radius: height / 2; color: IrisStyle.dotEmpty }
+                                                    Rectangle { x: Math.round(16 * root.d); y: Math.round(33 * root.d); width: Math.round(ghostColumn.width * ghostRow.reach * 0.6); height: Math.round(6 * root.d); radius: height / 2; color: IrisStyle.paperDot }
+                                                    Rectangle {
+                                                        anchors.right: parent.right; anchors.rightMargin: Math.round(16 * root.d); anchors.verticalCenter: parent.verticalCenter
+                                                        width: Math.round((ghostRow.index % 3 === 1 ? 96 : 36) * root.d); height: Math.round(20 * root.d); radius: height / 2
+                                                        color: "transparent"; border.width: 1; border.color: IrisStyle.dotEmpty
+                                                    }
+                                                    Rectangle { anchors.bottom: parent.bottom; x: Math.round(16 * root.d); width: parent.width - 2 * x; height: 1; color: IrisStyle.hairline }
+                                                }
+                                            }
                                         }
                                     }
 
@@ -2141,11 +2230,7 @@ Item {
             readonly property bool deckStop: true
             readonly property bool folds: root.groupsFold
             readonly property bool open: !group.shut
-            readonly property string summary: {
-                Config.revision
-                return group.modelData.rows.filter(spec => ["switch", "range", "choice"].includes(spec.kind) && spec.path).slice(0, 3)
-                    .map(spec => spec.kind === "switch" ? Translation.tr(String(spec.label ?? "")) + " " + root.answerOf(spec).toLowerCase() : root.answerOf(spec)).join(" · ")
-            }
+            readonly property string summary: { Config.revision; return root.sayGroup(group.modelData.rows) }
             readonly property var notes: root.notesHere.filter(note => String(note.group ?? "") === String(group.modelData.key ?? ""))
             function toggle(): void { root.toggleGroup(String(group.modelData.key ?? "")) }
             visible: root.flatSection && groupHead.title.length > 0 && headSkin.active

@@ -9630,5 +9630,12 @@
   "just now": "الآن",
   "yesterday": "أمس",
   "Music & Anime": "الموسيقى والأنمي",
-  "Notifications & Sound": "الإشعارات والصوت"
+  "Notifications & Sound": "الإشعارات والصوت",
+  "%1 automatic": "%1 تلقائي",
+  "%1 and %2 automatic": "%1 و%2 تلقائيان",
+  "All off": "الكل متوقف",
+  "Middle": "في الوسط",
+  "Most visited": "الأكثر زيارة",
+  "No output": "لا يوجد مخرج",
+  "Set this wallpaper": "تعيين هذه الخلفية"
 }

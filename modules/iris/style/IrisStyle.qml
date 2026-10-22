@@ -323,7 +323,8 @@ QtObject {
     // iris-literal: the signal colours Settings offers beside Nothing's red and the wallpaper's.
     readonly property var signalSwatches: ({ orange: "#ff8a00", blue: "#2f7bf6", green: "#36c46b", pink: "#ff4fa3" })
     readonly property string signalChoice: String(root.appearance?.signal ?? "nothing")
-    readonly property color signal: root.signalChoice === "wallpaper"
+    readonly property color signal: root.signalChoice === "ink" ? root.text
+        : root.signalChoice === "wallpaper"
         ? root.vividHighlight(Appearance.wallpaperDominantColor, root.vividHighlight(Appearance.colors.colPrimary, root.signalRed))
         : /^#[0-9a-fA-F]{6}$/.test(root.signalChoice) ? Qt.color(root.signalChoice) : root.signalRed
     // The signal as text: moved only as far as 4.5:1 on the paper needs (the pure red is a mark, 3:1, not a word).

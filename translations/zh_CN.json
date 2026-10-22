@@ -9630,5 +9630,12 @@
   "just now": "刚刚",
   "yesterday": "昨天",
   "Music & Anime": "音乐与动漫",
-  "Notifications & Sound": "通知与声音"
+  "Notifications & Sound": "通知与声音",
+  "%1 automatic": "%1自动",
+  "%1 and %2 automatic": "%1和%2自动",
+  "All off": "全部关闭",
+  "Middle": "居中",
+  "Most visited": "最常访问",
+  "No output": "无输出",
+  "Set this wallpaper": "设为壁纸"
 }

@@ -9630,5 +9630,12 @@
   "just now": "щойно",
   "yesterday": "вчора",
   "Music & Anime": "Музика й аніме",
-  "Notifications & Sound": "Сповіщення та звук"
+  "Notifications & Sound": "Сповіщення та звук",
+  "%1 automatic": "%1 — автоматично",
+  "%1 and %2 automatic": "%1 і %2 — автоматично",
+  "All off": "Усе вимкнено",
+  "Middle": "Посередині",
+  "Most visited": "Часто відкривані",
+  "No output": "Немає виводу",
+  "Set this wallpaper": "Встановити ці шпалери"
 }
