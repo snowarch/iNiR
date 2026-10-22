@@ -107,7 +107,12 @@ Item {
     // Segments share the track evenly, so the widest name sets every slot.
     readonly property real segmentNatural: root.spec.kind !== "choice" || root.choices.length === 0 ? 0
         : root.choices.length * (Math.max(...root.choices.map(choice => choiceMetrics.advanceWidth(Translation.tr(String(choice.label ?? ""))))) + 26 * root.d) + 4
-    readonly property bool inlineChoice: root.spec.kind === "choice" && root.roomy && root.choices.length >= 2 && root.choices.length <= (root.voice.length > 0 ? 5 : 4)
+    // In a layout's voice the choice is measured by its own Segmented (its names hug): it sits in the column when it fits.
+    readonly property bool voicedChoice: root.voice.length > 0 && root.spec.kind === "choice" && root.roomy && root.choices.length >= 2
+        && root.choices.length <= 5 && !root.swatched && !root.tiled && !root.carded
+    readonly property real voicedNatural: root.voicedChoice ? Number(inlineSegments.item?.implicitWidth ?? 0) : 0
+    readonly property bool inlineChoice: root.voicedChoice ? root.voicedNatural > 0 && root.voicedNatural <= root.controlWidth
+        : root.spec.kind === "choice" && root.roomy && root.choices.length >= 2 && root.choices.length <= 4
         && !root.swatched && !root.tiled && !root.carded && root.segmentNatural <= root.controlWidth
     // A flat list the column's track cannot hold (HIG: past a few choices, or names too long to share it) answers as a
     // pop-up button in the same column. Pictures stay pictures: up to five glyph choices keep their track under the text.
@@ -313,10 +318,11 @@ Item {
             }
 
             Loader {
+                id: inlineSegments
                 opacity: root.controlOpacity
-                active: root.inlineChoice
-                visible: active
-                Layout.preferredWidth: Math.round(Math.max(root.segmentNatural, root.controlWidth * 0.66))
+                active: root.inlineChoice || root.voicedChoice
+                visible: root.inlineChoice
+                Layout.preferredWidth: root.voicedChoice ? root.voicedNatural : Math.round(Math.max(root.segmentNatural, root.controlWidth * 0.66))
                 sourceComponent: segmentedComponent
             }
 
@@ -493,7 +499,10 @@ Item {
 
         Loader {
             opacity: root.controlOpacity
-            Layout.fillWidth: true
+            // A voiced track under its row keeps its names' width, at the row's right like the column it left.
+            Layout.fillWidth: root.voice.length === 0 || (item?.implicitWidth ?? 0) <= 0
+            Layout.alignment: Qt.AlignRight
+            Layout.preferredWidth: root.voice.length > 0 ? Math.min(item?.implicitWidth ?? 0, parent.width) : -1
             active: root.spec.kind === "choice" && !root.inlineChoice && !root.swatched && !root.menuChoice && !root.tiled && !root.carded
             visible: active
             sourceComponent: segmentedComponent

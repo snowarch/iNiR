@@ -13,12 +13,15 @@ Item {
     readonly property int chosen: root.host?.selectedIndex ?? -1
     readonly property real d: IrisStyle.settingsDensity
     function slot(i: int): real { return root.host ? root.host.slotX(i) : 0 }
-    readonly property real slotWidth: root.host ? root.host.slot : 0
+    function span(i: int): real { return root.slot(i + 1) - root.slot(i) }
+    // Each name in a segment of its own: its width at the taken weight, with air on both sides.
+    FontMetrics { id: metrics; font.family: IrisStyle.fontMain; font.pixelSize: IrisStyle.typeLabel; font.weight: Font.Medium }
+    function widthFor(label: string): real { return Math.ceil(metrics.advanceWidth(label)) + Math.round(26 * root.d) }
     Rectangle {
         visible: root.chosen >= 0
         x: root.slot(Math.max(0, root.chosen)) + 2
         y: 2
-        width: root.slotWidth - 4
+        width: root.span(Math.max(0, root.chosen)) - 4
         height: root.height - 4
         radius: height / 2
         color: IrisStyle.fill
@@ -34,7 +37,7 @@ Item {
             required property int index
             readonly property bool taken: option.index === root.chosen
             readonly property bool hovered: option.index === (root.host?.hoveredIndex ?? -1)
-            x: root.slot(option.index) + Math.round((root.slotWidth - width) / 2)
+            x: root.slot(option.index) + Math.round((root.span(option.index) - width) / 2)
             anchors.verticalCenter: parent.verticalCenter
             spacing: Math.round(6 * root.d)
             MaterialSymbol {
@@ -47,7 +50,7 @@ Item {
             IrisText {
                 visible: !(root.host?.glyphOnly ?? false)
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, root.slotWidth - Math.round(10 * root.d))
+                width: Math.min(implicitWidth, root.span(option.index) - Math.round(10 * root.d))
                 elide: Text.ElideRight
                 text: Translation.tr(String(option.modelData.label ?? ""))
                 color: option.taken || option.hovered ? IrisStyle.text : IrisStyle.muted

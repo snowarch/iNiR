@@ -47,8 +47,14 @@ Rectangle {
         font.weight: IrisStyle.weight(Font.DemiBold)
     }
 
+    // A layout's voice (Folio, Console) measures each name with its own type: every segment hugs its name and the track
+    // ends where they do. Squeezed below that, the names share the track evenly again.
+    readonly property var hugWidths: typeof skin.item?.widthFor === "function"
+        ? root.options.map(option => Number(skin.item.widthFor(Translation.tr(String(option.label ?? ""))))) : []
+    readonly property real hugWidth: root.hugWidths.length > 0 ? Math.ceil(root.hugWidths.reduce((sum, w) => sum + w, 0)) + 2 * root.inset : 0
+    readonly property bool hugs: root.hugWidth > 0 && root.width >= root.hugWidth - 1
     implicitHeight: Math.round((skin.item?.wantHeight ?? (root.pictured ? 52 : root.glyphOnly ? 32 : 28)) * root.d)
-    implicitWidth: root.glyphOnly ? root.count * (root.implicitHeight - 2 * root.inset) + 2 * root.inset : 0
+    implicitWidth: root.hugWidth > 0 ? root.hugWidth : root.glyphOnly ? root.count * (root.implicitHeight - 2 * root.inset) + 2 * root.inset : 0
     readonly property real thumbRadius: root.pictured ? IrisStyle.radiusTile - root.inset
         : IrisStyle.controlPlated ? IrisStyle.pieceRadius(root.height - 2 * root.inset) : (root.height - 2 * root.inset) / 2
     radius: root.pictured ? IrisStyle.radiusTile : IrisStyle.controlPlated ? root.thumbRadius + root.inset : height / 2
@@ -62,6 +68,11 @@ Rectangle {
     }
 
     function slotX(index: int): int {
+        if (root.hugs) {
+            let x = root.inset
+            for (let i = 0; i < Math.min(index, root.hugWidths.length); i++) x += root.hugWidths[i]
+            return Math.round(x)
+        }
         return root.inset + Math.round(index * root.slot)
     }
 
