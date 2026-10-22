@@ -70,7 +70,7 @@ Item {
     // history and every row stay here.
     // iRiS lays the page in the layout chosen in Settings (Folio, Deck, Console); a Design with its own page keeps it.
     // Only layouts whose page exists: a missing one would leave the body waiting for its scene forever.
-    readonly property var layouts: ({ folio: "Folio" })
+    readonly property var layouts: ({ folio: "Folio", deck: "Deck" })
     readonly property string layout: {
         if (IrisDesign.skin("settingsPage").length > 0) return ""
         const wanted = String(Config.options?.iris?.appearance?.settingsLayout ?? "folio")
@@ -356,9 +356,11 @@ Item {
         return rows.slice(0, 2).map(spec => Translation.tr(spec.label)).join(", ")
     }
     // The rows that tell an area best at a glance: what was changed here first, then each group's lead row.
-    function tellingRows(count: int): var {
+    function tellingRows(count: int, section: string): var {
         Config.revision
-        const usable = root.entries.filter(spec => spec.path && !spec.mirror && !(spec.locked && spec.locked())
+        const rows = !section || section === root.section ? root.entries
+            : root.specifications.filter(spec => spec.section === section && root.shown(spec))
+        const usable = rows.filter(spec => spec.path && !spec.mirror && !(spec.locked && spec.locked())
             && ["switch", "range", "choice", "zone"].includes(spec.kind) && Translation.tr(String(spec.label ?? "")).length <= 26)
         const leads = []
         const seen = new Set()
@@ -372,6 +374,14 @@ Item {
         for (const spec of usable.filter(spec => IrisOptions.modified(spec)).concat(leads))
             if (!out.includes(spec) && out.length < count) out.push(spec)
         return out
+    }
+    // A row's value as a word or a figure: On, Bottom, 40 px.
+    function answerOf(spec: var): string {
+        const value = IrisOptions.currentValue(spec)
+        if (spec.kind === "switch") return (spec.invert ? !value : !!value) ? Translation.tr("On") : Translation.tr("Off")
+        if (spec.kind === "range") return Translation.tr(IrisOptions.rangeText(spec, value))
+        const choice = IrisOptions.choicesOf(spec).find(entry => IrisOptions.same(entry.value, value))
+        return choice ? Translation.tr(String(choice.label ?? "")) : String(value ?? "")
     }
     // Puts a row in view and lights it, as a search result lands.
     function landOn(path: string): void {
@@ -726,6 +736,9 @@ Item {
     Shortcut { sequence: "Ctrl+F"; enabled: GlobalStates.settingsOverlayOpen; onActivated: searchField.forceActiveFocus() }
     // Typing anywhere on the page searches: a letter no control takes reaches the page and goes to the field.
     // ↑ and ↓ walk the sidebar's areas when nothing on the page holds the keys (DI49a: they did nothing).
+    // Deck lays the areas side by side: left and right turn its cards.
+    Keys.onLeftPressed: event => { if (event.modifiers === Qt.NoModifier && root.layout === "deck") root.stepSection(-1); else event.accepted = false }
+    Keys.onRightPressed: event => { if (event.modifiers === Qt.NoModifier && root.layout === "deck") root.stepSection(1); else event.accepted = false }
     Keys.onUpPressed: event => { if (event.modifiers === Qt.NoModifier) root.stepSection(-1); else event.accepted = false }
     Keys.onDownPressed: event => { if (event.modifiers === Qt.NoModifier) root.stepSection(1); else event.accepted = false }
     Keys.onPressed: event => typeAhead.take(event)

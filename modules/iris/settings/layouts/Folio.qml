@@ -354,7 +354,7 @@ Item {
                 font.pixelSize: root.u(root.compact ? 19 : 23)
                 lineHeight: 1.28
                 text: {
-                    const rows = root.host?.tellingRows(root.compact ? 3 : 4) ?? []
+                    const rows = root.host?.tellingRows(root.compact ? 3 : 4, "") ?? []
                     if (rows.length === 0) return ""
                     const esc = value => String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;")
                     const area = Translation.tr(String(root.area.title ?? ""))
@@ -474,13 +474,7 @@ Item {
         }
     }
 
-    function answer(spec: var): string {
-        const value = IrisOptions.currentValue(spec)
-        if (spec.kind === "switch") return (spec.invert ? !value : !!value) ? Translation.tr("On") : Translation.tr("Off")
-        if (spec.kind === "range") return Translation.tr(IrisOptions.rangeText(spec, value))
-        const choice = IrisOptions.choicesOf(spec).find(entry => IrisOptions.same(entry.value, value))
-        return choice ? Translation.tr(String(choice.label ?? "")) : String(value ?? "")
-    }
+    function answer(spec: var): string { return root.host.answerOf(spec) }
 
     // A row's name inside its own area drops the area's name: "Dock notch" in Dock is the notch.
     function named(spec: var, area: string): string {

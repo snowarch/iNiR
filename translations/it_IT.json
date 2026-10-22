@@ -9551,5 +9551,7 @@
   "%1, %2": "%1, %2",
   "with %1 on": "con %1 attivo",
   "%1 off": "%1 spento",
-  "%1 are %2": "%1 sono %2"
+  "%1 are %2": "%1 sono %2",
+  "or click": "o fai clic",
+  "click or": "fai clic o"
 }

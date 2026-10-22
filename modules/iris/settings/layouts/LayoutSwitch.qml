@@ -33,7 +33,7 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 2
         Repeater {
-            model: root.keys
+            model: root.keys.filter(entry => root.host?.layouts?.[entry.id] !== undefined)
             MouseArea {
                 id: key
                 required property var modelData
