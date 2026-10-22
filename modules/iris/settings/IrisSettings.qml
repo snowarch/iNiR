@@ -304,13 +304,15 @@ Item {
     function summaryOf(entry: var): string {
         Config.revision
         const rows = entry.rows.filter(spec => root.shown(spec))
-        const parts = [...new Set(rows.map(spec => root.valueText(spec)).filter(text => text.length > 0))]
+        // Deduped per item, not per row: Family "iRiS" next to the cycle "iRiS, Material" read "iRiS, iRiS, Material".
+        const parts = []
+        rows.forEach(spec => root.valueText(spec).split(", ").forEach(item => { if (item.length > 0 && !parts.includes(item)) parts.push(item) }))
         // Switches that all keep quiet answer for themselves: a group's own switch on ("Notch") said Off when no row followed it.
         if (parts.length === 0 && rows.length > 0 && rows.every(spec => spec.kind === "switch")) {
             const on = rows.some(spec => { const value = IrisOptions.currentValue(spec); return spec.invert ? !value : !!value })
             return on ? Translation.tr("On") : Translation.tr("Off")
         }
-        if (parts.length > 0) return parts.slice(0, 2).join(", ")
+        if (parts.length > 0) return parts.slice(0, 3).join(", ")
         // Nothing to answer with (lists, defaults): say what's inside instead of leaving the row mute.
         return rows.slice(0, 2).map(spec => Translation.tr(spec.label)).join(", ")
     }
