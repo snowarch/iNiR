@@ -2182,16 +2182,6 @@ Item {
                         Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing } }
                     }
                     IrisCutPlate { anchors.fill: parent; visible: !root.split && IrisStyle.fieldChamfer; color: IrisStyle.readingCard }
-                    Rectangle {
-                        anchors.fill: parent
-                        visible: card.raised
-                        radius: card.radius
-                        color: Qt.alpha(IrisStyle.text, 0.03)
-                        border.width: Math.max(1, Math.round(root.d))
-                        border.color: Qt.alpha(IrisStyle.accent, 0.4)
-                        opacity: group.reading ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing } }
-                    }
                     ColumnLayout {
                         id: groupRows
                         anchors.left: parent.left
