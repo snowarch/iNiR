@@ -71,7 +71,7 @@ Item {
     // history and every row stay here.
     // iRiS lays the page in the layout chosen in Settings (Folio, Deck, Console); a Design with its own page keeps it.
     // Only layouts whose page exists: a missing one would leave the body waiting for its scene forever.
-    readonly property var layouts: ({ folio: "Folio", deck: "Deck" })
+    readonly property var layouts: ({ folio: "Folio", deck: "Deck", console: "Console" })
     readonly property string layout: {
         if (IrisDesign.skin("settingsPage").length > 0) return ""
         const wanted = String(Config.options?.iris?.appearance?.settingsLayout ?? "folio")
@@ -186,8 +186,10 @@ Item {
     readonly property var entries: {
         Config.revision
         return root.searching ? root.matches.slice(0, root.searchLimit)
-            : root.specifications.filter(spec => spec.section === root.section && root.shown(spec))
+            : root.specifications.filter(spec => spec.section === root.section && root.shown(spec) && !root.claimed.includes(spec))
     }
+    // What the layout already shows as its own widgets (Console's tiles and dials) stays out of the rows.
+    readonly property var claimed: root.scene?.claims ?? []
     readonly property var groups: {
         const out = []
         for (const spec of root.entries) {
