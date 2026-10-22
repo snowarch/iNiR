@@ -15,9 +15,10 @@ import qs.modules.iris.preview
 import qs.modules.iris.settings
 import qs.modules.iris.settings.layouts.deck as Skins // so Quickshell mirrors the skins IrisSkin loads by url
 
-// Deck (Baraja): the areas as a deck of cards. Over the desktop the head is the Island grown down from its edge, the
-// open area a tall card under it, its neighbours cards on both sides and the far ones half off the screen; in a window
-// the neighbours stand as spines beside the card. The card holds the area's live stage, its telling values and its rows.
+// Deck: StandBy and the Apple TV row. Over the desktop the Island stretches into the head (the area before, the search,
+// the area after); the open area is one hero card (its stage under its Dot title, then its rows), the neighbours stand
+// back at 92 % on both sides; a dot pager under the card says where you are (the open one a bar, a signal dot where an
+// area needs you). Arrows turn and walk it, Enter acts, the wheel turns it. In a window the neighbours are spines.
 Item {
     id: root
     property Item host
@@ -33,16 +34,18 @@ Item {
     readonly property bool readsWhole: true
     // Its groups fold under their heads, the first two open (IrisSettings.groupOpen).
     readonly property bool folds: true
-    readonly property string searchHint: Translation.tr("Search, or say what to change")
+    readonly property string searchHint: Translation.tr("Search")
 
     readonly property bool windowed: Boolean(root.host?.windowed ?? true)
     readonly property var sections: root.host?.sections ?? []
     readonly property string section: String(root.host?.section ?? "")
+    readonly property bool searching: root.host?.searching ?? false
+    readonly property bool home: root.section === "home" && !root.searching
     readonly property int current: Math.max(0, root.sections.findIndex(entry => entry.id === root.section))
     readonly property var area: root.host?.currentSection ?? ({})
     readonly property var room: root.host?.room ?? ({ x: 0, y: 0, width: root.width, height: root.height })
     readonly property var noteCounts: root.host?.noteCounts ?? ({})
-    readonly property int noteTotal: Object.keys(root.noteCounts).reduce((sum, id) => sum + Number(root.noteCounts[id] ?? 0), 0)
+    readonly property color signal: IrisStyle["signal"] ?? IrisStyle.danger
     function neighbour(step: int): var { return root.sections[root.current + step] ?? null }
 
     // ── Travel: a new area slides in from where its card stood, the whole deck moving one pitch with the morph curve.
@@ -194,28 +197,27 @@ Item {
         root.wheelAcc = 0
         wheelRest.restart()
     }
-    function tint(entry: var, alpha: real): color { const c = entry?.tint ?? IrisStyle.accent; return Qt.rgba(c.r, c.g, c.b, alpha) }
-
-    // The head floats over the deck in the room the Island leaves, a capsule like the cards are plates.
+    // The head is the Island stretched: it takes the Island's own place at the top of the screen and grows sideways.
     readonly property real gap: root.u(24)
     readonly property rect headRect: {
         if (root.windowed) return Qt.rect(0, 0, root.width, root.u(60))
-        const w = Math.min(root.u(820), root.room.width)
-        return Qt.rect(Math.round((root.width - w) / 2), root.room.y, w, root.u(60))
+        const w = Math.min(root.u(760), root.room.width)
+        return Qt.rect(Math.round((root.width - w) / 2), Math.max(root.u(4), IrisFrame.band - root.u(2)), w, root.u(50))
     }
     readonly property rect cardRect: {
         if (root.windowed) return Qt.rect(deckRow.x + cardSlot.x, deckRow.y, cardSlot.width, deckRow.height)
-        const top = root.headRect.y + root.headRect.height + root.u(20)
-        const w = Math.round(Math.max(Math.min(root.u(620), root.room.width), Math.min(root.u(800), root.room.width * 0.46)))
+        const top = Math.max(root.room.y, root.headRect.y + root.headRect.height + root.u(16))
+        const w = Math.round(Math.max(Math.min(root.u(640), root.room.width), Math.min(root.u(820), root.room.width * 0.46)))
         return Qt.rect(Math.round((root.width - w) / 2), top, w, Math.max(0, root.room.y + root.room.height - top))
     }
-    readonly property real sideWidth: Math.min(root.u(404), Math.floor((root.width - root.cardRect.width) / 2) - 2 * root.gap - root.u(60))
+    readonly property real sideWidth: Math.min(root.u(420), Math.floor((root.width - root.cardRect.width) / 2) - 2 * root.gap - root.u(40))
     readonly property bool sided: !root.windowed && root.sideWidth >= root.u(240)
+    // The neighbours stand back: 92 % of the card, centred on its middle.
     function sideRect(step: int): rect {
         const c = root.cardRect
         const near = Math.abs(step) === 1
-        const w = near ? root.sideWidth : root.u(270)
-        const h = Math.round(c.height * (near ? 0.86 : 0.71))
+        const w = near ? root.sideWidth : root.u(260)
+        const h = Math.round(c.height * (near ? 0.92 : 0.84))
         const inner = c.x - root.gap - root.sideWidth
         const x = step === -1 ? inner : step === 1 ? c.x + c.width + root.gap
             : step < 0 ? inner - root.gap - w : c.x + c.width + 2 * root.gap + root.sideWidth
@@ -223,7 +225,7 @@ Item {
     }
     readonly property var steps: root.sided ? [-2, -1, 1, 2].filter(step => root.neighbour(step) !== null) : []
 
-    // The bodies IrisSettings draws and blurs, one per card and the head's capsule.
+    // The bodies IrisSettings draws and blurs: the head, the card and each neighbour.
     readonly property var panes: {
         if (root.windowed) return []
         const out = []
@@ -233,12 +235,12 @@ Item {
         out.push({ id: "deckCard", x: c.x + root.shift, y: c.y, width: c.width, height: c.height, radius: root.u(30) })
         for (const step of root.steps) {
             const r = root.sideRect(step)
-            out.push({ id: "deckSide" + step, x: r.x + root.shift, y: r.y, width: r.width, height: r.height, radius: root.u(30) })
+            out.push({ id: "deckSide" + step, x: r.x + root.shift, y: r.y, width: r.width, height: r.height, radius: root.u(28) })
         }
         return out
     }
 
-    // ── The head: back, the search, every area as a tick, the notes, the layouts, the way out.
+    // ── The head: the area before, the search, the area after.
     MouseArea {
         id: head
         x: root.headRect.x
@@ -248,62 +250,12 @@ Item {
         onWheel: wheel => root.wheel(wheel)
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: root.u(11)
-            anchors.rightMargin: root.u(11)
+            anchors.leftMargin: root.u(8)
+            anchors.rightMargin: root.u(8)
             spacing: root.u(10)
-            RoundKey { glyph: "arrow_back"; name: Translation.tr("Back"); onClicked: root.host.goBack() }
-            Item { id: searchSlot; Layout.fillWidth: true; Layout.preferredHeight: root.u(40) }
-            MouseArea {
-                id: ticks
-                Layout.preferredWidth: tickRow.implicitWidth
-                Layout.preferredHeight: root.u(20)
-                visible: root.headRect.width >= root.u(700)
-                cursorShape: Qt.PointingHandCursor
-                onClicked: mouse => {
-                    const at = Math.max(0, Math.min(root.sections.length - 1, Math.floor(mouse.x / (tickRow.implicitWidth / Math.max(1, root.sections.length)))))
-                    root.host.selectSection(root.sections[at].id)
-                }
-                Row {
-                    id: tickRow
-                    anchors.bottom: parent.bottom
-                    spacing: 3
-                    Repeater {
-                        model: root.sections
-                        Rectangle {
-                            required property var modelData
-                            required property int index
-                            anchors.bottom: parent.bottom
-                            width: 3
-                            height: index === root.current ? root.u(18) : root.u(8)
-                            radius: 1.5
-                            Behavior on height { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-                            Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
-                            color: index === root.current ? IrisStyle.accent : Number(root.noteCounts[modelData.id] ?? 0) > 0 ? IrisStyle.danger
-                                : Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, 0.2)
-                        }
-                    }
-                }
-            }
-            MouseArea {
-                id: notePill
-                visible: root.noteTotal > 0
-                Layout.preferredHeight: root.u(38)
-                Layout.preferredWidth: root.u(38)
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                Accessible.role: Accessible.Button
-                Accessible.name: root.noteTotal === 1 ? Translation.tr("1 note") : Translation.tr("%1 notes").arg(root.noteTotal)
-                onClicked: root.host.openNote()
-                Rectangle { anchors.fill: parent; radius: height / 2; color: Qt.rgba(IrisStyle.danger.r, IrisStyle.danger.g, IrisStyle.danger.b, notePill.containsMouse ? 0.24 : 0.14) }
-                MaterialSymbol { anchors.centerIn: parent; text: "error"; iconSize: root.u(19); color: IrisStyle.danger }
-            }
-            LayoutSwitch { host: root.host; voice: "deck"; compact: true }
-            RoundKey {
-                glyph: root.windowed ? "layers" : "web_asset"
-                name: root.windowed ? Translation.tr("Open over the desktop") : Translation.tr("Open as a window")
-                onClicked: root.host.switchHost()
-            }
-            RoundKey { glyph: "close"; name: Translation.tr("Close settings"); onClicked: root.host.close() }
+            StepKey { step: -1; Layout.preferredWidth: root.u(170) }
+            Item { id: searchSlot; Layout.fillWidth: true; Layout.preferredHeight: root.u(34) }
+            StepKey { step: 1; Layout.preferredWidth: root.u(170) }
         }
     }
 
@@ -314,7 +266,7 @@ Item {
         x: root.u(10)
         y: root.headRect.height
         width: root.width - root.u(20)
-        height: root.height - y - root.u(10)
+        height: root.height - y - root.u(34)
         spacing: root.u(8)
         Spine { step: -2 }
         Spine { step: -1 }
@@ -323,13 +275,13 @@ Item {
         Spine { step: 2 }
     }
 
-    // ── The neighbours as cards over the desktop.
+    // ── The neighbours over the desktop.
     Repeater {
         model: root.steps
         SideCard { required property int modelData; step: modelData }
     }
 
-    // ── The open area: its stage, what it says, its rows.
+    // ── The hero: the area's Dot title over its stage, then its rows; or Home.
     Item {
         id: card
         x: root.cardRect.x + (root.windowed ? 0 : root.shift)
@@ -337,124 +289,95 @@ Item {
         width: root.cardRect.width
         height: root.cardRect.height
         readonly property real inset: root.u(root.windowed ? 8 : 12)
-        // In a window the card's insides slide within it; over the desktop the card itself travels.
         clip: root.windowed
         transform: Translate { x: root.windowed ? root.shift : 0 }
         Rectangle {
             visible: root.windowed
             anchors.fill: parent
             radius: root.u(22)
-            // Over glass the rows get the reading plate, so the wallpaper never reaches the type.
             color: IrisStyle.glassy ? IrisStyle.readingSidebar : Qt.rgba(0, 0, 0, IrisStyle.light ? 0.04 : 0.15) // iris-literal: the fold sits a step under the card
             border.width: 1
             border.color: IrisStyle.hairline
         }
+        // The layouts, the host and the way out ride the card's top corner.
+        Row {
+            id: keys
+            z: 3
+            anchors.right: parent.right
+            anchors.rightMargin: card.inset + root.u(10)
+            y: card.inset + root.u(10)
+            spacing: root.u(6)
+            LayoutSwitch { host: root.host; voice: "deck"; compact: true }
+            RoundKey {
+                glyph: root.windowed ? "layers" : "web_asset"
+                name: root.windowed ? Translation.tr("Open over the desktop") : Translation.tr("Open as a window")
+                onClicked: root.host.switchHost()
+            }
+            RoundKey { glyph: "close"; name: Translation.tr("Close settings"); onClicked: root.host.close() }
+        }
         ClippingRectangle {
             id: hero
+            visible: !root.home && !root.searching
             x: card.inset
             y: card.inset
             width: card.width - 2 * card.inset
-            height: root.u(root.windowed ? 170 : Math.min(280, card.height * 0.3 / root.d))
-            // Concentric with the card it sits in.
+            height: Math.round(Math.min(root.u(300), card.height * 0.36))
             radius: root.u(root.windowed ? 22 : 30) - card.inset
             color: IrisStyle.readingCard
             MouseArea { anchors.fill: parent; acceptedButtons: Qt.NoButton; onWheel: wheel => root.wheel(wheel) }
-            // The stage keeps clear of the title: full-bleed, Lock's clock and the Control Center sat under its words.
+            DotTitle {
+                id: dotTitle
+                x: root.u(22)
+                y: root.u(20)
+                text: Translation.tr(String(root.area.title ?? ""))
+                size: root.u(root.windowed ? 34 : 40)
+                fit: keys.x - card.inset - x - root.u(16)
+            }
+            IrisText {
+                id: heroLine
+                x: dotTitle.x
+                anchors.top: dotTitle.bottom
+                anchors.topMargin: root.u(8)
+                width: hero.width - 2 * x
+                elide: Text.ElideRight
+                text: Translation.tr(String(root.area.subtitle ?? ""))
+                color: IrisStyle.muted
+                font.pixelSize: IrisStyle.typeMeta
+            }
             IrisGroupPreview {
                 id: stage
-                anchors.fill: parent
-                anchors.leftMargin: Math.round(hero.width * 0.42)
-                radius: 0
-                border.width: 0
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.top: heroLine.bottom
+                anchors.margins: root.u(12)
+                radius: Math.max(IrisStyle.radiusRow, hero.radius - root.u(12))
                 visible: stage.available
                 standIn: true
-                section: root.host?.searching ? "" : root.section
+                section: root.searching || root.home ? "" : root.section
                 niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
                 niriRevision: IrisNiri.revision
                 group: String(root.host?.leadGroup ?? "")
             }
-            Rectangle {
-                anchors.fill: parent
-                gradient: Gradient {
-                    orientation: Gradient.Horizontal
-                    GradientStop { position: 0.4; color: Qt.rgba(IrisStyle.surfaceOpaque.r, IrisStyle.surfaceOpaque.g, IrisStyle.surfaceOpaque.b, 0.6) }
-                    GradientStop { position: 0.52; color: "transparent" }
-                }
-            }
-            Row {
-                x: root.u(26)
-                y: root.u(22)
-                spacing: root.u(14)
-                Rectangle {
-                    width: root.u(root.windowed ? 44 : 52)
-                    height: width
-                    radius: Math.round(width / 3)
-                    color: root.tint(root.area, 0.18)
-                    border.width: 1
-                    border.color: root.tint(root.area, 0.34)
-                    MaterialSymbol { anchors.centerIn: parent; text: String(root.area.icon ?? "settings"); iconSize: Math.round(parent.width / 2); color: root.area.tint ?? IrisStyle.accent }
-                }
-                Column {
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: root.u(4)
-                    IrisText {
-                        id: heroTitle
-                        width: Math.round(hero.width * 0.42) - parent.x - root.u(26 + 24)
-                        wrapMode: Text.WordWrap
-                        maximumLineCount: 2
-                        fontSizeMode: Text.HorizontalFit
-                        minimumPixelSize: root.u(26)
-                        text: Translation.tr(String(root.area.title ?? ""))
-                        color: IrisStyle.text
-                        font.family: IrisStyle.fontTitle
-                        font.pixelSize: root.u(root.windowed ? 36 : 44)
-                        font.weight: Font.DemiBold
-                        font.letterSpacing: -Math.round(root.u(44) * 0.02)
-                    }
-                    IrisText {
-                        width: heroTitle.width
-                        wrapMode: Text.WordWrap
-                        text: Translation.tr(String(root.area.subtitle ?? ""))
-                        color: IrisStyle.subtext
-                        font.pixelSize: IrisStyle.typeLabel
-                    }
-                }
-            }
         }
-        // What the area holds now, in a few chips, and its notes in red: each lands on its row.
-        Flow {
-            id: chips
-            x: card.inset + root.u(12)
-            y: hero.y + hero.height + root.u(14)
-            width: card.width - 2 * card.inset - root.u(24)
-            spacing: root.u(8)
-            visible: !(root.host?.searching ?? false)
-            Repeater {
-                model: (root.host?.tellingRows(9, "") ?? []).map(spec => ({ spec: spec, text: root.chipOf(spec) })).filter((entry, at, all) => entry.text.length > 0 && all.findIndex(other => other.text === entry.text) === at).slice(0, 5)
-                Chip {
-                    required property var modelData
-                    text: "<font color='" + IrisStyle.text + "'>" + modelData.text + "</font>"
-                    onClicked: root.host.landOn(String(modelData.spec.path))
-                }
-            }
-            Repeater {
-                model: (root.host?.notesHere ?? []).slice(0, 2)
-                Chip {
-                    required property var modelData
-                    warn: true
-                    text: String(modelData.text)
-                    onClicked: root.host.landOn(String(modelData.path))
-                }
-            }
+        Home {
+            visible: root.home
+            height: card.height - y - root.u(root.windowed ? 8 : 34)
+            x: card.inset + root.u(6)
+            y: keys.y + keys.height + root.u(14)
+            width: card.width - 2 * x
+            host: root.host
+            voice: "deck"
         }
         Item {
             id: rowsSlot
+            visible: !root.home
             x: card.inset - root.u(4)
-            y: (chips.visible ? chips.y + chips.height : hero.y + hero.height) + root.u(10)
+            y: root.searching ? keys.y + keys.height + root.u(10) : hero.y + hero.height + root.u(10)
             width: card.width - 2 * card.inset + root.u(8)
-            height: card.height - y - root.u(4) - (hintBar.visible ? hintBar.height + root.u(6) : 0)
+            height: card.height - y - (root.windowed ? root.u(4) : root.u(34)) - (hintBar.visible ? hintBar.height + root.u(6) : 0)
             clip: true
-            // The console focus: the row lifts on a lit plate with the accent's bar at its side; held, arrows flank it.
+            // The console focus: the row lifts on a plate ringed in ink; held, its value moves with the arrows.
             Rectangle {
                 id: ring
                 property bool shown: false
@@ -463,20 +386,19 @@ Item {
                 radius: root.u(16)
                 color: Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, 0.05)
                 border.width: Math.max(2, root.u(2))
-                border.color: IrisStyle.accent
+                border.color: root.engaged ? root.signal : IrisStyle.text
                 Behavior on y { NumberAnimation { duration: IrisStyle.duration(160); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
                 Behavior on height { NumberAnimation { duration: IrisStyle.duration(160); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-                Rectangle { x: -1; y: root.u(12); width: root.u(4); height: parent.height - root.u(24); radius: width / 2; color: IrisStyle.accent }
             }
         }
-        // What the keys do now, said under the rows like a console's button bar: never over a row's text.
+        // What the keys do now, like a console's button bar under the rows.
         Rectangle {
             id: hintBar
             visible: root.driving && ring.shown
             x: card.inset
             width: card.width - 2 * card.inset
             height: root.u(34)
-            y: card.height - card.inset - hintBar.height
+            y: card.height - (root.windowed ? card.inset : root.u(36)) - hintBar.height
             radius: height / 2
             color: IrisStyle.fillQuiet
             Row {
@@ -493,96 +415,112 @@ Item {
                     Row {
                         required property var modelData
                         spacing: root.u(7)
-                        IrisText {
-                            text: parent.modelData[0]
-                            color: IrisStyle.accent
-                            font.family: IrisStyle.fontMono
-                            font.pixelSize: IrisStyle.typeCaption
-                            font.weight: Font.DemiBold
-                        }
-                        IrisText {
-                            text: parent.modelData[1]
-                            color: IrisStyle.subtext
-                            font.family: IrisStyle.fontMono
-                            font.pixelSize: IrisStyle.typeCaption
-                            font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.12)
-                            font.capitalization: Font.AllUppercase
-                        }
+                        IrisText { text: parent.modelData[0]; color: IrisStyle.text; font.family: IrisStyle.fontMono; font.pixelSize: Math.max(10, IrisStyle.typeCaption); font.weight: Font.DemiBold }
+                        IrisText { text: parent.modelData[1]; color: IrisStyle.subtext; font.family: IrisStyle.fontMono; font.pixelSize: Math.max(10, IrisStyle.typeCaption)
+                            font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08); font.capitalization: Font.AllUppercase }
                     }
                 }
             }
         }
     }
 
-    // A chip says a value as you would: "40 px", "Bottom edge", "Hides itself"; a switch that is off says nothing.
-    function chipOf(spec: var): string {
-        const answer = root.host.answerOf(spec)
-        const label = Translation.tr(String(spec.label ?? ""))
-        const words = label.split(" ")
-        if (spec.kind === "range") return answer
-        if (spec.kind === "switch") return answer === Translation.tr("On") && words.length <= 3 ? label : ""
-        if (answer.split(" ").length > 2) return ""
-        // "Tray bubble rests" + "Top right" has no short way to be said: left to its row.
-        if (/\s(opens|rests|sits|stays|follows|shows|hides|starts|moves|lives|appears|closes|keeps|leads|lands|goes)$/i.test(String(spec.label ?? ""))) return ""
-        // A one-word label is the noun itself: "Off" alone says nothing, "Glass off" does.
-        // "Search the web with" + "Google": the value says it.
-        if (/\s(as|at|on|in|to|by|from|with|for|into)$/i.test(label)) return answer
-        if (words.length === 1) {
-            if (answer.toLowerCase().includes(label.toLowerCase())) return answer
-            const plain = [Translation.tr("Off"), Translation.tr("On"), Translation.tr("Auto"), Translation.tr("None")].includes(answer)
-            return plain ? label + " " + answer.toLowerCase() : answer + " " + label.toLowerCase()
+    // ── The dot pager under the card: a dot per area, the open one a bar, a signal dot where an area needs you.
+    MouseArea {
+        id: pager
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: root.windowed ? root.height - root.u(24) : root.cardRect.y + root.cardRect.height - root.u(26)
+        width: pagerRow.implicitWidth
+        height: root.u(14)
+        cursorShape: Qt.PointingHandCursor
+        onWheel: wheel => root.wheel(wheel)
+        onClicked: mouse => {
+            const item = pagerRow.childAt(mouse.x, pagerRow.height / 2)
+            if (item && item.entryId) root.host.selectSection(item.entryId)
         }
-        const noun = words[words.length - 1].toLowerCase()
-        return noun.length > 0 && !answer.toLowerCase().includes(noun) ? answer + " " + noun : answer
+        Row {
+            id: pagerRow
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: root.u(6)
+            Repeater {
+                model: root.sections
+                Item {
+                    id: dot
+                    required property var modelData
+                    required property int index
+                    readonly property string entryId: dot.modelData.id
+                    readonly property bool on: dot.index === root.current
+                    readonly property bool noted: Number(root.noteCounts[dot.modelData.id] ?? 0) > 0
+                    // A cluster starts a little further off.
+                    readonly property bool starts: dot.index > 0 && root.sections[dot.index - 1]?.cluster !== dot.modelData.cluster
+                    width: (dot.starts ? root.u(6) : 0) + (dot.on ? root.u(20) : root.u(6))
+                    height: root.u(14)
+                    Behavior on width { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+                    Rectangle {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: dot.on ? root.u(20) : root.u(6)
+                        height: root.u(6)
+                        radius: height / 2
+                        color: dot.on ? IrisStyle.text : dot.noted ? root.signal : Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, 0.32)
+                        Behavior on width { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+                        Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
+                    }
+                }
+            }
+        }
     }
 
     component RoundKey: MouseArea {
         id: key
         property string glyph
         property string name
-        Layout.preferredWidth: root.u(38)
-        Layout.preferredHeight: root.u(38)
+        width: root.u(36)
+        height: root.u(36)
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
         Accessible.name: key.name
         Rectangle { anchors.fill: parent; radius: height / 2; color: key.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet }
-        MaterialSymbol { anchors.centerIn: parent; text: key.glyph; iconSize: root.u(19); color: IrisStyle.subtext }
+        MaterialSymbol { anchors.centerIn: parent; text: key.glyph; iconSize: root.u(18); color: IrisStyle.text }
     }
-
-    component Chip: MouseArea {
-        id: chip
-        property string text
-        property bool warn: false
-        width: Math.min(chipRow.implicitWidth + root.u(24), chips.width)
-        height: root.u(30)
+    // The area before or after, named in the Label voice with its arrow.
+    component StepKey: MouseArea {
+        id: stepKey
+        property int step
+        readonly property var entry: root.neighbour(stepKey.step)
+        Layout.preferredHeight: root.u(34)
+        enabled: stepKey.entry !== null
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        Rectangle {
-            anchors.fill: parent
-            radius: height / 2
-            color: chip.warn ? Qt.rgba(IrisStyle.danger.r, IrisStyle.danger.g, IrisStyle.danger.b, chip.containsMouse ? 0.24 : 0.14)
-                : chip.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet
-        }
+        Accessible.role: Accessible.Button
+        Accessible.name: Translation.tr(String(stepKey.entry?.title ?? ""))
+        onClicked: root.host.stepSection(stepKey.step)
+        Rectangle { anchors.fill: parent; radius: height / 2; color: stepKey.containsMouse ? IrisStyle.fillHover : "transparent" }
         Row {
-            id: chipRow
-            anchors.centerIn: parent
-            spacing: root.u(6)
-            MaterialSymbol { visible: chip.warn; anchors.verticalCenter: parent.verticalCenter; text: "error"; iconSize: root.u(16); color: IrisStyle.danger }
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: stepKey.step < 0 ? parent.left : undefined
+            anchors.right: stepKey.step > 0 ? parent.right : undefined
+            anchors.leftMargin: root.u(12)
+            anchors.rightMargin: root.u(12)
+            layoutDirection: stepKey.step < 0 ? Qt.LeftToRight : Qt.RightToLeft
+            spacing: root.u(8)
+            MaterialSymbol { anchors.verticalCenter: parent.verticalCenter; text: stepKey.step < 0 ? "arrow_back" : "arrow_forward"; iconSize: root.u(15); color: IrisStyle.text }
             IrisText {
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, chips.width - root.u(48))
+                width: Math.min(implicitWidth, stepKey.width - root.u(48))
                 elide: Text.ElideRight
-                textFormat: Text.StyledText
-                text: chip.text
-                color: chip.warn ? IrisStyle.text : IrisStyle.subtext
-                font.pixelSize: IrisStyle.typeMeta
+                text: Translation.tr(String(stepKey.entry?.title ?? ""))
+                color: IrisStyle.text
+                font.family: IrisStyle.fontMono
+                font.pixelSize: Math.max(10, IrisStyle.typeCaption)
+                font.weight: Font.Medium
+                font.capitalization: Font.AllUppercase
+                font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
             }
         }
     }
 
-    // A neighbour over the desktop: its mark, what it is, its stage and its values; the far ones only their mark,
-    // name and notes, set in the part of the card the screen shows.
+    // A neighbour over the desktop: its Dot name, what it is and its stage, standing back.
     component SideCard: MouseArea {
         id: side
         property int step
@@ -593,108 +531,53 @@ Item {
         readonly property int notes: Number(root.noteCounts[side.entry?.id] ?? 0)
         x: side.box.x + root.shift
         y: side.box.y
-        clip: true
-        onWheel: wheel => root.wheel(wheel)
         width: side.box.width
         height: side.box.height
+        clip: true
+        opacity: side.near ? 0.78 : 0.5
+        onWheel: wheel => root.wheel(wheel)
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
         Accessible.name: Translation.tr(String(side.entry?.title ?? ""))
         onClicked: root.host.selectSection(side.entry.id)
-        // Taller than the card, its body fades out above the footer; the rest is one click (or a key) away.
-        Item {
-            id: sideBody
-            width: parent.width
-            height: parent.height - root.u(16)
-            clip: true
-            readonly property bool spills: sideColumn.height > sideBody.height - sideColumn.y
-            layer.enabled: sideBody.spills
-            layer.effect: MultiEffect {
-                maskEnabled: true
-                maskSource: sideFade
-                maskThresholdMin: 0.5
-                maskSpreadAtMin: 1
-            }
         Column {
-            id: sideColumn
-            readonly property real pad: root.u(side.near ? 24 : 16)
-            x: (side.box.x < 0 ? -side.box.x : 0) + pad
-            y: root.u(26)
-            width: Math.max(0, side.shown - 2 * pad)
-            spacing: root.u(side.near ? 8 : 10)
-            Rectangle {
-                width: root.u(46)
-                height: width
-                radius: root.u(15)
-                color: side.notes > 0 && !side.near ? Qt.rgba(IrisStyle.danger.r, IrisStyle.danger.g, IrisStyle.danger.b, 0.16) : root.tint(side.entry, 0.16)
-                MaterialSymbol { anchors.centerIn: parent; text: String(side.entry?.icon ?? ""); iconSize: root.u(22)
-                    color: side.notes > 0 && !side.near ? IrisStyle.danger : side.entry?.tint ?? IrisStyle.accent }
+            x: (side.box.x < 0 ? -side.box.x : 0) + root.u(22)
+            y: root.u(24)
+            width: Math.max(0, side.shown - root.u(44))
+            spacing: root.u(10)
+            Row {
+                spacing: root.u(8)
+                DotTitle {
+                    text: Translation.tr(String(side.entry?.title ?? ""))
+                    size: root.u(side.near ? 28 : 22)
+                    fit: side.shown - root.u(70)
+                    color: IrisStyle.subtext
+                }
+                Rectangle { visible: side.notes > 0; anchors.top: parent.top; width: root.u(6); height: width; radius: width / 2; color: root.signal }
             }
             IrisText {
-                width: parent.width
-                elide: Text.ElideRight
-                text: Translation.tr(String(side.entry?.title ?? ""))
-                color: IrisStyle.text
-                font.family: IrisStyle.fontTitle
-                font.pixelSize: root.u(side.near ? 26 : 20)
-                font.weight: Font.DemiBold
-            }
-            IrisText {
+                visible: side.near
                 width: parent.width
                 wrapMode: Text.WordWrap
-                visible: side.near || side.notes > 0
-                text: side.near ? Translation.tr(String(side.entry?.subtitle ?? ""))
-                    : side.notes === 1 ? Translation.tr("1 note") : Translation.tr("%1 notes").arg(side.notes)
-                color: side.near ? IrisStyle.muted : IrisStyle.danger
+                maximumLineCount: 2
+                elide: Text.ElideRight
+                text: Translation.tr(String(side.entry?.subtitle ?? ""))
+                color: IrisStyle.muted
                 font.pixelSize: IrisStyle.typeMeta
             }
             IrisGroupPreview {
-                id: neighbourStage
-                visible: side.near && neighbourStage.available
+                visible: side.near && available
                 width: parent.width
-                height: root.u(190)
+                height: root.u(200)
                 radius: root.u(18)
                 standIn: true
-                section: side.near ? String(side.entry?.id ?? "") : ""
+                section: side.near && side.entry?.id !== "home" ? String(side.entry?.id ?? "") : ""
                 playing: false
-            }
-            Repeater {
-                model: {
-                    const rows = side.near && side.entry ? root.host.tellingRows(5, side.entry.id) : []
-                    const count = {}
-                    for (const spec of rows) count[spec.label] = (count[spec.label] ?? 0) + 1
-                    // Two groups' rows of one name (Side Panels' "Alignment"s) are told apart by their group.
-                    return rows.map(spec => ({ spec: spec, label: count[spec.label] > 1 && spec.group
-                        ? Translation.tr(String(spec.group)) + " · " + Translation.tr(String(spec.label)) : Translation.tr(String(spec.label)) }))
-                }
-                Item {
-                    required property var modelData
-                    width: parent?.width ?? 0
-                    height: root.u(42)
-                    IrisText { anchors.verticalCenter: parent.verticalCenter; width: parent.width * 0.6; elide: Text.ElideRight
-                        text: parent.modelData.label; color: IrisStyle.subtext; font.pixelSize: IrisStyle.typeLabel }
-                    IrisText { anchors.verticalCenter: parent.verticalCenter; anchors.right: parent.right; width: Math.min(implicitWidth, parent.width * 0.38); elide: Text.ElideRight
-                        text: root.host.answerOf(parent.modelData.spec); color: IrisStyle.text; font.pixelSize: IrisStyle.typeLabel; font.weight: Font.Medium }
-                    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: IrisStyle.hairline }
-                }
-            }
-        }
-        }
-        Rectangle {
-            id: sideFade
-            visible: false
-            layer.enabled: true
-            width: sideBody.width
-            height: sideBody.height
-            gradient: Gradient {
-                GradientStop { position: 0; color: "white" }
-                GradientStop { position: Math.max(0, 1 - root.u(72) / Math.max(1, sideBody.height)); color: "white" }
-                GradientStop { position: 1; color: "transparent" }
             }
         }
     }
 
-    // A neighbour in a window: a spine with its mark, a red dot for notes, its name read upwards.
+    // A neighbour in a window: a spine with its glyph, a signal dot for notes, its name read upwards.
     component Spine: MouseArea {
         id: spine
         property int step
@@ -702,7 +585,7 @@ Item {
         readonly property bool near: Math.abs(spine.step) === 1
         visible: spine.entry !== null
         Layout.fillHeight: true
-        Layout.preferredWidth: root.u(spine.near ? 58 : 46)
+        Layout.preferredWidth: root.u(spine.near ? 54 : 44)
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
         Accessible.name: Translation.tr(String(spine.entry?.title ?? ""))
@@ -711,7 +594,7 @@ Item {
         Rectangle {
             anchors.fill: parent
             radius: root.u(20)
-            color: spine.near ? IrisStyle.fillQuiet : Qt.rgba(0, 0, 0, IrisStyle.light ? 0.03 : 0.15) // iris-literal: a far spine sits a step under the card
+            color: spine.near ? IrisStyle.fillQuiet : "transparent"
             border.width: 1
             border.color: IrisStyle.hairline
         }
@@ -719,8 +602,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: root.u(16)
             spacing: root.u(14)
-            MaterialSymbol { anchors.horizontalCenter: parent.horizontalCenter; text: String(spine.entry?.icon ?? ""); iconSize: root.u(20); color: spine.near ? IrisStyle.subtext : IrisStyle.textTertiary }
-            Rectangle { visible: Number(root.noteCounts[spine.entry?.id] ?? 0) > 0; anchors.horizontalCenter: parent.horizontalCenter; width: root.u(7); height: width; radius: width / 2; color: IrisStyle.danger }
+            MaterialSymbol { anchors.horizontalCenter: parent.horizontalCenter; text: String(spine.entry?.icon ?? ""); iconSize: root.u(19); color: spine.near ? IrisStyle.text : IrisStyle.muted }
+            Rectangle { visible: Number(root.noteCounts[spine.entry?.id] ?? 0) > 0; anchors.horizontalCenter: parent.horizontalCenter; width: root.u(6); height: width; radius: width / 2; color: root.signal }
             Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: spineName.implicitHeight
@@ -731,9 +614,11 @@ Item {
                     rotation: -90
                     text: Translation.tr(String(spine.entry?.title ?? ""))
                     color: spine.near ? IrisStyle.text : IrisStyle.subtext
-                    font.family: IrisStyle.fontTitle
-                    font.pixelSize: root.u(spine.near ? 17 : 15)
-                    font.weight: Font.DemiBold
+                    font.family: IrisStyle.fontMono
+                    font.pixelSize: Math.max(10, IrisStyle.typeCaption)
+                    font.weight: Font.Medium
+                    font.capitalization: Font.AllUppercase
+                    font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
                 }
             }
         }

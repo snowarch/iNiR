@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.modules.common
 import qs.services
 import qs.modules.iris.style
@@ -59,6 +60,45 @@ QtObject {
         return Config.getNestedValue(spec.path, spec.fallback)
     }
     function commit(spec: var, next: var): void {
+        const before = root.currentValue(spec)
+        root.write(spec, next)
+        root.remember(spec, before, next)
+    }
+    // Home's "Recently changed": the last rows touched with the value each had before, so touching it again undoes.
+    // A row brought back to where it was leaves the list. Kept in the state dir, never in config.json.
+    property var recent: []
+    readonly property int recentMost: 12
+    function recentKey(spec: var): string { return String(spec.section ?? spec.target ?? "") + "|" + String(spec.path ?? "") + "|" + String(spec.label ?? "") }
+    function remember(spec: var, before: var, next: var): void {
+        if (!spec.path || spec.mirror || ["action", "list", "widgets", "pieces"].includes(String(spec.kind))) return
+        const key = root.recentKey(spec)
+        const plain = value => value === undefined ? null : JSON.parse(JSON.stringify(value))
+        const kept = root.recent.find(entry => entry.key === key)
+        const was = kept ? kept.before : plain(before)
+        const rest = root.recent.filter(entry => entry.key !== key)
+        root.recent = root.same(was, next) ? rest
+            : [{ key: key, before: was, at: Date.now() }].concat(rest).slice(0, root.recentMost)
+        recentFile.setText(JSON.stringify(root.recent))
+    }
+    function forget(key: string): void {
+        root.recent = root.recent.filter(entry => entry.key !== key)
+        recentFile.setText(JSON.stringify(root.recent))
+    }
+    // The rows behind the list, newest first; a row gone from this version or hidden now drops out.
+    function recentRows(): var {
+        const out = []
+        for (const entry of root.recent) {
+            const spec = root.settings.find(candidate => root.recentKey(candidate) === entry.key)
+            if (spec && root.shown(spec)) out.push({ spec: spec, before: entry.before, at: Number(entry.at ?? 0), key: entry.key })
+        }
+        return out
+    }
+    readonly property FileView recentFile: FileView {
+        path: Directories.statePath + "/user/iris-settings-recent.json"
+        printErrors: false
+        onLoaded: { try { const list = JSON.parse(text()); if (Array.isArray(list)) root.recent = list } catch (e) {} }
+    }
+    function write(spec: var, next: var): void {
         // A family switch goes through the shell's transition, never a bare config write.
         if (spec.path === "panelFamily") Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "panelFamily", "set", String(next)])
         else if (spec.widget) IrisWidgetRows.write(spec, next)
@@ -1243,51 +1283,51 @@ QtObject {
         { label: "Island", value: "island" }, { label: "Workspaces", value: "workspaces" },
         { label: "Current window", value: "window" }, { label: "Time", value: "time" }
     ].concat(IrisPieces.extras.filter(piece => piece.id !== "workspaces").map(piece => ({ label: piece.label, value: piece.id })))
-    // Every area, in the sidebar's order (the categories' below). `tip` is the one line a section opens on.
+    // Every area, in the order people reach for them: Look, Desktop, Tools, System, More (the clusters). `tip` is the one line a section opens on.
     readonly property var sections: [
-        { id: "general", cluster: 0, title: "General", subtitle: "Time, language and how iRiS behaves", icon: "settings", get tint() { return IrisStyle.identity.gray }, tip: "Settings that shape the whole shell, whichever surface shows them." },
         { id: "appearance", cluster: 0, title: "Style", subtitle: "Look, material, shape and type", icon: "style", get tint() { return IrisStyle.identity.purple }, tip: "Customize edits the same values live, on top of your desktop." },
         { id: "colour", cluster: 0, title: "Colour", subtitle: "Light or dark, accent, highlight and your apps", icon: "palette", get tint() { return IrisStyle.identity.pink }, tip: "Colour can come from your wallpaper, from a theme, or be one you pick." },
         { id: "wallpaper", cluster: 0, title: "Wallpaper", subtitle: "Shuffle, live wallpapers, the gallery and the overview", icon: "wallpaper", get tint() { return IrisStyle.identity.teal }, tip: "Next wallpaper in the desktop menu changes it once; Shuffle keeps changing it." },
         { id: "motion", cluster: 0, title: "Motion", subtitle: "How every shape grows, moves and settles", icon: "animation", get tint() { return IrisStyle.identity.indigo }, tip: "Shorter durations feel snappier; the curve stays the same." },
         { id: "bar", cluster: 1, title: "Island", subtitle: "Composition, size and how the Island responds", icon: "pill", get tint() { return IrisStyle.identity.blue }, tip: "Rest on the Island to peek, click to keep it, scroll for volume." },
-        { id: "bubbles", cluster: 1, title: "Bubbles & Cards", subtitle: "Pieces you carry and the cards they grow", icon: "bubble_chart", get tint() { return IrisStyle.identity.sky }, tip: "Hold a bubble to carry it; drop it beside the Island to bring it back." },
         { id: "dock", cluster: 1, title: "Dock", subtitle: "Visibility, material and app icons", icon: "dock_to_bottom", get tint() { return IrisStyle.identity.indigo }, tip: "Slide an icon along the Dock to move it. Right-click it for its windows or to float it as a bubble; middle-click opens a new one." },
+        { id: "bubbles", cluster: 1, title: "Bubbles & Cards", subtitle: "Pieces you carry and the cards they grow", icon: "bubble_chart", get tint() { return IrisStyle.identity.sky }, tip: "Hold a bubble to carry it; drop it beside the Island to bring it back." },
         { id: "desktop", cluster: 1, title: "Desktop", subtitle: "Widgets and the desktop menu", icon: "widgets", get tint() { return IrisStyle.identity.yellow }, tip: "Right-click the desktop to edit widgets." },
         { id: "widgets", cluster: 1, title: "Widgets", subtitle: "Every widget's own options, and how they arrange", icon: "dashboard_customize", get tint() { return IrisStyle.identity.sky }, tip: "Carry a widget near another and it lines up; hold Alt to place it freely." },
         { id: "windows", cluster: 1, title: "Windows", subtitle: "Gaps, borders, corners and how Niri moves them", icon: "select_window", get tint() { return IrisStyle.identity.orange }, tip: "Niri draws these; they change right away and live in your Niri config." },
         { id: "sidebars", cluster: 1, title: "Side Panels", subtitle: "Focus and Today, arranged around your workflow", icon: "dock_to_right", get tint() { return IrisStyle.identity.green }, tip: "Ctrl+E customizes a panel; Keep open makes room beside windows." },
-        { id: "controlCenter", cluster: 2, title: "Control Center", subtitle: "What it carries and how it looks", icon: "toggle_on", get tint() { return IrisStyle.identity.gray }, tip: "Arrange it in place from the button beside the lock in its header." },
+        { id: "controlCenter", cluster: 1, title: "Control Center", subtitle: "What it carries and how it looks", icon: "toggle_on", get tint() { return IrisStyle.identity.gray }, tip: "Arrange it in place from the button beside the lock in its header." },
         { id: "spotlight", cluster: 2, title: "Spotlight", subtitle: "Search apps, files, the clipboard and more", icon: "search", get tint() { return IrisStyle.identity.blue }, tip: "Prefixes: ; clipboard, = calculator, / actions." },
         { id: "orbit", cluster: 2, title: "Orbit", subtitle: "Every workspace and window, and the way to any of them", icon: "workspaces", get tint() { return IrisStyle.identity.indigo }, tip: "Type to light up where a window is; ↵ takes you to it. Bind inir orbit toggle." },
         { id: "capture", cluster: 2, title: "Screenshots & Recording", subtitle: "Snip, annotate, read Japanese and record", icon: "screenshot_region", get tint() { return IrisStyle.identity.orange }, tip: "Super+Shift+S snips; the toolbar switches to text, search or recording." },
-        { id: "notifications", cluster: 2, title: "Notifications", subtitle: "Banners, quiet hours and Do Not Disturb", icon: "notifications", get tint() { return IrisStyle.identity.red }, tip: "Hover a banner to keep it; swipe it away to dismiss." },
-        { id: "sound", cluster: 2, title: "Sound & Feedback", subtitle: "Volume, alert sounds and what the OSD shows", icon: "volume_up", get tint() { return IrisStyle.identity.pink }, tip: "Scroll on the Island for volume; Ctrl for the microphone." },
-        { id: "player", cluster: 5, title: "Now Playing", subtitle: "Music in the Island, on the lock screen and on the frame", icon: "music_note", get tint() { return IrisStyle.identity.pink }, tip: "Middle-click the Island to play or pause." },
-        { id: "anime", cluster: 5, title: "Anime", subtitle: "Airing, Continue and the anime colour layer", icon: "live_tv", get tint() { return IrisStyle.identity.purple }, tip: "Airing tracks what is coming; Continue resumes what you were watching." },
+        { id: "player", cluster: 2, title: "Now Playing", subtitle: "Music in the Island, on the lock screen and on the frame", icon: "music_note", get tint() { return IrisStyle.identity.pink }, tip: "Middle-click the Island to play or pause." },
+        { id: "anime", cluster: 2, title: "Anime", subtitle: "Airing, Continue and the anime colour layer", icon: "live_tv", get tint() { return IrisStyle.identity.purple }, tip: "Airing tracks what is coming; Continue resumes what you were watching." },
+        { id: "general", cluster: 3, title: "General", subtitle: "Time, language and how iRiS behaves", icon: "settings", get tint() { return IrisStyle.identity.gray }, tip: "Settings that shape the whole shell, whichever surface shows them." },
+        { id: "notifications", cluster: 3, title: "Notifications", subtitle: "Banners, quiet hours and Do Not Disturb", icon: "notifications", get tint() { return IrisStyle.identity.red }, tip: "Hover a banner to keep it; swipe it away to dismiss." },
+        { id: "sound", cluster: 3, title: "Sound & Feedback", subtitle: "Volume, alert sounds and what the OSD shows", icon: "volume_up", get tint() { return IrisStyle.identity.pink }, tip: "Scroll on the Island for volume; Ctrl for the microphone." },
         { id: "display", cluster: 3, title: "Display", subtitle: "Resolution, scale, night light and bright flashes", icon: "brightness_6", get tint() { return IrisStyle.identity.blue }, tip: "Shift and scroll on the Island for brightness." },
         { id: "keyboard", cluster: 3, title: "Keyboard & Mouse", subtitle: "Layouts, repeat, pointer speed and cursor", icon: "keyboard", get tint() { return IrisStyle.identity.gray }, tip: "Your shortcuts are in General, Keyboard shortcuts." },
         { id: "battery", cluster: 3, title: "Battery", subtitle: "Warnings, suspend and charge limit", icon: "battery_full", get tint() { return IrisStyle.identity.green }, tip: "Only matters on a machine with a battery." },
         { id: "gaming", cluster: 3, title: "Gaming & Fullscreen", subtitle: "What iRiS steps back from while you play", icon: "sports_esports", get tint() { return IrisStyle.identity.purple }, tip: "Game mode turns on by itself for fullscreen games." },
-        { id: "lock", cluster: 4, title: "Lock Screen", subtitle: "What it shows, when it locks and how it reads", icon: "lock", get tint() { return IrisStyle.identity.gray }, tip: "Rehearse it: the real surface, editable, with nothing to unlock." },
-        { id: "login", cluster: 4, title: "Login Screen", subtitle: "Where you sign in after starting the computer", icon: "login", get tint() { return IrisStyle.identity.indigo }, tip: "A change shows the next time you sign in." },
-        { id: "sources", cluster: 6, title: "Sources", subtitle: "Where the Island gets what it shows", icon: "cloud_sync", get tint() { return IrisStyle.identity.yellow }, tip: "A setting belongs here when an iRiS surface puts its data on screen." },
-        { id: "system", cluster: 6, title: "Community Hub", subtitle: "Widgets, themes and web apps from other people", icon: "storefront", get tint() { return IrisStyle.identity.pink }, tip: "What people who use iNiR share, reviewed before it is published." }
+        { id: "lock", cluster: 3, title: "Lock Screen", subtitle: "What it shows, when it locks and how it reads", icon: "lock", get tint() { return IrisStyle.identity.gray }, tip: "Rehearse it: the real surface, editable, with nothing to unlock." },
+        { id: "login", cluster: 3, title: "Login Screen", subtitle: "Where you sign in after starting the computer", icon: "login", get tint() { return IrisStyle.identity.indigo }, tip: "A change shows the next time you sign in." },
+        { id: "sources", cluster: 4, title: "Sources", subtitle: "Where the Island gets what it shows", icon: "cloud_sync", get tint() { return IrisStyle.identity.yellow }, tip: "A setting belongs here when an iRiS surface puts its data on screen." },
+        { id: "system", cluster: 4, title: "Community Hub", subtitle: "Widgets, themes and web apps from other people", icon: "storefront", get tint() { return IrisStyle.identity.pink }, tip: "What people who use iNiR share, reviewed before it is published." }
     ]
     // The sidebar's groups (DI49g, 2026-10-21): each names the areas under it, which the sidebar lists directly; a
     // category's id still opens its first area (`inir iris settings look`).
     readonly property var categories: [
-        { id: "general", cluster: 0, title: "General", icon: "settings", get tint() { return IrisStyle.identity.gray }, sections: ["general"] },
         { id: "look", cluster: 0, title: "Appearance", icon: "style", get tint() { return IrisStyle.identity.purple }, sections: ["appearance", "colour", "wallpaper", "motion"] },
-        { id: "islandDock", cluster: 1, title: "Island & Dock", icon: "pill", get tint() { return IrisStyle.identity.blue }, sections: ["bar", "bubbles", "dock"] },
+        { id: "islandDock", cluster: 1, title: "Island & Dock", icon: "pill", get tint() { return IrisStyle.identity.blue }, sections: ["bar", "dock", "bubbles"] },
         { id: "desk", cluster: 1, title: "Desktop & Widgets", icon: "widgets", get tint() { return IrisStyle.identity.yellow }, sections: ["desktop", "widgets"] },
         { id: "panels", cluster: 1, title: "Windows & Panels", icon: "select_window", get tint() { return IrisStyle.identity.orange }, sections: ["windows", "sidebars", "controlCenter"] },
         { id: "tools", cluster: 2, title: "Spotlight & Tools", icon: "search", get tint() { return IrisStyle.identity.indigo }, sections: ["spotlight", "orbit", "capture"] },
-        { id: "notifications", cluster: 2, title: "Notifications", icon: "notifications", get tint() { return IrisStyle.identity.red }, sections: ["notifications"] },
-        { id: "media", cluster: 2, title: "Sound & Media", icon: "volume_up", get tint() { return IrisStyle.identity.pink }, sections: ["sound", "player", "anime"] },
+        { id: "media", cluster: 2, title: "Music & Anime", icon: "music_note", get tint() { return IrisStyle.identity.pink }, sections: ["player", "anime"] },
+        { id: "general", cluster: 3, title: "General", icon: "settings", get tint() { return IrisStyle.identity.gray }, sections: ["general"] },
+        { id: "notifications", cluster: 3, title: "Notifications & Sound", icon: "notifications", get tint() { return IrisStyle.identity.red }, sections: ["notifications", "sound"] },
         { id: "devices", cluster: 3, title: "Display & Input", icon: "monitor", get tint() { return IrisStyle.identity.teal }, sections: ["display", "keyboard", "battery", "gaming"] },
         { id: "lockLogin", cluster: 3, title: "Lock & Login", icon: "lock", get tint() { return IrisStyle.identity.gray }, sections: ["lock", "login"] },
-        { id: "foot", cluster: 6, title: "", icon: "", get tint() { return IrisStyle.identity.gray }, sections: ["sources", "system"], foot: true }
+        { id: "foot", cluster: 4, title: "", icon: "", get tint() { return IrisStyle.identity.gray }, sections: ["sources", "system"], foot: true }
     ]
     function categoryOf(sectionId: string): var {
         return root.categories.find(category => category.sections.includes(sectionId)) ?? root.categories[0]

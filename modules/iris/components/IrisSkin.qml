@@ -12,8 +12,8 @@ Loader {
     property bool wanted: true
     // A Settings layout (Folio, Console) voices its rows' controls; only the rows it hosts pass it, the shell never does.
     property string voice: ""
-    readonly property var voiced: ({ folio: ["switch", "segmented", "scrubber", "groupHeader"],
-        deck: ["switch", "segmented", "scrubber", "groupHeader"], console: ["switch", "segmented", "scrubber", "groupHeader"] })
+    // One set of controls everywhere (DESIGN S4): a layout voices only its group heads.
+    readonly property var voiced: ({ folio: ["groupHeader"], deck: ["groupHeader"], console: ["groupHeader"] })
     readonly property string voiceUrl: (root.voiced[root.voice] ?? []).includes(root.part)
         ? Qt.resolvedUrl("../settings/layouts/" + root.voice + "/" + root.part.charAt(0).toUpperCase() + root.part.slice(1) + ".qml") : ""
     // What the owner draws with when the Design has no anatomy of its own for the part (Settings' layouts).

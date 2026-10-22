@@ -46,11 +46,17 @@ Item {
         return screen ? screen.height / Math.max(1, screen.width) : 0.5625
     }
     // A section about hardware this machine lacks is not offered (Battery on a desktop); `inir battery simulate` brings it back.
-    readonly property var sections: IrisOptions.sections.filter(section => section.id !== "battery" || Battery.available)
+    readonly property var sections: (root.homed ? [root.homeEntry] : []).concat(IrisOptions.sections.filter(section => section.id !== "battery" || Battery.available))
+    // Home leads every layout: what people change every day, what needs them, what they changed last. The engine's own
+    // page (a Design's, or a window too narrow for a layout) has no Home and opens on General.
+    readonly property bool homed: root.layout.length > 0
+    readonly property var homeEntry: ({ id: "home", cluster: -1, title: "Home", subtitle: "What you change every day", icon: "home", get tint() { return IrisStyle.identity.gray } })
+    onHomedChanged: if (!root.homed && root.section === "home") root.section = "general"
+    onSceneFitsChanged: if (!root.sceneFits && root.section === "home") root.section = "general"
     // Sources and the Community Hub sit in a footer under the list, always in view.
-    readonly property int footerCluster: 6
+    readonly property int footerCluster: 4
     readonly property var specifications: IrisOptions.settings
-    readonly property var currentSection: IrisOptions.sectionById(root.section)
+    readonly property var currentSection: root.section === "home" ? root.homeEntry : IrisOptions.sectionById(root.section)
     // Every area is a row of the sidebar (DI49g); clusters part by air, no captions.
     readonly property var sideSections: {
         const out = []
@@ -94,7 +100,7 @@ Item {
         return { x: left, y: top, width: Math.max(0, root.width - left - right), height: Math.max(0, root.height - top - bottom) }
     }
     // The clusters the areas are kept in, named for a layout that prints them (Folio's ruler, Console's grid).
-    readonly property var clusterNames: ["Look", "Desktop", "Tools", "Devices", "Security", "Media", "Sources"]
+    readonly property var clusterNames: ["Look", "Desktop", "Tools", "System", "More"]
     // Every area's notes (IrisOptions.notesBySection), taken when Settings has opened and after each config change.
     property var notes: ({})
     readonly property var noteCounts: { const out = {}; for (const id in root.notes) out[id] = root.notes[id].length; return out }
@@ -699,7 +705,12 @@ Item {
         // setting "general" on the way to the asked section built General's page on each request.
         const own = root.pageIndexOf(key)
         let section = own >= 0 ? String(root.ownPages.concat(root.morePages).find(entry => entry.key === key)?.home ?? "system")
-            : "general"
+            : root.homed ? "home" : "general"
+        // An area asked for by the name it shows ("style" is Style, "screenshots" Screenshots & Recording).
+        const asked0 = root.requestedSection.toLowerCase()
+        const titled = asked0.length > 0 && !root.sections.some(s => s.id === root.requestedSection)
+            ? root.sections.find(s => [String(s.title), Translation.tr(String(s.title))].some(t => t.toLowerCase() === asked0 || t.toLowerCase().split(/\s+/)[0] === asked0)) : null
+        if (titled) root.requestedSection = titled.id
         if (own < 0 && root.sections.some(s => s.id === root.requestedSection)) section = root.requestedSection
         // A place asked for by name is where you want to be, not a filter over it.
         if (searchField.text.length > 0) searchField.text = ""
