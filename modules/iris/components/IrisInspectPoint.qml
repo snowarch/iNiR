@@ -3,11 +3,11 @@ import qs
 
 // Mod+Alt+click (a Niri bind: a layer surface never hears Alt while an app holds the keyboard) asks the shell what
 // is under the pointer; only the surface the pointer is on answers, with the piece there.
-Item {
+// It reads the surface's own HoverHandler: a full-window hover item stacked over the chassis took the pointer from
+// every edge strip, and no auto-hidden surface came back.
+QtObject {
     id: root
-    anchors.fill: parent
-    // Over everything in its window, so it hears the pointer wherever a piece takes it.
-    z: 100000
+    required property HoverHandler hover
     // (x, y) in this item → { id, x, y, width, height } in screen space, or null.
     property var resolve: null
     // The desktop answers last, when nothing on it did.
@@ -23,14 +23,13 @@ Item {
         GlobalStates.irisEdit = true
     }
     function answer(): void {
-        if (!hover.hovered || GlobalStates.irisInspectClaimed === GlobalStates.irisInspectRequest) return
-        const hit = root.resolve ? root.resolve(hover.point.position.x, hover.point.position.y) : null
+        if (!root.hover.hovered || GlobalStates.irisInspectClaimed === GlobalStates.irisInspectRequest) return
+        const hit = root.resolve ? root.resolve(root.hover.point.position.x, root.hover.point.position.y) : null
         if (hit) root.inspect(hit)
     }
-    HoverHandler { id: hover }
-    Timer { id: late; interval: 60; onTriggered: root.answer() }
-    Connections {
+    property Timer late: Timer { interval: 60; onTriggered: root.answer() }
+    property Connections request: Connections {
         target: GlobalStates
-        function onIrisInspectRequestChanged(): void { if (root.fallback) late.restart(); else root.answer() }
+        function onIrisInspectRequestChanged(): void { if (root.fallback) root.late.restart(); else root.answer() }
     }
 }

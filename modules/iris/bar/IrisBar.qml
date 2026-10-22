@@ -1038,6 +1038,7 @@ Scope {
                 }
 
                 IrisParts.IrisInspectPoint {
+                    hover: canvasHover
                     readonly property var aliases: [["control", "controlCenter"], ["banner", "notifications"], ["spotlight", "spotlight"],
                         ["orbit", "orbit"], ["place", "sidebars"]]
                     resolve: (x, y) => {
