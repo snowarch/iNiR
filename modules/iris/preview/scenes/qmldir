@@ -35,3 +35,13 @@ TypographyScene 1.0 TypographyScene.qml
 WidgetsScene 1.0 WidgetsScene.qml
 WindowsScene 1.0 WindowsScene.qml
 OrbitScene 1.0 OrbitScene.qml
+GeneralScene 1.0 GeneralScene.qml
+CaptureScene 1.0 CaptureScene.qml
+SoundScene 1.0 SoundScene.qml
+DisplayScene 1.0 DisplayScene.qml
+KeyboardScene 1.0 KeyboardScene.qml
+BatteryScene 1.0 BatteryScene.qml
+GamingScene 1.0 GamingScene.qml
+AnimeScene 1.0 AnimeScene.qml
+SourcesScene 1.0 SourcesScene.qml
+HubScene 1.0 HubScene.qml

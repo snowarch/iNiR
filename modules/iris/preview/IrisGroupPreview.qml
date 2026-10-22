@@ -38,8 +38,7 @@ ClippingRectangle {
     // A layout that always shows a stage (Folio's plate, Deck's hero) asks for a neighbour's scene where its area has none.
     property bool standIn: false
     readonly property string scene: root.sceneFor(root.section, root.group)
-        || (root.standIn && root.group.length === 0 ? (({ general: "fusion", capture: "windows", sound: "feedback", anime: "player", display: "frame",
-            keyboard: "spotlight", battery: "controlCenter", gaming: "windows", sources: "gallery", system: "settings" })[root.section] ?? "") : "")
+        || (root.standIn ? root.sceneFor(root.section, "") : "")
     readonly property bool available: (Config.options?.iris?.appearance?.previews ?? true) && root.scene.length > 0
     readonly property real wantedHeight: Math.round(Math.min(420 * root.d, Math.max(260 * root.d, Number(root.sceneItem?.naturalHeight ?? 0))))
     // Another group's scene takes the last one's place (DI48-R2): the old one leaves in the first 40 % (fading as it
@@ -94,7 +93,8 @@ ClippingRectangle {
         if (group.length === 0)
             return ({ dock: "dock", player: "player", desktop: "widgets", widgets: "widgets", sidebars: "panels", controlCenter: "controlCenter", spotlight: "spotlight", bubbles: "bubbles",
                 bar: "islandEdge", appearance: "fusion", colour: "palette", wallpaper: "gallery", login: "login", motion: "motion", lock: "lock", notifications: "feedback",
-                windows: "windows", orbit: "orbit" })[section] ?? ""
+                windows: "windows", orbit: "orbit", general: "general", capture: "capture", sound: "sound", display: "display",
+                keyboard: "keyboard", battery: "battery", gaming: "gaming", anime: "anime", sources: "sources", system: "hub" })[section] ?? ""
         const key = section + "/" + group
         return ({
             "bar/Visibility": "islandReserve", "bar/Interaction": "islandInteraction",
@@ -136,7 +136,9 @@ ClippingRectangle {
                 light: lightScene, palette: paletteScene, fusion: fusionScene, shapes: shapesScene, glass: glassScene,
                 islandInteraction: islandInteractionScene, islandPage: islandPageScene, bubbles: bubblesScene,
                 highlight: highlightScene, login: loginScene, material: materialScene, surfaces: surfacesScene,
-                windows: windowsScene, orbit: orbitScene
+                windows: windowsScene, orbit: orbitScene, general: generalScene, capture: captureScene, sound: soundScene,
+                display: displayScene, keyboard: keyboardScene, battery: batteryScene, gaming: gamingScene, anime: animeScene,
+                sources: sourcesScene, hub: hubScene
         })[name] ?? null
     }
     radius: IrisStyle.radiusTile
@@ -239,4 +241,14 @@ ClippingRectangle {
     Component { id: trayScene; TrayScene { preview: root } }
     Component { id: typographyScene; TypographyScene { preview: root } }
     Component { id: widgetsScene; WidgetsScene { preview: root } }
+    Component { id: generalScene; GeneralScene { preview: root } }
+    Component { id: captureScene; CaptureScene { preview: root } }
+    Component { id: soundScene; SoundScene { preview: root } }
+    Component { id: displayScene; DisplayScene { preview: root } }
+    Component { id: keyboardScene; KeyboardScene { preview: root } }
+    Component { id: batteryScene; BatteryScene { preview: root } }
+    Component { id: gamingScene; GamingScene { preview: root } }
+    Component { id: animeScene; AnimeScene { preview: root } }
+    Component { id: sourcesScene; SourcesScene { preview: root } }
+    Component { id: hubScene; HubScene { preview: root } }
 }
