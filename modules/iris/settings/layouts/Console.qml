@@ -347,6 +347,7 @@ Item {
                                 color: IrisStyle.textTertiary
                             }
                             Flow {
+                                id: flow
                                 width: parent.width
                                 spacing: root.gap
                                 readonly property real unit: Math.floor((width - 3 * root.gap) / 4)
@@ -356,14 +357,14 @@ Item {
                                         id: cell
                                         required property var modelData
                                         readonly property string kind: root.shape(cell.modelData)
-                                        width: cell.kind === "switch" ? parent.unit : cell.kind === "row" ? parent.width : 2 * parent.unit + root.gap
+                                        width: cell.kind === "switch" ? flow.unit : cell.kind === "row" ? flow.width : 2 * flow.unit + root.gap
                                         sourceComponent: cell.kind === "switch" ? switchTile : cell.kind === "range" ? rangeTile : cell.kind === "choice" ? choiceTile : rowTile
                                         onLoaded: item.spec = cell.modelData
                                     }
                                 }
                                 Tile {
                                     visible: group.folds
-                                    width: parent.unit
+                                    width: flow.unit
                                     caption: group.open ? Translation.tr("Less") : Translation.tr("More")
                                     text: group.open ? Translation.tr("Fold") : Translation.tr("%1 more").arg(group.tuned.length)
                                     dashed: true
