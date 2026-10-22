@@ -4,6 +4,7 @@ import QtQuick.Effects
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Widgets
 import qs
 import qs.services
 import qs.modules.common
@@ -65,10 +66,8 @@ Item {
             font.letterSpacing: Math.round(IrisStyle.typeFootnote * 0.16)
             font.capitalization: Font.AllUppercase
             color: IrisStyle.textTertiary
-            readonly property var cluster: root.sections[root.current]?.cluster ?? 0
-            text: Translation.tr("Settings") + "  /  <font color='" + IrisStyle.subtext + "'>"
-                + String(Number(root.sections[root.current]?.cluster ?? 0) + 1).padStart(2, "0") + " " + root.clusterName(Number(root.sections[root.current]?.cluster ?? 0))
-                + "</font>  /  <font color='" + IrisStyle.subtext + "'>" + Translation.tr(String(root.area.title ?? "")) + "</font>"
+            text: Translation.tr("Settings") + "  /  " + root.clusterName(Number(root.sections[root.current]?.cluster ?? 0))
+                + "  /  <font color='" + IrisStyle.accent + "'>" + Translation.tr(String(root.area.title ?? "")) + "</font>"
         }
         LayoutSwitch { host: root.host; voice: "folio"; compact: root.compact }
         Item {
@@ -114,8 +113,18 @@ Item {
         RoundKey { glyph: "close"; name: Translation.tr("Close settings"); onClicked: root.host.close() }
     }
 
-    // ── The rail: every area as a word, the open one large and centred; the ends fade into the sheet. The wheel or a
-    // drag reads along it; left alone a moment it comes back to the open area.
+    // ── The rail: every area as a word, the open one large and centred; the ends fade into the sheet. The wheel over
+    // the rail or the ruler turns to the next area, a notch an area, and the rail glides after it.
+    property real wheelAcc: 0
+    Timer { id: wheelRest; interval: 260 }
+    function wheel(event: var): void {
+        const delta = event.angleDelta.x !== 0 ? -event.angleDelta.x : -event.angleDelta.y
+        root.wheelAcc += delta
+        if (wheelRest.running || Math.abs(root.wheelAcc) < 60) return
+        root.host.stepSection(root.wheelAcc > 0 ? 1 : -1)
+        root.wheelAcc = 0
+        wheelRest.restart()
+    }
     Flickable {
         id: rail
         anchors.top: head.bottom
@@ -124,31 +133,19 @@ Item {
         width: root.width - 2 * root.pad
         height: root.u(root.compact ? 70 : 84)
         clip: true
-        flickableDirection: Flickable.HorizontalFlick
-        boundsBehavior: Flickable.StopAtBounds
+        interactive: false
         contentWidth: words.width + rail.width
         contentHeight: rail.height
+        contentX: rail.want
+        // Retargets keep their speed: the words grow and shrink while the rail is still gliding.
+        Behavior on contentX { enabled: rail.ready; SmoothedAnimation { duration: IrisStyle.morphDuration; velocity: -1 } }
+        property bool ready: false
+        Component.onCompleted: Qt.callLater(() => rail.ready = true)
         readonly property real big: root.u(root.compact ? 44 : 54)
         readonly property real small: root.u(21)
         readonly property real base: Math.round(rail.height * 0.72)
         readonly property real want: words.chosen ? Math.round(words.chosen.x + words.chosen.width / 2) : 0
-        onWantChanged: if (!rail.moving && !railRest.running) railSettle.restart()
-        onContentWidthChanged: if (!rail.moving && !railRest.running) railSettle.restart()
-        onWidthChanged: if (!rail.moving && !railRest.running) railSettle.restart()
-        onMovementEnded: railRest.restart()
-        Component.onCompleted: rail.contentX = rail.want
-        NumberAnimation { id: railSettle; target: rail; property: "contentX"; to: rail.want; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
-        Timer { id: railRest; interval: 1600; onTriggered: railSettle.restart() }
-        WheelHandler {
-            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-            onWheel: event => {
-                const delta = event.pixelDelta.x !== 0 ? event.pixelDelta.x : event.pixelDelta.y !== 0 ? event.pixelDelta.y
-                    : (event.angleDelta.x !== 0 ? event.angleDelta.x : event.angleDelta.y) / 120 * root.u(90)
-                railSettle.stop()
-                rail.contentX = Math.max(0, Math.min(rail.contentWidth - rail.width, rail.contentX - delta))
-                railRest.restart()
-            }
-        }
+        WheelHandler { acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad; onWheel: event => root.wheel(event) }
         layer.enabled: true
         layer.effect: MultiEffect {
             maskEnabled: true
@@ -177,7 +174,7 @@ Item {
                     Component.onCompleted: if (word.here) words.chosen = word
                     readonly property int noted: Number(root.host?.noteCounts?.[word.modelData.id] ?? 0)
                     readonly property bool found: !(root.host?.searching ?? false) || (root.host?.matchedSections?.has(word.modelData.id) ?? false)
-                    width: wordText.implicitWidth + (word.noted > 0 ? sup.implicitWidth + root.u(3) : 0)
+                    width: wordText.implicitWidth + (word.noted > 0 ? sup.width + root.u(4) : 0)
                     height: rail.height
                     opacity: !word.found ? 0.14 : word.chosen ? 1 : word.distance <= 1 ? 0.66 : word.distance === 2 ? 0.46 : 0.32
                     Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing } }
@@ -185,7 +182,7 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     Accessible.role: Accessible.Button
                     Accessible.name: wordText.text
-                    onClicked: { railRest.stop(); root.host.selectSection(word.modelData.id) }
+                    onClicked: root.host.selectSection(word.modelData.id)
                     IrisText {
                         id: wordText
                         y: rail.base - wordText.baselineOffset
@@ -195,20 +192,25 @@ Item {
                         font.pixelSize: word.chosen ? rail.big : rail.small
                         font.weight: word.chosen ? Font.DemiBold : Font.Normal
                         font.letterSpacing: word.chosen ? -Math.round(rail.big * 0.02) : 0
+                        Behavior on font.pixelSize { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+                        Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
                     }
-                    IrisText {
+                    // An area with a note carries a red dot at its shoulder.
+                    Rectangle {
                         id: sup
                         visible: word.noted > 0
-                        x: wordText.width + root.u(3)
-                        y: rail.base - (word.chosen ? rail.big : rail.small) * 0.72
-                        text: String(word.noted)
+                        x: wordText.width + root.u(4)
+                        y: rail.base - wordText.font.pixelSize * 0.7
+                        width: root.u(6)
+                        height: width
+                        radius: width / 2
                         color: root.err
-                        font.family: IrisStyle.fontMono
-                        font.pixelSize: IrisStyle.typeFootnote
-                        font.weight: Font.DemiBold
                     }
                     Rectangle {
-                        visible: word.chosen
+                        opacity: word.chosen ? 1 : 0
+                        scale: word.chosen ? 1 : 0.2
+                        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(200); easing.type: IrisStyle.feedbackEasing } }
+                        Behavior on scale { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
                         anchors.horizontalCenter: wordText.horizontalCenter
                         y: rail.base + root.u(7)
                         width: root.u(6)
@@ -278,6 +280,7 @@ Item {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
+            onWheel: wheel => root.wheel(wheel)
             onClicked: mouse => {
                 const at = Math.max(0, Math.min(root.sections.length - 1, Math.floor(mouse.x / ruler.step)))
                 root.host.selectSection(root.sections[at].id)
@@ -285,9 +288,25 @@ Item {
         }
     }
 
-    // ── The sheet: the plate and what the area says on the left, the rows on the right.
+    // ── The sheet: the plate and what the area says on the left, the rows on the right. A new area slides in from the
+    // side it lies on in the rail.
+    property int was: -1
+    onCurrentChanged: {
+        if (root.was >= 0 && root.was !== root.current && IrisStyle.motionEnabled) {
+            bodyArrive.from = (root.current > root.was ? 1 : -1) * root.u(48)
+            bodyIn.restart()
+        }
+        root.was = root.current
+    }
+    Component.onCompleted: root.was = root.current
+    ParallelAnimation {
+        id: bodyIn
+        NumberAnimation { id: bodyArrive; target: bodyShift; property: "x"; to: 0; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
+        NumberAnimation { target: body; property: "opacity"; from: 0; to: 1; duration: IrisStyle.duration(240); easing.type: IrisStyle.feedbackEasing }
+    }
     Item {
         id: body
+        transform: Translate { id: bodyShift }
         anchors.top: ruler.bottom
         anchors.topMargin: root.u(14)
         anchors.bottom: parent.bottom
@@ -309,8 +328,8 @@ Item {
             width: leftFlick.width
             spacing: root.u(root.compact ? 16 : 22)
 
-            // The plate: the area's live stage on a drafting grid.
-            Rectangle {
+            // The plate: the area's live stage on a drafting grid, clipped to its own corners.
+            ClippingRectangle {
                 id: plate
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.round(Math.min(root.u(root.compact ? 300 : 430), leftFlick.height * 0.62))
@@ -318,7 +337,6 @@ Item {
                 color: IrisStyle.readingCard
                 border.width: 1
                 border.color: IrisStyle.hairline
-                clip: true
                 Canvas {
                     id: grid
                     anchors.fill: parent
@@ -337,28 +355,17 @@ Item {
                         ctx.stroke()
                     }
                 }
-                IrisText {
-                    id: plateCap
-                    x: root.u(18)
-                    y: root.u(14)
-                    textFormat: Text.StyledText
-                    text: Translation.tr("Plate") + "  <font color='" + IrisStyle.subtext + "'>" + Translation.tr(String(root.area.title ?? "")) + "</font>  ·  " + Translation.tr("Live")
-                    color: IrisStyle.textTertiary
-                    font.family: IrisStyle.fontMono
-                    font.pixelSize: IrisStyle.typeCaption
-                    font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.18)
-                    font.capitalization: Font.AllUppercase
-                }
                 IrisGroupPreview {
                     id: stage
                     anchors.fill: parent
-                    anchors.topMargin: root.u(38)
-                    anchors.leftMargin: root.u(18)
-                    anchors.rightMargin: root.u(18)
-                    anchors.bottomMargin: (plateNote.visible ? root.u(40) : root.u(18)) + (callouts.visible ? root.u(34) : 0) // never on the side picked: that reads the stage's size back
+                    anchors.margins: root.u(14)
+                    anchors.bottomMargin: plateNote.visible ? root.u(40) : root.u(14)
+                    radius: Math.max(IrisStyle.radiusRow, IrisStyle.radiusSheet - root.u(14))
                     visible: stage.available
                     standIn: true
                     section: root.host?.searching ? "" : root.section
+                    niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
+                    niriRevision: IrisNiri.revision
                     group: String(root.host?.leadGroup ?? "")
                 }
                 // An area without a stage shows its mark and what it is for.
@@ -381,100 +388,22 @@ Item {
                         font.pixelSize: IrisStyle.typeLabel
                     }
                 }
-                // Callouts printed beside what they measure: a rule along the stage's subject, the values on the side
-                // with room (over a piece at the bottom, under one at the top). A stage with no subject sets them in a
-                // line in the plate's margin under it, never over the scene's own caption.
-                Item {
-                    id: callouts
-                    readonly property rect at: stage.subject
-                    // The side of the subject with room for the notes: its long sides first (a tall or small piece is read
-                    // from beside it), then the others; none with room and they go to the plate's margin.
-                    readonly property string side: {
-                        const r = callouts.at
-                        if (r.width <= 0) return ""
-                        const needW = root.u(240), needH = calloutList.count * root.u(26) + root.u(20) // never the grid's own size: its columns follow the side
-                        const room = { top: r.y, bottom: stage.height - r.y - r.height, left: r.x, right: stage.width - r.x - r.width }
-                        const across = r.height > r.width * 1.4 || r.width < stage.width * 0.3
-                        const lr = room.left > room.right ? ["left", "right"] : ["right", "left"]
-                        const tb = room.top > room.bottom ? ["top", "bottom"] : ["bottom", "top"]
-                        return (across ? lr.concat(tb) : tb.concat(lr)).find(side => room[side] >= (side === "left" || side === "right" ? needW : needH)) ?? ""
-                    }
-                    readonly property bool pinned: callouts.side.length > 0
-                    readonly property bool vertical: callouts.side === "left" || callouts.side === "right"
-                    readonly property bool over: callouts.side === "top"
-                    readonly property bool leftOf: callouts.side === "left"
-                    visible: stage.available && !(root.host?.searching ?? false) && calloutList.count > 0
-                    x: stage.x
-                    y: stage.y
-                    width: stage.width
-                    height: stage.height
-                    z: 2
-                    // The rule: as long as the subject, a tick at each end, set off it by the gap.
-                    Item {
-                        id: rule
-                        visible: callouts.pinned
-                        readonly property real off: root.u(6)
-                        x: callouts.vertical ? (callouts.leftOf ? callouts.at.x - rule.off - 1 : callouts.at.x + callouts.at.width + rule.off) : callouts.at.x
-                        y: callouts.vertical ? callouts.at.y : (callouts.over ? callouts.at.y - rule.off - 1 : callouts.at.y + callouts.at.height + rule.off)
-                        width: callouts.vertical ? 1 : callouts.at.width
-                        height: callouts.vertical ? callouts.at.height : 1
-                        Rectangle { anchors.fill: parent; color: IrisStyle.accent; opacity: 0.8 }
-                        Rectangle { x: callouts.vertical ? -root.u(3) : 0; y: callouts.vertical ? 0 : -root.u(3); width: callouts.vertical ? root.u(7) : 1; height: callouts.vertical ? 1 : root.u(7); color: IrisStyle.accent }
-                        Rectangle { x: callouts.vertical ? -root.u(3) : parent.width - 1; y: callouts.vertical ? parent.height - 1 : -root.u(3); width: callouts.vertical ? root.u(7) : 1; height: callouts.vertical ? 1 : root.u(7); color: IrisStyle.accent }
-                    }
-                    Grid {
-                        id: calloutColumn
-                        columns: callouts.pinned ? 1 : 2
-                        rowSpacing: root.u(4)
-                        columnSpacing: root.u(10)
-                        readonly property real wantX: !callouts.pinned ? 0
-                            : callouts.vertical ? (callouts.leftOf ? rule.x - root.u(8) - calloutColumn.width : rule.x + root.u(8))
-                            : rule.x
-                        readonly property real wantY: !callouts.pinned ? callouts.height + root.u(9)
-                            : callouts.vertical ? rule.y + rule.height / 2 - calloutColumn.height / 2
-                            : callouts.over ? rule.y - root.u(6) - calloutColumn.height : rule.y + root.u(6)
-                        x: !callouts.pinned ? 0 : Math.round(Math.max(root.u(6), Math.min(callouts.width - calloutColumn.width - root.u(6), calloutColumn.wantX)))
-                        y: !callouts.pinned ? calloutColumn.wantY : Math.round(Math.max(root.u(6), Math.min(callouts.height - calloutColumn.height - root.u(6), calloutColumn.wantY)))
-                        Repeater {
-                            id: calloutList
-                            model: (root.host?.tellingRows(6, "") ?? []).filter(spec => spec.kind !== "switch" && root.answer(spec).split(" ").length <= 2).slice(0, 2)
-                            Rectangle {
-                                required property var modelData
-                                width: callout.implicitWidth + root.u(14)
-                                height: callout.implicitHeight + root.u(8)
-                                radius: root.u(4)
-                                color: Qt.rgba(IrisStyle.surfaceOpaque.r, IrisStyle.surfaceOpaque.g, IrisStyle.surfaceOpaque.b, 0.82)
-                                border.width: 1
-                                border.color: Qt.rgba(IrisStyle.accent.r, IrisStyle.accent.g, IrisStyle.accent.b, 0.5)
-                                IrisText {
-                                    id: callout
-                                    anchors.centerIn: parent
-                                    textFormat: Text.StyledText
-                                    text: Translation.tr(String(parent.modelData.label ?? "")) + "  <font color='" + IrisStyle.accent + "'>" + root.answer(parent.modelData) + "</font>"
-                                    color: IrisStyle.subtext
-                                    font.family: IrisStyle.fontMono
-                                    font.pixelSize: IrisStyle.typeCaption
-                                    font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.14)
-                                    font.capitalization: Font.AllUppercase
-                                }
-                            }
-                        }
-                    }
-                }
-                IrisText {
+                Row {
                     id: plateNote
                     visible: root.notes.length > 0
                     x: root.u(18)
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: root.u(14)
-                    width: parent.width - root.u(36)
-                    elide: Text.ElideRight
-                    text: (root.notes.length === 1 ? Translation.tr("1 note") : Translation.tr("%1 notes").arg(root.notes.length)) + "  ·  " + String(root.notes[0]?.text ?? "")
-                    color: root.err
-                    font.family: IrisStyle.fontMono
-                    font.pixelSize: IrisStyle.typeCaption
-                    font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.12)
-                    font.capitalization: Font.AllUppercase
+                    anchors.bottomMargin: root.u(13)
+                    spacing: root.u(8)
+                    Rectangle { anchors.verticalCenter: parent.verticalCenter; width: root.u(6); height: width; radius: width / 2; color: root.err }
+                    IrisText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.min(implicitWidth, plate.width - root.u(50))
+                        elide: Text.ElideRight
+                        text: String(root.notes[0]?.text ?? "")
+                        color: IrisStyle.text
+                        font.pixelSize: IrisStyle.typeMeta
+                    }
                 }
             }
 
@@ -498,7 +427,8 @@ Item {
                     if (rows.length === 0) return ""
                     const esc = value => String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;")
                     const area = Translation.tr(String(root.area.title ?? ""))
-                    const link = (spec, words) => "<a style='text-decoration:none; color:" + (IrisOptions.modified(spec) ? IrisStyle.accent : IrisStyle.text)
+                    // What a value is reads in the accent; a switch's name stays in the ink.
+                    const link = (spec, words) => "<a style='text-decoration:none; color:" + (spec.kind === "switch" ? IrisStyle.text : IrisStyle.accent)
                         + "; font-weight:500' href='" + encodeURIComponent(String(spec.path)) + "'>" + esc(words) + "</a>"
                     const list = parts => parts.length === 1 ? parts[0]
                         : Translation.tr("%1 and %2").arg(parts.slice(0, -1).reduce((all, part) => Translation.tr("%1, %2").arg(all).arg(part))).arg(parts[parts.length - 1])
@@ -568,7 +498,7 @@ Item {
                                 id: changeText
                                 anchors.verticalCenter: parent.verticalCenter
                                 textFormat: Text.StyledText
-                                text: root.named(change.modelData, "", root.twins(changes.rows)) + "  <font color='" + IrisStyle.textTertiary + "'><s>" + root.fallbackOf(change.modelData) + "</s>  →</font>  " + root.answer(change.modelData)
+                                text: root.named(change.modelData, "", root.twins(changes.rows)) + "  <font color='" + IrisStyle.textTertiary + "'><s>" + root.fallbackOf(change.modelData) + "</s>  →</font>  <font color='" + IrisStyle.accent + "'>" + root.answer(change.modelData) + "</font>"
                                 color: IrisStyle.subtext
                                 font.pixelSize: IrisStyle.typeLabel
                             }

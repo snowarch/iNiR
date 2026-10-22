@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Widgets
 import qs
 import qs.services
 import qs.modules.common
@@ -195,13 +196,12 @@ Item {
     }
     function tint(entry: var, alpha: real): color { const c = entry?.tint ?? IrisStyle.accent; return Qt.rgba(c.r, c.g, c.b, alpha) }
 
-    // The head hangs from the top edge when the Island is a body there; anywhere else it floats like the cards.
-    readonly property bool hangs: !root.windowed && IrisFrame.islandEdge === "top" && !IrisFrame.islandSpans
+    // The head floats over the deck in the room the Island leaves, a capsule like the cards are plates.
     readonly property real gap: root.u(24)
     readonly property rect headRect: {
         if (root.windowed) return Qt.rect(0, 0, root.width, root.u(60))
-        const w = Math.min(root.u(860), root.room.width)
-        return Qt.rect(Math.round((root.width - w) / 2), root.hangs ? 0 : root.room.y, w, root.u(64))
+        const w = Math.min(root.u(820), root.room.width)
+        return Qt.rect(Math.round((root.width - w) / 2), root.room.y, w, root.u(60))
     }
     readonly property rect cardRect: {
         if (root.windowed) return Qt.rect(deckRow.x + cardSlot.x, deckRow.y, cardSlot.width, deckRow.height)
@@ -223,14 +223,12 @@ Item {
     }
     readonly property var steps: root.sided ? [-2, -1, 1, 2].filter(step => root.neighbour(step) !== null) : []
 
-    // The bodies IrisSettings draws and blurs, one per card; the head melts into a wall past the top edge.
+    // The bodies IrisSettings draws and blurs, one per card and the head's capsule.
     readonly property var panes: {
         if (root.windowed) return []
         const out = []
         const h = root.headRect
-        if (root.hangs) out.push({ id: "deckWall", edge: true, x: h.x - root.u(120), y: -root.u(200), width: h.width + root.u(240), height: root.u(200), radius: 0 })
-        out.push({ id: "deckHead", joins: root.hangs ? "deckWall" : "", fuse: root.hangs ? root.u(28) : 0,
-            x: h.x, y: h.y, width: h.width, height: h.height, radius: root.hangs ? root.u(30) : h.height / 2 })
+        out.push({ id: "deckHead", x: h.x, y: h.y, width: h.width, height: h.height, radius: h.height / 2 })
         const c = root.cardRect
         out.push({ id: "deckCard", x: c.x + root.shift, y: c.y, width: c.width, height: c.height, radius: root.u(30) })
         for (const step of root.steps) {
@@ -241,18 +239,18 @@ Item {
     }
 
     // ── The head: back, the search, every area as a tick, the notes, the layouts, the way out.
-    Item {
+    MouseArea {
         id: head
         x: root.headRect.x
         y: root.headRect.y
         width: root.headRect.width
         height: root.headRect.height
+        onWheel: wheel => root.wheel(wheel)
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: root.u(root.hangs ? 34 : 14)
-            anchors.rightMargin: root.u(root.hangs ? 34 : 14)
-            anchors.topMargin: root.u(root.hangs ? 6 : 0)
-            spacing: root.u(12)
+            anchors.leftMargin: root.u(11)
+            anchors.rightMargin: root.u(11)
+            spacing: root.u(10)
             RoundKey { glyph: "arrow_back"; name: Translation.tr("Back"); onClicked: root.host.goBack() }
             Item { id: searchSlot; Layout.fillWidth: true; Layout.preferredHeight: root.u(40) }
             MouseArea {
@@ -278,39 +276,26 @@ Item {
                             width: 3
                             height: index === root.current ? root.u(18) : root.u(8)
                             radius: 1.5
+                            Behavior on height { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+                            Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
                             color: index === root.current ? IrisStyle.accent : Number(root.noteCounts[modelData.id] ?? 0) > 0 ? IrisStyle.danger
                                 : Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, 0.2)
                         }
                     }
                 }
             }
-            IrisText {
-                visible: ticks.visible
-                textFormat: Text.StyledText
-                text: "<font color='" + IrisStyle.text + "'>" + String(root.current + 1).padStart(2, "0") + "</font>/" + String(root.sections.length).padStart(2, "0")
-                color: IrisStyle.textTertiary
-                font.family: IrisStyle.fontMono
-                font.pixelSize: IrisStyle.typeCaption
-                font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.1)
-            }
             MouseArea {
                 id: notePill
                 visible: root.noteTotal > 0
-                Layout.preferredHeight: root.u(32)
-                Layout.preferredWidth: noteRow.implicitWidth + root.u(24)
+                Layout.preferredHeight: root.u(38)
+                Layout.preferredWidth: root.u(38)
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 Accessible.role: Accessible.Button
                 Accessible.name: root.noteTotal === 1 ? Translation.tr("1 note") : Translation.tr("%1 notes").arg(root.noteTotal)
                 onClicked: root.host.openNote()
-                Rectangle { anchors.fill: parent; radius: height / 2; color: Qt.rgba(IrisStyle.danger.r, IrisStyle.danger.g, IrisStyle.danger.b, notePill.containsMouse ? 0.24 : 0.15) }
-                Row {
-                    id: noteRow
-                    anchors.centerIn: parent
-                    spacing: root.u(6)
-                    MaterialSymbol { anchors.verticalCenter: parent.verticalCenter; text: "error"; iconSize: root.u(17); color: IrisStyle.danger }
-                    IrisText { anchors.verticalCenter: parent.verticalCenter; text: String(root.noteTotal); color: IrisStyle.text; font.pixelSize: IrisStyle.typeLabel; font.weight: Font.DemiBold }
-                }
+                Rectangle { anchors.fill: parent; radius: height / 2; color: Qt.rgba(IrisStyle.danger.r, IrisStyle.danger.g, IrisStyle.danger.b, notePill.containsMouse ? 0.24 : 0.14) }
+                MaterialSymbol { anchors.centerIn: parent; text: "error"; iconSize: root.u(19); color: IrisStyle.danger }
             }
             LayoutSwitch { host: root.host; voice: "deck"; compact: true }
             RoundKey {
@@ -364,23 +349,28 @@ Item {
             border.width: 1
             border.color: IrisStyle.hairline
         }
-        Rectangle {
+        ClippingRectangle {
             id: hero
             x: card.inset
             y: card.inset
             width: card.width - 2 * card.inset
             height: root.u(root.windowed ? 170 : Math.min(280, card.height * 0.3 / root.d))
-            radius: root.u(20)
+            // Concentric with the card it sits in.
+            radius: root.u(root.windowed ? 22 : 30) - card.inset
             color: IrisStyle.readingCard
-            clip: true
+            MouseArea { anchors.fill: parent; acceptedButtons: Qt.NoButton; onWheel: wheel => root.wheel(wheel) }
             // The stage keeps clear of the title: full-bleed, Lock's clock and the Control Center sat under its words.
             IrisGroupPreview {
                 id: stage
                 anchors.fill: parent
                 anchors.leftMargin: Math.round(hero.width * 0.42)
+                radius: 0
+                border.width: 0
                 visible: stage.available
                 standIn: true
                 section: root.host?.searching ? "" : root.section
+                niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
+                niriRevision: IrisNiri.revision
                 group: String(root.host?.leadGroup ?? "")
             }
             Rectangle {
@@ -427,64 +417,6 @@ Item {
                         text: Translation.tr(String(root.area.subtitle ?? ""))
                         color: IrisStyle.subtext
                         font.pixelSize: IrisStyle.typeLabel
-                    }
-                }
-            }
-        }
-        // The hero's edges: where the area's piece lives is lit, a click on another edge moves it there.
-        Item {
-            id: edges
-            readonly property var spec: (root.host?.entries ?? []).find(spec => spec.kind === "choice" && spec.path
-                && ["top", "bottom", "left", "right"].every(side => IrisOptions.choicesOf(spec).some(entry => entry.value === side))) ?? null
-            readonly property string at: { Config.revision; return edges.spec ? String(IrisOptions.currentValue(edges.spec)) : "" }
-            visible: edges.spec !== null && !(root.host?.searching ?? false)
-            anchors.fill: hero
-            z: 2
-            Rectangle {
-                anchors.right: parent.right
-                anchors.rightMargin: root.u(30)
-                y: root.u(30)
-                width: edgeCap.implicitWidth + root.u(16)
-                height: edgeCap.implicitHeight + root.u(8)
-                radius: height / 2
-                color: Qt.rgba(IrisStyle.surfaceOpaque.r, IrisStyle.surfaceOpaque.g, IrisStyle.surfaceOpaque.b, 0.8)
-            }
-            IrisText {
-                id: edgeCap
-                anchors.right: parent.right
-                anchors.rightMargin: root.u(38)
-                y: root.u(34)
-                text: Translation.tr("Click an edge to move it")
-                color: IrisStyle.accent
-                font.family: IrisStyle.fontMono
-                font.pixelSize: IrisStyle.typeCaption
-                font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.18)
-                font.capitalization: Font.AllUppercase
-            }
-            Repeater {
-                model: ["top", "bottom", "left", "right"]
-                MouseArea {
-                    id: bar
-                    required property string modelData
-                    readonly property bool across: bar.modelData === "top" || bar.modelData === "bottom"
-                    readonly property bool lit: edges.at === bar.modelData
-                    readonly property real thick: root.u(22)
-                    x: bar.across ? Math.round(parent.width * 0.3) : bar.modelData === "left" ? 0 : parent.width - bar.thick
-                    y: !bar.across ? Math.round(parent.height * 0.24) : bar.modelData === "top" ? 0 : parent.height - bar.thick
-                    width: bar.across ? Math.round(parent.width * 0.4) : bar.thick
-                    height: bar.across ? bar.thick : Math.round(parent.height * 0.52)
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    Accessible.role: Accessible.Button
-                    Accessible.name: edges.spec ? Translation.tr(String(IrisOptions.choicesOf(edges.spec).find(entry => entry.value === bar.modelData)?.label ?? bar.modelData)) : ""
-                    onClicked: IrisOptions.commit(edges.spec, bar.modelData)
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: bar.across ? parent.width : root.u(bar.lit || bar.containsMouse ? 6 : 4)
-                        height: bar.across ? root.u(bar.lit || bar.containsMouse ? 6 : 4) : parent.height
-                        radius: Math.min(width, height) / 2
-                        color: bar.lit ? IrisStyle.accent : Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, bar.containsMouse ? 0.6 : 0.28)
-                        Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
                     }
                 }
             }
@@ -673,7 +605,7 @@ Item {
         Item {
             id: sideBody
             width: parent.width
-            height: parent.height - root.u(side.near ? 58 : 16)
+            height: parent.height - root.u(16)
             clip: true
             readonly property bool spills: sideColumn.height > sideBody.height - sideColumn.y
             layer.enabled: sideBody.spills
@@ -716,14 +648,15 @@ Item {
                 color: side.near ? IrisStyle.muted : IrisStyle.danger
                 font.pixelSize: IrisStyle.typeMeta
             }
-            Rectangle {
+            IrisGroupPreview {
+                id: neighbourStage
                 visible: side.near && neighbourStage.available
                 width: parent.width
                 height: root.u(190)
                 radius: root.u(18)
-                color: IrisStyle.readingCard
-                clip: true
-                IrisGroupPreview { id: neighbourStage; anchors.fill: parent; standIn: true; section: side.near ? String(side.entry?.id ?? "") : ""; playing: false }
+                standIn: true
+                section: side.near ? String(side.entry?.id ?? "") : ""
+                playing: false
             }
             Repeater {
                 model: {
@@ -758,18 +691,6 @@ Item {
                 GradientStop { position: Math.max(0, 1 - root.u(72) / Math.max(1, sideBody.height)); color: "white" }
                 GradientStop { position: 1; color: "transparent" }
             }
-        }
-        IrisText {
-            visible: side.near
-            x: root.u(24)
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: root.u(22)
-            text: side.step < 0 ? "←  " + Translation.tr("or click") : Translation.tr("click or") + "  →"
-            color: IrisStyle.textTertiary
-            font.family: IrisStyle.fontMono
-            font.pixelSize: IrisStyle.typeCaption
-            font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.14)
-            font.capitalization: Font.AllUppercase
         }
     }
 

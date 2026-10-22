@@ -2,7 +2,7 @@ import QtQuick
 import qs.modules.iris.style
 import qs.modules.iris.components
 
-// Folio's group head: the group's number in the accent, its name in spaced mono capitals, a hairline to the edge.
+// Folio's group head: its name in spaced mono capitals (the one being read in the accent), a hairline to the edge.
 Item {
     id: root
     property Item host
@@ -12,23 +12,13 @@ Item {
     implicitHeight: root.line
 
     IrisText {
-        id: number
-        anchors.verticalCenter: parent.verticalCenter
-        text: String(Number(root.host?.folio ?? 0) + 1).padStart(2, "0")
-        color: IrisStyle.accent
-        font.family: IrisStyle.fontMono
-        font.pixelSize: IrisStyle.typeFootnote
-        font.weight: Font.DemiBold
-        font.letterSpacing: Math.round(IrisStyle.typeFootnote * 0.1)
-    }
-    IrisText {
         id: name
         anchors.verticalCenter: parent.verticalCenter
-        x: number.width + Math.round(12 * root.d)
         width: Math.min(implicitWidth, parent.width - x - (root.lone ? Math.round(64 * root.d) : 0))
         elide: Text.ElideRight
         text: String(root.host?.title ?? "")
-        color: (root.host?.reading ?? false) ? IrisStyle.text : IrisStyle.subtext
+        color: (root.host?.reading ?? false) ? IrisStyle.accent : IrisStyle.subtext
+        Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
         font.family: IrisStyle.fontMono
         font.pixelSize: IrisStyle.typeFootnote
         font.weight: Font.DemiBold

@@ -50,7 +50,7 @@ Item {
     readonly property var areaSpecs: {
         Config.revision
         return IrisOptions.settings.filter(spec => spec.section === root.section && !spec.mirror && spec.path && IrisOptions.shown(spec)
-            && !(spec.locked && spec.locked()))
+            && !(spec.locked && spec.locked()) && spec.path !== "iris.appearance.settingsLayout")
     }
     readonly property var essentials: root.areaSpecs.filter(spec => !IrisOptions.fineTune(spec))
     readonly property var edgeSpec: root.essentials.find(spec => spec.kind === "choice"
@@ -83,9 +83,14 @@ Item {
         if (!root.windowed) return 6 / root.tops.length
         return root.tops.length === 1 || index === 2 ? 4 : 2
     }
-    readonly property real topHeight: root.tops.length === 0 ? 0 : root.u(root.windowed ? 196 : 232)
+    readonly property real shapeHeight: root.u(root.windowed ? 52 : 64)
+    readonly property real capHeight: root.u(root.windowed ? 16 : 20) + IrisStyle.typeCaption + root.u(root.windowed ? 26 : 30)
+    readonly property real tilesNeed: root.capHeight + root.shapeHeight + (root.chipSpec ? root.u(24) + IrisStyle.typeCaption + root.u(root.windowed ? 28 : 32) : 0)
+    // The screen and the scrubber want room; shapes alone only what they hold.
+    readonly property real topHeight: root.tops.length === 0 ? 0
+        : root.tops.some(kind => kind !== "tiles") ? root.u(root.windowed ? 196 : 232) : root.tilesNeed
     // In a window the shapes lie in one row under the other two: their widget only as tall as that row.
-    readonly property real tileStrip: root.u(root.chipSpec ? 160 : 112)
+    readonly property real tileStrip: root.tilesNeed
     function topHeightOf(index: int): real { return root.windowed && root.tops.length === 3 && index === 2 ? root.tileStrip : root.topHeight }
     readonly property real topBlock: root.tops.length === 0 ? 0 : root.windowed && root.tops.length === 3 ? root.topHeight + root.tileStrip + root.gap : root.topHeight
     readonly property bool noteWidget: root.pins || root.notes.length > 0
@@ -99,6 +104,26 @@ Item {
         return Math.max(0, Math.min(2, fit, Math.ceil(root.switchSpecs.length / root.tileCols)))
     }
     readonly property var toggles: root.switchSpecs.slice(0, root.toggleRows * root.tileCols)
+    property real rangeDragged: NaN
+    readonly property string rangeSaid: {
+        Config.revision
+        if (!root.rangeSpec) return ""
+        const value = Number.isFinite(root.rangeDragged) ? root.rangeDragged : Number(IrisOptions.currentValue(root.rangeSpec))
+        return Translation.tr(IrisOptions.rangeText(root.rangeSpec, value))
+    }
+
+    // A new area rises into place under the head.
+    property int was: -1
+    onCurrentChanged: {
+        if (root.was >= 0 && root.was !== root.current && IrisStyle.motionEnabled) areaIn.restart()
+        root.was = root.current
+    }
+    Component.onCompleted: root.was = root.current
+    ParallelAnimation {
+        id: areaIn
+        NumberAnimation { target: boardShift; property: "y"; from: root.u(18); to: 0; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
+        NumberAnimation { targets: [board, rowsSlot, place]; property: "opacity"; from: 0; to: 1; duration: IrisStyle.duration(240); easing.type: IrisStyle.feedbackEasing }
+    }
 
     // ── The head: the area in dot type, where it sits, the search, the layouts, the notes, the way out.
     Item {
@@ -112,31 +137,19 @@ Item {
             anchors.bottom: parent.bottom
             text: Translation.tr(String(root.area.title ?? ""))
             pitch: root.u(root.windowed ? 6 : 9)
-            fit: Math.max(root.u(120), controls.x - place.width - root.u(36))
+            fit: Math.max(root.u(120), controls.x - root.u(260))
         }
-        Column {
+        IrisText {
             id: place
             anchors.left: title.right
-            anchors.leftMargin: root.u(18)
+            anchors.leftMargin: root.u(20)
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: root.u(2)
-            spacing: root.u(6)
-            IrisText {
-                text: String(root.current + 1).padStart(2, "0") + " / " + String(root.sections.length).padStart(2, "0")
-                color: IrisStyle.muted
-                font.family: IrisStyle.fontMono
-                font.pixelSize: IrisStyle.typeCaption
-                font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.16)
-            }
-            IrisText {
-                text: root.clusterName(Number(root.area.cluster ?? 0))
-                color: IrisStyle.text
-                font.family: IrisStyle.fontMono
-                font.pixelSize: IrisStyle.typeLabel
-                font.weight: Font.Medium
-                font.capitalization: Font.AllUppercase
-                font.letterSpacing: Math.round(IrisStyle.typeLabel * 0.1)
-            }
+            anchors.bottomMargin: root.u(1)
+            width: Math.max(0, Math.min(implicitWidth, controls.x - x - root.u(20)))
+            elide: Text.ElideRight
+            text: Translation.tr(String(root.area.subtitle ?? ""))
+            color: IrisStyle.muted
+            font.pixelSize: IrisStyle.typeLabel
         }
         Row {
             id: controls
@@ -162,14 +175,7 @@ Item {
                     border.width: Math.max(1, root.u(1.5))
                     border.color: IrisStyle.danger
                 }
-                IrisText {
-                    anchors.centerIn: parent
-                    text: String(root.noteTotal)
-                    color: IrisStyle.danger
-                    font.family: IrisStyle.fontMono
-                    font.pixelSize: IrisStyle.typeLabel
-                    font.weight: Font.DemiBold
-                }
+                MaterialSymbol { anchors.centerIn: parent; text: "priority_high"; iconSize: root.u(19); color: IrisStyle.danger }
             }
             RoundKey {
                 glyph: root.windowed ? "layers" : "web_asset"
@@ -223,7 +229,7 @@ Item {
                         IrisText {
                             id: clusterName
                             anchors.verticalCenter: parent.verticalCenter
-                            text: String(cluster.modelData.index + 1).padStart(2, "0") + "  " + root.clusterName(cluster.modelData.index)
+                            text: root.clusterName(cluster.modelData.index)
                             color: IrisStyle.muted
                             font.family: IrisStyle.fontMono
                             font.pixelSize: IrisStyle.typeCaption
@@ -278,18 +284,17 @@ Item {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     anchors.bottom: parent.bottom
                                     width: parent.width - root.u(2)
-                                    elide: Text.ElideRight
                                     fontSizeMode: Text.HorizontalFit
-                                    minimumPixelSize: root.u(7)
+                                    minimumPixelSize: Math.max(8, IrisStyle.typeCaption - 3)
                                     horizontalAlignment: Text.AlignHCenter
                                     // A key says the first word of its area: "Bubbles", not "Bubbles & Cards".
                                     text: Translation.tr(String(key.modelData.title ?? "")).split(/\s+/)[0]
-                                    color: key.on ? IrisStyle.text : IrisStyle.muted
+                                    color: key.on ? IrisStyle.text : key.containsMouse ? IrisStyle.subtext : IrisStyle.muted
                                     font.family: IrisStyle.fontMono
-                                    font.pixelSize: root.u(root.windowed ? 7.5 : 8.5)
-                                    font.weight: Font.Medium
+                                    font.pixelSize: IrisStyle.typeCaption
+                                    font.weight: key.on ? Font.DemiBold : Font.Medium
                                     font.capitalization: Font.AllUppercase
-                                    font.letterSpacing: Math.round(root.u(8.5) * 0.1)
+                                    font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.06)
                                 }
                             }
                         }
@@ -302,6 +307,7 @@ Item {
     // ── The area as widgets, the rows under them.
     Item {
         id: board
+        transform: Translate { id: boardShift }
         x: nav.x + nav.width + root.u(root.windowed ? 18 : 28)
         y: nav.y
         width: root.width - x - root.pad
@@ -321,6 +327,7 @@ Item {
                     width: root.spanWidth(root.topSpan(top.index))
                     height: root.topHeightOf(top.index)
                     caption: top.modelData === "edge" ? root.edgeSpec?.label ?? "" : top.modelData === "range" ? root.rangeSpec?.label ?? "" : root.tileSpec?.label ?? ""
+                    note: top.modelData === "range" ? root.rangeSaid : ""
                     Loader {
                         anchors.fill: parent.body
                         sourceComponent: top.modelData === "edge" ? edgeWidget : top.modelData === "range" ? rangeWidget : tilesWidget
@@ -376,7 +383,7 @@ Item {
     Item {
         id: rowsSlot
         x: board.x + root.u(6)
-        y: (root.host?.searching ?? false) ? board.y : board.y + rowsPanel.y + root.u(4)
+        y: ((root.host?.searching ?? false) ? board.y : board.y + rowsPanel.y + root.u(4)) + boardShift.y
         width: board.width - root.u(12)
         height: (root.host?.searching ?? false) ? board.height : Math.max(0, rowsPanel.height - root.u(8))
         clip: true
@@ -386,6 +393,7 @@ Item {
     component Widget: Rectangle {
         id: widget
         property string caption: ""
+        property string note: ""
         readonly property alias body: body
         radius: root.u(root.windowed ? 24 : 28)
         color: root.plate
@@ -393,7 +401,7 @@ Item {
             id: cap
             x: root.u(root.windowed ? 18 : 22)
             y: root.u(root.windowed ? 16 : 20)
-            width: parent.width - 2 * x
+            width: parent.width - 2 * x - (capNote.visible ? capNote.width + root.u(12) : 0)
             elide: Text.ElideRight
             text: Translation.tr(widget.caption)
             color: IrisStyle.muted
@@ -402,6 +410,20 @@ Item {
             font.weight: Font.Medium
             font.capitalization: Font.AllUppercase
             font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.16)
+        }
+        IrisText {
+            id: capNote
+            visible: widget.note.length > 0
+            anchors.right: parent.right
+            anchors.rightMargin: cap.x
+            anchors.verticalCenter: cap.verticalCenter
+            text: widget.note
+            color: IrisStyle.text
+            font.family: IrisStyle.fontMono
+            font.pixelSize: IrisStyle.typeCaption
+            font.weight: Font.DemiBold
+            font.capitalization: Font.AllUppercase
+            font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.12)
         }
         Item {
             id: body
@@ -581,7 +603,7 @@ Item {
         }
     }
 
-    // The area's lead figure big in dots, a dot scrubber under it: click or drag along it.
+    // The area's lead range as a large dot scrubber: click or drag along it; its value reads in the caption.
     Component {
         id: rangeWidget
         Item {
@@ -590,15 +612,8 @@ Item {
             readonly property real lo: Number(range.spec?.min ?? 0)
             readonly property real hi: Number(range.spec?.max ?? 1)
             readonly property real step: Number(range.spec?.step ?? 1)
-            property real dragged: NaN
-            readonly property real value: { Config.revision; return Number.isFinite(range.dragged) ? range.dragged : Number(IrisOptions.currentValue(range.spec)) }
-            readonly property string said: range.spec ? Translation.tr(IrisOptions.rangeText(range.spec, range.value)) : ""
-            // "40 px" → the figure in dots, the unit beside it in small capitals.
-            readonly property var parts: {
-                const m = range.said.match(/^([-−+]?[\d.,:]+)\s*(.*)$/)
-                return m ? [m[1].replace("−", "-").replace(",", "."), m[2]] : [range.said, ""]
-            }
-            readonly property int dots: root.windowed ? 15 : 21
+            readonly property real value: { Config.revision; return Number.isFinite(root.rangeDragged) ? root.rangeDragged : Number(IrisOptions.currentValue(range.spec)) }
+            readonly property int dots: root.windowed ? 13 : 17
             readonly property real fraction: range.hi > range.lo ? Math.max(0, Math.min(1, (range.value - range.lo) / (range.hi - range.lo))) : 0
             readonly property int knob: Math.round(range.fraction * (range.dots - 1))
             function valueAt(x: real): real {
@@ -607,76 +622,33 @@ Item {
                 const snapped = range.lo + Math.round((raw - range.lo) / range.step) * range.step
                 return Number(Math.max(range.lo, Math.min(range.hi, snapped)).toFixed(4))
             }
-            Row {
-                id: figure
-                anchors.bottom: scrub.top
-                anchors.bottomMargin: root.u(root.windowed ? 14 : 22)
-                spacing: root.u(14)
-                Skins.DotMatrix {
-                    id: big
-                    text: range.parts[0]
-                    // As big as the widget's height lets it stand over the scrubber.
-                    pitch: Math.max(root.u(5), Math.min(root.u(root.windowed ? 12 : 19), Math.floor((range.height - root.u(root.windowed ? 58 : 70)) / 7)))
-                    fit: range.width - unit.width - root.u(14)
-                }
-                IrisText {
-                    id: unit
-                    anchors.bottom: big.bottom
-                    anchors.bottomMargin: root.u(4)
-                    text: range.parts[1]
-                    color: IrisStyle.muted
-                    font.family: IrisStyle.fontMono
-                    font.pixelSize: IrisStyle.typeLabel
-                    font.weight: Font.Medium
-                    font.capitalization: Font.AllUppercase
-                    font.letterSpacing: Math.round(IrisStyle.typeLabel * 0.14)
-                }
-            }
             MouseArea {
                 id: scrub
-                anchors.bottom: scale.top
-                anchors.bottomMargin: root.u(8)
+                anchors.verticalCenter: parent.verticalCenter
                 width: range.width
-                height: root.u(22)
+                height: root.u(48)
                 cursorShape: Qt.PointingHandCursor
                 preventStealing: true
                 Accessible.role: Accessible.Slider
                 Accessible.name: Translation.tr(String(range.spec?.label ?? ""))
-                onPressed: mouse => range.dragged = range.valueAt(mouse.x)
-                onPositionChanged: mouse => { if (pressed) range.dragged = range.valueAt(mouse.x) }
-                onReleased: { IrisOptions.commit(range.spec, range.dragged); range.dragged = NaN }
-                onCanceled: range.dragged = NaN
+                onPressed: mouse => root.rangeDragged = range.valueAt(mouse.x)
+                onPositionChanged: mouse => { if (pressed) root.rangeDragged = range.valueAt(mouse.x) }
+                onReleased: { IrisOptions.commit(range.spec, root.rangeDragged); root.rangeDragged = NaN }
+                onCanceled: root.rangeDragged = NaN
                 Repeater {
                     model: range.dots
                     Rectangle {
                         required property int index
                         readonly property bool here: index === range.knob
-                        readonly property real size: root.u(here ? 14 : 7)
-                        x: Math.round(index / (range.dots - 1) * (scrub.width - root.u(14)) + root.u(7) - size / 2)
+                        readonly property real size: root.u(here ? 22 : index < range.knob ? 11 : 9)
+                        x: Math.round(index / (range.dots - 1) * (scrub.width - root.u(22)) + root.u(11) - size / 2)
                         anchors.verticalCenter: parent.verticalCenter
                         width: size
                         height: size
                         radius: size / 2
                         color: here ? IrisStyle.danger : index < range.knob ? IrisStyle.text : root.dim
-                    }
-                }
-            }
-            Item {
-                id: scale
-                anchors.bottom: parent.bottom
-                width: range.width
-                height: root.u(14)
-                Repeater {
-                    model: [range.lo, (range.lo + range.hi) / 2, range.hi]
-                    IrisText {
-                        required property real modelData
-                        required property int index
-                        x: index === 0 ? 0 : index === 1 ? (scale.width - width) / 2 : scale.width - width
-                        text: range.spec ? Translation.tr(IrisOptions.rangeText(range.spec, Math.round(modelData / range.step) * range.step)).replace(/\s*[^\d.,:\s-]+$/, "") : ""
-                        color: IrisStyle.textTertiary
-                        font.family: IrisStyle.fontMono
-                        font.pixelSize: IrisStyle.typeCaption
-                        font.letterSpacing: Math.round(IrisStyle.typeCaption * 0.1)
+                        Behavior on width { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+                        Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                     }
                 }
             }
@@ -692,7 +664,7 @@ Item {
             readonly property var choices: root.tileSpec ? IrisOptions.choicesOf(root.tileSpec) : []
             Row {
                 id: tileRow
-                y: root.chipSpec ? 0 : (tiles.height - height) / 2
+                y: 0
                 width: tiles.width
                 spacing: root.u(10)
                 Repeater {
@@ -702,7 +674,7 @@ Item {
                         required property var modelData
                         readonly property bool on: IrisOptions.same(shape.modelData.value, tiles.current)
                         width: (tileRow.width - (tiles.choices.length - 1) * tileRow.spacing) / tiles.choices.length
-                        height: root.u(root.windowed ? 56 : 86)
+                        height: root.shapeHeight
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         Accessible.role: Accessible.RadioButton
@@ -715,21 +687,22 @@ Item {
                             color: shape.on ? IrisStyle.text : shape.containsMouse ? IrisStyle.fillHover : "transparent"
                             border.width: shape.on ? 0 : 1
                             border.color: IrisStyle.hairlineStrong
+                            Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                         }
-                        Column {
+                        Row {
                             anchors.centerIn: parent
                             spacing: root.u(8)
                             MaterialSymbol {
-                                visible: String(shape.modelData.glyph ?? "").length > 0 && !root.windowed
-                                anchors.horizontalCenter: parent.horizontalCenter
+                                visible: String(shape.modelData.glyph ?? "").length > 0
+                                anchors.verticalCenter: parent.verticalCenter
                                 text: String(shape.modelData.glyph ?? "")
                                 iconSize: root.u(20)
                                 color: shape.on ? IrisStyle.surfaceOpaque : IrisStyle.muted
                             }
                             IrisText {
                                 id: shapeName
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                width: Math.min(implicitWidth, shape.width - root.u(10))
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.min(implicitWidth, shape.width - root.u(40))
                                 elide: Text.ElideRight
                                 text: Translation.tr(String(shape.modelData.label ?? ""))
                                 color: shape.on ? IrisStyle.surfaceOpaque : IrisStyle.muted
