@@ -157,6 +157,15 @@ Item {
 
     DeferredPanelLoader { identifier: "iiBootGreeting"; component: BootGreeting {} }
     OnDemandPanelLoader { identifier: "iiCheatsheet"; open: GlobalStates.cheatsheetOpen; source: "../shared/cheatsheet/Cheatsheet.qml" }
+    // Arranging the desktop: the toolbar and the shelf, while the desktop recedes into a card; held a beat after Done
+    // so the card can grow back.
+    OnDemandPanelLoader {
+        identifier: "iiBackground"
+        open: GlobalStates.widgetEditMode
+        closeGraceMs: 900
+        retainIdleMs: 60 * 1000
+        source: "./edit/MaterialEditDesk.qml"
+    }
     OnDemandPanelLoader {
         identifier: "iiControlPanel"
         open: GlobalStates.controlPanelOpen
