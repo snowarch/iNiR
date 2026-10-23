@@ -10,6 +10,7 @@ import qs.modules.common.functions
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.bar.island
+import qs.modules.iris.edit
 import "../components"
 
 // AIRISU's Island face. The engine (IrisIsland) decides the mode, the events, the levels, the clock style and the size;
@@ -330,30 +331,125 @@ Item {
         }
     }
 
+    // Arranging the desktop: undo and redo walk the arrangement, the grid key's seal says the lattice holds, Done
+    // puts the desktop back.
+    component EditKey: Item {
+        id: key
+        property string glyph
+        property string name
+        property bool available: true
+        property bool stamped: false
+        signal take()
+        Layout.preferredWidth: Math.round(root.h * 0.62)
+        Layout.preferredHeight: Layout.preferredWidth
+        Layout.alignment: Qt.AlignVCenter
+        AKey {
+            id: keyFace
+            anchors.fill: parent
+            lacquer: "transparent"
+            under: Airisu.ground
+            hovered: keyArea.containsMouse
+            pressed: keyArea.pressed
+            available: key.available
+        }
+        Mark {
+            anchors.centerIn: parent
+            anchors.horizontalCenterOffset: keyFace.shift
+            anchors.verticalCenterOffset: keyFace.shift
+            text: key.glyph
+            iconSize: Math.round(15 * root.d)
+            color: key.available ? root.ink : root.inkSecond
+            opacity: key.available ? 1 : 0.5
+        }
+        ASeal {
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Math.round(2 * root.d)
+            implicitWidth: Airisu.u(1.5)
+            implicitHeight: Airisu.u(1.5)
+            visible: key.stamped
+            stamped: key.stamped
+        }
+        MouseArea {
+            id: keyArea
+            anchors.fill: parent
+            hoverEnabled: true
+            enabled: key.available
+            cursorShape: Qt.PointingHandCursor
+            Accessible.role: Accessible.Button
+            Accessible.name: key.name
+            onClicked: key.take()
+        }
+    }
     Face {
         id: edit
-        Mark { text: "edit" }
-        AText {
-            Layout.fillWidth: true
-            text: Translation.tr("Editing desktop")
-            size: IrisStyle.typeLabel
-            font.weight: Font.Bold
-            color: root.ink
+        readonly property bool gridOn: Config.options?.background?.widgets?.editGrid?.snap ?? true
+        EditKey {
+            glyph: "undo"
+            name: Translation.tr("Undo")
+            available: IrisEditHistory.undoStack.length > 0
+            onTake: IrisEditHistory.undo()
         }
-        // The engine's press area ends editing; this is the key it presses, lacquered in the accent.
+        EditKey {
+            glyph: "redo"
+            name: Translation.tr("Redo")
+            available: IrisEditHistory.redoStack.length > 0
+            onTake: IrisEditHistory.redo()
+        }
+        Column {
+            Layout.fillWidth: true
+            Layout.preferredWidth: Math.max(editHint.visible ? editHint.implicitWidth : 0, editName.implicitWidth)
+            Layout.alignment: Qt.AlignVCenter
+            Layout.leftMargin: Airisu.u(1)
+            spacing: Math.round(-1 * root.d)
+            Ruby {
+                id: editHint
+                visible: root.stacks
+                width: parent.width
+                elide: Text.ElideRight
+                text: Translation.tr("Drag to place · click to use")
+            }
+            AText {
+                id: editName
+                width: parent.width
+                text: IrisEditHistory.notice.length > 0 ? IrisEditHistory.notice : Translation.tr("Editing desktop")
+                size: IrisStyle.typeLabel
+                font.weight: Font.Bold
+                color: root.ink
+                elide: Text.ElideRight
+            }
+        }
+        EditKey {
+            glyph: "grid_4x4"
+            name: edit.gridOn ? Translation.tr("Snap to grid: on") : Translation.tr("Snap to grid: off")
+            stamped: edit.gridOn
+            onTake: Config.setNestedValue("background.widgets.editGrid.snap", !edit.gridOn)
+        }
         ALacquer {
+            id: doneKey
             Layout.preferredHeight: Math.round(root.h * 0.56)
             Layout.preferredWidth: doneLabel.implicitWidth + Airisu.u(5)
             Layout.alignment: Qt.AlignVCenter
             cut: Math.round(Layout.preferredHeight / 3)
-            lacquer: Airisu.vivid(Airisu.pigment("rest"))
+            lacquer: doneArea.containsMouse ? Airisu.step(Airisu.vivid(Airisu.pigment("rest")), Airisu.hoverStep) : Airisu.vivid(Airisu.pigment("rest"))
             AText {
                 id: doneLabel
                 anchors.centerIn: parent
+                anchors.horizontalCenterOffset: doneArea.pressed ? Airisu.offset : 0
+                anchors.verticalCenterOffset: doneArea.pressed ? Airisu.offset : 0
                 text: Translation.tr("Done")
                 size: IrisStyle.typeMeta
                 font.weight: Font.Bold
                 color: Airisu.inkOn(Airisu.vivid(Airisu.pigment("rest")))
+            }
+            MouseArea {
+                id: doneArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                Accessible.role: Accessible.Button
+                Accessible.name: Translation.tr("Done")
+                onClicked: GlobalStates.setWidgetEditMode(false)
             }
         }
     }

@@ -2260,10 +2260,8 @@ Item {
                 y: root.zoned && root.vertical ? Math.round(barZones.heartAlong) : 0
                 width: root.zoned && !root.vertical ? Math.round(root.heartLength) : parent.width
                 height: root.zoned && root.vertical ? Math.round(root.heartLength) : parent.height
-                // Arranging, the head's own buttons take the clicks; a Design face that draws its own head (AIRISU)
-                // still ends arranging from here.
-                enabled: !root.inlineExpanded && (!root.zoned || root.heartShown)
-                    && (root.compactMode !== "edit" || root.faceUrl.length > 0)
+                // Arranging, the head's own keys take the clicks (a Design face draws its own).
+                enabled: !root.inlineExpanded && (!root.zoned || root.heartShown) && root.compactMode !== "edit"
                 acceptedButtons: Qt.LeftButton | Qt.MiddleButton
                 cursorShape: islandGrip.carrying ? Qt.ClosedHandCursor
                     : GlobalStates.irisEdit ? Qt.OpenHandCursor : Qt.PointingHandCursor
