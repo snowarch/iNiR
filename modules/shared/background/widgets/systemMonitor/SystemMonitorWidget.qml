@@ -345,10 +345,10 @@ AbstractBackgroundWidget {
         const shouldHold = root._active && root.visible && root.motionActive;
         if (shouldHold && !root._holdingResourceUsage) {
             root._holdingResourceUsage = true;
-            ResourceUsage.keepAlive();
+            ResourceUsage.keepAlive(root);
         } else if (!shouldHold && root._holdingResourceUsage) {
             root._holdingResourceUsage = false;
-            ResourceUsage.releaseKeepAlive();
+            ResourceUsage.releaseKeepAlive(root);
         }
     }
     on_ActiveChanged: root._syncResourceUsage()
@@ -357,7 +357,7 @@ AbstractBackgroundWidget {
     Component.onCompleted: { root.reading = root._readingNow(); root._syncResourceUsage(); }
     Component.onDestruction: if (root._holdingResourceUsage) {
         root._holdingResourceUsage = false;
-        ResourceUsage.releaseKeepAlive();
+        ResourceUsage.releaseKeepAlive(root);
     }
 
     WidgetSurface {

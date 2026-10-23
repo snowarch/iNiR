@@ -14,7 +14,14 @@ Singleton {
 
     property bool _runningRequested: false
     property bool _initRequested: false
-    property int _persistentConsumers: 0
+    // Who holds the poll, not how many: across a reload the old widget's release reached the new instance and
+    // dropped the new widget's hold to zero, so every reading froze until something asked again.
+    property var _holders: []
+    property int _anonymousHolders: 0
+    function _held(): bool {
+        root._holders = root._holders.filter(holder => holder !== null && holder !== undefined);
+        return root._holders.length > 0 || root._anonymousHolders > 0;
+    }
 
     // Auto-stop polling when nothing requested it recently.
     // This prevents the service from running forever after briefly opening a panel.
@@ -210,7 +217,7 @@ Singleton {
             detectTempSensors.running = true;
             findCpuMaxFreqProc.running = true;
         }
-        if (root._persistentConsumers === 0)
+        if (!root._held())
             autoStopTimer.restart();
         pollTimer.restart();
         // Prime values now instead of waiting one updateInterval — but only once.
@@ -227,15 +234,21 @@ Singleton {
 
     // Register a persistent consumer (always-visible panel like bar).
     // While any persistent consumer is registered, auto-stop is disabled.
-    function keepAlive(): void {
-        root._persistentConsumers++;
+    function keepAlive(holder: var): void {
+        if (!holder)
+            root._anonymousHolders++;
+        else if (!root._holders.includes(holder))
+            root._holders = root._holders.concat([holder]);
         autoStopTimer.stop();
         ensureRunning();
     }
 
-    function releaseKeepAlive(): void {
-        root._persistentConsumers = Math.max(0, root._persistentConsumers - 1);
-        if (root._persistentConsumers === 0 && root._runningRequested)
+    function releaseKeepAlive(holder: var): void {
+        if (!holder)
+            root._anonymousHolders = Math.max(0, root._anonymousHolders - 1);
+        else
+            root._holders = root._holders.filter(other => other !== holder);
+        if (!root._held() && root._runningRequested)
             autoStopTimer.restart();
     }
 
@@ -258,7 +271,7 @@ Singleton {
         interval: root._autoStopDelayMs
         repeat: false
         onTriggered: {
-            if (root._persistentConsumers === 0)
+            if (!root._held())
                 root.stop();
         }
     }

@@ -14,11 +14,11 @@ QtObject {
     function sync(): void {
         if (monitoring === _holding) return;
         _holding = monitoring;
-        if (_holding) ResourceUsage.keepAlive();
-        else ResourceUsage.releaseKeepAlive();
+        if (_holding) ResourceUsage.keepAlive(root);
+        else ResourceUsage.releaseKeepAlive(root);
     }
 
     onMonitoringChanged: sync()
     Component.onCompleted: sync()
-    Component.onDestruction: if (_holding) ResourceUsage.releaseKeepAlive()
+    Component.onDestruction: if (_holding) ResourceUsage.releaseKeepAlive(root)
 }

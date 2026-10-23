@@ -852,10 +852,10 @@ ColumnLayout {
             readonly property bool polling: page.current && page.island.visualExpanded
             property bool holdingSensors: false
             onPollingChanged: {
-                if (polling && !holdingSensors) { ResourceUsage.keepAlive(); holdingSensors = true }
-                else if (!polling && holdingSensors) { ResourceUsage.releaseKeepAlive(); holdingSensors = false }
+                if (polling && !holdingSensors) { ResourceUsage.keepAlive(vitals); holdingSensors = true }
+                else if (!polling && holdingSensors) { ResourceUsage.releaseKeepAlive(vitals); holdingSensors = false }
             }
-            Component.onDestruction: if (holdingSensors) ResourceUsage.releaseKeepAlive()
+            Component.onDestruction: if (holdingSensors) ResourceUsage.releaseKeepAlive(vitals)
 
             RowLayout {
                 anchors.fill: parent

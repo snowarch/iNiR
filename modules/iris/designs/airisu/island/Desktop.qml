@@ -582,10 +582,10 @@ GridLayout {
         readonly property bool polling: page.live && sheet.visible
         property bool holding: false
         onPollingChanged: {
-            if (polling && !holding) { ResourceUsage.keepAlive(); holding = true }
-            else if (!polling && holding) { ResourceUsage.releaseKeepAlive(); holding = false }
+            if (polling && !holding) { ResourceUsage.keepAlive(sheet); holding = true }
+            else if (!polling && holding) { ResourceUsage.releaseKeepAlive(sheet); holding = false }
         }
-        Component.onDestruction: if (holding) ResourceUsage.releaseKeepAlive()
+        Component.onDestruction: if (holding) ResourceUsage.releaseKeepAlive(sheet)
         Row {
             anchors.fill: parent
             spacing: Airisu.u(3)

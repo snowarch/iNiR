@@ -1263,12 +1263,12 @@ Loader {
             readonly property bool polling: root.contentActive
             property bool holding: false
             function syncPolling(): void {
-                if (systemCard.polling && !systemCard.holding) { ResourceUsage.keepAlive(); systemCard.holding = true }
-                else if (!systemCard.polling && systemCard.holding) { ResourceUsage.releaseKeepAlive(); systemCard.holding = false }
+                if (systemCard.polling && !systemCard.holding) { ResourceUsage.keepAlive(systemCard); systemCard.holding = true }
+                else if (!systemCard.polling && systemCard.holding) { ResourceUsage.releaseKeepAlive(systemCard); systemCard.holding = false }
             }
             onPollingChanged: systemCard.syncPolling()
             Component.onCompleted: systemCard.syncPolling()
-            Component.onDestruction: if (systemCard.holding) ResourceUsage.releaseKeepAlive()
+            Component.onDestruction: if (systemCard.holding) ResourceUsage.releaseKeepAlive(systemCard)
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 4 * root.d
