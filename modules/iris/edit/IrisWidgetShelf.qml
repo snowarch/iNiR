@@ -13,17 +13,26 @@ import qs.modules.iris.settings
 import qs.modules.iris.widgets
 import qs.modules.iris.components
 
-// iRiS's face on the shared shelf: its aisles slide a segmented thumb, the search is Spotlight's matcher, the plates are
-// concentric with the drawer's body.
+// iRiS's face on the shared shelf: its pages slide a segmented thumb (the widgets, the Island, the Dock, the look, saved
+// desktops), the search is Spotlight's matcher and finds a kind by name too, the plates are concentric with the drawer's body.
 WidgetShelf {
     id: root
 
     property real bodyRadius: IrisStyle.radius
 
+    pages: [
+        { value: "widgets", label: Translation.tr("Widgets") },
+        { value: "bar", label: Translation.tr("Island") },
+        { value: "dock", label: Translation.tr("Dock") },
+        { value: "appearance", label: Translation.tr("Look") },
+        { value: "presets", label: Translation.tr("Presets") }
+    ]
+
     entries: {
         const list = IrisFaceData.galleryEntries.concat(IrisFaceData.otherEntries).map(entry => IrisSearch.prepare({
             key: entry.key, glyph: entry.glyph, name: entry.label, english: entry.english, tint: entry.tint,
-            words: entry.key + " " + DesktopWidgetIdentity.keywordsOf(entry.key), category: DesktopWidgetIdentity.categoryOf(entry.key) }))
+            words: [entry.key, DesktopWidgetIdentity.keywordsOf(entry.key), root.categoryNames[DesktopWidgetIdentity.categoryOf(entry.key)] ?? "",
+                DesktopWidgetIdentity.categoryOf(entry.key)].join(" "), category: DesktopWidgetIdentity.categoryOf(entry.key) }))
         for (const custom of (CustomWidgets.ready ? CustomWidgets.widgets : []))
             list.push(IrisSearch.prepare({ key: "custom." + custom.id, glyph: custom.icon || "widgets", name: custom.name,
                 english: custom.name, tint: DesktopWidgetIdentity.customTint, words: "custom hub", category: "decor" }))
@@ -42,6 +51,7 @@ WidgetShelf {
         readonly property color raised: IrisStyle.raised
         readonly property color hairline: IrisStyle.hairline
         readonly property color hairlineStrong: IrisStyle.hairlineStrong
+        readonly property color danger: IrisStyle.signal
         readonly property string fontMain: IrisStyle.fontMain
         readonly property real typeMeta: IrisStyle.typeMeta
         readonly property real typeBody: IrisStyle.typeBody
@@ -52,6 +62,10 @@ WidgetShelf {
         function pressScale(s: real): real { return IrisStyle.pressScale(s) }
         function weight(w: int): int { return IrisStyle.weight(w) }
         function score(query: string, entry: var): real { return IrisSearch.score(query, entry) }
+        function pageOf(page: string): Component { return ["bar", "dock", "appearance"].includes(page) ? optionsPage : null }
+        readonly property Component optionsPage: Component {
+            IrisShelfOptions { section: root.page }
+        }
         readonly property Component head: Component {
             Item {
                 id: head
@@ -61,17 +75,29 @@ WidgetShelf {
                 function dropSearch(): void { searchInput.focus = false }
 
                 IrisSegmented {
-                    id: aisles
+                    id: pageTabs
                     y: Math.round((head.height - height) / 2)
-                    width: Math.min(aisles.fitWidth, head.width - searchBox.width - settingsButton.width - Math.round(20 * head.d))
-                    options: head.shelf?.categories ?? []
-                    current: (head.shelf?.query.length ?? 0) > 0 ? "" : (head.shelf?.category ?? "all")
-                    accessibleName: Translation.tr("Widget kinds")
-                    onPicked: value => head.shelf.pick(value)
+                    width: Math.min(pageTabs.fitWidth, head.width - searchBox.width - settingsButton.width - Math.round(20 * head.d))
+                    options: head.shelf?.pages ?? []
+                    current: head.shelf?.page ?? "widgets"
+                    accessibleName: Translation.tr("Shelf pages")
+                    onPicked: value => head.shelf.goTo(value)
+                }
+
+                // What the shelf just did (saved, worn, undone), where the search sits on the other pages.
+                IrisLabel {
+                    anchors.right: settingsButton.left
+                    anchors.rightMargin: Math.round(12 * head.d)
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !(head.shelf?.onWidgets ?? true)
+                    text: DesktopEditHistory.notice
+                    opacity: text.length > 0 ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
                 }
 
                 Rectangle {
                     id: searchBox
+                    visible: head.shelf?.onWidgets ?? true
                     anchors.right: settingsButton.left
                     anchors.rightMargin: Math.round(8 * head.d)
                     width: Math.round(240 * head.d)
@@ -147,7 +173,7 @@ WidgetShelf {
                     materialIcon: "tune"
                     iconSize: Math.round(16 * head.d)
                     Accessible.name: Translation.tr("Widget settings")
-                    onClicked: GlobalStates.openSettingsAt("widgets")
+                    onClicked: GlobalStates.openSettingsAt("iris", head.shelf && !head.shelf.onWidgets && head.shelf.page !== "presets" ? head.shelf.page : "widgets")
                 }
             }
         }

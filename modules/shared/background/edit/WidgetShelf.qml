@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Qt.labs.folderlistmodel
 import Quickshell
+import Quickshell.Widgets
 import qs
 import qs.services
 import qs.modules.common
@@ -41,11 +42,41 @@ Item {
         .map(id => ({ value: id, label: root.categoryNames[id] }))
     property string category: "all"
 
+    // ── Pages: the widgets, then what the family offers beside them (its Island or bar, the Dock, the look) and the
+    // saved desktops. A family lists them as { value, label } and draws its own (face.pageOf(value)); Presets is shared.
+    property var pages: [{ value: "widgets", label: Translation.tr("Widgets") }, { value: "presets", label: Translation.tr("Presets") }]
+    property string page: "widgets"
+    readonly property bool onWidgets: root.page === "widgets"
+    // A new page comes in from the side of the tab it was picked from, as the segmented thumb travels.
+    property real pageShift: 0
+    function goTo(page: string): void {
+        if (page === root.page) return
+        const from = root.pages.findIndex(entry => entry.value === root.page)
+        const to = root.pages.findIndex(entry => entry.value === page)
+        if (page !== "widgets") GlobalStates.widgetSearchText = ""
+        root.naming = ""
+        root.page = page
+        shiftAnim.stop()
+        root.pageShift = (to > from ? 1 : -1) * Math.round(36 * root.d)
+        shiftAnim.start()
+    }
+    NumberAnimation {
+        id: shiftAnim
+        target: root
+        property: "pageShift"
+        to: 0
+        duration: root.face.duration(300)
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: root.face.morphCurve
+    }
+
     // ── Finding a widget ──
     // The query searches every aisle. ↓/Tab and ↑ move along what matches, ↵ takes it, Escape clears, then lets go.
     readonly property string query: GlobalStates.widgetSearchText.trim()
     property bool searchFocused: false
-    readonly property bool searching: root.query.length > 0 || root.searchFocused
+    // A saved desktop being named takes the keys the same way: Escape gives the name up, Ctrl+Z edits the text.
+    property string naming: ""
+    readonly property bool searching: root.query.length > 0 || root.searchFocused || root.naming.length > 0
     readonly property var shown: {
         if (root.query.length === 0)
             return root.entries.filter(entry => root.category === "all" || entry.category === root.category)
@@ -66,7 +97,8 @@ Item {
     }
     function openSearch(): void { headLoader.item?.focusSearch() }
     function escapeSearch(): void {
-        if (GlobalStates.widgetSearchText.length > 0) GlobalStates.widgetSearchText = ""
+        if (root.naming.length > 0) root.naming = ""
+        else if (GlobalStates.widgetSearchText.length > 0) GlobalStates.widgetSearchText = ""
         else { headLoader.item?.dropSearch(); GlobalStates.widgetSearchOpen = false }
     }
     function move(step: int): void {
@@ -232,6 +264,8 @@ Item {
     // ── The row of pictures ──
     Flickable {
         id: tiles
+        visible: root.onWidgets
+        transform: Translate { x: root.onWidgets ? root.pageShift : 0 }
         x: root.pad
         y: root.pad + root.headHeight + root.headGap
         width: root.width - 2 * root.pad
@@ -440,9 +474,21 @@ Item {
         }
     }
 
+    // The family's own pages and the saved desktops, where the pictures were.
+    Loader {
+        id: pageLoader
+        x: tiles.x
+        y: tiles.y
+        width: tiles.width
+        height: tiles.height
+        active: !root.onWidgets
+        transform: Translate { x: root.pageShift }
+        sourceComponent: root.page === "presets" ? presetsPage : root.face.pageOf?.(root.page) ?? null
+    }
+
     StyledText {
         anchors.centerIn: tiles
-        visible: root.shown.length === 0
+        visible: root.onWidgets && root.shown.length === 0
         text: Translation.tr("No widget is called “%1”").arg(root.query)
         color: root.face.muted
         font.family: root.face.fontMain
@@ -534,6 +580,272 @@ Item {
                 fill: 1
                 color: ghost.tint
             }
+        }
+    }
+
+    // ── Saved desktops: save this one, wear one (Undo takes it back), rename or remove it in place. ──
+    Component {
+        id: presetsPage
+        Flickable {
+            id: presetRow
+            readonly property real plateWidth: Math.round(root.pictureHeight * 16 / 9)
+            readonly property string worn: { Config.revision; return DesktopPresets.presets.length > 0 ? DesktopPresets.wornId() : "" }
+            property string confirming: ""
+            contentWidth: presetContent.width
+            contentHeight: height
+            flickableDirection: Flickable.HorizontalFlick
+            boundsBehavior: Flickable.StopAtBounds
+            clip: true
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: event => {
+                    const delta = Math.abs(event.angleDelta.x) > Math.abs(event.angleDelta.y) ? event.angleDelta.x : event.angleDelta.y
+                    presetRow.contentX = Math.max(0, Math.min(presetRow.contentWidth - presetRow.width, presetRow.contentX - delta / 120 * Math.round(180 * root.d)))
+                }
+            }
+            Row {
+                id: presetContent
+                spacing: root.tileGap
+                height: presetRow.height
+
+                // Save this desktop: a plate with nothing in it yet.
+                Item {
+                    width: presetRow.plateWidth
+                    height: presetRow.height
+                    Rectangle {
+                        id: savePlate
+                        width: parent.width
+                        height: root.pictureHeight
+                        radius: root.face.plateRadius
+                        color: saveArea.containsMouse ? root.face.fillActive : "transparent"
+                        border.width: 1
+                        border.color: root.face.hairlineStrong
+                        scale: saveArea.pressed ? root.face.pressScale(0.96) : 1
+                        Behavior on scale { NumberAnimation { duration: root.face.duration(saveArea.pressed ? 80 : 200); easing.type: root.face.feedbackEasing } }
+                        Behavior on color { ColorAnimation { duration: root.face.duration(110); easing.type: root.face.feedbackEasing } }
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: "add"
+                            iconSize: Math.round(28 * root.d)
+                            color: root.face.ink
+                        }
+                        MouseArea {
+                            id: saveArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            Accessible.role: Accessible.Button
+                            Accessible.name: Translation.tr("Save this desktop")
+                            onClicked: root.naming = DesktopPresets.save("")
+                        }
+                    }
+                    StyledText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: root.pictureHeight + root.nameGap
+                        text: Translation.tr("Save this desktop")
+                        color: root.face.subtext
+                        font.family: root.face.fontMain
+                        font.pixelSize: root.face.typeMeta
+                        font.weight: root.face.weight(Font.Medium)
+                    }
+                }
+
+                Repeater {
+                    model: ScriptModel { values: DesktopPresets.presets; objectProp: "id" }
+                    delegate: Item {
+                        id: preset
+                        required property var modelData
+                        readonly property bool worn: presetRow.worn === preset.modelData.id
+                        readonly property bool confirming: presetRow.confirming === preset.modelData.id
+                        width: presetRow.plateWidth
+                        height: presetRow.height
+
+                        Rectangle {
+                            id: presetPlate
+                            width: parent.width
+                            height: root.pictureHeight
+                            radius: root.face.plateRadius
+                            color: root.face.fillQuiet
+                            border.width: preset.worn ? Math.max(1, Math.round(1.5 * root.d)) : 0
+                            border.color: root.face.ink
+                            scale: wearArea.pressed ? root.face.pressScale(0.96) : 1
+                            Behavior on scale { NumberAnimation { duration: root.face.duration(wearArea.pressed ? 80 : 200); easing.type: root.face.feedbackEasing } }
+                            // The desktop it saves: this wallpaper under its widgets, where they stood.
+                            ClippingRectangle {
+                                anchors.fill: parent
+                                anchors.margins: Math.round(5 * root.d)
+                                radius: Math.max(0, presetPlate.radius - Math.round(5 * root.d))
+                                color: "transparent"
+                                Image {
+                                    anchors.fill: parent
+                                    source: Wallpapers.effectiveWallpaperUrl
+                                    sourceSize: Qt.size(Math.round(presetRow.plateWidth * 2), Math.round(root.pictureHeight * 2))
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    opacity: wearArea.containsMouse || preset.worn ? 0.9 : 0.6
+                                    Behavior on opacity { NumberAnimation { duration: root.face.duration(160); easing.type: root.face.feedbackEasing } }
+                                }
+                                Repeater {
+                                    model: DesktopPresets.placesOn(preset.modelData.id, root.outputName)
+                                    Rectangle {
+                                        required property var modelData
+                                        x: Math.round(modelData.x * parent.width)
+                                        y: Math.round(modelData.y * parent.height)
+                                        readonly property real share: modelData.size === "small" ? 0.75 : modelData.size === "large" ? 1.4 : 1
+                                        width: Math.round(parent.width * 0.1 * share)
+                                        height: Math.round(parent.height * 0.14 * share)
+                                        radius: Math.round(3 * root.d)
+                                        color: Qt.rgba(1, 1, 1, 0.82)
+                                        border.width: 1
+                                        border.color: Qt.rgba(0, 0, 0, 0.25)
+                                    }
+                                }
+                            }
+                            MouseArea {
+                                id: wearArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                Accessible.role: Accessible.Button
+                                Accessible.name: Translation.tr("Wear %1").arg(preset.modelData.name)
+                                onClicked: { presetRow.confirming = ""; DesktopPresets.wear(preset.modelData.id) }
+                                onDoubleClicked: root.naming = preset.modelData.id
+                            }
+                            // Worn: a check where a widget shows it is out.
+                            Rectangle {
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.margins: Math.round(6 * root.d)
+                                width: Math.round(20 * root.d)
+                                height: width
+                                radius: width / 2
+                                color: root.face.accent
+                                scale: preset.worn && !keys.shown ? 1 : 0
+                                Behavior on scale { NumberAnimation { duration: root.face.duration(200); easing.type: root.face.feedbackEasing } }
+                                MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "check"
+                                    iconSize: Math.round(14 * root.d)
+                                    font.weight: Font.DemiBold
+                                    color: root.face.inkOnAccent
+                                }
+                            }
+                            // Rename and remove, at the corner while the pointer is over it; remove asks once.
+                            Row {
+                                id: keys
+                                readonly property bool shown: wearArea.containsMouse || renameKey.hovered || removeKey.hovered || preset.confirming
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.margins: Math.round(6 * root.d)
+                                spacing: Math.round(4 * root.d)
+                                opacity: keys.shown ? 1 : 0
+                                visible: opacity > 0
+                                Behavior on opacity { NumberAnimation { duration: root.face.duration(140); easing.type: root.face.feedbackEasing } }
+                                CornerKey {
+                                    id: renameKey
+                                    glyph: "edit"
+                                    name: Translation.tr("Rename")
+                                    onActivated: root.naming = preset.modelData.id
+                                }
+                                CornerKey {
+                                    id: removeKey
+                                    glyph: preset.confirming ? "delete_forever" : "delete"
+                                    name: preset.confirming ? Translation.tr("Remove %1").arg(preset.modelData.name) : Translation.tr("Remove")
+                                    warn: preset.confirming
+                                    onActivated: {
+                                        if (preset.confirming) { presetRow.confirming = ""; DesktopPresets.remove(preset.modelData.id) }
+                                        else presetRow.confirming = preset.modelData.id
+                                    }
+                                }
+                            }
+                        }
+
+                        StyledText {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: root.pictureHeight + root.nameGap
+                            width: Math.min(implicitWidth, parent.width)
+                            visible: root.naming !== preset.modelData.id
+                            text: preset.confirming ? Translation.tr("Remove?") : preset.modelData.name
+                            color: preset.worn ? root.face.ink : root.face.subtext
+                            font.family: root.face.fontMain
+                            font.pixelSize: root.face.typeMeta
+                            font.weight: root.face.weight(preset.worn ? Font.DemiBold : Font.Medium)
+                            elide: Text.ElideRight
+                        }
+                        TextInput {
+                            id: nameInput
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: root.pictureHeight + root.nameGap
+                            width: parent.width
+                            visible: root.naming === preset.modelData.id
+                            horizontalAlignment: TextInput.AlignHCenter
+                            color: root.face.ink
+                            selectionColor: root.face.fillActive
+                            selectedTextColor: root.face.ink
+                            font.family: root.face.fontMain
+                            font.pixelSize: root.face.typeMeta
+                            font.weight: root.face.weight(Font.DemiBold)
+                            Accessible.name: Translation.tr("Name")
+                            onVisibleChanged: if (visible) { text = preset.modelData.name; forceActiveFocus(); selectAll() }
+                            onAccepted: { DesktopPresets.rename(preset.modelData.id, text); root.naming = "" }
+                            onActiveFocusChanged: if (!activeFocus && visible) { DesktopPresets.rename(preset.modelData.id, text); root.naming = "" }
+                            Keys.onEscapePressed: event => { root.naming = ""; event.accepted = true }
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.bottom
+                                anchors.topMargin: Math.round(2 * root.d)
+                                height: 1
+                                color: root.face.accent
+                            }
+                        }
+                    }
+                }
+
+                // Nothing saved yet: what this row is for, once.
+                StyledText {
+                    visible: DesktopPresets.presets.length === 0
+                    height: root.pictureHeight
+                    verticalAlignment: Text.AlignVCenter
+                    width: Math.min(implicitWidth, Math.round(360 * root.d))
+                    wrapMode: Text.WordWrap
+                    text: Translation.tr("Save how this desktop looks and wear it again whenever you like.")
+                    color: root.face.muted
+                    font.family: root.face.fontMain
+                    font.pixelSize: root.face.typeBody
+                }
+            }
+        }
+    }
+
+    component CornerKey: Rectangle {
+        id: key
+        property string glyph: ""
+        property string name: ""
+        property bool warn: false
+        readonly property bool hovered: keyArea.containsMouse
+        signal activated()
+        width: Math.round(22 * root.d)
+        height: width
+        radius: width / 2
+        color: key.warn ? root.face.danger : keyArea.containsMouse ? root.face.fillActive : root.face.raised
+        border.width: key.warn ? 0 : 1
+        border.color: root.face.hairline
+        Behavior on color { ColorAnimation { duration: root.face.duration(110); easing.type: root.face.feedbackEasing } }
+        MaterialSymbol {
+            anchors.centerIn: parent
+            text: key.glyph
+            iconSize: Math.round(14 * root.d)
+            color: key.warn ? root.face.inkOnAccent : root.face.ink
+        }
+        MouseArea {
+            id: keyArea
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            Accessible.role: Accessible.Button
+            Accessible.name: key.name
+            onClicked: key.activated()
         }
     }
 }

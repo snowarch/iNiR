@@ -7,8 +7,9 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 
-// Material's face on the shared widget shelf: its surfaces and type, filter chips for the aisles, a search field and the
-// widget settings key; widgets are found by the start of a word in their name or keywords.
+// Material's face on the shared widget shelf: its surfaces and type, filter chips for the pages (the widgets, the bar,
+// the Dock, saved desktops), a search field and the widget settings key; widgets are found by the start of a word in
+// their name, keywords or kind.
 QtObject {
     id: face
 
@@ -23,6 +24,7 @@ QtObject {
     readonly property color raised: Appearance.colors.colLayer3
     readonly property color hairline: Appearance.colors.colOutlineVariant
     readonly property color hairlineStrong: Appearance.colors.colOutline
+    readonly property color danger: Appearance.colors.colError
     readonly property string fontMain: Appearance.font.family.main
     readonly property real typeMeta: Appearance.font.pixelSize.smaller
     readonly property real typeBody: Appearance.font.pixelSize.small
@@ -65,6 +67,41 @@ QtObject {
         return sum / words.length
     }
 
+    readonly property var pages: [
+        { value: "widgets", label: Translation.tr("Widgets") },
+        { value: "bar", label: Translation.tr("Bar") },
+        { value: "dock", label: Translation.tr("Dock") },
+        { value: "presets", label: Translation.tr("Presets") }
+    ]
+    readonly property var options: ({
+        bar: [
+            { path: "bar.bottom", label: "Position", kind: "choice", options: [{ label: "Top", value: false }, { label: "Bottom", value: true }] },
+            { path: "bar.appearanceStyle", label: "Style", kind: "choice", options: [{ label: "M3", value: "m3" }, { label: "Classic", value: "classic" },
+                { label: "Islands", value: "islands" }, { label: "Scenic", value: "scenic" }, { label: "Frame", value: "frame" }, { label: "Pill", value: "pill" }] },
+            { path: "bar.autoHide.enable", label: "Hide automatically", kind: "switch" },
+            { path: "bar.showBackground", label: "Background", kind: "switch" },
+            { path: "bar.vertical", label: "Vertical", kind: "switch" },
+            { path: "bar.height", label: "Height", kind: "range", min: 30, max: 60, step: 1, unit: "px" }
+        ],
+        dock: [
+            { path: "dock.enable", label: "Dock", kind: "switch" },
+            { path: "dock.style", label: "Style", kind: "choice", options: [{ label: "M3", value: "m3" }, { label: "Panel", value: "panel" },
+                { label: "Pill", value: "pill" }, { label: "macOS", value: "macos" }, { label: "Island", value: "island" }] },
+            { path: "dock.hoverToReveal", label: "Show on hover", kind: "switch" },
+            { path: "dock.monochromeIcons", label: "Monochrome icons", kind: "switch" },
+            { path: "dock.showBackground", label: "Background", kind: "switch" },
+            { path: "dock.iconSize", label: "Icon size", kind: "range", min: 24, max: 64, step: 1, unit: "px" }
+        ]
+    })
+    property var shelf: null
+    function pageOf(page: string): Component { return face.options[page] ? optionsPage : null }
+    readonly property Component optionsPage: Component {
+        MaterialShelfOptions {
+            specs: face.options[face.shelf?.page ?? ""] ?? []
+            settingsPage: face.shelf?.page ?? "bar"
+        }
+    }
+
     readonly property Component head: Component {
         Item {
             id: head
@@ -77,18 +114,18 @@ QtObject {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 6
                 Repeater {
-                    model: head.shelf?.categories ?? []
+                    model: head.shelf?.pages ?? []
                     delegate: RippleButton {
                         id: chip
                         required property var modelData
-                        readonly property bool chosen: (head.shelf?.query.length ?? 0) === 0 && head.shelf?.category === chip.modelData.value
+                        readonly property bool chosen: head.shelf?.page === chip.modelData.value
                         implicitHeight: 30
                         implicitWidth: chipLabel.implicitWidth + (chip.chosen ? 40 : 24)
                         buttonRadius: Appearance.rounding.small
                         colBackground: chip.chosen ? Appearance.colors.colSecondaryContainer : "transparent"
                         colBackgroundHover: chip.chosen ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colLayer2Hover
                         Behavior on implicitWidth { NumberAnimation { duration: face.duration(160); easing.type: Easing.OutCubic } }
-                        onClicked: head.shelf.pick(chip.modelData.value)
+                        onClicked: head.shelf.goTo(chip.modelData.value)
                         Accessible.name: chip.modelData.label
                         contentItem: Item {
                             Rectangle {
@@ -122,8 +159,19 @@ QtObject {
                 }
             }
 
+            StyledText {
+                anchors.right: settingsKey.left
+                anchors.rightMargin: 12
+                anchors.verticalCenter: parent.verticalCenter
+                visible: !(head.shelf?.onWidgets ?? true)
+                text: DesktopEditHistory.notice
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+            }
+
             Rectangle {
                 id: searchBox
+                visible: head.shelf?.onWidgets ?? true
                 anchors.right: settingsKey.left
                 anchors.rightMargin: 8
                 width: 260
@@ -188,7 +236,7 @@ QtObject {
                 colBackground: "transparent"
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 Accessible.name: Translation.tr("Widget settings")
-                onClicked: GlobalStates.openSettingsAt("widgets")
+                onClicked: GlobalStates.openSettingsAt(head.shelf && face.options[head.shelf.page] ? head.shelf.page : "widgets")
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: "tune"
