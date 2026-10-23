@@ -537,6 +537,32 @@ Item {
     }
 
     // A neighbour over the desktop: its Dot name, what it is and its stage, standing back.
+    // A value as a neighbour card shows it: its name, and the answer read through the distance.
+    component SideRow: Item {
+        id: sideRow
+        required property var modelData
+        required property int index
+        height: root.u(44)
+        Rectangle { visible: sideRow.index > 0; width: parent.width; height: 1; color: IrisStyle.hairline }
+        IrisText {
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width * 0.6
+            elide: Text.ElideRight
+            text: Translation.tr(String(sideRow.modelData.label ?? ""))
+            color: IrisStyle.subtext
+            font.pixelSize: IrisStyle.typeMeta
+        }
+        IrisText {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.min(implicitWidth, parent.width * 0.38)
+            elide: Text.ElideRight
+            text: { Config.revision; return root.host?.answerOf(sideRow.modelData) ?? "" }
+            color: IrisStyle.text
+            font.pixelSize: IrisStyle.typeMeta
+            font.weight: IrisStyle.weight(Font.DemiBold)
+        }
+    }
     component SideCard: MouseArea {
         id: side
         property int step
@@ -603,32 +629,33 @@ Item {
                 opacity: 0.72
                 Repeater {
                     model: sideRows.rows
-                    Item {
-                        id: sideRow
-                        required property var modelData
-                        required property int index
-                        width: sideRows.width
-                        height: root.u(44)
-                        Rectangle { visible: sideRow.index > 0; width: parent.width; height: 1; color: IrisStyle.hairline }
-                        IrisText {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width * 0.6
-                            elide: Text.ElideRight
-                            text: Translation.tr(String(sideRow.modelData.label ?? ""))
-                            color: IrisStyle.subtext
-                            font.pixelSize: IrisStyle.typeMeta
-                        }
-                        IrisText {
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: Math.min(implicitWidth, parent.width * 0.38)
-                            elide: Text.ElideRight
-                            text: { Config.revision; return root.host?.answerOf(sideRow.modelData) ?? "" }
-                            color: IrisStyle.text
-                            font.pixelSize: IrisStyle.typeMeta
-                            font.weight: IrisStyle.weight(Font.DemiBold)
-                        }
-                    }
+                    SideRow { width: sideRows.width }
+                }
+            }
+            // An area with few values leaves the card's foot to the next one out, dimmed further, under its name.
+            Column {
+                id: beyond
+                readonly property var entry: root.neighbour(side.step + (side.step > 0 ? 1 : -1))
+                readonly property int fit: sideRows.fit - sideRows.rows.length - 1
+                readonly property var rows: { Config.revision; return sideRows.visible && beyond.fit > 0 && beyond.entry && beyond.entry.id !== "home" ? (root.host?.tellingRows(beyond.fit, beyond.entry.id) ?? []) : [] }
+                visible: beyond.rows.length > 0
+                width: parent.width
+                opacity: 0.42
+                IrisText {
+                    height: root.u(44)
+                    verticalAlignment: Text.AlignBottom
+                    bottomPadding: root.u(8)
+                    text: Translation.tr(String(beyond.entry?.title ?? ""))
+                    color: IrisStyle.subtext
+                    font.family: IrisStyle.fontMono
+                    font.pixelSize: Math.max(10, IrisStyle.typeCaption)
+                    font.weight: Font.Medium
+                    font.capitalization: Font.AllUppercase
+                    font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
+                }
+                Repeater {
+                    model: beyond.rows
+                    SideRow { width: beyond.width }
                 }
             }
         }

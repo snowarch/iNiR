@@ -396,7 +396,8 @@ Item {
             if (!seen.has(group)) { seen.add(group); leads.push(spec) }
         }
         const out = []
-        for (const spec of usable.filter(spec => IrisOptions.modified(spec)).concat(leads))
+        // Room left after one value a group: the rest of the area's values, the everyday ones first.
+        for (const spec of usable.filter(spec => IrisOptions.modified(spec)).concat(leads, essentials, usable))
             if (!out.includes(spec) && out.length < count) out.push(spec)
         return out
     }
