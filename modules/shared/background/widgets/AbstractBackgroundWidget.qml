@@ -1018,11 +1018,14 @@ AbstractWidget {
         const card = DesktopEditStage.cardFor(root.outputName, root.screenWidth, root.screenHeight)
         return Qt.rect((rect.x - card.x) / card.s, (rect.y - card.y) / card.s, rect.width / card.s, rect.height / card.s)
     }
+    property var _landedArrival: null
     function _land(): void {
         const arrival = DesktopEditStage.arrival(root.outputName, root.configEntryName)
-        if (!arrival || !root._geometryReady)
+        if (!arrival || !root._geometryReady || arrival === root._landedArrival)
             return
-        DesktopEditStage.arrived(root.outputName, root.configEntryName)
+        root._landedArrival = arrival
+        // A turn later: dropped from inside the handler of `_arrival` it re-read itself (binding loop).
+        Qt.callLater(DesktopEditStage.arrived, root.outputName, root.configEntryName)
         let spot = null
         if (arrival.at?.exact) {
             spot = { x: root._clampX(arrival.at.x), y: root._clampY(arrival.at.y) }
