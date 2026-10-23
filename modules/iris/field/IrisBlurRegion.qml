@@ -35,8 +35,13 @@ Region {
     // A table rebuilt with the same bodies is no move: restarting the settle on it kept a still Island on the coarse
     // three-row corners forever, the stair steps under its blur.
     property string shapesKey: ""
+    // Hundredths: a spring's float noise is no move, and the region is whole pixels anyway.
+    function valueKey(v: var): string { return typeof v === "number" ? v.toFixed(2) : String(v) }
     function keyOf(list: var): string {
-        return list.map(s => Object.keys(s).filter(k => typeof s[k] !== "object").map(k => k + ":" + s[k]).join(",")).join("|")
+        return list.map(s => root.bodyKey(s)).join("|")
+    }
+    function bodyKey(s: var): string {
+        return Object.keys(s).filter(k => typeof s[k] !== "object").map(k => k + ":" + root.valueKey(s[k])).join(",")
     }
     onShapesChanged: {
         const key = root.keyOf(root.shapes ?? [])
@@ -121,7 +126,7 @@ Region {
     }
     // The frame's inner box, set once per build from inside the `pieces` binding, so it must not notify: built
     // per evaluation it was 95 % of the build (2.5 ms against 0.13).
-    readonly property var memo: ({ frame: null, runs: null })
+    readonly property var memo: ({ frame: null, runs: null, rows: null, keys: null })
     function smoothUnion(a: real, b: real, k: real): real {
         if (k <= 0.001) return Math.min(a, b)
         const h = Math.max(0, Math.min(1, 0.5 + 0.5 * (b - a) / k))
@@ -136,6 +141,7 @@ Region {
         const alongLo = rows ? s.x : s.y, alongLen = rows ? s.width : s.height
         const limit = rows ? root.windowWidth : root.windowHeight
         const r = Math.min(Number(s.radius ?? 0), s.width / 2, s.height / 2)
+        const curve = root.squircles(s) ? Math.min(r * root.squircleReach, Math.min(s.width, s.height) / 2) : 0
         const test = (along, across) => rows ? inside(along, across) : inside(across, along)
         // The last pixel centre from `from` (inside) toward `to` that the union holds: 4 px strides, then 1 px.
         const walk = (from, to, across) => {
@@ -157,7 +163,7 @@ Region {
             const across = n + 0.5
             if (!test(mid, across)) return null
             const off = Math.max(0, Math.min(across - acrossLo, acrossLo + acrossLen - across))
-            const inset = off >= r ? 0 : r - Math.sqrt(Math.max(0, r * r - (r - off) ** 2))
+            const inset = curve > 0 ? root.squircleInset(off, curve) : off >= r ? 0 : r - Math.sqrt(Math.max(0, r * r - (r - off) ** 2))
             const edgeA = Math.min(mid, Math.floor(alongLo + inset + i) + 1.5), edgeB = Math.max(mid, Math.ceil(alongLo + alongLen - inset - i) - 1.5)
             return [Math.max(0, Math.floor(walk(test(edgeA, across) ? edgeA : mid, Math.max(0.5, Math.ceil(alongLo + inset) - reach - 0.5), across))),
                 Math.min(limit - 1, Math.floor(walk(test(edgeB, across) ? edgeB : mid, Math.min(limit - 0.5, Math.floor(alongLo + alongLen - inset) + reach + 0.5), across)))]
@@ -207,13 +213,31 @@ Region {
         const mine = []
         kept[exact ? key : key + "~"] = mine
         // Plain numbers in closures: this runs ~10k times a build, and a QML property read per call made it 15 ms.
+        // The field's squircleBox: walked on circular corners, the blur held a sliver outside every large shoulder and
+        // missed one inside a join's (12 px past an open Island's lower corners, 36 short of a resting Island's join).
+        const reachK = root.squircleReach
         const box = b => {
-            const hx = b.width / 2, hy = b.height / 2, r = Math.min(Number(b.radius ?? 0), hx, hy)
-            const cx = b.x + hx, cy = b.y + hy, ex = hx - r, ey = hy - r
+            const hx = b.width / 2, hy = b.height / 2, m = hx < hy ? hx : hy
+            const r = Math.min(Number(b.radius ?? 0), m)
+            const cx = b.x + hx, cy = b.y + hy
+            if (r < 0.5 || r >= m - 0.5) {
+                const ex = hx - r, ey = hy - r
+                return (x, y) => {
+                    const qx = Math.abs(x - cx) - ex, qy = Math.abs(y - cy) - ey
+                    const ox = qx > 0 ? qx : 0, oy = qy > 0 ? qy : 0
+                    return Math.sqrt(ox * ox + oy * oy) + Math.min(qx > qy ? qx : qy, 0) - r
+                }
+            }
+            const reach = Math.min(r * reachK, m), ex = hx - reach, ey = hy - reach
             return (x, y) => {
                 const qx = Math.abs(x - cx) - ex, qy = Math.abs(y - cy) - ey
-                const ox = qx > 0 ? qx : 0, oy = qy > 0 ? qy : 0
-                return Math.sqrt(ox * ox + oy * oy) + Math.min(qx > qy ? qx : qy, 0) - r
+                if (qx <= 0 || qy <= 0) {
+                    const ox = qx > 0 ? qx : 0, oy = qy > 0 ? qy : 0
+                    return Math.sqrt(ox * ox + oy * oy) + Math.min(qx > qy ? qx : qy, 0) - reach
+                }
+                const x2 = qx * qx, y2 = qy * qy, l = Math.sqrt(Math.sqrt(x2 * x2 + y2 * y2)), l3 = l * l * l
+                const gx = x2 * qx / l3, gy = y2 * qy / l3
+                return (l - reach) / Math.sqrt(gx * gx + gy * gy)
             }
         }
         // A chamfered Design draws square boxes cut at 45° and joins them with a gusset whose legs are the blade's
@@ -386,22 +410,41 @@ Region {
         const out = []
         const runs = []
         const cache = root.memo.runs ?? {}, kept = {}
+        // A body that sits where it sat in the last build is still: its own rows and its joins with still bodies are
+        // exact at once, from the cache. Only what moves is walked coarse, so one moving body (a visualizer, a banner)
+        // no longer keeps every other contour on three-row stairs until everything rests.
+        const before = root.memo.keys ?? {}, keys = {}
+        const still = s => { const key = root.bodyKey(s); keys[key] = true; return before[key] === true }
+        const rowsCache = root.memo.rows ?? {}, rowsKept = {}
         const b = root.band
         root.memo.frame = { x: b, y: b, width: root.windowWidth - 2 * b, height: root.windowHeight - 2 * b, radius: root.cornerRadius }
         const cut = IrisStyle.fieldChamfer ? IrisStyle.chamferCut : 0
+        const stillOf = {}
+        for (const s of list) stillOf[root.bodyKey(s)] = still(s)
         for (const s of list) {
             const i = root.inset
-            if (cut > 0) root.chamfered(s, cut, exact, runs)
-            else if (root.squircles(s)) root.squircled(s, exact, runs)
-            else out.push({ x: s.x + i, y: s.y + i, width: s.width - 2 * i, height: s.height - 2 * i, radius: Math.max(0, Number(s.radius ?? 0) - i) })
+            const mine = exact || stillOf[root.bodyKey(s)]
+            if (cut > 0 || root.squircles(s)) {
+                const key = root.bodyKey(s) + "," + cut + "," + root.cutMaskOf(s)
+                let rows = mine ? rowsCache[key] : null
+                if (!rows) {
+                    rows = []
+                    if (cut > 0) root.chamfered(s, cut, mine, rows)
+                    else root.squircled(s, mine, rows)
+                }
+                if (mine) rowsKept[key] = rows
+                for (const q of rows) runs.push(q)
+            } else out.push({ x: s.x + i, y: s.y + i, width: s.width - 2 * i, height: s.height - 2 * i, radius: Math.max(0, Number(s.radius ?? 0) - i) })
             const joins = !s.joins ? [] : Array.isArray(s.joins) ? s.joins : [s.joins]
             for (const id of joins) {
                 if (id === "frame") {
-                    if (root.joinsFrame) root.joinRuns(s, null, exact, runs, cache, kept)
-                } else if (byId[id]) root.joinRuns(s, byId[id], exact, runs, cache, kept)
+                    if (root.joinsFrame) root.joinRuns(s, null, mine, runs, cache, kept)
+                } else if (byId[id]) root.joinRuns(s, byId[id], exact || (mine && stillOf[root.bodyKey(byId[id])]), runs, cache, kept)
             }
         }
         root.memo.runs = kept
+        root.memo.rows = rowsKept
+        root.memo.keys = keys
         root.frameCuts(runs)
         return { bodies: out.slice(0, 70), runs: runs }
     }

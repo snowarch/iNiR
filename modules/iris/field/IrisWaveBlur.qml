@@ -39,7 +39,7 @@ Scope {
     // the fallback ran out (a strip that never draws must not keep the chassis away).
     readonly property bool ready: root.fallbackDone || (leftStrip.drawn && rightStrip.drawn && topStrip.drawn && bottomStrip.drawn)
     property bool fallbackDone: false
-    property Timer fallback: Timer { interval: 300; running: true; onTriggered: root.fallbackDone = true }
+    property Timer fallback: Timer { interval: 2000; running: true; onTriggered: root.fallbackDone = true }
 
     // Once a frame: IrisFramePulse moves the level, then the phase, on every tick it runs; the phase is the clock.
     onWaveClockChanged: root.place()
@@ -64,12 +64,16 @@ Scope {
     // engine, where each call and each Math.min is measurable.
     function waveCluster(bodies: var, alongY: var, alongX: var, g: var, vertical: bool, far: bool): var {
         const b = g.b, R = g.R, W = g.W, H = g.H, wx = g.wx, wy = g.wy, wz = g.wz, ww = g.ww
-        const count = bodies.length, J = new Float64Array(count * 10)
+        // Large round corners are the field's squircles (IrisField.frag squircleBox): the quartic over 1.8409 r.
+        const SQ = 1.8409
+        const count = bodies.length, J = new Float64Array(count * 11)
         for (let n = 0; n < count; n++) {
-            const s = bodies[n], hx = s.width / 2, hy = s.height / 2, r = Math.min(Number(s.radius ?? 0), hx, hy)
-            const k = Math.max(0, Number(s.fuse ?? g.k)), reach = Math.ceil(1.25 * k) + 2, o = n * 10
-            J[o] = s.x + hx; J[o + 1] = s.y + hy; J[o + 2] = hx - r; J[o + 3] = hy - r; J[o + 4] = r; J[o + 5] = k
+            const s = bodies[n], hx = s.width / 2, hy = s.height / 2, mm = Math.min(hx, hy), r = Math.min(Number(s.radius ?? 0), mm)
+            const curved = r >= 0.5 && r < mm - 0.5, e = curved ? Math.min(r * SQ, mm) : r
+            const k = Math.max(0, Number(s.fuse ?? g.k)), reach = Math.ceil(1.25 * k) + 2, o = n * 11
+            J[o] = s.x + hx; J[o + 1] = s.y + hy; J[o + 2] = hx - e; J[o + 3] = hy - e; J[o + 4] = e; J[o + 5] = k
             J[o + 6] = s.x - reach; J[o + 7] = s.y - reach; J[o + 8] = s.x + s.width + reach; J[o + 9] = s.y + s.height + reach
+            J[o + 10] = curved ? 1 : 0
         }
         const depth = vertical ? W : H
         return (a, line) => {
@@ -80,20 +84,32 @@ Scope {
             let halfX = (hxp - lx) / 2, halfY = (hyp - ly) / 2
             if (halfX < 0) halfX = 0
             if (halfY < 0) halfY = 0
-            let r = R < halfX ? R : halfX
-            if (halfY < r) r = halfY
+            const half = halfX < halfY ? halfX : halfY
+            let r = R < half ? R : half
+            if (r >= 0.5 && r < half - 0.5) r = r * SQ < half ? r * SQ : half
+            else r = -r - 1
+            const fr = r < 0 ? -r - 1 : r
             let qx = x - (lx + hxp) / 2, qy = y - (ly + hyp) / 2
-            qx = (qx < 0 ? -qx : qx) - (halfX - r); qy = (qy < 0 ? -qy : qy) - (halfY - r)
-            let ox = qx > 0 ? qx : 0, oy = qy > 0 ? qy : 0, m = qx > qy ? qx : qy
-            const f = -(Math.sqrt(ox * ox + oy * oy) + (m < 0 ? m : 0) - r)
+            qx = (qx < 0 ? -qx : qx) - (halfX - fr); qy = (qy < 0 ? -qy : qy) - (halfY - fr)
+            let ox = qx > 0 ? qx : 0, oy = qy > 0 ? qy : 0, m = qx > qy ? qx : qy, f
+            if (r >= 0 && qx > 0 && qy > 0) {
+                const x2 = qx * qx, y2 = qy * qy, l = Math.sqrt(Math.sqrt(x2 * x2 + y2 * y2)), l3 = l * l * l
+                const gx = x2 * qx / l3, gy = y2 * qy / l3
+                f = -((l - fr) / Math.sqrt(gx * gx + gy * gy))
+            } else f = -(Math.sqrt(ox * ox + oy * oy) + (m < 0 ? m : 0) - fr)
             let d = f
             for (let n = 0; n < count; n++) {
-                const o = n * 10
+                const o = n * 11
                 if (x < J[o + 6] || x > J[o + 8] || y < J[o + 7] || y > J[o + 9]) continue
                 qx = x - J[o]; qy = y - J[o + 1]
                 qx = (qx < 0 ? -qx : qx) - J[o + 2]; qy = (qy < 0 ? -qy : qy) - J[o + 3]
                 ox = qx > 0 ? qx : 0; oy = qy > 0 ? qy : 0; m = qx > qy ? qx : qy
-                const body = Math.sqrt(ox * ox + oy * oy) + (m < 0 ? m : 0) - J[o + 4]
+                let body
+                if (J[o + 10] > 0 && qx > 0 && qy > 0) {
+                    const x2 = qx * qx, y2 = qy * qy, l = Math.sqrt(Math.sqrt(x2 * x2 + y2 * y2)), l3 = l * l * l
+                    const gx = x2 * qx / l3, gy = y2 * qy / l3
+                    body = (l - J[o + 4]) / Math.sqrt(gx * gx + gy * gy)
+                } else body = Math.sqrt(ox * ox + oy * oy) + (m < 0 ? m : 0) - J[o + 4]
                 const k = J[o + 5]
                 let u
                 if (k > 0.001) {
@@ -390,6 +406,9 @@ Scope {
             }
             strip.published = wanted
         }
+        // qs-rs maps a window with nothing to draw only on its first frame, which an empty strip never asked for: the
+        // chassis gave up waiting, mapped first, and the strips that came later sat above it, blurring the band it paints.
+        Component.onCompleted: strip.contentItem?.Window.window?.update()
         Component.onDestruction: strip.BackgroundEffect.blurRegion = null
     }
 
