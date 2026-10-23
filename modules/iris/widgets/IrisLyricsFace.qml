@@ -56,6 +56,7 @@ IrisWidgetFace {
     readonly property int smallSize: root.px(root.small ? 16 : root.medium ? 14 : 17)
     readonly property int farSize: root.px(14)
     readonly property int maxRows: root.small ? 3 : 2
+    readonly property real edgeReach: root.dp(root.small ? 10 : 14)
     readonly property real lineGap: root.dp(root.small ? 14 : 12)
     readonly property real dot: root.dp(root.small ? 14 : root.medium ? 10 : 11)
 
@@ -176,8 +177,11 @@ IrisWidgetFace {
         readonly property real body: line.gap ? root.dot * 2.2 * line.presence
             : Math.max(Math.ceil(base.contentHeight), Math.ceil(root.smallSize * 1.3))
         height: line.body + root.lineGap * line.presence
-        opacity: line.entry ? root.strength(line.vd) * line.presence : 0
-        visible: line.opacity > 0.01
+        // Nothing is ever cut by the face's edge: a line fades out over the last `edgeReach` before it would touch it.
+        readonly property real placedAt: stack.y + line.y
+        readonly property real edgeRoom: Math.min(line.placedAt, stage.height - line.placedAt - line.body) / root.edgeReach
+        opacity: line.entry ? root.strength(line.vd) * line.presence * LyricsMath.smooth(line.edgeRoom) : 0
+        // Never hidden: the column skips hidden slots, and opacity follows the place, so hiding moved the place.
 
         LineText {
             id: base
