@@ -55,7 +55,8 @@ IrisWidgetFace {
     readonly property int minSize: root.px(root.small ? 16 : 15)
     readonly property int smallSize: root.px(root.small ? 16 : root.medium ? 14 : 17)
     readonly property int farSize: root.px(14)
-    readonly property int maxRows: root.medium ? 2 : 3
+    readonly property int maxRows: root.small ? 3 : 2
+    readonly property real lineGap: root.dp(root.small ? 14 : 12)
     readonly property real dot: root.dp(root.small ? 14 : root.medium ? 10 : 11)
 
     FontMetrics {
@@ -64,21 +65,48 @@ IrisWidgetFace {
         font.pixelSize: 100
         font.weight: Font.DemiBold
     }
-    // The sung line's size: as big as the face sings, shrunk only as far as its rows need to fit.
+    // The sung line's size: as big as the face sings, stepped down until its words wrap into the rows it has at the
+    // face's full width (greedy, as the text lays out); only below the smallest size does it take another row.
     function fit(text: string): int {
         if (text.length === 0)
             return root.bigSize
-        const perPx = metrics.advanceWidth(text) / 100
-        const room = root.maxRows * stage.width / (perPx * 1.2)
-        return Math.max(root.minSize, Math.min(root.bigSize, Math.floor(room)))
+        const words = text.split(/\s+/).filter(word => word.length > 0).map(word => metrics.advanceWidth(word) / 100)
+        const space = metrics.advanceWidth(" ") / 100
+        const rows = size => {
+            let count = 1, run = 0
+            for (const w of words) {
+                const next = run === 0 ? w * size : run + (space + w) * size
+                if (next > stage.width - 2 && run > 0) {
+                    count++
+                    run = w * size
+                } else {
+                    run = next
+                }
+            }
+            return count
+        }
+        let size = root.bigSize
+        while (size > root.minSize && rows(size) > root.maxRows)
+            size--
+        // A row more for a word or two: a little smaller takes them back in.
+        for (let step = 1; step <= 3 && size - step >= root.minSize; step++)
+            if (rows(size - step) < rows(size))
+                return size - step
+        return size
     }
-    // Two rows of even length: a wrapped line never leaves one word hanging under it.
-    function balanced(text: string, pixel: int): real {
-        if (text.length === 0)
-            return stage.width
-        const advance = metrics.advanceWidth(text) / 100 * pixel
-        const rows = Math.ceil(advance * 1.04 / stage.width)
-        return rows !== 2 ? stage.width : Math.min(stage.width, Math.ceil(advance / 2 * 1.12))
+    // Where slot `index` stands in the stack as it reads: a gap folded away beside the sung line takes no place, so
+    // the line after it is the next one, not two away.
+    function gapFold(index: int): real {
+        const entry = root.stageLines[root.at - root.center + index]
+        return entry?.gap ? LyricsMath.smooth(Math.min(1, Math.abs(index - root.center - root.frac))) : 0
+    }
+    function readAt(index: int): real {
+        let d = index - root.center - root.frac
+        if (index > root.center)
+            for (let j = root.center + 1; j < index; j++) d -= root.gapFold(j)
+        else if (index < root.center)
+            for (let j = index + 1; j < root.center; j++) d += root.gapFold(j)
+        return d
     }
     // How strong a line is `d` lines from the middle (negative: sung already).
     function strength(d: real): real {
@@ -96,8 +124,7 @@ IrisWidgetFace {
     // Text cannot say where a character sits, and the three layers must lay out alike.
     component LineText: TextEdit {
         required property var line
-        x: Math.round((line.width - width) / 2)
-        width: line.textWidth
+        width: line.width
         text: line.text
         readOnly: true
         enabled: false
@@ -122,11 +149,12 @@ IrisWidgetFace {
         readonly property bool gap: line.entry?.gap ?? false
         readonly property string text: line.entry && !line.gap ? line.entry.text : ""
         readonly property real d: line.index - root.center - root.frac
-        readonly property real ad: Math.abs(line.d)
+        // Size and strength follow the place it reads at; the fold of a gap follows its own.
+        readonly property real vd: root.readAt(line.index)
+        readonly property real ad: Math.abs(line.vd)
         readonly property int big: root.fit(line.text)
         readonly property int pixel: Math.round(line.ad <= 1 ? line.big + (root.smallSize - line.big) * LyricsMath.smooth(line.ad)
             : root.smallSize + (root.farSize - root.smallSize) * LyricsMath.smooth(Math.min(1, line.ad - 1)))
-        readonly property real textWidth: root.balanced(line.text, line.pixel)
         readonly property real sung: line.text.length > 0 ? LyricsMath.sungTo(line.entry.words, root.songTime) : 0
         // Where the singing is: the rows above it are sung whole, its own row up to here.
         readonly property rect caret: {
@@ -143,8 +171,12 @@ IrisWidgetFace {
         }
         readonly property real soft: root.dp(12)
         width: stage.width
-        height: line.gap ? root.dot * 2.2 : Math.max(Math.ceil(base.contentHeight), Math.ceil(root.smallSize * 1.3))
-        opacity: line.entry ? root.strength(line.d) : 0
+        // A gap is the dots only while it is the stretch that plays: beside a sung line it folds away to nothing.
+        readonly property real presence: line.gap ? 1 - LyricsMath.smooth(Math.min(1, Math.abs(line.d))) : 1
+        readonly property real body: line.gap ? root.dot * 2.2 * line.presence
+            : Math.max(Math.ceil(base.contentHeight), Math.ceil(root.smallSize * 1.3))
+        height: line.body + root.lineGap * line.presence
+        opacity: line.entry ? root.strength(line.vd) * line.presence : 0
         visible: line.opacity > 0.01
 
         LineText {
@@ -157,7 +189,7 @@ IrisWidgetFace {
         Item {
             anchors.fill: parent
             visible: !line.gap && line.sung > 0
-            opacity: line.d < 0 ? 1 - 0.38 * LyricsMath.smooth(Math.min(1, -line.d)) : 1
+            opacity: line.vd < 0 ? 1 - 0.38 * LyricsMath.smooth(Math.min(1, -line.vd)) : 1
             Item {
                 width: parent.width
                 height: line.caret.y
@@ -235,15 +267,14 @@ IrisWidgetFace {
         Column {
             id: stack
             width: stage.width
-            spacing: root.dp(root.small ? 14 : 12)
             // The point between the sung line and the next, as far as the next has climbed, sits in the middle.
             y: {
                 void slots.count
                 const a = slots.itemAt(root.center), b = slots.itemAt(root.center + 1)
                 if (!a)
                     return 0
-                const ca = a.y + a.height / 2
-                const cb = b ? b.y + b.height / 2 : ca
+                const ca = a.y + a.body / 2
+                const cb = b ? b.y + b.body / 2 : ca
                 return Math.round(stage.height / 2 - (ca + (cb - ca) * root.frac))
             }
             Repeater {
