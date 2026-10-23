@@ -9665,5 +9665,12 @@
   "Shelf pages": "货架页面",
   "Hide automatically": "自动隐藏",
   "Show on hover": "悬停时显示",
-  "More in Settings": "更多设置"
+  "More in Settings": "更多设置",
+  "Play something and it shows here": "播放内容后会显示在这里",
+  "Nothing waiting on you": "没有待办事项",
+  "Devices you pair show up here": "配对的设备会显示在这里",
+  "The next seven days are free": "接下来七天没有安排",
+  "Listening": "聆听",
+  "Move, size and dress every widget on the desktop itself; the shelf has these same options.": "直接在桌面上移动、调整大小和装扮每个小组件；架子上有同样的选项。",
+  "Ready-made desktops (Glance, Dashboard, Focus, Listening, Bare) and the ones you saved: wear one, Undo takes it back.": "现成的桌面和你保存的桌面：套用一个，撤销即可还原。"
 }

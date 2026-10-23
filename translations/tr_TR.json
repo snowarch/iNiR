@@ -9665,5 +9665,12 @@
   "Shelf pages": "Raf sayfaları",
   "Hide automatically": "Otomatik gizle",
   "Show on hover": "Üzerine gelince göster",
-  "More in Settings": "Ayarlar'da daha fazlası"
+  "More in Settings": "Ayarlar'da daha fazlası",
+  "Play something and it shows here": "Bir şey çal, burada görünsün",
+  "Nothing waiting on you": "Seni bekleyen bir şey yok",
+  "Devices you pair show up here": "Eşlediğin cihazlar burada görünür",
+  "The next seven days are free": "Önümüzdeki yedi gün boş",
+  "Listening": "Dinleme",
+  "Move, size and dress every widget on the desktop itself; the shelf has these same options.": "Her widget'ı doğrudan masaüstünde taşı, boyutlandır ve giydir; rafta aynı seçenekler var.",
+  "Ready-made desktops (Glance, Dashboard, Focus, Listening, Bare) and the ones you saved: wear one, Undo takes it back.": "Hazır masaüstleri ve kaydettiklerin: birini giy, Geri Al geri alır."
 }

@@ -9665,5 +9665,12 @@
   "Shelf pages": "棚のページ",
   "Hide automatically": "自動的に隠す",
   "Show on hover": "ホバーで表示",
-  "More in Settings": "設定でさらに"
+  "More in Settings": "設定でさらに",
+  "Play something and it shows here": "何か再生するとここに表示されます",
+  "Nothing waiting on you": "やることはありません",
+  "Devices you pair show up here": "ペアリングしたデバイスがここに表示されます",
+  "The next seven days are free": "これから7日間は予定がありません",
+  "Listening": "リスニング",
+  "Move, size and dress every widget on the desktop itself; the shelf has these same options.": "デスクトップ上でウィジェットを移動・サイズ変更・着せ替えできます。シェルフにも同じ設定があります。",
+  "Ready-made desktops (Glance, Dashboard, Focus, Listening, Bare) and the ones you saved: wear one, Undo takes it back.": "用意されたデスクトップと保存したもの：適用でき、元に戻すで取り消せます。"
 }

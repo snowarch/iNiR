@@ -9665,5 +9665,12 @@
   "Shelf pages": "선반 페이지",
   "Hide automatically": "자동으로 숨기기",
   "Show on hover": "마우스를 올리면 표시",
-  "More in Settings": "설정에서 더 보기"
+  "More in Settings": "설정에서 더 보기",
+  "Play something and it shows here": "무언가를 재생하면 여기에 표시됩니다",
+  "Nothing waiting on you": "남은 일이 없습니다",
+  "Devices you pair show up here": "페어링한 기기가 여기에 표시됩니다",
+  "The next seven days are free": "앞으로 7일간 일정이 없습니다",
+  "Listening": "감상",
+  "Move, size and dress every widget on the desktop itself; the shelf has these same options.": "바탕화면에서 바로 위젯을 옮기고 크기와 모양을 바꿉니다. 선반에도 같은 옵션이 있습니다.",
+  "Ready-made desktops (Glance, Dashboard, Focus, Listening, Bare) and the ones you saved: wear one, Undo takes it back.": "준비된 바탕화면과 저장한 바탕화면: 하나를 적용하면 실행 취소로 되돌릴 수 있습니다."
 }
