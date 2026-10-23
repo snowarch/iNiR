@@ -380,6 +380,16 @@ AbstractBackgroundWidget {
             }
         }
 
+        // A blank page is an invitation, not a stub line (iRiS draws its own, IrisNotesFace).
+        WidgetBlank {
+            anchors.fill: parent
+            visible: !root.irisFaced && textEdit.text.length === 0 && !textEdit.activeFocus
+                && height >= 70 * root.scaleFactor
+            widget: root
+            icon: "edit_note"
+            title: Translation.tr("Write something")
+            detail: Translation.tr("Click anywhere on the page to start")
+        }
         StyledText {
             anchors {
                 left: parent.left
@@ -388,8 +398,8 @@ AbstractBackgroundWidget {
                 leftMargin: 2
                 rightMargin: 2
             }
-            // iRiS draws its own blank page (IrisNotesFace).
             visible: !root.irisFaced && textEdit.text.length === 0 && !textEdit.activeFocus
+                && parent.height < 70 * root.scaleFactor
             text: Translation.tr("Write a note…")
             color: root.widgetInkSubtle
             font.pixelSize: root.fontSize

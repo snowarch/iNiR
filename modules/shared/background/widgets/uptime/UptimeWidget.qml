@@ -83,9 +83,45 @@ AbstractBackgroundWidget {
     }
 
     // ── Row style (default) ──
+    // Sized: the figure is the widget, the label and mark frame it.
+    ColumnLayout {
+        visible: !root.irisFaced && !root.instrument && root.materialSized
+        anchors.fill: parent
+        anchors.margins: Math.round(16 * root.scaleFactor)
+        spacing: Math.round(2 * root.scaleFactor)
+        Rectangle {
+            implicitWidth: Math.round(40 * root.scaleFactor)
+            implicitHeight: implicitWidth
+            radius: width / 2
+            color: root.widgetSemanticContainer(root.widgetTertiaryRole)
+            MaterialSymbol {
+                anchors.centerIn: parent
+                text: "avg_pace"
+                fill: 1
+                iconSize: Math.round(22 * root.scaleFactor)
+                color: root.widgetSemanticOnContainer(root.widgetTertiaryRole)
+            }
+        }
+        Item { Layout.fillHeight: true }
+        StyledText {
+            text: Translation.tr("System uptime")
+            color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
+            font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+        }
+        StyledText {
+            Layout.fillWidth: true
+            text: DateTime.uptime || "--"
+            color: root.surfaceInk
+            elide: Text.ElideRight
+            font.family: root.widgetNumbersFamily
+            font.pixelSize: Math.round((root.materialSmall ? 30 : 40) * root.scaleFactor)
+            font.weight: Font.DemiBold
+        }
+    }
+
     RowLayout {
         opacity: root.instrument ? 0 : 1
-        visible: !root.irisFaced && opacity > 0
+        visible: !root.irisFaced && !root.materialSized && opacity > 0
         enabled: !root.instrument
         Behavior on opacity {
             enabled: root.animationsActive

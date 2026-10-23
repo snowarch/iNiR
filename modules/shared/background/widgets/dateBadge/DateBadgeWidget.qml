@@ -36,6 +36,7 @@ AbstractBackgroundWidget {
     widgetSurfaceEnabled: !root.instrument
     readonly property date today: DateTime.clock.date
     readonly property bool horizontal: root.badgeStyle === "ticket" && root.width >= 200 * root.scaleFactor
+        && !root.materialLarge
     readonly property int dayOfYear: {
         // Calendar ordinal must not drift by one when the local timezone crosses
         // a DST boundary. Compare UTC midnights, not elapsed local milliseconds.
@@ -110,7 +111,7 @@ AbstractBackgroundWidget {
         color: root.horizontal ? root.widgetSemanticOnContainer(root.widgetPrimaryRole)
             : root.widgetAccentVisible
         font.family: root.widgetNumbersFamily
-        font.pixelSize: Math.min(height, 80 * root.scaleFactor)
+        font.pixelSize: Math.min(height, (root.materialLarge ? 170 : 80) * root.scaleFactor)
         font.weight: root.widgetTitleWeight
         fontSizeMode: Text.Fit
         minimumPixelSize: 16

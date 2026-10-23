@@ -59,6 +59,12 @@ AbstractBackgroundWidget {
     property var displayedArticle: null
     property bool rotationPaused: false
     readonly property int articleCount: NewsService.articles.length
+    readonly property var upcomingArticles: {
+        const list = []
+        for (let i = 1; i <= 3 && i < root.articleCount; ++i)
+            list.push(NewsService.articles[(root.headlineIndex + i) % root.articleCount])
+        return list
+    }
     readonly property var article: root.articleCount > 0
         ? NewsService.articles[root.headlineIndex % root.articleCount] : null
     readonly property string articleMeta: root.displayedArticle
@@ -299,17 +305,18 @@ AbstractBackgroundWidget {
             StyledText {
                 id: headlineText
                 Layout.fillWidth: true
-                Layout.fillHeight: true
+                Layout.fillHeight: !root.materialLarge
                 text: root.displayedArticle?.title
                     ?? (!Network.online ? Network.offlineReason
                         : NewsService.loading ? Translation.tr("Loading…") : Translation.tr("No news"))
                 color: root.widgetInk
                 wrapMode: Text.WordWrap
-                maximumLineCount: 2
+                maximumLineCount: root.materialSized && !root.materialSmall ? 3 : 2
                 elide: Text.ElideRight
                 font.family: root.widgetTitleFamily
                 font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.normal
-                    : Appearance.font.pixelSize.small * root.widgetTitleScale) * root.scaleFactor)
+                    : (root.materialLarge ? Appearance.font.pixelSize.larger : Appearance.font.pixelSize.small)
+                        * root.widgetTitleScale) * root.scaleFactor)
                 font.weight: root.instrument ? Font.DemiBold : root.widgetTitleWeight
                 font.letterSpacing: root.widgetTitleTracking
                 opacity: 1
@@ -322,6 +329,42 @@ AbstractBackgroundWidget {
                     }
                 }
             }
+            // Large: the headlines that come next, under the one on show.
+            Repeater {
+                model: root.materialLarge ? root.upcomingArticles : []
+                delegate: ColumnLayout {
+                    id: nextRow
+                    required property var modelData
+                    Layout.fillWidth: true
+                    Layout.topMargin: Math.round(8 * root.scaleFactor)
+                    spacing: Math.round(2 * root.scaleFactor)
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.bottomMargin: Math.round(6 * root.scaleFactor)
+                        implicitHeight: 1
+                        color: ColorUtils.applyAlpha(root.widgetInk, 0.12)
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: String(nextRow.modelData?.source ?? "")
+                        visible: text.length > 0
+                        color: root.widgetAccentVisible
+                        elide: Text.ElideRight
+                        font.pixelSize: Math.round(Appearance.font.pixelSize.smallest * root.scaleFactor)
+                        font.weight: Font.DemiBold
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: String(nextRow.modelData?.title ?? "")
+                        color: root.widgetInkMuted
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                        font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                    }
+                }
+            }
+            Item { Layout.fillHeight: true; visible: root.materialLarge }
         }
 
         RippleButton {
