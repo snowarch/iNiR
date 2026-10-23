@@ -170,14 +170,17 @@ Item {
     property int launchFrames: 0
     Connections {
         target: root.Window.window
-        // Content that went missing after arming (Settings armed before its window had a size, so before its layout
-        // was asked for) holds the launch too: the body never opens empty.
-        enabled: root.armed && !root.launched && root.contentReady
+        enabled: root.armed && !root.launched && root.launchable
         // One frame is enough: it is the warm frame that built the content. A still window draws no second
         // one, so waiting for two always fell through to the timer (90 ms of nothing).
         function onFrameSwapped(): void { if (++root.launchFrames >= 1) root.launched = true }
     }
-    Timer { interval: 90; running: root.armed && !root.launched && root.contentReady; onTriggered: root.launched = true }
+    Timer { interval: 90; running: root.armed && !root.launched && root.launchable; onTriggered: root.launched = true }
+    // Content that went missing after arming (Settings armed before its window had a size, so before its layout was asked
+    // for) holds the launch, so the body never opens empty; for 400 ms at most, so a surface left empty still opens.
+    property bool holdSpent: false
+    readonly property bool launchable: root.contentReady || root.holdSpent
+    Timer { id: launchHold; interval: 400; onTriggered: root.holdSpent = true }
     onLaunchedChanged: if (root.launched && IrisMotionMeter.watching(root.motionSurface)) IrisMotionMeter.mark("launched")
     readonly property alias presentation: presentationSpring.value
     IrisSpring {
@@ -253,6 +256,8 @@ Item {
             root.launched = false
             root.launchFrames = 0
         }
+        root.holdSpent = false
+        launchHold.restart()
         root.armed = true
         if (IrisMotionMeter.watching(root.motionSurface)) IrisMotionMeter.mark("armed")
     }
