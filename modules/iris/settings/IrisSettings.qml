@@ -123,6 +123,7 @@ Item {
     // A Design that draws the page is known before its scene arrives: the engine's own chrome is then never built, and the
     // body waits for the scene instead of showing that chrome for the frames the scene takes to load.
     readonly property bool sceneDesigned: pageScene.url.length > 0
+    readonly property bool sceneWanted: root.layout.length > 0 || IrisDesign.skin("settingsPage").length > 0
     // How tall the rows a scene holds are, so it can end their sheet where they end; -1 while a shared page fills the slot.
     readonly property real rowsExtent: settingsFlick.visible
         ? settingsFlick.anchors.topMargin + settingsFlick.contentHeight + settingsFlick.anchors.bottomMargin : -1
@@ -279,9 +280,11 @@ Item {
         root.blockTick
         if (root.searching || !root.browsing || root.shownGroups.length === 0) return false
         if (root.shownGroups.length > 1 && !(root.fedAll && root.fedPage === root.pageKey)) return true
+        // Fed before the Repeater made its loaders (the layout still loading): nothing built yet is still pending.
+        if (blockRepeater.count < root.fedGroups.length) return true
         for (let i = 0; i < blockRepeater.count; i++) {
             const block = blockRepeater.itemAt(i)
-            if (block && (block.status !== Loader.Ready || !block.landed)) return true
+            if (!block || block.status !== Loader.Ready || !block.landed) return true
         }
         return false
     }
@@ -853,7 +856,9 @@ Item {
         id: frame
         compositorBlurred: true
         energy: root.windowed && GlobalStates.settingsWindowBehind ? 0 : 1
-        contentReady: !root.sceneDesigned || root.sceneDrawn
+        // A layout's page grows with the body: armed while the frame still measured 0 the scene was not even asked for, and
+        // the body opened empty for half a second on llvmpipe.
+        contentReady: root.sceneDrawn || !root.sceneWanted || (frame.width > 0 && !root.sceneFits) || pageScene.status === Loader.Error
         open: root.windowed || GlobalStates.settingsOverlayOpen
         color: IrisStyle.surface
         light: IrisStyle.surfaceLight("settings", IrisStyle.wallpaperLight)
@@ -1462,11 +1467,14 @@ Item {
                                         // A block is built by the incubator in slices of a frame: one block of a heavy
                                         // Design (AIRISU's lacquered rows) took up to 400 ms built at once. A search or
                                         // a link to a row builds at once, since it scrolls to what it built.
+                                        // The first block of a page opened from inside Settings builds at once, so the rows are
+                                        // there on the frame the area is; while the body still morphs in, the ghosts hold it.
                                         Loader {
                                             id: blockLoader
                                             required property var modelData
+                                            required property int index
                                             Layout.fillWidth: true
-                                            asynchronous: !root.searching && root.landingPath.length === 0
+                                            asynchronous: !root.searching && root.landingPath.length === 0 && (blockLoader.index > 0 || !frame.settled)
                                             sourceComponent: GroupBlock { modelData: blockLoader.modelData }
                                             onStatusChanged: root.blockTick++
                                             // Each block lands as it is built: up from just below, out of the ghosts' place. It waits
@@ -1492,7 +1500,9 @@ Item {
                                         id: ghostRows
                                         visible: root.rowsPending
                                         Layout.fillWidth: true
-                                        Layout.preferredHeight: ghostColumn.height
+                                        // Counted, not measured: a Column hidden until now reports 0 and the ghosts drew nothing.
+                                        readonly property int count: Math.max(3, Math.min(7, 2 * (root.shownGroups.length - root.fedGroups.length) + 2))
+                                        Layout.preferredHeight: ghostRows.count * Math.round(56 * root.d)
                                         property real breath: 1
                                         SequentialAnimation on breath {
                                             running: ghostRows.visible && IrisStyle.motionEnabled
@@ -1505,7 +1515,7 @@ Item {
                                             width: parent.width
                                             opacity: ghostRows.breath
                                             Repeater {
-                                                model: Math.max(3, Math.min(7, 2 * (root.shownGroups.length - root.fedGroups.length) + 2))
+                                                model: ghostRows.count
                                                 Item {
                                                     id: ghostRow
                                                     required property int index
