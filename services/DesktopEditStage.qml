@@ -64,9 +64,11 @@ Singleton {
     property string look: "default"
     property var pictures: ({})
     readonly property string pictureDir: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/inir/widget-pictures"
+    // An empty url drops the live picture (its grab is gone); the shelf falls back to the one on disk.
     function setPicture(key: string, url: string, width: real, height: real): void {
         const next = Object.assign({}, root.pictures)
-        next[key] = { url: url, width: width, height: height }
+        if (url.length === 0) delete next[key]
+        else next[key] = { url: url, width: width, height: height }
         root.pictures = next
     }
     function savedPicture(key: string): string {

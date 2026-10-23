@@ -983,10 +983,18 @@ AbstractWidget {
         running: root._picturing
         onTriggered: root._takePicture()
     }
+    // Taken back to the shelf while arranging, the widget leaves its last look on disk and its live one goes with it.
+    Component.onDestruction: {
+        if (!root._picture)
+            return
+        root._picture.saveToFile(DesktopEditStage.savedPicture(root.configEntryName))
+        DesktopEditStage.setPicture(root.configEntryName, "", 0, 0)
+    }
     on_PicturingChanged: {
         if (root._picturing || !root._picture)
             return
         root._picture.saveToFile(DesktopEditStage.savedPicture(root.configEntryName))
+        DesktopEditStage.setPicture(root.configEntryName, "", 0, 0)
         root._picture = null
     }
 
