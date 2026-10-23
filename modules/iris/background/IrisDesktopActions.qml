@@ -29,7 +29,7 @@ Singleton {
             run: screen => {
                 Config.setNestedValue("iris.modules.desktopWidgets", true)
                 GlobalStates.setWidgetEditMode(true)
-                GlobalStates.desktopWidgetManagerToggleRequested(screen)
+                GlobalStates.widgetSearchOpen = true
             } },
         { id: "customize", group: 0, label: Translation.tr("Customize iRiS"), glyph: "palette", tint: "purple",
             run: screen => GlobalStates.openIrisCustomize("") },

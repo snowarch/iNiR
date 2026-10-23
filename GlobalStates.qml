@@ -259,7 +259,6 @@ Singleton {
     property string selectedDesktopWidget: ""
     property string selectedDesktopItem: ""
     property string desktopWidgetQuickControls: ""
-    property string desktopWidgetManagerOutput: ""
     property bool shellLayoutEditMode: false
 
     function setWidgetEditMode(enabled: bool): void {
@@ -502,7 +501,6 @@ Singleton {
         wallpaperLauncherOpen = false
     }
     // Desktop widget manager toggle routed to the output that should show it.
-    signal desktopWidgetManagerToggleRequested(string outputName)
     // The iRiS desktop menu opened at a point of an output (`inir iris desktopMenu`).
     signal irisDesktopMenuRequested(string outputName, real x, real y)
     // Whether any output's Island is expanded, published for `inir iris status`.

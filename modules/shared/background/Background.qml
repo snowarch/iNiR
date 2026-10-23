@@ -138,9 +138,10 @@ Scope {
         }
 
         function toggleWidgetManager(): string {
+            // The shelf is the library now: arranging opens with it out, and this finds a widget on it.
             if (!GlobalStates.widgetEditMode) GlobalStates.setWidgetEditMode(true)
-            GlobalStates.desktopWidgetManagerToggleRequested(GlobalStates.focusedScreen?.name ?? "")
-            return "widget manager toggled"
+            GlobalStates.widgetSearchOpen = true
+            return "widget shelf search"
         }
 
         function setEditMode(enabled: bool): string {
@@ -2021,7 +2022,7 @@ Scope {
                 closeOnHoverLostDelay: 700
                 model: GlobalStates.widgetEditMode ? [
                     { text: Translation.tr("Manage widgets"), iconName: "tune", monochromeIcon: true,
-                        action: () => { widgetManagerPanel.shown = true } },
+                        action: () => { GlobalStates.widgetSearchOpen = true } },
                     { text: Config.getNestedValue("background.widgets.editGrid.snap", true)
                             ? Translation.tr("Disable grid snap") : Translation.tr("Enable grid snap"),
                         iconName: "grid_3x3", monochromeIcon: true,
@@ -2041,7 +2042,7 @@ Scope {
                     { text: Translation.tr("Widget settings"), iconName: "settings", monochromeIcon: true,
                         action: () => GlobalStates.openSettingsAt("widgets") },
                     { text: Translation.tr("Done editing"), iconName: "check", monochromeIcon: true,
-                        action: () => { widgetManagerPanel.shown = false; GlobalStates.setWidgetEditMode(false) } }
+                        action: () => GlobalStates.setWidgetEditMode(false) }
                 ] : [
                     { text: Translation.tr("Settings"), iconName: "settings", monochromeIcon: true,
                         action: () => { Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]) } },
@@ -2079,7 +2080,7 @@ Scope {
                 readonly property bool gridSnap: Config.getNestedValue("background.widgets.editGrid.snap", true)
                 model: GlobalStates.widgetEditMode ? [
                     { text: Translation.tr("Add widgets"), iconName: "dashboard_customize", tint: "teal",
-                        action: () => { widgetManagerPanel.shown = true } },
+                        action: () => { GlobalStates.widgetSearchOpen = true } },
                     { text: Translation.tr("Snap to grid"), iconName: "grid_on", checked: irisDesktopMenu.gridSnap, keepOpen: true,
                         action: () => Config.setNestedValue("background.widgets.editGrid.snap", !irisDesktopMenu.gridSnap) },
                     { type: "separator" },
@@ -2093,7 +2094,7 @@ Scope {
                         action: () => GlobalStates.openSettingsAt("widgets") },
                     { type: "separator" },
                     { text: Translation.tr("Done"), iconName: "check", tint: "green",
-                        action: () => { widgetManagerPanel.shown = false; GlobalStates.setWidgetEditMode(false) } }
+                        action: () => GlobalStates.setWidgetEditMode(false) }
                 ] : IrisDesktopActions.menu(bgRoot.screenName, bgRoot.wallpaperPath, bgRoot.wallpaperPath)
             }
 
@@ -2948,7 +2949,7 @@ Scope {
                             case "screen": return Translation.tr("Screen centre")
                             case "centre": return Translation.tr("Centre")
                             case "flush": return Translation.tr("Edge to edge")
-                            case "gutter": return Translation.tr("Gap")
+                            case "gutter": return ""
                             }
                             switch (line?.side) {
                             case "L": return Translation.tr("Left")
@@ -3120,128 +3121,6 @@ Scope {
                                 border.color: guides.ink
                                 opacity: 0.9 * (1 - guides.flare)
                             }
-                        }
-                    }
-                }
-
-                Item {
-                    id: editControlsOverlay
-                    anchors.fill: parent
-                    visible: opacity > 0
-                    opacity: GlobalStates.widgetEditMode ? 1 : 0
-                    z: 20000
-                    enabled: GlobalStates.widgetEditMode
-
-                    Behavior on opacity {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
-                    }
-
-                    // A family that hosts arranging here (its own shelf and head: DesktopEditStage) keeps the shared
-                    // toolbar and library out of this output.
-                    readonly property bool hosted: DesktopEditStage.hosted(bgRoot.screenName)
-                    Loader {
-                        anchors.fill: parent
-                        active: editControlsOverlay.visible && !editControlsOverlay.hosted
-                        sourceComponent: Item {
-                            DesktopEditToolbar {
-                                id: editControlsBar
-                                availableWidth: Math.max(0, editGridOverlay.safeWidth - 16)
-                                availableHeight: editGridOverlay.safeHeight
-                                outputName: bgRoot.screenName
-                                hasSelection: editGridOverlay.hasSelection
-                                libraryOpen: widgetManagerPanel.shown
-                                x: Math.round(editGridOverlay.safeLeft
-                                    + (editGridOverlay.safeWidth - width) / 2)
-                                // iRiS: the Dock steps aside while editing and the toolbar takes the
-                                // edge opposite the Island, so it never lands on the Island.
-                                readonly property bool irisTopEdge: (Config.options?.panelFamily ?? "ii") === "iris"
-                                    && editGridOverlay.workArea?.insets?.barEdge === "bottom"
-                                attachedTopEdge: irisTopEdge
-                                y: editControlsBar.iris ? (irisTopEdge ? IrisFrame.band : parent.height - height - IrisFrame.band)
-                                    : Math.max(editGridOverlay.safeTop, editGridOverlay.safeBottom - height - 12)
-                                onLibraryRequested: widgetManagerPanel.shown = !widgetManagerPanel.shown
-                                onEdgeSettingsRequested: GlobalStates.openSettingsAt("widgets", "Organic edge")
-                                onSettingsRequested: GlobalStates.openSettingsAt("widgets")
-                                onDoneRequested: {
-                                    widgetManagerPanel.shown = false
-                                    GlobalStates.setWidgetEditMode(false)
-                                }
-                            }
-                        }
-                    }
-
-                    // ── Widget Manager Panel ─────────────────────────
-                    Loader {
-                        id: widgetManagerPanel
-                        property bool shown: false
-                        property bool geometryReady: false
-                        Connections {
-                            target: GlobalStates
-                            function onDesktopWidgetManagerToggleRequested(outputName: string): void {
-                                if ((outputName.length === 0 || outputName === bgRoot.screenName) && !editControlsOverlay.hosted)
-                                    widgetManagerPanel.shown = !widgetManagerPanel.shown
-                            }
-                            function onWidgetEditModeChanged(): void {
-                                if (!GlobalStates.widgetEditMode) widgetManagerPanel.shown = false
-                            }
-                        }
-                        active: shown && !editControlsOverlay.hosted
-                        visible: active
-                        enabled: active
-                        z: 150
-                        x: 0
-                        y: 0
-
-                        function restoreGeometry(): void {
-                            if (!widgetManagerPanel.shown)
-                                return
-                            Qt.callLater(() => {
-                                const panel = widgetManagerPanel.item
-                                if (!panel)
-                                    return
-                                const inset = 12
-                                const canvasWidth = widgetManagerPanel.parent?.width ?? 0
-                                const canvasHeight = widgetManagerPanel.parent?.height ?? 0
-                                const spanX = Math.max(0, canvasWidth - panel.width - inset * 2)
-                                const spanY = Math.max(0, canvasHeight - panel.height - inset * 2)
-                                const rx = Math.max(0, Math.min(1,
-                                    Number(Persistent.states?.desktopWidgets?.managerXRatio ?? 0.68)))
-                                const ry = Math.max(0, Math.min(1,
-                                    Number(Persistent.states?.desktopWidgets?.managerYRatio ?? 0.48)))
-                                widgetManagerPanel.x = inset + Math.round(spanX * rx)
-                                widgetManagerPanel.y = inset + Math.round(spanY * ry)
-                                widgetManagerPanel.geometryReady = true
-                            })
-                        }
-
-                        Timer { id: managerCloseLater; interval: 0; onTriggered: widgetManagerPanel.shown = false }
-                        onShownChanged: {
-                            if (shown) GlobalStates.desktopWidgetManagerOutput = bgRoot.screenName
-                            else if (GlobalStates.desktopWidgetManagerOutput === bgRoot.screenName) GlobalStates.desktopWidgetManagerOutput = ""
-                            if (!shown) {
-                                geometryReady = false
-                                return
-                            }
-                            geometryReady = false
-                            restoreGeometry()
-                        }
-                        onLoaded: restoreGeometry()
-
-                        sourceComponent: WidgetManagerPanel {
-                            outputName: bgRoot.screen?.name ?? ""
-                            canvasWidth: widgetManagerPanel.parent?.width ?? 800
-                            canvasHeight: widgetManagerPanel.parent?.height ?? 600
-                            screenWidth: bgRoot.screen.width
-                            screenHeight: bgRoot.screen.height
-                            // Closed after its own click returns: unloading the panel inside the
-                            // click that asked for it lost the next click.
-                            onCloseRequested: managerCloseLater.restart()
-                            onFocusWidgetRequested: layoutKey => {
-                                GlobalStates.selectDesktopWidget(
-                                    bgRoot.screenName + "::" + layoutKey)
-                            }
-                            Component.onCompleted: widgetManagerPanel.restoreGeometry()
                         }
                     }
                 }

@@ -16,7 +16,7 @@ import qs.modules.iris.style
  * pokes the live companion. Registered per the folder contract: import +
  * _builtinWidgets entry + FadeLoader + knownWidgets in Background.qml,
  * schema in Config.qml, defaults/config.json, DesktopWidgetsConfig section,
- * WidgetManagerPanel _supportsAppearance whitelist.
+ * shelf (DesktopWidgetIdentity) list.
  */
 AbstractBackgroundWidget {
     id: root

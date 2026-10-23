@@ -3,12 +3,9 @@ AbstractBackgroundWidget 1.0 AbstractBackgroundWidget.qml
 EditorialWidget 1.0 EditorialWidget.qml
 CustomImageWidget 1.0 CustomImageWidget.qml
 ManifestPopover 1.0 ManifestPopover.qml
-WidgetManagerPanel 1.0 WidgetManagerPanel.qml
-DesktopEditToolbar 1.0 DesktopEditToolbar.qml
 WidgetChoiceButton 1.0 WidgetChoiceButton.qml
 WidgetEditAction 1.0 WidgetEditAction.qml
 WidgetPlacementControls 1.0 WidgetPlacementControls.qml
-WidgetLibraryCard 1.0 WidgetLibraryCard.qml
 WidgetSurface 1.0 WidgetSurface.qml
 OrganicEdgeWidget 1.0 OrganicEdgeWidget.qml
 WidgetQuickControlsLayout 1.0 WidgetQuickControlsLayout.qml
