@@ -86,6 +86,219 @@ ColumnLayout {
         font.weight: IrisStyle.weight(Font.DemiBold)
     }
 
+    // One pick drawn as what it gives: the room it takes, the design it wears.
+    component ChoiceTile: Rectangle {
+        id: tile
+        property bool chosen: false
+        property string label: ""
+        default property alias mark: markBox.data
+        signal picked()
+        Layout.fillWidth: true
+        Layout.preferredWidth: 1
+        Layout.maximumWidth: Number.POSITIVE_INFINITY
+        Layout.preferredHeight: Math.round(78 * root.d)
+        radius: root.plateRadius
+        readonly property color stuff: tile.chosen ? IrisStyle.tintFill(IrisStyle.accent)
+            : tileHover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
+        color: IrisStyle.fieldChamfer ? "transparent" : tile.stuff
+        border.width: tile.chosen && !IrisStyle.fieldChamfer ? 1 : 0
+        border.color: IrisStyle.tintBorder(IrisStyle.accent)
+        scale: tileTap.pressed ? IrisStyle.pressScale(0.96) : 1
+        Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+        Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+        IrisCutPlate {
+            anchors.fill: parent
+            visible: IrisStyle.fieldChamfer
+            cutLength: root.plateCut
+            color: tile.stuff
+            stroke: IrisStyle.tintBorder(IrisStyle.accent)
+            strokeWidth: tile.chosen ? 1 : 0
+        }
+        Item {
+            id: markBox
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: Math.round(11 * root.d) // iris-literal: a design specimen, drawn to scale
+            width: Math.round(40 * root.d)
+            height: Math.round(32 * root.d)
+        }
+        IrisText {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: Math.round(4 * root.d)
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: Math.round(9 * root.d) // iris-literal: a design specimen, drawn to scale
+            horizontalAlignment: Text.AlignHCenter
+            text: tile.label
+            color: tile.chosen ? IrisStyle.text : IrisStyle.textSecondary
+            font.pixelSize: IrisStyle.typeMeta
+            font.weight: tile.chosen ? Font.DemiBold : Font.Medium
+            elide: Text.ElideRight
+        }
+        HoverHandler { id: tileHover; cursorShape: Qt.PointingHandCursor }
+        TapHandler { id: tileTap; gesturePolicy: TapHandler.WithinBounds; onTapped: tile.picked() }
+        Accessible.role: Accessible.RadioButton
+        Accessible.name: tile.label
+        Accessible.checked: tile.chosen
+    }
+
+    // A design's specimen, drawn in its own manner: the face's big figure, Material's pill,
+    // the instrument's dial, the readout's ruled rows.
+    component DesignMark: Item {
+        id: mark
+        property string design: ""
+        property bool on: false
+        readonly property color ink: mark.on ? IrisStyle.accent : IrisStyle.textTertiary
+        readonly property real line: Math.max(1, Math.round(1.5 * root.d))
+        anchors.fill: parent
+
+        Rectangle {
+            visible: mark.design === "iris"
+            anchors.centerIn: parent
+            width: Math.round(36 * root.d)
+            height: Math.round(30 * root.d)
+            radius: Math.round(9 * root.d) // iris-literal: a design specimen, drawn to scale
+            color: ColorUtils.applyAlpha(mark.ink, 0.16) // iris-literal: a design specimen, drawn to scale
+            Rectangle {
+                x: Math.round(6 * root.d)
+                y: Math.round(6 * root.d)
+                width: Math.round(9 * root.d)
+                height: Math.round(3 * root.d)
+                radius: height / 2
+                color: mark.ink
+            }
+            IrisText {
+                x: Math.round(5 * root.d)
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: Math.round(1 * root.d) // iris-literal: a design specimen, drawn to scale
+                text: "21"
+                color: mark.on ? IrisStyle.text : IrisStyle.textSecondary
+                font.family: IrisStyle.fontTitle
+                font.pixelSize: Math.round(17 * root.d)
+                font.weight: Font.Bold
+            }
+        }
+
+        Rectangle {
+            visible: mark.design === "material"
+            anchors.centerIn: parent
+            width: Math.round(38 * root.d)
+            height: Math.round(20 * root.d)
+            radius: height / 2
+            color: ColorUtils.applyAlpha(mark.ink, 0.2) // iris-literal: a design specimen, drawn to scale
+            Rectangle {
+                id: materialDot
+                x: Math.round(4 * root.d)
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.round(12 * root.d)
+                height: width
+                radius: width / 2
+                color: mark.ink
+            }
+            Column {
+                anchors.left: materialDot.right
+                anchors.leftMargin: Math.round(4 * root.d)
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Math.round(2 * root.d)
+                Rectangle { width: Math.round(14 * root.d); height: Math.round(3 * root.d); radius: height / 2; color: mark.on ? IrisStyle.text : IrisStyle.textSecondary }
+                Rectangle { width: Math.round(9 * root.d); height: Math.round(3 * root.d); radius: height / 2; color: ColorUtils.applyAlpha(mark.ink, 0.6) } // iris-literal: a design specimen, drawn to scale
+            }
+        }
+
+        Item {
+            visible: mark.design === "instrument"
+            anchors.centerIn: parent
+            width: Math.round(30 * root.d)
+            height: width
+            Rectangle {
+                anchors.fill: parent
+                radius: width / 2
+                color: "transparent"
+                border.width: mark.line
+                border.color: ColorUtils.applyAlpha(mark.ink, 0.45) // iris-literal: a design specimen, drawn to scale
+            }
+            Repeater {
+                model: 12
+                Item {
+                    id: tick
+                    required property int index
+                    anchors.fill: parent
+                    rotation: tick.index * 30
+                    Rectangle {
+                        x: (parent.width - width) / 2
+                        y: Math.round(4 * root.d)
+                        width: mark.line
+                        height: tick.index % 3 === 0 ? Math.round(5 * root.d) : Math.round(3 * root.d)
+                        radius: width / 2
+                        color: tick.index % 3 === 0 ? mark.ink : ColorUtils.applyAlpha(mark.ink, 0.5) // iris-literal: a design specimen, drawn to scale
+                    }
+                }
+            }
+            Item {
+                anchors.fill: parent
+                rotation: 52
+                Rectangle {
+                    x: (parent.width - width) / 2
+                    y: Math.round(6 * root.d)
+                    width: Math.max(1.5, Math.round(2 * root.d))
+                    height: parent.height / 2 - y
+                    radius: width / 2
+                    color: mark.on ? IrisStyle.text : IrisStyle.textSecondary
+                }
+            }
+            Rectangle {
+                anchors.centerIn: parent
+                width: Math.round(4 * root.d)
+                height: width
+                radius: width / 2
+                color: mark.ink
+            }
+        }
+
+        Column {
+            visible: mark.design === "readout"
+            anchors.centerIn: parent
+            spacing: Math.round(6 * root.d)
+            Repeater {
+                model: [12, 7, 10]
+                Item {
+                    id: readRow
+                    required property int modelData
+                    required property int index
+                    width: Math.round(38 * root.d)
+                    height: Math.round(3 * root.d)
+                    Rectangle {
+                        id: readName
+                        width: Math.round(9 * root.d)
+                        height: parent.height
+                        radius: Math.round(1 * root.d) // iris-literal: a design specimen, drawn to scale
+                        color: ColorUtils.applyAlpha(mark.on ? IrisStyle.text : IrisStyle.textSecondary, 0.55) // iris-literal: a design specimen, drawn to scale
+                    }
+                    Rectangle {
+                        id: readValue
+                        anchors.right: parent.right
+                        width: Math.round(readRow.modelData * root.d)
+                        height: parent.height
+                        radius: Math.round(1 * root.d) // iris-literal: a design specimen, drawn to scale
+                        color: readRow.index === 0 ? mark.ink : (mark.on ? IrisStyle.text : IrisStyle.textSecondary)
+                    }
+                    Row {
+                        anchors.left: readName.right
+                        anchors.right: readValue.left
+                        anchors.margins: Math.round(2 * root.d)
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: Math.round(2 * root.d)
+                        clip: true
+                        Repeater {
+                            model: 8
+                            Rectangle { width: Math.max(1, Math.round(1 * root.d)); height: width; color: ColorUtils.applyAlpha(mark.ink, 0.5) } // iris-literal: a design specimen, drawn to scale
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     component ActionRow: Rectangle {
         id: action
         property string glyph: ""
@@ -193,53 +406,20 @@ ColumnLayout {
                 Repeater {
                     model: root.widget.irisSizeChoices
 
-                    Rectangle {
+                    ChoiceTile {
                         id: sizeTile
                         required property string modelData
-                        readonly property bool chosen: root.widget.irisSize === sizeTile.modelData
                         readonly property real cell: Math.round(14 * root.d)
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 1
-                        Layout.maximumWidth: Number.POSITIVE_INFINITY
-                        Layout.preferredHeight: Math.round(78 * root.d)
-                        radius: root.plateRadius
-                        readonly property color stuff: sizeTile.chosen ? IrisStyle.tintFill(IrisStyle.accent)
-                            : tileHover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
-                        color: IrisStyle.fieldChamfer ? "transparent" : sizeTile.stuff
-                        border.width: sizeTile.chosen && !IrisStyle.fieldChamfer ? 1 : 0
-                        border.color: IrisStyle.tintBorder(IrisStyle.accent)
-                        Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
-                        IrisCutPlate {
-                            anchors.fill: parent
-                            visible: IrisStyle.fieldChamfer
-                            cutLength: root.plateCut
-                            color: sizeTile.stuff
-                            stroke: IrisStyle.tintBorder(IrisStyle.accent)
-                            strokeWidth: sizeTile.chosen ? 1 : 0
-                        }
-
+                        chosen: root.widget.irisSize === sizeTile.modelData
+                        label: root.widget.irisSizeLabels[sizeTile.modelData] ?? sizeTile.modelData
+                        onPicked: root.widget.setIrisOption("size", sizeTile.modelData)
                         Rectangle {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            y: Math.round(12 * root.d) + (sizeTile.cell * 2 + 2 - height) / 2
+                            anchors.centerIn: parent
                             width: sizeTile.modelData === "small" ? sizeTile.cell : sizeTile.cell * 2 + 2
                             height: sizeTile.modelData === "large" ? sizeTile.cell * 2 + 2 : sizeTile.cell
                             radius: IrisStyle.radiusMicro
                             color: sizeTile.chosen ? IrisStyle.accent : IrisStyle.fillActive
                         }
-                        IrisText {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: Math.round(9 * root.d)
-                            text: root.widget.irisSizeLabels[sizeTile.modelData] ?? sizeTile.modelData
-                            color: sizeTile.chosen ? IrisStyle.text : IrisStyle.textSecondary
-                            font.pixelSize: IrisStyle.typeMeta
-                            font.weight: sizeTile.chosen ? Font.DemiBold : Font.Medium
-                        }
-                        HoverHandler { id: tileHover; cursorShape: Qt.PointingHandCursor }
-                        TapHandler { onTapped: root.widget.setIrisOption("size", sizeTile.modelData) }
-                        Accessible.role: Accessible.RadioButton
-                        Accessible.name: root.widget.irisSizeLabels[sizeTile.modelData] ?? sizeTile.modelData
-                        Accessible.checked: sizeTile.chosen
                     }
                 }
             }
@@ -278,6 +458,7 @@ ColumnLayout {
                         FaceChoice {
                             required property var modelData
                             Layout.fillWidth: true
+                            Layout.preferredWidth: 1
                             icon: modelData.icon ?? ""
                             label: modelData.label
                             selected: option.value === modelData.value
@@ -367,16 +548,16 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: Math.round(4 * root.d)
+                spacing: Math.round(8 * root.d)
                 Repeater {
                     model: root.widget.designChoices
-                    FaceChoice {
+                    ChoiceTile {
+                        id: designTile
                         required property var modelData
-                        Layout.fillWidth: true
-                        icon: modelData.icon
-                        label: modelData.label
-                        selected: root.widget.widgetDesign === modelData.value
-                        onClicked: root.widget.pickDesign(modelData.value)
+                        chosen: root.widget.widgetDesign === designTile.modelData.value
+                        label: designTile.modelData.label
+                        onPicked: root.widget.pickDesign(designTile.modelData.value)
+                        DesignMark { design: designTile.modelData.value; on: designTile.chosen }
                     }
                 }
             }
@@ -420,7 +601,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.preferredWidth: 1
                         Layout.maximumWidth: Number.POSITIVE_INFINITY
-                        spacing: Math.round(5 * root.d)
+                        spacing: Math.round(5 * root.d) // iris-literal: the material swatch, a miniature
 
                         Item {
                             Layout.fillWidth: true
@@ -435,7 +616,7 @@ ColumnLayout {
                             }
                             ClippingRectangle {
                                 anchors.fill: parent
-                                anchors.margins: Math.round(3 * root.d)
+                                anchors.margins: Math.round(3 * root.d) // iris-literal: the material swatch, a miniature
                                 radius: IrisStyle.concentric(root.plateRadius, 3 * root.d, IrisStyle.radiusMicro)
                                 color: IrisStyle.fillQuiet
 
