@@ -137,50 +137,22 @@ Item {
     readonly property string timerGlyph: root.timerKind === "pomodoro" && TimerService.pomodoroBreak ? "coffee"
         : root.timerKind === "stopwatch" ? "timer" : "hourglass_top"
 
-    // Jobs newest first by when they began (not by update, or two running jobs would swap every tick).
-    readonly property var tasks: LiveActivities.active.slice().sort((a, b) => b.started - a.started)
-    readonly property var task: root.tasks[0] ?? null
-    readonly property color taskTint: root.nothingLook ? IrisStyle.text : IrisStyle.identityColor(String(root.task?.tint ?? "lavender"))
-    // Priority, as Live Activities: what records you, then what counts down, then jobs, then the song. The first is
-    // the compact Island; the second detaches as the minimal bubble; the expanded page lists them all.
+    readonly property var task: LiveActivities.latest
+    readonly property color taskTint: IrisStyle.identityColor(String(root.task?.tint ?? "lavender"))
     readonly property var activities: {
         const list = []
         if (root.recording) list.push("record")
         if (root.timerKind.length > 0) list.push("timer")
-        for (const job of root.tasks.slice(0, 2)) list.push("task")
+        if (root.task) list.push("task")
         if (root.hasMedia) list.push("media")
         return list
     }
     readonly property string primary: root.activities[0] ?? "idle"
     readonly property string secondary: root.activities[1] ?? ""
-    readonly property var secondaryTask: root.primary === "task" ? (root.tasks[1] ?? null) : root.task
-    readonly property bool privacyLive: Privacy.anyActive
-    // A Cluster Island is the clock with the song beside it; a live activity (recording, a timer, a job) takes the
-    // Island itself, as on a phone, and what comes after it detaches into the left bubble.
-    readonly property string islandActivity: IrisStyle.cluster && ["record", "timer", "task"].includes(root.primary) ? root.primary : ""
-    readonly property string leftKind: root.islandActivity.length > 0 ? root.secondary : root.primary === "idle" ? "" : root.primary
-    // Where a tap on the Island goes: what it shows, who is using the mic or screen, else the desktop page.
-    readonly property string tapPage: IrisStyle.cluster
-        ? (root.islandActivity.length > 0 || root.privacyLive ? "activity" : "desktop") : root.pageFor(root.primary)
-    readonly property bool hasSystemActivity: root.recording || root.timerKind.length > 0 || root.task !== null || root.privacyLive
-
-    // A job without a percentage shows how long it has run; this ticks only while one does.
-    property real now: Date.now()
-    Timer {
-        interval: 1000
-        repeat: true
-        running: root.tasks.some(job => Number(job.progress ?? -1) < 0)
-        onTriggered: root.now = Date.now()
-        onRunningChanged: root.now = Date.now()
-    }
-    function elapsedOf(job): string {
-        return root.clockText(Math.max(0, Math.floor((root.now - Number(job?.started ?? root.now)) / 1000)))
-    }
-    function percentOf(job): string { return String(Math.round(Math.max(0, Number(job?.progress ?? 0)) * 100)) }
+    readonly property bool hasSystemActivity: root.recording || root.timerKind.length > 0 || root.task !== null
 
     function pageFor(kind: string): string {
-        if (kind === "idle" || kind === "") return root.privacyLive ? "activity" : "desktop"
-        return kind === "media" ? "media" : "activity"
+        return kind === "media" ? "media" : kind === "idle" || kind === "" ? "desktop" : "activity"
     }
     readonly property string effectivePage: {
         const requested = root.page.length > 0 ? root.page : root.pageFor(root.primary)
@@ -208,8 +180,7 @@ Item {
     }
     readonly property var navEntries: {
         const glyphs = { media: "music_note", activity: root.recording ? "radio_button_checked"
-                : root.timerKind.length > 0 ? root.timerGlyph : root.task ? String(root.task.glyph ?? "bolt")
-                : Privacy.micActive ? "mic" : Privacy.cameraActive ? "videocam" : Privacy.screenSharing ? "screen_share" : "bolt",
+                : root.timerKind.length > 0 ? root.timerGlyph : String(root.task?.glyph ?? "bolt"),
             desktop: "space_dashboard", tray: "apps", tools: "timer", focus: "left_panel_open",
             today: "right_panel_open", controls: "tune", settings: "settings" }
         const labels = { media: "Now playing", activity: "Live activities", desktop: "Desktop", tray: "Tray",
@@ -364,16 +335,6 @@ Item {
         onExited: exitCode => { if (exitCode === 0) Directories.userAvatarRevision++ }
     }
 
-    // Compact figures: the Dot voice at its smallest size, grown with the clock scale.
-    readonly property int dotFigure: Math.round(28 * IrisStyle.typeScale * Math.max(1, root.clockScale))
-    // Nothing is worn here only when the person puts it on the Island; Apple keeps its own faces.
-    readonly property string irisPlace: "island"
-    readonly property bool nothingLook: IrisStyle.nothingAt("island")
-    readonly property real figureSize: root.nothingLook ? root.dotFigure : IrisStyle.typeHeadline * root.clockScale
-    function stripWidth(count: int): real {
-        const dot = Math.max(3, Math.round(4 * IrisStyle.density)), gap = Math.max(2, Math.round(3 * IrisStyle.density))
-        return count * dot + (count - 1) * gap
-    }
     function clockText(total: real): string {
         const s = Math.max(0, Math.floor(total))
         const h = Math.floor(s / 3600)
@@ -416,28 +377,16 @@ Item {
     }
 
     readonly property bool eventsEnabled: root.options?.events ?? true
-    property var event: ({ icon: "", tint: IrisStyle.text, title: "", detail: "", value: -1, kind: "", failed: false })
+    property var event: ({ icon: "", tint: IrisStyle.text, title: "", detail: "", value: -1 })
     readonly property bool eventShown: eventTimer.running && !root.expanded && !root.feedback
     // A battery notice draws the battery itself, filled to its level, instead of a font glyph.
     // Material's "lan" is a network diagram; a cable reads as the ethernet port, as the Network bubble shows it.
     readonly property string eventGlyph: root.event.icon === "lan" ? "settings_ethernet" : root.event.icon
-    readonly property color eventInk: root.event.failed || (root.nothingLook && Qt.colorEqual(root.event.tint, IrisStyle.danger))
-        ? IrisStyle.signalInk : root.nothingLook ? IrisStyle.text : root.event.tint
     readonly property bool eventIsBattery: String(root.event.icon).startsWith("battery") && root.event.value >= 0
     function showEvent(icon: string, tint: color, title: string, detail: string, value: real): void {
         if (!root.eventsEnabled || !eventsWarm.ready || root.expanded || root.fullscreenCovered
             || root.targetScreen?.name !== GlobalStates.focusedScreen?.name) return
-        root.event = { icon: icon, tint: tint, title: title, detail: detail, value: value, kind: "", failed: false }
-        eventTimer.restart()
-    }
-    // A job that ends says so in the compact Island: its strip fills and a pulse runs through it, or it fails in signal.
-    function showDone(activity): void {
-        if (!root.eventsEnabled || !eventsWarm.ready || root.expanded || root.fullscreenCovered
-            || root.targetScreen?.name !== GlobalStates.focusedScreen?.name) return
-        const failed = Boolean(activity?.failed)
-        root.event = { icon: failed ? "close" : "check", tint: failed ? IrisStyle.signal : root.nothingLook ? IrisStyle.text : IrisStyle.success,
-            title: String(activity?.title ?? ""), kind: "done", failed: failed, value: failed ? -1 : 1,
-            detail: String(activity?.detail ?? "").length > 0 ? String(activity.detail) : failed ? Translation.tr("Failed") : Translation.tr("Done") }
+        root.event = { icon: icon, tint: tint, title: title, detail: detail, value: value }
         eventTimer.restart()
     }
     Timer { id: eventTimer; interval: 2600; onTriggered: root.clearOsdRequests() }
@@ -475,7 +424,10 @@ Item {
     }
     Connections {
         target: LiveActivities
-        function onFinished(activity: var): void { root.showDone(activity) }
+        function onFinished(activity: var): void {
+            root.showEvent("check_circle", IrisStyle.identityColor(String(activity?.tint ?? "lavender")),
+                String(activity?.title ?? ""), String(activity?.detail ?? "").length > 0 ? String(activity.detail) : Translation.tr("Done"), -1)
+        }
     }
     property var badge: ({ icon: "", tint: IrisStyle.text, text: "" })
     function showBadge(icon: string, tint: color, text: string): void {
@@ -617,7 +569,7 @@ Item {
         && root.targetScreen?.name === GlobalStates.focusedScreen?.name
     readonly property string compactMode: root.feedback && !root.anchored ? "feedback"
         : root.eventShown && !root.anchored ? "event"
-        : IrisStyle.cluster && !root.zoned ? (root.islandActivity.length > 0 ? root.islandActivity : "clock") : root.primary
+        : IrisStyle.cluster && !root.zoned ? "clock" : root.primary
     readonly property string layout: String(root.options?.layout ?? "island")
     // Menu bar: a thin strip across the edge with the heart hanging from its middle as a notch.
     readonly property bool menubar: root.layout === "menubar" && !root.vertical
@@ -695,7 +647,7 @@ Item {
     readonly property bool leftSatelliteShown: root.leftSatelliteRest && !root.inlineExpanded
     readonly property bool leftSatelliteRest: IrisStyle.cluster && !root.zoned && !root.feedback && !root.eventShown
         && !root.floatingSlots.includes("left")
-        && root.leftKind.length > 0
+        && root.primary !== "idle"
     readonly property bool rightSatelliteShown: root.rightSatelliteRest && !root.inlineExpanded
     function floatsAlone(kind: string): bool { return IrisPieces.floats(Config.options?.iris?.bubbles, kind) }
     readonly property bool rightSatelliteRest: !root.zoned && !root.feedback && !root.eventShown
@@ -723,7 +675,7 @@ Item {
         if (root.floatsAlone(kind)) return true
         if (root.auxiliaryRest && root.auxiliary === kind) return true
         if (root.rightSatelliteRest && IrisStyle.cluster && root.trailingKind === kind) return true
-        return root.leftSatelliteRest && kind === "media" && root.leftKind === "media"
+        return root.leftSatelliteRest && kind === "media"
     }
     readonly property var barPieces: {
         const carried = IrisPieces.carriedBy(Config.options?.iris?.bubbles, IrisStyle.structuralValue("bar.pieces", []))
@@ -892,7 +844,8 @@ Item {
         onTriggered: {
             if (!root.hoverArmed || !root.pointerOnIsland || root.expanded || root.feedback || root.editingDesktop || wheelQuiet.running) return
             if (root.pieceHovered) return
-            if (root.tapPage === "desktop") root.openPage("desktop", false, null)
+            const page = IrisStyle.cluster ? "desktop" : root.pageFor(root.primary)
+            if (page === "desktop") root.openPage(page, false, null)
         }
     }
     Timer { id: wheelQuiet; interval: 900 }
@@ -1281,7 +1234,6 @@ Item {
         property bool resting: false
         property bool leftSide: false
         property int slotIndex: 1
-        property var task: root.task
         readonly property alias hovered: satelliteHover.hovered
         readonly property alias artwork: face.artwork
         signal activated()
@@ -1330,7 +1282,6 @@ Item {
             opacity: Math.max(0, Math.min(1, (satellite.emerge - 0.45) / 0.4))
             anchors.fill: parent
             kind: satellite.levelKind.length > 0 ? satellite.levelKind : satellite.kind
-            task: satellite.task
             tint: root.artTint
             playing: root.playing
             mediaProgress: root.trackProgress
@@ -1375,16 +1326,15 @@ Item {
         id: leftSatellite
         slot: "left"
         leftSide: true
-        kind: root.leftKind
-        task: root.islandActivity.length > 0 ? root.secondaryTask : root.task
+        kind: root.primary
         shown: root.leftSatelliteShown
         resting: root.leftSatelliteRest
         onActivated: {
             if (root.mediaBubbleCard) root.toggleBubbleCard("media", leftSatellite, "island-left")
-            else root.openPage(root.pageFor(root.leftKind), true, leftSatellite)
+            else root.openPage(root.pageFor(root.primary), true, leftSatellite)
         }
     }
-    readonly property bool mediaBubbleCard: IrisStyle.cluster && root.leftKind === "media"
+    readonly property bool mediaBubbleCard: IrisStyle.cluster && root.primary === "media"
         && String(Config.options?.iris?.player?.bubbleOpens ?? "card") === "card"
     readonly property bool focusedOutput: root.targetScreen?.name === GlobalStates.focusedScreen?.name
     Connections {
@@ -1398,7 +1348,7 @@ Item {
         }
     }
     readonly property var bubbleKinds: ({
-        left: IrisStyle.cluster ? root.leftKind : "",
+        left: IrisStyle.cluster && root.primary !== "idle" ? root.primary : "",
         right: IrisStyle.cluster ? (root.trailingKind !== "none" && !root.floatsAlone(root.trailingKind) ? root.trailingKind : "") : root.secondary,
         utility: root.auxiliary !== "none" && !root.floatsAlone(root.auxiliary)
             && (root.auxiliary !== "tray" || root.trayItems.length > 0) ? root.auxiliary : ""
@@ -1560,7 +1510,6 @@ Item {
         id: rightSatellite
         slot: "right"
         kind: IrisStyle.cluster ? root.trailingKind : root.secondary
-        task: root.secondaryTask
         shown: root.rightSatelliteShown
         resting: root.rightSatelliteRest
         onActivated: {
@@ -1830,13 +1779,10 @@ Item {
                 IrisClock {
                     id: idleClock
                     Layout.alignment: Qt.AlignVCenter
-                    family: root.nothingLook ? IrisStyle.fontDot : IrisStyle.figureFace(pixelSize)
-                    minorFamily: root.nothingLook ? IrisStyle.fontLabel : family
-                    pixelSize: root.figureSize
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
                     separatorColor: root.clockAccent
                     opacity: clockFlight.hides(idleClock) ? 0 : 1
                 }
-                PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: true }
             }
 
             CompactRow {
@@ -1872,7 +1818,7 @@ Item {
                     }
                     Rectangle {
                         Layout.fillWidth: true
-                        visible: !root.nothingLook && root.effectiveLength > 0
+                        visible: root.effectiveLength > 0
                         implicitHeight: (root.zoned ? 3 : 2.5) * root.d
                         radius: IrisStyle.capsule(height)
                         color: IrisStyle.fillHover
@@ -1885,138 +1831,94 @@ Item {
                     }
                 }
                 Tabular {
-                    visible: !root.nothingLook
                     text: DateTime.timeDisplay
                     color: IrisStyle.textSecondary
                     font.pixelSize: root.zoned ? IrisStyle.typeLabel : IrisStyle.typeMeta
                     font.weight: IrisStyle.weight(Font.Medium)
                 }
                 IrisVisualizer {
-                    visible: !root.nothingLook
-                    running: visible && root.playing && root.compactMode === "media" && !root.visualExpanded
+                    running: root.playing && root.compactMode === "media" && !root.visualExpanded
                     tint: IrisStyle.visualizerTint(root.artTint)
                     barHeight: (root.zoned ? 18 : 15) * root.d
                 }
-                // Where the song is, as six dots; quiet while paused.
-                IrisDotStrip {
-                    visible: root.nothingLook && root.effectiveLength > 0
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredWidth: root.stripWidth(6)
-                    count: 6
-                    value: root.trackProgress
-                    fillColor: root.playing ? IrisStyle.text : IrisStyle.textSecondary
-                }
-                PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: false }
             }
 
             CompactRow {
                 id: recordRow
                 mode: "record"
-                RecordDot { Layout.alignment: Qt.AlignVCenter; color: root.nothingLook ? IrisStyle.signal : IrisStyle.danger }
-                IrisLabel {
+                RecordDot { Layout.alignment: Qt.AlignVCenter }
+                IrisText {
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    text: root.nothingLook ? Translation.tr("Rec") : Translation.tr("Recording")
-                    color: root.nothingLook ? IrisStyle.text : IrisStyle.textSecondary
+                    text: Translation.tr("Recording")
+                    color: IrisStyle.textSecondary
+                    font.pixelSize: IrisStyle.typeLabel
+                    font.weight: IrisStyle.weight(Font.Medium)
+                    elide: Text.ElideRight
                 }
                 // While something runs, its figure is what the row says (DI49j): the word steps back.
-                IrisDotText {
-                    Layout.alignment: Qt.AlignVCenter
+                IrisNumber {
                     text: root.clockText(RecorderStatus.elapsedSeconds)
-                    pixelSize: root.figureSize
-                    color: root.nothingLook ? IrisStyle.text : IrisStyle.danger
+                    color: IrisStyle.danger
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
+                    weight: IrisStyle.figureWeight
                 }
-                PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: false }
             }
 
             CompactRow {
                 id: timerRow
                 mode: "timer"
-                // A running timer is live: its dot is the signal. Paused, the dot gives way to the pause bars.
                 Glyph {
-                    visible: !root.nothingLook
-                    Layout.alignment: Qt.AlignVCenter
                     text: root.timerPaused ? "pause" : root.timerGlyph
                     iconSize: 17 * root.d
                     color: IrisStyle.secondaryAccent
                 }
-                Item {
-                    visible: root.nothingLook
-                    Layout.alignment: Qt.AlignVCenter
-                    implicitWidth: Math.round(16 * root.d)
-                    implicitHeight: implicitWidth
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: Math.round(7 * root.d)
-                        height: width
-                        radius: width / 2
-                        color: IrisStyle.signal
-                        opacity: root.timerPaused ? 0 : 1
-                        scale: root.timerPaused ? 0.4 : 1
-                        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
-                        Behavior on scale { NumberAnimation { duration: IrisStyle.duration(200); easing.type: Easing.OutCubic } }
-                    }
-                    Glyph {
-                        anchors.centerIn: parent
-                        text: "pause"
-                        iconSize: 16 * root.d
-                        color: IrisStyle.textSecondary
-                        opacity: root.timerPaused ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
-                    }
-                }
-                IrisLabel {
+                IrisText {
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    text: root.timerPaused ? Translation.tr("Paused") : root.timerLabel
-                    color: root.nothingLook ? IrisStyle.text : IrisStyle.textSecondary
+                    text: root.timerLabel
+                    color: IrisStyle.textSecondary
+                    font.pixelSize: IrisStyle.typeLabel
+                    font.weight: IrisStyle.weight(Font.Medium)
+                    elide: Text.ElideRight
                 }
-                IrisDotText {
-                    Layout.alignment: Qt.AlignVCenter
+                IrisNumber {
                     text: root.clockText(root.timerSeconds)
-                    direction: root.timerKind === "stopwatch" ? 1 : -1
-                    pixelSize: root.figureSize
-                    color: root.timerPaused ? IrisStyle.textSecondary : root.nothingLook ? IrisStyle.text : IrisStyle.secondaryAccent
+                    countDown: root.timerKind !== "stopwatch"
+                    color: root.timerPaused ? IrisStyle.textSecondary : IrisStyle.secondaryAccent
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
+                    weight: IrisStyle.figureWeight
                 }
-                PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: false }
             }
 
             CompactRow {
                 id: taskRow
                 mode: "task"
-                readonly property real progress: Number(root.task?.progress ?? -1)
                 Glyph {
-                    Layout.alignment: Qt.AlignVCenter
                     text: String(root.task?.glyph ?? "bolt")
                     iconSize: 17 * root.d
                     color: root.taskTint
                 }
                 IrisText {
                     Layout.fillWidth: true
-                    Layout.maximumWidth: Math.round(170 * root.d)
-                    Layout.alignment: Qt.AlignVCenter
+                    Layout.maximumWidth: Math.round(190 * root.d)
                     text: String(root.task?.title ?? "")
-                    // Under Apple the figure is what the row says and the name steps back.
-                    color: !root.nothingLook && taskRow.progress >= 0 ? IrisStyle.textSecondary : IrisStyle.text
+                    // Without a figure the name is what the row says; with one, it steps back.
+                    color: Number(root.task?.progress ?? -1) >= 0 ? IrisStyle.textSecondary : IrisStyle.text
                     font.pixelSize: IrisStyle.typeLabel
-                    font.weight: IrisStyle.weight(!root.nothingLook && taskRow.progress >= 0 ? Font.Medium : Font.DemiBold)
+                    font.weight: IrisStyle.weight(Number(root.task?.progress ?? -1) >= 0 ? Font.Medium : Font.DemiBold)
                     elide: Text.ElideRight
                 }
-                IrisDotStrip {
-                    visible: root.nothingLook && taskRow.progress >= 0
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredWidth: root.stripWidth(6)
-                    count: 6
-                    value: Math.max(0, taskRow.progress)
+                IrisNumber {
+                    visible: Number(root.task?.progress ?? -1) >= 0
+                    text: Math.round(Number(root.task?.progress ?? 0) * 100) + "%"
+                    color: root.taskTint
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
+                    weight: IrisStyle.figureWeight
                 }
-                // The percentage when the job knows it, how long it has run when it does not.
-                IrisDotText {
+                RecordDot {
+                    visible: Number(root.task?.progress ?? -1) < 0
                     Layout.alignment: Qt.AlignVCenter
-                    text: taskRow.progress >= 0 ? root.percentOf(root.task) + (root.nothingLook ? "" : "%") : root.elapsedOf(root.task)
-                    pixelSize: root.figureSize
-                    color: root.nothingLook ? IrisStyle.text : root.taskTint
+                    color: root.taskTint
                 }
-                PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: false }
             }
 
             CompactRow {
@@ -2046,13 +1948,10 @@ Item {
                 IrisClock {
                     id: clusterClock
                     Layout.alignment: Qt.AlignVCenter
-                    family: root.nothingLook ? IrisStyle.fontDot : IrisStyle.figureFace(pixelSize)
-                    minorFamily: root.nothingLook ? IrisStyle.fontLabel : family
-                    pixelSize: root.figureSize
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
                     separatorColor: root.clockAccent
                     opacity: clockFlight.hides(clusterClock) ? 0 : 1
                 }
-                PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: true }
                 Item { Layout.fillWidth: true }
             }
 
@@ -2064,21 +1963,21 @@ Item {
                     Layout.preferredWidth: root.compactHeight - Math.round(12 * root.d)
                     Layout.preferredHeight: Layout.preferredWidth
                     radius: IrisStyle.capsule(width)
-                    color: root.nothingLook ? IrisStyle.fill : IrisStyle.tintFill(root.event.tint)
+                    color: IrisStyle.tintFill(root.event.tint)
                     Glyph {
                         visible: !root.eventIsBattery
                         anchors.centerIn: parent
                         text: root.eventGlyph
                         iconSize: 16 * root.d
-                        color: root.eventInk
+                        color: root.event.tint
                     }
                     IrisBatteryMark {
                         visible: root.eventIsBattery
                         anchors.centerIn: parent
                         markHeight: Math.round(9 * root.d)
                         level: Math.max(0, root.event.value)
-                        tint: root.eventInk
-                        frame: IrisStyle.trackOf(root.eventInk)
+                        tint: root.event.tint
+                        frame: IrisStyle.trackOf(root.event.tint)
                     }
                 }
                 ColumnLayout {
@@ -2100,43 +1999,21 @@ Item {
                         elide: Text.ElideRight
                     }
                 }
-                // A level as dots; a job that ends fills them and sends one pulse through (S6).
                 Metric {
-                    visible: !root.nothingLook && root.event.value >= 0 && root.event.kind !== "done"
+                    visible: root.event.value >= 0
                     Layout.alignment: Qt.AlignVCenter
                     value: Math.round(root.event.value * 100)
                     unit: "%"
                     pixelSize: IrisStyle.typeBody
                     weight: IrisStyle.figureWeight
-                    color: root.eventInk
+                    color: root.event.tint
                 }
                 ProgressRing {
-                    visible: !root.nothingLook && root.event.value >= 0
+                    visible: root.event.value >= 0
                     Layout.preferredWidth: Math.round(20 * root.d)
                     Layout.preferredHeight: Layout.preferredWidth
                     progress: Math.max(0, root.event.value)
-                    tint: root.eventInk
-                }
-                IrisDotStrip {
-                    id: eventStrip
-                    visible: root.nothingLook && root.event.value >= 0 && !root.eventIsBattery
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredWidth: root.stripWidth(8)
-                    count: 8
-                    value: Math.max(0, root.event.value)
-                    indeterminate: donePulse.running
-                    fillColor: root.eventInk
-                }
-                IrisLabel {
-                    visible: root.nothingLook && root.event.value >= 0 && root.event.kind !== "done"
-                    Layout.alignment: Qt.AlignVCenter
-                    text: Math.round(root.event.value * 100) + "%"
-                    color: IrisStyle.text
-                }
-                Timer { id: donePulse; interval: IrisStyle.duration(620) }
-                Connections {
-                    target: root
-                    function onEventChanged(): void { if (root.event.kind === "done" && !root.event.failed) donePulse.restart() }
+                    tint: root.event.tint
                 }
             }
 
@@ -2362,7 +2239,7 @@ Item {
                         const at = compactPress.mapToItem(root, mouse.x, mouse.y)
                         root.pageOriginX = at.x
                         root.pageOriginY = at.y
-                        root.openPage(root.tapPage, true, null)
+                        root.openPage(IrisStyle.cluster ? "desktop" : root.pageFor(root.primary), true, null)
                     }
                 }
             }
@@ -2727,8 +2604,7 @@ Item {
                                         text: navSlot.modelData.glyph ?? ""
                                         fill: navButton.selected ? 1 : 0
                                         iconSize: 18 * root.d
-                                        // Chosen is inverted (S1): the glyph takes the plate's label ink, not the accent it sits on.
-                                        color: navButton.selected ? IrisStyle.selectionLabel
+                                        color: navButton.selected ? IrisStyle.accent
                                             : navButton.hovered ? IrisStyle.text : IrisStyle.textSecondary
                                     }
                                 }

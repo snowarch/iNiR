@@ -22,8 +22,6 @@ Item {
     property string screenName: ""
     readonly property real d: IrisStyle.density
 
-    // The job a task bubble shows: the Island hands the second one to its minimal bubble.
-    property var task: LiveActivities.latest
     readonly property var player: MprisController.activePlayer
     property bool playing: root.player?.isPlaying ?? false
     // The live readings below feed only the kind that shows.
@@ -34,8 +32,6 @@ Item {
     property bool lightBackdrop: false
     property var backdrop: null
     readonly property bool bare: root.backdrop !== null
-    // Dots are Nothing's way to count; Apple (and AIRISU's edge rings) draw the ring.
-    readonly property bool dotted: IrisStyle.wearsNothing(root)
     readonly property color ink: root.lightBackdrop ? IrisStyle.inkOnLight : IrisStyle.text
     readonly property color inkMuted: root.lightBackdrop ? IrisStyle.inkOnLightMuted : IrisStyle.muted
     readonly property color inkFaint: root.lightBackdrop ? IrisStyle.inkOnLightFaint : IrisStyle.textTertiary
@@ -292,7 +288,7 @@ Item {
             id: timerBody
             Item {
                 Ring {
-                    visible: !root.dotted && root.timerKind !== "stopwatch"
+                    visible: root.timerKind !== "stopwatch"
                     anchors.fill: parent
                     anchors.margins: 2 * root.d + root.platedInset
                     opacity: root.coverHidden ? 0 : 1
@@ -300,35 +296,12 @@ Item {
                     tint: root.highlight
                     progress: root.timerProgress
                 }
-                IrisDotRing {
-                    visible: root.dotted && root.timerKind !== "stopwatch"
-                    anchors.fill: parent
-                    anchors.margins: 2 * root.d + root.platedInset
-                    cut: root.edgeRings ? Math.min(IrisStyle.chamferCut, width / 4) : 0
-                    opacity: root.coverHidden ? 0 : 1
-                    Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
-                    fillColor: root.dotted ? root.ink : root.highlight
-                    emptyColor: IrisStyle.unlit(root.ink)
-                    value: root.timerProgress
-                }
-                // What is left, in minutes while there are minutes (the minimal Live Activity's figure).
-                IrisNumber {
-                    readonly property int secondsLeft: root.timerKind === "pomodoro" ? TimerService.pomodoroSecondsLeft
-                        : root.timerKind === "countdown" ? TimerService.countdownSecondsLeft : -1
-                    visible: root.kind === "timer" && !root.timerPaused && secondsLeft >= 0
-                    anchors.centerIn: parent
-                    text: secondsLeft >= 60 ? String(Math.ceil(secondsLeft / 60)) : String(Math.max(0, secondsLeft))
-                    countDown: true
-                    pixelSize: Math.round(13 * root.d)
-                    weight: IrisStyle.weight(Font.DemiBold)
-                    color: root.ink
-                }
                 Glyph {
-                    visible: root.kind === "timer" && (root.timerPaused || root.timerKind === "stopwatch")
+                    visible: root.kind === "timer"
                     anchors.centerIn: parent
                     text: root.timerPaused ? "pause" : root.timerGlyph
                     iconSize: 16 * root.d
-                    color: root.dotted ? root.ink : root.highlight
+                    color: root.highlight
                 }
             }
         }
@@ -336,28 +309,20 @@ Item {
             id: taskBody
             Item {
                 Ring {
-                    visible: !root.dotted && root.kind === "task" && Number(root.task?.progress ?? -1) >= 0
+                    readonly property var task: LiveActivities.latest
+                    visible: root.kind === "task" && Number(task?.progress ?? -1) >= 0
                     anchors.fill: parent
                     anchors.margins: 2 * root.d + root.platedInset
-                    tint: IrisStyle.identityColor(String(root.task?.tint ?? "lavender"))
-                    progress: Math.max(0, Number(root.task?.progress ?? 0))
-                }
-                IrisDotRing {
-                    visible: root.dotted && root.kind === "task"
-                    anchors.fill: parent
-                    anchors.margins: 2 * root.d + root.platedInset
-                    cut: root.edgeRings ? Math.min(IrisStyle.chamferCut, width / 4) : 0
-                    fillColor: root.ink
-                    emptyColor: IrisStyle.unlit(root.ink)
-                    value: Math.max(0, Number(root.task?.progress ?? 0))
-                    indeterminate: Number(root.task?.progress ?? -1) < 0
+                    tint: IrisStyle.identityColor(String(task?.tint ?? "lavender"))
+                    progress: Math.max(0, Number(task?.progress ?? 0))
                 }
                 Glyph {
+                    readonly property var task: LiveActivities.latest
                     visible: root.kind === "task"
                     anchors.centerIn: parent
-                    text: String(root.task?.glyph ?? "bolt")
-                    iconSize: 15 * root.d
-                    color: root.dotted ? root.ink : root.legible(IrisStyle.identityColor(String(root.task?.tint ?? "lavender")), 3)
+                    text: String(task?.glyph ?? "bolt")
+                    iconSize: 16 * root.d
+                    color: root.legible(IrisStyle.identityColor(String(task?.tint ?? "lavender")), 3)
                 }
             }
         }
@@ -369,7 +334,7 @@ Item {
                     anchors.centerIn: parent
                     width: 12 * root.d
                     height: width
-                    color: root.dotted ? IrisStyle.signal : root.dangerInk
+                    color: root.dangerInk
                 }
             }
         }

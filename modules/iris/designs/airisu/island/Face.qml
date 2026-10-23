@@ -186,7 +186,6 @@ Item {
             }
             Time {}
         }
-        PrivacyMarks { Layout.alignment: Qt.AlignVCenter; ink: root.ink }
         Item { Layout.fillWidth: true }
     }
 
@@ -229,7 +228,6 @@ Item {
             text: "pause"
             color: root.inkSecond
         }
-        PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: false; ink: root.ink }
     }
 
     Face {
@@ -270,7 +268,6 @@ Item {
                 text: root.island?.clockText(RecorderStatus.elapsedSeconds) ?? ""
             }
         }
-        PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: false; ink: root.ink; alarm: root.ink }
     }
 
     Face {
@@ -300,7 +297,6 @@ Item {
                 text: root.island?.clockText(root.island?.timerSeconds ?? 0) ?? ""
             }
         }
-        PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: false; ink: root.ink }
     }
 
     Face {
@@ -324,16 +320,14 @@ Item {
                 color: root.ink
             }
         }
-        // The percentage when the job knows it, how long it has run when it does not.
         AText {
+            visible: Number(root.island?.task?.progress ?? -1) >= 0
             voice: "figure"
             lean: Airisu.lean
             size: root.figure
             color: root.ink
-            text: Number(root.island?.task?.progress ?? -1) >= 0 ? (root.island?.percentOf(root.island?.task) ?? "")
-                : (root.island?.elapsedOf(root.island?.task) ?? "")
+            text: Math.round(Number(root.island?.task?.progress ?? 0) * 100) + "%"
         }
-        PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: false; ink: root.ink }
     }
 
     // A notice: the strip is repainted in the notice's colour from its start, and what it says is set on it.
