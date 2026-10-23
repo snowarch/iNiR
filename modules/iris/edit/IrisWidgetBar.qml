@@ -10,8 +10,8 @@ import qs.modules.iris.style
 import qs.modules.iris.components
 
 // The shelf while arranging the desktop: a body of its own floating over the bottom edge, in the edit window above the
-// chassis (IrisEditDesk), while the chassis and the desktop recede into the card above it. It rises out of that edge the
-// way a drawer opens; its content rides the edge that grows.
+// chassis (IrisEditDesk). The desktop stays at its true size under it, sharp and live; the shelf rises out of that edge
+// the way a drawer opens and sinks away while a widget is held or sized, so nothing hides under it.
 Item {
     id: root
 
@@ -72,25 +72,19 @@ Item {
         frost: Math.min(1, root.presentation * 1.6)
     }] : []
 
-    // The desktop and the chassis recede into a card above the shelf while arranging, and the windows of the
-    // workspace step aside on an empty one (DesktopEditStage).
-    readonly property real shelfRoom: root.margin + root.fullHeight
-    readonly property var stageNow: [root.outputName, Math.max(0, Math.min(1.2, root.presentation)), 0, root.shelfRoom]
-    onStageNowChanged: DesktopEditStage.setStage(root.stageNow[0], root.stageNow[1], root.stageNow[2], root.stageNow[3])
-    // The windows come back once the card has grown back into the desktop, not over a shrunk one.
+    // The windows of the workspace step aside on an empty one while arranging (DesktopEditStage).
     readonly property bool parks: root.present && (GlobalStates.focusedScreen?.name ?? root.outputName) === root.outputName
     onParksChanged: if (root.parks) DesktopEditStage.park(root.outputName)
     readonly property bool settledHome: !root.present && root.presentation < 0.04
     onSettledHomeChanged: if (root.settledHome) DesktopEditStage.unpark()
-    Component.onDestruction: {
-        DesktopEditStage.setStage(root.outputName, 0, 0, 0)
-        if (!root.present) DesktopEditStage.unpark()
-    }
+    Component.onDestruction: if (!root.present) DesktopEditStage.unpark()
+    readonly property bool ducked: (DesktopArrange.phase === "drag" && DesktopArrange.dragOutput === root.outputName
+        && DesktopEditStage.carry === null) || Boolean(DesktopEditStage.chosen?.widget?._irisSizing)
 
     IrisSpring {
         id: presentSpring
         surface: "panels"
-        to: root.entered && root.present ? 1 : 0
+        to: root.entered && root.present && !root.ducked ? 1 : 0
         intent: "auto"
         minimum: 0
     }

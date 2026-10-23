@@ -963,8 +963,8 @@ AbstractWidget {
     }
 
     // ── The shelf (a family that hosts arranging: DesktopEditStage) ──
-    // Once a second while arranging, the widget takes its own picture for the shelf; held or carried it keeps the last
-    // one (its edit chrome would be in it). Done leaves that picture on disk for when the widget is not out.
+    // The widget takes its own picture for the shelf when arranging starts and after it changes size (a grab per second
+    // per widget stalled the whole mode); held or carried it keeps the last one. Done leaves it on disk.
     readonly property bool _picturing: GlobalStates.widgetEditMode && DesktopEditStage.hosted(root.outputName)
         && root.visible && root.width > 0 && root.height > 0 && root.configEntryName.length > 0
     property var _picture: null
@@ -979,12 +979,13 @@ AbstractWidget {
         }, Qt.size(w, h))
     }
     Timer {
-        interval: 1000
-        repeat: true
-        triggeredOnStart: true
+        id: pictureTimer
+        interval: 600
         running: root._picturing
         onTriggered: root._takePicture()
     }
+    onWidthChanged: if (root._picturing) pictureTimer.restart()
+    onHeightChanged: if (root._picturing) pictureTimer.restart()
     // Taken back to the shelf while arranging, the widget leaves its last look on disk and its live one goes with it.
     Component.onDestruction: {
         DesktopEditStage.inspect(root.outputName, root, false)
@@ -2625,8 +2626,11 @@ AbstractWidget {
 
     readonly property real irisUnit: Math.round(170 * IrisStyle.density * root.scaleFactor)
     readonly property real irisGutter: Math.round(16 * IrisStyle.density * root.scaleFactor)
-    readonly property real irisFaceWidth: root.irisSize === "small" ? root.irisUnit : root.irisUnit * 2 + root.irisGutter
-    readonly property real irisFaceHeight: root.irisSize === "large" ? root.irisUnit * 2 + root.irisGutter : root.irisUnit
+    property real irisFaceWidth: root.irisSize === "small" ? root.irisUnit : root.irisUnit * 2 + root.irisGutter
+    property real irisFaceHeight: root.irisSize === "large" ? root.irisUnit * 2 + root.irisGutter : root.irisUnit
+    // A new size glides there while arranging, as a widget does on a phone; outside the mode it is just the size.
+    Behavior on irisFaceWidth { enabled: GlobalStates.widgetEditMode; NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 0.7 } }
+    Behavior on irisFaceHeight { enabled: GlobalStates.widgetEditMode; NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 0.7 } }
     readonly property var irisSizeLabels: ({ small: Translation.tr("Small"), medium: Translation.tr("Medium"), large: Translation.tr("Large") })
     function irisOption(key: string, fallback: var): var {
         const value = root._readConfigKey("iris." + key)
