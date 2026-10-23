@@ -79,13 +79,14 @@ Item {
     // iRiS lays the page in the layout chosen in Settings (Folio, Deck, Console); a Design with its own page keeps it.
     // Only layouts whose page exists: a missing one would leave the body waiting for its scene forever.
     readonly property var layouts: ({ folio: "Folio", deck: "Deck", console: "Console" })
-    readonly property string layout: {
-        if (IrisDesign.skin("settingsPage").length > 0) return ""
+    // Classic is the engine's own page (the sidebar and its pages, as before the layouts): no layout file, no Home.
+    readonly property string chosenLayout: {
         const wanted = String(Config.options?.iris?.appearance?.settingsLayout ?? "folio")
-        return root.layouts[wanted] ? wanted : "folio"
+        return wanted === "classic" || root.layouts[wanted] ? wanted : "folio"
     }
+    readonly property string layout: IrisDesign.skin("settingsPage").length > 0 || root.chosenLayout === "classic" ? "" : root.chosenLayout
     function setLayout(name: string): void {
-        if (!root.layouts[name] || name === root.layout) return
+        if ((name !== "classic" && !root.layouts[name]) || name === root.chosenLayout) return
         reshape.restart()
         Config.setNestedValue("iris.appearance.settingsLayout", name)
     }
@@ -201,8 +202,12 @@ Item {
         const ids = new Set(root.matches.map(spec => spec.section))
         return ids
     }
+    // A layout that draws an area's rows on its own pages (Folio, Deck, Console) gets nothing from here but a search or
+    // a shared page: the engine reads no area for it, so a turn costs it nothing.
+    readonly property bool layoutRows: (root.scene?.drawsRows ?? false) && !root.searching && root.advancedPage < 0
     readonly property var entries: {
         Config.revision
+        if (root.layoutRows) return []
         return root.searching ? root.matches.slice(0, root.searchLimit)
             : root.specifications.filter(spec => spec.section === root.section && root.shown(spec) && !root.claimed.includes(spec))
     }
@@ -274,6 +279,9 @@ Item {
     // shell for a quarter second on every switch. The first comes at once, so the top of the page is there on the
     // first frame; a search or a link to a row gets every group at once, so it can scroll to it.
     readonly property string pageKey: root.section + "/" + root.openGroup + "/" + root.advancedPage
+    // Read fresh where the turn's other bindings are still settling: `pageKey` may hold the area being left there
+    // (an area's groups were filed under the previous one, and an empty page kept the last area's rows on screen).
+    function keyNow(): string { return root.section + "/" + root.openGroup + "/" + root.advancedPage }
     property string fedPage: ""
     property int blocksShown: 1
     // The page has arrived whole: a block built later (another block of a long area) comes in at once, never by trimming
@@ -283,8 +291,9 @@ Item {
         // A layout that draws an area's rows itself (Console) only takes the engine's for a search or a page.
         if ((root.scene?.drawsRows ?? false) && !root.searching && root.advancedPage < 0) return []
         if (root.searching || root.landingPath.length > 0) return root.shownGroups
-        if (root.fedAll && root.fedPage === root.pageKey) return root.shownGroups
-        const shown = root.fedPage === root.pageKey ? root.blocksShown : 1
+        const key = root.keyNow()
+        if (root.fedAll && root.fedPage === key) return root.shownGroups
+        const shown = root.fedPage === key ? root.blocksShown : 1
         return shown >= root.shownGroups.length ? root.shownGroups : root.shownGroups.slice(0, shown)
     }
     // The page is still building (blocks fed a frame apart, each built in slices): its ghost rows hold the place.
@@ -294,7 +303,7 @@ Item {
         if (root.searching || !root.browsing || root.shownGroups.length === 0) return false
         const standing = root.blockRepeater
         if (standing.count >= root.shownGroups.length && Array.from({ length: standing.count }, (_, i) => standing.itemAt(i)).every(b => b && b.status === Loader.Ready)) return false
-        if (root.shownGroups.length > 1 && !(root.fedAll && root.fedPage === root.pageKey)) return true
+        if (root.shownGroups.length > 1 && !(root.fedAll && root.fedPage === root.keyNow())) return true
         // Fed before the Repeater made its loaders (the layout still loading): nothing built yet is still pending.
         if (root.blockRepeater.count < root.fedGroups.length) return true
         for (let i = 0; i < root.blockRepeater.count; i++) {
@@ -318,14 +327,15 @@ Item {
     onFedGroupsChanged: root.refeed()
     function refeed(): void {
         const pages = root.bufPages.slice(), used = root.bufUsed.slice(), bufs = root.bufs.slice()
-        let slot = pages.indexOf(root.pageKey)
+        const key = root.keyNow()
+        let slot = pages.indexOf(key)
         if (slot < 0) {
             slot = 0
             for (let i = 1; i < root.slots; i++) if (used[i] < used[slot]) slot = i
             const onScreen = bufs[root.building]
             root.holding = onScreen.length > 0 && root.fedGroups.length > 0 && !root.searching && root.landingPath.length === 0 && frame.settled
             if (root.holding) holdLimit.restart()
-            pages[slot] = root.pageKey
+            pages[slot] = key
             bufs[slot] = []
         } else if (slot !== root.building) root.holding = false
         // Fed again from its first group: a page already standing keeps the blocks it has.
@@ -348,10 +358,13 @@ Item {
     onBlockTickChanged: root.letGoOfOld()
     Timer { id: holdLimit; interval: 700; onTriggered: root.holding = false }
     function feedPage(): void {
-        root.fedPage = root.pageKey
+        root.fedPage = root.keyNow()
         root.fedAll = false
         root.blocksShown = 1
         blockFeed.restart()
+        // A page with nothing to feed (a list of its groups) leaves `fedGroups` the same empty array: no change
+        // signal, so the set on screen would stay the last area's.
+        root.refeed()
     }
     Timer {
         id: blockFeed
@@ -442,7 +455,7 @@ Item {
     // `apart` reads the area from the registry alone, so a neighbour card doesn't redo it every time another area opens.
     function tellingRows(count: int, section: string, apart: bool): var {
         Config.revision
-        const rows = !apart && (!section || section === root.section) ? root.entries
+        const rows = !apart && !root.layoutRows && (!section || section === root.section) ? root.entries
             : root.specifications.filter(spec => spec.section === section && root.shown(spec))
         const usable = rows.filter(spec => spec.path && !spec.mirror && !(spec.locked && spec.locked())
             && ["switch", "range", "choice", "zone"].includes(spec.kind) && Translation.tr(String(spec.label ?? "")).length <= 26)
@@ -616,6 +629,7 @@ Item {
         return out
     }
     function scrollToGroup(wanted: string): void {
+        if (root.layoutRows && typeof root.scene?.showGroup === "function") { root.scene.showGroup(wanted); return }
         const lower = wanted.toLowerCase()
         const match = root.groups.find(entry => entry.key === wanted || entry.title === wanted
             || entry.key.toLowerCase() === lower || entry.title.toLowerCase() === lower)
@@ -1358,6 +1372,13 @@ Item {
                         onClicked: resettable.forEach(spec => IrisOptions.commit(spec, spec.fallback))
                     }
                     }
+                    // Classic's way back to the layouts.
+                    Layouts.LayoutSwitch {
+                        visible: !root.sceneDesigned
+                        host: root
+                        voice: ""
+                        compact: true
+                    }
                     IrisIconButton {
                         materialIcon: root.windowed ? "layers" : "web_asset"
                         onClicked: root.switchHost()
@@ -1456,7 +1477,8 @@ Item {
                                 parent: heroPinSlot
                                 width: heroPinSlot.width
                                 visible: pageHero.shown
-                                sceneSection: pageHero.shown ? root.section : ""
+                                // Not `shown`: a group page asks the stage whether it has a scene, so the stage can't wait on its answer.
+                                sceneSection: pageHero.sectionPage || pageHero.groupPage ? root.section : ""
                                 sceneGroup: pageHero.groupPage || pageHero.spying ? pageHero.key : ""
                             }
 
