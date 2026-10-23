@@ -72,6 +72,18 @@ Singleton {
         root.sheetHosts = next
     }
     function hostsSheet(output: string): bool { return Boolean(root.sheetHosts[output]) }
+    // The chosen widget and the one under the pointer ({ output, widget } or null): their outfit (ring, name, keys)
+    // is drawn by the host at true size over the card.
+    property var chosen: null
+    property var pointed: null
+    function choose(output: string, widget: var, on: bool): void {
+        if (on) root.chosen = { output: output, widget: widget }
+        else if (root.chosen?.widget === widget) root.chosen = null
+    }
+    function point(output: string, widget: var, on: bool): void {
+        if (on) root.pointed = { output: output, widget: widget }
+        else if (root.pointed?.widget === widget) root.pointed = null
+    }
     // { output, widget }: the widget whose controls are open, or null.
     property var inspected: null
     function inspect(output: string, widget: var, open: bool): void {

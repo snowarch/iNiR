@@ -987,6 +987,8 @@ AbstractWidget {
     // Taken back to the shelf while arranging, the widget leaves its last look on disk and its live one goes with it.
     Component.onDestruction: {
         DesktopEditStage.inspect(root.outputName, root, false)
+        DesktopEditStage.choose(root.outputName, root, false)
+        DesktopEditStage.point(root.outputName, root, false)
         if (!root._picture)
             return
         root._picture.saveToFile(DesktopEditStage.savedPicture(root.configEntryName))
@@ -1143,6 +1145,12 @@ AbstractWidget {
     readonly property bool _sheetHosted: root.irisFaced && GlobalStates.widgetEditMode && DesktopEditStage.hostsSheet(root.outputName)
     readonly property bool _handsSheet: root._sheetHosted && editPopoverPanel.open
     on_HandsSheetChanged: DesktopEditStage.inspect(root.outputName, root, root._handsSheet)
+    // Its outfit too: chosen or under the pointer, the host draws it over the card where the card cannot clip it.
+    readonly property bool _outfitHosted: root._outfitted && DesktopEditStage.hostsSheet(root.outputName)
+    readonly property bool _chosenOut: root._outfitHosted && root.editSelected
+    readonly property bool _pointedOut: root._outfitHosted && root.editHovered
+    on_ChosenOutChanged: DesktopEditStage.choose(root.outputName, root, root._chosenOut)
+    on_PointedOutChanged: DesktopEditStage.point(root.outputName, root, root._pointedOut)
     readonly property string quickTab: root._quickTab
 
     // What the widget wears while arranging, when the family draws it (its part `widgetOutfit`): then the engine's own
@@ -1154,7 +1162,10 @@ AbstractWidget {
         anchors.fill: parent
         active: root._outfitted
         source: root._outfitPart
-        onLoaded: item.widget = root
+        onLoaded: {
+            item.widget = root
+            if (item.hostedElsewhere !== undefined) item.hostedElsewhere = Qt.binding(() => root._outfitHosted)
+        }
     }
 
     onPressed: {

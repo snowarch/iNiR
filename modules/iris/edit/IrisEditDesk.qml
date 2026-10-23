@@ -32,6 +32,7 @@ PanelWindow {
     mask: Region {
         item: shelfHit
         Region { item: sheetHit }
+        Region { item: chosen.item?.keysItem ?? null }
     }
     Item {
         id: shelfHit
@@ -71,6 +72,34 @@ PanelWindow {
         side: "lit"
         output: root.outputName
         card: root.card
+    }
+
+    // The chosen widget's ring, name and keys, and the name of the one under the pointer, over the card at true size.
+    component Outfit: Loader {
+        id: outfit
+        property var entry: null
+        readonly property Item widget: outfit.entry?.output === root.outputName ? outfit.entry.widget : null
+        active: outfit.widget !== null
+        x: root.card.x + (outfit.widget?.x ?? 0) * root.card.s
+        y: root.card.y + (outfit.widget?.y ?? 0) * root.card.s
+        width: (outfit.widget?.width ?? 0) * root.card.s
+        height: (outfit.widget?.height ?? 0) * root.card.s
+        sourceComponent: IrisWidgetOutfit {
+            overlay: true
+            widget: outfit.widget
+            width: outfit.width
+            height: outfit.height
+            x: 0
+            y: 0
+            room: Qt.rect(0, 0, root.width, bar.hitRect.height > 0 ? bar.hitRect.y : root.height)
+        }
+    }
+    Outfit {
+        entry: DesktopEditStage.pointed?.widget !== DesktopEditStage.chosen?.widget ? DesktopEditStage.pointed : null
+    }
+    Outfit {
+        id: chosen
+        entry: DesktopEditStage.chosen
     }
 
     IrisWidgetBar {

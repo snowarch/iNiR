@@ -1479,6 +1479,8 @@ Scope {
                 source: editStill.visible ? Wallpapers.stillUrlFor(bgRoot.wallpaperPathRaw) : ""
                 sourceSize: Qt.size(bgRoot.width, bgRoot.height)
                 fillMode: Image.PreserveAspectCrop
+                // Shrunk with the card: a mipmap keeps a pixel-art wall from breaking into uneven pixels.
+                mipmap: true
                 asynchronous: true
                 cache: true
             }

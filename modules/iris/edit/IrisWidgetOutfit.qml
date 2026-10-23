@@ -20,7 +20,14 @@ Item {
     id: root
 
     property Item widget: null
-    anchors.fill: parent
+    // In the card the outfit fills its widget; the edit window (IrisEditDesk) draws one over the card instead, at true
+    // size where nothing clips it (`overlay`, placed by its host), and the one in the card keeps only the lifted shadow.
+    property bool hostedElsewhere: false
+    property bool overlay: false
+    // The overlay's room on screen: keys and name stay inside it.
+    property rect room: Qt.rect(0, 0, 1920, 1080)
+    anchors.fill: root.overlay ? undefined : parent
+    readonly property bool dressed: root.overlay || !root.hostedElsewhere
 
     readonly property bool selected: root.widget?.editSelected ?? false
     readonly property bool hovered: (root.widget?.editHovered ?? false) && !root.selected
@@ -31,9 +38,9 @@ Item {
     // The card shrinks the desktop: the outfit's type and keys keep their true size on screen.
     readonly property var card: DesktopEditStage.cardFor(root.widget?.outputName ?? "", root.widget?.scaledScreenWidth ?? 0,
         root.widget?.scaledScreenHeight ?? 0)
-    readonly property real hair: 1 / Math.max(0.2, root.card.s)
+    readonly property real hair: root.overlay ? 1 : 1 / Math.max(0.2, root.card.s)
     readonly property real d: IrisStyle.density
-    readonly property real cardRadius: Math.round((root.widget?.widgetCardRadius ?? 18) * (root.widget?.scaleFactor ?? 1))
+    readonly property real cardRadius: Math.round((root.widget?.widgetCardRadius ?? 18) * (root.widget?.scaleFactor ?? 1)) * (root.overlay ? root.card.s : 1)
     readonly property real gap: 4 * root.hair
     readonly property color ringInk: root.ink ? IrisStyle.text : IrisStyle.accent
 
@@ -57,7 +64,7 @@ Item {
     property real lit: root.selected ? 1 : root.hovered ? 0.55 : 0
     Behavior on lit { NumberAnimation { duration: 110; easing.type: IrisStyle.feedbackEasing } }
     Rectangle {
-        visible: !root.cut && root.lit > 0.01
+        visible: root.dressed && !root.cut && root.lit > 0.01
         anchors.fill: parent
         anchors.margins: -root.gap
         radius: root.cardRadius + root.gap
@@ -68,7 +75,7 @@ Item {
         antialiasing: true
     }
     Repeater {
-        model: root.cut ? 4 : 0
+        model: root.cut && root.dressed ? 4 : 0
         delegate: Item {
             id: mark
             required property int index
@@ -89,7 +96,7 @@ Item {
     // ── Lifted while carried ──
     IrisBodyShadow {
         z: -1
-        visible: root.carried
+        visible: root.carried && !root.overlay
         x: 0
         y: 10 * root.hair
         width: root.width
@@ -101,23 +108,37 @@ Item {
     }
 
     // ── Room round the widget, for the keys and the name ──
-    readonly property real roomTop: root.widget?._safeTop ?? 0
-    readonly property real roomBottom: root.widget?._safeBottom ?? 1080
+    // In the card: the desktop's safe area in desktop px. Over it: the screen above the shelf, in screen px.
+    readonly property real topNow: root.overlay ? (root.parent?.y ?? 0) + root.y : (root.widget?.y ?? 0)
+    readonly property real leftNow: root.overlay ? (root.parent?.x ?? 0) + root.x : (root.widget?.x ?? 0)
+    readonly property real roomTop: root.overlay ? root.room.y : (root.widget?._safeTop ?? 0)
+    readonly property real roomBottom: root.overlay ? root.room.y + root.room.height : (root.widget?._safeBottom ?? 1080)
+    readonly property real roomLeft: root.overlay ? root.room.x : 0
+    readonly property real roomRight: root.overlay ? root.room.x + root.room.width : (root.widget?.scaledScreenWidth ?? 1920)
     readonly property real keysHeight: keys.height * root.hair
-    readonly property bool keysAbove: (root.widget?.y ?? 0) - root.keysHeight - 2 * root.gap >= root.roomTop
-    readonly property bool tagBelow: !root.keysAbove ? false
-        : (root.widget?.y ?? 0) + root.height + 2 * root.gap + tag.height * root.hair <= root.roomBottom
+    readonly property real keysWidth: keys.width * root.hair
+    // Above the widget, else below it, else inside its top edge.
+    readonly property string keysAt: root.topNow - root.keysHeight - 2 * root.gap >= root.roomTop ? "above"
+        : root.topNow + root.height + 2 * root.gap + root.keysHeight <= root.roomBottom ? "below" : "inside"
+    readonly property bool keysAbove: root.keysAt === "above"
+    readonly property bool tagBelow: root.topNow + root.height + 2 * root.gap + tag.height * root.hair <= root.roomBottom
+    // Right-aligned with the widget, slid back inside the room at either side.
+    function inside(x: real, w: real): real {
+        return Math.max(root.roomLeft + 2 * root.gap, Math.min(root.roomRight - 2 * root.gap - w, x))
+    }
+    readonly property real keysX: root.inside(root.leftNow + root.width - root.keysWidth, root.keysWidth) - root.leftNow
 
     // ── Its name ──
     Item {
         id: tag
         readonly property real pad: 10 * root.d
-        readonly property bool shown: root.hovered && !root.carried
+        readonly property bool shown: root.dressed && root.hovered && !root.carried
         width: tagRow.implicitWidth + 2 * tag.pad
         height: Math.round(24 * root.d)
         scale: root.hair * (0.92 + 0.08 * tag.show)
         transformOrigin: root.tagBelow ? Item.Top : Item.Bottom
-        x: (root.width - tag.width) / 2
+        x: root.inside(root.leftNow + (root.width - tag.width * root.hair) / 2, tag.width * root.hair) - root.leftNow
+            + (tag.width * root.hair - tag.width) / 2
         y: root.tagBelow ? root.height + 2 * root.gap : -2 * root.gap - tag.height
         opacity: tag.show
         visible: tag.show > 0.01
@@ -186,18 +207,22 @@ Item {
     IrisSpring {
         id: emerge
         surface: "panels"
-        to: root.selected && !root.carried ? 1 : 0
+        to: root.dressed && root.selected && !root.carried ? 1 : 0
         intent: "auto"
         minimum: 0
     }
+    readonly property Item keysItem: keys
     Row {
         id: keys
         readonly property real out: Math.max(0, Math.min(1, emerge.value))
         spacing: Math.round(6 * root.d)
         scale: root.hair * (0.6 + 0.4 * keys.out)
-        transformOrigin: root.keysAbove ? Item.BottomRight : Item.TopRight
-        x: root.width - keys.width
-        y: root.keysAbove ? -2 * root.gap - keys.height : root.height + 2 * root.gap
+        transformOrigin: root.keysAt === "below" ? Item.TopRight : Item.BottomRight
+        // The row is scaled about its right edge: place that edge.
+        x: root.keysX + root.keysWidth - keys.width
+        y: root.keysAt === "above" ? -2 * root.gap - keys.height
+            : root.keysAt === "below" ? root.height + 2 * root.gap
+            : 2 * root.gap + root.keysHeight - keys.height
         opacity: IrisStyle.contentAt(keys.out)
         visible: keys.out > 0.01
         enabled: root.selected
