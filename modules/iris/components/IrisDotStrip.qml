@@ -1,13 +1,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import qs.modules.common.functions
 import qs.modules.iris.style
 
 // A level, a progress or a range as a row of dots (DESIGN.md S4, S5): filled dots are the value, a change fills dot
 // by dot (12 ms apart, the family's only stagger), indeterminate is one dot travelling with a short tail, and a range
 // may carry a larger knob dot at its value. Vertical fills bottom-up. Nothing animates while it is hidden.
-Item {
+ShaderEffect {
     id: root
 
     property real value: 0
@@ -33,16 +32,24 @@ Item {
         : Math.max(2, Math.floor(root.lane / Math.max(1, root.dotSize + root.gap)) + 1)
     readonly property real shown: Math.max(0, Math.min(1, Number.isFinite(root.value) ? root.value : 0))
     readonly property real pitch: root.dots > 1 ? root.lane / (root.dots - 1) : 0
-    // The dot nearest the value when it last changed: the fill spreads from there.
-    property real _from: 0
-    property real _last: 0
-    onShownChanged: { root._from = root._last; root._last = root.shown }
-    Component.onCompleted: { root._from = root.shown; root._last = root.shown }
+    // How many dots are lit; `level` walks there 12 ms a dot (the stagger as one number, not a timer per dot).
+    readonly property int lit: root.indeterminate || root.shown <= 0 ? 0
+        : root.dots > 1 ? Math.floor(root.shown * (root.dots - 1) + 0.0001) + 1 : 1
+    property real level: 0
+    onLitChanged: {
+        fillWalk.stop()
+        if (!root.stagger || !root.visible || !IrisStyle.motionEnabled) { root.level = root.lit; return }
+        fillWalk.from = root.level
+        fillWalk.to = root.lit
+        fillWalk.duration = IrisStyle.duration(Math.min(24, Math.abs(root.lit - root.level)) * 12 + 70)
+        fillWalk.start()
+    }
+    onVisibleChanged: if (!root.visible) { fillWalk.stop(); root.level = root.lit }
+    Component.onCompleted: root.level = root.lit
+    NumberAnimation { id: fillWalk; target: root; property: "level"; easing.type: Easing.Linear }
 
     implicitWidth: root.vertical ? Math.max(root.dotSize, root.knobSize) : 160
     implicitHeight: root.vertical ? 160 : Math.max(root.dotSize, root.knobSize)
-
-    function along(at: real): real { return root.vertical ? root.span - at : at }
 
     property real head: 0
     NumberAnimation on head {
@@ -52,45 +59,17 @@ Item {
         loops: Animation.Infinite
     }
 
-    Repeater {
-        model: root.dots
-        Rectangle {
-            id: dot
-            required property int index
-            readonly property real at: root.dots > 1 ? dot.index / (root.dots - 1) : 0
-            readonly property bool filled: !root.indeterminate && root.shown > 0 && dot.at <= root.shown + 0.0001
-            readonly property real glow: root.indeterminate ? Math.max(0, 1 - Math.abs(dot.index - root.head) / 2.5) : 0
-            readonly property real pos: root.along(root.start + dot.index * root.pitch)
-            width: root.dotSize
-            height: root.dotSize
-            radius: IrisStyle.capsule(root.dotSize)
-            // The knob covers the dots it sits on; one peeking past its rim reads as a smudge.
-            visible: !knob.visible || Math.abs(dot.pos - knob.pos) > (root.knobSize + root.dotSize) / 2 + 1
-            x: root.vertical ? Math.round((root.width - width) / 2) : Math.round(dot.pos - width / 2)
-            y: root.vertical ? Math.round(dot.pos - height / 2) : Math.round((root.height - height) / 2)
-            color: root.indeterminate ? ColorUtils.mix(root.fillColor, root.emptyColor, dot.glow)
-                : dot.filled ? root.fillColor : root.emptyColor
-            readonly property int delay: root.stagger && !root.indeterminate
-                ? Math.min(24, Math.abs(dot.index - Math.round(root._from * (root.dots - 1)))) * 12 : 0
-            Behavior on color {
-                enabled: !root.indeterminate && IrisStyle.motionEnabled && root.visible
-                SequentialAnimation {
-                    PauseAnimation { duration: IrisStyle.duration(dot.delay) }
-                    ColorAnimation { duration: IrisStyle.duration(70); easing.type: Easing.OutCubic }
-                }
-            }
-        }
-    }
-
-    Rectangle {
-        id: knob
-        visible: root.knobSize > 0 && !root.indeterminate
-        width: root.knobSize
-        height: root.knobSize
-        radius: IrisStyle.capsule(root.knobSize)
-        color: root.knobColor
-        readonly property real pos: root.along(root.start + root.shown * root.lane)
-        x: root.vertical ? Math.round((root.width - width) / 2) : Math.round(knob.pos - width / 2)
-        y: root.vertical ? Math.round(knob.pos - height / 2) : Math.round((root.height - height) / 2)
-    }
+    blending: true
+    fragmentShader: Qt.resolvedUrl("IrisDotStrip.frag.qsb")
+    readonly property color fill: root.fillColor
+    readonly property color empty: root.emptyColor
+    readonly property color knobFill: root.knobColor
+    readonly property bool knobShown: root.knobSize > 0 && !root.indeterminate
+    readonly property vector4d box: Qt.vector4d(Math.max(1, width), Math.max(1, height), root.vertical ? 1 : 0,
+        IrisStyle.capsule(2) > 0 ? 1 : 0)
+    readonly property vector4d grid: Qt.vector4d(root.dots, root.start, root.pitch, root.dotSize)
+    // The knob covers the dots it sits on; one peeking past its rim reads as a smudge.
+    readonly property vector4d phase: Qt.vector4d(root.level, root.knobShown ? root.knobSize : 0,
+        root.vertical ? root.span - (root.start + root.shown * root.lane) : root.start + root.shown * root.lane,
+        root.indeterminate ? root.head : -1000)
 }
