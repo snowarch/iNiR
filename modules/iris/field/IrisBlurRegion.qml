@@ -10,6 +10,26 @@ Region {
     id: root
 
     property var shapes: []
+    // qs-rs rasterises the field itself on every build (FieldRegion, IrisFieldRegion.qml): exact on every frame, with the
+    // music's wave in the band, so nothing below runs there. Quickshell walks it here.
+    readonly property bool nativeRaster: typeof Quickshell.hasVersion === "function" && Quickshell.hasVersion(0, 3, ["field-region"])
+    property var nativeRegion: null
+    property vector4d edgeWave: Qt.vector4d(0, 0, 0, 0)
+    property real waveClock: 0
+    readonly property real chamfer: IrisStyle.fieldChamfer ? IrisStyle.chamferCut : 0
+    // Eight numbers a body, as FieldRegion reads them; the fuse and the cut mask as IrisField packs them.
+    readonly property var nativeBodies: {
+        if (!root.nativeRaster) return []
+        const list = root.shapes ?? [], out = [], index = {}
+        list.forEach((s, n) => { if (s.id) index[s.id] = n })
+        const slot = name => !name ? 0 : name === "frame" ? -1 : index[name] === undefined ? 0 : index[name] + 1
+        for (const s of list) {
+            const joins = !s.joins ? [] : Array.isArray(s.joins) ? s.joins : [s.joins]
+            out.push(s.x, s.y, s.width, s.height, root.chamfer > 0 ? root.cutMaskOf(s) : Number(s.radius ?? 0),
+                Number(s.fuse ?? IrisStyle.fuse), slot(joins[0]), slot(joins[1]))
+        }
+        return out
+    }
     property bool framed: false
     property bool joinsFrame: root.framed
     property real windowWidth: 0
@@ -44,6 +64,7 @@ Region {
         return Object.keys(s).filter(k => typeof s[k] !== "object").map(k => k + ":" + root.valueKey(s[k])).join(",")
     }
     onShapesChanged: {
+        if (root.nativeRaster) return
         const key = root.keyOf(root.shapes ?? [])
         if (key === root.shapesKey) return
         root.shapesKey = key
@@ -75,9 +96,11 @@ Region {
     property Timer settle: Timer { interval: 96; onTriggered: { root.dirty = false; root.held = root.shapes ?? []; root.settled = true; root.kick() } }
     // Moving, a join is walked in 4 px strides and stays up to 3 px inside the silhouette; settled, to the pixel.
     property bool settled: true
-    readonly property var built: root.build(root.held ?? [], root.settled)
+    readonly property var built: root.nativeRaster ? ({ bodies: [], runs: [] }) : root.build(root.held ?? [], root.settled)
     readonly property var pieces: root.built.bodies
-    readonly property bool empty: root.pieces.length === 0 && root.built.runs.length === 0 && !root.framed
+    readonly property bool empty: root.nativeRaster ? (root.shapes ?? []).length === 0 && !root.framed
+        : root.pieces.length === 0 && root.built.runs.length === 0 && !root.framed
+    readonly property var target: root.nativeRaster ? root.nativeRegion : root
     onBuiltChanged: { root.placePieces(); root.placeRuns() }
 
     // The window this region blurs. The region publishes itself, as DMS's WindowBlur does: nothing
@@ -94,13 +117,13 @@ Region {
     }
     function apply(): void {
         if (!root.window) return
-        root.window.BackgroundEffect.blurRegion = root.empty || !root.window.visible ? null : root
+        root.window.BackgroundEffect.blurRegion = root.empty || !root.window.visible ? null : root.target
         root.commitFrame()
     }
     function kick(): void {
         if (!root.window || root.empty || !root.window.visible) return root.apply()
         root.window.BackgroundEffect.blurRegion = null
-        root.window.BackgroundEffect.blurRegion = root
+        root.window.BackgroundEffect.blurRegion = root.target
         root.commitFrame()
     }
     onEmptyChanged: root.apply()
@@ -110,7 +133,10 @@ Region {
         ignoreUnknownSignals: true
         function onVisibleChanged(): void { root.window.visible ? root.kick() : root.apply() }
     }
-    Component.onCompleted: root.apply()
+    Component.onCompleted: {
+        if (root.nativeRaster) root.nativeRegion = Qt.createComponent("IrisFieldRegion.qml").createObject(root, { owner: root })
+        root.apply()
+    }
     Component.onDestruction: if (root.window) root.window.BackgroundEffect.blurRegion = null
 
     // The field's own distances (IrisField.frag), so a join is measured on the shape it draws.
@@ -514,8 +540,8 @@ Region {
     }
 
     Region {
-        width: root.framed ? root.windowWidth : 0
-        height: root.framed ? root.windowHeight : 0
+        width: root.framed && !root.nativeRaster ? root.windowWidth : 0
+        height: root.framed && !root.nativeRaster ? root.windowHeight : 0
         Region {
             intersection: Intersection.Subtract
             readonly property int edge: root.hi(root.band - root.inset)

@@ -730,6 +730,7 @@ Scope {
             IrisWaveBlur {
                 id: waveBlur
                 screen: windowLoader.modelData
+                nativeRaster: glassBlurRegion.nativeRaster
                 active: barWindow.frameBlurred && !barWindow.overlaid && IrisFrame.musicActive
                 shapes: barWindow.blurShapes
                 edgeWave: framePulse.amplitudes
@@ -954,6 +955,8 @@ Scope {
                     shapes: barWindow.blurShapes
                     beforeTake: () => islandLoader.item?.flushShapes?.()
                     framed: barWindow.frameBlurred
+                    edgeWave: barWindow.overlaid ? Qt.vector4d(0, 0, 0, 0) : framePulse.amplitudes
+                    waveClock: framePulse.phase
                     windowWidth: barWindow.width
                     windowHeight: barWindow.height
                 }

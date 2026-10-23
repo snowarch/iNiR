@@ -18,6 +18,8 @@ Scope {
     property var screen: null
     // The compositor-glass bodies the chassis publishes (their joins to the frame make fillets that move too).
     property var shapes: []
+    // On qs-rs the chassis region holds the wave itself (FieldRegion): no strip is mapped.
+    property bool nativeRaster: false
     // True while the frame is compositor glass and the music moves it.
     property bool active: false
     property vector4d edgeWave: Qt.vector4d(0, 0, 0, 0)
@@ -37,7 +39,7 @@ Scope {
 
     // The chassis maps once this is true, so it lands above the strips: every strip has put one frame on screen, or
     // the fallback ran out (a strip that never draws must not keep the chassis away).
-    readonly property bool ready: root.fallbackDone || (leftStrip.drawn && rightStrip.drawn && topStrip.drawn && bottomStrip.drawn)
+    readonly property bool ready: root.nativeRaster || root.fallbackDone || (leftStrip.drawn && rightStrip.drawn && topStrip.drawn && bottomStrip.drawn)
     property bool fallbackDone: false
     property Timer fallback: Timer { interval: 2000; running: true; onTriggered: root.fallbackDone = true }
 
@@ -337,6 +339,7 @@ Scope {
         return out
     }
     function place(): void {
+        if (root.nativeRaster) return
         const runs = root.waveRuns()
         leftStrip.publish(runs.left)
         rightStrip.publish(runs.right)
@@ -351,7 +354,7 @@ Scope {
         screen: root.screen
         // Mapped for as long as the chassis is, and before it: remapped later it would sit above the chassis and
         // blur the band the chassis paints.
-        visible: true
+        visible: !root.nativeRaster
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
         exclusiveZone: 0
