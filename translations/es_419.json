@@ -9653,5 +9653,17 @@
   "Screen centre": "Centro de la pantalla",
   "Edge to edge": "Borde con borde",
   "Put back": "Devolver",
-  "Size: %1": "Tamaño: %1"
+  "Size: %1": "Tamaño: %1",
+  "Save this desktop": "Guardar este escritorio",
+  "Wear %1": "Usar %1",
+  "Remove?": "¿Quitar?",
+  "Save how this desktop looks and wear it again whenever you like.": "Guarda cómo se ve este escritorio y vuelve a usarlo cuando quieras.",
+  "Desktop %1": "Escritorio %1",
+  "Saved as %1": "Guardado como %1",
+  "Wearing %1": "Usando %1",
+  "Removed %1": "Se quitó %1",
+  "Shelf pages": "Páginas del estante",
+  "Hide automatically": "Ocultar automáticamente",
+  "Show on hover": "Mostrar al pasar el puntero",
+  "More in Settings": "Más en Configuración"
 }

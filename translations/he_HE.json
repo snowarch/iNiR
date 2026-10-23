@@ -9653,5 +9653,17 @@
   "Screen centre": "מרכז המסך",
   "Edge to edge": "קצה לקצה",
   "Put back": "החזר",
-  "Size: %1": "גודל: %1"
+  "Size: %1": "גודל: %1",
+  "Save this desktop": "שמור את שולחן העבודה הזה",
+  "Wear %1": "החל את %1",
+  "Remove?": "להסיר?",
+  "Save how this desktop looks and wear it again whenever you like.": "שמור את המראה של שולחן העבודה הזה והחל אותו שוב מתי שתרצה.",
+  "Desktop %1": "שולחן עבודה %1",
+  "Saved as %1": "נשמר בשם %1",
+  "Wearing %1": "הוחל %1",
+  "Removed %1": "הוסר %1",
+  "Shelf pages": "דפי המדף",
+  "Hide automatically": "הסתרה אוטומטית",
+  "Show on hover": "הצגה במעבר עכבר",
+  "More in Settings": "עוד בהגדרות"
 }

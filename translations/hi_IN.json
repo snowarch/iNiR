@@ -9653,5 +9653,17 @@
   "Screen centre": "स्क्रीन का केंद्र",
   "Edge to edge": "किनारे से किनारा",
   "Put back": "वापस रखें",
-  "Size: %1": "आकार: %1"
+  "Size: %1": "आकार: %1",
+  "Save this desktop": "यह डेस्कटॉप सहेजें",
+  "Wear %1": "%1 लागू करें",
+  "Remove?": "हटाएँ?",
+  "Save how this desktop looks and wear it again whenever you like.": "इस डेस्कटॉप का रूप सहेजें और जब चाहें फिर से लागू करें।",
+  "Desktop %1": "डेस्कटॉप %1",
+  "Saved as %1": "%1 के रूप में सहेजा गया",
+  "Wearing %1": "%1 लागू किया गया",
+  "Removed %1": "%1 हटाया गया",
+  "Shelf pages": "शेल्फ पेज",
+  "Hide automatically": "अपने आप छिपाएँ",
+  "Show on hover": "होवर करने पर दिखाएँ",
+  "More in Settings": "सेटिंग्स में और"
 }

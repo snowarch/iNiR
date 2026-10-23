@@ -9653,5 +9653,17 @@
   "Screen centre": "Ekran ortası",
   "Edge to edge": "Kenar kenara",
   "Put back": "Geri koy",
-  "Size: %1": "Boyut: %1"
+  "Size: %1": "Boyut: %1",
+  "Save this desktop": "Bu masaüstünü kaydet",
+  "Wear %1": "%1 uygula",
+  "Remove?": "Kaldırılsın mı?",
+  "Save how this desktop looks and wear it again whenever you like.": "Bu masaüstünün görünümünü kaydedin ve istediğiniz zaman yeniden uygulayın.",
+  "Desktop %1": "Masaüstü %1",
+  "Saved as %1": "%1 olarak kaydedildi",
+  "Wearing %1": "%1 uygulandı",
+  "Removed %1": "%1 kaldırıldı",
+  "Shelf pages": "Raf sayfaları",
+  "Hide automatically": "Otomatik gizle",
+  "Show on hover": "Üzerine gelince göster",
+  "More in Settings": "Ayarlar'da daha fazlası"
 }

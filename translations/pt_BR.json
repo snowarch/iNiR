@@ -9653,5 +9653,17 @@
   "Screen centre": "Centro da tela",
   "Edge to edge": "Borda com borda",
   "Put back": "Guardar",
-  "Size: %1": "Tamanho: %1"
+  "Size: %1": "Tamanho: %1",
+  "Save this desktop": "Salvar esta área de trabalho",
+  "Wear %1": "Usar %1",
+  "Remove?": "Remover?",
+  "Save how this desktop looks and wear it again whenever you like.": "Salve como esta área de trabalho está e volte a usá-la quando quiser.",
+  "Desktop %1": "Área de trabalho %1",
+  "Saved as %1": "Salva como %1",
+  "Wearing %1": "Usando %1",
+  "Removed %1": "%1 removida",
+  "Shelf pages": "Páginas da prateleira",
+  "Hide automatically": "Ocultar automaticamente",
+  "Show on hover": "Mostrar ao passar o ponteiro",
+  "More in Settings": "Mais nas Configurações"
 }

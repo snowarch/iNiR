@@ -9653,5 +9653,17 @@
   "Screen centre": "Центр екрана",
   "Edge to edge": "Край до краю",
   "Put back": "Прибрати",
-  "Size: %1": "Розмір: %1"
+  "Size: %1": "Розмір: %1",
+  "Save this desktop": "Зберегти цю стільницю",
+  "Wear %1": "Застосувати %1",
+  "Remove?": "Видалити?",
+  "Save how this desktop looks and wear it again whenever you like.": "Збережіть вигляд цієї стільниці й застосовуйте його знову, коли захочете.",
+  "Desktop %1": "Стільниця %1",
+  "Saved as %1": "Збережено як %1",
+  "Wearing %1": "Застосовано: %1",
+  "Removed %1": "Видалено: %1",
+  "Shelf pages": "Сторінки полиці",
+  "Hide automatically": "Приховувати автоматично",
+  "Show on hover": "Показувати під час наведення",
+  "More in Settings": "Більше в Параметрах"
 }

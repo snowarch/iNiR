@@ -9653,5 +9653,17 @@
   "Screen centre": "Центр экрана",
   "Edge to edge": "Край к краю",
   "Put back": "Убрать",
-  "Size: %1": "Размер: %1"
+  "Size: %1": "Размер: %1",
+  "Save this desktop": "Сохранить этот рабочий стол",
+  "Wear %1": "Применить %1",
+  "Remove?": "Удалить?",
+  "Save how this desktop looks and wear it again whenever you like.": "Сохраните вид этого рабочего стола и применяйте его снова, когда захотите.",
+  "Desktop %1": "Рабочий стол %1",
+  "Saved as %1": "Сохранено как %1",
+  "Wearing %1": "Применено: %1",
+  "Removed %1": "Удалено: %1",
+  "Shelf pages": "Страницы полки",
+  "Hide automatically": "Скрывать автоматически",
+  "Show on hover": "Показывать при наведении",
+  "More in Settings": "Больше в Настройках"
 }

@@ -9653,5 +9653,17 @@
   "Screen centre": "화면 중앙",
   "Edge to edge": "가장자리 맞춤",
   "Put back": "되돌려 놓기",
-  "Size: %1": "크기: %1"
+  "Size: %1": "크기: %1",
+  "Save this desktop": "이 데스크톱 저장",
+  "Wear %1": "%1 적용",
+  "Remove?": "제거할까요?",
+  "Save how this desktop looks and wear it again whenever you like.": "이 데스크톱의 모습을 저장하고 언제든 다시 적용하세요.",
+  "Desktop %1": "데스크톱 %1",
+  "Saved as %1": "%1(으)로 저장됨",
+  "Wearing %1": "%1 적용 중",
+  "Removed %1": "%1 제거됨",
+  "Shelf pages": "선반 페이지",
+  "Hide automatically": "자동으로 숨기기",
+  "Show on hover": "마우스를 올리면 표시",
+  "More in Settings": "설정에서 더 보기"
 }

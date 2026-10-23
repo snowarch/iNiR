@@ -9653,5 +9653,17 @@
   "Screen centre": "屏幕中心",
   "Edge to edge": "边缘对齐",
   "Put back": "放回",
-  "Size: %1": "大小：%1"
+  "Size: %1": "大小：%1",
+  "Save this desktop": "保存此桌面",
+  "Wear %1": "应用 %1",
+  "Remove?": "删除？",
+  "Save how this desktop looks and wear it again whenever you like.": "保存此桌面的样子，随时再次应用。",
+  "Desktop %1": "桌面 %1",
+  "Saved as %1": "已保存为 %1",
+  "Wearing %1": "正在使用 %1",
+  "Removed %1": "已删除 %1",
+  "Shelf pages": "货架页面",
+  "Hide automatically": "自动隐藏",
+  "Show on hover": "悬停时显示",
+  "More in Settings": "更多设置"
 }

@@ -9653,5 +9653,17 @@
   "Screen centre": "وسط الشاشة",
   "Edge to edge": "حافة بحافة",
   "Put back": "أعِده",
-  "Size: %1": "الحجم: %1"
+  "Size: %1": "الحجم: %1",
+  "Save this desktop": "حفظ سطح المكتب هذا",
+  "Wear %1": "تطبيق %1",
+  "Remove?": "إزالة؟",
+  "Save how this desktop looks and wear it again whenever you like.": "احفظ شكل سطح المكتب هذا وطبّقه مجددًا متى شئت.",
+  "Desktop %1": "سطح المكتب %1",
+  "Saved as %1": "حُفظ باسم %1",
+  "Wearing %1": "تم تطبيق %1",
+  "Removed %1": "تمت إزالة %1",
+  "Shelf pages": "صفحات الرف",
+  "Hide automatically": "إخفاء تلقائي",
+  "Show on hover": "إظهار عند التمرير",
+  "More in Settings": "المزيد في الإعدادات"
 }

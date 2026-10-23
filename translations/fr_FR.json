@@ -9653,5 +9653,17 @@
   "Screen centre": "Centre de l’écran",
   "Edge to edge": "Bord à bord",
   "Put back": "Ranger",
-  "Size: %1": "Taille : %1"
+  "Size: %1": "Taille : %1",
+  "Save this desktop": "Enregistrer ce bureau",
+  "Wear %1": "Appliquer %1",
+  "Remove?": "Supprimer ?",
+  "Save how this desktop looks and wear it again whenever you like.": "Enregistrez l'apparence de ce bureau et réappliquez-la quand vous voulez.",
+  "Desktop %1": "Bureau %1",
+  "Saved as %1": "Enregistré sous %1",
+  "Wearing %1": "%1 appliqué",
+  "Removed %1": "%1 supprimé",
+  "Shelf pages": "Pages de l'étagère",
+  "Hide automatically": "Masquer automatiquement",
+  "Show on hover": "Afficher au survol",
+  "More in Settings": "Plus dans les Paramètres"
 }

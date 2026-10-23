@@ -9653,5 +9653,17 @@
   "Screen centre": "画面の中央",
   "Edge to edge": "端と端",
   "Put back": "棚に戻す",
-  "Size: %1": "サイズ: %1"
+  "Size: %1": "サイズ: %1",
+  "Save this desktop": "このデスクトップを保存",
+  "Wear %1": "%1 を適用",
+  "Remove?": "削除しますか?",
+  "Save how this desktop looks and wear it again whenever you like.": "このデスクトップの見た目を保存して、いつでもまた適用できます。",
+  "Desktop %1": "デスクトップ %1",
+  "Saved as %1": "%1 として保存しました",
+  "Wearing %1": "%1 を適用中",
+  "Removed %1": "%1 を削除しました",
+  "Shelf pages": "棚のページ",
+  "Hide automatically": "自動的に隠す",
+  "Show on hover": "ホバーで表示",
+  "More in Settings": "設定でさらに"
 }
