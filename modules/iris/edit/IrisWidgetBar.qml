@@ -38,8 +38,8 @@ Item {
             else GlobalStates.setWidgetEditMode(false)
         }
     }
-    Shortcut { sequences: [StandardKey.Undo]; enabled: root.holdsKeyboard && !shelf.searching; onActivated: IrisEditHistory.undo() }
-    Shortcut { sequences: [StandardKey.Redo, "Ctrl+Y"]; enabled: root.holdsKeyboard && !shelf.searching; onActivated: IrisEditHistory.redo() }
+    Shortcut { sequences: [StandardKey.Undo]; enabled: root.holdsKeyboard && !shelf.searching; onActivated: DesktopEditHistory.undo() }
+    Shortcut { sequences: [StandardKey.Redo, "Ctrl+Y"]; enabled: root.holdsKeyboard && !shelf.searching; onActivated: DesktopEditHistory.redo() }
     readonly property bool nudging: root.holdsKeyboard && root.selecting && !shelf.searching
     Shortcut { sequence: "Left"; enabled: root.nudging; onActivated: GlobalStates.desktopWidgetNudge(-1, 0) }
     Shortcut { sequence: "Right"; enabled: root.nudging; onActivated: GlobalStates.desktopWidgetNudge(1, 0) }

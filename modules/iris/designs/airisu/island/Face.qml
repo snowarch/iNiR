@@ -387,14 +387,14 @@ Item {
         EditKey {
             glyph: "undo"
             name: Translation.tr("Undo")
-            available: IrisEditHistory.undoStack.length > 0
-            onTake: IrisEditHistory.undo()
+            available: DesktopEditHistory.undoStack.length > 0
+            onTake: DesktopEditHistory.undo()
         }
         EditKey {
             glyph: "redo"
             name: Translation.tr("Redo")
-            available: IrisEditHistory.redoStack.length > 0
-            onTake: IrisEditHistory.redo()
+            available: DesktopEditHistory.redoStack.length > 0
+            onTake: DesktopEditHistory.redo()
         }
         Column {
             Layout.fillWidth: true
@@ -412,7 +412,7 @@ Item {
             AText {
                 id: editName
                 width: parent.width
-                text: IrisEditHistory.notice.length > 0 ? IrisEditHistory.notice : Translation.tr("Editing desktop")
+                text: DesktopEditHistory.notice.length > 0 ? DesktopEditHistory.notice : Translation.tr("Editing desktop")
                 size: IrisStyle.typeLabel
                 font.weight: Font.Bold
                 color: root.ink

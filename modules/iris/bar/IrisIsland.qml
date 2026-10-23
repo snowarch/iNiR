@@ -1963,20 +1963,20 @@ Item {
                     Layout.preferredHeight: Layout.preferredWidth
                     materialIcon: "undo"
                     iconSize: Math.round(16 * root.d)
-                    enabled: IrisEditHistory.undoStack.length > 0
+                    enabled: DesktopEditHistory.undoStack.length > 0
                     opacity: enabled ? 1 : 0.35
                     Accessible.name: Translation.tr("Undo")
-                    onClicked: IrisEditHistory.undo()
+                    onClicked: DesktopEditHistory.undo()
                 }
                 IrisIconButton {
                     Layout.preferredWidth: Math.round(28 * root.d)
                     Layout.preferredHeight: Layout.preferredWidth
                     materialIcon: "redo"
                     iconSize: Math.round(16 * root.d)
-                    enabled: IrisEditHistory.redoStack.length > 0
+                    enabled: DesktopEditHistory.redoStack.length > 0
                     opacity: enabled ? 1 : 0.35
                     Accessible.name: Translation.tr("Redo")
-                    onClicked: IrisEditHistory.redo()
+                    onClicked: DesktopEditHistory.redo()
                 }
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -1986,7 +1986,7 @@ Item {
                     IrisText {
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
-                        text: IrisEditHistory.notice.length > 0 ? IrisEditHistory.notice : Translation.tr("Edit Desktop")
+                        text: DesktopEditHistory.notice.length > 0 ? DesktopEditHistory.notice : Translation.tr("Edit Desktop")
                         font.pixelSize: IrisStyle.typeLabel
                         font.weight: IrisStyle.weight(Font.DemiBold)
                         elide: Text.ElideRight
