@@ -7729,5 +7729,11 @@
   "On mains power": "Innaallagissamut atasoq",
   "This computer has no battery": "Qarasaasiami uani batteriqanngilaq",
   "Finished tasks are hidden": "Suliassat naammassisat toqqorsimapput",
-  "Add a task with +": "+ atorlugu suliassamik ilasigit"
+  "Add a task with +": "+ atorlugu suliassamik ilasigit",
+  "Rec": "Rec",
+  "Cam": "Cam",
+  "Cast": "Cast",
+  "Failed": "Failed",
+  "Stopped": "Stopped",
+  "Working": "Working"
 }

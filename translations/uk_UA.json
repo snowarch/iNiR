@@ -9693,5 +9693,10 @@
   "On mains power": "Від мережі",
   "This computer has no battery": "Цей комп'ютер не має батареї",
   "Finished tasks are hidden": "Виконані завдання приховано",
-  "Add a task with +": "Додайте завдання кнопкою +"
+  "Add a task with +": "Додайте завдання кнопкою +",
+  "Rec": "Зап",
+  "Cam": "Кам",
+  "Cast": "Трансл",
+  "Failed": "Помилка",
+  "Stopped": "Зупинено"
 }

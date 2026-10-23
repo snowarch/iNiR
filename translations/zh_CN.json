@@ -9693,5 +9693,10 @@
   "On mains power": "使用电源供电",
   "This computer has no battery": "这台电脑没有电池",
   "Finished tasks are hidden": "已完成的任务已隐藏",
-  "Add a task with +": "点 + 添加任务"
+  "Add a task with +": "点 + 添加任务",
+  "Rec": "录制",
+  "Cam": "摄像头",
+  "Cast": "投屏",
+  "Failed": "失败",
+  "Stopped": "已停止"
 }

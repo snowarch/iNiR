@@ -9693,5 +9693,10 @@
   "On mains power": "Alimentato dalla rete",
   "This computer has no battery": "Questo computer non ha una batteria",
   "Finished tasks are hidden": "Le attività completate sono nascoste",
-  "Add a task with +": "Aggiungi un'attività con +"
+  "Add a task with +": "Aggiungi un'attività con +",
+  "Rec": "Reg",
+  "Cam": "Cam",
+  "Cast": "Cast",
+  "Failed": "Non riuscito",
+  "Stopped": "Fermato"
 }

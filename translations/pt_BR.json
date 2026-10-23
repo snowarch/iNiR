@@ -9693,5 +9693,10 @@
   "On mains power": "Na tomada",
   "This computer has no battery": "Este computador não tem bateria",
   "Finished tasks are hidden": "As tarefas concluídas estão ocultas",
-  "Add a task with +": "Adicione uma tarefa com +"
+  "Add a task with +": "Adicione uma tarefa com +",
+  "Rec": "Grav",
+  "Cam": "Câm",
+  "Cast": "Transm",
+  "Failed": "Falhou",
+  "Stopped": "Parado"
 }

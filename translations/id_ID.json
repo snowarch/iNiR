@@ -9693,5 +9693,10 @@
   "On mains power": "Memakai listrik PLN",
   "This computer has no battery": "Komputer ini tidak punya baterai",
   "Finished tasks are hidden": "Tugas yang selesai disembunyikan",
-  "Add a task with +": "Tambahkan tugas dengan +"
+  "Add a task with +": "Tambahkan tugas dengan +",
+  "Rec": "Rek",
+  "Cam": "Kam",
+  "Cast": "Siar",
+  "Failed": "Gagal",
+  "Stopped": "Dihentikan"
 }

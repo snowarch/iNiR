@@ -9693,5 +9693,10 @@
   "On mains power": "Conectado a la corriente",
   "This computer has no battery": "Esta computadora no tiene batería",
   "Finished tasks are hidden": "Las tareas terminadas están ocultas",
-  "Add a task with +": "Agrega una tarea con +"
+  "Add a task with +": "Agrega una tarea con +",
+  "Rec": "Rec",
+  "Cam": "Cám",
+  "Cast": "Comp",
+  "Failed": "Falló",
+  "Stopped": "Detenido"
 }

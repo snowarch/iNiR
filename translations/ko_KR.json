@@ -9693,5 +9693,10 @@
   "On mains power": "전원에 연결됨",
   "This computer has no battery": "이 컴퓨터에는 배터리가 없습니다",
   "Finished tasks are hidden": "완료한 할 일은 숨겨져 있습니다",
-  "Add a task with +": "+로 할 일을 추가하세요"
+  "Add a task with +": "+로 할 일을 추가하세요",
+  "Rec": "녹화",
+  "Cam": "카메라",
+  "Cast": "공유",
+  "Failed": "실패",
+  "Stopped": "중지됨"
 }

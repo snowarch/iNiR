@@ -9693,5 +9693,10 @@
   "On mains power": "On mains power",
   "This computer has no battery": "This computer has no battery",
   "Finished tasks are hidden": "Finished tasks are hidden",
-  "Add a task with +": "Add a task with +"
+  "Add a task with +": "Add a task with +",
+  "Rec": "Rec",
+  "Cam": "Cam",
+  "Cast": "Cast",
+  "Failed": "Failed",
+  "Stopped": "Stopped"
 }

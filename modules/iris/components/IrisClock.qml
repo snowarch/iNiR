@@ -15,6 +15,8 @@ Row {
     property color separatorColor: IrisStyle.secondaryAccent
     property string family: IrisStyle.figureFace(root.pixelSize)
     property real minorScale: 0.58
+    // AM/PM beside Dot digits reads in the Label voice, not as more dots.
+    property string minorFamily: root.family
 
     readonly property var parts: {
         const raw = String(root.text ?? "").trim()
@@ -48,9 +50,9 @@ Row {
         id: minor
         width: Math.ceil(implicitWidth)
         transform: Translate { x: Math.round(minor.x) - minor.x; y: Math.round(minor.y) - minor.y }
-        font.family: root.family
+        font.family: root.minorFamily
         font.pixelSize: Math.round(root.pixelSize * root.minorScale)
-        font.weight: root.family === IrisStyle.fontDot ? Font.Normal : IrisStyle.weight(Font.DemiBold)
+        font.weight: root.minorFamily === IrisStyle.fontDot ? Font.Normal : IrisStyle.weight(Font.DemiBold)
         font.features: ({ "tnum": 1 })
         color: IrisStyle.secondaryOf(root.color)
         renderType: Text.NativeRendering

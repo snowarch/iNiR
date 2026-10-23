@@ -9693,5 +9693,10 @@
   "On mains power": "Đang dùng điện lưới",
   "This computer has no battery": "Máy tính này không có pin",
   "Finished tasks are hidden": "Việc đã xong đang được ẩn",
-  "Add a task with +": "Thêm việc bằng nút +"
+  "Add a task with +": "Thêm việc bằng nút +",
+  "Rec": "Ghi",
+  "Cam": "Cam",
+  "Cast": "Chiếu",
+  "Failed": "Thất bại",
+  "Stopped": "Đã dừng"
 }

@@ -9693,5 +9693,10 @@
   "On mains power": "電源に接続中",
   "This computer has no battery": "このコンピューターにはバッテリーがありません",
   "Finished tasks are hidden": "完了したタスクは非表示です",
-  "Add a task with +": "+ でタスクを追加"
+  "Add a task with +": "+ でタスクを追加",
+  "Rec": "録画",
+  "Cam": "カメラ",
+  "Cast": "共有",
+  "Failed": "失敗",
+  "Stopped": "停止"
 }

@@ -9693,5 +9693,10 @@
   "On mains power": "Am Stromnetz",
   "This computer has no battery": "Dieser Computer hat keinen Akku",
   "Finished tasks are hidden": "Erledigte Aufgaben sind ausgeblendet",
-  "Add a task with +": "Füge mit + eine Aufgabe hinzu"
+  "Add a task with +": "Füge mit + eine Aufgabe hinzu",
+  "Rec": "Aufn",
+  "Cam": "Kam",
+  "Cast": "Cast",
+  "Failed": "Fehlgeschlagen",
+  "Stopped": "Gestoppt"
 }

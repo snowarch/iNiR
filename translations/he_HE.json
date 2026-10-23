@@ -9693,5 +9693,10 @@
   "On mains power": "מחובר לחשמל",
   "This computer has no battery": "למחשב הזה אין סוללה",
   "Finished tasks are hidden": "משימות שהושלמו מוסתרות",
-  "Add a task with +": "הוסיפו משימה עם +"
+  "Add a task with +": "הוסיפו משימה עם +",
+  "Rec": "הקלטה",
+  "Cam": "מצלמה",
+  "Cast": "שידור",
+  "Failed": "נכשל",
+  "Stopped": "נעצר"
 }

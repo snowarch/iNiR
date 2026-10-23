@@ -9693,5 +9693,10 @@
   "On mains power": "Şebeke elektriğinde",
   "This computer has no battery": "Bu bilgisayarda pil yok",
   "Finished tasks are hidden": "Biten görevler gizli",
-  "Add a task with +": "+ ile görev ekle"
+  "Add a task with +": "+ ile görev ekle",
+  "Rec": "Kayıt",
+  "Cam": "Kam",
+  "Cast": "Yayın",
+  "Failed": "Başarısız",
+  "Stopped": "Durduruldu"
 }

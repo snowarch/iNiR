@@ -9693,5 +9693,10 @@
   "On mains power": "От сети",
   "This computer has no battery": "У этого компьютера нет батареи",
   "Finished tasks are hidden": "Выполненные задачи скрыты",
-  "Add a task with +": "Добавьте задачу кнопкой +"
+  "Add a task with +": "Добавьте задачу кнопкой +",
+  "Rec": "Зап",
+  "Cam": "Кам",
+  "Cast": "Трансл",
+  "Failed": "Ошибка",
+  "Stopped": "Остановлено"
 }

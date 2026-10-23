@@ -9693,5 +9693,10 @@
   "On mains power": "बिजली से चल रहा है",
   "This computer has no battery": "इस कंप्यूटर में बैटरी नहीं है",
   "Finished tasks are hidden": "पूरे हुए काम छिपे हुए हैं",
-  "Add a task with +": "+ से काम जोड़ें"
+  "Add a task with +": "+ से काम जोड़ें",
+  "Rec": "रिकॉ",
+  "Cam": "कैम",
+  "Cast": "कास्ट",
+  "Failed": "विफल",
+  "Stopped": "रुका"
 }

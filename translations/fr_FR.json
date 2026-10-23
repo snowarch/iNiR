@@ -9693,5 +9693,10 @@
   "On mains power": "Sur secteur",
   "This computer has no battery": "Cet ordinateur n'a pas de batterie",
   "Finished tasks are hidden": "Les tâches terminées sont masquées",
-  "Add a task with +": "Ajoutez une tâche avec +"
+  "Add a task with +": "Ajoutez une tâche avec +",
+  "Rec": "Enr",
+  "Cam": "Cam",
+  "Cast": "Diff",
+  "Failed": "Échec",
+  "Stopped": "Arrêté"
 }

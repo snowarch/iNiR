@@ -9693,5 +9693,10 @@
   "On mains power": "يعمل على الكهرباء",
   "This computer has no battery": "لا توجد بطارية في هذا الحاسوب",
   "Finished tasks are hidden": "المهام المنجزة مخفية",
-  "Add a task with +": "أضف مهمة باستخدام +"
+  "Add a task with +": "أضف مهمة باستخدام +",
+  "Rec": "تسجيل",
+  "Cam": "كاميرا",
+  "Cast": "بث",
+  "Failed": "فشل",
+  "Stopped": "توقف"
 }
