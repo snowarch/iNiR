@@ -984,8 +984,6 @@ AbstractWidget {
         running: root._picturing
         onTriggered: root._takePicture()
     }
-    onWidthChanged: if (root._picturing) pictureTimer.restart()
-    onHeightChanged: if (root._picturing) pictureTimer.restart()
     // Taken back to the shelf while arranging, the widget leaves its last look on disk and its live one goes with it.
     Component.onDestruction: {
         DesktopEditStage.inspect(root.outputName, root, false)
@@ -2948,8 +2946,8 @@ AbstractWidget {
     on_ZoneSafeTopChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
     on_ZoneSafeRightChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
     on_ZoneSafeBottomChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-    onWidthChanged: { _geometryPlacementDebounce.restart(); root._report() }
-    onHeightChanged: { _geometryPlacementDebounce.restart(); root._report() }
+    onWidthChanged: { _geometryPlacementDebounce.restart(); root._report(); if (root._picturing) pictureTimer.restart() }
+    onHeightChanged: { _geometryPlacementDebounce.restart(); root._report(); if (root._picturing) pictureTimer.restart() }
     Timer {
         id: _zoneResnapDebounce
         interval: 100; repeat: false
