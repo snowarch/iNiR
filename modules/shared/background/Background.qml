@@ -162,6 +162,8 @@ Scope {
                     height: screen?.height ?? 0,
                     widgetsAllowed: DesktopWidgetLayout.outputAllowed(screen?.name ?? ""),
                     insets: ShellLayoutController.desktopInsets(screen?.name ?? ""),
+                    bodies: DesktopArrange.bodiesOf(screen?.name ?? ""),
+                    card: DesktopEditStage.cardFor(screen?.name ?? "", screen?.width ?? 0, screen?.height ?? 0),
                     workArea: ShellLayoutController.desktopWorkArea(
                         screen?.name ?? "", screen?.width ?? 0,
                         screen?.height ?? 0),
@@ -767,48 +769,6 @@ Scope {
             { key: "controls",           defaultOn: false, icon: "toggle_on" },
             { key: "screenTime",         defaultOn: false, icon: "hourglass_bottom" }
         ]
-        // Revision counter to force re-evaluation
-        property int _zoneRevision: 0
-        Connections {
-            target: Config
-            function onConfigChanged() { bgRoot._zoneRevision++ }
-        }
-        function _computeZoneOccupants(): var {
-            void bgRoot._zoneRevision; // bind to revision
-            const zones = ["topLeft", "topCenter", "topRight", "centerLeft", "center", "centerRight", "bottomLeft", "bottomCenter", "bottomRight"];
-            let occ = {};
-            for (const z of zones) occ[z] = [];
-            for (const w of bgRoot._builtinWidgets) {
-                if (!bgRoot._widgetEnabled(w.key, w.defaultOn)) continue;
-                const strat = bgRoot._widgetConfigValue(w.key, "placementStrategy", "free");
-                if (zones.indexOf(strat) >= 0)
-                    occ[strat].push({ name: w.key, icon: w.icon, locked: Boolean(bgRoot._widgetConfigValue(w.key, "locked", false)) });
-            }
-            // Extra mascot instances
-            {
-                const extraMascots = Config.getNestedValue("background.widgets.mascotInstances", {}) ?? {};
-                for (const id of Object.keys(extraMascots)) {
-                    const prefix = "background.widgets.mascotInstances." + id;
-                    if (!Config.getNestedValue(prefix + ".enable", false)) continue;
-                    const strat = Config.getNestedValue(prefix + ".placementStrategy", "free");
-                    if (zones.indexOf(strat) >= 0)
-                        occ[strat].push({ name: "mascot #" + id, icon: "pets", locked: Boolean(Config.getNestedValue(prefix + ".locked", false)) });
-                }
-            }
-            // Custom widgets
-            if (typeof CustomWidgets !== "undefined" && CustomWidgets.ready) {
-                const list = CustomWidgets.widgets;
-                for (let i = 0; i < list.length; i++) {
-                    const cw = list[i];
-                    if (!Config.getNestedValue("background.widgets.custom." + cw.id + ".enable", false)) continue;
-                    const strat = Config.getNestedValue("background.widgets.custom." + cw.id + ".placementStrategy", "free");
-                    if (zones.indexOf(strat) >= 0)
-                        occ[strat].push({ name: cw.name || cw.id, icon: cw.icon || "widgets", locked: Boolean(Config.getNestedValue("background.widgets.custom." + cw.id + ".locked", false)) });
-                }
-            }
-            return occ;
-        }
-        readonly property var zoneOccupants: _computeZoneOccupants()
 
         // Multi-monitor wallpaper support
         // IMPORTANT: Only use WallpaperListener when multi-monitor is enabled.
@@ -1474,12 +1434,23 @@ Scope {
                 Scale { xScale: bgRoot.editCard.s; yScale: bgRoot.editCard.s },
                 Translate { x: bgRoot.editCard.x; y: bgRoot.editCard.y }
             ]
-            // As a card the desktop is drawn whole and shrunk through mipmaps, so text and widgets stay sharp, and its
-            // corners are cut by the family's card shape: a real edge, with the paper and its shadow seen past it.
+            // As a card the desktop is drawn whole into one picture its corners are cut from (the family's card shape:
+            // a real edge, the paper and its shadow seen past it). Settled, the full-size picture is brought down to the
+            // card's pixels by a tent of taps (CardPicture.frag), so text reads as on the desktop: mipmaps blurred it,
+            // a picture drawn at the card's size aliased its native glyphs. While it travels, mipmaps are enough.
+            readonly property bool cardSettled: bgRoot.editCard.p >= 0.999
             layer.enabled: bgRoot.editCard.p > 0 && (editOverLoader.item?.cardMask ?? null) !== null
             layer.smooth: true
-            layer.mipmap: true
-            layer.effect: OpacityMask { maskSource: editOverLoader.item?.cardMask ?? null }
+            layer.mipmap: !desktopStage.cardSettled
+            layer.effect: ShaderEffect {
+                property var maskSource: editOverLoader.item?.cardMask ?? null
+                // Half a card pixel in the picture's uv: s of a screen pixel per desktop pixel.
+                readonly property vector2d reach: desktopStage.cardSettled
+                    ? Qt.vector2d(0.2 / Math.max(0.2, bgRoot.editCard.s) / Math.max(1, bgRoot.width * bgRoot.devicePixelRatio),
+                        0.2 / Math.max(0.2, bgRoot.editCard.s) / Math.max(1, bgRoot.height * bgRoot.devicePixelRatio))
+                    : Qt.vector2d(0, 0)
+                fragmentShader: Qt.resolvedUrl("edit/CardPicture.frag.qsb")
+            }
 
             // A wallpaper another program draws (awww) stays full size under the shell: the card carries its still.
             Image {
@@ -2382,15 +2353,16 @@ Scope {
                 function freeSpot(instanceKey: string, x: real, y: real, width: real, height: real): var {
                     const placed = widgetCanvas.arrangeNeighbours(instanceKey)
                         .map(n => ({ id: n.key, x: n.x, y: n.y, w: n.width, h: n.height }))
+                        .concat(DesktopArrange.bodiesOf(bgRoot.screenName))
                     const spot = ArrangeMath.settle({ id: instanceKey, x: x, y: y, w: width, h: height }, placed,
                         widgetCanvas.arrangeRoom, widgetCanvas.arrangeGap)
                     return { x: spot.x, y: spot.y, moved: spot.moved }
                 }
                 // The room widgets rest in, for DesktopArrange.
                 readonly property var arrangeRoom: ({ w: widgetCanvas.width, h: widgetCanvas.height,
-                    left: Number(bgRoot.desktopItemsWorkArea?.left ?? 0), top: Number(bgRoot.desktopItemsWorkArea?.top ?? 0),
-                    right: Number(bgRoot.desktopItemsWorkArea?.right ?? widgetCanvas.width),
-                    bottom: Number(bgRoot.desktopItemsWorkArea?.bottom ?? widgetCanvas.height) })
+                    left: Number(bgRoot.desktopFreeWorkArea?.left ?? 0), top: Number(bgRoot.desktopFreeWorkArea?.top ?? 0),
+                    right: Number(bgRoot.desktopFreeWorkArea?.right ?? widgetCanvas.width),
+                    bottom: Number(bgRoot.desktopFreeWorkArea?.bottom ?? widgetCanvas.height) })
                 onArrangeRoomChanged: DesktopArrange.setRoom(bgRoot.screenName, widgetCanvas.arrangeRoom)
 
                 // A widget that grew (resized, a larger size class) moves the neighbours it now covers aside, each to
@@ -2680,227 +2652,18 @@ Scope {
                     }
                 }
 
-                // ── Edit Mode Overlay ─────────────────────────────
-                Item {
-                    id: editGridOverlay
+                // Where the shell's own bodies rest (the frame, the Island, the Dock, a bar), drawn by the family under
+                // the widgets while arranging: the card is the screen as it will be, and they stay clear of them.
+                Loader {
                     anchors.fill: parent
-                    visible: opacity > 0
-                    opacity: GlobalStates.widgetEditMode ? 1 : 0
                     z: -1
-
-                    Behavior on opacity {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
-                    }
-
-                    readonly property int gridSize: Config.getNestedValue("background.widgets.editGrid.size", 32)
-                    readonly property bool gridVisible: Config.getNestedValue("background.widgets.editGrid.snap", true)
-                    readonly property color gridColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                        : Appearance.inirEverywhere ? Appearance.inir.colAccent
-                        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-                        : Appearance.colors.colPrimary
-                    readonly property color crosshairColor: Appearance.angelEverywhere ? Appearance.angel.colTertiary
-                        : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-                        : Appearance.auroraEverywhere ? Appearance.colors.colTertiary
-                        : Appearance.colors.colTertiary
-                    readonly property var workArea: ShellLayoutController.desktopWorkArea(
-                        bgRoot.screen?.name ?? "", width, height)
-                    readonly property var zoneWorkArea: ShellLayoutController.desktopZoneWorkArea(
-                        bgRoot.screen?.name ?? "", width, height)
-                    readonly property int zoneMargin: 16
-                    readonly property real safeLeft: workArea.left ?? 0
-                    readonly property real safeTop: workArea.top ?? 0
-                    readonly property real safeRight: workArea.right ?? width
-                    readonly property real safeBottom: workArea.bottom ?? height
-                    readonly property real safeWidth: workArea.width ?? 0
-                    readonly property real safeHeight: workArea.height ?? 0
-                    readonly property real zoneLeft: zoneWorkArea.left ?? safeLeft
-                    readonly property real zoneTop: zoneWorkArea.top ?? safeTop
-                    readonly property real zoneWidth: zoneWorkArea.width ?? safeWidth
-                    readonly property real zoneHeight: zoneWorkArea.height ?? safeHeight
-                    readonly property bool hasSelection: GlobalStates.selectedDesktopWidget
-                        .startsWith((bgRoot.screen?.name ?? "") + "::")
-                    readonly property bool manipulating: {
-                        if (!hasSelection) return false
-                        const widget = bgRoot._loadedWidget(GlobalStates.selectedDesktopWidget.split("::")[1])
-                        return widget !== null && (widget.isDragging || widget._isResizing)
-                    }
-
-                    // Grid dots at intersections. The lattice uses the same
-                    // panel-aware bounds as drag snapping, so moving the bar or
-                    // dock changes both the visible guide and the committed
-                    // position instead of leaving two competing coordinate systems.
-                    readonly property bool gridNonDefault: gridSize !== 32
-                    // One tiled texture, not a Canvas: painting every dot of a 4K lattice in software
-                    // stalled the main thread ~60 ms as editing began, the toolbar's entrance with it.
-                    Item {
-                        id: editGridCanvas
-                        x: editGridOverlay.zoneLeft
-                        y: editGridOverlay.zoneTop
-                        width: editGridOverlay.zoneWidth
-                        height: editGridOverlay.zoneHeight
-                        visible: editGridOverlay.gridVisible
-                        clip: true
-                        readonly property int gs: Math.max(4, editGridOverlay.gridSize)
-                        readonly property bool custom: editGridOverlay.gridNonDefault
-                        // SVG Tiny paint: a hex colour and its opacity apart (QtSvg reads no rgba()).
-                        function paint(c: color, a: real, kind: string): string {
-                            const hex = n => ("0" + Math.round(n * 255).toString(16)).slice(-2)
-                            return kind + "='#" + hex(c.r) + hex(c.g) + hex(c.b) + "' " + kind + "-opacity='" + a + "'"
-                        }
-                        readonly property string tile: {
-                            const g = editGridCanvas.gs, h = g / 2
-                            const dot = editGridCanvas.paint(editGridOverlay.gridColor, editGridCanvas.custom ? 0.18 : 0.10, "fill")
-                            const line = editGridCanvas.paint(editGridOverlay.gridColor, 0.05, "stroke")
-                            const lines = editGridCanvas.custom
-                                ? "<path d='M" + h + " 0V" + g + "M0 " + h + "H" + g + "' fill='none' " + line + " stroke-width='0.5'/>" : ""
-                            const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='" + g + "' height='" + g + "'>" + lines
-                                + "<circle cx='" + h + "' cy='" + h + "' r='" + (editGridCanvas.custom ? 1.8 : 1.4) + "' " + dot + "/></svg>"
-                            // Base64: Qt hands a percent-encoded data URL to the SVG reader undecoded.
-                            const table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-                            let out = ""
-                            for (let i = 0; i < svg.length; i += 3) {
-                                const a = svg.charCodeAt(i), b = svg.charCodeAt(i + 1), c = svg.charCodeAt(i + 2)
-                                const n = (a << 16) | ((b || 0) << 8) | (c || 0)
-                                out += table[(n >> 18) & 63] + table[(n >> 12) & 63]
-                                    + (i + 1 < svg.length ? table[(n >> 6) & 63] : "=") + (i + 2 < svg.length ? table[n & 63] : "=")
-                            }
-                            return "data:image/svg+xml;base64," + out
-                        }
-                        Image {
-                            x: -editGridCanvas.gs / 2
-                            y: -editGridCanvas.gs / 2
-                            width: parent.width + editGridCanvas.gs
-                            height: parent.height + editGridCanvas.gs
-                            fillMode: Image.Tile
-                            source: editGridCanvas.tile
-                            sourceSize: Qt.size(editGridCanvas.gs, editGridCanvas.gs)
-                            cache: false
-                            smooth: false
-                        }
-                    }
-
-                    Rectangle {
-                        x: editGridOverlay.zoneLeft
-                        y: editGridOverlay.zoneTop
-                        width: editGridOverlay.zoneWidth
-                        height: editGridOverlay.zoneHeight
-                        color: "transparent"
-                        radius: Appearance.rounding.small
-                        border.width: 1
-                        border.color: CF.ColorUtils.applyAlpha(editGridOverlay.gridColor, 0.18)
-                    }
-
-                    // Crosshair follows the adaptive panel-safe widget area.
-                    Rectangle {
-                        x: Math.floor(editGridOverlay.zoneLeft + editGridOverlay.zoneWidth / 2)
-                        y: editGridOverlay.zoneTop
-                        width: 1; height: editGridOverlay.zoneHeight
-                        color: CF.ColorUtils.applyAlpha(editGridOverlay.crosshairColor, 0.08)
-                    }
-                    Rectangle {
-                        x: editGridOverlay.zoneLeft
-                        y: Math.floor(editGridOverlay.zoneTop + editGridOverlay.zoneHeight / 2)
-                        width: editGridOverlay.zoneWidth; height: 1
-                        color: CF.ColorUtils.applyAlpha(editGridOverlay.crosshairColor, 0.08)
-                    }
-                    // Center dot
-                    Rectangle {
-                        x: Math.floor(editGridOverlay.zoneLeft + editGridOverlay.zoneWidth / 2) - 3
-                        y: Math.floor(editGridOverlay.zoneTop + editGridOverlay.zoneHeight / 2) - 3
-                        width: 6; height: 6; radius: 3
-                        color: CF.ColorUtils.applyAlpha(editGridOverlay.crosshairColor, 0.25)
-                    }
-
-                    // ── Snap Zone Indicators (3x3 grid) ──────────────
-                    Repeater {
-                        model: [
-                            { zone: "topLeft",      col: 0, row: 0 },
-                            { zone: "topCenter",    col: 1, row: 0 },
-                            { zone: "topRight",     col: 2, row: 0 },
-                            { zone: "centerLeft",   col: 0, row: 1 },
-                            { zone: "center",       col: 1, row: 1 },
-                            { zone: "centerRight",  col: 2, row: 1 },
-                            { zone: "bottomLeft",   col: 0, row: 2 },
-                            { zone: "bottomCenter", col: 1, row: 2 },
-                            { zone: "bottomRight",  col: 2, row: 2 }
-                        ]
-                        delegate: Rectangle {
-                            id: zoneRect
-                            required property var modelData
-                            readonly property int col: modelData.col
-                            readonly property int row: modelData.row
-                            readonly property real zw: (editGridOverlay.zoneWidth - editGridOverlay.zoneMargin * 2) / 3
-                            readonly property real zh: (editGridOverlay.zoneHeight - editGridOverlay.zoneMargin * 2) / 3
-                            readonly property var occupants: bgRoot.zoneOccupants[modelData.zone] ?? []
-                            readonly property bool occupied: occupants.length > 0
-                            readonly property bool hasLocked: {
-                                for (let i = 0; i < occupants.length; i++)
-                                    if (occupants[i].locked) return true;
-                                return false;
-                            }
-
-                            x: editGridOverlay.zoneLeft + editGridOverlay.zoneMargin + col * zw + 4
-                            y: editGridOverlay.zoneTop + editGridOverlay.zoneMargin + row * zh + 4
-                            width: zw - 8
-                            height: zh - 8
-                            radius: Appearance.rounding.small
-                            visible: editGridOverlay.manipulating
-                            opacity: 0.65
-                            color: occupied
-                                ? CF.ColorUtils.applyAlpha(hasLocked ? Appearance.colors.colError : editGridOverlay.gridColor, 0.04)
-                                : "transparent"
-                            border {
-                                width: occupied ? 1.5 : 1
-                                color: CF.ColorUtils.applyAlpha(
-                                    hasLocked ? Appearance.colors.colError : editGridOverlay.gridColor,
-                                    occupied ? 0.25 : 0.10)
-                            }
-                            Behavior on opacity {
-                                enabled: Appearance.animationsEnabled
-                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                            }
-                            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: 200 } }
-                            Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: 200 } }
-
-                            // Zone content: arrow + occupant icons
-                            Column {
-                                anchors.centerIn: parent
-                                spacing: 4
-
-                                // Direction arrow
-                                Text {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    text: {
-                                        const labels = {
-                                            topLeft: "↖", topCenter: "↑", topRight: "↗",
-                                            centerLeft: "←", center: "⊙", centerRight: "→",
-                                            bottomLeft: "↙", bottomCenter: "↓", bottomRight: "↘"
-                                        };
-                                        return labels[zoneRect.modelData.zone] ?? "";
-                                    }
-                                    font.pixelSize: zoneRect.occupied ? 14 : 16
-                                    color: CF.ColorUtils.applyAlpha(editGridOverlay.gridColor, zoneRect.occupied ? 0.35 : 0.20)
-                                }
-
-                                // Occupant widget icons
-                                Row {
-                                    visible: zoneRect.occupied
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    spacing: 4
-                                    Repeater {
-                                        model: zoneRect.occupants
-                                        MaterialSymbol {
-                                            required property var modelData
-                                            text: modelData.icon
-                                            iconSize: 14
-                                            color: CF.ColorUtils.applyAlpha(
-                                                modelData.locked ? Appearance.colors.colError : editGridOverlay.gridColor, 0.45)
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    active: GlobalStates.widgetEditMode && bgRoot.editStagePart.length > 0
+                    source: bgRoot.editStagePart
+                    onLoaded: {
+                        item.side = "inside"
+                        item.output = bgRoot.screenName
+                        item.card = Qt.binding(() => bgRoot.editCard)
+                        item.room = Qt.binding(() => widgetCanvas.arrangeRoom)
                     }
                 }
 
@@ -2945,7 +2708,11 @@ Scope {
                         readonly property bool moving: (guides.here && DesktopArrange.phase === "drag") || guides.carry !== null
                         readonly property var room: DesktopArrange.rooms[bgRoot.screenName] ?? widgetCanvas.arrangeRoom
                         function word(line: var): string {
+                            const body = (line?.ids ?? []).find(id => String(id).startsWith("@"))
+                            if (body && line?.kind !== "gutter")
+                                return DesktopArrange.bodiesOf(bgRoot.screenName).find(b => b.id === body)?.name ?? ""
                             switch (line?.kind) {
+                            case "room": return Translation.tr("Edge")
                             case "screen": return Translation.tr("Screen centre")
                             case "centre": return Translation.tr("Centre")
                             case "flush": return Translation.tr("Edge to edge")

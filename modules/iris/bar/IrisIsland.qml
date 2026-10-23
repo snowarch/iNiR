@@ -1463,7 +1463,14 @@ Item {
             bubble: leftSatellite.width, gap: root.satelliteOffset, bottomEdge: root.bottomEdge,
             edge: root.edge, vertical: root.vertical,
             auxiliarySlot: root.auxiliarySlot, resting: !root.expanded,
-            fullWidth: root.spanning
+            fullWidth: root.spanning, radius: chassis.radius,
+            // Welded to its edge (a notch): which edge, and the fillet of the join.
+            joins: root.notchness > 0.5 ? root.edge : "",
+            fuse: Math.round(IrisStyle.fuse + (IrisStyle.fuseEdge - IrisStyle.fuse) * Math.min(1, Math.max(0, root.notchness))),
+            // The bubbles beside it at rest, by place along the Island: -1 before it, 1.. after it.
+            satellites: [leftSatellite.resting && leftSatellite.kind.length > 0 ? -1 : 0,
+                rightSatellite.resting && rightSatellite.kind.length > 0 ? 1 : 0,
+                root.auxiliaryRest && root.auxiliary.length > 0 ? root.auxiliarySlot : 0].filter(i => i !== 0)
         }
     }
     function publishBubbleKinds(): void {

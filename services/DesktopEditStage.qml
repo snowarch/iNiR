@@ -36,10 +36,12 @@ Singleton {
             return { x: 0, y: 0, s: 1, p: 0 }
         const top = stage.top + root.gap
         const bottom = h - stage.bottom - root.gap
-        const s = Math.max(0.2, Math.min((w - 4 * root.gap) / w, (bottom - top) / h))
+        const fit = Math.max(0.2, Math.min((w - 4 * root.gap) / w, (bottom - top) / h))
+        // At rest the card is whole pixels from its corner to its size, so its picture lands texel on pixel.
+        const s = Math.round(w * fit) / w
         const p = stage.progress
-        const x = (w - w * s) / 2
-        const y = top + Math.max(0, (bottom - top - h * s) / 2)
+        const x = Math.round((w - w * s) / 2)
+        const y = Math.round(top + Math.max(0, (bottom - top - h * s) / 2))
         return { x: x * p, y: y * p, s: 1 + (s - 1) * p, p: p }
     }
 

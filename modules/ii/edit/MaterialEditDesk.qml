@@ -51,12 +51,23 @@ Scope {
             Component.onCompleted: {
                 enterTimer.start()
                 DesktopEditStage.setHost(desk.outputName, true)
+                // Loaded by the mode itself: it was already on, no change comes.
+                if (desk.present) desk.enter()
             }
             Binding { target: desk; property: "p"; value: desk.entered && desk.present ? 1 : 0 }
-            onPresentChanged: if (desk.present) { desk.seeding = true; seedTimer.restart(); desk.prepare() }
+            onPresentChanged: if (desk.present) desk.enter()
+            function enter(): void { desk.seeding = true; seedTimer.restart(); desk.prepare() }
             function prepare(): void {
                 DesktopEditStage.look = (Appearance.m3colors.darkmode ? "dark" : "light") + "-material"
                 Quickshell.execDetached(["mkdir", "-p", DesktopEditStage.pictureDir])
+                // The bar is away while arranging: where it rests comes from its edge and thickness.
+                const insets = ShellLayoutController.desktopInsets(desk.outputName)
+                const t = insets.barThickness ?? 0
+                const sw = desk.screen?.width ?? 0
+                const sh = desk.screen?.height ?? 0
+                const band = ({ top: [0, 0, sw, t], bottom: [0, sh - t, sw, t], left: [0, 0, t, sh], right: [sw - t, 0, t, sh] })[insets.barEdge ?? ""]
+                DesktopArrange.setBodies(desk.outputName, "bar", band && t > 1
+                    ? [{ id: "bar", name: Translation.tr("Bar"), x: band[0], y: band[1], w: band[2], h: band[3], radius: 0 }] : [])
             }
 
             // ── The card between the toolbar and the shelf; windows step aside ──
@@ -69,6 +80,7 @@ Scope {
             readonly property bool settledHome: !desk.present && desk.p < 0.04
             onSettledHomeChanged: if (desk.settledHome) DesktopEditStage.unpark()
             Component.onDestruction: {
+                DesktopArrange.setBodies(desk.outputName, "bar", [])
                 DesktopEditStage.setStage(desk.outputName, 0, 0, 0)
                 DesktopEditStage.setHost(desk.outputName, false)
                 if (!desk.present) DesktopEditStage.unpark()

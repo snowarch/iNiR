@@ -53,10 +53,40 @@ Singleton {
     }
     function rectOf(output: string, key: string): var { return root._rects[output]?.[key] ?? null }
     function othersOf(output: string, key: string, stack: string): var {
-        const out = []
+        const out = root.bodiesOf(output)
         const rects = root._rects[output] ?? {}
         for (const k in rects)
             if (k !== key && !(stack.length > 0 && rects[k].stack === stack)) out.push(rects[k])
+        return out
+    }
+
+    // The shell's own bodies resting on each output, screen px: output -> owner -> [{ id, name, x, y, w, h, radius, joins, fuse }]
+    // (`joins`: the screen edge a body is welded to, with a fillet of `fuse`).
+    // Families write them at rest and never while arranging (their surfaces step aside or become the edit head then),
+    // so the card shows and the maths keeps clear of where they live, not of where they went for the edit.
+    property var bodies: ({})
+    function setBodies(output: string, owner: string, list: var): void {
+        if (output.length === 0 || owner.length === 0)
+            return
+        const now = root.bodies[output]?.[owner] ?? []
+        const next = (list ?? []).filter(b => b && b.w >= 2 && b.h >= 2)
+        if (JSON.stringify(now) === JSON.stringify(next))
+            return
+        const all = Object.assign({}, root.bodies)
+        const mine = Object.assign({}, all[output] ?? {})
+        if (next.length > 0) mine[owner] = next
+        else delete mine[owner]
+        all[output] = mine
+        root.bodies = all
+    }
+    // Flat, with an id no widget key can take ("@island") and `fixed` so ArrangeMath matches no size to them.
+    function bodiesOf(output: string): var {
+        const out = []
+        const owners = root.bodies[output] ?? {}
+        for (const owner in owners)
+            for (const b of owners[owner])
+                out.push({ id: "@" + b.id, name: b.name ?? "", x: b.x, y: b.y, w: b.w, h: b.h, radius: b.radius ?? 0,
+                    joins: b.joins ?? "", fuse: b.fuse ?? 0, fixed: true })
         return out
     }
     // Where a widget asked to go to x,y rests, and what it lines up with there; changes nothing on screen.

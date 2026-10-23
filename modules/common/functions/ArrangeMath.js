@@ -4,6 +4,9 @@
 // (dev/tests/test-arrange-math.js). A rect is { id, x, y, w, h }; a room is the canvas
 // { w, h } plus the work area the widgets may rest in { left, top, right, bottom }.
 //
+// `others` may hold the shell's own bodies resting on the screen (`fixed`: the Island, the Dock, a bar): widgets
+// line up with them and never rest under them, like with any neighbour.
+//
 // A widget has three lines per axis (left/centre/right, top/centre/bottom). Edges pair with edges,
 // centres with centres, and one gutter beside a neighbour pairs with the edge that faces it.
 
@@ -28,7 +31,8 @@ function targets(axis, others, room, gap) {
     var size = axis === "x" ? room.w : room.h
     var lo = axis === "x" ? room.left : room.top
     var hi = axis === "x" ? room.right : room.bottom
-    var t = { edges: [0, size, lo, hi], centres: [size / 2], lead: [], tail: [] }
+    // The room's own sides pull twice: flush, and one gutter in.
+    var t = { edges: [0, size, lo, hi], centres: [size / 2], lead: gap > 0 ? [lo + gap] : [], tail: gap > 0 ? [hi - gap] : [] }
     for (var i = 0; i < others.length; i++) {
         var o = others[i]
         var p = axis === "x" ? o.x : o.y
@@ -139,7 +143,10 @@ function relations(rect, others, room, gap) {
                 }
             }
             var screen = m.centre && near(m.v, (vertical ? room.w : room.h) / 2)
-            if (group.length === 0 && !screen)
+            var lo = vertical ? room.left : room.top
+            var hi = vertical ? room.right : room.bottom
+            var side = !m.centre && ((m.side === "L" || m.side === "T") ? near(m.v, lo) : near(m.v, hi))
+            if (group.length === 0 && !screen && !side)
                 continue
             var from = vertical ? rect.y : rect.x
             var to = from + (vertical ? rect.h : rect.w)
@@ -151,7 +158,7 @@ function relations(rect, others, room, gap) {
                 from = Math.min(from, gf)
                 to = Math.max(to, gf + (vertical ? g.h : g.w))
             }
-            if (screen) {
+            if (screen || (side && group.length === 0)) {
                 from = 0
                 to = span
             } else {
@@ -161,7 +168,8 @@ function relations(rect, others, room, gap) {
             lines.push({
                 key: (vertical ? "v" : "h") + ":" + m.side + ":" + Math.round(m.v * 10),
                 vertical: vertical, at: m.v, from: from, to: to,
-                kind: m.centre ? (screen && group.length === 0 ? "screen" : "centre") : (same ? "edge" : "flush"),
+                kind: m.centre ? (screen && group.length === 0 ? "screen" : "centre")
+                    : group.length === 0 ? "room" : (same ? "edge" : "flush"),
                 side: m.side, ids: ids
             })
         }
@@ -184,10 +192,25 @@ function relations(rect, others, room, gap) {
             }
         }
     }
+    // One gutter in from a side of the room: the same tick.
+    if (gap > 0) {
+        var my = rect.y + rect.h / 2
+        var mx = rect.x + rect.w / 2
+        if (near(rect.x, room.left + gap))
+            lines.push({ key: "g:x:L", vertical: false, at: my, from: room.left, to: room.left + gap, kind: "gutter", side: "G", ids: [] })
+        if (near(rect.x + rect.w, room.right - gap))
+            lines.push({ key: "g:x:R", vertical: false, at: my, from: room.right - gap, to: room.right, kind: "gutter", side: "G", ids: [] })
+        if (near(rect.y, room.top + gap))
+            lines.push({ key: "g:y:T", vertical: true, at: mx, from: room.top, to: room.top + gap, kind: "gutter", side: "G", ids: [] })
+        if (near(rect.y + rect.h, room.bottom - gap))
+            lines.push({ key: "g:y:B", vertical: true, at: mx, from: room.bottom - gap, to: room.bottom, kind: "gutter", side: "G", ids: [] })
+    }
     var sizes = []
     var wIds = []
     var hIds = []
     for (var z = 0; z < others.length; z++) {
+        // The shell's own bodies (the Island, the Dock) are no size to match.
+        if (others[z].fixed) continue
         if (near(others[z].w, rect.w)) wIds.push(others[z].id)
         if (near(others[z].h, rect.h)) hIds.push(others[z].id)
     }

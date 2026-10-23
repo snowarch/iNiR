@@ -188,6 +188,38 @@ Scope {
                     item: dockMouseArea
                 }
 
+                // Where the dock rests when the desktop shows, for arranging widgets beside it (DesktopArrange.bodies):
+                // worked out from its place on the edge, not where it is now (hidden, it waits past the edge). Never
+                // written while arranging, when the dock is away.
+                readonly property bool showsOnDesktop: root.pinned || Config.options?.dock?.showOnDesktop !== false
+                function publishBody(): void {
+                    const name = dockRoot.screen?.name ?? ""
+                    if (name.length === 0 || GlobalStates.widgetEditMode)
+                        return
+                    const item = dockRoot.nativeBlurItem
+                    if (!dockRoot.showsOnDesktop || !item || !(Config.options?.dock?.showBackground ?? true)) {
+                        DesktopArrange.setBodies(name, "dock", [])
+                        return
+                    }
+                    const inBg = item.mapToItem(dockBackground, 0, 0)
+                    const sw = dockRoot.screen?.width ?? 0
+                    const sh = dockRoot.screen?.height ?? 0
+                    const x = root.isVertical ? (root.isLeft ? 0 : sw - dockRoot.width) + inBg.x
+                        : (sw - dockBackground.width) / 2 + inBg.x
+                    const y = root.isVertical ? (sh - dockBackground.height) / 2 + inBg.y
+                        : (root.isTop ? 0 : sh - dockRoot.height) + inBg.y
+                    DesktopArrange.setBodies(name, "dock", [{ id: "dock", name: Translation.tr("Dock"), x: Math.round(x),
+                        y: Math.round(y), w: Math.round(item.width), h: Math.round(item.height), radius: Math.round(item.radius ?? 0) }])
+                }
+                Timer { id: bodyTimer; interval: 400; onTriggered: dockRoot.publishBody() }
+                onWidthChanged: bodyTimer.restart()
+                onHeightChanged: bodyTimer.restart()
+                onShowsOnDesktopChanged: bodyTimer.restart()
+                readonly property real bodyWidth: dockBackground.width
+                onBodyWidthChanged: bodyTimer.restart()
+                Component.onCompleted: bodyTimer.restart()
+                Component.onDestruction: DesktopArrange.setBodies(dockRoot.screen?.name ?? "", "dock", [])
+
                 MouseArea {
                     id: dockMouseArea
                     hoverEnabled: true

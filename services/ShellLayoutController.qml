@@ -231,6 +231,7 @@ Singleton {
             right: 0,
             bottom: 0,
             barEdge: "",
+            barThickness: 0,
             dockEdge: ""
         }
         if (root.activeFamily === "iris")
@@ -283,6 +284,7 @@ Singleton {
                         + (hugCorners ? Appearance.rounding.screenRounding : 0)
             }
             result.barEdge = barState.ok ? barState.slot : ""
+            result.barThickness = Math.max(0, Math.round(thickness))
             root._applyInset(result, result.barEdge, thickness)
         }
 
@@ -337,8 +339,7 @@ Singleton {
     }
 
     function _workAreaFromInsets(insets: var, screenWidth: real,
-            screenHeight: real): var {
-        const gap = root.desktopWidgetOuterGap
+            screenHeight: real, gap: real): var {
         const left = Math.max(0, (insets.left ?? 0) + gap)
         const top = Math.max(0, (insets.top ?? 0) + gap)
         const right = Math.max(left,
@@ -359,8 +360,8 @@ Singleton {
     function desktopWorkArea(outputName: string, screenWidth: real,
             screenHeight: real): var {
         const panelInsets = root.desktopInsets(outputName)
-        // Free placement may cover panels on purpose, never the iRiS frame's band: under it a
-        // widget is cut by the chassis.
+        // Free placement reaches the screen's edge, in iRiS the frame's inner edge (under its band a widget is cut by
+        // the chassis). The shell's own bodies are kept clear by arranging (DesktopArrange.bodies), not by bands.
         const band = root.activeFamily === "iris" ? root._irisFrameBand() : 0
         return root._workAreaFromInsets({
             left: band,
@@ -369,7 +370,7 @@ Singleton {
             bottom: band,
             barEdge: panelInsets.barEdge ?? "",
             dockEdge: panelInsets.dockEdge ?? ""
-        }, screenWidth, screenHeight)
+        }, screenWidth, screenHeight, 0)
     }
 
     // Zone placement is intentionally panel-aware while free placement spans
@@ -378,7 +379,7 @@ Singleton {
     function desktopZoneWorkArea(outputName: string, screenWidth: real,
             screenHeight: real): var {
         return root._workAreaFromInsets(root.desktopInsets(outputName),
-            screenWidth, screenHeight)
+            screenWidth, screenHeight, root.desktopWidgetOuterGap)
     }
 
     function currentState(surfaceId: string, outputName: string): var {

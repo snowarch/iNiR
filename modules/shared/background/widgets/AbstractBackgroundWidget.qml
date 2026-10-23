@@ -865,7 +865,8 @@ AbstractWidget {
         if (canvas && typeof canvas.arrangeNeighbours === "function") {
             const gap = canvas.arrangeGap ?? 16
             let best = null
-            for (const n of canvas.arrangeNeighbours(root.editInstanceKey)) {
+            const bodies = DesktopArrange.bodiesOf(root.outputName).map(b => ({ x: b.x, y: b.y, width: b.w, height: b.h }))
+            for (const n of canvas.arrangeNeighbours(root.editInstanceKey).concat(bodies)) {
                 const lines = vertical ? [n.y, n.y + n.height, n.y - gap, n.y + n.height + gap]
                     : [n.x, n.x + n.width, n.x - gap, n.x + n.width + gap]
                 for (const line of lines) {

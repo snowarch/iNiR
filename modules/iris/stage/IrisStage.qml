@@ -327,6 +327,7 @@ Item {
     }
     Component.onDestruction: {
         if (root.screenName.length === 0) return
+        DesktopArrange.setBodies(root.screenName, "iris", [])
         const next = Object.assign({}, GlobalStates.irisAbsorbed ?? {})
         delete next[root.screenName]
         GlobalStates.irisAbsorbed = next
@@ -412,6 +413,61 @@ Item {
             out.push({ x: Math.round(centre.x - root.size / 2), y: Math.round(centre.y - root.size / 2), size: root.size })
         }
         return out
+    }
+    // What of iRiS rests on this output, for arranging widgets beside it (DesktopArrange.bodies): the Island with the
+    // bubbles at its sides, the floating bubbles and their bars, the Dock. Written at rest and never while arranging,
+    // when the Dock steps aside and the Island turns into the edit head.
+    readonly property var dockBody: (GlobalStates.irisDockBody?.[root.screenName] ?? []).find?.(b => b?.id === "dock") ?? null
+    readonly property bool arranging: GlobalStates.widgetEditMode
+    onIslandChanged: bodiesSettle.restart()
+    onRectsChanged: bodiesSettle.restart()
+    onPlatesChanged: bodiesSettle.restart()
+    onDockBodyChanged: bodiesSettle.restart()
+    onArrangingChanged: if (!root.arranging) bodiesSettle.restart()
+    Timer {
+        id: bodiesSettle
+        interval: 300
+        onTriggered: if (!root.arranging) DesktopArrange.setBodies(root.screenName, "iris", root.restBodies())
+    }
+    function restBodies(): var {
+        const out = []
+        const sw = root.modelData?.width ?? 0
+        const sh = root.modelData?.height ?? 0
+        // Mostly off the screen (a Dock hidden until the pointer comes) is nothing a widget has to keep clear of.
+        const seen = b => {
+            const w = Math.min(sw, b.x + b.w) - Math.max(0, b.x)
+            const h = Math.min(sh, b.y + b.h) - Math.max(0, b.y)
+            return w > 0 && h > 0 && w * h >= 0.6 * b.w * b.h
+        }
+        const isl = root.island
+        if (isl && isl.width > 1 && isl.height > 1) {
+            out.push({ id: "island", name: Translation.tr("Island"), x: Math.round(isl.x), y: Math.round(isl.y),
+                w: Math.round(isl.width), h: Math.round(isl.height), radius: Math.round(isl.radius ?? isl.height / 2),
+                joins: String(isl.joins ?? ""), fuse: Math.round(isl.fuse ?? 0) })
+            const b = Math.round(isl.bubble ?? 0)
+            const gap = Math.round(isl.gap ?? 0)
+            if (b > 1 && !isl.vertical) {
+                for (const at of isl.satellites ?? []) {
+                    const x = at < 0 ? isl.x - gap - b : isl.x + isl.width - b + (gap + b) * at
+                    out.push({ id: "island" + at, name: Translation.tr("Bubble"), x: Math.round(x),
+                        y: Math.round(isl.y + (isl.height - b) / 2), w: b, h: b, radius: Math.round(b / 2) })
+                }
+            }
+        }
+        root.allSlots.forEach((slot, i) => {
+            const r = root.rects[i]
+            if (r) out.push({ id: "bubble-" + slot, name: Translation.tr("Bubble"), x: r.x, y: r.y, w: r.size, h: r.size,
+                radius: Math.round(IrisStyle.pieceRadius(r.size)) })
+        })
+        for (const plate of root.plates)
+            out.push({ id: "bubbles-" + plate.zone, name: Translation.tr("Bubbles"), x: plate.x, y: plate.y,
+                w: plate.width, h: plate.height, radius: Math.round(Math.min(plate.width, plate.height) / 2) })
+        const dock = root.dockBody
+        if (dock && dock.width > 1 && dock.height > 1)
+            out.push({ id: "dock", name: Translation.tr("Dock"), x: dock.x, y: dock.y, w: dock.width, h: dock.height,
+                radius: Math.round(dock.radius ?? 0), joins: dock.joins === "frame" || dock.joins === "dockEdge" ? IrisFrame.dockEdge : "",
+                fuse: Math.round(dock.fuse ?? 0) })
+        return out.filter(seen)
     }
     readonly property var plates: {
         const out = []
@@ -716,7 +772,7 @@ Item {
         Config.setNestedValues(updates)
     }
 
-    Component.onCompleted: { root.land(); root.publishAbsorbed() }
+    Component.onCompleted: { root.land(); root.publishAbsorbed(); bodiesSettle.restart() }
     Connections {
         target: GlobalStates
         function onIrisBubbleDragChanged(): void { root.land() }
