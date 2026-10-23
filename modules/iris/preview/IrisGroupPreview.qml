@@ -167,14 +167,15 @@ ClippingRectangle {
         readonly property real fit: Math.min(1, root.width / Math.max(1, world.wide),
             root.sceneItem?.cropBottom ? 1 : root.height / Math.max(1, world.tall))
         // Any shortfall shrinks it: kept at 1 down to 0.85, a scene a few percent too wide cut its words at the edge.
-        readonly property real k: world.fit
+        readonly property real k: Math.max(0.05, world.fit)
         width: root.width / world.k
         height: root.height / world.k
         scale: world.k
         transformOrigin: Item.TopLeft
         // Drawn at twice the frame and read back with one linear step: a mipmapped layer sampled a level under the frame
         // and every line of the scene's type came out soft.
-        layer.enabled: world.k < 0.999
+        // A frame squeezed to a sliver (a card mid-resize) asked for a 396x20976 texture: nothing to read there anyway.
+        layer.enabled: world.k < 0.999 && root.width >= 24 && root.height >= 24
         layer.smooth: true
         layer.textureSize: Qt.size(Math.max(1, Math.ceil(root.width * 2)), Math.max(1, Math.ceil(root.height * 2)))
 

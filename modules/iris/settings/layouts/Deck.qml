@@ -87,9 +87,20 @@ Item {
     }
     Component.onCompleted: { root.aim = root.current; travel.to = root.current; travel.jump(); admit.start() }
     // The open area's own rows stand in its card once they are built; until then the card shows what a neighbour shows.
-    readonly property bool live: !root.sided || !Boolean(root.host?.rowsPending ?? false)
+    readonly property bool live: root.home || root.searching || pool.shown === root.section
+    readonly property bool heroArriving: pool.turning
+    // What the hero's pages leave free: the keys at the card's corner, the key bar under the rows while driving.
+    readonly property real heroReserve: keys.width + root.u(30)
+    readonly property real heroFoot: root.driving ? hintBar.height + root.u(6) : 0
     onLiveChanged: root.land()
+    // A group asked for by name lands once its area's page stands.
+    property string wantedGroup: ""
+    function showGroup(key: string): void {
+        if (pool.shown === root.section && pool.shownItem?.showGroup) pool.shownItem.showGroup(key)
+        else root.wantedGroup = key
+    }
     function land(): void {
+        if (root.wantedGroup.length > 0 && pool.shown === root.section) { pool.shownItem?.showGroup?.(root.wantedGroup); root.wantedGroup = "" }
         if (!root.driving || !root.live || root.cursor >= 0) return
         Qt.callLater(() => { if (root.cursor < 0) { root.cursor = root.stops().length > 0 ? 0 : -1; root.place() } })
     }
@@ -99,9 +110,13 @@ Item {
     property bool driving: false
     property int cursor: -1
     property bool engaged: false
+    readonly property bool paged: Number(root.host?.advancedPage ?? -1) >= 0
+    readonly property bool drawsRows: true
+    // Where the keys walk: the page in front, or the engine's rows during a search or a shared page.
+    readonly property Item stopsRoot: root.searching || root.paged ? rowsSlot : (pool.shown === root.section ? (pool.shownItem?.rowsRoot ?? null) : null)
     readonly property Item flick: {
         root.section
-        return root.findFlick(rowsSlot)
+        return root.searching || root.paged ? root.findFlick(rowsSlot) : (pool.shownItem?.flick ?? null)
     }
     function findFlick(item: Item): Item {
         for (const child of item?.children ?? []) {
@@ -121,14 +136,15 @@ Item {
     }
     function stops(): var {
         const out = []
-        root.collect(rowsSlot, out)
-        return out.map(item => ({ item: item, y: item.mapToItem(rowsSlot, 0, 0).y })).sort((a, b) => a.y - b.y).map(entry => entry.item)
+        if (!root.stopsRoot) return out
+        root.collect(root.stopsRoot, out)
+        return out.map(item => ({ item: item, y: item.mapToItem(card, 0, 0).y })).sort((a, b) => a.y - b.y).map(entry => entry.item)
     }
     function focused(): Item { return root.cursor >= 0 ? (root.stops()[root.cursor] ?? null) : null }
     function place(): void {
         const item = root.focused()
         if (!item) { ring.shown = false; return }
-        const at = item.mapToItem(rowsSlot, 0, 0)
+        const at = item.mapToItem(card, 0, 0)
         const out = item.deckStop === true ? root.u(10) : -root.u(2)
         ring.x = at.x - out
         ring.y = at.y + (item.deckStop === true ? 0 : root.u(3))
@@ -207,10 +223,11 @@ Item {
         }
         return false
     }
+    // Esc lets go of the innermost thing first: a held value, then the focused row, then Settings.
     function release(): bool {
-        if (!root.engaged) return false
-        root.engaged = false
-        return true
+        if (root.engaged) { root.engaged = false; return true }
+        if (root.cursor >= 0) { root.cursor = -1; ring.shown = false; return true }
+        return false
     }
     // The wheel over the deck's sides turns it, a notch a card (bursts just retarget the spring). Two fingers sideways
     // carry the deck with them and let go onto the nearest card, at the speed they left with.
@@ -438,99 +455,57 @@ Item {
             }
             RoundKey { glyph: "close"; name: Translation.tr("Close settings"); onClicked: root.host.close() }
         }
-        ClippingRectangle {
-            id: hero
-            visible: !root.home && !root.searching
-            opacity: root.live ? 1 : 0
+        // The hero: Home or the area, each a page of the pool, built once in the background and kept; a turn moves
+        // the cards and crosses the hero's pages in place, it never rebuilds one.
+        AreaPool {
+            id: pool
             x: card.inset
             y: card.inset
             width: card.width - 2 * card.inset
-            height: Math.round(Math.min(root.u(300), card.height * 0.36))
-            radius: IrisStyle.fieldChamfer ? 0 : root.u(root.windowed ? 22 : 30) - card.inset
-            color: IrisStyle.readingCard
-            MouseArea { anchors.fill: parent; acceptedButtons: Qt.NoButton; onWheel: wheel => root.wheel(wheel) }
-            DotTitle {
-                id: dotTitle
-                x: root.u(22)
-                y: root.u(20)
-                text: Translation.tr(String(root.area.title ?? ""))
-                size: root.u(root.windowed ? 34 : 40)
-                fit: keys.x - card.inset - x - root.u(16)
-            }
-            IrisText {
-                id: heroLine
-                x: dotTitle.x
-                anchors.top: dotTitle.bottom
-                anchors.topMargin: root.u(8)
-                width: hero.width - 2 * x
-                elide: Text.ElideRight
-                text: Translation.tr(String(root.area.subtitle ?? ""))
-                color: IrisStyle.muted
-                font.pixelSize: IrisStyle.typeMeta
-            }
-            IrisGroupPreview {
-                id: stage
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: stageLine.top
-                anchors.top: heroLine.bottom
-                anchors.margins: root.u(12)
-                anchors.bottomMargin: root.u(8)
-                radius: IrisStyle.fieldChamfer ? 0 : Math.max(IrisStyle.radiusRow, hero.radius - root.u(12))
-                visible: stage.available
-                standIn: true
-                captionOutside: true
-                section: root.searching || root.home ? "" : root.section
-                niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
-                niriRevision: IrisNiri.revision
-                group: String(root.host?.leadGroup ?? "")
-            }
-            // What the stage shows now, under it instead of on it.
-            IrisText {
-                id: stageLine
-                x: root.u(16)
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: root.u(10)
-                width: hero.width - 2 * x
-                height: stage.caption.length > 0 ? implicitHeight : 0
-                elide: Text.ElideRight
-                text: stage.caption
-                color: IrisStyle.muted
-                font.pixelSize: IrisStyle.typeMeta
+            height: card.height - y - (root.windowed ? root.u(4) : root.u(34))
+            current: root.searching ? pool.shown : root.section
+            hidden: root.searching || root.paged
+            urlFor: id => Qt.resolvedUrl(id === "home" ? "Home.qml" : "DeckPage.qml")
+            propsFor: id => id === "home" ? { host: root.host, voice: "deck" } : { host: root.host }
+            order: root.sections.map(entry => entry.id)
+            distance: 0
+            crossing: false
+            keepsShown: false
+            onArrived: { root.land(); prewarmSoon.restart() }
+        }
+        // At rest the cards either side are built too, so a turn only crosses two standing pages.
+        Timer {
+            id: prewarmSoon
+            interval: 600
+            onTriggered: {
+                if (!(root.host?.bodySettled ?? true) || pool.turning || travel.running) { prewarmSoon.restart(); return }
+                const order = root.sections.map(entry => entry.id)
+                const at = order.indexOf(pool.shown)
+                pool.prewarm([order[at - 1], order[at + 1]].filter(id => id !== undefined && id !== "home"))
             }
         }
-        Home {
-            visible: root.home
-            height: card.height - y - root.u(root.windowed ? 8 : 34)
-            x: card.inset + root.u(6)
-            y: keys.y + keys.height + root.u(14)
-            width: card.width - 2 * x
-            host: root.host
-            voice: "deck"
-        }
+        // A search's results or a shared page (the Hub), under the keys.
         Item {
             id: rowsSlot
-            visible: !root.home
-            // built while hidden, so they stand laid out on the frame they show
-            opacity: root.live ? 1 : 0
+            visible: root.searching || root.paged
             x: card.inset - root.u(4)
-            y: root.searching ? keys.y + keys.height + root.u(10) : hero.y + hero.height + root.u(10)
+            y: keys.y + keys.height + root.u(10)
             width: card.width - 2 * card.inset + root.u(8)
-            height: card.height - y - (root.windowed ? root.u(4) : root.u(34)) - (hintBar.visible ? hintBar.height + root.u(6) : 0)
+            height: card.height - y - (root.windowed ? root.u(4) : root.u(34))
             clip: true
-            // The console focus: the row lifts on a plate ringed in ink; held, its value moves with the arrows.
-            Rectangle {
-                id: ring
-                property bool shown: false
-                z: 10
-                visible: ring.shown && root.driving
-                radius: IrisStyle.fieldChamfer ? 0 : root.u(16)
-                color: Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, 0.05)
-                border.width: Math.max(2, root.u(2))
-                border.color: root.engaged ? root.signal : IrisStyle.text
-                Behavior on y { NumberAnimation { duration: IrisStyle.duration(160); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-                Behavior on height { NumberAnimation { duration: IrisStyle.duration(160); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-            }
+        }
+        // The console focus: the row lifts on a plate ringed in ink; held, its value moves with the arrows.
+        Rectangle {
+            id: ring
+            property bool shown: false
+            z: 10
+            visible: ring.shown && root.driving
+            radius: IrisStyle.fieldChamfer ? 0 : root.u(16)
+            color: Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, 0.05)
+            border.width: Math.max(2, root.u(2))
+            border.color: root.engaged ? root.signal : IrisStyle.text
+            Behavior on y { NumberAnimation { duration: IrisStyle.duration(160); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+            Behavior on height { NumberAnimation { duration: IrisStyle.duration(160); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
         }
         // What the keys do now, like a console's button bar under the rows.
         Rectangle {
@@ -702,8 +677,8 @@ Item {
         onFarChanged: if (side.far >= 3.2) { side.admitted = false; side.staged = false }
         // what a card says past its name fades out between one and two cards off (built once, never dropped on the way)
         readonly property real detail: Math.max(0, Math.min(1, (1.75 - side.far) / 0.5))
-        // the open card's own rows stand on it once built: the live card covers this one
-        readonly property bool covered: side.index === root.current && root.live
+        // the open card's own rows stand on it once built: the live card covers this one, once it has come in over it
+        readonly property bool covered: side.index === root.current && root.live && !root.heroArriving
         readonly property rect box: side.inView ? root.rectAt(side.o) : Qt.rect(0, 0, 0, 0)
         readonly property real shown: Math.min(side.box.x + side.box.width, root.width) - Math.max(side.box.x, 0)
         readonly property int notes: Number(root.noteCounts[side.entry?.id] ?? 0)
@@ -725,20 +700,24 @@ Item {
         Loader {
             active: side.admitted
             asynchronous: true
+            // Title and line stand where the hero's page puts them (its inset + 22, 20), so the page comes in over them
+            // without a second title.
             sourceComponent: Column {
-                x: (side.box.x < 0 ? -side.box.x : 0) + root.u(22)
-                y: root.u(24)
-                width: Math.max(0, side.shown - root.u(44))
-                spacing: root.u(10)
+                x: (side.box.x < 0 ? -side.box.x : 0) + root.u(34)
+                y: root.u(32)
+                width: Math.max(0, side.shown - root.u(68))
+                spacing: root.u(8)
                 Row {
                     spacing: root.u(8)
+                    height: sideTitle.height * sideTitle.grow
                     DotTitle {
                         id: sideTitle
                         // 28 beside, 22 two out, the hero's 40 as it arrives
                         readonly property real grow: side.far < 1 ? 1 + (40 / 28 - 1) * (1 - side.far) : side.far < 2 ? 1 - (1 - 22 / 28) * (side.far - 1) : 22 / 28
                         text: Translation.tr(String(side.entry?.title ?? ""))
                         size: root.u(28)
-                        fit: (side.shown - root.u(70)) / sideTitle.grow
+                        // the hero's title leaves room for the keys at its corner; arriving, this one does too
+                        fit: (side.shown - root.u(68) - Math.max(0, 1 - side.far) * (keys.width + root.u(8))) / sideTitle.grow
                         color: side.far < 0.5 ? IrisStyle.text : IrisStyle.subtext
                         transformOrigin: Item.TopLeft
                         scale: sideTitle.grow

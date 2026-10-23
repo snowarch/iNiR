@@ -19,7 +19,7 @@ Item {
     property string highlight: ""
     // Arrived at from a search: the row glows once in the accent, then settles.
     property bool landing: false
-    onLandingChanged: if (root.landing) landingGlow.restart()
+    onLandingChanged: if (root.landing) { glowLoader.active = false; glowLoader.active = true }
     function marked(text: string): string {
         const plain = part => part.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
         const terms = root.highlight.trim().split(/\s+/).filter(term => term.length > 1)
@@ -142,27 +142,36 @@ Item {
     implicitHeight: Math.max(Math.round(50 * root.d), layout.implicitHeight + Math.round(22 * root.d))
     enabled: !root.locked
 
-    IrisCutPlate {
-        anchors.fill: glow
-        visible: IrisStyle.fieldChamfer
-        opacity: glow.opacity
-        cutLength: IrisStyle.nestedCut(IrisStyle.chamferCut, glow.anchors.margins)
-        color: IrisStyle.tintFillHover(IrisStyle.accent)
-    }
-    Rectangle {
-        id: glow
+    // Arrived at from a search: the glow is built for its one pass, then let go.
+    Loader {
+        id: glowLoader
         anchors.fill: parent
-        anchors.margins: Math.round(4 * root.d)
-        // Concentric with the group's card; cut like it under a chamfer (the plate above).
-        radius: IrisStyle.concentric(IrisStyle.radiusTile, glow.anchors.margins, IrisStyle.radiusRow)
-        color: IrisStyle.fieldChamfer ? "transparent" : IrisStyle.tintFillHover(IrisStyle.accent)
-        opacity: 0
-        SequentialAnimation {
-            id: landingGlow
-            PauseAnimation { duration: IrisStyle.duration(260) }
-            NumberAnimation { target: glow; property: "opacity"; to: 1; duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing }
-            PauseAnimation { duration: IrisStyle.duration(900) }
-            NumberAnimation { target: glow; property: "opacity"; to: 0; duration: IrisStyle.duration(700); easing.type: IrisStyle.feedbackEasing }
+        active: false
+        sourceComponent: Item {
+            IrisCutPlate {
+                anchors.fill: glow
+                visible: IrisStyle.fieldChamfer
+                opacity: glow.opacity
+                cutLength: IrisStyle.nestedCut(IrisStyle.chamferCut, glow.anchors.margins)
+                color: IrisStyle.tintFillHover(IrisStyle.accent)
+            }
+            Rectangle {
+                id: glow
+                anchors.fill: parent
+                anchors.margins: Math.round(4 * root.d)
+                // Concentric with the group's card; cut like it under a chamfer (the plate above).
+                radius: IrisStyle.concentric(IrisStyle.radiusTile, glow.anchors.margins, IrisStyle.radiusRow)
+                color: IrisStyle.fieldChamfer ? "transparent" : IrisStyle.tintFillHover(IrisStyle.accent)
+                opacity: 0
+                SequentialAnimation {
+                    running: true
+                    PauseAnimation { duration: IrisStyle.duration(260) }
+                    NumberAnimation { target: glow; property: "opacity"; to: 1; duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing }
+                    PauseAnimation { duration: IrisStyle.duration(900) }
+                    NumberAnimation { target: glow; property: "opacity"; to: 0; duration: IrisStyle.duration(700); easing.type: IrisStyle.feedbackEasing }
+                    onFinished: glowLoader.active = false
+                }
+            }
         }
     }
 
@@ -207,30 +216,36 @@ Item {
                         opacity: root.modified ? 1 : 0
                         visible: opacity > 0
                         Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: resetArea.containsMouse ? resetMark.width : Math.round(7 * root.d)
-                            height: width
-                            radius: IrisStyle.capsule(width)
-                            color: resetArea.containsMouse ? IrisStyle.tintFill(IrisStyle.accent) : IrisStyle.accent
-                            Behavior on width { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
-                            MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "undo"
-                                iconSize: Math.round(12 * root.d)
-                                color: IrisStyle.accent
-                                opacity: resetArea.containsMouse ? 1 : 0
-                            }
-                        }
-                        MouseArea {
-                            id: resetArea
+                        Loader {
                             anchors.fill: parent
-                            enabled: root.modified
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            Accessible.role: Accessible.Button
-                            Accessible.name: Translation.tr("Reset %1").arg(Translation.tr(root.spec.label))
-                            onClicked: root.commit(root.spec.fallback)
+                            active: resetMark.visible
+                            sourceComponent: Item {
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: resetArea.containsMouse ? resetMark.width : Math.round(7 * root.d)
+                                    height: width
+                                    radius: IrisStyle.capsule(width)
+                                    color: resetArea.containsMouse ? IrisStyle.tintFill(IrisStyle.accent) : IrisStyle.accent
+                                    Behavior on width { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+                                    MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        text: "undo"
+                                        iconSize: Math.round(12 * root.d)
+                                        color: IrisStyle.accent
+                                        opacity: resetArea.containsMouse ? 1 : 0
+                                    }
+                                }
+                                MouseArea {
+                                    id: resetArea
+                                    anchors.fill: parent
+                                    enabled: root.modified
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    Accessible.role: Accessible.Button
+                                    Accessible.name: Translation.tr("Reset %1").arg(Translation.tr(root.spec.label))
+                                    onClicked: root.commit(root.spec.fallback)
+                                }
+                            }
                         }
                     }
                 }
@@ -254,67 +269,83 @@ Item {
                         onClicked: description.full = !description.full
                     }
                 }
-                RowLayout {
+                Loader {
                     Layout.fillWidth: true
-                    visible: root.noteText.length > 0
-                    spacing: Math.round(6 * root.d)
-                    MaterialSymbol {
-                        Layout.alignment: Qt.AlignTop
-                        text: root.locked ? "link" : "info"
-                        iconSize: Math.round(14 * root.d)
-                        color: IrisStyle.accent
-                    }
-                    IrisText {
-                        Layout.fillWidth: true
-                        text: root.noteText
-                        color: IrisStyle.accent
-                        font.pixelSize: IrisStyle.typeMeta
-                        wrapMode: Text.WordWrap
+                    active: root.noteText.length > 0
+                    visible: active
+                    sourceComponent: RowLayout {
+                        spacing: Math.round(6 * root.d)
+                        MaterialSymbol {
+                            Layout.alignment: Qt.AlignTop
+                            text: root.locked ? "link" : "info"
+                            iconSize: Math.round(14 * root.d)
+                            color: IrisStyle.accent
+                        }
+                        IrisText {
+                            Layout.fillWidth: true
+                            text: root.noteText
+                            color: IrisStyle.accent
+                            font.pixelSize: IrisStyle.typeMeta
+                            wrapMode: Text.WordWrap
+                        }
                     }
                 }
             }
 
             // A trailing value reads on the title's line, in the interface face: the title leads, the value answers.
-            IrisText {
-                visible: root.swatched
+            Loader {
+                active: root.swatched
+                visible: active
                 Layout.alignment: root.inlineSwatch ? Qt.AlignVCenter : Qt.AlignTop
                 Layout.preferredHeight: root.inlineSwatch ? -1 : label.implicitHeight
-                verticalAlignment: Text.AlignVCenter
-                text: Translation.tr(String(root.choices.find(choice => choice.value === root.value)?.label ?? ""))
-                color: IrisStyle.subtext
-                font.pixelSize: IrisStyle.typeLabel
+                sourceComponent: IrisText {
+                    verticalAlignment: Text.AlignVCenter
+                    text: Translation.tr(String(root.choices.find(choice => choice.value === root.value)?.label ?? ""))
+                    color: IrisStyle.subtext
+                    font.pixelSize: IrisStyle.typeLabel
+                }
             }
 
-            IrisText {
-                visible: root.spec.kind === "range" && !root.inlineRange
+            Loader {
+                active: root.spec.kind === "range" && !root.inlineRange
+                visible: active
                 Layout.alignment: Qt.AlignTop
                 Layout.preferredHeight: label.implicitHeight
-                verticalAlignment: Text.AlignVCenter
-                text: Translation.tr(IrisOptions.rangeText(root.spec, root.shownValue))
-                color: IrisStyle.subtext
-                font.features: ({ "tnum": 1 })
-                font.pixelSize: IrisStyle.typeLabel
+                sourceComponent: IrisText {
+                    verticalAlignment: Text.AlignVCenter
+                    text: Translation.tr(IrisOptions.rangeText(root.spec, root.shownValue))
+                    color: IrisStyle.subtext
+                    font.features: ({ "tnum": 1 })
+                    font.pixelSize: IrisStyle.typeLabel
+                }
             }
 
-            IrisSwitch {
-                id: toggle
-                voice: root.voice
+            // One control per row, built for its kind only: every row used to carry a switch, a button and a range.
+            Loader {
+                active: root.spec.kind === "switch"
+                visible: active
                 opacity: root.controlOpacity
-                visible: root.spec.kind === "switch"
-                on: root.spec.invert ? !Boolean(root.value) : Boolean(root.value)
-                name: Translation.tr(root.spec.label)
-                onToggled: root.commit(root.spec.invert ? toggle.on : !toggle.on)
+                sourceComponent: IrisSwitch {
+                    id: toggle
+                    voice: root.voice
+                    on: root.spec.invert ? !Boolean(root.value) : Boolean(root.value)
+                    name: Translation.tr(root.spec.label)
+                    onToggled: root.commit(root.spec.invert ? toggle.on : !toggle.on)
+                }
             }
 
-            IrisButton {
-                id: actionButton
-                visible: root.spec.kind === "action"
+            Loader {
+                active: root.spec.kind === "action"
+                visible: active
                 opacity: root.controlOpacity
                 Layout.alignment: Qt.AlignVCenter
-                text: Translation.tr(String(root.spec.button ?? ""))
-                colBackground: actionButton.skinned ? "transparent" : IrisStyle.fill
-                colBackgroundHover: actionButton.skinned ? "transparent" : IrisStyle.fillHover
-                onClicked: root.spec.run()
+                sourceComponent: IrisButton {
+                    id: actionButton
+                    text: Translation.tr(String(root.spec.button ?? ""))
+                    colBackground: actionButton.skinned ? "transparent" : IrisStyle.fill
+                    colBackgroundHover: actionButton.skinned ? "transparent" : IrisStyle.fillHover
+                    onClicked: root.spec.run()
+                }
             }
 
             Loader {
@@ -350,99 +381,102 @@ Item {
                 sourceComponent: textComponent
             }
 
-            RowLayout {
-                visible: root.inlineRange
+            Loader {
+                active: root.inlineRange
+                visible: active
                 // Fixed: the track's fillWidth would otherwise spread to the row and eat the label's column.
                 Layout.fillWidth: false
                 Layout.minimumWidth: root.controlWidth
                 Layout.maximumWidth: root.controlWidth
-                spacing: Math.round(12 * root.d)
-                Item {
-                    id: inlineRangeSlot
-                    Layout.fillWidth: true
-                    implicitHeight: Math.round(22 * root.d)
-                }
-                // One figure column on every row (wider only for a longer word), so the tracks of a page start on one line.
-                // The figure is also a field: a click types an exact value, ↑ ↓ step it, Return sets it, Escape leaves it.
-                Item {
-                    id: figure
-                    property bool editing: false
-                    readonly property real scale: Number(root.spec.scale ?? 1)
-                    readonly property real shownStep: Math.abs(Number(root.spec.step ?? 1) * figure.scale)
-                    readonly property int decimals: figure.shownStep > 0 && figure.shownStep < 1
-                        ? Math.min(2, Math.ceil(-Math.log10(figure.shownStep) - 1e-9)) : 0
-                    function plain(value: real): string {
-                        return Number(value * figure.scale).toFixed(figure.decimals).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "")
+                sourceComponent: RowLayout {
+                    spacing: Math.round(12 * root.d)
+                    Loader {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.round(22 * root.d)
+                        sourceComponent: scrubberComponent
                     }
-                    function begin(): void {
-                        figureInput.text = figure.plain(Number(root.value))
-                        figure.editing = true
-                        figureInput.forceActiveFocus()
-                        figureInput.selectAll()
+                    // One figure column on every row (wider only for a longer word), so the tracks of a page start on one line.
+                    // The figure is also a field: a click types an exact value, ↑ ↓ step it, Return sets it, Escape leaves it.
+                    Item {
+                        id: figure
+                        property bool editing: false
+                        readonly property real scale: Number(root.spec.scale ?? 1)
+                        readonly property real shownStep: Math.abs(Number(root.spec.step ?? 1) * figure.scale)
+                        readonly property int decimals: figure.shownStep > 0 && figure.shownStep < 1
+                            ? Math.min(2, Math.ceil(-Math.log10(figure.shownStep) - 1e-9)) : 0
+                        function plain(value: real): string {
+                            return Number(value * figure.scale).toFixed(figure.decimals).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "")
+                        }
+                        function begin(): void {
+                            figureInput.text = figure.plain(Number(root.value))
+                            figure.editing = true
+                            figureInput.forceActiveFocus()
+                            figureInput.selectAll()
+                        }
+                        function settle(text: string): void {
+                            figure.editing = false
+                            const typed = Number(String(text).trim().replace(",", "."))
+                            if (!Number.isFinite(typed)) return
+                            const step = Number(root.spec.step ?? 1)
+                            const raw = Math.max(root.spec.min, Math.min(root.spec.max, typed / figure.scale))
+                            const value = Number((Math.round(raw / step) * step).toFixed(4))
+                            if (value !== Number(root.value)) root.commit(value)
+                        }
+                        Layout.preferredWidth: Math.max(root.figureWidth, Math.round(60 * root.d))
+                        implicitHeight: Math.round(24 * root.d)
+                        opacity: root.controlOpacity
+                        Rectangle {
+                            anchors.right: parent.right
+                            anchors.rightMargin: -Math.round(6 * root.d)
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.min(parent.width, (figure.editing ? parent.width : figureText.contentWidth)) + Math.round(12 * root.d)
+                            height: parent.height
+                            radius: IrisStyle.radiusChip
+                            color: figure.editing ? IrisStyle.fill : figureHover.hovered ? IrisStyle.fillQuiet : "transparent"
+                            border.width: figure.editing ? 1 : 0
+                            border.color: IrisStyle.tintBorder(IrisStyle.accent)
+                            Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+                        }
+                        IrisText {
+                            id: figureText
+                            anchors.fill: parent
+                            visible: !figure.editing
+                            horizontalAlignment: Text.AlignRight
+                            verticalAlignment: Text.AlignVCenter
+                            text: Translation.tr(IrisOptions.rangeText(root.spec, root.shownValue))
+                            // The range's answer is a figure, set in the figures' voice like every value iRiS shows large.
+                            color: IrisStyle.text
+                            font.family: IrisStyle.fontNumbers
+                            font.features: ({ "tnum": 1 })
+                            font.pixelSize: IrisStyle.typeHeadline
+                            font.weight: IrisStyle.figureWeight
+                        }
+                        TextInput {
+                            id: figureInput
+                            anchors.fill: parent
+                            visible: figure.editing
+                            horizontalAlignment: Text.AlignRight
+                            verticalAlignment: Text.AlignVCenter
+                            color: IrisStyle.text
+                            selectionColor: IrisStyle.accentContainer
+                            selectedTextColor: IrisStyle.inkOnAccentContainer
+                            font.family: IrisStyle.fontNumbers
+                            font.features: ({ "tnum": 1 })
+                            font.pixelSize: IrisStyle.typeHeadline
+                            font.weight: IrisStyle.figureWeight
+                            inputMethodHints: Qt.ImhFormattedNumbersOnly
+                            Accessible.name: Translation.tr(root.spec.label)
+                            onEditingFinished: if (figure.editing) figure.settle(figureInput.text)
+                            onActiveFocusChanged: if (!activeFocus && figure.editing) figure.settle(figureInput.text)
+                            // Escape leaves the field without a change, before it closes anything else.
+                            Keys.onShortcutOverride: event => { if (event.key === Qt.Key_Escape) event.accepted = true }
+                            Keys.onEscapePressed: { figure.editing = false; figureInput.focus = false }
+                            Keys.onUpPressed: figureInput.text = figure.plain(Math.min(root.spec.max, Number(figureInput.text.replace(",", ".")) / figure.scale + Number(root.spec.step ?? 1)))
+                            Keys.onDownPressed: figureInput.text = figure.plain(Math.max(root.spec.min, Number(figureInput.text.replace(",", ".")) / figure.scale - Number(root.spec.step ?? 1)))
+                        }
+                        HoverHandler { id: figureHover; enabled: !figure.editing; cursorShape: Qt.IBeamCursor }
+                        TapHandler { enabled: !figure.editing; onTapped: figure.begin() }
                     }
-                    function settle(text: string): void {
-                        figure.editing = false
-                        const typed = Number(String(text).trim().replace(",", "."))
-                        if (!Number.isFinite(typed)) return
-                        const step = Number(root.spec.step ?? 1)
-                        const raw = Math.max(root.spec.min, Math.min(root.spec.max, typed / figure.scale))
-                        const value = Number((Math.round(raw / step) * step).toFixed(4))
-                        if (value !== Number(root.value)) root.commit(value)
-                    }
-                    Layout.preferredWidth: Math.max(root.figureWidth, Math.round(60 * root.d))
-                    implicitHeight: Math.round(24 * root.d)
-                    opacity: root.controlOpacity
-                    Rectangle {
-                        anchors.right: parent.right
-                        anchors.rightMargin: -Math.round(6 * root.d)
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.min(parent.width, (figure.editing ? parent.width : figureText.contentWidth)) + Math.round(12 * root.d)
-                        height: parent.height
-                        radius: IrisStyle.radiusChip
-                        color: figure.editing ? IrisStyle.fill : figureHover.hovered ? IrisStyle.fillQuiet : "transparent"
-                        border.width: figure.editing ? 1 : 0
-                        border.color: IrisStyle.tintBorder(IrisStyle.accent)
-                        Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
-                    }
-                    IrisText {
-                        id: figureText
-                        anchors.fill: parent
-                        visible: !figure.editing
-                        horizontalAlignment: Text.AlignRight
-                        verticalAlignment: Text.AlignVCenter
-                        text: Translation.tr(IrisOptions.rangeText(root.spec, root.shownValue))
-                        // The range's answer is a figure, set in the figures' voice like every value iRiS shows large.
-                        color: IrisStyle.text
-                        font.family: IrisStyle.fontNumbers
-                        font.features: ({ "tnum": 1 })
-                        font.pixelSize: IrisStyle.typeHeadline
-                        font.weight: IrisStyle.figureWeight
-                    }
-                    TextInput {
-                        id: figureInput
-                        anchors.fill: parent
-                        visible: figure.editing
-                        horizontalAlignment: Text.AlignRight
-                        verticalAlignment: Text.AlignVCenter
-                        color: IrisStyle.text
-                        selectionColor: IrisStyle.accentContainer
-                        selectedTextColor: IrisStyle.inkOnAccentContainer
-                        font.family: IrisStyle.fontNumbers
-                        font.features: ({ "tnum": 1 })
-                        font.pixelSize: IrisStyle.typeHeadline
-                        font.weight: IrisStyle.figureWeight
-                        inputMethodHints: Qt.ImhFormattedNumbersOnly
-                        Accessible.name: Translation.tr(root.spec.label)
-                        onEditingFinished: if (figure.editing) figure.settle(figureInput.text)
-                        onActiveFocusChanged: if (!activeFocus && figure.editing) figure.settle(figureInput.text)
-                        // Escape leaves the field without a change, before it closes anything else.
-                        Keys.onShortcutOverride: event => { if (event.key === Qt.Key_Escape) event.accepted = true }
-                        Keys.onEscapePressed: { figure.editing = false; figureInput.focus = false }
-                        Keys.onUpPressed: figureInput.text = figure.plain(Math.min(root.spec.max, Number(figureInput.text.replace(",", ".")) / figure.scale + Number(root.spec.step ?? 1)))
-                        Keys.onDownPressed: figureInput.text = figure.plain(Math.max(root.spec.min, Number(figureInput.text.replace(",", ".")) / figure.scale - Number(root.spec.step ?? 1)))
-                    }
-                    HoverHandler { id: figureHover; enabled: !figure.editing; cursorShape: Qt.IBeamCursor }
-                    TapHandler { enabled: !figure.editing; onTapped: figure.begin() }
                 }
             }
 
@@ -454,47 +488,12 @@ Item {
             }
         }
 
-        Item {
-            id: belowRangeSlot
+        Loader {
             Layout.fillWidth: true
             Layout.preferredHeight: Math.round(22 * root.d)
-            visible: root.spec.kind === "range" && !root.inlineRange
-        }
-        IrisScrubber {
-            id: rangeScrubber
-            parent: root.inlineRange ? inlineRangeSlot : belowRangeSlot
-            anchors.fill: parent
-            visible: root.spec.kind === "range"
-            opacity: root.controlOpacity
-            knob: true
-            voice: root.voice
-            range: root.spec.kind === "range" ? { min: root.spec.min, max: root.spec.max, step: root.spec.step ?? 1, value: Number(root.shownValue),
-                text: Translation.tr(IrisOptions.rangeText(root.spec, root.shownValue)) } : null
-            Accessible.name: Translation.tr(root.spec.label)
-            stepSize: (root.spec.step ?? 1) / Math.max(1, root.spec.max - root.spec.min)
-            fillColor: IrisStyle.accent
-            trackColor: IrisStyle.fill
-            value: root.spec.kind === "range" ? (Number(root.shownValue) - root.spec.min) / (root.spec.max - root.spec.min) : 0
-            onMoved: next => {
-                const step = root.spec.step ?? 1
-                const span = root.spec.max - root.spec.min
-                const raw = root.spec.min + next * span
-                // A drag passing the default holds there, so it can always be found again; keys and the wheel step freely.
-                const home = Number(root.spec.fallback)
-                const held = rangeScrubber.dragging && Number.isFinite(home) && Math.abs(raw - home) < span * 0.02
-                const value = held ? home : Number((Math.round(raw / step) * step).toFixed(4))
-                if (!rangeScrubber.dragging) { if (value !== Number(root.value)) root.commit(value); return }
-                if (value === root.dragValue) return
-                root.dragValue = value
-                if (!rangePreview.running) { root.previewDrag(); rangePreview.restart() }
-            }
-            onDraggingChanged: if (!dragging) { rangePreview.stop(); root.flushDrag(); root.dragValue = NaN }
-        }
-        // The live preview moves at most at frame pace's half: a step can re-layout a whole surface.
-        Timer {
-            id: rangePreview
-            interval: 32
-            onTriggered: root.previewDrag()
+            active: root.spec.kind === "range" && !root.inlineRange
+            visible: active
+            sourceComponent: scrubberComponent
         }
 
         Loader {
@@ -637,6 +636,42 @@ Item {
         color: IrisStyle.hairline
     }
 
+    Component {
+        id: scrubberComponent
+        IrisScrubber {
+            id: rangeScrubber
+            opacity: root.controlOpacity
+            knob: true
+            voice: root.voice
+            range: root.spec.kind === "range" ? { min: root.spec.min, max: root.spec.max, step: root.spec.step ?? 1, value: Number(root.shownValue),
+                text: Translation.tr(IrisOptions.rangeText(root.spec, root.shownValue)) } : null
+            Accessible.name: Translation.tr(root.spec.label)
+            stepSize: (root.spec.step ?? 1) / Math.max(1, root.spec.max - root.spec.min)
+            fillColor: IrisStyle.accent
+            trackColor: IrisStyle.fill
+            value: root.spec.kind === "range" ? (Number(root.shownValue) - root.spec.min) / (root.spec.max - root.spec.min) : 0
+            onMoved: next => {
+                const step = root.spec.step ?? 1
+                const span = root.spec.max - root.spec.min
+                const raw = root.spec.min + next * span
+                // A drag passing the default holds there, so it can always be found again; keys and the wheel step freely.
+                const home = Number(root.spec.fallback)
+                const held = rangeScrubber.dragging && Number.isFinite(home) && Math.abs(raw - home) < span * 0.02
+                const value = held ? home : Number((Math.round(raw / step) * step).toFixed(4))
+                if (!rangeScrubber.dragging) { if (value !== Number(root.value)) root.commit(value); return }
+                if (value === root.dragValue) return
+                root.dragValue = value
+                if (!rangePreview.running) { root.previewDrag(); rangePreview.restart() }
+            }
+            onDraggingChanged: if (!dragging) { rangePreview.stop(); root.flushDrag(); root.dragValue = NaN }
+            // The live preview moves at most at frame pace's half: a step can re-layout a whole surface.
+            Timer {
+                id: rangePreview
+                interval: 32
+                onTriggered: root.previewDrag()
+            }
+        }
+    }
     Component {
         id: piecesComponent
 

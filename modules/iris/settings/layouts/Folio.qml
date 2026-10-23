@@ -32,6 +32,7 @@ Item {
     readonly property string voice: "folio"
     readonly property bool ownsStage: true
     readonly property bool readsWhole: true
+    readonly property bool drawsRows: true
     readonly property string searchHint: Translation.tr("Search, or say what to change")
 
     readonly property bool compact: root.width < root.u(1200)
@@ -39,6 +40,7 @@ Item {
     readonly property string section: String(root.host?.section ?? "")
     readonly property bool home: root.section === "home" && !root.searching
     readonly property bool searching: root.host?.searching ?? false
+    readonly property bool paged: Number(root.host?.advancedPage ?? -1) >= 0
     readonly property var area: root.host?.currentSection ?? ({})
     readonly property var noteCounts: root.host?.noteCounts ?? ({})
     readonly property color signal: IrisStyle["signal"] ?? IrisStyle.danger
@@ -77,6 +79,17 @@ Item {
                 radius: IrisStyle.capsule(height)
                 color: IrisStyle.text
                 y: pill.target
+                // The open area stays in view: a link or a turn to one below the fold scrolls the index to it.
+                onTargetChanged: {
+                    const top = pill.target - root.u(36), bottom = pill.target + pill.height + root.u(8)
+                    let to = indexFlick.contentY
+                    if (top < to) to = Math.max(0, top)
+                    else if (bottom > to + indexFlick.height) to = Math.min(indexFlick.contentHeight - indexFlick.height, bottom - indexFlick.height)
+                    if (Math.abs(to - indexFlick.contentY) < 1) return
+                    indexScroll.to = to
+                    indexScroll.restart()
+                }
+                NumberAnimation { id: indexScroll; target: indexFlick; property: "contentY"; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
                 Behavior on y { enabled: pill.placed && IrisStyle.motionEnabled; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
                 Timer { running: true; interval: 400; onTriggered: pill.placed = true }
             }
@@ -169,7 +182,7 @@ Item {
         }
     }
 
-    // ── The page.
+    // ── The page: Home or an area, each a page of the pool, built once in the background and kept.
     Item {
         id: page
         x: index.x + index.width + root.u(root.compact ? 20 : 28)
@@ -194,256 +207,65 @@ Item {
             RoundKey { glyph: "close"; name: Translation.tr("Close settings"); onClicked: root.host.close() }
         }
 
-        // A new area rises in from the side it lies on in the index; the motion only moves, it never waits on opacity.
-        property int was: -1
-        readonly property int current: Math.max(0, root.sections.findIndex(entry => entry.id === root.section))
-        onCurrentChanged: {
-            if (page.was >= 0 && page.was !== page.current && IrisStyle.motionEnabled) {
-                rise.from = (page.current > page.was ? 1 : -1) * root.u(26)
-                rise.restart()
-            }
-            page.was = page.current
-        }
-        Component.onCompleted: page.was = page.current
-        NumberAnimation { id: rise; target: bodyShift; property: "y"; to: 0; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
-
         Item {
             id: body
-            transform: Translate { id: bodyShift }
             y: head.y + head.height + root.u(18)
             width: page.width
-            height: page.height - y
+            height: page.height - y - root.u(16)
 
-            Home {
-                id: homePage
-                visible: root.home
+            AreaPool {
+                id: pool
                 anchors.fill: parent
-                anchors.bottomMargin: root.u(16)
-                host: root.host
-                voice: "folio"
+                // A search or a shared page borrows the body; the area under it stays as it was.
+                current: root.searching ? pool.shown : root.section
+                hidden: root.searching || root.paged
+                urlFor: id => Qt.resolvedUrl(id === "home" ? "Home.qml" : "FolioPage.qml")
+                propsFor: id => id === "home" ? { host: root.host, voice: "folio" } : { host: root.host }
+                order: root.sections.map(entry => entry.id)
+                distance: root.u(26)
+                onArrived: id => {
+                    if (root.wantedGroup.length > 0 && id === root.section) {
+                        pool.shownItem?.showGroup?.(root.wantedGroup)
+                        root.wantedGroup = ""
+                    }
+                    prewarmSoon.restart()
+                }
+            }
+            // At rest the neighbours in the index are built too, so the next click is only a turn.
+            Timer {
+                id: prewarmSoon
+                interval: 600
+                onTriggered: {
+                    if (!(root.host?.bodySettled ?? true) || pool.turning) { prewarmSoon.restart(); return }
+                    const order = root.sections.map(entry => entry.id)
+                    const at = order.indexOf(pool.shown)
+                    pool.prewarm([order[at - 1], order[at + 1]].filter(id => id !== undefined && id !== "home"))
+                }
             }
 
-            // The area: its title and sentence across, the stage on the left, its groups on the right.
-            Column {
-                id: title
-                visible: !root.home && !root.searching
-                width: body.width
-                spacing: root.u(4)
-                IrisText {
-                    width: parent.width
-                    elide: Text.ElideRight
-                    text: Translation.tr(String(root.area.title ?? ""))
-                    color: IrisStyle.text
-                    font.family: IrisStyle.fontTitle
-                    font.pixelSize: root.u(26)
-                    font.weight: Font.DemiBold
-                    font.letterSpacing: -Math.round(root.u(26) * 0.01)
-                }
-                IrisText {
-                    width: parent.width
-                    elide: Text.ElideRight
-                    text: Translation.tr(String(root.area.subtitle ?? ""))
-                    color: IrisStyle.muted
-                    font.pixelSize: IrisStyle.typeBody
-                }
-            }
-            Item {
-                id: areaBox
-                visible: !root.home
-                y: root.searching ? 0 : title.height + root.u(18)
-                width: body.width
-                height: body.height - y - root.u(16)
-                readonly property bool staged: !root.searching && stage.available
-                readonly property real gap: root.u(root.compact ? 18 : 24)
-                ClippingRectangle {
-                    id: plate
-                    visible: areaBox.staged
-                    width: Math.round(areaBox.width * (root.compact ? 0.40 : 0.42))
-                    height: Math.round(Math.min(areaBox.height, width * 0.78, root.u(440)))
-                    radius: IrisStyle.radiusSheet
-                    color: IrisStyle.readingCard
-                    border.width: 1
-                    border.color: IrisStyle.hairline
-                    IrisGroupPreview {
-                        id: stage
-                        anchors.fill: parent
-                        anchors.margins: root.u(12)
-                        radius: Math.max(IrisStyle.radiusRow, IrisStyle.radiusSheet - root.u(12))
-                        standIn: true
-                        captionOutside: true
-                        section: root.searching || root.home ? "" : root.section
-                        niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
-                        niriRevision: IrisNiri.revision
-                        group: String(root.host?.leadGroup ?? "")
-                    }
-                }
-                // Under the stage: what it shows now, what can be done to the page, then the area at a glance.
-                Column {
-                    id: underStage
-                    visible: areaBox.staged
-                    y: plate.height + root.u(14)
-                    width: plate.width
-                    spacing: root.u(14)
-                IrisText {
-                    visible: stage.caption.length > 0
-                    x: root.u(4)
-                    width: parent.width - x
-                    wrapMode: Text.WordWrap
-                    maximumLineCount: 2
-                    elide: Text.ElideRight
-                    text: stage.caption
-                    color: IrisStyle.muted
-                    font.pixelSize: IrisStyle.typeMeta
-                }
-                Flow {
-                    width: plate.width
-                    spacing: root.u(6)
-                    Repeater {
-                        model: root.host?.pageActions ?? []
-                        MouseArea {
-                            id: act
-                            required property var modelData
-                            width: actRow.implicitWidth + root.u(22)
-                            height: root.u(32)
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            Accessible.role: Accessible.Button
-                            Accessible.name: String(act.modelData.label ?? "")
-                            onClicked: act.modelData.clicked()
-                            Rectangle { anchors.fill: parent; radius: IrisStyle.capsule(height); color: act.containsMouse ? IrisStyle.fillHover : IrisStyle.fillQuiet }
-                            Row {
-                                id: actRow
-                                anchors.centerIn: parent
-                                spacing: root.u(6)
-                                MaterialSymbol { anchors.verticalCenter: parent.verticalCenter; text: String(act.modelData.glyph ?? ""); iconSize: root.u(16); color: IrisStyle.text }
-                                IrisText { anchors.verticalCenter: parent.verticalCenter; text: String(act.modelData.label ?? ""); color: IrisStyle.text; font.pixelSize: IrisStyle.typeMeta }
-                            }
-                        }
-                    }
-                }
-                // The area at a glance: its telling values, each a link to its row.
-                Column {
-                    id: facts
-                    readonly property int fit: Math.max(0, Math.min(6, Math.floor((areaBox.height - plate.height - root.u(150)) / root.u(40))))
-                    readonly property var rows: { Config.revision; return facts.fit > 0 && !root.home && !root.searching ? (root.host?.tellingRows(facts.fit, root.section, false) ?? []) : [] }
-                    visible: facts.rows.length > 0
-                    width: plate.width
-                    IrisText {
-                        x: root.u(4)
-                        bottomPadding: root.u(6)
-                        text: Translation.tr("At a glance")
-                        color: IrisStyle.textTertiary
-                        font.family: IrisStyle.fontMono
-                        font.pixelSize: Math.max(10, IrisStyle.typeCaption)
-                        font.weight: Font.Medium
-                        font.capitalization: Font.AllUppercase
-                        font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
-                    }
-                    Repeater {
-                        model: facts.rows
-                        MouseArea {
-                            id: fact
-                            required property var modelData
-                            required property int index
-                            width: facts.width
-                            height: root.u(40)
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            Accessible.role: Accessible.Link
-                            Accessible.name: Translation.tr(String(fact.modelData.label ?? ""))
-                            onClicked: root.host.landOn(String(fact.modelData.path ?? ""))
-                            Rectangle { anchors.fill: parent; radius: IrisStyle.fieldChamfer ? 0 : root.u(10); color: fact.containsMouse ? IrisStyle.fillHover : "transparent" }
-                            Rectangle { visible: fact.index > 0; x: root.u(4); width: parent.width - 2 * x; height: 1; color: IrisStyle.hairline }
-                            IrisText {
-                                x: root.u(4)
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width * 0.6 - x
-                                elide: Text.ElideRight
-                                text: Translation.tr(String(fact.modelData.label ?? ""))
-                                color: IrisStyle.subtext
-                                font.pixelSize: IrisStyle.typeMeta
-                            }
-                            IrisText {
-                                anchors.right: parent.right
-                                anchors.rightMargin: root.u(4)
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: Math.min(implicitWidth, parent.width * 0.4)
-                                elide: Text.ElideRight
-                                text: { Config.revision; return root.host?.answerOf(fact.modelData) ?? "" }
-                                color: IrisStyle.text
-                                font.pixelSize: IrisStyle.typeMeta
-                                font.weight: IrisStyle.weight(Font.DemiBold)
-                            }
-                        }
-                    }
-                }
-                }
-                Rectangle {
-                    id: sheet
-                    x: areaBox.staged ? plate.width + areaBox.gap : 0
-                    width: areaBox.width - x
-                    height: areaBox.height
-                    radius: IrisStyle.radiusSheet
-                    color: IrisStyle.glassy ? IrisStyle.readingSidebar : "transparent"
-                    Item {
-                        id: rowsSlot
-                        anchors.fill: parent
-                        anchors.leftMargin: IrisStyle.glassy ? root.u(6) : -root.u(12)
-                        anchors.rightMargin: IrisStyle.glassy ? root.u(6) : 0
-                        anchors.topMargin: IrisStyle.glassy ? root.u(6) : 0
-                    }
-                    // The wheel over the groups glides head to head: a group whose head is in view is landed on, a long one
-                    // is read through in steps. Clicks pass through to the rows.
-                    MouseArea {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.NoButton
-                        enabled: !root.searching
-                        onWheel: wheel => root.glide(wheel)
-                    }
+            // A search's results or a shared page (the Hub) on their own sheet.
+            Rectangle {
+                visible: root.searching || root.paged
+                anchors.fill: parent
+                radius: IrisStyle.radiusSheet
+                color: IrisStyle.glassy ? IrisStyle.readingSidebar : "transparent"
+                Item {
+                    id: rowsSlot
+                    anchors.fill: parent
+                    anchors.leftMargin: IrisStyle.glassy ? root.u(6) : -root.u(12)
+                    anchors.rightMargin: IrisStyle.glassy ? root.u(6) : 0
+                    anchors.topMargin: IrisStyle.glassy ? root.u(6) : 0
                 }
             }
         }
     }
 
-    readonly property Item flick: {
-        root.section
-        return root.findFlick(rowsSlot)
+    // A group asked for by name lands once its area's page stands.
+    property string wantedGroup: ""
+    function showGroup(key: string): void {
+        if (pool.shown === root.section && pool.shownItem?.showGroup) pool.shownItem.showGroup(key)
+        else root.wantedGroup = key
     }
-    function findFlick(item: Item): Item {
-        for (const child of item?.children ?? []) {
-            if (child.contentY !== undefined && child.contentHeight !== undefined && child.visible) return child
-            const deeper = root.findFlick(child)
-            if (deeper) return deeper
-        }
-        return null
-    }
-    property real wheelAcc: 0
-    Timer { id: wheelRest; interval: 200; onTriggered: root.wheelAcc = 0 }
-    function glide(event: var): void {
-        const f = root.flick
-        if (!f) { event.accepted = false; return }
-        // A touchpad scrolls by pixels as it always does: only notched wheels snap.
-        if (event.pixelDelta.y !== 0) { f.contentY = Math.max(0, Math.min(f.contentHeight - f.height, f.contentY - event.pixelDelta.y)); return }
-        // a notch a head; a burst chains from where the last glide is going, never waits out a pause
-        if (Math.sign(event.angleDelta.y) !== Math.sign(root.wheelAcc)) root.wheelAcc = 0
-        root.wheelAcc += event.angleDelta.y
-        wheelRest.restart()
-        if (Math.abs(root.wheelAcc) < 120) return
-        const down = root.wheelAcc < 0
-        root.wheelAcc -= 120 * Math.sign(root.wheelAcc)
-        const end = Math.max(0, f.contentHeight - f.height)
-        const now = glideTo.running ? glideTo.to : f.contentY
-        const heads = (root.host?.spyTargets() ?? []).map(target => target.item.mapToItem(f.contentItem, 0, 0).y - root.u(8)).sort((a, b) => a - b)
-        const next = down ? heads.find(y => y > now + 4) : heads.slice().reverse().find(y => y < now - 4)
-        let to = next !== undefined && Math.abs(next - now) <= f.height * 0.85 ? next : now + (down ? 1 : -1) * f.height * 0.6
-        to = Math.max(0, Math.min(end, to))
-        if (Math.abs(to - f.contentY) < 1) return
-        glideTo.target = f
-        glideTo.from = f.contentY
-        glideTo.to = to
-        glideTo.restart()
-    }
-    NumberAnimation { id: glideTo; property: "contentY"; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
 
     component RoundKey: MouseArea {
         id: key

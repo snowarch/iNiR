@@ -21,6 +21,10 @@ Item {
     id: root
     property Item host
     property string voice: ""
+    // As a page of an AreaPool: its id and how far its arrival still has to travel.
+    property string area: "home"
+    property real shift: 0
+    transform: Translate { y: root.shift }
     readonly property real d: Number(root.host?.d ?? IrisStyle.settingsDensity)
     function u(n: real): int { return Math.round(n * root.d) }
     readonly property bool wide: root.width >= root.u(820)
