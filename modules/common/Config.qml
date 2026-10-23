@@ -1422,7 +1422,7 @@ Singleton {
                         property real x: 100
                         property real y: 100
                         property string style: "digital" // "digital" | "androidStacked" | "cookie" | "pixel" | "instrument"
-                        property int dim: 70 // Extra dim for clock text (0-100)
+                        property int dim: 0 // Extra dim for clock text (0-100)
                         property string fontFamily: "Space Grotesk"
                         property string timeFormat: "system" // "system", "24h", "12h"
                         property string dateStyle: "long" // "long", "minimal", "weekday", "numeric"

@@ -2465,7 +2465,7 @@ ContentPage {
                     "pixel": {
                                         "orientation": "horizontal"
                     },
-                    "dim": 70,
+                    "dim": 0,
                     "fontFamily": "Space Grotesk",
                     "placementStrategy": "free",
                     "quote": {

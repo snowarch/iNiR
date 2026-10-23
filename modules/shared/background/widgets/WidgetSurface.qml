@@ -75,11 +75,12 @@ Rectangle {
     readonly property real _surfaceStrength: Math.max(0, Math.min(1, Number(root.surfaceOpacity) || 0))
     readonly property bool _backgroundVisible: root._surfaceStrength > 0.001
     readonly property bool _editorialStack: root._editorial && root._backgroundVisible && Appearance.editorial.paperStack
+    // A Material plate is a container, not a veil: below ~0.86 the wallpaper washes every widget out.
     // Explicit Island style owns its material opacity. A widget's legacy
     // backgroundOpacity controls whether the plate exists, but must not multiply
     // the shared Ricelin opacity again or every widget becomes nearly invisible.
     readonly property real _plateAlpha: root._backgroundVisible
-        ? (root._island ? 1 : root._editorial ? (root._glass ? Appearance.editorial.glassOpacity : Math.min(1, 0.86 + root._surfaceStrength * 0.14)) : Math.min(0.96, 0.72 + root._surfaceStrength * 0.24)) : 0
+        ? (root._island ? 1 : root._editorial ? (root._glass ? Appearance.editorial.glassOpacity : Math.min(1, 0.86 + root._surfaceStrength * 0.14)) : Math.min(0.96, 0.86 + root._surfaceStrength * 0.6)) : 0
     // The owning widget's own Look material and opacity win over the shared row (AbstractBackgroundWidget resolves
     // both), so a widget made Transparent in its Look controls drops its plate whichever design draws it.
     readonly property string _irisMaterialName: String(parent?.irisMaterial ?? Config.options?.iris?.widgets?.material ?? "glass")
@@ -388,6 +389,6 @@ Rectangle {
         anchors.fill: parent
         visible: root._inir && root._backgroundVisible
         radius: root.radius
-        color: ColorUtils.applyAlpha(root._plate, Math.min(0.96, 0.72 + root.surfaceOpacity * 0.24))
+        color: ColorUtils.applyAlpha(root._plate, root._plateAlpha)
     }
 }

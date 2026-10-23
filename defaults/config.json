@@ -502,7 +502,7 @@
                     "spacing": 6,
                     "preset": "default"
                 },
-                "dim": 70,
+                "dim": 0,
                 "enable": true,
                 "fontFamily": "Space Grotesk",
                 "placementStrategy": "leastBusy",
