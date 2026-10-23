@@ -424,7 +424,8 @@ Singleton {
     // Initial check after startup delay
     Timer {
         id: startupDelay
-        interval: 5000  // 5s after shell starts (quick first check)
+        // After the desktop settles: a fetch at boot competed with the shell's own start.
+        interval: 30000
         repeat: false
         running: root.enabled && Config.ready
         onTriggered: {
@@ -776,9 +777,10 @@ Singleton {
     }
 
     // Lightweight git command prefix — disables LFS filter and auto-gc to prevent
-    // CPU spikes from global git-lfs config on repos with zero LFS objects.
+    // CPU spikes from global git-lfs config on repos with zero LFS objects. Background work,
+    // so it yields to everything else (nice 19).
     readonly property var _gitCmd: [
-        "git",
+        "nice", "-n", "19", "git",
         "-c", "filter.lfs.process=",
         "-c", "filter.lfs.required=false",
         "-c", "filter.lfs.smudge=",

@@ -27,9 +27,10 @@ Singleton {
         if (checkUpdatesProc.running) return;
         root._checkOutput = null
         root._checkExit = -1
-        checkUpdatesProc.command = root._backend === "xbps"
-            ? ["xbps-install", "-nu"]
-            : ["checkupdates"]
+        // checkupdates syncs a copy of the package databases: background work, at nice 19 and idle IO.
+        checkUpdatesProc.command = ["/usr/bin/bash", "-c",
+            'p=(nice -n 19); command -v ionice >/dev/null && p+=(ionice -c 3); exec "${p[@]}" "$@"', "_"]
+            .concat(root._backend === "xbps" ? ["xbps-install", "-nu"] : ["checkupdates"])
         checkUpdatesProc.running = true;
     }
 
@@ -45,7 +46,8 @@ Singleton {
 
     Timer {
         id: availabilityDefer
-        interval: 1500
+        // Nobody reads the count at boot; the first check waits for the desktop to settle.
+        interval: 20000
         repeat: false
         onTriggered: {
             root._availabilityOutput = ""
