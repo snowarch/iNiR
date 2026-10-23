@@ -4345,7 +4345,7 @@
   "Location": "स्थान",
   "Logical coordinates in Niri's global space.": "Niri के वैश्विक स्थान में तार्किक निर्देशांक।",
   "Long context": "लंबा संदर्भ",
-  "Look": "देखें",
+  "Look": "लुक",
   "Low power effects": "कम बिजली प्रभाव",
   "MIXER": "MIXER",
   "Magazine": "पत्रिका",
@@ -9612,7 +9612,6 @@
   "Nothing red": "Nothing लाल",
   "From wallpaper": "वॉलपेपर से",
   "The one colour iRiS uses: something live, something that needs you, an action you can't undo.": "iRiS का एकमात्र रंग: कुछ लाइव, कुछ जिसे आपकी ज़रूरत है, ऐसा काम जो वापस नहीं हो सकता।",
-  "What your apps wear. iRiS itself stays ink, with the signal for what is live.": "आपके ऐप्स जो पहनते हैं। iRiS खुद स्याही में रहता है, लाइव चीज़ों के लिए सिग्नल के साथ।",
   "%1 days ago": "%1 दिन पहले",
   "%1 h ago": "%1 घं. पहले",
   "%1 min ago": "%1 मि. पहले",
@@ -9637,5 +9636,9 @@
   "Middle": "बीच में",
   "Most visited": "सबसे ज़्यादा देखे गए",
   "No output": "कोई आउटपुट नहीं",
-  "Set this wallpaper": "यह वॉलपेपर लगाएँ"
+  "Set this wallpaper": "यह वॉलपेपर लगाएँ",
+  "Apple": "Apple",
+  "Nothing OS": "Nothing OS",
+  "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple आपकी चुनी चीज़ को आपके एक्सेंट से दिखाता है। Nothing iRiS को स्याही बना देता है, एक सिग्नल रंग के साथ।",
+  "What your apps wear, and what iRiS marks as chosen under the Apple look.": "आपके ऐप्स का रंग, और Apple लुक में iRiS जो चुना हुआ दिखाता है।"
 }

@@ -9612,7 +9612,6 @@
   "Nothing red": "Nothing 레드",
   "From wallpaper": "배경화면에서",
   "The one colour iRiS uses: something live, something that needs you, an action you can't undo.": "iRiS가 쓰는 단 하나의 색: 진행 중인 것, 당신이 필요한 것, 되돌릴 수 없는 동작.",
-  "What your apps wear. iRiS itself stays ink, with the signal for what is live.": "앱이 입는 색. iRiS 자체는 잉크로 남고, 진행 중인 것에만 시그널.",
   "%1 days ago": "%1일 전",
   "%1 h ago": "%1시간 전",
   "%1 min ago": "%1분 전",
@@ -9637,5 +9636,9 @@
   "Middle": "가운데",
   "Most visited": "자주 여는 곳",
   "No output": "출력 없음",
-  "Set this wallpaper": "이 배경화면으로 설정"
+  "Set this wallpaper": "이 배경화면으로 설정",
+  "Apple": "Apple",
+  "Nothing OS": "Nothing OS",
+  "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple은 선택한 것을 강조 색으로 표시합니다. Nothing은 iRiS를 잉크로 바꾸고 신호 색 하나만 씁니다.",
+  "What your apps wear, and what iRiS marks as chosen under the Apple look.": "앱이 쓰는 색, 그리고 Apple 룩에서 iRiS가 선택을 표시하는 색."
 }

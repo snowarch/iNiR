@@ -4345,7 +4345,7 @@
   "Location": "Localização",
   "Logical coordinates in Niri's global space.": "Coordenadas lógicas no espaço global do Niri.",
   "Long context": "Contexto longo",
-  "Look": "Visual",
+  "Look": "Aparência",
   "Low power effects": "Efeitos de baixo consumo",
   "MIXER": "MIXER",
   "Magazine": "Revista",
@@ -9612,7 +9612,6 @@
   "Nothing red": "Vermelho Nothing",
   "From wallpaper": "Do papel de parede",
   "The one colour iRiS uses: something live, something that needs you, an action you can't undo.": "A única cor que o iRiS usa: algo ao vivo, algo que precisa de você, uma ação que não dá para desfazer.",
-  "What your apps wear. iRiS itself stays ink, with the signal for what is live.": "O que seus apps usam. O iRiS fica em tinta, com o sinal para o que está ao vivo.",
   "%1 days ago": "há %1 dias",
   "%1 h ago": "há %1 h",
   "%1 min ago": "há %1 min",
@@ -9637,5 +9636,9 @@
   "Middle": "Centro",
   "Most visited": "Mais visitados",
   "No output": "Sem saída",
-  "Set this wallpaper": "Usar este papel de parede"
+  "Set this wallpaper": "Usar este papel de parede",
+  "Apple": "Apple",
+  "Nothing OS": "Nothing OS",
+  "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple marca o que você escolhe com o seu destaque. Nothing deixa o iRiS em tinta, com uma só cor de sinal.",
+  "What your apps wear, and what iRiS marks as chosen under the Apple look.": "O que seus apps usam, e o que o iRiS marca como escolhido na aparência Apple."
 }

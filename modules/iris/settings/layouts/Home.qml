@@ -33,6 +33,7 @@ Item {
     function specAt(path: string): var { return IrisOptions.settings.find(spec => spec.path === path && !spec.mirror) ?? null }
     readonly property var schemeSpec: root.specAt("iris.appearance.scheme")
     readonly property var signalSpec: root.specAt("iris.appearance.signal")
+    readonly property var lookSpec: root.specAt("iris.appearance.look")
     readonly property var designSpec: root.specAt("iris.appearance.design")
     readonly property var silentSpec: root.specAt("notifications.silent")
     readonly property var glassSpec: root.specAt("iris.appearance.glass.mode")
@@ -312,6 +313,19 @@ Item {
                                         .map(value => ({ label: Translation.tr(scheme.words[value]), value: value }))
                                     current: { Config.revision; return root.schemeSpec ? IrisOptions.currentValue(root.schemeSpec) : "" }
                                     onPicked: value => IrisOptions.commit(root.schemeSpec, value)
+                                }
+                            }
+                            Line {
+                                visible: root.lookSpec !== null
+                                name: Translation.tr("Look")
+                                IrisSegmented {
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    voice: root.voice
+                                    accessibleName: Translation.tr("Look")
+                                    options: ["apple", "nothing"].map(value => ({ label: Translation.tr(value === "apple" ? "Apple" : "Nothing OS"), value: value }))
+                                    current: { Config.revision; return root.lookSpec ? IrisOptions.currentValue(root.lookSpec) : "apple" }
+                                    onPicked: value => IrisOptions.commit(root.lookSpec, value)
                                 }
                             }
                             Line {

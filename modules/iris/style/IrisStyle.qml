@@ -303,7 +303,9 @@ QtObject {
     readonly property var washiLight: IrisWashi.palette("light")
     // Signal (DESIGN.md S1): the body is monochrome, ink on paper with no hue, and colour means one thing. A colour theme
     // the person follows, the anime layer and the Midnight material are choices of colour and keep theirs.
-    readonly property bool mono: !root.followsTheme && !root.animeEnabled
+    // Only the Nothing look (iris.appearance.look); Apple, the standard, keeps the accent on what is chosen.
+    readonly property string look: String(root.appearance?.look ?? "apple")
+    readonly property bool mono: root.look === "nothing" && !root.followsTheme && !root.animeEnabled
     readonly property bool neutralBody: root.mono && !["midnight", "wallpaper", "theme"].includes(root.materialName)
     readonly property var neutralRoles: ["surface", "surfaceHigh", "surfaceHighest", "text", "textSecondary", "textTertiary", "fillInk"]
     // The same light, no hue: a warm paper or a wallpaper-tinted black reads as its grey.
@@ -1106,7 +1108,7 @@ QtObject {
     readonly property bool plateSelection: IrisDesign.trait("selection") === "plate"
     readonly property bool indexed: IrisDesign.trait("index") === true
     // Signal: every caption and group head speaks in the Label voice, in every Design.
-    readonly property bool monoCaptions: true
+    readonly property bool monoCaptions: root.mono || IrisDesign.trait("captions") === "mono"
     // A side panel's section is headed by a bar of its line colour, as a station sign marks a line, instead of a glyph.
     readonly property bool lineSections: IrisDesign.trait("sections") === "line"
     // The shell's shared toasts (reloaded, copied, failed) take the Design's own toast under iRiS when it has one.

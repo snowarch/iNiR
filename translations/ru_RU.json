@@ -9612,7 +9612,6 @@
   "Nothing red": "Красный Nothing",
   "From wallpaper": "Из обоев",
   "The one colour iRiS uses: something live, something that needs you, an action you can't undo.": "Единственный цвет iRiS: что-то идёт, что-то ждёт тебя, действие, которое нельзя отменить.",
-  "What your apps wear. iRiS itself stays ink, with the signal for what is live.": "Что носят твои приложения. Сам iRiS остаётся чернилами, с сигналом для того, что идёт сейчас.",
   "%1 days ago": "%1 дн. назад",
   "%1 h ago": "%1 ч назад",
   "%1 min ago": "%1 мин назад",
@@ -9637,5 +9636,9 @@
   "Middle": "Посередине",
   "Most visited": "Часто открываемые",
   "No output": "Нет вывода",
-  "Set this wallpaper": "Поставить эти обои"
+  "Set this wallpaper": "Поставить эти обои",
+  "Apple": "Apple",
+  "Nothing OS": "Nothing OS",
+  "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple отмечает выбранное вашим акцентом. Nothing делает iRiS чернильным, с одним сигнальным цветом.",
+  "What your apps wear, and what iRiS marks as chosen under the Apple look.": "Цвет ваших приложений и того, что iRiS отмечает как выбранное в виде Apple."
 }

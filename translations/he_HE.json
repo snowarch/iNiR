@@ -4345,7 +4345,7 @@
   "Location": "מיקום",
   "Logical coordinates in Niri's global space.": "קואורדינטות לוגיות במרחב הגלובלי של Niri.",
   "Long context": "הקשר ארוך",
-  "Look": "תראה",
+  "Look": "מראה",
   "Low power effects": "אפקטים בהספק נמוך",
   "MIXER": "MIXER",
   "Magazine": "מגזין",
@@ -9612,7 +9612,6 @@
   "Nothing red": "אדום Nothing",
   "From wallpaper": "מהטפט",
   "The one colour iRiS uses: something live, something that needs you, an action you can't undo.": "הצבע היחיד ש-iRiS משתמש בו: משהו חי, משהו שצריך אותך, פעולה שאי אפשר לבטל.",
-  "What your apps wear. iRiS itself stays ink, with the signal for what is live.": "מה שהאפליקציות שלך לובשות. iRiS עצמו נשאר בדיו, עם האות למה שחי.",
   "%1 days ago": "לפני %1 ימים",
   "%1 h ago": "לפני %1 שע׳",
   "%1 min ago": "לפני %1 דק׳",
@@ -9637,5 +9636,9 @@
   "Middle": "באמצע",
   "Most visited": "הכי נפוצים",
   "No output": "אין פלט",
-  "Set this wallpaper": "הגדר טפט זה"
+  "Set this wallpaper": "הגדר טפט זה",
+  "Apple": "Apple",
+  "Nothing OS": "Nothing OS",
+  "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple מסמן את מה שבחרת בצבע ההדגשה שלך. Nothing הופך את iRiS לדיו, עם צבע אות אחד.",
+  "What your apps wear, and what iRiS marks as chosen under the Apple look.": "מה שהאפליקציות שלך לובשות, ומה ש-iRiS מסמן כנבחר במראה Apple."
 }

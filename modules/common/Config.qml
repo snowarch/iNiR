@@ -4154,6 +4154,8 @@ Singleton {
                     property string numbersFontFamily: "" // Empty = Geist Pixel Circle (bundled; the Dot voice)
                     // The one colour of Signal (live, needs you, errors): "nothing" (#D71921), "wallpaper" or a #rrggbb.
                     property string signal: "nothing"
+                    // apple: the accent marks what is chosen; nothing: ink body, one signal colour
+                    property string look: "apple"
                     property real density: 1.0
                     property bool motion: true
                     // iRiS Studio: the user's own tweaks on top of the preset. Every

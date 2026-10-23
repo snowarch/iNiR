@@ -4363,7 +4363,7 @@
   "Location": "Sumiiffik",
   "Logical coordinates in Niri's global space.": "Niri global space-imi logical coordinates.",
   "Long context": "Takisooq context",
-  "Look": "Isikkoq",
+  "Look": "Look",
   "Low power effects": "Appasissoq power effect-it",
   "MIXER": "MIXER",
   "Magazine": "Magasini",
@@ -7660,7 +7660,6 @@
   "Nothing red": "Nothing aappaluttoq",
   "From wallpaper": "Tunuliaqutamit",
   "The one colour iRiS uses: something live, something that needs you, an action you can't undo.": "Qalipaat ataaseq iRiS-ip atugaa: suna ingerlasoq, suna ilinnik pisariaqartitsisoq, iliuuseq utertinneqarsinnaanngitsoq.",
-  "What your apps wear. iRiS itself stays ink, with the signal for what is live.": "Atuutitit atugaat. iRiS nammineq qernertuuvoq, ingerlasunut nalunaarut ilanngullugu.",
   "%1 days ago": "%1 days ago",
   "%1 h ago": "%1 h ago",
   "%1 min ago": "%1 min ago",
@@ -7685,5 +7684,9 @@
   "Middle": "Qeqqani",
   "Most visited": "Akulikitsumik ammaasartakkat",
   "No output": "Nipiliorfissaqanngilaq",
-  "Set this wallpaper": "Tunngaviusoq una atortiguk"
+  "Set this wallpaper": "Tunngaviusoq una atortiguk",
+  "Apple": "Apple",
+  "Nothing OS": "Nothing OS",
+  "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.",
+  "What your apps wear, and what iRiS marks as chosen under the Apple look.": "What your apps wear, and what iRiS marks as chosen under the Apple look."
 }

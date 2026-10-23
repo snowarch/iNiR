@@ -4345,7 +4345,7 @@
   "Location": "場所",
   "Logical coordinates in Niri's global space.": "Niri のグローバル空間における論理座標。",
   "Long context": "長い文脈",
-  "Look": "見た目",
+  "Look": "ルック",
   "Low power effects": "省電力時のエフェクト",
   "MIXER": "MIXER",
   "Magazine": "マガジン",
@@ -9612,7 +9612,6 @@
   "Nothing red": "Nothing レッド",
   "From wallpaper": "壁紙から",
   "The one colour iRiS uses: something live, something that needs you, an action you can't undo.": "iRiS が使う唯一の色：進行中のもの、あなたを必要とするもの、元に戻せない操作。",
-  "What your apps wear. iRiS itself stays ink, with the signal for what is live.": "アプリがまとう色。iRiS 自体はインクのまま、進行中のものだけにシグナル。",
   "%1 days ago": "%1日前",
   "%1 h ago": "%1時間前",
   "%1 min ago": "%1分前",
@@ -9637,5 +9636,9 @@
   "Middle": "中央",
   "Most visited": "よく開く項目",
   "No output": "出力なし",
-  "Set this wallpaper": "この壁紙にする"
+  "Set this wallpaper": "この壁紙にする",
+  "Apple": "Apple",
+  "Nothing OS": "Nothing OS",
+  "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple は選んだものをアクセントで示します。Nothing は iRiS をインクにし、シグナル色は一つだけ。",
+  "What your apps wear, and what iRiS marks as chosen under the Apple look.": "アプリの色、そして Apple ルックで iRiS が選択を示す色。"
 }

@@ -9612,7 +9612,6 @@
   "Nothing red": "Merah Nothing",
   "From wallpaper": "Dari wallpaper",
   "The one colour iRiS uses: something live, something that needs you, an action you can't undo.": "Satu-satunya warna iRiS: sesuatu yang live, sesuatu yang butuh kamu, aksi yang tak bisa dibatalkan.",
-  "What your apps wear. iRiS itself stays ink, with the signal for what is live.": "Yang dipakai aplikasimu. iRiS sendiri tetap tinta, dengan sinyal untuk yang sedang live.",
   "%1 days ago": "%1 hari lalu",
   "%1 h ago": "%1 jam lalu",
   "%1 min ago": "%1 mnt lalu",
@@ -9637,5 +9636,9 @@
   "Middle": "Tengah",
   "Most visited": "Paling sering dibuka",
   "No output": "Tanpa keluaran",
-  "Set this wallpaper": "Pasang wallpaper ini"
+  "Set this wallpaper": "Pasang wallpaper ini",
+  "Apple": "Apple",
+  "Nothing OS": "Nothing OS",
+  "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple menandai pilihanmu dengan aksenmu. Nothing membuat iRiS bertinta, dengan satu warna sinyal.",
+  "What your apps wear, and what iRiS marks as chosen under the Apple look.": "Warna aplikasimu, dan yang ditandai iRiS sebagai pilihan pada tampilan Apple."
 }

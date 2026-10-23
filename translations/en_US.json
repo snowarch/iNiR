@@ -9612,7 +9612,6 @@
   "Nothing red": "Nothing red",
   "From wallpaper": "From wallpaper",
   "The one colour iRiS uses: something live, something that needs you, an action you can't undo.": "The one colour iRiS uses: something live, something that needs you, an action you can't undo.",
-  "What your apps wear. iRiS itself stays ink, with the signal for what is live.": "What your apps wear. iRiS itself stays ink, with the signal for what is live.",
   "%1 days ago": "%1 days ago",
   "%1 h ago": "%1 h ago",
   "%1 min ago": "%1 min ago",
@@ -9637,5 +9636,9 @@
   "Middle": "Middle",
   "Most visited": "Most visited",
   "No output": "No output",
-  "Set this wallpaper": "Set this wallpaper"
+  "Set this wallpaper": "Set this wallpaper",
+  "Apple": "Apple",
+  "Nothing OS": "Nothing OS",
+  "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.",
+  "What your apps wear, and what iRiS marks as chosen under the Apple look.": "What your apps wear, and what iRiS marks as chosen under the Apple look."
 }

@@ -2453,6 +2453,7 @@
             "icons": { "style": "iris", "plate": "black" },
             "numbersFontFamily": "",
             "signal": "nothing",
+            "look": "apple",
             "density": 1.0,
             "motion": true,
             "motionDuration": 220,

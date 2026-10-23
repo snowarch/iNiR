@@ -9612,7 +9612,6 @@
   "Nothing red": "Nothing kırmızısı",
   "From wallpaper": "Duvar kağıdından",
   "The one colour iRiS uses: something live, something that needs you, an action you can't undo.": "iRiS'in kullandığı tek renk: canlı bir şey, sana ihtiyaç duyan bir şey, geri alınamayan bir eylem.",
-  "What your apps wear. iRiS itself stays ink, with the signal for what is live.": "Uygulamalarının giydiği renk. iRiS mürekkep kalır, canlı olan için sinyalle.",
   "%1 days ago": "%1 gün önce",
   "%1 h ago": "%1 sa önce",
   "%1 min ago": "%1 dk önce",
@@ -9637,5 +9636,9 @@
   "Middle": "Orta",
   "Most visited": "En çok açılanlar",
   "No output": "Çıkış yok",
-  "Set this wallpaper": "Bu duvar kağıdını ayarla"
+  "Set this wallpaper": "Bu duvar kağıdını ayarla",
+  "Apple": "Apple",
+  "Nothing OS": "Nothing OS",
+  "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple seçtiklerini vurgu renginle işaretler. Nothing iRiS'i tek bir sinyal rengiyle mürekkebe çevirir.",
+  "What your apps wear, and what iRiS marks as chosen under the Apple look.": "Uygulamalarının rengi ve Apple görünümünde iRiS'in seçili olarak işaretlediği şey."
 }

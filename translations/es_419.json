@@ -9612,7 +9612,6 @@
   "Nothing red": "Rojo Nothing",
   "From wallpaper": "Del fondo de pantalla",
   "The one colour iRiS uses: something live, something that needs you, an action you can't undo.": "El único color que usa iRiS: algo en vivo, algo que te necesita, una acción que no se puede deshacer.",
-  "What your apps wear. iRiS itself stays ink, with the signal for what is live.": "Lo que usan tus apps. iRiS se queda en tinta, con la señal para lo que está en vivo.",
   "%1 days ago": "hace %1 días",
   "%1 h ago": "hace %1 h",
   "%1 min ago": "hace %1 min",
@@ -9637,5 +9636,9 @@
   "Middle": "Centro",
   "Most visited": "Lo más visitado",
   "No output": "Sin salida",
-  "Set this wallpaper": "Poner este fondo"
+  "Set this wallpaper": "Poner este fondo",
+  "Apple": "Apple",
+  "Nothing OS": "Nothing OS",
+  "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple marca lo que elegís con tu acento. Nothing deja iRiS en tinta, con un solo color de señal.",
+  "What your apps wear, and what iRiS marks as chosen under the Apple look.": "Lo que usan tus apps, y lo que iRiS marca como elegido con el aspecto Apple."
 }

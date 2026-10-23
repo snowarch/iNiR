@@ -4345,7 +4345,7 @@
   "Location": "Vị trí",
   "Logical coordinates in Niri's global space.": "Tọa độ logic trong không gian chung của Niri.",
   "Long context": "Ngữ cảnh dài",
-  "Look": "Nhìn",
+  "Look": "Giao diện",
   "Low power effects": "Hiệu ứng năng lượng thấp",
   "MIXER": "MIXER",
   "Magazine": "Tạp chí",
@@ -9612,7 +9612,6 @@
   "Nothing red": "Đỏ Nothing",
   "From wallpaper": "Từ hình nền",
   "The one colour iRiS uses: something live, something that needs you, an action you can't undo.": "Màu duy nhất iRiS dùng: thứ đang diễn ra, thứ cần bạn, thao tác không thể hoàn tác.",
-  "What your apps wear. iRiS itself stays ink, with the signal for what is live.": "Màu ứng dụng của bạn khoác. iRiS giữ màu mực, với tín hiệu cho thứ đang diễn ra.",
   "%1 days ago": "%1 ngày trước",
   "%1 h ago": "%1 giờ trước",
   "%1 min ago": "%1 phút trước",
@@ -9637,5 +9636,9 @@
   "Middle": "Giữa",
   "Most visited": "Mở nhiều nhất",
   "No output": "Không có đầu ra",
-  "Set this wallpaper": "Đặt hình nền này"
+  "Set this wallpaper": "Đặt hình nền này",
+  "Apple": "Apple",
+  "Nothing OS": "Nothing OS",
+  "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple đánh dấu lựa chọn bằng màu nhấn của bạn. Nothing biến iRiS thành mực, với một màu tín hiệu.",
+  "What your apps wear, and what iRiS marks as chosen under the Apple look.": "Màu ứng dụng của bạn, và thứ iRiS đánh dấu là đã chọn ở giao diện Apple."
 }
