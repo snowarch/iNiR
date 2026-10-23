@@ -377,14 +377,14 @@ Item {
         repeat: true
         onTriggered: {
             let best = null
-            for (let i = Math.max(0, Math.floor(root.pos - root.reach)); i <= Math.min(cards.count - 1, Math.ceil(root.pos + root.reach)); i++) {
+            for (let i = 0; i < cards.count; i++) {
                 const card = cards.itemAt(i)
                 if (card && !card.admitted && card.far < root.reach && (!best || card.far < best.far)) best = card
             }
             if (best) { best.admitted = true; return }
             // then their stages, the heavy part, once the body stands: one a frame as well
             if (!Boolean(root.host?.bodySettled ?? true)) { admit.stop(); return }
-            for (let i = Math.max(0, Math.floor(root.pos - root.reach)); i <= Math.min(cards.count - 1, Math.ceil(root.pos + root.reach)); i++) {
+            for (let i = 0; i < cards.count; i++) {
                 const card = cards.itemAt(i)
                 if (card && card.admitted && !card.staged && (!best || card.far < best.far)) best = card
             }
@@ -392,9 +392,13 @@ Item {
             else admit.stop()
         }
     }
+    // The deck holds the cards within three of where it stands (and where it is going): seven at the open instead of
+    // every area, one more for each card a turn brings near.
+    readonly property int windowFrom: Math.max(0, Math.floor(Math.min(root.pos, root.aim)) - 3)
+    readonly property int windowTo: Math.min(root.sections.length - 1, Math.ceil(Math.max(root.pos, root.aim)) + 3)
     Repeater {
         id: cards
-        model: ScriptModel { values: root.sided ? root.sections : []; objectProp: "id" }
+        model: ScriptModel { values: root.sided ? root.sections.slice(root.windowFrom, root.windowTo + 1) : []; objectProp: "id" }
         AreaCard {}
     }
 
@@ -687,7 +691,7 @@ Item {
     component AreaCard: MouseArea {
         id: side
         required property var modelData
-        required property int index
+        readonly property int index: root.sections.findIndex(entry => entry.id === side.modelData.id)
         readonly property var entry: side.modelData
         readonly property bool home: String(side.entry?.id ?? "") === "home"
         readonly property real o: side.index - root.pos
