@@ -969,7 +969,7 @@ AbstractWidget {
         && root.visible && root.width > 0 && root.height > 0 && root.configEntryName.length > 0
     property var _picture: null
     function _takePicture(): void {
-        if (root._editEngaged || root.isDragging || root._isResizing || root._shelfMoving)
+        if (root._editEngaged || root.isDragging || root._isResizing || root._shelfMoving || !root.Window.window?.visible)
             return
         const w = Math.round(root.width)
         const h = Math.round(root.height)

@@ -11,7 +11,7 @@ import qs.modules.iris.components
 
 // The shelf while arranging the desktop: a body of its own floating over the bottom edge, in the edit window above the
 // chassis (IrisEditDesk). The desktop stays at its true size under it, sharp and live; the shelf rises out of that edge
-// the way a drawer opens and sinks away while a widget is held or sized, so nothing hides under it.
+// the way a drawer opens and sinks away while a widget is chosen, held or sized, so nothing hides under it.
 Item {
     id: root
 
@@ -80,6 +80,7 @@ Item {
     Component.onDestruction: if (!root.present) DesktopEditStage.unpark()
     readonly property bool ducked: (DesktopArrange.phase === "drag" && DesktopArrange.dragOutput === root.outputName
         && DesktopEditStage.carry === null) || Boolean(DesktopEditStage.chosen?.widget?._irisSizing)
+        || (root.selecting && !shelf.searching)
 
     IrisSpring {
         id: presentSpring
