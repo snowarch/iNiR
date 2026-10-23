@@ -1133,6 +1133,21 @@ AbstractWidget {
         id: widgetEditHover
         enabled: GlobalStates.widgetEditMode
     }
+    readonly property bool editHovered: widgetEditHover.hovered
+    readonly property bool quickControlsOpen: editPopoverPanel.open
+    readonly property string quickTab: root._quickTab
+
+    // What the widget wears while arranging, when the family draws it (its part `widgetOutfit`): then the engine's own
+    // toolbar, name and outline step aside and only its sheet of controls stays.
+    readonly property string _outfitPart: FamilyParts.url(FamilyParts.active, "widgetOutfit")
+    readonly property bool _outfitted: GlobalStates.widgetEditMode && root._outfitPart.length > 0
+    Loader {
+        z: 200
+        anchors.fill: parent
+        active: root._outfitted
+        source: root._outfitPart
+        onLoaded: item.widget = root
+    }
 
     onPressed: {
         if (GlobalStates.widgetEditMode) {
@@ -1250,7 +1265,7 @@ AbstractWidget {
         Loader {
             id: toolbarLoader
             anchors.fill: parent
-            active: GlobalStates.widgetEditMode
+            active: GlobalStates.widgetEditMode && !root._outfitted
             sourceComponent: Item {
                 readonly property real naturalWidth: toolbarRow.naturalWidth
                 implicitHeight: toolbarRow.implicitHeight
@@ -1477,7 +1492,7 @@ AbstractWidget {
         readonly property string side: !editNameLabel.toolbarBelow && editNameLabel.roomBelow ? "below"
             : !editNameLabel.toolbarAbove && editNameLabel.roomAbove ? "above" : ""
         z: 200
-        visible: GlobalStates.widgetEditMode && (root.editSelected || widgetEditHover.hovered) && side.length > 0
+        visible: GlobalStates.widgetEditMode && !root._outfitted && (root.editSelected || widgetEditHover.hovered) && side.length > 0
         opacity: root.editSelected ? 1 : 0.78
         x: Math.round((root.width - width) / 2)
         y: editNameLabel.side === "above" ? -height - 6 : root.height + 6
@@ -1540,7 +1555,7 @@ AbstractWidget {
         z: 199
         anchors.fill: parent
         anchors.margins: -4
-        visible: GlobalStates.widgetEditMode && (root.editSelected || widgetEditHover.hovered)
+        visible: GlobalStates.widgetEditMode && !root._outfitted && (root.editSelected || widgetEditHover.hovered)
         color: "transparent"
         radius: root.widgetIris ? Math.round(root.widgetCardRadius * root.scaleFactor) + 4 : Appearance.rounding.small + 4
         border {

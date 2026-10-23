@@ -9651,5 +9651,7 @@
   "No widget is called “%1”": "Немає віджета з назвою «%1»",
   "Decor": "Декор",
   "Screen centre": "Центр екрана",
-  "Edge to edge": "Край до краю"
+  "Edge to edge": "Край до краю",
+  "Put back": "Прибрати",
+  "Size: %1": "Розмір: %1"
 }

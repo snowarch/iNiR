@@ -9651,5 +9651,7 @@
   "No widget is called “%1”": "没有名为“%1”的小组件",
   "Decor": "装饰",
   "Screen centre": "屏幕中心",
-  "Edge to edge": "边缘对齐"
+  "Edge to edge": "边缘对齐",
+  "Put back": "放回",
+  "Size: %1": "大小：%1"
 }

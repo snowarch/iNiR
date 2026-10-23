@@ -51,18 +51,31 @@ Item {
     Shortcut { sequence: "Shift+Down"; enabled: root.nudging; onActivated: GlobalStates.desktopWidgetNudge(0, 10) }
 
     readonly property real fullHeight: shelf.fullHeight
-    readonly property real bodyWidth: Math.max(Math.round(480 * root.d), Math.min(Math.round(1640 * root.d),
+    readonly property real fullWidth: Math.max(Math.round(480 * root.d), Math.min(Math.round(1640 * root.d),
         root.width - 2 * IrisFrame.band - Math.round(128 * root.d)))
-    readonly property real bodyHeight: Math.round(root.fullHeight * Math.max(0, Math.min(1, root.presentation)))
-    readonly property real bodyRadius: Math.min(IrisStyle.radius, root.bodyHeight / 2)
-    readonly property real bodyX: Math.round((root.width - root.bodyWidth) / 2)
+    // The Dock steps aside while arranging and its body opens into the shelf: the shelf starts where the Dock rests on
+    // this edge (its span, its depth, its corner and join) and grows from there, so it is the Dock turned drawer.
+    readonly property var dockRest: DesktopArrange.bodiesOf(root.outputName)
+        .find(b => b.id === "@dock" && b.joins === (root.bottomEdge ? "bottom" : "top")) ?? null
+    readonly property real grow: Math.max(0, Math.min(1, root.presentation))
+    readonly property real dockDepth: !root.dockRest ? 0 : root.bottomEdge
+        ? Math.max(0, root.height - IrisFrame.band - root.dockRest.y)
+        : Math.max(0, root.dockRest.y + root.dockRest.h - IrisFrame.band)
+    function lerp(a: real, b: real): real { return a + (b - a) * root.grow }
+    readonly property real bodyWidth: Math.round(root.dockRest ? root.lerp(root.dockRest.w, root.fullWidth) : root.fullWidth)
+    readonly property real bodyHeight: Math.round(root.dockRest ? root.lerp(Math.min(root.dockDepth, root.fullHeight), root.fullHeight)
+        : root.fullHeight * root.grow)
+    readonly property real bodyRadius: Math.min(root.dockRest ? root.lerp(root.dockRest.radius, IrisStyle.radius) : IrisStyle.radius,
+        root.bodyHeight / 2)
+    readonly property real bodyX: Math.round(root.dockRest
+        ? root.lerp(root.dockRest.x, (root.width - root.fullWidth) / 2) : (root.width - root.bodyWidth) / 2)
     readonly property real bodyY: root.bottomEdge ? root.height - IrisFrame.band - root.bodyHeight : IrisFrame.band
 
     readonly property var hitRect: root.shown
         ? Qt.rect(root.bodyX, root.bodyY, root.bodyWidth, root.bodyHeight) : Qt.rect(0, 0, 0, 0)
     readonly property var fieldShapes: root.shown ? [{
         x: root.bodyX, y: root.bodyY, width: root.bodyWidth, height: root.bodyHeight,
-        radius: root.bodyRadius, fuse: IrisStyle.fuse, paints: true,
+        radius: root.bodyRadius, fuse: root.dockRest ? Math.max(IrisStyle.fuse, root.dockRest.fuse) : IrisStyle.fuse, paints: true,
         id: "widgetbar", joins: IrisFrame.framed ? "frame" : ""
     }] : []
 
@@ -119,7 +132,10 @@ Item {
             outputName: root.outputName
             ghostLayer: root
             bodyRadius: IrisStyle.radius
-            width: drawer.width
+            // Laid out once at its full size and uncovered as the body opens: a width that grows per frame would
+            // reflow every picture on every frame.
+            width: root.fullWidth
+            x: Math.round((root.width - root.fullWidth) / 2) - root.bodyX
             height: shelf.fullHeight
             // The content rides the edge that grows, so it rises out of the frame instead of being uncovered.
             y: root.bottomEdge ? 0 : drawer.height - shelf.fullHeight

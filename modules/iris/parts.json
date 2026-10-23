@@ -21,7 +21,8 @@
   "widgetFace.uptime": "widgets/IrisUptimeFace.qml",
   "widgetFace.vitals": "widgets/IrisVitalsFace.qml",
   "widgetFace.weather": "widgets/IrisWeatherFace.qml",
-  "widgetFace.worldClock": "widgets/IrisWorldClockFace.qml"
+  "widgetFace.worldClock": "widgets/IrisWorldClockFace.qml",
+  "widgetOutfit": "edit/IrisWidgetOutfit.qml"
  },
  "flags": {
   "lockSurfaceSync": true

@@ -1,6 +1,7 @@
 {
  "about": "What Material draws on surfaces several families share. Part name -> file in this folder; anything absent is drawn in Material's look by default.",
  "parts": {
-  "editStage": "edit/MaterialEditStage.qml"
+  "editStage": "edit/MaterialEditStage.qml",
+  "widgetOutfit": "edit/MaterialWidgetOutfit.qml"
  }
 }

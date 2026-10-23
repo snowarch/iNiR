@@ -9651,5 +9651,7 @@
   "No widget is called “%1”": "Aucun widget ne s'appelle « %1 »",
   "Decor": "Déco",
   "Screen centre": "Centre de l’écran",
-  "Edge to edge": "Bord à bord"
+  "Edge to edge": "Bord à bord",
+  "Put back": "Ranger",
+  "Size: %1": "Taille : %1"
 }
