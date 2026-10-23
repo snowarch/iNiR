@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import qs.modules.common.functions
 import qs.modules.iris.style
 
@@ -9,7 +10,9 @@ Item {
 
     property real value: 0
     property bool seekable: true
-    property color fillColor: IrisStyle.text
+    // Apple: a capsule track that thickens under the pointer and a white thumb. Nothing (S4): a row of dots.
+    readonly property bool nothing: IrisStyle.wearsNothing(root)
+    property color fillColor: root.nothing ? IrisStyle.text : IrisStyle.fillStrong
     property color trackColor: IrisStyle.fill
     signal seekRequested(real value)
     signal moved(real value)
@@ -52,9 +55,56 @@ Item {
     property bool showValue: false
     readonly property bool valueShown: root.showValue && root.range !== null && !skin.active
     readonly property real valueRoom: root.valueShown ? Math.ceil(valueLabel.implicitWidth) + Math.round(12 * IrisStyle.density) : 0
+    // Where the value runs, whichever draws it: the pointer maps onto this lane.
+    readonly property real laneStart: root.nothing ? track.start : 0
+    readonly property real laneLength: root.nothing ? track.lane : bar.width
+    Item {
+        id: bar
+        visible: !skin.active && !root.nothing
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        width: root.width - root.valueRoom
+        height: Math.round((root.engaged ? 9 : 4) * IrisStyle.density)
+        Behavior on height { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
+        Rectangle {
+            anchors.fill: parent
+            radius: IrisStyle.capsule(height)
+            color: root.trackColor
+        }
+        Item {
+            width: bar.width * root.shownValue
+            height: bar.height
+            clip: true
+            Rectangle {
+                width: bar.width
+                height: bar.height
+                radius: IrisStyle.capsule(height)
+                color: root.fillColor
+            }
+        }
+    }
+    RectangularShadow {
+        visible: knobFace.visible
+        anchors.fill: knobFace
+        radius: knobFace.radius
+        offset.y: IrisStyle.density
+        blur: 3 * IrisStyle.density
+        color: IrisStyle.shadow
+    }
+    Rectangle {
+        id: knobFace
+        visible: root.knob && !skin.active && !root.nothing
+        width: Math.round((root.engaged ? 20 : 18) * IrisStyle.density)
+        height: width
+        radius: IrisStyle.capsule(width)
+        x: Math.max(0, Math.min(bar.width - width, bar.width * root.shownValue - width / 2))
+        anchors.verticalCenter: parent.verticalCenter
+        color: IrisStyle.onTint
+        Behavior on width { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
+    }
     IrisDotStrip {
         id: track
-        visible: !skin.active
+        visible: !skin.active && root.nothing
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         width: root.width - root.valueRoom
@@ -112,13 +162,13 @@ Item {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        width: track.width
+        width: root.width - root.valueRoom
         anchors.topMargin: -4
         anchors.bottomMargin: -4
         enabled: root.seekable
         hoverEnabled: true
         cursorShape: root.seekable ? Qt.PointingHandCursor : Qt.ArrowCursor
-        function valueAt(px: real): real { return Math.max(0, Math.min(1, (px - track.start) / Math.max(1, track.lane))) }
+        function valueAt(px: real): real { return Math.max(0, Math.min(1, (px - root.laneStart) / Math.max(1, root.laneLength))) }
         onPressed: mouse => { root.forceActiveFocus(); root.dragValue = valueAt(mouse.x); root.moved(root.dragValue) }
         onPositionChanged: mouse => { wheelIntent.track(mouse.x, mouse.y); if (pressed) { root.dragValue = valueAt(mouse.x); root.moved(root.dragValue) } }
         onReleased: {

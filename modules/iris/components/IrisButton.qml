@@ -26,9 +26,12 @@ RippleButton {
             : root.emphasized ? IrisStyle.inkOnAccentFill : root.selected ? IrisStyle.selectionLabel
             : root.danger ? IrisStyle.danger : IrisStyle.text)
         : root.danger && root.emphasized ? IrisStyle.inkOnDanger
-        : root.emphasized ? IrisStyle.inkOnAccent
+        : root.emphasized ? (root.nothing || !IrisStyle.mono ? IrisStyle.inkOnAccent : IrisStyle.appleInkOnAccentFill)
         : root.danger ? IrisStyle.danger
-        : root.selected ? IrisStyle.selectionLabel : IrisStyle.text
+        : root.selected ? (root.nothing ? IrisStyle.selectionLabel : IrisStyle.appleAccent) : IrisStyle.text
+    // Apple: a rounded plate, the accent on what is chosen. Nothing (S4): a capsule, primary inverted, destructive
+    // the signal as text.
+    readonly property bool nothing: IrisStyle.wearsNothing(root)
 
     implicitWidth: Math.max(34 * IrisStyle.density,
         root.text.length > 0 ? label.implicitWidth + 22 * IrisStyle.density : 34 * IrisStyle.density)
@@ -37,9 +40,8 @@ RippleButton {
     Layout.minimumHeight: root.text.length > 0 ? label.implicitHeight + 10 * IrisStyle.density : 0
 
     toggled: root.selected
-    // Signal (DESIGN.md S4): a capsule. Primary is inverted, secondary a raised fill, destructive the signal as text.
-    buttonRadius: IrisStyle.capsule(root.height)
-    buttonRadiusPressed: IrisStyle.capsule(root.height)
+    buttonRadius: root.nothing ? IrisStyle.capsule(root.height) : IrisStyle.radiusSmall
+    buttonRadiusPressed: root.nothing ? IrisStyle.capsule(root.height) : Math.max(3, IrisStyle.radiusSmall - 2)
     rippleEnabled: false
     rippleDuration: IrisStyle.duration(420)
     stateTransitionsEnabled: IrisStyle.motionEnabled
@@ -48,19 +50,19 @@ RippleButton {
     cookieMorphing: false
 
     colBackground: root.skinned ? "transparent" : root.danger && root.emphasized ? IrisStyle.danger
-        : root.emphasized ? IrisStyle.accent
+        : root.emphasized ? (root.nothing ? IrisStyle.accent : IrisStyle.appleAccent)
         : root.quiet ? ColorUtils.applyAlpha(IrisStyle.surfaceHigh, 0)
         : IrisStyle.controlPlated ? IrisStyle.plateFillFor(IrisStyle.controlPlate)
-        : IrisStyle.fill
+        : root.nothing ? IrisStyle.fill : IrisStyle.surfaceHigh
     colBackgroundHover: root.skinned ? "transparent" : root.danger && root.emphasized
         ? ColorUtils.mix(IrisStyle.danger, IrisStyle.inkOnDanger, 0.90)
         : root.danger
             ? IrisStyle.tintFill(IrisStyle.danger)
         : root.emphasized
-            ? IrisStyle.accentHover
-            : IrisStyle.fillHover
-    colBackgroundToggled: root.skinned ? "transparent" : IrisStyle.selectionFill
-    colBackgroundToggledHover: root.skinned ? "transparent" : IrisStyle.invertSelection ? IrisStyle.accentHover : IrisStyle.tintFillHover(IrisStyle.accent)
+            ? (root.nothing || !IrisStyle.mono ? IrisStyle.accentHover : ColorUtils.mix(IrisStyle.appleAccent, IrisStyle.appleInkOnAccentFill, 0.9))
+            : root.nothing || root.quiet ? IrisStyle.fillHover : IrisStyle.surfaceHighest
+    colBackgroundToggled: root.skinned ? "transparent" : root.nothing ? IrisStyle.selectionFill : IrisStyle.tintFill(IrisStyle.appleAccent)
+    colBackgroundToggledHover: root.skinned ? "transparent" : root.nothing ? (IrisStyle.invertSelection ? IrisStyle.accentHover : IrisStyle.tintFillHover(IrisStyle.accent)) : IrisStyle.tintFillHover(IrisStyle.appleAccent)
     colRipple: root.skinned ? "transparent" : IrisStyle.tintFill((root.danger ? IrisStyle.danger : IrisStyle.accent))
     colRippleToggled: root.skinned ? "transparent" : IrisStyle.tintFill(IrisStyle.accent)
     // A skinned button draws nothing of its own, whatever colours a caller handed it (they were for iRiS's anatomy).

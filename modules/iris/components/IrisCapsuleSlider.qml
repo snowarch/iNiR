@@ -13,7 +13,10 @@ Item {
     property string icon: "volume_up"
     property bool muted: false
     property bool vertical: false
-    property color fillColor: IrisStyle.text
+    // Apple: the fill rises from the foot as on a phone's Control Center, its number only while held or hovered.
+    // Nothing (S4): a run of dots past the glyph's pocket with a larger dot for the knob.
+    readonly property bool nothing: IrisStyle.wearsNothing(root)
+    property color fillColor: root.nothing ? IrisStyle.text : IrisStyle.fillStrong
     property bool readout: false
     // The level's name, for a Design that sets it in words beside the level (AIRISU's rule).
     property string label: ""
@@ -47,10 +50,31 @@ Item {
         Behavior on scale { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
 
         Readout { ink: IrisStyle.textSecondary }
-        // Signal (DESIGN.md S4): the level is a run of dots past the glyph's pocket, filled to the value, the knob a
-        // larger dot; muted, the dots go quiet but keep the level.
+        Item {
+            id: fillClip
+            visible: !root.nothing
+            property real length: root.span * root.shownValue
+            Behavior on length {
+                enabled: root.dragValue < 0
+                NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing }
+            }
+            y: root.vertical ? track.height - fillClip.length : 0
+            width: root.vertical ? track.width : fillClip.length
+            height: root.vertical ? fillClip.length : track.height
+            clip: true
+            Rectangle {
+                y: -fillClip.y
+                width: track.width
+                height: track.height
+                radius: root.corner
+                color: root.muted ? IrisStyle.textTertiary : root.fillColor
+                Readout { ink: IrisStyle.surface }
+            }
+        }
+        // Muted, the dots go quiet but keep the level.
         IrisDotStrip {
             id: dots
+            visible: root.nothing
             readonly property real inset: Math.round(14 * IrisStyle.density)
             readonly property real readoutRoom: root.readout && !root.vertical ? Math.round(30 * IrisStyle.density) : 0
             vertical: root.vertical
@@ -72,7 +96,9 @@ Item {
             text: root.icon
             fill: 1
             iconSize: Math.round((root.vertical ? 19 : 20) * IrisStyle.density)
-            color: root.muted ? IrisStyle.textTertiary : IrisStyle.text
+            readonly property bool overFill: !root.nothing && !root.muted && fillClip.length >= root.pocket * 0.72
+            color: overFill ? IrisStyle.surface : root.muted ? IrisStyle.textTertiary : IrisStyle.text
+            Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
         }
     }
 
@@ -123,7 +149,7 @@ Item {
     component Readout: IrisText {
         property color ink: IrisStyle.text
         readonly property real inset: Math.round(14 * IrisStyle.density)
-        visible: root.readout
+        visible: root.readout && (root.nothing || pointer.containsMouse || root.dragValue >= 0)
         x: root.vertical ? (track.width - width) / 2 : track.width - width - inset
         y: root.vertical ? inset : (track.height - height) / 2
         text: Math.round(root.shownValue * 100)

@@ -23,7 +23,7 @@ Item {
         seekable: root.enabled
         knob: true
         value: root.value
-        fillColor: IrisStyle.text
+        fillColor: scrubber.nothing ? IrisStyle.text : IrisStyle.appleAccent
         onMoved: next => root.moved(next)
     }
     HoverHandler { id: hover; enabled: skin.active }

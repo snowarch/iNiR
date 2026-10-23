@@ -15,13 +15,18 @@ StyledText {
     // A Value's ink. Quiet by default: a value is read after its name, it does not shout. Signal only when it needs you.
     property color tone: IrisStyle.subtext
 
-    readonly property bool labelVoice: role === IrisText.Eyebrow || role === IrisText.Group || role === IrisText.Value
+    readonly property bool labelRole: role === IrisText.Eyebrow || role === IrisText.Group || role === IrisText.Value
         || role === IrisText.Label
-    readonly property bool dotVoice: role === IrisText.Metric || role === IrisText.Dot
+    readonly property bool dotRole: role === IrisText.Metric || role === IrisText.Dot
+    // Mono caps and the Dot face are Nothing's; under Apple a label reads in Geist and a figure in bold tabular.
+    readonly property bool nothing: (root.labelRole || root.dotRole) && IrisStyle.wearsNothing(root)
+    readonly property bool labelVoice: root.labelRole && root.nothing
+    readonly property bool dotVoice: root.dotRole && root.nothing
     readonly property int voiceSize: role === IrisText.Meta || role === IrisText.Detail ? IrisStyle.typeMeta
         : role === IrisText.Name || role === IrisText.Body ? IrisStyle.typeBody
         : role === IrisText.Group ? IrisStyle.typeCaption
         : root.labelVoice ? IrisStyle.typeLabelMono
+        : root.labelRole ? IrisStyle.typeMeta
         : role === IrisText.Title ? IrisStyle.typeTitle
         : role === IrisText.Display ? IrisStyle.typeTitleL
         : role === IrisText.Dot ? IrisStyle.typeDotM
@@ -32,17 +37,19 @@ StyledText {
         : role === IrisText.Value ? root.tone : IrisStyle.text
     defaultFont: root.labelVoice ? IrisStyle.fontLabel
         : root.dotVoice ? IrisStyle.fontDot
+        : root.dotRole ? IrisStyle.fontNumbers
         : role === IrisText.Title || role === IrisText.Display ? IrisStyle.fontTitle
         : IrisStyle.fontRead
     font.family: defaultFont
     font.pixelSize: root.voiceSize
     font.weight: root.dotVoice ? Font.Normal
-        : root.labelVoice ? IrisStyle.weight(Font.Medium)
+        : root.labelVoice || root.labelRole ? IrisStyle.weight(Font.Medium)
+        : root.dotRole ? IrisStyle.figureWeight
         : IrisStyle.weight(role === IrisText.Title || role === IrisText.Display ? Font.DemiBold
             : role === IrisText.Name ? Font.Medium : Font.Normal)
     font.capitalization: root.labelVoice ? Font.AllUppercase : Font.MixedCase
     // Figures in a column want one width each.
-    font.features: role === IrisText.Value || root.dotVoice ? ({ "tnum": 1 }) : ({})
+    font.features: role === IrisText.Value || root.dotRole ? ({ "tnum": 1 }) : ({})
     font.letterSpacing: root.labelVoice ? IrisStyle.labelTracking(root.voiceSize)
         : root.dotVoice ? IrisStyle.dotTracking(root.voiceSize)
         : IrisStyle.tracking(root.voiceSize)

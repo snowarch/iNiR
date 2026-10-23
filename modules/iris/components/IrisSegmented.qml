@@ -22,6 +22,8 @@ Rectangle {
     property var fontFor: null
     property string voice: ""
     readonly property real d: IrisStyle.density
+    // Apple lifts the chosen segment as a raised thumb with the accent on its word; Nothing inverts it (S4).
+    readonly property bool nothing: IrisStyle.wearsNothing(root)
     readonly property int inset: 2
     readonly property int count: Math.max(1, root.options.length)
     readonly property int selectedIndex: root.options.findIndex(option => option.value === root.current)
@@ -95,7 +97,15 @@ Rectangle {
     // How chosen a segment reads (0..1) while the thumb travels: its word inverts as the capsule passes under it.
     function chosenness(index: int): real { return root.selectedIndex < 0 ? 0 : Math.max(0, 1 - Math.abs(root.thumbAt - index)) }
     function inkFor(index: int): color {
-        return ColorUtils.mix(IrisStyle.selectionLabel, IrisStyle.subtext, root.chosenness(index))
+        return ColorUtils.mix(root.nothing ? IrisStyle.selectionLabel : IrisStyle.appleAccent, IrisStyle.subtext, root.chosenness(index))
+    }
+    RectangularShadow {
+        visible: thumb.visible && !root.nothing
+        anchors.fill: thumb
+        radius: thumb.radius
+        offset.y: root.d
+        blur: 3 * root.d
+        color: IrisStyle.shadow
     }
     Rectangle {
         id: thumb
@@ -105,7 +115,7 @@ Rectangle {
         x: Math.round(root.edgeAt(root.thumbAt))
         width: Math.round(root.edgeAt(root.thumbAt + 1)) - x
         radius: root.thumbRadius
-        color: IrisStyle.selectionFill
+        color: root.nothing ? IrisStyle.selectionFill : IrisStyle.raised
     }
 
     Repeater {
@@ -143,7 +153,7 @@ Rectangle {
                 // Under a skin the hover and the focus are the skin's to draw.
                 color: !segment.selected && segment.containsMouse && !root.skinned ? IrisStyle.fillQuiet : "transparent"
                 border.width: segment.activeFocus && !root.skinned ? 1 : 0
-                border.color: IrisStyle.text
+                border.color: root.nothing ? IrisStyle.text : IrisStyle.appleAccent
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
             }
             MaterialSymbol {

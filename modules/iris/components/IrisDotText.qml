@@ -9,7 +9,9 @@ Item {
     property string text: ""
     property int pixelSize: IrisStyle.typeDotM
     property color color: IrisStyle.text
-    property string family: IrisStyle.fontDot
+    // Apple sets the figure in the numbers face, bold; the Dot face is Nothing's. Both roll per digit.
+    readonly property bool nothing: IrisStyle.wearsNothing(root)
+    property string family: root.nothing ? IrisStyle.fontDot : IrisStyle.fontNumbers
     property int horizontalAlignment: Text.AlignLeft
     property bool roll: IrisStyle.motionEnabled && root.visible
     // -1 rolls down, 1 up, 0 decides from the value (a bigger number rolls up).
@@ -78,7 +80,8 @@ Item {
                     color: root.color
                     font.family: root.family
                     font.pixelSize: probe.font.pixelSize
-                    font.letterSpacing: IrisStyle.dotTracking(probe.font.pixelSize)
+                    font.letterSpacing: root.nothing ? IrisStyle.dotTracking(probe.font.pixelSize) : 0
+                    font.weight: root.nothing ? Font.Normal : IrisStyle.figureWeight
                     font.features: ({ "tnum": 1 })
                     renderType: Text.NativeRendering
                 }
@@ -92,7 +95,8 @@ Item {
                     color: root.color
                     font.family: root.family
                     font.pixelSize: probe.font.pixelSize
-                    font.letterSpacing: IrisStyle.dotTracking(probe.font.pixelSize)
+                    font.letterSpacing: root.nothing ? IrisStyle.dotTracking(probe.font.pixelSize) : 0
+                    font.weight: root.nothing ? Font.Normal : IrisStyle.figureWeight
                     font.features: ({ "tnum": 1 })
                 }
             }
