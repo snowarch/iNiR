@@ -253,12 +253,35 @@ IrisWidgetFace {
                 onActivated: root.copyAll()
             }
             Key {
-                visible: root.widget.canUseAccent
-                glyph: root.widget.accentBefore ? "undo" : "format_paint"
-                label: root.widget.accentBefore ? Translation.tr("Undo") : Translation.tr("Use as accent")
-                on: root.widget.accentBefore !== null
-                onActivated: root.widget.accentBefore ? root.widget.undoAccent() : root.widget.useAsAccent(root.colours[root.chosen])
+                visible: root.canUseAccent
+                glyph: root.accentBefore ? "undo" : "format_paint"
+                label: root.accentBefore ? Translation.tr("Undo") : Translation.tr("Use as accent")
+                on: root.accentBefore !== null
+                onActivated: root.accentBefore ? root.undoAccent() : root.useAsAccent(root.colours[root.chosen])
             }
         }
     }
+
+    // The accent it replaced, held only while the undo key shows. iRiS's own keys: the face writes them, never the
+    // shared widget under it.
+    property var accentBefore: null
+    readonly property bool canUseAccent: (Config.options?.panelFamily ?? "ii") === "iris"
+        && !(String(ThemeService.currentTheme ?? "auto") !== "auto"
+            && Boolean(Config.options?.iris?.appearance?.followTheme ?? true))
+    function useAsAccent(value: string): void {
+        const c = Qt.color(value)
+        const appearance = Config.options?.iris?.appearance
+        root.accentBefore = { accent: String(appearance?.accent ?? "blue"), hue: Number(appearance?.theme?.accentHue ?? 212) }
+        Config.setNestedValues({ "iris.appearance.accent": "custom",
+            "iris.appearance.theme.accentHue": Math.round((c.hslHue < 0 ? 0 : c.hslHue) * 360) })
+        accentUndo.restart()
+    }
+    function undoAccent(): void {
+        if (!root.accentBefore) return
+        Config.setNestedValues({ "iris.appearance.accent": root.accentBefore.accent,
+            "iris.appearance.theme.accentHue": root.accentBefore.hue })
+        root.accentBefore = null
+        accentUndo.stop()
+    }
+    Timer { id: accentUndo; interval: 8000; onTriggered: root.accentBefore = null }
 }
