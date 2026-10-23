@@ -364,13 +364,13 @@ Item {
         function onAppIdentityRulesChanged() { root.rebuildDockItems() }
     }
     Component.onCompleted: {
-        CompositorService.acquireSortingConsumer()
+        CompositorService.acquireSortingConsumer(root)
         _sortingConsumerAcquired = true
         rebuildDockItems()
     }
     Component.onDestruction: {
         if (_sortingConsumerAcquired)
-            CompositorService.releaseSortingConsumer()
+            CompositorService.releaseSortingConsumer(root)
     }
 
     // ─── Hover preview state ────────────────────────────────────────

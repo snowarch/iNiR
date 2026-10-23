@@ -13,7 +13,11 @@ Singleton {
 
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
 
-    property int subscribers: 0
+    // Who holds it, not how many: across a reload the old holder's release reached the new instance and dropped the
+    // new holder's claim (ResourceUsage froze every reading that way).
+    property var _holders: []
+    property int _anonymousHolders: 0
+    readonly property int subscribers: root._holders.length + root._anonymousHolders
     readonly property bool active: root.subscribers > 0
 
     property var lyricsLines: []
@@ -33,12 +37,18 @@ Singleton {
     property string _runningRequestId: ""
     property string _runningTrackKey: ""
 
-    function subscribe(): void {
-        root.subscribers++;
+    function subscribe(holder: var): void {
+        if (!holder)
+            root._anonymousHolders++;
+        else if (!root._holders.includes(holder))
+            root._holders = root._holders.concat([holder]);
     }
 
-    function unsubscribe(): void {
-        root.subscribers = Math.max(0, root.subscribers - 1);
+    function unsubscribe(holder: var): void {
+        if (!holder)
+            root._anonymousHolders = Math.max(0, root._anonymousHolders - 1);
+        else
+            root._holders = root._holders.filter(other => other !== holder);
     }
 
     function buildSlots(idx: int): var {

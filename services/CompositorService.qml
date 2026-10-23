@@ -19,7 +19,11 @@ Singleton {
 
     property var _sortingConsumers: ({})
     property int _sortingConsumersCount: 0
-    property int _sortingLeaseCount: 0
+    // Who holds it, not how many: across a reload the old holder's release reached the new instance and dropped the
+    // new holder's claim (ResourceUsage froze every reading that way).
+    property var _sortingHolders: []
+    property int _anonymousSortingHolders: 0
+    readonly property int _sortingLeaseCount: root._sortingHolders.length + root._anonymousSortingHolders
     readonly property bool sortingActive:
         root._sortingConsumersCount + root._sortingLeaseCount > 0
 
@@ -83,17 +87,17 @@ Singleton {
         root._handleSortingDemandChanged(wasActive)
     }
 
-    function acquireSortingConsumer(): void {
+    function acquireSortingConsumer(holder: var): void {
         const wasActive = root.sortingActive
-        root._sortingLeaseCount++
+        if (!holder) root._anonymousSortingHolders++
+        else if (!root._sortingHolders.includes(holder)) root._sortingHolders = root._sortingHolders.concat([holder])
         root._handleSortingDemandChanged(wasActive)
     }
 
-    function releaseSortingConsumer(): void {
-        if (root._sortingLeaseCount <= 0)
-            return
+    function releaseSortingConsumer(holder: var): void {
         const wasActive = root.sortingActive
-        root._sortingLeaseCount--
+        if (!holder) root._anonymousSortingHolders = Math.max(0, root._anonymousSortingHolders - 1)
+        else root._sortingHolders = root._sortingHolders.filter(other => other !== holder)
         root._handleSortingDemandChanged(wasActive)
     }
 

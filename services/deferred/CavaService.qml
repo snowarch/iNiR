@@ -25,7 +25,9 @@ Singleton {
 
     property int _legacySubscribers: 0
     property var _sampleRequests: []
-    property int _nextSampleRequestId: 1
+    // Ids start somewhere new per instance: across a reload the old consumer's release carried id 1 and dropped
+    // the new consumer's id 1, and the visualiser froze.
+    property int _nextSampleRequestId: 1 + Math.floor(Math.random() * 1000000000)
     property bool _suppressConfigRestart: false
     property int _generationBars: 0
     property int _processBars: 0

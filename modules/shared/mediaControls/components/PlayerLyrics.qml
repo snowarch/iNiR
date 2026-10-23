@@ -35,9 +35,9 @@ Item {
 
         root._subscribed = shouldSubscribe;
         if (shouldSubscribe)
-            LyricsService.subscribe();
+            LyricsService.subscribe(root);
         else
-            LyricsService.unsubscribe();
+            LyricsService.unsubscribe(root);
     }
 
     onVisibleChanged: root.syncSubscription()
@@ -45,7 +45,7 @@ Item {
     Component.onDestruction: {
         if (root._subscribed) {
             root._subscribed = false;
-            LyricsService.unsubscribe();
+            LyricsService.unsubscribe(root);
         }
     }
 

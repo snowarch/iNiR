@@ -19,7 +19,11 @@ import qs.services
 Singleton {
     id: root
 
-    property int _consumers: 0
+    // Who holds it, not how many: across a reload the old holder's release reached the new instance and dropped the
+    // new holder's claim (ResourceUsage froze every reading that way).
+    property var _holders: []
+    property int _anonymousHolders: 0
+    readonly property int _consumers: root._holders.length + root._anonymousHolders
     property bool mangoHudInstalled: false
 
     property bool gameDetected: false
@@ -198,19 +202,22 @@ Singleton {
             ? system : mango
     }
 
-    function acquire(): void {
-        root._consumers++
-        if (root._consumers !== 1) return
+    function acquire(holder: var): void {
+        const before = root._consumers
+        if (!holder) root._anonymousHolders++
+        else if (!root._holders.includes(holder)) root._holders = root._holders.concat([holder])
+        if (before !== 0 || root._consumers !== 1) return
         if (!rigInfoProcess.running) rigInfoProcess.running = true
         if (!root.mangoHudInstalled && !mangoHudProbe.running)
             mangoHudProbe.running = true
         root._refreshTarget()
     }
 
-    function release(): void {
-        if (root._consumers <= 0) return
-        root._consumers--
-        if (root._consumers !== 0) return
+    function release(holder: var): void {
+        const before = root._consumers
+        if (!holder) root._anonymousHolders = Math.max(0, root._anonymousHolders - 1)
+        else root._holders = root._holders.filter(other => other !== holder)
+        if (before === 0 || root._consumers !== 0) return
         if (telemetryProcess.running) telemetryProcess.running = false
         telemetryRestartTimer.stop()
         root._resetTelemetry()

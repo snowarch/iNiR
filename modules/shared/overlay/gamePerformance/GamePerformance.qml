@@ -60,10 +60,10 @@ StyledOverlayWidget {
         const shouldHold = root.visible
         if (shouldHold && !root._holdingTelemetry) {
             root._holdingTelemetry = true
-            GamePerformanceService.acquire()
+            GamePerformanceService.acquire(root)
         } else if (!shouldHold && root._holdingTelemetry) {
             root._holdingTelemetry = false
-            GamePerformanceService.release()
+            GamePerformanceService.release(root)
         }
     }
 
@@ -226,7 +226,7 @@ StyledOverlayWidget {
     onVisibleChanged: root.syncTelemetry()
     Component.onDestruction: if (root._holdingTelemetry) {
         root._holdingTelemetry = false
-        GamePerformanceService.release()
+        GamePerformanceService.release(root)
     }
 
     Connections {

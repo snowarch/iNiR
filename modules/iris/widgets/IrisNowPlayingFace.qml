@@ -39,8 +39,8 @@ IrisWidgetFace {
         : root.artLight
     padding: (root.small && root.art.length > 0 && !root.resting) || root.coverLarge ? 0 : root.edgePad
 
-    onLyricsWantedChanged: root.lyricsWanted ? LyricsService.subscribe() : LyricsService.unsubscribe()
-    Component.onDestruction: if (root.lyricsWanted) LyricsService.unsubscribe()
+    onLyricsWantedChanged: root.lyricsWanted ? LyricsService.subscribe(root) : LyricsService.unsubscribe(root)
+    Component.onDestruction: if (root.lyricsWanted) LyricsService.unsubscribe(root)
 
     Timer {
         id: restDelay

@@ -681,12 +681,12 @@ Item {
 
     function syncSortingDemand(): void {
         if (root.enabled && !_sortingConsumerAcquired) {
-            CompositorService.acquireSortingConsumer()
+            CompositorService.acquireSortingConsumer(root)
             _sortingConsumerAcquired = true
             rebuildDockItems()
         } else if (!root.enabled && _sortingConsumerAcquired) {
             rebuildTimer.stop()
-            CompositorService.releaseSortingConsumer()
+            CompositorService.releaseSortingConsumer(root)
             _sortingConsumerAcquired = false
         }
     }
@@ -695,7 +695,7 @@ Item {
     Component.onCompleted: syncSortingDemand()
     Component.onDestruction: {
         if (_sortingConsumerAcquired)
-            CompositorService.releaseSortingConsumer()
+            CompositorService.releaseSortingConsumer(root)
     }
 
     StyledListView {
