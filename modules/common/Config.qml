@@ -2083,6 +2083,16 @@ Singleton {
                         property real y: 240
                     }
 
+                    property JsonObject palette: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property int widgetScale: 100
+                        property real cornerRadius: -1
+                        property real x: 120
+                        property real y: 600
+                    }
+
                     property JsonObject shape: JsonObject {
                         property bool enable: false
                         property string treatment: "flat"

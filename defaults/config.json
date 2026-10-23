@@ -964,6 +964,15 @@
                 "x": 120,
                 "y": 240
             },
+            "palette": {
+                "enable": false,
+                "locked": false,
+                "placementStrategy": "free",
+                "widgetScale": 100,
+                "cornerRadius": -1,
+                "x": 120,
+                "y": 600
+            },
             "newsTicker": {
                 "enable": false,
                 "locked": false,

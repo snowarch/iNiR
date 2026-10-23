@@ -16,6 +16,7 @@
   "widgetFace.nowPlaying": "widgets/IrisNowPlayingFace.qml",
   "widgetFace.profile": "widgets/IrisProfileFace.qml",
   "widgetFace.screenTime": "widgets/IrisScreenTimeFace.qml",
+  "widgetFace.palette": "widgets/IrisPaletteFace.qml",
   "widgetFace.timer": "widgets/IrisTimerFace.qml",
   "widgetFace.todo": "widgets/IrisTodoFace.qml",
   "widgetFace.uptime": "widgets/IrisUptimeFace.qml",

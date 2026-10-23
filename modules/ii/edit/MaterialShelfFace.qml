@@ -38,7 +38,7 @@ QtObject {
     readonly property var names: ({ clock: Translation.tr("Clock"), weather: Translation.tr("Weather"),
         mediaControls: Translation.tr("Now Playing"), controls: Translation.tr("Controls"), monthCalendar: Translation.tr("Calendar"),
         calendarUpcoming: Translation.tr("Up next"), todo: Translation.tr("Tasks"), notes: Translation.tr("Notes"),
-        timers: Translation.tr("Timers"), screenTime: Translation.tr("Screen Time"), systemMonitor: Translation.tr("Vitals"),
+        timers: Translation.tr("Timers"), screenTime: Translation.tr("Screen Time"), palette: Translation.tr("Palette"), systemMonitor: Translation.tr("Vitals"),
         battery: Translation.tr("Batteries"), worldClock: Translation.tr("World clock"), dayProgress: Translation.tr("Day"),
         dateBadge: Translation.tr("Date"), userCard: Translation.tr("Profile"), uptime: Translation.tr("Uptime"),
         newsTicker: Translation.tr("News"), visualizer: Translation.tr("Visualizer"), editorial: Translation.tr("Editorial"),

@@ -23,7 +23,7 @@ QtObject {
     // Widgets that have an iRiS face (`irisFace`), and the ones on by default.
     readonly property var faced: ["clock", "weather", "battery", "monthCalendar", "calendarUpcoming", "controls", "dateBadge",
         "dayProgress", "newsTicker", "notes", "mediaControls", "userCard", "screenTime", "timers", "todo", "uptime",
-        "systemMonitor", "worldClock"]
+        "systemMonitor", "worldClock", "palette"]
     readonly property var onByDefault: ["clock"]
 
     function value(widget: string, key: string, fallback: var): var {
@@ -67,7 +67,7 @@ QtObject {
         battery: "Battery", notes: "Notes", todo: "Todo", userCard: "User card", newsTicker: "News",
         customImage: "Custom image", imageConverter: "Image converter", shape: "Decorative shape",
         japaneseTypography: "Japanese Typography", editorial: "Editorial", mascot: "Mascot", controls: "Controls",
-        screenTime: "Screen time"
+        screenTime: "Screen time", palette: "Palette"
     })
     // Clusters of the section's column, in the order people look for them.
     readonly property var clusters: [
@@ -75,7 +75,7 @@ QtObject {
         { caption: "Time", groups: ["Clock", "World clock", "Month Calendar", "Upcoming Events", "Date badge", "Day progress", "Timers", "System uptime"] },
         { caption: "Music", groups: ["Media Controls", "Visualizer"] },
         { caption: "System", groups: ["System Monitor", "Battery", "Controls", "Screen time", "Weather", "News"] },
-        { caption: "Yours", groups: ["Notes", "Todo", "User card", "Custom image", "Image converter"] },
+        { caption: "Yours", groups: ["Notes", "Todo", "User card", "Palette", "Custom image", "Image converter"] },
         { caption: "Art", groups: ["Decorative shape", "Japanese Typography", "Editorial", "Mascot"] }
     ]
     readonly property var order: root.clusters.reduce((all, cluster) => all.concat(cluster.groups), [])
@@ -390,6 +390,10 @@ QtObject {
         ...root.opening("screenTime"),
         root.size("screenTime", ["small", "medium", "large"]),
         ...root.closing("screenTime", false),
+        ...root.opening("palette"),
+        root.size("palette", ["small", "medium", "large"]),
+        root.row("palette", "iris.source", "Colours from", "choice", "wallpaper", { choices: root.choices([["wallpaper", "Wallpaper"], ["music", "Music"], ["random", "Random"]]) }),
+        ...root.closing("palette", false),
 
         // ── Weather ──
         ...root.opening("weather"),

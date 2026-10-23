@@ -9672,5 +9672,7 @@
   "The next seven days are free": "これから7日間は予定がありません",
   "Listening": "リスニング",
   "Move, size and dress every widget on the desktop itself; the shelf has these same options.": "デスクトップ上でウィジェットを移動・サイズ変更・着せ替えできます。シェルフにも同じ設定があります。",
-  "Ready-made desktops (Glance, Dashboard, Focus, Listening, Bare) and the ones you saved: wear one, Undo takes it back.": "用意されたデスクトップと保存したもの：適用でき、元に戻すで取り消せます。"
+  "Ready-made desktops (Glance, Dashboard, Focus, Listening, Bare) and the ones you saved: wear one, Undo takes it back.": "用意されたデスクトップと保存したもの：適用でき、元に戻すで取り消せます。",
+  "Colours from": "色の取得元",
+  "Use as accent": "アクセントにする"
 }
