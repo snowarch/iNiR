@@ -345,8 +345,8 @@ Item {
                             readonly property bool folds: group.tuned.length >= 2 && group.tuned.length < group.modelData.rows.length
                             readonly property var shown: group.folds && !group.open ? group.modelData.rows.filter(spec => !group.tuned.includes(spec)) : group.modelData.rows
                             readonly property int units: group.shown.reduce((sum, spec) => sum + root.unitsOf(root.shape(spec)), group.folds ? 1 : 0)
-                            readonly property bool short: group.units <= 3 && !group.shown.some(spec => root.shape(spec) === "row")
-                            width: group.short ? boardColumn.span(group.units) : boardColumn.width
+                            readonly property bool brief: group.units <= 3 && !group.shown.some(spec => root.shape(spec) === "row")
+                            width: group.brief ? boardColumn.span(group.units) : boardColumn.width
                             spacing: root.gap
                             bottomPadding: root.u(8)
                             Mono {

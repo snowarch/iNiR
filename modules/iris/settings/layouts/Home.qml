@@ -185,7 +185,7 @@ Item {
                                             fillMode: Image.PreserveAspectCrop
                                             asynchronous: true
                                             opacity: status === Image.Ready ? 1 : 0
-                                            Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(160) } }
+                                            Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
                                         }
                                         Rectangle {
                                             anchors.fill: parent
@@ -622,7 +622,7 @@ Item {
                                     visible: !IrisStyle.fieldChamfer
                                     radius: IrisStyle.radiusTile
                                     color: place.containsMouse ? IrisStyle.fillHover : IrisStyle.fill
-                                    Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration } }
+                                    Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
                                 }
                                 MaterialSymbol { x: root.u(12); y: root.u(12); text: String(place.modelData.icon ?? "settings"); iconSize: root.u(18); color: IrisStyle.text }
                                 Rectangle { visible: place.noted > 0; x: parent.width - width - root.u(12); y: root.u(14); width: root.u(6); height: width; radius: width / 2; color: root.signal }
@@ -798,16 +798,16 @@ Item {
                     strokeWidth: -1
                     fillGradient: ConicalGradient {
                         centerX: root.u(9); centerY: root.u(9)
-                        GradientStop { position: 0; color: "#ff4fa3" }
-                        GradientStop { position: 0.25; color: "#ff8a00" }
-                        GradientStop { position: 0.5; color: "#36c46b" }
-                        GradientStop { position: 0.75; color: "#2f7bf6" }
-                        GradientStop { position: 1; color: "#ff4fa3" }
+                        GradientStop { position: 0; color: "#ff4fa3" } // iris-literal: the custom colour key shows every hue
+                        GradientStop { position: 0.25; color: "#ff8a00" } // iris-literal: the custom colour key shows every hue
+                        GradientStop { position: 0.5; color: "#36c46b" } // iris-literal: the custom colour key shows every hue
+                        GradientStop { position: 0.75; color: "#2f7bf6" } // iris-literal: the custom colour key shows every hue
+                        GradientStop { position: 1; color: "#ff4fa3" } // iris-literal: the custom colour key shows every hue
                     }
                     PathAngleArc { centerX: root.u(9); centerY: root.u(9); radiusX: root.u(9); radiusY: root.u(9); startAngle: 0; sweepAngle: 360 }
                 }
             }
-            Rectangle { visible: customKey.on; anchors.centerIn: parent; width: root.u(18); height: width; radius: width / 2; color: String(swatches.current ?? "#000000") }
+            Rectangle { visible: customKey.on; anchors.centerIn: parent; width: root.u(18); height: width; radius: width / 2; color: String(swatches.current ?? "#000000") } // iris-literal: fallback before a colour is picked
         }
     }
     component Swatch: MouseArea {
