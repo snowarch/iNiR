@@ -4,7 +4,8 @@ set -euo pipefail
 # The inir binary (snowarch/inir-cli) is the front door when it is installed: it does
 # what it knows and hands the rest back to this file (INIR_CLI_DELEGATED set). Nothing
 # here changes without it. INIR_NO_CLI=1 skips it; a binary that cannot run is skipped too.
-if [[ -z "${INIR_CLI_DELEGATED:-}" && -z "${INIR_NO_CLI:-}" ]]; then
+# A session start goes straight to the shell: the binary only hands `run --session` back.
+if [[ -z "${INIR_CLI_DELEGATED:-}" && -z "${INIR_NO_CLI:-}" && "${1:-} ${2:-}" != "run --session" ]]; then
     for _inir_cli in "${INIR_CLI:-}" "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" \
                      /usr/local/lib/inir/inir /usr/lib/inir/inir; do
         [[ -n "$_inir_cli" && -f "$_inir_cli" && -x "$_inir_cli" ]] || continue
@@ -1422,6 +1423,26 @@ check_qs_abi() {
     local mismatch_detected=false
     local mismatch_msg=""
 
+    # A pass is cached on the mtimes of both binaries: the same pair needs neither `qs --version`
+    # (a whole Qt start, ~200 ms on every boot) nor the strings scan.
+    local abi_cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/inir"
+    local abi_cache_file="$abi_cache_dir/abi-check"
+    local qs_mtime qt_mtime abi_cache_key
+    qs_mtime="$(stat -c %Y "$qs_bin" 2>/dev/null || echo 0)"
+    local qt_lib_path=""
+    if [[ -e /usr/lib/libQt6Core.so.6 ]]; then
+        qt_lib_path="/usr/lib/libQt6Core.so.6"
+    elif [[ -e /usr/lib64/libQt6Core.so.6 ]]; then
+        qt_lib_path="/usr/lib64/libQt6Core.so.6"
+    fi
+    qt_mtime="$(stat -c %Y "$(readlink -f "$qt_lib_path" 2>/dev/null || echo "$qt_lib_path")" 2>/dev/null || echo 0)"
+    # v2 prefix invalidates pre-fix caches that passed under major.minor-only comparison
+    # (those would have wrongly cached a pass for e.g. 6.11.0 -> 6.11.1 patch bumps).
+    abi_cache_key="v2:${qs_mtime}:${qt_mtime}"
+    if [[ -f "$abi_cache_file" ]] && [[ "$(<"$abi_cache_file")" == "$abi_cache_key" ]]; then
+        return 0
+    fi
+
     # Primary: qs --version may print mismatch warning on stderr
     local qs_output
     qs_output="$("$qs_bin" --version 2>&1 || true)"
@@ -1431,28 +1452,7 @@ check_qs_abi() {
     fi
 
     # Secondary: compare compile-time Qt (from binary strings) vs runtime Qt (from lib symlink).
-    # Cache the result keyed on binary mtimes to avoid re-running `strings` on every start.
     if ! $mismatch_detected && command -v strings >/dev/null 2>&1; then
-        local abi_cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/inir"
-        local abi_cache_file="$abi_cache_dir/abi-check"
-        local qs_mtime qt_mtime abi_cache_key
-        qs_mtime="$(stat -c %Y "$qs_bin" 2>/dev/null || echo 0)"
-        local qt_lib_path=""
-        if [[ -e /usr/lib/libQt6Core.so.6 ]]; then
-            qt_lib_path="/usr/lib/libQt6Core.so.6"
-        elif [[ -e /usr/lib64/libQt6Core.so.6 ]]; then
-            qt_lib_path="/usr/lib64/libQt6Core.so.6"
-        fi
-        qt_mtime="$(stat -c %Y "$(readlink -f "$qt_lib_path" 2>/dev/null || echo "$qt_lib_path")" 2>/dev/null || echo 0)"
-        # v2 prefix invalidates pre-fix caches that passed under major.minor-only comparison
-        # (those would have wrongly cached a pass for e.g. 6.11.0 -> 6.11.1 patch bumps).
-        abi_cache_key="v2:${qs_mtime}:${qt_mtime}"
-
-        if [[ -f "$abi_cache_file" ]] && [[ "$(<"$abi_cache_file")" == "$abi_cache_key" ]]; then
-            # Cached pass — same binaries as last successful check
-            return 0
-        fi
-
         local buildtime_qt=""
         local runtime_qt=""
         buildtime_qt="$(strings "$qs_bin" 2>/dev/null | grep -P '^6\.\d+\.\d+$' | head -1 || true)"
@@ -1469,7 +1469,7 @@ check_qs_abi() {
             mismatch_msg="Quickshell built against Qt $buildtime_qt but system has Qt $runtime_qt"
         fi
 
-        # Cache successful result so next start skips the expensive strings scan
+        # A pass is cached: the next start with the same pair skips both checks
         if ! $mismatch_detected; then
             mkdir -p "$abi_cache_dir" 2>/dev/null || true
             printf '%s' "$abi_cache_key" > "$abi_cache_file" 2>/dev/null || true
