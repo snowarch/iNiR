@@ -9649,5 +9649,7 @@
   "Widget kinds": "Виды виджетов",
   "%1, on the desktop": "%1, на рабочем столе",
   "No widget is called “%1”": "Нет виджета с названием «%1»",
-  "Decor": "Декор"
+  "Decor": "Декор",
+  "Screen centre": "Центр экрана",
+  "Edge to edge": "Край к краю"
 }

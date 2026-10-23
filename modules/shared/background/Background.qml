@@ -45,6 +45,7 @@ import qs.modules.iris.frame
 import qs.modules.iris.background
 import "root:modules/common/functions/parallax.js" as ParallaxMath
 import "widgets/OrganicEdgeConfig.js" as OrganicEdgeConfig
+import "root:modules/common/functions/ArrangeMath.js" as ArrangeMath
 
 Scope {
     id: backgroundScope
@@ -2125,7 +2126,10 @@ Scope {
                 // Each widget's edit toolbar and quick-controls sheet live here, above every widget and
                 // outside the widget's own opacity and dim, so they stay opaque and on top.
                 readonly property Item editChromeLayer: widgetChromeLayer
-                Component.onDestruction: delete backgroundScope.widgetCanvases[bgRoot.screenName]
+                Component.onDestruction: {
+                    delete backgroundScope.widgetCanvases[bgRoot.screenName]
+                    DesktopArrange.setRoom(bgRoot.screenName, null)
+                }
                 visible: !GlobalStates.shellLayoutEditMode
                     && DesktopWidgetLayout.outputAllowed(modelData?.name ?? "")
                 enabled: visible && !GlobalStates.screenLocked  // Disable all widget input during lock
@@ -2361,93 +2365,32 @@ Scope {
 
                 // ── Arranging (edit mode) ─────────────────────────────────────
                 // The widgets an arranged one meets: on screen, neither the item itself nor the pages of its stack.
+                // One still on a shelf (not loaded) meets every widget out.
                 function arrangeNeighbours(instanceKey: string): var {
                     const widgets = widgetCanvas._loadedDesktopWidgets()
-                    const current = widgets.find(item => item.editInstanceKey === instanceKey)
-                    if (!current)
-                        return []
+                    const current = widgets.find(item => item.editInstanceKey === instanceKey) ?? null
                     return widgets.filter(item => item !== current && item.width > 0 && item.height > 0
                         && item.opacity > 0.01
-                        && !(current.stacked && item.stacked && item.stack?.id === current.stack?.id))
+                        && !(current?.stacked && item.stacked && item.stack?.id === current?.stack?.id))
                         .map(item => ({ key: item.editInstanceKey, x: item.x, y: item.y, width: item.width,
                             height: item.height, locked: Boolean(item.locked), item: item }))
-                }
-
-                // Magnetic snap: within `threshold` px of a neighbour's edge or centre, or one gutter beside it, the
-                // carried rect lands exactly there. Gives the position and the guide lines to draw.
-                function magnetize(instanceKey: string, x: real, y: real, width: real, height: real, threshold: real): var {
-                    const others = widgetCanvas.arrangeNeighbours(instanceKey)
-                    const gap = widgetCanvas.arrangeGap
-                    let bestX = null
-                    let bestY = null
-                    for (const n of others) {
-                        // Only neighbours near on the other axis pull: alignment reads between widgets that sit
-                        // close, not across the screen.
-                        const nearRow = y < n.y + n.height + 320 && y + height > n.y - 320
-                        const nearColumn = x < n.x + n.width + 320 && x + width > n.x - 320
-                        if (nearRow) {
-                            for (const c of [
-                                    { at: n.x, line: n.x }, { at: n.x + n.width - width, line: n.x + n.width },
-                                    { at: n.x + (n.width - width) / 2, line: n.x + n.width / 2 },
-                                    { at: n.x + n.width + gap, line: n.x + n.width, gap: true },
-                                    { at: n.x - width - gap, line: n.x, gap: true }]) {
-                                const d = Math.abs(c.at - x)
-                                if (d <= threshold && (bestX === null || d < bestX.d))
-                                    bestX = { d: d, at: c.at, line: c.line, gap: Boolean(c.gap), n: n }
-                            }
-                        }
-                        if (nearColumn) {
-                            for (const c of [
-                                    { at: n.y, line: n.y }, { at: n.y + n.height - height, line: n.y + n.height },
-                                    { at: n.y + (n.height - height) / 2, line: n.y + n.height / 2 },
-                                    { at: n.y + n.height + gap, line: n.y + n.height, gap: true },
-                                    { at: n.y - height - gap, line: n.y, gap: true }]) {
-                                const d = Math.abs(c.at - y)
-                                if (d <= threshold && (bestY === null || d < bestY.d))
-                                    bestY = { d: d, at: c.at, line: c.line, gap: Boolean(c.gap), n: n }
-                            }
-                        }
-                    }
-                    // The screen's own centre pulls too, and its line runs across the whole screen.
-                    const midX = (widgetCanvas.width - width) / 2
-                    const midY = (widgetCanvas.height - height) / 2
-                    if (Math.abs(midX - x) <= threshold && (bestX === null || Math.abs(midX - x) < bestX.d))
-                        bestX = { d: Math.abs(midX - x), at: midX, line: widgetCanvas.width / 2, screen: true }
-                    if (Math.abs(midY - y) <= threshold && (bestY === null || Math.abs(midY - y) < bestY.d))
-                        bestY = { d: Math.abs(midY - y), at: midY, line: widgetCanvas.height / 2, screen: true }
-                    const outX = bestX ? Math.round(bestX.at) : x
-                    const outY = bestY ? Math.round(bestY.at) : y
-                    const guides = []
-                    if (bestX?.screen)
-                        guides.push({ vertical: true, screen: true, at: Math.round(bestX.line), from: 0, to: widgetCanvas.height })
-                    if (bestY?.screen)
-                        guides.push({ vertical: false, screen: true, at: Math.round(bestY.line), from: 0, to: widgetCanvas.width })
-                    // An alignment draws its line through both widgets; a gutter draws the gap it keeps.
-                    if (bestX && !bestX.screen)
-                        guides.push(bestX.gap
-                            ? { vertical: false, gap: true, at: Math.round(Math.max(outY, bestX.n.y) + Math.min(outY + height, bestX.n.y + bestX.n.height)) / 2,
-                                from: Math.min(outX + width, bestX.n.x + bestX.n.width), to: Math.max(outX, bestX.n.x) }
-                            : { vertical: true, at: Math.round(bestX.line),
-                                from: Math.min(outY, bestX.n.y), to: Math.max(outY + height, bestX.n.y + bestX.n.height) })
-                    if (bestY && !bestY.screen)
-                        guides.push(bestY.gap
-                            ? { vertical: true, gap: true, at: Math.round(Math.max(outX, bestY.n.x) + Math.min(outX + width, bestY.n.x + bestY.n.width)) / 2,
-                                from: Math.min(outY + height, bestY.n.y + bestY.n.height), to: Math.max(outY, bestY.n.y) }
-                            : { vertical: false, at: Math.round(bestY.line),
-                                from: Math.min(outX, bestY.n.x), to: Math.max(outX + width, bestY.n.x + bestY.n.width) })
-                    return { x: outX, y: outY, snappedX: bestX !== null, snappedY: bestY !== null, guides: guides }
                 }
 
                 // Where a carried widget may rest: the spot asked for when nothing is under it, else the nearest free
                 // one (beside a neighbour first). Nothing is left lying on top of another at rest.
                 function freeSpot(instanceKey: string, x: real, y: real, width: real, height: real): var {
                     const placed = widgetCanvas.arrangeNeighbours(instanceKey)
-                    if (widgetCanvas._positionIsFree(x, y, width, height, placed, 0))
-                        return { x: Math.round(x), y: Math.round(y), moved: false }
-                    const spot = widgetCanvas._nearestFreePosition({ width: width, height: height }, x, y, placed,
-                        bgRoot.desktopItemsWorkArea)
-                    return { x: spot.x, y: spot.y, moved: true }
+                        .map(n => ({ id: n.key, x: n.x, y: n.y, w: n.width, h: n.height }))
+                    const spot = ArrangeMath.settle({ id: instanceKey, x: x, y: y, w: width, h: height }, placed,
+                        widgetCanvas.arrangeRoom, widgetCanvas.arrangeGap)
+                    return { x: spot.x, y: spot.y, moved: spot.moved }
                 }
+                // The room widgets rest in, for DesktopArrange.
+                readonly property var arrangeRoom: ({ w: widgetCanvas.width, h: widgetCanvas.height,
+                    left: Number(bgRoot.desktopItemsWorkArea?.left ?? 0), top: Number(bgRoot.desktopItemsWorkArea?.top ?? 0),
+                    right: Number(bgRoot.desktopItemsWorkArea?.right ?? widgetCanvas.width),
+                    bottom: Number(bgRoot.desktopItemsWorkArea?.bottom ?? widgetCanvas.height) })
+                onArrangeRoomChanged: DesktopArrange.setRoom(bgRoot.screenName, widgetCanvas.arrangeRoom)
 
                 // A widget that grew (resized, a larger size class) moves the neighbours it now covers aside, each to
                 // its nearest free spot. When one of them cannot move (locked, held by a zone), the grown one steps off.
@@ -2651,6 +2594,7 @@ Scope {
 
                 Component.onCompleted: {
                     backgroundScope.widgetCanvases[bgRoot.screenName] = widgetCanvas
+                    DesktopArrange.setRoom(bgRoot.screenName, widgetCanvas.arrangeRoom)
                     outputLayoutTimer.restart()
                 }
 
@@ -2971,6 +2915,213 @@ Scope {
                     id: widgetChromeLayer
                     anchors.fill: parent
                     z: 15000
+                }
+
+                // Arranging, drawn over every widget in the card's space (DesktopArrange): the grid while a widget is
+                // carried, the lines it meets (light while it moves, named once let go), the four sides of the drop
+                // running across the screen, a flare on every widget it lined up with, and where a widget pulled off
+                // a family's shelf will land.
+                Loader {
+                    id: arrangeLayer
+                    anchors.fill: parent
+                    z: 15001
+                    active: GlobalStates.widgetEditMode
+                    sourceComponent: Item {
+                        id: guides
+                        readonly property bool here: DesktopArrange.dragOutput === bgRoot.screenName && DesktopArrange.phase !== "idle"
+                        readonly property var carry: DesktopEditStage.carry?.output === bgRoot.screenName ? DesktopEditStage.carry : null
+                        readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
+                        readonly property color ink: guides.iris ? IrisStyle.accent : Appearance.colors.colPrimary
+                        readonly property color paper: guides.iris ? IrisStyle.raised : Appearance.colors.colPrimaryContainer
+                        readonly property color paperInk: guides.iris ? IrisStyle.text : Appearance.colors.colOnPrimaryContainer
+                        // One screen pixel, and type at its true size, while the desktop is a card.
+                        readonly property real hair: 1 / Math.max(0.2, bgRoot.editCard.s)
+                        readonly property real radius: guides.iris
+                            ? Math.round(Math.max(0, Math.min(40, Config.options?.iris?.widgets?.radius ?? 22)) * IrisStyle.density)
+                            : Appearance.rounding.small
+                        readonly property real strength: !guides.here ? 0 : DesktopArrange.phase === "drag" ? 0.6
+                            : DesktopArrange.phase === "confirm" ? 1 : 0
+                        readonly property bool moving: (guides.here && DesktopArrange.phase === "drag") || guides.carry !== null
+                        readonly property var room: DesktopArrange.rooms[bgRoot.screenName] ?? widgetCanvas.arrangeRoom
+                        function word(line: var): string {
+                            switch (line?.kind) {
+                            case "screen": return Translation.tr("Screen centre")
+                            case "centre": return Translation.tr("Centre")
+                            case "flush": return Translation.tr("Edge to edge")
+                            case "gutter": return Translation.tr("Gap")
+                            }
+                            switch (line?.side) {
+                            case "L": return Translation.tr("Left")
+                            case "R": return Translation.tr("Right")
+                            case "T": return Translation.tr("Top")
+                            case "B": return Translation.tr("Bottom")
+                            }
+                            return ""
+                        }
+
+                        // The lattice a carried widget is pulled onto: a dot on each crossing, painted once per size.
+                        Canvas {
+                            id: lattice
+                            anchors.fill: parent
+                            readonly property int cell: DesktopArrange.grid
+                            readonly property string look: lattice.cell + ":" + guides.room.left + ":" + guides.room.top + ":" + guides.ink + ":" + guides.hair
+                            visible: lattice.opacity > 0.01 && lattice.cell > 0
+                            opacity: guides.moving ? 1 : 0
+                            Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                            onLookChanged: if (lattice.visible) lattice.requestPaint()
+                            onVisibleChanged: if (lattice.visible) lattice.requestPaint()
+                            onPaint: {
+                                const ctx = lattice.getContext("2d")
+                                ctx.clearRect(0, 0, lattice.width, lattice.height)
+                                if (lattice.cell <= 0)
+                                    return
+                                ctx.fillStyle = Qt.rgba(guides.ink.r, guides.ink.g, guides.ink.b, 0.32)
+                                const r = 1.1 * guides.hair
+                                for (let y = guides.room.top; y <= guides.room.bottom + 0.5; y += lattice.cell)
+                                    for (let x = guides.room.left; x <= guides.room.right + 0.5; x += lattice.cell)
+                                        ctx.fillRect(x - r, y - r, 2 * r, 2 * r)
+                            }
+                        }
+
+                        // Where a widget pulled off the shelf lands.
+                        Rectangle {
+                            visible: guides.carry !== null
+                            x: guides.carry?.plan?.x ?? 0
+                            y: guides.carry?.plan?.y ?? 0
+                            width: guides.carry?.width ?? 0
+                            height: guides.carry?.height ?? 0
+                            radius: guides.radius
+                            color: guides.iris ? IrisStyle.tintFill(IrisStyle.accent) : CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.08)
+                            border.width: guides.hair
+                            border.color: guides.ink
+                            Behavior on x { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                            Behavior on y { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                        }
+
+                        // The lines, in fixed slots: a line that stays keeps its slot, a new one draws on from its middle.
+                        Repeater {
+                            model: DesktopArrange.slotCount
+                            delegate: Item {
+                                id: guide
+                                required property int index
+                                anchors.fill: parent
+                                readonly property var now: DesktopArrange.slots[guide.index] ?? null
+                                property var line: null
+                                property real drawn: 0
+                                onNowChanged: {
+                                    if (!guide.now)
+                                        return
+                                    const fresh = !guide.line || guide.line.key !== guide.now.key || guide.opacity < 0.05
+                                    guide.line = guide.now
+                                    if (fresh) drawOn.restart()
+                                }
+                                NumberAnimation { id: drawOn; target: guide; property: "drawn"; from: 0; to: 1; duration: 170; easing.type: Easing.OutCubic }
+                                opacity: guide.now !== null ? guides.strength : 0
+                                visible: guide.opacity > 0.01 && guide.line !== null
+                                Behavior on opacity { NumberAnimation { duration: DesktopArrange.phase === "fade" ? DesktopArrange.fadeMs : 120; easing.type: Easing.OutCubic } }
+                                readonly property bool vertical: guide.line?.vertical ?? true
+                                readonly property real mid: guide.line ? ((guide.line?.from ?? 0) + guide.line.to) / 2 : 0
+                                readonly property real half: guide.line ? (guide.line.to - (guide.line?.from ?? 0)) / 2 * guide.drawn : 0
+                                readonly property real thick: (DesktopArrange.phase === "drag" ? 1 : 1.5) * guides.hair
+                                Rectangle {
+                                    x: guide.vertical ? (guide.line?.at ?? 0) - guide.thick / 2 : guide.mid - guide.half
+                                    y: guide.vertical ? guide.mid - guide.half : (guide.line?.at ?? 0) - guide.thick / 2
+                                    width: guide.vertical ? guide.thick : 2 * guide.half
+                                    height: guide.vertical ? 2 * guide.half : guide.thick
+                                    color: guides.ink
+                                    opacity: guide.line?.kind === "flush" ? 0.75 : 1
+                                }
+                                // Its name, once let go, past the line's start (inside the card for a line that runs all of it).
+                                Rectangle {
+                                    id: name
+                                    readonly property string text: guides.word(guide.line)
+                                    visible: DesktopArrange.phase !== "drag" && name.text.length > 0
+                                    width: nameText.implicitWidth + 14 * guides.hair
+                                    height: nameText.implicitHeight + 6 * guides.hair
+                                    radius: guides.iris ? height / 2 : Appearance.rounding.full
+                                    color: guides.paper
+                                    border.width: guides.hair
+                                    border.color: guides.ink
+                                    readonly property real lead: 6 * guides.hair
+                                    readonly property bool inside: guide.line ? ((guide.line?.from ?? 0) - name.lead - (guide.vertical ? name.height : name.width)) < 0 : false
+                                    x: Math.max(0, Math.min(parent.width - width, guide.vertical ? (guide.line?.at ?? 0) - width / 2
+                                        : (name.inside ? (guide.line?.from ?? 0) + name.lead : (guide.line?.from ?? 0) - name.lead - width)))
+                                    y: Math.max(0, Math.min(parent.height - height, guide.vertical
+                                        ? (name.inside ? (guide.line?.from ?? 0) + name.lead : (guide.line?.from ?? 0) - name.lead - height)
+                                        : (guide.line?.at ?? 0) - height / 2))
+                                    scale: visible ? 1 : 0.9
+                                    Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                                    StyledText {
+                                        id: nameText
+                                        anchors.centerIn: parent
+                                        text: name.text
+                                        color: guides.paperInk
+                                        font.family: guides.iris ? IrisStyle.fontMain : Appearance.font.family.main
+                                        font.pixelSize: (guides.iris ? IrisStyle.typeFootnote : Appearance.font.pixelSize.smaller) * guides.hair
+                                        font.weight: Font.DemiBold
+                                    }
+                                }
+                            }
+                        }
+
+                        // Let go: the four sides of the drop run across the screen, and the widgets it met flare.
+                        property real rail: 0
+                        property real flare: 1
+                        property var flareRects: []
+                        readonly property int serial: DesktopArrange.confirmSerial
+                        onSerialChanged: {
+                            if (DesktopArrange.dragOutput !== bgRoot.screenName || !DesktopArrange.dropRect || !Appearance.animationsEnabled)
+                                return
+                            guides.flareRects = Object.keys(DesktopArrange.matched)
+                                .map(key => DesktopArrange.rectOf(bgRoot.screenName, key)).filter(r => r !== null)
+                            railRun.restart()
+                            flareRun.restart()
+                        }
+                        SequentialAnimation {
+                            id: railRun
+                            NumberAnimation { target: guides; property: "rail"; from: 0; to: 1; duration: 240; easing.type: Easing.OutCubic }
+                            PauseAnimation { duration: 140 }
+                            NumberAnimation { target: guides; property: "rail"; to: 2; duration: 220; easing.type: Easing.InCubic }
+                        }
+                        NumberAnimation { id: flareRun; target: guides; property: "flare"; from: 0; to: 1; duration: 620; easing.type: Easing.OutCubic }
+                        Repeater {
+                            model: guides.rail > 0 && guides.rail < 2 ? 4 : 0
+                            delegate: Rectangle {
+                                required property int index
+                                readonly property var r: DesktopArrange.dropRect ?? ({ x: 0, y: 0, w: 0, h: 0 })
+                                readonly property bool vertical: index < 2
+                                readonly property real at: index === 0 ? r.x : index === 1 ? r.x + r.w : index === 2 ? r.y : r.y + r.h
+                                readonly property real from: vertical ? r.y : r.x
+                                readonly property real to: vertical ? r.y + r.h : r.x + r.w
+                                readonly property real span: vertical ? guides.height : guides.width
+                                readonly property real run: Math.min(1, guides.rail)
+                                readonly property real head: from * (1 - run)
+                                readonly property real tail: to + (span - to) * run
+                                x: vertical ? at - guides.hair / 2 : head
+                                y: vertical ? head : at - guides.hair / 2
+                                width: vertical ? guides.hair : tail - head
+                                height: vertical ? tail - head : guides.hair
+                                color: guides.ink
+                                opacity: 0.7 * (guides.rail <= 1 ? 1 : 2 - guides.rail)
+                            }
+                        }
+                        Repeater {
+                            model: guides.flare < 1 ? guides.flareRects : []
+                            delegate: Rectangle {
+                                required property var modelData
+                                readonly property real grow: (2 + 8 * guides.flare) * guides.hair
+                                x: modelData.x - grow
+                                y: modelData.y - grow
+                                width: modelData.w + 2 * grow
+                                height: modelData.h + 2 * grow
+                                radius: guides.radius + grow
+                                color: "transparent"
+                                border.width: 1.5 * guides.hair
+                                border.color: guides.ink
+                                opacity: 0.9 * (1 - guides.flare)
+                            }
+                        }
+                    }
                 }
 
                 Item {

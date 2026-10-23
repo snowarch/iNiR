@@ -9649,5 +9649,7 @@
   "Widget kinds": "ウィジェットの種類",
   "%1, on the desktop": "%1、デスクトップ上",
   "No widget is called “%1”": "“%1”という名前のウィジェットはありません",
-  "Decor": "デコ"
+  "Decor": "デコ",
+  "Screen centre": "画面の中央",
+  "Edge to edge": "端と端"
 }

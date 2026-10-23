@@ -9649,5 +9649,7 @@
   "Widget kinds": "विजेट के प्रकार",
   "%1, on the desktop": "%1, डेस्कटॉप पर",
   "No widget is called “%1”": "“%1” नाम का कोई विजेट नहीं है",
-  "Decor": "सजावट"
+  "Decor": "सजावट",
+  "Screen centre": "स्क्रीन का केंद्र",
+  "Edge to edge": "किनारे से किनारा"
 }

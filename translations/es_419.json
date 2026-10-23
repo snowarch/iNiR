@@ -9649,5 +9649,7 @@
   "Widget kinds": "Tipos de widgets",
   "%1, on the desktop": "%1, en el escritorio",
   "No widget is called “%1”": "Ningún widget se llama “%1”",
-  "Decor": "Decoración"
+  "Decor": "Decoración",
+  "Screen centre": "Centro de la pantalla",
+  "Edge to edge": "Borde con borde"
 }

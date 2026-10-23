@@ -151,7 +151,7 @@ Item {
     onShownChanged: publishTimer.restart()
     onWidthChanged: publishTimer.restart()
     onYChanged: publishTimer.restart()
-    Component.onDestruction: DesktopEditStage.tiles = ({})
+    Component.onDestruction: { DesktopEditStage.tiles = ({}); DesktopEditStage.carry = null }
 
     // ── Carrying a picture onto the card ──
     property Item carried: null
@@ -164,24 +164,55 @@ Item {
         && root.carryAt.y >= root.cardRect.y && root.carryAt.y <= root.cardRect.y + root.cardRect.height
     function lift(tile: Item, at: point): void {
         root.carried = tile
+        DesktopArrange.begin(root.outputName, root.outputName + "::" + tile.key)
         root.carryAt = at
         const r = root.screenRect(tile.picture)
         ghost.place(r.x, r.y, r.width, r.height, false)
         ghost.ride = true
     }
     function carry(at: point): void { root.carryAt = at }
+    // Over the card the carried picture is pulled onto the desktop's lines like a widget carried there (DesktopArrange),
+    // and the desktop draws where it will land; it lands exactly there.
+    property var carryPlan: null
+    function planCarry(): void {
+        if (!root.overCard) {
+            if (root.carryPlan !== null) {
+                root.carryPlan = null
+                DesktopEditStage.carry = null
+            }
+            return
+        }
+        const tile = root.carried
+        const w = tile.logicalWidth
+        const h = tile.logicalHeight
+        const p = DesktopArrange.snap(root.outputName, root.outputName + "::" + tile.key, (root.carryAt.x - root.card.x) / root.card.s - w / 2,
+            (root.carryAt.y - root.card.y) / root.card.s - h / 2, w, h, false, "")
+        root.carryPlan = { x: p.x, y: p.y, width: w, height: h }
+        DesktopEditStage.carry = { output: root.outputName, key: tile.key, width: w, height: h, plan: root.carryPlan }
+    }
+    onCarryAtChanged: root.planCarry()
+    onOverCardChanged: root.planCarry()
     function drop(): void {
         const tile = root.carried
         if (root.overCard) {
             const ghostRect = Qt.rect(ghost.x, ghost.y, ghost.width, ghost.height)
-            const at = { x: (root.carryAt.x - root.card.x) / root.card.s, y: (root.carryAt.y - root.card.y) / root.card.s }
+            const plan = root.carryPlan
+            const spot = plan ? DesktopArrange.end(root.outputName, root.outputName + "::" + tile.key, plan.x, plan.y, plan.width, plan.height, false, "") : null
+            const at = spot ? { x: spot.x, y: spot.y, exact: true }
+                : { x: (root.carryAt.x - root.card.x) / root.card.s, y: (root.carryAt.y - root.card.y) / root.card.s }
+            root.carryPlan = null
+            DesktopEditStage.carry = null
+            // One already out slides from its place to the drop while the picture in hand dissolves over it.
+            const glide = tile.on
             ghost.ride = false
             root.carried = null
-            ghost.visible = false
-            DesktopEditStage.arrive(root.outputName, tile.key, at, ghostRect)
+            if (glide) ghostFade.restart()
+            else ghost.visible = false
+            DesktopEditStage.arrive(root.outputName, tile.key, at, glide ? null : ghostRect, glide)
             return
         }
         // Back onto its shelf.
+        DesktopArrange.cancel()
         ghost.ride = false
         root.carried = null
         const r = root.screenRect(tile.picture)
@@ -335,8 +366,8 @@ Item {
                     readonly property string key: tile.modelData.key
                     readonly property bool on: root.enabledOf(tile.key)
                     readonly property var live: DesktopEditStage.pictures[tile.key] ?? null
-                    readonly property bool pictured: tile.live !== null || saved.status === Image.Ready
-                    readonly property real aspect: tile.live && tile.live.height > 0 ? tile.live.width / tile.live.height
+                    readonly property bool pictured: (tile.live !== null || saved.status === Image.Ready) && !probe.blank
+                    readonly property real aspect: probe.blank ? 1 : tile.live && tile.live.height > 0 ? tile.live.width / tile.live.height
                         : saved.status === Image.Ready && saved.sourceSize.height > 0 ? saved.sourceSize.width / saved.sourceSize.height : 1
                     readonly property real logicalWidth: tile.live ? tile.live.width : saved.status === Image.Ready ? saved.sourceSize.width : Math.round(180 * root.d)
                     readonly property real logicalHeight: tile.live ? tile.live.height : saved.status === Image.Ready ? saved.sourceSize.height : Math.round(180 * root.d)
@@ -347,6 +378,33 @@ Item {
                     height: tileRow.height
                     opacity: root.carried === tile ? 0.35 : 1
                     onXChanged: publishTimer.restart()
+
+                    // A picture with nothing in it (a visualizer with no sound) is no picture: its glyph stands in. Read
+                    // at 8x8, then wiped, so it never shows.
+                    Canvas {
+                        id: probe
+                        z: -1
+                        width: 8
+                        height: 8
+                        property bool blank: false
+                        readonly property string url: tile.live ? tile.live.url : saved.status === Image.Ready ? saved.source.toString() : ""
+                        onUrlChanged: if (probe.url.length > 0) probe.loadImage(probe.url)
+                        onImageLoaded: probe.requestPaint()
+                        onPaint: {
+                            const ctx = probe.getContext("2d")
+                            if (probe.url.length === 0 || !probe.isImageLoaded(probe.url))
+                                return
+                            ctx.clearRect(0, 0, 8, 8)
+                            ctx.drawImage(probe.url, 0, 0, 8, 8)
+                            const data = ctx.getImageData(0, 0, 8, 8).data
+                            let alpha = 0
+                            for (let i = 3; i < data.length; i += 4)
+                                alpha += data[i]
+                            probe.blank = alpha < 64 * 6
+                            ctx.clearRect(0, 0, 8, 8)
+                            probe.unloadImage(probe.url)
+                        }
+                    }
 
                     // The widget's last look on disk, read once; a live picture covers it while the widget is out.
                     Image {
@@ -501,7 +559,7 @@ Item {
                 ghost.logicalHeight = tile.logicalHeight
                 ghost.tileWidth = w
                 ghost.tileHeight = h
-                ghost.url = tile.pictureUrl
+                ghost.url = tile.pictured ? tile.pictureUrl : ""
                 ghost.glyph = tile.modelData.glyph
                 ghost.tint = tile.modelData.tint
                 ghost.x = x
@@ -532,7 +590,13 @@ Item {
             NumberAnimation { id: homeH; target: ghost; property: "height"; duration: IrisStyle.duration(220); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
             onFinished: { ghost.visible = false; ghost.homing = false }
         }
-        opacity: root.overCard || ghost.homing ? 1 : 0.8
+        SequentialAnimation {
+            id: ghostFade
+            NumberAnimation { target: ghost; property: "fade"; from: 1; to: 0; duration: IrisStyle.duration(200); easing.type: IrisStyle.feedbackEasing }
+            ScriptAction { script: { ghost.visible = false; ghost.fade = 1 } }
+        }
+        property real fade: 1
+        opacity: (root.overCard || ghost.homing || ghostFade.running ? 1 : 0.8) * ghost.fade
 
         Image {
             anchors.fill: parent

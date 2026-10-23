@@ -73,6 +73,11 @@ Singleton {
         return root.pictureDir + "/" + key.replace(/[^A-Za-z0-9._-]/g, "_") + "-" + root.look + ".png"
     }
 
+    // ── Pulling a widget off the shelf ──
+    // The family carrying a picture over the card writes where it will land ({ output, key, width, height, plan }, desktop
+    // px; DesktopArrange snaps it); each output's desktop draws the spot.
+    property var carry: null
+
     // ── Adding and taking away from the shelf ──
     // A widget taken from the shelf lands where it was dropped (`at`, desktop px, its centre) or on a free spot, and
     // grows out of the picture it was (`from`, screen px). One taken back shrinks into its picture before it goes.
@@ -80,9 +85,10 @@ Singleton {
     property var tiles: ({})
     property var arrivals: ({})
     property var departures: ({})
-    function arrive(output: string, key: string, at: var, from: var): void {
+    // `at` with `exact` is a plan: the widget takes that spot as it is. `glide`: the widget was out already and slides.
+    function arrive(output: string, key: string, at: var, from: var, glide: bool): void {
         const next = Object.assign({}, root.arrivals)
-        next[output + "::" + key] = { at: at, from: from }
+        next[output + "::" + key] = { at: at, from: from, glide: Boolean(glide) }
         root.arrivals = next
         DesktopWidgetLayout.setGloballyEnabled(key, true)
     }

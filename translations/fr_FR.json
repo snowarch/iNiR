@@ -9649,5 +9649,7 @@
   "Widget kinds": "Types de widgets",
   "%1, on the desktop": "%1, sur le bureau",
   "No widget is called “%1”": "Aucun widget ne s'appelle « %1 »",
-  "Decor": "Déco"
+  "Decor": "Déco",
+  "Screen centre": "Centre de l’écran",
+  "Edge to edge": "Bord à bord"
 }

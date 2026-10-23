@@ -403,7 +403,7 @@ AbstractWidget {
         Rotation { origin.x: root.width / 2; origin.y: root.height / 2; angle: root._chaosAngle },
         Translate { x: root._chaosDX; y: root._chaosDY },
         Scale { xScale: root._shelfScale; yScale: root._shelfScale },
-        Translate { x: root._shelfDX; y: root._shelfDY }
+        Translate { x: root._shelfDX + root._glideX * root._glide; y: root._shelfDY + root._glideY * root._glide }
     ]
 
     // Live geometry report so the romp knows where to aim (chaos-gated)
@@ -922,73 +922,42 @@ AbstractWidget {
             root._zoneSafeTop, root._zoneSafeBottom)
     }
 
-    // ── Arranging ──────────────────────────────────────────────
-    // A carried widget is pulled to its neighbours' edges, centres and one gutter beside them, then to the grid,
-    // and never rests on top of another: if the spot is taken it lands on the nearest free one, which the ghost
-    // shows before the drop. Alt carries it freely (no magnets, overlap allowed). Stacking keeps its own drop.
+    // ── Arranging (DesktopArrange) ──────────────────────────────
+    // Carried, the widget is pulled onto its neighbours' lines, the screen's centre and the grid as it moves (O(n) per
+    // move); let go on top of another, it slides beside it. The grid switch only takes the lattice away; Alt carries it
+    // freely. Stacking keeps its own drop. Every widget reports where it is while arranging, so a carried one knows its
+    // neighbours without reading them.
     readonly property bool _arrangeFree: (root.dragModifiers & Qt.AltModifier) !== 0
     readonly property real _neighbourMagnet: 12
+    readonly property bool _arranging: GlobalStates.widgetEditMode && root.configEntryName.length > 0
+    readonly property string _stackId: root.stack?.id ?? ""
+    function _report(): void {
+        if (!root._arranging)
+            return
+        DesktopArrange.report(root.outputName, root.editInstanceKey, root.x, root.y, root.width, root.height,
+            root.visible && root.opacity > 0.01 && !root._shelfMoving && !root._departure, root._stackId)
+    }
+    on_ArrangingChanged: root._report()
+    property bool _snapping: false
+    function _arrangeMoved(): void {
+        if (!root._arranging)
+            return
+        if (root.isDragging && root._dropKey.length === 0 && !root._snapping) {
+            root._snapping = true
+            const p = DesktopArrange.snap(root.outputName, root.editInstanceKey, root.x, root.y, root.width, root.height,
+                root._arrangeFree, root._stackId)
+            if (p.x !== root.x) root.x = p.x
+            if (p.y !== root.y) root.y = p.y
+            root._snapping = false
+        }
+        root._report()
+    }
+    onXChanged: root._arrangeMoved()
+    onYChanged: root._arrangeMoved()
+    // Where a widget asked to go to x,y would rest (the IPC probe, a shelf drop without a plan).
     function _planDrop(x: real, y: real): var {
-        const canvas = root._canvas
-        let px = x
-        let py = y
-        let guides = []
-        if (root._snapEnabled && canvas && typeof canvas.magnetize === "function") {
-            const pulled = canvas.magnetize(root.editInstanceKey, x, y, root.width, root.height, root._neighbourMagnet)
-            px = pulled.snappedX ? root._clampX(pulled.x) : root._snapEditX(x)
-            py = pulled.snappedY ? root._clampY(pulled.y) : root._snapEditY(y)
-            guides = pulled.guides
-        } else {
-            px = root._snapEnabled ? root._snapEditX(x) : root._clampX(x)
-            py = root._snapEnabled ? root._snapEditY(y) : root._clampY(y)
-        }
-        if (canvas && typeof canvas.freeSpot === "function") {
-            const spot = canvas.freeSpot(root.editInstanceKey, px, py, root.width, root.height)
-            if (spot.moved) {
-                px = root._clampX(spot.x)
-                py = root._clampY(spot.y)
-                guides = []
-            }
-        }
-        return { x: Math.round(px), y: Math.round(py), guides: guides }
-    }
-    // Evaluated only while carrying: it reads every neighbour.
-    readonly property var _dropPlan: root.isDragging && !root._arrangeFree && root._dropKey.length === 0
-        ? root._planDrop(root.x, root.y) : null
-    property real _snapPreviewX: root._dropPlan ? root._dropPlan.x : root.x
-    property real _snapPreviewY: root._dropPlan ? root._dropPlan.y : root.y
-    Rectangle {
-        id: snapGhost
-        visible: root._dropPlan !== null && root.draggable
-            && (Math.abs(root._snapPreviewX - root.x) > 0.5 || Math.abs(root._snapPreviewY - root.y) > 0.5)
-        x: root._snapPreviewX - root.x
-        y: root._snapPreviewY - root.y
-        width: root.width
-        height: root.height
-        radius: root.widgetIrisFamily ? Math.round(Math.max(0, Math.min(40, Config.options?.iris?.widgets?.radius ?? 22)) * IrisStyle.density)
-            : Appearance.rounding.small
-        color: root.widgetIrisFamily ? IrisStyle.tintFill(IrisStyle.accent) : ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.08)
-        border.width: 1.5
-        border.color: root.widgetIrisFamily ? IrisStyle.tintBorder(IrisStyle.accent) : ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.45)
-    }
-    // Alignment lines through the widgets the carried one lines up with; a gutter shows as a short tick.
-    Repeater {
-        model: root._dropPlan ? root._dropPlan.guides : []
-        delegate: Rectangle {
-            required property var modelData
-            parent: root._chromeHost ?? root
-            readonly property real originX: parent === root ? root.x : 0
-            readonly property real originY: parent === root ? root.y : 0
-            readonly property real dx: root._snapPreviewX - root.x
-            readonly property real dy: root._snapPreviewY - root.y
-            x: (modelData.vertical ? modelData.at - 0.5 : modelData.from) - originX
-            y: (modelData.vertical ? modelData.from : modelData.at - 0.5) - originY
-            width: modelData.vertical ? 1 : Math.max(1, modelData.to - modelData.from)
-            height: modelData.vertical ? Math.max(1, modelData.to - modelData.from) : 1
-            color: root.widgetIrisFamily ? IrisStyle.accent : Appearance.colors.colPrimary
-            opacity: modelData.gap ? 0.9 : 0.7
-            z: 300
-        }
+        const plan = DesktopArrange.plan(root.outputName, root.editInstanceKey, x, y, root.width, root.height, root._stackId)
+        return { x: Math.round(root._clampX(plan.x)), y: Math.round(root._clampY(plan.y)), guides: plan.guides, neighbours: plan.neighbours }
     }
 
     // ── The shelf (a family that hosts arranging: DesktopEditStage) ──
@@ -1026,6 +995,7 @@ AbstractWidget {
     property real _shelf: 1
     property rect _shelfRect: Qt.rect(0, 0, 0, 0)
     readonly property bool _shelfMoving: shelfGrow.running || shelfShrink.running
+    on_ShelfMovingChanged: root._report()
     readonly property real _shelfK: root._shelfRect.width > 0 && root.width > 0 && root.height > 0
         ? Math.min(root._shelfRect.width / root.width, root._shelfRect.height / root.height) : 1
     readonly property real _shelfScale: 1 + (root._shelfK - 1) * (1 - root._shelf)
@@ -1044,13 +1014,29 @@ AbstractWidget {
             return
         DesktopEditStage.arrived(root.outputName, root.configEntryName)
         let spot = null
-        if (arrival.at) {
+        if (arrival.at?.exact) {
+            spot = { x: root._clampX(arrival.at.x), y: root._clampY(arrival.at.y) }
+        } else if (arrival.at) {
             spot = root._planDrop(arrival.at.x - root.width / 2, arrival.at.y - root.height / 2)
-        } else if (root._canvas && typeof root._canvas.freeSpot === "function") {
-            spot = root._canvas.freeSpot(root.editInstanceKey, root.x, root.y, root.width, root.height)
+        } else {
+            spot = DesktopArrange.plan(root.outputName, root.editInstanceKey, root.x, root.y, root.width, root.height, root._stackId)
         }
-        if (spot && (Math.abs(spot.x - root.x) > 0.5 || Math.abs(spot.y - root.y) > 0.5))
+        const wasX = root.x
+        const wasY = root.y
+        if (spot && (Math.abs(spot.x - root.x) > 0.5 || Math.abs(spot.y - root.y) > 0.5)) {
+            root.x = spot.x
+            root.y = spot.y
             root._setOutputValues({ x: spot.x, y: spot.y, placementStrategy: "free" })
+        }
+        if (arrival.glide) {
+            if (spot && root.animationsActive) {
+                root._glideX = wasX - root.x
+                root._glideY = wasY - root.y
+                root._glide = 1
+                glideRun.restart()
+            }
+            return
+        }
         if (!arrival.from || !root.animationsActive)
             return
         root._shelfRect = root._fromScreen(arrival.from)
@@ -1086,6 +1072,19 @@ AbstractWidget {
         duration: DesktopEditStage.departDuration
         easing.type: Easing.InCubic
     }
+    // One already out, pulled off the shelf again, slides from where it was to where it was dropped.
+    property real _glide: 0
+    property real _glideX: 0
+    property real _glideY: 0
+    NumberAnimation {
+        id: glideRun
+        target: root
+        property: "_glide"
+        to: 0
+        duration: root.widgetIrisFamily ? IrisStyle.duration(420) : Appearance.animation.elementMove.duration
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: root.widgetIrisFamily ? IrisStyle.morphCurve : Appearance.animation.elementMove.bezierCurve
+    }
     // Taking a widget away while a shelf is out sends it into its picture there.
     function takeAway(): void {
         const tile = DesktopEditStage.tiles[root.configEntryName]
@@ -1113,7 +1112,7 @@ AbstractWidget {
             _editDisengageTimer.restart()
         }
     }
-    onVisibleChanged: if (!root.visible) root._editControlsShown = false
+    onVisibleChanged: { if (!root.visible) root._editControlsShown = false; root._report() }
 
     Timer {
         id: _editDisengageTimer
@@ -1945,9 +1944,17 @@ AbstractWidget {
             root._absorb()
             return
         }
-        const plan = root._arrangeFree ? null : root._planDrop(root.x, root.y)
-        const finalX = plan ? plan.x : root._clampX(root.x)
-        const finalY = plan ? plan.y : root._clampY(root.y)
+        const spot = DesktopArrange.end(root.outputName, root.editInstanceKey, root.x, root.y, root.width, root.height,
+            root._arrangeFree, root._stackId)
+        const finalX = root._clampX(spot.x)
+        const finalY = root._clampY(spot.y)
+        // Let go on top of another, it slides to where it rests instead of jumping.
+        if (spot.moved && root.animationsActive) {
+            root._glideX = root.x - finalX
+            root._glideY = root.y - finalY
+            root._glide = 1
+            glideRun.restart()
+        }
         root.x = finalX;
         root.y = finalY;
         const updates = { x: finalX, y: finalY }
@@ -2766,6 +2773,8 @@ AbstractWidget {
         // on every frame of the drag. Moving the widget puts it away instead.
         if (root.isDragging && editPopoverPanel.open)
             root.closeQuickControls()
+        if (root.isDragging && root._arranging)
+            DesktopArrange.begin(root.outputName, root.editInstanceKey)
     }
     onPlacementStrategyChanged: _placementLater.restart()
     // Deferred placement dies with the widget: a Qt.callLater queued as a config write disables it
@@ -2792,8 +2801,8 @@ AbstractWidget {
     on_ZoneSafeTopChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
     on_ZoneSafeRightChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
     on_ZoneSafeBottomChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-    onWidthChanged: _geometryPlacementDebounce.restart()
-    onHeightChanged: _geometryPlacementDebounce.restart()
+    onWidthChanged: { _geometryPlacementDebounce.restart(); root._report() }
+    onHeightChanged: { _geometryPlacementDebounce.restart(); root._report() }
     Timer {
         id: _zoneResnapDebounce
         interval: 100; repeat: false

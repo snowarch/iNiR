@@ -9649,5 +9649,7 @@
   "Widget kinds": "Loại tiện ích",
   "%1, on the desktop": "%1, trên màn hình nền",
   "No widget is called “%1”": "Không có tiện ích nào tên “%1”",
-  "Decor": "Trang trí"
+  "Decor": "Trang trí",
+  "Screen centre": "Giữa màn hình",
+  "Edge to edge": "Sát mép"
 }

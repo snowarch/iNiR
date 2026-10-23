@@ -9649,5 +9649,7 @@
   "Widget kinds": "위젯 종류",
   "%1, on the desktop": "%1, 데스크톱에 있음",
   "No widget is called “%1”": "“%1”(이)라는 위젯이 없습니다",
-  "Decor": "장식"
+  "Decor": "장식",
+  "Screen centre": "화면 중앙",
+  "Edge to edge": "가장자리 맞춤"
 }

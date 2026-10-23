@@ -9649,5 +9649,7 @@
   "Widget kinds": "أنواع الأدوات",
   "%1, on the desktop": "%1، على سطح المكتب",
   "No widget is called “%1”": "لا توجد أداة باسم “%1”",
-  "Decor": "زينة"
+  "Decor": "زينة",
+  "Screen centre": "وسط الشاشة",
+  "Edge to edge": "حافة بحافة"
 }

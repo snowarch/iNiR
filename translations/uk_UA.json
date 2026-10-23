@@ -9649,5 +9649,7 @@
   "Widget kinds": "Види віджетів",
   "%1, on the desktop": "%1, на робочому столі",
   "No widget is called “%1”": "Немає віджета з назвою «%1»",
-  "Decor": "Декор"
+  "Decor": "Декор",
+  "Screen centre": "Центр екрана",
+  "Edge to edge": "Край до краю"
 }
