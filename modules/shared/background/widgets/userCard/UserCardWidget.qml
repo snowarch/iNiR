@@ -41,7 +41,7 @@ AbstractBackgroundWidget {
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 280) * scaleFactor)
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Math.max(170, Number(root._readConfigKey("contentHeight") ?? 176)) * scaleFactor)
     irisFacePart: "profile"
-    irisSizes: ["small", "medium"]
+    irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"
     irisOptions: [
         { key: "showAvatar", raw: true, label: Translation.tr("Picture"), icon: "account_circle", fallback: true },
