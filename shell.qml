@@ -166,6 +166,9 @@ ShellRoot {
             if (!root._bootShellEntryAt) root._bootShellEntryAt = Date.now();
             console.info("[Boot] T+" + (root._bootShellEntryAt - root._bootCompletedAt) + "ms: shellEntryReady (first frame)");
             GlobalStates.shellEntryReady = true;
+            // The wallpaper is the first thing anyone sees: its daemon starts with the first frame, not
+            // when a late surface first asks for the backend (2.3 s later).
+            void AwwwBackend.enabled;
             deferredInitTimer.start();
         }
     }
