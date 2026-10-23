@@ -38,6 +38,7 @@ Item {
     property var forwardStack: []
     property int travel: 1
     property string requestedSection: ""
+    property bool placed: false
     readonly property real d: IrisStyle.settingsDensity
     // Past this a label sits too far from its control to aim at.
     readonly property real rowsMost: Math.round(880 * root.d)
@@ -718,8 +719,14 @@ Item {
         // Switching hosts, the one leaving still hears the request and took it: the other opened on General.
         if (root.windowed !== ((Config.options?.iris?.appearance?.settingsHost ?? "overlay") === "window")) return
         let key = String(GlobalStates.settingsOverlayRequestedKey ?? "")
-        if (key.length === 0) return
         let asked = String(GlobalStates.settingsOverlayRequestedSection ?? "")
+        // The instance going away on close can take a request meant for the one opening: this one then stood on General.
+        const last = GlobalStates.irisSettingsLastRequest
+        if (key.length === 0) {
+            if (root.placed || !last) return
+            key = last.key
+            asked = last.asked
+        }
         const landing = root.nativePages[key]
         if (landing) { asked = landing(asked); key = "iris" }
         GlobalStates.settingsOverlayCurrentPage = GlobalStates.settingsPageKeys.indexOf(key)
@@ -727,6 +734,8 @@ Item {
         GlobalStates.settingsOverlayRequestedPage = -1
         GlobalStates.settingsOverlayRequestedKey = ""
         if (key === "iris" && root.runCommand(asked)) return
+        GlobalStates.irisSettingsLastRequest = { key: key, asked: asked }
+        root.placed = true
         root.group = ""
         const request = asked.split("/")
         root.requestedSection = root.renamedSections[request[0] ?? ""] ?? (request[0] ?? "")
