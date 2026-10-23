@@ -389,9 +389,10 @@ Item {
         return rows.slice(0, 2).map(spec => Translation.tr(spec.label)).join(", ")
     }
     // The rows that tell an area best at a glance: what was changed here first, then each group's lead row.
-    function tellingRows(count: int, section: string): var {
+    // `apart` reads the area from the registry alone, so a neighbour card doesn't redo it every time another area opens.
+    function tellingRows(count: int, section: string, apart: bool): var {
         Config.revision
-        const rows = !section || section === root.section ? root.entries
+        const rows = !apart && (!section || section === root.section) ? root.entries
             : root.specifications.filter(spec => spec.section === section && root.shown(spec))
         const usable = rows.filter(spec => spec.path && !spec.mirror && !(spec.locked && spec.locked())
             && ["switch", "range", "choice", "zone"].includes(spec.kind) && Translation.tr(String(spec.label ?? "")).length <= 26)

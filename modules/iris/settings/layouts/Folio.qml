@@ -325,7 +325,7 @@ Item {
                 Column {
                     id: facts
                     readonly property int fit: Math.max(0, Math.min(6, Math.floor((areaBox.height - plate.height - root.u(150)) / root.u(40))))
-                    readonly property var rows: { Config.revision; return facts.fit > 0 && !root.home && !root.searching ? (root.host?.tellingRows(facts.fit, root.section) ?? []) : [] }
+                    readonly property var rows: { Config.revision; return facts.fit > 0 && !root.home && !root.searching ? (root.host?.tellingRows(facts.fit, root.section, false) ?? []) : [] }
                     visible: facts.rows.length > 0
                     width: plate.width
                     IrisText {
