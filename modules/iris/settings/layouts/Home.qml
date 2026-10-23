@@ -63,7 +63,9 @@ Item {
         return IrisOptions.recentRows().slice(0, 6)
     }
     function areaTitle(id: string): string { return Translation.tr(String(IrisOptions.sectionById(id)?.title ?? "")) }
-    readonly property var visited: IrisOptions.mostVisited(4, ["appearance", "wallpaper", "dock", "bar"])
+    // As many as the card holds (two a line), the ones opened most first, the daily areas after them.
+    property int visitedLines: 2
+    readonly property var visited: IrisOptions.mostVisited(2 * root.visitedLines, ["appearance", "wallpaper", "dock", "bar", "colour", "widgets", "notifications", "display"])
         .map(id => IrisOptions.sectionById(id)).filter(entry => entry)
 
     // The wallpapers set lately (the one on screen first), topped up from the folder when the history is short.
@@ -590,6 +592,7 @@ Item {
                     width: column.side
                     height: root.wide ? recentCard.height : visitedGrid.height + visitedCard.headroom + visitedCard.pad
                     caption: Translation.tr("Most visited")
+                    Binding { target: root; property: "visitedLines"; value: root.wide ? Math.max(2, Math.min(4, Math.floor((visitedCard.height - visitedCard.headroom - visitedCard.pad + root.u(10)) / root.u(86)))) : 2 }
                     Grid {
                         id: visitedGrid
                         x: visitedCard.pad
