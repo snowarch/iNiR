@@ -180,7 +180,8 @@ IrisWidgetFace {
             WeekStrip { visible: root.shown.length === 0; Layout.fillWidth: true }
             Item { Layout.fillHeight: true; visible: root.shown.length === 0 }
             Empty { visible: root.shown.length === 0; Layout.fillWidth: true }
-            Item { Layout.fillHeight: true; visible: root.shown.length > 0 }
+            // Free: the words sit in the middle of what is left under the week, not on its floor.
+            Item { Layout.fillHeight: true }
         }
     }
 
@@ -226,42 +227,13 @@ IrisWidgetFace {
             visible: root.shown.length === 0
             Layout.fillWidth: true
             Layout.fillHeight: true
-            ColumnLayout {
+            FaceBlank {
+                face: root
                 anchors.centerIn: parent
                 width: parent.width
-                spacing: root.dp(4)
-                Rectangle {
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: root.dp(48)
-                    Layout.preferredHeight: Layout.preferredWidth
-                    Layout.bottomMargin: root.dp(6)
-                    radius: width / 2
-                    color: root.nothing ? "transparent" : IrisStyle.tintFill(root.inked(IrisStyle.identity.red))
-                    border.width: root.nothing ? Math.max(1, root.dp(1.5)) : 0
-                    border.color: root.ink
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "event_available"
-                        iconSize: Math.round(parent.width * 0.5)
-                        color: root.inked(IrisStyle.identity.red)
-                    }
-                }
-                FaceText {
-                    face: root
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: Translation.tr("Nothing scheduled")
-                    size: 14
-                    weight: Font.DemiBold
-                }
-                FaceText {
-                    face: root
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: Translation.tr("The next seven days are free")
-                    color: root.inkSecondary
-                    size: 12
-                }
+                glyph: "event_available"
+                title: Translation.tr("Nothing scheduled")
+                detail: Translation.tr("The next seven days are free")
             }
         }
         Item { Layout.fillHeight: true; visible: root.shown.length > 0 }

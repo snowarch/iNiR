@@ -33,19 +33,37 @@ IrisWidgetFace {
             tint: root.accent
         }
 
-        FaceText {
-            face: root
+        // No stories: what happened, centred in the room they would fill, and a way to try again; one grey line cut
+        // at the edge read like a broken widget.
+        Item {
+            id: blankNews
             visible: root.stories.length === 0
+            readonly property bool offline: !Network.online
+            readonly property bool failed: !blankNews.offline && NewsService.lastError.length > 0 && !NewsService.loading
             Layout.fillWidth: true
-            text: !Network.online ? Network.offlineReason
-                : NewsService.lastError.length > 0 && !NewsService.loading ? Translation.tr("Headlines didn't load (´・ω・`)")
-                : Translation.tr("Fetching headlines…")
-            color: root.inkTertiary
-            size: 12.5
+            Layout.fillHeight: true
+            FaceBlank {
+                face: root
+                anchors.centerIn: parent
+                width: parent.width
+                glyph: blankNews.offline ? "cloud_off" : blankNews.failed ? "sync_problem" : "newspaper"
+                title: blankNews.offline ? Translation.tr("Offline")
+                    : blankNews.failed ? Translation.tr("Headlines didn't load") : Translation.tr("Fetching headlines…")
+                detail: blankNews.offline ? Network.offlineReason : blankNews.failed ? Translation.tr("The feed did not answer") : ""
+                FaceChoice {
+                    visible: blankNews.failed
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.topMargin: root.dp(4)
+                    icon: "refresh"
+                    label: Translation.tr("Try again")
+                    onClicked: root.widget._fetch(true)
+                }
+            }
         }
 
         GridLayout {
             id: storyGrid
+            visible: root.stories.length > 0
             Layout.fillWidth: true
             Layout.fillHeight: true
             columns: root.medium ? 2 : 1

@@ -188,28 +188,19 @@ IrisWidgetFace {
             text: Translation.tr("Batteries")
             tint: root.inked(IrisStyle.identity.green)
         }
-        Item { Layout.fillHeight: true }
-        MaterialSymbol {
-            text: "power"
-            fill: 1
-            iconSize: root.px(root.small ? 30 : 36)
-            color: root.inkSecondary
-        }
-        FaceText {
-            face: root
+        Item {
             Layout.fillWidth: true
-            text: Translation.tr("On power")
-            size: 14
-            weight: Font.DemiBold
-        }
-        FaceText {
-            face: root
-            Layout.fillWidth: true
-            wrapMode: Text.WordWrap
-            maximumLineCount: 2
-            text: Translation.tr("Devices you pair show up here")
-            color: root.inkSecondary
-            size: 12
+            Layout.fillHeight: true
+            FaceBlank {
+                face: root
+                anchors.centerIn: parent
+                width: parent.width
+                glyph: "power"
+                glyphFill: true
+                tint: root.inked(IrisStyle.identity.green)
+                title: Translation.tr("On power")
+                detail: Translation.tr("Devices you pair show up here")
+            }
         }
     }
 

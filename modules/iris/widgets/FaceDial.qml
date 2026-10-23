@@ -94,14 +94,15 @@ Item {
         }
     }
 
+    // Under the 12, as Apple's dial carries its city: below the centre it sat where the hands rest half the day.
     Text {
         visible: root.caption.length > 0
         anchors.horizontalCenter: parent.horizontalCenter
-        y: Math.round(root.cy + root.r * 0.3)
+        y: Math.round(root.cy - root.r * 0.38 - height / 2)
         text: root.caption
         color: IrisStyle.secondaryOf(root.ink)
         font.family: root.face.fontMain
-        font.pixelSize: Math.max(8, Math.round(root.r * 0.16))
+        font.pixelSize: Math.max(8, Math.round(root.r * 0.15))
         font.weight: IrisStyle.weight(Font.DemiBold)
         renderType: Text.NativeRendering
     }

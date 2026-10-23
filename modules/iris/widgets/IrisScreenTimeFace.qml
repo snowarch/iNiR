@@ -25,6 +25,8 @@ IrisWidgetFace {
     readonly property int appCount: root.large ? 5 : root.medium ? 2 : 1
     readonly property var topApps: root.apps.slice(0, root.appCount)
     readonly property color tint: root.inked(IrisStyle.identity.indigo)
+    // Under a minute counted: the day has not started, and "0m" over a row of empty stubs said nothing.
+    readonly property bool idle: root.total < 60
 
     function duration(seconds: int): string {
         const hours = Math.floor(seconds / 3600)
@@ -51,27 +53,52 @@ IrisWidgetFace {
         icon: IrisPieces.appIcon(String(app?.originalId ?? app?.id ?? ""))
     }
 
-    component HourBars: Row {
+    // Hours with use stand on a baseline; an unused hour is no bar at all (a 3 px stub per empty hour drew a dashed
+    // line across an idle day), and the hour we are in is a dot when nothing filled it yet.
+    component HourBars: Item {
         id: bars
         property real barHeight: root.dp(56)
-        spacing: Math.max(1, root.dp(2))
-        readonly property real barWidth: (width - bars.spacing * 23) / 24
-        Repeater {
-            model: 24
-            Item {
-                id: hour
-                required property int index
-                width: bars.barWidth
-                height: bars.barHeight
-                Rectangle {
-                    anchors.bottom: parent.bottom
-                    width: parent.width
-                    height: Math.max(root.dp(3), parent.height * root.hourly[hour.index] / root.hourPeak)
-                    radius: Math.min(width / 2, IrisStyle.radiusMicro)
-                    color: hour.index === root.hourNow ? root.highlight
-                        : root.hourly[hour.index] > 0 ? root.accent : root.fill
+        readonly property real gap: Math.max(1, root.dp(2))
+        readonly property real barWidth: (width - bars.gap * 23) / 24
+        implicitHeight: bars.barHeight + 1
+        Row {
+            spacing: bars.gap
+            Repeater {
+                model: 24
+                Item {
+                    id: hour
+                    required property int index
+                    readonly property bool now: hour.index === root.hourNow
+                    readonly property real used: root.hourly[hour.index] ?? 0
+                    width: bars.barWidth
+                    height: bars.barHeight
+                    Rectangle {
+                        visible: hour.used > 0
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: Math.max(root.dp(3), parent.height * hour.used / root.hourPeak)
+                        radius: Math.min(width / 2, IrisStyle.radiusMicro)
+                        color: hour.now ? root.highlight : root.accent
+                    }
+                    Rectangle {
+                        visible: hour.now && hour.used <= 0
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: -Math.round(height / 2)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: Math.max(root.dp(4), Math.min(parent.width, root.dp(5)))
+                        height: width
+                        radius: width / 2
+                        color: root.highlight
+                    }
                 }
             }
+        }
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: root.hairline
         }
     }
 
@@ -106,7 +133,35 @@ IrisWidgetFace {
 
     ColumnLayout {
         anchors.fill: parent
-        visible: root.on
+        visible: root.on && root.idle
+        spacing: root.dp(8)
+
+        FaceHeader {
+            face: root
+            Layout.fillWidth: true
+            glyph: "hourglass_bottom"
+            text: Translation.tr("Screen Time")
+            trailing: root.small ? "" : Translation.tr("Today")
+            tint: root.tint
+        }
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            FaceBlank {
+                face: root
+                anchors.centerIn: parent
+                width: parent.width
+                glyph: "hourglass_empty"
+                tint: root.tint
+                title: Translation.tr("Nothing yet today")
+                detail: Translation.tr("Your hours show up here as you use the computer")
+            }
+        }
+    }
+
+    ColumnLayout {
+        anchors.fill: parent
+        visible: root.on && !root.idle
         spacing: root.dp(root.small ? 2 : 6)
 
         FaceHeader {

@@ -388,7 +388,8 @@ AbstractBackgroundWidget {
                 leftMargin: 2
                 rightMargin: 2
             }
-            visible: textEdit.text.length === 0 && !textEdit.activeFocus
+            // iRiS draws its own blank page (IrisNotesFace).
+            visible: !root.irisFaced && textEdit.text.length === 0 && !textEdit.activeFocus
             text: Translation.tr("Write a note…")
             color: root.widgetInkSubtle
             font.pixelSize: root.fontSize

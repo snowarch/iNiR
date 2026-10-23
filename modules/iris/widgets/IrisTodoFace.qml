@@ -106,45 +106,14 @@ IrisWidgetFace {
             Layout.fillWidth: true
             Layout.fillHeight: true
             implicitHeight: done.implicitHeight
-            ColumnLayout {
+            FaceBlank {
                 id: done
+                face: root
                 anchors.centerIn: parent
                 width: parent.width
-                spacing: root.dp(4)
-                Rectangle {
-                    Layout.alignment: Qt.AlignHCenter
-                    visible: !root.small
-                    Layout.preferredWidth: root.dp(root.large ? 52 : 40)
-                    Layout.preferredHeight: Layout.preferredWidth
-                    Layout.bottomMargin: root.dp(4)
-                    radius: width / 2
-                    color: root.nothing ? "transparent" : IrisStyle.tintFill(root.accent)
-                    border.width: root.nothing ? Math.max(1, root.dp(1.5)) : 0
-                    border.color: root.ink
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "check"
-                        iconSize: Math.round(parent.width * 0.52)
-                        color: root.accent
-                    }
-                }
-                FaceText {
-                    face: root
-                    Layout.fillWidth: true
-                    horizontalAlignment: root.small ? Text.AlignLeft : Text.AlignHCenter
-                    text: Translation.tr("All done")
-                    size: root.small ? 13 : 14
-                    weight: Font.DemiBold
-                }
-                FaceText {
-                    face: root
-                    visible: !root.small
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: Translation.tr("Nothing waiting on you")
-                    color: root.inkSecondary
-                    size: 12
-                }
+                glyph: "check"
+                title: Translation.tr("All done")
+                detail: Translation.tr("Nothing waiting on you")
             }
         }
         Rectangle {
@@ -189,8 +158,10 @@ IrisWidgetFace {
             iconSize: root.px(22)
             color: root.accent
         }
+        // A zero beside "All done" said the same thing twice, louder.
         FaceFigure {
             face: root
+            visible: root.pending > 0
             text: root.pending
             size: 38
             tone: root.accent
@@ -225,6 +196,7 @@ IrisWidgetFace {
             }
             FaceFigure {
                 face: root
+                visible: root.pending > 0
                 text: root.pending
                 size: 22
                 tone: root.accent
@@ -267,6 +239,7 @@ IrisWidgetFace {
             }
             FaceFigure {
                 face: root
+                visible: root.pending > 0
                 text: root.pending
                 size: 26
                 tone: root.accent

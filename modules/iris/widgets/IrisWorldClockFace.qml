@@ -86,7 +86,12 @@ IrisWidgetFace {
         rowSpacing: root.dp(6)
         Repeater {
             model: root.large ? [] : root.cities
-            City { diameter: root.dialFor(root.cities.length) }
+            // Three on a small face: the third spans both columns and sits under the pair's middle, not under the first.
+            City {
+                diameter: root.dialFor(root.cities.length)
+                Layout.alignment: Qt.AlignHCenter
+                Layout.columnSpan: root.small && root.cities.length === 3 && index === 2 ? 2 : 1
+            }
         }
     }
 
