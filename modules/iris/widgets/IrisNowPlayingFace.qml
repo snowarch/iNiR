@@ -28,6 +28,8 @@ IrisWidgetFace {
     readonly property bool lyricsWanted: root.large && root.live && root.hasPlayer
         && Boolean(root.widget.irisOption("lyrics", true))
     readonly property bool lyricsReady: root.lyricsWanted && LyricsService.status === "ok" && LyricsService.lyricsLines.length > 0
+    // Large without lyrics wears the cover whole: beside the title it left a 180 px hole where the lines go.
+    readonly property bool coverLarge: root.large && !root.resting && !root.lyricsReady && root.art.length > 0
     readonly property string source: {
         const identity = String(root.player?.identity || String(root.player?.desktopEntry ?? "").split(".").pop() || "")
         return identity.length > 0 ? identity.charAt(0).toUpperCase() + identity.slice(1) : Translation.tr("Music")
@@ -35,7 +37,7 @@ IrisWidgetFace {
 
     light: root.small || root.art.length === 0 ? "transparent"
         : root.artLight
-    padding: root.small && root.art.length > 0 && !root.resting ? 0 : root.edgePad
+    padding: (root.small && root.art.length > 0 && !root.resting) || root.coverLarge ? 0 : root.edgePad
 
     onLyricsWantedChanged: root.lyricsWanted ? LyricsService.subscribe() : LyricsService.unsubscribe()
     Component.onDestruction: if (root.lyricsWanted) LyricsService.unsubscribe()
@@ -58,10 +60,13 @@ IrisWidgetFace {
     component Transport: RowLayout {
         id: transport
         property real disc: root.dp(34)
+        property bool overMedia: false
         spacing: root.dp(6)
         FaceAction {
             face: root
             implicitWidth: transport.disc
+            tint: transport.overMedia ? IrisStyle.onMedia : root.ink
+            color: transport.overMedia ? IrisStyle.onMediaFill : root.fill
             glyph: "skip_previous"
             name: Translation.tr("Previous")
             enabled: media.effectiveCanGoPrevious
@@ -73,13 +78,15 @@ IrisWidgetFace {
             implicitWidth: Math.round(transport.disc * 1.2)
             glyph: root.playing ? "pause" : "play_arrow"
             name: root.playing ? Translation.tr("Pause") : Translation.tr("Play")
-            tint: root.playing ? root.onFill(root.accent) : root.ink
-            color: root.playing ? root.accent : root.fill
+            tint: root.playing ? root.onFill(root.accent) : transport.overMedia ? IrisStyle.onMedia : root.ink
+            color: root.playing ? root.accent : transport.overMedia ? IrisStyle.onMediaFill : root.fill
             onActivated: media.togglePlaying()
         }
         FaceAction {
             face: root
             implicitWidth: transport.disc
+            tint: transport.overMedia ? IrisStyle.onMedia : root.ink
+            color: transport.overMedia ? IrisStyle.onMediaFill : root.fill
             glyph: "skip_next"
             name: Translation.tr("Next")
             enabled: media.effectiveCanGoNext
@@ -89,14 +96,53 @@ IrisWidgetFace {
     }
 
     component Progress: Rectangle {
+        id: progressBar
+        property bool overMedia: false
         implicitHeight: root.dp(4)
         radius: IrisStyle.capsule(height)
-        color: root.fill
+        color: progressBar.overMedia ? IrisStyle.onMediaFill : root.fill
         Rectangle {
             width: parent.width * root.progress
             height: parent.height
             radius: IrisStyle.capsule(height)
-            color: root.ink
+            color: progressBar.overMedia ? IrisStyle.onMedia : root.ink
+        }
+    }
+
+    // The keys sit on the timeline's centre, the times pinned to its ends: fillers between two times of
+    // different widths pushed the transport off by half their difference.
+    component KeysRow: Item {
+        id: keysRow
+        property bool overMedia: false
+        property real disc: root.dp(36)
+        implicitHeight: keys.implicitHeight
+        FaceText {
+            face: root
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            visible: media.effectiveLength > 0
+            text: StringUtils.friendlyTimeForSeconds(media.effectivePosition)
+            color: keysRow.overMedia ? IrisStyle.onMediaSecondary : root.inkTertiary
+            font.family: root.fontNumbers
+            font.features: ({ "tnum": 1 })
+            size: 11
+        }
+        Transport {
+            id: keys
+            anchors.centerIn: parent
+            disc: keysRow.disc
+            overMedia: keysRow.overMedia
+        }
+        FaceText {
+            face: root
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            visible: media.effectiveLength > 0
+            text: StringUtils.friendlyTimeForSeconds(media.effectiveLength)
+            color: keysRow.overMedia ? IrisStyle.onMediaSecondary : root.inkTertiary
+            font.family: root.fontNumbers
+            font.features: ({ "tnum": 1 })
+            size: 11
         }
     }
 
@@ -420,6 +466,7 @@ IrisWidgetFace {
                 visible: media.effectiveLength > 0
             }
             Transport {
+                Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: root.dp(6)
                 disc: root.dp(32)
             }
@@ -428,7 +475,7 @@ IrisWidgetFace {
 
     ColumnLayout {
         anchors.fill: parent
-        visible: !root.resting && root.large
+        visible: !root.resting && root.large && !root.coverLarge
         spacing: root.dp(12)
 
         RowLayout {
@@ -480,14 +527,6 @@ IrisWidgetFace {
             FaceText {
                 face: root
                 Layout.fillWidth: true
-                visible: root.lyricsWanted && LyricsService.status === "offline"
-                text: Translation.tr("Lyrics need an internet connection")
-                color: root.inkTertiary
-                size: 12.5
-            }
-            FaceText {
-                face: root
-                Layout.fillWidth: true
                 visible: root.lyricsReady
                 text: LyricsService.slots[2] ?? ""
                 color: root.inkTertiary
@@ -518,26 +557,76 @@ IrisWidgetFace {
             Layout.fillWidth: true
             visible: media.effectiveLength > 0
         }
-        RowLayout {
+        KeysRow {
             Layout.fillWidth: true
-            FaceText {
-                face: root
-                text: StringUtils.friendlyTimeForSeconds(media.effectivePosition)
-                color: root.inkTertiary
-                font.family: root.fontNumbers
-                font.features: ({ "tnum": 1 })
-                size: 11
+        }
+    }
+
+    Item {
+        anchors.fill: parent
+        visible: root.coverLarge
+
+        ClippingRectangle {
+            anchors.fill: parent
+            radius: root.radius
+            color: "transparent"
+            IrisImage {
+                anchors.fill: parent
+                source: root.art
             }
-            Item { Layout.fillWidth: true }
-            Transport { disc: root.dp(36) }
-            Item { Layout.fillWidth: true }
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: parent.height * 0.6
+                gradient: Gradient {
+                    GradientStop { position: 0; color: "transparent" }
+                    GradientStop { position: 1; color: IrisStyle.veilStrong }
+                }
+            }
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: root.edgePad
+            spacing: root.dp(2)
+
+            Item { Layout.fillHeight: true }
             FaceText {
                 face: root
-                text: StringUtils.friendlyTimeForSeconds(media.effectiveLength)
-                color: root.inkTertiary
-                font.family: root.fontNumbers
-                font.features: ({ "tnum": 1 })
+                Layout.fillWidth: true
+                text: root.source
+                color: IrisStyle.onMediaSecondary
                 size: 11
+                weight: Font.DemiBold
+            }
+            FaceText {
+                face: root
+                Layout.fillWidth: true
+                text: media.effectiveTitle
+                color: IrisStyle.onMedia
+                size: 19
+                weight: Font.DemiBold
+                wrapMode: Text.Wrap
+                maximumLineCount: 2
+            }
+            FaceText {
+                face: root
+                Layout.fillWidth: true
+                text: media.effectiveArtist
+                color: IrisStyle.onMediaSecondary
+                size: 13
+            }
+            Progress {
+                Layout.fillWidth: true
+                Layout.topMargin: root.dp(12)
+                overMedia: true
+                visible: media.effectiveLength > 0
+            }
+            KeysRow {
+                Layout.fillWidth: true
+                Layout.topMargin: root.dp(8)
+                overMedia: true
             }
         }
     }

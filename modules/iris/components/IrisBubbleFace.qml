@@ -150,7 +150,8 @@ Item {
             }
         }
         ShapePath {
-            strokeColor: root.edgeRings ? "transparent" : ring.tint
+            strokeColor: root.edgeRings ? "transparent"
+                : IrisStyle.arcInk(ring.tint, Math.PI * (ring.width - ring.stroke) * Math.max(0, Math.min(1, ring.progress)), ring.stroke)
             strokeWidth: ring.stroke
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
@@ -186,7 +187,7 @@ Item {
             }
         }
         ShapePath {
-            strokeColor: gauge.tint
+            strokeColor: IrisStyle.arcInk(gauge.tint, gauge.radius * Math.PI * 4 / 3 * Math.max(0, Math.min(1, gauge.progress)), gauge.stroke)
             strokeWidth: gauge.stroke
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
@@ -194,7 +195,7 @@ Item {
                 centerX: gauge.width / 2; centerY: gauge.radius + gauge.stroke / 2
                 radiusX: gauge.radius; radiusY: gauge.radius
                 startAngle: 150
-                sweepAngle: Math.max(0.5, 240 * Math.max(0, Math.min(1, gauge.progress)))
+                sweepAngle: 240 * Math.max(0, Math.min(1, gauge.progress))
             }
         }
     }

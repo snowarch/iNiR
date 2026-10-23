@@ -843,6 +843,8 @@ QtObject {
     function tintFill(tint: color): color { return ColorUtils.applyAlpha(tint, Math.min(0.15, root.fillAlpha(0.13))) }
     // The unread part of a reading (rings, gauges): the reading's own colour, faint but present on every material.
     function trackOf(tint: color): color { return ColorUtils.applyAlpha(tint, root.fillAlpha(0.38)) }
+    // A reading's arc fades in over its first stroke of length: a round cap alone drew a dot on an empty ring.
+    function arcInk(tint: color, length: real, stroke: real): color { return ColorUtils.applyAlpha(tint, tint.a * Math.max(0, Math.min(1, length / Math.max(1, stroke)))) }
     function tintFillHover(tint: color): color { return ColorUtils.applyAlpha(tint, root.fillAlpha(0.2)) }
     function tintBorder(tint: color): color { return ColorUtils.applyAlpha(tint, 0.7) }
 

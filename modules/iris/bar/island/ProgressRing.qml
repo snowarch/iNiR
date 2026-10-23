@@ -16,6 +16,7 @@ Item {
     property color tint: IrisStyle.text
     property real stroke: Math.max(2, 2.5 * IrisStyle.density)
     readonly property real radius: Math.max(0, Math.min(ring.width, ring.height) / 2 - ring.stroke / 2)
+    readonly property real level: Math.max(0, Math.min(1, ring.progress))
 
     // A Design may draw it its own way (AIRISU: the needle gauge's 270° arc).
     IrisSkin { id: ringSkin; part: "ring" }
@@ -37,7 +38,7 @@ Item {
             }
         }
         ShapePath {
-            strokeColor: ring.tint
+            strokeColor: IrisStyle.arcInk(ring.tint, 2 * Math.PI * ring.radius * ring.level, ring.stroke)
             strokeWidth: ring.stroke
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
@@ -47,7 +48,7 @@ Item {
                 radiusX: ring.radius
                 radiusY: ring.radius
                 startAngle: -90
-                sweepAngle: 360 * Math.max(0, Math.min(1, ring.progress))
+                sweepAngle: 360 * ring.level
             }
         }
     }

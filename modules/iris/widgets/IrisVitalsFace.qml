@@ -21,9 +21,13 @@ IrisWidgetFace {
     readonly property real sectionGap: root.dp(root.small ? 8 : 14)
     readonly property real heatHeight: root.dp(root.small ? 24 : root.medium ? 28 : 66)
     readonly property real diskHeight: root.dp(root.small ? 23 : root.medium ? 25 : 36)
+    // Loads alone: where heats and disk would sit, each load's last minutes instead of air.
+    readonly property bool trends: !root.small && root.loads.length > 0 && root.heats.length === 0 && !root.hasDisk
+    readonly property real trendHeight: root.large && root.trends ? root.dp(92) : 0
     readonly property real loadHeight: root.contentHeight
         - (root.heats.length ? root.heatHeight + root.sectionGap : 0)
         - (root.hasDisk ? root.diskHeight + root.sectionGap : 0)
+        - (root.trendHeight > 0 ? root.trendHeight + root.sectionGap : 0)
     readonly property real orbitSize: root.medium ? Math.min(root.contentHeight, root.dp(126))
         : Math.round(Math.min(root.loadHeight, root.contentWidth * (root.small ? 0.54 : 0.61)))
 
@@ -92,6 +96,8 @@ IrisWidgetFace {
     component Trace: Shape {
         id: trace
         required property string key
+        // A lane of its own: a floor to stand on and the reading's present as a dot at the line's end.
+        property bool lane: false
         readonly property var samples: root.history(trace.key).map(value => Math.max(0, Math.min(1, Number(value) || 0)))
         readonly property real low: Math.min(...trace.samples)
         readonly property real high: Math.max(...trace.samples)
@@ -100,7 +106,7 @@ IrisWidgetFace {
         readonly property var line: trace.samples.map((value, i) => Qt.point(
             trace.width * i / Math.max(1, trace.samples.length - 1),
             trace.height - 1 - (value - trace.base) / trace.span * (trace.height - 2)))
-        visible: trace.samples.length >= 2
+        visible: trace.samples.length >= 2 && trace.high > 0.005
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {
@@ -119,6 +125,24 @@ IrisWidgetFace {
             capStyle: ShapePath.RoundCap
             fillColor: "transparent"
             PathPolyline { path: trace.line }
+        }
+        Rectangle {
+            visible: trace.lane
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: root.fill
+        }
+        Rectangle {
+            readonly property point end: trace.line.length ? trace.line[trace.line.length - 1] : Qt.point(0, 0)
+            visible: trace.lane && trace.line.length > 0
+            width: root.dp(6)
+            height: width
+            radius: IrisStyle.capsule(width)
+            x: Math.round(end.x - width / 2)
+            y: Math.round(end.y - height / 2)
+            color: root.tint(trace.key)
         }
     }
 
@@ -316,6 +340,42 @@ IrisWidgetFace {
                         ? Math.floor(root.loadHeight / root.loads.length - loadValues.spacing)
                         : implicitHeight
                     figureSize: root.small ? 24 : root.medium ? 25 : 24
+                }
+            }
+        }
+
+        Row {
+            visible: root.medium && root.trends
+            x: composition.detailsX
+            y: loadValues.height + root.dp(12)
+            width: composition.detailsWidth
+            height: Math.max(0, composition.height - y)
+            spacing: loadValues.spacing
+            Repeater {
+                model: root.loads
+                Trace {
+                    required property var modelData
+                    key: modelData.key
+                    width: Math.floor((composition.detailsWidth - (root.loads.length - 1) * loadValues.spacing) / root.loads.length)
+                    height: parent.height
+                }
+            }
+        }
+
+        Column {
+            visible: root.large && root.trends
+            y: composition.height - height
+            width: composition.width
+            height: root.trendHeight
+            spacing: root.dp(6)
+            Repeater {
+                model: root.loads
+                Trace {
+                    required property var modelData
+                    key: modelData.key
+                    lane: true
+                    width: composition.width - root.dp(3)
+                    height: Math.floor((root.trendHeight - (root.loads.length - 1) * root.dp(6)) / root.loads.length)
                 }
             }
         }
