@@ -9641,5 +9641,13 @@
   "Nothing OS": "Nothing OS",
   "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple은 선택한 것을 강조 색으로 표시합니다. Nothing은 iRiS를 잉크로 바꾸고 신호 색 하나만 씁니다.",
   "What your apps wear, and what iRiS marks as chosen under the Apple look.": "앱이 쓰는 색, 그리고 Apple 룩에서 iRiS가 선택을 표시하는 색.",
-  "Volume and brightness": "볼륨 및 밝기"
+  "Volume and brightness": "볼륨 및 밝기",
+  "Edit Desktop": "데스크톱 편집",
+  "Drag to place · click to use": "끌어서 배치 · 클릭해서 사용",
+  "Snap to grid: on": "격자에 맞춤: 켬",
+  "Snap to grid: off": "격자에 맞춤: 끔",
+  "Widget kinds": "위젯 종류",
+  "%1, on the desktop": "%1, 데스크톱에 있음",
+  "No widget is called “%1”": "“%1”(이)라는 위젯이 없습니다",
+  "Decor": "장식"
 }

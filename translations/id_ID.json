@@ -9641,5 +9641,13 @@
   "Nothing OS": "Nothing OS",
   "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple menandai pilihanmu dengan aksenmu. Nothing membuat iRiS bertinta, dengan satu warna sinyal.",
   "What your apps wear, and what iRiS marks as chosen under the Apple look.": "Warna aplikasimu, dan yang ditandai iRiS sebagai pilihan pada tampilan Apple.",
-  "Volume and brightness": "Volume dan kecerahan"
+  "Volume and brightness": "Volume dan kecerahan",
+  "Edit Desktop": "Edit Desktop",
+  "Drag to place · click to use": "Seret untuk menaruh · klik untuk memakai",
+  "Snap to grid: on": "Tempel ke kisi: aktif",
+  "Snap to grid: off": "Tempel ke kisi: nonaktif",
+  "Widget kinds": "Jenis widget",
+  "%1, on the desktop": "%1, di desktop",
+  "No widget is called “%1”": "Tidak ada widget bernama “%1”",
+  "Decor": "Dekorasi"
 }

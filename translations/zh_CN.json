@@ -9641,5 +9641,13 @@
   "Nothing OS": "Nothing OS",
   "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple 用你的强调色标出所选内容。Nothing 让 iRiS 变成墨色，只保留一种信号色。",
   "What your apps wear, and what iRiS marks as chosen under the Apple look.": "应用使用的颜色，以及 Apple 外观下 iRiS 标记所选项的颜色。",
-  "Volume and brightness": "音量和亮度"
+  "Volume and brightness": "音量和亮度",
+  "Edit Desktop": "编辑桌面",
+  "Drag to place · click to use": "拖动放置 · 点击使用",
+  "Snap to grid: on": "吸附网格：开",
+  "Snap to grid: off": "吸附网格：关",
+  "Widget kinds": "小组件类别",
+  "%1, on the desktop": "%1，已在桌面上",
+  "No widget is called “%1”": "没有名为“%1”的小组件",
+  "Decor": "装饰"
 }

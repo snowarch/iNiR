@@ -9641,5 +9641,13 @@
   "Nothing OS": "Nothing OS",
   "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple מסמן את מה שבחרת בצבע ההדגשה שלך. Nothing הופך את iRiS לדיו, עם צבע אות אחד.",
   "What your apps wear, and what iRiS marks as chosen under the Apple look.": "מה שהאפליקציות שלך לובשות, ומה ש-iRiS מסמן כנבחר במראה Apple.",
-  "Volume and brightness": "עוצמת שמע ובהירות"
+  "Volume and brightness": "עוצמת שמע ובהירות",
+  "Edit Desktop": "עריכת שולחן העבודה",
+  "Drag to place · click to use": "גרור למיקום · לחץ לשימוש",
+  "Snap to grid: on": "הצמדה לרשת: פעיל",
+  "Snap to grid: off": "הצמדה לרשת: כבוי",
+  "Widget kinds": "סוגי וידג'טים",
+  "%1, on the desktop": "%1, על שולחן העבודה",
+  "No widget is called “%1”": "אין וידג'ט בשם “%1”",
+  "Decor": "עיצוב"
 }

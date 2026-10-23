@@ -9641,5 +9641,13 @@
   "Nothing OS": "Nothing OS",
   "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple позначає вибране вашим акцентом. Nothing робить iRiS чорнильним, з одним сигнальним кольором.",
   "What your apps wear, and what iRiS marks as chosen under the Apple look.": "Колір ваших застосунків і того, що iRiS позначає як вибране у вигляді Apple.",
-  "Volume and brightness": "Гучність і яскравість"
+  "Volume and brightness": "Гучність і яскравість",
+  "Edit Desktop": "Редагування робочого столу",
+  "Drag to place · click to use": "Перетягніть, щоб розмістити · натисніть, щоб використати",
+  "Snap to grid: on": "Прив'язка до сітки: увімк.",
+  "Snap to grid: off": "Прив'язка до сітки: вимк.",
+  "Widget kinds": "Види віджетів",
+  "%1, on the desktop": "%1, на робочому столі",
+  "No widget is called “%1”": "Немає віджета з назвою «%1»",
+  "Decor": "Декор"
 }

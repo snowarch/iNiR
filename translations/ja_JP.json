@@ -9641,5 +9641,13 @@
   "Nothing OS": "Nothing OS",
   "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple は選んだものをアクセントで示します。Nothing は iRiS をインクにし、シグナル色は一つだけ。",
   "What your apps wear, and what iRiS marks as chosen under the Apple look.": "アプリの色、そして Apple ルックで iRiS が選択を示す色。",
-  "Volume and brightness": "音量と明るさ"
+  "Volume and brightness": "音量と明るさ",
+  "Edit Desktop": "デスクトップを編集",
+  "Drag to place · click to use": "ドラッグで配置 · クリックで使用",
+  "Snap to grid: on": "グリッドに吸着: オン",
+  "Snap to grid: off": "グリッドに吸着: オフ",
+  "Widget kinds": "ウィジェットの種類",
+  "%1, on the desktop": "%1、デスクトップ上",
+  "No widget is called “%1”": "“%1”という名前のウィジェットはありません",
+  "Decor": "デコ"
 }

@@ -9641,5 +9641,13 @@
   "Nothing OS": "Nothing OS",
   "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple segna ciò che scegli con il tuo accento. Nothing rende iRiS inchiostro, con un solo colore di segnale.",
   "What your apps wear, and what iRiS marks as chosen under the Apple look.": "Ciò che usano le tue app, e ciò che iRiS segna come scelto con l'aspetto Apple.",
-  "Volume and brightness": "Volume e luminosità"
+  "Volume and brightness": "Volume e luminosità",
+  "Edit Desktop": "Modifica scrivania",
+  "Drag to place · click to use": "Trascina per posizionare · clic per usare",
+  "Snap to grid: on": "Aggancia alla griglia: attivo",
+  "Snap to grid: off": "Aggancia alla griglia: disattivo",
+  "Widget kinds": "Tipi di widget",
+  "%1, on the desktop": "%1, sulla scrivania",
+  "No widget is called “%1”": "Nessun widget si chiama “%1”",
+  "Decor": "Decorazioni"
 }

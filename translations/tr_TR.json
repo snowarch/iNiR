@@ -9641,5 +9641,13 @@
   "Nothing OS": "Nothing OS",
   "Apple marks what you choose with your accent. Nothing turns iRiS to ink, with one signal colour.": "Apple seçtiklerini vurgu renginle işaretler. Nothing iRiS'i tek bir sinyal rengiyle mürekkebe çevirir.",
   "What your apps wear, and what iRiS marks as chosen under the Apple look.": "Uygulamalarının rengi ve Apple görünümünde iRiS'in seçili olarak işaretlediği şey.",
-  "Volume and brightness": "Ses ve parlaklık"
+  "Volume and brightness": "Ses ve parlaklık",
+  "Edit Desktop": "Masaüstünü düzenle",
+  "Drag to place · click to use": "Yerleştirmek için sürükle · kullanmak için tıkla",
+  "Snap to grid: on": "Izgaraya hizala: açık",
+  "Snap to grid: off": "Izgaraya hizala: kapalı",
+  "Widget kinds": "Widget türleri",
+  "%1, on the desktop": "%1, masaüstünde",
+  "No widget is called “%1”": "“%1” adında bir widget yok",
+  "Decor": "Dekor"
 }
