@@ -1914,17 +1914,37 @@ Item {
                 mode: "record"
                 RecordDot { Layout.alignment: Qt.AlignVCenter; color: root.nothingLook ? IrisStyle.signal : IrisStyle.danger }
                 IrisLabel {
+                    visible: root.nothingLook
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
-                    text: root.nothingLook ? Translation.tr("Rec") : Translation.tr("Recording")
-                    color: root.nothingLook ? IrisStyle.text : IrisStyle.textSecondary
+                    text: Translation.tr("Rec")
+                    color: IrisStyle.text
+                }
+                IrisText {
+                    visible: !root.nothingLook
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    text: Translation.tr("Recording")
+                    color: IrisStyle.textSecondary
+                    font.pixelSize: IrisStyle.typeLabel
+                    font.weight: IrisStyle.weight(Font.Medium)
+                    elide: Text.ElideRight
                 }
                 // While something runs, its figure is what the row says (DI49j): the word steps back.
                 IrisDotText {
+                    visible: root.nothingLook
                     Layout.alignment: Qt.AlignVCenter
                     text: root.clockText(RecorderStatus.elapsedSeconds)
                     pixelSize: root.figureSize
-                    color: root.nothingLook ? IrisStyle.text : IrisStyle.danger
+                    color: IrisStyle.text
+                }
+                IrisNumber {
+                    visible: !root.nothingLook
+                    Layout.alignment: Qt.AlignVCenter
+                    text: root.clockText(RecorderStatus.elapsedSeconds)
+                    color: IrisStyle.danger
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
+                    weight: IrisStyle.figureWeight
                 }
                 PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: false }
             }
@@ -1966,17 +1986,38 @@ Item {
                     }
                 }
                 IrisLabel {
+                    visible: root.nothingLook
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
                     text: root.timerPaused ? Translation.tr("Paused") : root.timerLabel
-                    color: root.nothingLook ? IrisStyle.text : IrisStyle.textSecondary
+                    color: IrisStyle.text
+                }
+                IrisText {
+                    visible: !root.nothingLook
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    text: root.timerPaused ? Translation.tr("Paused") : root.timerLabel
+                    color: IrisStyle.textSecondary
+                    font.pixelSize: IrisStyle.typeLabel
+                    font.weight: IrisStyle.weight(Font.Medium)
+                    elide: Text.ElideRight
                 }
                 IrisDotText {
+                    visible: root.nothingLook
                     Layout.alignment: Qt.AlignVCenter
                     text: root.clockText(root.timerSeconds)
                     direction: root.timerKind === "stopwatch" ? 1 : -1
                     pixelSize: root.figureSize
-                    color: root.timerPaused ? IrisStyle.textSecondary : root.nothingLook ? IrisStyle.text : IrisStyle.secondaryAccent
+                    color: root.timerPaused ? IrisStyle.textSecondary : IrisStyle.text
+                }
+                IrisNumber {
+                    visible: !root.nothingLook
+                    Layout.alignment: Qt.AlignVCenter
+                    text: root.clockText(root.timerSeconds)
+                    countDown: root.timerKind !== "stopwatch"
+                    color: root.timerPaused ? IrisStyle.textSecondary : IrisStyle.secondaryAccent
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
+                    weight: IrisStyle.figureWeight
                 }
                 PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: false }
             }
@@ -2011,10 +2052,19 @@ Item {
                 }
                 // The percentage when the job knows it, how long it has run when it does not.
                 IrisDotText {
+                    visible: root.nothingLook
                     Layout.alignment: Qt.AlignVCenter
-                    text: taskRow.progress >= 0 ? root.percentOf(root.task) + (root.nothingLook ? "" : "%") : root.elapsedOf(root.task)
+                    text: taskRow.progress >= 0 ? root.percentOf(root.task) : root.elapsedOf(root.task)
                     pixelSize: root.figureSize
-                    color: root.nothingLook ? IrisStyle.text : root.taskTint
+                    color: IrisStyle.text
+                }
+                IrisNumber {
+                    visible: !root.nothingLook
+                    Layout.alignment: Qt.AlignVCenter
+                    text: taskRow.progress >= 0 ? root.percentOf(root.task) + "%" : root.elapsedOf(root.task)
+                    color: root.taskTint
+                    pixelSize: IrisStyle.typeHeadline * root.clockScale
+                    weight: IrisStyle.figureWeight
                 }
                 PrivacyMarks { Layout.alignment: Qt.AlignVCenter; spelled: false }
             }
