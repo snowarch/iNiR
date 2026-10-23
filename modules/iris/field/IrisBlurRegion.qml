@@ -32,7 +32,16 @@ Region {
     // A body that leaves (a dismissed banner, a closed card) takes its region with it in the same turn: the
     // region reaches the compositor only with a frame that has something to draw, and a turn later the frame
     // that removed the body is gone, so its blur stayed until the next repaint.
+    // A table rebuilt with the same bodies is no move: restarting the settle on it kept a still Island on the coarse
+    // three-row corners forever, the stair steps under its blur.
+    property string shapesKey: ""
+    function keyOf(list: var): string {
+        return list.map(s => Object.keys(s).filter(k => typeof s[k] !== "object").map(k => k + ":" + s[k]).join(",")).join("|")
+    }
     onShapesChanged: {
+        const key = root.keyOf(root.shapes ?? [])
+        if (key === root.shapesKey) return
+        root.shapesKey = key
         if ((root.shapes ?? []).length < (root.held ?? []).length) { perFrame.stop(); root.held = root.shapes ?? [] }
         else {
             root.dirty = true
