@@ -23,6 +23,9 @@ Item {
     readonly property real peak: Number(root.face?.hourPeak ?? 900)
     readonly property int hourNow: Number(root.face?.hourNow ?? 0)
     readonly property var apps: root.face?.topApps ?? []
+    // On, but under a minute today: the day is said in words instead of a 0m over an empty axis.
+    readonly property bool idle: root.on && (root.face?.idle ?? false)
+    readonly property bool logging: root.on && !root.idle
 
     AStock {
         id: stock
@@ -85,9 +88,20 @@ Item {
     }
 
     // On.
+    ABlank {
+        visible: root.idle
+        x: root.pad
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.pad
+        width: root.width - 2 * root.pad
+        face: root.face
+        stock: stock
+        label: Translation.tr("Nothing yet today")
+        line: Translation.tr("Your hours show up here as you use the computer")
+    }
     AText {
         id: total
-        visible: root.on
+        visible: root.logging
         x: root.pad
         y: root.pad + root.dp(16)
         voice: "figure"
@@ -98,7 +112,7 @@ Item {
     }
     Item {
         id: log
-        visible: root.on
+        visible: root.logging
         x: root.pad
         y: total.y + total.height + root.dp(8)
         width: (root.large ? root.width : root.small ? root.width : Math.round(root.width * 0.55)) - 2 * root.pad
@@ -136,7 +150,7 @@ Item {
         }
     }
     Column {
-        visible: root.on && !root.small && root.apps.length > 0
+        visible: root.logging && !root.small && root.apps.length > 0
         x: root.large ? root.pad : log.x + log.width + root.dp(12)
         y: root.large ? log.y + log.height + root.dp(10) : root.pad + root.dp(16)
         width: root.large ? root.width - 2 * root.pad : root.width - x - root.pad

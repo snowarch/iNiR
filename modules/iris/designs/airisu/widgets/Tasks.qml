@@ -19,6 +19,7 @@ Item {
     readonly property int pad: root.dp(14)
     readonly property var entries: root.face?.entries ?? []
     readonly property bool adding: root.face?.adding ?? false
+    readonly property bool empty: root.entries.length === 0 && !root.adding
 
     AStock {
         id: stock
@@ -29,10 +30,12 @@ Item {
     Row {
         id: head
         x: root.pad
-        y: root.pad
+        // With nothing left the count goes and the label sits level with the key.
+        y: root.empty ? root.pad + Math.round((root.dp(26) - height) / 2) : root.pad
         spacing: root.dp(6)
         AText {
             id: count
+            visible: !root.empty
             voice: "figure"
             lean: Airisu.lean
             size: root.px(root.small ? 34 : 40)
@@ -40,7 +43,7 @@ Item {
             text: root.face?.pending ?? 0
         }
         AText {
-            anchors.baseline: count.baseline
+            anchors.baseline: root.empty ? undefined : count.baseline
             voice: "mono"
             size: IrisStyle.typeCaption
             color: stock.inkSecond
@@ -87,17 +90,21 @@ Item {
         TapHandler { id: addTap; onTapped: root.face?.beginAdding() }
     }
 
+    ABlank {
+        visible: root.empty
+        x: root.pad
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.pad
+        width: root.width - 2 * root.pad
+        face: root.face
+        stock: stock
+        label: Translation.tr("All done")
+        line: Translation.tr("Nothing waiting on you")
+    }
     Column {
         x: root.pad
         y: head.y + head.height + root.dp(8)
         width: root.width - 2 * root.pad
-        AText {
-            visible: root.entries.length === 0 && !root.adding
-            voice: "data"
-            size: IrisStyle.typeCaption
-            color: stock.inkThird
-            text: Translation.tr("All done")
-        }
         Repeater {
             model: root.entries
             Item {

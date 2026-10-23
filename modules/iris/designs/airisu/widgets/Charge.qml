@@ -87,7 +87,29 @@ Item {
                 : (root.lead?.charging ?? false) ? Translation.tr("Charging") : ""
         }
     }
+    AText {
+        visible: root.lead === null
+        x: root.pad
+        y: root.pad
+        width: root.width - 2 * root.pad
+        voice: "mono"
+        size: IrisStyle.typeCaption
+        color: stock.inkSecond
+        text: Translation.tr("Batteries")
+    }
+    ABlank {
+        visible: root.lead === null
+        x: root.pad
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.pad
+        width: root.width - 2 * root.pad
+        face: root.face
+        stock: stock
+        label: Translation.tr("On power")
+        line: Translation.tr("Devices you pair show up here")
+    }
     Meter {
+        visible: root.lead !== null
         x: root.pad
         width: root.width - 2 * root.pad
         height: root.dp(12)

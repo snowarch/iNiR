@@ -41,4 +41,15 @@ Item {
             text: Translation.tr("%1 words").arg(root.words)
         }
     }
+    ABlank {
+        visible: root.face?.blank ?? false
+        x: root.pad
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.pad
+        width: root.width - 2 * root.pad
+        face: root.face
+        stock: stock
+        label: Translation.tr("Empty")
+        line: Translation.tr("Click anywhere on the page to start")
+    }
 }

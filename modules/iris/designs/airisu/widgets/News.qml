@@ -56,18 +56,20 @@ Item {
             antialiasing: false
         }
     }
-    AText {
+    ABlank {
+        readonly property bool offline: !Network.online
+        readonly property bool failed: !offline && NewsService.lastError.length > 0 && !NewsService.loading
         visible: root.stories.length === 0
         x: root.pad
-        y: mast.y + mast.height + root.dp(10)
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.pad
         width: root.width - 2 * root.pad
-        size: IrisStyle.typeLabel
-        wrapMode: Text.Wrap
-        maximumLineCount: 4
-        color: stock.inkSecond
-        text: !Network.online ? Network.offlineReason
-            : NewsService.lastError.length > 0 && !NewsService.loading ? Translation.tr("Headlines didn't load (´・ω・`)")
-            : Translation.tr("Fetching headlines…")
+        face: root.face
+        stock: stock
+        label: offline ? Translation.tr("Offline") : failed ? Translation.tr("Headlines didn't load") : Translation.tr("Fetching headlines…")
+        line: offline ? Network.offlineReason : failed ? Translation.tr("The feed did not answer") : ""
+        action: failed ? Translation.tr("Try again") : ""
+        onActivated: root.face?.widget._fetch(true)
     }
     Grid {
         id: page
