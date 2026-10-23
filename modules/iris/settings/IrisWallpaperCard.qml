@@ -36,8 +36,15 @@ ClippingRectangle {
         const words = FileUtils.trimFileExt(FileUtils.fileNameForPath(card.current))
             .replace(/^(motionbgs|wallhaven|wallpaperflare|unsplash)[-_]/i, "")
             .split(/[-_\s]+/).filter(word => word.length > 0)
-        if (words.length === 1 && /\d/.test(words[0]) && /^[a-z0-9]{4,10}$/i.test(words[0])) return ""
-        return words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
+        // A name people gave it reads as one; a site's dump (ids, domains, a row of tags, a hash) is not a name: the folder
+        // it lives in says it instead, else just "Wallpaper".
+        const machine = words.length === 0 || words.length > 5 || words.some(word => /\d{4,}|\.[a-z]{2,4}$|^[0-9a-f]{12,}$/i.test(word))
+            || (words.length === 1 && /\d/.test(words[0]) && /^[a-z0-9]{4,10}$/i.test(words[0]))
+        if (!machine) return words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
+        const folder = FileUtils.fileNameForPath(FileUtils.parentDirectory(card.current))
+        const generic = ["", "pictures", "wallpapers", "wallpaper", "walls", "downloads", "images", "backgrounds", "imágenes", "descargas"]
+        return generic.includes(folder.toLowerCase()) || /\d{4,}/.test(folder) ? Translation.tr("Wallpaper")
+            : folder.split(/[-_\s]+/).filter(word => word.length > 0).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
     }
     readonly property string name: SystemInfo.displayName || SystemInfo.username
     readonly property var nearby: {
