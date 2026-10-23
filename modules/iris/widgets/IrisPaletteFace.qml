@@ -10,6 +10,7 @@ import qs.modules.iris.style
 
 IrisWidgetFace {
     id: root
+    designFace: IrisDesign.skin("widgetPalette")
 
     readonly property var colours: root.widget.colours
     readonly property var kept: root.widget.kept

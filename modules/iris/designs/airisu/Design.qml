@@ -86,6 +86,8 @@ QtObject {
         widgetEditorial: "widgets/Poster.qml",
         widgetJapanese: "widgets/Hanko.qml",
         widgetVitals: "widgets/Vitals.qml",
+        widgetPalette: "widgets/Swatch.qml",
+        widgetPhoto: "widgets/Print.qml",
         // Every other widget: iRiS's face set on AIRISU's lacquer.
         widgetStock: "widgets/Stock.qml"
     })

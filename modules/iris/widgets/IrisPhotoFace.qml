@@ -46,7 +46,9 @@ IrisWidgetFace {
             }
         }
     }
-    Component.onCompleted: root.widget.irisPhotoHost = host
+    // A Design that prints the photo lends its own host; this one takes it back when the Design goes.
+    Component.onCompleted: if (!root.designed) root.widget.irisPhotoHost = host
+    onDesignedChanged: if (!root.designed) root.widget.irisPhotoHost = host
     Component.onDestruction: if (root.widget.irisPhotoHost === host) root.widget.irisPhotoHost = null
 
     RowLayout {
