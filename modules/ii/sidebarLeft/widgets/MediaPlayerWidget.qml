@@ -348,6 +348,8 @@ Item {
                     spacing: 4
 
                     StyledText {
+                        id: timeStartLabel
+                        Layout.preferredWidth: Math.max(timeStartLabel.implicitWidth, timeEndLabel.implicitWidth)
                         text: StringUtils.friendlyTimeForSeconds(root.effectivePosition)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
@@ -491,6 +493,10 @@ Item {
                     Item { Layout.fillWidth: true }
 
                     StyledText {
+                        // Both times as wide as the wider: the keys between them sit on the row's centre.
+                        id: timeEndLabel
+                        Layout.preferredWidth: Math.max(timeStartLabel.implicitWidth, timeEndLabel.implicitWidth)
+                        horizontalAlignment: Text.AlignRight
                         text: StringUtils.friendlyTimeForSeconds(root.effectiveLength)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
