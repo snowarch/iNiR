@@ -321,13 +321,15 @@ IrisWidgetFace {
         Trace {
             key: tile.key
             lane: true
+            // Inset like a sparkline on a card: the line and its end dot never meet the tile's edge.
             anchors.left: tile.row ? undefined : parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.rightMargin: tile.row ? root.dp(12) : 0
-            anchors.bottomMargin: tile.row ? root.dp(12) : 0
-            width: tile.row ? parent.width * 0.52 : parent.width
-            height: tile.row ? parent.height - root.dp(24) : parent.height * 0.36
+            anchors.leftMargin: tile.row ? 0 : root.dp(10)
+            anchors.rightMargin: root.dp(tile.row ? 12 : 10)
+            anchors.bottomMargin: root.dp(tile.row ? 12 : 12)
+            width: tile.row ? parent.width * 0.52 : parent.width - root.dp(20)
+            height: tile.row ? parent.height - root.dp(24) : parent.height * 0.34
         }
         Row {
             x: root.dp(10)
@@ -340,30 +342,6 @@ IrisWidgetFace {
                 size: 11.5
                 weight: Font.DemiBold
                 color: root.inkSecondary
-            }
-        }
-        // The level as a small ring.
-        Shape {
-            id: ring
-            readonly property real side: root.dp(tile.row ? 0 : 20)
-            visible: !tile.row
-            x: parent.width - ring.side - root.dp(9)
-            y: root.dp(8)
-            width: ring.side
-            height: ring.side
-            preferredRendererType: Shape.CurveRenderer
-            ShapePath {
-                strokeColor: root.fill
-                strokeWidth: root.dp(3)
-                fillColor: "transparent"
-                PathAngleArc { centerX: ring.side / 2; centerY: ring.side / 2; radiusX: ring.side / 2 - root.dp(2); radiusY: radiusX; startAngle: 0; sweepAngle: 360 }
-            }
-            ShapePath {
-                strokeColor: root.tint(tile.key)
-                strokeWidth: root.dp(3)
-                capStyle: ShapePath.RoundCap
-                fillColor: "transparent"
-                PathAngleArc { centerX: ring.side / 2; centerY: ring.side / 2; radiusX: ring.side / 2 - root.dp(2); radiusY: radiusX; startAngle: -90; sweepAngle: Math.max(0.5, 360 * tile.level) }
             }
         }
         Reading {
