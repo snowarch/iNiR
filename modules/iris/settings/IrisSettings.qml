@@ -292,6 +292,8 @@ Item {
     readonly property bool rowsPending: {
         root.blockTick
         if (root.searching || !root.browsing || root.shownGroups.length === 0) return false
+        const standing = root.blockRepeater
+        if (standing.count >= root.shownGroups.length && Array.from({ length: standing.count }, (_, i) => standing.itemAt(i)).every(b => b && b.status === Loader.Ready)) return false
         if (root.shownGroups.length > 1 && !(root.fedAll && root.fedPage === root.pageKey)) return true
         // Fed before the Repeater made its loaders (the layout still loading): nothing built yet is still pending.
         if (root.blockRepeater.count < root.fedGroups.length) return true
@@ -301,36 +303,40 @@ Item {
         }
         return false
     }
-    // Two sets of blocks: a new page builds in the background while the last one stays on screen, and takes its place in
-    // one frame once its first block stands. Building the first block on the spot froze a frame of 160-240 ms per area.
+    // Four sets of blocks, one per recent page: an area seen before is shown again as it stood, nothing rebuilt (every
+    // turn used to tear down the page and build the next one, ~2400 rows' objects). A new page builds in the set used
+    // longest ago, its first block in the background, while its ghosts hold the place.
+    readonly property int slots: 4
     property int building: 0
     property bool holding: false
-    property var bufA: []
-    property var bufB: []
-    property string bufPage: ""
-    readonly property Repeater blockRepeater: root.building === 0 ? blocksA : blocksB
+    property var bufs: [[], [], [], []]
+    property var bufPages: ["", "", "", ""]
+    property var bufUsed: [0, 0, 0, 0]
+    property int bufClock: 0
+    readonly property string bufPage: root.bufPages[root.building]
+    readonly property Repeater blockRepeater: [blocks0, blocks1, blocks2, blocks3][root.building]
     onFedGroupsChanged: root.refeed()
     function refeed(): void {
-        if (root.pageKey !== root.bufPage && root.holding) {
-            // turned again while the last one built: the page on screen keeps holding, the new one takes the build
-            root.bufPage = root.pageKey
-            holdLimit.restart()
-        } else if (root.pageKey !== root.bufPage) {
-            const onScreen = root.building === 0 ? root.bufA : root.bufB
-            const hold = onScreen.length > 0 && root.fedGroups.length > 0 && !root.searching && root.landingPath.length === 0 && frame.settled
-            root.bufPage = root.pageKey
-            if (hold) {
-                root.building = 1 - root.building
-                root.holding = true
-                holdLimit.restart()
-            } else {
-                root.holding = false
-                if (root.building === 0) root.bufB = []
-                else root.bufA = []
-            }
-        }
-        if (root.building === 0) root.bufA = root.fedGroups
-        else root.bufB = root.fedGroups
+        const pages = root.bufPages.slice(), used = root.bufUsed.slice(), bufs = root.bufs.slice()
+        let slot = pages.indexOf(root.pageKey)
+        if (slot < 0) {
+            slot = 0
+            for (let i = 1; i < root.slots; i++) if (used[i] < used[slot]) slot = i
+            const onScreen = bufs[root.building]
+            root.holding = onScreen.length > 0 && root.fedGroups.length > 0 && !root.searching && root.landingPath.length === 0 && frame.settled
+            if (root.holding) holdLimit.restart()
+            pages[slot] = root.pageKey
+            bufs[slot] = []
+        } else if (slot !== root.building) root.holding = false
+        // Fed again from its first group: a page already standing keeps the blocks it has.
+        const have = bufs[slot], fed = root.fedGroups
+        const prefix = fed.length < have.length && fed.every((g, i) => g?.title === have[i]?.title)
+        if (!prefix) bufs[slot] = fed
+        used[slot] = ++root.bufClock
+        root.bufPages = pages
+        root.bufUsed = used
+        root.bufs = bufs
+        root.building = slot
         root.letGoOfOld()
     }
     function letGoOfOld(): void {
@@ -338,12 +344,9 @@ Item {
         const first = root.blockRepeater.itemAt(0)
         if (root.fedGroups.length > 0 && !(first && first.status === Loader.Ready)) return
         root.holding = false
-        if (root.building === 0) root.bufB = []
-        else root.bufA = []
     }
     onBlockTickChanged: root.letGoOfOld()
-    // never hold the old page for long if a build stalls
-    Timer { id: holdLimit; interval: 700; onTriggered: if (root.holding) { root.holding = false; if (root.building === 0) root.bufB = []; else root.bufA = [] } }
+    Timer { id: holdLimit; interval: 700; onTriggered: root.holding = false }
     function feedPage(): void {
         root.fedPage = root.pageKey
         root.fedAll = false
@@ -1527,8 +1530,10 @@ Item {
                                         MoreGroup {}
                                     }
 
-                                    BlockBuffer { id: blocksA; slot: 0 }
-                                    BlockBuffer { id: blocksB; slot: 1 }
+                                    BlockBuffer { id: blocks0; slot: 0 }
+                                    BlockBuffer { id: blocks1; slot: 1 }
+                                    BlockBuffer { id: blocks2; slot: 2 }
+                                    BlockBuffer { id: blocks3; slot: 3 }
 
                                     // Ghost rows: where the rest of the page is coming, breathing until it does.
                                     Item {
@@ -2222,7 +2227,7 @@ Item {
         // The page being left hides at once (its rows under the new area's title read as the wrong area); it is only
         // torn down once the new one stands, so the turn's frame builds and destroys nothing.
         readonly property bool shown: root.building === buffer.slot
-        model: ScriptModel { objectProp: "title"; values: buffer.slot === 0 ? root.bufA : root.bufB }
+        model: ScriptModel { objectProp: "title"; values: root.bufs[buffer.slot] }
         Loader {
             id: blockLoader
             required property var modelData
