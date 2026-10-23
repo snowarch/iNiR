@@ -298,6 +298,28 @@
      "values": []
     },
     {
+     "name": "presets",
+     "args": [],
+     "description": "The desktops you can wear (factory first, then saved) as JSON, and which one is worn",
+     "values": []
+    },
+    {
+     "name": "wearPreset",
+     "args": [
+      "id"
+     ],
+     "description": "Wear a desktop by id (`factory:glance`, `factory:dashboard`, `factory:focus`, `factory:listening`, `factory:bare`, or a saved one)",
+     "values": []
+    },
+    {
+     "name": "savePreset",
+     "args": [
+      "name"
+     ],
+     "description": "Save this desktop under a name (empty = \"Desktop N\") and print its id",
+     "values": []
+    },
+    {
      "name": "editState",
      "args": [],
      "description": "Report the active selection, physical panel insets, full desktop work area and panel-aware zone work area for each output",

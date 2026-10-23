@@ -13,7 +13,9 @@ Singleton {
 
     readonly property bool active: GlobalStates.widgetEditMode
     function trackedPaths(): var {
-        const out = ["background.widgets.outputOverrides", "background.widgets.layerOrder", "background.widgets.stacks"]
+        // The widgets' look travels with them: a saved or factory desktop wears its material and accents too.
+        const out = ["background.widgets.outputOverrides", "background.widgets.layerOrder", "background.widgets.stacks",
+            "iris.widgets.material", "iris.widgets.tint"]
         const widgets = Config.options?.background?.widgets ?? {}
         for (const key of Object.keys(widgets)) {
             const value = widgets[key]
@@ -34,7 +36,7 @@ Singleton {
     function snapshot(): var {
         const values = {}
         for (const path of root.trackedPaths())
-            values[path] = root.plain(Config.getNestedValue(path, path.endsWith(".enable") ? false : []))
+            values[path] = root.plain(Config.getNestedValue(path, path.endsWith(".enable") ? false : path.startsWith("iris.") ? "" : []))
         return values
     }
 

@@ -589,7 +589,7 @@ Item {
         Flickable {
             id: presetRow
             readonly property real plateWidth: Math.round(root.pictureHeight * 16 / 9)
-            readonly property string worn: { Config.revision; return DesktopPresets.presets.length > 0 ? DesktopPresets.wornId() : "" }
+            readonly property string worn: { Config.revision; return DesktopPresets.wornId() }
             property string confirming: ""
             contentWidth: presetContent.width
             contentHeight: height
@@ -651,12 +651,14 @@ Item {
                 }
 
                 Repeater {
-                    model: ScriptModel { values: DesktopPresets.presets; objectProp: "id" }
+                    // Factory desktops first (worn, never renamed or removed), then the ones the person saved.
+                    model: ScriptModel { values: DesktopPresets.factory.concat(DesktopPresets.presets); objectProp: "id" }
                     delegate: Item {
                         id: preset
                         required property var modelData
                         readonly property bool worn: presetRow.worn === preset.modelData.id
                         readonly property bool confirming: presetRow.confirming === preset.modelData.id
+                        readonly property bool factory: DesktopPresets.isFactory(preset.modelData.id)
                         width: presetRow.plateWidth
                         height: presetRow.height
 
@@ -709,7 +711,7 @@ Item {
                                 Accessible.role: Accessible.Button
                                 Accessible.name: Translation.tr("Wear %1").arg(preset.modelData.name)
                                 onClicked: { presetRow.confirming = ""; DesktopPresets.wear(preset.modelData.id) }
-                                onDoubleClicked: root.naming = preset.modelData.id
+                                onDoubleClicked: if (!preset.factory) root.naming = preset.modelData.id
                             }
                             // Worn: a check where a widget shows it is out.
                             Rectangle {
@@ -733,7 +735,7 @@ Item {
                             // Rename and remove, at the corner while the pointer is over it; remove asks once.
                             Row {
                                 id: keys
-                                readonly property bool shown: wearArea.containsMouse || renameKey.hovered || removeKey.hovered || preset.confirming
+                                readonly property bool shown: !preset.factory && (wearArea.containsMouse || renameKey.hovered || removeKey.hovered || preset.confirming)
                                 anchors.right: parent.right
                                 anchors.top: parent.top
                                 anchors.margins: Math.round(6 * root.d)

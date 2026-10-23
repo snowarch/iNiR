@@ -149,6 +149,20 @@ Scope {
             return GlobalStates.widgetEditMode ? "edit mode on" : "edit mode off"
         }
 
+        // Desktops: the factory ones and the ones saved, by id; wearing one is an ordinary change (Undo takes it back).
+        function presets(): string {
+            return JSON.stringify(DesktopPresets.factory.concat(DesktopPresets.presets)
+                .map(preset => ({ id: preset.id, name: preset.name })).concat([{ worn: DesktopPresets.wornId() }]))
+        }
+        function wearPreset(id: string): string {
+            if (!DesktopPresets.find(id)) return "no desktop " + id
+            DesktopPresets.wear(id)
+            return "wearing " + DesktopPresets.find(id).name
+        }
+        function savePreset(name: string): string {
+            return DesktopPresets.save(name)
+        }
+
         function editState(): string {
             return JSON.stringify({
                 active: GlobalStates.widgetEditMode,
@@ -310,9 +324,6 @@ Scope {
 
             if (!known)
                 return "unknown widget: " + name
-            if (name === "battery" && !Battery.available)
-                return "widget unavailable: " + name
-
             const screen = GlobalStates.focusedScreen ?? Quickshell.screens[0]
             if (!screen)
                 return "no output available"
@@ -3046,7 +3057,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("battery", false) && Battery.available
+                    shown: bgRoot._widgetEnabled("battery", false)
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask6 : null
                     WidgetInputMask { id: _hitMask6; loader: parent }

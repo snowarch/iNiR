@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 dev/tools/generate-ipc-registry.py
-# IPC.md hash: cb2b4a630ab0c6ba
+# IPC.md hash: bd2230f7b68478d5
 # Targets: 74
 
 declare -gA IPC_TARGET_DESC=(
@@ -165,7 +165,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [appCatalog]="refresh search install list"
   [audio]="volumeUp volumeDown mute playEvent micMute"
   [autostart]="status addCommand addApp removeLast reload"
-  [background]="widgetDesign widgetMaterial widgetSearch toggleEditMode toggleWidgetManager setEditMode editState applyOrganicEdgePreset applyOrganicEdgeComposition applyOrganicEdgeMaterial applyOrganicEdgeResponse organicEdgeState setOrganicEdgeEnabled quickControlsPage quickControlsGeometry widgetSnapshot legibilityState desktopItemsState focusWidget arrangeWidget promoteWidget resetLayerOrder setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
+  [background]="widgetDesign widgetMaterial widgetSearch toggleEditMode toggleWidgetManager setEditMode presets wearPreset savePreset editState applyOrganicEdgePreset applyOrganicEdgeComposition applyOrganicEdgeMaterial applyOrganicEdgeResponse organicEdgeState setOrganicEdgeEnabled quickControlsPage quickControlsGeometry widgetSnapshot legibilityState desktopItemsState focusWidget arrangeWidget promoteWidget resetLayerOrder setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
   [bar]="mediaWidth toggle close open"
   [battery]="status simulate"
   [bluetooth]="status simulate"
@@ -270,6 +270,9 @@ declare -gA IPC_FUNCTION_DESC=(
   ["background:toggleEditMode"]="Toggle widget edit mode (drag, resize, configure desktop widgets)"
   ["background:toggleWidgetManager"]="Enter edit mode if needed and toggle the widget manager on the focused output"
   ["background:setEditMode"]="Set widget edit mode explicitly"
+  ["background:presets"]="The desktops you can wear (factory first, then saved) as JSON, and which one is worn"
+  ["background:wearPreset"]="Wear a desktop by id (\`factory:glance\`, \`factory:dashboard\`, \`factory:focus\`, \`factory:listening\`, \`factory:bare\`, or a saved one)"
+  ["background:savePreset"]="Save this desktop under a name (empty = \"Desktop N\") and print its id"
   ["background:editState"]="Report the active selection, physical panel insets, full desktop work area and panel-aware zone work area for each output"
   ["background:applyOrganicEdgePreset"]="Apply an Organic Edge scene by name without changing enabled displays"
   ["background:applyOrganicEdgeComposition"]="Apply only an Organic Edge topology/geometry preset"
@@ -693,6 +696,8 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["background:widgetMaterial"]="<action>"
   ["background:widgetSearch"]="<query>"
   ["background:setEditMode"]="<enabled>"
+  ["background:wearPreset"]="<id>"
+  ["background:savePreset"]="<name>"
   ["background:applyOrganicEdgePreset"]="<name>"
   ["background:applyOrganicEdgeComposition"]="<name>"
   ["background:applyOrganicEdgeMaterial"]="<name>"
