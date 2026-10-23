@@ -30,6 +30,8 @@ Item {
     readonly property string voice: "console"
     readonly property bool ownsStage: true
     readonly property bool readsWhole: true
+    // its tiles are the rows: the engine builds its own only for a search or a page
+    readonly property bool drawsRows: true
     readonly property color groupFill: "transparent"
     readonly property string searchHint: Translation.tr("Search")
 

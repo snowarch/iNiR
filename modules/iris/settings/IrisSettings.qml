@@ -278,6 +278,8 @@ Item {
     // the ones already there.
     property bool fedAll: false
     readonly property var fedGroups: {
+        // A layout that draws an area's rows itself (Console) only takes the engine's for a search or a page.
+        if ((root.scene?.drawsRows ?? false) && !root.searching && root.advancedPage < 0) return []
         if (root.searching || root.landingPath.length > 0) return root.shownGroups
         if (root.fedAll && root.fedPage === root.pageKey) return root.shownGroups
         const shown = root.fedPage === root.pageKey ? root.blocksShown : 1
@@ -290,13 +292,56 @@ Item {
         if (root.searching || !root.browsing || root.shownGroups.length === 0) return false
         if (root.shownGroups.length > 1 && !(root.fedAll && root.fedPage === root.pageKey)) return true
         // Fed before the Repeater made its loaders (the layout still loading): nothing built yet is still pending.
-        if (blockRepeater.count < root.fedGroups.length) return true
-        for (let i = 0; i < blockRepeater.count; i++) {
-            const block = blockRepeater.itemAt(i)
-            if (!block || block.status !== Loader.Ready || !block.landed) return true
+        if (root.blockRepeater.count < root.fedGroups.length) return true
+        for (let i = 0; i < root.blockRepeater.count; i++) {
+            const block = root.blockRepeater.itemAt(i)
+            if (!block || block.status !== Loader.Ready) return true
         }
         return false
     }
+    // Two sets of blocks: a new page builds in the background while the last one stays on screen, and takes its place in
+    // one frame once its first block stands. Building the first block on the spot froze a frame of 160-240 ms per area.
+    property int building: 0
+    property bool holding: false
+    property var bufA: []
+    property var bufB: []
+    property string bufPage: ""
+    readonly property Repeater blockRepeater: root.building === 0 ? blocksA : blocksB
+    onFedGroupsChanged: root.refeed()
+    function refeed(): void {
+        if (root.pageKey !== root.bufPage && root.holding) {
+            // turned again while the last one built: the page on screen keeps holding, the new one takes the build
+            root.bufPage = root.pageKey
+            holdLimit.restart()
+        } else if (root.pageKey !== root.bufPage) {
+            const onScreen = root.building === 0 ? root.bufA : root.bufB
+            const hold = onScreen.length > 0 && root.fedGroups.length > 0 && !root.searching && root.landingPath.length === 0 && frame.settled
+            root.bufPage = root.pageKey
+            if (hold) {
+                root.building = 1 - root.building
+                root.holding = true
+                holdLimit.restart()
+            } else {
+                root.holding = false
+                if (root.building === 0) root.bufB = []
+                else root.bufA = []
+            }
+        }
+        if (root.building === 0) root.bufA = root.fedGroups
+        else root.bufB = root.fedGroups
+        root.letGoOfOld()
+    }
+    function letGoOfOld(): void {
+        if (!root.holding) return
+        const first = root.blockRepeater.itemAt(0)
+        if (root.fedGroups.length > 0 && !(first && first.status === Loader.Ready)) return
+        root.holding = false
+        if (root.building === 0) root.bufB = []
+        else root.bufA = []
+    }
+    onBlockTickChanged: root.letGoOfOld()
+    // never hold the old page for long if a build stalls
+    Timer { id: holdLimit; interval: 700; onTriggered: if (root.holding) { root.holding = false; if (root.building === 0) root.bufB = []; else root.bufA = [] } }
     function feedPage(): void {
         root.fedPage = root.pageKey
         root.fedAll = false
@@ -555,8 +600,8 @@ Item {
     // What the page shows, in order, by group key.
     function spyTargets(): var {
         const out = []
-        for (let i = 0; i < blockRepeater.count; i++) {
-            const block = blockRepeater.itemAt(i)
+        for (let i = 0; i < root.blockRepeater.count; i++) {
+            const block = root.blockRepeater.itemAt(i)
             if (block && block.visible) out.push({ key: String(block.modelData.key ?? ""), item: block })
         }
         for (let i = 0; i < editorRepeater.count; i++) {
@@ -1480,44 +1525,13 @@ Item {
                                         MoreGroup {}
                                     }
 
-                                    Repeater {
-                                        id: blockRepeater
-                                        model: ScriptModel { objectProp: "title"; values: root.fedGroups }
-                                        // A block is built by the incubator in slices of a frame: one block of a heavy
-                                        // Design (AIRISU's lacquered rows) took up to 400 ms built at once. A search or
-                                        // a link to a row builds at once, since it scrolls to what it built.
-                                        // The first block of a page opened from inside Settings builds at once, so the rows are
-                                        // there on the frame the area is; while the body still morphs in, the ghosts hold it.
-                                        Loader {
-                                            id: blockLoader
-                                            required property var modelData
-                                            required property int index
-                                            Layout.fillWidth: true
-                                            asynchronous: !root.searching && root.landingPath.length === 0 && (blockLoader.index > 0 || !frame.settled)
-                                            sourceComponent: GroupBlock { modelData: blockLoader.modelData }
-                                            onStatusChanged: root.blockTick++
-                                            // Each block lands as it is built: up from just below, out of the ghosts' place. It waits
-                                            // a beat after loading so its own rows have laid out (a first frame stacked every head at 0).
-                                            readonly property bool moves: blockLoader.asynchronous && IrisStyle.motionEnabled
-                                            property bool landed: !blockLoader.moves
-                                            opacity: blockLoader.moves ? 0 : 1
-                                            transform: Translate { id: blockRise }
-                                            onLoaded: if (blockLoader.moves) blockSettle.restart()
-                                            property Timer blockSettle: Timer {
-                                                interval: 90
-                                                onTriggered: { blockLoader.landed = true; root.blockTick++; blockLoader.blockIn.restart() }
-                                            }
-                                            property ParallelAnimation blockIn: ParallelAnimation {
-                                                NumberAnimation { target: blockLoader; property: "opacity"; from: 0; to: 1; duration: IrisStyle.duration(200); easing.type: Easing.OutCubic }
-                                                NumberAnimation { target: blockRise; property: "y"; from: Math.round(14 * root.d); to: 0; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
-                                            }
-                                        }
-                                    }
+                                    BlockBuffer { id: blocksA; slot: 0 }
+                                    BlockBuffer { id: blocksB; slot: 1 }
 
                                     // Ghost rows: where the rest of the page is coming, breathing until it does.
                                     Item {
                                         id: ghostRows
-                                        visible: root.rowsPending
+                                        visible: root.rowsPending && !root.holding
                                         Layout.fillWidth: true
                                         // Counted, not measured: a Column hidden until now reports 0 and the ghosts drew nothing.
                                         readonly property int count: Math.max(3, Math.min(7, 2 * (root.shownGroups.length - root.fedGroups.length) + 2))
@@ -2196,6 +2210,27 @@ Item {
         }
     }
 
+    // One set of a page's blocks (see `building`). A block is built by the incubator in slices of a frame: one block of a
+    // heavy Design (AIRISU's lacquered rows) took up to 400 ms built at once. A search or a link to a row builds at once,
+    // since it scrolls to what it built; so does a page's first block when nothing is on screen to hold its place.
+    // A block shows the frame it is built: no fade, no beat (a stalled fade once left a body empty).
+    component BlockBuffer: Repeater {
+        id: buffer
+        required property int slot
+        readonly property bool shown: root.building === buffer.slot ? !root.holding : root.holding
+        model: ScriptModel { objectProp: "title"; values: buffer.slot === 0 ? root.bufA : root.bufB }
+        Loader {
+            id: blockLoader
+            required property var modelData
+            required property int index
+            visible: buffer.shown
+            Layout.fillWidth: true
+            asynchronous: !root.searching && root.landingPath.length === 0 && (blockLoader.index > 0 || !frame.settled || root.holding)
+            sourceComponent: GroupBlock { modelData: blockLoader.modelData }
+            onStatusChanged: root.blockTick++
+        }
+        Component.onCompleted: if (buffer.slot === 0) root.refeed()
+    }
     component GroupBlock: ColumnLayout {
         id: group
         required property var modelData
