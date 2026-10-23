@@ -9698,5 +9698,15 @@
   "Cam": "Cam",
   "Cast": "Chiếu",
   "Failed": "Thất bại",
-  "Stopped": "Đã dừng"
+  "Stopped": "Đã dừng",
+  "Pin live": "Ghim trực tiếp",
+  "Waiting for %1": "Đang chờ %1",
+  "%1 is closed": "%1 đã đóng",
+  "Click to open it again": "Nhấp để mở lại",
+  "Keep on the desktop": "Giữ trên màn hình nền",
+  "Keep above windows": "Giữ trên các cửa sổ",
+  "Remove pin": "Bỏ ghim",
+  "Waiting for the window's picture": "Đang chờ hình ảnh của cửa sổ",
+  "It stays live, even on another workspace": "Vẫn trực tiếp, kể cả ở không gian làm việc khác",
+  "Drag over the part to keep": "Kéo qua phần muốn giữ"
 }

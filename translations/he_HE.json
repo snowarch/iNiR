@@ -9698,5 +9698,15 @@
   "Cam": "מצלמה",
   "Cast": "שידור",
   "Failed": "נכשל",
-  "Stopped": "נעצר"
+  "Stopped": "נעצר",
+  "Pin live": "הצמדה חיה",
+  "Waiting for %1": "ממתין ל-%1",
+  "%1 is closed": "%1 סגור",
+  "Click to open it again": "לחץ כדי לפתוח שוב",
+  "Keep on the desktop": "השאר על שולחן העבודה",
+  "Keep above windows": "השאר מעל החלונות",
+  "Remove pin": "הסר הצמדה",
+  "Waiting for the window's picture": "ממתין לתמונת החלון",
+  "It stays live, even on another workspace": "נשאר חי, גם בסביבת עבודה אחרת",
+  "Drag over the part to keep": "גרור מעל החלק שברצונך לשמור"
 }

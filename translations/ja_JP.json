@@ -9698,5 +9698,15 @@
   "Cam": "カメラ",
   "Cast": "共有",
   "Failed": "失敗",
-  "Stopped": "停止"
+  "Stopped": "停止",
+  "Pin live": "ライブで固定",
+  "Waiting for %1": "%1 を待っています",
+  "%1 is closed": "%1 は閉じています",
+  "Click to open it again": "クリックしてもう一度開く",
+  "Keep on the desktop": "デスクトップに置く",
+  "Keep above windows": "ウィンドウの上に置く",
+  "Remove pin": "固定を外す",
+  "Waiting for the window's picture": "ウィンドウの映像を待っています",
+  "It stays live, even on another workspace": "別のワークスペースでもライブのまま",
+  "Drag over the part to keep": "残したい部分をドラッグ"
 }

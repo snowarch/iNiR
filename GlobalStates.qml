@@ -213,7 +213,7 @@ Singleton {
 
     // The unified snip menu may restore the last toolbar choice. Raw ordinals
     // mirror RegionSelection's enums: action 0 Shot, 1 Edit, 2 Search, 3 OCR
-    // (record is never restored); mode 0 rectangle, 1 circle.
+    // (record and 6 Pin are never restored); mode 0 rectangle, 1 circle.
     function openRememberedRegionTool(): void {
         let action = 0
         let mode = 0

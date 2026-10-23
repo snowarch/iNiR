@@ -9698,5 +9698,15 @@
   "Cam": "Cam",
   "Cast": "Diff",
   "Failed": "Échec",
-  "Stopped": "Arrêté"
+  "Stopped": "Arrêté",
+  "Pin live": "Épingler en direct",
+  "Waiting for %1": "En attente de %1",
+  "%1 is closed": "%1 est fermé",
+  "Click to open it again": "Cliquez pour le rouvrir",
+  "Keep on the desktop": "Garder sur le bureau",
+  "Keep above windows": "Garder au-dessus des fenêtres",
+  "Remove pin": "Retirer l'épingle",
+  "Waiting for the window's picture": "En attente de l'image de la fenêtre",
+  "It stays live, even on another workspace": "Reste en direct, même sur un autre espace de travail",
+  "Drag over the part to keep": "Faites glisser sur la partie à garder"
 }

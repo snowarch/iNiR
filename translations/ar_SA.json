@@ -9698,5 +9698,15 @@
   "Cam": "كاميرا",
   "Cast": "بث",
   "Failed": "فشل",
-  "Stopped": "توقف"
+  "Stopped": "توقف",
+  "Pin live": "تثبيت مباشر",
+  "Waiting for %1": "بانتظار %1",
+  "%1 is closed": "%1 مغلق",
+  "Click to open it again": "انقر لفتحه مجددًا",
+  "Keep on the desktop": "إبقاء على سطح المكتب",
+  "Keep above windows": "إبقاء فوق النوافذ",
+  "Remove pin": "إزالة التثبيت",
+  "Waiting for the window's picture": "بانتظار صورة النافذة",
+  "It stays live, even on another workspace": "يبقى مباشرًا حتى في مساحة عمل أخرى",
+  "Drag over the part to keep": "اسحب فوق الجزء الذي تريد إبقاءه"
 }

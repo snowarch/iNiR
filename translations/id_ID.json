@@ -9698,5 +9698,15 @@
   "Cam": "Kam",
   "Cast": "Siar",
   "Failed": "Gagal",
-  "Stopped": "Dihentikan"
+  "Stopped": "Dihentikan",
+  "Pin live": "Sematkan langsung",
+  "Waiting for %1": "Menunggu %1",
+  "%1 is closed": "%1 ditutup",
+  "Click to open it again": "Klik untuk membukanya lagi",
+  "Keep on the desktop": "Simpan di desktop",
+  "Keep above windows": "Tetap di atas jendela",
+  "Remove pin": "Lepas sematan",
+  "Waiting for the window's picture": "Menunggu gambar jendela",
+  "It stays live, even on another workspace": "Tetap langsung, bahkan di ruang kerja lain",
+  "Drag over the part to keep": "Seret di atas bagian yang ingin disimpan"
 }

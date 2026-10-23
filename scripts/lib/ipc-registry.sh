@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 dev/tools/generate-ipc-registry.py
-# IPC.md hash: 98740de2aa5fe8d7
-# Targets: 76
+# IPC.md hash: 9fdafc1c59255893
+# Targets: 77
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -34,6 +34,7 @@ declare -gA IPC_TARGET_DESC=(
   [hub]="The community hub (widgets, colour themes, iRiS themes, web apps from [inir-hub](https://github.com/snowarch/inir-hub)) as the running shell sees it. \`inir hub list|search|info|install|update|remove|sync\` works with or without the shell running and tells it afterwards; these functions queue the same actions inside the shell, so its Hub page shows them happening. All families."
   [iris]="iRiS bar and Island design. Available while the iRiS bar is enabled."
   [keyboard]="Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info."
+  [livePins]="Live snips: a part of a window kept on screen, streamed, even when the window is on another workspace (qs-rs on niri)."
   [lock]="Lock screen. For when you need to pretend you're working."
   [loginScreen]="The login screen you see after starting the computer. It wears your wallpaper and colours."
   [mascot]="Playful mascot companion (needs \`mascot.enable\` and the companion switch in Settings › Mascot). She peeks from screen edges and reacts to events; every reaction and its pose is configurable in the dedicated Mascot settings page. Never appears over fullscreen apps, game mode, the lock screen or the session screen."
@@ -113,6 +114,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [hub]="shared"
   [iris]="shared"
   [keyboard]="shared"
+  [livePins]="shared"
   [lock]="shared"
   [loginScreen]="shared"
   [mascot]="shared"
@@ -192,6 +194,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [hub]="refresh install remove update use openItem status changed"
   [iris]="open page close toggle card theme settings settingsClose bubble dock dockApp dockMove appBubble focus today controlCenter pin layout strip edge dockEdge zone barPiece arrange edit studio notch surround accent spotlight gallerySource orbit orbitCorner orbitClose spotlightClose bubbleCard tap bubbleMenu morph activity activities set adaptive tokens options preview proof palette preset icon control lock utility watch watchPick desktopAction desktopMenu menuClose watchSubs watchSeek watchSkip motion motioned status"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
+  [livePins]="list supported frame pin remove clear place onTop move resize activate"
   [lock]="activate prepareSleep deactivate status focus"
   [loginScreen]="set style status sync"
   [mascot]="poke status setVoice romp chase hideSeek tidy appear appearContextual appearWithLine hide snooze"
@@ -214,7 +217,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [pill]="open close toggle state"
   [privacy]="status simulate"
   [recordingOsd]="toggle show hide"
-  [region]="screenshot search googleLens ocr record recordWithSound menu dismiss current"
+  [region]="screenshot search googleLens ocr record recordWithSound menu pin dismiss current"
   [search]="toggle close open"
   [session]="toggle close open"
   [settings]="open toggle openOverlay openOverlayAt openWindowAt setOverlayStyle"
@@ -455,6 +458,17 @@ declare -gA IPC_FUNCTION_DESC=(
   ["keyboard:switchLayoutPrevious"]="Switch to previous keyboard layout"
   ["keyboard:getCurrentLayout"]="Get the current layout name"
   ["keyboard:getLayouts"]="Get all configured layout names (JSON array)"
+  ["livePins:list"]="Every pin as JSON, with \`live\` when its window is open"
+  ["livePins:supported"]="Whether this shell can stream windows"
+  ["livePins:frame"]="Pick a window and drag over the part to keep"
+  ["livePins:pin"]="Pin that rectangle of the window (its logical pixels); prints the pin's id"
+  ["livePins:remove"]="Remove a pin"
+  ["livePins:clear"]="Remove every pin"
+  ["livePins:place"]="island>\`"
+  ["livePins:onTop"]="false>\`"
+  ["livePins:move"]="Move a pin"
+  ["livePins:resize"]="Resize a pin; its height follows the crop"
+  ["livePins:activate"]="Go to its window, or open the app again"
   ["lock:activate"]="Lock the screen"
   ["lock:prepareSleep"]="Suspend handshake: activate immediately and wait until the compositor confirms the session lock is secure"
   ["lock:deactivate"]="Cancel lock and mark screen unlocked"
@@ -558,6 +572,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["region:record"]="Record region (no audio)"
   ["region:recordWithSound"]="Record region with audio"
   ["region:menu"]="Open the unified snip menu, optionally restoring its last toolbar choice"
+  ["region:pin"]="Pin part of a window live: pick the window, drag over the part to keep (qs-rs on niri)"
   ["region:dismiss"]="Close the selector overlay"
   ["region:current"]="Return the selector state (open/action/mode) as JSON"
   ["search:toggle"]="Open/close start menu"
@@ -807,6 +822,13 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["iris:watchSeek"]="<seconds>"
   ["iris:watchSkip"]="<direction>"
   ["iris:motion"]="<target>"
+  ["livePins:pin"]="<windowId> <x> <y> <w> <h>"
+  ["livePins:remove"]="<id>"
+  ["livePins:place"]="<id> <place>"
+  ["livePins:onTop"]="<id> <on>"
+  ["livePins:move"]="<id> <x> <y>"
+  ["livePins:resize"]="<id> <width>"
+  ["livePins:activate"]="<id>"
   ["loginScreen:set"]="<look>"
   ["loginScreen:style"]="<name>"
   ["mascot:setVoice"]="<mode>"
@@ -995,8 +1017,8 @@ Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }'
   [ytmusic]='Mod+M+Space { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector dashboard dev gamemode globalActions globalStyle hub iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily privacy region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer voiceSearch vpn wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector dashboard dev gamemode globalActions globalStyle hub iris keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily privacy region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer voiceSearch vpn wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=(equalizer pill)
 IPC_WAFFLE_TARGETS=(autostart customWidgets recordingOsd search wactionCenter waffleAltSwitcher wbar widgetStacks widgetpower wnotificationCenter wwidgets)
 
@@ -1011,6 +1033,7 @@ declare -gA IPC_KEBAB_ALIASES=(
   [custom-widgets]=customWidgets
   [global-actions]=globalActions
   [global-style]=globalStyle
+  [live-pins]=livePins
   [login-screen]=loginScreen
   [mascot-mood]=mascotMood
   [media-controls]=mediaControls

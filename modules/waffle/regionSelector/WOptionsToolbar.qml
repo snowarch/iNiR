@@ -31,7 +31,7 @@ WPane {
     function persistSnipChoice() {
         if (!(Config.options?.regionSelector?.rememberSnipChoice ?? true)) return;
         const isRecord = root.action === RegionSelection.SnipAction.Record
-            || root.action === RegionSelection.SnipAction.RecordWithSound;
+            || root.action === RegionSelection.SnipAction.RecordWithSound || root.action === RegionSelection.SnipAction.Pin;
         const updates = { "regionSelector.lastMode": root.selectionMode };
         if (!isRecord) updates["regionSelector.lastAction"] = root.action;
         Config.setNestedValues(updates);
@@ -44,7 +44,7 @@ WPane {
         { "action": RegionSelection.SnipAction.CharRecognition, "icon": "text-font",    "name": Translation.tr("Recognize text") },
         { "action": RegionSelection.SnipAction.Search,          "icon": "globe-search", "name": Translation.tr("Visual search") },
         { "action": RegionSelection.SnipAction.Record,          "icon": "record",       "name": Translation.tr("Record") }
-    ]
+    ].concat(LivePins.supported ? [{ "action": RegionSelection.SnipAction.Pin, "icon": "pin", "name": Translation.tr("Live") }] : [])
 
     contentItem: Item {
         implicitWidth: rowLayout.implicitWidth + 12

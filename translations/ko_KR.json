@@ -9698,5 +9698,15 @@
   "Cam": "카메라",
   "Cast": "공유",
   "Failed": "실패",
-  "Stopped": "중지됨"
+  "Stopped": "중지됨",
+  "Pin live": "라이브 고정",
+  "Waiting for %1": "%1 기다리는 중",
+  "%1 is closed": "%1이(가) 닫혔습니다",
+  "Click to open it again": "클릭하여 다시 열기",
+  "Keep on the desktop": "데스크톱에 두기",
+  "Keep above windows": "창 위에 두기",
+  "Remove pin": "고정 해제",
+  "Waiting for the window's picture": "창 화면을 기다리는 중",
+  "It stays live, even on another workspace": "다른 작업 공간에서도 실시간으로 유지됩니다",
+  "Drag over the part to keep": "남길 부분을 드래그하세요"
 }

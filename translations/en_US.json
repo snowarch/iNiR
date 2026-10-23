@@ -9698,5 +9698,15 @@
   "Cam": "Cam",
   "Cast": "Cast",
   "Failed": "Failed",
-  "Stopped": "Stopped"
+  "Stopped": "Stopped",
+  "Pin live": "Pin live",
+  "Waiting for %1": "Waiting for %1",
+  "%1 is closed": "%1 is closed",
+  "Click to open it again": "Click to open it again",
+  "Keep on the desktop": "Keep on the desktop",
+  "Keep above windows": "Keep above windows",
+  "Remove pin": "Remove pin",
+  "Waiting for the window's picture": "Waiting for the window's picture",
+  "It stays live, even on another workspace": "It stays live, even on another workspace",
+  "Drag over the part to keep": "Drag over the part to keep"
 }

@@ -28,6 +28,7 @@ Scope {
     function record(): void { open(RegionSelection.SnipAction.Record, RegionSelection.SelectionMode.RectCorners) }
     function recordWithSound(): void { open(RegionSelection.SnipAction.RecordWithSound, RegionSelection.SelectionMode.RectCorners) }
     function menu(): void { GlobalStates.openRememberedRegionTool() }
+    function pin(): void { LivePins.frame() }
 
     IpcHandler {
         target: "region"
@@ -38,6 +39,7 @@ Scope {
         function record(): void { root.record() }
         function recordWithSound(): void { root.recordWithSound() }
         function menu(): void { root.menu() }
+        function pin(): void { root.pin() }
         function dismiss(): void { GlobalStates.regionSelectorOpen = false }
         function current(): string {
             return JSON.stringify({

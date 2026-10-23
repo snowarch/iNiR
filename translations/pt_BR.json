@@ -9698,5 +9698,15 @@
   "Cam": "Câm",
   "Cast": "Transm",
   "Failed": "Falhou",
-  "Stopped": "Parado"
+  "Stopped": "Parado",
+  "Pin live": "Fixar ao vivo",
+  "Waiting for %1": "Aguardando %1",
+  "%1 is closed": "%1 está fechado",
+  "Click to open it again": "Clique para abrir de novo",
+  "Keep on the desktop": "Manter na área de trabalho",
+  "Keep above windows": "Manter acima das janelas",
+  "Remove pin": "Remover",
+  "Waiting for the window's picture": "Aguardando a imagem da janela",
+  "It stays live, even on another workspace": "Continua ao vivo, mesmo em outro espaço de trabalho",
+  "Drag over the part to keep": "Arraste sobre a parte que quer manter"
 }

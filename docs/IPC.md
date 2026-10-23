@@ -231,6 +231,7 @@ Region selection tools. Screenshots, OCR, recording. Draw a box, get stuff done.
 | `record` | Record region (no audio) |
 | `recordWithSound` | Record region with audio |
 | `menu` | Open the unified snip menu, optionally restoring its last toolbar choice |
+| `pin` | Pin part of a window live: pick the window, drag over the part to keep (qs-rs on niri) |
 | `dismiss` | Close the selector overlay |
 | `current` | Return the selector state (open/action/mode) as JSON |
 
@@ -241,6 +242,26 @@ Super+Shift+A { spawn "inir" "region" "search"; }
 Ctrl+Shift+S { spawn "inir" "region" "menu"; }
 ```
 
+
+---
+
+### livePins
+
+Live snips: a part of a window kept on screen, streamed, even when the window is on another workspace (qs-rs on niri).
+
+| Function | Description |
+|----------|-------------|
+| `frame` | Pick a window and drag over the part to keep |
+| `list` | Every pin as JSON, with `live` when its window is open |
+| `supported` | Whether this shell can stream windows |
+| `pin <windowId> <x> <y> <w> <h>` | Pin that rectangle of the window (its logical pixels); prints the pin's id |
+| `move <id> <x> <y>` | Move a pin |
+| `resize <id> <width>` | Resize a pin; its height follows the crop |
+| `onTop <id> <true|false>` | Above the windows, or on the desktop |
+| `place <id> <desktop|island>` | Where the pin lives |
+| `activate <id>` | Go to its window, or open the app again |
+| `remove <id>` | Remove a pin |
+| `clear` | Remove every pin |
 ---
 
 ### voiceSearch

@@ -9698,5 +9698,15 @@
   "Cam": "摄像头",
   "Cast": "投屏",
   "Failed": "失败",
-  "Stopped": "已停止"
+  "Stopped": "已停止",
+  "Pin live": "实时固定",
+  "Waiting for %1": "正在等待 %1",
+  "%1 is closed": "%1 已关闭",
+  "Click to open it again": "点击重新打开",
+  "Keep on the desktop": "留在桌面",
+  "Keep above windows": "保持在窗口上方",
+  "Remove pin": "取消固定",
+  "Waiting for the window's picture": "正在等待窗口画面",
+  "It stays live, even on another workspace": "即使在其他工作区也保持实时",
+  "Drag over the part to keep": "拖动选择要保留的部分"
 }

@@ -9698,5 +9698,15 @@
   "Cam": "कैम",
   "Cast": "कास्ट",
   "Failed": "विफल",
-  "Stopped": "रुका"
+  "Stopped": "रुका",
+  "Pin live": "लाइव पिन करें",
+  "Waiting for %1": "%1 की प्रतीक्षा",
+  "%1 is closed": "%1 बंद है",
+  "Click to open it again": "फिर से खोलने के लिए क्लिक करें",
+  "Keep on the desktop": "डेस्कटॉप पर रखें",
+  "Keep above windows": "विंडो के ऊपर रखें",
+  "Remove pin": "पिन हटाएँ",
+  "Waiting for the window's picture": "विंडो की तस्वीर की प्रतीक्षा",
+  "It stays live, even on another workspace": "दूसरे वर्कस्पेस पर भी लाइव रहता है",
+  "Drag over the part to keep": "रखने वाले हिस्से पर खींचें"
 }

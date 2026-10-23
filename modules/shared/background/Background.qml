@@ -15,6 +15,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
 
+import qs.modules.shared.livePins
 import qs.modules.shared.background.widgets
 import qs.modules.shared.background.widgets.clock
 import qs.modules.shared.background.widgets.mediaControls
@@ -2119,6 +2120,16 @@ Scope {
                 anchors.fill: parent
                 z: 19
                 screenName: modelData?.name ?? ""
+            }
+
+            // Live snips on this desktop: here, not in a layer of their own, because niri stacks this window over any
+            // later Bottom layer and it takes the pointer everywhere.
+            Loader {
+                anchors.fill: parent
+                z: 21
+                active: LivePins.supported && LivePins.pins.some(pin => !pin.onTop)
+                visible: !GlobalStates.shellLayoutEditMode
+                sourceComponent: LivePinDesk { screenName: bgRoot.screenName }
             }
 
             WidgetCanvas {

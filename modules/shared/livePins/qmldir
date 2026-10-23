@@ -1,0 +1,5 @@
+module qs.modules.shared.livePins
+LivePinCard 1.0 LivePinCard.qml
+LivePinDesk 1.0 LivePinDesk.qml
+LivePinLayer 1.0 LivePinLayer.qml
+LivePinFramer 1.0 LivePinFramer.qml

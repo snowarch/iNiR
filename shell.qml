@@ -743,6 +743,10 @@ ShellRoot {
     // handler per target (region, tiling, wallpaperSelector, coverflowSelector).
     // One owner here is valid whichever family is loaded.
     LazyLoader { active: Config.ready; source: "modules/shared/regionSelector/RegionSelectorRouter.qml" }
+    // Live snips kept above the windows (those on the desktop are drawn by Background): only while one exists, and
+    // only where windows can be streamed (qs-rs on niri).
+    LazyLoader { active: Config.ready && LivePins.supported && LivePins.pins.some(pin => pin.onTop); source: "modules/shared/livePins/LivePinLayer.qml" }
+    LazyLoader { active: Config.ready && LivePins.framing; source: "modules/shared/livePins/LivePinFramer.qml" }
     LazyLoader { active: Config.ready; source: "modules/shared/japaneseLookup/JapaneseLookup.qml" }
     LazyLoader { active: Config.ready; source: "modules/shared/tilingOverlay/TilingOverlayRouter.qml" }
     LazyLoader { active: Config.ready; source: "modules/shared/wallpaperSelector/WallpaperSelectorRouter.qml" }

@@ -9698,5 +9698,15 @@
   "Cam": "Кам",
   "Cast": "Трансл",
   "Failed": "Ошибка",
-  "Stopped": "Остановлено"
+  "Stopped": "Остановлено",
+  "Pin live": "Закрепить вживую",
+  "Waiting for %1": "Ожидание %1",
+  "%1 is closed": "%1 закрыт",
+  "Click to open it again": "Нажмите, чтобы открыть снова",
+  "Keep on the desktop": "Оставить на рабочем столе",
+  "Keep above windows": "Держать поверх окон",
+  "Remove pin": "Открепить",
+  "Waiting for the window's picture": "Ожидание изображения окна",
+  "It stays live, even on another workspace": "Остаётся живым даже на другом рабочем пространстве",
+  "Drag over the part to keep": "Выделите часть, которую нужно оставить"
 }

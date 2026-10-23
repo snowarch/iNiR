@@ -2134,6 +2134,103 @@
    ]
   },
   {
+   "name": "livePins",
+   "family": "shared",
+   "description": "Live snips: a part of a window kept on screen, streamed, even when the window is on another workspace (qs-rs on niri).",
+   "example": "",
+   "functions": [
+    {
+     "name": "list",
+     "args": [],
+     "description": "Every pin as JSON, with `live` when its window is open",
+     "values": []
+    },
+    {
+     "name": "supported",
+     "args": [],
+     "description": "Whether this shell can stream windows",
+     "values": []
+    },
+    {
+     "name": "frame",
+     "args": [],
+     "description": "Pick a window and drag over the part to keep",
+     "values": []
+    },
+    {
+     "name": "pin",
+     "args": [
+      "windowId",
+      "x",
+      "y",
+      "w",
+      "h"
+     ],
+     "description": "Pin that rectangle of the window (its logical pixels); prints the pin's id",
+     "values": []
+    },
+    {
+     "name": "remove",
+     "args": [
+      "id"
+     ],
+     "description": "Remove a pin",
+     "values": []
+    },
+    {
+     "name": "clear",
+     "args": [],
+     "description": "Remove every pin",
+     "values": []
+    },
+    {
+     "name": "place",
+     "args": [
+      "id",
+      "place"
+     ],
+     "description": "island>`",
+     "values": []
+    },
+    {
+     "name": "onTop",
+     "args": [
+      "id",
+      "on"
+     ],
+     "description": "false>`",
+     "values": []
+    },
+    {
+     "name": "move",
+     "args": [
+      "id",
+      "x",
+      "y"
+     ],
+     "description": "Move a pin",
+     "values": []
+    },
+    {
+     "name": "resize",
+     "args": [
+      "id",
+      "width"
+     ],
+     "description": "Resize a pin; its height follows the crop",
+     "values": []
+    },
+    {
+     "name": "activate",
+     "args": [
+      "id"
+     ],
+     "description": "Go to its window, or open the app again",
+     "values": []
+    }
+   ]
+  },
+  {
    "name": "lock",
    "family": "shared",
    "description": "Lock screen. For when you need to pretend you're working.",
@@ -3060,6 +3157,12 @@
      "name": "menu",
      "args": [],
      "description": "Open the unified snip menu, optionally restoring its last toolbar choice",
+     "values": []
+    },
+    {
+     "name": "pin",
+     "args": [],
+     "description": "Pin part of a window live: pick the window, drag over the part to keep (qs-rs on niri)",
      "values": []
     },
     {
@@ -4230,6 +4333,7 @@
   "custom-widgets": "customWidgets",
   "global-actions": "globalActions",
   "global-style": "globalStyle",
+  "live-pins": "livePins",
   "login-screen": "loginScreen",
   "mascot-mood": "mascotMood",
   "media-controls": "mediaControls",

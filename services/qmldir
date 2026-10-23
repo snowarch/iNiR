@@ -41,6 +41,7 @@ singleton Idle 1.0 Idle.qml
 singleton KeyboardIndicators 1.0 KeyboardIndicators.qml
 singleton JapaneseDictionary 1.0 JapaneseDictionary.qml
 singleton LiveActivities 1.0 LiveActivities.qml
+singleton LivePins 1.0 LivePins.qml
 singleton LyricsService 1.0 LyricsService.qml
 singleton MaterialThemeLoader 1.0 MaterialThemeLoader.qml
 singleton MemoryPressureService 1.0 MemoryPressureService.qml

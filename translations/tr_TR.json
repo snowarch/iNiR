@@ -9698,5 +9698,15 @@
   "Cam": "Kam",
   "Cast": "Yayın",
   "Failed": "Başarısız",
-  "Stopped": "Durduruldu"
+  "Stopped": "Durduruldu",
+  "Pin live": "Canlı sabitle",
+  "Waiting for %1": "%1 bekleniyor",
+  "%1 is closed": "%1 kapalı",
+  "Click to open it again": "Yeniden açmak için tıkla",
+  "Keep on the desktop": "Masaüstünde tut",
+  "Keep above windows": "Pencerelerin üstünde tut",
+  "Remove pin": "Sabitlemeyi kaldır",
+  "Waiting for the window's picture": "Pencerenin görüntüsü bekleniyor",
+  "It stays live, even on another workspace": "Başka bir çalışma alanında da canlı kalır",
+  "Drag over the part to keep": "Saklamak istediğin kısmın üzerine sürükle"
 }

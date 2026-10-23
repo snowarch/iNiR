@@ -9698,5 +9698,15 @@
   "Cam": "Кам",
   "Cast": "Трансл",
   "Failed": "Помилка",
-  "Stopped": "Зупинено"
+  "Stopped": "Зупинено",
+  "Pin live": "Закріпити наживо",
+  "Waiting for %1": "Очікування %1",
+  "%1 is closed": "%1 закрито",
+  "Click to open it again": "Натисніть, щоб відкрити знову",
+  "Keep on the desktop": "Залишити на робочому столі",
+  "Keep above windows": "Тримати над вікнами",
+  "Remove pin": "Відкріпити",
+  "Waiting for the window's picture": "Очікування зображення вікна",
+  "It stays live, even on another workspace": "Лишається живим навіть на іншому робочому просторі",
+  "Drag over the part to keep": "Виділіть частину, яку треба залишити"
 }

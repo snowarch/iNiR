@@ -26,7 +26,7 @@ IrisSurface {
         { action: RegionSelection.SnipAction.CharRecognition, icon: "document_scanner", name: Translation.tr("OCR") },
         { action: RegionSelection.SnipAction.Search, icon: "image_search", name: Translation.tr("Search") },
         { action: RegionSelection.SnipAction.Record, icon: "videocam", name: Translation.tr("Record") }
-    ]
+    ].concat(LivePins.supported ? [{ action: RegionSelection.SnipAction.Pin, icon: "picture_in_picture_alt", name: Translation.tr("Live") }] : [])
     readonly property int actionIndex: {
         for (let i = 0; i < root.actionList.length; i++)
             if (root.actionList[i].action === root.action) return i
@@ -35,10 +35,11 @@ IrisSurface {
 
     function persistSnipChoice(): void {
         if (!(Config.options?.regionSelector?.rememberSnipChoice ?? true)) return
-        const isRecord = root.action === RegionSelection.SnipAction.Record
-            || root.action === RegionSelection.SnipAction.RecordWithSound
+        // Recording and pinning are asked for each time, never restored.
+        const once = root.action === RegionSelection.SnipAction.Record
+            || root.action === RegionSelection.SnipAction.RecordWithSound || root.action === RegionSelection.SnipAction.Pin
         const updates = { "regionSelector.lastMode": root.selectionMode }
-        if (!isRecord) updates["regionSelector.lastAction"] = root.action
+        if (!once) updates["regionSelector.lastAction"] = root.action
         Config.setNestedValues(updates)
     }
 

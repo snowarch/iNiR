@@ -28,9 +28,11 @@ PanelWindow {
         bottom: true
     }
 
-    enum SnipAction { Copy, Edit, Search, CharRecognition, Record, RecordWithSound } 
+    enum SnipAction { Copy, Edit, Search, CharRecognition, Record, RecordWithSound, Pin }
     enum SelectionMode { RectCorners, Circle }
     property var action: RegionSelection.SnipAction.Copy
+    // A pin is framed on the window itself (LivePinFramer): niri does not say where a tiled window sits on screen.
+    onActionChanged: if (root.action === RegionSelection.SnipAction.Pin) { root.dismiss(); LivePins.frame() }
     property var selectionMode: RegionSelection.SelectionMode.RectCorners
     signal dismiss()
     
@@ -135,6 +137,11 @@ PanelWindow {
                 const w = wins[i]
                 const layout = w.layout
                 if (!layout || !layout.tile_pos_in_workspace_view || !layout.tile_size)
+                    continue
+
+                // Positions are per workspace view: a window of another output would land on this one.
+                const output = NiriService.workspaces?.[w.workspace_id]?.output
+                if (output && root.screen && output !== root.screen.name)
                     continue
 
                 const pos = layout.tile_pos_in_workspace_view
