@@ -1451,8 +1451,28 @@ Scope {
             }
         }
 
-        Item {
+        // Arranging widgets under a family that stages it: its paper behind the card, its card edge over it.
+        readonly property var editCard: DesktopEditStage.cardFor(bgRoot.screenName, bgRoot.width, bgRoot.height)
+        readonly property string editStagePart: FamilyParts.url(FamilyParts.active, "editStage")
+        Loader {
             anchors.fill: parent
+            active: bgRoot.editCard.p > 0 && bgRoot.editStagePart.length > 0
+            source: bgRoot.editStagePart
+            // A wallpaper another program draws (awww) stays full size under the shell: the card gets its still.
+            onLoaded: {
+                item.side = "under"
+                item.card = Qt.binding(() => bgRoot.editCard)
+                item.wallpaper = Qt.binding(() => bgRoot.externalMainWallpaperActive ? Wallpapers.stillUrlFor(bgRoot.wallpaperPathRaw) : "")
+            }
+        }
+
+        Item {
+            id: desktopStage
+            anchors.fill: parent
+            transform: [
+                Scale { xScale: bgRoot.editCard.s; yScale: bgRoot.editCard.s },
+                Translate { x: bgRoot.editCard.x; y: bgRoot.editCard.y }
+            ]
 
             // Wallpaper container - used as reference for blur and widgets
             Item {
@@ -3622,6 +3642,12 @@ Scope {
                 }
 
             }
+        }
+        Loader {
+            anchors.fill: parent
+            active: bgRoot.editCard.p > 0 && bgRoot.editStagePart.length > 0
+            source: bgRoot.editStagePart
+            onLoaded: { item.side = "over"; item.card = Qt.binding(() => bgRoot.editCard) }
         }
     }
     }

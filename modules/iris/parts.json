@@ -2,6 +2,7 @@
  "about": "What iRiS draws on surfaces several families share (modules/common/FamilyParts.qml). Part name -> file in this folder.",
  "parts": {
   "closeConfirm": "closeConfirm/IrisCloseConfirmContent.qml",
+  "editStage": "edit/IrisEditStage.qml",
   "lockSurface": "lock/IrisLockSurface.qml",
   "widgetFace.agenda": "widgets/IrisAgendaFace.qml",
   "widgetFace.battery": "widgets/IrisBatteryFace.qml",

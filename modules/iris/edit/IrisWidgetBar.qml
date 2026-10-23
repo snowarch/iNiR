@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs
 import qs.modules.common
+import qs.services
 import qs.modules.shared.background.widgets
 import qs.modules.iris.frame
 import qs.modules.iris.style
@@ -62,6 +63,23 @@ Item {
         radius: root.bodyRadius, fuse: IrisStyle.fuse, paints: true,
         id: "widgetbar", joins: IrisFrame.framed ? "frame" : ""
     }] : []
+
+    // The desktop recedes into a card between the Island and this bar while arranging, and the windows of the
+    // workspace step aside on an empty one (DesktopEditStage).
+    readonly property real islandRoom: IrisFrame.band + IrisFrame.islandVisualDepth
+    readonly property real barRoom: IrisFrame.band + root.bodyHeight
+    readonly property var stageNow: [root.outputName, Math.max(0, Math.min(1.2, root.presentation)),
+        root.bottomEdge ? root.islandRoom : root.barRoom, root.bottomEdge ? root.barRoom : root.islandRoom]
+    onStageNowChanged: DesktopEditStage.setStage(root.stageNow[0], root.stageNow[1], root.stageNow[2], root.stageNow[3])
+    // The windows come back once the card has grown back into the desktop, not over a shrunk one.
+    readonly property bool parks: root.present && (GlobalStates.focusedScreen?.name ?? root.outputName) === root.outputName
+    onParksChanged: if (root.parks) DesktopEditStage.park(root.outputName)
+    readonly property bool settledHome: !root.present && root.presentation < 0.04
+    onSettledHomeChanged: if (root.settledHome) DesktopEditStage.unpark()
+    Component.onDestruction: {
+        DesktopEditStage.setStage(root.outputName, 0, 0, 0)
+        if (!root.present) DesktopEditStage.unpark()
+    }
 
     IrisSpring {
         id: presentSpring
