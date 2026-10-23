@@ -14,6 +14,7 @@ Rectangle {
     property bool compact: false
     readonly property real d: IrisStyle.settingsDensity
     readonly property var keys: [
+        { id: "classic", glyph: "view_sidebar", name: Translation.tr("Classic") },
         { id: "folio", glyph: "article", name: Translation.tr("Folio") },
         { id: "deck", glyph: "view_carousel", name: Translation.tr("Deck") },
         { id: "console", glyph: "grid_view", name: Translation.tr("Console") }
@@ -33,11 +34,11 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 2
         Repeater {
-            model: root.keys.filter(entry => root.host?.layouts?.[entry.id] !== undefined)
+            model: root.keys.filter(entry => entry.id === "classic" || root.host?.layouts?.[entry.id] !== undefined)
             MouseArea {
                 id: key
                 required property var modelData
-                readonly property bool on: String(root.host?.layout ?? "") === key.modelData.id
+                readonly property bool on: String(root.host?.chosenLayout ?? root.host?.layout ?? "") === key.modelData.id
                 width: keyContent.implicitWidth + Math.round((root.compact ? 18 : 26) * root.d)
                 height: root.height - 6
                 hoverEnabled: true
