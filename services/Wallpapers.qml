@@ -236,6 +236,7 @@ Singleton {
         id: _recentWallpapersFile
         property bool loadedOnce: false
         path: Directories.stateUserPath + "/recent-wallpapers.json"
+        printErrors: false // missing on first run; onLoadFailed writes it
         onLoaded: {
             let list = []
             try { const read = JSON.parse(text()); if (Array.isArray(read)) list = read.map(String) } catch (e) {}
