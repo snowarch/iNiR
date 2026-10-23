@@ -159,42 +159,101 @@ IrisWidgetFace {
         }
     }
 
+    // Medium: each timer on its own tile, as the gauges of the weather and vitals cards: what it is, its figure, the
+    // play key and how far the lap has gone. A running tile takes its colour.
     RowLayout {
         visible: !root.small
         anchors.fill: parent
-        spacing: root.dp(12)
+        spacing: root.dp(8)
         Repeater {
             model: root.small ? [] : root.timers
-            ColumnLayout {
-                id: column
+            Rectangle {
+                id: tile
                 required property var modelData
+                readonly property bool running: root.live(tile.modelData)
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 Layout.fillHeight: true
-                spacing: root.dp(6)
-                Dial {
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: root.dp(62)
-                    Layout.preferredHeight: root.dp(62)
-                    timer: column.modelData
+                radius: root.innerRadius
+                color: tile.running ? Qt.alpha(tile.modelData.tint, 0.16) : root.fillQuiet
+                Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+                Accessible.role: Accessible.Button
+                Accessible.name: tile.modelData.label + ", " + tile.modelData.value
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: root.dp(10)
+                    spacing: root.dp(2)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: root.dp(4)
+                        MaterialSymbol {
+                            text: tile.modelData.glyph
+                            fill: 1
+                            iconSize: root.px(13)
+                            color: tile.running ? tile.modelData.tint : root.inkSecondary
+                        }
+                        FaceText {
+                            face: root
+                            Layout.fillWidth: true
+                            text: tile.modelData.label
+                            size: 11.5
+                            weight: Font.DemiBold
+                            color: tile.running ? root.ink : root.inkSecondary
+                        }
+                    }
+                    FaceFigure {
+                        face: root
+                        Layout.fillWidth: true
+                        text: tile.modelData.value
+                        size: 24
+                        tone: tile.running || tile.modelData.paused ? root.ink : root.inkSecondary
+                    }
+                    Item { Layout.fillHeight: true }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: root.dp(8)
+                        Rectangle {
+                            implicitWidth: root.dp(30)
+                            implicitHeight: implicitWidth
+                            radius: width / 2
+                            color: tile.running ? tile.modelData.tint : keyHover.hovered ? root.fillHover : root.fill
+                            scale: keyTap.pressed ? IrisStyle.pressScale(0.9) : 1
+                            Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: tile.running ? "pause" : "play_arrow"
+                                fill: 1
+                                iconSize: root.px(17)
+                                color: tile.running ? root.onFill(tile.modelData.tint) : root.ink
+                            }
+                            HoverHandler { id: keyHover; cursorShape: Qt.PointingHandCursor }
+                            TapHandler {
+                                id: keyTap
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                gesturePolicy: TapHandler.WithinBounds
+                                onTapped: (point, button) => button === Qt.RightButton ? root.reset(tile.modelData.key) : root.toggle(tile.modelData.key)
+                            }
+                        }
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: root.dp(4)
+                            radius: height / 2
+                            color: root.fill
+                            Rectangle {
+                                width: parent.width * Math.max(0, Math.min(1, tile.modelData.progress))
+                                height: parent.height
+                                radius: height / 2
+                                color: tile.modelData.tint
+                                Behavior on width { enabled: root.moving; NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                            }
+                        }
+                    }
                 }
-                FaceText {
-                    face: root
-                    Layout.alignment: Qt.AlignHCenter
-                    text: column.modelData.value
-                    size: 16
-                    weight: Font.DemiBold
-                    color: root.live(column.modelData) || column.modelData.paused ? root.ink : root.inkSecondary
-                    font.family: root.fontNumbers
-                    font.features: ({ "tnum": 1 })
-                }
-                FaceText {
-                    face: root
-                    Layout.alignment: Qt.AlignHCenter
-                    text: column.modelData.label
-                    color: root.live(column.modelData) ? column.modelData.tint : root.inkTertiary
-                    size: 11.5
-                    weight: Font.DemiBold
+                WheelHandler {
+                    enabled: tile.modelData.key === "countdown" && !tile.modelData.running
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    onWheel: event => TimerService.adjustCountdownDuration(event.angleDelta.y > 0 ? 60 : -60)
                 }
             }
         }
