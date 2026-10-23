@@ -170,7 +170,23 @@ Singleton {
         const round = value => Math.round(value * 10) / 10
         return { state: "done", frames: gaps.length, mean: round(gaps.reduce((a, b) => a + b, 0) / gaps.length),
             p95: round(sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))]), worst: round(sorted[sorted.length - 1]),
-            over20: gaps.filter(v => v > 20).length, over50: gaps.filter(v => v > 50).length }
+            over20: gaps.filter(v => v > 20).length, over50: gaps.filter(v => v > 50).length,
+            // How long the GUI thread was held at once: frame gaps also count drawing (a llvmpipe nest draws in 40 ms),
+            // this counts only work that blocks animations and input, whatever renders the frame.
+            busy: round(Math.max(0, ...root.meterBeats.slice(1)) - 4), busy16: root.meterBeats.slice(1).filter(v => v > 20).length }
+    }
+    property var meterBeats: []
+    property real meterBeat: 0
+    Timer {
+        interval: 4
+        repeat: true
+        running: meter.running
+        onRunningChanged: if (running) { root.meterBeats = []; root.meterBeat = Date.now() }
+        onTriggered: {
+            const now = Date.now()
+            root.meterBeats.push(now - root.meterBeat)
+            root.meterBeat = now
+        }
     }
     FrameAnimation {
         id: meter
