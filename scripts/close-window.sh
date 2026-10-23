@@ -33,7 +33,7 @@ close_focused() {
 }
 
 # If QS is not running, close directly using the captured ID.
-if ! pgrep -x qs >/dev/null 2>&1 && ! pgrep -x quickshell >/dev/null 2>&1; then
+if ! pgrep -x 'qs|quickshell|inir-shell' >/dev/null 2>&1; then
     close_focused
     exit 0
 fi

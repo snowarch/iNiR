@@ -1333,7 +1333,7 @@ _inir_doctor_perf() {
         proc_ppid="${proc_ppid:-?}"
         proc_rss_mb="$((proc_rss / 1024))"
         proc_note=""
-        if [[ "$proc_comm" == "qs" ]]; then
+        if [[ "$proc_comm" == "qs" || "$proc_comm" == "inir-shell" ]]; then
             proc_note="shell"
         elif [[ "$proc_comm" == "awww-daemon" ]]; then
             proc_note="wallpaper daemon counted under iNiR"
@@ -1819,6 +1819,18 @@ apply_gpu_policy() {
     fi
 }
 
+# CachyOS's ananicy rules run any process named `qs` as a background service (nice 10, ionice 6):
+# a shell drawn every frame then waits behind whatever else runs, boot included. The kernel names a
+# process after the file it ran, so the shell runs through a link with a name of its own.
+shell_exec_bin() {
+    local dir="${XDG_RUNTIME_DIR:-/tmp}/inir/bin"
+    if mkdir -p "$dir" 2>/dev/null && ln -sfn "$(readlink -f "$qs_bin" 2>/dev/null || printf '%s' "$qs_bin")" "$dir/inir-shell" 2>/dev/null; then
+        printf '%s' "$dir/inir-shell"
+    else
+        printf '%s' "$qs_bin"
+    fi
+}
+
 apply_qt_runtime_env() {
     # Must run before Qt reads env at QGuiApplication construction.
     apply_gpu_policy
@@ -1856,6 +1868,7 @@ apply_qt_runtime_env() {
                 && printf '%s\n' '<?xml version="1.0" standalone="yes"?>' '<driconf><device>' \
                     '<application name="Quickshell" executable="qs"><option name="mesa_glthread_app_profile" value="0"/></application>' \
                     '<application name="Quickshell" executable="quickshell"><option name="mesa_glthread_app_profile" value="0"/></application>' \
+                    '<application name="iNiR" executable="inir-shell"><option name="mesa_glthread_app_profile" value="0"/></application>' \
                     '</device></driconf>' > "$_drirc_dir/99-inir.conf"; then
             export DRIRC_CONFIGDIR="$_drirc_dir"
         else
@@ -2213,7 +2226,7 @@ start_background() {
     fi
 
     apply_hot_reload_policy_for_dir "$dir"
-    nohup "$qs_bin" -n -d -p "$dir" >/dev/null 2>&1 &
+    nohup "$(shell_exec_bin)" -n -d -p "$dir" >/dev/null 2>&1 &
 }
 
 kill_wrapper() {
@@ -2296,7 +2309,7 @@ cleanup_orphans() {
     elif command -v sv >/dev/null 2>&1; then
         service_main_pid="$(sv status "${XDG_CONFIG_HOME:-$HOME/.config}/service/inir" 2>/dev/null | sed -n 's/.*(pid \([0-9][0-9]*\)).*/\1/p')"
     fi
-    alive_pids="$(pgrep -x 'quickshell|qs' 2>/dev/null || true)"
+    alive_pids="$(pgrep -x 'quickshell|qs|inir-shell' 2>/dev/null || true)"
     if [[ -n "$alive_pids" ]]; then
         while IFS= read -r pid; do
             [[ -n "$pid" ]] || continue
@@ -2492,7 +2505,7 @@ open_detached_qml_window() {
     apply_qt_runtime_env
     apply_qt_logging_rules
     exec 9>&-
-    exec "$qs_bin" -n -p "$qml_path"
+    exec "$(shell_exec_bin)" -n -p "$qml_path"
 }
 
 resolve_setup_dir() {
@@ -4376,7 +4389,7 @@ case "$command_name" in
             check_qs_abi
             apply_qt_runtime_env          # import Niri-owned session env if needed
             wait_for_wayland_socket       # validate the exact Niri-owned socket
-            exec "$qs_bin" -n -p "$config_dir"
+            exec "$(shell_exec_bin)" -n -p "$config_dir"
         fi
 
         # ── Normal run path (manual invocation) ──
@@ -4398,13 +4411,13 @@ case "$command_name" in
             fi
         fi
         if [[ "$foreground" == true ]]; then
-            exec "$qs_bin" -n -p "$config_dir"
+            exec "$(shell_exec_bin)" -n -p "$config_dir"
         fi
         if is_inir_service_enabled; then
             start_inir_service_if_enabled
             exit 0
         fi
-        exec "$qs_bin" -n -d -p "$config_dir"
+        exec "$(shell_exec_bin)" -n -d -p "$config_dir"
         ;;
     restart)
         require_qs
