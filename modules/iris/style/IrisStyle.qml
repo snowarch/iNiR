@@ -344,6 +344,7 @@ QtObject {
     readonly property color inkOnSignal: root.onTintFor(root.signal)
     // S4's inks: an empty dot of a meter, the hairline ring of an off switch, the 8 px paper grid behind a stage.
     readonly property color dotEmpty: ColorUtils.applyAlpha(root.text, 0.2) // iris-literal: an unlit dot still reads
+    function unlit(ink: color): color { return ColorUtils.applyAlpha(ink, 0.2) } // iris-literal: the same unlit dot on any ink
     readonly property color ringInk: ColorUtils.applyAlpha(root.text, 0.42) // iris-literal: the off switch's hairline
     readonly property color paperDot: ColorUtils.applyAlpha(root.text, 0.08) // iris-literal: S3's 6-8 %
 

@@ -59,6 +59,7 @@ Item {
             accent: column.clockAccent
             showDay: column.clockStyle === "dateTime"
         }
+        PrivacyMarks { anchors.horizontalCenter: parent.horizontalCenter; spelled: false }
     }
 
     Stack {
@@ -73,10 +74,20 @@ Item {
             radius: circular ? width / 2 : 6 * column.d
         }
         IrisVisualizer {
+            visible: !column.island.nothingLook
             anchors.horizontalCenter: parent.horizontalCenter
-            running: column.island.playing && column.mode === "media" && !column.island.visualExpanded
+            running: visible && column.island.playing && column.mode === "media" && !column.island.visualExpanded
             tint: IrisStyle.visualizerTint(column.island.artTint)
             barHeight: 13 * column.d
+        }
+        IrisDotStrip {
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: column.island.nothingLook && column.island.effectiveLength > 0
+            vertical: true
+            count: 6
+            height: column.island.stripWidth(6)
+            value: column.island.trackProgress
+            fillColor: column.island.playing ? IrisStyle.text : IrisStyle.textSecondary
         }
         // On its side there is room for the time under what plays.
         IslandStackedClock {
@@ -90,11 +101,12 @@ Item {
     Stack {
         id: recordStack
         modes: "record"
-        RecordDot { anchors.horizontalCenter: parent.horizontalCenter }
+        RecordDot { anchors.horizontalCenter: parent.horizontalCenter; color: column.island.nothingLook ? IrisStyle.signal : IrisStyle.danger }
         Figure {
             text: column.island.clockText(RecorderStatus.elapsedSeconds)
-            color: IrisStyle.danger
+            color: column.island.nothingLook ? IrisStyle.text : IrisStyle.danger
         }
+        PrivacyMarks { anchors.horizontalCenter: parent.horizontalCenter; spelled: false }
     }
 
     Stack {
@@ -104,13 +116,14 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             text: column.island.timerPaused ? "pause" : column.island.timerGlyph
             iconSize: 17 * column.d
-            color: IrisStyle.secondaryAccent
+            color: column.island.timerPaused ? IrisStyle.textSecondary : column.island.nothingLook ? IrisStyle.text : IrisStyle.secondaryAccent
         }
         Figure {
             text: column.island.clockText(column.island.timerSeconds)
             countDown: column.island.timerKind !== "stopwatch"
-            color: column.island.timerPaused ? IrisStyle.subtext : IrisStyle.secondaryAccent
+            color: column.island.timerPaused ? IrisStyle.subtext : column.island.nothingLook ? IrisStyle.text : IrisStyle.secondaryAccent
         }
+        PrivacyMarks { anchors.horizontalCenter: parent.horizontalCenter; spelled: false }
     }
 
     Stack {
@@ -122,16 +135,22 @@ Item {
             iconSize: 17 * column.d
             color: column.island.taskTint
         }
-        Figure {
-            visible: Number(column.island.task?.progress ?? -1) >= 0
-            text: Math.round(Number(column.island.task?.progress ?? 0) * 100) + "%"
-            color: column.island.taskTint
-        }
-        RecordDot {
-            visible: Number(column.island.task?.progress ?? -1) < 0
+        IrisDotStrip {
+            visible: column.island.nothingLook
             anchors.horizontalCenter: parent.horizontalCenter
-            color: column.island.taskTint
+            vertical: true
+            count: 6
+            height: column.island.stripWidth(6)
+            value: Math.max(0, Number(column.island.task?.progress ?? 0))
+            indeterminate: Number(column.island.task?.progress ?? -1) < 0
         }
+        Figure {
+            text: Number(column.island.task?.progress ?? -1) >= 0
+                ? column.island.percentOf(column.island.task) + (column.island.nothingLook ? "" : "%")
+                : column.island.elapsedOf(column.island.task)
+            color: column.island.nothingLook ? IrisStyle.text : column.island.taskTint
+        }
+        PrivacyMarks { anchors.horizontalCenter: parent.horizontalCenter; spelled: false }
     }
 
     Stack {
