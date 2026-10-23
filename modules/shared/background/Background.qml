@@ -1458,11 +1458,10 @@ Scope {
             anchors.fill: parent
             active: bgRoot.editCard.p > 0 && bgRoot.editStagePart.length > 0
             source: bgRoot.editStagePart
-            // A wallpaper another program draws (awww) stays full size under the shell: the card gets its still.
             onLoaded: {
                 item.side = "under"
                 item.card = Qt.binding(() => bgRoot.editCard)
-                item.wallpaper = Qt.binding(() => bgRoot.externalMainWallpaperActive ? Wallpapers.stillUrlFor(bgRoot.wallpaperPathRaw) : "")
+                item.waiting = Qt.binding(() => editStill.visible && editStill.status !== Image.Ready)
             }
         }
 
@@ -1473,6 +1472,25 @@ Scope {
                 Scale { xScale: bgRoot.editCard.s; yScale: bgRoot.editCard.s },
                 Translate { x: bgRoot.editCard.x; y: bgRoot.editCard.y }
             ]
+            // As a card the desktop is drawn whole and shrunk through mipmaps, so text and widgets stay sharp, and its
+            // corners are cut by the family's card shape: a real edge, with the paper and its shadow seen past it.
+            layer.enabled: bgRoot.editCard.p > 0 && (editOverLoader.item?.cardMask ?? null) !== null
+            layer.smooth: true
+            layer.mipmap: true
+            layer.effect: OpacityMask { maskSource: editOverLoader.item?.cardMask ?? null }
+
+            // A wallpaper another program draws (awww) stays full size under the shell: the card carries its still.
+            Image {
+                id: editStill
+                anchors.fill: parent
+                z: -1
+                visible: bgRoot.editCard.p > 0 && bgRoot.externalMainWallpaperActive
+                source: editStill.visible ? Wallpapers.stillUrlFor(bgRoot.wallpaperPathRaw) : ""
+                sourceSize: Qt.size(bgRoot.width, bgRoot.height)
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                cache: true
+            }
 
             // Wallpaper container - used as reference for blur and widgets
             Item {
@@ -2390,17 +2408,28 @@ Scope {
                             }
                         }
                     }
+                    // The screen's own centre pulls too, and its line runs across the whole screen.
+                    const midX = (widgetCanvas.width - width) / 2
+                    const midY = (widgetCanvas.height - height) / 2
+                    if (Math.abs(midX - x) <= threshold && (bestX === null || Math.abs(midX - x) < bestX.d))
+                        bestX = { d: Math.abs(midX - x), at: midX, line: widgetCanvas.width / 2, screen: true }
+                    if (Math.abs(midY - y) <= threshold && (bestY === null || Math.abs(midY - y) < bestY.d))
+                        bestY = { d: Math.abs(midY - y), at: midY, line: widgetCanvas.height / 2, screen: true }
                     const outX = bestX ? Math.round(bestX.at) : x
                     const outY = bestY ? Math.round(bestY.at) : y
                     const guides = []
+                    if (bestX?.screen)
+                        guides.push({ vertical: true, screen: true, at: Math.round(bestX.line), from: 0, to: widgetCanvas.height })
+                    if (bestY?.screen)
+                        guides.push({ vertical: false, screen: true, at: Math.round(bestY.line), from: 0, to: widgetCanvas.width })
                     // An alignment draws its line through both widgets; a gutter draws the gap it keeps.
-                    if (bestX)
+                    if (bestX && !bestX.screen)
                         guides.push(bestX.gap
                             ? { vertical: false, gap: true, at: Math.round(Math.max(outY, bestX.n.y) + Math.min(outY + height, bestX.n.y + bestX.n.height)) / 2,
                                 from: Math.min(outX + width, bestX.n.x + bestX.n.width), to: Math.max(outX, bestX.n.x) }
                             : { vertical: true, at: Math.round(bestX.line),
                                 from: Math.min(outY, bestX.n.y), to: Math.max(outY + height, bestX.n.y + bestX.n.height) })
-                    if (bestY)
+                    if (bestY && !bestY.screen)
                         guides.push(bestY.gap
                             ? { vertical: true, gap: true, at: Math.round(Math.max(outX, bestY.n.x) + Math.min(outX + width, bestY.n.x + bestY.n.width)) / 2,
                                 from: Math.min(outY + height, bestY.n.y + bestY.n.height), to: Math.max(outY, bestY.n.y) }
@@ -2957,11 +2986,12 @@ Scope {
                         NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
                     }
 
-                    // iRiS hosts the toolbar in its chassis (IrisWidgetBar); here it exists only while editing outside iRiS.
-                    readonly property bool irisHost: (Config.options?.panelFamily ?? "ii") === "iris"
+                    // A family that hosts arranging here (its own shelf and head: DesktopEditStage) keeps the shared
+                    // toolbar and library out of this output.
+                    readonly property bool hosted: DesktopEditStage.hosted(bgRoot.screenName)
                     Loader {
                         anchors.fill: parent
-                        active: editControlsOverlay.visible && !editControlsOverlay.irisHost
+                        active: editControlsOverlay.visible && !editControlsOverlay.hosted
                         sourceComponent: Item {
                             DesktopEditToolbar {
                                 id: editControlsBar
@@ -2998,29 +3028,19 @@ Scope {
                         Connections {
                             target: GlobalStates
                             function onDesktopWidgetManagerToggleRequested(outputName: string): void {
-                                if (outputName.length === 0 || outputName === bgRoot.screenName)
+                                if ((outputName.length === 0 || outputName === bgRoot.screenName) && !editControlsOverlay.hosted)
                                     widgetManagerPanel.shown = !widgetManagerPanel.shown
                             }
                             function onWidgetEditModeChanged(): void {
                                 if (!GlobalStates.widgetEditMode) widgetManagerPanel.shown = false
                             }
                         }
-                        active: shown
-                        visible: shown
-                        enabled: shown && (!editControlsOverlay.irisHost || geometryReady)
-                        opacity: editControlsOverlay.irisHost && !geometryReady ? 0 : 1
+                        active: shown && !editControlsOverlay.hosted
+                        visible: active
+                        enabled: active
                         z: 150
                         x: 0
                         y: 0
-
-                        Behavior on opacity {
-                            enabled: editControlsOverlay.irisHost && IrisStyle.motionEnabled
-                            NumberAnimation {
-                                duration: IrisStyle.revealDuration
-                                easing.type: Easing.BezierSpline
-                                easing.bezierCurve: IrisStyle.morphCurve
-                            }
-                        }
 
                         function restoreGeometry(): void {
                             if (!widgetManagerPanel.shown)
@@ -3644,6 +3664,7 @@ Scope {
             }
         }
         Loader {
+            id: editOverLoader
             anchors.fill: parent
             active: bgRoot.editCard.p > 0 && bgRoot.editStagePart.length > 0
             source: bgRoot.editStagePart

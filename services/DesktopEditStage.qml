@@ -43,6 +43,74 @@ Singleton {
         return { x: x * p, y: y * p, s: 1 + (s - 1) * p, p: p }
     }
 
+    // ── Who arranges each output ──
+    // A family that hosts arranging on an output (its own shelf and head) says so; the shared editor (toolbar, library)
+    // stays out of that output.
+    property var hosts: ({})
+    function setHost(output: string, on: bool): void {
+        if (Boolean(root.hosts[output]) === on)
+            return
+        const next = Object.assign({}, root.hosts)
+        if (on) next[output] = true
+        else delete next[output]
+        root.hosts = next
+    }
+    function hosted(output: string): bool { return Boolean(root.hosts[output]) }
+
+    // ── Pictures of widgets, for the shelf ──
+    // Each widget on the desktop takes its own picture once a second while arranging (key -> { url, width, height } in
+    // logical px), and leaves it on disk on Done so the shelf shows a widget that is not out with its last look.
+    // `look` names the look a family is wearing (scheme, Design): a picture from another look is not shown.
+    property string look: "default"
+    property var pictures: ({})
+    readonly property string pictureDir: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/inir/widget-pictures"
+    function setPicture(key: string, url: string, width: real, height: real): void {
+        const next = Object.assign({}, root.pictures)
+        next[key] = { url: url, width: width, height: height }
+        root.pictures = next
+    }
+    function savedPicture(key: string): string {
+        return root.pictureDir + "/" + key.replace(/[^A-Za-z0-9._-]/g, "_") + "-" + root.look + ".png"
+    }
+
+    // ── Adding and taking away from the shelf ──
+    // A widget taken from the shelf lands where it was dropped (`at`, desktop px, its centre) or on a free spot, and
+    // grows out of the picture it was (`from`, screen px). One taken back shrinks into its picture before it goes.
+    // key -> rect (screen px) of its picture on the shelf, published by the family that draws one.
+    property var tiles: ({})
+    property var arrivals: ({})
+    property var departures: ({})
+    function arrive(output: string, key: string, at: var, from: var): void {
+        const next = Object.assign({}, root.arrivals)
+        next[output + "::" + key] = { at: at, from: from }
+        root.arrivals = next
+        DesktopWidgetLayout.setGloballyEnabled(key, true)
+    }
+    function arrival(output: string, key: string): var { return root.arrivals[output + "::" + key] ?? null }
+    function arrived(output: string, key: string): void {
+        const next = Object.assign({}, root.arrivals)
+        delete next[output + "::" + key]
+        root.arrivals = next
+    }
+    function depart(output: string, key: string, to: var): void {
+        const next = Object.assign({}, root.departures)
+        next[output + "::" + key] = { to: to }
+        root.departures = next
+        departTimer.restart()
+    }
+    function departure(output: string, key: string): var { return root.departures[output + "::" + key] ?? null }
+    readonly property int departDuration: 240
+    Timer {
+        id: departTimer
+        interval: root.departDuration
+        onTriggered: {
+            const gone = Object.keys(root.departures)
+            root.departures = ({})
+            for (const id of gone)
+                DesktopWidgetLayout.setGloballyEnabled(id.slice(id.indexOf("::") + 2), false)
+        }
+    }
+
     // ── Windows wait on an empty workspace while the desktop is arranged ──
     property int parkedFrom: -1
     property int parkedOn: -1

@@ -2,8 +2,8 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQml
 
-// What each desktop widget is called by glyph and category tint, wherever it is shown as itself:
-// the edit toolbar's rail and the head of its quick controls.
+// What each desktop widget is called by glyph, category tint and aisle, wherever it is shown as itself:
+// the edit toolbar's rail, the shelf and the head of its quick controls.
 QtObject {
     id: root
     readonly property var glyphs: ({
@@ -35,10 +35,21 @@ QtObject {
         editorial: "text typography quote", shape: "decoration decorative", mascot: "pet character companion",
         controls: "toggles wifi bluetooth volume brightness quick settings", screenTime: "usage apps time tracker"
     })
+    // The shelf's aisles: what a widget is for, in the order people reach for them.
+    readonly property var categoryOrder: ["today", "media", "system", "notes", "decor"]
+    readonly property var categories: ({
+        clock: "today", worldClock: "today", weather: "today", dayProgress: "today", dateBadge: "today",
+        monthCalendar: "today", calendarUpcoming: "today", timers: "today",
+        mediaControls: "media", visualizer: "media", newsTicker: "media",
+        systemMonitor: "system", battery: "system", uptime: "system", controls: "system", screenTime: "system", userCard: "system",
+        notes: "notes", todo: "notes",
+        customImage: "decor", imageConverter: "decor", shape: "decor", mascot: "decor", editorial: "decor", japaneseTypography: "decor"
+    })
     readonly property string customTint: "#5e5ce6"
     readonly property string fallbackTint: "#8e8e93"
 
     function glyph(key: string): string { return root.glyphs[key] ?? "widgets" }
     function keywordsOf(key: string): string { return root.keywords[key] ?? "" }
+    function categoryOf(key: string): string { return root.categories[key] ?? "decor" }
     function tint(key: string): string { return root.tints[key] ?? (key.startsWith("custom.") ? root.customTint : root.fallbackTint) }
 }

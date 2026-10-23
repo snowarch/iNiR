@@ -100,7 +100,7 @@ ColumnLayout {
                 else if (value === "reset") root.widget.resetToDefaults()
                 else if (value === "remove") {
                     root.widget.closeQuickControls()
-                    DesktopWidgetLayout.setGloballyEnabled(root.widget.configEntryName, false)
+                    root.widget.takeAway()
                 }
             }
         }

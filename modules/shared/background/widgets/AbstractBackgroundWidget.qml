@@ -401,7 +401,9 @@ AbstractWidget {
 
     transform: [
         Rotation { origin.x: root.width / 2; origin.y: root.height / 2; angle: root._chaosAngle },
-        Translate { x: root._chaosDX; y: root._chaosDY }
+        Translate { x: root._chaosDX; y: root._chaosDY },
+        Scale { xScale: root._shelfScale; yScale: root._shelfScale },
+        Translate { x: root._shelfDX; y: root._shelfDY }
     ]
 
     // Live geometry report so the romp knows where to aim (chaos-gated)
@@ -987,6 +989,110 @@ AbstractWidget {
             opacity: modelData.gap ? 0.9 : 0.7
             z: 300
         }
+    }
+
+    // ── The shelf (a family that hosts arranging: DesktopEditStage) ──
+    // Once a second while arranging, the widget takes its own picture for the shelf; held or carried it keeps the last
+    // one (its edit chrome would be in it). Done leaves that picture on disk for when the widget is not out.
+    readonly property bool _picturing: GlobalStates.widgetEditMode && DesktopEditStage.hosted(root.outputName)
+        && root.visible && root.width > 0 && root.height > 0 && root.configEntryName.length > 0
+    property var _picture: null
+    function _takePicture(): void {
+        if (root._editEngaged || root.isDragging || root._isResizing || root._shelfMoving)
+            return
+        const w = Math.round(root.width)
+        const h = Math.round(root.height)
+        root.grabToImage(result => {
+            root._picture = result
+            DesktopEditStage.setPicture(root.configEntryName, result.url, w, h)
+        }, Qt.size(w, h))
+    }
+    Timer {
+        interval: 1000
+        repeat: true
+        triggeredOnStart: true
+        running: root._picturing
+        onTriggered: root._takePicture()
+    }
+    on_PicturingChanged: {
+        if (root._picturing || !root._picture)
+            return
+        root._picture.saveToFile(DesktopEditStage.savedPicture(root.configEntryName))
+        root._picture = null
+    }
+
+    // Taken from the shelf, the widget lands where it was dropped (or on a free spot) and grows out of its picture;
+    // taken back, it shrinks into it. `_shelf` runs 0 (the picture) to 1 (the widget in place).
+    property real _shelf: 1
+    property rect _shelfRect: Qt.rect(0, 0, 0, 0)
+    readonly property bool _shelfMoving: shelfGrow.running || shelfShrink.running
+    readonly property real _shelfK: root._shelfRect.width > 0 && root.width > 0 && root.height > 0
+        ? Math.min(root._shelfRect.width / root.width, root._shelfRect.height / root.height) : 1
+    readonly property real _shelfScale: 1 + (root._shelfK - 1) * (1 - root._shelf)
+    readonly property real _shelfDX: root._shelfRect.width > 0
+        ? (root._shelfRect.x + (root._shelfRect.width - root.width * root._shelfK) / 2 - root.x) * (1 - root._shelf) : 0
+    readonly property real _shelfDY: root._shelfRect.width > 0
+        ? (root._shelfRect.y + (root._shelfRect.height - root.height * root._shelfK) / 2 - root.y) * (1 - root._shelf) : 0
+    // A rect in screen px (the shelf's) seen from the desktop, which is a card while arranging.
+    function _fromScreen(rect: var): rect {
+        const card = DesktopEditStage.cardFor(root.outputName, root.screenWidth, root.screenHeight)
+        return Qt.rect((rect.x - card.x) / card.s, (rect.y - card.y) / card.s, rect.width / card.s, rect.height / card.s)
+    }
+    function _land(): void {
+        const arrival = DesktopEditStage.arrival(root.outputName, root.configEntryName)
+        if (!arrival || !root._geometryReady)
+            return
+        DesktopEditStage.arrived(root.outputName, root.configEntryName)
+        let spot = null
+        if (arrival.at) {
+            spot = root._planDrop(arrival.at.x - root.width / 2, arrival.at.y - root.height / 2)
+        } else if (root._canvas && typeof root._canvas.freeSpot === "function") {
+            spot = root._canvas.freeSpot(root.editInstanceKey, root.x, root.y, root.width, root.height)
+        }
+        if (spot && (Math.abs(spot.x - root.x) > 0.5 || Math.abs(spot.y - root.y) > 0.5))
+            root._setOutputValues({ x: spot.x, y: spot.y, placementStrategy: "free" })
+        if (!arrival.from || !root.animationsActive)
+            return
+        root._shelfRect = root._fromScreen(arrival.from)
+        root._shelf = 0
+        shelfGrow.restart()
+    }
+    readonly property var _arrival: DesktopEditStage.arrival(root.outputName, root.configEntryName)
+    on_ArrivalChanged: root._land()
+    on_GeometryReadyChanged: root._land()
+    readonly property var _departure: DesktopEditStage.departure(root.outputName, root.configEntryName)
+    on_DepartureChanged: {
+        if (!root._departure)
+            return
+        shelfGrow.stop()
+        root._shelfRect = root._fromScreen(root._departure.to)
+        shelfShrink.restart()
+    }
+    // Away from the shelf, or back into it from wherever the drop or the grid moved it.
+    NumberAnimation {
+        id: shelfGrow
+        target: root
+        property: "_shelf"
+        to: 1
+        duration: root.widgetIrisFamily ? IrisStyle.duration(380) : Appearance.animation.elementMoveEnter.duration
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: root.widgetIrisFamily ? IrisStyle.morphCurve : Appearance.animation.elementMoveEnter.bezierCurve
+    }
+    NumberAnimation {
+        id: shelfShrink
+        target: root
+        property: "_shelf"
+        to: 0
+        duration: DesktopEditStage.departDuration
+        easing.type: Easing.InCubic
+    }
+    // Taking a widget away while a shelf is out sends it into its picture there.
+    function takeAway(): void {
+        const tile = DesktopEditStage.tiles[root.configEntryName]
+        if (tile && DesktopEditStage.hosted(root.outputName) && root.animationsActive)
+            DesktopEditStage.depart(root.outputName, root.configEntryName, tile)
+        else
+            DesktopWidgetLayout.setGloballyEnabled(root.configEntryName, false)
     }
 
     // ── Edit engagement ──────────────────────────────────────
