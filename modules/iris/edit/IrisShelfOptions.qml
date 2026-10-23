@@ -17,6 +17,8 @@ Flickable {
     id: root
 
     required property string section
+    // One group of the area when the shelf wants only it (Look = Desktop › Widgets).
+    property string group: ""
     readonly property real d: IrisStyle.density
     readonly property real gap: Math.round(8 * root.d)
     readonly property real unit: Math.floor((root.height - root.gap) / 2)
@@ -27,14 +29,15 @@ Flickable {
         if (spec.kind === "range" && Number.isFinite(Number(spec.min)) && Number.isFinite(Number(spec.max))) return "range"
         if (spec.kind === "choice" && !spec.cards) {
             const choices = IrisOptions.choicesOf(spec)
-            if (choices.length >= 2 && choices.length <= 4 && choices.every(entry => Translation.tr(String(entry.label ?? "")).length <= 9))
+            if (choices.length >= 2 && choices.length <= 4 && choices.every(entry => Translation.tr(String(entry.label ?? "")).length <= 11))
                 return "choice"
         }
         return ""
     }
     readonly property var specs: {
         Config.revision
-        return IrisOptions.settings.filter(spec => spec.section === root.section && !spec.mirror && IrisOptions.shown(spec)
+        return IrisOptions.settings.filter(spec => spec.section === root.section && (root.group.length === 0 || spec.group === root.group)
+            && !spec.mirror && IrisOptions.shown(spec)
             && !IrisOptions.fineTune(spec) && root.shape(spec) !== "")
     }
     // A name two rows share says whose it is: "Island · Light".
@@ -64,7 +67,8 @@ Flickable {
         for (const spec of root.specs) {
             const kind = root.shape(spec)
             const name = root.nameOf(spec)
-            const said = Math.min(Math.round(200 * root.d), nameMetrics.advanceWidth(name))
+            // A few pixels over the measure: the name's own text rounds up and "Outline" read "Outl…".
+            const said = Math.min(Math.round(200 * root.d), Math.ceil(nameMetrics.advanceWidth(name)) + Math.round(6 * root.d))
             const control = kind === "switch" ? root.switchWidth
                 : kind === "range" ? root.scrubWidth + Math.round(44 * root.d) : root.choiceTrack(spec)
             lay(Math.ceil(root.inner + said + Math.round(12 * root.d) + control + root.inner * 0.75), { spec: spec, kind: kind, name: name })
@@ -156,7 +160,7 @@ Flickable {
             name: Translation.tr("More")
             controlWidth: Math.round(18 * root.d)
             tappable: true
-            onTapped: GlobalStates.openSettingsAt("iris", root.section)
+            onTapped: GlobalStates.openSettingsAt("iris", root.group.length > 0 ? root.section + "/" + root.group : root.section)
             MaterialSymbol {
                 anchors.centerIn: parent
                 text: "arrow_outward"

@@ -20,11 +20,22 @@ WidgetShelf {
 
     property real bodyRadius: IrisStyle.radius
 
+    Component.onCompleted: root.takeAsked()
+    readonly property string asked: GlobalStates.desktopShelfPage
+    onAskedChanged: root.takeAsked()
+    function takeAsked(): void {
+        if (root.asked.length === 0 || !root.pages.some(entry => entry.value === root.asked)) return
+        root.goTo(root.asked)
+        GlobalStates.desktopShelfPage = ""
+    }
+
     pages: [
         { value: "widgets", label: Translation.tr("Widgets") },
+        // Look is the widgets' own (Settings › Desktop › Widgets, the same rows, so either place shows the other's change).
+        { value: "look", label: Translation.tr("Look") },
         { value: "bar", label: Translation.tr("Island") },
         { value: "dock", label: Translation.tr("Dock") },
-        { value: "appearance", label: Translation.tr("Look") },
+        { value: "appearance", label: Translation.tr("Style") },
         { value: "presets", label: Translation.tr("Presets") }
     ]
 
@@ -62,9 +73,12 @@ WidgetShelf {
         function pressScale(s: real): real { return IrisStyle.pressScale(s) }
         function weight(w: int): int { return IrisStyle.weight(w) }
         function score(query: string, entry: var): real { return IrisSearch.score(query, entry) }
-        function pageOf(page: string): Component { return ["bar", "dock", "appearance"].includes(page) ? optionsPage : null }
+        function pageOf(page: string): Component { return ["look", "bar", "dock", "appearance"].includes(page) ? optionsPage : null }
         readonly property Component optionsPage: Component {
-            IrisShelfOptions { section: root.page }
+            IrisShelfOptions {
+                section: root.page === "look" ? "desktop" : root.page
+                group: root.page === "look" ? "Widgets" : ""
+            }
         }
         readonly property Component head: Component {
             Item {

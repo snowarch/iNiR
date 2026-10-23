@@ -259,6 +259,8 @@ Singleton {
     property string selectedDesktopWidget: ""
     property string selectedDesktopItem: ""
     property string desktopWidgetQuickControls: ""
+    // A shelf page asked for by whoever opens the arranging mode (Settings' Desktops row); the shelf takes it and clears it.
+    property string desktopShelfPage: ""
     property bool shellLayoutEditMode: false
 
     function setWidgetEditMode(enabled: bool): void {
