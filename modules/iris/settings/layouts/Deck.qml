@@ -70,7 +70,7 @@ Item {
         const entry = root.sections[root.aim]
         if (entry) root.host.selectSection(entry.id)
     }
-    onPosChanged: root.arrive()
+    onPosChanged: { root.arrive(); if (!admit.running) admit.start() }
     onCurrentChanged: {
         // Opened from elsewhere (the pager of a shortcut, IPC, search): the deck follows.
         if (root.aim !== root.current) {
@@ -85,7 +85,7 @@ Item {
         ring.shown = false
         root.land()
     }
-    Component.onCompleted: { root.aim = root.current; travel.to = root.current; travel.jump() }
+    Component.onCompleted: { root.aim = root.current; travel.to = root.current; travel.jump(); admit.start() }
     // The open area's own rows stand in its card once they are built; until then the card shows what a neighbour shows.
     readonly property bool live: !root.sided || !Boolean(root.host?.rowsPending ?? false)
     onLiveChanged: root.land()
@@ -367,7 +367,33 @@ Item {
 
     // ── The neighbours over the desktop.
     // One card per area for as long as Settings is open: a turn only moves them, it never makes or breaks one.
+    // What a card shows is let in one card a frame, nearest first: while the body opens only the open one and its two
+    // neighbours, so the opening frames carry nothing else; a jump across the deck fills in around where it landed.
+    readonly property real reach: Boolean(root.host?.bodySettled ?? true) ? 3.2 : 1.5
+    onReachChanged: admit.start()
+    Timer {
+        id: admit
+        interval: 16
+        repeat: true
+        onTriggered: {
+            let best = null
+            for (let i = Math.max(0, Math.floor(root.pos - root.reach)); i <= Math.min(cards.count - 1, Math.ceil(root.pos + root.reach)); i++) {
+                const card = cards.itemAt(i)
+                if (card && !card.admitted && card.far < root.reach && (!best || card.far < best.far)) best = card
+            }
+            if (best) { best.admitted = true; return }
+            // then their stages, the heavy part, once the body stands: one a frame as well
+            if (!Boolean(root.host?.bodySettled ?? true)) { admit.stop(); return }
+            for (let i = Math.max(0, Math.floor(root.pos - root.reach)); i <= Math.min(cards.count - 1, Math.ceil(root.pos + root.reach)); i++) {
+                const card = cards.itemAt(i)
+                if (card && card.admitted && !card.staged && (!best || card.far < best.far)) best = card
+            }
+            if (best) best.staged = true
+            else admit.stop()
+        }
+    }
     Repeater {
+        id: cards
         model: ScriptModel { values: root.sided ? root.sections : []; objectProp: "id" }
         AreaCard {}
     }
@@ -667,6 +693,9 @@ Item {
         readonly property real o: side.index - root.pos
         readonly property real far: Math.abs(side.o)
         readonly property bool inView: side.far < 2.5
+        property bool admitted: false
+        property bool staged: false
+        onFarChanged: if (side.far >= 3.2) { side.admitted = false; side.staged = false }
         // what a card says past its name fades out between one and two cards off (built once, never dropped on the way)
         readonly property real detail: Math.max(0, Math.min(1, (1.75 - side.far) / 0.5))
         // the open card's own rows stand on it once built: the live card covers this one
@@ -690,7 +719,7 @@ Item {
         onClicked: root.goTo(side.index)
         // Built in the background a card before it slides into view, let go two cards past it.
         Loader {
-            active: side.far < 3.2
+            active: side.admitted
             asynchronous: true
             sourceComponent: Column {
                 x: (side.box.x < 0 ? -side.box.x : 0) + root.u(22)
@@ -722,16 +751,21 @@ Item {
                     color: IrisStyle.muted
                     font.pixelSize: IrisStyle.typeMeta
                 }
-                IrisGroupPreview {
-                    visible: available
+                // the stage is the heavy part: it comes a beat later, on its own
+                Loader {
+                    active: !side.home && side.staged
+                    asynchronous: true
+                    visible: (item?.available ?? false)
                     opacity: side.detail
                     width: parent.width
                     height: root.u(200)
-                    radius: IrisStyle.fieldChamfer ? 0 : root.u(18)
-                    standIn: true
-                    captionOutside: true
-                    section: side.home ? "" : String(side.entry?.id ?? "")
-                    playing: false
+                    sourceComponent: IrisGroupPreview {
+                        radius: IrisStyle.fieldChamfer ? 0 : root.u(18)
+                        standIn: true
+                        captionOutside: true
+                        section: String(side.entry?.id ?? "")
+                        playing: false
+                    }
                 }
                 // Its first values, as the card would show them, read through the distance.
                 Column {

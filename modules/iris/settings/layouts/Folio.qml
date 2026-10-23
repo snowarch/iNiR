@@ -418,17 +418,19 @@ Item {
         return null
     }
     property real wheelAcc: 0
-    Timer { id: wheelRest; interval: 180 }
+    Timer { id: wheelRest; interval: 200; onTriggered: root.wheelAcc = 0 }
     function glide(event: var): void {
         const f = root.flick
         if (!f) { event.accepted = false; return }
         // A touchpad scrolls by pixels as it always does: only notched wheels snap.
         if (event.pixelDelta.y !== 0) { f.contentY = Math.max(0, Math.min(f.contentHeight - f.height, f.contentY - event.pixelDelta.y)); return }
+        // a notch a head; a burst chains from where the last glide is going, never waits out a pause
+        if (Math.sign(event.angleDelta.y) !== Math.sign(root.wheelAcc)) root.wheelAcc = 0
         root.wheelAcc += event.angleDelta.y
-        if (wheelRest.running || Math.abs(root.wheelAcc) < 60) return
-        const down = root.wheelAcc < 0
-        root.wheelAcc = 0
         wheelRest.restart()
+        if (Math.abs(root.wheelAcc) < 120) return
+        const down = root.wheelAcc < 0
+        root.wheelAcc -= 120 * Math.sign(root.wheelAcc)
         const end = Math.max(0, f.contentHeight - f.height)
         const now = glideTo.running ? glideTo.to : f.contentY
         const heads = (root.host?.spyTargets() ?? []).map(target => target.item.mapToItem(f.contentItem, 0, 0).y - root.u(8)).sort((a, b) => a - b)

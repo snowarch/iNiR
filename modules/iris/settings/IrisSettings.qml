@@ -117,6 +117,8 @@ Item {
     Timer { id: notesLater; interval: 300; onTriggered: root.notes = IrisOptions.notesBySection() }
     Connections { target: Config; function onRevisionChanged(): void { notesLater.restart() } }
     // Read once the body has landed: a 30 ms pass mid-morph is a dropped frame.
+    // the body has finished opening: a layout holds its extras until then
+    readonly property bool bodySettled: frame.settled
     Connections { target: frame; function onSettledChanged(): void { if (frame.settled) root.notes = IrisOptions.notesBySection() } }
     // Takes you to the first note of the area, or of the next area that has one.
     function openNote(): void {
