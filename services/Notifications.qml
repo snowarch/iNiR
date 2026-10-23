@@ -482,7 +482,21 @@ Singleton {
                 console.warn("[Notifications] Failed to create notification wrapper")
                 return
             }
+            const job = LiveActivities.follow(notification, newNotifObject.notificationId)
+            // One job keeps one entry: a progress notice re-sent under the same synchronous tag replaces the last one.
+            const syncTag = LiveActivities.syncTag(notification)
+            if (syncTag.length > 0) {
+                for (const old of root.list.filter(n => n.notification && n.notification !== notification
+                        && n.appName === newNotifObject.appName && LiveActivities.syncTag(n.notification) === syncTag))
+                    root.discardNotification(old.notificationId)
+            }
             root.list = [...root.list, newNotifObject];
+
+            // In iRiS a job with progress lives in the Island; its notice stays in the list, without a popup.
+            if (job && Config.options?.panelFamily === "iris") {
+                notifFileView.setText(stringifyList(root.list));
+                return
+            }
 
             if (root._notificationQuiet(notification)) {
                 notifFileView.setText(stringifyList(root.list));

@@ -845,6 +845,31 @@ The laptop battery as every family shows it. `simulate` lets you see the battery
 
 ---
 
+### timer
+
+The pomodoro, countdown and stopwatch every family shows (iRiS draws them as Live Activities in the Island).
+
+| Function | Description |
+|----------|-------------|
+| `status` | Print each timer's state and what is left, as JSON |
+| `countdown <seconds>` | Set the countdown to that many seconds and start it; on a running one, pause or resume |
+| `pomodoro` | Start the pomodoro, or pause/resume it |
+| `stopwatch` | Start the stopwatch, or pause/resume it |
+| `stop` | Stop every running timer |
+
+---
+
+### privacy
+
+Who is using the microphone, the camera or the screen (PipeWire links, V4L2, niri screencasts). `simulate` lets you see the marks without one.
+
+| Function | Description |
+|----------|-------------|
+| `status` | Print the apps using the mic and camera and every screencast with who watches it, as JSON |
+| `simulate <spec>` | Pretend an app uses something until the shell restarts: `"mic Discord"`, `"camera Zoom"`, `"cast OBS"`, or `off`. For testing |
+
+---
+
 ### network
 
 Whether the shell can reach the internet, as NetworkManager sees it. Surfaces that show online content (wallpaper sources, news, anime, weather, calendars, lyrics) read this to say why they are empty instead of failing quietly.

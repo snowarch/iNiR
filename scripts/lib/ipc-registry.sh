@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 dev/tools/generate-ipc-registry.py
-# IPC.md hash: 267a8fcc0ba1151e
-# Targets: 74
+# IPC.md hash: 98740de2aa5fe8d7
+# Targets: 76
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -54,6 +54,7 @@ declare -gA IPC_TARGET_DESC=(
   [packageSearch]="Package search service. Searches pacman/AUR or XBPS repositories and installed packages."
   [panelFamily]="Switch between the three shell families: Material ii (default), Waffle (Windows 11-like), and iRiS (the Island family)."
   [pill]="The pill bar's morphing surfaces (only registered while Bar appearance is set to Pill). Valid surface names: \`power\`, \`media\`, \`battery\`, \`calendar\`, \`link\`, \`mixer\`, \`sysmon\`, \`clipboard\`, \`glance\`, \`launcher\`, \`recorder\`."
+  [privacy]="Who is using the microphone, the camera or the screen (PipeWire links, V4L2, niri screencasts). \`simulate\` lets you see the marks without one."
   [recordingOsd]="Screen recording floating pill OSD. Shows elapsed time and stop button during active recording."
   [region]="Region selection tools. Screenshots, OCR, recording. Draw a box, get stuff done."
   [search]="Waffle start menu / search."
@@ -66,6 +67,7 @@ declare -gA IPC_TARGET_DESC=(
   [sidebarRight]="Right sidebar: quick toggles, notepad and settings in Material; the customizable Today panel in iRiS."
   [taskview]="Compatibility entry point for task navigation. On Waffle it opens the Waffle Task View; on ii/Niri it routes to Orbit."
   [tiling]="Tiling layout overlay. Pick or cycle through tiling presets for the current workspace."
+  [timer]="The pomodoro, countdown and stopwatch every family shows (iRiS draws them as Live Activities in the Island)."
   [voiceSearch]="Provider-neutral voice input for web search and AI dictation. Auto prefers local whisper.cpp, then connected Groq, Gemini and OpenAI speech backends. Keys stay in the system keyring and are passed to adapters through the process environment."
   [vpn]="NetworkManager VPN profiles (OpenVPN, WireGuard, anything with an NM plugin) and Tailscale, as the VPN piece and its card show them."
   [wactionCenter]="Waffle action center (quick settings)."
@@ -131,6 +133,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [packageSearch]="shared"
   [panelFamily]="shared"
   [pill]="ii"
+  [privacy]="shared"
   [recordingOsd]="waffle"
   [region]="shared"
   [search]="waffle"
@@ -143,6 +146,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [sidebarRight]="shared"
   [taskview]="shared"
   [tiling]="shared"
+  [timer]="shared"
   [voiceSearch]="shared"
   [vpn]="shared"
   [wactionCenter]="waffle"
@@ -208,6 +212,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [packageSearch]="search results"
   [panelFamily]="cycle set"
   [pill]="open close toggle state"
+  [privacy]="status simulate"
   [recordingOsd]="toggle show hide"
   [region]="screenshot search googleLens ocr record recordWithSound menu dismiss current"
   [search]="toggle close open"
@@ -220,6 +225,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [sidebarRight]="toggle close open"
   [taskview]="toggle close open"
   [tiling]="toggle open hide cycle showOsd promote"
+  [timer]="status countdown pomodoro stopwatch stop"
   [voiceSearch]="start stop toggle refresh status"
   [vpn]="status toggle details refresh importFile add"
   [wactionCenter]="toggle close open"
@@ -540,6 +546,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["pill:close"]="Close the open surface"
   ["pill:toggle"]="Open a surface, or close it if already open"
   ["pill:state"]="Print the open surface name, or \`closed\`"
+  ["privacy:status"]="Print the apps using the mic and camera and every screencast with who watches it, as JSON"
+  ["privacy:simulate"]="Pretend an app uses something until the shell restarts: \`\"mic Discord\"\`, \`\"camera Zoom\"\`, \`\"cast OBS\"\`, or \`off\`. For testing"
   ["recordingOsd:toggle"]="Stop the current recording (if active)"
   ["recordingOsd:show"]="Reveal the recording OSD pill"
   ["recordingOsd:hide"]="Collapse/hide the recording OSD pill"
@@ -615,6 +623,11 @@ declare -gA IPC_FUNCTION_DESC=(
   ["tiling:cycle"]="Cycle to next tiling preset (shows OSD)"
   ["tiling:showOsd"]="Flash the current tiling preset OSD"
   ["tiling:promote"]="Promote focused window to master position"
+  ["timer:status"]="Print each timer's state and what is left, as JSON"
+  ["timer:countdown"]="Set the countdown to that many seconds and start it; on a running one, pause or resume"
+  ["timer:pomodoro"]="Start the pomodoro, or pause/resume it"
+  ["timer:stopwatch"]="Start the stopwatch, or pause/resume it"
+  ["timer:stop"]="Stop every running timer"
   ["voiceSearch:start"]="Start recording for voice web search"
   ["voiceSearch:stop"]="Stop the active recording or transcription"
   ["voiceSearch:toggle"]="Toggle recording"
@@ -817,6 +830,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["panelFamily:set"]="<family>"
   ["pill:open"]="<surface>"
   ["pill:toggle"]="<surface>"
+  ["privacy:simulate"]="<spec>"
   ["settings:openOverlayAt"]="<index>"
   ["settings:openWindowAt"]="<index>"
   ["settings:setOverlayStyle"]="<style> <index>"
@@ -834,6 +848,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["shellLayout:setProperty"]="<surfaceId> <key> <value>"
   ["shellLayout:validate"]="<surfaceId> <slot>"
   ["shellUpdate:simulate"]="<state>"
+  ["timer:countdown"]="<seconds>"
   ["vpn:details"]="<state>"
   ["vpn:importFile"]="<path>"
   ["vpn:add"]="<kind>"
@@ -923,6 +938,7 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["niriAnimations:apply"]="snappy niri material bouncy gentle instant"
   ["osd:media"]="play pause next previous"
   ["overlay:tool"]="crosshair fpsLimiter floatingImage recorder resources notes discord volumeMixer notifications gamePerformance on off toggle"
+  ["privacy:simulate"]="off"
   ["settings:openOverlayAt"]="index"
   ["settings:openWindowAt"]="index"
   ["settings:setOverlayStyle"]="index"
@@ -979,8 +995,8 @@ Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }'
   [ytmusic]='Mod+M+Space { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector dashboard dev gamemode globalActions globalStyle hub iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch vpn wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector dashboard dev gamemode globalActions globalStyle hub iris keyboard lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily privacy region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer voiceSearch vpn wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=(equalizer pill)
 IPC_WAFFLE_TARGETS=(autostart customWidgets recordingOsd search wactionCenter waffleAltSwitcher wbar widgetStacks widgetpower wnotificationCenter wwidgets)
 

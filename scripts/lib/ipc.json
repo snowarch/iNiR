@@ -2965,6 +2965,30 @@
    ]
   },
   {
+   "name": "privacy",
+   "family": "shared",
+   "description": "Who is using the microphone, the camera or the screen (PipeWire links, V4L2, niri screencasts). `simulate` lets you see the marks without one.",
+   "example": "",
+   "functions": [
+    {
+     "name": "status",
+     "args": [],
+     "description": "Print the apps using the mic and camera and every screencast with who watches it, as JSON",
+     "values": []
+    },
+    {
+     "name": "simulate",
+     "args": [
+      "spec"
+     ],
+     "description": "Pretend an app uses something until the shell restarts: `\"mic Discord\"`, `\"camera Zoom\"`, `\"cast OBS\"`, or `off`. For testing",
+     "values": [
+      "off"
+     ]
+    }
+   ]
+  },
+  {
    "name": "recordingOsd",
    "family": "waffle",
    "description": "Screen recording floating pill OSD. Shows elapsed time and stop button during active recording.",
@@ -3559,6 +3583,46 @@
      "name": "promote",
      "args": [],
      "description": "Promote focused window to master position",
+     "values": []
+    }
+   ]
+  },
+  {
+   "name": "timer",
+   "family": "shared",
+   "description": "The pomodoro, countdown and stopwatch every family shows (iRiS draws them as Live Activities in the Island).",
+   "example": "",
+   "functions": [
+    {
+     "name": "status",
+     "args": [],
+     "description": "Print each timer's state and what is left, as JSON",
+     "values": []
+    },
+    {
+     "name": "countdown",
+     "args": [
+      "seconds"
+     ],
+     "description": "Set the countdown to that many seconds and start it; on a running one, pause or resume",
+     "values": []
+    },
+    {
+     "name": "pomodoro",
+     "args": [],
+     "description": "Start the pomodoro, or pause/resume it",
+     "values": []
+    },
+    {
+     "name": "stopwatch",
+     "args": [],
+     "description": "Start the stopwatch, or pause/resume it",
+     "values": []
+    },
+    {
+     "name": "stop",
+     "args": [],
+     "description": "Stop every running timer",
      "values": []
     }
    ]

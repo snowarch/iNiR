@@ -38,6 +38,8 @@ Singleton {
 
     property var outputs: ({})
     property var windows: []
+    // Live screencasts (niri 26.04 Cast objects); empty on an older niri that never sends them.
+    property var casts: []
     property var displayScales: ({})
     property var mruWindowIds: []
     property var activeWindow: null  // Currently focused window object
@@ -337,6 +339,9 @@ Singleton {
                 'OverviewOpenedOrClosed',
                 'KeyboardLayoutsChanged',
                 'KeyboardLayoutSwitched',
+                'CastsChanged',
+                'CastStartedOrChanged',
+                'CastStopped',
             ]
             if (!criticalEvents.includes(eventType)) {
                 return
@@ -385,6 +390,17 @@ Singleton {
             break
         case 'WorkspaceUrgencyChanged':
             handleWorkspaceUrgencyChanged(event.WorkspaceUrgencyChanged)
+            break
+        case 'CastsChanged':
+            root.casts = Array.from(event.CastsChanged?.casts ?? [])
+            break
+        case 'CastStartedOrChanged': {
+            const cast = event.CastStartedOrChanged?.cast
+            if (cast) root.casts = root.casts.filter(c => c.stream_id !== cast.stream_id).concat([cast])
+            break
+        }
+        case 'CastStopped':
+            root.casts = root.casts.filter(c => c.stream_id !== event.CastStopped?.stream_id)
             break
         }
     }
@@ -820,6 +836,11 @@ Singleton {
             return false
         requestSocket.send(request)
         return true
+    }
+
+    // Only PipeWire casts can be stopped; wlr-screencopy ones have no IPC for it.
+    function stopCast(sessionId) {
+        return send({ "Action": { "StopCast": { "session_id": Number(sessionId) } } })
     }
 
     function toggleOverview() {

@@ -307,4 +307,29 @@ Singleton {
                 - (nextDuration - root.countdownSecondsLeft);
         }
     }
+
+    IpcHandler {
+        id: timerIpc
+        target: "timer"
+        function status(): string {
+            return JSON.stringify({ pomodoro: root.pomodoroRunning ? (root.pomodoroPaused ? "paused" : "running") : "off",
+                pomodoroLeft: root.pomodoroSecondsLeft, countdown: root.countdownRunning ? (root.countdownPaused ? "paused" : "running") : "off",
+                countdownLeft: root.countdownSecondsLeft, stopwatch: root.stopwatchRunning ? (root.stopwatchPaused ? "paused" : "running") : "off" })
+        }
+        // A number of seconds sets the duration first; then it starts, or pauses/resumes one that runs.
+        function countdown(seconds: string): string {
+            const value = parseInt(seconds)
+            if (!isNaN(value) && value > 0 && !root.countdownRunning) root.setCountdownDuration(value)
+            root.toggleCountdown()
+            return timerIpc.status()
+        }
+        function pomodoro(): string { root.togglePomodoro(); return timerIpc.status() }
+        function stopwatch(): string { root.toggleStopwatch(); return timerIpc.status() }
+        function stop(): string {
+            if (root.pomodoroRunning) root.stopPomodoro()
+            if (root.countdownRunning) root.stopCountdown()
+            if (root.stopwatchRunning) root.stopStopwatch()
+            return timerIpc.status()
+        }
+    }
 }
