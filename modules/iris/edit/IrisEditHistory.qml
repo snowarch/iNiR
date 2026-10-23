@@ -7,12 +7,24 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.iris.settings
+import qs.modules.iris.widgets
 
-// Undo and redo for everything Customize can change, and the one line it says back.
+// Undo and redo for everything Customize can change, and the one line it says back. Arranging the desktop keeps its own
+// history: which widgets are out, where they sit, their order and stacks.
 Singleton {
     id: root
 
-    readonly property var trackedPaths: {
+    readonly property bool desktop: GlobalStates.widgetEditMode
+    readonly property var desktopFallbacks: {
+        const out = { "background.widgets.outputOverrides": [], "background.widgets.layerOrder": [], "background.widgets.stacks": [] }
+        for (const entry of IrisFaceData.galleryEntries.concat(IrisFaceData.otherEntries))
+            out["background.widgets." + entry.key + ".enable"] = false
+        for (const custom of (CustomWidgets.ready ? CustomWidgets.widgets : []))
+            out["background.widgets.custom." + custom.id + ".enable"] = false
+        return out
+    }
+    readonly property var trackedPaths: root.desktop ? Object.keys(root.desktopFallbacks) : root.customizePaths
+    readonly property var customizePaths: {
         const set = {}
         set["iris.appearance.preset"] = true
         set["iris.appearance.themeId"] = true
@@ -22,6 +34,7 @@ Singleton {
         return Object.keys(set)
     }
     function fallbackOf(path: string): var {
+        if (root.desktop) return root.desktopFallbacks[path]
         const owned = IrisThemes.paths.find(entry => entry.path === path)
         if (owned) return owned.fallback
         return IrisOptions.studio.find(spec => spec.path === path)?.fallback
@@ -85,11 +98,12 @@ Singleton {
     Timer { id: recordTimer; interval: 320; onTriggered: root.record() }
     Connections {
         target: Config
-        enabled: GlobalStates.irisEdit || GlobalStates.irisStudioOpen
+        enabled: GlobalStates.irisEdit || GlobalStates.irisStudioOpen || GlobalStates.widgetEditMode
         function onRevisionChanged(): void { recordTimer.restart() }
     }
     Connections {
         target: GlobalStates
+        function onWidgetEditModeChanged(): void { root.reset() }
         function onIrisEditChanged(): void { if (GlobalStates.irisEdit) root.reset() }
         function onIrisStudioOpenChanged(): void { if (GlobalStates.irisStudioOpen) root.reset() }
     }

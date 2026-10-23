@@ -20,6 +20,7 @@ import qs.modules.iris.frame
 import qs.modules.iris.pieces
 import qs.modules.iris.bar.island
 import qs.modules.iris.control
+import qs.modules.iris.edit
 
 Item {
     id: root
@@ -628,7 +629,7 @@ Item {
         : root.compactRows[root.compactMode]?.implicitWidth ?? 0
     readonly property real compactFloor: root.compactHeight * 2.1
     readonly property real compactCeiling: Math.min(root.availableWidth,
-        (root.compactMode === "media" ? 380 : root.compactMode === "event" ? 330 : 320) * root.d)
+        (root.compactMode === "edit" ? 440 : root.compactMode === "media" ? 380 : root.compactMode === "event" ? 330 : 320) * root.d)
     // The ceiling holds the Island's own content; the pieces it carries come on top of it, or they would be
     // squeezed over the clock.
     readonly property real compactTargetWidth: root.spanning ? root.fullChassisWidth
@@ -1948,46 +1949,75 @@ Item {
                 Item { Layout.fillWidth: true }
             }
 
+            // Arranging the desktop: the Island is its head. Undo and redo walk the arrangement, the grid lattice
+            // snaps or lets go, Done puts the desktop back.
             CompactRow {
                 id: editRow
                 mode: "edit"
+                lead: Math.round(28 * root.d)
                 anchors.rightMargin: 5 * root.d
-                Rectangle {
-                    Layout.preferredWidth: Math.round(26 * root.d)
+                spacing: Math.round(4 * root.d)
+                readonly property bool gridOn: Config.options?.background?.widgets?.editGrid?.snap ?? true
+                IrisIconButton {
+                    Layout.preferredWidth: Math.round(28 * root.d)
                     Layout.preferredHeight: Layout.preferredWidth
-                    radius: IrisStyle.capsule(width)
-                    color: IrisStyle.tintFill(IrisStyle.accent)
-                    Glyph {
-                        anchors.centerIn: parent
-                        text: "edit"
-                        iconSize: 15 * root.d
-                        color: IrisStyle.accent
-                    }
+                    materialIcon: "undo"
+                    iconSize: Math.round(16 * root.d)
+                    enabled: IrisEditHistory.undoStack.length > 0
+                    opacity: enabled ? 1 : 0.35
+                    Accessible.name: Translation.tr("Undo")
+                    onClicked: IrisEditHistory.undo()
+                }
+                IrisIconButton {
+                    Layout.preferredWidth: Math.round(28 * root.d)
+                    Layout.preferredHeight: Layout.preferredWidth
+                    materialIcon: "redo"
+                    iconSize: Math.round(16 * root.d)
+                    enabled: IrisEditHistory.redoStack.length > 0
+                    opacity: enabled ? 1 : 0.35
+                    Accessible.name: Translation.tr("Redo")
+                    onClicked: IrisEditHistory.redo()
                 }
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.leftMargin: Math.round(8 * root.d)
+                    Layout.rightMargin: Math.round(8 * root.d)
                     spacing: -1 * root.d
                     IrisText {
                         Layout.fillWidth: true
-                        text: Translation.tr("Editing desktop")
+                        horizontalAlignment: Text.AlignHCenter
+                        text: IrisEditHistory.notice.length > 0 ? IrisEditHistory.notice : Translation.tr("Edit Desktop")
                         font.pixelSize: IrisStyle.typeLabel
                         font.weight: IrisStyle.weight(Font.DemiBold)
                         elide: Text.ElideRight
                     }
                     IrisText {
                         Layout.fillWidth: true
-                        text: Translation.tr("Drag widgets to arrange")
+                        horizontalAlignment: Text.AlignHCenter
+                        text: Translation.tr("Drag to place · click to use")
                         color: IrisStyle.muted
                         font.pixelSize: IrisStyle.typeFootnote
                         elide: Text.ElideRight
                     }
                 }
+                IrisIconButton {
+                    Layout.preferredWidth: Math.round(28 * root.d)
+                    Layout.preferredHeight: Layout.preferredWidth
+                    materialIcon: "grid_4x4"
+                    iconSize: Math.round(16 * root.d)
+                    selected: editRow.gridOn
+                    Accessible.name: editRow.gridOn ? Translation.tr("Snap to grid: on") : Translation.tr("Snap to grid: off")
+                    onClicked: Config.setNestedValue("background.widgets.editGrid.snap", !editRow.gridOn)
+                }
                 Rectangle {
-                    Layout.preferredHeight: root.compactHeight - Math.round(10 * root.d)
-                    Layout.preferredWidth: doneLabel.implicitWidth + Math.round(24 * root.d)
+                    Layout.leftMargin: Math.round(4 * root.d)
+                    Layout.preferredHeight: root.compactHeight - Math.round(12 * root.d)
+                    Layout.preferredWidth: doneLabel.implicitWidth + Math.round(26 * root.d)
                     radius: IrisStyle.capsule(height)
-                    color: compactPress.containsMouse ? IrisStyle.accentHover : IrisStyle.accent
+                    color: doneArea.pressed ? IrisStyle.accentHover : doneArea.containsMouse ? IrisStyle.accentHover : IrisStyle.accent
+                    scale: doneArea.pressed ? IrisStyle.pressScale(0.94) : 1
                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+                    Behavior on scale { NumberAnimation { duration: IrisStyle.duration(doneArea.pressed ? 80 : 200); easing.type: IrisStyle.feedbackEasing } }
                     IrisText {
                         id: doneLabel
                         anchors.centerIn: parent
@@ -1995,6 +2025,15 @@ Item {
                         color: IrisStyle.inkOnAccent
                         font.pixelSize: IrisStyle.typeLabel
                         font.weight: IrisStyle.weight(Font.Bold)
+                    }
+                    MouseArea {
+                        id: doneArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        Accessible.role: Accessible.Button
+                        Accessible.name: Translation.tr("Done")
+                        onClicked: GlobalStates.setWidgetEditMode(false)
                     }
                 }
             }
@@ -2221,9 +2260,9 @@ Item {
                 y: root.zoned && root.vertical ? Math.round(barZones.heartAlong) : 0
                 width: root.zoned && !root.vertical ? Math.round(root.heartLength) : parent.width
                 height: root.zoned && root.vertical ? Math.round(root.heartLength) : parent.height
-                enabled: !root.inlineExpanded && (!root.zoned || root.heartShown)
+                // Arranging, the head's own buttons take the clicks.
+                enabled: !root.inlineExpanded && (!root.zoned || root.heartShown) && root.compactMode !== "edit"
                 acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-                hoverEnabled: root.compactMode === "edit"
                 cursorShape: islandGrip.carrying ? Qt.ClosedHandCursor
                     : GlobalStates.irisEdit ? Qt.OpenHandCursor : Qt.PointingHandCursor
                 preventStealing: true
@@ -2234,7 +2273,6 @@ Item {
                 QtObject {
                     id: islandGrip
                     property bool carrying: false
-                    property bool endedEdit: false
                     property point pressAt: Qt.point(0, 0)
                     function publish(mouse, released: bool): void {
                         const p = compactPress.mapToItem(null, mouse.x, mouse.y)
@@ -2245,9 +2283,9 @@ Item {
                         }
                     }
                 }
-                onPressed: mouse => { islandGrip.pressAt = Qt.point(mouse.x, mouse.y); islandGrip.endedEdit = false }
+                onPressed: mouse => { islandGrip.pressAt = Qt.point(mouse.x, mouse.y) }
                 onPressAndHold: mouse => {
-                    if (mouse.button !== Qt.LeftButton || root.compactMode === "edit") return
+                    if (mouse.button !== Qt.LeftButton) return
                     islandGrip.carrying = true
                     islandGrip.publish(mouse, false)
                 }
@@ -2259,14 +2297,6 @@ Item {
                     if (islandGrip.carrying) islandGrip.publish(mouse, false)
                 }
                 onReleased: mouse => {
-                    // A hold past pressAndHoldInterval swallows onClicked; the edit row's Done ends on
-                    // release so a slow press still leaves arranging.
-                    if (!islandGrip.carrying && root.compactMode === "edit" && mouse.button === Qt.LeftButton
-                            && compactPress.containsMouse) {
-                        islandGrip.endedEdit = true
-                        GlobalStates.setWidgetEditMode(false)
-                        return
-                    }
                     if (!islandGrip.carrying) return
                     islandGrip.publish(mouse, true)
                     Qt.callLater(() => islandGrip.carrying = false)
@@ -2278,7 +2308,6 @@ Item {
                     islandGrip.carrying = false
                 }
                 onClicked: mouse => {
-                    if (islandGrip.endedEdit) { islandGrip.endedEdit = false; return }
                     if (islandGrip.carrying) return
                     if (mouse.button === Qt.MiddleButton) {
                         if (root.hasMedia) MprisController.togglePlaying()
@@ -2289,7 +2318,6 @@ Item {
                         GlobalStates.irisEditTarget = "island"
                         return
                     }
-                    if (root.compactMode === "edit") { GlobalStates.setWidgetEditMode(false); return }
                     if (root.pinned) root.expanded = false
                     else {
                         const at = compactPress.mapToItem(root, mouse.x, mouse.y)

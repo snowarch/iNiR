@@ -1,16 +1,16 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell
 import qs
 import qs.modules.common
 import qs.services
-import qs.modules.shared.background.widgets
 import qs.modules.iris.frame
 import qs.modules.iris.style
 import qs.modules.iris.components
 
-// The desktop widgets toolbar while arranging them. It lives in the chassis so the field draws its
-// body joined to the frame on the edge opposite the Island, the way the Edit bar does.
+// The shelf while arranging the desktop. It lives in the chassis so the field draws its body joined to the frame on the
+// edge opposite the Island, and it grows out of that edge the way a drawer opens; its content rises with it.
 Item {
     id: root
 
@@ -28,17 +28,19 @@ Item {
     readonly property bool holdsKeyboard: root.present && (GlobalStates.focusedScreen?.name ?? root.outputName) === root.outputName
         && !GlobalStates.searchOpen && !GlobalStates.settingsOverlayOpen && !GlobalStates.controlPanelOpen
     readonly property bool selecting: GlobalStates.selectedDesktopWidget.length > 0
-    Shortcut { sequence: "Ctrl+F"; enabled: root.holdsKeyboard && !toolbar.searching; onActivated: toolbar.openSearch() }
+    Shortcut { sequence: "Ctrl+F"; enabled: root.holdsKeyboard && !shelf.searching; onActivated: shelf.openSearch() }
     Shortcut {
         sequence: "Escape"
         enabled: root.holdsKeyboard
         onActivated: {
-            if (toolbar.searching) toolbar.escapeSearch()
+            if (shelf.searching) shelf.escapeSearch()
             else if (root.selecting) GlobalStates.clearDesktopWidgetSelection()
             else GlobalStates.setWidgetEditMode(false)
         }
     }
-    readonly property bool nudging: root.holdsKeyboard && root.selecting && !toolbar.searching
+    Shortcut { sequences: [StandardKey.Undo]; enabled: root.holdsKeyboard && !shelf.searching; onActivated: IrisEditHistory.undo() }
+    Shortcut { sequences: [StandardKey.Redo, "Ctrl+Y"]; enabled: root.holdsKeyboard && !shelf.searching; onActivated: IrisEditHistory.redo() }
+    readonly property bool nudging: root.holdsKeyboard && root.selecting && !shelf.searching
     Shortcut { sequence: "Left"; enabled: root.nudging; onActivated: GlobalStates.desktopWidgetNudge(-1, 0) }
     Shortcut { sequence: "Right"; enabled: root.nudging; onActivated: GlobalStates.desktopWidgetNudge(1, 0) }
     Shortcut { sequence: "Up"; enabled: root.nudging; onActivated: GlobalStates.desktopWidgetNudge(0, -1) }
@@ -48,13 +50,13 @@ Item {
     Shortcut { sequence: "Shift+Up"; enabled: root.nudging; onActivated: GlobalStates.desktopWidgetNudge(0, -10) }
     Shortcut { sequence: "Shift+Down"; enabled: root.nudging; onActivated: GlobalStates.desktopWidgetNudge(0, 10) }
 
-    readonly property real bodyWidth: toolbar.bodyWidth
-    readonly property real bodyHeight: toolbar.bodyHeight
-    readonly property real bodyRadius: toolbar.bodyRadius
-    readonly property real restY: root.bottomEdge ? root.height - IrisFrame.band - root.bodyHeight : IrisFrame.band
-    readonly property real hiddenY: root.bottomEdge ? root.height + Math.round(8 * root.d) : -root.bodyHeight - Math.round(8 * root.d)
+    readonly property real fullHeight: shelf.fullHeight
+    readonly property real bodyWidth: Math.max(Math.round(480 * root.d), Math.min(Math.round(1640 * root.d),
+        root.width - 2 * IrisFrame.band - Math.round(128 * root.d)))
+    readonly property real bodyHeight: Math.round(root.fullHeight * Math.max(0, Math.min(1, root.presentation)))
+    readonly property real bodyRadius: Math.min(IrisStyle.radius, root.bodyHeight / 2)
     readonly property real bodyX: Math.round((root.width - root.bodyWidth) / 2)
-    readonly property real bodyY: Math.round(root.hiddenY + (root.restY - root.hiddenY) * Math.min(1, root.presentation))
+    readonly property real bodyY: root.bottomEdge ? root.height - IrisFrame.band - root.bodyHeight : IrisFrame.band
 
     readonly property var hitRect: root.shown
         ? Qt.rect(root.bodyX, root.bodyY, root.bodyWidth, root.bodyHeight) : Qt.rect(0, 0, 0, 0)
@@ -67,7 +69,7 @@ Item {
     // The desktop recedes into a card between the Island and this bar while arranging, and the windows of the
     // workspace step aside on an empty one (DesktopEditStage).
     readonly property real islandRoom: IrisFrame.band + IrisFrame.islandVisualDepth
-    readonly property real barRoom: IrisFrame.band + root.bodyHeight
+    readonly property real barRoom: IrisFrame.band + root.fullHeight
     readonly property var stageNow: [root.outputName, Math.max(0, Math.min(1.2, root.presentation)),
         root.bottomEdge ? root.islandRoom : root.barRoom, root.bottomEdge ? root.barRoom : root.islandRoom]
     onStageNowChanged: DesktopEditStage.setStage(root.stageNow[0], root.stageNow[1], root.stageNow[2], root.stageNow[3])
@@ -94,22 +96,35 @@ Item {
     Timer { id: enterTimer; interval: 0; onTriggered: root.entered = true }
     Component.onCompleted: enterTimer.start()
 
-    DesktopEditToolbar {
-        id: toolbar
-        bodyless: true
-        visible: root.shown
-        enabled: root.present
-        opacity: Math.min(1, root.presentation * 1.6)
-        availableWidth: Math.max(0, root.width - 2 * IrisFrame.band - Math.round(48 * root.d))
-        availableHeight: root.height
-        outputName: root.outputName
-        attachedTopEdge: !root.bottomEdge
-        libraryOpen: GlobalStates.desktopWidgetManagerOutput === root.outputName
-        x: root.bodyX - toolbar.fillet
+    // The shelf's pictures are each widget's own, under the look worn now: another scheme or Design shows its glyph
+    // until the widget has been seen in it.
+    readonly property string look: (IrisStyle.light ? "light" : "dark") + "-" + IrisDesign.current
+    onLookChanged: if (root.present) DesktopEditStage.look = root.look
+    onPresentChanged: if (root.present) root.prepare()
+    function prepare(): void {
+        DesktopEditStage.look = root.look
+        Quickshell.execDetached(["mkdir", "-p", DesktopEditStage.pictureDir])
+    }
+
+    Item {
+        id: drawer
+        x: root.bodyX
         y: root.bodyY
-        onLibraryRequested: GlobalStates.desktopWidgetManagerToggleRequested(root.outputName)
-        onEdgeSettingsRequested: GlobalStates.openSettingsAt("widgets", "Organic edge")
-        onSettingsRequested: GlobalStates.openSettingsAt("widgets")
-        onDoneRequested: GlobalStates.setWidgetEditMode(false)
+        width: root.bodyWidth
+        height: root.bodyHeight
+        clip: true
+        visible: root.shown
+        IrisWidgetShelf {
+            id: shelf
+            outputName: root.outputName
+            ghostLayer: root
+            bodyRadius: IrisStyle.radius
+            width: drawer.width
+            height: shelf.fullHeight
+            // The content rides the edge that grows, so it rises out of the frame instead of being uncovered.
+            y: root.bottomEdge ? 0 : drawer.height - shelf.fullHeight
+            enabled: root.present
+            opacity: IrisStyle.contentAt(root.presentation)
+        }
     }
 }

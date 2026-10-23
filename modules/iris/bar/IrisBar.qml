@@ -766,8 +766,17 @@ Scope {
                     Component.onCompleted: chassisShown.tell()
                     Component.onDestruction: IrisFrame.showChassis(chassisShown.told, false)
                 }
-                Component.onCompleted: IrisParts.IrisMotionMeter.registerChassis(barWindow.screen?.name ?? "", barWindow)
-                Component.onDestruction: IrisParts.IrisMotionMeter.registerChassis(barWindow.screen?.name ?? "", null)
+                // This chassis hosts arranging its output's desktop (the shelf, the Island's head): the shared toolbar
+                // and library stay out of it.
+                readonly property string hostedOutput: barWindow.screen?.name ?? ""
+                Component.onCompleted: {
+                    IrisParts.IrisMotionMeter.registerChassis(barWindow.hostedOutput, barWindow)
+                    DesktopEditStage.setHost(barWindow.hostedOutput, true)
+                }
+                Component.onDestruction: {
+                    IrisParts.IrisMotionMeter.registerChassis(barWindow.hostedOutput, null)
+                    DesktopEditStage.setHost(barWindow.hostedOutput, false)
+                }
                 readonly property bool editHere: GlobalStates.irisEdit
                     && (root.editScreen.length === 0 || barWindow.screen?.name === root.editScreen)
                 readonly property bool presenting: barWindow.pinned || stage.cardPresent

@@ -683,7 +683,7 @@ ColumnLayout {
                     const widget = root.widget
                     root.close()
                     if (root.onLock) widget._setOutputValue("enable", false)
-                    else DesktopWidgetLayout.setGloballyEnabled(widget.configEntryName, false)
+                    else widget.takeAway()
                 }
             }
         }
