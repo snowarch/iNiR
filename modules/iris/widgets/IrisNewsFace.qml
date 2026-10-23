@@ -69,8 +69,6 @@ IrisWidgetFace {
             columns: root.medium ? 2 : 1
             columnSpacing: root.dp(20)
             rowSpacing: root.dp(10)
-            readonly property real share: (storyGrid.height - storyGrid.rowSpacing * Math.max(0, root.stories.length - 1))
-                / Math.max(1, root.stories.length + 1)
 
             Repeater {
                 model: root.stories
@@ -80,12 +78,13 @@ IrisWidgetFace {
                     required property int index
                     readonly property bool lead: story.index === 0
                     readonly property bool fills: true
-                    readonly property real band: storyGrid.share * (story.lead ? 2 : 1)
+                    // The large face's rows share its height, the lead twice the others: a band computed from the
+                    // grid's own height fed back into it and the rows folded to their source lines.
                     Layout.fillWidth: true
-                    Layout.fillHeight: !root.large
+                    Layout.fillHeight: true
                     Layout.minimumHeight: 0
-                    Layout.preferredHeight: root.large ? story.band : -1
-                    Layout.maximumHeight: root.large ? story.band : Number.POSITIVE_INFINITY
+                    Layout.preferredHeight: root.large ? 0 : -1
+                    Layout.verticalStretchFactor: root.large && story.lead ? 2 : 1
                     Layout.preferredWidth: root.medium ? (story.lead ? 3 : 2) : 1
                     Layout.maximumWidth: Number.POSITIVE_INFINITY
                     clip: true
