@@ -7,6 +7,7 @@ import Quickshell.Io
 import Quickshell.Services.Mpris
 import qs.modules.common
 import qs.services
+import "root:modules/common/functions/LyricsMath.js" as LyricsMath
 
 Singleton {
     id: root
@@ -231,12 +232,58 @@ Singleton {
     property real _anchorPos: 0
     property real _anchorMs: 0
     property real _lastReported: -1
+    // The last readings as position minus wall time, and one far behind the clock waiting to be believed.
+    property var _readings: []
+    property var _behind: null
 
     readonly property bool _playing: root.activePlayer?.isPlaying ?? false
+    // The song's clock for faces that move with it: `clockPos` seconds at wall time `clockMs`, running while `playing`.
+    readonly property real clockPos: root._anchorPos
+    readonly property real clockMs: root._anchorMs
+    readonly property bool playing: root._playing
+    function clockAt(nowMs: real): real {
+        return root._playing ? root._anchorPos + (nowMs - root._anchorMs) / 1000 : root._anchorPos;
+    }
 
     function _reanchor(pos: real): void {
+        root._readings = [];
+        root._behind = null;
         root._anchorPos = pos;
         root._anchorMs = Date.now();
+    }
+
+    // A reading is only ever older than the truth, never newer: the clock follows the best of the last ten (SekaiPop's
+    // LyricsMath.observe), not their average, which sagged and swung early, late, early with a slow player.
+    function _observe(polled: real): void {
+        const now = Date.now();
+        if (!root._playing || root._readings.length === 0) {
+            root._reanchor(polled);
+            root._readings = [polled - now / 1000];
+            return;
+        }
+        const o = polled - now / 1000;
+        const d = o - (root._anchorPos - root._anchorMs / 1000);
+        if (Math.abs(d) >= 1.5) {
+            root._reanchor(polled);
+            root._readings = [o];
+            return;
+        }
+        if (d < -0.35) {
+            // Behind: a late reading, or a seek back when enough in a row agree.
+            const n = root._behind && Math.abs(o - root._behind.o) < 0.12 ? root._behind.n + 1 : 1;
+            if (n >= (d > -0.8 ? 8 : 3)) {
+                root._reanchor(polled);
+                root._readings = [o];
+            } else {
+                root._behind = { o: o, n: n };
+            }
+            return;
+        }
+        const next = root._readings.concat([o]).slice(-10);
+        root._readings = next;
+        root._behind = null;
+        root._anchorPos = Math.max(...next) + now / 1000;
+        root._anchorMs = now;
     }
 
     function _estimatedPosition(): real {
@@ -245,20 +292,28 @@ Singleton {
         return root._anchorPos + (Date.now() - root._anchorMs) / 1000;
     }
 
-    on_PlayingChanged: root._reanchor(root._estimatedPosition())
+    // Pausing holds where the player says it stopped, not where the last reading left the clock.
+    on_PlayingChanged: {
+        root.activePlayer?.positionChanged();
+        const reported = MprisController.positionOf(root.activePlayer);
+        root._lastReported = reported;
+        root._reanchor(reported > 0 ? reported : root._anchorPos);
+    }
 
     Timer {
         id: syncTimer
         interval: 300
         repeat: true
-        running: root.active && root.status === "ok" && root.lyricsLines.length > 0
+        // Paused, nothing moves: the clock holds and the index with it.
+        running: root.active && root._playing && root.status === "ok" && root.lyricsLines.length > 0
+        triggeredOnStart: true
         onTriggered: {
             root.activePlayer?.positionChanged();
             const reported = MprisController.positionOf(root.activePlayer);
             if (reported !== root._lastReported) {
                 root._lastReported = reported;
                 if (reported > 0 || root._anchorPos === 0)
-                    root._reanchor(reported);
+                    root._observe(reported);
             }
 
             const pos = root._estimatedPosition();
@@ -313,10 +368,11 @@ Singleton {
 
                 const lines = (payload.lines ?? [])
                     .filter(line => typeof line.t === "number")
-                    .map(line => ({
-                        time: line.t,
-                        text: line.text ?? ""
-                    }));
+                    .map(line => {
+                        // Enhanced LRC keeps its word stamps out of the text.
+                        const words = LyricsMath.readWords(line.text ?? "");
+                        return { time: line.t, text: words.text, marks: words.marks };
+                    });
 
                 if (lines.length === 0) {
                     root._publishFailure(requestId, "not_found");

@@ -19,6 +19,7 @@ import qs.modules.shared.background.widgets.uptime
 import qs.modules.shared.background.widgets.controls
 import qs.modules.shared.background.widgets.screenTime
 import qs.modules.shared.background.widgets.palette
+import qs.modules.shared.background.widgets.lyrics
 import qs.modules.shared.background.widgets.dayProgress
 import qs.modules.shared.background.widgets.worldClock
 import qs.modules.shared.background.widgets.userCard
@@ -94,7 +95,7 @@ Item {
                 monthCalendar: monthWidget, calendarUpcoming: upcomingWidget, todo: todoWidget, notes: notesWidget,
                 timers: timersWidget, screenTime: screenTimeWidget, systemMonitor: vitalsWidget, battery: batteryWidget,
                 worldClock: worldClockWidget, dayProgress: dayWidget, dateBadge: dateWidget, userCard: profileWidget,
-                uptime: uptimeWidget, newsTicker: newsWidget, palette: paletteWidget
+                uptime: uptimeWidget, newsTicker: newsWidget, palette: paletteWidget, lyrics: lyricsWidget
             })[slot.modelData] ?? null
         }
     }
@@ -109,6 +110,7 @@ Item {
     Component { id: notesWidget; NotesWidget { visibleWhenLocked: true; outputName: root.scope; screenWidth: root.width; screenHeight: root.height; scaledScreenWidth: root.width; scaledScreenHeight: root.height; wallpaperScale: 1 } }
     Component { id: timersWidget; TimerWidget { visibleWhenLocked: true; outputName: root.scope; screenWidth: root.width; screenHeight: root.height; scaledScreenWidth: root.width; scaledScreenHeight: root.height; wallpaperScale: 1 } }
     Component { id: screenTimeWidget; ScreenTimeWidget { visibleWhenLocked: true; outputName: root.scope; screenWidth: root.width; screenHeight: root.height; scaledScreenWidth: root.width; scaledScreenHeight: root.height; wallpaperScale: 1 } }
+    Component { id: lyricsWidget; LyricsWidget { visibleWhenLocked: true; outputName: root.scope; screenWidth: root.width; screenHeight: root.height; scaledScreenWidth: root.width; scaledScreenHeight: root.height; wallpaperScale: 1 } }
     Component { id: paletteWidget; PaletteWidget { visibleWhenLocked: true; outputName: root.scope; screenWidth: root.width; screenHeight: root.height; scaledScreenWidth: root.width; scaledScreenHeight: root.height; wallpaperScale: 1 } }
     Component { id: vitalsWidget; SystemMonitorWidget { visibleWhenLocked: true; outputName: root.scope; screenWidth: root.width; screenHeight: root.height; scaledScreenWidth: root.width; scaledScreenHeight: root.height; wallpaperScale: 1 } }
     Component { id: batteryWidget; BatteryWidget { visibleWhenLocked: true; outputName: root.scope; screenWidth: root.width; screenHeight: root.height; scaledScreenWidth: root.width; scaledScreenHeight: root.height; wallpaperScale: 1 } }

@@ -12,6 +12,8 @@ RowLayout {
     property string text: ""
     property string trailing: ""
     property color tint: root.face.accent
+    // A trailing text that can run long (an artist) gets at most this much of the row and elides.
+    property real trailingMax: -1
 
     spacing: root.face.dp(5)
 
@@ -37,6 +39,7 @@ RowLayout {
     FaceText {
         face: root.face
         visible: root.trailing.length > 0
+        Layout.maximumWidth: root.trailingMax >= 0 ? root.trailingMax : Number.POSITIVE_INFINITY
         text: root.label ? root.trailing.toUpperCase() : root.trailing
         color: root.face.inkTertiary
         size: root.label ? 10 : 11.5

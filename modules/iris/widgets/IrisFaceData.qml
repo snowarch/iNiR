@@ -29,7 +29,8 @@ Singleton {
         { key: "userCard", glyph: "account_circle", english: "Profile", label: Translation.tr("Profile"), tint: IrisStyle.identity.blue },
         { key: "uptime", glyph: "timelapse", english: "Uptime", label: Translation.tr("Uptime"), tint: IrisStyle.identity.indigo },
         { key: "newsTicker", glyph: "newspaper", english: "News", label: Translation.tr("News"), tint: IrisStyle.identity.teal },
-        { key: "palette", glyph: "palette", english: "Palette", label: Translation.tr("Palette"), tint: IrisStyle.identity.pink }
+        { key: "palette", glyph: "palette", english: "Palette", label: Translation.tr("Palette"), tint: IrisStyle.identity.pink },
+        { key: "lyrics", glyph: "lyrics", english: "Lyrics", label: Translation.tr("Lyrics"), tint: IrisStyle.identity.pink }
     ]
 
     // Widgets without an iRiS face that the active Design prints all the same (IrisDesignFace): they take that print as

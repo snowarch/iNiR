@@ -23,7 +23,7 @@ QtObject {
     // Widgets that have an iRiS face (`irisFace`), and the ones on by default.
     readonly property var faced: ["clock", "weather", "battery", "monthCalendar", "calendarUpcoming", "controls", "dateBadge",
         "dayProgress", "newsTicker", "notes", "mediaControls", "userCard", "screenTime", "timers", "todo", "uptime",
-        "systemMonitor", "worldClock", "palette"]
+        "systemMonitor", "worldClock", "palette", "lyrics"]
     readonly property var onByDefault: ["clock"]
 
     function value(widget: string, key: string, fallback: var): var {
@@ -67,13 +67,13 @@ QtObject {
         battery: "Battery", notes: "Notes", todo: "Todo", userCard: "User card", newsTicker: "News",
         customImage: "Custom image", imageConverter: "Image converter", shape: "Decorative shape",
         japaneseTypography: "Japanese Typography", editorial: "Editorial", mascot: "Mascot", controls: "Controls",
-        screenTime: "Screen time", palette: "Palette"
+        screenTime: "Screen time", palette: "Palette", lyrics: "Lyrics"
     })
     // Clusters of the section's column, in the order people look for them.
     readonly property var clusters: [
         { caption: "Every widget", groups: ["Arranging", "Power saving"] },
         { caption: "Time", groups: ["Clock", "World clock", "Month Calendar", "Upcoming Events", "Date badge", "Day progress", "Timers", "System uptime"] },
-        { caption: "Music", groups: ["Media Controls", "Visualizer"] },
+        { caption: "Music", groups: ["Media Controls", "Lyrics", "Visualizer"] },
         { caption: "System", groups: ["System Monitor", "Battery", "Controls", "Screen time", "Weather", "News"] },
         { caption: "Yours", groups: ["Notes", "Todo", "User card", "Palette", "Custom image", "Image converter"] },
         { caption: "Art", groups: ["Decorative shape", "Japanese Typography", "Editorial", "Mascot"] }
@@ -315,6 +315,9 @@ QtObject {
             .map(entry => root.row("mediaControls", entry[0], entry[1], "range", entry[2], { min: entry[3], max: entry[4], step: 5, unit: " %",
                 when: () => root.material("mediaControls") && root.is("mediaControls", "visualizerType", "wave", "organic") })),
         ...root.closing("mediaControls", true),
+        ...root.opening("lyrics"),
+        root.size("lyrics", ["small", "medium", "large"]),
+        ...root.closing("lyrics", false),
 
         // ── Visualizer ──
         ...root.opening("visualizer"),

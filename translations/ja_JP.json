@@ -9686,5 +9686,8 @@
   "Drop to show it": "ドロップして表示",
   "This picture won't open": "この画像を開けません",
   "Add a photo": "写真を追加",
-  "Drop a picture or a folder here": "画像かフォルダーをここにドロップ"
+  "Drop a picture or a folder here": "画像かフォルダーをここにドロップ",
+  "Play something with words": "歌詞のある曲を再生しよう",
+  "No lyrics for this song": "この曲の歌詞はありません",
+  "Instrumental": "インストゥルメンタル"
 }

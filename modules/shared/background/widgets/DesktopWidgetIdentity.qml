@@ -13,7 +13,7 @@ QtObject {
         todo: "checklist", timers: "timer", newsTicker: "newspaper", userCard: "account_circle",
         customImage: "add_photo_alternate", imageConverter: "transform", japaneseTypography: "translate",
         editorial: "text_fields", shape: "category", mascot: "pets", controls: "toggle_on", screenTime: "hourglass_bottom",
-        palette: "palette"
+        palette: "palette", lyrics: "lyrics"
     })
     // The fixed category palette notification tiles use.
     readonly property var tints: ({
@@ -23,7 +23,7 @@ QtObject {
         todo: "#ff9f0a", timers: "#ff9f0a", newsTicker: "#30b0c7", userCard: "#0a84ff",
         customImage: "#30b0c7", imageConverter: "#30b0c7", japaneseTypography: "#bf5af2",
         editorial: "#5e5ce6", shape: "#bf5af2", mascot: "#ff375f", controls: "#0a84ff", screenTime: "#5e5ce6",
-        palette: "#ff375f"
+        palette: "#ff375f", lyrics: "#ff375f"
     })
     // What people call them besides their name, for searching while arranging.
     readonly property var keywords: ({
@@ -36,14 +36,15 @@ QtObject {
         customImage: "picture photo image", imageConverter: "picture convert image", japaneseTypography: "japanese kanji text",
         editorial: "text typography quote", shape: "decoration decorative", mascot: "pet character companion",
         controls: "toggles wifi bluetooth volume brightness quick settings", screenTime: "usage apps time tracker",
-        palette: "colours colors swatches hex wallpaper cover accent theme"
+        palette: "colours colors swatches hex wallpaper cover accent theme",
+        lyrics: "lyrics words song sing karaoke music lines"
     })
     // The shelf's aisles: what a widget is for, in the order people reach for them.
     readonly property var categoryOrder: ["today", "media", "system", "notes", "decor"]
     readonly property var categories: ({
         clock: "today", worldClock: "today", weather: "today", dayProgress: "today", dateBadge: "today",
         monthCalendar: "today", calendarUpcoming: "today", timers: "today",
-        mediaControls: "media", visualizer: "media", newsTicker: "media",
+        mediaControls: "media", visualizer: "media", newsTicker: "media", lyrics: "media",
         systemMonitor: "system", battery: "system", uptime: "system", controls: "system", screenTime: "system", userCard: "system",
         notes: "notes", todo: "notes",
         customImage: "decor", imageConverter: "decor", shape: "decor", mascot: "decor", editorial: "decor", japaneseTypography: "decor",

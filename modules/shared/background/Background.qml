@@ -33,6 +33,7 @@ import qs.modules.shared.background.widgets.uptime
 import qs.modules.shared.background.widgets.controls
 import qs.modules.shared.background.widgets.screenTime
 import qs.modules.shared.background.widgets.palette
+import qs.modules.shared.background.widgets.lyrics
 import qs.modules.shared.background.widgets.dayProgress
 import qs.modules.shared.background.widgets.worldClock
 import qs.modules.shared.background.widgets.userCard
@@ -326,7 +327,7 @@ Scope {
                 notes: false, calendarUpcoming: false, monthCalendar: false,
                 todo: false, timers: false, dayProgress: false, uptime: false, shape: false, dateBadge: false, editorial: false,
                 newsTicker: false, mascot: false, japaneseTypography: false,
-                worldClock: false, userCard: false, controls: false, screenTime: false, palette: false
+                worldClock: false, userCard: false, controls: false, screenTime: false, palette: false, lyrics: false
             })
             let known = builtinDefaults[name] !== undefined
             let baseEnabled = known
@@ -405,7 +406,7 @@ Scope {
                 "mediaControls", "visualizer", "systemMonitor", "battery", "notes",
                 "calendarUpcoming", "monthCalendar", "todo", "timers", "dayProgress", "uptime", "shape", "dateBadge", "editorial",
                 "newsTicker", "mascot", "japaneseTypography",
-                "worldClock", "userCard", "controls", "screenTime", "palette"];
+                "worldClock", "userCard", "controls", "screenTime", "palette", "lyrics"];
             if (!knownWidgets.includes(widgetName))
                 return "unknown widget: " + widgetName;
             DesktopWidgetLayout.setGloballyEnabled(widgetName, enabled);
@@ -806,7 +807,8 @@ Scope {
             { key: "userCard",           defaultOn: false, icon: "account_circle" },
             { key: "controls",           defaultOn: false, icon: "toggle_on" },
             { key: "screenTime",         defaultOn: false, icon: "hourglass_bottom" },
-            { key: "palette",            defaultOn: false, icon: "palette" }
+            { key: "palette",            defaultOn: false, icon: "palette" },
+            { key: "lyrics",             defaultOn: false, icon: "lyrics" }
         ]
 
         // Multi-monitor wallpaper support
@@ -3250,6 +3252,22 @@ Scope {
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskPalette : null
                     WidgetInputMask { id: _hitMaskPalette; loader: parent }
                     sourceComponent: PaletteWidget {
+                        widgetIndex: 40
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("lyrics", false) && (Config.options?.panelFamily ?? "ii") === "iris"
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskLyrics : null
+                    WidgetInputMask { id: _hitMaskLyrics; loader: parent }
+                    sourceComponent: LyricsWidget {
                         widgetIndex: 40
                         outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
