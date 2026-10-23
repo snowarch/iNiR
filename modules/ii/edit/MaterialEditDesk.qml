@@ -70,14 +70,18 @@ Scope {
                     ? [{ id: "bar", name: Translation.tr("Bar"), x: band[0], y: band[1], w: band[2], h: band[3], radius: 0 }] : [])
             }
 
-            // ── The desktop stays at its true size between the toolbar and the shelf; windows step aside ──
+            // ── The card between the toolbar and the shelf; windows step aside ──
             readonly property real margin: 14
+            readonly property var stageNow: [desk.outputName, Math.max(0, Math.min(1, desk.p)),
+                desk.margin + headBody.height, desk.margin + shelfBody.height]
+            onStageNowChanged: DesktopEditStage.setStage(desk.stageNow[0], desk.stageNow[1], desk.stageNow[2], desk.stageNow[3])
             readonly property bool parks: desk.present && (GlobalStates.focusedScreen?.name ?? desk.outputName) === desk.outputName
             onParksChanged: if (desk.parks) DesktopEditStage.park(desk.outputName)
             readonly property bool settledHome: !desk.present && desk.p < 0.04
             onSettledHomeChanged: if (desk.settledHome) DesktopEditStage.unpark()
             Component.onDestruction: {
                 DesktopArrange.setBodies(desk.outputName, "bar", [])
+                DesktopEditStage.setStage(desk.outputName, 0, 0, 0)
                 DesktopEditStage.setHost(desk.outputName, false)
                 if (!desk.present) DesktopEditStage.unpark()
             }
