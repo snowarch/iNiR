@@ -1247,6 +1247,8 @@ Desktop background and widget controls.
 | `presets` | The desktops you can wear (factory first, then saved) as JSON, and which one is worn |
 | `wearPreset id` | Wear a desktop by id (`factory:glance`, `factory:dashboard`, `factory:focus`, `factory:listening`, `factory:bare`, or a saved one) |
 | `savePreset name` | Save this desktop under a name (empty = "Desktop N") and print its id |
+| `sizeWidget widgetName size` | Set an iRiS widget's size class (`small`, `medium`, `large`) as its size key does; neighbours it now covers move aside while arranging |
+| `widgetRects` | Where every desktop widget sits on each screen, as JSON |
 | `editState` | Report the active selection, physical panel insets, full desktop work area and panel-aware zone work area for each output |
 | `desktopItemsState` | Report desktop-item persistence, availability, item count, validation errors and undo state |
 | `quickControlsPage page` | Show a page of the selected widget's quick controls: widget, look or arrange (and stack, for a widget in a stack) |

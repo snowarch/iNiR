@@ -162,6 +162,32 @@ Scope {
         function savePreset(name: string): string {
             return DesktopPresets.save(name)
         }
+        // An iRiS widget's size class (small, medium, large) on every screen it is out on, as the size key sets it.
+        function sizeWidget(widgetName: string, size: string): string {
+            const out = []
+            for (const output of Object.keys(backgroundScope.widgetCanvases)) {
+                const canvas = backgroundScope.widgetCanvases[output]
+                if (!canvas || typeof canvas._loadedDesktopWidgets !== "function") continue
+                for (const widget of canvas._loadedDesktopWidgets())
+                    if (widget.configEntryName === widgetName && widget.irisSizeChoices.includes(size)) {
+                        widget.commitIrisSize(size)
+                        out.push(output)
+                    }
+            }
+            return out.length > 0 ? widgetName + " " + size + " on " + out.join(", ") : "no " + widgetName + " that takes " + size
+        }
+        // Where every widget sits, per screen: [{ output, widget, x, y, w, h }].
+        function widgetRects(): string {
+            const out = []
+            for (const output of Object.keys(backgroundScope.widgetCanvases)) {
+                const canvas = backgroundScope.widgetCanvases[output]
+                if (!canvas || typeof canvas._loadedDesktopWidgets !== "function") continue
+                for (const widget of canvas._loadedDesktopWidgets())
+                    out.push({ output: output, widget: widget.configEntryName, x: Math.round(widget.x), y: Math.round(widget.y),
+                        w: Math.round(widget.width), h: Math.round(widget.height) })
+            }
+            return JSON.stringify(out)
+        }
 
         function editState(): string {
             return JSON.stringify({

@@ -320,6 +320,25 @@
      "values": []
     },
     {
+     "name": "sizeWidget",
+     "args": [
+      "widgetName",
+      "size"
+     ],
+     "description": "Set an iRiS widget's size class (`small`, `medium`, `large`) as its size key does; neighbours it now covers move aside while arranging",
+     "values": [
+      "small",
+      "medium",
+      "large"
+     ]
+    },
+    {
+     "name": "widgetRects",
+     "args": [],
+     "description": "Where every desktop widget sits on each screen, as JSON",
+     "values": []
+    },
+    {
      "name": "editState",
      "args": [],
      "description": "Report the active selection, physical panel insets, full desktop work area and panel-aware zone work area for each output",

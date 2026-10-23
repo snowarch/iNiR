@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 dev/tools/generate-ipc-registry.py
-# IPC.md hash: bd2230f7b68478d5
+# IPC.md hash: 267a8fcc0ba1151e
 # Targets: 74
 
 declare -gA IPC_TARGET_DESC=(
@@ -165,7 +165,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [appCatalog]="refresh search install list"
   [audio]="volumeUp volumeDown mute playEvent micMute"
   [autostart]="status addCommand addApp removeLast reload"
-  [background]="widgetDesign widgetMaterial widgetSearch toggleEditMode toggleWidgetManager setEditMode presets wearPreset savePreset editState applyOrganicEdgePreset applyOrganicEdgeComposition applyOrganicEdgeMaterial applyOrganicEdgeResponse organicEdgeState setOrganicEdgeEnabled quickControlsPage quickControlsGeometry widgetSnapshot legibilityState desktopItemsState focusWidget arrangeWidget promoteWidget resetLayerOrder setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
+  [background]="widgetDesign widgetMaterial widgetSearch toggleEditMode toggleWidgetManager setEditMode presets wearPreset savePreset sizeWidget widgetRects editState applyOrganicEdgePreset applyOrganicEdgeComposition applyOrganicEdgeMaterial applyOrganicEdgeResponse organicEdgeState setOrganicEdgeEnabled quickControlsPage quickControlsGeometry widgetSnapshot legibilityState desktopItemsState focusWidget arrangeWidget promoteWidget resetLayerOrder setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
   [bar]="mediaWidth toggle close open"
   [battery]="status simulate"
   [bluetooth]="status simulate"
@@ -273,6 +273,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["background:presets"]="The desktops you can wear (factory first, then saved) as JSON, and which one is worn"
   ["background:wearPreset"]="Wear a desktop by id (\`factory:glance\`, \`factory:dashboard\`, \`factory:focus\`, \`factory:listening\`, \`factory:bare\`, or a saved one)"
   ["background:savePreset"]="Save this desktop under a name (empty = \"Desktop N\") and print its id"
+  ["background:sizeWidget"]="Set an iRiS widget's size class (\`small\`, \`medium\`, \`large\`) as its size key does; neighbours it now covers move aside while arranging"
+  ["background:widgetRects"]="Where every desktop widget sits on each screen, as JSON"
   ["background:editState"]="Report the active selection, physical panel insets, full desktop work area and panel-aware zone work area for each output"
   ["background:applyOrganicEdgePreset"]="Apply an Organic Edge scene by name without changing enabled displays"
   ["background:applyOrganicEdgeComposition"]="Apply only an Organic Edge topology/geometry preset"
@@ -698,6 +700,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["background:setEditMode"]="<enabled>"
   ["background:wearPreset"]="<id>"
   ["background:savePreset"]="<name>"
+  ["background:sizeWidget"]="<widgetName> <size>"
   ["background:applyOrganicEdgePreset"]="<name>"
   ["background:applyOrganicEdgeComposition"]="<name>"
   ["background:applyOrganicEdgeMaterial"]="<name>"
@@ -859,6 +862,7 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["background:widgetDesign"]="iris material individual instrument readout undo status"
   ["background:widgetMaterial"]="status match"
   ["background:widgetSearch"]="open next previous take close"
+  ["background:sizeWidget"]="small medium large"
   ["background:arrangeWidget"]="probe"
   ["battery:simulate"]="full off"
   ["bluetooth:simulate"]="off on none clear"
