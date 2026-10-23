@@ -1533,7 +1533,7 @@ Item {
                                     // Ghost rows: where the rest of the page is coming, breathing until it does.
                                     Item {
                                         id: ghostRows
-                                        visible: root.rowsPending && !root.holding
+                                        visible: root.rowsPending
                                         Layout.fillWidth: true
                                         // Counted, not measured: a Column hidden until now reports 0 and the ghosts drew nothing.
                                         readonly property int count: Math.max(3, Math.min(7, 2 * (root.shownGroups.length - root.fedGroups.length) + 2))
@@ -2219,7 +2219,9 @@ Item {
     component BlockBuffer: Repeater {
         id: buffer
         required property int slot
-        readonly property bool shown: root.building === buffer.slot ? !root.holding : root.holding
+        // The page being left hides at once (its rows under the new area's title read as the wrong area); it is only
+        // torn down once the new one stands, so the turn's frame builds and destroys nothing.
+        readonly property bool shown: root.building === buffer.slot
         model: ScriptModel { objectProp: "title"; values: buffer.slot === 0 ? root.bufA : root.bufB }
         Loader {
             id: blockLoader
