@@ -14,7 +14,9 @@ IrisWidgetFace {
     id: root
 
     readonly property bool labelled: !root.small
-    readonly property int columns: root.small ? 2 : 4
+    // Medium and large: wide tiles as the Control Center's (a disc, the name and what it is doing), two a row.
+    readonly property bool tiles: !root.small
+    readonly property int columns: root.tiles ? 2 : 2
     readonly property real spacing: root.dp(root.small ? 14 : 12)
     readonly property real cell: (root.contentWidth - root.spacing * (root.columns - 1)) / root.columns
     readonly property real disc: Math.min(root.cell, root.dp(root.small ? 60 : root.medium ? 48 : 56))
@@ -27,18 +29,57 @@ IrisWidgetFace {
         property bool on: false
         property color tint: root.accent
         property bool available: true
+        property string status: toggle.on ? Translation.tr("On") : Translation.tr("Off")
         signal toggled()
 
-        Layout.preferredWidth: root.cell
-        Layout.preferredHeight: root.disc + (root.labelled ? root.dp(20) : 0)
+        Layout.fillWidth: root.tiles
+        Layout.preferredWidth: root.tiles ? 1 : root.cell
+        Layout.preferredHeight: root.tiles ? root.dp(root.large ? 46 : 40) : root.disc
         opacity: toggle.available || discSkinned ? 1 : 0.4
         readonly property bool discSkinned: IrisDesign.has("controlTile")
 
+        // The tile behind a wide control: the whole of it is the key.
+        Rectangle {
+            visible: root.tiles
+            anchors.fill: parent
+            radius: Math.min(root.innerRadius, height / 2)
+            color: tap.pressed ? root.fillActive : hover.hovered ? root.fillHover : root.fillQuiet
+            scale: tap.pressed ? IrisStyle.pressScale(0.97) : 1
+            Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+            Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+            ColumnLayout {
+                anchors.left: parent.left
+                anchors.leftMargin: disc.width + root.dp(14)
+                anchors.right: parent.right
+                anchors.rightMargin: root.dp(8)
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 0
+                FaceText {
+                    face: root
+                    Layout.fillWidth: true
+                    text: toggle.label
+                    size: 12
+                    weight: Font.DemiBold
+                    color: toggle.available ? root.ink : root.inkTertiary
+                }
+                FaceText {
+                    face: root
+                    Layout.fillWidth: true
+                    text: toggle.available ? toggle.status : Translation.tr("Unavailable")
+                    size: 10.5
+                    color: toggle.on ? root.inkSecondary : root.inkTertiary
+                }
+            }
+        }
+
         Rectangle {
             id: disc
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: root.disc
-            height: root.disc
+            anchors.horizontalCenter: root.tiles ? undefined : parent.horizontalCenter
+            anchors.left: root.tiles ? parent.left : undefined
+            anchors.leftMargin: root.tiles ? root.dp(6) : 0
+            anchors.verticalCenter: root.tiles ? parent.verticalCenter : undefined
+            width: root.tiles ? parent.height - root.dp(12) : root.disc
+            height: width
             radius: IrisStyle.capsule(height)
             color: disc.skinned ? "transparent" : toggle.on ? toggle.tint : tap.pressed ? root.fillActive : hover.hovered ? root.fillHover : root.fill
             scale: tap.pressed && !disc.skinned ? IrisStyle.pressScale(0.94) : 1
@@ -58,23 +99,13 @@ IrisWidgetFace {
                 anchors.centerIn: parent
                 text: toggle.glyph
                 fill: toggle.on ? 1 : 0
-                iconSize: Math.round(root.disc * 0.42)
+                iconSize: Math.round(disc.width * 0.46)
                 color: toggle.on ? root.onFill(toggle.tint) : root.ink
             }
             HoverHandler { id: hover; enabled: toggle.available; cursorShape: Qt.PointingHandCursor }
             TapHandler { id: tap; enabled: toggle.available; gesturePolicy: TapHandler.WithinBounds; onTapped: toggle.toggled() }
         }
-        FaceText {
-            face: root
-            visible: root.labelled
-            anchors.top: disc.bottom
-            anchors.topMargin: root.dp(5)
-            width: parent.width
-            horizontalAlignment: Text.AlignHCenter
-            text: toggle.label
-            color: toggle.on ? root.ink : root.inkSecondary
-            size: 11
-        }
+
         Accessible.role: Accessible.CheckBox
         Accessible.name: toggle.label
         Accessible.checked: toggle.on
@@ -84,25 +115,27 @@ IrisWidgetFace {
         anchors.fill: parent
         spacing: root.dp(root.large ? 14 : 12)
 
-        Item { Layout.fillHeight: root.large; visible: root.large }
-
         GridLayout {
             Layout.alignment: Qt.AlignHCenter
+            Layout.fillWidth: root.tiles
             Layout.fillHeight: root.small
             columns: root.columns
-            columnSpacing: root.spacing
-            rowSpacing: root.dp(root.small ? 14 : 10)
+            columnSpacing: root.tiles ? root.dp(8) : root.spacing
+            rowSpacing: root.dp(root.small ? 14 : 8)
 
             Toggle {
                 glyph: Network.ethernet ? "lan" : Network.wifiEnabled ? "wifi" : "wifi_off"
                 label: Network.ethernet ? Translation.tr("Ethernet") : (Network.networkName || Translation.tr("Wi-Fi"))
                 on: Network.ethernet || Network.wifiEnabled
+                status: Network.ethernet ? Translation.tr("Connected") : Network.wifiEnabled
+                    ? (Network.networkName || Translation.tr("Not connected")) : Translation.tr("Off")
                 tint: root.inked(IrisStyle.identity.blue)
                 onToggled: Network.toggleWifi()
             }
             Toggle {
                 glyph: BluetoothStatus.enabled ? "bluetooth" : "bluetooth_disabled"
-                label: BluetoothStatus.activeDeviceSummary() || Translation.tr("Bluetooth")
+                label: root.tiles ? Translation.tr("Bluetooth") : (BluetoothStatus.activeDeviceSummary() || Translation.tr("Bluetooth"))
+                status: !BluetoothStatus.enabled ? Translation.tr("Off") : (BluetoothStatus.activeDeviceSummary() || Translation.tr("On"))
                 on: BluetoothStatus.enabled
                 available: BluetoothStatus.available
                 tint: root.inked(IrisStyle.identity.blue)

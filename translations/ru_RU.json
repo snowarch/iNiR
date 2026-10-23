@@ -9708,5 +9708,18 @@
   "Remove pin": "Открепить",
   "Waiting for the window's picture": "Ожидание изображения окна",
   "It stays live, even on another workspace": "Остаётся живым даже на другом рабочем пространстве",
-  "Drag over the part to keep": "Выделите часть, которую нужно оставить"
+  "Drag over the part to keep": "Выделите часть, которую нужно оставить",
+  "%1 busy days": "Занятых дней: %1",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · Неделя %2",
+  "1 busy day": "1 занятый день",
+  "Coming up": "Скоро",
+  "Days": "Дни",
+  "Extreme": "Экстремальный",
+  "Free month": "Свободный месяц",
+  "Hourly": "По часам",
+  "Nothing on this day": "В этот день ничего",
+  "UV index": "УФ-индекс",
+  "Very high": "Очень высокий",
+  "Week %1 · Day %2 of the year": "Неделя %1 · День %2 года"
 }

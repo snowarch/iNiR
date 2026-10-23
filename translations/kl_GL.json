@@ -7745,5 +7745,18 @@
   "Remove pin": "Remove pin",
   "Waiting for the window's picture": "Waiting for the window's picture",
   "It stays live, even on another workspace": "It stays live, even on another workspace",
-  "Drag over the part to keep": "Drag over the part to keep"
+  "Drag over the part to keep": "Drag over the part to keep",
+  "%1 busy days": "%1 busy days",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · Week %2",
+  "1 busy day": "1 busy day",
+  "Coming up": "Coming up",
+  "Days": "Days",
+  "Extreme": "Extreme",
+  "Free month": "Free month",
+  "Hourly": "Hourly",
+  "Nothing on this day": "Nothing on this day",
+  "UV index": "UV index",
+  "Very high": "Very high",
+  "Week %1 · Day %2 of the year": "Week %1 · Day %2 of the year"
 }

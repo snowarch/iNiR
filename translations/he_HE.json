@@ -9708,5 +9708,18 @@
   "Remove pin": "הסר הצמדה",
   "Waiting for the window's picture": "ממתין לתמונת החלון",
   "It stays live, even on another workspace": "נשאר חי, גם בסביבת עבודה אחרת",
-  "Drag over the part to keep": "גרור מעל החלק שברצונך לשמור"
+  "Drag over the part to keep": "גרור מעל החלק שברצונך לשמור",
+  "%1 busy days": "%1 ימים עמוסים",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · שבוע %2",
+  "1 busy day": "יום עמוס אחד",
+  "Coming up": "בקרוב",
+  "Days": "ימים",
+  "Extreme": "קיצוני",
+  "Free month": "חודש פנוי",
+  "Hourly": "לפי שעה",
+  "Nothing on this day": "אין כלום ביום הזה",
+  "UV index": "מדד UV",
+  "Very high": "גבוה מאוד",
+  "Week %1 · Day %2 of the year": "שבוע %1 · יום %2 בשנה"
 }

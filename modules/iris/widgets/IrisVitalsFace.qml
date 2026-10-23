@@ -23,6 +23,8 @@ IrisWidgetFace {
     readonly property real diskHeight: root.dp(root.small ? 23 : root.medium ? 25 : 36)
     // Loads alone: where heats and disk would sit, each load's last minutes instead of air.
     readonly property bool trends: !root.small && root.loads.length > 0 && root.heats.length === 0 && !root.hasDisk
+    // Loads only, medium or large: each load on its own gauge tile (SekaiPop's gauges): name, figure, a ring, its trend.
+    readonly property bool tiled: root.trends && !root.designed
     readonly property real trendHeight: root.large && root.trends ? root.dp(92) : 0
     readonly property real loadHeight: root.contentHeight
         - (root.heats.length ? root.heatHeight + root.sectionGap : 0)
@@ -307,10 +309,109 @@ IrisWidgetFace {
         size: 12.5
     }
 
+    // One load on a tile: its name and ring on top, the figure, the recent trend filling the foot.
+    component LoadTile: Rectangle {
+        id: tile
+        required property string key
+        property bool row: false
+        readonly property real level: root.level(tile.key)
+        radius: root.innerRadius
+        color: root.fillQuiet
+        clip: true
+        Trace {
+            key: tile.key
+            lane: true
+            anchors.left: tile.row ? undefined : parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.rightMargin: tile.row ? root.dp(12) : 0
+            anchors.bottomMargin: tile.row ? root.dp(12) : 0
+            width: tile.row ? parent.width * 0.52 : parent.width
+            height: tile.row ? parent.height - root.dp(24) : parent.height * 0.36
+        }
+        Row {
+            x: root.dp(10)
+            y: root.dp(9)
+            spacing: root.dp(5)
+            Dot { key: tile.key; anchors.verticalCenter: parent.verticalCenter }
+            FaceText {
+                face: root
+                text: tile.key === "cpu" ? Translation.tr("CPU") : tile.key === "mem" ? Translation.tr("RAM") : Translation.tr("GPU")
+                size: 11.5
+                weight: Font.DemiBold
+                color: root.inkSecondary
+            }
+        }
+        // The level as a small ring.
+        Shape {
+            id: ring
+            readonly property real side: root.dp(tile.row ? 0 : 20)
+            visible: !tile.row
+            x: parent.width - ring.side - root.dp(9)
+            y: root.dp(8)
+            width: ring.side
+            height: ring.side
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath {
+                strokeColor: root.fill
+                strokeWidth: root.dp(3)
+                fillColor: "transparent"
+                PathAngleArc { centerX: ring.side / 2; centerY: ring.side / 2; radiusX: ring.side / 2 - root.dp(2); radiusY: radiusX; startAngle: 0; sweepAngle: 360 }
+            }
+            ShapePath {
+                strokeColor: root.tint(tile.key)
+                strokeWidth: root.dp(3)
+                capStyle: ShapePath.RoundCap
+                fillColor: "transparent"
+                PathAngleArc { centerX: ring.side / 2; centerY: ring.side / 2; radiusX: ring.side / 2 - root.dp(2); radiusY: radiusX; startAngle: -90; sweepAngle: Math.max(0.5, 360 * tile.level) }
+            }
+        }
+        Reading {
+            key: tile.key
+            x: root.dp(10)
+            y: tile.row ? parent.height - height - root.dp(8) : root.dp(30)
+            figureSize: tile.row ? 34 : root.large ? 34 : 28
+        }
+    }
+
+    Item {
+        visible: root.tiled
+        anchors.fill: parent
+        Row {
+            visible: root.medium
+            anchors.fill: parent
+            spacing: root.dp(8)
+            Repeater {
+                model: root.loads
+                LoadTile {
+                    required property var modelData
+                    key: modelData.key
+                    width: (parent.width - parent.spacing * (root.loads.length - 1)) / root.loads.length
+                    height: parent.height
+                }
+            }
+        }
+        Column {
+            visible: root.large
+            anchors.fill: parent
+            spacing: root.dp(8)
+            Repeater {
+                model: root.loads
+                LoadTile {
+                    required property var modelData
+                    key: modelData.key
+                    row: true
+                    width: parent.width
+                    height: (parent.height - parent.spacing * (root.loads.length - 1)) / root.loads.length
+                }
+            }
+        }
+    }
+
     Item {
         id: composition
         anchors.fill: parent
-        visible: root.resources.length > 0
+        visible: root.resources.length > 0 && !root.tiled
         readonly property real detailsX: root.medium && root.loads.length ? root.orbitSize + root.dp(20) : 0
         readonly property real detailsWidth: width - detailsX
 

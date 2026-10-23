@@ -9708,5 +9708,18 @@
   "Remove pin": "Retirer l'épingle",
   "Waiting for the window's picture": "En attente de l'image de la fenêtre",
   "It stays live, even on another workspace": "Reste en direct, même sur un autre espace de travail",
-  "Drag over the part to keep": "Faites glisser sur la partie à garder"
+  "Drag over the part to keep": "Faites glisser sur la partie à garder",
+  "%1 busy days": "%1 jours occupés",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · Semaine %2",
+  "1 busy day": "1 jour occupé",
+  "Coming up": "À venir",
+  "Days": "Jours",
+  "Extreme": "Extrême",
+  "Free month": "Mois libre",
+  "Hourly": "Par heure",
+  "Nothing on this day": "Rien ce jour-là",
+  "UV index": "Indice UV",
+  "Very high": "Très élevé",
+  "Week %1 · Day %2 of the year": "Semaine %1 · Jour %2 de l'année"
 }

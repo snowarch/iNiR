@@ -9708,5 +9708,18 @@
   "Remove pin": "Sabitlemeyi kaldır",
   "Waiting for the window's picture": "Pencerenin görüntüsü bekleniyor",
   "It stays live, even on another workspace": "Başka bir çalışma alanında da canlı kalır",
-  "Drag over the part to keep": "Saklamak istediğin kısmın üzerine sürükle"
+  "Drag over the part to keep": "Saklamak istediğin kısmın üzerine sürükle",
+  "%1 busy days": "%1 dolu gün",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · %2. hafta",
+  "1 busy day": "1 dolu gün",
+  "Coming up": "Yaklaşanlar",
+  "Days": "Günler",
+  "Extreme": "Aşırı",
+  "Free month": "Boş ay",
+  "Hourly": "Saatlik",
+  "Nothing on this day": "Bu gün bir şey yok",
+  "UV index": "UV indeksi",
+  "Very high": "Çok yüksek",
+  "Week %1 · Day %2 of the year": "%1. hafta · Yılın %2. günü"
 }

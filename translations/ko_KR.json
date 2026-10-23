@@ -9708,5 +9708,18 @@
   "Remove pin": "고정 해제",
   "Waiting for the window's picture": "창 화면을 기다리는 중",
   "It stays live, even on another workspace": "다른 작업 공간에서도 실시간으로 유지됩니다",
-  "Drag over the part to keep": "남길 부분을 드래그하세요"
+  "Drag over the part to keep": "남길 부분을 드래그하세요",
+  "%1 busy days": "바쁜 날 %1일",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · %2주차",
+  "1 busy day": "바쁜 날 1일",
+  "Coming up": "다가오는 일정",
+  "Days": "일별",
+  "Extreme": "위험",
+  "Free month": "한가한 달",
+  "Hourly": "시간별",
+  "Nothing on this day": "이 날은 일정 없음",
+  "UV index": "자외선 지수",
+  "Very high": "매우 높음",
+  "Week %1 · Day %2 of the year": "%1주차 · 올해 %2일째"
 }

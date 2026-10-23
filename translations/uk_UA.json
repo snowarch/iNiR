@@ -9708,5 +9708,18 @@
   "Remove pin": "Відкріпити",
   "Waiting for the window's picture": "Очікування зображення вікна",
   "It stays live, even on another workspace": "Лишається живим навіть на іншому робочому просторі",
-  "Drag over the part to keep": "Виділіть частину, яку треба залишити"
+  "Drag over the part to keep": "Виділіть частину, яку треба залишити",
+  "%1 busy days": "Зайнятих днів: %1",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · Тиждень %2",
+  "1 busy day": "1 зайнятий день",
+  "Coming up": "Незабаром",
+  "Days": "Дні",
+  "Extreme": "Екстремальний",
+  "Free month": "Вільний місяць",
+  "Hourly": "Погодинно",
+  "Nothing on this day": "Цього дня нічого",
+  "UV index": "УФ-індекс",
+  "Very high": "Дуже високий",
+  "Week %1 · Day %2 of the year": "Тиждень %1 · День %2 року"
 }

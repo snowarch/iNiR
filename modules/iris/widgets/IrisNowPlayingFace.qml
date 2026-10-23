@@ -421,30 +421,88 @@ IrisWidgetFace {
         }
     }
 
+    // Medium, as SekaiPop's media card: the plate washed in the cover's colour, the cover as a key (raised while it
+    // plays, pressed flush when paused; click it to play or pause), the song with a chip that says what it is doing,
+    // and the lane with its times at the ends and the keys on its centre.
+    Rectangle {
+        visible: !root.resting && root.medium && root.art.length > 0
+        anchors.fill: parent
+        anchors.margins: -root.padding
+        radius: root.radius
+        opacity: 0.5
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0; color: Qt.alpha(root.artLight, 0.42) }
+            GradientStop { position: 0.75; color: Qt.alpha(root.artLight, 0) }
+        }
+    }
     RowLayout {
         anchors.fill: parent
         visible: !root.resting && root.medium
         spacing: root.dp(14)
 
-        IrisArtwork {
-            source: root.art
-            circular: false
-            radius: root.innerRadius
+        Item {
             Layout.preferredWidth: root.height - root.padding * 2
             Layout.preferredHeight: Layout.preferredWidth
+            IrisArtwork {
+                id: mediumCover
+                anchors.fill: parent
+                source: root.art
+                circular: false
+                radius: root.innerRadius
+                scale: coverTap.pressed ? 0.9 : root.playing ? 1 : 0.94
+                Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
+            }
+            Rectangle {
+                anchors.centerIn: parent
+                visible: !root.playing
+                width: root.dp(38)
+                height: width
+                radius: width / 2
+                color: Qt.alpha(IrisStyle.scrim, 0.55)
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "play_arrow"
+                    fill: 1
+                    iconSize: root.px(24)
+                    color: IrisStyle.onMedia
+                }
+            }
+            HoverHandler { cursorShape: Qt.PointingHandCursor }
+            TapHandler { id: coverTap; onTapped: media.togglePlaying() }
         }
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: root.dp(2)
 
-            FaceText {
-                face: root
+            RowLayout {
                 Layout.fillWidth: true
-                text: root.source
-                color: root.inkTertiary
-                size: 11
-                weight: Font.DemiBold
+                spacing: root.dp(6)
+                FaceText {
+                    face: root
+                    Layout.fillWidth: true
+                    text: root.source
+                    color: root.inkTertiary
+                    size: 11
+                    weight: Font.DemiBold
+                }
+                Rectangle {
+                    implicitWidth: stateText.implicitWidth + root.dp(12)
+                    implicitHeight: root.dp(18)
+                    radius: height / 2
+                    color: root.playing ? Qt.alpha(root.artLight, 0.3) : root.fillQuiet
+                    Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+                    FaceText {
+                        id: stateText
+                        face: root
+                        anchors.centerIn: parent
+                        text: root.playing ? Translation.tr("Playing") : Translation.tr("Paused")
+                        size: 10
+                        weight: Font.DemiBold
+                        color: root.playing ? root.ink : root.inkSecondary
+                    }
+                }
             }
             FaceText {
                 face: root
@@ -465,10 +523,10 @@ IrisWidgetFace {
                 Layout.fillWidth: true
                 visible: media.effectiveLength > 0
             }
-            Transport {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: root.dp(6)
-                disc: root.dp(32)
+            KeysRow {
+                Layout.fillWidth: true
+                Layout.topMargin: root.dp(4)
+                disc: root.dp(30)
             }
         }
     }

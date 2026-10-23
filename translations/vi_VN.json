@@ -9708,5 +9708,18 @@
   "Remove pin": "Bỏ ghim",
   "Waiting for the window's picture": "Đang chờ hình ảnh của cửa sổ",
   "It stays live, even on another workspace": "Vẫn trực tiếp, kể cả ở không gian làm việc khác",
-  "Drag over the part to keep": "Kéo qua phần muốn giữ"
+  "Drag over the part to keep": "Kéo qua phần muốn giữ",
+  "%1 busy days": "%1 ngày bận",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · Tuần %2",
+  "1 busy day": "1 ngày bận",
+  "Coming up": "Sắp tới",
+  "Days": "Ngày",
+  "Extreme": "Cực cao",
+  "Free month": "Tháng rảnh",
+  "Hourly": "Theo giờ",
+  "Nothing on this day": "Không có gì vào ngày này",
+  "UV index": "Chỉ số UV",
+  "Very high": "Rất cao",
+  "Week %1 · Day %2 of the year": "Tuần %1 · Ngày %2 trong năm"
 }

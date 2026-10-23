@@ -9708,5 +9708,18 @@
   "Remove pin": "إزالة التثبيت",
   "Waiting for the window's picture": "بانتظار صورة النافذة",
   "It stays live, even on another workspace": "يبقى مباشرًا حتى في مساحة عمل أخرى",
-  "Drag over the part to keep": "اسحب فوق الجزء الذي تريد إبقاءه"
+  "Drag over the part to keep": "اسحب فوق الجزء الذي تريد إبقاءه",
+  "%1 busy days": "%1 أيام مشغولة",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · الأسبوع %2",
+  "1 busy day": "يوم مشغول واحد",
+  "Coming up": "القادم",
+  "Days": "الأيام",
+  "Extreme": "شديد جدًا",
+  "Free month": "شهر فارغ",
+  "Hourly": "كل ساعة",
+  "Nothing on this day": "لا شيء في هذا اليوم",
+  "UV index": "مؤشر الأشعة فوق البنفسجية",
+  "Very high": "مرتفع جدًا",
+  "Week %1 · Day %2 of the year": "الأسبوع %1 · اليوم %2 من السنة"
 }

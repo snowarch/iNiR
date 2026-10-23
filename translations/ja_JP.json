@@ -9708,5 +9708,18 @@
   "Remove pin": "固定を外す",
   "Waiting for the window's picture": "ウィンドウの映像を待っています",
   "It stays live, even on another workspace": "別のワークスペースでもライブのまま",
-  "Drag over the part to keep": "残したい部分をドラッグ"
+  "Drag over the part to keep": "残したい部分をドラッグ",
+  "%1 busy days": "予定のある日: %1",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · 第%2週",
+  "1 busy day": "予定のある日: 1",
+  "Coming up": "今後の予定",
+  "Days": "日別",
+  "Extreme": "極端",
+  "Free month": "予定のない月",
+  "Hourly": "時間別",
+  "Nothing on this day": "この日は予定なし",
+  "UV index": "UV指数",
+  "Very high": "非常に高い",
+  "Week %1 · Day %2 of the year": "第%1週 · 年の%2日目"
 }

@@ -9708,5 +9708,18 @@
   "Remove pin": "पिन हटाएँ",
   "Waiting for the window's picture": "विंडो की तस्वीर की प्रतीक्षा",
   "It stays live, even on another workspace": "दूसरे वर्कस्पेस पर भी लाइव रहता है",
-  "Drag over the part to keep": "रखने वाले हिस्से पर खींचें"
+  "Drag over the part to keep": "रखने वाले हिस्से पर खींचें",
+  "%1 busy days": "%1 व्यस्त दिन",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · सप्ताह %2",
+  "1 busy day": "1 व्यस्त दिन",
+  "Coming up": "आगामी",
+  "Days": "दिन",
+  "Extreme": "अत्यधिक",
+  "Free month": "खाली महीना",
+  "Hourly": "प्रति घंटा",
+  "Nothing on this day": "इस दिन कुछ नहीं",
+  "UV index": "UV सूचकांक",
+  "Very high": "बहुत अधिक",
+  "Week %1 · Day %2 of the year": "सप्ताह %1 · वर्ष का दिन %2"
 }

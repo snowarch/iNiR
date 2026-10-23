@@ -9708,5 +9708,18 @@
   "Remove pin": "取消固定",
   "Waiting for the window's picture": "正在等待窗口画面",
   "It stays live, even on another workspace": "即使在其他工作区也保持实时",
-  "Drag over the part to keep": "拖动选择要保留的部分"
+  "Drag over the part to keep": "拖动选择要保留的部分",
+  "%1 busy days": "%1 天有安排",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · 第 %2 周",
+  "1 busy day": "1 天有安排",
+  "Coming up": "即将到来",
+  "Days": "按天",
+  "Extreme": "极高",
+  "Free month": "空闲月份",
+  "Hourly": "逐小时",
+  "Nothing on this day": "这天没有安排",
+  "UV index": "紫外线指数",
+  "Very high": "很高",
+  "Week %1 · Day %2 of the year": "第 %1 周 · 今年第 %2 天"
 }

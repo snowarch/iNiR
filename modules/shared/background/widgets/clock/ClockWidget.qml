@@ -65,11 +65,12 @@ AbstractBackgroundWidget {
         root.statusShown ? statusText.implicitWidth : 0)
     irisFacePart: "clock"
     designFaceKey: "widgetClock"
-    irisSizes: ["small", "medium"]
+    irisSizes: ["small", "medium", "large"]
     irisOptions: [
         { key: "face", label: Translation.tr("Face"), fallback: "analog", choices: [
             { label: Translation.tr("Analog"), icon: "schedule", value: "analog" },
-            { label: Translation.tr("Digital"), icon: "timer_10", value: "digital" }] },
+            { label: Translation.tr("Digital"), icon: "timer_10", value: "digital" },
+            { label: Translation.tr("Keys"), icon: "keyboard", value: "keys" }] },
         { key: "seconds", label: Translation.tr("Second hand"), icon: "avg_pace", fallback: true }
     ]
     // Digital mode resizes via timeScale, cookie via cookie.size — avoids scaleFactor churn

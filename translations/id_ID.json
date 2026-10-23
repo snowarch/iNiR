@@ -9708,5 +9708,18 @@
   "Remove pin": "Lepas sematan",
   "Waiting for the window's picture": "Menunggu gambar jendela",
   "It stays live, even on another workspace": "Tetap langsung, bahkan di ruang kerja lain",
-  "Drag over the part to keep": "Seret di atas bagian yang ingin disimpan"
+  "Drag over the part to keep": "Seret di atas bagian yang ingin disimpan",
+  "%1 busy days": "%1 hari sibuk",
+  "%1 · %2 · %3": "%1 · %2 · %3",
+  "%1 · Week %2": "%1 · Minggu %2",
+  "1 busy day": "1 hari sibuk",
+  "Coming up": "Akan datang",
+  "Days": "Hari",
+  "Extreme": "Ekstrem",
+  "Free month": "Bulan kosong",
+  "Hourly": "Per jam",
+  "Nothing on this day": "Tidak ada apa-apa hari ini",
+  "UV index": "Indeks UV",
+  "Very high": "Sangat tinggi",
+  "Week %1 · Day %2 of the year": "Minggu %1 · Hari ke-%2 tahun ini"
 }
