@@ -21,7 +21,8 @@ IrisWidgetFace {
             running: TimerService.pomodoroRunning,
             paused: TimerService.pomodoroPaused,
             progress: 1 - TimerService.pomodoroSecondsLeft / Math.max(1, TimerService.pomodoroLapDuration),
-            tint: TimerService.pomodoroBreak ? IrisStyle.identity.green : root.highlight
+            tint: root.nothing ? (TimerService.pomodoroRunning && !TimerService.pomodoroPaused ? root.signal : root.ink)
+                : TimerService.pomodoroBreak ? IrisStyle.identity.green : root.highlight
         },
         {
             key: "stopwatch",
@@ -41,7 +42,8 @@ IrisWidgetFace {
             running: TimerService.countdownRunning,
             paused: TimerService.countdownPaused,
             progress: 1 - TimerService.countdownSecondsLeft / Math.max(1, TimerService.countdownDuration),
-            tint: root.highlight
+            // Nothing: a timer is ink until it runs; running, it is the one live thing and wears the signal.
+            tint: root.nothing ? (TimerService.countdownRunning && !TimerService.countdownPaused ? root.signal : root.ink) : root.highlight
         }
     ]
     readonly property var lead: {
@@ -126,7 +128,7 @@ IrisWidgetFace {
                 Layout.fillWidth: true
                 text: root.lead.value
                 size: 34
-                color: root.live(root.lead) || root.lead.paused ? root.ink : root.inkSecondary
+                tone: root.live(root.lead) || root.lead.paused ? root.ink : root.inkSecondary
             }
         }
         RowLayout {

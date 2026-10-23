@@ -24,7 +24,7 @@ IrisWidgetFace {
     readonly property var apps: { void root.revision; return root.on ? ScreenTime.getAppList(1) : [] }
     readonly property int appCount: root.large ? 5 : root.medium ? 2 : 1
     readonly property var topApps: root.apps.slice(0, root.appCount)
-    readonly property color tint: IrisStyle.identity.indigo
+    readonly property color tint: root.inked(IrisStyle.identity.indigo)
 
     function duration(seconds: int): string {
         const hours = Math.floor(seconds / 3600)

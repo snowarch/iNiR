@@ -94,11 +94,17 @@ Item {
     }
     // A Design's stock brings its own pigments for the data.
     readonly property bool stockInk: root.stocked && !root.clear && stockLoader.item !== null
-    readonly property color accent: root.stockInk ? stockLoader.item.accent : root.mark(root.widget.irisAccent)
-    readonly property color highlight: root.stockInk ? stockLoader.item.ink : root.mark(root.widget.irisAccent3)
-    readonly property color accent2: root.stockInk ? stockLoader.item.accent2 : root.mark(root.widget.irisAccent2)
-    readonly property color warm: root.mark(IrisStyle.secondaryAccent)
-    readonly property color danger: root.mark(IrisStyle.danger)
+    // Nothing worn on the desktop (DESIGN.md S1-S2): a monochrome face, ink levels for the data, the signal for the one
+    // value that is live or wants you, mono caps for labels. A Design that prints or dresses the face keeps its own.
+    readonly property bool nothing: IrisStyle.nothingAt("widgets") && !root.designed && !root.stocked
+    // As text it must read (4.5:1 on the face), as a mark the pure red is enough; one token keeps both legible.
+    readonly property color signal: root.mark(IrisStyle.signalInk)
+    function inked(seed: color): color { return root.nothing ? root.ink : seed }
+    readonly property color accent: root.nothing ? root.ink : root.stockInk ? stockLoader.item.accent : root.mark(root.widget.irisAccent)
+    readonly property color highlight: root.nothing ? root.signal : root.stockInk ? stockLoader.item.ink : root.mark(root.widget.irisAccent3)
+    readonly property color accent2: root.nothing ? root.inkSecondary : root.stockInk ? stockLoader.item.accent2 : root.mark(root.widget.irisAccent2)
+    readonly property color warm: root.nothing ? root.ink : root.mark(IrisStyle.secondaryAccent)
+    readonly property color danger: root.nothing ? root.signal : root.mark(IrisStyle.danger)
     readonly property color ink: root.stockInk ? stockLoader.item.ink : root.paper ? IrisStyle.text : root.lightBackdrop ? IrisStyle.inkOnLight : IrisStyle.light ? IrisStyle.inkOnDark : IrisStyle.text
     readonly property color inkSecondary: IrisStyle.secondaryOf(root.ink)
     readonly property color inkTertiary: IrisStyle.tertiaryOf(root.ink)
@@ -112,6 +118,7 @@ Item {
     readonly property int figureWeight: root.widget.widgetTitleWeight
     readonly property string fontMain: IrisStyle.fontMain
     readonly property string fontNumbers: IrisStyle.fontNumbers
+    readonly property string fontLabel: IrisStyle.fontLabel
     // Outline: Auto follows the shell's outline and leaves Transparent bare; while arranging it always shows.
     readonly property bool rimShown: GlobalStates.widgetEditMode || root.widget.irisOutline === "always"
         || (root.widget.irisOutline === "auto" && (!root.clear || root.widget.irisRim))

@@ -35,6 +35,9 @@ IrisWidgetFace {
     function tint(key: string): color {
         if (root.level(key) >= 0.85)
             return root.danger
+        // Nothing: one ink in three levels; only a reading past 85 % earns the signal.
+        if (root.nothing)
+            return key === "cpu" || key === "temp" ? root.ink : key === "mem" ? root.inkSecondary : root.inkTertiary
         return key === "cpu" || key === "temp" ? root.accent
             : key === "mem" ? root.accent2
             : key === "gpu" || key === "gpuTemp" ? root.highlight : root.inkSecondary
@@ -73,7 +76,7 @@ IrisWidgetFace {
             face: root
             text: root.figure(reading.key)
             size: reading.figureSize
-            color: reading.ink
+            tone: reading.ink
         }
         FaceText {
             face: root
@@ -156,12 +159,12 @@ IrisWidgetFace {
         }
     }
 
-    // Small: dot, name, figure on one line. Medium: figure over dot and name. Large: a legend row
-    // for its ring, name at the start and the figure at the end, all on one baseline.
+    // Small: dot, name and figure on one line across the face (the ring left 4 px for "RAM": it read "..."). Medium: the
+    // figure over its dot and name. Large: a legend row for its ring, name at the start and the figure at the end.
     component LoadReading: Item {
         id: load
         required property var entry
-        property real figureSize: root.small ? 16 : root.medium ? 25 : 30
+        property real figureSize: root.small ? 17 : root.medium ? 25 : 30
         readonly property bool inline: root.small || root.large
         implicitHeight: load.inline ? Math.max(value.height, label.height) : value.height + label.height + root.dp(2)
 
@@ -188,9 +191,9 @@ IrisWidgetFace {
                 x: dot.width + root.dp(root.small ? 4 : 6)
                 width: load.inline ? Math.max(0, value.x - x - root.dp(4)) : parent.width - x
                 text: load.entry.label
-                size: root.small ? 9 : root.large ? 13 : 11
-                weight: root.large ? Font.DemiBold : Font.Medium
-                color: root.large ? root.ink : root.inkSecondary
+                size: root.small ? 12.5 : root.large ? 13 : 11
+                weight: root.medium ? Font.Medium : Font.DemiBold
+                color: root.medium ? root.inkSecondary : root.ink
                 y: load.inline ? Math.round((value.height - height) / 2) : value.height + root.dp(2)
             }
         }
@@ -288,7 +291,7 @@ IrisWidgetFace {
         readonly property real detailsWidth: width - detailsX
 
         Orbits {
-            visible: root.loads.length > 0
+            visible: root.loads.length > 0 && !root.small
             width: root.orbitSize
             height: width
             y: Math.round(root.medium ? (composition.height - height) / 2 : (root.loadHeight - height) / 2)
@@ -297,7 +300,7 @@ IrisWidgetFace {
         Grid {
             id: loadValues
             visible: root.loads.length > 0
-            x: root.medium ? composition.detailsX : root.orbitSize + root.dp(root.small ? 8 : 22)
+            x: root.medium ? composition.detailsX : root.small ? 0 : root.orbitSize + root.dp(22)
             y: root.medium ? 0 : Math.round((root.loadHeight - height) / 2)
             width: composition.width - x
             columns: root.medium ? Math.max(1, root.loads.length) : 1
@@ -312,7 +315,7 @@ IrisWidgetFace {
                     height: root.small && root.loads.length > 1
                         ? Math.floor(root.loadHeight / root.loads.length - loadValues.spacing)
                         : implicitHeight
-                    figureSize: root.small ? 16 : root.medium ? 25 : 24
+                    figureSize: root.small ? 24 : root.medium ? 25 : 24
                 }
             }
         }

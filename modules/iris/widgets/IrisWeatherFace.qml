@@ -14,7 +14,9 @@ IrisWidgetFace {
     readonly property bool ready: Weather.enabled && !String(Weather.data?.temp ?? "--").startsWith("--")
     readonly property string glyph: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
     readonly property color sky: IrisStyle.skyLight(root.glyph)
-    readonly property string city: root.widget.showLocation && Weather.showVisibleCity ? Weather.visibleCity : ""
+    // The town, not its province: "Avellaneda, Bueno…" told less than "Avellaneda". Large has the room for both.
+    readonly property string city: root.widget.showLocation && Weather.showVisibleCity
+        ? (root.large ? Weather.visibleCity : String(Weather.visibleCity).split(",")[0].trim()) : ""
     readonly property string condition: IrisFaceData.capitalized(String(Weather.data?.description ?? ""))
     readonly property string range: {
         const high = root.degrees(Weather.data?.tempMax)
@@ -241,8 +243,8 @@ IrisWidgetFace {
                         radius: IrisStyle.capsule(height)
                         gradient: Gradient {
                             orientation: Gradient.Horizontal
-                            GradientStop { position: 0; color: IrisStyle.identity.sky }
-                            GradientStop { position: 1; color: IrisStyle.identity.orange }
+                            GradientStop { position: 0; color: root.inked(IrisStyle.identity.sky) }
+                            GradientStop { position: 1; color: root.inked(IrisStyle.identity.orange) }
                         }
                     }
                 }

@@ -18,7 +18,7 @@ IrisWidgetFace {
         height: root.dp(20)
         glyph: "edit_note"
         text: Translation.tr("Notes")
-        tint: IrisStyle.identity.yellow
+        tint: root.inked(IrisStyle.identity.yellow)
         trailing: root.words > 0 && !root.small ? Translation.tr("%1 words").arg(root.words) : ""
     }
 }
