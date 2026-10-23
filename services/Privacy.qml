@@ -125,7 +125,7 @@ Singleton {
     }
     Process {
         id: v4l2
-        command: ["sh", "-c", "for f in /proc/[0-9]*/fd/*; do case \"$(readlink \"$f\" 2>/dev/null)\" in /dev/video*) p=${f#/proc/}; cat \"/proc/${p%%/*}/comm\";; esac; done 2>/dev/null | sort -u"]
+        command: ["sh", "-c", "find /proc/[0-9]*/fd -maxdepth 1 -lname '/dev/video*' 2>/dev/null | cut -d/ -f3 | sort -u | while read -r p; do cat \"/proc/$p/comm\"; done 2>/dev/null | sort -u"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const names = this.text.split("\n").map(name => name.trim()).filter(name => name.length > 0
