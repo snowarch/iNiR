@@ -4156,6 +4156,18 @@ Singleton {
                     property string signal: "nothing"
                     // apple: the accent marks what is chosen; nothing: ink body, one signal colour
                     property string look: "apple"
+                    // Where the Nothing look is worn; a place turned off keeps Apple's controls and type.
+                    property JsonObject nothingOn: JsonObject {
+                        property bool island: true
+                        property bool dock: true
+                        property bool settings: true
+                        property bool spotlight: true
+                        property bool orbit: true
+                        property bool lock: true
+                        property bool widgets: true
+                        property bool notifications: true
+                        property bool osd: true
+                    }
                     property real density: 1.0
                     property bool motion: true
                     // iRiS Studio: the user's own tweaks on top of the preset. Every

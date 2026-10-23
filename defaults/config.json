@@ -2454,6 +2454,7 @@
             "numbersFontFamily": "",
             "signal": "nothing",
             "look": "apple",
+            "nothingOn": { "island": true, "dock": true, "settings": true, "spotlight": true, "orbit": true, "lock": true, "widgets": true, "notifications": true, "osd": true },
             "density": 1.0,
             "motion": true,
             "motionDuration": 220,

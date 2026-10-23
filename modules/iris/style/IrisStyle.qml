@@ -262,7 +262,8 @@ QtObject {
     // chose a face of their own for figures; past 22 px a figure takes the Dot voice (`figureFace`).
     readonly property string fontNumbers: IrisDesign.font("numbers")
         || (String(root.appearance?.numbersFontFamily ?? "").length > 0 ? root.fontDot : root.fontMain)
-    function figureFace(px: real): string { return px >= 22 ? root.fontDot : root.fontNumbers }
+    // The Dot face is Nothing's; Apple sets every figure in the numbers face, bold and tabular.
+    function figureFace(px: real): string { return px >= 22 && root.mono ? root.fontDot : root.fontNumbers }
     // The Label voice: data and labels in capitals.
     readonly property string fontMono: IrisDesign.font("mono") || root.faceLabel
     readonly property string fontRead: root.fontMain
@@ -306,6 +307,16 @@ QtObject {
     // Only the Nothing look (iris.appearance.look); Apple, the standard, keeps the accent on what is chosen.
     readonly property string look: String(root.appearance?.look ?? "apple")
     readonly property bool mono: root.look === "nothing" && !root.followsTheme && !root.animeEnabled
+    // Nothing is a layer worn by place (DESIGN.md "Two looks"): a surface names its place with `irisPlace` on its root
+    // item and every control under it asks once. Apple, the default, never walks: `mono` is false first.
+    readonly property var nothingOn: root.appearance?.nothingOn ?? ({})
+    function nothingAt(place: string): bool { return root.mono && (place.length === 0 || root.nothingOn?.[place] !== false) }
+    function placeOf(item): string {
+        for (let p = item; p; p = p.parent)
+            if (typeof p.irisPlace === "string") return p.irisPlace
+        return ""
+    }
+    function wearsNothing(item): bool { return root.mono && root.nothingAt(root.placeOf(item)) }
     readonly property bool neutralBody: root.mono && !["midnight", "wallpaper", "theme"].includes(root.materialName)
     readonly property var neutralRoles: ["surface", "surfaceHigh", "surfaceHighest", "text", "textSecondary", "textTertiary", "fillInk"]
     // The same light, no hue: a warm paper or a wallpaper-tinted black reads as its grey.
@@ -693,6 +704,10 @@ QtObject {
     // own ink on it turns into the inverted plate (ink fill, paper word), Nothing's "chosen".
     readonly property color accent: root.animeEnabled
         ? root.animeAccent(root.baseAccent, root.animePaletteName, root.animeStrength) : root.mono ? root.text : root.baseAccent
+    // The person's accent as Apple draws it, also where Nothing's ink took `accent` (a place that keeps Apple).
+    readonly property color appleAccent: root.animeEnabled || !root.mono ? root.accent : root.baseAccent
+    readonly property color appleAccentFill: !root.mono ? root.accentFill : root.washi?.accentFill ? Qt.color(root.washi.accentFill) : root.baseAccent
+    readonly property color appleInkOnAccentFill: !root.mono ? root.inkOnAccentFill : root.washi?.onAccentFill ? Qt.color(root.washi.onAccentFill) : root.role("onAccent", "#101318")
     readonly property color inkOnAccent: root.animeEnabled ? root.onTintFor(root.accent) : root.mono ? root.paper : root.role("onAccent", "#101318")
     // Colour over imagery (the lock, artwork veils), which stays dark in every scheme: the night palette's roles.
     readonly property color mediaInk: root.neutral(Qt.color(root.washiDark?.text ?? "#f2f2f0"))
