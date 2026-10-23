@@ -6,10 +6,6 @@ import qs.services
 import qs.modules.common.widgets
 import qs.modules.iris.style
 
-// The month as SekaiPop's calendar card builds it, in iRiS: a plate (the month as the title, the year and this week's
-// number over it, today as a disc that brings the page back, the month's tally on a tab and the two page keys), the
-// days as keys (today the raised accent key, a day with entries wears their dots), and what a day holds when you
-// pick it. The wheel over the days turns the page.
 IrisWidgetFace {
     id: root
     designFace: IrisDesign.skin("widgetCalendar")
@@ -19,143 +15,62 @@ IrisWidgetFace {
     readonly property bool browsing: root.widget.monthShift !== 0
     readonly property bool adjacent: root.widget.showAdjacentDays
     readonly property var upcoming: IrisFaceData.upcomingEvents(root.today, 7)
-    readonly property string monthName: IrisFaceData.capitalized(Translation.locale.standaloneMonthName(root.viewing.getMonth()))
-    readonly property int week: {
-        const day = new Date(root.today.getFullYear(), root.today.getMonth(), root.today.getDate())
-        day.setDate(day.getDate() + 3 - (day.getDay() + 6) % 7)
-        const first = new Date(day.getFullYear(), 0, 4)
-        return 1 + Math.round(((day - first) / 86400000 - 3 + (first.getDay() + 6) % 7) / 7)
-    }
-    readonly property int monthDays: new Date(root.viewing.getFullYear(), root.viewing.getMonth() + 1, 0).getDate()
-    readonly property int busyDays: {
-        let busy = 0
-        for (let d = 1; d <= root.monthDays; ++d)
-            if (IrisFaceData.hasEvents(new Date(root.viewing.getFullYear(), root.viewing.getMonth(), d)))
-                busy++
-        return busy
-    }
-    // The day you picked (null = the week ahead).
+    // A picked day (click it in the month) takes the place of today in the readout; click it again, or the big day,
+    // to let go. The wheel over the month turns the page.
     property var picked: null
+    readonly property var focusDay: root.picked ?? root.today
     readonly property var pickedEvents: root.picked ? root.eventsOn(root.picked) : []
-    readonly property var shownEvents: root.picked ? root.pickedEvents : root.upcoming
-
+    readonly property var nextEvent: root.picked ? (root.pickedEvents[0] ?? null) : (root.upcoming[0] ?? null)
+    readonly property string weekday: IrisFaceData.capitalized(Translation.locale.toString(root.focusDay, "dddd"))
     function eventsOn(date: var): var {
         return Array.from(Events.getEventsForDate(date) ?? []).concat(Array.from(CalendarSync.getEventsForDate(date) ?? []))
-            .sort((a, b) => IrisFaceData.eventDate(a) - IrisFaceData.eventDate(b))
     }
     function sameDay(a: var, b: var): bool {
-        return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+        return Boolean(a) && Boolean(b) && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
     }
     function turn(step: int): void {
         root.picked = null
         root.widget.monthShift = step === 0 ? 0 : root.widget.monthShift + step
     }
+    readonly property string monthName: IrisFaceData.capitalized(Translation.locale.standaloneMonthName(root.viewing.getMonth()))
 
-    // Today as a disc: click it to bring the page back.
-    component TodayDisc: Rectangle {
-        property real side: root.dp(34)
-        width: side
-        height: side
-        radius: side / 2
-        color: root.highlight
-        scale: discTap.pressed ? 0.92 : 1
-        Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-        FaceFigure {
-            face: root
-            anchors.centerIn: parent
-            text: root.today.getDate()
-            size: Math.max(14, parent.side / root.t * 0.46)
-            tone: root.onFill(root.highlight)
-        }
-        TapHandler { id: discTap; onTapped: root.turn(0) }
-        HoverHandler { cursorShape: Qt.PointingHandCursor }
-    }
+    component MonthGrid: ColumnLayout {
+        id: grid
+        property real cellText: 10.5
+        property bool dots: false
+        property bool header: true
+        spacing: root.dp(2)
 
-    // The two page keys as one capsule.
-    component PageKeys: Rectangle {
-        implicitWidth: root.dp(56)
-        implicitHeight: root.dp(24)
-        radius: height / 2
-        color: root.fillQuiet
-        Row {
-            anchors.fill: parent
-            Repeater {
-                model: [{ glyph: "chevron_left", step: -1 }, { glyph: "chevron_right", step: 1 }]
-                Item {
-                    id: pageKey
-                    required property var modelData
-                    width: parent.width / 2
-                    height: parent.height
-                    Rectangle {
-                        anchors.fill: parent
-                        anchors.margins: root.dp(2)
-                        radius: height / 2
-                        color: pageHover.hovered ? root.fillHover : "transparent"
-                    }
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: pageKey.modelData.glyph
-                        iconSize: root.px(16)
-                        color: root.inkSecondary
-                    }
-                    HoverHandler { id: pageHover; cursorShape: Qt.PointingHandCursor }
-                    TapHandler { onTapped: root.turn(pageKey.modelData.step) }
-                }
+        RowLayout {
+            visible: grid.header
+            Layout.fillWidth: true
+            spacing: root.dp(4)
+            FaceText {
+                face: root
+                text: root.monthName
+                color: root.heading
+                size: grid.cellText + 2
+                weight: Font.DemiBold
+            }
+            FaceText {
+                face: root
+                Layout.fillWidth: true
+                visible: root.viewing.getFullYear() !== root.today.getFullYear()
+                text: root.viewing.getFullYear()
+                color: root.inkTertiary
+                size: grid.cellText + 2
             }
         }
-    }
-
-    // The month's tally on a tab.
-    component Tally: Rectangle {
-        implicitWidth: tallyText.implicitWidth + root.dp(14)
-        implicitHeight: root.dp(22)
-        radius: height / 2
-        color: root.busyDays > 0 ? Qt.alpha(root.accent, 0.18) : root.fillQuiet
-        FaceText {
-            id: tallyText
-            face: root
-            anchors.centerIn: parent
-            text: root.busyDays === 0 ? Translation.tr("Free month")
-                : root.busyDays === 1 ? Translation.tr("1 busy day") : Translation.tr("%1 busy days").arg(root.busyDays)
-            size: 11
-            weight: Font.DemiBold
-            color: root.busyDays > 0 ? root.accent : root.inkSecondary
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: event => { if (Math.abs(event.angleDelta.y) >= 60) root.turn(event.angleDelta.y < 0 ? 1 : -1) }
         }
-    }
-
-    // The month title with the year and the week over it.
-    component Title: ColumnLayout {
-        property real size: 17
-        spacing: 0
-        FaceText {
-            face: root
+        GridLayout {
             Layout.fillWidth: true
-            text: root.browsing ? String(root.viewing.getFullYear())
-                : Translation.tr("%1 · Week %2").arg(root.viewing.getFullYear()).arg(root.week)
-            color: root.inkTertiary
-            size: 11.5
-            weight: Font.DemiBold
-            font.features: ({ "tnum": 1 })
-        }
-        FaceText {
-            face: root
-            Layout.fillWidth: true
-            text: root.monthName
-            color: root.heading
-            size: parent.size
-            weight: Font.Bold
-        }
-    }
-
-    // The days as keys.
-    component Days: ColumnLayout {
-        id: days
-        property real cellText: 11
-        property bool keycaps: true
-        spacing: root.dp(2)
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: root.dp(days.keycaps ? 3 : 0)
+            Layout.fillHeight: true
+            columns: 7
+            rowSpacing: 0
+            columnSpacing: 0
             Repeater {
                 model: 7
                 FaceText {
@@ -165,18 +80,11 @@ IrisWidgetFace {
                     Layout.preferredWidth: 1
                     horizontalAlignment: Text.AlignHCenter
                     text: Translation.locale.dayName((root.widget.weekStart + index) % 7, Locale.NarrowFormat).toUpperCase()
-                    color: (root.widget.weekStart + index) % 7 === 0 || (root.widget.weekStart + index) % 7 === 6 ? root.inkTertiary : root.inkSecondary
-                    size: days.cellText - 1.5
+                    color: root.inkTertiary
+                    size: grid.cellText - 1
                     weight: Font.DemiBold
                 }
             }
-        }
-        GridLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            columns: 7
-            rowSpacing: root.dp(days.keycaps ? 3 : 0)
-            columnSpacing: root.dp(days.keycaps ? 3 : 0)
             Repeater {
                 model: root.widget.monthCells()
                 Item {
@@ -185,64 +93,25 @@ IrisWidgetFace {
                     required property int index
                     readonly property var date: new Date(root.viewing.getFullYear(), root.viewing.getMonth()
                         + (cell.modelData.currentMonth ? 0 : cell.index < 7 ? -1 : 1), cell.modelData.day)
-                    readonly property var events: cell.modelData.currentMonth ? root.eventsOn(cell.date) : []
+                    readonly property var events: grid.dots && cell.modelData.currentMonth ? root.eventsOn(cell.date) : []
+                    readonly property bool busy: cell.events.length > 0
                     readonly property bool chosen: root.sameDay(root.picked, cell.date)
-                    readonly property bool shown: cell.modelData.currentMonth || root.adjacent
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.preferredWidth: 1
                     Layout.preferredHeight: 1
                     Rectangle {
-                        id: keycap
                         anchors.centerIn: parent
-                        width: days.keycaps ? parent.width : Math.min(parent.width, parent.height) * 0.92
-                        height: days.keycaps ? parent.height : width
-                        radius: days.keycaps ? Math.min(root.dp(8), height * 0.32) : height / 2
-                        visible: cell.shown
-                        color: cell.modelData.isToday ? root.highlight
-                            : cell.chosen ? root.fillActive
-                            : dayHover.hovered && cell.modelData.currentMonth ? root.fillHover
-                            : days.keycaps && cell.modelData.currentMonth ? root.fillQuiet : "transparent"
+                        width: Math.min(parent.width, parent.height) * 0.9
+                        height: width
+                        radius: IrisStyle.capsule(width)
+                        visible: cell.modelData.isToday || cell.chosen || (dayHover.hovered && cell.modelData.currentMonth)
+                        color: cell.modelData.isToday ? root.highlight : cell.chosen ? root.fillActive : root.fillHover
                         border.width: cell.chosen && !cell.modelData.isToday ? 1 : 0
-                        border.color: root.accent
-                        scale: dayTap.pressed ? 0.9 : 1
-                        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                        Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
-                        FaceText {
-                            face: root
-                            anchors.centerIn: parent
-                            anchors.verticalCenterOffset: cell.events.length > 0 && days.keycaps ? -root.dp(2) : 0
-                            text: cell.modelData.day
-                            color: cell.modelData.isToday ? root.onFill(root.highlight)
-                                : cell.modelData.currentMonth ? root.ink : root.inkTertiary
-                            size: days.cellText
-                            weight: cell.modelData.isToday ? Font.Bold : Font.Medium
-                            font.family: root.fontNumbers
-                            font.features: ({ "tnum": 1 })
-                        }
-                        // Up to three dots, one per entry, in their own colours.
-                        Row {
-                            visible: cell.events.length > 0
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: Math.max(1, root.dp(days.keycaps ? 3 : 0))
-                            spacing: root.dp(2)
-                            Repeater {
-                                model: cell.events.slice(0, 3)
-                                Rectangle {
-                                    required property var modelData
-                                    width: root.dp(4)
-                                    height: width
-                                    radius: width / 2
-                                    color: cell.modelData.isToday ? root.onFill(root.highlight) : IrisFaceData.eventTint(modelData, root.accent)
-                                }
-                            }
-                        }
+                        border.color: root.highlight
                     }
-                    HoverHandler { id: dayHover; enabled: cell.shown; cursorShape: Qt.PointingHandCursor }
+                    HoverHandler { id: dayHover; cursorShape: Qt.PointingHandCursor }
                     TapHandler {
-                        id: dayTap
-                        enabled: cell.shown
                         onTapped: {
                             if (!cell.modelData.currentMonth)
                                 root.turn(cell.index < 7 ? -1 : 1)
@@ -250,180 +119,196 @@ IrisWidgetFace {
                                 root.picked = cell.chosen ? null : cell.date
                         }
                     }
+                    FaceText {
+                        face: root
+                        anchors.centerIn: parent
+                        visible: cell.modelData.currentMonth || root.adjacent
+                        text: cell.modelData.day
+                        color: cell.modelData.isToday ? root.onFill(root.highlight)
+                            : cell.modelData.currentMonth ? root.ink : root.inkTertiary
+                        size: grid.cellText
+                        weight: cell.modelData.isToday ? Font.Bold : Font.Medium
+                        font.family: root.fontNumbers
+                        font.features: ({ "tnum": 1 })
+                    }
+                    Rectangle {
+                        visible: cell.busy && !cell.modelData.isToday
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.bottom: parent.bottom
+                        width: root.dp(4)
+                        height: width
+                        radius: IrisStyle.capsule(width)
+                        color: IrisFaceData.eventTint(cell.events[0], root.accent)
+                    }
                 }
-            }
-        }
-        WheelHandler {
-            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-            onWheel: event => {
-                if (Math.abs(event.angleDelta.y) >= 60)
-                    root.turn(event.angleDelta.y < 0 ? 1 : -1)
             }
         }
     }
 
-    // One entry: its colour, title and when.
-    component Entry: Rectangle {
-        id: entry
+    component EventLine: RowLayout {
+        id: line
         property var event: null
-        implicitHeight: root.dp(38)
-        radius: root.innerRadius
-        color: root.fillQuiet
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: root.dp(8)
-            anchors.rightMargin: root.dp(10)
-            spacing: root.dp(8)
-            Rectangle {
-                Layout.preferredWidth: root.dp(4)
-                Layout.preferredHeight: parent.height - root.dp(14)
-                radius: width / 2
-                color: IrisFaceData.eventTint(entry.event, root.accent)
-            }
+        spacing: root.dp(8)
+        Rectangle {
+            Layout.preferredWidth: root.dp(3)
+            Layout.fillHeight: true
+            radius: IrisStyle.capsule(width)
+            color: IrisFaceData.eventTint(line.event, root.accent)
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 0
             FaceText {
                 face: root
                 Layout.fillWidth: true
-                text: IrisFaceData.eventTitle(entry.event)
+                text: IrisFaceData.eventTitle(line.event)
                 size: 12.5
                 weight: Font.DemiBold
             }
-            Rectangle {
-                implicitWidth: whenText.implicitWidth + root.dp(12)
-                implicitHeight: root.dp(20)
-                radius: height / 2
-                color: Qt.alpha(IrisFaceData.eventTint(entry.event, root.accent), 0.18)
-                FaceText {
-                    id: whenText
-                    face: root
-                    anchors.centerIn: parent
-                    text: IrisFaceData.eventWhen(entry.event, root.today)
-                    size: 10.5
-                    weight: Font.DemiBold
-                    color: root.inkSecondary
-                }
+            FaceText {
+                face: root
+                Layout.fillWidth: true
+                text: IrisFaceData.eventWhen(line.event, root.today)
+                color: root.inkSecondary
+                size: 11.5
             }
         }
     }
 
-    // What the picked day (or the week ahead) holds.
-    component Agenda: ColumnLayout {
-        id: agenda
-        property int rows: 2
-        spacing: root.dp(5)
-        FaceText {
-            face: root
-            Layout.fillWidth: true
-            text: root.picked ? IrisFaceData.capitalized(Translation.locale.toString(root.picked, "dddd d MMMM"))
-                : Translation.tr("Coming up")
-            color: root.inkSecondary
-            size: 11.5
-            weight: Font.DemiBold
-        }
-        Repeater {
-            model: root.shownEvents.slice(0, agenda.rows)
-            Entry {
-                required property var modelData
-                Layout.fillWidth: true
-                event: modelData
-            }
-        }
-        Rectangle {
-            visible: root.shownEvents.length === 0
-            Layout.fillWidth: true
-            implicitHeight: root.dp(38)
-            radius: root.innerRadius
-            color: root.fillQuiet
+    MonthGrid {
+        visible: root.small
+        anchors.fill: parent
+        cellText: 10
+    }
+
+    RowLayout {
+        visible: root.medium
+        anchors.fill: parent
+        spacing: root.dp(14)
+
+        ColumnLayout {
+            Layout.fillWidth: false
+            Layout.preferredWidth: root.contentWidth * 0.36
+            Layout.maximumWidth: root.contentWidth * 0.36
+            Layout.fillHeight: true
+            spacing: 0
             FaceText {
                 face: root
-                anchors.centerIn: parent
+                Layout.fillWidth: true
+                text: root.weekday
+                color: root.heading
+                size: 13
+                weight: Font.DemiBold
+            }
+            FaceFigure {
+                face: root
+                Layout.fillWidth: true
+                text: root.focusDay.getDate()
+                size: 46
+                tone: root.picked ? root.inkSecondary : root.ink
+                TapHandler { enabled: root.picked !== null || root.browsing; onTapped: root.turn(0) }
+            }
+            Item { Layout.fillHeight: true }
+            EventLine {
+                visible: root.nextEvent !== null
+                Layout.fillWidth: true
+                event: root.nextEvent
+            }
+            FaceText {
+                face: root
+                visible: root.nextEvent === null
+                Layout.fillWidth: true
                 text: root.picked ? Translation.tr("Nothing on this day") : Translation.tr("No events this week")
                 color: root.inkTertiary
                 size: 12
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
             }
+        }
+        MonthGrid {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            cellText: 10
+            dots: true
         }
     }
 
-    // Small: title and disc, then the days.
     ColumnLayout {
-        visible: root.small
+        visible: root.large
         anchors.fill: parent
-        spacing: root.dp(4)
+        spacing: root.dp(8)
+
         RowLayout {
             Layout.fillWidth: true
             spacing: root.dp(4)
             FaceText {
                 face: root
-                Layout.fillWidth: true
                 text: root.monthName
                 color: root.heading
-                size: 13
+                size: 18
                 weight: Font.Bold
             }
-            PageKeys { implicitWidth: root.dp(44); implicitHeight: root.dp(20) }
-        }
-        Days {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            cellText: 9.5
-            keycaps: false
-        }
-    }
-
-    // Medium: the plate beside the days.
-    RowLayout {
-        visible: root.medium
-        anchors.fill: parent
-        spacing: root.dp(12)
-        ColumnLayout {
-            Layout.preferredWidth: root.contentWidth * 0.33
-            Layout.maximumWidth: root.contentWidth * 0.33
-            Layout.fillHeight: true
-            spacing: root.dp(6)
-            RowLayout {
+            FaceText {
+                face: root
                 Layout.fillWidth: true
-                Title { Layout.fillWidth: true; size: 16 }
+                text: root.viewing.getFullYear()
+                color: root.inkTertiary
+                size: 18
+                weight: Font.Medium
             }
-            TodayDisc { side: root.dp(40) }
-            Item { Layout.fillHeight: true }
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: root.dp(4)
-                PageKeys {}
-                Item { Layout.fillWidth: true }
+            Repeater {
+                model: [
+                    { glyph: "today", shift: 0, shown: root.browsing, name: Translation.tr("Today") },
+                    { glyph: "chevron_left", shift: -1, shown: true, name: Translation.tr("Previous month") },
+                    { glyph: "chevron_right", shift: 1, shown: true, name: Translation.tr("Next month") }
+                ]
+                Rectangle {
+                    id: navButton
+                    required property var modelData
+                    visible: navButton.modelData.shown
+                    Layout.preferredWidth: root.dp(28)
+                    Layout.preferredHeight: root.dp(28)
+                    radius: IrisStyle.capsule(width)
+                    color: navHover.hovered ? root.fillHover : root.fillQuiet
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: navButton.modelData.glyph
+                        iconSize: root.px(18)
+                        color: root.inkSecondary
+                    }
+                    HoverHandler { id: navHover; cursorShape: Qt.PointingHandCursor }
+                    TapHandler { onTapped: root.turn(navButton.modelData.shift) }
+                    Accessible.role: Accessible.Button
+                    Accessible.name: navButton.modelData.name
+                }
             }
         }
-        Days {
+        MonthGrid {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            cellText: 10.5
+            header: false
+            cellText: 13.5
+            dots: true
         }
-    }
-
-    // Large: the plate across the top, the days, then what is coming.
-    ColumnLayout {
-        visible: root.large
-        anchors.fill: parent
-        spacing: root.dp(10)
-        RowLayout {
+        Rectangle {
             Layout.fillWidth: true
-            spacing: root.dp(10)
-            TodayDisc { side: root.dp(46) }
-            Title { Layout.fillWidth: true; size: 20 }
-            ColumnLayout {
-                spacing: root.dp(4)
-                PageKeys { Layout.alignment: Qt.AlignRight }
-                Tally { Layout.alignment: Qt.AlignRight }
-            }
+            Layout.preferredHeight: 1
+            color: root.hairline
         }
-        Days {
+        EventLine {
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            cellText: 13
+            Layout.preferredHeight: root.dp(34)
+            visible: root.nextEvent !== null
+            event: root.nextEvent
         }
-        Agenda {
+        FaceText {
+            face: root
+            visible: root.nextEvent === null
             Layout.fillWidth: true
-            Layout.fillHeight: false
-            rows: 2
+            Layout.preferredHeight: root.dp(34)
+            text: root.picked ? Translation.tr("Nothing on this day") : Translation.tr("No events this week")
+            color: root.inkTertiary
+            size: 12.5
         }
     }
 }

@@ -421,21 +421,8 @@ IrisWidgetFace {
         }
     }
 
-    // Medium, as SekaiPop's media card: the plate washed in the cover's colour, the cover as a key (raised while it
-    // plays, pressed flush when paused; click it to play or pause), the song with a chip that says what it is doing,
-    // and the lane with its times at the ends and the keys on its centre.
-    Rectangle {
-        visible: !root.resting && root.medium && root.art.length > 0
-        anchors.fill: parent
-        anchors.margins: -root.padding
-        radius: root.radius
-        opacity: 0.5
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop { position: 0; color: Qt.alpha(root.artLight, 0.42) }
-            GradientStop { position: 0.75; color: Qt.alpha(root.artLight, 0) }
-        }
-    }
+    // Medium: the cover is the play key (it settles back while paused), the song, and the lane with its times at
+    // the ends and the keys on its centre.
     RowLayout {
         anchors.fill: parent
         visible: !root.resting && root.medium
@@ -476,33 +463,13 @@ IrisWidgetFace {
             Layout.fillHeight: true
             spacing: root.dp(2)
 
-            RowLayout {
+            FaceText {
+                face: root
                 Layout.fillWidth: true
-                spacing: root.dp(6)
-                FaceText {
-                    face: root
-                    Layout.fillWidth: true
-                    text: root.source
-                    color: root.inkTertiary
-                    size: 11
-                    weight: Font.DemiBold
-                }
-                Rectangle {
-                    implicitWidth: stateText.implicitWidth + root.dp(12)
-                    implicitHeight: root.dp(18)
-                    radius: height / 2
-                    color: root.playing ? Qt.alpha(root.artLight, 0.3) : root.fillQuiet
-                    Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
-                    FaceText {
-                        id: stateText
-                        face: root
-                        anchors.centerIn: parent
-                        text: root.playing ? Translation.tr("Playing") : Translation.tr("Paused")
-                        size: 10
-                        weight: Font.DemiBold
-                        color: root.playing ? root.ink : root.inkSecondary
-                    }
-                }
+                text: root.source
+                color: root.inkTertiary
+                size: 11
+                weight: Font.DemiBold
             }
             FaceText {
                 face: root

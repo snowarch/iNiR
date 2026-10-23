@@ -91,10 +91,7 @@ AbstractBackgroundWidget {
     irisFacePart: "weather"
     irisSizes: ["small", "medium", "large"]
     irisOptions: [
-        { key: "showLocation", raw: true, label: Translation.tr("Location"), icon: "location_on", fallback: true },
-        { key: "forecast", label: Translation.tr("Forecast"), fallback: "hours", choices: [
-            { label: Translation.tr("Hourly"), icon: "schedule", value: "hours" },
-            { label: Translation.tr("Days"), icon: "calendar_view_week", value: "days" }] }
+        { key: "showLocation", raw: true, label: Translation.tr("Location"), icon: "location_on", fallback: true }
     ]
     resizableAxes: ({ uniform: "size" })
     resizeMinWidth: root.weatherStyle === "detail" ? 280

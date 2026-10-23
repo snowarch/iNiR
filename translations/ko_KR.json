@@ -9721,5 +9721,6 @@
   "Nothing on this day": "이 날은 일정 없음",
   "UV index": "자외선 지수",
   "Very high": "매우 높음",
-  "Week %1 · Day %2 of the year": "%1주차 · 올해 %2일째"
+  "Week %1 · Day %2 of the year": "%1주차 · 올해 %2일째",
+  "UV %1 · %2": "자외선 %1 · %2"
 }

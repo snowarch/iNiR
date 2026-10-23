@@ -87,53 +87,7 @@ IrisWidgetFace {
         return (now.getHours() * 60 + now.getMinutes()) / 1440
     }
 
-    // SekaiPop's user card in iRiS: a banner that greets you, the avatar as a sticker on its edge, your name and
-    // machine, how the machine is (up, shell, desktop) as keys, and how much of today is gone on a lane.
-    component Banner: Rectangle {
-        radius: root.innerRadius
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop { position: 0; color: Qt.alpha(root.accent, 0.55) }
-            GradientStop { position: 1; color: Qt.alpha(root.highlight, 0.35) }
-        }
-        Rectangle {
-            anchors.right: parent.right
-            anchors.rightMargin: root.dp(8)
-            anchors.verticalCenter: parent.verticalCenter
-            implicitWidth: greetText.implicitWidth + root.dp(14)
-            implicitHeight: root.dp(20)
-            radius: height / 2
-            color: Qt.alpha(root.knockout, 0.7)
-            FaceText {
-                id: greetText
-                face: root
-                anchors.centerIn: parent
-                text: root.greeting
-                size: 10.5
-                weight: Font.DemiBold
-            }
-        }
-    }
-
-    component Sticker: Rectangle {
-        property real side: root.dp(60)
-        visible: root.widget.showAvatar
-        width: side
-        height: side
-        radius: side / 2
-        color: root.knockout
-        rotation: avatarHover.hovered ? 4 : -3
-        scale: avatarTap.pressed ? 0.9 : 1
-        Behavior on rotation { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
-        Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-        FaceAvatar {
-            anchors.fill: parent
-            anchors.margins: root.dp(3)
-        }
-        HoverHandler { id: avatarHover }
-        TapHandler { id: avatarTap }
-    }
-
+    // Your avatar, name and machine, how the machine is (up, shell, desktop) and how much of today is gone.
     component Key: Rectangle {
         id: fact
         property string word: ""
@@ -231,44 +185,46 @@ IrisWidgetFace {
         }
     }
 
-    // Medium and large: banner, sticker and name, (keys,) the day.
+    // Medium and large: avatar, greeting, name and machine, (facts and today,) the day.
     Item {
         visible: !root.small
         anchors.fill: parent
-        Banner {
-            id: banner
+        FaceAvatar {
+            id: avatar
+            visible: root.widget.showAvatar
             anchors.left: parent.left
-            anchors.right: parent.right
-            height: root.dp(root.large ? 70 : 40)
-        }
-        Sticker {
-            id: sticker
-            anchors.left: parent.left
-            anchors.leftMargin: root.dp(10)
-            y: banner.height - side * 0.55
-            side: root.dp(root.large ? 76 : 56)
+            anchors.top: parent.top
+            width: root.dp(root.large ? 72 : 58)
+            height: width
         }
         ColumnLayout {
-            anchors.left: root.widget.showAvatar ? sticker.right : parent.left
-            anchors.leftMargin: root.widget.showAvatar ? root.dp(10) : 0
+            anchors.left: root.widget.showAvatar ? avatar.right : parent.left
+            anchors.leftMargin: root.widget.showAvatar ? root.dp(12) : 0
             anchors.right: actions.left
             anchors.rightMargin: root.dp(6)
-            anchors.top: banner.bottom
-            anchors.topMargin: root.dp(4)
+            anchors.verticalCenter: avatar.verticalCenter
             spacing: 0
             FaceText {
                 face: root
                 Layout.fillWidth: true
+                text: root.greeting
+                color: root.heading
+                size: 12.5
+                weight: Font.DemiBold
+            }
+            FaceText {
+                face: root
+                Layout.fillWidth: true
                 text: root.name
-                size: root.large ? 20 : 16
-                weight: Font.Bold
+                size: root.large ? 22 : 18
+                weight: root.figureWeight
                 font.family: IrisStyle.fontTitle
             }
             FaceText {
                 face: root
                 Layout.fillWidth: true
                 visible: root.host.length > 0
-                text: "@" + root.host
+                text: root.host
                 color: root.inkSecondary
                 size: 11.5
             }
@@ -276,15 +232,14 @@ IrisWidgetFace {
         Actions {
             id: actions
             anchors.right: parent.right
-            anchors.top: banner.bottom
-            anchors.topMargin: root.dp(8)
+            anchors.top: parent.top
         }
         RowLayout {
             id: facts
             visible: root.large
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.top: sticker.bottom
+            anchors.top: avatar.bottom
             anchors.topMargin: root.dp(14)
             spacing: root.dp(8)
             Key { Layout.fillWidth: true; word: Translation.tr("Uptime"); value: DateTime.uptime || "--" }
