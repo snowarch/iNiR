@@ -100,6 +100,8 @@ Item {
     // As text it must read (4.5:1 on the face), as a mark the pure red is enough; one token keeps both legible.
     readonly property color signal: root.mark(IrisStyle.signalInk)
     function inked(seed: color): color { return root.nothing ? root.ink : seed }
+    // A heading in the highlight; under Nothing it is ink, so the signal is left for the face's one live value.
+    readonly property color heading: root.nothing ? root.ink : root.highlight
     readonly property color accent: root.nothing ? root.ink : root.stockInk ? stockLoader.item.accent : root.mark(root.widget.irisAccent)
     readonly property color highlight: root.nothing ? root.signal : root.stockInk ? stockLoader.item.ink : root.mark(root.widget.irisAccent3)
     readonly property color accent2: root.nothing ? root.inkSecondary : root.stockInk ? stockLoader.item.accent2 : root.mark(root.widget.irisAccent2)

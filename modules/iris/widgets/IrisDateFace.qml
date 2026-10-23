@@ -54,7 +54,7 @@ IrisWidgetFace {
                     width: Math.max(parent.height, parent.width * root.yearShare)
                     height: parent.height
                     radius: IrisStyle.capsule(height)
-                    color: root.highlight
+                    color: root.heading
                 }
             }
             FaceText {

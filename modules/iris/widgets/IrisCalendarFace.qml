@@ -33,7 +33,7 @@ IrisWidgetFace {
             FaceText {
                 face: root
                 text: root.monthName
-                color: root.highlight
+                color: root.heading
                 size: grid.cellText + 2
                 weight: Font.DemiBold
             }
@@ -165,7 +165,7 @@ IrisWidgetFace {
                 face: root
                 Layout.fillWidth: true
                 text: root.weekday
-                color: root.highlight
+                color: root.heading
                 size: 13
                 weight: Font.DemiBold
             }
@@ -211,7 +211,7 @@ IrisWidgetFace {
             FaceText {
                 face: root
                 text: root.monthName
-                color: root.highlight
+                color: root.heading
                 size: 18
                 weight: Font.Bold
             }

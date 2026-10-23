@@ -100,7 +100,7 @@ IrisWidgetFace {
                 face: root
                 Layout.fillWidth: true
                 text: root.greeting
-                color: root.highlight
+                color: root.heading
                 size: 13
                 weight: Font.DemiBold
             }
