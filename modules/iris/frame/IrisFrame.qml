@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+import Quickshell
 import qs.modules.common
 import qs.modules.iris.style
 
@@ -22,6 +23,34 @@ QtObject {
         if (shapes.length > 0 && screen) next[key] = { screen: screen, shapes: shapes }
         else delete next[key]
         root.placeBodies = next
+    }
+    // Each output's chassis says whether it is drawn and seen there: its canvas not withdrawn, nothing fullscreen over it.
+    property var chassisShown: ({})
+    function showChassis(screen: string, shown: bool): void {
+        if (!screen || Boolean(root.chassisShown[screen]) === shown) return
+        const next = Object.assign({}, root.chassisShown)
+        if (shown) next[screen] = true
+        else delete next[screen]
+        root.chassisShown = next
+    }
+    readonly property bool nativeRaster: typeof Quickshell.hasVersion === "function" && Quickshell.hasVersion(0, 3, ["field-region"])
+    // Places in Overlay windows of their own (Settings, side panels, menus) in the order they opened: Niri stacks a
+    // later one above an earlier one.
+    property var overlayPlaces: []
+    function stackOverlay(key: string, screen: string, shown: bool): void {
+        const at = root.overlayPlaces.findIndex(p => p.key === key)
+        if (shown && screen && at >= 0 && root.overlayPlaces[at].screen === screen) return
+        const rest = root.overlayPlaces.filter(p => p.key !== key)
+        if (!shown && at < 0) return
+        root.overlayPlaces = shown && screen ? rest.concat([{ key: key, screen: screen }]) : rest
+    }
+    // Such a Place hands its body to the chassis (one field, one blur) where the chassis is seen and no Overlay Place
+    // opened before it is still there: that one's own body and content would sit between this body and its content.
+    // `anyRuntime` aside, only on qs-rs: Quickshell walks the blur of a big moving body coarsely, its own field is exact.
+    function leases(key: string, screen: string, anyRuntime: bool): bool {
+        if (!key || !root.chassisShown[screen] || !(anyRuntime || root.nativeRaster)) return false
+        const first = root.overlayPlaces.find(p => p.screen === screen)
+        return first !== undefined && first.key === key
     }
     function placeShapesOn(screen: string): var {
         const out = []

@@ -748,6 +748,24 @@ Scope {
                 exclusionMode: ExclusionMode.Ignore
                 exclusiveZone: 0
                 WlrLayershell.namespace: "quickshell:iris-chassis"
+                // Overlay Places lease this field only where it is seen: never over a fullscreen window (Top sits under it,
+                // and Overlay recreates this surface above the Places that opened first).
+                QtObject {
+                    id: chassisShown
+                    readonly property string screenName: barWindow.screen?.name ?? ""
+                    readonly property bool shown: !barWindow.canvasSuppressed && !barWindow.overlaid
+                        && !(CompositorService.isNiri && GameMode.hasFullscreenOnOutput(chassisShown.screenName))
+                    property string told: ""
+                    function tell(): void {
+                        if (chassisShown.told && chassisShown.told !== chassisShown.screenName) IrisFrame.showChassis(chassisShown.told, false)
+                        chassisShown.told = chassisShown.screenName
+                        IrisFrame.showChassis(chassisShown.screenName, chassisShown.shown)
+                    }
+                    onShownChanged: chassisShown.tell()
+                    onScreenNameChanged: chassisShown.tell()
+                    Component.onCompleted: chassisShown.tell()
+                    Component.onDestruction: IrisFrame.showChassis(chassisShown.told, false)
+                }
                 Component.onCompleted: IrisParts.IrisMotionMeter.registerChassis(barWindow.screen?.name ?? "", barWindow)
                 Component.onDestruction: IrisParts.IrisMotionMeter.registerChassis(barWindow.screen?.name ?? "", null)
                 readonly property bool editHere: GlobalStates.irisEdit

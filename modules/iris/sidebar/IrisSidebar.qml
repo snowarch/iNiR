@@ -167,11 +167,14 @@ PanelWindow {
         behindOrigin: false
         id: frame
         compositorBlurred: true
-        ownField: !root.notch
-        fieldBacked: root.notch
+        ownField: true
+        overlay: true
+        leasesOnAnyRuntime: root.notch
+        fieldBacked: frame.chassisLeases
         chassisKey: "sidebar-" + root.side
         chassisJoin: {
             const id = "panel:" + root.side
+            if (!root.notch) return { id: id }
             if (IrisFrame.framed) return { id: id, joins: "frame", fuse: IrisStyle.fuseEdge }
             const deep = Math.max(8, IrisStyle.fuseEdge)
             return { id: id, joins: "panelEdge:" + root.side, fuse: IrisStyle.fuseEdge,

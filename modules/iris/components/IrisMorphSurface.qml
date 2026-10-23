@@ -48,6 +48,14 @@ Item {
     // edge, and `grow` ("top", "left"…) to extend the body under that edge by its radius.
     property string chassisKey: ""
     property var chassisJoin: ({})
+    // Lives in an Overlay window of its own: it may lease the chassis while `chassisLeases` (IrisFrame.leases).
+    property bool overlay: false
+    property bool leasesOnAnyRuntime: false
+    readonly property string leaseScreen: root.QsWindow.window?.screen?.name ?? ""
+    readonly property bool overlayShown: root.overlay && root.visible && (root.open || root.armed || root.presentation > 0)
+    onOverlayShownChanged: IrisFrame.stackOverlay(root.chassisKey, root.leaseScreen, root.overlayShown)
+    onLeaseScreenChanged: if (root.overlayShown) IrisFrame.stackOverlay(root.chassisKey, root.leaseScreen, true)
+    readonly property bool chassisLeases: root.overlay && IrisFrame.leases(root.chassisKey, root.leaseScreen, root.leasesOnAnyRuntime)
     // Glass materialises by its blur, as Liquid Glass does, not by fading: over the first three quarters of the
     // movement the body goes from the clear wallpaper to its full frost and tint (`IrisField` reads it per body).
     readonly property real frost: { const t = Math.max(0, Math.min(1, root.presentation / 0.75)); return 1 - (1 - t) * (1 - t) }
@@ -57,9 +65,13 @@ Item {
         const at = chassis.mapToItem(null, 0, 0)
         const join = root.chassisJoin ?? {}
         const r = chassis.radius
+        const glass = root.glass ? IrisStyle.surfaceGlass(root.motionSurface) : "solid"
+        if (root.panes.length > 0)
+            return root.paneShapes(Qt.point(at.x + root.windowOffset.x, at.y + root.windowOffset.y)).map(p => Object.assign(
+                { paints: true, fuse: 0, joins: "", glass: glass, frost: root.frost }, p, { id: root.chassisKey + ":" + (p.id ?? "") }))
         const body = { x: at.x + root.windowOffset.x, y: at.y + root.windowOffset.y, width: chassis.width, height: chassis.height, radius: r,
             id: join.id ?? root.chassisKey, joins: join.joins ?? "", fuse: join.fuse ?? 0, paints: true,
-            glass: root.glass ? IrisStyle.surfaceGlass(root.motionSurface) : "solid", frost: root.frost }
+            glass: glass, frost: root.frost }
         if (join.grow === "top") { body.y -= r; body.height += r }
         else if (join.grow === "bottom") body.height += r
         else if (join.grow === "left") { body.x -= r; body.width += r }
@@ -67,7 +79,10 @@ Item {
         return join.edge ? [join.edge, body] : [body]
     }
     onChassisBodiesChanged: IrisFrame.publishPlace(root.chassisKey, root.QsWindow.window?.screen?.name ?? "", root.chassisBodies)
-    Component.onDestruction: IrisFrame.publishPlace(root.chassisKey, "", [])
+    Component.onDestruction: {
+        IrisFrame.publishPlace(root.chassisKey, "", [])
+        if (root.overlay) IrisFrame.stackOverlay(root.chassisKey, "", false)
+    }
     // Several bodies in one surface (Settings' Deck): rects in the surface's own frame, drawn and blurred each as a body
     // of its own with the gaps between them clear. A pane with `edge` is a wall it melts into, never blurred.
     property var panes: []

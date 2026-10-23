@@ -934,6 +934,9 @@ Item {
         settles: true
         windowOffset: Qt.point(IrisFrame.band, IrisFrame.band)
         ownField: !root.windowed || root.windowField
+        overlay: !root.windowed
+        chassisKey: "settings"
+        fieldBacked: frame.chassisLeases
         // A window cannot know where it sits on screen, so it never samples the wallpaper: Blur asks Niri, else solid.
         glass: !root.windowed || IrisStyle.glassCompositor
         id: frame

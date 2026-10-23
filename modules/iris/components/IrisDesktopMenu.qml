@@ -18,6 +18,8 @@ Loader {
     id: root
 
     property var model: []
+    // Several menus can be alive at once (one closing as another opens): each leases the chassis under its own key.
+    readonly property string leaseKey: "menu:" + Math.random().toString(36).slice(2, 10)
     // What the open menu shows, fixed when it opens: a live model rebuilt the rows while the popup was
     // mapped, the popup resized, and its input landed rows away from what was drawn.
     property var shown: []
@@ -247,6 +249,9 @@ Loader {
             compositorBlurred: true
             blurWhileReceding: false
             ownField: true
+            overlay: true
+            chassisKey: root.leaseKey
+            fieldBacked: menu.chassisLeases
             MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons; z: -1 }
             open: popup.placed
             readonly property real seed: Math.round(28 * root.d)
