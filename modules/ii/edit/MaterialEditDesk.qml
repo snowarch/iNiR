@@ -238,14 +238,13 @@ Scope {
                     pages: materialFace.pages
                     Component.onCompleted: materialFace.shelf = shelf
                     entries: {
-                        const keys = Object.keys(DesktopWidgetIdentity.glyphs)
-                        const list = keys.map(key => materialFace.prepare({ key: key, glyph: DesktopWidgetIdentity.glyph(key),
-                            name: materialFace.nameOf(key), english: materialFace.nameOf(key), tint: DesktopWidgetIdentity.tint(key),
-                            words: [key, DesktopWidgetIdentity.keywordsOf(key), shelf.categoryNames[DesktopWidgetIdentity.categoryOf(key)] ?? "",
-                                DesktopWidgetIdentity.categoryOf(key)].join(" "), category: DesktopWidgetIdentity.categoryOf(key) }))
+                        const list = DesktopWidgetRegistry.keys.map(key => materialFace.prepare({ key: key, glyph: DesktopWidgetRegistry.glyph(key),
+                            name: materialFace.nameOf(key), english: materialFace.nameOf(key), tint: DesktopWidgetRegistry.tint(key),
+                            words: [key, DesktopWidgetRegistry.keywordsOf(key), shelf.categoryNames[DesktopWidgetRegistry.categoryOf(key)] ?? "",
+                                DesktopWidgetRegistry.categoryOf(key)].join(" "), category: DesktopWidgetRegistry.categoryOf(key) }))
                         for (const custom of (CustomWidgets.ready ? CustomWidgets.widgets : []))
                             list.push(materialFace.prepare({ key: "custom." + custom.id, glyph: custom.icon || "widgets", name: custom.name,
-                                english: custom.name, tint: DesktopWidgetIdentity.customTint, words: "custom hub", category: "decor" }))
+                                english: custom.name, tint: DesktopWidgetRegistry.customTint, words: "custom hub", category: "decor" }))
                         return list
                     }
                 }

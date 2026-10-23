@@ -402,12 +402,7 @@ Scope {
         }
 
         function setWidgetEnabled(widgetName: string, enabled: bool): string {
-            const knownWidgets = ["weather", "clock", "customImage", "imageConverter",
-                "mediaControls", "visualizer", "systemMonitor", "battery", "notes",
-                "calendarUpcoming", "monthCalendar", "todo", "timers", "dayProgress", "uptime", "shape", "dateBadge", "editorial",
-                "newsTicker", "mascot", "japaneseTypography",
-                "worldClock", "userCard", "controls", "screenTime", "palette", "lyrics"];
-            if (!knownWidgets.includes(widgetName))
+            if (!DesktopWidgetRegistry.has(widgetName))
                 return "unknown widget: " + widgetName;
             DesktopWidgetLayout.setGloballyEnabled(widgetName, enabled);
             return widgetName + (enabled ? " enabled" : " disabled");
@@ -630,6 +625,9 @@ Scope {
         function _widgetConfigValue(widgetKey: string, key: string, fallback: var): var {
             return DesktopWidgetLayout.value(bgRoot.screenName, widgetKey, key, fallback);
         }
+        function _widgetShown(widgetKey: string): bool {
+            return bgRoot._widgetEnabled(widgetKey, DesktopWidgetRegistry.defaultOn(widgetKey))
+        }
         function _widgetEnabled(widgetKey: string, fallback: bool): bool {
             return DesktopWidgetLayout.enabled(bgRoot.screenName, widgetKey, fallback);
         }
@@ -780,36 +778,6 @@ Scope {
             && (GlobalStates.widgetEditMode
                 || bgRoot._widgetEnabled("notes", false)
                 || bgRoot._widgetEnabled("todo", false))
-
-        // Zone occupancy: map zone name → array of widget names
-        readonly property var _builtinWidgets: [
-            { key: "weather",            defaultOn: false, icon: "cloud" },
-            { key: "clock",              defaultOn: true,  icon: "schedule" },
-            { key: "customImage",        defaultOn: false, icon: "add_photo_alternate" },
-            { key: "imageConverter",     defaultOn: false, icon: "transform" },
-            { key: "mediaControls",      defaultOn: false, icon: "album" },
-            { key: "visualizer",         defaultOn: false, icon: "graphic_eq" },
-            { key: "systemMonitor",      defaultOn: false, icon: "monitor_heart" },
-            { key: "battery",            defaultOn: false, icon: "battery_full" },
-            { key: "notes",              defaultOn: false, icon: "sticky_note_2" },
-            { key: "calendarUpcoming",   defaultOn: false, icon: "event" },
-            { key: "monthCalendar",      defaultOn: false, icon: "calendar_month" },
-            { key: "todo",               defaultOn: false, icon: "checklist" },
-            { key: "timers",             defaultOn: false, icon: "timer" },
-            { key: "uptime",             defaultOn: false, icon: "avg_pace" },
-            { key: "shape", defaultOn: false, icon: "category" },
-            { key: "dateBadge", defaultOn: false, icon: "today" },
-            { key: "editorial", defaultOn: false, icon: "text_fields" },
-            { key: "newsTicker",         defaultOn: false, icon: "newspaper" },
-            { key: "mascot",             defaultOn: false, icon: "pets" },
-            { key: "japaneseTypography", defaultOn: false, icon: "translate" },
-            { key: "worldClock",         defaultOn: false, icon: "public" },
-            { key: "userCard",           defaultOn: false, icon: "account_circle" },
-            { key: "controls",           defaultOn: false, icon: "toggle_on" },
-            { key: "screenTime",         defaultOn: false, icon: "hourglass_bottom" },
-            { key: "palette",            defaultOn: false, icon: "palette" },
-            { key: "lyrics",             defaultOn: false, icon: "lyrics" }
-        ]
 
         // Multi-monitor wallpaper support
         // IMPORTANT: Only use WallpaperListener when multi-monitor is enabled.
@@ -2964,7 +2932,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("weather", false)
+                    shown: bgRoot._widgetShown("weather")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask : null
                     WidgetInputMask { id: _hitMask; loader: parent }
@@ -2980,7 +2948,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("customImage", false)
+                    shown: bgRoot._widgetShown("customImage")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskCustomImage : null
                     WidgetInputMask { id: _hitMaskCustomImage; loader: parent }
@@ -2996,7 +2964,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("imageConverter", false)
+                    shown: bgRoot._widgetShown("imageConverter")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskImageConverter : null
                     WidgetInputMask { id: _hitMaskImageConverter; loader: parent }
@@ -3012,7 +2980,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("clock", true)
+                    shown: bgRoot._widgetShown("clock")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask2 : null
                     WidgetInputMask { id: _hitMask2; loader: parent }
@@ -3039,7 +3007,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("mediaControls", false)
+                    shown: bgRoot._widgetShown("mediaControls")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask3 : null
                     WidgetInputMask { id: _hitMask3; loader: parent }
@@ -3055,7 +3023,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("visualizer", false)
+                    shown: bgRoot._widgetShown("visualizer")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask4 : null
                     WidgetInputMask { id: _hitMask4; loader: parent }
@@ -3071,7 +3039,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("systemMonitor", false)
+                    shown: bgRoot._widgetShown("systemMonitor")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask5 : null
                     WidgetInputMask { id: _hitMask5; loader: parent }
@@ -3087,7 +3055,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("battery", false)
+                    shown: bgRoot._widgetShown("battery")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask6 : null
                     WidgetInputMask { id: _hitMask6; loader: parent }
@@ -3103,7 +3071,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("notes", false)
+                    shown: bgRoot._widgetShown("notes")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask7 : null
                     WidgetInputMask { id: _hitMask7; loader: parent }
@@ -3119,7 +3087,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("calendarUpcoming", false)
+                    shown: bgRoot._widgetShown("calendarUpcoming")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask8 : null
                     WidgetInputMask { id: _hitMask8; loader: parent }
@@ -3135,7 +3103,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("monthCalendar", false)
+                    shown: bgRoot._widgetShown("monthCalendar")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskMonthCalendar : null
                     WidgetInputMask { id: _hitMaskMonthCalendar; loader: parent }
@@ -3151,7 +3119,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("todo", false)
+                    shown: bgRoot._widgetShown("todo")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskTodo : null
                     WidgetInputMask { id: _hitMaskTodo; loader: parent }
@@ -3167,7 +3135,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("timers", false)
+                    shown: bgRoot._widgetShown("timers")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskTimers : null
                     WidgetInputMask { id: _hitMaskTimers; loader: parent }
@@ -3183,7 +3151,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("dayProgress", false)
+                    shown: bgRoot._widgetShown("dayProgress")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskDayProgress : null
                     WidgetInputMask { id: _hitMaskDayProgress; loader: parent }
@@ -3199,7 +3167,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("uptime", false)
+                    shown: bgRoot._widgetShown("uptime")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask10 : null
                     WidgetInputMask { id: _hitMask10; loader: parent }
@@ -3215,7 +3183,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("controls", false) && (Config.options?.panelFamily ?? "ii") === "iris"
+                    shown: bgRoot._widgetShown("controls") && (Config.options?.panelFamily ?? "ii") === "iris"
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskControls : null
                     WidgetInputMask { id: _hitMaskControls; loader: parent }
@@ -3231,7 +3199,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("screenTime", false) && (Config.options?.panelFamily ?? "ii") === "iris"
+                    shown: bgRoot._widgetShown("screenTime") && (Config.options?.panelFamily ?? "ii") === "iris"
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskScreenTime : null
                     WidgetInputMask { id: _hitMaskScreenTime; loader: parent }
@@ -3247,7 +3215,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("palette", false) && (Config.options?.panelFamily ?? "ii") === "iris"
+                    shown: bgRoot._widgetShown("palette") && (Config.options?.panelFamily ?? "ii") === "iris"
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskPalette : null
                     WidgetInputMask { id: _hitMaskPalette; loader: parent }
@@ -3263,7 +3231,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("lyrics", false) && (Config.options?.panelFamily ?? "ii") === "iris"
+                    shown: bgRoot._widgetShown("lyrics") && (Config.options?.panelFamily ?? "ii") === "iris"
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskLyrics : null
                     WidgetInputMask { id: _hitMaskLyrics; loader: parent }
@@ -3279,7 +3247,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("editorial", false)
+                    shown: bgRoot._widgetShown("editorial")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? editorialHitMask : null
                     WidgetInputMask { id: editorialHitMask; loader: parent }
@@ -3295,7 +3263,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("shape", false)
+                    shown: bgRoot._widgetShown("shape")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskshape : null
                     WidgetInputMask { id: _hitMaskshape; loader: parent }
@@ -3311,7 +3279,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("dateBadge", false)
+                    shown: bgRoot._widgetShown("dateBadge")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMaskdateBadge : null
                     WidgetInputMask { id: _hitMaskdateBadge; loader: parent }
@@ -3328,7 +3296,7 @@ Scope {
 
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("worldClock", false)
+                    shown: bgRoot._widgetShown("worldClock")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask15 : null
                     WidgetInputMask { id: _hitMask15; loader: parent }
@@ -3344,7 +3312,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("userCard", false)
+                    shown: bgRoot._widgetShown("userCard")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask16 : null
                     WidgetInputMask { id: _hitMask16; loader: parent }
@@ -3360,7 +3328,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("newsTicker", false)
+                    shown: bgRoot._widgetShown("newsTicker")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask12 : null
                     WidgetInputMask { id: _hitMask12; loader: parent }
@@ -3376,7 +3344,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("mascot", false)
+                    shown: bgRoot._widgetShown("mascot")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask13 : null
                     WidgetInputMask { id: _hitMask13; loader: parent }
@@ -3392,7 +3360,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("japaneseTypography", false)
+                    shown: bgRoot._widgetShown("japaneseTypography")
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask14 : null
                     WidgetInputMask { id: _hitMask14; loader: parent }

@@ -6,6 +6,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.shared.background.widgets
 
 // Material's face on the shared widget shelf: its surfaces and type, filter chips for the pages (the widgets, the bar,
 // the Dock, saved desktops), a search field and the widget settings key; widgets are found by the start of a word in
@@ -35,16 +36,7 @@ QtObject {
     function pressScale(s: real): real { return s }
     function weight(w: int): int { return w }
 
-    readonly property var names: ({ clock: Translation.tr("Clock"), weather: Translation.tr("Weather"),
-        mediaControls: Translation.tr("Now Playing"), controls: Translation.tr("Controls"), monthCalendar: Translation.tr("Calendar"),
-        calendarUpcoming: Translation.tr("Up next"), todo: Translation.tr("Tasks"), notes: Translation.tr("Notes"),
-        timers: Translation.tr("Timers"), screenTime: Translation.tr("Screen Time"), palette: Translation.tr("Palette"), lyrics: Translation.tr("Lyrics"), systemMonitor: Translation.tr("Vitals"),
-        battery: Translation.tr("Batteries"), worldClock: Translation.tr("World clock"), dayProgress: Translation.tr("Day"),
-        dateBadge: Translation.tr("Date"), userCard: Translation.tr("Profile"), uptime: Translation.tr("Uptime"),
-        newsTicker: Translation.tr("News"), visualizer: Translation.tr("Visualizer"), editorial: Translation.tr("Editorial"),
-        mascot: Translation.tr("Mascot"), japaneseTypography: Translation.tr("Japanese Typography"), customImage: Translation.tr("Image"),
-        imageConverter: Translation.tr("Image converter"), shape: Translation.tr("Shape") })
-    function nameOf(key: string): string { return face.names[key] ?? key }
+    function nameOf(key: string): string { return DesktopWidgetRegistry.has(key) ? Translation.tr(DesktopWidgetRegistry.nameOf(key)) : key }
 
     function fold(text: string): string { return String(text ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "") }
     function prepare(entry: var): var {

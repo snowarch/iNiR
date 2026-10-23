@@ -37,7 +37,7 @@ Item {
 
     readonly property var categoryNames: ({ all: Translation.tr("All"), today: Translation.tr("Today"), media: Translation.tr("Media"),
         system: Translation.tr("System"), notes: Translation.tr("Notes"), decor: Translation.tr("Decor") })
-    readonly property var categories: ["all"].concat(DesktopWidgetIdentity.categoryOrder
+    readonly property var categories: ["all"].concat(DesktopWidgetRegistry.categoryOrder
         .filter(id => root.entries.some(entry => entry.category === id)))
         .map(id => ({ value: id, label: root.categoryNames[id] }))
     property string category: "all"

@@ -31,7 +31,7 @@ ColumnLayout {
 
     function entry(key: string): var {
         return IrisFaceData.galleryEntries.find(item => item.key === key)
-            ?? { key: key, glyph: DesktopWidgetIdentity.glyph(key), label: key, tint: IrisStyle.identityOf(DesktopWidgetIdentity.tint(key)) }
+            ?? { key: key, glyph: DesktopWidgetRegistry.glyph(key), label: key, tint: IrisStyle.identityOf(DesktopWidgetRegistry.tint(key)) }
     }
     function intervalLabel(seconds: int): string {
         return seconds >= 60 ? Translation.tr("%1 min").arg(Math.round(seconds / 60)) : Translation.tr("%1 s").arg(seconds)

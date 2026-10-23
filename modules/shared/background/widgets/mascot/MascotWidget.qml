@@ -13,10 +13,7 @@ import qs.modules.iris.style
 /**
  * Desktop mascot widget: a pose from the catalog living on the wallpaper
  * layer, pose picked visually in Settings › Widgets › Mascot. Tapping her
- * pokes the live companion. Registered per the folder contract: import +
- * _builtinWidgets entry + FadeLoader + knownWidgets in Background.qml,
- * schema in Config.qml, defaults/config.json, DesktopWidgetsConfig section,
- * shelf (DesktopWidgetIdentity) list.
+ * pokes the live companion. Registered in DesktopWidgetRegistry.
  */
 AbstractBackgroundWidget {
     id: root

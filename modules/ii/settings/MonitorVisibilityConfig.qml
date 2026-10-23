@@ -5,6 +5,7 @@ import Quickshell.Io
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.shared.background.widgets
 
 ContentPage {
     id: root
@@ -67,28 +68,8 @@ ContentPage {
     readonly property var desktopWidgetDescriptors: {
         void Config.revision
         void CustomWidgets.ready
-        const widgets = [
-            { key: "clock", title: Translation.tr("Clock"), icon: "schedule", defaultOn: true },
-            { key: "weather", title: Translation.tr("Weather"), icon: "cloud", defaultOn: false },
-            { key: "mediaControls", title: Translation.tr("Media controls"), icon: "album", defaultOn: false },
-            { key: "visualizer", title: Translation.tr("Visualizer"), icon: "graphic_eq", defaultOn: false },
-            { key: "systemMonitor", title: Translation.tr("System monitor"), icon: "monitor_heart", defaultOn: false },
-            { key: "battery", title: Translation.tr("Battery"), icon: "battery_full", defaultOn: false },
-            { key: "notes", title: Translation.tr("Notes"), icon: "sticky_note_2", defaultOn: false },
-            { key: "calendarUpcoming", title: Translation.tr("Upcoming Events"), icon: "event", defaultOn: false },
-            { key: "monthCalendar", title: Translation.tr("Month Calendar"), icon: "calendar_month", defaultOn: false },
-            { key: "todo", title: Translation.tr("Todo"), icon: "checklist", defaultOn: false },
-            { key: "timers", title: Translation.tr("Timers"), icon: "timer", defaultOn: false },
-            { key: "dayProgress", title: Translation.tr("Day progress"), icon: "av_timer", defaultOn: false },
-            { key: "uptime", title: Translation.tr("System uptime"), icon: "avg_pace", defaultOn: false },
-            { key: "worldClock", title: Translation.tr("World clock"), icon: "public", defaultOn: false },
-            { key: "userCard", title: Translation.tr("User card"), icon: "account_circle", defaultOn: false },
-            { key: "newsTicker", title: Translation.tr("News Ticker"), icon: "newspaper", defaultOn: false },
-            { key: "japaneseTypography", title: Translation.tr("Japanese Typography"), icon: "translate", defaultOn: false },
-            { key: "customImage", title: Translation.tr("Custom image"), icon: "add_photo_alternate", defaultOn: false },
-            { key: "imageConverter", title: Translation.tr("Image converter"), icon: "transform", defaultOn: false },
-            { key: "mascot", title: Translation.tr("Mascot"), icon: "pets", defaultOn: false }
-        ]
+        const widgets = DesktopWidgetRegistry.entries.map(entry => ({ key: entry.key, title: Translation.tr(entry.group),
+            icon: entry.glyph, defaultOn: entry.defaultOn }))
         const instances = Config.getNestedValue("background.widgets.mascotInstances", {}) ?? {}
         let mascotIndex = 1
         for (const id of Object.keys(instances).sort()) {

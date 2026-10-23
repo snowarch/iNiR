@@ -42,11 +42,11 @@ WidgetShelf {
     entries: {
         const list = IrisFaceData.galleryEntries.concat(IrisFaceData.otherEntries).map(entry => IrisSearch.prepare({
             key: entry.key, glyph: entry.glyph, name: entry.label, english: entry.english, tint: entry.tint,
-            words: [entry.key, DesktopWidgetIdentity.keywordsOf(entry.key), root.categoryNames[DesktopWidgetIdentity.categoryOf(entry.key)] ?? "",
-                DesktopWidgetIdentity.categoryOf(entry.key)].join(" "), category: DesktopWidgetIdentity.categoryOf(entry.key) }))
+            words: [entry.key, DesktopWidgetRegistry.keywordsOf(entry.key), root.categoryNames[DesktopWidgetRegistry.categoryOf(entry.key)] ?? "",
+                DesktopWidgetRegistry.categoryOf(entry.key)].join(" "), category: DesktopWidgetRegistry.categoryOf(entry.key) }))
         for (const custom of (CustomWidgets.ready ? CustomWidgets.widgets : []))
             list.push(IrisSearch.prepare({ key: "custom." + custom.id, glyph: custom.icon || "widgets", name: custom.name,
-                english: custom.name, tint: DesktopWidgetIdentity.customTint, words: "custom hub", category: "decor" }))
+                english: custom.name, tint: DesktopWidgetRegistry.customTint, words: "custom hub", category: "decor" }))
         return list
     }
 

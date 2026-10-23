@@ -45,41 +45,16 @@ QtObject {
     })
 
     // Material's size classes: footprints on an 8 px grid, and per widget the classes it draws (default first)
-    // plus what each one sets on it. Box widgets take the footprint as contentWidth/contentHeight.
+    // plus what each one sets on it (DesktopWidgetRegistry). Box widgets take the footprint as contentWidth/contentHeight.
     readonly property int materialUnit: 176
     readonly property int materialGap: 16
-    readonly property var materialSizes: ({
-        clock: { sizes: ["medium", "small", "large"] },
-        weather: { sizes: ["small", "medium", "large"] },
-        mediaControls: { sizes: ["medium", "small", "large"] },
-        monthCalendar: { sizes: ["large", "small", "medium"], box: true },
-        calendarUpcoming: { sizes: ["medium", "small", "large"], box: true },
-        todo: { sizes: ["large", "small", "medium"], box: true },
-        notes: { sizes: ["medium", "small", "large"], box: true },
-        timers: { sizes: ["medium", "small", "large"] },
-        systemMonitor: { sizes: ["medium", "small", "large"], box: true },
-        battery: { sizes: ["small", "medium", "large"] },
-        worldClock: { sizes: ["medium", "large"], box: true },
-        dayProgress: { sizes: ["small", "large"], box: true },
-        dateBadge: { sizes: ["small", "medium", "large"], box: true },
-        userCard: { sizes: ["medium", "small"], box: true },
-        uptime: { sizes: ["small", "medium"], box: true },
-        newsTicker: { sizes: ["medium", "small", "large"], box: true },
-        customImage: { sizes: ["medium", "small", "large"], box: true },
-        visualizer: { sizes: ["medium", "small", "large"], box: true },
-        japaneseTypography: { sizes: ["large"], box: true },
-        imageConverter: { sizes: ["large", "medium"], box: true },
-        shape: { sizes: ["small", "medium", "large"], box: true },
-        mascot: { sizes: ["large", "small"], small: { contentWidth: 176 }, large: { contentWidth: 368 } },
-        editorial: { sizes: ["large", "medium"], box: true }
-    })
-    function materialSizesOf(widget: string): var { return root.materialSizes[widget]?.sizes ?? [] }
+    function materialSizesOf(widget: string): var { return DesktopWidgetRegistry.entry(widget)?.sizes ?? [] }
     function materialFootprint(size: string): size {
         const unit = root.materialUnit
         return Qt.size(size === "small" ? unit : unit * 2 + root.materialGap, size === "large" ? unit * 2 + root.materialGap : unit)
     }
     function materialValues(widget: string, size: string): var {
-        const entry = root.materialSizes[widget]
+        const entry = DesktopWidgetRegistry.entry(widget)
         if (!entry || !entry.sizes.includes(size)) return ({})
         const values = Object.assign({}, entry[size] ?? {})
         if (entry.box) {

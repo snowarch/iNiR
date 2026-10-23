@@ -10,44 +10,34 @@ import qs.modules.shared.background.widgets
 Singleton {
     id: root
 
-    readonly property var galleryEntries: [
-        { key: "clock", glyph: "schedule", english: "Clock", label: Translation.tr("Clock"), tint: IrisStyle.identity.orange },
-        { key: "weather", glyph: "partly_cloudy_day", english: "Weather", label: Translation.tr("Weather"), tint: IrisStyle.identity.blue },
-        { key: "mediaControls", glyph: "music_note", english: "Now Playing", label: Translation.tr("Now Playing"), tint: IrisStyle.identity.pink },
-        { key: "controls", glyph: "toggle_on", english: "Controls", label: Translation.tr("Controls"), tint: IrisStyle.identity.blue },
-        { key: "monthCalendar", glyph: "calendar_month", english: "Calendar", label: Translation.tr("Calendar"), tint: IrisStyle.identity.red },
-        { key: "calendarUpcoming", glyph: "event_upcoming", english: "Up next", label: Translation.tr("Up next"), tint: IrisStyle.identity.red },
-        { key: "todo", glyph: "checklist", english: "Tasks", label: Translation.tr("Tasks"), tint: IrisStyle.identity.orange },
-        { key: "notes", glyph: "sticky_note_2", english: "Notes", label: Translation.tr("Notes"), tint: IrisStyle.identity.yellow },
-        { key: "timers", glyph: "timer", english: "Timers", label: Translation.tr("Timers"), tint: IrisStyle.identity.orange },
-        { key: "screenTime", glyph: "hourglass_bottom", english: "Screen Time", label: Translation.tr("Screen Time"), tint: IrisStyle.identity.indigo },
-        { key: "systemMonitor", glyph: "monitor_heart", english: "Vitals", label: Translation.tr("Vitals"), tint: IrisStyle.identity.green },
-        { key: "battery", glyph: "battery_full", english: "Batteries", label: Translation.tr("Batteries"), tint: IrisStyle.identity.green },
-        { key: "worldClock", glyph: "public", english: "World clock", label: Translation.tr("World clock"), tint: IrisStyle.identity.orange },
-        { key: "dayProgress", glyph: "wb_twilight", english: "Day", label: Translation.tr("Day"), tint: IrisStyle.identity.orange },
-        { key: "dateBadge", glyph: "today", english: "Date", label: Translation.tr("Date"), tint: IrisStyle.identity.red },
-        { key: "userCard", glyph: "account_circle", english: "Profile", label: Translation.tr("Profile"), tint: IrisStyle.identity.blue },
-        { key: "uptime", glyph: "timelapse", english: "Uptime", label: Translation.tr("Uptime"), tint: IrisStyle.identity.indigo },
-        { key: "newsTicker", glyph: "newspaper", english: "News", label: Translation.tr("News"), tint: IrisStyle.identity.teal },
-        { key: "palette", glyph: "palette", english: "Palette", label: Translation.tr("Palette"), tint: IrisStyle.identity.pink },
-        { key: "lyrics", glyph: "lyrics", english: "Lyrics", label: Translation.tr("Lyrics"), tint: IrisStyle.identity.pink }
-    ]
+    // The gallery's order (DesktopWidgetRegistry holds the widgets; one missing here goes last) and the glyphs iRiS
+    // draws its own way.
+    readonly property var order: ["clock", "weather", "mediaControls", "controls", "monthCalendar", "calendarUpcoming", "todo",
+        "notes", "timers", "screenTime", "systemMonitor", "battery", "worldClock", "dayProgress", "dateBadge", "userCard",
+        "uptime", "newsTicker", "palette", "lyrics", "visualizer", "editorial", "mascot", "japaneseTypography", "customImage",
+        "imageConverter", "shape"]
+    readonly property var ordered: root.order.filter(key => DesktopWidgetRegistry.has(key))
+        .concat(DesktopWidgetRegistry.keys.filter(key => !root.order.includes(key)))
+    readonly property var glyphs: ({ weather: "partly_cloudy_day", mediaControls: "music_note", calendarUpcoming: "event_upcoming",
+        dayProgress: "wb_twilight", uptime: "timelapse" })
+    function entryOf(key: string, ownTint: bool): var {
+        const name = DesktopWidgetRegistry.nameOf(key)
+        const tint = DesktopWidgetRegistry.tint(key)
+        return { key: key, glyph: root.glyphs[key] ?? DesktopWidgetRegistry.glyph(key), english: name, label: Translation.tr(name),
+            tint: ownTint ? IrisStyle.identityOf(tint) : tint }
+    }
+
+    // What the lock and the gallery offer, in identity colours.
+    readonly property var galleryEntries: root.ordered.filter(key => DesktopWidgetRegistry.entry(key).lock).map(key => root.entryOf(key, true))
 
     // Widgets without an iRiS face that the active Design prints all the same (IrisDesignFace): they take that print as
     // their face under iRiS and keep drawing themselves everywhere else.
     readonly property var prints: ({ visualizer: IrisDesign.has("widgetVisualizer"), editorial: IrisDesign.has("widgetEditorial"),
         japaneseTypography: IrisDesign.has("widgetJapanese") })
 
-    // Widgets without an iRiS face, listed wherever the set is: they count on the desktop and can be taken away.
-    readonly property var otherEntries: [
-        { key: "visualizer", glyph: DesktopWidgetIdentity.glyph("visualizer"), english: "Visualizer", label: Translation.tr("Visualizer"), tint: DesktopWidgetIdentity.tint("visualizer") },
-        { key: "editorial", glyph: DesktopWidgetIdentity.glyph("editorial"), english: "Editorial", label: Translation.tr("Editorial"), tint: DesktopWidgetIdentity.tint("editorial") },
-        { key: "mascot", glyph: DesktopWidgetIdentity.glyph("mascot"), english: "Mascot", label: Translation.tr("Mascot"), tint: DesktopWidgetIdentity.tint("mascot") },
-        { key: "japaneseTypography", glyph: DesktopWidgetIdentity.glyph("japaneseTypography"), english: "Japanese Typography", label: Translation.tr("Japanese Typography"), tint: DesktopWidgetIdentity.tint("japaneseTypography") },
-        { key: "customImage", glyph: DesktopWidgetIdentity.glyph("customImage"), english: "Image", label: Translation.tr("Image"), tint: DesktopWidgetIdentity.tint("customImage") },
-        { key: "imageConverter", glyph: DesktopWidgetIdentity.glyph("imageConverter"), english: "Image converter", label: Translation.tr("Image converter"), tint: DesktopWidgetIdentity.tint("imageConverter") },
-        { key: "shape", glyph: DesktopWidgetIdentity.glyph("shape"), english: "Shape", label: Translation.tr("Shape"), tint: DesktopWidgetIdentity.tint("shape") }
-    ]
+    // The rest, listed wherever the set is: they count on the desktop and can be taken away.
+    readonly property var otherEntries: root.ordered.filter(key => !DesktopWidgetRegistry.entry(key).lock)
+        .map(key => root.entryOf(key, false))
 
     function capitalized(text: string): string {
         const value = String(text ?? "")

@@ -16,7 +16,7 @@ WidgetQuickSection 1.0 WidgetQuickSection.qml
 WidgetQuickSlider 1.0 WidgetQuickSlider.qml
 WidgetIdentityMark 1.0 WidgetIdentityMark.qml
 singleton DesktopWidgetShapes 1.0 DesktopWidgetShapes.qml
-singleton DesktopWidgetIdentity 1.0 DesktopWidgetIdentity.qml
+singleton DesktopWidgetRegistry 1.0 DesktopWidgetRegistry.qml
 singleton DesktopWidgetDesign 1.0 DesktopWidgetDesign.qml
 WidgetShapePicker 1.0 WidgetShapePicker.qml
 WidgetSizeGrip 1.0 WidgetSizeGrip.qml

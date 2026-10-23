@@ -369,12 +369,7 @@ ContentPage {
         ]
     }
 
-    readonly property var _paletteWidgetKeys: [
-        "clock", "weather", "customImage", "imageConverter", "mediaControls",
-        "visualizer", "systemMonitor", "battery", "notes", "japaneseTypography",
-        "calendarUpcoming", "monthCalendar", "todo", "timers", "dayProgress", "uptime", "worldClock", "shape", "dateBadge", "editorial",
-        "userCard", "mascot", "newsTicker"
-    ]
+    readonly property var _paletteWidgetKeys: DesktopWidgetRegistry.paletteKeys
 
     function _semanticRoleOptions(): var {
         return [

@@ -2037,9 +2037,9 @@ AbstractWidget {
     readonly property Component _widgetSpecificPopover: root.editPopoverContent
         ?? (root._manifestKeyList.length > 0 ? root._autoPopoverComponent : null)
     property string _quickTab: "widget"
-    readonly property string identityGlyph: DesktopWidgetIdentity.glyph(root.configEntryName)
-    readonly property color identityTint: root.widgetIrisFamily ? IrisStyle.identityOf(DesktopWidgetIdentity.tint(root.configEntryName))
-        : DesktopWidgetIdentity.tint(root.configEntryName)
+    readonly property string identityGlyph: DesktopWidgetRegistry.glyph(root.configEntryName)
+    readonly property color identityTint: root.widgetIrisFamily ? IrisStyle.identityOf(DesktopWidgetRegistry.tint(root.configEntryName))
+        : DesktopWidgetRegistry.tint(root.configEntryName)
     // The page that holds position, lock and removal: "arrange" in an iRiS face's sheet, "layout" otherwise.
     readonly property string _arrangeTab: root.irisFaced ? "arrange" : "layout"
     readonly property Component _effectivePopover: root.irisFaced ? _irisPopoverRef : root._semanticPalettePopover
@@ -2555,7 +2555,7 @@ AbstractWidget {
         const choices = root.stack.sizes
         return choices.includes(chosen) ? chosen : choices.includes(root.stack.size) ? root.stack.size : choices[0]
     }
-    // Material's own size classes (DesktopWidgetDesign.materialSizes); iRiS faces keep theirs.
+    // Material's own size classes (DesktopWidgetRegistry sizes); iRiS faces keep theirs.
     readonly property var materialSizes: DesktopWidgetDesign.materialSizesOf(root.configEntryName)
     readonly property bool materialSized: !root.widgetIrisFamily && root.materialSizes.length > 0
         && !root.outputName.startsWith("lock:")

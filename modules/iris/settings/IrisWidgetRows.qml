@@ -60,15 +60,7 @@ QtObject {
         return String(root.effective(widget, key, fallback)) === String(wanted)
     }
 
-    readonly property var groups: ({
-        clock: "Clock", weather: "Weather", monthCalendar: "Month Calendar", calendarUpcoming: "Upcoming Events",
-        worldClock: "World clock", dateBadge: "Date badge", dayProgress: "Day progress", timers: "Timers",
-        uptime: "System uptime", mediaControls: "Media Controls", visualizer: "Visualizer", systemMonitor: "System Monitor",
-        battery: "Battery", notes: "Notes", todo: "Todo", userCard: "User card", newsTicker: "News",
-        customImage: "Custom image", imageConverter: "Image converter", shape: "Decorative shape",
-        japaneseTypography: "Japanese Typography", editorial: "Editorial", mascot: "Mascot", controls: "Controls",
-        screenTime: "Screen time", palette: "Palette", lyrics: "Lyrics"
-    })
+    readonly property var groups: DesktopWidgetRegistry.groups
     // Clusters of the section's column, in the order people look for them.
     readonly property var clusters: [
         { caption: "Every widget", groups: ["Arranging", "Power saving"] },

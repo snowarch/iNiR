@@ -152,11 +152,11 @@ Singleton {
         const output = GlobalStates.focusedScreen?.name ?? ""
         const found = IrisFaceData.galleryEntries.concat(IrisFaceData.otherEntries)
         for (const custom of (CustomWidgets.ready ? CustomWidgets.widgets : []))
-            found.push({ key: "custom." + custom.id, glyph: custom.icon || "widgets", english: custom.name, label: custom.name, tint: DesktopWidgetIdentity.customTint })
+            found.push({ key: "custom." + custom.id, glyph: custom.icon || "widgets", english: custom.name, label: custom.name, tint: DesktopWidgetRegistry.customTint })
         return found.map(widget => {
             const on = DesktopWidgetLayout.enabled(output, widget.key, Config.getNestedValue("background.widgets." + widget.key + ".enable", false))
             return root.prepare({ name: widget.label, english: widget.english, detail: on ? Translation.tr("On the desktop") : Translation.tr("Not on the desktop"),
-                area: "widgets", areaName: Translation.tr("Widgets"), words: widget.key + " " + DesktopWidgetIdentity.keywordsOf(widget.key),
+                area: "widgets", areaName: Translation.tr("Widgets"), words: widget.key + " " + DesktopWidgetRegistry.keywordsOf(widget.key),
                 icon: widget.glyph, tint: widget.tint, kind: "widget", on: on, keepOpen: false, priority: 250,
                 run: () => root.findWidget(widget.key, on) })
         })
