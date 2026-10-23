@@ -111,6 +111,16 @@ QtObject {
     readonly property real dockDepth: (root.dock?.enable ?? true)
         && (root.dock?.reserveSpace ?? true) && !(root.dock?.autoHide ?? false)
         ? root.dockVisualDepth : 0
+    // What an auto-hidden Island or Dock still shows on a workspace with no windows (revealOnEmpty).
+    function emptyDepth(edge: string): real {
+        let depth = 0
+        if (edge === root.islandEdge && root.islandAutoHide && (root.bar?.revealOnEmpty ?? true))
+            depth = root.islandBand + root.islandMargin
+        if (edge === root.dockEdge && (root.dock?.enable ?? true) && (root.dock?.autoHide ?? false)
+                && (root.dock?.revealOnEmpty ?? true))
+            depth = Math.max(depth, root.dockBand + root.dockMargin)
+        return depth
+    }
 
     readonly property var bubbles: Config.options?.iris?.bubbles ?? ({})
     readonly property bool piecesAttached: root.bubbles?.attach ?? true

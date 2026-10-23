@@ -93,10 +93,18 @@ Item {
     Timer { id: reshape; interval: IrisStyle.morphDuration + 120 }
     // The voice the layout gives its rows' controls and group heads.
     readonly property string voice: root.sceneDrawn ? String(root.scene.voice ?? "") : ""
+    // An auto-hidden Island or Dock that stays up on an empty workspace keeps its edge out of the room.
+    readonly property bool workspaceEmpty: {
+        const out = root.screen?.name ?? ""
+        if (root.windowed || out === "" || !CompositorService.isNiri) return false
+        const active = (NiriService.allWorkspaces ?? []).find(ws => ws.output === out && ws.is_active)
+        return active !== undefined && !(NiriService.windows ?? []).some(w => w.workspace_id === active.id)
+    }
     // The overlay's free box: clear of the band, the Island, the Dock and the pieces on their edges.
     readonly property var room: {
         const gap = Math.round(14 * root.d)
-        const side = edge => Math.max(0, IrisFrame.safeClear(edge) - IrisFrame.band) + gap
+        const side = edge => Math.max(0, IrisFrame.safeClear(edge) - IrisFrame.band,
+            root.workspaceEmpty ? IrisFrame.emptyDepth(edge) + IrisFrame.musicReach(edge) : 0) + gap
         const left = side("left"), right = side("right"), top = side("top"), bottom = side("bottom")
         return { x: left, y: top, width: Math.max(0, root.width - left - right), height: Math.max(0, root.height - top - bottom) }
     }
