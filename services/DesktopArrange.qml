@@ -143,6 +143,10 @@ Singleton {
         root._liveSig = ""
         root.slots = [null, null, null, null, null, null]
     }
+    // "That one": the shelf points at a widget already out, and it flares where it sits.
+    signal pinged(string output, string key)
+    function ping(output: string, key: string): void { root.pinged(output, key) }
+
     Timer { id: holdTimer; interval: root.holdMs; onTriggered: { root.phase = "fade"; fadeTimer.restart() } }
     Timer { id: fadeTimer; interval: root.fadeMs + 40; onTriggered: root.cancel() }
 

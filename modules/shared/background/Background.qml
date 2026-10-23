@@ -3085,6 +3085,16 @@ Scope {
                             NumberAnimation { target: guides; property: "rail"; to: 2; duration: 220; easing.type: Easing.InCubic }
                         }
                         NumberAnimation { id: flareRun; target: guides; property: "flare"; from: 0; to: 1; duration: 620; easing.type: Easing.OutCubic }
+                        Connections {
+                            target: DesktopArrange
+                            function onPinged(output: string, key: string): void {
+                                const r = output === bgRoot.screenName ? DesktopArrange.rectOf(output, key) : null
+                                if (!r || !Appearance.animationsEnabled)
+                                    return
+                                guides.flareRects = [r]
+                                flareRun.restart()
+                            }
+                        }
                         Repeater {
                             model: guides.rail > 0 && guides.rail < 2 ? 4 : 0
                             delegate: Rectangle {

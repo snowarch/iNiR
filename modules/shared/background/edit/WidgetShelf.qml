@@ -119,6 +119,7 @@ Item {
     function use(tile: Item): void {
         if (tile.on) {
             GlobalStates.selectDesktopWidget(root.outputName + "::" + tile.key)
+            DesktopArrange.ping(root.outputName, root.outputName + "::" + tile.key)
             return
         }
         DesktopEditStage.arrive(root.outputName, tile.key, null, root.screenRect(tile.picture))
