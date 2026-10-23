@@ -813,23 +813,37 @@ Singleton {
 		if (!win)
 			return;
 
+		if (browserNavProcess.running)
+			return;
+		// The key only reaches a focused browser, so the person is taken there for a moment and brought back: to the
+		// window they had, or, from the desktop or an empty workspace (no window focused), to that workspace.
 		const restoreWindow = NiriService.activeWindow;
-		const restoreId = restoreWindow && restoreWindow.id !== win.id ? String(restoreWindow.id) : "";
-		const key = direction === "previous" ? "p" : "n";
-		Quickshell.execDetached(["/usr/bin/bash", "-c", `
-			target="$1"
-			restore="$2"
-			key="$3"
+		root._browserNavRestore = {
+			window: restoreWindow && restoreWindow.id !== win.id ? restoreWindow.id : null,
+			workspace: NiriService.focusedWorkspaceId
+		};
+		browserNavProcess.command = ["/usr/bin/bash", "-c", `
 			command -v niri >/dev/null 2>&1 || exit 0
 			command -v wtype >/dev/null 2>&1 || exit 0
-			niri msg action focus-window --id "$target" >/dev/null 2>&1 || exit 0
+			niri msg action focus-window --id "$1" >/dev/null 2>&1 || exit 0
 			sleep 0.08
-			wtype -M shift -k "$key" >/dev/null 2>&1 || true
+			wtype -M shift -k "$2" >/dev/null 2>&1 || true
 			sleep 0.05
-			if [ -n "$restore" ] && [ "$restore" != "$target" ]; then
-				niri msg action focus-window --id "$restore" >/dev/null 2>&1 || true
-			fi
-		`, "_", String(win.id), restoreId, key]);
+		`, "_", String(win.id), direction === "previous" ? "p" : "n"];
+		browserNavProcess.running = true;
+	}
+
+	property var _browserNavRestore: null
+	Process {
+		id: browserNavProcess
+		onExited: {
+			const back = root._browserNavRestore;
+			root._browserNavRestore = null;
+			if (back?.window !== null && back?.window !== undefined)
+				NiriService.focusWindow(back.window);
+			else if (String(back?.workspace ?? "").length > 0)
+				NiriService.switchToWorkspaceById(Number(back.workspace));
+		}
 	}
 
 	function canGoPreviousForPlayer(player): bool {
