@@ -520,21 +520,23 @@ AbstractBackgroundWidget {
 
                 readonly property real _liveValue: root._getValue(modelData.key)
                 readonly property color _liveColor: root._getColor(modelData.key)
-
+                // Sized: the type grows with the row and the bar stays a bar, not a slab.
+                readonly property real big: root.materialSized ? Math.min(barsBody.height / Math.max(1, root._resourceModel.length) * 0.42, 26 * root.scaleFactor) : 0
                 MaterialSymbol {
                     visible: root.showLabels
                     text: barRow.modelData.icon
-                    iconSize: Appearance.font.pixelSize.small
+                    iconSize: barRow.big > 0 ? Math.round(barRow.big) : Appearance.font.pixelSize.small
                     color: barRow._liveColor
                 }
 
                 Item {
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
-
+                    Layout.fillHeight: barRow.big === 0
+                    Layout.preferredHeight: barRow.big > 0 ? Math.max(8, Math.round(barRow.big * 0.55)) : -1
+                    Layout.alignment: Qt.AlignVCenter
                     Rectangle {
                         anchors.fill: parent
-                        radius: Appearance.rounding.verysmall
+                        radius: barRow.big > 0 ? height / 2 : Appearance.rounding.verysmall
                         color: root._metricTrackColor(barRow.modelData.key)
                     }
 
@@ -543,9 +545,9 @@ AbstractBackgroundWidget {
                         property real targetWidth: parent.width * Math.min(1, barRow._liveValue)
                         width: targetWidth
                         height: parent.height
-                        radius: Appearance.rounding.verysmall
+                        radius: barRow.big > 0 ? height / 2 : Appearance.rounding.verysmall
                         color: barRow._liveColor
-                        opacity: root.fillOpacity
+                        opacity: barRow.big > 0 ? 1 : root.fillOpacity
 
                         Behavior on width {
                             enabled: root.animatesValues && barsBody.visible
@@ -559,11 +561,13 @@ AbstractBackgroundWidget {
                     text: root._getDisplayText(barRow.modelData.key)
                     color: barRow._liveColor
                     font {
-                        pixelSize: Appearance.font.pixelSize.smaller
+                        pixelSize: barRow.big > 0 ? Math.round(barRow.big * 0.8) : Appearance.font.pixelSize.smaller
                         family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily
+                        weight: barRow.big > 0 ? Font.DemiBold : Font.Normal
                     }
                     horizontalAlignment: Text.AlignRight
-                    Layout.preferredWidth: barRow.modelData.key === "temp" ? 40 : 32
+                    Layout.preferredWidth: barRow.big > 0 ? Math.round(barRow.big * (barRow.modelData.key === "temp" ? 3 : 2.4))
+                        : barRow.modelData.key === "temp" ? 40 : 32
                 }
             }
         }

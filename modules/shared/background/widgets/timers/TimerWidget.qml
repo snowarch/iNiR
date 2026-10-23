@@ -32,15 +32,22 @@ AbstractBackgroundWidget {
     readonly property bool showProgress: Boolean(root._readConfigKey("showProgress") ?? true)
     readonly property bool showState: Boolean(root._readConfigKey("showState") ?? true)
     readonly property bool showHundredths: Boolean(root._readConfigKey("showHundredths") ?? true)
-    readonly property real cardWidth: Math.round((root.instrument ? 176 : 136) * root.scaleFactor)
-    readonly property real cardHeight: Math.round((root.instrument ? 132 : 120) * root.scaleFactor)
+    // Sized: the cards share the footprint (Medium three columns, Large three rows, Small the timer that matters).
+    readonly property int sizedColumns: root.materialSized && root.materialSize === "medium" ? 3 : 1
+    readonly property int sizedRows: root.materialLarge ? 3 : 1
+    readonly property real sizedPad: Math.round(12 * root.scaleFactor)
+    readonly property string smallPick: TimerService.countdownRunning ? "countdown"
+        : TimerService.stopwatchRunning ? "stopwatch" : "focus"
+    readonly property real cardWidth: root.materialSized
+        ? Math.floor((root.materialWidth - root.sizedPad * 2 - root.cardSpacing * (root.sizedColumns - 1)) / root.sizedColumns)
+        : Math.round((root.instrument ? 176 : 136) * root.scaleFactor)
+    readonly property real cardHeight: root.materialSized
+        ? Math.floor((root.materialHeight - root.sizedPad * 2 - root.cardSpacing * (root.sizedRows - 1)) / root.sizedRows)
+        : Math.round((root.instrument ? 132 : 120) * root.scaleFactor)
     readonly property real cardSpacing: Math.round(12 * root.scaleFactor)
 
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : timerGrid.implicitWidth
-    materialFitted: true
-    materialNaturalWidth: timerGrid.implicitWidth
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : timerGrid.implicitHeight
-    materialNaturalHeight: timerGrid.implicitHeight
     irisFacePart: "timer"
     irisSizes: ["small", "medium"]
     irisDefaultSize: "medium"
@@ -118,6 +125,8 @@ AbstractBackgroundWidget {
 
     component TimerCard: Rectangle {
         id: timerCard
+        property string cardKey: ""
+        visible: !root.materialSmall || root.smallPick === timerCard.cardKey
 
         required property string icon
         required property string value
@@ -210,7 +219,8 @@ AbstractBackgroundWidget {
                     font.family: root.widgetBodyFamily
                     font.pixelSize: timerCard.instrumentMode
                         ? Math.max(10, Math.round(11 * root.scaleFactor))
-                        : Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                        : Math.round((root.materialSized && root.sizedColumns === 3 ? Appearance.font.pixelSize.smallest
+                            : Appearance.font.pixelSize.smaller) * root.scaleFactor)
                     font.weight: root.widgetLabelWeight
                     font.letterSpacing: timerCard.instrumentMode ? root.widgetMetadataTracking : 0
                     font.capitalization: timerCard.instrumentMode ? root.widgetCapitalization : Font.MixedCase
@@ -228,8 +238,8 @@ AbstractBackgroundWidget {
 
                 RippleButton {
                     visible: !timerCard.instrumentMode
-                    Layout.preferredWidth: Math.round(34 * root.scaleFactor)
-                    Layout.preferredHeight: Math.round(34 * root.scaleFactor)
+                    Layout.preferredWidth: Math.round((root.materialSized && root.sizedColumns === 3 ? 26 : 34) * root.scaleFactor)
+                    Layout.preferredHeight: Layout.preferredWidth
                     buttonRadius: Appearance.rounding.full
                     colBackground: ColorUtils.applyAlpha(timerCard.cardInk, 0.10)
                     colBackgroundHover: ColorUtils.applyAlpha(timerCard.cardInk, 0.16)
@@ -257,7 +267,9 @@ AbstractBackgroundWidget {
                 horizontalAlignment: Text.AlignLeft
                 fontSizeMode: Text.Fit
                 minimumPixelSize: Math.max(15, Math.round(16 * root.scaleFactor))
-                font.pixelSize: timerCard.instrumentMode
+                font.pixelSize: root.materialSized
+                    ? Math.round(Math.min(timerCard.height * 0.3, timerCard.width * 0.24, 52 * root.scaleFactor))
+                    : timerCard.instrumentMode
                     ? Math.max(24, Math.round(30 * root.scaleFactor))
                     : Math.round(Appearance.font.pixelSize.large * root.scaleFactor)
                 font.weight: timerCard.instrumentMode
@@ -377,7 +389,7 @@ AbstractBackgroundWidget {
             enabled: root.animateGeometry
             NumberAnimation { properties: "x,y"; duration: Appearance.animation.elementMove.duration; easing.type: Easing.OutCubic }
         }
-        columns: root.vertical ? 1 : 3
+        columns: root.materialSized ? root.sizedColumns : root.vertical ? 1 : 3
         spacing: root.cardSpacing
 
         TimerCard {
@@ -385,6 +397,7 @@ AbstractBackgroundWidget {
             value: root.formatSeconds(TimerService.pomodoroSecondsLeft)
             label: TimerService.pomodoroLongBreak ? Translation.tr("Long break")
                 : TimerService.pomodoroBreak ? Translation.tr("Break") : Translation.tr("Focus")
+            cardKey: "focus"
             running: TimerService.pomodoroRunning
             paused: TimerService.pomodoroPaused
             shape: MaterialShape.Shape.Flower
@@ -400,6 +413,7 @@ AbstractBackgroundWidget {
             value: root.instrument ? root.formatStopwatch(TimerService.stopwatchTime)
                 : root.formatSeconds(TimerService.stopwatchTime / 100)
             label: Translation.tr("Stopwatch")
+            cardKey: "stopwatch"
             running: TimerService.stopwatchRunning
             paused: TimerService.stopwatchPaused
             shape: MaterialShape.Shape.Sunny
@@ -415,6 +429,7 @@ AbstractBackgroundWidget {
             icon: "hourglass_top"
             value: root.formatSeconds(TimerService.countdownSecondsLeft)
             label: Translation.tr("Countdown")
+            cardKey: "countdown"
             running: TimerService.countdownRunning
             paused: TimerService.countdownPaused
             shape: MaterialShape.Shape.Bun

@@ -435,7 +435,7 @@ AbstractBackgroundWidget {
         StyledText {
             id: temperatureLabel
             visible: root.showTemp
-            height: Math.max(1, Math.round(root.height * 0.42))
+            height: Math.max(1, Math.round(parent.height * 0.42))
             font {
                 pixelSize: root.tempFontSize
                 family: root.widgetEditorial ? root.widgetTitleFamily : Appearance.font.family.expressive
@@ -495,7 +495,7 @@ AbstractBackgroundWidget {
             text: Weather.data?.description ?? ""
             elide: Text.ElideRight
             width: Math.max(0, Math.min(implicitWidth,
-                root.width - root.contentInset * 2
+                parent.width - root.contentInset * 2
                     - (root.showIcon ? weatherIcon.width + Math.round(root.contentInset * 0.4) : 0)))
             anchors {
                 left: root.showIcon ? weatherIcon.right : parent.left

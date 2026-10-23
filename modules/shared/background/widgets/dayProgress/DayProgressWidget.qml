@@ -118,14 +118,14 @@ AbstractBackgroundWidget {
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.topMargin: root.showIcon ? Math.round(2 * root.scaleFactor) : 0
-                    Layout.maximumWidth: ringArea.size * 0.68
+                    Layout.maximumWidth: ringArea.size * 0.56
                     text: DateTime.time
                     fontSizeMode: Text.Fit
                     minimumPixelSize: 12
                     color: root.ink
                     font {
                         family: root.widgetNumbersFamily
-                        pixelSize: Math.round(ringArea.size * 0.205 * root.textScale)
+                        pixelSize: Math.round(ringArea.size * 0.17 * root.textScale)
                         weight: Font.DemiBold
                     }
                 }
