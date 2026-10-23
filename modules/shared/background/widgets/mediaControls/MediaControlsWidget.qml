@@ -53,7 +53,7 @@ AbstractBackgroundWidget {
     readonly property var sizedGeometry: root.instrument ? root.presetGeometry["instrument"]
         : root.presetGeometry[root.effectiveSizedPreset] ?? root.presetGeometry["full"]
 
-    readonly property real widgetWidth: Math.round(
+    readonly property real widgetWidth: root.materialSized ? root.materialWidth : Math.round(
         root.sizedGeometry.w * Appearance.fontSizeScale * scaleFactor)
 
     readonly property bool lyricsAvailable: LyricsService.status === "ok"
@@ -73,7 +73,19 @@ AbstractBackgroundWidget {
         }
     }
 
-    readonly property string selectedPreset: Config.getNestedValue("background.widgets.mediaControls.playerPreset", "full")
+    readonly property string chosenPreset: Config.getNestedValue("background.widgets.mediaControls.playerPreset", "full")
+    // A size class picks the player that fits it: Small the cover tile, Medium the chosen wide player, Large the
+    // cover or the lyrics sheet.
+    readonly property string selectedPreset: {
+        if (!root.materialSized)
+            return root.chosenPreset
+        const tall = ["albumart", "lyrics", "lyricsSplit"].includes(root.chosenPreset)
+        if (root.materialSize === "small")
+            return "albumart"
+        if (root.materialSize === "large")
+            return tall ? root.chosenPreset : "albumart"
+        return tall || root.chosenPreset === "expandingLyrics" ? "full" : root.chosenPreset
+    }
     property string renderedPreset: ""
     property string sizedPreset: ""
     property bool presetLoaderActive: true
@@ -127,7 +139,7 @@ AbstractBackgroundWidget {
 
     readonly property bool nativeIrisPlayer: root.widgetIris && ["full", "compact", "minimal", "classic"].includes(root.effectiveRenderedPreset)
 
-    readonly property real widgetHeight: root.nativeIrisPlayer
+    readonly property real widgetHeight: root.materialSized ? root.materialHeight : root.nativeIrisPlayer
         ? Math.round((root.effectiveRenderedPreset === "compact" ? 126 : 204) * scaleFactor * Appearance.fontSizeScale)
         : Math.round(
         (root.sizedGeometry.hBare ?? root.sizedGeometry.h) * Appearance.fontSizeScale * scaleFactor)
@@ -211,7 +223,7 @@ AbstractBackgroundWidget {
             WidgetQuickSection {
                 title: Translation.tr("Player")
                 WidgetQuickChoices {
-                    current: root.selectedPreset
+                    current: root.chosenPreset
                     model: [
                         { label: Translation.tr("Full"), icon: "view_agenda", value: "full" },
                         { label: Translation.tr("Compact"), icon: "view_compact", value: "compact" },
@@ -335,8 +347,8 @@ AbstractBackgroundWidget {
         ? [root.meaningfulPlayer] : []
     readonly property bool hasPlayer: root.meaningfulPlayers.length > 0
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.hasPlayer ? root.widgetWidth : root.placeholderWidth
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.hasPlayer ? root.widgetHeight : root.placeholderHeight
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : root.hasPlayer ? root.widgetWidth : root.placeholderWidth
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.hasPlayer ? root.widgetHeight : root.placeholderHeight
     irisFacePart: "nowPlaying"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"
@@ -567,9 +579,16 @@ AbstractBackgroundWidget {
                 width: Math.min(parent.width, parent.height) * 0.6
                 height: width
             }
+            WidgetBlank {
+                anchors.fill: parent
+                visible: root.materialSized && !root.instrument
+                widget: root
+                icon: "music_note"
+                title: Translation.tr("Nothing playing")
+            }
             MaterialShape {
                 id: idleOrnament
-                visible: !root.widgetIris && !root.instrument
+                visible: !root.widgetIris && !root.instrument && !root.materialSized
                 anchors.centerIn: parent
                 implicitSize: Math.max(24, Math.min(parent.width, parent.height)
                     - Appearance.sizes.elevationMargin)

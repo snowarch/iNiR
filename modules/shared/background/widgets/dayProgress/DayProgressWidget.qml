@@ -22,8 +22,8 @@ AbstractBackgroundWidget {
         x: 80, y: 260
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 240) * scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 240) * scaleFactor)
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 240) * scaleFactor)
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 240) * scaleFactor)
     irisFacePart: "day"
     irisSizes: ["small", "medium"]
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })

@@ -15,8 +15,8 @@ AbstractBackgroundWidget {
         colorMode: "auto", dim: 0, showBackground: false, showBorder: false,
         backgroundOpacity: 0.12, borderWidth: 1, borderOpacity: 0.2,
         cornerRadius: -1, useBlur: false, x: 100, y: 300 })
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.max(180, Number(root._readConfigKey("contentWidth") ?? 360)) * scaleFactor
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.max(140, Number(root._readConfigKey("contentHeight") ?? 240)) * scaleFactor
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.max(180, Number(root._readConfigKey("contentWidth") ?? 360)) * scaleFactor
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.max(140, Number(root._readConfigKey("contentHeight") ?? 240)) * scaleFactor
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
     irisFace: IrisFaceData.prints.editorial ? designPrint : null
     irisSizes: ["medium", "large", "small"]

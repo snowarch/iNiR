@@ -19,5 +19,7 @@ singleton DesktopWidgetShapes 1.0 DesktopWidgetShapes.qml
 singleton DesktopWidgetIdentity 1.0 DesktopWidgetIdentity.qml
 singleton DesktopWidgetDesign 1.0 DesktopWidgetDesign.qml
 WidgetShapePicker 1.0 WidgetShapePicker.qml
+WidgetSizeGrip 1.0 WidgetSizeGrip.qml
+WidgetBlank 1.0 WidgetBlank.qml
 
 WidgetInputMask 1.0 WidgetInputMask.qml

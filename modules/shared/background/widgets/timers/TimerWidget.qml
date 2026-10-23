@@ -36,8 +36,11 @@ AbstractBackgroundWidget {
     readonly property real cardHeight: Math.round((root.instrument ? 132 : 120) * root.scaleFactor)
     readonly property real cardSpacing: Math.round(12 * root.scaleFactor)
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : timerGrid.implicitWidth
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : timerGrid.implicitHeight
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : timerGrid.implicitWidth
+    materialFitted: true
+    materialNaturalWidth: timerGrid.implicitWidth
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : timerGrid.implicitHeight
+    materialNaturalHeight: timerGrid.implicitHeight
     irisFacePart: "timer"
     irisSizes: ["small", "medium"]
     irisDefaultSize: "medium"
@@ -366,6 +369,7 @@ AbstractBackgroundWidget {
 
     Grid {
         id: timerGrid
+        anchors.centerIn: parent
         opacity: 1
         visible: !root.irisFaced
         enabled: !GlobalStates.widgetEditMode

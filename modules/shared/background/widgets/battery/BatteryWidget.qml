@@ -25,8 +25,11 @@ AbstractBackgroundWidget {
         cornerRadius: -1, x: 50, y: 50
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round((root.displayMode === "instrument" ? 220 : 160) * scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round((root.displayMode === "instrument" ? 140 : 104) * scaleFactor)
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round((root.displayMode === "instrument" ? 220 : 160) * scaleFactor)
+    materialFitted: true
+    materialNaturalWidth: Math.round((root.displayMode === "instrument" ? 220 : 160) * scaleFactor)
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round((root.displayMode === "instrument" ? 140 : 104) * scaleFactor)
+    materialNaturalHeight: Math.round((root.displayMode === "instrument" ? 140 : 104) * scaleFactor)
     irisFacePart: "battery"
     irisSizes: ["small", "medium"]
     irisOptions: [
@@ -135,12 +138,23 @@ AbstractBackgroundWidget {
             && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
     }
 
+    // A desktop has no battery: say what powers it instead of a 0% ring.
+    readonly property bool noBattery: !Battery.available
+    WidgetBlank {
+        anchors.fill: parent
+        visible: !root.irisFaced && root.noBattery
+        widget: root
+        icon: "power"
+        title: Translation.tr("On mains power")
+        detail: Translation.tr("This computer has no battery")
+    }
+
     // ── Instrument: energy reserve, not a clock face ─────────
     Item {
         id: instrumentArea
         anchors.fill: parent
         opacity: root.displayMode === "instrument" ? 1 : 0
-        visible: !root.irisFaced && opacity > 0
+        visible: !root.irisFaced && !root.noBattery && opacity > 0
         enabled: root.displayMode === "instrument"
         Behavior on opacity {
             enabled: root.animationsActive
@@ -230,7 +244,7 @@ AbstractBackgroundWidget {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
         opacity: root.displayMode === "ring" ? 1 : 0
-        visible: !root.irisFaced && opacity > 0
+        visible: !root.irisFaced && !root.noBattery && opacity > 0
         enabled: root.displayMode === "ring"
         Behavior on opacity {
             enabled: root.animationsActive
@@ -281,7 +295,7 @@ AbstractBackgroundWidget {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
         opacity: root.displayMode === "bars" ? 1 : 0
-        visible: !root.irisFaced && opacity > 0
+        visible: !root.irisFaced && !root.noBattery && opacity > 0
         enabled: root.displayMode === "bars"
         Behavior on opacity {
             enabled: root.animationsActive
@@ -365,7 +379,7 @@ AbstractBackgroundWidget {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 8 : 4
         opacity: root.displayMode === "pill" ? 1 : 0
-        visible: !root.irisFaced && opacity > 0
+        visible: !root.irisFaced && !root.noBattery && opacity > 0
         enabled: root.displayMode === "pill"
         Behavior on opacity {
             enabled: root.animationsActive

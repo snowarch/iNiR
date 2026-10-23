@@ -38,8 +38,8 @@ AbstractBackgroundWidget {
             y: 420
         })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 280) * scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round(Math.max(170, Number(root._readConfigKey("contentHeight") ?? 176)) * scaleFactor)
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 280) * scaleFactor)
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Math.max(170, Number(root._readConfigKey("contentHeight") ?? 176)) * scaleFactor)
     irisFacePart: "profile"
     irisSizes: ["small", "medium"]
     irisDefaultSize: "medium"

@@ -108,8 +108,8 @@ AbstractBackgroundWidget {
 
     property bool dropHover: false
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.renderedWidth
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.renderedHeight
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : root.renderedWidth
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.renderedHeight
 
     function fileUrl(path: string): string {
         const value = String(path ?? "")

@@ -26,8 +26,8 @@ AbstractBackgroundWidget {
         x: 420, y: 120
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 300) * root.scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 340) * root.scaleFactor)
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 300) * root.scaleFactor)
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 340) * root.scaleFactor)
     irisFacePart: "calendar"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"
@@ -97,8 +97,11 @@ AbstractBackgroundWidget {
         return rows
     }
 
+    // Small: the month in initials; Medium: this week and the next under the header.
+    readonly property bool compact: root.materialSmall
+    readonly property bool strip: root.materialSized && root.materialSize === "medium"
     function weekdayLabels(): var {
-        const sundayFirst = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+        const sundayFirst = root.compact ? ["S", "M", "T", "W", "T", "F", "S"] : ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
         const start = root.weekStart === 0 ? 0 : 1
         const labels = []
         for (let i = 0; i < 7; ++i)
@@ -108,12 +111,28 @@ AbstractBackgroundWidget {
 
     function monthCells(): var {
         const cells = []
+        if (root.strip) {
+            const start = new Date(root.today)
+            start.setDate(start.getDate() - (start.getDay() - root.weekStart + 7) % 7)
+            for (let i = 0; i < 14; ++i) {
+                const day = new Date(start)
+                day.setDate(start.getDate() + i)
+                cells.push({ day: day.getDate(), currentMonth: day.getMonth() === root.today.getMonth(),
+                    isToday: i === (root.today.getDay() - root.weekStart + 7) % 7 })
+            }
+            return cells
+        }
         for (const week of root.weeks) {
+            // Small draws only the weeks the month reaches.
+            if (root.compact && !week.some(cell => cell.currentMonth))
+                continue
             for (const cell of week)
                 cells.push(cell)
         }
         return cells
     }
+    onCompactChanged: if (root.compact || root.strip) root.monthShift = 0
+    onStripChanged: if (root.compact || root.strip) root.monthShift = 0
 
     editPopoverContent: Component {
         ColumnLayout {
@@ -185,8 +204,8 @@ AbstractBackgroundWidget {
     ColumnLayout {
         visible: !root.irisFaced
         anchors.fill: parent
-        anchors.margins: Math.round(14 * root.scaleFactor)
-        spacing: Math.round(8 * root.scaleFactor)
+        anchors.margins: Math.round((root.compact ? 12 : 14) * root.scaleFactor)
+        spacing: Math.round((root.compact ? 4 : 8) * root.scaleFactor)
 
         RowLayout {
             Layout.fillWidth: true
@@ -207,14 +226,15 @@ AbstractBackgroundWidget {
                     font.capitalization: Font.Capitalize
                     color: root.ink
                     font.family: root.widgetTitleFamily
-                    font.pixelSize: Math.round(Appearance.font.pixelSize.larger
+                    font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.larger)
                         * root.widgetTitleScale * root.scaleFactor)
                     font.weight: root.widgetTitleWeight
                     font.letterSpacing: root.widgetTitleTracking
                 }
                 StyledText {
-                    visible: !root.instrument
-                    text: String(root.viewingDate.getFullYear())
+                    visible: !root.instrument && !root.compact
+                    text: root.strip ? root.today.toLocaleDateString(Qt.locale(), "dddd d") : String(root.viewingDate.getFullYear())
+                    font.capitalization: Font.Capitalize
                     color: root.inkMuted
                     font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
                     font.family: root.widgetNumbersFamily
@@ -222,7 +242,7 @@ AbstractBackgroundWidget {
             }
 
             Repeater {
-                model: [
+                model: root.compact || root.strip ? [] : [
                     { icon: "chevron_left", delta: -1, tip: "Previous month" },
                     { icon: "today", delta: 0, tip: "Today" },
                     { icon: "chevron_right", delta: 1, tip: "Next month" }
@@ -274,7 +294,7 @@ AbstractBackgroundWidget {
                     horizontalAlignment: Text.AlignHCenter
                     text: modelData
                     color: root.inkMuted
-                    font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                    font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.smallest : Appearance.font.pixelSize.smaller) * root.scaleFactor)
                     font.weight: Font.DemiBold
                     font.capitalization: root.instrument && !root.widgetIris ? Font.AllUppercase : Font.MixedCase
                     font.letterSpacing: root.instrument
@@ -287,8 +307,8 @@ AbstractBackgroundWidget {
             Layout.fillWidth: true
             Layout.fillHeight: true
             columns: 7
-            columnSpacing: Math.round(2 * root.scaleFactor)
-            rowSpacing: Math.round(3 * root.scaleFactor)
+            columnSpacing: Math.round((root.compact ? 0 : 2) * root.scaleFactor)
+            rowSpacing: Math.round((root.compact ? 0 : 3) * root.scaleFactor)
 
             Repeater {
                 model: root.monthCells()
@@ -318,7 +338,8 @@ AbstractBackgroundWidget {
                             color: dayCell.modelData.isToday
                                 ? root.accentMarkInk : root.ink
                             opacity: dayCell.modelData.currentMonth ? 1 : 0.32
-                            font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                            font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.smaller
+                                : root.strip ? Appearance.font.pixelSize.large : Appearance.font.pixelSize.small) * root.scaleFactor)
                             font.weight: dayCell.modelData.isToday ? Font.Bold : Font.Normal
                             font.family: root.widgetNumbersFamily
                         }

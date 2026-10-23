@@ -7725,5 +7725,9 @@
   "Play something with words": "Oqaasilimmik tusarnaarit",
   "No lyrics for this song": "Erinarsuummut matumunnga oqaasertaqanngilaq",
   "Instrumental": "Nipilersuutit kisimik",
-  "Lyrics need an internet connection": "Oqaasertat internetimut atassuserneqartariaqarput"
+  "Lyrics need an internet connection": "Oqaasertat internetimut atassuserneqartariaqarput",
+  "On mains power": "Innaallagissamut atasoq",
+  "This computer has no battery": "Qarasaasiami uani batteriqanngilaq",
+  "Finished tasks are hidden": "Suliassat naammassisat toqqorsimapput",
+  "Add a task with +": "+ atorlugu suliassamik ilasigit"
 }

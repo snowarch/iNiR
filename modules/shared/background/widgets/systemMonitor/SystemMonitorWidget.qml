@@ -33,10 +33,12 @@ AbstractBackgroundWidget {
     readonly property int meterColumns: Math.max(1, Math.min(root._resourceModel.length,
         Math.floor((root.implicitWidth + 10 * root.scaleFactor) / (110 * root.scaleFactor))))
     readonly property int meterRows: Math.ceil(root._resourceModel.length / root.meterColumns)
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 320) * scaleFactor)
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 320) * scaleFactor)
     implicitHeight: {
         if (root.irisFaced)
             return root.irisFaceHeight;
+        if (root.materialSized)
+            return root.materialHeight;
         const stored = Math.round(Number(root._readConfigKey("contentHeight") ?? 120) * scaleFactor);
         if (root.displayMode === "tiles")
             return Math.max(stored, root._tilesMinHeight);

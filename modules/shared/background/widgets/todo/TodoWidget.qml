@@ -26,9 +26,9 @@ AbstractBackgroundWidget {
         x: 120, y: 180
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 300)
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 300)
         * root.scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 276)
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 276)
         * root.scaleFactor)
     irisFacePart: "todo"
     irisSizes: ["small", "medium", "large"]
@@ -259,7 +259,7 @@ AbstractBackgroundWidget {
                         font.letterSpacing: root.widgetTitleTracking
                     }
                     StyledText {
-                        visible: !root.instrument
+                        visible: !root.instrument && (root.pendingCount > 0 || root.completedCount > 0)
                         text: root.pendingCount === 0 && root.completedCount > 0
                             ? Translation.tr("All done · %1 completed").arg(root.completedCount)
                             : root.pendingCount === 1
@@ -469,13 +469,14 @@ AbstractBackgroundWidget {
                     }
                 }
 
-                StyledText {
-                    anchors.centerIn: parent
+                WidgetBlank {
+                    anchors.fill: parent
                     visible: root.visibleTaskEntries.length === 0
-                    text: Todo.list.length > 0 && !root.showCompleted
-                        ? Translation.tr("No pending tasks") : Translation.tr("Nothing pending")
-                    color: root.inkMuted
-                    font.pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
+                    widget: root
+                    icon: "task_alt"
+                    title: Translation.tr("All done")
+                    detail: Todo.list.length > 0 && !root.showCompleted
+                        ? Translation.tr("Finished tasks are hidden") : Translation.tr("Add a task with +")
                 }
             }
         }

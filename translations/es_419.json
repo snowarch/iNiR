@@ -9689,5 +9689,9 @@
   "Drop a picture or a folder here": "Suelta aquí una imagen o una carpeta",
   "Play something with words": "Reproduce algo con letra",
   "No lyrics for this song": "No hay letra para esta canción",
-  "Instrumental": "Instrumental"
+  "Instrumental": "Instrumental",
+  "On mains power": "Conectado a la corriente",
+  "This computer has no battery": "Esta computadora no tiene batería",
+  "Finished tasks are hidden": "Las tareas terminadas están ocultas",
+  "Add a task with +": "Agrega una tarea con +"
 }

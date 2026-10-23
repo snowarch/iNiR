@@ -9689,5 +9689,9 @@
   "Drop a picture or a folder here": "Перетягніть сюди зображення або теку",
   "Play something with words": "Увімкніть щось зі словами",
   "No lyrics for this song": "Для цієї пісні немає тексту",
-  "Instrumental": "Інструментал"
+  "Instrumental": "Інструментал",
+  "On mains power": "Від мережі",
+  "This computer has no battery": "Цей комп'ютер не має батареї",
+  "Finished tasks are hidden": "Виконані завдання приховано",
+  "Add a task with +": "Додайте завдання кнопкою +"
 }

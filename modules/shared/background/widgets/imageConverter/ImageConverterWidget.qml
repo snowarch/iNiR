@@ -58,8 +58,8 @@ AbstractBackgroundWidget {
     property var outputPaths: []
     signal conversionFinished(var paths)
 
-    implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 292) * root.scaleFactor)
-    implicitHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 260) * root.scaleFactor)
+    implicitWidth: root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 292) * root.scaleFactor)
+    implicitHeight: root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 260) * root.scaleFactor)
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 250
     resizeMinHeight: 220

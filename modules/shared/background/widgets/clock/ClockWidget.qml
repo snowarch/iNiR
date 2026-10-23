@@ -17,7 +17,7 @@ AbstractBackgroundWidget {
         fontFamily: "Space Grotesk", timeFormat: "system",
         showSeconds: false, showDate: true, dateStyle: "long",
         instrumentTrail: true, instrumentTrailLength: 6, instrumentNumerals: true,
-        timeScale: 100, dateScale: 100, showShadow: true, dim: 70,
+        timeScale: 100, dateScale: 100, showShadow: true, dim: 0,
         "digital.adaptToWallpaper": true,
         "digital.animateChange": true, "digital.fontWeight": 600,
         "digital.spacing": 6, "digital.preset": "default",
@@ -54,9 +54,14 @@ AbstractBackgroundWidget {
             ? androidStackedClockLoader.height : digitalClockLoader.height
     readonly property bool statusShown: root.wallpaperSafetyTriggered
         || (root.shellLocked && (Config.options?.lock?.showLockedText ?? false))
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.activeClockHeight
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.activeClockHeight
         + (root.statusShown ? contentColumn.spacing + statusText.implicitHeight : 0)
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.max(root.activeClockWidth,
+    materialNaturalHeight: root.activeClockHeight
+        + (root.statusShown ? contentColumn.spacing + statusText.implicitHeight : 0)
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.max(root.activeClockWidth,
+        root.statusShown ? statusText.implicitWidth : 0)
+    materialFitted: true
+    materialNaturalWidth: Math.max(root.activeClockWidth,
         root.statusShown ? statusText.implicitWidth : 0)
     irisFacePart: "clock"
     designFaceKey: "widgetClock"
@@ -370,7 +375,7 @@ AbstractBackgroundWidget {
         id: clockSurface
         regionBrightness: root.regionBrightness
         anchors.fill: parent
-        anchors.margins: -Math.round(8 * root.scaleFactor)
+        anchors.margins: root.materialSized ? 0 : -Math.round(8 * root.scaleFactor)
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
         surfaceOpacity: root.backgroundOpacity
         surfaceBorderWidth: root.borderWidth
@@ -380,8 +385,8 @@ AbstractBackgroundWidget {
         surfaceAccent: root.widgetAccent
         surfaceFill: root.widgetPlateColor
         surfaceUseBlur: root.effectiveBlur
-        screenX: root.x + Math.round(8 * root.scaleFactor)
-        screenY: root.y + Math.round(8 * root.scaleFactor)
+        screenX: root.x + (root.materialSized ? 0 : Math.round(8 * root.scaleFactor))
+        screenY: root.y + (root.materialSized ? 0 : Math.round(8 * root.scaleFactor))
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
         shown: !root.irisFaced && root.textClockStyle
@@ -392,8 +397,8 @@ AbstractBackgroundWidget {
         id: contentColumn
         visible: !root.irisFaced
         anchors.centerIn: parent
-        width: root.implicitWidth
-        height: root.implicitHeight
+        width: root.materialFits ? root.materialNaturalWidth : root.implicitWidth
+        height: root.materialFits ? root.materialNaturalHeight : root.implicitHeight
         spacing: Math.round(6 * root.scaleFactor)
 
         FadeLoader {

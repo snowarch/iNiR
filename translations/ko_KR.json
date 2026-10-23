@@ -9689,5 +9689,9 @@
   "Drop a picture or a folder here": "사진이나 폴더를 여기에 놓으세요",
   "Play something with words": "가사가 있는 곡을 재생하세요",
   "No lyrics for this song": "이 곡의 가사가 없습니다",
-  "Instrumental": "연주곡"
+  "Instrumental": "연주곡",
+  "On mains power": "전원에 연결됨",
+  "This computer has no battery": "이 컴퓨터에는 배터리가 없습니다",
+  "Finished tasks are hidden": "완료한 할 일은 숨겨져 있습니다",
+  "Add a task with +": "+로 할 일을 추가하세요"
 }

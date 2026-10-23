@@ -80,9 +80,14 @@ AbstractBackgroundWidget {
         return raw + "°";
     }
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
         : root.weatherStyle === "dial" ? Math.round(shapeSize * 1.4) : shapeSize
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
+    materialFitted: true
+    materialFitPadding: 0
+    materialNaturalWidth: root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
+        : root.weatherStyle === "dial" ? Math.round(shapeSize * 1.4) : shapeSize
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
+    materialNaturalHeight: root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
     irisFacePart: "weather"
     irisSizes: ["small", "medium", "large"]
     irisOptions: [
@@ -266,7 +271,9 @@ AbstractBackgroundWidget {
     MaterialShape {
         id: pillBackground
         visible: !root.irisFaced && root.weatherStyle === "pill"
-        anchors.fill: parent
+        anchors.centerIn: parent
+        width: root.materialFits ? root.materialNaturalWidth : parent.width
+        height: root.materialFits ? root.materialNaturalHeight : parent.height
         shape: root.pillShapeEnum
         color: root.shapeFill
         implicitSize: root.shapeSize
@@ -279,7 +286,9 @@ AbstractBackgroundWidget {
         id: cardBackground
         shown: !root.irisFaced && (root.weatherStyle === "card" || root.weatherStyle === "detail")
             && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
-        anchors.fill: parent
+        anchors.centerIn: parent
+        width: root.materialFits ? root.materialNaturalWidth : parent.width
+        height: root.materialFits ? root.materialNaturalHeight : parent.height
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
         surfaceOpacity: root.backgroundOpacity
         surfaceBorderWidth: root.borderWidth
@@ -298,8 +307,9 @@ AbstractBackgroundWidget {
     ColumnLayout {
         id: detailLayout
         visible: !root.irisFaced && root.weatherStyle === "detail"
-        anchors.fill: parent
-        anchors.margins: Math.round(16 * root.scaleFactor)
+        anchors.centerIn: parent
+        width: (root.materialFits ? root.materialNaturalWidth : parent.width) - Math.round(32 * root.scaleFactor)
+        height: (root.materialFits ? root.materialNaturalHeight : parent.height) - Math.round(32 * root.scaleFactor)
         clip: true
         spacing: Math.round(6 * root.scaleFactor)
 
@@ -409,7 +419,9 @@ AbstractBackgroundWidget {
     }
 
     Item {
-        anchors.fill: parent
+        anchors.centerIn: parent
+        width: root.materialFits ? root.materialNaturalWidth : parent.width
+        height: root.materialFits ? root.materialNaturalHeight : parent.height
         visible: !root.irisFaced && root.weatherStyle !== "detail" && root.weatherStyle !== "dial"
 
         MaterialSymbol {
@@ -501,7 +513,9 @@ AbstractBackgroundWidget {
     // that sky stage instead of becoming an unexplained rule under the widget.
     Item {
         id: instrumentArea
-        anchors.fill: parent
+        anchors.centerIn: parent
+        width: root.materialFits ? root.materialNaturalWidth : parent.width
+        height: root.materialFits ? root.materialNaturalHeight : parent.height
         opacity: root.weatherStyle === "dial" ? 1 : 0
         visible: !root.irisFaced && opacity > 0
         enabled: root.weatherStyle === "dial"

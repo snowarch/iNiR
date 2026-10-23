@@ -9689,5 +9689,9 @@
   "Drop a picture or a folder here": "把图片或文件夹拖到这里",
   "Play something with words": "播放一首有歌词的歌",
   "No lyrics for this song": "这首歌没有歌词",
-  "Instrumental": "纯音乐"
+  "Instrumental": "纯音乐",
+  "On mains power": "使用电源供电",
+  "This computer has no battery": "这台电脑没有电池",
+  "Finished tasks are hidden": "已完成的任务已隐藏",
+  "Add a task with +": "点 + 添加任务"
 }

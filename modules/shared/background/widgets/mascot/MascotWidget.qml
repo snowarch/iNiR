@@ -42,8 +42,8 @@ AbstractBackgroundWidget {
         if (root.mascotContentSize !== next)
             root.mascotContentSize = next
     }
-    implicitWidth: root.mascotContentSize
-    implicitHeight: root.mascotContentSize
+    implicitWidth: root.materialSized ? root.materialWidth : root.mascotContentSize
+    implicitHeight: root.materialSized ? root.materialHeight : root.mascotContentSize
     // She's an image — no ink to adapt — but her optional card is the shared
     // region-aware plate, so run the analysis only while the card is on.
     needsColText: widgetHasSurface

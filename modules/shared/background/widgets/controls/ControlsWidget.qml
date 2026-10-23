@@ -10,8 +10,8 @@ AbstractBackgroundWidget {
         placementStrategy: "free", widgetScale: 100, cornerRadius: -1, x: 120, y: 420
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : instrumentBody.implicitWidth
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : instrumentBody.implicitHeight
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : instrumentBody.implicitWidth
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : instrumentBody.implicitHeight
     irisOnly: true
     irisFacePart: "controls"
     irisSizes: ["small", "medium", "large"]

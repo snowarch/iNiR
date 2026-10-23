@@ -9689,5 +9689,9 @@
   "Drop a picture or a folder here": "画像かフォルダーをここにドロップ",
   "Play something with words": "歌詞のある曲を再生しよう",
   "No lyrics for this song": "この曲の歌詞はありません",
-  "Instrumental": "インストゥルメンタル"
+  "Instrumental": "インストゥルメンタル",
+  "On mains power": "電源に接続中",
+  "This computer has no battery": "このコンピューターにはバッテリーがありません",
+  "Finished tasks are hidden": "完了したタスクは非表示です",
+  "Add a task with +": "+ でタスクを追加"
 }

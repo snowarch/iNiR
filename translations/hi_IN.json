@@ -9689,5 +9689,9 @@
   "Drop a picture or a folder here": "यहाँ कोई तस्वीर या फ़ोल्डर छोड़ें",
   "Play something with words": "बोल वाला कुछ चलाएँ",
   "No lyrics for this song": "इस गाने के बोल नहीं मिले",
-  "Instrumental": "वाद्य संगीत"
+  "Instrumental": "वाद्य संगीत",
+  "On mains power": "बिजली से चल रहा है",
+  "This computer has no battery": "इस कंप्यूटर में बैटरी नहीं है",
+  "Finished tasks are hidden": "पूरे हुए काम छिपे हुए हैं",
+  "Add a task with +": "+ से काम जोड़ें"
 }

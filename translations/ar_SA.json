@@ -9689,5 +9689,9 @@
   "Drop a picture or a folder here": "أفلِت صورة أو مجلدًا هنا",
   "Play something with words": "شغّل شيئًا فيه كلمات",
   "No lyrics for this song": "لا توجد كلمات لهذه الأغنية",
-  "Instrumental": "موسيقى بلا كلمات"
+  "Instrumental": "موسيقى بلا كلمات",
+  "On mains power": "يعمل على الكهرباء",
+  "This computer has no battery": "لا توجد بطارية في هذا الحاسوب",
+  "Finished tasks are hidden": "المهام المنجزة مخفية",
+  "Add a task with +": "أضف مهمة باستخدام +"
 }

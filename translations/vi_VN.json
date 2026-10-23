@@ -9689,5 +9689,9 @@
   "Drop a picture or a folder here": "Thả ảnh hoặc thư mục vào đây",
   "Play something with words": "Phát bài nào có lời",
   "No lyrics for this song": "Không có lời cho bài này",
-  "Instrumental": "Không lời"
+  "Instrumental": "Không lời",
+  "On mains power": "Đang dùng điện lưới",
+  "This computer has no battery": "Máy tính này không có pin",
+  "Finished tasks are hidden": "Việc đã xong đang được ẩn",
+  "Add a task with +": "Thêm việc bằng nút +"
 }

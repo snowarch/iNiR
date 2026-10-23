@@ -14,8 +14,8 @@ AbstractBackgroundWidget {
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         showBackground: false, showBorder: false, backgroundOpacity: 0,
         borderWidth: 0, borderOpacity: 0.2, cornerRadius: -1, useBlur: false, x: 80, y: 240 })
-    implicitWidth: Math.max(64, Number(root._readConfigKey("contentWidth") ?? 160)) * scaleFactor
-    implicitHeight: Math.max(64, Number(root._readConfigKey("contentHeight") ?? 160)) * scaleFactor
+    implicitWidth: root.materialSized ? root.materialWidth : Math.max(64, Number(root._readConfigKey("contentWidth") ?? 160)) * scaleFactor
+    implicitHeight: root.materialSized ? root.materialHeight : Math.max(64, Number(root._readConfigKey("contentHeight") ?? 160)) * scaleFactor
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 64
     resizeMinHeight: 64

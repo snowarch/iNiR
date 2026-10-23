@@ -41,8 +41,8 @@ AbstractBackgroundWidget {
 
     readonly property int listWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 300) * scaleFactor)
     readonly property int listHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 210) * scaleFactor)
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.listWidth
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.instrument
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : root.listWidth
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.instrument
         ? Math.max(root.listHeight, root.instrumentHeightTarget)
         : root.listHeight
     irisFacePart: "worldClock"

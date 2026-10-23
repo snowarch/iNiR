@@ -15,8 +15,8 @@ AbstractBackgroundWidget {
         colorMode: "auto", dim: 0, showBackground: true, showBorder: true,
         backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2,
         cornerRadius: -1, useBlur: false, x: 260, y: 80 })
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : Math.max(140, Number(root._readConfigKey("contentWidth") ?? 220)) * scaleFactor
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : Math.max(120, Number(root._readConfigKey("contentHeight") ?? 140)) * scaleFactor
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.max(140, Number(root._readConfigKey("contentWidth") ?? 220)) * scaleFactor
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.max(120, Number(root._readConfigKey("contentHeight") ?? 140)) * scaleFactor
     irisFacePart: "date"
     irisOptions: [
         { key: "showWeekday", raw: true, label: Translation.tr("Weekday"), icon: "calendar_view_week", fallback: true },

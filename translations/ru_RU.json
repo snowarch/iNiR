@@ -9689,5 +9689,9 @@
   "Drop a picture or a folder here": "Перетащите сюда изображение или папку",
   "Play something with words": "Включите что-нибудь со словами",
   "No lyrics for this song": "Для этой песни нет текста",
-  "Instrumental": "Инструментал"
+  "Instrumental": "Инструментал",
+  "On mains power": "От сети",
+  "This computer has no battery": "У этого компьютера нет батареи",
+  "Finished tasks are hidden": "Выполненные задачи скрыты",
+  "Add a task with +": "Добавьте задачу кнопкой +"
 }

@@ -9689,5 +9689,9 @@
   "Drop a picture or a folder here": "Buraya bir resim ya da klasör bırak",
   "Play something with words": "Sözlü bir şey çal",
   "No lyrics for this song": "Bu şarkının sözleri yok",
-  "Instrumental": "Enstrümantal"
+  "Instrumental": "Enstrümantal",
+  "On mains power": "Şebeke elektriğinde",
+  "This computer has no battery": "Bu bilgisayarda pil yok",
+  "Finished tasks are hidden": "Biten görevler gizli",
+  "Add a task with +": "+ ile görev ekle"
 }
