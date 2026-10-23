@@ -9674,5 +9674,17 @@
   "Move, size and dress every widget on the desktop itself; the shelf has these same options.": "हर विजेट को डेस्कटॉप पर ही खिसकाएँ, आकार बदलें और सजाएँ; शेल्फ़ में यही विकल्प हैं।",
   "Ready-made desktops (Glance, Dashboard, Focus, Listening, Bare) and the ones you saved: wear one, Undo takes it back.": "तैयार डेस्कटॉप और आपके सहेजे हुए: एक पहनें, पूर्ववत् उसे वापस लेता है।",
   "Colours from": "रंग स्रोत",
-  "Use as accent": "एक्सेंट के रूप में उपयोग करें"
+  "Use as accent": "एक्सेंट के रूप में उपयोग करें",
+  "Write something": "कुछ लिखें",
+  "Click anywhere on the page to start": "शुरू करने के लिए पेज पर कहीं भी क्लिक करें",
+  "Nothing yet today": "आज अभी तक कुछ नहीं",
+  "Your hours show up here as you use the computer": "कंप्यूटर इस्तेमाल करते ही आपके घंटे यहाँ दिखेंगे",
+  "Headlines didn't load": "सुर्खियाँ लोड नहीं हुईं",
+  "The feed did not answer": "फ़ीड ने जवाब नहीं दिया",
+  "Whole": "पूरी",
+  "Next picture": "अगली तस्वीर",
+  "Drop to show it": "दिखाने के लिए छोड़ें",
+  "This picture won't open": "यह तस्वीर नहीं खुल रही",
+  "Add a photo": "फ़ोटो जोड़ें",
+  "Drop a picture or a folder here": "यहाँ कोई तस्वीर या फ़ोल्डर छोड़ें"
 }

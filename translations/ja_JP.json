@@ -9674,5 +9674,17 @@
   "Move, size and dress every widget on the desktop itself; the shelf has these same options.": "デスクトップ上でウィジェットを移動・サイズ変更・着せ替えできます。シェルフにも同じ設定があります。",
   "Ready-made desktops (Glance, Dashboard, Focus, Listening, Bare) and the ones you saved: wear one, Undo takes it back.": "用意されたデスクトップと保存したもの：適用でき、元に戻すで取り消せます。",
   "Colours from": "色の取得元",
-  "Use as accent": "アクセントにする"
+  "Use as accent": "アクセントにする",
+  "Write something": "なにか書く",
+  "Click anywhere on the page to start": "ページのどこかをクリックして書き始める",
+  "Nothing yet today": "今日はまだありません",
+  "Your hours show up here as you use the computer": "パソコンを使うと、ここに時間が表示されます",
+  "Headlines didn't load": "見出しを読み込めませんでした",
+  "The feed did not answer": "フィードから応答がありません",
+  "Whole": "全体",
+  "Next picture": "次の画像",
+  "Drop to show it": "ドロップして表示",
+  "This picture won't open": "この画像を開けません",
+  "Add a photo": "写真を追加",
+  "Drop a picture or a folder here": "画像かフォルダーをここにドロップ"
 }

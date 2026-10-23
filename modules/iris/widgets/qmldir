@@ -6,6 +6,7 @@ FaceText 1.0 FaceText.qml
 FaceFigure 1.0 FaceFigure.qml
 FaceHeader 1.0 FaceHeader.qml
 FaceChoice 1.0 FaceChoice.qml
+FaceBlank 1.0 FaceBlank.qml
 singleton IrisFaceData 1.0 IrisFaceData.qml
 FaceDial 1.0 FaceDial.qml
 IrisClockFace 1.0 IrisClockFace.qml
@@ -18,6 +19,7 @@ IrisDateFace 1.0 IrisDateFace.qml
 IrisAgendaFace 1.0 IrisAgendaFace.qml
 IrisBatteryFace 1.0 IrisBatteryFace.qml
 IrisVitalsFace 1.0 IrisVitalsFace.qml
+IrisPhotoFace 1.0 IrisPhotoFace.qml
 IrisTimerFace 1.0 IrisTimerFace.qml
 IrisTodoFace 1.0 IrisTodoFace.qml
 IrisNotesFace 1.0 IrisNotesFace.qml

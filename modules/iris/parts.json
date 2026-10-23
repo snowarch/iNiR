@@ -21,6 +21,7 @@
   "widgetFace.todo": "widgets/IrisTodoFace.qml",
   "widgetFace.uptime": "widgets/IrisUptimeFace.qml",
   "widgetFace.vitals": "widgets/IrisVitalsFace.qml",
+  "widgetFace.photo": "widgets/IrisPhotoFace.qml",
   "widgetFace.weather": "widgets/IrisWeatherFace.qml",
   "widgetFace.worldClock": "widgets/IrisWorldClockFace.qml",
   "widgetOutfit": "edit/IrisWidgetOutfit.qml"

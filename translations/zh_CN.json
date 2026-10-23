@@ -9674,5 +9674,17 @@
   "Move, size and dress every widget on the desktop itself; the shelf has these same options.": "直接在桌面上移动、调整大小和装扮每个小组件；架子上有同样的选项。",
   "Ready-made desktops (Glance, Dashboard, Focus, Listening, Bare) and the ones you saved: wear one, Undo takes it back.": "现成的桌面和你保存的桌面：套用一个，撤销即可还原。",
   "Colours from": "颜色来源",
-  "Use as accent": "用作强调色"
+  "Use as accent": "用作强调色",
+  "Write something": "写点什么",
+  "Click anywhere on the page to start": "点击页面任意位置开始",
+  "Nothing yet today": "今天还没有记录",
+  "Your hours show up here as you use the computer": "使用电脑时，你的时长会显示在这里",
+  "Headlines didn't load": "头条未能加载",
+  "The feed did not answer": "信息源没有响应",
+  "Whole": "完整",
+  "Next picture": "下一张图片",
+  "Drop to show it": "松开即可显示",
+  "This picture won't open": "无法打开这张图片",
+  "Add a photo": "添加照片",
+  "Drop a picture or a folder here": "把图片或文件夹拖到这里"
 }

@@ -39,6 +39,17 @@ AbstractBackgroundWidget {
         y: 320
     })
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
+    irisFacePart: "photo"
+    irisSizes: ["small", "medium", "large"]
+    irisDefaultSize: "medium"
+    irisOptions: [
+        { key: "fitMode", raw: true, label: Translation.tr("Picture"), fallback: "cover", choices: [
+            { label: Translation.tr("Fill"), icon: "crop", value: "cover" },
+            { label: Translation.tr("Whole"), icon: "fit_screen", value: "contain" }] }
+    ]
+    // The iRiS face lends its own clip: the media slots draw inside it instead of under a Material shape.
+    property Item irisPhotoHost: null
+    readonly property bool _hosted: root.irisFaced && root.irisPhotoHost !== null
 
     readonly property string sourceMode: root._readConfigKey("sourceMode") === "folder" ? "folder" : "file"
     readonly property string mediaPath: String(root._readConfigKey("path") ?? "")
@@ -97,8 +108,8 @@ AbstractBackgroundWidget {
 
     property bool dropHover: false
 
-    implicitWidth: root.renderedWidth
-    implicitHeight: root.renderedHeight
+    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.renderedWidth
+    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.renderedHeight
 
     function fileUrl(path: string): string {
         const value = String(path ?? "")
@@ -318,6 +329,17 @@ AbstractBackgroundWidget {
         updates[root._configPath + ".path"] = path
         updates[root._configPath + ".sourceMode"] = "file"
         Config.setNestedValues(updates)
+    }
+    // A dropped folder becomes the rotation: everything in it, in the set order.
+    function setMediaFolder(path: string): void {
+        if (!path)
+            return
+        const updates = {}
+        updates[root._configPath + ".folder"] = path
+        updates[root._configPath + ".sourceMode"] = "folder"
+        updates[root._configPath + ".mediaFilter"] = "all"
+        Config.setNestedValues(updates)
+        Qt.callLater(rotationTimer.restart)
     }
 
     onCurrentPathChanged: {
@@ -585,13 +607,14 @@ AbstractBackgroundWidget {
 
     StyledDropShadow {
         target: shadowShape
-        visible: root.currentPath.length > 0
+        visible: root.currentPath.length > 0 && !root.irisFaced
     }
 
     Item {
         id: maskedContent
+        parent: root._hosted ? root.irisPhotoHost : root
         anchors.fill: parent
-        layer.enabled: true
+        layer.enabled: !root._hosted
         layer.effect: GE.OpacityMask {
             maskSource: MaterialShape {
                 width: maskedContent.width
@@ -602,6 +625,7 @@ AbstractBackgroundWidget {
 
         Rectangle {
             anchors.fill: parent
+            visible: !root._hosted
             color: root.widgetSemanticContainer(root.widgetPrimaryRole)
         }
 
@@ -637,7 +661,7 @@ AbstractBackgroundWidget {
 
         MaterialSymbol {
             anchors.centerIn: parent
-            visible: root.currentPath.length === 0 || root.activeFailed
+            visible: !root._hosted && (root.currentPath.length === 0 || root.activeFailed)
             text: root.activeFailed ? "broken_image" : (root.dropHover ? "download" : "perm_media")
             fill: root.dropHover ? 1 : 0
             iconSize: Math.max(28, Math.round(Math.min(root.renderedWidth, root.renderedHeight) * 0.24))
@@ -646,7 +670,7 @@ AbstractBackgroundWidget {
 
         MaterialShape {
             anchors.fill: parent
-            visible: root.dropHover
+            visible: root.dropHover && !root._hosted
             shape: root.shapeEnum
             color: ColorUtils.applyAlpha(root.widgetAccentVisible, 0.22)
         }
@@ -670,6 +694,12 @@ AbstractBackgroundWidget {
             }
 
             const path = root.pathFromDropUrl(drop.urls[0]);
+            // No extension: a folder (the file manager drags those too).
+            if (path && !/\.[^\/]+$/.test(path)) {
+                root.setMediaFolder(path);
+                drop.accept(Qt.CopyAction);
+                return;
+            }
             if (!path || !Images.isValidMediaByName(path)) {
                 drop.accepted = false;
                 return;

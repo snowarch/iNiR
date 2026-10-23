@@ -9674,5 +9674,17 @@
   "Move, size and dress every widget on the desktop itself; the shelf has these same options.": "Двигайте, меняйте размер и оформление виджетов прямо на рабочем столе; на полке те же параметры.",
   "Ready-made desktops (Glance, Dashboard, Focus, Listening, Bare) and the ones you saved: wear one, Undo takes it back.": "Готовые рабочие столы и сохранённые вами: наденьте один, «Отменить» вернёт как было.",
   "Colours from": "Цвета из",
-  "Use as accent": "Сделать акцентом"
+  "Use as accent": "Сделать акцентом",
+  "Write something": "Напишите что-нибудь",
+  "Click anywhere on the page to start": "Нажмите в любом месте страницы, чтобы начать",
+  "Nothing yet today": "Сегодня пока ничего",
+  "Your hours show up here as you use the computer": "Ваши часы появятся здесь по мере работы за компьютером",
+  "Headlines didn't load": "Заголовки не загрузились",
+  "The feed did not answer": "Лента не ответила",
+  "Whole": "Целиком",
+  "Next picture": "Следующее изображение",
+  "Drop to show it": "Отпустите, чтобы показать",
+  "This picture won't open": "Это изображение не открывается",
+  "Add a photo": "Добавьте фото",
+  "Drop a picture or a folder here": "Перетащите сюда изображение или папку"
 }
