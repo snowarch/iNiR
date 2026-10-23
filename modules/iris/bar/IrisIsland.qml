@@ -569,7 +569,6 @@ Item {
         && root.targetScreen?.name === GlobalStates.focusedScreen?.name
     readonly property string compactMode: root.feedback && !root.anchored ? "feedback"
         : root.eventShown && !root.anchored ? "event"
-        : root.editingDesktop ? "edit"
         : IrisStyle.cluster && !root.zoned ? "clock" : root.primary
     readonly property string layout: String(root.options?.layout ?? "island")
     // Menu bar: a thin strip across the edge with the heart hanging from its middle as a notch.
@@ -623,13 +622,13 @@ Item {
     readonly property bool compactSizeClass: root.compactMode === "feedback" || root.compactMode === "event"
     readonly property bool spanning: root.fullWidth
     readonly property var compactRows: ({ idle: idleRow, media: mediaRow, record: recordRow,
-        timer: timerRow, task: taskRow, clock: clockRow, edit: editRow, event: eventRow, feedback: feedbackRow })
+        timer: timerRow, task: taskRow, clock: clockRow, event: eventRow, feedback: feedbackRow })
     readonly property real compactContentWidth: root.vertical ? compactColumn.implicitHeight
         : root.faceUrl.length > 0 ? (designFace.item?.contentWidth ?? 0)
         : root.compactRows[root.compactMode]?.implicitWidth ?? 0
     readonly property real compactFloor: root.compactHeight * 2.1
     readonly property real compactCeiling: Math.min(root.availableWidth,
-        (root.compactMode === "edit" ? 440 : root.compactMode === "media" ? 380 : root.compactMode === "event" ? 330 : 320) * root.d)
+        (root.compactMode === "media" ? 380 : root.compactMode === "event" ? 330 : 320) * root.d)
     // The ceiling holds the Island's own content; the pieces it carries come on top of it, or they would be
     // squeezed over the clock.
     readonly property real compactTargetWidth: root.spanning ? root.fullChassisWidth
@@ -1956,95 +1955,6 @@ Item {
                 Item { Layout.fillWidth: true }
             }
 
-            // Arranging the desktop: the Island is its head. Undo and redo walk the arrangement, the grid lattice
-            // snaps or lets go, Done puts the desktop back.
-            CompactRow {
-                id: editRow
-                mode: "edit"
-                lead: Math.round(28 * root.d)
-                anchors.rightMargin: 5 * root.d
-                spacing: Math.round(4 * root.d)
-                readonly property bool gridOn: Config.options?.background?.widgets?.editGrid?.snap ?? true
-                IrisIconButton {
-                    Layout.preferredWidth: Math.round(28 * root.d)
-                    Layout.preferredHeight: Layout.preferredWidth
-                    materialIcon: "undo"
-                    iconSize: Math.round(16 * root.d)
-                    enabled: DesktopEditHistory.undoStack.length > 0
-                    opacity: enabled ? 1 : 0.35
-                    Accessible.name: Translation.tr("Undo")
-                    onClicked: DesktopEditHistory.undo()
-                }
-                IrisIconButton {
-                    Layout.preferredWidth: Math.round(28 * root.d)
-                    Layout.preferredHeight: Layout.preferredWidth
-                    materialIcon: "redo"
-                    iconSize: Math.round(16 * root.d)
-                    enabled: DesktopEditHistory.redoStack.length > 0
-                    opacity: enabled ? 1 : 0.35
-                    Accessible.name: Translation.tr("Redo")
-                    onClicked: DesktopEditHistory.redo()
-                }
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: Math.round(8 * root.d)
-                    Layout.rightMargin: Math.round(8 * root.d)
-                    spacing: -1 * root.d
-                    IrisText {
-                        Layout.fillWidth: true
-                        horizontalAlignment: Text.AlignHCenter
-                        text: DesktopEditHistory.notice.length > 0 ? DesktopEditHistory.notice : Translation.tr("Edit Desktop")
-                        font.pixelSize: IrisStyle.typeLabel
-                        font.weight: IrisStyle.weight(Font.DemiBold)
-                        elide: Text.ElideRight
-                    }
-                    IrisText {
-                        Layout.fillWidth: true
-                        horizontalAlignment: Text.AlignHCenter
-                        text: Translation.tr("Drag to place · click to use")
-                        color: IrisStyle.muted
-                        font.pixelSize: IrisStyle.typeFootnote
-                        elide: Text.ElideRight
-                    }
-                }
-                IrisIconButton {
-                    Layout.preferredWidth: Math.round(28 * root.d)
-                    Layout.preferredHeight: Layout.preferredWidth
-                    materialIcon: "grid_4x4"
-                    iconSize: Math.round(16 * root.d)
-                    selected: editRow.gridOn
-                    Accessible.name: editRow.gridOn ? Translation.tr("Snap to grid: on") : Translation.tr("Snap to grid: off")
-                    onClicked: Config.setNestedValue("background.widgets.editGrid.snap", !editRow.gridOn)
-                }
-                Rectangle {
-                    Layout.leftMargin: Math.round(4 * root.d)
-                    Layout.preferredHeight: root.compactHeight - Math.round(12 * root.d)
-                    Layout.preferredWidth: doneLabel.implicitWidth + Math.round(26 * root.d)
-                    radius: IrisStyle.capsule(height)
-                    color: doneArea.pressed ? IrisStyle.accentHover : doneArea.containsMouse ? IrisStyle.accentHover : IrisStyle.accent
-                    scale: doneArea.pressed ? IrisStyle.pressScale(0.94) : 1
-                    Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
-                    Behavior on scale { NumberAnimation { duration: IrisStyle.duration(doneArea.pressed ? 80 : 200); easing.type: IrisStyle.feedbackEasing } }
-                    IrisText {
-                        id: doneLabel
-                        anchors.centerIn: parent
-                        text: Translation.tr("Done")
-                        color: IrisStyle.inkOnAccent
-                        font.pixelSize: IrisStyle.typeLabel
-                        font.weight: IrisStyle.weight(Font.Bold)
-                    }
-                    MouseArea {
-                        id: doneArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        Accessible.role: Accessible.Button
-                        Accessible.name: Translation.tr("Done")
-                        onClicked: GlobalStates.setWidgetEditMode(false)
-                    }
-                }
-            }
-
             CompactRow {
                 id: eventRow
                 mode: "event"
@@ -2267,8 +2177,7 @@ Item {
                 y: root.zoned && root.vertical ? Math.round(barZones.heartAlong) : 0
                 width: root.zoned && !root.vertical ? Math.round(root.heartLength) : parent.width
                 height: root.zoned && root.vertical ? Math.round(root.heartLength) : parent.height
-                // Arranging, the head's own keys take the clicks (a Design face draws its own).
-                enabled: !root.inlineExpanded && (!root.zoned || root.heartShown) && root.compactMode !== "edit"
+                enabled: !root.inlineExpanded && (!root.zoned || root.heartShown)
                 acceptedButtons: Qt.LeftButton | Qt.MiddleButton
                 cursorShape: islandGrip.carrying ? Qt.ClosedHandCursor
                     : GlobalStates.irisEdit ? Qt.OpenHandCursor : Qt.PointingHandCursor
@@ -2316,7 +2225,6 @@ Item {
                 }
                 onClicked: mouse => {
                     if (islandGrip.carrying) return
-                    if (root.compactMode === "edit") { GlobalStates.setWidgetEditMode(false); return }
                     if (mouse.button === Qt.MiddleButton) {
                         if (root.hasMedia) MprisController.togglePlaying()
                         return

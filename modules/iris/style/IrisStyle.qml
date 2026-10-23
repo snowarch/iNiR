@@ -109,7 +109,7 @@ QtObject {
     }
     // The Label voice's air between capitals (+0.08 em) and the Dot voice's (+0.02 em), in pixels.
     function labelTracking(px: real): real { return Math.round(px * 0.08 * 10) / 10 }
-    function dotTracking(px: real): real { return Math.round(px * 0.02 * 10) / 10 }
+    function dotTracking(px: real): real { return -Math.round(px * 0.01 * 10) / 10 }
 
     readonly property var theme: root.appearance?.theme ?? ({})
     function wrapHue(hue, fallback: real): real {
@@ -219,19 +219,18 @@ QtObject {
             source: Quickshell.shellPath(`assets/fonts/${modelData}.ttf`)
         }
     }
-    // One family in three voices (DESIGN.md S2): Geist to read, Geist Mono for labels, Geist Pixel Circle for the
-    // one number. Loaded from the shell itself, so it does not wait on fontconfig; a missing file falls back to the
-    // bundled Inter and the system mono instead of a blank face.
+    // One family in three voices (DESIGN.md S2): Geist to read, Geist Mono for labels, Archivo SemiExpanded for the
+    // one number (no dot or pixel faces: 10-23, his order). Loaded from the shell itself, so it does not wait on
+    // fontconfig; a missing file falls back to the bundled Inter and the system mono instead of a blank face.
     readonly property FontLoader geistRead: FontLoader { source: Quickshell.shellPath("assets/fonts/geist/Geist.ttf") }
     readonly property FontLoader geistMono: FontLoader { source: Quickshell.shellPath("assets/fonts/geist/GeistMono.ttf") }
-    readonly property FontLoader geistDot: FontLoader { source: Quickshell.shellPath("assets/fonts/geist/GeistPixel-Circle.ttf") }
     function loadedFace(loader: FontLoader, fallback: string): string {
         return loader.status === FontLoader.Ready && loader.name.length > 0 ? loader.name : fallback
     }
     readonly property string faceText: root.loadedFace(root.geistRead, "Inter")
     readonly property string faceTitle: root.faceText
     readonly property string faceLabel: root.loadedFace(root.geistMono, "JetBrainsMono Nerd Font")
-    readonly property string faceFigures: root.loadedFace(root.geistDot, root.faceText)
+    readonly property string faceFigures: Qt.fontFamilies().includes("Archivo SemiExpanded") ? "Archivo SemiExpanded" : root.faceText
     readonly property var defaultFaces: ({
         "iris.appearance.fontFamily": root.faceText,
         "iris.appearance.titleFontFamily": root.faceTitle,
@@ -256,13 +255,13 @@ QtObject {
         return steps[Math.max(0, Math.min(steps.length - 1, at + root.weightShift))]
     }
     readonly property int figureWeight: ({ light: Font.Light, regular: Font.Normal })[root.appearance?.figureWeight ?? "bold"] ?? Font.Bold
-    // The Dot voice: clock digits, a widget's one number, area titles. The Figures row picks it; never under 22 px.
+    // The Figure voice (was Dot): clock digits, a widget's one number, area titles. The Figures row picks it.
     readonly property string fontDot: IrisDesign.font("dot") || root.face("iris.appearance.numbersFontFamily", root.appearance?.numbersFontFamily)
     // Small figures (a count, a percentage in a row) read in the Read voice with tabular digits, unless the person
     // chose a face of their own for figures; past 22 px a figure takes the Dot voice (`figureFace`).
     readonly property string fontNumbers: IrisDesign.font("numbers")
         || (String(root.appearance?.numbersFontFamily ?? "").length > 0 ? root.fontDot : root.fontMain)
-    // The Dot face is Nothing's; Apple sets every figure in the numbers face, bold and tabular.
+    // The figure face is Nothing's; Apple sets every figure in the numbers face, bold and tabular.
     function figureFace(px: real): string { return px >= 22 && root.mono ? root.fontDot : root.fontNumbers }
     // The Label voice: data and labels in capitals.
     readonly property string fontMono: IrisDesign.font("mono") || root.faceLabel

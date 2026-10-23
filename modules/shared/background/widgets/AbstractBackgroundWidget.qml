@@ -986,6 +986,7 @@ AbstractWidget {
     }
     // Taken back to the shelf while arranging, the widget leaves its last look on disk and its live one goes with it.
     Component.onDestruction: {
+        DesktopEditStage.inspect(root.outputName, root, false)
         if (!root._picture)
             return
         root._picture.saveToFile(DesktopEditStage.savedPicture(root.configEntryName))
@@ -1135,6 +1136,10 @@ AbstractWidget {
     }
     readonly property bool editHovered: widgetEditHover.hovered
     readonly property bool quickControlsOpen: editPopoverPanel.open
+    // The family draws this widget's controls beside the card at true size (DesktopEditStage.inspected).
+    readonly property bool _sheetHosted: root.irisFaced && GlobalStates.widgetEditMode && DesktopEditStage.hostsSheet(root.outputName)
+    readonly property bool _handsSheet: root._sheetHosted && editPopoverPanel.open
+    on_HandsSheetChanged: DesktopEditStage.inspect(root.outputName, root, root._handsSheet)
     readonly property string quickTab: root._quickTab
 
     // What the widget wears while arranging, when the family draws it (its part `widgetOutfit`): then the engine's own
@@ -1374,8 +1379,8 @@ AbstractWidget {
                 root._latchEditPlacement()
             }
             onWidthChanged: if (open) root._latchEditPlacement()
-            visible: opacity > 0
-            enabled: open && !root._irisGesture
+            visible: opacity > 0 && !root._sheetHosted
+            enabled: open && !root._irisGesture && !root._sheetHosted
             opacity: open && !root._irisGesture ? 1 : 0
             x: root._editControlsGeometry.popoverX - root._editControlsGeometry.toolbarX
             y: root._editControlsGeometry.popoverY - root._editControlsGeometry.toolbarY
@@ -1475,7 +1480,7 @@ AbstractWidget {
                 // `visible` is effective visibility and inherits the parent chain;
                 // using it as Loader state can latch this popover unloaded forever.
                 active: (editPopoverPanel.open || editPopoverPanel.opacity > 0)
-                    && root._effectivePopover !== null
+                    && root._effectivePopover !== null && !root._sheetHosted
             }
         }
     }

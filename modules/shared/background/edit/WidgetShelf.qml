@@ -25,13 +25,13 @@ Item {
     property var entries: []
     readonly property real d: root.face.d
 
-    readonly property real pad: Math.round(16 * root.d)
-    readonly property real headHeight: Math.round(30 * root.d)
-    readonly property real headGap: Math.round(14 * root.d)
-    readonly property real pictureHeight: Math.round(112 * root.d)
-    readonly property real nameGap: Math.round(7 * root.d)
-    readonly property real nameHeight: Math.round(18 * root.d)
-    readonly property real tileGap: Math.round(14 * root.d)
+    readonly property real pad: Math.round(12 * root.d)
+    readonly property real headHeight: Math.round(32 * root.d)
+    readonly property real headGap: Math.round(10 * root.d)
+    readonly property real pictureHeight: Math.round(76 * root.d)
+    readonly property real nameGap: Math.round(5 * root.d)
+    readonly property real nameHeight: Math.round(15 * root.d)
+    readonly property real tileGap: Math.round(10 * root.d)
     readonly property real fullHeight: root.pad + root.headHeight + root.headGap + root.pictureHeight + root.nameGap
         + root.nameHeight + root.pad
 

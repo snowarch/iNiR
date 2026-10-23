@@ -10,8 +10,9 @@ import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.settings
 
-// One area's everyday options on the shelf as quick tiles (S4): a switch 1x1, a range or a short choice 2x1, two rows
-// that scroll sideways. The card above shows each change as it lands; the rest of the area is one tap away in Settings.
+// One area's everyday options on the shelf, two rows of inline tiles that scroll sideways (S4): each says its name and
+// holds its control beside it, a switch, a short choice or a scrubber with its value. The card above shows each change
+// as it lands; the rest of the area is one tap away in Settings.
 Flickable {
     id: root
 
@@ -19,6 +20,7 @@ Flickable {
     readonly property real d: IrisStyle.density
     readonly property real gap: Math.round(8 * root.d)
     readonly property real unit: Math.floor((root.height - root.gap) / 2)
+    readonly property real inner: Math.round(12 * root.d)
 
     function shape(spec: var): string {
         if (spec.kind === "switch") return "switch"
@@ -43,7 +45,15 @@ Flickable {
         return twins > 1 && group.length > 0 && group !== label ? group + " · " + label : label
     }
     FontMetrics { id: nameMetrics; font.family: IrisStyle.fontMain; font.pixelSize: IrisStyle.typeMeta; font.weight: IrisStyle.weight(Font.DemiBold) }
-    // Each tile as wide as what it says, laid in two rows that stay even: the next one goes on the shorter row.
+    FontMetrics { id: choiceMetrics; font.family: IrisStyle.fontMain; font.pixelSize: IrisStyle.typeMeta; font.weight: IrisStyle.weight(Font.DemiBold) }
+    readonly property real switchWidth: Math.round(40 * root.d)
+    readonly property real scrubWidth: Math.round(120 * root.d)
+    function choiceTrack(spec: var): real {
+        const choices = IrisOptions.choicesOf(spec)
+        const widest = Math.max(...choices.map(entry => choiceMetrics.advanceWidth(Translation.tr(String(entry.label ?? "")))))
+        return Math.ceil(choices.length * (widest + Math.round(26 * root.d)) + 6)
+    }
+    // Each tile as wide as its name and its control, laid in two rows that stay even: the next goes on the shorter one.
     readonly property var placed: {
         const rows = [0, 0], out = []
         const lay = (w, item) => {
@@ -54,18 +64,12 @@ Flickable {
         for (const spec of root.specs) {
             const kind = root.shape(spec)
             const name = root.nameOf(spec)
-            const said = nameMetrics.advanceWidth(name)
-            let w = 0
-            if (kind === "switch") w = Math.min(Math.round(280 * root.d), Math.max(Math.round(132 * root.d), said + Math.round(34 * root.d)))
-            else if (kind === "range") w = Math.max(Math.round(240 * root.d), said + Math.round(90 * root.d))
-            else {
-                const widest = Math.max(...IrisOptions.choicesOf(spec).map(entry => nameMetrics.advanceWidth(Translation.tr(String(entry.label ?? "")))))
-                const track = IrisOptions.choicesOf(spec).length * (widest + Math.round(24 * root.d)) + 4
-                w = Math.min(Math.round(440 * root.d), Math.max(Math.round(200 * root.d), track + Math.round(16 * root.d), said + Math.round(24 * root.d)))
-            }
-            lay(Math.ceil(w), { spec: spec, kind: kind, name: name })
+            const said = Math.min(Math.round(200 * root.d), nameMetrics.advanceWidth(name))
+            const control = kind === "switch" ? root.switchWidth
+                : kind === "range" ? root.scrubWidth + Math.round(44 * root.d) : root.choiceTrack(spec)
+            lay(Math.ceil(root.inner + said + Math.round(12 * root.d) + control + root.inner * 0.75), { spec: spec, kind: kind, name: name })
         }
-        lay(Math.round(132 * root.d), { spec: null, kind: "more", name: "" })
+        lay(Math.round(118 * root.d), { spec: null, kind: "more", name: "" })
         return out
     }
 
@@ -97,87 +101,109 @@ Flickable {
                 height: root.unit
                 sourceComponent: cell.modelData.kind === "switch" ? switchTile : cell.modelData.kind === "range" ? rangeTile
                     : cell.modelData.kind === "choice" ? choiceTile : moreTile
-                onLoaded: { cell.item.spec = cell.modelData.spec; cell.item.name = cell.modelData.name }
+                onLoaded: {
+                    cell.item.spec = cell.modelData.spec
+                    if (cell.modelData.kind !== "more") cell.item.name = cell.modelData.name
+                }
             }
         }
     }
 
-    // The rest of the area, in Settings.
-    Component {
-        id: moreTile
-        IrisTile {
-            property var spec: null
-            property string name: ""
-            unit: root.unit
-            glyph: "tune"
-            title: Translation.tr("More")
-            label: Translation.tr("Settings")
-            onClicked: GlobalStates.openSettingsAt("iris", root.section)
-        }
-    }
-
-    Component {
-        id: switchTile
-        IrisTile {
-            id: sw
-            property var spec: null
-            property string name: ""
-            readonly property bool lit: { Config.revision; const v = !!IrisOptions.currentValue(sw.spec ?? {}); return sw.spec?.invert ? !v : v }
-            unit: root.unit
-            on: sw.lit
-            wide: true
-            title: sw.name
-            label: sw.lit ? Translation.tr("On") : Translation.tr("Off")
-            onClicked: IrisOptions.commit(sw.spec, sw.spec.invert ? sw.lit : !sw.lit)
-        }
-    }
-
-    component WidePlate: Rectangle {
+    // A tile: its name on the left, its control on the right, one line.
+    component Plate: Rectangle {
         id: plate
         property var spec: null
         property string name: ""
-        property string said: ""
-        radius: IrisStyle.radiusTile
-        color: IrisStyle.fill
+        property real controlWidth: 0
+        default property alias control: holder.data
+        property bool tappable: false
+        signal tapped()
+        radius: IrisStyle.fieldChamfer ? 0 : Math.min(IrisStyle.radiusTile, height / 2)
+        color: plateHover.hovered ? IrisStyle.fillActive : IrisStyle.fillQuiet
+        Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+        HoverHandler { id: plateHover }
+        MouseArea {
+            anchors.fill: parent
+            enabled: plate.tappable
+            cursorShape: Qt.PointingHandCursor
+            onClicked: plate.tapped()
+        }
         IrisText {
-            x: Math.round(12 * root.d)
-            y: Math.round(10 * root.d)
-            width: plate.width - x - (sayText.visible ? sayText.width + Math.round(20 * root.d) : Math.round(12 * root.d))
+            x: root.inner
+            anchors.verticalCenter: parent.verticalCenter
+            width: plate.width - x - plate.controlWidth - Math.round(12 * root.d) - root.inner * 0.75
             elide: Text.ElideRight
             text: plate.name
             role: IrisText.Name
             font.pixelSize: IrisStyle.typeMeta
             font.weight: IrisStyle.weight(Font.DemiBold)
         }
-        IrisLabel {
-            id: sayText
+        Item {
+            id: holder
             anchors.right: parent.right
-            anchors.rightMargin: Math.round(12 * root.d)
-            y: Math.round(11 * root.d)
-            visible: plate.said.length > 0
-            text: plate.said
+            anchors.rightMargin: Math.round(root.inner * 0.75)
+            anchors.verticalCenter: parent.verticalCenter
+            width: plate.controlWidth
+            height: plate.height
         }
     }
+
+    // The rest of the area, in Settings.
+    Component {
+        id: moreTile
+        Plate {
+            property var spec: null
+            name: Translation.tr("More")
+            controlWidth: Math.round(18 * root.d)
+            tappable: true
+            onTapped: GlobalStates.openSettingsAt("iris", root.section)
+            MaterialSymbol {
+                anchors.centerIn: parent
+                text: "arrow_outward"
+                iconSize: Math.round(16 * root.d)
+                color: IrisStyle.textSecondary
+            }
+        }
+    }
+
+    Component {
+        id: switchTile
+        Plate {
+            id: sw
+            readonly property bool lit: { Config.revision; const v = !!IrisOptions.currentValue(sw.spec ?? {}); return sw.spec?.invert ? !v : v }
+            controlWidth: root.switchWidth
+            tappable: true
+            onTapped: IrisOptions.commit(sw.spec, sw.spec.invert ? sw.lit : !sw.lit)
+            IrisSwitch {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                on: sw.lit
+                name: sw.name
+                onToggled: IrisOptions.commit(sw.spec, sw.spec.invert ? sw.lit : !sw.lit)
+            }
+        }
+    }
+
     Component {
         id: rangeTile
-        WidePlate {
+        Plate {
             id: range
             readonly property real lo: Number(range.spec?.min ?? 0)
             readonly property real hi: Number(range.spec?.max ?? 1)
             readonly property real step: Number(range.spec?.step ?? 1)
             property real dragged: NaN
             readonly property real value: { Config.revision; return Number.isFinite(range.dragged) ? range.dragged : Number(IrisOptions.currentValue(range.spec ?? {})) }
-            said: range.spec ? Translation.tr(IrisOptions.rangeText(range.spec, range.value)) : ""
+            controlWidth: root.scrubWidth + Math.round(44 * root.d)
             function snap(raw: real): real {
                 const snapped = range.lo + Math.round((raw - range.lo) / range.step) * range.step
                 return Number(Math.max(range.lo, Math.min(range.hi, snapped)).toFixed(4))
             }
             IrisSlider {
                 id: slider
-                x: Math.round(10 * root.d)
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: Math.round(6 * root.d)
-                width: parent.width - 2 * x
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: root.scrubWidth
+                height: Math.min(implicitHeight, range.height)
                 value: range.hi > range.lo ? (range.value - range.lo) / (range.hi - range.lo) : 0
                 // A drag is seen live in memory and written once, on release, as Settings does.
                 onMoved: next => {
@@ -192,19 +218,27 @@ Flickable {
                     IrisOptions.commit(range.spec, v)
                 }
             }
+            IrisLabel {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.round(38 * root.d)
+                horizontalAlignment: Text.AlignRight
+                elide: Text.ElideRight
+                text: range.spec ? Translation.tr(IrisOptions.rangeText(range.spec, range.value)) : ""
+            }
         }
     }
     Component {
         id: choiceTile
-        WidePlate {
+        Plate {
             id: choice
             readonly property var options: IrisOptions.choicesOf(choice.spec ?? {})
             readonly property var now: { Config.revision; return IrisOptions.currentValue(choice.spec ?? {}) }
+            controlWidth: root.choiceTrack(choice.spec ?? {})
             IrisSegmented {
-                x: Math.round(8 * root.d)
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: Math.round(8 * root.d)
-                width: parent.width - 2 * x
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width
+                height: Math.min(implicitHeight, choice.height - Math.round(6 * root.d))
                 accessibleName: Translation.tr(String(choice.spec?.label ?? ""))
                 options: choice.options.map(entry => ({ label: Translation.tr(String(entry.label ?? "")), value: entry.value }))
                 current: choice.now

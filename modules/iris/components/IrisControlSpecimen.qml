@@ -19,7 +19,7 @@ GridLayout {
     }
 
     Cell {
-        caption: "Dot · Geist Pixel Circle"
+        caption: "Figure · Archivo SemiExpanded"
         IrisDotText { text: "12:44"; pixelSize: IrisStyle.typeDotXL }
         Row {
             spacing: Math.round(10 * root.d)

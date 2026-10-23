@@ -1,28 +1,36 @@
 #version 440
-// The desktop as a card: the full-size picture brought down to the card's pixels through a tent of nine taps (a
-// mipmap blends in the half-size level and blurs text; a plain fetch aliases it), cut by the card's shape.
+// The desktop as a card: its picture cut by the card's shape, worked out here (a rounded rect, or AIRISU's 45 deg cut
+// top-right and bottom-left) with one card pixel of edge, so no mask picture has to be drawn and kept.
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
-    // Half a card pixel, in the picture's uv. Zero while the card travels: the mipmapped fetch alone.
-    vec2 reach;
+    // The desktop's size, the corner (radius or cut) in desktop px, 1 for the cut, and one card pixel in desktop px.
+    vec2 size;
+    float corner;
+    float chamfer;
+    float edge;
 };
 layout(binding = 1) uniform sampler2D source;
-layout(binding = 2) uniform sampler2D maskSource;
+
+float roundedCoverage(vec2 p) {
+    vec2 half_ = size * 0.5;
+    vec2 q = abs(p - half_) - (half_ - vec2(corner));
+    float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - corner;
+    return clamp(0.5 - d / edge, 0.0, 1.0);
+}
+
+float cutCoverage(vec2 p) {
+    // Distance past the two diagonals: top-right (x - (w - c)) - y and bottom-left (h - c) - y ... mirrored.
+    float tr = ((p.x - (size.x - corner)) - p.y) * 0.70710678;
+    float bl = ((p.y - (size.y - corner)) - p.x) * 0.70710678;
+    float d = max(tr, bl);
+    return clamp(0.5 - d / edge, 0.0, 1.0);
+}
 
 void main() {
-    vec2 uv = qt_TexCoord0;
-    float cut = texture(maskSource, uv).a;
-    if (reach.x <= 0.0) {
-        fragColor = texture(source, uv) * cut * qt_Opacity;
-        return;
-    }
-    vec2 dx = vec2(reach.x, 0.0);
-    vec2 dy = vec2(0.0, reach.y);
-    vec4 c = 4.0 * texture(source, uv)
-        + 2.0 * (texture(source, uv + dx) + texture(source, uv - dx) + texture(source, uv + dy) + texture(source, uv - dy))
-        + texture(source, uv + dx + dy) + texture(source, uv - dx - dy) + texture(source, uv + dx - dy) + texture(source, uv - dx + dy);
-    fragColor = c * (cut * qt_Opacity / 16.0);
+    vec2 p = qt_TexCoord0 * size;
+    float cut = corner <= 0.0 ? 1.0 : (chamfer > 0.5 ? cutCoverage(p) : roundedCoverage(p));
+    fragColor = texture(source, qt_TexCoord0) * cut * qt_Opacity;
 }

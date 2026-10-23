@@ -112,7 +112,7 @@ Item {
     Item {
         id: tag
         readonly property real pad: 10 * root.d
-        readonly property bool shown: (root.hovered || root.selected) && !root.carried
+        readonly property bool shown: root.hovered && !root.carried
         width: tagRow.implicitWidth + 2 * tag.pad
         height: Math.round(24 * root.d)
         scale: root.hair * (0.92 + 0.08 * tag.show)
@@ -202,6 +202,37 @@ Item {
         visible: keys.out > 0.01
         enabled: root.selected
 
+        // Chosen, its name leads the keys: one row, never a tag stacked on them.
+        Rectangle {
+            implicitHeight: Math.round(32 * root.d)
+            implicitWidth: keyName.implicitWidth + Math.round(24 * root.d)
+            radius: root.cut ? 0 : height / 2
+            color: IrisStyle.surfaceOpaque
+            border.width: IrisStyle.devicePx
+            border.color: IrisStyle.hairlineStrong
+            Row {
+                anchors.centerIn: parent
+                spacing: Math.round(6 * root.d)
+                MaterialSymbol {
+                    visible: root.locked
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "lock"
+                    iconSize: Math.round(13 * root.d)
+                    color: IrisStyle.textSecondary
+                }
+                StyledText {
+                    id: keyName
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.name
+                    color: IrisStyle.text
+                    font.family: root.ink ? IrisStyle.fontLabel : IrisStyle.fontMain
+                    font.pixelSize: root.ink ? Math.round(10 * root.d) : IrisStyle.typeFootnote
+                    font.weight: Font.DemiBold
+                    font.capitalization: root.ink ? Font.AllUppercase : Font.MixedCase
+                    font.letterSpacing: root.ink ? 0.8 * root.d : 0
+                }
+            }
+        }
         // The size it is, as a little grid of the cells it takes; a press moves to the next one.
         IrisButton {
             visible: root.sized && !root.locked

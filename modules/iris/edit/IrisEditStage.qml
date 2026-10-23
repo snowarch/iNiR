@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Shapes
 import qs.modules.common.functions
 import qs.modules.iris.style
@@ -9,11 +10,11 @@ import qs.services
 import qs.modules.iris.components
 import qs.modules.iris.frame
 
-// Arranging widgets: the family's paper the desktop recedes onto, and the card's edge. Loaded three times by the desktop
-// (shared Background): `under` paints the paper and the card's shadow behind the shrunk desktop, `over` draws the
-// card's hairline on top of it and gives the desktop `cardMask`, the card's shape at full size, to cut its corners, and
-// `inside` (shrunk with the desktop, under its widgets) draws where the frame, the Island, its bubbles and the Dock
-// rest, so the card is the screen as it will be and a widget is seen keeping clear of them.
+// Arranging widgets: what the desktop recedes over, and the card's edge. Loaded by the desktop (shared Background):
+// `under` lays the wallpaper softly blurred and dimmed behind the card with its shadow, `over` draws the card's hairline
+// and gives the desktop `cardMask`, the card's shape at full size, to cut its corners. The chassis recedes into the card
+// with the desktop (IrisBar), so the frame, the Island and the Dock on the card are the real ones; the edit window
+// (IrisEditDesk) loads `lit`, the rims of the bodies a carried widget meets, drawn over them.
 Item {
     id: root
 
@@ -23,6 +24,8 @@ Item {
     property var card: ({ x: 0, y: 0, s: 1, p: 0 })
     // The card's own still is still decoding: the real wallpaper keeps showing round the card meanwhile.
     property bool waiting: false
+    // The wallpaper's still, for the stage.
+    property string still: ""
 
     readonly property real d: IrisStyle.density
     readonly property real p: Math.max(0, Math.min(1, root.card.p))
@@ -34,23 +37,36 @@ Item {
     readonly property real cornerSize: (root.cut ? IrisStyle.chamferCut : Math.round(22 * root.d)) * root.p
     readonly property color paper: IrisStyle.paper
 
-    // The paper: ink with the family's dot grid, tiled from one cell so nothing is painted per frame.
-    Rectangle {
+    // The stage: the person's own wallpaper, out of focus and a step darker (lighter in light), so the card reads as
+    // the thing in front. Decoded small and blurred once; nothing is drawn per frame but its opacity.
+    Item {
         visible: root.side === "under"
         anchors.fill: parent
-        color: root.paper
         opacity: root.waiting ? 0 : Math.min(1, root.p * 1.6)
-
+        Rectangle { anchors.fill: parent; color: root.paper }
         Image {
-            readonly property real pitch: Math.max(4, Math.round(8 * root.d))
-            readonly property color ink: IrisStyle.paperDot
+            id: stageStill
             anchors.fill: parent
-            fillMode: Image.Tile
-            smooth: false
-            source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='" + pitch + "' height='" + pitch
-                + "'><circle cx='" + pitch / 2 + "' cy='" + pitch / 2 + "' r='" + Math.max(0.75, root.d)
-                + "' fill='rgb(" + Math.round(ink.r * 255) + "," + Math.round(ink.g * 255) + "," + Math.round(ink.b * 255)
-                + ")' fill-opacity='" + ink.a.toFixed(3) + "'/></svg>"
+            visible: false
+            source: root.side === "under" ? root.still : ""
+            sourceSize: Qt.size(Math.round(root.width / 3), Math.round(root.height / 3))
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            cache: true
+        }
+        MultiEffect {
+            anchors.fill: parent
+            source: stageStill
+            visible: stageStill.status === Image.Ready
+            blurEnabled: true
+            blur: 1
+            blurMax: 40
+            saturation: -0.15
+            autoPaddingEnabled: false
+        }
+        Rectangle {
+            anchors.fill: parent
+            color: ColorUtils.applyAlpha(root.paper, IrisStyle.light ? 0.32 : 0.46) // iris-literal: the stage's dim over the blurred wallpaper
         }
     }
 
@@ -68,12 +84,14 @@ Item {
 
     // The card's shape at the desktop's own size (it is shrunk with it): rounded in iRiS, the 45 deg cut in AIRISU.
     readonly property Item cardMask: root.side === "over" ? mask : null
+    // The card's corner in desktop px and whether it is cut: the desktop's own shader draws the shape.
+    readonly property real cardCorner: root.cornerSize / Math.max(0.2, root.card.s)
+    readonly property bool cardCut: root.cut
     Item {
         id: mask
         visible: false
         width: root.width
         height: root.height
-        layer.enabled: root.side === "over"
         readonly property real r: root.cornerSize / Math.max(0.2, root.card.s)
         Rectangle {
             anchors.fill: parent
@@ -111,13 +129,12 @@ Item {
         antialiasing: true
     }
 
-    // ── inside: the bodies where they rest, in desktop px ──
+    // ── lit: the bodies a carried widget meets, their rims over the shrunk chassis ──
     readonly property real hair: 1 / Math.max(0.2, root.card.s)
-    readonly property var bodies: root.side === "inside" ? DesktopArrange.bodiesOf(root.output) : []
-    // What a carried widget lines up with, or was let go beside, lights up.
+    readonly property var bodies: root.side === "lit" ? DesktopArrange.bodiesOf(root.output) : []
     readonly property var lit: {
         const out = {}
-        if (root.side !== "inside" || DesktopArrange.dragOutput !== root.output || DesktopArrange.phase === "idle")
+        if (root.side !== "lit" || DesktopArrange.dragOutput !== root.output || DesktopArrange.phase === "idle")
             return out
         for (const line of DesktopArrange.slots)
             for (const id of (line?.ids ?? [])) out[id] = true
@@ -155,137 +172,35 @@ Item {
         corner(x + R, y + R, Math.PI)
         return "M " + pts.join(" L ") + " Z"
     }
-    // The field's own tint (glass shows the wallpaper through it, unblurred here) and its rim.
-    readonly property color bodyFill: IrisStyle.glassy ? IrisStyle.bodyTint : IrisStyle.bodySurface
-    readonly property color bodyLine: IrisStyle.hairlineStrong
-    // A body welded to an edge reaches it, and meets the frame's inner edge (or the screen's) in two fillets.
-    function welded(b: var): string {
-        const edge = String(b?.joins ?? "")
-        if (edge.length === 0) return ""
-        const r = root.room ?? { left: 0, top: 0, right: root.width, bottom: root.height }
-        // The field melts by a smooth union: its fillet reads about two thirds of `fuse` wide.
-        // AIRISU joins with a 45 deg gusset of at most two cuts instead.
-        const f = root.cut ? Math.min(Number(b.fuse ?? 0), 2 * IrisStyle.chamferCut)
-            : Math.max(0, Math.min(Number(b.fuse ?? 0) * 0.65, 48))
-        const arc = (sweep, x, y) => root.cut ? `L ${x} ${y}` : `A ${f} ${f} 0 0 ${sweep} ${x} ${y}`
-        const at = ({ top: r.top, bottom: r.bottom, left: r.left, right: r.right })[edge]
-        if (at === undefined) return ""
-        let p = ""
-        if (edge === "top" || edge === "bottom") {
-            // Over the welded half too, so the body's corners on that side come out square.
-            const y0 = edge === "top" ? 0 : b.y + b.h / 2
-            const y1 = edge === "top" ? b.y + b.h / 2 : root.height
-            p += `M ${b.x} ${y0} L ${b.x + b.w} ${y0} L ${b.x + b.w} ${y1} L ${b.x} ${y1} Z `
-            if (f > 0.5) {
-                const s = edge === "top" ? 1 : -1
-                p += `M ${b.x - f} ${at} L ${b.x + 1} ${at} L ${b.x + 1} ${at + s * f} L ${b.x} ${at + s * f} ${arc(edge === "top" ? 0 : 1, b.x - f, at)} Z `
-                p += `M ${b.x + b.w + f} ${at} L ${b.x + b.w - 1} ${at} L ${b.x + b.w - 1} ${at + s * f} L ${b.x + b.w} ${at + s * f} ${arc(edge === "top" ? 1 : 0, b.x + b.w + f, at)} Z `
-            }
-        } else {
-            const x0 = edge === "left" ? 0 : b.x + b.w / 2
-            const x1 = edge === "left" ? b.x + b.w / 2 : root.width
-            p += `M ${x0} ${b.y} L ${x1} ${b.y} L ${x1} ${b.y + b.h} L ${x0} ${b.y + b.h} Z `
-            if (f > 0.5) {
-                const s = edge === "left" ? 1 : -1
-                p += `M ${at} ${b.y - f} L ${at} ${b.y + 1} L ${at + s * f} ${b.y + 1} L ${at + s * f} ${b.y} ${arc(edge === "left" ? 1 : 0, at, b.y - f)} Z `
-                p += `M ${at} ${b.y + b.h + f} L ${at} ${b.y + b.h - 1} L ${at + s * f} ${b.y + b.h - 1} L ${at + s * f} ${b.y + b.h} ${arc(edge === "left" ? 0 : 1, at, b.y + b.h + f)} Z `
-            }
-        }
-        return p
-    }
-
-    // The frame's band round the screen with its hole cut like the real one, and the bodies resting on it: drawn
-    // opaque into one layer that takes the tint's alpha once, so a weld over the band never doubles it.
-    readonly property color ghostInk: Qt.rgba(root.bodyFill.r, root.bodyFill.g, root.bodyFill.b, 1)
-    readonly property string holePath: {
-        const r = root.room
-        if (!r) return ""
-        return root.outline(r.left, r.top, r.right - r.left, r.bottom - r.top, IrisFrame.cornerRadius,
-            root.cut ? IrisStyle.chamferCut : 0)
-    }
     function cutOf(b: var): real { return root.cut ? Math.min(IrisStyle.chamferCut, Math.round(b.h / 3)) : 0 }
     Item {
-        visible: root.side === "inside"
-        anchors.fill: parent
-        opacity: root.bodyFill.a
-        layer.enabled: root.side === "inside" && root.bodyFill.a < 0.999
-        Shape {
-            visible: IrisFrame.framed && root.holePath.length > 0
-            anchors.fill: parent
-            preferredRendererType: Shape.CurveRenderer
-            ShapePath {
-                fillRule: ShapePath.OddEvenFill
-                fillColor: root.ghostInk
-                strokeColor: "transparent"
-                strokeWidth: 0
-                PathSvg { path: `M 0 0 L ${root.width} 0 L ${root.width} ${root.height} L 0 ${root.height} Z ` + root.holePath }
-            }
-            // The inner rim, under the bodies so a weld covers it where the Island or the Dock joins the frame.
-            ShapePath {
-                fillColor: "transparent"
-                strokeColor: Qt.tint(root.ghostInk, root.bodyLine)
-                strokeWidth: 1.5 * root.hair
-                PathSvg { path: root.holePath }
-            }
-        }
+        visible: root.side === "lit"
+        width: root.width
+        height: root.height
+        transform: [
+            Scale { xScale: root.card.s; yScale: root.card.s },
+            Translate { x: root.card.x; y: root.card.y }
+        ]
         Repeater {
             model: root.bodies
             delegate: Shape {
-                id: fill
+                id: rim
                 required property var modelData
-                anchors.fill: parent
+                readonly property bool hot: Boolean(root.lit[rim.modelData.id])
+                x: rim.modelData.x
+                y: rim.modelData.y
+                width: rim.modelData.w
+                height: rim.modelData.h
+                opacity: rim.hot ? 1 : 0
+                visible: opacity > 0.01
+                Behavior on opacity { NumberAnimation { duration: 110; easing.type: IrisStyle.feedbackEasing } }
                 preferredRendererType: Shape.CurveRenderer
                 ShapePath {
-                    fillColor: root.ghostInk
-                    strokeColor: "transparent"
-                    strokeWidth: 0
-                    PathSvg { path: root.welded(fill.modelData) }
+                    fillColor: ColorUtils.applyAlpha(IrisStyle.accent, 0.12) // iris-literal: a lit body's wash, under its accent rim
+                    strokeColor: IrisStyle.accent
+                    strokeWidth: 2 * root.hair
+                    PathSvg { path: root.outline(0, 0, rim.width, rim.height, rim.modelData.radius ?? 0, root.cutOf(rim.modelData)) }
                 }
-                ShapePath {
-                    fillColor: root.ghostInk
-                    strokeColor: "transparent"
-                    strokeWidth: 0
-                    PathSvg {
-                        path: root.outline(fill.modelData.x, fill.modelData.y, fill.modelData.w, fill.modelData.h,
-                            fill.modelData.radius ?? 0, root.cutOf(fill.modelData))
-                    }
-                }
-            }
-        }
-    }
-    // A floating body's rim; a body a carried widget meets lights in accent.
-    Repeater {
-        model: root.bodies
-        delegate: Item {
-            id: body
-            required property var modelData
-            readonly property bool hot: Boolean(root.lit[body.modelData.id])
-            readonly property bool weld: String(body.modelData.joins ?? "").length > 0
-            x: body.modelData.x
-            y: body.modelData.y
-            width: body.modelData.w
-            height: body.modelData.h
-            Shape {
-                anchors.fill: parent
-                visible: !body.weld || body.hot
-                preferredRendererType: Shape.CurveRenderer
-                ShapePath {
-                    fillColor: "transparent"
-                    strokeColor: body.hot ? IrisStyle.accent : root.bodyLine
-                    strokeWidth: (body.hot ? 1.5 : 1) * root.hair
-                    PathSvg { path: root.outline(0, 0, body.width, body.height, body.modelData.radius ?? 0, root.cutOf(body.modelData)) }
-                }
-            }
-            // Its name, at its true size on the card, when it fits.
-            Text {
-                anchors.centerIn: parent
-                text: body.modelData.name ?? ""
-                visible: implicitWidth + 12 * root.hair <= body.width && implicitHeight + 4 * root.hair <= body.height
-                color: body.hot ? IrisStyle.text : IrisStyle.textTertiary
-                font.family: IrisStyle.fontMain
-                font.pixelSize: IrisStyle.typeCaption * root.hair
-                font.weight: Font.DemiBold
-                Behavior on color { ColorAnimation { duration: 110; easing.type: IrisStyle.feedbackEasing } }
             }
         }
     }

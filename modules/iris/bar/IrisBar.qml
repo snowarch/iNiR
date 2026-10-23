@@ -737,6 +737,18 @@ Scope {
                 waveClock: framePulse.phase
                 smoothing: chassisField.smoothing
             }
+            // Arranging the desktop on this output: the shelf and the widget's controls in a window of their own above
+            // the chassis, which recedes into the card meanwhile. Kept until the shelf has played its exit.
+            LazyLoader {
+                id: editDeskLoader
+                property bool lingering: false
+                active: GlobalStates.widgetEditMode || editDeskLoader.lingering
+                onActiveChanged: if (GlobalStates.widgetEditMode) editDeskLoader.lingering = true
+                component: IrisEditDesk {
+                    screen: windowLoader.modelData
+                    onGone: editDeskLoader.lingering = false
+                }
+            }
             PanelWindow {
                 id: barWindow
                 readonly property bool expanded: islandLoader.item?.expanded ?? false
@@ -753,7 +765,7 @@ Scope {
                 QtObject {
                     id: chassisShown
                     readonly property string screenName: barWindow.screen?.name ?? ""
-                    readonly property bool shown: !barWindow.canvasSuppressed && !barWindow.overlaid
+                    readonly property bool shown: !barWindow.canvasSuppressed && !barWindow.overlaid && !barWindow.carded
                         && !(CompositorService.isNiri && GameMode.hasFullscreenOnOutput(chassisShown.screenName))
                     property string told: ""
                     function tell(): void {
@@ -770,6 +782,7 @@ Scope {
                 // and library stay out of it.
                 readonly property string hostedOutput: barWindow.screen?.name ?? ""
                 Component.onCompleted: {
+                    barWindow.applyTransform()
                     IrisParts.IrisMotionMeter.registerChassis(barWindow.hostedOutput, barWindow)
                     DesktopEditStage.setHost(barWindow.hostedOutput, true)
                 }
@@ -779,6 +792,10 @@ Scope {
                 }
                 readonly property bool editHere: GlobalStates.irisEdit
                     && (root.editScreen.length === 0 || barWindow.screen?.name === root.editScreen)
+                // Arranging the desktop, the whole chassis (frame, Island, bubbles, Dock) recedes into the card with the
+                // desktop under it: the screen as it will be, live, while the shelf's pages change it.
+                readonly property var editCard: DesktopEditStage.cardFor(barWindow.screen?.name ?? "", barWindow.width, barWindow.height)
+                readonly property bool carded: barWindow.editCard.p > 0
                 readonly property bool presenting: barWindow.pinned || stage.cardPresent
                     || (controlCentreLoader.item?.present ?? false) || barWindow.editHere
                     || (dockLoader.item?.overFullscreen ?? false) || (dockLoader.item?.menuOpen ?? false)
@@ -803,7 +820,7 @@ Scope {
                 WlrLayershell.layer: barWindow.overlaid ? WlrLayer.Overlay : WlrLayer.Top
                 WlrLayershell.keyboardFocus: barWindow.pinned || stage.cardOpen || (controlCentreLoader.item?.morphOpen ?? false)
                     || (dockLoader.item?.menuOpen ?? false) || (spotlightLoader.item?.here && GlobalStates.searchOpen)
-                    || (galleryLoader.item?.morphOpen ?? false) || (orbitLoader.item?.wanted ?? false) || (widgetBarLoader.item?.holdsKeyboard ?? false)
+                    || (galleryLoader.item?.morphOpen ?? false) || (orbitLoader.item?.wanted ?? false)
                     ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
                 anchors { left: true; right: true; top: true; bottom: true }
                 readonly property bool suppressed: islandLoader.active
@@ -816,7 +833,7 @@ Scope {
                     return active !== undefined && !(NiriService.windows ?? []).some(w => w.workspace_id === active.id)
                 }
                 property bool islandEdgeIntent: false
-                readonly property bool islandWants: barWindow.expanded || barWindow.pinned || barWindow.editHere
+                readonly property bool islandWants: barWindow.expanded || barWindow.pinned || barWindow.editHere || GlobalStates.widgetEditMode
                     || (islandLoader.item?.feedback ?? false) || (islandLoader.item?.eventShown ?? false)
                     || (islandLoader.item?.morphing ?? false) || stage.cardPresent
                     || (controlCentreLoader.item?.present ?? false)
@@ -842,7 +859,7 @@ Scope {
                 Timer { id: islandRevealDwell; interval: 110; onTriggered: barWindow.islandEdgeIntent = true }
                 Timer { id: islandHideDelay; interval: 420
                     onTriggered: if (!barWindow.pointerNearIsland) barWindow.islandEdgeIntent = false }
-                mask: barWindow.canvasSuppressed ? emptyRegion
+                mask: barWindow.canvasSuppressed || barWindow.carded ? emptyRegion
                     : barWindow.pinned || stage.cardArmed || (controlCentreLoader.item?.armed ?? false)
                         || (dockLoader.item?.menuOpen ?? false) || (spotlightLoader.item?.armed ?? false)
                         || (galleryLoader.item?.armed ?? false) || (orbitLoader.item?.armed ?? false)
@@ -886,13 +903,6 @@ Scope {
                     Region { item: dockLoader.item && !dockLoader.item.inputOff ? dockLoader.item.hitItem : null }
                     Region {
                         readonly property var rect: editLoader.item?.hitRect ?? null
-                        x: rect?.x ?? 0
-                        y: rect?.y ?? 0
-                        width: rect?.width ?? 0
-                        height: rect?.height ?? 0
-                    }
-                    Region {
-                        readonly property var rect: widgetBarLoader.item?.hitRect ?? null
                         x: rect?.x ?? 0
                         y: rect?.y ?? 0
                         width: rect?.width ?? 0
@@ -960,10 +970,10 @@ Scope {
                 }
                 // Arriving, the chassis is scaled; the compositor's region follows geometry, not
                 // transforms, so it waits for the arrival instead of blurring beside the bodies.
-                readonly property var blurShapes: barWindow.canvasSuppressed || IrisStyle.arriving ? []
+                readonly property var blurShapes: barWindow.canvasSuppressed || IrisStyle.arriving || barWindow.carded ? []
                     // The compositor's blur is all or nothing: a body joins it once half frosted, its tint carries the rest.
                     : (barWindow.fieldShapes ?? []).filter(shape => chassisField.glassOf(shape) === 2 && !(shape.frost < 0.5))
-                readonly property bool frameBlurred: !barWindow.canvasSuppressed && !IrisStyle.arriving
+                readonly property bool frameBlurred: !barWindow.canvasSuppressed && !IrisStyle.arriving && !barWindow.carded
                     && IrisFrame.framed && chassisField.frameGlass === 2
                 // The family grows inward: everything the chassis draws comes in from just past the
                 // screen edges and settles; the transform is dropped at rest so nothing is resampled.
@@ -974,7 +984,18 @@ Scope {
                     xScale: 1 + 0.035 * (1 - IrisStyle.arrival)
                     yScale: 1 + 0.035 * (1 - IrisStyle.arrival)
                 }
-                Binding { target: barWindow.contentItem; property: "transform"; value: IrisStyle.arriving ? [arrivalScale] : [] }
+                // As a card the compositor's blur would sit beside the shrunk bodies: glass takes the wallpaper instead,
+                // sampled where the desktop pixel lies, which is where the card shows it.
+                Scale { id: cardScale; xScale: barWindow.editCard.s; yScale: barWindow.editCard.s }
+                Translate { id: cardShift; x: barWindow.editCard.x; y: barWindow.editCard.y }
+                // Set by hand: a Binding on the content item's transform list never reached it (qs-rs, 10-23).
+                readonly property int transformKind: IrisStyle.arriving ? 1 : barWindow.carded ? 2 : 0
+                onTransformKindChanged: barWindow.applyTransform()
+                function applyTransform(): void {
+                    if (!barWindow.contentItem) return
+                    barWindow.contentItem.transform = barWindow.transformKind === 1 ? [arrivalScale]
+                        : barWindow.transformKind === 2 ? [cardScale, cardShift] : []
+                }
                 Binding { target: barWindow.contentItem; property: "opacity"; value: Math.min(1, IrisStyle.arrival * 1.6) }
                 IrisBlurRegion {
                     id: glassBlurRegion
@@ -1085,7 +1106,6 @@ Scope {
                     const hung = (controlCentreLoader.item?.fieldShapes ?? [])
                         .concat(stage.fieldShapes)
                         .concat(editLoader.item?.fieldShapes ?? [])
-                        .concat(widgetBarLoader.item?.fieldShapes ?? [])
                         .concat(Array.isArray(dockBody) ? dockBody : [])
                         .concat(banners.fieldShapes)
                         .concat(IrisFrame.placeShapesOn(barWindow.screen?.name ?? ""))
@@ -1123,7 +1143,7 @@ Scope {
                 IrisField {
                     id: chassisField
                     anchors.fill: parent
-                    compositorAllowed: true
+                    compositorAllowed: !barWindow.carded
                     providesBackdrop: true
                     edgeWave: framePulse.amplitudes
                     waveClock: framePulse.phase
@@ -1292,26 +1312,6 @@ Scope {
                     Timer { id: editRelease; interval: 0; onTriggered: editLoader.lingering = editLoader.item?.shown ?? false }
                     active: barWindow.editHere || editLoader.lingering
                     sourceComponent: IrisEditBar { screenData: barWindow.screen; shapes: barWindow.fieldShapes.concat(stage.pieceShapes, islandLoader.item?.carriedShapes ?? [], dockLoader.item?.editShapes ?? []) }
-                }
-
-                Loader {
-                    id: widgetBarLoader
-                    z: 4
-                    anchors.fill: parent
-                    // The bar stays until its own exit has played out: tied to edit mode alone, Done unloaded
-                    // it from inside its own click, and the click that followed went nowhere.
-                    property bool lingering: false
-                    onLoaded: widgetBarLoader.lingering = true
-                    Connections {
-                        target: widgetBarLoader.item
-                        function onShownChanged(): void {
-                            if (widgetBarLoader.item.shown) widgetBarLoader.lingering = true
-                            else widgetBarRelease.restart()
-                        }
-                    }
-                    Timer { id: widgetBarRelease; interval: 0; onTriggered: widgetBarLoader.lingering = widgetBarLoader.item?.shown ?? false }
-                    active: (GlobalStates.widgetEditMode || widgetBarLoader.lingering) && !barWindow.canvasSuppressed
-                    sourceComponent: IrisWidgetBar { screenData: barWindow.screen }
                 }
 
                 Loader {

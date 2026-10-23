@@ -74,10 +74,35 @@ WidgetShelf {
                 function focusSearch(): void { searchInput.forceActiveFocus() }
                 function dropSearch(): void { searchInput.focus = false }
 
+                // Undo and redo walk the arrangement (and a worn preset), the way back is always at hand.
+                Row {
+                    id: history
+                    y: Math.round((head.height - height) / 2)
+                    spacing: Math.round(2 * head.d)
+                    IrisIconButton {
+                        implicitWidth: head.height
+                        materialIcon: "undo"
+                        iconSize: Math.round(17 * head.d)
+                        enabled: DesktopEditHistory.undoStack.length > 0
+                        opacity: enabled ? 1 : 0.35
+                        Accessible.name: Translation.tr("Undo")
+                        onClicked: DesktopEditHistory.undo()
+                    }
+                    IrisIconButton {
+                        implicitWidth: head.height
+                        materialIcon: "redo"
+                        iconSize: Math.round(17 * head.d)
+                        enabled: DesktopEditHistory.redoStack.length > 0
+                        opacity: enabled ? 1 : 0.35
+                        Accessible.name: Translation.tr("Redo")
+                        onClicked: DesktopEditHistory.redo()
+                    }
+                }
                 IrisSegmented {
                     id: pageTabs
+                    x: history.width + Math.round(14 * head.d)
                     y: Math.round((head.height - height) / 2)
-                    width: Math.min(pageTabs.fitWidth, head.width - searchBox.width - settingsButton.width - Math.round(20 * head.d))
+                    width: Math.min(pageTabs.fitWidth, head.width - pageTabs.x - searchBox.width - tail.width - Math.round(20 * head.d))
                     options: head.shelf?.pages ?? []
                     current: head.shelf?.page ?? "widgets"
                     accessibleName: Translation.tr("Shelf pages")
@@ -86,7 +111,7 @@ WidgetShelf {
 
                 // What the shelf just did (saved, worn, undone), where the search sits on the other pages.
                 IrisLabel {
-                    anchors.right: settingsButton.left
+                    anchors.right: tail.left
                     anchors.rightMargin: Math.round(12 * head.d)
                     anchors.verticalCenter: parent.verticalCenter
                     visible: !(head.shelf?.onWidgets ?? true)
@@ -98,7 +123,7 @@ WidgetShelf {
                 Rectangle {
                     id: searchBox
                     visible: head.shelf?.onWidgets ?? true
-                    anchors.right: settingsButton.left
+                    anchors.right: tail.left
                     anchors.rightMargin: Math.round(8 * head.d)
                     width: Math.round(240 * head.d)
                     height: head.height
@@ -165,15 +190,34 @@ WidgetShelf {
                     HoverHandler { cursorShape: Qt.IBeamCursor }
                 }
 
-                IrisIconButton {
-                    id: settingsButton
+                Row {
+                    id: tail
                     anchors.right: parent.right
                     y: Math.round((head.height - height) / 2)
-                    implicitWidth: head.height
-                    materialIcon: "tune"
-                    iconSize: Math.round(16 * head.d)
-                    Accessible.name: Translation.tr("Widget settings")
-                    onClicked: GlobalStates.openSettingsAt("iris", head.shelf && !head.shelf.onWidgets && head.shelf.page !== "presets" ? head.shelf.page : "widgets")
+                    spacing: Math.round(4 * head.d)
+                    readonly property bool gridOn: Config.options?.background?.widgets?.editGrid?.snap ?? true
+                    IrisIconButton {
+                        implicitWidth: head.height
+                        materialIcon: "grid_4x4"
+                        iconSize: Math.round(16 * head.d)
+                        selected: tail.gridOn
+                        Accessible.name: tail.gridOn ? Translation.tr("Snap to grid: on") : Translation.tr("Snap to grid: off")
+                        onClicked: Config.setNestedValue("background.widgets.editGrid.snap", !tail.gridOn)
+                    }
+                    IrisIconButton {
+                        id: settingsButton
+                        implicitWidth: head.height
+                        materialIcon: "tune"
+                        iconSize: Math.round(16 * head.d)
+                        Accessible.name: Translation.tr("Widget settings")
+                        onClicked: GlobalStates.openSettingsAt("iris", head.shelf && !head.shelf.onWidgets && head.shelf.page !== "presets" ? head.shelf.page : "widgets")
+                    }
+                    IrisButton {
+                        implicitHeight: head.height
+                        text: Translation.tr("Done")
+                        emphasized: true
+                        onClicked: GlobalStates.setWidgetEditMode(false)
+                    }
                 }
             }
         }

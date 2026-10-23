@@ -59,6 +59,26 @@ Singleton {
     }
     function hosted(output: string): bool { return Boolean(root.hosts[output]) }
 
+    // ── A chosen widget's controls ──
+    // A family that draws them at true size beside the card (iRiS's edit window) says so per output; the widget then
+    // keeps its own sheet closed and hands itself over while its controls are open.
+    property var sheetHosts: ({})
+    function setSheetHost(output: string, on: bool): void {
+        if (Boolean(root.sheetHosts[output]) === on)
+            return
+        const next = Object.assign({}, root.sheetHosts)
+        if (on) next[output] = true
+        else delete next[output]
+        root.sheetHosts = next
+    }
+    function hostsSheet(output: string): bool { return Boolean(root.sheetHosts[output]) }
+    // { output, widget }: the widget whose controls are open, or null.
+    property var inspected: null
+    function inspect(output: string, widget: var, open: bool): void {
+        if (open) root.inspected = { output: output, widget: widget }
+        else if (root.inspected?.widget === widget) root.inspected = null
+    }
+
     // ── Pictures of widgets, for the shelf ──
     // Each widget on the desktop takes its own picture once a second while arranging (key -> { url, width, height } in
     // logical px), and leaves it on disk on Done so the shelf shows a widget that is not out with its last look.

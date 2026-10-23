@@ -1,7 +1,7 @@
 import QtQuick
 import qs.modules.iris.style
 
-// The Dot voice (DESIGN.md S2, S5): one figure in Geist Pixel Circle. When it changes, each digit that changed rolls
+// The Figure voice (DESIGN.md S2, S5): one figure in Archivo SemiExpanded. When it changes, each digit that changed rolls
 // on its own (180 ms, up when the value grows, down when it falls); the ones that did not change stay put.
 Item {
     id: root
@@ -81,7 +81,7 @@ Item {
                     font.family: root.family
                     font.pixelSize: probe.font.pixelSize
                     font.letterSpacing: root.nothing ? IrisStyle.dotTracking(probe.font.pixelSize) : 0
-                    font.weight: root.nothing ? Font.Normal : IrisStyle.figureWeight
+                    font.weight: root.nothing ? Font.Bold : IrisStyle.figureWeight
                     font.features: ({ "tnum": 1 })
                     renderType: Text.NativeRendering
                 }
@@ -96,7 +96,7 @@ Item {
                     font.family: root.family
                     font.pixelSize: probe.font.pixelSize
                     font.letterSpacing: root.nothing ? IrisStyle.dotTracking(probe.font.pixelSize) : 0
-                    font.weight: root.nothing ? Font.Normal : IrisStyle.figureWeight
+                    font.weight: root.nothing ? Font.Bold : IrisStyle.figureWeight
                     font.features: ({ "tnum": 1 })
                 }
             }

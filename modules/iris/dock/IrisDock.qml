@@ -336,11 +336,8 @@ Item {
             readonly property bool overFullscreen: window.overviewOverFullscreen || (window.fullscreenCovered
                 && (window.askedShown || window.menuOpen || window.editingDock))
             readonly property bool fullscreenIdle: window.fullscreenCovered && !window.overFullscreen
-            // The widget toolbar takes the edge opposite the Island, so the Dock makes room. Customize stays under
-            // the Island: the Dock is part of what is customized and stays in view to be touched.
-            readonly property bool stepAside: GlobalStates.widgetEditMode
-            onStepAsideChanged: if (window.stepAside) window.menuApp = null
-            readonly property bool revealed: !window.fullscreenIdle && !window.stepAside && (!root.autoHide || window.edgeIntent || window.menuOpen
+            // Arranging the desktop the Dock recedes into the card with the chassis and shows as it rests there.
+            readonly property bool revealed: !window.fullscreenIdle && (!root.autoHide || GlobalStates.widgetEditMode || window.edgeIntent || window.menuOpen
                 || window.askedShown || window.spotlightHere || window.workspaceEmpty || GlobalStates.irisEdit)
             onPointerOnDockChanged: {
                 if (window.pointerOnDock) {
@@ -366,7 +363,7 @@ Item {
             readonly property real screenOffsetY: window.y
             readonly property real menuReserve: Math.round(Math.min((root.screen?.height ?? 1080) * 0.55, 460 * root.d))
             implicitHeight: window.dockHeight + window.edgeGap + window.headroom + window.menuReserve
-            readonly property bool inputOff: window.fullscreenIdle || window.stepAside
+            readonly property bool inputOff: window.fullscreenIdle || GlobalStates.widgetEditMode
             MouseArea {
                 anchors.fill: parent
                 z: -100

@@ -19,6 +19,7 @@ Item {
     property var room: null
     property var card: ({ x: 0, y: 0, s: 1, p: 0 })
     property bool waiting: false
+    property string still: ""
     readonly property real p: Math.max(0, Math.min(1, root.card.p))
     readonly property real cardX: root.card.x
     readonly property real cardY: root.card.y
@@ -27,21 +28,33 @@ Item {
     readonly property real cornerSize: Appearance.rounding.large * root.p
 
     // The surface: Material's base layer with a quiet dot lattice, tiled from one cell so nothing repaints per frame.
-    Rectangle {
+    // The person's own wallpaper out of focus and a step darker behind the card; blurred once, nothing per frame.
+    Item {
         visible: root.side === "under"
         anchors.fill: parent
-        color: Appearance.colors.colLayer0
         opacity: root.waiting ? 0 : Math.min(1, root.p * 1.6)
+        Rectangle { anchors.fill: parent; color: Appearance.colors.colLayer0 }
         Image {
-            readonly property int pitch: 12
-            readonly property color ink: ColorUtils.applyAlpha(Appearance.colors.colOnLayer0, 0.12)
+            id: stageStill
             anchors.fill: parent
-            fillMode: Image.Tile
-            smooth: false
-            source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='" + pitch + "' height='" + pitch
-                + "'><circle cx='" + pitch / 2 + "' cy='" + pitch / 2 + "' r='1' fill='rgb(" + Math.round(ink.r * 255) + ","
-                + Math.round(ink.g * 255) + "," + Math.round(ink.b * 255) + ")' fill-opacity='" + ink.a.toFixed(3) + "'/></svg>"
+            visible: false
+            source: root.side === "under" ? root.still : ""
+            sourceSize: Qt.size(Math.round(root.width / 3), Math.round(root.height / 3))
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            cache: true
         }
+        MultiEffect {
+            anchors.fill: parent
+            source: stageStill
+            visible: stageStill.status === Image.Ready
+            blurEnabled: true
+            blur: 1
+            blurMax: 40
+            saturation: -0.15
+            autoPaddingEnabled: false
+        }
+        Rectangle { anchors.fill: parent; color: ColorUtils.applyAlpha(Appearance.colors.colLayer0, 0.45) }
     }
     RectangularShadow {
         visible: root.side === "under"
@@ -56,12 +69,14 @@ Item {
     }
     // The card's shape at the desktop's own size (it is shrunk with it).
     readonly property Item cardMask: root.side === "over" ? mask : null
+    // The card's corner in desktop px and whether it is cut: the desktop's own shader draws the shape.
+    readonly property real cardCorner: root.cornerSize / Math.max(0.2, root.card.s)
+    readonly property bool cardCut: false
     Item {
         id: mask
         visible: false
         width: root.width
         height: root.height
-        layer.enabled: root.side === "over"
         Rectangle {
             anchors.fill: parent
             radius: root.cornerSize / Math.max(0.2, root.card.s)

@@ -9,7 +9,7 @@ StyledText {
     // Roles, not sizes, in the three Signal voices (DESIGN.md S2):
     //   Read   Body, Meta, Name, Detail, Title, Display: Geist, sentence case, hierarchy by size then weight then ink.
     //   Label  Eyebrow, Group, Value, Label: Geist Mono caps, tracked +0.08 em, quiet ink, three words at most.
-    //   Dot    Metric, Dot: Geist Pixel Circle, a figure of 22 px or more and nothing else.
+    //   Figure Metric, Dot: Archivo SemiExpanded Bold, a figure of 22 px or more and nothing else.
     enum Role { Body, Meta, Eyebrow, Title, Display, Metric, Name, Value, Detail, Group, Label, Dot }
     property int role: IrisText.Body
     // A Value's ink. Quiet by default: a value is read after its name, it does not shout. Signal only when it needs you.
@@ -42,7 +42,7 @@ StyledText {
         : IrisStyle.fontRead
     font.family: defaultFont
     font.pixelSize: root.voiceSize
-    font.weight: root.dotVoice ? Font.Normal
+    font.weight: root.dotVoice ? Font.Bold
         : root.labelVoice || root.labelRole ? IrisStyle.weight(Font.Medium)
         : root.dotRole ? IrisStyle.figureWeight
         : IrisStyle.weight(role === IrisText.Title || role === IrisText.Display ? Font.DemiBold

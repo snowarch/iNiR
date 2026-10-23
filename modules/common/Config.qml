@@ -4151,7 +4151,7 @@ Singleton {
                     property int motionDuration: 220
                     property string fontFamily: "" // Empty = Geist (bundled)
                     property string titleFontFamily: "" // Empty = Geist (bundled)
-                    property string numbersFontFamily: "" // Empty = Geist Pixel Circle (bundled; the Dot voice)
+                    property string numbersFontFamily: "" // Empty = Archivo SemiExpanded (bundled; the figure voice)
                     // The one colour of Signal (live, needs you, errors): "nothing" (#D71921), "wallpaper" or a #rrggbb.
                     property string signal: "nothing"
                     // apple: the accent marks what is chosen; nothing: ink body, one signal colour
