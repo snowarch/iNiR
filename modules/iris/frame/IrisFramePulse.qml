@@ -42,8 +42,9 @@ Item {
         onTriggered: {
             const points = cava.points ?? []
             let bass = 0
-            const count = Math.min(4, points.length)
-            for (let i = 0; i < count; ++i) bass += Number(points[i] ?? 0)
+            const from = cava.mirrored ? Math.max(0, Math.floor(points.length / 2) - 2) : 0
+            const count = Math.min(4, points.length - from)
+            for (let i = from; i < from + count; ++i) bass += Number(points[i] ?? 0)
             bass = count > 0 ? Math.min(1, bass / count / Math.max(1, cava.normalizationCeiling)) : 0
             bass = Math.min(1, Math.sqrt(bass) * root.sensitivity)
             const step = Math.min(0.05, frameTime)

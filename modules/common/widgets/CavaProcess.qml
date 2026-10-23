@@ -23,6 +23,8 @@ Item {
         ? CavaService.normalizationCeiling : 100
     readonly property bool audioSignalActive: root._held
         ? CavaService.audioSignalActive : false
+    // Stereo output mirrors frequency space: the bass sits in the middle, highs at both ends.
+    readonly property bool mirrored: CavaService.cfgStereo
 
     readonly property bool _wanted: active
         && !GameMode.visualizersSuppressed
