@@ -210,6 +210,16 @@ WidgetShelf {
                     y: Math.round((head.height - height) / 2)
                     spacing: Math.round(4 * head.d)
                     readonly property bool gridOn: Config.options?.background?.widgets?.editGrid?.snap ?? true
+                    readonly property bool platesOn: String(Config.options?.iris?.widgets?.material ?? "glass") !== "clear"
+                    // Every widget's plate away or back in one tap (the shared material; a widget's own stays its own).
+                    IrisIconButton {
+                        implicitWidth: head.height
+                        materialIcon: tail.platesOn ? "layers" : "layers_clear"
+                        iconSize: Math.round(16 * head.d)
+                        selected: tail.platesOn
+                        Accessible.name: Translation.tr("Background")
+                        onClicked: Config.setNestedValue("iris.widgets.material", tail.platesOn ? "clear" : "glass")
+                    }
                     IrisIconButton {
                         implicitWidth: head.height
                         materialIcon: "grid_4x4"

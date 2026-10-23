@@ -392,6 +392,60 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: Math.round(14 * root.d)
 
+        // One tap takes this widget's plate away (Transparent) and brings it back.
+        Rectangle {
+            id: plateRow
+            visible: root.widget.irisFaced
+            Layout.fillWidth: true
+            implicitHeight: Math.round(40 * root.d)
+            radius: root.plateRadius
+            readonly property bool on: root.widget.irisMaterial !== "clear"
+            readonly property color stuff: plateHover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet
+            color: IrisStyle.fieldChamfer ? "transparent" : plateRow.stuff
+            Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+            IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; cutLength: root.plateCut; color: plateRow.stuff }
+            function flip(): void {
+                const shared = String(Config.options?.iris?.widgets?.material ?? "glass")
+                root.widget.setIrisOption("material", plateRow.on ? "clear" : shared === "clear" ? "glass" : "auto")
+            }
+            MaterialSymbol {
+                id: plateGlyph
+                anchors.left: parent.left
+                anchors.leftMargin: Math.round(12 * root.d)
+                anchors.verticalCenter: parent.verticalCenter
+                text: plateRow.on ? "layers" : "layers_clear"
+                iconSize: Math.round(18 * root.d)
+                color: plateRow.on ? IrisStyle.text : IrisStyle.textSecondary
+            }
+            IrisText {
+                anchors.left: plateGlyph.right
+                anchors.leftMargin: Math.round(10 * root.d)
+                anchors.right: plateSwitch.left
+                anchors.rightMargin: Math.round(10 * root.d)
+                anchors.verticalCenter: parent.verticalCenter
+                text: Translation.tr("Background")
+                font.pixelSize: IrisStyle.typeLabel
+                elide: Text.ElideRight
+            }
+            Item {
+                anchors.left: parent.left
+                anchors.right: plateSwitch.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                HoverHandler { id: plateHover; cursorShape: Qt.PointingHandCursor }
+                TapHandler { onTapped: plateRow.flip() }
+            }
+            IrisSwitch {
+                id: plateSwitch
+                anchors.right: parent.right
+                anchors.rightMargin: Math.round(10 * root.d)
+                anchors.verticalCenter: parent.verticalCenter
+                on: plateRow.on
+                name: Translation.tr("Background")
+                onToggled: plateRow.flip()
+            }
+        }
+
         ColumnLayout {
             visible: root.widget.irisSizeChoices.length > 1
             Layout.fillWidth: true

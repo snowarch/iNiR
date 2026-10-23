@@ -110,10 +110,16 @@ Scope {
 
         function widgetMaterial(action: string): string {
             if (action === "match") return DesktopWidgetDesign.matchSurfaces()
+            if (action === "toggle" || action === "clear" || action === "glass") {
+                const now = String(Config.options?.iris?.widgets?.material ?? "glass")
+                const next = action !== "toggle" ? action : now === "clear" ? "glass" : "clear"
+                Config.setNestedValue("iris.widgets.material", next)
+                return next
+            }
             if (action === "status")
                 return String(Config.options?.iris?.widgets?.material ?? "glass") + " · "
                     + DesktopWidgetDesign.ownSurfaceCount + " widgets with their own material or opacity"
-            return "Use status or match"
+            return "Use status, match, toggle, clear or glass"
         }
 
         function widgetSearch(query: string): string {

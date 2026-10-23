@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 dev/tools/generate-ipc-registry.py
-# IPC.md hash: 9fdafc1c59255893
+# IPC.md hash: aab2cc5a11bf2011
 # Targets: 77
 
 declare -gA IPC_TARGET_DESC=(
@@ -274,7 +274,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["autostart:removeLast"]="Remove the last managed entry"
   ["autostart:reload"]="Force re-read the startup file"
   ["background:widgetDesign"]="Put every desktop widget on \`iris\`, \`material\`, \`individual\`, \`instrument\` or \`readout\`; \`undo\` brings back the design and each widget's own look from before; \`status\` reports the design, how many widgets keep their own look and whether an undo is available."
-  ["background:widgetMaterial"]="iRiS: \`status\` reports the shared widget material and how many widgets chose their own material or surface opacity in Look; \`match\` puts them back on the shared ones."
+  ["background:widgetMaterial"]="iRiS: \`status\` reports the shared widget material and how many widgets chose their own material or surface opacity in Look; \`match\` puts them back on the shared ones; \`toggle\`, \`clear\` and \`glass\` take every widget's plate away or bring it back (returns the material now)."
   ["background:widgetSearch"]="While arranging (iRiS), find a widget from the bar: the words to look for, \`open\` for an empty field, \`next\`/\`previous\` to move the selection, \`take\` to add or show the selected widget, \`close\`. Ctrl+F opens it"
   ["background:toggleEditMode"]="Toggle widget edit mode (drag, resize, configure desktop widgets)"
   ["background:toggleWidgetManager"]="Enter edit mode if needed and toggle the widget manager on the focused output"
@@ -897,7 +897,7 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["audio:playEvent"]="batteryLow timerDone"
   ["autostart:addCommand"]="spawn-sh-at-startup"
   ["background:widgetDesign"]="iris material individual instrument readout undo status"
-  ["background:widgetMaterial"]="status match"
+  ["background:widgetMaterial"]="status match toggle clear glass"
   ["background:widgetSearch"]="open next previous take close"
   ["background:sizeWidget"]="small medium large"
   ["background:arrangeWidget"]="probe"

@@ -136,7 +136,7 @@ complete -c inir -n '__inir_at_target' -a background -d 'Desktop background and 
 complete -c inir -n '__inir_at_function background' -a widgetDesign -d 'Put every desktop widget on iris, material, individual, ins…'
 complete -c inir -n '__inir_at_value 1 widgetDesign background' -a 'iris material individual instrument readout undo status'
 complete -c inir -n '__inir_at_function background' -a widgetMaterial -d 'iRiS: status reports the shared widget material and how man…'
-complete -c inir -n '__inir_at_value 1 widgetMaterial background' -a 'status match'
+complete -c inir -n '__inir_at_value 1 widgetMaterial background' -a 'status match toggle clear glass'
 complete -c inir -n '__inir_at_function background' -a widgetSearch -d 'While arranging (iRiS), find a widget from the bar: the wor…'
 complete -c inir -n '__inir_at_value 1 widgetSearch background' -a 'open next previous take close'
 complete -c inir -n '__inir_at_function background' -a toggleEditMode -d 'Toggle widget edit mode (drag, resize, configure desktop wi…'
