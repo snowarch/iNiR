@@ -100,35 +100,6 @@ IrisWidgetFace {
         }
     }
 
-    ColumnLayout {
-        visible: root.devices.length === 0
-        anchors.centerIn: parent
-        width: parent.width
-        spacing: root.dp(6)
-        MaterialSymbol {
-            Layout.alignment: Qt.AlignHCenter
-            text: "power"
-            fill: 1
-            iconSize: root.px(30)
-            color: root.accent
-        }
-        FaceText {
-            face: root
-            Layout.fillWidth: true
-            horizontalAlignment: Text.AlignHCenter
-            text: Translation.tr("On power")
-            size: 13.5
-            weight: Font.DemiBold
-        }
-        FaceText {
-            face: root
-            Layout.fillWidth: true
-            horizontalAlignment: Text.AlignHCenter
-            text: Translation.tr("No batteries to watch")
-            color: root.inkSecondary
-            size: 12
-        }
-    }
 
     ColumnLayout {
         visible: root.devices.length === 1 && root.small
@@ -204,4 +175,42 @@ IrisWidgetFace {
             }
         }
     }
+
+    // Nothing to measure: a desktop with no battery and nothing wireless awake. It says what will show and when.
+    ColumnLayout {
+        visible: root.devices.length === 0
+        anchors.fill: parent
+        spacing: root.dp(4)
+        FaceHeader {
+            face: root
+            Layout.fillWidth: true
+            glyph: "battery_full"
+            text: Translation.tr("Batteries")
+            tint: root.inked(IrisStyle.identity.green)
+        }
+        Item { Layout.fillHeight: true }
+        MaterialSymbol {
+            text: "power"
+            fill: 1
+            iconSize: root.px(root.small ? 30 : 36)
+            color: root.inkSecondary
+        }
+        FaceText {
+            face: root
+            Layout.fillWidth: true
+            text: Translation.tr("On power")
+            size: 14
+            weight: Font.DemiBold
+        }
+        FaceText {
+            face: root
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+            maximumLineCount: 2
+            text: Translation.tr("Devices you pair show up here")
+            color: root.inkSecondary
+            size: 12
+        }
+    }
+
 }

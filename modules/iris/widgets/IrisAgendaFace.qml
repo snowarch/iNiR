@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.services
+import qs.modules.common.widgets
 import qs.modules.iris.style
 
 IrisWidgetFace {
@@ -220,7 +221,49 @@ IrisWidgetFace {
             }
         }
         WeekStrip { visible: root.shown.length === 0; Layout.fillWidth: true; Layout.topMargin: root.dp(4) }
-        Empty { visible: root.shown.length === 0; Layout.fillWidth: true; Layout.topMargin: root.dp(6) }
-        Item { Layout.fillHeight: true }
+        // A free week fills the room it has with a calm mark instead of a line of grey over air.
+        Item {
+            visible: root.shown.length === 0
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            ColumnLayout {
+                anchors.centerIn: parent
+                width: parent.width
+                spacing: root.dp(4)
+                Rectangle {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: root.dp(48)
+                    Layout.preferredHeight: Layout.preferredWidth
+                    Layout.bottomMargin: root.dp(6)
+                    radius: width / 2
+                    color: root.nothing ? "transparent" : IrisStyle.tintFill(root.inked(IrisStyle.identity.red))
+                    border.width: root.nothing ? Math.max(1, root.dp(1.5)) : 0
+                    border.color: root.ink
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "event_available"
+                        iconSize: Math.round(parent.width * 0.5)
+                        color: root.inked(IrisStyle.identity.red)
+                    }
+                }
+                FaceText {
+                    face: root
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    text: Translation.tr("Nothing scheduled")
+                    size: 14
+                    weight: Font.DemiBold
+                }
+                FaceText {
+                    face: root
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    text: Translation.tr("The next seven days are free")
+                    color: root.inkSecondary
+                    size: 12
+                }
+            }
+        }
+        Item { Layout.fillHeight: true; visible: root.shown.length > 0 }
     }
 }

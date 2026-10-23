@@ -19,6 +19,7 @@ IrisWidgetFace {
         return pending.concat(done).slice(0, root.capacity)
     }
     readonly property int pending: root.widget.pendingCount
+    readonly property bool empty: !root.adding && root.entries.length === 0
 
     function beginAdding(): void {
         root.adding = true
@@ -99,13 +100,52 @@ IrisWidgetFace {
             model: root.adding ? [] : root.entries
             Task { Layout.fillWidth: true }
         }
-        FaceText {
-            face: root
-            visible: !root.adding && root.entries.length === 0
+        // Nothing left: a done mark and how to start again, centred in the room the list would take.
+        Item {
+            visible: root.empty
             Layout.fillWidth: true
-            text: Translation.tr("All done")
-            color: root.inkTertiary
-            size: 12.5
+            Layout.fillHeight: true
+            implicitHeight: done.implicitHeight
+            ColumnLayout {
+                id: done
+                anchors.centerIn: parent
+                width: parent.width
+                spacing: root.dp(4)
+                Rectangle {
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: !root.small
+                    Layout.preferredWidth: root.dp(root.large ? 52 : 40)
+                    Layout.preferredHeight: Layout.preferredWidth
+                    Layout.bottomMargin: root.dp(4)
+                    radius: width / 2
+                    color: root.nothing ? "transparent" : IrisStyle.tintFill(root.accent)
+                    border.width: root.nothing ? Math.max(1, root.dp(1.5)) : 0
+                    border.color: root.ink
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "check"
+                        iconSize: Math.round(parent.width * 0.52)
+                        color: root.accent
+                    }
+                }
+                FaceText {
+                    face: root
+                    Layout.fillWidth: true
+                    horizontalAlignment: root.small ? Text.AlignLeft : Text.AlignHCenter
+                    text: Translation.tr("All done")
+                    size: root.small ? 13 : 14
+                    weight: Font.DemiBold
+                }
+                FaceText {
+                    face: root
+                    visible: !root.small
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    text: Translation.tr("Nothing waiting on you")
+                    color: root.inkSecondary
+                    size: 12
+                }
+            }
         }
         Rectangle {
             visible: root.adding
@@ -153,7 +193,7 @@ IrisWidgetFace {
             face: root
             text: root.pending
             size: 38
-            color: root.accent
+            tone: root.accent
         }
         FaceText {
             face: root
@@ -187,11 +227,11 @@ IrisWidgetFace {
                 face: root
                 text: root.pending
                 size: 22
-                color: root.accent
+                tone: root.accent
             }
         }
-        Tasks { Layout.fillWidth: true }
-        Item { Layout.fillHeight: true }
+        Tasks { Layout.fillWidth: true; Layout.fillHeight: root.empty }
+        Item { Layout.fillHeight: true; visible: !root.empty }
     }
 
     RowLayout {
@@ -208,6 +248,7 @@ IrisWidgetFace {
         }
         Tasks {
             Layout.fillWidth: true
+            Layout.fillHeight: root.empty
             Layout.alignment: Qt.AlignTop
         }
     }
@@ -228,11 +269,11 @@ IrisWidgetFace {
                 face: root
                 text: root.pending
                 size: 26
-                color: root.accent
+                tone: root.accent
             }
         }
-        Tasks { Layout.fillWidth: true }
-        Item { Layout.fillHeight: true }
+        Tasks { Layout.fillWidth: true; Layout.fillHeight: root.empty }
+        Item { Layout.fillHeight: true; visible: !root.empty }
         RowLayout {
             Layout.fillWidth: true
             Add {}
