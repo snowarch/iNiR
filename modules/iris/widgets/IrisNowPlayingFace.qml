@@ -110,17 +110,22 @@ IrisWidgetFace {
     }
 
     // The keys sit on the timeline's centre, the times pinned to its ends: fillers between two times of
-    // different widths pushed the transport off by half their difference.
+    // different widths pushed the transport off by half their difference. Where the times would touch the keys
+    // (a medium face's column) they take their own line under the timeline, as Apple's player does.
     component KeysRow: Item {
         id: keysRow
         property bool overMedia: false
         property real disc: root.dp(36)
-        implicitHeight: keys.implicitHeight
+        readonly property bool timed: media.effectiveLength > 0
+        readonly property bool beside: keysRow.width >= keys.implicitWidth
+            + 2 * (Math.max(elapsed.implicitWidth, total.implicitWidth) + root.dp(12))
+        readonly property real timesH: keysRow.timed && !keysRow.beside ? Math.ceil(elapsed.implicitHeight) + root.dp(2) : 0
+        implicitHeight: keysRow.timesH + keys.implicitHeight
         FaceText {
+            id: elapsed
             face: root
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            visible: media.effectiveLength > 0
+            visible: keysRow.timed
+            y: keysRow.beside ? Math.round(keys.y + (keys.height - height) / 2) : 0
             text: StringUtils.friendlyTimeForSeconds(media.effectivePosition)
             color: keysRow.overMedia ? IrisStyle.onMediaSecondary : root.inkTertiary
             font.family: root.fontNumbers
@@ -129,15 +134,17 @@ IrisWidgetFace {
         }
         Transport {
             id: keys
-            anchors.centerIn: parent
+            x: Math.round((keysRow.width - width) / 2)
+            y: keysRow.timesH
             disc: keysRow.disc
             overMedia: keysRow.overMedia
         }
         FaceText {
+            id: total
             face: root
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            visible: media.effectiveLength > 0
+            visible: keysRow.timed
+            x: keysRow.width - width
+            y: elapsed.y
             text: StringUtils.friendlyTimeForSeconds(media.effectiveLength)
             color: keysRow.overMedia ? IrisStyle.onMediaSecondary : root.inkTertiary
             font.family: root.fontNumbers
@@ -201,7 +208,8 @@ IrisWidgetFace {
         readonly property string coverArt: rest.paused ? root.art : rest.remembered ? String(rest.last.art ?? "") : ""
         readonly property bool cover: rest.coverArt.length > 0
         readonly property string title: rest.paused ? (media.effectiveTitle || root.source) : String(rest.last.title ?? "")
-        readonly property string detail: rest.paused ? (media.effectiveArtist || root.source) : String(rest.last.artist ?? "")
+        // the artist only: with none, the source already heads the face ("Mozilla firefox" said twice)
+        readonly property string detail: rest.paused ? media.effectiveArtist : String(rest.last.artist ?? "")
         readonly property string head: rest.paused ? root.source : rest.remembered ? Translation.tr("Last played") : Translation.tr("Music")
         readonly property string when: rest.remembered ? [String(rest.last.source ?? ""), root.ago(rest.last.at)].filter(part => part.length > 0).join(" · ") : ""
 
@@ -285,6 +293,7 @@ IrisWidgetFace {
                 }
                 FaceText {
                     face: root
+                    visible: text.length > 0
                     width: parent.width
                     text: rest.detail
                     color: root.inkSecondary
@@ -301,6 +310,7 @@ IrisWidgetFace {
                 Item { visible: rest.paused; width: 1; height: root.dp(8) }
                 Transport {
                     visible: rest.paused
+                    anchors.horizontalCenter: parent.horizontalCenter
                     disc: root.dp(30)
                 }
             }
@@ -341,7 +351,8 @@ IrisWidgetFace {
                     face: root
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    text: rest.when.length > 0 ? rest.detail + " · " + rest.when : rest.detail
+                    visible: text.length > 0
+                    text: [rest.detail, rest.when].filter(part => part.length > 0).join(" · ")
                     color: root.inkSecondary
                     size: 12.5
                 }
@@ -447,21 +458,6 @@ IrisWidgetFace {
                 radius: root.innerRadius
                 scale: coverTap.pressed ? 0.9 : root.playing ? 1 : 0.94
                 Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
-            }
-            Rectangle {
-                anchors.centerIn: parent
-                visible: !root.playing
-                width: root.dp(38)
-                height: width
-                radius: width / 2
-                color: Qt.alpha(IrisStyle.scrim, 0.55)
-                MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: "play_arrow"
-                    fill: 1
-                    iconSize: root.px(24)
-                    color: IrisStyle.onMedia
-                }
             }
             HoverHandler { cursorShape: Qt.PointingHandCursor }
             TapHandler { id: coverTap; onTapped: media.togglePlaying() }
