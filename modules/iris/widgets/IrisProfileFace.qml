@@ -60,43 +60,12 @@ IrisWidgetFace {
         }
     }
 
-    // A fact of the machine: the word over its value, centred in a quiet well.
-    component Key: Rectangle {
-        id: fact
-        property string word: ""
-        property string value: ""
-        implicitHeight: root.dp(50)
-        radius: root.innerRadius
-        color: root.fillQuiet
-        ColumnLayout {
-            anchors.centerIn: parent
-            width: parent.width - root.dp(12)
-            spacing: root.dp(1)
-            FaceText {
-                face: root
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-                text: fact.word
-                size: 11
-                color: root.inkSecondary
-            }
-            FaceText {
-                face: root
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-                text: fact.value
-                size: 14
-                weight: Font.DemiBold
-            }
-        }
-    }
-
     // Who is here: greeting, name and machine beside the avatar.
     component Who: RowLayout {
         spacing: root.dp(12)
         FaceAvatar {
             visible: root.widget.showAvatar
-            Layout.preferredWidth: root.dp(root.large ? 64 : 52)
+            Layout.preferredWidth: root.dp(root.large ? 76 : 52)
             Layout.preferredHeight: Layout.preferredWidth
         }
         ColumnLayout {
@@ -115,7 +84,7 @@ IrisWidgetFace {
                 face: root
                 Layout.fillWidth: true
                 text: root.name
-                size: root.large ? 22 : 19
+                size: root.large ? 26 : 19
                 weight: Font.DemiBold
                 font.family: IrisStyle.fontTitle
             }
@@ -173,64 +142,34 @@ IrisWidgetFace {
         Item { Layout.fillHeight: true }
     }
 
-    // Medium: who, then the keys along the bottom. Large: who, the day and the weather, the machine, the keys.
+    // Medium: who, then the keys along the bottom. Large: who, the machine as the Day's fact rows (and the weather,
+    // when shown), the keys; the wells of facts and the date beside them were a second widget inside this one.
     ColumnLayout {
         visible: !root.small
         anchors.fill: parent
         spacing: root.dp(10)
 
-        Who { Layout.fillWidth: true }
-        Item { Layout.fillHeight: true; visible: !root.large }
-
-        RowLayout {
+        Who { Layout.fillHeight: false; Layout.fillWidth: true }
+        Item { Layout.fillHeight: true }
+        ColumnLayout {
             visible: root.large
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            spacing: root.dp(10)
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignBottom
-                spacing: 0
-                FaceText {
-                    face: root
-                    text: IrisFaceData.capitalized(Translation.locale.toString(DateTime.clock.date, "dddd"))
-                    color: root.highlight
-                    size: 12.5
-                    weight: Font.DemiBold
-                }
-                FaceFigure {
-                    face: root
-                    text: Translation.locale.toString(DateTime.clock.date, "d MMM").replace(/\./g, "")
-                    size: 32
-                }
-            }
-            ColumnLayout {
-                visible: root.widget.showWeather && Weather.enabled
-                Layout.alignment: Qt.AlignBottom | Qt.AlignRight
-                spacing: 0
-                MaterialSymbol {
-                    Layout.alignment: Qt.AlignRight
-                    text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
-                    fill: 1
-                    iconSize: root.px(20)
-                    color: IrisStyle.skyLight(text)
-                }
-                FaceFigure {
-                    Layout.alignment: Qt.AlignRight
-                    text: String(Weather.data?.temp ?? "").replace(/°[CF]$/, "°")
-                    face: root
-                    size: 32
-                }
-            }
-        }
-        RowLayout {
-            visible: root.large
-            Layout.fillWidth: true
+            Layout.fillHeight: false
+            Layout.bottomMargin: root.dp(4)
             spacing: root.dp(8)
-            Key { Layout.fillWidth: true; word: Translation.tr("Uptime"); value: DateTime.uptime || "--" }
-            Key { Layout.fillWidth: true; word: Translation.tr("Shell"); value: root.shellName }
-            Key { Layout.fillWidth: true; word: Translation.tr("Desktop"); value: root.desktopName }
+            FaceFact { face: root; Layout.fillWidth: true; rule: false; glyph: "avg_pace"; label: Translation.tr("Uptime"); value: DateTime.uptime || "--" }
+            FaceFact { face: root; Layout.fillWidth: true; glyph: "terminal"; label: Translation.tr("Shell"); value: root.shellName }
+            FaceFact { face: root; Layout.fillWidth: true; glyph: "desktop_windows"; label: Translation.tr("Desktop"); value: root.desktopName }
+            FaceFact {
+                face: root
+                visible: root.widget.showWeather && Weather.enabled && String(Weather.data?.temp ?? "").length > 0
+                Layout.fillWidth: true
+                glyph: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
+                tint: IrisStyle.skyLight(glyph)
+                label: Translation.tr("Weather")
+                value: String(Weather.data?.temp ?? "").replace(/°[CF]$/, "°")
+            }
         }
-        Actions { Layout.fillWidth: true }
+        Actions { Layout.fillHeight: false; Layout.fillWidth: true }
     }
 }

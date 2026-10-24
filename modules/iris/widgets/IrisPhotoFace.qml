@@ -59,6 +59,7 @@ IrisWidgetFace {
         anchors.margins: root.edgePad
         spacing: root.dp(8)
         ColumnLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             spacing: 0
             FaceText {
@@ -90,10 +91,20 @@ IrisWidgetFace {
         }
     }
 
+    // Empty on a large frame: a head names it and the empty state waits under it, not lost in the middle.
+    FaceHeader {
+        id: blankHead
+        face: root
+        visible: !root.showsPicture && root.large
+        width: parent.width
+        glyph: "photo"
+        text: Translation.tr("Image")
+        tint: root.tint
+    }
     FaceBlank {
         face: root
         visible: !root.showsPicture
-        anchors.centerIn: parent
+        y: root.large ? blankHead.height + root.dp(24) : Math.round((parent.height - height) / 2)
         width: parent.width
         glyph: root.dropping ? "download" : root.failed ? "broken_image" : "add_photo_alternate"
         tint: root.tint

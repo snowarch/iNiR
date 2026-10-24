@@ -248,12 +248,13 @@ IrisWidgetFace {
     // The header names the song on the large face.
     FaceHeader {
         id: header
-        visible: root.large && root.hasPlayer
+        // with nothing playing it still names the face, so the empty state below has a head to wait under
+        visible: root.large
         width: root.contentWidth
         face: root
         glyph: "lyrics"
-        text: root.title
-        trailing: root.artist
+        text: root.hasPlayer ? root.title : Translation.tr("Lyrics")
+        trailing: root.hasPlayer ? root.artist : ""
         trailingMax: Math.round(root.contentWidth * 0.42)
     }
 
@@ -291,7 +292,9 @@ IrisWidgetFace {
 
     FaceBlank {
         visible: !root.singing
-        anchors.centerIn: parent
+        // a large face would lose it in the middle: it waits under the head, where the first line goes
+        x: Math.round((parent.width - width) / 2)
+        y: root.large ? header.height + root.dp(24) : Math.round((parent.height - height) / 2)
         width: root.contentWidth
         face: root
         glyph: root.mode === "offline" ? "wifi_off" : root.mode === "instrumental" ? "music_note"
