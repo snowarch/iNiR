@@ -189,6 +189,7 @@ IrisWidgetFace {
         }
 
         RowLayout {
+            Layout.fillHeight: false
             visible: root.large
             Layout.fillWidth: true
             spacing: root.dp(4)
@@ -240,6 +241,7 @@ IrisWidgetFace {
         }
 
         RowLayout {
+            Layout.fillHeight: false
             visible: root.large
             Layout.fillWidth: true
             spacing: root.dp(4)

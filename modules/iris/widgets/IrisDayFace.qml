@@ -203,6 +203,7 @@ IrisWidgetFace {
             tint: root.warm
         }
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             spacing: root.dp(10)
             Lead { figureSize: root.large ? 44 : 38 }
@@ -233,6 +234,7 @@ IrisWidgetFace {
         }
         FaceHours { face: root; Layout.fillWidth: true; Layout.topMargin: root.dp(2) }
         ColumnLayout {
+            Layout.fillHeight: false
             visible: root.large
             Layout.fillWidth: true
             Layout.topMargin: root.dp(12)

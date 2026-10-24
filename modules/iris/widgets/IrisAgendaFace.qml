@@ -54,6 +54,9 @@ IrisWidgetFace {
     component EventRow: RowLayout {
         id: row
         property var event: null
+        // what the line under the title says of when: all of it, only the hour (a day head says the day), or nothing
+        // (the time is the figure above it)
+        property string when: "full"
         spacing: root.dp(8)
         Rectangle {
             Layout.preferredWidth: root.dp(3)
@@ -62,6 +65,7 @@ IrisWidgetFace {
             color: IrisFaceData.eventTint(row.event, root.accent)
         }
         ColumnLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             spacing: 0
             FaceText {
@@ -74,10 +78,14 @@ IrisWidgetFace {
             FaceText {
                 face: root
                 Layout.fillWidth: true
+                visible: text.length > 0
                 text: {
-                    const when = IrisFaceData.eventWhen(row.event, root.today)
+                    const allDay = Boolean(row.event?.allDay)
+                    const when = row.when === "none" ? "" : row.when === "time"
+                        ? (allDay ? Translation.tr("All day") : IrisFaceData.clockText(IrisFaceData.eventDate(row.event)))
+                        : IrisFaceData.eventWhen(row.event, root.today)
                     const place = root.widget.showLocation ? String(row.event?.location ?? "") : ""
-                    return place.length > 0 ? when + " · " + place : when
+                    return [when, place].filter(part => part.length > 0).join(" · ")
                 }
                 color: root.inkSecondary
                 size: 11.5
@@ -113,6 +121,7 @@ IrisWidgetFace {
         Repeater {
             model: root.week
             ColumnLayout {
+                Layout.fillHeight: false
                 id: day
                 required property var modelData
                 readonly property bool current: day.modelData.getDate() === root.today.getDate()
@@ -183,15 +192,17 @@ IrisWidgetFace {
         }
         Item { Layout.fillHeight: true }
         EventRow {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             event: root.next
+            when: root.nextTime !== null ? "none" : "full"
         }
     }
     ColumnLayout {
         visible: root.small && root.next === null
         anchors.fill: parent
         spacing: root.dp(6)
-        DateHero { Layout.fillWidth: true }
+        DateHero { Layout.fillHeight: false; Layout.fillWidth: true }
         Item { Layout.fillHeight: true }
         Empty { Layout.fillWidth: true }
     }
@@ -214,10 +225,11 @@ IrisWidgetFace {
                 EventRow {
                     required property var modelData
                     Layout.fillWidth: true
+                    Layout.fillHeight: false
                     event: modelData
                 }
             }
-            WeekStrip { visible: root.shown.length === 0; Layout.fillWidth: true }
+            WeekStrip { Layout.fillHeight: false; visible: root.shown.length === 0; Layout.fillWidth: true }
             // Free: the words read right under the week they talk about
             Empty { visible: root.shown.length === 0; Layout.fillWidth: true; Layout.leftMargin: root.dp(4) }
             Item { Layout.fillHeight: true }
@@ -228,7 +240,7 @@ IrisWidgetFace {
         visible: root.large
         anchors.fill: parent
         spacing: root.dp(8)
-        DateHero { Layout.fillWidth: true }
+        DateHero { Layout.fillHeight: false; Layout.fillWidth: true }
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 1
@@ -243,6 +255,7 @@ IrisWidgetFace {
                 readonly property string day: root.dayLabel(entry.modelData)
                 readonly property bool heading: entry.index === 0 || root.dayLabel(root.shown[entry.index - 1]) !== entry.day
                 Layout.fillWidth: true
+                Layout.fillHeight: false
                 spacing: root.dp(4)
                 FaceText {
                     face: root
@@ -255,12 +268,14 @@ IrisWidgetFace {
                     weight: Font.DemiBold
                 }
                 EventRow {
+                    Layout.fillHeight: false
                     Layout.fillWidth: true
                     event: entry.modelData
+                    when: root.widget.groupByDay ? "time" : "full"
                 }
             }
         }
-        WeekStrip { visible: root.shown.length === 0; Layout.fillWidth: true; Layout.topMargin: root.dp(4) }
+        WeekStrip { Layout.fillHeight: false; visible: root.shown.length === 0; Layout.fillWidth: true; Layout.topMargin: root.dp(4) }
         // A free week fills the room it has with a calm mark instead of a line of grey over air.
         Item {
             visible: root.shown.length === 0

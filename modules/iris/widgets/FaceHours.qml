@@ -6,6 +6,8 @@ import QtQuick.Layouts
 // The hours under a drawn day, ends flush with its edges.
 RowLayout {
     id: hours
+    // sized by its content: a nested layout fills its column by default and took the room meant for others
+    Layout.fillHeight: false
     required property var face
     property var marks: [0, 6, 12, 18, 24]
     spacing: 0

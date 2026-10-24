@@ -167,6 +167,7 @@ IrisWidgetFace {
                     elide: Text.ElideRight
                 }
                 RowLayout {
+                    Layout.fillHeight: false
                     visible: root.small && root.topApps.length > 0
                     Layout.fillWidth: true
                     spacing: root.dp(6)
@@ -197,10 +198,12 @@ IrisWidgetFace {
 
                 Item { Layout.fillHeight: true }
                 HourBars {
+                    Layout.fillHeight: false
                     Layout.fillWidth: true
                     barHeight: root.dp(40)
                 }
                 RowLayout {
+                    Layout.fillHeight: false
                     Layout.fillWidth: true
                     spacing: root.dp(10)
                     Repeater {
@@ -232,6 +235,7 @@ IrisWidgetFace {
                 spacing: root.dp(8)
 
                 RowLayout {
+                    Layout.fillHeight: false
                     Layout.fillWidth: true
                     FaceFigure {
                         face: root
@@ -241,6 +245,7 @@ IrisWidgetFace {
                     Item { Layout.fillWidth: true }
                 }
                 HourBars {
+                    Layout.fillHeight: false
                     Layout.fillWidth: true
                     barHeight: root.dp(64)
                 }
@@ -256,12 +261,15 @@ IrisWidgetFace {
                         id: appRow
                         required property var modelData
                         Layout.fillWidth: true
+                        Layout.fillHeight: false
                         spacing: root.dp(10)
                         AppIcon { app: appRow.modelData; implicitSize: root.dp(22) }
                         ColumnLayout {
+                            Layout.fillHeight: false
                             Layout.fillWidth: true
                             spacing: root.dp(3)
                             RowLayout {
+                                Layout.fillHeight: false
                                 Layout.fillWidth: true
                                 FaceText {
                                     face: root

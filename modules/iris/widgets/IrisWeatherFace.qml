@@ -244,9 +244,9 @@ IrisWidgetFace {
         visible: root.ready && root.small
         anchors.fill: parent
         spacing: 0
-        Now { Layout.fillWidth: true }
+        Now { Layout.fillHeight: false; Layout.fillWidth: true }
         Item { Layout.fillHeight: true }
-        Condition { Layout.fillWidth: true }
+        Condition { Layout.fillHeight: false; Layout.fillWidth: true }
     }
 
     ColumnLayout {
@@ -254,6 +254,7 @@ IrisWidgetFace {
         anchors.fill: parent
         spacing: 0
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             spacing: root.dp(12)
             Now {
@@ -275,6 +276,7 @@ IrisWidgetFace {
         spacing: root.dp(10)
 
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             spacing: root.dp(12)
             Now { Layout.fillWidth: true; Layout.alignment: Qt.AlignTop }
@@ -283,6 +285,7 @@ IrisWidgetFace {
         Hours { Layout.fillWidth: true }
         // The air as three facts: humidity, the wind with an arrow to where it goes, the UV index in a word.
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             spacing: root.dp(12)
             Repeater {

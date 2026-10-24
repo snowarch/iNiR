@@ -6,6 +6,8 @@ import qs.modules.common.widgets
 
 RowLayout {
     id: root
+    // sized by its content: a nested layout fills its column by default and took the room meant for others
+    Layout.fillHeight: false
 
     required property var face
     property string glyph: ""

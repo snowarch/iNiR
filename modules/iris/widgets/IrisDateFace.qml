@@ -55,7 +55,7 @@ IrisWidgetFace {
         visible: root.small
         anchors.fill: parent
         spacing: 0
-        Lead { Layout.fillWidth: true }
+        Lead { Layout.fillHeight: false; Layout.fillWidth: true }
         Item { Layout.fillHeight: true }
         FaceAside {
             face: root
@@ -155,6 +155,7 @@ IrisWidgetFace {
             trailing: root.lit ? (root.lengthening ? Translation.tr("Days getting longer") : Translation.tr("Days getting shorter")) : ""
         }
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             spacing: root.dp(10)
             FaceFigure {
@@ -195,6 +196,7 @@ IrisWidgetFace {
         }
         Item { visible: !root.lit; Layout.fillHeight: true }
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             Layout.topMargin: root.dp(2)
             spacing: 0
@@ -214,6 +216,7 @@ IrisWidgetFace {
             }
         }
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             Layout.topMargin: root.dp(12)
             spacing: root.dp(14)

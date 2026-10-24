@@ -169,6 +169,7 @@ IrisWidgetFace {
             color: root.hairline
         }
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             spacing: root.dp(10)
             FaceText {
@@ -291,6 +292,7 @@ IrisWidgetFace {
                     required property var modelData
                     required property int index
                     Layout.fillWidth: true
+                    Layout.fillHeight: false
                     entry: modelData
                     rule: root.large || index > 0
                     traced: root.large && ["cpu", "mem", "gpu", "temp", "gpuTemp"].includes(modelData.key)

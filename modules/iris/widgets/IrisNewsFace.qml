@@ -98,6 +98,7 @@ IrisWidgetFace {
                         color: root.hairline
                     }
                     RowLayout {
+                        Layout.fillHeight: false
                         visible: root.widget.showMeta || storyHover.hovered
                         Layout.fillWidth: true
                         spacing: root.dp(6)

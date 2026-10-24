@@ -131,6 +131,7 @@ IrisWidgetFace {
             }
             Item { Layout.fillHeight: true }
             RowLayout {
+                Layout.fillHeight: false
                 Layout.fillWidth: true
                 spacing: root.dp(8)
                 Key {
@@ -154,53 +155,55 @@ IrisWidgetFace {
                 }
             }
         }
-        ColumnLayout {
+        // The other two share the height, each centred in its half (placed by y: a column of layouts bunched them
+        // on the rule between them).
+        Item {
+            id: otherColumn
             visible: root.medium
             Layout.fillWidth: true
             Layout.preferredWidth: 1
             Layout.fillHeight: true
-            spacing: 0
             Repeater {
                 model: root.medium ? root.others : []
-                ColumnLayout {
+                Item {
                     id: other
                     required property var modelData
                     required property int index
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    spacing: 0
+                    readonly property real pitch: otherColumn.height / Math.max(1, root.others.length)
+                    y: Math.round(other.index * other.pitch)
+                    width: otherColumn.width
+                    height: Math.round((other.index + 1) * other.pitch) - y
                     Rectangle {
                         visible: other.index > 0
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 1
+                        width: parent.width
+                        height: 1
                         color: root.hairline
                     }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        spacing: root.dp(10)
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 0
-                            FaceText {
-                                face: root
-                                Layout.fillWidth: true
-                                text: other.modelData.label
-                                color: root.live(other.modelData) ? other.modelData.tint : root.inkSecondary
-                                size: 12
-                                weight: Font.DemiBold
-                            }
-                            FaceFigure {
-                                face: root
-                                text: other.modelData.value
-                                size: 20
-                                tone: root.live(other.modelData) || other.modelData.paused ? root.ink : root.inkSecondary
-                            }
+                    Column {
+                        id: otherText
+                        y: Math.round((parent.height - height) / 2)
+                        width: parent.width - otherKey.width - root.dp(10)
+                        FaceText {
+                            face: root
+                            width: Math.min(implicitWidth, otherText.width)
+                            text: other.modelData.label
+                            color: root.live(other.modelData) ? other.modelData.tint : root.inkSecondary
+                            size: 12
+                            weight: Font.DemiBold
                         }
-                        Key {
-                            implicitWidth: root.dp(32)
-                            timer: other.modelData
+                        FaceFigure {
+                            face: root
+                            text: other.modelData.value
+                            size: 20
+                            tone: root.live(other.modelData) || other.modelData.paused ? root.ink : root.inkSecondary
                         }
+                    }
+                    Key {
+                        id: otherKey
+                        implicitWidth: root.dp(32)
+                        x: parent.width - width
+                        y: Math.round((parent.height - height) / 2)
+                        timer: other.modelData
                     }
                 }
             }
@@ -240,6 +243,7 @@ IrisWidgetFace {
                     Layout.fillHeight: true
                     spacing: root.dp(12)
                     ColumnLayout {
+                        Layout.fillHeight: false
                         Layout.fillWidth: true
                         spacing: 0
                         FaceText {

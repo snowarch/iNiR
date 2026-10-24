@@ -9,6 +9,8 @@ import qs.modules.iris.style
 // empty, offline and error state is this one block, centred where its content would sit; a key can follow it.
 ColumnLayout {
     id: blank
+    // sized by its content: a nested layout fills its column by default and took the room meant for others
+    Layout.fillHeight: false
     required property var face
     property string glyph: ""
     property bool glyphFill: false

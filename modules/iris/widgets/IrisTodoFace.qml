@@ -98,7 +98,7 @@ IrisWidgetFace {
         }
         Repeater {
             model: root.adding ? [] : root.entries
-            Task { Layout.fillWidth: true }
+            Task { Layout.fillWidth: true; Layout.fillHeight: false }
         }
         // Nothing left: a done mark and how to start again, centred in the room the list would take.
         Item {
@@ -193,6 +193,7 @@ IrisWidgetFace {
         anchors.fill: parent
         spacing: root.dp(8)
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             FaceHeader {
                 face: root
@@ -219,7 +220,7 @@ IrisWidgetFace {
             Layout.fillWidth: false
             Layout.preferredWidth: root.contentWidth * 0.26
             Layout.fillHeight: true
-            Count { Layout.fillWidth: true }
+            Count { Layout.fillHeight: false; Layout.fillWidth: true }
             Item { Layout.fillHeight: true }
             Add {}
         }
@@ -235,6 +236,7 @@ IrisWidgetFace {
         anchors.fill: parent
         spacing: root.dp(10)
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             FaceHeader {
                 face: root
@@ -252,6 +254,7 @@ IrisWidgetFace {
         Tasks { Layout.fillWidth: true; Layout.fillHeight: root.empty }
         Item { Layout.fillHeight: true; visible: !root.empty }
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             Add {}
             FaceText {

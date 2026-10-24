@@ -29,10 +29,21 @@ IrisWidgetFace {
     readonly property string bootDay: IrisFaceData.capitalized(Translation.locale.toString(root.boot, "dddd"))
     // On from waking to now: the line rises over the first hours like the sun does and holds (a straight ramp said
     // only that time passes; a hard step read as a bar).
+    // Early in a day the session began before: the day so far was a sliver at its left edge, so the drawing reads the
+    // last 24 hours instead, ending now.
+    readonly property bool rolling: root.sinceYesterday && root.nowAt < 0.25
+    readonly property real areaFrom: root.rolling ? Math.max(0, 1 - root.total / 86400) : root.bootAt
+    readonly property real areaTo: root.rolling ? 1 : root.nowAt
+    readonly property var marks: {
+        if (!root.rolling)
+            return [0, 6, 12, 18, 24]
+        const hour = root.now.getHours() + (root.now.getMinutes() >= 30 ? 1 : 0)
+        return [-24, -18, -12, -6].map(back => ((hour + back) % 24 + 24) % 24).concat([Translation.tr("Now")])
+    }
     function level(t: real): real {
-        if (root.sinceYesterday)
+        if (root.sinceYesterday && !(root.rolling && root.areaFrom > 0))
             return 0.8
-        const k = Math.max(0, Math.min(1, (t - root.bootAt) * 24 / 2.5))
+        const k = Math.max(0, Math.min(1, (t - root.areaFrom) * 24 / 2.5))
         return 0.8 * k * k * (3 - 2 * k)
     }
     function span(seconds: int): string {
@@ -79,8 +90,8 @@ IrisWidgetFace {
 
     component Session: FaceArea {
         face: root
-        from: root.bootAt
-        to: root.nowAt
+        from: root.areaFrom
+        to: root.areaTo
         curve: t => root.level(t)
     }
 
@@ -115,6 +126,7 @@ IrisWidgetFace {
             trailing: root.medium && root.days > 0 ? Translation.tr("Day %1 of this session").arg(root.widget.sessionDay) : ""
         }
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             spacing: root.dp(10)
             Lead { figureSize: root.large ? 44 : 38 }
@@ -130,8 +142,9 @@ IrisWidgetFace {
             Layout.fillHeight: true
             Layout.topMargin: root.dp(6)
         }
-        FaceHours { face: root; Layout.fillWidth: true; Layout.topMargin: root.dp(2) }
+        FaceHours { face: root; marks: root.marks; Layout.fillWidth: true; Layout.topMargin: root.dp(2) }
         ColumnLayout {
+            Layout.fillHeight: false
             visible: root.large
             Layout.fillWidth: true
             Layout.topMargin: root.dp(12)

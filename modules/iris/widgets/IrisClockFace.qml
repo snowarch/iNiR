@@ -110,6 +110,7 @@ IrisWidgetFace {
             size: root.small ? 12.5 : 13.5
         }
         Week {
+            Layout.fillHeight: false
             visible: !root.small && !root.large
             Layout.fillWidth: true
             Layout.topMargin: root.dp(6)
@@ -129,7 +130,7 @@ IrisWidgetFace {
             Layout.preferredHeight: 1
             color: root.hairline
         }
-        Week { Layout.fillWidth: true }
+        Week { Layout.fillHeight: false; Layout.fillWidth: true }
     }
 
     // The week, today as the chosen capsule.

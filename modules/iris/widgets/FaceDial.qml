@@ -94,11 +94,13 @@ Item {
         }
     }
 
-    // Under the 12, as Apple's dial carries its city: below the centre it sat where the hands rest half the day.
+    // Under the 12, as Apple's dial carries its city, unless the hour hand is up there: then over the 6, so the date
+    // is never under it (fixed under the 12, 10 to 2 o'clock hid it; fixed under the centre, 4 to 8).
+    readonly property bool hourUp: root.hours >= 9.5 || root.hours < 2.5
     Text {
         visible: root.caption.length > 0
         anchors.horizontalCenter: parent.horizontalCenter
-        y: Math.round(root.cy - root.r * 0.38 - height / 2)
+        y: Math.round(root.cy + (root.hourUp ? 0.38 : -0.38) * root.r - height / 2)
         text: root.caption
         color: IrisStyle.secondaryOf(root.ink)
         font.family: root.face.fontMain

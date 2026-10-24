@@ -209,6 +209,7 @@ IrisWidgetFace {
                 required property int index
                 readonly property color tint: root.tint(device.modelData)
                 Layout.fillWidth: true
+                Layout.fillHeight: false
                 spacing: 0
                 Rectangle {
                     visible: device.index > 0
@@ -218,6 +219,7 @@ IrisWidgetFace {
                     color: root.hairline
                 }
                 RowLayout {
+                    Layout.fillHeight: false
                     Layout.fillWidth: true
                     Layout.topMargin: root.dp(10)
                     Layout.bottomMargin: root.dp(10)
@@ -236,6 +238,7 @@ IrisWidgetFace {
                         }
                     }
                     ColumnLayout {
+                        Layout.fillHeight: false
                         Layout.fillWidth: true
                         spacing: 0
                         FaceText {
