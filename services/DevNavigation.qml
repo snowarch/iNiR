@@ -217,8 +217,15 @@ Singleton {
         }
     }
 
+    // Installs restart on update and carry no Makefile: the watcher is for checkouts only, not a python all day.
+    property bool checkout: false
+    FileView {
+        path: Quickshell.shellPath("Makefile")
+        printErrors: false
+        onLoaded: root.checkout = true
+    }
     Process {
-        running: Quickshell.watchFiles
+        running: Quickshell.watchFiles && root.checkout
         command: ["python3", Quickshell.shellPath("scripts/daemon/dev_hot_reload.py"), Quickshell.shellDir,
             String(Quickshell.processId)]
     }
