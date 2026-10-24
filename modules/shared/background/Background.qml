@@ -197,6 +197,56 @@ Scope {
             }
             return JSON.stringify(out)
         }
+        // How every face fits its size: text over other text, past the plate, hugging its edge or cut short.
+        // [{ output, widget, size, issues: [...] }], only widgets with something wrong.
+        function widgetFit(): string {
+            const out = []
+            for (const output of Object.keys(backgroundScope.widgetCanvases)) {
+                const canvas = backgroundScope.widgetCanvases[output]
+                if (!canvas || typeof canvas._loadedDesktopWidgets !== "function") continue
+                for (const widget of canvas._loadedDesktopWidgets()) {
+                    const texts = []
+                    const walk = (item, alpha) => {
+                        for (const child of item.children ?? []) {
+                            const seen = alpha * child.opacity
+                            if (!child.visible || seen < 0.05) continue
+                            if (typeof child.text === "string" && child.text.trim().length > 0 && (child.paintedWidth ?? 0) > 0) {
+                                const at = child.mapToItem(widget, 0, 0)
+                                const dx = child.horizontalAlignment === Text.AlignHCenter ? (child.width - child.paintedWidth) / 2
+                                    : child.horizontalAlignment === Text.AlignRight ? child.width - child.paintedWidth : 0
+                                const dy = child.verticalAlignment === Text.AlignVCenter ? (child.height - child.paintedHeight) / 2
+                                    : child.verticalAlignment === Text.AlignBottom ? child.height - child.paintedHeight : 0
+                                texts.push({ text: child.text.replace(/\s+/g, " ").slice(0, 20), x: at.x + dx, y: at.y + dy,
+                                    // a wrapped text clamped to its lines (a headline) is cut on purpose; a label or figure is not
+                                    w: child.paintedWidth, h: child.paintedHeight, cut: child.truncated === true && !(child.wrapMode > 0) })
+                            }
+                            walk(child, seen)
+                        }
+                    }
+                    walk(widget, 1)
+                    const issues = []
+                    const edge = 10
+                    for (const t of texts) {
+                        if (t.cut) issues.push("cut '" + t.text + "'")
+                        if (t.x < -1 || t.y < -1 || t.x + t.w > widget.width + 1 || t.y + t.h > widget.height + 1)
+                            issues.push("past the plate '" + t.text + "'")
+                        else if (t.x < edge || t.y < edge || t.x + t.w > widget.width - edge || t.y + t.h > widget.height - edge)
+                            issues.push("hugs the edge '" + t.text + "'")
+                    }
+                    for (let i = 0; i < texts.length; ++i)
+                        for (let j = i + 1; j < texts.length; ++j) {
+                            const a = texts[i], b = texts[j]
+                            const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)
+                            const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y)
+                            if (ox > 2 && oy > 0.3 * Math.min(a.h, b.h))
+                                issues.push("'" + a.text + "' over '" + b.text + "' at " + Math.round(Math.max(a.x, b.x)) + "," + Math.round(Math.max(a.y, b.y)))
+                        }
+                    if (issues.length > 0)
+                        out.push({ output: output, widget: widget.configEntryName, size: widget.irisSize ?? "", issues: issues })
+                }
+            }
+            return JSON.stringify(out)
+        }
 
         function editState(): string {
             return JSON.stringify({

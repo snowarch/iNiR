@@ -148,6 +148,7 @@ complete -c inir -n '__inir_at_function background' -a savePreset -d 'Save this 
 complete -c inir -n '__inir_at_function background' -a sizeWidget -d 'Set an iRiS widget\'s size class (small, medium, large) as i…'
 complete -c inir -n '__inir_at_value 2 sizeWidget background' -a 'small medium large'
 complete -c inir -n '__inir_at_function background' -a widgetRects -d 'Where every desktop widget sits on each screen, as JSON'
+complete -c inir -n '__inir_at_function background' -a widgetFit -d 'widgetFit'
 complete -c inir -n '__inir_at_function background' -a editState -d 'Report the active selection, physical panel insets, full de…'
 complete -c inir -n '__inir_at_function background' -a applyOrganicEdgePreset -d 'Apply an Organic Edge scene by name without changing enable…'
 complete -c inir -n '__inir_at_function background' -a applyOrganicEdgeComposition -d 'Apply only an Organic Edge topology/geometry preset'

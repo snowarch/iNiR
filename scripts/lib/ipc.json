@@ -342,6 +342,12 @@
      "values": []
     },
     {
+     "name": "widgetFit",
+     "args": [],
+     "description": "",
+     "values": []
+    },
+    {
      "name": "editState",
      "args": [],
      "description": "Report the active selection, physical panel insets, full desktop work area and panel-aware zone work area for each output",
