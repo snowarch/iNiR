@@ -17,6 +17,8 @@ Item {
     // Nothing (S4): a run of dots past the glyph's pocket with a larger dot for the knob.
     readonly property bool nothing: IrisStyle.wearsNothing(root)
     property color fillColor: root.nothing ? IrisStyle.text : IrisStyle.fillStrong
+    // the icon's ink once the fill reaches it
+    property color inkOnFill: IrisStyle.surface
     property bool readout: false
     // The level's name, for a Design that sets it in words beside the level (AIRISU's rule).
     property string label: ""
@@ -97,7 +99,7 @@ Item {
             fill: 1
             iconSize: Math.round((root.vertical ? 19 : 20) * IrisStyle.density)
             readonly property bool overFill: !root.nothing && !root.muted && fillClip.length >= root.pocket * 0.72
-            color: overFill ? IrisStyle.surface : root.muted ? IrisStyle.textTertiary : IrisStyle.text
+            color: overFill ? root.inkOnFill : root.muted ? IrisStyle.textTertiary : IrisStyle.text
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
         }
     }

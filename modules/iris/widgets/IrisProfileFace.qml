@@ -127,6 +127,17 @@ IrisWidgetFace {
                 color: root.inkSecondary
                 size: 12
             }
+            // medium has the room and nothing else to say: how long the machine has been on
+            FaceText {
+                face: root
+                Layout.fillWidth: true
+                Layout.topMargin: root.dp(2)
+                visible: root.medium
+                text: root.uptime
+                color: root.inkTertiary
+                size: 12
+                font.features: ({ "tnum": 1 })
+            }
         }
     }
 

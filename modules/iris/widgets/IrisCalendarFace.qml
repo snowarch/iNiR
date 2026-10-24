@@ -208,22 +208,25 @@ IrisWidgetFace {
                 tone: root.picked ? root.inkSecondary : root.ink
                 TapHandler { enabled: root.picked !== null || root.browsing; onTapped: root.turn(0) }
             }
-            Item { Layout.fillHeight: true }
+            // what the day holds reads right under it, not at the far edge
             EventLine {
                 visible: root.nextEvent !== null
                 Layout.fillWidth: true
+                Layout.topMargin: root.dp(6)
                 event: root.nextEvent
             }
             FaceText {
                 face: root
                 visible: root.nextEvent === null
                 Layout.fillWidth: true
+                Layout.topMargin: root.dp(6)
                 text: root.picked ? Translation.tr("Nothing on this day") : Translation.tr("No events this week")
-                color: root.inkTertiary
+                color: root.inkSecondary
                 size: 12
                 wrapMode: Text.WordWrap
                 maximumLineCount: 2
             }
+            Item { Layout.fillHeight: true }
         }
         MonthGrid {
             Layout.fillWidth: true

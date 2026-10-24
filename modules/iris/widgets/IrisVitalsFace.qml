@@ -61,6 +61,31 @@ IrisWidgetFace {
     function unit(key: string): string {
         return key === "temp" || key === "gpuTemp" ? "°C" : "%"
     }
+    // A smooth line through the points that never overshoots them (monotone cubic, Fritsch-Carlson), as SVG;
+    // `floor` closes it down to the bottom edge for the fill under it.
+    function curve(points: var, floor: real): string {
+        const n = points.length
+        if (n < 2)
+            return ""
+        const d = [], m = []
+        for (let i = 0; i < n - 1; i++)
+            d.push((points[i + 1].y - points[i].y) / Math.max(0.001, points[i + 1].x - points[i].x))
+        m.push(d[0])
+        for (let i = 1; i < n - 1; i++)
+            m.push(d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2)
+        m.push(d[n - 2])
+        for (let i = 0; i < n - 1; i++) {
+            if (d[i] === 0) { m[i] = 0; m[i + 1] = 0; continue }
+            const a = m[i] / d[i], b = m[i + 1] / d[i], h = a * a + b * b
+            if (h > 9) { const t = 3 / Math.sqrt(h); m[i] = t * a * d[i]; m[i + 1] = t * b * d[i] }
+        }
+        let path = floor >= 0 ? `M ${points[0].x} ${floor} L ${points[0].x} ${points[0].y}` : `M ${points[0].x} ${points[0].y}`
+        for (let i = 0; i < n - 1; i++) {
+            const dx = (points[i + 1].x - points[i].x) / 3
+            path += ` C ${points[i].x + dx} ${points[i].y + m[i] * dx} ${points[i + 1].x - dx} ${points[i + 1].y - m[i + 1] * dx} ${points[i + 1].x} ${points[i + 1].y}`
+        }
+        return floor >= 0 ? path + ` L ${points[n - 1].x} ${floor} Z` : path
+    }
     function history(key: string): var {
         const values = key === "cpu" ? ResourceUsage.cpuUsageHistory
             : key === "mem" ? ResourceUsage.memoryUsageHistory
@@ -115,10 +140,10 @@ IrisWidgetFace {
             strokeColor: "transparent"
             fillGradient: LinearGradient {
                 x1: 0; y1: 0; x2: 0; y2: trace.height
-                GradientStop { position: 0; color: IrisStyle.tintFill(root.tint(trace.key)) }
+                GradientStop { position: 0; color: ColorUtils.applyAlpha(root.tint(trace.key), 0.28) }
                 GradientStop { position: 1; color: ColorUtils.applyAlpha(root.tint(trace.key), 0) }
             }
-            PathPolyline { path: [Qt.point(0, trace.height)].concat(trace.line, [Qt.point(trace.width, trace.height)]) }
+            PathSvg { path: root.curve(trace.line, trace.height) }
         }
         ShapePath {
             strokeColor: root.tint(trace.key)
@@ -126,7 +151,7 @@ IrisWidgetFace {
             joinStyle: ShapePath.RoundJoin
             capStyle: ShapePath.RoundCap
             fillColor: "transparent"
-            PathPolyline { path: trace.line }
+            PathSvg { path: root.curve(trace.line, -1) }
         }
         Rectangle {
             visible: trace.lane
@@ -139,7 +164,7 @@ IrisWidgetFace {
         Rectangle {
             readonly property point end: trace.line.length ? trace.line[trace.line.length - 1] : Qt.point(0, 0)
             visible: trace.lane && trace.line.length > 0
-            width: root.dp(6)
+            width: root.dp(5)
             height: width
             radius: IrisStyle.capsule(width)
             x: Math.round(end.x - width / 2)

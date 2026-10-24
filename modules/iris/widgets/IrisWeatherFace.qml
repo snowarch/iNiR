@@ -23,7 +23,7 @@ IrisWidgetFace {
         const low = root.degrees(Weather.data?.tempMin)
         return high.length > 0 && low.length > 0 ? Translation.tr("H:%1  L:%2").arg(high).arg(low) : ""
     }
-    readonly property var hours: Array.from(Weather.data?.hourly ?? []).slice(0, root.large ? 6 : 5)
+    readonly property var hours: Array.from(Weather.data?.hourly ?? []).slice(0, root.small ? 5 : 6)
     readonly property var days: Array.from(Weather.data?.forecast ?? []).slice(0, 5)
     readonly property var lows: root.days.map(day => Number(day.loVal)).filter(Number.isFinite)
     readonly property var highs: root.days.map(day => Number(day.hiVal)).filter(Number.isFinite)
@@ -68,8 +68,11 @@ IrisWidgetFace {
     }
 
     component Condition: ColumnLayout {
+        // medium reads it on the right, under nothing, as Apple's medium weather does
+        property bool trailing: false
         spacing: root.dp(1)
         MaterialSymbol {
+            Layout.alignment: parent.trailing ? Qt.AlignRight : Qt.AlignLeft
             text: root.glyph
             fill: 1
             iconSize: root.px(20)
@@ -78,6 +81,7 @@ IrisWidgetFace {
         FaceText {
             face: root
             Layout.fillWidth: true
+            horizontalAlignment: parent.trailing ? Text.AlignRight : Text.AlignLeft
             text: root.readout.length > 0 ? root.readout : root.condition
             size: 12.5
             weight: Font.DemiBold
@@ -85,6 +89,7 @@ IrisWidgetFace {
         FaceText {
             face: root
             Layout.fillWidth: true
+            horizontalAlignment: parent.trailing ? Text.AlignRight : Text.AlignLeft
             visible: root.range.length > 0 || Weather.stale
             text: !Weather.stale ? root.range
                 : !Network.online ? Translation.tr("Offline · %1").arg(Weather.updatedLabel)
@@ -180,24 +185,25 @@ IrisWidgetFace {
         Condition { Layout.fillWidth: true }
     }
 
-    RowLayout {
+    ColumnLayout {
         visible: root.ready && root.medium
         anchors.fill: parent
-        spacing: root.dp(14)
-        ColumnLayout {
-            Layout.fillWidth: false
-            Layout.preferredWidth: root.contentWidth * 0.36
-            Layout.maximumWidth: root.contentWidth * 0.36
-            Layout.fillHeight: true
-            spacing: 0
-            Now { Layout.fillWidth: true }
-            Item { Layout.fillHeight: true }
-            Condition { Layout.fillWidth: true }
-        }
-        Hours {
+        spacing: 0
+        RowLayout {
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
+            spacing: root.dp(12)
+            Now {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+            }
+            Condition {
+                trailing: true
+                Layout.preferredWidth: root.contentWidth * 0.42
+                Layout.alignment: Qt.AlignTop
+            }
         }
+        Item { Layout.fillHeight: true }
+        Hours { Layout.fillWidth: true }
     }
 
     ColumnLayout {

@@ -197,6 +197,9 @@ IrisWidgetFace {
             muted: Audio.sink?.audio?.muted ?? false
             icon: muted ? "volume_off" : (Audio.value ?? 0) < 0.34 ? "volume_mute" : (Audio.value ?? 0) < 0.67 ? "volume_down" : "volume_up"
             value: Math.min(1, Audio.value ?? 0)
+            // the level wears the person's accent, as the discs that are on do (Apple); Nothing keeps its ink
+            fillColor: IrisStyle.wearsNothing(root) ? IrisStyle.text : IrisStyle.appleAccentFill
+            inkOnFill: IrisStyle.wearsNothing(root) ? IrisStyle.surface : IrisStyle.appleInkOnAccentFill
             Accessible.name: Translation.tr("Volume")
             onMoved: next => Audio.setSinkVolume(next)
             onIconClicked: Audio.toggleMute()
@@ -207,6 +210,8 @@ IrisWidgetFace {
             Layout.preferredHeight: root.dp(34)
             icon: "light_mode"
             value: root.monitor?.brightness ?? 0
+            fillColor: IrisStyle.wearsNothing(root) ? IrisStyle.text : IrisStyle.appleAccentFill
+            inkOnFill: IrisStyle.wearsNothing(root) ? IrisStyle.surface : IrisStyle.appleInkOnAccentFill
             Accessible.name: Translation.tr("Brightness")
             onMoved: next => root.monitor?.setBrightness(next)
         }
