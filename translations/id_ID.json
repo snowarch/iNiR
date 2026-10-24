@@ -9732,5 +9732,10 @@
   "Left this year": "Sisa tahun ini",
   "Machine": "Mesin",
   "On today": "Menyala hari ini",
-  "Started": "Dimulai"
+  "Started": "Dimulai",
+  "Screenshot copied": "Tangkapan layar disalin",
+  "%1 × %2, saved in %3": "%1 × %2, disimpan di %3",
+  "Saved in %1 and copied": "Disimpan di %1 dan disalin",
+  "Saved in %1. Copying needs wl-clipboard": "Disimpan di %1. Menyalin butuh wl-clipboard",
+  "Screenshot edited": "Tangkapan layar diedit"
 }

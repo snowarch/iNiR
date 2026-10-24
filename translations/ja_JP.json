@@ -9732,5 +9732,10 @@
   "Left this year": "今年の残り",
   "Machine": "マシン",
   "On today": "今日の稼働",
-  "Started": "起動"
+  "Started": "起動",
+  "Screenshot copied": "スクリーンショットをコピーしました",
+  "%1 × %2, saved in %3": "%1 × %2、%3 に保存",
+  "Saved in %1 and copied": "%1 に保存してコピーしました",
+  "Saved in %1. Copying needs wl-clipboard": "%1 に保存しました。コピーには wl-clipboard が必要です",
+  "Screenshot edited": "スクリーンショットを編集しました"
 }

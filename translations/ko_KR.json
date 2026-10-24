@@ -9732,5 +9732,10 @@
   "Left this year": "올해 남은 날",
   "Machine": "기기",
   "On today": "오늘 켜진 시간",
-  "Started": "시작"
+  "Started": "시작",
+  "Screenshot copied": "스크린샷 복사됨",
+  "%1 × %2, saved in %3": "%1 × %2, %3에 저장됨",
+  "Saved in %1 and copied": "%1에 저장하고 복사함",
+  "Saved in %1. Copying needs wl-clipboard": "%1에 저장함. 복사하려면 wl-clipboard가 필요해요",
+  "Screenshot edited": "스크린샷 편집됨"
 }

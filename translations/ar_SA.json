@@ -9732,5 +9732,10 @@
   "Left this year": "المتبقي من العام",
   "Machine": "الجهاز",
   "On today": "تشغيل اليوم",
-  "Started": "بدأ"
+  "Started": "بدأ",
+  "Screenshot copied": "تم نسخ لقطة الشاشة",
+  "%1 × %2, saved in %3": "%1 × %2، حُفظت في %3",
+  "Saved in %1 and copied": "حُفظت في %1 ونُسخت",
+  "Saved in %1. Copying needs wl-clipboard": "حُفظت في %1. النسخ يحتاج wl-clipboard",
+  "Screenshot edited": "تم تعديل لقطة الشاشة"
 }

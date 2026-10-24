@@ -9732,5 +9732,10 @@
   "Left this year": "इस साल बाकी",
   "Machine": "मशीन",
   "On today": "आज चालू",
-  "Started": "शुरू हुआ"
+  "Started": "शुरू हुआ",
+  "Screenshot copied": "स्क्रीनशॉट कॉपी हुआ",
+  "%1 × %2, saved in %3": "%1 × %2, %3 में सहेजा",
+  "Saved in %1 and copied": "%1 में सहेजा और कॉपी किया",
+  "Saved in %1. Copying needs wl-clipboard": "%1 में सहेजा। कॉपी के लिए wl-clipboard चाहिए",
+  "Screenshot edited": "स्क्रीनशॉट संपादित हुआ"
 }

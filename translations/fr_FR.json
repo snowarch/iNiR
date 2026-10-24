@@ -9732,5 +9732,10 @@
   "Left this year": "Restants cette année",
   "Machine": "Machine",
   "On today": "Allumé aujourd'hui",
-  "Started": "Démarré"
+  "Started": "Démarré",
+  "Screenshot copied": "Capture copiée",
+  "%1 × %2, saved in %3": "%1 × %2, enregistrée dans %3",
+  "Saved in %1 and copied": "Enregistrée dans %1 et copiée",
+  "Saved in %1. Copying needs wl-clipboard": "Enregistrée dans %1. Copier demande wl-clipboard",
+  "Screenshot edited": "Capture modifiée"
 }

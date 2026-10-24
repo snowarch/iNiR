@@ -388,9 +388,13 @@ PanelWindow {
         }
         const annotationCommand = `${(Config.options?.regionSelector?.annotation?.useSatty ?? false) ? "satty" : "swappy"} -f -`;
         const clipboardCopy = StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/clipboard-copy.sh"));
+        // Words in the notification, the folder by its name: the full path read as a log line in the Island.
+        const savedIn = String(Directories.screenshotsPath).replace(/\/+$/, "").split("/").pop()
+        const copiedTitle = StringUtils.shellSingleQuoteEscape(Translation.tr("Screenshot copied"))
+        const copiedBody = StringUtils.shellSingleQuoteEscape(Translation.tr("%1 × %2, saved in %3").arg(rw).arg(rh).arg(savedIn))
         switch (root.action) {
             case RegionSelection.SnipAction.Copy:
-                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropToStdout} | tee "$_ss" | '${clipboardCopy}' && printf '%s' "$_ss" | '${clipboardCopy}' --primary && ${cleanup} && /usr/bin/notify-send "Screenshot copied" "${rw}x${rh} saved to $_ss" -a "Screenshot" -i camera-photo -t 3000`]
+                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropToStdout} | tee "$_ss" | '${clipboardCopy}' && printf '%s' "$_ss" | '${clipboardCopy}' --primary && ${cleanup} && /usr/bin/notify-send '${copiedTitle}' '${copiedBody}' -a Screenshot -i camera-photo -t 3000`]
                 break;
             case RegionSelection.SnipAction.Edit:
                 if (Config.options?.regionSelector?.annotation?.useNativeEditor ?? true) {

@@ -9732,5 +9732,10 @@
   "Left this year": "Übrig dieses Jahr",
   "Machine": "Rechner",
   "On today": "Heute an",
-  "Started": "Gestartet"
+  "Started": "Gestartet",
+  "Screenshot copied": "Bildschirmfoto kopiert",
+  "%1 × %2, saved in %3": "%1 × %2, gespeichert in %3",
+  "Saved in %1 and copied": "In %1 gespeichert und kopiert",
+  "Saved in %1. Copying needs wl-clipboard": "In %1 gespeichert. Zum Kopieren wird wl-clipboard gebraucht",
+  "Screenshot edited": "Bildschirmfoto bearbeitet"
 }

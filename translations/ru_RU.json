@@ -9732,5 +9732,10 @@
   "Left this year": "Осталось в году",
   "Machine": "Компьютер",
   "On today": "Работает сегодня",
-  "Started": "Запущен"
+  "Started": "Запущен",
+  "Screenshot copied": "Снимок скопирован",
+  "%1 × %2, saved in %3": "%1 × %2, сохранён в %3",
+  "Saved in %1 and copied": "Сохранён в %1 и скопирован",
+  "Saved in %1. Copying needs wl-clipboard": "Сохранён в %1. Для копирования нужен wl-clipboard",
+  "Screenshot edited": "Снимок изменён"
 }

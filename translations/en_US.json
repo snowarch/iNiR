@@ -9732,5 +9732,10 @@
   "Left this year": "Left this year",
   "Machine": "Machine",
   "On today": "On today",
-  "Started": "Started"
+  "Started": "Started",
+  "Screenshot copied": "Screenshot copied",
+  "%1 × %2, saved in %3": "%1 × %2, saved in %3",
+  "Saved in %1 and copied": "Saved in %1 and copied",
+  "Saved in %1. Copying needs wl-clipboard": "Saved in %1. Copying needs wl-clipboard",
+  "Screenshot edited": "Screenshot edited"
 }

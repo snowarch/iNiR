@@ -511,6 +511,8 @@ PanelWindow {
         }
     }
 
+    // The screenshots folder by its name: a notification says where in words, never the whole path.
+    readonly property string savedIn: String(Directories.screenshotsPath).replace(/\/+$/, "").split("/").pop()
     // Clipboard is best-effort; saving to disk must still report success.
     Process {
         id: saveProc
@@ -526,14 +528,13 @@ PanelWindow {
             fi;
             # Clipboard ownership lives outside inir.service so editing/copying
             # never leaves a wl-copy process behind when the shell restarts.
-            _clip_msg="";
             _clip_helper='${StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/clipboard-copy.sh"))}';
             if "$_clip_helper" < "$_ss" 2>/dev/null && printf '%s' "$_ss" | "$_clip_helper" --primary 2>/dev/null; then
-                _clip_msg=" — copied to clipboard";
+                _body='${StringUtils.shellSingleQuoteEscape(Translation.tr("Saved in %1 and copied").arg(root.savedIn))}';
             else
-                _clip_msg=" — clipboard unavailable (is wl-clipboard running?)";
+                _body='${StringUtils.shellSingleQuoteEscape(Translation.tr("Saved in %1. Copying needs wl-clipboard").arg(root.savedIn))}';
             fi;
-            /usr/bin/notify-send "Screenshot edited" "Saved to $_ss$_clip_msg" -a "Screenshot" -i camera-photo -t 4000;
+            /usr/bin/notify-send '${StringUtils.shellSingleQuoteEscape(Translation.tr("Screenshot edited"))}' "$_body" -a Screenshot -i camera-photo -t 4000;
         `]
         onExited: (code) => {
             if (code !== 0) console.warn("[AnnotationEditor] saveProc exit", code);

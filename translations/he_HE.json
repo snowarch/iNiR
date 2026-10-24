@@ -9732,5 +9732,10 @@
   "Left this year": "נותרו השנה",
   "Machine": "מחשב",
   "On today": "פועל היום",
-  "Started": "הופעל"
+  "Started": "הופעל",
+  "Screenshot copied": "צילום המסך הועתק",
+  "%1 × %2, saved in %3": "%1 × %2, נשמר ב־%3",
+  "Saved in %1 and copied": "נשמר ב־%1 והועתק",
+  "Saved in %1. Copying needs wl-clipboard": "נשמר ב־%1. העתקה דורשת wl-clipboard",
+  "Screenshot edited": "צילום המסך נערך"
 }

@@ -307,7 +307,8 @@ Item {
                         }
                         IrisText {
                             Layout.fillWidth: true
-                            visible: text.length > 0 && text !== String(banner.notification?.summary ?? "")
+                            // The app once: not when the title already names it ("Screenshot" under "Screenshot copied").
+                            visible: text.length > 0 && !String(banner.notification?.summary ?? "").toLowerCase().includes(text.toLowerCase())
                             text: String(banner.notification?.appName ?? "")
                             color: IrisStyle.textTertiary
                             font.pixelSize: IrisStyle.typeFootnote

@@ -9732,5 +9732,10 @@
   "Left this year": "今年剩余",
   "Machine": "设备",
   "On today": "今日开机",
-  "Started": "开机于"
+  "Started": "开机于",
+  "Screenshot copied": "截图已复制",
+  "%1 × %2, saved in %3": "%1 × %2，已保存到 %3",
+  "Saved in %1 and copied": "已保存到 %1 并复制",
+  "Saved in %1. Copying needs wl-clipboard": "已保存到 %1。复制需要 wl-clipboard",
+  "Screenshot edited": "截图已编辑"
 }
