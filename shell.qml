@@ -330,6 +330,14 @@ ShellRoot {
             }
         }
 
+        // A family that never ran (setup's family pick written straight to the file, a hand edit) has none of its
+        // panels: the fresh profile only lists Material's, and iRiS came up as a bare wallpaper.
+        if (basePanels.length > 0 && !basePanels.some(p => panels.includes(p))) {
+            root._log("[Shell] First start of " + family + ": enabling its panels");
+            panels.push(...basePanels.filter(p => !panels.includes(p)));
+            changed = true;
+        }
+
         if (family === "waffle") {
             // If waffle family has iiBackdrop but not wBackdrop, migrate
             const hasIiBackdrop = panels.includes("iiBackdrop");
