@@ -2760,6 +2760,8 @@ Scope {
                             : DesktopArrange.phase === "confirm" ? 1 : 0
                         readonly property bool moving: (guides.here && DesktopArrange.phase === "drag") || guides.carry !== null
                         readonly property var room: DesktopArrange.rooms[bgRoot.screenName] ?? widgetCanvas.arrangeRoom
+                        // Only names that say more than the line: a body (Island, Dock), the screen's centre or edge. "Left",
+                        // "Top" or "Centre" over a neighbour's edge sat on the chosen widget's keys row and said nothing new.
                         function word(line: var): string {
                             const body = (line?.ids ?? []).find(id => String(id).startsWith("@"))
                             if (body && line?.kind !== "gutter")
@@ -2767,15 +2769,6 @@ Scope {
                             switch (line?.kind) {
                             case "room": return Translation.tr("Edge")
                             case "screen": return Translation.tr("Screen centre")
-                            case "centre": return Translation.tr("Centre")
-                            case "flush": return Translation.tr("Edge to edge")
-                            case "gutter": return ""
-                            }
-                            switch (line?.side) {
-                            case "L": return Translation.tr("Left")
-                            case "R": return Translation.tr("Right")
-                            case "T": return Translation.tr("Top")
-                            case "B": return Translation.tr("Bottom")
                             }
                             return ""
                         }
@@ -2864,12 +2857,19 @@ Scope {
                                     border.width: guides.hair
                                     border.color: guides.ink
                                     readonly property real lead: 6 * guides.hair
-                                    readonly property bool inside: guide.line ? ((guide.line?.from ?? 0) - name.lead - (guide.vertical ? name.height : name.width)) < 0 : false
-                                    x: Math.max(0, Math.min(parent.width - width, guide.vertical ? (guide.line?.at ?? 0) - width / 2
-                                        : (name.inside ? (guide.line?.from ?? 0) + name.lead : (guide.line?.from ?? 0) - name.lead - width)))
-                                    y: Math.max(0, Math.min(parent.height - height, guide.vertical
-                                        ? (name.inside ? (guide.line?.from ?? 0) + name.lead : (guide.line?.from ?? 0) - name.lead - height)
-                                        : (guide.line?.at ?? 0) - height / 2))
+                                    // At the end of the line away from the widget let go, so it never sits on its keys.
+                                    readonly property real start: guide.line?.from ?? 0
+                                    readonly property real end: guide.line?.to ?? 0
+                                    readonly property var drop: DesktopArrange.dropRect
+                                    readonly property real dropMid: !name.drop ? name.start
+                                        : guide.vertical ? name.drop.y + name.drop.h / 2 : name.drop.x + name.drop.w / 2
+                                    readonly property bool atEnd: Math.abs(name.dropMid - name.start) < Math.abs(name.dropMid - name.end)
+                                    readonly property real along: guide.vertical ? name.height : name.width
+                                    readonly property real place: name.atEnd
+                                        ? (name.end + name.lead + name.along <= (guide.vertical ? parent.height : parent.width) ? name.end + name.lead : name.end - name.lead - name.along)
+                                        : (name.start - name.lead - name.along >= 0 ? name.start - name.lead - name.along : name.start + name.lead)
+                                    x: Math.max(0, Math.min(parent.width - width, guide.vertical ? (guide.line?.at ?? 0) - width / 2 : name.place))
+                                    y: Math.max(0, Math.min(parent.height - height, guide.vertical ? name.place : (guide.line?.at ?? 0) - height / 2))
                                     scale: visible ? 1 : 0.9
                                     Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                                     StyledText {
