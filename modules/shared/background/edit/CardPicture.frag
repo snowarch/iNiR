@@ -1,6 +1,8 @@
 #version 440
-// The desktop as a card: its picture cut by the card's shape, worked out here (a rounded rect, or AIRISU's 45 deg cut
-// top-right and bottom-left) with one card pixel of edge, so no mask picture has to be drawn and kept.
+// The desktop as a card: the full-size picture brought down to the card's pixels through a tent of nine taps (a mipmap
+// blends in the half-size level and blurs text; a picture drawn at the card's size aliases its glyphs), cut by the
+// card's shape, worked out here (a rounded rect, or AIRISU's 45 deg cut top-right and bottom-left) with one card pixel
+// of edge, so no mask picture has to be drawn and kept.
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
@@ -11,6 +13,8 @@ layout(std140, binding = 0) uniform buf {
     float corner;
     float chamfer;
     float edge;
+    // 0.2 of a card pixel in the picture's uv, at the card's scale of the moment: sharp from the first frame.
+    vec2 reach;
 };
 layout(binding = 1) uniform sampler2D source;
 
@@ -32,5 +36,11 @@ float cutCoverage(vec2 p) {
 void main() {
     vec2 p = qt_TexCoord0 * size;
     float cut = corner <= 0.0 ? 1.0 : (chamfer > 0.5 ? cutCoverage(p) : roundedCoverage(p));
-    fragColor = texture(source, qt_TexCoord0) * cut * qt_Opacity;
+    vec2 uv = qt_TexCoord0;
+    vec2 dx = vec2(reach.x, 0.0);
+    vec2 dy = vec2(0.0, reach.y);
+    vec4 c = 4.0 * texture(source, uv)
+        + 2.0 * (texture(source, uv + dx) + texture(source, uv - dx) + texture(source, uv + dy) + texture(source, uv - dy))
+        + texture(source, uv + dx + dy) + texture(source, uv - dx - dy) + texture(source, uv + dx - dy) + texture(source, uv - dx + dy);
+    fragColor = c * (cut * qt_Opacity / 16.0);
 }

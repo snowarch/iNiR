@@ -1452,38 +1452,21 @@ Scope {
                 Translate { x: bgRoot.editCard.x; y: bgRoot.editCard.y }
             ]
             // As a card the desktop is drawn whole into one picture its corners are cut from (the family's card shape:
-            // a real edge, the paper and its shadow seen past it). While it travels the full-size picture is mipmapped;
-            // settled, it is drawn at the card's own pixels with every text of the desktop in distance-field glyphs,
-            // which are rasterised at that size instead of shrunk: native glyphs drawn small aliased, shrunk they blurred.
-            readonly property bool cardSettled: bgRoot.editCard.p >= 0.999
-            readonly property bool cardSharp: desktopStage.cardSettled && desktopStage.layer.enabled
+            // a real edge, the paper and its shadow seen past it), brought down to the card's pixels by a tent of taps
+            // (CardPicture.frag) at the card's scale of the moment, so it reads sharp from the first frame. Mipmaps blurred
+            // text; a picture drawn at the card's size aliased it, and switching every text to distance-field glyphs once
+            // the card settled made it turn legible late (and walked the whole desktop every 1.5 s while arranging).
             layer.enabled: bgRoot.editCard.p > 0 && (editOverLoader.item?.cardMask ?? null) !== null
             layer.smooth: true
-            layer.mipmap: !desktopStage.cardSharp
-            layer.textureSize: desktopStage.cardSharp
-                ? Qt.size(Math.round(bgRoot.width * bgRoot.editCard.s * bgRoot.devicePixelRatio),
-                    Math.round(bgRoot.height * bgRoot.editCard.s * bgRoot.devicePixelRatio))
-                : Qt.size(0, 0)
             layer.effect: ShaderEffect {
                 readonly property vector2d size: Qt.vector2d(bgRoot.width, bgRoot.height)
                 readonly property real corner: Number(editOverLoader.item?.cardCorner ?? 0)
                 readonly property real chamfer: editOverLoader.item?.cardCut ? 1 : 0
                 readonly property real edge: 1 / Math.max(0.05, bgRoot.editCard.s * bgRoot.devicePixelRatio)
+                readonly property vector2d reach: Qt.vector2d(
+                    0.2 / Math.max(0.2, bgRoot.editCard.s) / Math.max(1, bgRoot.width * bgRoot.devicePixelRatio),
+                    0.2 / Math.max(0.2, bgRoot.editCard.s) / Math.max(1, bgRoot.height * bgRoot.devicePixelRatio))
                 fragmentShader: Qt.resolvedUrl("edit/CardPicture.frag.qsb")
-            }
-            function glyphsOf(item: Item, sharp: bool): void {
-                if (!item) return
-                if (item.renderType !== undefined && (item instanceof Text || item instanceof TextInput || item instanceof TextEdit))
-                    item.renderType = sharp ? Text.QtRendering : Text.NativeRendering
-                for (const child of item.children) desktopStage.glyphsOf(child, sharp)
-            }
-            onCardSharpChanged: { desktopStage.glyphsOf(desktopStage, desktopStage.cardSharp) }
-            // A widget that builds a text later (a new forecast row) gets it on the next pass.
-            Timer {
-                interval: 1500
-                repeat: true
-                running: desktopStage.cardSharp
-                onTriggered: desktopStage.glyphsOf(desktopStage, true)
             }
 
             // A wallpaper another program draws (awww) stays full size under the shell: the card carries its still.
