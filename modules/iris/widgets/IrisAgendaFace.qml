@@ -111,7 +111,10 @@ IrisWidgetFace {
                 required property var modelData
                 readonly property bool current: day.modelData.getDate() === root.today.getDate()
                     && day.modelData.getMonth() === root.today.getMonth()
+                // A column caps its width at its widest child unless told: the week bunched up on the left.
                 Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                Layout.maximumWidth: Number.POSITIVE_INFINITY
                 spacing: root.dp(4)
                 FaceText {
                     face: root
@@ -228,7 +231,10 @@ IrisWidgetFace {
             Layout.fillHeight: true
             FaceBlank {
                 face: root
-                anchors.centerIn: parent
+                // Large has room to lose it in: there it waits right under its head, where the first row would be.
+                anchors.centerIn: root.large ? undefined : parent
+                anchors.top: root.large ? parent.top : undefined
+                anchors.topMargin: root.dp(24)
                 width: parent.width
                 glyph: "event_available"
                 title: Translation.tr("Nothing scheduled")

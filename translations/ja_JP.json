@@ -9722,5 +9722,8 @@
   "UV index": "UV指数",
   "Very high": "非常に高い",
   "Week %1 · Day %2 of the year": "第%1週 · 年の%2日目",
-  "UV %1 · %2": "UV %1 · %2"
+  "UV %1 · %2": "UV %1 · %2",
+  "Daylight": "日照時間",
+  "Moon": "月",
+  "Until midnight": "深夜0時まで"
 }

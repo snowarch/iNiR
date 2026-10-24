@@ -31,7 +31,7 @@ AbstractBackgroundWidget {
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round((root.displayMode === "instrument" ? 140 : 104) * scaleFactor)
     materialNaturalHeight: Math.round((root.displayMode === "instrument" ? 140 : 104) * scaleFactor)
     irisFacePart: "battery"
-    irisSizes: ["small", "medium"]
+    irisSizes: ["small", "medium", "large"]
     irisOptions: [
         { key: "showTime", raw: true, label: Translation.tr("Time remaining"), icon: "timer", fallback: true }
     ]

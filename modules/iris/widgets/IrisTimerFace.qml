@@ -160,11 +160,11 @@ IrisWidgetFace {
     }
 
     RowLayout {
-        visible: !root.small
+        visible: root.medium
         anchors.fill: parent
         spacing: root.dp(12)
         Repeater {
-            model: root.small ? [] : root.timers
+            model: root.medium ? root.timers : []
             ColumnLayout {
                 id: column
                 required property var modelData
@@ -195,6 +195,75 @@ IrisWidgetFace {
                     color: root.live(column.modelData) ? column.modelData.tint : root.inkTertiary
                     size: 11.5
                     weight: Font.DemiBold
+                }
+            }
+        }
+    }
+
+    // Large: the three as rows, each its dial, its time leading and its name under it.
+    ColumnLayout {
+        visible: root.large
+        anchors.fill: parent
+        spacing: 0
+        FaceHeader {
+            face: root
+            Layout.fillWidth: true
+            Layout.bottomMargin: root.dp(4)
+            glyph: "timer"
+            text: Translation.tr("Timers")
+            tint: root.highlight
+        }
+        Repeater {
+            model: root.large ? root.timers : []
+            ColumnLayout {
+                id: row
+                required property var modelData
+                required property int index
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 0
+                Rectangle {
+                    visible: row.index > 0
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 1
+                    Layout.leftMargin: root.dp(64)
+                    color: root.hairline
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: root.dp(12)
+                    Dial {
+                        Layout.preferredWidth: root.dp(52)
+                        Layout.preferredHeight: root.dp(52)
+                        timer: row.modelData
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+                        FaceFigure {
+                            face: root
+                            text: row.modelData.value
+                            size: 28
+                            tone: root.live(row.modelData) || row.modelData.paused ? root.ink : root.inkSecondary
+                        }
+                        FaceText {
+                            face: root
+                            Layout.fillWidth: true
+                            text: row.modelData.paused ? row.modelData.label + " · " + Translation.tr("Paused") : row.modelData.label
+                            color: root.live(row.modelData) ? row.modelData.tint : root.inkSecondary
+                            size: 12.5
+                            weight: Font.DemiBold
+                        }
+                    }
+                    FaceAction {
+                        face: root
+                        visible: row.modelData.running || row.modelData.paused
+                        glyph: "restart_alt"
+                        name: Translation.tr("Reset")
+                        tint: root.inkSecondary
+                        onActivated: root.reset(row.modelData.key)
+                    }
                 }
             }
         }

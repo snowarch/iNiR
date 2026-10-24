@@ -9722,5 +9722,8 @@
   "UV index": "Indice UV",
   "Very high": "Très élevé",
   "Week %1 · Day %2 of the year": "Semaine %1 · Jour %2 de l'année",
-  "UV %1 · %2": "UV %1 · %2"
+  "UV %1 · %2": "UV %1 · %2",
+  "Daylight": "Durée du jour",
+  "Moon": "Lune",
+  "Until midnight": "Jusqu'à minuit"
 }

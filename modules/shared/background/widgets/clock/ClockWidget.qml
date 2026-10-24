@@ -65,7 +65,7 @@ AbstractBackgroundWidget {
         root.statusShown ? statusText.implicitWidth : 0)
     irisFacePart: "clock"
     designFaceKey: "widgetClock"
-    irisSizes: ["small", "medium"]
+    irisSizes: ["small", "medium", "large"]
     irisOptions: [
         { key: "face", label: Translation.tr("Face"), fallback: "analog", choices: [
             { label: Translation.tr("Analog"), icon: "schedule", value: "analog" },

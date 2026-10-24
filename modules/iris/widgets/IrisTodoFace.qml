@@ -109,7 +109,10 @@ IrisWidgetFace {
             FaceBlank {
                 id: done
                 face: root
-                anchors.centerIn: parent
+                // Large has room to lose it in: there it waits right under its head, where the first row would be.
+                anchors.centerIn: root.large ? undefined : parent
+                anchors.top: root.large ? parent.top : undefined
+                anchors.topMargin: root.dp(24)
                 width: parent.width
                 glyph: "check"
                 title: Translation.tr("All done")

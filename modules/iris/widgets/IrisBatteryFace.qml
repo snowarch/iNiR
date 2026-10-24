@@ -32,7 +32,7 @@ IrisWidgetFace {
                 level: device.percentage, charging: device.state === UPowerDeviceState.Charging,
                 low: device.percentage <= 0.2 })
         }
-        return list.slice(0, 4)
+        return list.slice(0, root.large ? 5 : 4)
     }
 
     function tint(device: var): color {
@@ -153,7 +153,7 @@ IrisWidgetFace {
     }
 
     ColumnLayout {
-        visible: root.devices.length > 1 || (root.devices.length === 1 && !root.small)
+        visible: !root.large && (root.devices.length > 1 || (root.devices.length === 1 && !root.small))
         anchors.centerIn: parent
         spacing: root.dp(10)
         Repeater {
@@ -191,9 +191,12 @@ IrisWidgetFace {
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            // Large: right under the head, where the first device would be; smaller faces have no room to spare.
             FaceBlank {
                 face: root
-                anchors.centerIn: parent
+                anchors.centerIn: root.large ? undefined : parent
+                anchors.top: root.large ? parent.top : undefined
+                anchors.topMargin: root.dp(28)
                 width: parent.width
                 glyph: "power"
                 glyphFill: true
@@ -204,4 +207,94 @@ IrisWidgetFace {
         }
     }
 
+    // Large: one row per device, its glyph on its colour, the name and what it is doing, the charge leading.
+    ColumnLayout {
+        visible: root.large && root.devices.length > 0
+        anchors.fill: parent
+        spacing: 0
+        FaceHeader {
+            face: root
+            Layout.fillWidth: true
+            Layout.bottomMargin: root.dp(6)
+            glyph: "battery_full"
+            text: Translation.tr("Batteries")
+            tint: root.inked(IrisStyle.identity.green)
+        }
+        Repeater {
+            model: root.large ? root.devices : []
+            ColumnLayout {
+                id: device
+                required property var modelData
+                required property int index
+                readonly property color tint: root.tint(device.modelData)
+                Layout.fillWidth: true
+                spacing: 0
+                Rectangle {
+                    visible: device.index > 0
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 1
+                    Layout.leftMargin: root.dp(52)
+                    color: root.hairline
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: root.dp(10)
+                    Layout.bottomMargin: root.dp(10)
+                    spacing: root.dp(12)
+                    Rectangle {
+                        Layout.preferredWidth: root.dp(40)
+                        Layout.preferredHeight: root.dp(40)
+                        radius: IrisStyle.capsule(width)
+                        color: IrisStyle.tintFill(device.tint)
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: device.modelData.charging ? "bolt" : device.modelData.glyph
+                            fill: 1
+                            iconSize: root.px(20)
+                            color: device.tint
+                        }
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+                        FaceText {
+                            face: root
+                            Layout.fillWidth: true
+                            text: device.modelData.name
+                            size: 13.5
+                            weight: Font.DemiBold
+                        }
+                        FaceText {
+                            face: root
+                            Layout.fillWidth: true
+                            visible: text.length > 0
+                            text: device.modelData.charging ? Translation.tr("Charging")
+                                : device.modelData.level >= 0.995 ? Translation.tr("Fully charged")
+                                : device.modelData.low ? Translation.tr("Low") : ""
+                            color: device.modelData.low && !device.modelData.charging ? root.danger : root.inkSecondary
+                            size: 12
+                        }
+                    }
+                    Row {
+                        spacing: root.dp(1)
+                        FaceFigure {
+                            id: level
+                            face: root
+                            text: Math.round(device.modelData.level * 100)
+                            size: 26
+                            tone: device.modelData.low && !device.modelData.charging ? root.danger : root.ink
+                        }
+                        FaceText {
+                            face: root
+                            anchors.baseline: level.baseline
+                            text: "%"
+                            size: 13
+                            color: root.inkSecondary
+                        }
+                    }
+                }
+            }
+        }
+        Item { Layout.fillHeight: true }
+    }
 }

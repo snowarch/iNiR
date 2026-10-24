@@ -9722,5 +9722,8 @@
   "UV index": "자외선 지수",
   "Very high": "매우 높음",
   "Week %1 · Day %2 of the year": "%1주차 · 올해 %2일째",
-  "UV %1 · %2": "자외선 %1 · %2"
+  "UV %1 · %2": "자외선 %1 · %2",
+  "Daylight": "낮 길이",
+  "Moon": "달",
+  "Until midnight": "자정까지"
 }

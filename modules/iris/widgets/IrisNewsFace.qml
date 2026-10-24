@@ -85,7 +85,7 @@ IrisWidgetFace {
                     Layout.minimumHeight: 0
                     Layout.preferredHeight: root.large ? 0 : -1
                     Layout.verticalStretchFactor: root.large && story.lead ? 2 : 1
-                    Layout.preferredWidth: root.medium ? (story.lead ? 3 : 2) : 1
+                    Layout.preferredWidth: 1
                     Layout.maximumWidth: Number.POSITIVE_INFINITY
                     clip: true
                     spacing: root.dp(4)
@@ -106,7 +106,7 @@ IrisWidgetFace {
                             visible: root.widget.showMeta
                             Layout.fillWidth: true
                             text: String(story.modelData.source ?? "")
-                            color: story.lead ? root.accent : root.inkSecondary
+                            color: story.lead || root.medium ? root.accent : root.inkSecondary
                             size: 10.5
                             weight: Font.DemiBold
                         }
@@ -140,13 +140,14 @@ IrisWidgetFace {
                         Layout.minimumHeight: 0
                         Layout.preferredHeight: story.fills ? 0 : -1
                         text: IrisFaceData.unwidowed(String(story.modelData.title ?? ""))
-                        size: story.lead ? (root.small ? 16.5 : root.medium ? 15.5 : 20) : 13
-                        font.family: story.lead ? IrisStyle.fontTitle : root.fontMain
-                        weight: story.lead ? Font.Bold : Font.Medium
+                        // Medium is a two-up: both stories weigh the same, side by side.
+                        size: root.medium ? 14 : story.lead ? (root.small ? 16.5 : 20) : 13
+                        font.family: story.lead && !root.medium ? IrisStyle.fontTitle : root.fontMain
+                        weight: root.medium ? Font.DemiBold : story.lead ? Font.Bold : Font.Medium
                         wrapMode: Text.WordWrap
                         verticalAlignment: Text.AlignTop
                         lineHeight: 1.08
-                        maximumLineCount: !story.lead ? 2 : root.small ? 4 : root.medium ? 5 : 3
+                        maximumLineCount: root.medium ? 4 : !story.lead ? 2 : root.small ? 4 : 3
                         color: openHover.hovered ? root.accent : root.ink
                     }
                     HoverHandler { id: storyHover }

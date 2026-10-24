@@ -49,7 +49,7 @@ AbstractBackgroundWidget {
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : timerGrid.implicitWidth
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : timerGrid.implicitHeight
     irisFacePart: "timer"
-    irisSizes: ["small", "medium"]
+    irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"
     visibleWhenLocked: true
     needsColText: true
