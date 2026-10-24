@@ -9737,5 +9737,6 @@
   "%1 × %2, saved in %3": "%1 × %2, נשמר ב־%3",
   "Saved in %1 and copied": "נשמר ב־%1 והועתק",
   "Saved in %1. Copying needs wl-clipboard": "נשמר ב־%1. העתקה דורשת wl-clipboard",
-  "Screenshot edited": "צילום המסך נערך"
+  "Screenshot edited": "צילום המסך נערך",
+  "Last played": "הושמע לאחרונה"
 }

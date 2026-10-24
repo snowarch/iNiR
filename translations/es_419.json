@@ -9737,5 +9737,6 @@
   "%1 × %2, saved in %3": "%1 × %2, guardada en %3",
   "Saved in %1 and copied": "Guardada en %1 y copiada",
   "Saved in %1. Copying needs wl-clipboard": "Guardada en %1. Para copiar hace falta wl-clipboard",
-  "Screenshot edited": "Captura editada"
+  "Screenshot edited": "Captura editada",
+  "Last played": "Lo último que sonó"
 }

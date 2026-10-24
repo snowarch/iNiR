@@ -9737,5 +9737,6 @@
   "%1 × %2, saved in %3": "%1 × %2，已保存到 %3",
   "Saved in %1 and copied": "已保存到 %1 并复制",
   "Saved in %1. Copying needs wl-clipboard": "已保存到 %1。复制需要 wl-clipboard",
-  "Screenshot edited": "截图已编辑"
+  "Screenshot edited": "截图已编辑",
+  "Last played": "最近播放"
 }

@@ -146,84 +146,47 @@ IrisWidgetFace {
         }
     }
 
-    // At rest the face still says what it is: a record waiting on the platter when nothing plays, the paused cover with
-    // its song and a play key when something waits. A lone app tile told nothing and filled a large face with air.
-    component Record: Item {
-        id: record
-        property bool spins: false
+    // What plays is kept (state dir), so at rest the face shows the song that played last, as Apple's shows what you
+    // played, instead of a record on an empty platter (7517f1c6): a picture of a record told nothing a glyph didn't.
+    readonly property string playedKey: root.playing && media.effectiveTitle.length > 0
+        ? [media.effectiveTitle, media.effectiveArtist, root.art, root.source].join("\u0001") : ""
+    onPlayedKeyChanged: if (root.playedKey.length > 0) root.remember()
+    onPlayingChanged: if (!root.playing && Persistent.states.lastPlayed.title === media.effectiveTitle) Persistent.states.lastPlayed.at = Date.now()
+    function remember(): void {
+        const last = Persistent.states.lastPlayed
+        last.title = media.effectiveTitle
+        last.artist = media.effectiveArtist
+        last.source = root.source
+        last.art = root.art
+        last.at = Date.now()
+    }
+    function ago(at: real): string {
+        const minutes = Math.round((DateTime.clock.date.getTime() - at) / 60000)
+        return minutes < 1 ? Translation.tr("Now") : minutes < 60 ? Translation.tr("%1 min ago").arg(minutes)
+            : minutes < 1440 ? Translation.tr("%1 h ago").arg(Math.round(minutes / 60))
+            : Translation.tr("%1 days ago").arg(Math.round(minutes / 1440))
+    }
+
+    component Cover: Item {
+        IrisArtwork {
+            anchors.fill: parent
+            visible: rest.cover
+            source: rest.coverArt
+            circular: false
+            radius: Math.max(root.dp(6), Math.round(width * 0.14))
+        }
         Rectangle {
             anchors.fill: parent
-            radius: width / 2
-            color: IrisStyle.light && root.paper ? "#1b1b1d" : "#0d0d0f" // iris-literal: vinyl stays black in every scheme
-            border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.07) // iris-literal: a record's grooves and sheen are the vinyl's, not the theme's
-        }
-        Repeater {
-            model: [0.86, 0.74, 0.62]
-            delegate: Rectangle {
-                required property real modelData
-                anchors.centerIn: parent
-                width: Math.round(record.width * modelData)
-                height: width
-                radius: width / 2
-                color: "transparent"
-                border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.05 + (0.86 - modelData) * 0.12) // iris-literal: a record's grooves and sheen are the vinyl's, not the theme's
-            }
-        }
-        // the light that lies across a record
-        Rectangle {
-            anchors.centerIn: parent
-            width: Math.round(record.width * 0.94)
-            height: Math.max(1, Math.round(record.width * 0.06))
-            rotation: -38
-            radius: height / 2
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: "transparent" }
-                GradientStop { position: 0.3; color: Qt.rgba(1, 1, 1, 0.07) } // iris-literal: a record's grooves and sheen are the vinyl's, not the theme's
-                GradientStop { position: 0.42; color: "transparent" }
-                GradientStop { position: 0.58; color: "transparent" }
-                GradientStop { position: 0.7; color: Qt.rgba(1, 1, 1, 0.07) } // iris-literal: a record's grooves and sheen are the vinyl's, not the theme's
-                GradientStop { position: 1; color: "transparent" }
-            }
-        }
-        Rectangle {
-            id: label
-            anchors.centerIn: parent
-            width: Math.round(record.width * 0.38)
-            height: width
-            radius: width / 2
-            color: root.nothing ? root.signal : root.inked(IrisStyle.identity.pink)
+            visible: !rest.cover
+            radius: Math.max(root.dp(6), Math.round(width * 0.14))
+            color: IrisStyle.tintFill(root.inked(IrisStyle.identity.pink))
             MaterialSymbol {
                 anchors.centerIn: parent
                 text: "music_note"
                 fill: 1
-                iconSize: Math.round(label.width * 0.46)
-                color: IrisStyle.onTintFor(label.color)
+                iconSize: Math.round(parent.width * 0.42)
+                color: root.inked(IrisStyle.identity.pink)
             }
-        }
-        Rectangle {
-            anchors.centerIn: parent
-            width: Math.max(3, Math.round(record.width * 0.035))
-            height: width
-            radius: width / 2
-            color: "#0d0d0f" // iris-literal: the spindle hole
-        }
-    }
-
-    component RestArt: Item {
-        id: art
-        Record {
-            anchors.fill: parent
-            visible: !rest.cover
-        }
-        IrisArtwork {
-            anchors.fill: parent
-            visible: rest.cover
-            source: root.art
-            circular: false
-            radius: Math.max(root.dp(6), Math.round(width * 0.14))
         }
     }
 
@@ -232,25 +195,53 @@ IrisWidgetFace {
         anchors.fill: parent
         visible: root.resting
         readonly property bool paused: root.hasPlayer
-        readonly property bool cover: rest.paused && root.art.length > 0
-        readonly property string title: rest.paused ? (media.effectiveTitle || root.source) : Translation.tr("Not playing")
-        readonly property string detail: rest.paused ? (media.effectiveArtist || root.source)
-            : Translation.tr("Play something and it shows here")
+        readonly property var last: Persistent.states.lastPlayed
+        readonly property bool remembered: !rest.paused && String(rest.last.title ?? "").length > 0
+        readonly property bool known: rest.paused || rest.remembered
+        readonly property string coverArt: rest.paused ? root.art : rest.remembered ? String(rest.last.art ?? "") : ""
+        readonly property bool cover: rest.coverArt.length > 0
+        readonly property string title: rest.paused ? (media.effectiveTitle || root.source) : String(rest.last.title ?? "")
+        readonly property string detail: rest.paused ? (media.effectiveArtist || root.source) : String(rest.last.artist ?? "")
+        readonly property string head: rest.paused ? root.source : rest.remembered ? Translation.tr("Last played") : Translation.tr("Music")
+        readonly property string when: rest.remembered ? [String(rest.last.source ?? ""), root.ago(rest.last.at)].filter(part => part.length > 0).join(" · ") : ""
 
-        // Small: the art alone, its name under it.
-        ColumnLayout {
+        // Nothing ever played here: the family's empty state, under the head on a large face.
+        FaceHeader {
+            id: restBlankHead
+            face: root
+            visible: !rest.known && root.large
+            width: parent.width
+            glyph: "music_note"
+            text: Translation.tr("Music")
+            tint: root.inked(IrisStyle.identity.pink)
+        }
+        FaceBlank {
+            visible: !rest.known
+            face: root
+            width: parent.width
+            y: root.large ? restBlankHead.height + root.dp(24) : Math.round((parent.height - height) / 2)
+            glyph: "music_note"
+            glyphFill: true
+            tint: root.inked(IrisStyle.identity.pink)
+            title: Translation.tr("Not playing")
+            detail: Translation.tr("Play something and it shows here")
+        }
+
+        // Small: the cover, its song under it.
+        Item {
             anchors.fill: parent
-            visible: root.small
-            spacing: root.dp(8)
-            RestArt {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillHeight: true
-                Layout.preferredWidth: height
-                Layout.maximumWidth: rest.width
+            visible: rest.known && root.small
+            Cover {
+                id: restSmallCover
+                width: Math.min(parent.width, parent.height - restSmallTitle.height - root.dp(8))
+                height: width
+                x: Math.round((parent.width - width) / 2)
             }
             FaceText {
+                id: restSmallTitle
                 face: root
-                Layout.fillWidth: true
+                y: parent.height - height
+                width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 text: rest.title
                 color: rest.paused ? root.ink : root.inkSecondary
@@ -259,92 +250,107 @@ IrisWidgetFace {
             }
         }
 
-        // Medium: the art and what it is, the play key when something waits.
-        RowLayout {
+        // Medium: the cover and what it is, the play key when something waits.
+        Item {
             anchors.fill: parent
-            visible: root.medium
-            spacing: root.dp(14)
-            RestArt {
-                Layout.fillHeight: true
-                Layout.preferredWidth: height
+            visible: rest.known && root.medium
+            Cover {
+                id: restMediumCover
+                width: parent.height
+                height: width
             }
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                spacing: root.dp(2)
+            Column {
+                x: restMediumCover.width + root.dp(14)
+                width: parent.width - x
+                height: parent.height
                 FaceHeader {
                     face: root
-                    Layout.fillWidth: true
+                    width: parent.width
                     glyph: "music_note"
-                    text: rest.paused ? root.source : Translation.tr("Music")
+                    text: rest.head
                     tint: root.inked(IrisStyle.identity.pink)
                 }
-                Item { Layout.fillHeight: true }
+            }
+            Column {
+                id: restMediumSong
+                x: restMediumCover.width + root.dp(14)
+                y: parent.height - height
+                width: parent.width - x
                 FaceText {
                     face: root
-                    Layout.fillWidth: true
+                    width: parent.width
                     text: rest.title
                     size: 15
                     weight: Font.DemiBold
                 }
                 FaceText {
                     face: root
-                    Layout.fillWidth: true
-                    text: IrisFaceData.unwidowed(rest.detail)
+                    width: parent.width
+                    text: rest.detail
                     color: root.inkSecondary
                     size: 12.5
-                    wrapMode: Text.WordWrap
-                    maximumLineCount: 2
                 }
+                FaceText {
+                    face: root
+                    visible: rest.when.length > 0
+                    width: parent.width
+                    text: rest.when
+                    color: root.inkTertiary
+                    size: 11.5
+                }
+                Item { visible: rest.paused; width: 1; height: root.dp(8) }
                 Transport {
                     visible: rest.paused
-                    Layout.topMargin: root.dp(6)
                     disc: root.dp(30)
                 }
             }
         }
 
-        // Large: the art leads, the song under it.
-        ColumnLayout {
+        // Large: the cover leads, the song under it.
+        Item {
             anchors.fill: parent
-            visible: root.large
-            spacing: root.dp(6)
+            visible: rest.known && root.large
             FaceHeader {
+                id: restLargeHead
                 face: root
-                Layout.fillWidth: true
+                width: parent.width
                 glyph: "music_note"
-                text: rest.paused ? root.source : Translation.tr("Music")
+                text: rest.head
                 tint: root.inked(IrisStyle.identity.pink)
             }
-            RestArt {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: root.dp(4)
-                Layout.fillHeight: true
-                Layout.preferredWidth: height
-                Layout.maximumWidth: rest.width
+            Cover {
+                y: restLargeHead.height + root.dp(10)
+                width: Math.min(parent.width, restLargeSong.y - y - root.dp(14))
+                height: width
+                x: Math.round((parent.width - width) / 2)
             }
-            FaceText {
-                face: root
-                Layout.fillWidth: true
-                Layout.topMargin: root.dp(6)
-                horizontalAlignment: Text.AlignHCenter
-                text: rest.title
-                size: 15
-                weight: Font.DemiBold
-            }
-            FaceText {
-                face: root
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-                text: rest.detail
-                color: root.inkSecondary
-                size: 12.5
-            }
-            Transport {
-                visible: rest.paused
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: root.dp(4)
-                disc: root.dp(32)
+            Column {
+                id: restLargeSong
+                y: parent.height - height
+                width: parent.width
+                spacing: root.dp(1)
+                FaceText {
+                    face: root
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    text: rest.title
+                    size: 15
+                    weight: Font.DemiBold
+                }
+                FaceText {
+                    face: root
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    text: rest.when.length > 0 ? rest.detail + " · " + rest.when : rest.detail
+                    color: root.inkSecondary
+                    size: 12.5
+                }
+                Item { visible: rest.paused; width: 1; height: root.dp(6) }
+                Transport {
+                    visible: rest.paused
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    disc: root.dp(32)
+                }
             }
         }
     }
@@ -387,9 +393,11 @@ IrisWidgetFace {
             }
             Item { Layout.fillHeight: true }
             RowLayout {
+                Layout.fillHeight: false
                 Layout.fillWidth: true
                 spacing: root.dp(8)
                 ColumnLayout {
+                    Layout.fillHeight: false
                     Layout.fillWidth: true
                     spacing: 0
                     FaceText {
@@ -504,6 +512,7 @@ IrisWidgetFace {
         spacing: root.dp(12)
 
         RowLayout {
+            Layout.fillHeight: false
             Layout.fillWidth: true
             spacing: root.dp(14)
             IrisArtwork {
@@ -514,6 +523,7 @@ IrisWidgetFace {
                 Layout.preferredHeight: Layout.preferredWidth
             }
             ColumnLayout {
+                Layout.fillHeight: false
                 Layout.fillWidth: true
                 spacing: root.dp(2)
                 FaceText {

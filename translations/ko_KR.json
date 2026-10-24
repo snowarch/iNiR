@@ -9737,5 +9737,6 @@
   "%1 × %2, saved in %3": "%1 × %2, %3에 저장됨",
   "Saved in %1 and copied": "%1에 저장하고 복사함",
   "Saved in %1. Copying needs wl-clipboard": "%1에 저장함. 복사하려면 wl-clipboard가 필요해요",
-  "Screenshot edited": "스크린샷 편집됨"
+  "Screenshot edited": "스크린샷 편집됨",
+  "Last played": "마지막으로 재생"
 }

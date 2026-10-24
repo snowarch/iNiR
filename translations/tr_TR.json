@@ -9737,5 +9737,6 @@
   "%1 × %2, saved in %3": "%1 × %2, %3 klasörüne kaydedildi",
   "Saved in %1 and copied": "%1 klasörüne kaydedildi ve kopyalandı",
   "Saved in %1. Copying needs wl-clipboard": "%1 klasörüne kaydedildi. Kopyalamak için wl-clipboard gerekli",
-  "Screenshot edited": "Ekran görüntüsü düzenlendi"
+  "Screenshot edited": "Ekran görüntüsü düzenlendi",
+  "Last played": "Son çalınan"
 }

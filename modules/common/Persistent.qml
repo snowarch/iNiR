@@ -266,6 +266,15 @@ Singleton {
             property JsonObject screenCast: JsonObject {
                 property bool active: false
             }
+
+            // The song that played last, so Now Playing at rest shows it instead of an empty platter.
+            property JsonObject lastPlayed: JsonObject {
+                property string title: ""
+                property string artist: ""
+                property string source: ""
+                property string art: ""
+                property real at: 0
+            }
         }
     }
 }

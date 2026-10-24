@@ -9737,5 +9737,6 @@
   "%1 × %2, saved in %3": "%1 × %2, đã lưu vào %3",
   "Saved in %1 and copied": "Đã lưu vào %1 và sao chép",
   "Saved in %1. Copying needs wl-clipboard": "Đã lưu vào %1. Sao chép cần wl-clipboard",
-  "Screenshot edited": "Đã sửa ảnh chụp màn hình"
+  "Screenshot edited": "Đã sửa ảnh chụp màn hình",
+  "Last played": "Phát gần nhất"
 }

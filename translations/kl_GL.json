@@ -7774,5 +7774,6 @@
   "%1 × %2, saved in %3": "%1 × %2, saved in %3",
   "Saved in %1 and copied": "Saved in %1 and copied",
   "Saved in %1. Copying needs wl-clipboard": "Saved in %1. Copying needs wl-clipboard",
-  "Screenshot edited": "Screenshot edited"
+  "Screenshot edited": "Screenshot edited",
+  "Last played": "Last played"
 }
