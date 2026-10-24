@@ -10,6 +10,8 @@ import Quickshell.Io
  * A nice wrapper for date and time strings.
  */
 Singleton {
+    id: root
+
     property var clock: SystemClock {
         id: clock
         precision: {
@@ -42,10 +44,16 @@ Singleton {
         interval: 60000
         running: true
         repeat: true
-        onTriggered: {
-            fileUptime.reload();
-            const textUptime = fileUptime.text();
-            const uptimeSeconds = Number(textUptime.split(" ")[0] ?? 0);
+        onTriggered: fileUptime.reload()
+    }
+
+    FileView {
+        id: fileUptime
+
+        path: "/proc/uptime"
+        // reload() reads in the background: parsing right after it read nothing, so every start said 0 m for a minute.
+        onLoaded: {
+            const uptimeSeconds = Number(fileUptime.text().split(" ")[0] ?? 0);
 
             // Convert seconds to days, hours, and minutes
             const days = Math.floor(uptimeSeconds / 86400);
@@ -60,13 +68,7 @@ Singleton {
                 formatted += `${formatted ? ", " : ""}${hours}h`;
             if (minutes > 0 || !formatted)
                 formatted += `${formatted ? ", " : ""}${minutes}m`;
-            uptime = formatted;
+            root.uptime = formatted;
         }
-    }
-
-    FileView {
-        id: fileUptime
-
-        path: "/proc/uptime"
     }
 }
