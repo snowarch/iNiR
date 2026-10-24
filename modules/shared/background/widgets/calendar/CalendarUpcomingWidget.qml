@@ -118,7 +118,7 @@ AbstractBackgroundWidget {
             const dayKey = isNaN(dt.getTime()) ? "" : Qt.formatDate(dt, "yyyy-MM-dd")
             const showDayHeader = root.groupByDay && dayKey !== "" && dayKey !== previousDay
             previousDay = dayKey
-            return Object.assign({}, event, { _showDayHeader: showDayHeader })
+            return Object.assign({}, event, { _showDayHeader: showDayHeader, _underHeading: root.groupByDay && dayKey !== "" })
         })
     }
 
@@ -251,9 +251,9 @@ AbstractBackgroundWidget {
 
         }
 
-        // Events list
+        // Events list: the ones that fit whole; the rest were cut through by the plate's edge.
         Repeater {
-            model: root.upcomingEvents
+            model: root.upcomingEvents.slice(0, root.fittingEvents)
 
             delegate: ColumnLayout {
                 id: eventDelegate
@@ -401,7 +401,8 @@ AbstractBackgroundWidget {
         const eventDay = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate())
 
         let dateStr = ""
-        if (root.showDate) {
+        // under its day's heading the line says only the hour ("Today" over "Today · 21:30")
+        if (root.showDate && !event._underHeading) {
             if (eventDay.getTime() === today.getTime()) dateStr = Translation.tr("Today")
             else if (eventDay.getTime() === tomorrow.getTime()) dateStr = Translation.tr("Tomorrow")
             else dateStr = Qt.formatDate(dt, "ddd d MMM")
@@ -413,6 +414,26 @@ AbstractBackgroundWidget {
 
         if (dateStr && timeStr) return dateStr + " · " + timeStr
         return dateStr || timeStr
+    }
+
+    // How many rows fit under the header, from the type sizes the rows use (a row is its title and its time line,
+    // plus a day heading when it opens a day).
+    readonly property int fittingEvents: {
+        const k = root.scaleFactor
+        const line = px => Math.ceil(px * k * 1.36)
+        const small = root.instrument ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.small
+        const smaller = root.instrument ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smaller
+        let room = root.height - Math.round(24 * k) - line(Appearance.font.pixelSize.normal) - Math.round(4 * k)
+        let count = 0
+        for (const event of root.upcomingEvents) {
+            room -= line(small) + 1 + line(smaller) + Math.round(4 * k)
+                + (event._showDayHeader ? line(smaller) + Math.round(3 * k) : 0)
+                + (root.showLocation && (event.location?.length ?? 0) > 0 ? line(smaller) : 0)
+            if (room < 0)
+                break
+            ++count
+        }
+        return Math.max(1, count)
     }
 
     function _dayHeading(event): string {

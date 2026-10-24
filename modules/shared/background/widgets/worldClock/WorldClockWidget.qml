@@ -611,6 +611,8 @@ AbstractBackgroundWidget {
 
         StyledText {
             Layout.fillWidth: true
+            // a short card spends its height on the cities; the date put the last of them past the edge
+            visible: root.height >= Math.round(200 * root.scaleFactor)
             text: Qt.locale().toString(WorldClock.now, "dddd, MMMM d yyyy")
             color: ColorUtils.applyAlpha(root.surfaceInk, 0.6)
             elide: Text.ElideRight
@@ -620,7 +622,8 @@ AbstractBackgroundWidget {
         GridLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            columns: 2
+            // a wide card lays its cities in one row; two rows of tiles ran past a medium card
+            columns: root.width > root.height * 1.5 ? Math.min(4, Math.max(1, root.cities.length)) : 2
             columnSpacing: Math.round(6 * root.scaleFactor)
             rowSpacing: Math.round(6 * root.scaleFactor)
 
@@ -675,6 +678,8 @@ AbstractBackgroundWidget {
                                 }
 
                                 StyledText {
+                                    // a narrow tile keeps the city's name whole; the offset is the first to go
+                                    visible: cityCell.width >= Math.round(150 * root.scaleFactor)
                                     text: cityCell.modelData.offset
                                     color: ColorUtils.applyAlpha(cityCell.cellInk, 0.5)
                                     font.pixelSize: Math.round(Appearance.font.pixelSize.smallest * root.scaleFactor)
