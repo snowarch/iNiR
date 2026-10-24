@@ -662,6 +662,9 @@ Item {
         readonly property real o: side.index - root.pos
         readonly property real far: Math.abs(side.o)
         readonly property bool inView: side.far < 2.5
+        // Its values read only where they are seen (`detail` is 0 past 1.75): every config write re-told the values of
+        // seven cards, each a scan of every option, and rebuilt their rows.
+        readonly property bool reads: side.far < 1.75
         property bool admitted: false
         property bool staged: false
         onFarChanged: { if (side.far >= 3.2) side.admitted = false; if (side.far >= 2.5) side.staged = false }
@@ -744,13 +747,13 @@ Item {
                 Column {
                     id: sideRows
                     readonly property int fit: Math.max(0, Math.min(12, Math.floor((root.sideRect(1).height - root.u(370)) / root.u(44))))
-                    readonly property var rows: { Config.revision; return !side.home && sideRows.fit > 0 ? (root.host?.tellingRows(sideRows.fit, String(side.entry?.id ?? ""), true) ?? []) : [] }
+                    readonly property var rows: side.reads && !side.home && sideRows.fit > 0 ? (root.host?.tellingRows(sideRows.fit, String(side.entry?.id ?? ""), true) ?? []) : []
                     visible: sideRows.rows.length > 0
                     width: parent.width
                     topPadding: root.u(6)
                     opacity: 0.72 * side.detail
                     Repeater {
-                        model: sideRows.rows
+                        model: ScriptModel { values: sideRows.rows; objectProp: "modelKey" }
                         SideRow { width: sideRows.width }
                     }
                 }
@@ -759,7 +762,7 @@ Item {
                     id: beyond
                     readonly property var entry: root.sections[side.index + (side.o < 0 ? -1 : 1)] ?? null
                     readonly property int fit: sideRows.fit - sideRows.rows.length - 1
-                    readonly property var rows: { Config.revision; return beyond.fit > 0 && beyond.entry && beyond.entry.id !== "home" ? (root.host?.tellingRows(beyond.fit, beyond.entry.id, true) ?? []) : [] }
+                    readonly property var rows: side.reads && beyond.fit > 0 && beyond.entry && beyond.entry.id !== "home" ? (root.host?.tellingRows(beyond.fit, beyond.entry.id, true) ?? []) : []
                     visible: sideRows.visible && beyond.rows.length > 0
                     width: parent.width
                     opacity: 0.42 * side.detail * Math.min(1, side.far * 2)
@@ -776,7 +779,7 @@ Item {
                         font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
                     }
                     Repeater {
-                        model: beyond.rows
+                        model: ScriptModel { values: beyond.rows; objectProp: "modelKey" }
                         SideRow { width: beyond.width }
                     }
                 }
