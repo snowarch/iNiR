@@ -42,11 +42,12 @@ IrisWidgetFace {
         return minutes < 0 ? -1 : minutes / 1440
     }
 
-    // "06:02 AM" leads as "6:02" with its AM a step down, like a unit.
-    readonly property var figureParts: {
-        const match = root.figure.match(/^0?(\d{1,2}:\d{2})\s*([AaPp]\.?\s?[Mm]\.?)$/)
-        return match ? { main: match[1], suffix: match[2].toUpperCase() } : { main: root.figure, suffix: "" }
+    // "06:02 AM" reads as "6:02" with its AM a step down, like a unit.
+    function timeParts(text: string): var {
+        const match = text.match(/^0?(\d{1,2}:\d{2})\s*([AaPp]\.?\s?[Mm]\.?)$/)
+        return match ? { main: match[1], suffix: match[2].toUpperCase() } : { main: text, suffix: "" }
     }
+    readonly property var figureParts: root.timeParts(root.figure)
 
     // Altitude as a cosine around solar noon, crossing the horizon at sunrise and sunset. An Item around the Shape:
     // a Shape sizes itself from its paths, and these paths come from its size.
@@ -111,17 +112,6 @@ IrisWidgetFace {
             y: Math.round(path.horizon)
             color: root.hairline
         }
-        Rectangle {
-            readonly property real d: root.dp(10)
-            width: d
-            height: d
-            radius: IrisStyle.capsule(d)
-            x: Math.round(root.fraction * path.width - d / 2)
-            y: Math.round(path.yAt(root.fraction) - d / 2)
-            color: root.daytime ? root.warm : root.ink
-            border.width: root.dp(2)
-            border.color: root.knockout
-        }
     }
 
     component Hours: RowLayout {
@@ -168,6 +158,37 @@ IrisWidgetFace {
             text: root.figureName
             color: root.inkSecondary
             size: 14
+        }
+    }
+
+    // The other sun time under the path: its name, then the time in the figure's face.
+    component Other: Row {
+        id: other
+        property real timeSize: 17
+        readonly property var parts: root.timeParts(root.other.time)
+        spacing: root.dp(5)
+        FaceText {
+            face: root
+            anchors.baseline: otherTime.baseline
+            text: root.other.name
+            color: root.inkSecondary
+            size: 12.5
+            weight: Font.DemiBold
+        }
+        FaceFigure {
+            id: otherTime
+            face: root
+            text: other.parts.main
+            size: other.timeSize
+        }
+        FaceText {
+            face: root
+            visible: other.parts.suffix.length > 0
+            anchors.baseline: otherTime.baseline
+            text: other.parts.suffix
+            color: root.inkSecondary
+            size: Math.round(other.timeSize * 0.55)
+            weight: Font.DemiBold
         }
     }
 
@@ -226,14 +247,9 @@ IrisWidgetFace {
             Layout.fillHeight: true
             Layout.topMargin: root.dp(6)
         }
-        FaceText {
-            face: root
-            Layout.fillWidth: true
-            Layout.topMargin: root.dp(4)
+        Other {
             visible: root.sunKnown
-            text: root.other.name + " " + root.other.time
-            color: root.inkSecondary
-            size: 12
+            Layout.topMargin: root.dp(6)
         }
     }
 
@@ -259,12 +275,9 @@ IrisWidgetFace {
                 Layout.alignment: Qt.AlignBottom
                 Layout.bottomMargin: root.dp(4)
                 spacing: 0
-                FaceText {
-                    face: root
+                Other {
                     Layout.alignment: Qt.AlignRight
-                    text: root.other.name + " " + root.other.time
-                    color: root.inkSecondary
-                    size: 12
+                    timeSize: 16
                 }
                 FaceText {
                     face: root
