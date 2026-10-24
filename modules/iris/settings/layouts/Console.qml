@@ -218,22 +218,12 @@ Item {
             anchors.fill: parent
             current: root.searching ? pool.shown : root.section
             hidden: root.searching || root.paged
+            settled: Boolean(root.host?.bodySettled ?? true)
             urlFor: id => Qt.resolvedUrl(id === "home" ? "Home.qml" : "ConsolePage.qml")
             propsFor: id => id === "home" ? { host: root.host, voice: "console" } : { host: root.host }
             order: root.sections.map(entry => entry.id)
             distance: root.u(22)
-            onArrived: prewarmSoon.restart()
-        }
-        Timer {
-            id: prewarmSoon
-            interval: 600
-            onTriggered: {
-                if (!(root.host?.bodySettled ?? true) || pool.turning) { prewarmSoon.restart(); return }
-                const order = root.sections.map(entry => entry.id)
-                const at = order.indexOf(pool.shown)
-                pool.prewarm([order[at - 1], order[at + 1]].filter(id => id !== undefined && id !== "home"))
-            }
-        }
+                    }
     }
     // The engine's rows: a search's results or a page (the Hub).
     Item {

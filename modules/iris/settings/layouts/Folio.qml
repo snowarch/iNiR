@@ -219,6 +219,7 @@ Item {
                 // A search or a shared page borrows the body; the area under it stays as it was.
                 current: root.searching ? pool.shown : root.section
                 hidden: root.searching || root.paged
+                settled: Boolean(root.host?.bodySettled ?? true)
                 urlFor: id => Qt.resolvedUrl(id === "home" ? "Home.qml" : "FolioPage.qml")
                 propsFor: id => id === "home" ? { host: root.host, voice: "folio" } : { host: root.host }
                 order: root.sections.map(entry => entry.id)
@@ -228,18 +229,6 @@ Item {
                         pool.shownItem?.showGroup?.(root.wantedGroup)
                         root.wantedGroup = ""
                     }
-                    prewarmSoon.restart()
-                }
-            }
-            // At rest the neighbours in the index are built too, so the next click is only a turn.
-            Timer {
-                id: prewarmSoon
-                interval: 600
-                onTriggered: {
-                    if (!(root.host?.bodySettled ?? true) || pool.turning) { prewarmSoon.restart(); return }
-                    const order = root.sections.map(entry => entry.id)
-                    const at = order.indexOf(pool.shown)
-                    pool.prewarm([order[at - 1], order[at + 1]].filter(id => id !== undefined && id !== "home"))
                 }
             }
 

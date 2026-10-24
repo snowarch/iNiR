@@ -3,10 +3,10 @@ import QtQuick
 import Quickshell
 import qs.modules.iris.style
 
-// The areas a layout shows, one page each, kept built (Material's SettingsPageHost way): a page incubates in the
-// background in slices the runtime spreads across frames, the one on screen stays until the next is Ready, then the
-// two trade places in one move. Pages seen lately stay resident, so going back is only showing them; at rest the
-// layout prewarms the ones you are likely to open next. Nothing is rebuilt when an area turns.
+// The area a layout shows, one page at a time like Classic: the next page incubates in slices the runtime spreads
+// across frames, the one on screen stays until it is Ready, the two trade places in one move and the old one goes.
+// Keeping every area seen (and prewarming the neighbours) held 3-6x Classic's objects, and each of them re-read the
+// config on every write: the three layouts felt slow next to Classic (2026-10-24).
 Item {
     id: pool
 
@@ -16,9 +16,13 @@ Item {
     // What a page gets at creation, besides its `area`.
     property var propsFor: id => ({})
     // Pages kept built besides the one on screen.
-    property int keep: 4
+    property int keep: 0
     // Pages are hidden while a search or a shared page fills the layout.
     property bool hidden: false
+    // Settings stands (its open has finished): a page asked for now builds in the click's frame, as Classic's first
+    // block does; built in slices it showed 0.2-0.7 s later in a nest. During the open it builds in slices, and one
+    // still building when the open ends is finished at once (Loader completes an incubation when it turns synchronous).
+    property bool settled: true
     // Motion of a turn: the areas in their order, and how far a page arriving travels from the side it lies on.
     property var order: []
     property real distance: 0
@@ -59,11 +63,6 @@ Item {
         pool.used = next
         if (!pool.resident.includes(id)) pool.resident = pool.resident.concat([id])
     }
-    // Built in the background and kept, never shown: the layout asks for these once it rests.
-    function prewarm(ids: var): void {
-        for (const id of ids) if (!pool.resident.includes(id)) pool.hold(id)
-        pool.trim()
-    }
     function trim(): void {
         const extra = pool.resident.length - (pool.keep + 1)
         if (extra <= 0) return
@@ -79,6 +78,7 @@ Item {
         const here = pool.itemFor(pool.shown)
         if (here) { here.opacity = 1; here.shift = 0 }
         pool.leaving = ""
+        pool.trim()
     }
     function settle(): void {
         if (pool.current.length === 0 || pool.current === pool.shown || !pool.ready(pool.current)) return
@@ -97,7 +97,8 @@ Item {
             turn.start()
         }
         pool.arrived(pool.shown)
-        pool.trim()
+        // The page left goes once the turn ends, so the turn's frame destroys nothing.
+        if (!turn.running) pool.trim()
     }
     onCurrentChanged: {
         pool.hold(pool.current)
@@ -124,7 +125,7 @@ Item {
             readonly property bool onScreen: !pool.hidden && (page.area === pool.leaving
                 || page.area === pool.shown && (pool.keepsShown || pool.shown === pool.current))
             anchors.fill: parent
-            asynchronous: true
+            asynchronous: !pool.settled
             visible: page.onScreen && page.status === Loader.Ready
             enabled: page.area === pool.shown && !turn.running
             z: page.area === pool.shown ? 1 : 0

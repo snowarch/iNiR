@@ -399,11 +399,12 @@ Item {
                 if (card && !card.admitted && card.far < root.reach && (!best || card.far < best.far)) best = card
             }
             if (best) { best.admitted = true; return }
-            // then their stages, the heavy part, once the body stands: one a frame as well
-            if (!Boolean(root.host?.bodySettled ?? true)) { admit.stop(); return }
+            // then the stages of the two cards beside it, the heavy part, once the body and the open area's page stand:
+            // they took the frames the page was building in, and a stage two cards out is past the screen's edge
+            if (!Boolean(root.host?.bodySettled ?? true) || pool.current !== pool.shown) { admit.stop(); return }
             for (let i = 0; i < cards.count; i++) {
                 const card = cards.itemAt(i)
-                if (card && card.admitted && !card.staged && (!best || card.far < best.far)) best = card
+                if (card && card.admitted && !card.staged && card.far < 1.5 && (!best || card.far < best.far)) best = card
             }
             if (best) best.staged = true
             else admit.stop()
@@ -455,8 +456,7 @@ Item {
             }
             RoundKey { glyph: "close"; name: Translation.tr("Close settings"); onClicked: root.host.close() }
         }
-        // The hero: Home or the area, each a page of the pool, built once in the background and kept; a turn moves
-        // the cards and crosses the hero's pages in place, it never rebuilds one.
+        // The hero: Home or the area, a page of the pool; a turn moves the cards while the next page builds.
         AreaPool {
             id: pool
             x: card.inset
@@ -465,24 +465,14 @@ Item {
             height: card.height - y - (root.windowed ? root.u(4) : root.u(34))
             current: root.searching ? pool.shown : root.section
             hidden: root.searching || root.paged
+            settled: Boolean(root.host?.bodySettled ?? true)
             urlFor: id => Qt.resolvedUrl(id === "home" ? "Home.qml" : "DeckPage.qml")
             propsFor: id => id === "home" ? { host: root.host, voice: "deck" } : { host: root.host }
             order: root.sections.map(entry => entry.id)
             distance: 0
             crossing: false
             keepsShown: false
-            onArrived: { root.land(); prewarmSoon.restart() }
-        }
-        // At rest the cards either side are built too, so a turn only crosses two standing pages.
-        Timer {
-            id: prewarmSoon
-            interval: 600
-            onTriggered: {
-                if (!(root.host?.bodySettled ?? true) || pool.turning || travel.running) { prewarmSoon.restart(); return }
-                const order = root.sections.map(entry => entry.id)
-                const at = order.indexOf(pool.shown)
-                pool.prewarm([order[at - 1], order[at + 1]].filter(id => id !== undefined && id !== "home"))
-            }
+            onArrived: { root.land(); admit.start() }
         }
         // A search's results or a shared page (the Hub), under the keys.
         Item {
@@ -674,7 +664,7 @@ Item {
         readonly property bool inView: side.far < 2.5
         property bool admitted: false
         property bool staged: false
-        onFarChanged: if (side.far >= 3.2) { side.admitted = false; side.staged = false }
+        onFarChanged: { if (side.far >= 3.2) side.admitted = false; if (side.far >= 2.5) side.staged = false }
         // what a card says past its name fades out between one and two cards off (built once, never dropped on the way)
         readonly property real detail: Math.max(0, Math.min(1, (1.75 - side.far) / 0.5))
         // the open card's own rows stand on it once built: the live card covers this one, once it has come in over it
