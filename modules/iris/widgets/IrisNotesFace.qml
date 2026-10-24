@@ -32,10 +32,7 @@ IrisWidgetFace {
         visible: root.blank
         anchors.horizontalCenter: parent.horizontalCenter
         // Large: where the first line would be, not lost in the middle of the page.
-        anchors.verticalCenter: root.large ? undefined : parent.verticalCenter
-        anchors.verticalCenterOffset: root.dp(10)
-        anchors.top: root.large ? parent.top : undefined
-        anchors.topMargin: root.dp(52)
+        y: root.large ? root.dp(52) : Math.round((parent.height - height) / 2) + root.dp(10)
         width: parent.width
         glyph: "edit"
         glyphFill: true

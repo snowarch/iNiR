@@ -40,13 +40,12 @@ IrisWidgetFace {
         id: dial
         visible: root.analog && !root.designed
         face: root
-        // Large: the dial leads above the week; medium: beside the date.
-        anchors.left: root.large ? undefined : parent.left
-        anchors.horizontalCenter: root.large ? parent.horizontalCenter : undefined
-        anchors.verticalCenter: root.large ? undefined : parent.verticalCenter
-        anchors.top: root.large ? parent.top : undefined
+        // Large: the dial leads above the week; medium: beside the date. Placed by x/y: anchors switched per size
+        // left the dial at the old size's width after a size change (10-23).
         width: root.small ? parent.width : root.large ? Math.min(parent.width, parent.height - footer.height - root.dp(14)) : parent.height
         height: width
+        x: root.large ? Math.round((parent.width - width) / 2) : 0
+        y: root.large ? 0 : Math.round((parent.height - height) / 2)
         time: root.now
         seconds: root.seconds
         caption: root.small ? Translation.locale.toString(root.now, "ddd d").replace(/\./g, "")
@@ -59,8 +58,7 @@ IrisWidgetFace {
         anchors.left: root.analog ? dial.right : parent.left
         anchors.leftMargin: root.analog ? root.dp(18) : 0
         anchors.right: parent.right
-        anchors.verticalCenter: root.large ? undefined : parent.verticalCenter
-        anchors.top: root.large ? parent.top : undefined
+        y: root.large ? 0 : Math.round((parent.height - height) / 2)
         spacing: root.dp(2)
 
         // The week strip says the weekday wherever it shows.

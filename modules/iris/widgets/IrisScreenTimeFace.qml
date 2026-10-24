@@ -150,9 +150,7 @@ IrisWidgetFace {
             FaceBlank {
                 face: root
                 // Large has room to lose it in: there it waits right under its head, where the first row would be.
-                anchors.centerIn: root.large ? undefined : parent
-                anchors.top: root.large ? parent.top : undefined
-                anchors.topMargin: root.dp(24)
+                y: root.large ? root.dp(24) : Math.round((parent.height - height) / 2)
                 width: parent.width
                 glyph: "hourglass_empty"
                 tint: root.tint

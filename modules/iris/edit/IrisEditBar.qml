@@ -326,10 +326,9 @@ Item {
         MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
         Item {
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: root.edge === "bottom" ? undefined : parent.top
-            anchors.bottom: root.edge === "bottom" ? parent.bottom : undefined
             width: root.sheetW
             height: root.sheetFullH
+            y: root.edge === "bottom" ? parent.height - height : 0
             Flickable {
                 id: sheetFlick
                 anchors.fill: parent

@@ -194,9 +194,7 @@ IrisWidgetFace {
             // Large: right under the head, where the first device would be; smaller faces have no room to spare.
             FaceBlank {
                 face: root
-                anchors.centerIn: root.large ? undefined : parent
-                anchors.top: root.large ? parent.top : undefined
-                anchors.topMargin: root.dp(28)
+                y: root.large ? root.dp(28) : Math.round((parent.height - height) / 2)
                 width: parent.width
                 glyph: "power"
                 glyphFill: true

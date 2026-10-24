@@ -338,11 +338,10 @@ AbstractBackgroundWidget {
             Layout.fillHeight: true
 
             Column {
-                anchors.centerIn: root.instrument ? undefined : parent
-                anchors.left: root.instrument ? parent.left : undefined
                 anchors.verticalCenter: parent.verticalCenter
                 width: root.instrument ? parent.width : Math.min(parent.width,
                     Math.round(190 * root.scaleFactor))
+                x: root.instrument ? 0 : Math.round((parent.width - width) / 2)
                 spacing: Math.round(7 * root.scaleFactor)
 
                 MaterialShape {

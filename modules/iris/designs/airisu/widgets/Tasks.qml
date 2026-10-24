@@ -43,7 +43,7 @@ Item {
             text: root.face?.pending ?? 0
         }
         AText {
-            anchors.baseline: root.empty ? undefined : count.baseline
+            anchors.baseline: count.baseline
             voice: "mono"
             size: IrisStyle.typeCaption
             color: stock.inkSecond

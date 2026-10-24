@@ -74,12 +74,10 @@ IrisWidgetFace {
 
         Rectangle {
             id: disc
-            anchors.horizontalCenter: root.tiles ? undefined : parent.horizontalCenter
-            anchors.left: root.tiles ? parent.left : undefined
-            anchors.leftMargin: root.tiles ? root.dp(6) : 0
-            anchors.verticalCenter: root.tiles ? parent.verticalCenter : undefined
             width: root.tiles ? parent.height - root.dp(12) : root.disc
             height: width
+            x: root.tiles ? root.dp(6) : Math.round((parent.width - width) / 2)
+            y: root.tiles ? Math.round((parent.height - height) / 2) : 0
             radius: IrisStyle.capsule(height)
             color: disc.skinned ? "transparent" : toggle.on ? toggle.tint : tap.pressed ? root.fillActive : hover.hovered ? root.fillHover : root.fill
             scale: tap.pressed && !disc.skinned ? IrisStyle.pressScale(0.94) : 1
