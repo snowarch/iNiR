@@ -648,7 +648,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width * 0.6
             elide: Text.ElideRight
-            text: Translation.tr(String(sideRow.modelData.label ?? ""))
+            text: root.host?.glanceName(sideRow.modelData) ?? Translation.tr(String(sideRow.modelData.label ?? ""))
             color: IrisStyle.subtext
             font.pixelSize: IrisStyle.typeMeta
         }

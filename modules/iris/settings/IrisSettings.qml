@@ -473,6 +473,14 @@ Item {
             if (!out.includes(spec) && out.length < count) out.push(spec)
         return out
     }
+    // A glance row's name: its label, or its group's where the area gives several groups that label ("Size" under
+    // every widget read "Size, Size, Size").
+    function glanceName(spec: var): string {
+        const label = String(spec?.label ?? "")
+        const groups = new Set(root.specifications.filter(other => other.section === spec?.section && other.label === label)
+            .map(other => String(other.group ?? "")))
+        return Translation.tr(groups.size > 1 && String(spec?.group ?? "").length > 0 ? String(spec.group) : label)
+    }
     // A folded group said in a line people would say: what is on, what was picked, and what is left to itself
     // ("Dock notch, round dock shape, screen edge automatic"); never "Auto · off · Auto".
     function sayGroup(rows: var): string {

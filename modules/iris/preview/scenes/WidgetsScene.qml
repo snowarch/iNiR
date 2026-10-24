@@ -13,6 +13,7 @@ import qs.modules.shared.background.widgets.instrument
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.preview.parts
+import qs.modules.iris.widgets
 
 PreviewScene {
     id: widgetsRoot
@@ -108,20 +109,50 @@ PreviewScene {
             showComet: false
             animated: false
         }
+        // The Day as the iRiS face draws it: the next sunrise or sunset leading, the day as the sun's path.
         ColumnLayout {
-            anchors.left: parent.left; anchors.bottom: parent.bottom
+            visible: !widgetsRoot.instrument
+            anchors.fill: parent
             anchors.margins: Math.round(18 * widgetsRoot.d)
-            anchors.bottomMargin: widgetsRoot.instrument ? Math.round(44 * widgetsRoot.d) : Math.round(18 * widgetsRoot.d)
-            anchors.leftMargin: widgetsRoot.instrument ? Math.round(60 * widgetsRoot.d) : Math.round(18 * widgetsRoot.d)
-            spacing: 0
-            IrisText { text: Translation.locale.toString(DateTime.clock.date, "dddd"); color: widgetsRoot.ink; font.weight: widgetsRoot.weight; font.pixelSize: IrisStyle.typeHeadline }
-            IrisText {
-                text: Translation.locale.toString(DateTime.clock.date, "hh:mm")
-                font.family: IrisStyle.fontNumbers
-                font.weight: widgetsRoot.weight
-                font.pixelSize: (widgetsRoot.instrument ? 36 : 52) * IrisStyle.typeScale
-                style: widgetsRoot.clear ? Text.Raised : Text.Normal
-                styleColor: IrisStyle.plateShadow
+            spacing: Math.round(2 * widgetsRoot.d)
+            FaceHeader {
+                face: widgetsRoot.face
+                Layout.fillWidth: true
+                glyph: widgetsRoot.daytime ? "light_mode" : "bedtime"
+                text: IrisFaceData.capitalized(Translation.locale.toString(DateTime.clock.date, "dddd d"))
+                tint: widgetsRoot.face.warm
+            }
+            Row {
+                spacing: Math.round(6 * widgetsRoot.d)
+                FaceFigure { id: sunFigure; face: widgetsRoot.face; text: widgetsRoot.sunParts.main; size: 34 }
+                FaceText {
+                    face: widgetsRoot.face
+                    visible: widgetsRoot.sunParts.suffix.length > 0
+                    anchors.baseline: sunFigure.baseline
+                    text: widgetsRoot.sunParts.suffix
+                    color: widgetsRoot.face.inkSecondary
+                    size: 15
+                    weight: Font.DemiBold
+                }
+                FaceText {
+                    face: widgetsRoot.face
+                    anchors.baseline: sunFigure.baseline
+                    text: widgetsRoot.daytime ? Translation.tr("Sunset") : Translation.tr("Sunrise")
+                    color: widgetsRoot.face.inkSecondary
+                    size: 13
+                }
+            }
+            FaceArea {
+                face: widgetsRoot.face
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.topMargin: Math.round(6 * widgetsRoot.d)
+                curve: t => widgetsRoot.sunAt(t)
+                from: widgetsRoot.sunrise
+                to: widgetsRoot.sunset
+                upTo: Math.max(widgetsRoot.sunrise, Math.min(widgetsRoot.sunset, widgetsRoot.nowAt))
+                rest: true
+                tint: widgetsRoot.face.warm
             }
         }
     }
@@ -139,12 +170,37 @@ PreviewScene {
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: Math.round(18 * widgetsRoot.d)
-            spacing: Math.round(2 * widgetsRoot.d)
-            MaterialSymbol { text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"; fill: 1; iconSize: Math.round(30 * widgetsRoot.d); color: widgetsRoot.ink }
+            spacing: 0
+            FaceText { face: widgetsRoot.face; Layout.fillWidth: true; text: String(Weather.visibleCity ?? "").split(",")[0] || Translation.tr("Weather"); size: 13.5; weight: Font.DemiBold }
+            FaceFigure { face: widgetsRoot.face; text: String(Weather.data?.temp ?? "18°").replace(/°[CF]$/, "°"); size: 40 }
             Item { Layout.fillHeight: true }
-            IrisText { text: String(Weather.data?.temp ?? "18°"); font.family: IrisStyle.fontDot; font.weight: Font.Normal; font.pixelSize: IrisStyle.typeDotM }
-            IrisText { text: Weather.data?.city ?? Translation.tr("Weather"); color: IrisStyle.subtext; elide: Text.ElideRight; Layout.fillWidth: true }
+            MaterialSymbol { text: widgetsRoot.sky; fill: 1; iconSize: Math.round(18 * widgetsRoot.d); color: IrisStyle.skyLight(widgetsRoot.sky) }
+            FaceText { face: widgetsRoot.face; Layout.fillWidth: true; text: IrisFaceData.capitalized(String(Weather.data?.description ?? "")); size: 12.5; weight: Font.DemiBold }
         }
+    }
+    // What the face parts read, as a widget face would hand it to them, in this scene's options.
+    readonly property var face: ({
+        small: false, medium: true, large: false, nothing: false, moving: false,
+        dp: v => Math.round(v * widgetsRoot.d), px: v => Math.round(v * widgetsRoot.d * IrisStyle.typeScale),
+        ink: IrisStyle.text, inkSecondary: IrisStyle.subtext, inkTertiary: IrisStyle.textTertiary,
+        hairline: IrisStyle.hairline, fillActive: IrisStyle.fillActive, accent: widgetsRoot.ink, highlight: widgetsRoot.ink,
+        warm: IrisStyle.secondaryAccent, figureWeight: widgetsRoot.weight,
+        fontMain: IrisStyle.fontMain, fontNumbers: IrisStyle.fontNumbers, fontLabel: IrisStyle.fontLabel })
+    readonly property string sky: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
+    readonly property real nowAt: (DateTime.clock.date.getHours() * 60 + DateTime.clock.date.getMinutes()) / 1440
+    readonly property real sunriseAt: Weather._timeToMinutes(Weather.data?.sunrise) / 1440
+    readonly property real sunsetAt: Weather._timeToMinutes(Weather.data?.sunset) / 1440
+    readonly property bool sunKnown: widgetsRoot.sunriseAt >= 0 && widgetsRoot.sunsetAt > widgetsRoot.sunriseAt
+    readonly property real sunrise: widgetsRoot.sunKnown ? widgetsRoot.sunriseAt : 6 / 24
+    readonly property real sunset: widgetsRoot.sunKnown ? widgetsRoot.sunsetAt : 19 / 24
+    readonly property bool daytime: widgetsRoot.nowAt >= widgetsRoot.sunrise && widgetsRoot.nowAt < widgetsRoot.sunset
+    readonly property var sunParts: IrisFaceData.timeParts(widgetsRoot.sunKnown
+        ? String(widgetsRoot.daytime ? Weather.data?.sunset : Weather.data?.sunrise) : (widgetsRoot.daytime ? "7:00 PM" : "6:00 AM"))
+    // The sun's height over the day: a cosine around noon, from the horizon at sunrise to it at sunset.
+    function sunAt(t: real): real {
+        const noon = (widgetsRoot.sunrise + widgetsRoot.sunset) / 2
+        const c = Math.cos(Math.PI * (widgetsRoot.sunset - widgetsRoot.sunrise))
+        return Math.max(0, (Math.cos(2 * Math.PI * (t - noon)) - c) / Math.max(0.01, 1 - c))
     }
     // A Design that prints the clock and the weather shows its own prints here, on stand-in faces fed by the live clock
     // and forecast (the widgets themselves are not instantiated).

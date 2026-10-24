@@ -162,7 +162,7 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         Accessible.role: Accessible.Link
-                        Accessible.name: Translation.tr(String(fact.modelData.label ?? ""))
+                        Accessible.name: page.host?.glanceName(fact.modelData) ?? Translation.tr(String(fact.modelData.label ?? ""))
                         onClicked: page.host.landOn(String(fact.modelData.path ?? ""))
                         Rectangle { anchors.fill: parent; radius: IrisStyle.fieldChamfer ? 0 : page.u(10); color: fact.containsMouse ? IrisStyle.fillHover : "transparent" }
                         Rectangle { visible: fact.index > 0; x: page.u(4); width: parent.width - 2 * x; height: 1; color: IrisStyle.hairline }
@@ -171,7 +171,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             width: parent.width * 0.6 - x
                             elide: Text.ElideRight
-                            text: Translation.tr(String(fact.modelData.label ?? ""))
+                            text: page.host?.glanceName(fact.modelData) ?? Translation.tr(String(fact.modelData.label ?? ""))
                             color: IrisStyle.subtext
                             font.pixelSize: IrisStyle.typeMeta
                         }
