@@ -81,8 +81,8 @@ Item {
     readonly property var layouts: ({ folio: "Folio", deck: "Deck", console: "Console" })
     // Classic is the engine's own page (the sidebar and its pages, as before the layouts): no layout file, no Home.
     readonly property string chosenLayout: {
-        const wanted = String(Config.options?.iris?.appearance?.settingsLayout ?? "folio")
-        return wanted === "classic" || root.layouts[wanted] ? wanted : "folio"
+        const wanted = String(Config.options?.iris?.appearance?.settingsLayout ?? "classic")
+        return wanted === "classic" || root.layouts[wanted] ? wanted : "classic"
     }
     readonly property string layout: IrisDesign.skin("settingsPage").length > 0 || root.chosenLayout === "classic" ? "" : root.chosenLayout
     function setLayout(name: string): void {

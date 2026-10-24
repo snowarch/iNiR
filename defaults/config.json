@@ -2500,7 +2500,7 @@
             "customize": "shell",
             "themeColoursOnly": false,
             "settingsHost": "overlay",
-            "settingsLayout": "folio",
+            "settingsLayout": "classic",
             "saved": [],
             "themeId": "iris",
             "design": "iris",
