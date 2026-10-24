@@ -39,6 +39,12 @@ Singleton {
     readonly property var otherEntries: root.ordered.filter(key => !DesktopWidgetRegistry.entry(key).lock)
         .map(key => root.entryOf(key, false))
 
+    // The last two words travel together, so a wrapped line never ends on a lone word ("...shows / here").
+    function unwidowed(text: string): string {
+        const value = String(text ?? "")
+        return value.replace(/ (\S{1,12})$/, "\u00a0$1")
+    }
+
     function capitalized(text: string): string {
         const value = String(text ?? "")
         return value.length > 0 ? value.charAt(0).toUpperCase() + value.slice(1) : value

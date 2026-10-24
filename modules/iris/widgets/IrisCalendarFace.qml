@@ -220,7 +220,7 @@ IrisWidgetFace {
                 visible: root.nextEvent === null
                 Layout.fillWidth: true
                 Layout.topMargin: root.dp(6)
-                text: root.picked ? Translation.tr("Nothing on this day") : Translation.tr("No events this week")
+                text: IrisFaceData.unwidowed(root.picked ? Translation.tr("Nothing on this day") : Translation.tr("No events this week"))
                 color: root.inkSecondary
                 size: 12
                 wrapMode: Text.WordWrap

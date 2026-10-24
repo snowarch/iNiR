@@ -118,7 +118,7 @@ IrisWidgetFace {
         FaceText {
             face: root
             Layout.fillWidth: true
-            text: Translation.tr("See where your day goes")
+            text: IrisFaceData.unwidowed(Translation.tr("See where your day goes"))
             size: root.small ? 13 : 14
             weight: Font.DemiBold
             wrapMode: Text.Wrap

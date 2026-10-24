@@ -139,7 +139,7 @@ IrisWidgetFace {
                         Layout.fillHeight: story.fills
                         Layout.minimumHeight: 0
                         Layout.preferredHeight: story.fills ? 0 : -1
-                        text: String(story.modelData.title ?? "")
+                        text: IrisFaceData.unwidowed(String(story.modelData.title ?? ""))
                         size: story.lead ? (root.small ? 16.5 : root.medium ? 15.5 : 20) : 13
                         font.family: story.lead ? IrisStyle.fontTitle : root.fontMain
                         weight: story.lead ? Font.Bold : Font.Medium

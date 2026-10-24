@@ -81,7 +81,7 @@ IrisWidgetFace {
 
     component Empty: FaceText {
         face: root
-        text: Translation.tr("Nothing scheduled")
+        text: IrisFaceData.unwidowed(Translation.tr("Nothing scheduled"))
         color: root.inkTertiary
         size: 12.5
         wrapMode: Text.WordWrap
@@ -178,9 +178,8 @@ IrisWidgetFace {
                 }
             }
             WeekStrip { visible: root.shown.length === 0; Layout.fillWidth: true }
-            Item { Layout.fillHeight: true; visible: root.shown.length === 0 }
-            Empty { visible: root.shown.length === 0; Layout.fillWidth: true }
-            // Free: the words sit in the middle of what is left under the week, not on its floor.
+            // Free: the words read right under the week they talk about
+            Empty { visible: root.shown.length === 0; Layout.fillWidth: true; Layout.leftMargin: root.dp(4) }
             Item { Layout.fillHeight: true }
         }
     }

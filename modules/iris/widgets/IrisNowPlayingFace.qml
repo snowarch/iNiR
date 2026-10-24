@@ -290,7 +290,7 @@ IrisWidgetFace {
                 FaceText {
                     face: root
                     Layout.fillWidth: true
-                    text: rest.detail
+                    text: IrisFaceData.unwidowed(rest.detail)
                     color: root.inkSecondary
                     size: 12.5
                     wrapMode: Text.WordWrap
@@ -527,7 +527,7 @@ IrisWidgetFace {
                 FaceText {
                     face: root
                     Layout.fillWidth: true
-                    text: media.effectiveTitle
+                    text: IrisFaceData.unwidowed(media.effectiveTitle)
                     size: 17
                     weight: Font.DemiBold
                     wrapMode: Text.Wrap
@@ -560,7 +560,7 @@ IrisWidgetFace {
             FaceText {
                 face: root
                 Layout.fillWidth: true
-                text: LyricsService.slots[3] || "♪"
+                text: IrisFaceData.unwidowed(LyricsService.slots[3] || "♪")
                 visible: root.lyricsReady
                 size: 16
                 weight: Font.DemiBold
@@ -628,7 +628,7 @@ IrisWidgetFace {
             FaceText {
                 face: root
                 Layout.fillWidth: true
-                text: media.effectiveTitle
+                text: IrisFaceData.unwidowed(media.effectiveTitle)
                 color: IrisStyle.onMedia
                 size: 19
                 weight: Font.DemiBold

@@ -38,7 +38,7 @@ ColumnLayout {
         face: blank.face
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
-        text: blank.title
+        text: IrisFaceData.unwidowed(blank.title)
         size: blank.face.small ? 13 : 14
         weight: Font.DemiBold
         wrapMode: Text.Wrap
@@ -49,7 +49,7 @@ ColumnLayout {
         visible: !blank.face.small && blank.detail.length > 0
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
-        text: blank.detail
+        text: IrisFaceData.unwidowed(blank.detail)
         color: blank.face.inkSecondary
         size: 12
         wrapMode: Text.Wrap
