@@ -2548,6 +2548,13 @@ Scope {
                             placed.push({ x: item.x, y: item.y, width: item.width, height: item.height })
                             continue
                         }
+                        // Same screen: a widget with its own place keeps it and only the new one finds room. Placing
+                        // everyone again moved the whole desktop each time one was added (10-23).
+                        if (!geometryChanged && strategy === "free" && localX && localY
+                                && !DesktopWidgetStacks.isSplit(item.configEntryName)) {
+                            placed.push({ x: item.x, y: item.y, width: item.width, height: item.height })
+                            continue
+                        }
                         let wantX = Number(item.x) || 0
                         let wantY = Number(item.y) || 0
                         if (geometryChanged && target === "free" && localX && localY) {
