@@ -159,6 +159,7 @@ Item {
                     Column {
                         id: group
                         required property var modelData
+                        required property int index
                         readonly property var tuned: root.folded(group.modelData)
                         readonly property bool open: root.opened[root.section + "/" + group.modelData.key] === true
                         readonly property bool folds: group.tuned.length >= 2 && group.tuned.length < group.modelData.rows.length
@@ -187,6 +188,8 @@ Item {
                                     required property var modelData
                                     readonly property string kind: root.shape(cell.modelData)
                                     width: cell.kind === "row" ? flow.width : boardColumn.span(root.unitsOf(cell.kind))
+                                    // The first group comes with the page, the rest in the frames after it (Classic's way).
+                                    asynchronous: group.index > 0
                                     sourceComponent: cell.kind === "switch" ? switchTile : cell.kind === "range" ? rangeTile : cell.kind === "choice" ? choiceTile : rowTile
                                     onLoaded: item.spec = cell.modelData
                                 }
