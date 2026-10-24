@@ -77,6 +77,9 @@ ClippingRectangle {
         if (root.cross < 1) crossMotion.start()
         else root.dropHidden()
     }
+    // The first scene builds in the frames after its page instead of holding the page back (a widgets or look scene
+    // kept a Settings area from turning for up to 0.8 s); a later change builds at once, timed for its crossing.
+    property bool shown: false
     function dropHidden(): void { if (root.onB) root.sceneA = ""; else root.sceneB = "" }
     NumberAnimation {
         id: crossMotion
@@ -186,7 +189,9 @@ ClippingRectangle {
             opacity: root.onB ? 1 - root.leaving : root.arriving
             scale: root.onB ? 1 - 0.015 * root.leaving : 0.97 + 0.03 * root.arriving
             visible: opacity > 0
+            asynchronous: !root.shown
             sourceComponent: root.componentFor(root.sceneA)
+            onLoaded: root.shown = true
         }
         Loader {
             id: loaderB
@@ -195,7 +200,9 @@ ClippingRectangle {
             opacity: root.onB ? root.arriving : 1 - root.leaving
             scale: root.onB ? 0.97 + 0.03 * root.arriving : 1 - 0.015 * root.leaving
             visible: opacity > 0
+            asynchronous: !root.shown
             sourceComponent: root.componentFor(root.sceneB)
+            onLoaded: root.shown = true
         }
     }
 
