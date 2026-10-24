@@ -140,7 +140,7 @@ IrisWidgetFace {
             strokeColor: "transparent"
             fillGradient: LinearGradient {
                 x1: 0; y1: 0; x2: 0; y2: trace.height
-                GradientStop { position: 0; color: ColorUtils.applyAlpha(root.tint(trace.key), 0.28) }
+                GradientStop { position: 0; color: ColorUtils.applyAlpha(root.tint(trace.key), 0.28) } // iris-literal: the trend's fill fades from 28 % to nothing
                 GradientStop { position: 1; color: ColorUtils.applyAlpha(root.tint(trace.key), 0) }
             }
             PathSvg { path: root.curve(trace.line, trace.height) }
