@@ -2443,6 +2443,8 @@ Scope {
                         return
                     }
 
+                    // From here on a widget that appears is a newcomer (AbstractBackgroundWidget._settleNewcomer).
+                    widgetCanvas.settled = true
                     const geometryChanged = !DesktopWidgetLayout.outputLayoutMatches(
                         outputName, outputWidth, outputHeight)
                     let missingGeometry = false
@@ -2593,6 +2595,7 @@ Scope {
                 }
 
                 property int _outputLayoutAttempts: 0
+                property bool settled: false
 
                 Timer {
                     id: outputLayoutTimer

@@ -1060,7 +1060,28 @@ AbstractWidget {
     }
     readonly property var _arrival: DesktopEditStage.arrival(root.outputName, root.configEntryName)
     on_ArrivalChanged: root._land()
-    on_GeometryReadyChanged: root._land()
+    on_GeometryReadyChanged: {
+        root._land()
+        if (root._geometryReady)
+            newcomerSettle.restart()
+    }
+    // Brought out while the desktop is up (a switch in Settings, IPC) onto a place another widget took meanwhile, it
+    // steps to the nearest free spot and the others stay. At start every widget keeps its place; from the shelf
+    // `_land` places it.
+    Timer {
+        id: newcomerSettle
+        interval: 400
+        onTriggered: {
+            const canvas = root._canvas
+            if (!canvas?.settled || typeof canvas.freeSpot !== "function" || root.placementStrategy !== "free" || root.locked
+                    || root.isDragging || DesktopEditStage.arrival(root.outputName, root.configEntryName) || root._landedArrival
+                    || root.outputName.startsWith("lock:") || root.width <= 0 || root.height <= 0)
+                return
+            const spot = canvas.freeSpot(root.editInstanceKey, root.x, root.y, root.width, root.height)
+            if (spot.moved)
+                root._setOutputValues({ x: Math.round(spot.x), y: Math.round(spot.y), placementStrategy: "free" })
+        }
+    }
     readonly property var _departure: DesktopEditStage.departure(root.outputName, root.configEntryName)
     on_DepartureChanged: {
         if (!root._departure)
