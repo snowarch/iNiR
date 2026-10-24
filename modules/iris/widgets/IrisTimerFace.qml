@@ -5,7 +5,6 @@ import QtQuick.Layouts
 import qs.services
 import qs.modules.common.widgets
 import qs.modules.iris.style
-import qs.modules.iris.bar.island
 
 IrisWidgetFace {
     id: root
@@ -66,141 +65,149 @@ IrisWidgetFace {
         return timer.running && !timer.paused
     }
 
-    component Dial: Item {
-        id: dial
+    // The key that starts and holds a timer: a plain disc, lit while it runs. A ring around it said the time a second
+    // way and sat there full at rest.
+    component Key: Rectangle {
+        id: key
         required property var timer
+        implicitHeight: key.implicitWidth
+        radius: IrisStyle.capsule(width)
+        scale: keyTap.pressed ? IrisStyle.pressScale(0.92) : 1
+        color: root.live(key.timer) ? IrisStyle.tintFill(key.timer.tint) : keyHover.hovered ? root.fillHover : root.fill
+        Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+        Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
         Accessible.role: Accessible.Button
-        Accessible.name: dial.timer.label + ", " + dial.timer.value
-        ProgressRing {
-            anchors.fill: parent
-            progress: dial.timer.progress
-            tint: dial.timer.tint
-            stroke: Math.max(3, dial.width * 0.08)
-        }
-        Rectangle {
+        Accessible.name: key.timer.label + ", " + key.timer.value
+        MaterialSymbol {
             anchors.centerIn: parent
-            width: parent.width * 0.62
-            height: width
-            radius: IrisStyle.capsule(width)
-            scale: dialTap.pressed ? IrisStyle.pressScale(0.92) : 1
-            color: root.live(dial.timer) ? IrisStyle.tintFill(dial.timer.tint)
-                : dialHover.hovered ? root.fillHover : root.fill
-            Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
-            MaterialSymbol {
-                anchors.centerIn: parent
-                text: root.live(dial.timer) ? "pause" : "play_arrow"
-                fill: 1
-                iconSize: parent.width * 0.52
-                color: root.live(dial.timer) ? dial.timer.tint : root.ink
-            }
+            text: root.live(key.timer) ? "pause" : "play_arrow"
+            fill: 1
+            iconSize: Math.round(key.width * 0.5)
+            color: root.live(key.timer) ? key.timer.tint : root.ink
         }
-        HoverHandler { id: dialHover; cursorShape: Qt.PointingHandCursor }
+        HoverHandler { id: keyHover; cursorShape: Qt.PointingHandCursor }
         TapHandler {
-            id: dialTap
+            id: keyTap
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             gesturePolicy: TapHandler.WithinBounds
-            onTapped: (point, button) => button === Qt.RightButton ? root.reset(dial.timer.key) : root.toggle(dial.timer.key)
+            onTapped: (point, button) => button === Qt.RightButton ? root.reset(key.timer.key) : root.toggle(key.timer.key)
         }
         WheelHandler {
-            enabled: dial.timer.key === "countdown" && !dial.timer.running
+            enabled: key.timer.key === "countdown" && !key.timer.running
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: event => TimerService.adjustCountdownDuration(event.angleDelta.y > 0 ? 60 : -60)
         }
     }
 
-    ColumnLayout {
-        visible: root.small
+    function state(timer: var): string {
+        return root.live(timer) ? Translation.tr("Running") : timer.paused ? Translation.tr("Paused") : Translation.tr("Ready")
+    }
+    readonly property var others: root.timers.filter(timer => timer.key !== root.lead.key)
+
+    // Small and medium: the timer that matters leads (running, then held, then the countdown); medium lists the other
+    // two beside it.
+    RowLayout {
+        visible: !root.large
         anchors.fill: parent
-        spacing: 0
-        FaceHeader {
-            face: root
+        spacing: root.dp(16)
+        ColumnLayout {
             Layout.fillWidth: true
-            glyph: root.lead.glyph
-            text: root.lead.label
-            tint: root.lead.tint
-        }
-        Item { Layout.fillHeight: true }
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: root.dp(10)
+            Layout.preferredWidth: 1
+            Layout.fillHeight: true
+            spacing: 0
+            FaceHeader {
+                face: root
+                Layout.fillWidth: true
+                glyph: root.lead.glyph
+                text: root.lead.label
+                tint: root.lead.tint
+            }
             FaceFigure {
                 face: root
                 Layout.fillWidth: true
                 text: root.lead.value
-                size: 34
+                size: root.small ? 36 : 40
                 tone: root.live(root.lead) || root.lead.paused ? root.ink : root.inkSecondary
             }
+            Item { Layout.fillHeight: true }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: root.dp(8)
+                Key {
+                    implicitWidth: root.dp(40)
+                    timer: root.lead
+                }
+                FaceText {
+                    face: root
+                    Layout.fillWidth: true
+                    text: root.state(root.lead)
+                    color: root.inkTertiary
+                    size: 12
+                }
+                FaceAction {
+                    face: root
+                    visible: root.lead.running || root.lead.paused
+                    glyph: "restart_alt"
+                    name: Translation.tr("Reset")
+                    tint: root.inkSecondary
+                    onActivated: root.reset(root.lead.key)
+                }
+            }
         }
-        RowLayout {
+        ColumnLayout {
+            visible: root.medium
             Layout.fillWidth: true
-            Layout.topMargin: root.dp(8)
-            spacing: root.dp(8)
-            Dial {
-                Layout.preferredWidth: root.dp(40)
-                Layout.preferredHeight: root.dp(40)
-                timer: root.lead
-            }
-            FaceText {
-                face: root
-                Layout.fillWidth: true
-                text: root.live(root.lead) ? Translation.tr("Running")
-                    : root.lead.paused ? Translation.tr("Paused") : Translation.tr("Ready")
-                color: root.inkTertiary
-                size: 12
-            }
-            FaceAction {
-                face: root
-                visible: root.lead.running || root.lead.paused
-                glyph: "restart_alt"
-                name: Translation.tr("Reset")
-                tint: root.inkSecondary
-                onActivated: root.reset(root.lead.key)
-            }
-        }
-    }
-
-    RowLayout {
-        visible: root.medium
-        anchors.fill: parent
-        spacing: root.dp(12)
-        Repeater {
-            model: root.medium ? root.timers : []
-            ColumnLayout {
-                id: column
-                required property var modelData
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                Layout.fillHeight: true
-                spacing: root.dp(6)
-                Dial {
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: root.dp(62)
-                    Layout.preferredHeight: root.dp(62)
-                    timer: column.modelData
-                }
-                FaceText {
-                    face: root
-                    Layout.alignment: Qt.AlignHCenter
-                    text: column.modelData.value
-                    size: 16
-                    weight: Font.DemiBold
-                    color: root.live(column.modelData) || column.modelData.paused ? root.ink : root.inkSecondary
-                    font.family: root.fontNumbers
-                    font.features: ({ "tnum": 1 })
-                }
-                FaceText {
-                    face: root
-                    Layout.alignment: Qt.AlignHCenter
-                    text: column.modelData.label
-                    color: root.live(column.modelData) ? column.modelData.tint : root.inkTertiary
-                    size: 11.5
-                    weight: Font.DemiBold
+            Layout.preferredWidth: 1
+            Layout.fillHeight: true
+            spacing: 0
+            Repeater {
+                model: root.medium ? root.others : []
+                ColumnLayout {
+                    id: other
+                    required property var modelData
+                    required property int index
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 0
+                    Rectangle {
+                        visible: other.index > 0
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        color: root.hairline
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        spacing: root.dp(10)
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+                            FaceText {
+                                face: root
+                                Layout.fillWidth: true
+                                text: other.modelData.label
+                                color: root.live(other.modelData) ? other.modelData.tint : root.inkSecondary
+                                size: 12
+                                weight: Font.DemiBold
+                            }
+                            FaceFigure {
+                                face: root
+                                text: other.modelData.value
+                                size: 20
+                                tone: root.live(other.modelData) || other.modelData.paused ? root.ink : root.inkSecondary
+                            }
+                        }
+                        Key {
+                            implicitWidth: root.dp(32)
+                            timer: other.modelData
+                        }
+                    }
                 }
             }
         }
     }
 
-    // Large: the three as rows, each its dial, its time leading and its name under it.
+    // Large: the three as rows, each its time leading, its name under it and its key at the end.
     ColumnLayout {
         visible: root.large
         anchors.fill: parent
@@ -226,27 +233,15 @@ IrisWidgetFace {
                     visible: row.index > 0
                     Layout.fillWidth: true
                     Layout.preferredHeight: 1
-                    Layout.leftMargin: root.dp(64)
                     color: root.hairline
                 }
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     spacing: root.dp(12)
-                    Dial {
-                        Layout.preferredWidth: root.dp(52)
-                        Layout.preferredHeight: root.dp(52)
-                        timer: row.modelData
-                    }
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 0
-                        FaceFigure {
-                            face: root
-                            text: row.modelData.value
-                            size: 28
-                            tone: root.live(row.modelData) || row.modelData.paused ? root.ink : root.inkSecondary
-                        }
                         FaceText {
                             face: root
                             Layout.fillWidth: true
@@ -254,6 +249,12 @@ IrisWidgetFace {
                             color: root.live(row.modelData) ? row.modelData.tint : root.inkSecondary
                             size: 12.5
                             weight: Font.DemiBold
+                        }
+                        FaceFigure {
+                            face: root
+                            text: row.modelData.value
+                            size: 32
+                            tone: root.live(row.modelData) || row.modelData.paused ? root.ink : root.inkSecondary
                         }
                     }
                     FaceAction {
@@ -263,6 +264,10 @@ IrisWidgetFace {
                         name: Translation.tr("Reset")
                         tint: root.inkSecondary
                         onActivated: root.reset(row.modelData.key)
+                    }
+                    Key {
+                        implicitWidth: root.dp(44)
+                        timer: row.modelData
                     }
                 }
             }

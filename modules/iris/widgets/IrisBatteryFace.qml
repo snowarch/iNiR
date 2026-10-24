@@ -6,7 +6,6 @@ import Quickshell.Services.UPower
 import qs.services
 import qs.modules.common.widgets
 import qs.modules.iris.style
-import qs.modules.iris.bar.island
 
 IrisWidgetFace {
     id: root
@@ -46,60 +45,57 @@ IrisWidgetFace {
     readonly property real diameter: Math.min(root.dp(root.small ? 78 : 94), root.cellWidth,
         (root.height - root.padding * 2 - root.dp(10) * (root.rows - 1)) / Math.max(1, root.rows) - root.dp(21))
 
+    // One device: its glyph on its colour (charging warm, low in danger), the charge as the figure under it. A ring
+    // around the figure said the same charge twice.
     component Gauge: ColumnLayout {
         id: gauge
         required property var device
         property real diameter: root.dp(56)
-        spacing: root.dp(5)
-        Item {
+        readonly property color tint: gauge.device.low || gauge.device.charging ? root.tint(gauge.device) : root.inkSecondary
+        spacing: root.dp(4)
+        Rectangle {
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: gauge.diameter
-            Layout.preferredHeight: gauge.diameter
-            ProgressRing {
-                anchors.fill: parent
-                progress: gauge.device.level
-                tint: root.tint(gauge.device)
-                stroke: Math.max(3, gauge.diameter * 0.1)
-            }
-            Row {
-                anchors.centerIn: parent
-                spacing: root.dp(1)
-                FaceFigure {
-                    id: percentage
-                    face: root
-                    text: Math.round(gauge.device.level * 100)
-                    size: gauge.diameter / root.k * 0.29
-                }
-                FaceText {
-                    face: root
-                    anchors.baseline: percentage.baseline
-                    text: "%"
-                    size: Math.max(8, gauge.diameter / root.k * 0.14)
-                    color: root.inkSecondary
-                }
-            }
-        }
-        RowLayout {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.maximumWidth: root.cellWidth
-            spacing: root.dp(4)
+            Layout.preferredWidth: Math.round(gauge.diameter * 0.5)
+            Layout.preferredHeight: Layout.preferredWidth
+            radius: IrisStyle.capsule(width)
+            color: gauge.device.low || gauge.device.charging ? IrisStyle.tintFill(gauge.tint) : root.fill
             MaterialSymbol {
+                anchors.centerIn: parent
                 text: gauge.device.charging ? "bolt" : gauge.device.glyph
                 fill: 1
-                iconSize: root.px(14)
-                color: gauge.device.charging ? root.tint(gauge.device) : root.inkSecondary
+                iconSize: Math.round(parent.width * 0.5)
+                color: gauge.tint
+            }
+        }
+        Row {
+            Layout.alignment: Qt.AlignHCenter
+            spacing: root.dp(1)
+            FaceFigure {
+                id: percentage
+                face: root
+                text: Math.round(gauge.device.level * 100)
+                size: root.small ? 24 : 28
+                tone: gauge.device.low && !gauge.device.charging ? root.danger : root.ink
             }
             FaceText {
                 face: root
-                visible: !root.small
-                Layout.fillWidth: true
-                text: gauge.device.name
-                size: 10.5
+                anchors.baseline: percentage.baseline
+                text: "%"
+                size: root.small ? 11 : 13
+                weight: Font.DemiBold
                 color: root.inkSecondary
             }
         }
+        FaceText {
+            face: root
+            visible: !root.small
+            Layout.alignment: Qt.AlignHCenter
+            Layout.maximumWidth: root.cellWidth
+            text: gauge.device.name
+            size: 11
+            color: root.inkSecondary
+        }
     }
-
 
     ColumnLayout {
         visible: root.devices.length === 1 && root.small
@@ -136,19 +132,6 @@ IrisWidgetFace {
                 : (root.devices[0]?.charging ?? false) ? Translation.tr("Charging") : ""
             color: root.inkSecondary
             size: 12
-        }
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.topMargin: root.dp(8)
-            Layout.preferredHeight: root.dp(9)
-            radius: IrisStyle.capsule(height)
-            color: root.fill
-            Rectangle {
-                width: parent.width * (root.devices[0]?.level ?? 0)
-                height: parent.height
-                radius: IrisStyle.capsule(height)
-                color: root.devices.length > 0 ? root.tint(root.devices[0]) : "transparent"
-            }
         }
     }
 

@@ -9725,5 +9725,12 @@
   "UV %1 · %2": "자외선 %1 · %2",
   "Daylight": "낮 길이",
   "Moon": "달",
-  "Until midnight": "자정까지"
+  "Until midnight": "자정까지",
+  "Days getting longer": "낮이 길어지고 있어요",
+  "Days getting shorter": "낮이 짧아지고 있어요",
+  "left": "개 남음",
+  "Left this year": "올해 남은 날",
+  "Machine": "기기",
+  "On today": "오늘 켜진 시간",
+  "Started": "시작"
 }

@@ -9,6 +9,10 @@ FaceChoice 1.0 FaceChoice.qml
 FaceBlank 1.0 FaceBlank.qml
 singleton IrisFaceData 1.0 IrisFaceData.qml
 FaceDial 1.0 FaceDial.qml
+FaceArea 1.0 FaceArea.qml
+FaceHours 1.0 FaceHours.qml
+FaceFact 1.0 FaceFact.qml
+FaceAside 1.0 FaceAside.qml
 IrisClockFace 1.0 IrisClockFace.qml
 IrisCalendarFace 1.0 IrisCalendarFace.qml
 FaceAvatar 1.0 FaceAvatar.qml

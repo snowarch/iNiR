@@ -42,12 +42,7 @@ IrisWidgetFace {
         return minutes < 0 ? -1 : minutes / 1440
     }
 
-    // "06:02 AM" reads as "6:02" with its AM a step down, like a unit.
-    function timeParts(text: string): var {
-        const match = text.match(/^0?(\d{1,2}:\d{2})\s*([AaPp]\.?\s?[Mm]\.?)$/)
-        return match ? { main: match[1], suffix: match[2].toUpperCase() } : { main: text, suffix: "" }
-    }
-    readonly property var figureParts: root.timeParts(root.figure)
+    readonly property var figureParts: IrisFaceData.timeParts(root.figure)
 
     // Altitude as a cosine around solar noon, crossing the horizon at sunrise and sunset. An Item around the Shape:
     // a Shape sizes itself from its paths, and these paths come from its size.
@@ -114,25 +109,6 @@ IrisWidgetFace {
         }
     }
 
-    component Hours: RowLayout {
-        spacing: 0
-        Repeater {
-            model: [0, 6, 12, 18, 24]
-            FaceText {
-                required property int modelData
-                required property int index
-                face: root
-                Layout.fillWidth: true
-                horizontalAlignment: index === 0 ? Text.AlignLeft : index === 4 ? Text.AlignRight : Text.AlignHCenter
-                text: modelData
-                color: root.inkTertiary
-                size: 10.5
-                font.family: root.fontNumbers
-                font.features: ({ "tnum": 1 })
-            }
-        }
-    }
-
     component Lead: Row {
         property real figureSize: 30
         spacing: root.dp(6)
@@ -165,7 +141,7 @@ IrisWidgetFace {
     component Other: Row {
         id: other
         property real timeSize: 17
-        readonly property var parts: root.timeParts(root.other.time)
+        readonly property var parts: IrisFaceData.timeParts(root.other.time)
         spacing: root.dp(5)
         FaceText {
             face: root
@@ -189,44 +165,6 @@ IrisWidgetFace {
             color: root.inkSecondary
             size: Math.round(other.timeSize * 0.55)
             weight: Font.DemiBold
-        }
-    }
-
-    component Fact: ColumnLayout {
-        id: fact
-        property string glyph: ""
-        property string label: ""
-        property string value: ""
-        spacing: root.dp(8)
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            color: root.hairline
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: root.dp(8)
-            MaterialSymbol {
-                text: fact.glyph
-                fill: 1
-                iconSize: root.px(15)
-                color: root.warm
-            }
-            FaceText {
-                face: root
-                Layout.fillWidth: true
-                text: fact.label
-                color: root.inkSecondary
-                size: 13
-            }
-            FaceText {
-                face: root
-                text: fact.value
-                size: 13
-                weight: Font.DemiBold
-                font.family: root.fontNumbers
-                font.features: ({ "tnum": 1 })
-            }
         }
     }
 
@@ -293,27 +231,33 @@ IrisWidgetFace {
             Layout.fillHeight: true
             Layout.topMargin: root.dp(6)
         }
-        Hours { Layout.fillWidth: true; Layout.topMargin: root.dp(2) }
+        FaceHours { face: root; Layout.fillWidth: true; Layout.topMargin: root.dp(2) }
         ColumnLayout {
             visible: root.large
             Layout.fillWidth: true
             Layout.topMargin: root.dp(12)
             spacing: root.dp(8)
-            Fact {
+            FaceFact {
+                face: root
+                tint: root.warm
                 visible: root.sunKnown
                 Layout.fillWidth: true
                 glyph: root.other.glyph
                 label: root.other.name
                 value: root.other.time
             }
-            Fact {
+            FaceFact {
+                face: root
+                tint: root.warm
                 visible: root.sunKnown
                 Layout.fillWidth: true
                 glyph: "light_mode"
                 label: Translation.tr("Daylight")
                 value: root.daylight
             }
-            Fact {
+            FaceFact {
+                face: root
+                tint: root.warm
                 Layout.fillWidth: true
                 glyph: "dark_mode"
                 label: Translation.tr("Moon")

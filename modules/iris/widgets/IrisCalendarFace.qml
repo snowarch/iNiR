@@ -32,12 +32,15 @@ IrisWidgetFace {
         root.picked = null
         root.widget.monthShift = step === 0 ? 0 : root.widget.monthShift + step
     }
+    // Today as Apple marks it, in the person's accent: a solid fill with its own ink (a pale bubble with dark ink read
+    // as chosen, not as today). Under Nothing it is the signal.
+    readonly property color todayFill: root.nothing ? root.signal : IrisStyle.accentFill
+    readonly property color todayInk: root.nothing ? IrisStyle.onTintFor(root.signal) : IrisStyle.inkOnAccentFill
     readonly property string monthName: IrisFaceData.capitalized(Translation.locale.standaloneMonthName(root.viewing.getMonth()))
 
     component MonthGrid: ColumnLayout {
         id: grid
         property real cellText: 10.5
-        property bool dots: false
         property bool header: true
         spacing: root.dp(2)
 
@@ -48,7 +51,7 @@ IrisWidgetFace {
             FaceText {
                 face: root
                 text: root.monthName
-                color: root.heading
+                color: root.accent
                 size: grid.cellText + 2
                 weight: Font.DemiBold
             }
@@ -93,8 +96,6 @@ IrisWidgetFace {
                     required property int index
                     readonly property var date: new Date(root.viewing.getFullYear(), root.viewing.getMonth()
                         + (cell.modelData.currentMonth ? 0 : cell.index < 7 ? -1 : 1), cell.modelData.day)
-                    readonly property var events: grid.dots && cell.modelData.currentMonth ? root.eventsOn(cell.date) : []
-                    readonly property bool busy: cell.events.length > 0
                     readonly property bool chosen: root.sameDay(root.picked, cell.date)
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -106,9 +107,9 @@ IrisWidgetFace {
                         height: width
                         radius: IrisStyle.capsule(width)
                         visible: cell.modelData.isToday || cell.chosen || (dayHover.hovered && cell.modelData.currentMonth)
-                        color: cell.modelData.isToday ? root.highlight : cell.chosen ? root.fillActive : root.fillHover
+                        color: cell.modelData.isToday ? root.todayFill : cell.chosen ? root.fillActive : root.fillHover
                         border.width: cell.chosen && !cell.modelData.isToday ? 1 : 0
-                        border.color: root.highlight
+                        border.color: root.accent
                     }
                     HoverHandler { id: dayHover; cursorShape: Qt.PointingHandCursor }
                     TapHandler {
@@ -124,21 +125,12 @@ IrisWidgetFace {
                         anchors.centerIn: parent
                         visible: cell.modelData.currentMonth || root.adjacent
                         text: cell.modelData.day
-                        color: cell.modelData.isToday ? root.onFill(root.highlight)
+                        color: cell.modelData.isToday ? root.todayInk
                             : cell.modelData.currentMonth ? root.ink : root.inkTertiary
                         size: grid.cellText
                         weight: cell.modelData.isToday ? Font.Bold : Font.Medium
                         font.family: root.fontNumbers
                         font.features: ({ "tnum": 1 })
-                    }
-                    Rectangle {
-                        visible: cell.busy && !cell.modelData.isToday
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.bottom: parent.bottom
-                        width: root.dp(4)
-                        height: width
-                        radius: IrisStyle.capsule(width)
-                        color: IrisFaceData.eventTint(cell.events[0], root.accent)
                     }
                 }
             }
@@ -196,7 +188,7 @@ IrisWidgetFace {
                 face: root
                 Layout.fillWidth: true
                 text: root.weekday
-                color: root.heading
+                color: root.accent
                 size: 13
                 weight: Font.DemiBold
             }
@@ -232,7 +224,6 @@ IrisWidgetFace {
             Layout.fillWidth: true
             Layout.fillHeight: true
             cellText: 10
-            dots: true
         }
     }
 
@@ -247,7 +238,7 @@ IrisWidgetFace {
             FaceText {
                 face: root
                 text: root.monthName
-                color: root.heading
+                color: root.accent
                 size: 18
                 weight: Font.Bold
             }
@@ -291,7 +282,6 @@ IrisWidgetFace {
             Layout.fillHeight: true
             header: false
             cellText: 13.5
-            dots: true
         }
         Rectangle {
             Layout.fillWidth: true

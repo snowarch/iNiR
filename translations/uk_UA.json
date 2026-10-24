@@ -9725,5 +9725,12 @@
   "UV %1 · %2": "УФ %1 · %2",
   "Daylight": "Світловий день",
   "Moon": "Місяць",
-  "Until midnight": "До опівночі"
+  "Until midnight": "До опівночі",
+  "Days getting longer": "Дні стають довшими",
+  "Days getting shorter": "Дні стають коротшими",
+  "left": "лишилося",
+  "Left this year": "Лишилося цього року",
+  "Machine": "Комп'ютер",
+  "On today": "Працює сьогодні",
+  "Started": "Запущено"
 }

@@ -44,6 +44,7 @@ AbstractBackgroundWidget {
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : root.instrument ? Math.max(root.rowWidth, Math.round(260 * scaleFactor)) : root.rowWidth
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.instrument ? Math.max(root.rowHeight, Math.round(130 * scaleFactor)) : root.rowHeight
     irisFacePart: "uptime"
+    irisSizes: ["small", "medium", "large"]
     irisOptions: [
         { key: "showSince", raw: true, label: Translation.tr("Start time"), icon: "login", fallback: true }
     ]

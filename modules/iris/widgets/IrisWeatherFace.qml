@@ -99,52 +99,116 @@ IrisWidgetFace {
         }
     }
 
-    component Hours: RowLayout {
-        spacing: 0
+    // The next hours drawn as the Day draws the sun: the temperature as a line with the warm fade, each hour's figure
+    // above its point, and a sky mark only where it rains or snows (a glyph per hour said "cloud" six times).
+    readonly property var wet: ["rainy", "thunderstorm", "weather_hail", "weather_snowy", "cloudy_snowing"]
+    component Hours: Item {
+        id: graph
+        readonly property int n: root.hours.length
+        readonly property var temps: {
+            const out = []
+            for (const hour of root.hours) {
+                const value = parseFloat(String(hour.temp))
+                out.push(Number.isFinite(value) ? value : out.length > 0 ? out[out.length - 1] : 0)
+            }
+            return out
+        }
+        readonly property real lo: graph.temps.length > 0 ? Math.min(...graph.temps) : 0
+        readonly property real hi: graph.temps.length > 0 ? Math.max(...graph.temps) : 1
+        // The line keeps to the lower part, so the figures above it have room.
+        function level(i: int): real {
+            return 0.12 + 0.5 * (graph.hi > graph.lo ? (graph.temps[i] - graph.lo) / (graph.hi - graph.lo) : 0.5)
+        }
+        function at(i: int): real { return (i + 0.5) / Math.max(1, graph.n) }
+        readonly property var levels: graph.temps.map((value, i) => graph.level(i))
+        function curve(t: real): real { return IrisFaceData.smooth(graph.levels, t) }
+        implicitHeight: root.dp(root.large ? 76 : 64)
+
+        FaceArea {
+            id: line
+            face: root
+            width: parent.width
+            anchors.top: parent.top
+            anchors.bottom: when.top
+            anchors.bottomMargin: root.dp(4)
+            curve: t => graph.curve(t)
+            tint: root.warm
+            guide: false
+        }
         Repeater {
             model: root.hours
-            ColumnLayout {
-                id: hour
+            Row {
+                id: point
                 required property var modelData
                 required property int index
-                readonly property string glyph: Icons.getWeatherIcon(hour.modelData.code, hour.modelData.isNight) ?? "cloud"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                Layout.maximumWidth: Number.POSITIVE_INFINITY
-                spacing: root.dp(4)
-                FaceText {
-                    face: root
-                    Layout.alignment: Qt.AlignHCenter
-                    text: hour.index === 0 ? Translation.tr("Now") : String(hour.modelData.label).slice(0, 5)
-                    color: hour.index === 0 ? root.ink : root.inkSecondary
-                    size: 11.5
-                    weight: hour.index === 0 ? Font.DemiBold : Font.Medium
-                    font.features: ({ "tnum": 1 })
-                }
+                readonly property string glyph: Icons.getWeatherIcon(point.modelData.code, point.modelData.isNight) ?? "cloud"
+                x: Math.round(graph.at(point.index) * graph.width - width / 2)
+                y: Math.round(line.y + line.yAt(graph.at(point.index)) - height - root.dp(3))
+                spacing: root.dp(2)
                 MaterialSymbol {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: hour.glyph
+                    visible: root.wet.includes(point.glyph)
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: point.glyph
                     fill: 1
-                    iconSize: root.px(19)
-                    color: IrisStyle.skyLight(hour.glyph)
+                    iconSize: root.px(13)
+                    color: IrisStyle.skyLight(point.glyph)
                 }
                 FaceText {
                     face: root
-                    Layout.alignment: Qt.AlignHCenter
-                    text: root.degrees(hour.modelData.temp)
-                    size: 13
+                    text: root.degrees(point.modelData.temp)
+                    color: point.index === 0 ? root.ink : root.inkSecondary
+                    size: 12.5
                     weight: Font.DemiBold
                     font.family: root.fontNumbers
                     font.features: ({ "tnum": 1 })
                 }
-                HoverHandler {
-                    id: hourHover
-                    onHoveredChanged: {
-                        if (hourHover.hovered)
-                            root.readout = Translation.tr("%1 · %2 · %3").arg(hour.index === 0 ? Translation.tr("Now") : String(hour.modelData.label).slice(0, 5))
-                                .arg(root.degrees(hour.modelData.temp)).arg(IrisFaceData.capitalized(Weather.describeWeather(hour.modelData.code, hour.modelData.isNight)))
-                        else if (root.readout.length > 0)
-                            root.readout = ""
+            }
+        }
+        RowLayout {
+            id: when
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            spacing: 0
+            Repeater {
+                model: root.hours
+                FaceText {
+                    id: hour
+                    required property var modelData
+                    required property int index
+                    face: root
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    horizontalAlignment: Text.AlignHCenter
+                    text: hour.index === 0 ? Translation.tr("Now") : String(hour.modelData.label).slice(0, 5)
+                    color: hour.index === 0 ? root.ink : root.inkTertiary
+                    size: 10.5
+                    weight: hour.index === 0 ? Font.DemiBold : Font.Medium
+                    font.family: root.fontNumbers
+                    font.features: ({ "tnum": 1 })
+                }
+            }
+        }
+        // Pointing at an hour reads it out where the conditions are.
+        Row {
+            anchors.fill: parent
+            Repeater {
+                model: root.hours
+                Item {
+                    id: zone
+                    required property var modelData
+                    required property int index
+                    width: graph.width / Math.max(1, graph.n)
+                    height: graph.height
+                    HoverHandler {
+                        id: hourHover
+                        onHoveredChanged: {
+                            if (hourHover.hovered)
+                                root.readout = Translation.tr("%1 · %2 · %3").arg(zone.index === 0 ? Translation.tr("Now") : String(zone.modelData.label).slice(0, 5))
+                                    .arg(root.degrees(zone.modelData.temp)).arg(IrisFaceData.capitalized(Weather.describeWeather(zone.modelData.code, zone.modelData.isNight)))
+                            else if (root.readout.length > 0)
+                                root.readout = ""
+                        }
                     }
                 }
             }
@@ -202,8 +266,7 @@ IrisWidgetFace {
                 Layout.alignment: Qt.AlignTop
             }
         }
-        Item { Layout.fillHeight: true }
-        Hours { Layout.fillWidth: true }
+        Hours { Layout.fillWidth: true; Layout.fillHeight: true; Layout.topMargin: root.dp(6) }
     }
 
     ColumnLayout {

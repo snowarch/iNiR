@@ -71,13 +71,24 @@ IrisWidgetFace {
             size: root.small ? 13 : 14
             weight: Font.DemiBold
         }
-        // Beside a dial the hour is already read: the figure there is the date.
-        FaceFigure {
-            face: root
+        // Beside a dial the hour is already read: the figure there is the date, its month a step down.
+        Row {
             visible: root.analog
-            Layout.fillWidth: true
-            text: Translation.locale.toString(root.now, "d MMMM")
-            size: 30
+            spacing: root.dp(6)
+            FaceFigure {
+                id: dateFigure
+                face: root
+                text: root.now.getDate()
+                size: 40
+            }
+            FaceText {
+                face: root
+                anchors.baseline: dateFigure.baseline
+                text: IrisFaceData.capitalized(Translation.locale.standaloneMonthName(root.now.getMonth()))
+                color: root.inkSecondary
+                size: 16
+                weight: Font.DemiBold
+            }
         }
         IrisClock {
             visible: !root.analog
@@ -133,7 +144,7 @@ IrisWidgetFace {
                 Layout.fillWidth: true
                 implicitHeight: root.dp(20)
                 radius: height / 2
-                color: weekday.today ? root.highlight : "transparent"
+                color: weekday.today ? (root.nothing ? root.signal : IrisStyle.accentFill) : "transparent"
                 FaceText {
                     face: root
                     anchors.centerIn: parent
@@ -141,7 +152,8 @@ IrisWidgetFace {
                     text: Translation.locale.toString(new Date(2024, 0, 1 + weekday.index), "ddd").replace(/\./g, "").slice(0, 2)
                     size: 10.5
                     weight: weekday.today ? Font.DemiBold : Font.Medium
-                    color: weekday.today ? root.onFill(root.highlight) : weekday.index >= 5 ? root.inkTertiary : root.inkSecondary
+                    color: weekday.today ? (root.nothing ? IrisStyle.onTintFor(root.signal) : IrisStyle.inkOnAccentFill)
+                        : weekday.index >= 5 ? root.inkTertiary : root.inkSecondary
                 }
             }
         }

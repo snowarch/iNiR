@@ -53,53 +53,23 @@ IrisWidgetFace {
         icon: IrisPieces.appIcon(String(app?.originalId ?? app?.id ?? ""))
     }
 
-    // Hours with use stand on a baseline; an unused hour is no bar at all (a 3 px stub per empty hour drew a dashed
-    // line across an idle day), and the hour we are in is a dot when nothing filled it yet.
-    component HourBars: Item {
+    // The day's use drawn as the Day draws the sun: a smooth line through the hours with the fade under it, up to now,
+    // the hours under it (a bar per hour read as a row of stubs).
+    readonly property real nowAt: { void root.revision; const now = new Date(); return (now.getHours() * 60 + now.getMinutes()) / 1440 }
+    readonly property var useLevels: root.hourly.map(seconds => seconds / root.hourPeak)
+    component HourBars: ColumnLayout {
         id: bars
         property real barHeight: root.dp(56)
-        readonly property real gap: Math.max(1, root.dp(2))
-        readonly property real barWidth: (width - bars.gap * 23) / 24
-        implicitHeight: bars.barHeight + 1
-        Row {
-            spacing: bars.gap
-            Repeater {
-                model: 24
-                Item {
-                    id: hour
-                    required property int index
-                    readonly property bool now: hour.index === root.hourNow
-                    readonly property real used: root.hourly[hour.index] ?? 0
-                    width: bars.barWidth
-                    height: bars.barHeight
-                    Rectangle {
-                        visible: hour.used > 0
-                        anchors.bottom: parent.bottom
-                        width: parent.width
-                        height: Math.max(root.dp(3), parent.height * hour.used / root.hourPeak)
-                        radius: Math.min(width / 2, IrisStyle.radiusMicro)
-                        color: hour.now ? root.highlight : root.accent
-                    }
-                    Rectangle {
-                        visible: hour.now && hour.used <= 0
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: -Math.round(height / 2)
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: Math.max(root.dp(4), Math.min(parent.width, root.dp(5)))
-                        height: width
-                        radius: width / 2
-                        color: root.highlight
-                    }
-                }
-            }
+        spacing: root.dp(2)
+        FaceArea {
+            face: root
+            Layout.fillWidth: true
+            Layout.preferredHeight: bars.barHeight
+            tint: root.tint
+            to: root.nowAt
+            curve: t => IrisFaceData.smooth(root.useLevels, t)
         }
-        Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: 1
-            color: root.hairline
-        }
+        FaceHours { face: root; Layout.fillWidth: true }
     }
 
     ColumnLayout {
@@ -228,7 +198,7 @@ IrisWidgetFace {
                 Item { Layout.fillHeight: true }
                 HourBars {
                     Layout.fillWidth: true
-                    barHeight: root.dp(52)
+                    barHeight: root.dp(40)
                 }
                 RowLayout {
                     Layout.fillWidth: true
@@ -272,7 +242,7 @@ IrisWidgetFace {
                 }
                 HourBars {
                     Layout.fillWidth: true
-                    barHeight: root.dp(70)
+                    barHeight: root.dp(64)
                 }
                 Rectangle {
                     Layout.fillWidth: true

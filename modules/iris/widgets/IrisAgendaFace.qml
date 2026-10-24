@@ -15,6 +15,12 @@ IrisWidgetFace {
     readonly property int capacity: root.small ? 1 : root.medium ? 3 : 6
     readonly property var shown: root.events.slice(0, root.capacity)
 
+    // Today as the month calendar marks it: the accent's solid fill under its own ink.
+    readonly property color todayFill: root.nothing ? root.signal : IrisStyle.accentFill
+    readonly property color todayInk: root.nothing ? IrisStyle.onTintFor(root.signal) : IrisStyle.inkOnAccentFill
+    readonly property var next: root.shown[0] ?? null
+    readonly property var nextTime: root.next && !root.next.allDay ? IrisFaceData.timeParts(IrisFaceData.clockText(IrisFaceData.eventDate(root.next))) : null
+
     function dayLabel(event: var): string {
         const when = IrisFaceData.eventDate(event)
         const start = new Date(root.today)
@@ -33,7 +39,7 @@ IrisWidgetFace {
             face: root
             Layout.fillWidth: true
             text: IrisFaceData.capitalized(Translation.locale.toString(root.today, "dddd"))
-            color: root.highlight
+            color: root.accent
             size: 13
             weight: Font.DemiBold
         }
@@ -129,12 +135,12 @@ IrisWidgetFace {
                     implicitWidth: root.dp(26)
                     implicitHeight: implicitWidth
                     radius: IrisStyle.capsule(width)
-                    color: day.current ? root.accent : "transparent"
+                    color: day.current ? root.todayFill : "transparent"
                     FaceText {
                         face: root
                         anchors.centerIn: parent
                         text: day.modelData.getDate()
-                        color: day.current ? root.onFill(root.accent) : root.inkSecondary
+                        color: day.current ? root.todayInk : root.inkSecondary
                         font.family: root.fontNumbers
                         font.features: ({ "tnum": 1 })
                         size: 13
@@ -145,18 +151,49 @@ IrisWidgetFace {
         }
     }
 
+    // Small: the next event leads, its time as the figure (the date is on every other face); free, the date leads.
     ColumnLayout {
-        visible: root.small
+        visible: root.small && root.next !== null
+        anchors.fill: parent
+        spacing: 0
+        FaceHeader {
+            face: root
+            Layout.fillWidth: true
+            glyph: "event_upcoming"
+            text: root.next ? root.dayLabel(root.next) : ""
+        }
+        Row {
+            visible: root.nextTime !== null
+            spacing: root.dp(5)
+            FaceFigure {
+                id: nextFigure
+                face: root
+                text: root.nextTime?.main ?? ""
+                size: 34
+            }
+            FaceText {
+                face: root
+                visible: (root.nextTime?.suffix ?? "").length > 0
+                anchors.baseline: nextFigure.baseline
+                text: root.nextTime?.suffix ?? ""
+                color: root.inkSecondary
+                size: 15
+                weight: Font.DemiBold
+            }
+        }
+        Item { Layout.fillHeight: true }
+        EventRow {
+            Layout.fillWidth: true
+            event: root.next
+        }
+    }
+    ColumnLayout {
+        visible: root.small && root.next === null
         anchors.fill: parent
         spacing: root.dp(6)
         DateHero { Layout.fillWidth: true }
         Item { Layout.fillHeight: true }
-        EventRow {
-            visible: root.shown.length > 0
-            Layout.fillWidth: true
-            event: root.shown[0] ?? null
-        }
-        Empty { visible: root.shown.length === 0; Layout.fillWidth: true }
+        Empty { Layout.fillWidth: true }
     }
 
     RowLayout {

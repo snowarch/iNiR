@@ -9725,5 +9725,12 @@
   "UV %1 · %2": "الأشعة فوق البنفسجية %1 · %2",
   "Daylight": "ضوء النهار",
   "Moon": "القمر",
-  "Until midnight": "حتى منتصف الليل"
+  "Until midnight": "حتى منتصف الليل",
+  "Days getting longer": "النهار يطول",
+  "Days getting shorter": "النهار يقصر",
+  "left": "متبقية",
+  "Left this year": "المتبقي من العام",
+  "Machine": "الجهاز",
+  "On today": "تشغيل اليوم",
+  "Started": "بدأ"
 }

@@ -151,27 +151,32 @@ IrisWidgetFace {
         }
     }
 
+    // What is left is the figure, in ink with its word a step down; a zero beside "All done" said it twice, louder.
     component Count: ColumnLayout {
         spacing: 0
-        MaterialSymbol {
-            text: "checklist"
-            fill: 1
-            iconSize: root.px(22)
-            color: root.accent
-        }
-        // A zero beside "All done" said the same thing twice, louder.
-        FaceFigure {
+        FaceHeader {
             face: root
-            visible: root.pending > 0
-            text: root.pending
-            size: 38
-            tone: root.accent
-        }
-        FaceText {
-            face: root
+            Layout.fillWidth: true
+            glyph: "checklist"
             text: Translation.tr("Tasks")
-            size: 13
-            weight: Font.DemiBold
+        }
+        Row {
+            visible: root.pending > 0
+            spacing: root.dp(5)
+            FaceFigure {
+                id: left
+                face: root
+                text: root.pending
+                size: 38
+            }
+            FaceText {
+                face: root
+                anchors.baseline: left.baseline
+                text: Translation.tr("left")
+                color: root.inkSecondary
+                size: 15
+                weight: Font.DemiBold
+            }
         }
     }
 
@@ -200,7 +205,6 @@ IrisWidgetFace {
                 visible: root.pending > 0
                 text: root.pending
                 size: 22
-                tone: root.accent
             }
         }
         Tasks { Layout.fillWidth: true; Layout.fillHeight: root.empty }
@@ -243,7 +247,6 @@ IrisWidgetFace {
                 visible: root.pending > 0
                 text: root.pending
                 size: 26
-                tone: root.accent
             }
         }
         Tasks { Layout.fillWidth: true; Layout.fillHeight: root.empty }

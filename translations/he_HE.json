@@ -9725,5 +9725,12 @@
   "UV %1 · %2": "UV %1 · %2",
   "Daylight": "אור יום",
   "Moon": "ירח",
-  "Until midnight": "עד חצות"
+  "Until midnight": "עד חצות",
+  "Days getting longer": "הימים מתארכים",
+  "Days getting shorter": "הימים מתקצרים",
+  "left": "נותרו",
+  "Left this year": "נותרו השנה",
+  "Machine": "מחשב",
+  "On today": "פועל היום",
+  "Started": "הופעל"
 }

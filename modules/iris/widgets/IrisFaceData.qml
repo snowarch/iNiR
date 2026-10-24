@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs.services
+import qs.modules.common
 import qs.modules.iris.style
 import qs.modules.shared.background.widgets
 
@@ -98,5 +99,36 @@ Singleton {
         if (days === 1)
             return Translation.tr("Tomorrow · %1").arg(time)
         return root.capitalized(Translation.locale.toString(when, "dddd")) + " · " + time
+    }
+
+    // A time as the shell writes it (12 or 24 h).
+    function clockText(when: var): string {
+        return Translation.locale.toString(when, String(Config.options?.time?.format ?? "hh:mm").replace(/:ss/, ""))
+    }
+    // "06:02 AM" reads as "6:02" with its AM a step down, like a unit.
+    function timeParts(text: string): var {
+        const match = String(text).match(/^0?(\d{1,2}:\d{2})\s*([AaPp]\.?\s?[Mm]\.?)$/)
+        return match ? { main: match[1], suffix: match[2].toUpperCase() } : { main: String(text), suffix: "" }
+    }
+    // A smooth line through values set at the middle of equal steps (cubic Hermite, Catmull-Rom tangents), flat past
+    // the first and the last: what a drawn day reads its hours from.
+    function smooth(values: var, t: real): real {
+        const n = values.length
+        if (n === 0)
+            return 0
+        const x = t * n - 0.5
+        if (x <= 0)
+            return values[0]
+        if (x >= n - 1)
+            return values[n - 1]
+        const i = Math.floor(x)
+        const f = x - i
+        const p0 = values[i]
+        const p1 = values[i + 1]
+        const m0 = (p1 - values[Math.max(0, i - 1)]) / (i > 0 ? 2 : 1)
+        const m1 = (values[Math.min(n - 1, i + 2)] - p0) / (i + 2 < n ? 2 : 1)
+        const f2 = f * f
+        const f3 = f2 * f
+        return (2 * f3 - 3 * f2 + 1) * p0 + (f3 - 2 * f2 + f) * m0 + (-2 * f3 + 3 * f2) * p1 + (f3 - f2) * m1
     }
 }

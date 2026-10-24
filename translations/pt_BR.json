@@ -9725,5 +9725,12 @@
   "UV %1 · %2": "UV %1 · %2",
   "Daylight": "Luz do dia",
   "Moon": "Lua",
-  "Until midnight": "Até a meia-noite"
+  "Until midnight": "Até a meia-noite",
+  "Days getting longer": "Os dias estão ficando mais longos",
+  "Days getting shorter": "Os dias estão ficando mais curtos",
+  "left": "pendentes",
+  "Left this year": "Restam este ano",
+  "Machine": "Máquina",
+  "On today": "Ligado hoje",
+  "Started": "Ligado às"
 }

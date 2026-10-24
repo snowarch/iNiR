@@ -9725,5 +9725,12 @@
   "UV %1 · %2": "UV %1 · %2",
   "Daylight": "दिन का उजाला",
   "Moon": "चंद्रमा",
-  "Until midnight": "आधी रात तक"
+  "Until midnight": "आधी रात तक",
+  "Days getting longer": "दिन लंबे हो रहे हैं",
+  "Days getting shorter": "दिन छोटे हो रहे हैं",
+  "left": "बाकी",
+  "Left this year": "इस साल बाकी",
+  "Machine": "मशीन",
+  "On today": "आज चालू",
+  "Started": "शुरू हुआ"
 }

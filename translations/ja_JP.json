@@ -9725,5 +9725,12 @@
   "UV %1 · %2": "UV %1 · %2",
   "Daylight": "日照時間",
   "Moon": "月",
-  "Until midnight": "深夜0時まで"
+  "Until midnight": "深夜0時まで",
+  "Days getting longer": "日が長くなっています",
+  "Days getting shorter": "日が短くなっています",
+  "left": "件",
+  "Left this year": "今年の残り",
+  "Machine": "マシン",
+  "On today": "今日の稼働",
+  "Started": "起動"
 }

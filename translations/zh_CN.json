@@ -9725,5 +9725,12 @@
   "UV %1 · %2": "紫外线 %1 · %2",
   "Daylight": "日照时长",
   "Moon": "月亮",
-  "Until midnight": "距午夜"
+  "Until midnight": "距午夜",
+  "Days getting longer": "白天渐长",
+  "Days getting shorter": "白天渐短",
+  "left": "项",
+  "Left this year": "今年剩余",
+  "Machine": "设备",
+  "On today": "今日开机",
+  "Started": "开机于"
 }

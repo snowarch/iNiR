@@ -9725,5 +9725,12 @@
   "UV %1 · %2": "UV %1 · %2",
   "Daylight": "Gün ışığı",
   "Moon": "Ay",
-  "Until midnight": "Gece yarısına kadar"
+  "Until midnight": "Gece yarısına kadar",
+  "Days getting longer": "Günler uzuyor",
+  "Days getting shorter": "Günler kısalıyor",
+  "left": "kaldı",
+  "Left this year": "Bu yıl kalan",
+  "Machine": "Makine",
+  "On today": "Bugün açık",
+  "Started": "Başladı"
 }

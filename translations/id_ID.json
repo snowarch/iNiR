@@ -9725,5 +9725,12 @@
   "UV %1 · %2": "UV %1 · %2",
   "Daylight": "Siang hari",
   "Moon": "Bulan",
-  "Until midnight": "Hingga tengah malam"
+  "Until midnight": "Hingga tengah malam",
+  "Days getting longer": "Siang makin panjang",
+  "Days getting shorter": "Siang makin pendek",
+  "left": "tersisa",
+  "Left this year": "Sisa tahun ini",
+  "Machine": "Mesin",
+  "On today": "Menyala hari ini",
+  "Started": "Dimulai"
 }

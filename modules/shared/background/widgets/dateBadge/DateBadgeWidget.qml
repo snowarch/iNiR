@@ -18,6 +18,7 @@ AbstractBackgroundWidget {
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.max(140, Number(root._readConfigKey("contentWidth") ?? 220)) * scaleFactor
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.max(120, Number(root._readConfigKey("contentHeight") ?? 140)) * scaleFactor
     irisFacePart: "date"
+    irisSizes: ["small", "medium", "large"]
     irisOptions: [
         { key: "showWeekday", raw: true, label: Translation.tr("Weekday"), icon: "calendar_view_week", fallback: true },
         { key: "showYear", raw: true, label: Translation.tr("Year"), icon: "event", fallback: true },
