@@ -130,7 +130,7 @@ Item {
             width: parent.width
             columns: 7
             readonly property real cellW: grid.width / 7
-            readonly property real cellH: (month.height - grid.y) / 7
+            readonly property real cellH: (month.height - grid.y) / (Math.ceil(root.cells.length / 7) + 1)
             Repeater {
                 model: 7
                 AText {

@@ -89,8 +89,8 @@ Singleton {
         const day = new Date(when)
         day.setHours(0, 0, 0, 0)
         const days = Math.round((day.getTime() - today.getTime()) / 86400000)
-        const time = event.allDay ? Translation.tr("All day")
-            : Qt.locale().toString(when, Qt.locale().timeFormat(Locale.ShortFormat))
+        // the shell's clock format, as the figures beside it ("21:30" over "9:30 p. m." read as two times)
+        const time = event.allDay ? Translation.tr("All day") : root.clockText(when)
         const minutes = Math.round((when.getTime() - new Date(now).getTime()) / 60000)
         if (!event.allDay && minutes >= 0 && minutes < 60)
             return minutes < 1 ? Translation.tr("Now") : Translation.tr("In %1 min").arg(minutes)
@@ -98,7 +98,8 @@ Singleton {
             return time
         if (days === 1)
             return Translation.tr("Tomorrow · %1").arg(time)
-        return root.capitalized(Translation.locale.toString(when, "dddd")) + " · " + time
+        // A week out the weekday is today's own name again ("Saturday" under Saturday 24): the date says it.
+        return root.capitalized(Translation.locale.toString(when, days < 7 ? "dddd" : "ddd d")) + " · " + time
     }
 
     // A time as the shell writes it (12 or 24 h).

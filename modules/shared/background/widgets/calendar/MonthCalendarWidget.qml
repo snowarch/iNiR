@@ -123,8 +123,8 @@ AbstractBackgroundWidget {
             return cells
         }
         for (const week of root.weeks) {
-            // Small draws only the weeks the month reaches.
-            if (root.compact && !week.some(cell => cell.currentMonth))
+            // Only the weeks the month reaches: a sixth row of next month's days took a row's height from every week.
+            if (!week.some(cell => cell.currentMonth))
                 continue
             for (const cell of week)
                 cells.push(cell)
@@ -317,7 +317,8 @@ AbstractBackgroundWidget {
                     required property var modelData
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    visible: dayCell.modelData.currentMonth || root.showAdjacentDays
+                    // hidden, not gone: a layout closes the gap of an invisible cell and the 1st slid to Monday
+                    opacity: dayCell.modelData.currentMonth || root.showAdjacentDays ? 1 : 0
 
                     Rectangle {
                         anchors.centerIn: parent
