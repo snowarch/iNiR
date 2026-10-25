@@ -144,8 +144,8 @@ Item {
         requireEnabledPanel: false
         open: !root.settingsWindowed && (GlobalStates.settingsOverlayOpen || GlobalStates.irisSettingsWarm)
         // Kept built for ten minutes after it closes (SekaiPop keeps its Settings alive): opening again is instant,
-        // and a Settings left alone gives its memory back.
-        closeGraceMs: 600000
+        // and a Settings left alone gives its memory back. Gone at once when Settings moves to a window.
+        closeGraceMs: root.settingsWindowed ? 0 : 600000
         component: IrisSettingsOverlay {}
     }
 

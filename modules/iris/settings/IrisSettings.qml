@@ -839,7 +839,7 @@ Item {
     // section part carries; one of its own pages opens that page.
     function applyRequest(): void {
         // Switching hosts, the one leaving still hears the request and took it: the other opened on General.
-        if (root.windowed !== ((Config.options?.iris?.appearance?.settingsHost ?? "overlay") === "window")) return
+        if (!root.hostHere) return
         let key = String(GlobalStates.settingsOverlayRequestedKey ?? "")
         let asked = String(GlobalStates.settingsOverlayRequestedSection ?? "")
         // The instance going away on close can take a request meant for the one opening: this one then stood on General.
@@ -960,6 +960,7 @@ Item {
     Keys.onPressed: event => typeAhead.take(event)
     IrisTypeAhead { id: typeAhead; field: searchField }
     // The other host opens where this one stands.
+    readonly property bool hostHere: root.windowed === ((Config.options?.iris?.appearance?.settingsHost ?? "overlay") === "window")
     function switchHost(): void {
         GlobalStates.settingsOverlayRequestedSection = root.advancedPage < 0 ? root.section + (root.group.length > 0 ? "/" + root.group : "") : ""
         GlobalStates.settingsOverlayRequestedKey = root.advancedPage < 0 ? "iris" : root.pages[root.advancedPage].key
@@ -989,16 +990,17 @@ Item {
         ownField: !root.windowed || root.windowField
         overlay: !root.windowed
         chassisKey: "settings"
-        fieldBacked: frame.chassisLeases
+        // Over the desktop it is a solid sheet with its own field (10-25, he: no blur behind it): drawn by the band's
+        // field from another window, the body and the page landed a frame apart and it flickered on every open.
         // A window cannot know where it sits on screen, so it never samples the wallpaper: Blur asks Niri, else solid.
-        glass: !root.windowed || IrisStyle.glassCompositor
+        glass: root.windowed && IrisStyle.glassCompositor
         id: frame
         compositorBlurred: true
         energy: root.windowed && GlobalStates.settingsWindowBehind ? 0 : 1
         // A layout's page grows with the body: armed while the frame still measured 0 the scene was not even asked for, and
         // the body opened empty for half a second on llvmpipe.
         contentReady: root.sceneDrawn || !root.sceneWanted || (frame.width > 0 && !root.sceneFits) || pageScene.status === Loader.Error
-        open: root.windowed || GlobalStates.settingsOverlayOpen
+        open: root.windowed || (GlobalStates.settingsOverlayOpen && root.hostHere)
         color: IrisStyle.surface
         light: IrisStyle.surfaceLight("settings", IrisStyle.wallpaperLight)
         radius: frame.spread ? 0 : root.windowField ? Number(IrisNiri.data["window-rules"]?.corner_radius ?? 16)

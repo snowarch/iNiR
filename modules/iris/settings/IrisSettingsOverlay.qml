@@ -3,13 +3,16 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs
+import qs.modules.common
 import qs.modules.iris.frame
 import qs.modules.iris.components
 import qs.modules.iris.field as Field
 
 PanelWindow {
     id: root
-    visible: GlobalStates.settingsOverlayOpen || body.frame.progress > 0
+    // Kept built after closing: switched to a window it stood on screen beside it, still open.
+    readonly property bool hosting: (Config.options?.iris?.appearance?.settingsHost ?? "overlay") !== "window"
+    visible: root.hosting && (GlobalStates.settingsOverlayOpen || body.frame.progress > 0)
     IrisOutputHold {
         id: outputHold
         wanted: GlobalStates.focusedScreen
