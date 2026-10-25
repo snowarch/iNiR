@@ -199,8 +199,11 @@ Item {
     Timer { id: launchHold; interval: 400; onTriggered: root.holdSpent = true }
     onLaunchedChanged: if (root.launched && IrisMotionMeter.watching(root.motionSurface)) IrisMotionMeter.mark("launched")
     readonly property alias presentation: presentationSpring.value
+    // Opens and closes at once, without the morph (Settings: a tool you call up, not a place that grows out of the Island).
+    property bool instant: false
     IrisSpring {
         id: presentationSpring
+        animate: !root.instant
         surface: root.motionSurface
         to: root.armed && root.launched ? 1 : 0
         intent: root.animationDuration > 0 ? "move" : "auto"

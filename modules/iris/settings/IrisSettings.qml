@@ -979,6 +979,8 @@ Item {
     IrisMorphSurface {
         motionSurface: "settings"
         settles: true
+        // There and gone at once (10-25, he: no open or close motion at all); kept built between opens, so it is.
+        instant: true
         windowOffset: Qt.point(IrisFrame.band, IrisFrame.band)
         ownField: !root.windowed || root.windowField
         overlay: !root.windowed
