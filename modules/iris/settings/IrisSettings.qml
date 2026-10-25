@@ -1709,14 +1709,15 @@ Item {
         NumberAnimation on opacity { id: shotFade; running: false; to: 0; duration: IrisStyle.morphDuration; easing.type: IrisStyle.feedbackEasing }
     }
 
-    // What Home holds, edited over the body (Home › Customize › Edit).
-    IrisHomeEditor {
+    // What Home holds, edited over the body (Home › Customize › Edit). Built only while it shows: ~380 objects otherwise
+    // kept with every Settings.
+    Loader {
+        active: IrisOptions.homeEditing || (item?.visible ?? false)
         x: frame.x
         y: frame.y
         width: frame.width
         height: frame.height
-        d: root.d
-        bodyRadius: frame.radius
+        sourceComponent: IrisHomeEditor { d: root.d; bodyRadius: frame.radius }
     }
 
     // The toolbar's actions: one anatomy, a quiet capsule with its glyph. None of them is the page's answer, so none

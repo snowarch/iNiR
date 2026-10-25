@@ -42,13 +42,16 @@ Item {
     function close(): void { IrisOptions.homeEditing = false; query.text = "" }
 
     visible: scrim.opacity > 0
-    onOpenChanged: if (root.open) Qt.callLater(() => query.forceActiveFocus())
+    // Built on open: shown follows open from the next tick, once the Behaviors are live, so the sheet still fades in.
+    property bool shown: false
+    onShownChanged: if (root.shown) Qt.callLater(() => query.forceActiveFocus())
+    Component.onCompleted: Qt.callLater(() => root.shown = Qt.binding(() => root.open))
 
     Item {
         id: scrim
         readonly property color ink: Qt.rgba(0, 0, 0, IrisStyle.light ? 0.18 : 0.34) // iris-literal: a scrim, the page stays readable under it
         anchors.fill: parent
-        opacity: root.open ? 1 : 0
+        opacity: root.shown ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
         Rectangle { anchors.fill: parent; visible: !IrisStyle.fieldChamfer; radius: root.bodyRadius; color: scrim.ink }
         IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: scrim.ink }
@@ -75,8 +78,8 @@ Item {
         border.width: IrisStyle.fieldChamfer ? 0 : 1
         border.color: IrisStyle.hairline
         IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer; color: IrisStyle.surfaceOpaque; stroke: IrisStyle.hairline; strokeWidth: 1 }
-        opacity: root.open ? 1 : 0
-        scale: root.open ? 1 : 0.97
+        opacity: root.shown ? 1 : 0
+        scale: root.shown ? 1 : 0.97
         Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
         Behavior on scale { NumberAnimation { duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing } }
         MouseArea { anchors.fill: parent; onWheel: wheel => wheel.accepted = false }

@@ -755,7 +755,8 @@ ShellRoot {
     // only where windows can be streamed (qs-rs on niri).
     LazyLoader { active: Config.ready && LivePins.supported && LivePins.pins.some(pin => pin.onTop); source: "modules/shared/livePins/LivePinLayer.qml" }
     LazyLoader { active: Config.ready && LivePins.framing; source: "modules/shared/livePins/LivePinFramer.qml" }
-    LazyLoader { active: Config.ready; source: "modules/shared/japaneseLookup/JapaneseLookup.qml" }
+    // A hidden window per screen otherwise, for a lookup most people never make.
+    LazyLoader { active: Config.ready && GlobalStates.japaneseLookupOpen; source: "modules/shared/japaneseLookup/JapaneseLookup.qml" }
     LazyLoader { active: Config.ready; source: "modules/shared/tilingOverlay/TilingOverlayRouter.qml" }
     LazyLoader { active: Config.ready; source: "modules/shared/wallpaperSelector/WallpaperSelectorRouter.qml" }
 
