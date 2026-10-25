@@ -19,9 +19,10 @@ Item {
     property var screenData: null
     readonly property string screenName: root.screenData?.name ?? ""
     readonly property bool fullscreenHere: CompositorService.isNiri && GameMode.hasFullscreenOnOutput(root.screenName) && !NiriService.inOverview
-    // Customize owns the Island's surroundings while it is open: banners wait, and still land in Today.
+    // Customize owns the Island's surroundings while it is open, the wallpaper picker its whole screen and the toolbar
+    // a banner landed on: banners wait, and still land in Today.
     readonly property bool present: root.screenName === (GlobalStates.focusedScreen?.name ?? "") && !root.fullscreenHere
-        && !GlobalStates.irisEdit
+        && !GlobalStates.irisEdit && !GlobalStates.wallpaperSelectorOpen
         && (root.popups.length > 0 || exitLinger.running)
     readonly property var hitRect: root.present && popupColumn.contentHeight > 0
         ? { x: popupColumn.x, y: popupColumn.y, width: popupColumn.width, height: popupColumn.height } : null

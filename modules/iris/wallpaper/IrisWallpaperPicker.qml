@@ -122,6 +122,9 @@ Item {
         motionSurface: "gallery"
         settles: true
         fieldBacked: true
+        // Counted as an Overlay Place: a menu opened over its chips (the order) then draws its own body; leased to the
+        // chassis it was drawn under the picker's content, which read straight through it.
+        overlay: true
         chassisKey: "gallery"
         compositorBlurred: true
         open: root.morphOpen
