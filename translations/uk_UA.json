@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "У календарі порожньо",
   "%1 tasks waiting": "Завдань в очікуванні: %1",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "Вигляд бульбашки «Не засинати»; вона заповнюється, поки екран лишається увімкненим.",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "Вигляд бульбашки «Нічне світло»; вона заповнюється, поки екран утеплено.",
+  "The face of the Screenshot bubble.": "Вигляд бульбашки «Знімок екрана».",
+  "The face of the Power bubble.": "Вигляд бульбашки «Живлення»."
 }

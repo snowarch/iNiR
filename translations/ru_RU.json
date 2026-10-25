@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "В календаре пусто",
   "%1 tasks waiting": "Задач в ожидании: %1",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "Вид пузыря «Не засыпать»; он заполняется, пока экран остаётся включённым.",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "Вид пузыря «Ночной свет»; он заполняется, пока экран утеплён.",
+  "The face of the Screenshot bubble.": "Вид пузыря «Снимок экрана».",
+  "The face of the Power bubble.": "Вид пузыря «Питание»."
 }

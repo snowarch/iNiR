@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "אין כלום ביומן",
   "%1 tasks waiting": "%1 משימות ממתינות",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "המראה של בועת 'הישאר ער'; היא מתמלאת כל עוד המסך נשאר דולק.",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "המראה של בועת 'תאורת לילה'; היא מתמלאת כל עוד המסך מחומם.",
+  "The face of the Screenshot bubble.": "המראה של בועת 'צילום מסך'.",
+  "The face of the Power bubble.": "המראה של בועת 'הפעלה'."
 }

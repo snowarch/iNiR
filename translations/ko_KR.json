@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "캘린더에 일정 없음",
   "%1 tasks waiting": "대기 중인 작업 %1개",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "깨어 있기 버블의 모양. 화면이 켜진 상태로 유지되는 동안 채워집니다.",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "야간 조명 버블의 모양. 화면이 따뜻하게 유지되는 동안 채워집니다.",
+  "The face of the Screenshot bubble.": "스크린샷 버블의 모양.",
+  "The face of the Power bubble.": "전원 버블의 모양."
 }

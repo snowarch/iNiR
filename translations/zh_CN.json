@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "日历上没有安排",
   "%1 tasks waiting": "%1 个待办任务",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "保持唤醒气泡的外观；屏幕保持常亮时会填满。",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "夜灯气泡的外观；屏幕变暖时会填满。",
+  "The face of the Screenshot bubble.": "截图气泡的外观。",
+  "The face of the Power bubble.": "电源气泡的外观。"
 }

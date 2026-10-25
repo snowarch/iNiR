@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "Lịch trống",
   "%1 tasks waiting": "%1 việc đang chờ",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "Hình dạng của bong bóng Giữ màn hình sáng; nó được tô đầy khi màn hình vẫn bật.",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "Hình dạng của bong bóng Đèn ngủ; nó được tô đầy khi màn hình được làm ấm.",
+  "The face of the Screenshot bubble.": "Hình dạng của bong bóng Chụp màn hình.",
+  "The face of the Power bubble.": "Hình dạng của bong bóng Nguồn."
 }

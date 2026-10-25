@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "Tidak ada di kalender",
   "%1 tasks waiting": "%1 tugas menunggu",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "Tampilan gelembung Tetap terjaga; terisi selama layar tetap menyala.",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "Tampilan gelembung Lampu malam; terisi selama layar dihangatkan.",
+  "The face of the Screenshot bubble.": "Tampilan gelembung Tangkapan layar.",
+  "The face of the Power bubble.": "Tampilan gelembung Daya."
 }

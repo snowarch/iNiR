@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "Nothing on the calendar",
   "%1 tasks waiting": "%1 tasks waiting",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "The face of the Stay awake bubble; it fills while the screen is kept on.",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "The face of the Night light bubble; it fills while the screen is warmed.",
+  "The face of the Screenshot bubble.": "The face of the Screenshot bubble.",
+  "The face of the Power bubble.": "The face of the Power bubble."
 }

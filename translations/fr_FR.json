@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "Rien au calendrier",
   "%1 tasks waiting": "%1 tâches en attente",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "L'apparence de la bulle Rester éveillé ; elle se remplit tant que l'écran reste allumé.",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "L'apparence de la bulle Veilleuse ; elle se remplit tant que l'écran est réchauffé.",
+  "The face of the Screenshot bubble.": "L'apparence de la bulle Capture d'écran.",
+  "The face of the Power bubble.": "L'apparence de la bulle Alimentation."
 }

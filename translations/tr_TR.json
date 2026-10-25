@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "Takvimde bir şey yok",
   "%1 tasks waiting": "%1 görev bekliyor",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "Uyanık kal baloncuğunun görünümü; ekran açık tutulduğu sürece dolar.",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "Gece ışığı baloncuğunun görünümü; ekran ısıtıldığı sürece dolar.",
+  "The face of the Screenshot bubble.": "Ekran görüntüsü baloncuğunun görünümü.",
+  "The face of the Power bubble.": "Güç baloncuğunun görünümü."
 }

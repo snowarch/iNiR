@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "कैलेंडर में कुछ नहीं",
   "%1 tasks waiting": "%1 काम बाकी",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "जागते रहें बबल का रूप; स्क्रीन चालू रहने तक यह भरा रहता है।",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "नाइट लाइट बबल का रूप; स्क्रीन के गर्म रहने तक यह भरा रहता है।",
+  "The face of the Screenshot bubble.": "स्क्रीनशॉट बबल का रूप।",
+  "The face of the Power bubble.": "पावर बबल का रूप।"
 }

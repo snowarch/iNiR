@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "予定はありません",
   "%1 tasks waiting": "%1 件のタスクが待機中",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "スリープ防止バブルの見た目。画面をオンのままにしている間は塗りつぶされます。",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "夜間モードバブルの見た目。画面を暖色にしている間は塗りつぶされます。",
+  "The face of the Screenshot bubble.": "スクリーンショットバブルの見た目。",
+  "The face of the Power bubble.": "電源バブルの見た目。"
 }

@@ -9885,5 +9885,9 @@
   "Nothing on the calendar": "لا شيء في التقويم",
   "%1 tasks waiting": "%1 مهام بانتظارك",
   "Halo": "Halo",
-  "Ledger": "Ledger"
+  "Ledger": "Ledger",
+  "The face of the Stay awake bubble; it fills while the screen is kept on.": "مظهر فقاعة البقاء مستيقظًا؛ تمتلئ ما دامت الشاشة قيد التشغيل.",
+  "The face of the Night light bubble; it fills while the screen is warmed.": "مظهر فقاعة الإضاءة الليلية؛ تمتلئ ما دامت الشاشة دافئة.",
+  "The face of the Screenshot bubble.": "مظهر فقاعة لقطة الشاشة.",
+  "The face of the Power bubble.": "مظهر فقاعة الطاقة."
 }
