@@ -322,8 +322,6 @@ Item {
                 Accessible.name: root.engine.titleOf(tile.modelData)
                 onClicked: root.engine.select(tile.index)
                 onDoubleClicked: root.engine.apply(tile.modelData)
-                onContainsMouseChanged: if (tile.containsMouse) root.engine.hoverIndex = tile.index
-                    else if (root.engine.hoverIndex === tile.index) root.engine.hoverIndex = -1
                 WallpaperCard {
                     anchors.fill: parent
                     anchors.margins: Math.round(6 * root.d)

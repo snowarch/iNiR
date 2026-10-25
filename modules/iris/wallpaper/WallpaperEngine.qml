@@ -55,14 +55,14 @@ Item {
     // A new list (another source, folder, search or order) is dealt from its start; a list that only grew keeps its place.
     property int listGeneration: 0
     function restart(): void {
-        root.listGeneration += 1
         root.selectedIndex = 0
-        root.hoverIndex = -1
+        root.listGeneration += 1
     }
 
     property string query: ""
     property int selectedIndex: 0
-    property int hoverIndex: -1
+    // The list moved under the selection: same wallpaper, another index.
+    signal shifted(int delta)
     property bool previewArmed: false
     function select(index: int): void {
         if (root.count === 0) return
@@ -93,7 +93,17 @@ Item {
         folders.sort((a, b) => a.name.localeCompare(b.name))
         const same = (a, b) => a.length === b.length && a.every((entry, i) => entry.path === b[i].path)
         if (!same(folders, root.libraryFolders)) root.libraryFolders = folders
-        if (!same(files, root.libraryFiles)) root.libraryFiles = files
+        if (!same(files, root.libraryFiles)) {
+            // The one you are on stays yours when the folder changes under it (a download, a file added).
+            const held = root.source === "library" && root.previewArmed ? root.selectedKey : ""
+            root.libraryFiles = files
+            const at = held.length > 0 ? root.entries.findIndex(entry => entry.key === held) : -1
+            if (at >= 0 && at !== root.selectedIndex) {
+                const from = root.selectedIndex
+                root.selectedIndex = at
+                root.shifted(at - from)
+            }
+        }
         if (root.source === "library" && !root.previewArmed && root.query.length === 0) root.selectCurrent()
     }
     Connections {
@@ -327,7 +337,6 @@ Item {
         : root.source === "favorites" ? root.favoriteEntries : root.online ? root.webEntries : []
     readonly property int count: root.entries.length
     readonly property var selected: root.entries[root.selectedIndex] ?? null
-    readonly property var hovered: root.hoverIndex >= 0 ? (root.entries[root.hoverIndex] ?? null) : null
     function entryAt(index: int): var { return index >= 0 && index < root.count ? root.entries[index] : null }
     function isCurrent(entry: var): bool {
         return !!entry && entry.path.length > 0 && Wallpapers.isCurrentWallpaperPath(entry.path, root.selectionTarget, root.targetMonitor)
@@ -664,7 +673,7 @@ Item {
     }
     function selectCurrent(): void {
         const current = FileUtils.trimFileProtocol(String(root.currentPath ?? ""))
-        const index = root.entries.findIndex(entry => entry.path === current)
+        const index = (root.entries ?? []).findIndex(entry => entry.path === current)
         if (index >= 0) root.selectedIndex = index
     }
     function takeRequest(): void {

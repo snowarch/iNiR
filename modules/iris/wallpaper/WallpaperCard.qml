@@ -46,11 +46,14 @@ ClippingRectangle {
             sourceSize.width: 256
             sourceSize.height: 256
             mipmap: true
+            retainWhileLoading: false
         }
     }
+    // A card handed another wallpaper drops what it showed at once: no picture is retained while the next one loads.
     IrisImage {
         anchors.fill: parent
         visible: !root.local && source.toString().length > 0
+        retainWhileLoading: false
         source: root.local ? "" : String(root.entry?.preview ?? "")
         decodeWidth: Math.min(root.width, 320)
         decodeHeight: Math.min(root.height, 200)
@@ -58,12 +61,19 @@ ClippingRectangle {
         Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing } }
     }
     IrisImage {
-        id: sharpImage
         anchors.fill: parent
+        retainWhileLoading: false
         source: !root.sharp || !root.entry ? ""
             : root.local ? (root.video ? Wallpapers.stillUrlFor(root.entry.path) : "file://" + root.entry.path)
-            : root.full && !root.video ? String(root.entry.file ?? "")
             : String(root.entry.sample ?? "")
+        opacity: status === Image.Ready ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(240); easing.type: IrisStyle.feedbackEasing } }
+    }
+    // The original of a web still lands over its sample, so the upgrade never blinks back to the preview.
+    IrisImage {
+        anchors.fill: parent
+        retainWhileLoading: false
+        source: root.sharp && root.full && !root.local && !root.video && root.entry ? String(root.entry.file ?? "") : ""
         opacity: status === Image.Ready ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(240); easing.type: IrisStyle.feedbackEasing } }
     }

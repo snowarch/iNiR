@@ -56,6 +56,18 @@ Item {
         spring.to = Qt.binding(() => root.engine.selectedIndex)
     }
 
+    // The list moved under the wallpaper in front: the run moves with it instead of turning to it.
+    Connections {
+        target: root.engine
+        function onShifted(delta: int): void {
+            const at = spring.value + delta
+            spring.animate = false
+            spring.to = at
+            spring.animate = IrisStyle.motionEnabled
+            spring.to = Qt.binding(() => root.engine.selectedIndex)
+        }
+    }
+
     // A beat after it stops, so pictures going past don't each load their sharp copy.
     property bool restedFor: true
     Timer { id: rest; interval: 140; onTriggered: root.restedFor = true }
@@ -206,8 +218,6 @@ Item {
             HoverHandler {
                 id: tap
                 cursorShape: Qt.PointingHandCursor
-                onHoveredChanged: if (tap.hovered) root.engine.hoverIndex = slot.logical
-                    else if (root.engine.hoverIndex === slot.logical) root.engine.hoverIndex = -1
             }
             TapHandler {
                 id: press
