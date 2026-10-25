@@ -29,15 +29,25 @@ Singleton {
     // How long a display change waits for Keep before it goes back.
     readonly property int revertAfter: 15
 
+    // The config is read again only once niri reloads it (it watches the file itself) or the outputs change: every open
+    // started six python3 to read what had not moved. Cursor themes and devices come and go outside it.
+    property var stale: ({ input: true, layout: true, animations: true, "window-rules": true, outputs: true })
     function ensure(): void {
         if (!root.available) return
-        root.reload(["input", "layout", "animations", "window-rules", "outputs", "cursors"])
+        root.reload(Object.keys(root.stale).filter(part => root.stale[part]).concat(["cursors"]))
         if (!devices.running) devices.running = true
+    }
+    Connections {
+        target: NiriService
+        function onConfigLoadFinished(ok: bool): void {
+            if (ok) for (const part of ["input", "layout", "animations", "window-rules", "outputs"]) root.stale[part] = true
+        }
+        function onOutputsChanged(): void { root.stale.outputs = true }
     }
     function reload(parts: var): void {
         for (const part of parts) {
             const reader = ({ input: inputReader, layout: layoutReader, animations: animationsReader, "window-rules": rulesReader, outputs: outputsReader, cursors: cursorReader })[part]
-            if (reader && !reader.running) reader.running = true
+            if (reader && !reader.running) { reader.running = true; if (part in root.stale) root.stale[part] = false }
         }
     }
     function readPath(spec: var): string {
@@ -79,14 +89,16 @@ Singleton {
         writer.command = ["python3", root.script, "set", item.section, item.key, item.value]
         writer.running = true
     }
-    function parse(text: string, onValue: var): void {
+    function parse(text: string, onValue: var): bool {
         try {
             const parsed = JSON.parse(text)
-            if (parsed && parsed.error) { root.error = String(parsed.error); return }
+            if (parsed && parsed.error) { root.error = String(parsed.error); return false }
             onValue(parsed)
             root.revision++
+            return true
         } catch (e) {
             root.error = String(e)
+            return false
         }
     }
     function store(section: string, value: var): void {
@@ -263,7 +275,8 @@ Singleton {
         required property string section
         command: ["python3", root.script, "get-" + reader.section]
         stdout: StdioCollector {
-            onStreamFinished: root.parse(text, value => root.store(reader.section, value))
+            // A read that failed is read again on the next open.
+            onStreamFinished: if (!root.parse(text, value => root.store(reader.section, value))) root.stale[reader.section] = true
         }
     }
     Reader { id: inputReader; section: "input" }
@@ -285,7 +298,7 @@ Singleton {
         id: outputsReader
         command: ["python3", root.script, "outputs"]
         stdout: StdioCollector {
-            onStreamFinished: root.parse(text, value => { root.outputs = Array.isArray(value) ? value : [] })
+            onStreamFinished: if (!root.parse(text, value => { root.outputs = Array.isArray(value) ? value : [] })) root.stale.outputs = true
         }
     }
     Process {
