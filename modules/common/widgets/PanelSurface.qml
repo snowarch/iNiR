@@ -170,36 +170,42 @@ Item {
         : Appearance.colors.colLayer0Border
 
     // ── Backdrop de vidrio (aurora opt-in / island glass) debajo de la cara ──
-    GlassBackground {
+    // Every style's face is built only while that style is worn: hidden faces kept their wallpaper images and plates
+    // in every surface (two per desktop widget, 10-25).
+    Loader {
         anchors.fill: parent
-        visible: root._backdropActive
-        wallpaperBackdropEnabled: root._backdropActive
-        forceBackdrop: root._editorial && Appearance.editorial.glassActive
-        forceNeutralMaterial: root._editorial
-        // Transparent dialects must still be readable if the configured
-        // wallpaper disappears or has not decoded yet.
-        fallbackColor: root._editorial ? Appearance.editorial.paper : root._solidFill
-        overlayColor: root._editorial ? Appearance.editorial.paper : Appearance.colors.colLayer0Base
-        blurStrength: root._editorial ? Appearance.editorial.glassBlur : 1
-        saturationStrength: root._editorial ? 0.04 : Appearance.aurora.backdropSaturation
-        auroraTransparency: root._editorial
-            ? (root._editorialStackActive ? 1 : 1 - Appearance.editorial.glassOpacity)
-            : Appearance.aurora.popupTransparentize
-        radius: root._radius
-        screenX: root.backdropScreenX
-        screenY: root.backdropScreenY
-        screenWidth: root.backdropScreenWidth
-        screenHeight: root.backdropScreenHeight
+        active: root._backdropActive
+        sourceComponent: GlassBackground {
+            wallpaperBackdropEnabled: true
+            forceBackdrop: root._editorial && Appearance.editorial.glassActive
+            forceNeutralMaterial: root._editorial
+            // Transparent dialects must still be readable if the configured
+            // wallpaper disappears or has not decoded yet.
+            fallbackColor: root._editorial ? Appearance.editorial.paper : root._solidFill
+            overlayColor: root._editorial ? Appearance.editorial.paper : Appearance.colors.colLayer0Base
+            blurStrength: root._editorial ? Appearance.editorial.glassBlur : 1
+            saturationStrength: root._editorial ? 0.04 : Appearance.aurora.backdropSaturation
+            auroraTransparency: root._editorial
+                ? (root._editorialStackActive ? 1 : 1 - Appearance.editorial.glassOpacity)
+                : Appearance.aurora.popupTransparentize
+            radius: root._radius
+            screenX: root.backdropScreenX
+            screenY: root.backdropScreenY
+            screenWidth: root.backdropScreenWidth
+            screenHeight: root.backdropScreenHeight
+        }
     }
 
     // ── Cara ZZZ: placa con esquina cortada + hairline ──
-    ZzzPlate {
+    Loader {
         anchors.fill: parent
-        visible: root._zzz && root.zzzChamfer && !root.borderless
-        fillColor: root._fill
-        strokeColor: Appearance.zzz.hairline
-        strokeWidth: root.outlined ? Appearance.zzz.hairlineThick : 0
-        chamfer: Appearance.zzz.cutCorner
+        active: root._zzz && root.zzzChamfer && !root.borderless
+        sourceComponent: ZzzPlate {
+            fillColor: root._fill
+            strokeColor: Appearance.zzz.hairline
+            strokeWidth: root.outlined ? Appearance.zzz.hairlineThick : 0
+            chamfer: Appearance.zzz.cutCorner
+        }
     }
 
     // ── Cookie Shapes: one organic face; host geometry/input stay rectangular ──
@@ -213,24 +219,27 @@ Item {
         }
     }
 
-    RicelinSurface {
+    Loader {
         anchors.fill: parent
-        visible: root._island && !root.borderless
-        radius: root._radius
-        glassEnabled: root.wallpaperBackdrop
-        screen: root.QsWindow?.window?.screen ?? null
-        shadow: false
+        active: root._island && !root.borderless
+        sourceComponent: RicelinSurface {
+            radius: root._radius
+            glassEnabled: root.wallpaperBackdrop
+            screen: root.QsWindow?.window?.screen ?? null
+            shadow: false
+        }
     }
 
     // ── Regalia: fitted shell composition. The hard chassis contains a
     // recessed semantic field instead of recoloring the generic Material rectangle.
-    RegaliaPlate {
-        id: regaliaFace
+    Loader {
         anchors.fill: parent
-        visible: root._regalia && !root.borderless
-        radius: root._radius
-        fillColor: root._fill
-        elevated: root.elevation >= 2
+        active: root._regalia && !root.borderless
+        sourceComponent: RegaliaPlate {
+            radius: root._radius
+            fillColor: root._fill
+            elevated: root.elevation >= 2
+        }
     }
 
     // ── Cara resto (y zzz transparente): rectángulo redondeado ──
@@ -252,24 +261,28 @@ Item {
     // Las marcas L de esquina son vocabulario "console" (modo square); en
     // modo round (anime soft) son marcas cuadradas que chocan con la esquina
     // redondeada y se leen feas, así que se suprimen. kept in square.
-    ZzzTechFrame {
+    Loader {
         anchors.fill: parent
-        visible: root._zzz && root.techFrame
-        showCornerMarks: !Appearance.zzz.round
-        showLabels: root.frameLabel.length > 0 || root.frameIndex.length > 0
-        label: root.frameLabel
-        index: root.frameIndex
+        active: root._zzz && root.techFrame
+        sourceComponent: ZzzTechFrame {
+            showCornerMarks: !Appearance.zzz.round
+            showLabels: root.frameLabel.length > 0 || root.frameIndex.length > 0
+            label: root.frameLabel
+            index: root.frameIndex
+        }
     }
 
-    EditorialPaperStack {
+    Loader {
         anchors.fill: parent
-        visible: root._editorialStackActive
-        faceColor: root._backdropActive ? Appearance.editorial.paper : root._fill
-        radius: root._radius
-        materialOpacity: (root._backdropActive || root.editorialGlassMaterial && Appearance.editorial.glassActive)
-            ? Appearance.editorial.glassOpacity : 1
-        backingOpacity: (root._backdropActive || root.editorialGlassMaterial && Appearance.editorial.glassActive)
-            ? Appearance.editorial.glassBackingOpacity : 1
+        active: root._editorialStackActive
+        sourceComponent: EditorialPaperStack {
+            faceColor: root._backdropActive ? Appearance.editorial.paper : root._fill
+            radius: root._radius
+            materialOpacity: (root._backdropActive || root.editorialGlassMaterial && Appearance.editorial.glassActive)
+                ? Appearance.editorial.glassOpacity : 1
+            backingOpacity: (root._backdropActive || root.editorialGlassMaterial && Appearance.editorial.glassActive)
+                ? Appearance.editorial.glassBackingOpacity : 1
+        }
     }
 
     // Contenido encima de la cara.

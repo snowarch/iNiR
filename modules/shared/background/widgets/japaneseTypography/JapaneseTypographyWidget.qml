@@ -315,25 +315,31 @@ AbstractBackgroundWidget {
         return ColorUtils.applyAlpha(base, opacity);
     }
 
-    WidgetSurface {
-        visible: !root.irisFaced
-        irisPresentation: root.widgetIris
-        regionBrightness: root.regionBrightness
+    Loader {
         anchors.fill: parent
-        surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
-        surfaceOpacity: root.backgroundOpacity
-        surfaceBorderWidth: root.borderWidth
-        surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.widgetPlateColor
-        colorMode: root.colorMode
-        surfaceAccent: root.widgetAccent
-        surfaceFill: root.widgetPlateColor
-        surfaceUseBlur: root.effectiveBlur
-        screenX: root.x
-        screenY: root.y
-        screenWidth: root.scaledScreenWidth
-        screenHeight: root.scaledScreenHeight
-        shown: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
+        active: !root.irisFaced
+        sourceComponent: Item {
+            WidgetSurface {
+                visible: !root.irisFaced
+                irisPresentation: root.widgetIris
+                regionBrightness: root.regionBrightness
+                anchors.fill: parent
+                surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
+                surfaceOpacity: root.backgroundOpacity
+                surfaceBorderWidth: root.borderWidth
+                surfaceBorderOpacity: root.borderOpacity
+                surfaceColor: root.widgetPlateColor
+                colorMode: root.colorMode
+                surfaceAccent: root.widgetAccent
+                surfaceFill: root.widgetPlateColor
+                surfaceUseBlur: root.effectiveBlur
+                screenX: root.x
+                screenY: root.y
+                screenWidth: root.scaledScreenWidth
+                screenHeight: root.scaledScreenHeight
+                shown: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
+            }
+        }
     }
 
     Item {

@@ -51,157 +51,199 @@ AbstractBackgroundWidget {
         return ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) ? 366 : 365
     }
 
-    WidgetSurface {
-        irisPresentation: root.widgetIris
+    Loader {
         anchors.fill: parent
-        shown: !root.irisFaced && root.badgeStyle !== "seal" && !root.instrument
-        regionBrightness: root.regionBrightness
-        surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
-        surfaceOpacity: root.backgroundOpacity
-        surfaceBorderWidth: root.borderWidth
-        surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.widgetInk
-        colorMode: root.colorMode
-        surfaceAccent: root.widgetAccent
-        surfaceFill: root.widgetPlateColor
-        surfaceUseBlur: root.effectiveBlur
-        screenX: root.x; screenY: root.y
-        screenWidth: root.scaledScreenWidth; screenHeight: root.scaledScreenHeight
-    }
-
-    MaterialShape {
-        anchors.centerIn: parent
-        implicitSize: Math.min(root.width, root.height)
-        visible: !root.irisFaced && root.badgeStyle === "seal"
-        shape: MaterialShape.Shape.Cookie12Sided
-        color: ColorUtils.applyAlpha(root.widgetPlateColor, root.backgroundOpacity)
-        strokeColor: ColorUtils.applyAlpha(root.widgetAccent, root.borderOpacity)
-        strokeWidth: root.borderWidth
-    }
-
-    Rectangle {
-        visible: !root.irisFaced && root.badgeStyle === "ticket" && root.horizontal
-        x: 10 * root.scaleFactor
-        y: 10 * root.scaleFactor
-        width: root.width * 0.36
-        height: root.height - 20 * root.scaleFactor
-        radius: Math.min(root.widgetCardRadius, width / 2)
-        color: root.widgetSemanticContainer(root.widgetPrimaryRole)
-    }
-
-    Rectangle {
-        visible: !root.irisFaced && root.badgeStyle === "stacked" && root.showBackground
-        x: 16 * root.scaleFactor
-        y: 12 * root.scaleFactor
-        width: root.width - 32 * root.scaleFactor
-        height: 4 * root.scaleFactor
-        radius: height / 2
-        color: root.widgetAccentVisible
-    }
-
-    StyledText {
-        id: dayNumber
-        visible: !root.irisFaced && !root.instrument
-        x: root.horizontal ? 10 * root.scaleFactor : 0
-        y: root.horizontal ? (root.height - height) / 2 : root.height * (root.materialLarge ? 0.08 : 0.14)
-        width: root.horizontal ? root.width * 0.36 : root.width
-        height: root.height * (root.materialLarge ? 0.4 : 0.45)
-        text: Qt.locale().toString(root.today, "d")
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        color: root.horizontal ? root.widgetSemanticOnContainer(root.widgetPrimaryRole)
-            : root.widgetAccentVisible
-        font.family: root.widgetNumbersFamily
-        font.pixelSize: Math.min(height, (root.materialLarge ? 170 : 80) * root.scaleFactor)
-        font.weight: root.widgetTitleWeight
-        fontSizeMode: Text.Fit
-        minimumPixelSize: 16
-    }
-
-    ColumnLayout {
-        visible: !root.irisFaced && !root.instrument
-        x: root.horizontal ? root.width * 0.36 + 24 * root.scaleFactor : root.width * 0.14
-        y: root.horizontal ? (root.height - implicitHeight) / 2 : root.height * (root.materialLarge ? 0.49 : 0.59)
-        width: root.horizontal ? root.width - x - 14 * root.scaleFactor : root.width * 0.72
-        spacing: 2 * root.scaleFactor
-
-        StyledText {
-            Layout.fillWidth: true
-            visible: root.showWeekday
-            text: Translation.locale.toString(root.today, "dddd")
-            horizontalAlignment: root.horizontal ? Text.AlignLeft : Text.AlignHCenter
-            color: root.widgetInk
-            font.pixelSize: Appearance.font.pixelSize.small * root.scaleFactor
-            font.weight: root.widgetLabelWeight
-            elide: Text.ElideRight
+        active: !root.irisFaced
+        sourceComponent: Item {
+            WidgetSurface {
+                irisPresentation: root.widgetIris
+                anchors.fill: parent
+                shown: !root.irisFaced && root.badgeStyle !== "seal" && !root.instrument
+                regionBrightness: root.regionBrightness
+                surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
+                surfaceOpacity: root.backgroundOpacity
+                surfaceBorderWidth: root.borderWidth
+                surfaceBorderOpacity: root.borderOpacity
+                surfaceColor: root.widgetInk
+                colorMode: root.colorMode
+                surfaceAccent: root.widgetAccent
+                surfaceFill: root.widgetPlateColor
+                surfaceUseBlur: root.effectiveBlur
+                screenX: root.x; screenY: root.y
+                screenWidth: root.scaledScreenWidth; screenHeight: root.scaledScreenHeight
+            }
         }
-        StyledText {
-            Layout.fillWidth: true
-            text: Translation.locale.toString(root.today, root.showYear ? "MMM yyyy" : "MMMM")
-            horizontalAlignment: root.horizontal ? Text.AlignLeft : Text.AlignHCenter
-            color: root.widgetInkMuted
-            font.pixelSize: Appearance.font.pixelSize.smallest * root.scaleFactor
-            elide: Text.ElideRight
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: !root.irisFaced
+        sourceComponent: Item {
+            MaterialShape {
+                anchors.centerIn: parent
+                implicitSize: Math.min(root.width, root.height)
+                visible: !root.irisFaced && root.badgeStyle === "seal"
+                shape: MaterialShape.Shape.Cookie12Sided
+                color: ColorUtils.applyAlpha(root.widgetPlateColor, root.backgroundOpacity)
+                strokeColor: ColorUtils.applyAlpha(root.widgetAccent, root.borderOpacity)
+                strokeWidth: root.borderWidth
+            }
+        }
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: !root.irisFaced
+        sourceComponent: Item {
+            Rectangle {
+                visible: !root.irisFaced && root.badgeStyle === "ticket" && root.horizontal
+                x: 10 * root.scaleFactor
+                y: 10 * root.scaleFactor
+                width: root.width * 0.36
+                height: root.height - 20 * root.scaleFactor
+                radius: Math.min(root.widgetCardRadius, width / 2)
+                color: root.widgetSemanticContainer(root.widgetPrimaryRole)
+            }
+        }
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: !root.irisFaced
+        sourceComponent: Item {
+            Rectangle {
+                visible: !root.irisFaced && root.badgeStyle === "stacked" && root.showBackground
+                x: 16 * root.scaleFactor
+                y: 12 * root.scaleFactor
+                width: root.width - 32 * root.scaleFactor
+                height: 4 * root.scaleFactor
+                radius: height / 2
+                color: root.widgetAccentVisible
+            }
+        }
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: !root.irisFaced
+        sourceComponent: Item {
+            StyledText {
+                id: dayNumber
+                visible: !root.irisFaced && !root.instrument
+                x: root.horizontal ? 10 * root.scaleFactor : 0
+                y: root.horizontal ? (root.height - height) / 2 : root.height * (root.materialLarge ? 0.08 : 0.14)
+                width: root.horizontal ? root.width * 0.36 : root.width
+                height: root.height * (root.materialLarge ? 0.4 : 0.45)
+                text: Qt.locale().toString(root.today, "d")
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                color: root.horizontal ? root.widgetSemanticOnContainer(root.widgetPrimaryRole)
+                    : root.widgetAccentVisible
+                font.family: root.widgetNumbersFamily
+                font.pixelSize: Math.min(height, (root.materialLarge ? 170 : 80) * root.scaleFactor)
+                font.weight: root.widgetTitleWeight
+                fontSizeMode: Text.Fit
+                minimumPixelSize: 16
+            }
+        }
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: !root.irisFaced
+        sourceComponent: Item {
+            ColumnLayout {
+                visible: !root.irisFaced && !root.instrument
+                x: root.horizontal ? root.width * 0.36 + 24 * root.scaleFactor : root.width * 0.14
+                y: root.horizontal ? (root.height - implicitHeight) / 2 : root.height * (root.materialLarge ? 0.49 : 0.59)
+                width: root.horizontal ? root.width - x - 14 * root.scaleFactor : root.width * 0.72
+                spacing: 2 * root.scaleFactor
+
+                StyledText {
+                    Layout.fillWidth: true
+                    visible: root.showWeekday
+                    text: Translation.locale.toString(root.today, "dddd")
+                    horizontalAlignment: root.horizontal ? Text.AlignLeft : Text.AlignHCenter
+                    color: root.widgetInk
+                    font.pixelSize: Appearance.font.pixelSize.small * root.scaleFactor
+                    font.weight: root.widgetLabelWeight
+                    elide: Text.ElideRight
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.locale.toString(root.today, root.showYear ? "MMM yyyy" : "MMMM")
+                    horizontalAlignment: root.horizontal ? Text.AlignLeft : Text.AlignHCenter
+                    color: root.widgetInkMuted
+                    font.pixelSize: Appearance.font.pixelSize.smallest * root.scaleFactor
+                    elide: Text.ElideRight
+                }
+            }
         }
     }
 
     // Large adds the week the day sits in (the region's first weekday), today in the accent's fill, and where the
     // day falls in the year.
-    ColumnLayout {
-        visible: !root.irisFaced && !root.instrument && root.materialLarge
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.margins: Math.round(16 * root.scaleFactor)
-        spacing: Math.round(10 * root.scaleFactor)
+    Loader {
+        anchors.fill: parent
+        active: !root.irisFaced
+        sourceComponent: Item {
+            ColumnLayout {
+                visible: !root.irisFaced && !root.instrument && root.materialLarge
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: Math.round(16 * root.scaleFactor)
+                spacing: Math.round(10 * root.scaleFactor)
 
-        StyledText {
-            Layout.alignment: Qt.AlignHCenter
-            visible: root.showOrdinal
-            text: Translation.tr("Day") + " " + root.dayOfYear + " / " + root.daysInYear
-            color: root.widgetInkMuted
-            font.family: root.widgetNumbersFamily
-            font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
-            font.features: ({ "tnum": 1 })
-        }
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: root.showOrdinal
+                    text: Translation.tr("Day") + " " + root.dayOfYear + " / " + root.daysInYear
+                    color: root.widgetInkMuted
+                    font.family: root.widgetNumbersFamily
+                    font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                    font.features: ({ "tnum": 1 })
+                }
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: Math.round(4 * root.scaleFactor)
-            Repeater {
-                model: root.materialLarge ? 7 : 0
-                Rectangle {
-                    id: weekDay
-                    required property int index
-                    readonly property int lead: (root.today.getDay() - Qt.locale().firstDayOfWeek + 7) % 7
-                    readonly property date day: new Date(root.today.getFullYear(), root.today.getMonth(),
-                        root.today.getDate() - weekDay.lead + weekDay.index)
-                    readonly property bool isToday: weekDay.index === weekDay.lead
-                    readonly property color dayInk: weekDay.isToday ? root.widgetSemanticOnColor(root.widgetPrimaryRole) : root.widgetInk
+                RowLayout {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
-                    implicitHeight: dayColumn.implicitHeight + Math.round(14 * root.scaleFactor)
-                    radius: Math.min(root.widgetControlRadius, width / 2)
-                    color: weekDay.isToday ? root.widgetSemanticColor(root.widgetPrimaryRole) : "transparent"
-                    ColumnLayout {
-                        id: dayColumn
-                        anchors.centerIn: parent
-                        spacing: Math.round(2 * root.scaleFactor)
-                        StyledText {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: Translation.locale.standaloneDayName(weekDay.day.getDay(), Locale.NarrowFormat).toUpperCase()
-                            color: weekDay.isToday ? weekDay.dayInk : root.widgetInkMuted
-                            font.pixelSize: Math.round(Appearance.font.pixelSize.smallest * root.scaleFactor)
-                            font.weight: Font.Medium
-                        }
-                        StyledText {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: String(weekDay.day.getDate())
-                            color: weekDay.dayInk
-                            font.family: root.widgetNumbersFamily
-                            font.pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
-                            font.weight: weekDay.isToday ? Font.Bold : Font.Medium
-                            font.features: ({ "tnum": 1 })
+                    spacing: Math.round(4 * root.scaleFactor)
+                    Repeater {
+                        model: root.materialLarge ? 7 : 0
+                        Rectangle {
+                            id: weekDay
+                            required property int index
+                            readonly property int lead: (root.today.getDay() - Qt.locale().firstDayOfWeek + 7) % 7
+                            readonly property date day: new Date(root.today.getFullYear(), root.today.getMonth(),
+                                root.today.getDate() - weekDay.lead + weekDay.index)
+                            readonly property bool isToday: weekDay.index === weekDay.lead
+                            readonly property color dayInk: weekDay.isToday ? root.widgetSemanticOnColor(root.widgetPrimaryRole) : root.widgetInk
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            implicitHeight: dayColumn.implicitHeight + Math.round(14 * root.scaleFactor)
+                            radius: Math.min(root.widgetControlRadius, width / 2)
+                            color: weekDay.isToday ? root.widgetSemanticColor(root.widgetPrimaryRole) : "transparent"
+                            ColumnLayout {
+                                id: dayColumn
+                                anchors.centerIn: parent
+                                spacing: Math.round(2 * root.scaleFactor)
+                                StyledText {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: Translation.locale.standaloneDayName(weekDay.day.getDay(), Locale.NarrowFormat).toUpperCase()
+                                    color: weekDay.isToday ? weekDay.dayInk : root.widgetInkMuted
+                                    font.pixelSize: Math.round(Appearance.font.pixelSize.smallest * root.scaleFactor)
+                                    font.weight: Font.Medium
+                                }
+                                StyledText {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: String(weekDay.day.getDate())
+                                    color: weekDay.dayInk
+                                    font.family: root.widgetNumbersFamily
+                                    font.pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
+                                    font.weight: weekDay.isToday ? Font.Bold : Font.Medium
+                                    font.features: ({ "tnum": 1 })
+                                }
+                            }
                         }
                     }
                 }
@@ -211,146 +253,152 @@ AbstractBackgroundWidget {
 
     // Instrument: a borderless calendar index/almanac. The date is treated as
     // an address in the year, not another progress gauge or clock face.
-    Item {
+    Loader {
         anchors.fill: parent
-        visible: !root.irisFaced && opacity > 0
-        opacity: root.instrument ? 1 : 0
-        enabled: root.instrument
-        Behavior on opacity {
-            enabled: root.animationsActive
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-        }
-
-        // small sets the day over its month: side by side the month ran past the card
-        GridLayout {
-            anchors.fill: parent
-            anchors.margins: Math.round(12 * root.scaleFactor)
-            columns: root.materialSmall ? 1 : 2
-            columnSpacing: Math.round(12 * root.scaleFactor)
-            rowSpacing: Math.round(6 * root.scaleFactor)
-
+        active: !root.irisFaced
+        sourceComponent: Item {
             Item {
-                id: dateIndexHero
-                Layout.preferredWidth: root.materialSmall ? -1 : Math.max(Math.round(74 * root.scaleFactor), parent.width * 0.42)
-                Layout.fillWidth: root.materialSmall
-                Layout.preferredHeight: root.materialSmall ? parent.height * 0.5 : -1
-                Layout.fillHeight: !root.materialSmall
+                anchors.fill: parent
+                visible: !root.irisFaced && opacity > 0
+                opacity: root.instrument ? 1 : 0
+                enabled: root.instrument
+                Behavior on opacity {
+                    enabled: root.animationsActive
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
 
-                // Two registration corners frame the hero without becoming a card.
-                Item {
-                    visible: root.instrumentMarks
+                // small sets the day over its month: side by side the month ran past the card
+                GridLayout {
                     anchors.fill: parent
-                    opacity: 0.9
+                    anchors.margins: Math.round(12 * root.scaleFactor)
+                    columns: root.materialSmall ? 1 : 2
+                    columnSpacing: Math.round(12 * root.scaleFactor)
+                    rowSpacing: Math.round(6 * root.scaleFactor)
 
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        width: Math.round(18 * root.scaleFactor)
-                        height: Math.max(2, Math.round(2 * root.scaleFactor))
-                        color: root.widgetAccentVisible
-                    }
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        width: Math.max(2, Math.round(2 * root.scaleFactor))
-                        height: Math.round(18 * root.scaleFactor)
-                        color: root.widgetAccentVisible
-                    }
-                    Rectangle {
-                        anchors.right: parent.right
-                        anchors.bottom: parent.bottom
-                        width: Math.round(18 * root.scaleFactor)
-                        height: Math.max(2, Math.round(2 * root.scaleFactor))
-                        color: root.widgetAccentVisible
-                    }
-                    Rectangle {
-                        anchors.right: parent.right
-                        anchors.bottom: parent.bottom
-                        width: Math.max(2, Math.round(2 * root.scaleFactor))
-                        height: Math.round(18 * root.scaleFactor)
-                        color: root.widgetAccentVisible
-                    }
-                }
+                    Item {
+                        id: dateIndexHero
+                        Layout.preferredWidth: root.materialSmall ? -1 : Math.max(Math.round(74 * root.scaleFactor), parent.width * 0.42)
+                        Layout.fillWidth: root.materialSmall
+                        Layout.preferredHeight: root.materialSmall ? parent.height * 0.5 : -1
+                        Layout.fillHeight: !root.materialSmall
 
-                StyledText {
-                    anchors.centerIn: parent
-                    width: parent.width * 0.86
-                    height: parent.height * 0.8
-                    text: Qt.locale().toString(root.today, "dd")
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    color: root.widgetInk
-                    font.family: root.widgetNumbersFamily
-                    font.pixelSize: Math.round(parent.height * 0.7)
-                    font.weight: Font.Bold
-                    font.features: ({ "tnum": 1 })
-                    fontSizeMode: Text.Fit
-                    minimumPixelSize: 24
-                }
-            }
+                        // Two registration corners frame the hero without becoming a card.
+                        Item {
+                            visible: root.instrumentMarks
+                            anchors.fill: parent
+                            opacity: 0.9
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                spacing: Math.round(2 * root.scaleFactor)
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                width: Math.round(18 * root.scaleFactor)
+                                height: Math.max(2, Math.round(2 * root.scaleFactor))
+                                color: root.widgetAccentVisible
+                            }
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                width: Math.max(2, Math.round(2 * root.scaleFactor))
+                                height: Math.round(18 * root.scaleFactor)
+                                color: root.widgetAccentVisible
+                            }
+                            Rectangle {
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                width: Math.round(18 * root.scaleFactor)
+                                height: Math.max(2, Math.round(2 * root.scaleFactor))
+                                color: root.widgetAccentVisible
+                            }
+                            Rectangle {
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                width: Math.max(2, Math.round(2 * root.scaleFactor))
+                                height: Math.round(18 * root.scaleFactor)
+                                color: root.widgetAccentVisible
+                            }
+                        }
 
-                StyledText {
-                    Layout.fillWidth: true
-                    visible: root.showWeekday
-                    text: root.widgetCase(Translation.locale.toString(root.today, "dddd"))
-                    elide: Text.ElideRight
-                    color: root.widgetAccentVisible
-                    font {
-                        family: root.widgetBodyFamily
-                        pixelSize: Math.max(9, Math.round(10 * root.scaleFactor))
-                        weight: Font.DemiBold
-                        letterSpacing: root.widgetIris ? 0 : Math.round(1.5 * root.scaleFactor)
-                        capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
-                    }
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    verticalAlignment: Text.AlignVCenter
-                    text: root.widgetCase(Translation.locale.toString(root.today, "MMMM"))
-                    elide: Text.ElideRight
-                    color: root.widgetInk
-                    fontSizeMode: Text.Fit
-                    minimumPixelSize: Math.round(12 * root.scaleFactor)
-                    font {
-                        family: root.widgetTitleFamily
-                        pixelSize: Math.round(30 * root.scaleFactor)
-                        weight: root.widgetTitleWeight
-                        letterSpacing: -0.4
-                    }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Math.round(6 * root.scaleFactor)
-
-                    StyledText {
-                        visible: root.showYear
-                        text: String(root.today.getFullYear())
-                        color: root.widgetInkMuted
-                        font.family: root.widgetNumbersFamily
-                        font.pixelSize: Math.round(11 * root.scaleFactor)
-                        font.weight: Font.DemiBold
+                        StyledText {
+                            anchors.centerIn: parent
+                            width: parent.width * 0.86
+                            height: parent.height * 0.8
+                            text: Qt.locale().toString(root.today, "dd")
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            color: root.widgetInk
+                            font.family: root.widgetNumbersFamily
+                            font.pixelSize: Math.round(parent.height * 0.7)
+                            font.weight: Font.Bold
+                            font.features: ({ "tnum": 1 })
+                            fontSizeMode: Text.Fit
+                            minimumPixelSize: 24
+                        }
                     }
 
-                    Item { Layout.fillWidth: true }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        spacing: Math.round(2 * root.scaleFactor)
 
-                    StyledText {
-                        visible: root.showOrdinal
-                        text: root.materialSmall ? root.dayOfYear + "/" + root.daysInYear : Translation.tr("Day") + " " + root.dayOfYear + " / " + root.daysInYear
-                        color: root.widgetInkMuted
-                        font {
-                            family: root.widgetBodyFamily
-                            pixelSize: Math.max(8, Math.round(9 * root.scaleFactor))
-                            weight: Font.DemiBold
-                            letterSpacing: root.widgetIris ? 0 : Math.round(1.0 * root.scaleFactor)
-                            capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                        StyledText {
+                            Layout.fillWidth: true
+                            visible: root.showWeekday
+                            text: root.widgetCase(Translation.locale.toString(root.today, "dddd"))
+                            elide: Text.ElideRight
+                            color: root.widgetAccentVisible
+                            font {
+                                family: root.widgetBodyFamily
+                                pixelSize: Math.max(9, Math.round(10 * root.scaleFactor))
+                                weight: Font.DemiBold
+                                letterSpacing: root.widgetIris ? 0 : Math.round(1.5 * root.scaleFactor)
+                                capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                            }
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            verticalAlignment: Text.AlignVCenter
+                            text: root.widgetCase(Translation.locale.toString(root.today, "MMMM"))
+                            elide: Text.ElideRight
+                            color: root.widgetInk
+                            fontSizeMode: Text.Fit
+                            minimumPixelSize: Math.round(12 * root.scaleFactor)
+                            font {
+                                family: root.widgetTitleFamily
+                                pixelSize: Math.round(30 * root.scaleFactor)
+                                weight: root.widgetTitleWeight
+                                letterSpacing: -0.4
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Math.round(6 * root.scaleFactor)
+
+                            StyledText {
+                                visible: root.showYear
+                                text: String(root.today.getFullYear())
+                                color: root.widgetInkMuted
+                                font.family: root.widgetNumbersFamily
+                                font.pixelSize: Math.round(11 * root.scaleFactor)
+                                font.weight: Font.DemiBold
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            StyledText {
+                                visible: root.showOrdinal
+                                text: root.materialSmall ? root.dayOfYear + "/" + root.daysInYear : Translation.tr("Day") + " " + root.dayOfYear + " / " + root.daysInYear
+                                color: root.widgetInkMuted
+                                font {
+                                    family: root.widgetBodyFamily
+                                    pixelSize: Math.max(8, Math.round(9 * root.scaleFactor))
+                                    weight: Font.DemiBold
+                                    letterSpacing: root.widgetIris ? 0 : Math.round(1.0 * root.scaleFactor)
+                                    capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                                }
+                            }
                         }
                     }
                 }

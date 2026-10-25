@@ -85,25 +85,31 @@ AbstractBackgroundWidget {
     }
     readonly property string onTodayText: root.spanText(Math.round((root.nowAt - root.bootAt) * 86400))
 
-    WidgetSurface {
-        irisPresentation: root.widgetIris
-        regionBrightness: root.regionBrightness
+    Loader {
         anchors.fill: parent
-        shown: !root.irisFaced && !root.instrument
-            && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
-        surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
-        surfaceOpacity: root.backgroundOpacity
-        surfaceBorderWidth: root.borderWidth
-        surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.surfaceInk
-        colorMode: root.colorMode
-        surfaceAccent: root.widgetAccent3
-        surfaceFill: root.widgetPlateColor
-        surfaceUseBlur: root.effectiveBlur
-        screenX: root.x
-        screenY: root.y
-        screenWidth: root.scaledScreenWidth
-        screenHeight: root.scaledScreenHeight
+        active: !root.irisFaced
+        sourceComponent: Item {
+            WidgetSurface {
+                irisPresentation: root.widgetIris
+                regionBrightness: root.regionBrightness
+                anchors.fill: parent
+                shown: !root.irisFaced && !root.instrument
+                    && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
+                surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
+                surfaceOpacity: root.backgroundOpacity
+                surfaceBorderWidth: root.borderWidth
+                surfaceBorderOpacity: root.borderOpacity
+                surfaceColor: root.surfaceInk
+                colorMode: root.colorMode
+                surfaceAccent: root.widgetAccent3
+                surfaceFill: root.widgetPlateColor
+                surfaceUseBlur: root.effectiveBlur
+                screenX: root.x
+                screenY: root.y
+                screenWidth: root.scaledScreenWidth
+                screenHeight: root.scaledScreenHeight
+            }
+        }
     }
 
     // ── Row style (default) ──
@@ -117,11 +123,17 @@ AbstractBackgroundWidget {
             : hours > 0 ? [{ value: hours, unit: Translation.tr("h") }, { value: minutes, unit: Translation.tr("min") }]
             : [{ value: minutes, unit: Translation.tr("min") }]
     }
-    UptimeDay {
+    Loader {
         anchors.fill: parent
-        visible: !root.irisFaced && !root.instrument && root.materialSized && !root.materialSmall
-        widget: root
-        large: root.materialLarge
+        active: !root.irisFaced
+        sourceComponent: Item {
+            UptimeDay {
+                anchors.fill: parent
+                visible: !root.irisFaced && !root.instrument && root.materialSized && !root.materialSmall
+                widget: root
+                large: root.materialLarge
+            }
+        }
     }
     ColumnLayout {
         visible: !root.irisFaced && !root.instrument && root.materialSmall
@@ -184,43 +196,49 @@ AbstractBackgroundWidget {
         }
     }
 
-    RowLayout {
-        opacity: root.instrument ? 0 : 1
-        visible: !root.irisFaced && !root.materialSized && opacity > 0
-        enabled: !root.instrument
-        Behavior on opacity {
-            enabled: root.animationsActive
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-        }
+    Loader {
         anchors.fill: parent
-        anchors.margins: Math.round(14 * root.scaleFactor)
-        spacing: Math.round(12 * root.scaleFactor)
+        active: !root.irisFaced
+        sourceComponent: Item {
+            RowLayout {
+                opacity: root.instrument ? 0 : 1
+                visible: !root.irisFaced && !root.materialSized && opacity > 0
+                enabled: !root.instrument
+                Behavior on opacity {
+                    enabled: root.animationsActive
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
+                anchors.fill: parent
+                anchors.margins: Math.round(14 * root.scaleFactor)
+                spacing: Math.round(12 * root.scaleFactor)
 
-        MaterialSymbol {
-            text: "avg_pace"
-            iconSize: Math.round(38 * root.scaleFactor)
-            color: root.widgetAccent3Visible
-        }
+                MaterialSymbol {
+                    text: "avg_pace"
+                    iconSize: Math.round(38 * root.scaleFactor)
+                    color: root.widgetAccent3Visible
+                }
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Math.round(2 * root.scaleFactor)
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: Math.round(2 * root.scaleFactor)
 
-            StyledText {
-                text: Translation.tr("System uptime")
-                color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
-                font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
-            }
-            StyledText {
-                Layout.fillWidth: true
-                text: DateTime.uptime || "--"
-                color: root.surfaceInk
-                elide: Text.ElideRight
-                wrapMode: Text.NoWrap
-                font {
-                    family: root.widgetNumbersFamily
-                    pixelSize: Math.round(Appearance.font.pixelSize.large * root.scaleFactor)
-                    weight: Font.DemiBold
+                    StyledText {
+                        text: Translation.tr("System uptime")
+                        color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
+                        font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: DateTime.uptime || "--"
+                        color: root.surfaceInk
+                        elide: Text.ElideRight
+                        wrapMode: Text.NoWrap
+                        font {
+                            family: root.widgetNumbersFamily
+                            pixelSize: Math.round(Appearance.font.pixelSize.large * root.scaleFactor)
+                            weight: Font.DemiBold
+                        }
+                    }
                 }
             }
         }
@@ -229,167 +247,173 @@ AbstractBackgroundWidget {
     // ── Instrument: session chronometer ───────────────────────
     // Uptime has no finish line. The elapsed duration is the instrument; the
     // session day and boot time are annotations, not competing hero values.
-    Item {
-        id: instrumentArea
+    Loader {
         anchors.fill: parent
-        anchors.margins: Math.round(13 * root.scaleFactor)
-        opacity: root.instrument ? 1 : 0
-        visible: !root.irisFaced && opacity > 0
-        enabled: root.instrument
+        active: !root.irisFaced
+        sourceComponent: Item {
+            Item {
+                id: instrumentArea
+                anchors.fill: parent
+                anchors.margins: Math.round(13 * root.scaleFactor)
+                opacity: root.instrument ? 1 : 0
+                visible: !root.irisFaced && opacity > 0
+                enabled: root.instrument
 
-        Behavior on opacity {
-            enabled: root.animationsActive
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-        }
+                Behavior on opacity {
+                    enabled: root.animationsActive
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
 
-        // small stacks the reading over its notes; beside it they left the figure 40 px
-        GridLayout {
-            id: instrumentReading
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: root.materialLarge ? implicitHeight : parent.height
-            columns: root.materialSmall ? 1 : 3
-            columnSpacing: Math.round(12 * root.scaleFactor)
-            rowSpacing: Math.round(8 * root.scaleFactor)
+                // small stacks the reading over its notes; beside it they left the figure 40 px
+                GridLayout {
+                    id: instrumentReading
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    height: root.materialLarge ? implicitHeight : parent.height
+                    columns: root.materialSmall ? 1 : 3
+                    columnSpacing: Math.round(12 * root.scaleFactor)
+                    rowSpacing: Math.round(8 * root.scaleFactor)
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                spacing: Math.round(6 * root.scaleFactor)
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Math.round(6 * root.scaleFactor)
-
-                    InstrumentLabel {
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        text: root.materialSmall ? Translation.tr("Uptime") : Translation.tr("System / Uptime")
-                        color: root.widgetAccentVisible
-                        scaleFactor: root.scaleFactor
-                        strong: true
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: Math.round(6 * root.scaleFactor)
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Math.round(6 * root.scaleFactor)
+
+                            InstrumentLabel {
+                                Layout.fillWidth: true
+                                text: root.materialSmall ? Translation.tr("Uptime") : Translation.tr("System / Uptime")
+                                color: root.widgetAccentVisible
+                                scaleFactor: root.scaleFactor
+                                strong: true
+                            }
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            verticalAlignment: Text.AlignVCenter
+                            text: root.materialSmall ? root.materialParts.map(part => part.value + part.unit).join(" ") : DateTime.uptime || "--"
+                            color: root.widgetInk
+                            elide: Text.ElideRight
+                            fontSizeMode: Text.Fit
+                            minimumPixelSize: Math.max(20, Math.round(20 * root.scaleFactor))
+                            font.family: root.widgetNumbersFamily
+                            font.pixelSize: Math.round(42 * root.scaleFactor)
+                            font.weight: root.widgetEditorial ? Appearance.editorial.titleWeight : Font.Bold
+                            font.features: ({ "tnum": 1 })
+                            font.letterSpacing: -1
+                        }
                     }
-                }
 
-                StyledText {
-                    Layout.fillWidth: true
-                    verticalAlignment: Text.AlignVCenter
-                    text: root.materialSmall ? root.materialParts.map(part => part.value + part.unit).join(" ") : DateTime.uptime || "--"
-                    color: root.widgetInk
-                    elide: Text.ElideRight
-                    fontSizeMode: Text.Fit
-                    minimumPixelSize: Math.max(20, Math.round(20 * root.scaleFactor))
-                    font.family: root.widgetNumbersFamily
-                    font.pixelSize: Math.round(42 * root.scaleFactor)
-                    font.weight: root.widgetEditorial ? Appearance.editorial.titleWeight : Font.Bold
-                    font.features: ({ "tnum": 1 })
-                    font.letterSpacing: -1
-                }
-            }
-
-            Rectangle {
-                visible: root.showInstrumentDetails && !root.materialSmall
-                Layout.alignment: Qt.AlignVCenter
-                Layout.preferredHeight: Math.round(58 * root.scaleFactor)
-                Layout.preferredWidth: Math.max(1, Math.round(root.scaleFactor))
-                color: ColorUtils.applyAlpha(root.widgetInk, 0.16)
-            }
-
-            ColumnLayout {
-                visible: root.showInstrumentDetails
-                Layout.preferredWidth: Math.max(84, Math.round(96 * root.scaleFactor))
-                Layout.fillWidth: root.materialSmall
-                Layout.alignment: Qt.AlignVCenter
-                spacing: Math.round(5 * root.scaleFactor)
-
-                Item { Layout.fillHeight: true; visible: !root.materialSmall }
-
-                StyledText {
-                    visible: root.showBreakdown
-                    text: Translation.tr("Day") + " " + root.sessionDay
-                    color: root.widgetAccent3Visible
-                    font.family: root.widgetNumbersFamily
-                    font.pixelSize: Math.max(15, Math.round(18 * root.scaleFactor))
-                    font.weight: Font.Bold
-                    font.features: ({ "tnum": 1 })
-                }
-
-                InstrumentLabel {
-                    visible: root.showSince
-                    Layout.fillWidth: true
-                    text: Translation.tr("Since") + " " + root.bootLabel
-                    color: root.widgetInkMuted
-                    scaleFactor: root.scaleFactor
-                }
-
-                Item { Layout.fillHeight: true; visible: !root.materialSmall }
-            }
-        }
-
-        // Large: the day in 24 ticks, the hours it has been on lit, and the session's facts under them.
-        ColumnLayout {
-            visible: root.materialLarge
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            spacing: Math.round(8 * root.scaleFactor)
-            Row {
-                id: dayTicks
-                Layout.fillWidth: true
-                spacing: Math.round(3 * root.scaleFactor)
-                readonly property real tick: (width - spacing * 23) / 24
-                Repeater {
-                    model: 24
                     Rectangle {
-                        required property int index
-                        readonly property bool on: (index + 1) / 24 > root.sessionFrom && index / 24 < root.sessionTo
-                        width: dayTicks.tick
-                        height: Math.round(22 * root.scaleFactor)
-                        color: on ? root.widgetAccentVisible : ColorUtils.applyAlpha(root.widgetInk, 0.14)
+                        visible: root.showInstrumentDetails && !root.materialSmall
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredHeight: Math.round(58 * root.scaleFactor)
+                        Layout.preferredWidth: Math.max(1, Math.round(root.scaleFactor))
+                        color: ColorUtils.applyAlpha(root.widgetInk, 0.16)
+                    }
+
+                    ColumnLayout {
+                        visible: root.showInstrumentDetails
+                        Layout.preferredWidth: Math.max(84, Math.round(96 * root.scaleFactor))
+                        Layout.fillWidth: root.materialSmall
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: Math.round(5 * root.scaleFactor)
+
+                        Item { Layout.fillHeight: true; visible: !root.materialSmall }
+
+                        StyledText {
+                            visible: root.showBreakdown
+                            text: Translation.tr("Day") + " " + root.sessionDay
+                            color: root.widgetAccent3Visible
+                            font.family: root.widgetNumbersFamily
+                            font.pixelSize: Math.max(15, Math.round(18 * root.scaleFactor))
+                            font.weight: Font.Bold
+                            font.features: ({ "tnum": 1 })
+                        }
+
+                        InstrumentLabel {
+                            visible: root.showSince
+                            Layout.fillWidth: true
+                            text: Translation.tr("Since") + " " + root.bootLabel
+                            color: root.widgetInkMuted
+                            scaleFactor: root.scaleFactor
+                        }
+
+                        Item { Layout.fillHeight: true; visible: !root.materialSmall }
                     }
                 }
-            }
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.topMargin: -Math.round(4 * root.scaleFactor)
-                Repeater {
-                    model: root.sessionMarks
-                    InstrumentLabel {
-                        required property var modelData
-                        required property int index
+
+                // Large: the day in 24 ticks, the hours it has been on lit, and the session's facts under them.
+                ColumnLayout {
+                    visible: root.materialLarge
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    spacing: Math.round(8 * root.scaleFactor)
+                    Row {
+                        id: dayTicks
                         Layout.fillWidth: true
-                        horizontalAlignment: index === 0 ? Text.AlignLeft : index === root.sessionMarks.length - 1 ? Text.AlignRight : Text.AlignHCenter
-                        text: String(modelData)
-                        color: root.widgetInkMuted
-                        scaleFactor: root.scaleFactor
-                        size: 9
+                        spacing: Math.round(3 * root.scaleFactor)
+                        readonly property real tick: (width - spacing * 23) / 24
+                        Repeater {
+                            model: 24
+                            Rectangle {
+                                required property int index
+                                readonly property bool on: (index + 1) / 24 > root.sessionFrom && index / 24 < root.sessionTo
+                                width: dayTicks.tick
+                                height: Math.round(22 * root.scaleFactor)
+                                color: on ? root.widgetAccentVisible : ColorUtils.applyAlpha(root.widgetInk, 0.14)
+                            }
+                        }
                     }
-                }
-            }
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.topMargin: Math.round(6 * root.scaleFactor)
-                implicitHeight: Math.max(1, Math.round(root.scaleFactor))
-                color: ColorUtils.applyAlpha(root.widgetInk, 0.16)
-            }
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Math.round(12 * root.scaleFactor)
-                Repeater {
-                    model: [
-                        { label: Translation.tr("Started"), value: root.startedText },
-                        { label: Translation.tr("On today"), value: root.onTodayText }
-                    ]
-                    InstrumentField {
-                        required property var modelData
+                    RowLayout {
                         Layout.fillWidth: true
-                        scaleFactor: root.scaleFactor
-                        label: modelData.label
-                        value: modelData.value
-                        ink: root.widgetInk
-                        muted: root.widgetInkMuted
-                        family: root.widgetNumbersFamily
-                        valueSize: 13
+                        Layout.topMargin: -Math.round(4 * root.scaleFactor)
+                        Repeater {
+                            model: root.sessionMarks
+                            InstrumentLabel {
+                                required property var modelData
+                                required property int index
+                                Layout.fillWidth: true
+                                horizontalAlignment: index === 0 ? Text.AlignLeft : index === root.sessionMarks.length - 1 ? Text.AlignRight : Text.AlignHCenter
+                                text: String(modelData)
+                                color: root.widgetInkMuted
+                                scaleFactor: root.scaleFactor
+                                size: 9
+                            }
+                        }
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.topMargin: Math.round(6 * root.scaleFactor)
+                        implicitHeight: Math.max(1, Math.round(root.scaleFactor))
+                        color: ColorUtils.applyAlpha(root.widgetInk, 0.16)
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Math.round(12 * root.scaleFactor)
+                        Repeater {
+                            model: [
+                                { label: Translation.tr("Started"), value: root.startedText },
+                                { label: Translation.tr("On today"), value: root.onTodayText }
+                            ]
+                            InstrumentField {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                scaleFactor: root.scaleFactor
+                                label: modelData.label
+                                value: modelData.value
+                                ink: root.widgetInk
+                                muted: root.widgetInkMuted
+                                family: root.widgetNumbersFamily
+                                valueSize: 13
+                            }
+                        }
                     }
                 }
             }

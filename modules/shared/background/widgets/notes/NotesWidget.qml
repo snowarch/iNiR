@@ -171,44 +171,56 @@ AbstractBackgroundWidget {
         }
     }
 
-    WidgetSurface {
-        irisPresentation: root.widgetIris
-        regionBrightness: root.regionBrightness
+    Loader {
         anchors.fill: parent
-        surfaceRadius: root.cornerRadiusOverride >= 0
-            ? root.cornerRadiusOverride : root.cardRadius
-        surfaceOpacity: root.backgroundOpacity
-        surfaceBorderWidth: root.borderWidth
-        surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.widgetSurfaceInk
-        colorMode: root.colorMode
-        surfaceAccent: root.widgetAccent
-        surfaceFill: root.widgetPlateColor
-        surfaceUseBlur: root.effectiveBlur
-        screenX: root.x
-        screenY: root.y
-        screenWidth: root.scaledScreenWidth
-        screenHeight: root.scaledScreenHeight
-        shown: !root.irisFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0
-            || root.effectiveBlur)
+        active: !root.irisFaced
+        sourceComponent: Item {
+            WidgetSurface {
+                irisPresentation: root.widgetIris
+                regionBrightness: root.regionBrightness
+                anchors.fill: parent
+                surfaceRadius: root.cornerRadiusOverride >= 0
+                    ? root.cornerRadiusOverride : root.cardRadius
+                surfaceOpacity: root.backgroundOpacity
+                surfaceBorderWidth: root.borderWidth
+                surfaceBorderOpacity: root.borderOpacity
+                surfaceColor: root.widgetSurfaceInk
+                colorMode: root.colorMode
+                surfaceAccent: root.widgetAccent
+                surfaceFill: root.widgetPlateColor
+                surfaceUseBlur: root.effectiveBlur
+                screenX: root.x
+                screenY: root.y
+                screenWidth: root.scaledScreenWidth
+                screenHeight: root.scaledScreenHeight
+                shown: !root.irisFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0
+                    || root.effectiveBlur)
+            }
+        }
     }
 
-    Rectangle {
+    Loader {
         anchors.fill: parent
-        visible: !root.irisFaced
-        color: "transparent"
-        radius: root.cornerRadiusOverride >= 0
-            ? root.cornerRadiusOverride : root.cardRadius
-        border.width: textEdit.activeFocus ? (root.instrument ? 1 : 2) : 0
-        border.color: ColorUtils.applyAlpha(root.widgetAccentVisible, 0.72)
+        active: !root.irisFaced
+        sourceComponent: Item {
+            Rectangle {
+                anchors.fill: parent
+                visible: !root.irisFaced
+                color: "transparent"
+                radius: root.cornerRadiusOverride >= 0
+                    ? root.cornerRadiusOverride : root.cardRadius
+                border.width: textEdit.activeFocus ? (root.instrument ? 1 : 2) : 0
+                border.color: ColorUtils.applyAlpha(root.widgetAccentVisible, 0.72)
 
-        Behavior on border.width {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-        }
-        Behavior on border.color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                Behavior on border.width {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
+                Behavior on border.color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
+            }
         }
     }
 

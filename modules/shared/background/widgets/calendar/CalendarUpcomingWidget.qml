@@ -186,205 +186,217 @@ AbstractBackgroundWidget {
     }
 
     // ── Card background ────────────────────────────────────────
-    WidgetSurface {
-        irisPresentation: root.widgetIris
-        regionBrightness: root.regionBrightness
+    Loader {
         anchors.fill: parent
-        surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
-        surfaceOpacity: root.backgroundOpacity
-        surfaceBorderWidth: root.borderWidth
-        surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.widgetSurfaceInk
-        colorMode: root.colorMode
-        surfaceAccent: root.widgetAccent
-        surfaceFill: root.widgetPlateColor
-        surfaceUseBlur: root.effectiveBlur
-        screenX: root.x
-        screenY: root.y
-        screenWidth: root.scaledScreenWidth
-        screenHeight: root.scaledScreenHeight
-        shown: !root.irisFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
+        active: !root.irisFaced
+        sourceComponent: Item {
+            WidgetSurface {
+                irisPresentation: root.widgetIris
+                regionBrightness: root.regionBrightness
+                anchors.fill: parent
+                surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
+                surfaceOpacity: root.backgroundOpacity
+                surfaceBorderWidth: root.borderWidth
+                surfaceBorderOpacity: root.borderOpacity
+                surfaceColor: root.widgetSurfaceInk
+                colorMode: root.colorMode
+                surfaceAccent: root.widgetAccent
+                surfaceFill: root.widgetPlateColor
+                surfaceUseBlur: root.effectiveBlur
+                screenX: root.x
+                screenY: root.y
+                screenWidth: root.scaledScreenWidth
+                screenHeight: root.scaledScreenHeight
+                shown: !root.irisFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
+            }
+        }
     }
 
     // ── Content ────────────────────────────────────────────────
-    ColumnLayout {
-        visible: !root.irisFaced
+    Loader {
         anchors.fill: parent
-        anchors.margins: Math.round(12 * root.scaleFactor)
-        clip: true
-        spacing: Math.round(4 * root.scaleFactor)
+        active: !root.irisFaced
+        sourceComponent: Item {
+            ColumnLayout {
+                visible: !root.irisFaced
+                anchors.fill: parent
+                anchors.margins: Math.round(12 * root.scaleFactor)
+                clip: true
+                spacing: Math.round(4 * root.scaleFactor)
 
-        // Header
-        RowLayout {
-            visible: root.upcomingEvents.length > 0 || root.instrument
-            Layout.fillWidth: true
-            spacing: 6
-
-            InstrumentLabel {
-                visible: root.instrument
-                text: Translation.tr("Agenda / Upcoming")
-                color: root.widgetAccentVisible
-                scaleFactor: root.scaleFactor
-                strong: true
-            }
-            StyledText {
-                visible: !root.instrument
-                text: Translation.tr("Upcoming")
-                color: root.instrument ? root.widgetInk : (root.widgetEditorial ? root.widgetInk : root.widgetInkMuted)
-                font.family: root.instrument ? Appearance.font.family.monospace : root.widgetTitleFamily
-                font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.normal
-                    : Appearance.font.pixelSize.smaller * root.widgetTitleScale) * root.scaleFactor)
-                font.weight: root.instrument ? Font.Bold : (root.widgetEditorial ? root.widgetTitleWeight : Font.Medium)
-                font.letterSpacing: root.instrument ? Math.round(1.4 * root.scaleFactor) : root.widgetTitleTracking
-            }
-
-            Item { Layout.fillWidth: true }
-
-            StyledText {
-                visible: root.instrument
-                text: String(root.upcomingEvents.length).padStart(2, "0")
-                color: root.widgetAccentVisible
-                font.family: root.widgetNumbersFamily
-                font.pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
-                font.weight: Font.Bold
-            }
-
-        }
-
-        // Events list: the ones that fit whole; the rest were cut through by the plate's edge.
-        Repeater {
-            model: root.upcomingEvents.slice(0, root.fittingEvents)
-
-            delegate: ColumnLayout {
-                id: eventDelegate
-                required property var modelData
-                required property int index
-                Layout.fillWidth: true
-                spacing: Math.round(3 * root.scaleFactor)
-
-                StyledText {
-                    visible: eventDelegate.modelData?._showDayHeader ?? false
-                    text: root._dayHeading(eventDelegate.modelData)
-                    color: root.instrument ? root.widgetInkMuted : root.widgetAccentVisible
-                    font {
-                        family: root.instrument ? Appearance.font.family.monospace : root.widgetBodyFamily
-                        pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.small
-                            : Appearance.font.pixelSize.smaller) * root.scaleFactor)
-                        weight: Font.DemiBold
-                    }
-                }
-
+                // Header
                 RowLayout {
+                    visible: root.upcomingEvents.length > 0 || root.instrument
                     Layout.fillWidth: true
-                    spacing: Math.round(8 * root.scaleFactor)
+                    spacing: 6
 
-                    Rectangle {
-                        Layout.alignment: Qt.AlignTop
-                        Layout.topMargin: Math.round((root.instrument ? 1 : 4) * root.scaleFactor)
-                        width: Math.max(2, Math.round((root.instrument ? 2 : 3) * root.scaleFactor))
-                        height: Math.round((root.instrument ? 34 : 16) * root.scaleFactor)
-                        radius: root.instrument ? 0 : width / 2
-                        color: eventDelegate.modelData?.color || root.widgetAccentVisible
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 1
-
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: eventDelegate.modelData?.title || Translation.tr("Untitled")
-                            color: root.widgetInk
-                            font.family: root.widgetEditorial
-                                ? root.widgetTitleFamily : root.widgetBodyFamily
-                            font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.normal
-                                : Appearance.font.pixelSize.small) * root.scaleFactor)
-                            font.weight: root.instrument ? Font.DemiBold
-                                : (root.widgetEditorial ? root.widgetTitleWeight : Font.Medium)
-                            font.letterSpacing: root.widgetEditorial ? root.widgetTitleTracking : 0
-                            elide: Text.ElideRight
-                            wrapMode: Text.NoWrap
-                        }
-
-                        StyledText {
-                            Layout.fillWidth: true
-                            visible: text.length > 0
-                            text: root._formatDateTime(eventDelegate.modelData)
-                            color: root.instrument ? root.widgetAccentVisible : root.widgetInkMuted
-                            font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.small
-                                : Appearance.font.pixelSize.smaller) * root.scaleFactor)
-                            font.family: root.widgetNumbersFamily
-                            elide: Text.ElideRight
-                            wrapMode: Text.NoWrap
-                        }
-
-                        StyledText {
-                            Layout.fillWidth: true
-                            visible: root.showLocation && (eventDelegate.modelData?.location?.length ?? 0) > 0
-                            text: eventDelegate.modelData?.location ?? ""
-                            color: root.widgetInkSubtle
-                            font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
-                            elide: Text.ElideRight
-                            wrapMode: Text.NoWrap
-                        }
-                    }
-                }
-            }
-        }
-
-        Item {
-            visible: root.upcomingEvents.length === 0
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                width: root.instrument ? parent.width : Math.min(parent.width,
-                    Math.round(190 * root.scaleFactor))
-                x: root.instrument ? 0 : Math.round((parent.width - width) / 2)
-                spacing: Math.round(7 * root.scaleFactor)
-
-                MaterialShape {
-                    visible: !root.instrument
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    implicitSize: Math.round(54 * root.scaleFactor)
-                    shape: MaterialShape.Shape.Ghostish
-                    color: ColorUtils.applyAlpha(root.widgetAccent, 0.16)
-
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "event_available"
-                        iconSize: Math.round(26 * root.scaleFactor)
+                    InstrumentLabel {
+                        visible: root.instrument
+                        text: Translation.tr("Agenda / Upcoming")
                         color: root.widgetAccentVisible
+                        scaleFactor: root.scaleFactor
+                        strong: true
+                    }
+                    StyledText {
+                        visible: !root.instrument
+                        text: Translation.tr("Upcoming")
+                        color: root.instrument ? root.widgetInk : (root.widgetEditorial ? root.widgetInk : root.widgetInkMuted)
+                        font.family: root.instrument ? Appearance.font.family.monospace : root.widgetTitleFamily
+                        font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.normal
+                            : Appearance.font.pixelSize.smaller * root.widgetTitleScale) * root.scaleFactor)
+                        font.weight: root.instrument ? Font.Bold : (root.widgetEditorial ? root.widgetTitleWeight : Font.Medium)
+                        font.letterSpacing: root.instrument ? Math.round(1.4 * root.scaleFactor) : root.widgetTitleTracking
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    StyledText {
+                        visible: root.instrument
+                        text: String(root.upcomingEvents.length).padStart(2, "0")
+                        color: root.widgetAccentVisible
+                        font.family: root.widgetNumbersFamily
+                        font.pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
+                        font.weight: Font.Bold
+                    }
+
+                }
+
+                // Events list: the ones that fit whole; the rest were cut through by the plate's edge.
+                Repeater {
+                    model: root.upcomingEvents.slice(0, root.fittingEvents)
+
+                    delegate: ColumnLayout {
+                        id: eventDelegate
+                        required property var modelData
+                        required property int index
+                        Layout.fillWidth: true
+                        spacing: Math.round(3 * root.scaleFactor)
+
+                        StyledText {
+                            visible: eventDelegate.modelData?._showDayHeader ?? false
+                            text: root._dayHeading(eventDelegate.modelData)
+                            color: root.instrument ? root.widgetInkMuted : root.widgetAccentVisible
+                            font {
+                                family: root.instrument ? Appearance.font.family.monospace : root.widgetBodyFamily
+                                pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.small
+                                    : Appearance.font.pixelSize.smaller) * root.scaleFactor)
+                                weight: Font.DemiBold
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Math.round(8 * root.scaleFactor)
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignTop
+                                Layout.topMargin: Math.round((root.instrument ? 1 : 4) * root.scaleFactor)
+                                width: Math.max(2, Math.round((root.instrument ? 2 : 3) * root.scaleFactor))
+                                height: Math.round((root.instrument ? 34 : 16) * root.scaleFactor)
+                                radius: root.instrument ? 0 : width / 2
+                                color: eventDelegate.modelData?.color || root.widgetAccentVisible
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: eventDelegate.modelData?.title || Translation.tr("Untitled")
+                                    color: root.widgetInk
+                                    font.family: root.widgetEditorial
+                                        ? root.widgetTitleFamily : root.widgetBodyFamily
+                                    font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.normal
+                                        : Appearance.font.pixelSize.small) * root.scaleFactor)
+                                    font.weight: root.instrument ? Font.DemiBold
+                                        : (root.widgetEditorial ? root.widgetTitleWeight : Font.Medium)
+                                    font.letterSpacing: root.widgetEditorial ? root.widgetTitleTracking : 0
+                                    elide: Text.ElideRight
+                                    wrapMode: Text.NoWrap
+                                }
+
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    visible: text.length > 0
+                                    text: root._formatDateTime(eventDelegate.modelData)
+                                    color: root.instrument ? root.widgetAccentVisible : root.widgetInkMuted
+                                    font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.small
+                                        : Appearance.font.pixelSize.smaller) * root.scaleFactor)
+                                    font.family: root.widgetNumbersFamily
+                                    elide: Text.ElideRight
+                                    wrapMode: Text.NoWrap
+                                }
+
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    visible: root.showLocation && (eventDelegate.modelData?.location?.length ?? 0) > 0
+                                    text: eventDelegate.modelData?.location ?? ""
+                                    color: root.widgetInkSubtle
+                                    font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                                    elide: Text.ElideRight
+                                    wrapMode: Text.NoWrap
+                                }
+                            }
+                        }
                     }
                 }
 
-                StyledText {
-                    width: parent.width
-                    horizontalAlignment: root.instrument ? Text.AlignLeft : Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    text: root.instrument ? Translation.tr("All clear")
-                        : Translation.tr("No upcoming events")
-                    color: root.instrument ? root.widgetInk : root.widgetInkMuted
-                    font.family: root.instrument ? root.widgetTitleFamily : root.widgetBodyFamily
-                    font.pixelSize: Math.round((root.instrument ? 22 : Appearance.font.pixelSize.small) * root.scaleFactor)
-                    font.weight: root.instrument ? Font.Bold : Font.Normal
-                    wrapMode: Text.WordWrap
+                Item {
+                    visible: root.upcomingEvents.length === 0
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: root.instrument ? parent.width : Math.min(parent.width,
+                            Math.round(190 * root.scaleFactor))
+                        x: root.instrument ? 0 : Math.round((parent.width - width) / 2)
+                        spacing: Math.round(7 * root.scaleFactor)
+
+                        MaterialShape {
+                            visible: !root.instrument
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            implicitSize: Math.round(54 * root.scaleFactor)
+                            shape: MaterialShape.Shape.Ghostish
+                            color: ColorUtils.applyAlpha(root.widgetAccent, 0.16)
+
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "event_available"
+                                iconSize: Math.round(26 * root.scaleFactor)
+                                color: root.widgetAccentVisible
+                            }
+                        }
+
+                        StyledText {
+                            width: parent.width
+                            horizontalAlignment: root.instrument ? Text.AlignLeft : Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            text: root.instrument ? Translation.tr("All clear")
+                                : Translation.tr("No upcoming events")
+                            color: root.instrument ? root.widgetInk : root.widgetInkMuted
+                            font.family: root.instrument ? root.widgetTitleFamily : root.widgetBodyFamily
+                            font.pixelSize: Math.round((root.instrument ? 22 : Appearance.font.pixelSize.small) * root.scaleFactor)
+                            font.weight: root.instrument ? Font.Bold : Font.Normal
+                            wrapMode: Text.WordWrap
+                        }
+
+                        InstrumentLabel {
+                            visible: root.instrument
+                            width: parent.width
+                            text: Translation.tr("No events ahead")
+                            color: root.widgetInkMuted
+                            scaleFactor: root.scaleFactor
+                        }
+                    }
                 }
 
-                InstrumentLabel {
-                    visible: root.instrument
-                    width: parent.width
-                    text: Translation.tr("No events ahead")
-                    color: root.widgetInkMuted
-                    scaleFactor: root.scaleFactor
+                Item {
+                    visible: root.upcomingEvents.length > 0
+                    Layout.fillHeight: true
                 }
             }
-        }
-
-        Item {
-            visible: root.upcomingEvents.length > 0
-            Layout.fillHeight: true
         }
     }
 

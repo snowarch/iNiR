@@ -130,7 +130,7 @@ Rectangle {
     readonly property color _irisMaterial: root._irisMaterialName === "tinted"
         ? ColorUtils.mix(IrisStyle.surface, Appearance.colors.colPrimary, 0.82) : IrisStyle.surface
     readonly property color _irisFill: root._irisClear || root._irisGlass
-        ? ColorUtils.applyAlpha(IrisStyle.surface, root._irisClear && !Boolean(Config.options?.iris?.widgets?.legibleAlways ?? false) ? 0
+        ? ColorUtils.applyAlpha(IrisStyle.surface, root._irisClear ? 0
             : IrisStyle.legibleVeil(root._irisMaterialName, root.regionBrightness, 0, 1)
                 * (Boolean(Config.options?.iris?.widgets?.legibleAlways ?? false) ? 1 : root._irisStrength))
         : ColorUtils.applyAlpha(
@@ -181,23 +181,25 @@ Rectangle {
     border.color: "transparent"
     clip: true
 
-    ZzzPlate {
+    Loader {
         anchors.fill: parent
-        visible: root._zzz
-        // ZZZ separates by fill, not outlines; the per-widget showBackground/showBorder toggles still apply independently,
-        // so "border only" (transparent fill + hairline) is reachable like material.
-        fillColor: root._backgroundVisible
-            ? ColorUtils.applyAlpha(root.colorMode === "auto" ? Appearance.zzz.paper : root._plate,
-                root._plateAlpha)
-            : "transparent"
-        // ZZZ hairline is subtle by design (plates separate by FILL, not
-        // outlines). Respect the per-widget borderOpacity so the slider works in
-        // zzz too, but cap at 0.5 so it never becomes a loud accent border.
-        strokeColor: ColorUtils.applyAlpha(Appearance.zzz.onColor,
-            Math.min(0.5, root.surfaceBorderOpacity * 1.4))
-        strokeWidth: root.surfaceBorderWidth > 0 ? Appearance.zzz.hairlineThick : 0
-        chamfer: Appearance.zzz.cutCorner
-        radius: Appearance.zzz.round ? root.radius : 0
+        active: root._zzz && root.visible
+        sourceComponent: ZzzPlate {
+            // ZZZ separates by fill, not outlines; the per-widget showBackground/showBorder toggles still apply independently,
+            // so "border only" (transparent fill + hairline) is reachable like material.
+            fillColor: root._backgroundVisible
+                ? ColorUtils.applyAlpha(root.colorMode === "auto" ? Appearance.zzz.paper : root._plate,
+                    root._plateAlpha)
+                : "transparent"
+            // ZZZ hairline is subtle by design (plates separate by FILL, not
+            // outlines). Respect the per-widget borderOpacity so the slider works in
+            // zzz too, but cap at 0.5 so it never becomes a loud accent border.
+            strokeColor: ColorUtils.applyAlpha(Appearance.zzz.onColor,
+                Math.min(0.5, root.surfaceBorderOpacity * 1.4))
+            strokeWidth: root.surfaceBorderWidth > 0 ? Appearance.zzz.hairlineThick : 0
+            chamfer: Appearance.zzz.cutCorner
+            radius: Appearance.zzz.round ? root.radius : 0
+        }
     }
 
     Loader {
@@ -270,6 +272,8 @@ Rectangle {
     // desktop widget at once — removed outright per explicit request instead
     // of iterating on its geometry again.
 
+    // Each style's face is built only while it shows: a widget under its iRiS face kept a hidden plate with its own
+    // decoded wallpaper (10-25).
     // Blur mask FBO is only useful while the surface can contribute pixels.
     // Keep the decoded wallpaper cached for instant resume, but release the
     // per-widget mask and blur targets during fullscreen/GameMode pauses.
@@ -282,37 +286,40 @@ Rectangle {
         }
     }
 
-    Image {
-        id: blurredWallpaper
-        x: -root.screenX
-        y: -root.screenY
-        width: root.screenWidth
-        height: root.screenHeight
-        // Don't load/blur when the compositor is already blurring underneath.
-        // Each WidgetSurface keeps its own FBO when layer.enabled is true; with
-        // many widgets enabled this multiplies fast. See #159.
-        visible: root._glass && status === Image.Ready
-        source: root._glass ? root._wallpaperUrl : ""
-        fillMode: Image.PreserveAspectCrop
-        cache: true
-        asynchronous: true
-        sourceSize.width: Math.round(root.screenWidth * root._blurScale)
-        sourceSize.height: Math.round(root.screenHeight * root._blurScale)
+    Loader {
+        active: root._glass && root.visible
+        sourceComponent: Image {
+            id: blurredWallpaper
+            x: -root.screenX
+            y: -root.screenY
+            width: root.screenWidth
+            height: root.screenHeight
+            // Don't load/blur when the compositor is already blurring underneath.
+            // Each WidgetSurface keeps its own FBO when layer.enabled is true; with
+            // many widgets enabled this multiplies fast. See #159.
+            visible: status === Image.Ready
+            source: root._wallpaperUrl
+            fillMode: Image.PreserveAspectCrop
+            cache: true
+            asynchronous: true
+            sourceSize.width: Math.round(root.screenWidth * root._blurScale)
+            sourceSize.height: Math.round(root.screenHeight * root._blurScale)
 
-        // OPTIMIZATION: Release FBO when widget is not visible or power is off
-        layer.enabled: root._glass && root.visible && root.powerActive
-        layer.smooth: true
-        layer.textureSize: Qt.size(Math.round(width * root._blurScale),
-                                   Math.round(height * root._blurScale))
-        layer.effect: MultiEffect {
-            source: blurredWallpaper
-            anchors.fill: source
-            saturation: root._angel
-                ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
-                : 0.15
-            blurEnabled: true
-            blurMax: Math.max(1, Math.round(64 * root._blurScale))
-            blur: root._editorial ? Appearance.editorial.glassBlur : root._angel ? Appearance.angel.blurIntensity : 0.8
+            // OPTIMIZATION: Release FBO when widget is not visible or power is off
+            layer.enabled: root._glass && root.visible && root.powerActive
+            layer.smooth: true
+            layer.textureSize: Qt.size(Math.round(width * root._blurScale),
+                                       Math.round(height * root._blurScale))
+            layer.effect: MultiEffect {
+                source: blurredWallpaper
+                anchors.fill: source
+                saturation: root._angel
+                    ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
+                    : 0.15
+                blurEnabled: true
+                blurMax: Math.max(1, Math.round(64 * root._blurScale))
+                blur: root._editorial ? Appearance.editorial.glassBlur : root._angel ? Appearance.angel.blurIntensity : 0.8
+            }
         }
     }
 
@@ -327,29 +334,33 @@ Rectangle {
             : ColorUtils.transparentize(Appearance.colors.colLayer0Base, Appearance.aurora.popupTransparentize * 1.2)
     }
 
-    EditorialPaperStack {
+    Loader {
         anchors.fill: parent
-        visible: root._editorialStack
-        radius: root.radius
-        faceColor: root.colorMode === "auto" ? root.surfaceFill : root._plate
-        materialOpacity: root._plateAlpha
-        backingOpacity: root._glass ? Appearance.editorial.glassBackingOpacity : root._plateAlpha
-        edgeWidth: root.surfaceBorderWidth
-        edgeColor: ColorUtils.applyAlpha(Appearance.editorial.edge, root.surfaceBorderOpacity)
-        backingEdgeColor: ColorUtils.applyAlpha(Appearance.editorial.accent, root.surfaceBorderOpacity)
+        active: root._editorialStack && root.visible
+        sourceComponent: EditorialPaperStack {
+            radius: root.radius
+            faceColor: root.colorMode === "auto" ? root.surfaceFill : root._plate
+            materialOpacity: root._plateAlpha
+            backingOpacity: root._glass ? Appearance.editorial.glassBackingOpacity : root._plateAlpha
+            edgeWidth: root.surfaceBorderWidth
+            edgeColor: ColorUtils.applyAlpha(Appearance.editorial.edge, root.surfaceBorderOpacity)
+            backingEdgeColor: ColorUtils.applyAlpha(Appearance.editorial.accent, root.surfaceBorderOpacity)
+        }
     }
 
-    RicelinSurface {
+    Loader {
         anchors.fill: parent
-        visible: root._island && root._backgroundVisible
-        radius: root.radius
-        glassEnabled: root.powerActive
-        screen: root.QsWindow?.window?.screen ?? null
-        glassScreenX: root.screenX
-        glassScreenY: root.screenY
-        glassScreenWidth: root.screenWidth
-        glassScreenHeight: root.screenHeight
-        shadow: false
+        active: root._island && root._backgroundVisible && root.visible
+        sourceComponent: RicelinSurface {
+            radius: root.radius
+            glassEnabled: root.powerActive
+            screen: root.QsWindow?.window?.screen ?? null
+            glassScreenX: root.screenX
+            glassScreenY: root.screenY
+            glassScreenWidth: root.screenWidth
+            glassScreenHeight: root.screenHeight
+            shadow: false
+        }
     }
 
     // Inset glow — angel only
@@ -361,27 +372,31 @@ Rectangle {
     }
 
     // Partial border — angel only
-    AngelPartialBorder {
-        visible: root._angel && root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0
-        targetRadius: root.radius
-        borderWidth: Math.max(1, root.surfaceBorderWidth)
-        borderColor: ColorUtils.applyAlpha(Appearance.angel.colBorder,
-            root.surfaceBorderOpacity)
+    Loader {
+        anchors.fill: parent
+        active: root._angel && root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0 && root.visible
+        sourceComponent: AngelPartialBorder {
+            targetRadius: root.radius
+            borderWidth: Math.max(1, root.surfaceBorderWidth)
+            borderColor: ColorUtils.applyAlpha(Appearance.angel.colBorder,
+                root.surfaceBorderOpacity)
+        }
     }
 
     // Regalia desktop widgets use the same fitted chassis/content construction
     // as shell panels. The widget remains one visual object, but no longer reads
     // as a generic card with a different fill.
-    RegaliaPlate {
-        id: regaliaCard
+    Loader {
         anchors.fill: parent
-        visible: root._regalia && root._backgroundVisible
-        radius: root.radius
-        fillColor: ColorUtils.applyAlpha(
-            root.colorMode === "auto" ? root.surfaceFill : root._plate,
-            root._plateAlpha)
-        inset: Appearance.regalia.surfaceInset
-        elevated: true
+        active: root._regalia && root._backgroundVisible && root.visible
+        sourceComponent: RegaliaPlate {
+            radius: root.radius
+            fillColor: ColorUtils.applyAlpha(
+                root.colorMode === "auto" ? root.surfaceFill : root._plate,
+                root._plateAlpha)
+            inset: Appearance.regalia.surfaceInset
+            elevated: true
+        }
     }
 
     // Inir subtle fill

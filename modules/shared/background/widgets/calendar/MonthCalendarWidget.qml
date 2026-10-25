@@ -192,194 +192,206 @@ AbstractBackgroundWidget {
         }
     }
 
-    WidgetSurface {
-        irisPresentation: root.widgetIris
+    Loader {
         anchors.fill: parent
-        regionBrightness: root.regionBrightness
-        surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
-        surfaceOpacity: root.backgroundOpacity
-        surfaceBorderWidth: root.borderWidth
-        surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.widgetSurfaceInk
-        colorMode: root.colorMode
-        surfaceAccent: root.widgetAccent
-        surfaceFill: root.widgetPlateColor
-        surfaceUseBlur: root.effectiveBlur
-        screenX: root.x
-        screenY: root.y
-        screenWidth: root.scaledScreenWidth
-        screenHeight: root.scaledScreenHeight
-        shown: !root.irisFaced && !root.instrument
-            && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
+        active: !root.irisFaced
+        sourceComponent: Item {
+            WidgetSurface {
+                irisPresentation: root.widgetIris
+                anchors.fill: parent
+                regionBrightness: root.regionBrightness
+                surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
+                surfaceOpacity: root.backgroundOpacity
+                surfaceBorderWidth: root.borderWidth
+                surfaceBorderOpacity: root.borderOpacity
+                surfaceColor: root.widgetSurfaceInk
+                colorMode: root.colorMode
+                surfaceAccent: root.widgetAccent
+                surfaceFill: root.widgetPlateColor
+                surfaceUseBlur: root.effectiveBlur
+                screenX: root.x
+                screenY: root.y
+                screenWidth: root.scaledScreenWidth
+                screenHeight: root.scaledScreenHeight
+                shown: !root.irisFaced && !root.instrument
+                    && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
+            }
+        }
     }
 
-    ColumnLayout {
-        visible: !root.irisFaced
+    Loader {
         anchors.fill: parent
-        anchors.margins: Math.round((root.compact ? 12 : 14) * root.scaleFactor)
-        spacing: Math.round((root.compact ? 4 : 8) * root.scaleFactor)
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: Math.round(5 * root.scaleFactor)
-
-            // its texts fill too: a nested layout is never wider than its children allow, which left the keys mid-card
+        active: !root.irisFaced
+        sourceComponent: Item {
             ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 0
-                InstrumentLabel {
+                visible: !root.irisFaced
+                anchors.fill: parent
+                anchors.margins: Math.round((root.compact ? 12 : 14) * root.scaleFactor)
+                spacing: Math.round((root.compact ? 4 : 8) * root.scaleFactor)
+
+                RowLayout {
                     Layout.fillWidth: true
-                    visible: root.instrument
-                    text: Translation.tr("Calendar / %1").arg(root.viewingDate.getFullYear())
-                    color: root.widgetAccentVisible
-                    scaleFactor: root.scaleFactor
-                    strong: true
-                }
-                StyledText {
-                    Layout.fillWidth: true
-                    text: root.viewingDate.toLocaleDateString(Translation.locale, "MMMM")
-                    font.capitalization: Font.Capitalize
-                    color: root.ink
-                    font.family: root.widgetTitleFamily
-                    font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.larger)
-                        * root.widgetTitleScale * root.scaleFactor)
-                    font.weight: root.widgetTitleWeight
-                    font.letterSpacing: root.widgetTitleTracking
-                }
-                StyledText {
-                    Layout.fillWidth: true
-                    visible: !root.instrument && !root.compact
-                    text: root.strip ? root.today.toLocaleDateString(Translation.locale, "dddd d") : String(root.viewingDate.getFullYear())
-                    font.capitalization: Font.Capitalize
-                    color: root.inkMuted
-                    font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
-                    font.family: root.widgetNumbersFamily
-                }
-            }
+                    spacing: Math.round(5 * root.scaleFactor)
 
-            Repeater {
-                model: root.compact || root.strip ? [] : [
-                    { icon: "chevron_left", delta: -1, tip: "Previous month" },
-                    { icon: "today", delta: 0, tip: "Today" },
-                    { icon: "chevron_right", delta: 1, tip: "Next month" }
-                ]
-                RippleButton {
-                    required property var modelData
-                    Layout.preferredWidth: Math.round((root.instrument ? 28 : 32) * root.scaleFactor)
-                    Layout.preferredHeight: Math.round((root.instrument ? 28 : 32) * root.scaleFactor)
-                    buttonRadius: root.instrument ? root.widgetControlRadius : Appearance.rounding.full
-                    colBackground: modelData.delta === 0 && root.monthShift === 0
-                        ? (root.instrument
-                            ? ColorUtils.applyAlpha(root.accentMark, 0.16) : root.accentFace)
-                        : "transparent"
-                    colBackgroundHover: ColorUtils.applyAlpha(root.ink, 0.08)
-                    colRipple: ColorUtils.applyAlpha(root.ink, 0.12)
-                    releaseAction: () => {
-                        if (modelData.delta === 0) root.monthShift = 0
-                        else root.monthShift += modelData.delta
-                    }
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: modelData.icon
-                        iconSize: Math.round((root.instrument ? 15 : 17) * root.scaleFactor)
-                        color: modelData.delta === 0 && root.monthShift === 0
-                            ? root.accentMarkInk : root.ink
-                    }
-                    StyledToolTip { text: Translation.tr(modelData.tip) }
-                }
-            }
-        }
-
-        // Instrument hairline rule: the header reads as a measured caption
-        // over the grid, not a card header.
-        Rectangle {
-            Layout.fillWidth: true
-            visible: root.instrument && root.instrumentRule
-            height: Math.max(1, Math.round(1 * root.scaleFactor))
-            color: ColorUtils.applyAlpha(root.ink, 0.16)
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 0
-            Repeater {
-                model: root.weekdayLabels()
-                StyledText {
-                    required property string modelData
-                    required property int index
-                    // Saturday and Sunday take the accent (Lucid): the week's shape reads before its numbers.
-                    readonly property bool weekend: !root.instrument && [0, 6].includes((index + root.weekStart) % 7)
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: modelData
-                    color: weekend ? root.widgetAccentVisible : root.inkMuted
-                    font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.smallest : Appearance.font.pixelSize.smaller) * root.scaleFactor)
-                    font.weight: Font.DemiBold
-                    font.capitalization: root.instrument && !root.widgetIris ? Font.AllUppercase : Font.MixedCase
-                    font.letterSpacing: root.instrument
-                        ? Math.round(1.4 * root.scaleFactor) : 0
-                }
-            }
-        }
-
-        GridLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            columns: 7
-            columnSpacing: Math.round((root.compact ? 0 : 2) * root.scaleFactor)
-            rowSpacing: Math.round((root.compact ? 0 : 3) * root.scaleFactor)
-
-            Repeater {
-                model: root.monthCells()
-                Item {
-                    id: dayCell
-                    required property var modelData
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    // hidden, not gone: a layout closes the gap of an invisible cell and the 1st slid to Monday
-                    opacity: dayCell.modelData.currentMonth || root.showAdjacentDays ? 1 : 0
-
-                    // Today wears one of M3 Expressive's shapes, filled in the accent.
-                    MaterialShape {
-                        anchors.centerIn: parent
-                        visible: !root.instrument && dayCell.modelData.isToday
-                        implicitSize: Math.round(Math.min(parent.width, parent.height, Math.round(36 * root.scaleFactor)) * 1.1)
-                        shape: MaterialShape.Shape.Pentagon
-                        color: root.accentFace
-                    }
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: Math.min(parent.width, parent.height, Math.round(36 * root.scaleFactor))
-                        height: width
-                        radius: Appearance.rounding.full
-                        // Instrument: today is a signal mark — hairline accent
-                        // ring with accent ink, not a filled pill.
-                        color: "transparent"
-                        border.width: root.instrument && dayCell.modelData.isToday
-                            ? Math.max(1.5, Math.round(1.5 * root.scaleFactor)) : 0
-                        border.color: root.accentMark
-
+                    // its texts fill too: a nested layout is never wider than its children allow, which left the keys mid-card
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+                        InstrumentLabel {
+                            Layout.fillWidth: true
+                            visible: root.instrument
+                            text: Translation.tr("Calendar / %1").arg(root.viewingDate.getFullYear())
+                            color: root.widgetAccentVisible
+                            scaleFactor: root.scaleFactor
+                            strong: true
+                        }
                         StyledText {
-                            anchors.centerIn: parent
-                            text: dayCell.modelData.day
-                            color: dayCell.modelData.isToday
-                                ? root.accentMarkInk : root.ink
-                            opacity: dayCell.modelData.currentMonth ? 1 : 0.32
-                            font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.smaller
-                                : root.strip ? Appearance.font.pixelSize.large : Appearance.font.pixelSize.small) * root.scaleFactor)
-                            font.weight: dayCell.modelData.isToday ? Font.Bold : Font.Normal
+                            Layout.fillWidth: true
+                            text: root.viewingDate.toLocaleDateString(Translation.locale, "MMMM")
+                            font.capitalization: Font.Capitalize
+                            color: root.ink
+                            font.family: root.widgetTitleFamily
+                            font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.larger)
+                                * root.widgetTitleScale * root.scaleFactor)
+                            font.weight: root.widgetTitleWeight
+                            font.letterSpacing: root.widgetTitleTracking
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            visible: !root.instrument && !root.compact
+                            text: root.strip ? root.today.toLocaleDateString(Translation.locale, "dddd d") : String(root.viewingDate.getFullYear())
+                            font.capitalization: Font.Capitalize
+                            color: root.inkMuted
+                            font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
                             font.family: root.widgetNumbersFamily
                         }
-                        Rectangle {
-                            visible: dayCell.modelData.marked === true
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: Math.max(1, Math.round(parent.height * 0.12))
-                            width: Math.max(3, Math.round(4 * root.scaleFactor))
-                            height: width
-                            radius: width / 2
-                            color: dayCell.modelData.isToday ? root.accentMarkInk : root.widgetAccentVisible
-                            opacity: dayCell.modelData.currentMonth ? 1 : 0.32
+                    }
+
+                    Repeater {
+                        model: root.compact || root.strip ? [] : [
+                            { icon: "chevron_left", delta: -1, tip: "Previous month" },
+                            { icon: "today", delta: 0, tip: "Today" },
+                            { icon: "chevron_right", delta: 1, tip: "Next month" }
+                        ]
+                        RippleButton {
+                            required property var modelData
+                            Layout.preferredWidth: Math.round((root.instrument ? 28 : 32) * root.scaleFactor)
+                            Layout.preferredHeight: Math.round((root.instrument ? 28 : 32) * root.scaleFactor)
+                            buttonRadius: root.instrument ? root.widgetControlRadius : Appearance.rounding.full
+                            colBackground: modelData.delta === 0 && root.monthShift === 0
+                                ? (root.instrument
+                                    ? ColorUtils.applyAlpha(root.accentMark, 0.16) : root.accentFace)
+                                : "transparent"
+                            colBackgroundHover: ColorUtils.applyAlpha(root.ink, 0.08)
+                            colRipple: ColorUtils.applyAlpha(root.ink, 0.12)
+                            releaseAction: () => {
+                                if (modelData.delta === 0) root.monthShift = 0
+                                else root.monthShift += modelData.delta
+                            }
+                            contentItem: MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: modelData.icon
+                                iconSize: Math.round((root.instrument ? 15 : 17) * root.scaleFactor)
+                                color: modelData.delta === 0 && root.monthShift === 0
+                                    ? root.accentMarkInk : root.ink
+                            }
+                            StyledToolTip { text: Translation.tr(modelData.tip) }
+                        }
+                    }
+                }
+
+                // Instrument hairline rule: the header reads as a measured caption
+                // over the grid, not a card header.
+                Rectangle {
+                    Layout.fillWidth: true
+                    visible: root.instrument && root.instrumentRule
+                    height: Math.max(1, Math.round(1 * root.scaleFactor))
+                    color: ColorUtils.applyAlpha(root.ink, 0.16)
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
+                    Repeater {
+                        model: root.weekdayLabels()
+                        StyledText {
+                            required property string modelData
+                            required property int index
+                            // Saturday and Sunday take the accent (Lucid): the week's shape reads before its numbers.
+                            readonly property bool weekend: !root.instrument && [0, 6].includes((index + root.weekStart) % 7)
+                            Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignHCenter
+                            text: modelData
+                            color: weekend ? root.widgetAccentVisible : root.inkMuted
+                            font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.smallest : Appearance.font.pixelSize.smaller) * root.scaleFactor)
+                            font.weight: Font.DemiBold
+                            font.capitalization: root.instrument && !root.widgetIris ? Font.AllUppercase : Font.MixedCase
+                            font.letterSpacing: root.instrument
+                                ? Math.round(1.4 * root.scaleFactor) : 0
+                        }
+                    }
+                }
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    columns: 7
+                    columnSpacing: Math.round((root.compact ? 0 : 2) * root.scaleFactor)
+                    rowSpacing: Math.round((root.compact ? 0 : 3) * root.scaleFactor)
+
+                    Repeater {
+                        model: root.monthCells()
+                        Item {
+                            id: dayCell
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            // hidden, not gone: a layout closes the gap of an invisible cell and the 1st slid to Monday
+                            opacity: dayCell.modelData.currentMonth || root.showAdjacentDays ? 1 : 0
+
+                            // Today wears one of M3 Expressive's shapes, filled in the accent.
+                            MaterialShape {
+                                anchors.centerIn: parent
+                                visible: !root.instrument && dayCell.modelData.isToday
+                                implicitSize: Math.round(Math.min(parent.width, parent.height, Math.round(36 * root.scaleFactor)) * 1.1)
+                                shape: MaterialShape.Shape.Pentagon
+                                color: root.accentFace
+                            }
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: Math.min(parent.width, parent.height, Math.round(36 * root.scaleFactor))
+                                height: width
+                                radius: Appearance.rounding.full
+                                // Instrument: today is a signal mark — hairline accent
+                                // ring with accent ink, not a filled pill.
+                                color: "transparent"
+                                border.width: root.instrument && dayCell.modelData.isToday
+                                    ? Math.max(1.5, Math.round(1.5 * root.scaleFactor)) : 0
+                                border.color: root.accentMark
+
+                                StyledText {
+                                    anchors.centerIn: parent
+                                    text: dayCell.modelData.day
+                                    color: dayCell.modelData.isToday
+                                        ? root.accentMarkInk : root.ink
+                                    opacity: dayCell.modelData.currentMonth ? 1 : 0.32
+                                    font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.smaller
+                                        : root.strip ? Appearance.font.pixelSize.large : Appearance.font.pixelSize.small) * root.scaleFactor)
+                                    font.weight: dayCell.modelData.isToday ? Font.Bold : Font.Normal
+                                    font.family: root.widgetNumbersFamily
+                                }
+                                Rectangle {
+                                    visible: dayCell.modelData.marked === true
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.bottom: parent.bottom
+                                    anchors.bottomMargin: Math.max(1, Math.round(parent.height * 0.12))
+                                    width: Math.max(3, Math.round(4 * root.scaleFactor))
+                                    height: width
+                                    radius: width / 2
+                                    color: dayCell.modelData.isToday ? root.accentMarkInk : root.widgetAccentVisible
+                                    opacity: dayCell.modelData.currentMonth ? 1 : 0.32
+                                }
+                            }
                         }
                     }
                 }

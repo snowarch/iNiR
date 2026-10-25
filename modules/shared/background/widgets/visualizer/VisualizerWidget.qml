@@ -379,13 +379,19 @@ AbstractBackgroundWidget {
     // ── Visualizer rendering ─────────────────────────────────────
     // The field and the artwork on top of it move out together (LiveLayer): in their own surface, in their own
     // order, so a still widget does not repaint the whole desktop every frame. The card stays in the host, below.
-    LiveLayer {
-        visible: !root.irisFaced
+    Loader {
         anchors.fill: parent
-        live: root.motionActive && (root.vizType === "organic"
-            ? root._organicPresent
-            : root._active && cavaProcess.audioSignalActive)
-        content: vizContent
+        active: !root.irisFaced
+        sourceComponent: Item {
+            LiveLayer {
+                visible: !root.irisFaced
+                anchors.fill: parent
+                live: root.motionActive && (root.vizType === "organic"
+                    ? root._organicPresent
+                    : root._active && cavaProcess.audioSignalActive)
+                content: vizContent
+            }
+        }
     }
 
     Component {

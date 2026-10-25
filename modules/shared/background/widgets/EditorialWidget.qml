@@ -33,22 +33,28 @@ AbstractBackgroundWidget {
     readonly property bool centered: composition === "quote"
     readonly property real inset: (root._globalEditorial ? Appearance.editorial.inset : 20) * scaleFactor
 
-    WidgetSurface {
-        visible: !root.irisFaced
-        irisPresentation: root.widgetIris
+    Loader {
         anchors.fill: parent
-        regionBrightness: root.regionBrightness
-        surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
-        surfaceOpacity: root.backgroundOpacity
-        surfaceBorderWidth: root.borderWidth
-        surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.widgetInk
-        colorMode: root.colorMode
-        surfaceAccent: root.widgetAccent
-        surfaceFill: root.widgetPlateColor
-        surfaceUseBlur: root.effectiveBlur
-        screenX: root.x; screenY: root.y
-        screenWidth: root.scaledScreenWidth; screenHeight: root.scaledScreenHeight
+        active: !root.irisFaced
+        sourceComponent: Item {
+            WidgetSurface {
+                visible: !root.irisFaced
+                irisPresentation: root.widgetIris
+                anchors.fill: parent
+                regionBrightness: root.regionBrightness
+                surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
+                surfaceOpacity: root.backgroundOpacity
+                surfaceBorderWidth: root.borderWidth
+                surfaceBorderOpacity: root.borderOpacity
+                surfaceColor: root.widgetInk
+                colorMode: root.colorMode
+                surfaceAccent: root.widgetAccent
+                surfaceFill: root.widgetPlateColor
+                surfaceUseBlur: root.effectiveBlur
+                screenX: root.x; screenY: root.y
+                screenWidth: root.scaledScreenWidth; screenHeight: root.scaledScreenHeight
+            }
+        }
     }
 
     Rectangle {
@@ -60,71 +66,77 @@ AbstractBackgroundWidget {
         color: root.widgetAccent
     }
 
-    ColumnLayout {
-        visible: !root.irisFaced
+    Loader {
         anchors.fill: parent
-        anchors.margins: root.inset
-        anchors.leftMargin: root.composition === "label" ? root.inset * 2 : root.inset
-        spacing: 10 * root.scaleFactor
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 10 * root.scaleFactor
-            StyledText {
-                Layout.fillWidth: true
-                text: String(root._readConfigKey("caption") ?? "A LITTLE EVERY DAY")
-                textFormat: Text.PlainText
-                font.capitalization: Font.AllUppercase
-                color: root.widgetAccentVisible
-                font.pixelSize: Appearance.font.pixelSize.smallest * root.scaleFactor
-                font.weight: root._globalEditorial ? Appearance.editorial.labelWeight : Font.DemiBold
-                font.letterSpacing: root._globalEditorial ? Appearance.editorial.metadataTracking : 0
-                horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
-                elide: Text.ElideRight
+        active: !root.irisFaced
+        sourceComponent: Item {
+            ColumnLayout {
+                visible: !root.irisFaced
+                anchors.fill: parent
+                anchors.margins: root.inset
+                anchors.leftMargin: root.composition === "label" ? root.inset * 2 : root.inset
+                spacing: 10 * root.scaleFactor
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10 * root.scaleFactor
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: String(root._readConfigKey("caption") ?? "A LITTLE EVERY DAY")
+                        textFormat: Text.PlainText
+                        font.capitalization: Font.AllUppercase
+                        color: root.widgetAccentVisible
+                        font.pixelSize: Appearance.font.pixelSize.smallest * root.scaleFactor
+                        font.weight: root._globalEditorial ? Appearance.editorial.labelWeight : Font.DemiBold
+                        font.letterSpacing: root._globalEditorial ? Appearance.editorial.metadataTracking : 0
+                        horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
+                        elide: Text.ElideRight
+                    }
+                    MaterialShape {
+                        visible: root.showAccent && root._ornaments && root.composition === "poster"
+                        implicitSize: 24 * root.scaleFactor
+                        shape: MaterialShape.Shape.Flower
+                        color: root.widgetAccent
+                    }
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.minimumHeight: 0
+                    text: String(root._readConfigKey("title") ?? "Make room for wonder.")
+                    textFormat: Text.PlainText
+                    color: root.widgetInk
+                    font.family: root.centered
+                        ? (root._globalEditorial ? Appearance.editorial.serifFamily : "serif")
+                        : (root._globalEditorial ? Appearance.editorial.displayFamily : Appearance.font.family.main)
+                    font.pixelSize: (root.composition === "label" ? 34 : 48) * root._titleScale * root.scaleFactor
+                    font.weight: root._globalEditorial ? Appearance.editorial.titleWeight : root.centered ? Font.Normal : Font.DemiBold
+                    font.letterSpacing: root._globalEditorial ? Appearance.editorial.titleTracking : 0
+                    font.italic: root.centered
+                    fontSizeMode: Text.Fit
+                    minimumPixelSize: Math.max(1, 12 * root.scaleFactor)
+                    wrapMode: Text.WordWrap
+                    elide: Text.ElideRight
+                    horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                }
+                Rectangle {
+                    Layout.preferredWidth: Math.min(48 * root.scaleFactor, parent.width)
+                    Layout.alignment: root.centered ? Qt.AlignHCenter : Qt.AlignLeft
+                    visible: root.showAccent && root._ornaments && root.composition !== "label"
+                    implicitHeight: 2 * root.scaleFactor
+                    radius: height / 2
+                    color: root.widgetAccent
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    text: String(root._readConfigKey("footer") ?? "YOUR OWN PERSPECTIVE")
+                    textFormat: Text.PlainText
+                    color: root.widgetInkMuted
+                    font.pixelSize: Appearance.font.pixelSize.smallest * root.scaleFactor
+                    horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
+                    elide: Text.ElideRight
+                }
             }
-            MaterialShape {
-                visible: root.showAccent && root._ornaments && root.composition === "poster"
-                implicitSize: 24 * root.scaleFactor
-                shape: MaterialShape.Shape.Flower
-                color: root.widgetAccent
-            }
-        }
-        StyledText {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.minimumHeight: 0
-            text: String(root._readConfigKey("title") ?? "Make room for wonder.")
-            textFormat: Text.PlainText
-            color: root.widgetInk
-            font.family: root.centered
-                ? (root._globalEditorial ? Appearance.editorial.serifFamily : "serif")
-                : (root._globalEditorial ? Appearance.editorial.displayFamily : Appearance.font.family.main)
-            font.pixelSize: (root.composition === "label" ? 34 : 48) * root._titleScale * root.scaleFactor
-            font.weight: root._globalEditorial ? Appearance.editorial.titleWeight : root.centered ? Font.Normal : Font.DemiBold
-            font.letterSpacing: root._globalEditorial ? Appearance.editorial.titleTracking : 0
-            font.italic: root.centered
-            fontSizeMode: Text.Fit
-            minimumPixelSize: Math.max(1, 12 * root.scaleFactor)
-            wrapMode: Text.WordWrap
-            elide: Text.ElideRight
-            horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
-            verticalAlignment: Text.AlignVCenter
-        }
-        Rectangle {
-            Layout.preferredWidth: Math.min(48 * root.scaleFactor, parent.width)
-            Layout.alignment: root.centered ? Qt.AlignHCenter : Qt.AlignLeft
-            visible: root.showAccent && root._ornaments && root.composition !== "label"
-            implicitHeight: 2 * root.scaleFactor
-            radius: height / 2
-            color: root.widgetAccent
-        }
-        StyledText {
-            Layout.fillWidth: true
-            text: String(root._readConfigKey("footer") ?? "YOUR OWN PERSPECTIVE")
-            textFormat: Text.PlainText
-            color: root.widgetInkMuted
-            font.pixelSize: Appearance.font.pixelSize.smallest * root.scaleFactor
-            horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
-            elide: Text.ElideRight
         }
     }
 

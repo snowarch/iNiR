@@ -147,24 +147,30 @@ AbstractBackgroundWidget {
         }
     }
 
-    WidgetSurface {
-        irisPresentation: root.widgetIris
-        regionBrightness: root.regionBrightness
+    Loader {
         anchors.fill: parent
-        surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
-        surfaceOpacity: root.backgroundOpacity
-        surfaceBorderWidth: root.borderWidth
-        surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.surfaceInk
-        colorMode: root.colorMode
-        surfaceAccent: root.widgetAccent3
-        surfaceFill: root.widgetPlateColor
-        surfaceUseBlur: root.effectiveBlur
-        screenX: root.x
-        screenY: root.y
-        screenWidth: root.scaledScreenWidth
-        screenHeight: root.scaledScreenHeight
-        shown: !root.irisFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
+        active: !root.irisFaced
+        sourceComponent: Item {
+            WidgetSurface {
+                irisPresentation: root.widgetIris
+                regionBrightness: root.regionBrightness
+                anchors.fill: parent
+                surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
+                surfaceOpacity: root.backgroundOpacity
+                surfaceBorderWidth: root.borderWidth
+                surfaceBorderOpacity: root.borderOpacity
+                surfaceColor: root.surfaceInk
+                colorMode: root.colorMode
+                surfaceAccent: root.widgetAccent3
+                surfaceFill: root.widgetPlateColor
+                surfaceUseBlur: root.effectiveBlur
+                screenX: root.x
+                screenY: root.y
+                screenWidth: root.scaledScreenWidth
+                screenHeight: root.scaledScreenHeight
+                shown: !root.irisFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
+            }
+        }
     }
 
     ColumnLayout {
@@ -451,126 +457,132 @@ AbstractBackgroundWidget {
         }
     }
 
-    RowLayout {
-        id: instrumentPlate
+    Loader {
         anchors.fill: parent
-        anchors.margins: Math.round(12 * root.scaleFactor)
-        spacing: Math.round(12 * root.scaleFactor)
-        visible: !root.irisFaced && opacity > 0
-        opacity: root.instrument ? 1 : 0
-        enabled: root.instrument
-        Behavior on opacity {
-            enabled: root.animationsActive
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-        }
-
-        // small is the person and the session: the label, condition and keys left the name 40 px
-        Item {
-            visible: root.showAvatar
-            Layout.preferredWidth: Math.round((root.materialSmall ? 44 : root.materialLarge ? 96 : 58) * root.scaleFactor)
-            Layout.preferredHeight: Layout.preferredWidth
-            Layout.alignment: root.materialSmall || root.materialLarge ? Qt.AlignTop : Qt.AlignVCenter
-
-            Rectangle {
-                id: instrumentAvatarMask
-                anchors.fill: parent
-                radius: Math.round(8 * root.scaleFactor)
-                visible: false
-            }
-            Image {
-                anchors.fill: parent
-                source: avatarResolver.resolvedSource
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                cache: true
-                smooth: true
-                mipmap: true
-                layer.enabled: status === Image.Ready
-                layer.effect: GE.OpacityMask { maskSource: instrumentAvatarMask }
-            }
-            InstrumentBrackets { anchors.fill: parent; color: root.widgetAccentVisible; length: Math.round(13 * root.scaleFactor) }
-        }
-
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            spacing: Math.round(3 * root.scaleFactor)
-
-            InstrumentLabel {
-                visible: !root.materialSmall
-                text: Translation.tr("Identity / Session")
-                color: root.widgetAccentVisible
-                scaleFactor: root.scaleFactor
-                strong: true
-            }
-            StyledText {
-                Layout.fillWidth: true
-                text: root.username
-                color: root.widgetInk
-                elide: Text.ElideRight
-                font.family: root.widgetTitleFamily
-                font.pixelSize: Math.round((root.materialSmall ? 20 : 26) * root.scaleFactor)
-                font.weight: Font.Bold
-            }
-            StyledText {
-                visible: root.showHostname && root.hostname.length > 0
-                Layout.fillWidth: true
-                text: root.widgetIris ? root.hostname : root.hostname.toUpperCase()
-                color: root.widgetInkMuted
-                elide: Text.ElideRight
-                font.family: Appearance.font.family.monospace
-                font.pixelSize: Math.max(9, Math.round(10 * root.scaleFactor))
-                font.letterSpacing: Math.round(0.8 * root.scaleFactor)
-            }
-            Item { Layout.fillHeight: true }
+        active: !root.irisFaced
+        sourceComponent: Item {
             RowLayout {
-                Layout.fillWidth: true
-                spacing: Math.round(10 * root.scaleFactor)
-                InstrumentField {
-                    Layout.alignment: Qt.AlignTop
-                    scaleFactor: root.scaleFactor
-                    label: Translation.tr("Session")
-                    // small reads the two largest units, as the uptime widget does
-                    value: root.materialSmall ? String(DateTime.uptime).split(", ").slice(0, 2).join(" ") : DateTime.uptime
-                    ink: root.widgetInk
-                    muted: root.widgetInkMuted
-                    family: root.widgetNumbersFamily
+                id: instrumentPlate
+                anchors.fill: parent
+                anchors.margins: Math.round(12 * root.scaleFactor)
+                spacing: Math.round(12 * root.scaleFactor)
+                visible: !root.irisFaced && opacity > 0
+                opacity: root.instrument ? 1 : 0
+                enabled: root.instrument
+                Behavior on opacity {
+                    enabled: root.animationsActive
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
                 }
-                InstrumentField {
-                    visible: root.showWeather && root.weatherLine.text !== "" && !root.materialSmall
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignTop
-                    scaleFactor: root.scaleFactor
-                    label: Translation.tr("Condition")
-                    value: root.weatherLine.text
-                    ink: root.widgetInk
-                    muted: root.widgetInkMuted
-                    family: root.widgetBodyFamily
-                    valueSize: 12
-                }
-            }
-        }
 
-        ColumnLayout {
-            visible: !root.materialSmall
-            Layout.alignment: Qt.AlignVCenter
-            spacing: Math.round(5 * root.scaleFactor)
-            Repeater {
-                model: [
-                    { icon: "lock", action: () => root.lockScreen() },
-                    { icon: "settings", action: () => GlobalStates.openSettings() },
-                    { icon: "power_settings_new", action: () => GlobalStates.sessionOpen = true }
-                ]
-                RippleButton {
-                    required property var modelData
-                    implicitWidth: Math.round(30 * root.scaleFactor)
-                    implicitHeight: implicitWidth
-                    buttonRadius: Math.round(6 * root.scaleFactor)
-                    colBackground: "transparent"
-                    colBackgroundHover: ColorUtils.applyAlpha(root.widgetAccent, 0.14)
-                    colRipple: ColorUtils.applyAlpha(root.widgetAccent, 0.22)
-                    downAction: modelData.action
-                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: modelData.icon; iconSize: Math.round(16 * root.scaleFactor); color: root.widgetInk }
+                // small is the person and the session: the label, condition and keys left the name 40 px
+                Item {
+                    visible: root.showAvatar
+                    Layout.preferredWidth: Math.round((root.materialSmall ? 44 : root.materialLarge ? 96 : 58) * root.scaleFactor)
+                    Layout.preferredHeight: Layout.preferredWidth
+                    Layout.alignment: root.materialSmall || root.materialLarge ? Qt.AlignTop : Qt.AlignVCenter
+
+                    Rectangle {
+                        id: instrumentAvatarMask
+                        anchors.fill: parent
+                        radius: Math.round(8 * root.scaleFactor)
+                        visible: false
+                    }
+                    Image {
+                        anchors.fill: parent
+                        source: avatarResolver.resolvedSource
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        cache: true
+                        smooth: true
+                        mipmap: true
+                        layer.enabled: status === Image.Ready
+                        layer.effect: GE.OpacityMask { maskSource: instrumentAvatarMask }
+                    }
+                    InstrumentBrackets { anchors.fill: parent; color: root.widgetAccentVisible; length: Math.round(13 * root.scaleFactor) }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: Math.round(3 * root.scaleFactor)
+
+                    InstrumentLabel {
+                        visible: !root.materialSmall
+                        text: Translation.tr("Identity / Session")
+                        color: root.widgetAccentVisible
+                        scaleFactor: root.scaleFactor
+                        strong: true
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: root.username
+                        color: root.widgetInk
+                        elide: Text.ElideRight
+                        font.family: root.widgetTitleFamily
+                        font.pixelSize: Math.round((root.materialSmall ? 20 : 26) * root.scaleFactor)
+                        font.weight: Font.Bold
+                    }
+                    StyledText {
+                        visible: root.showHostname && root.hostname.length > 0
+                        Layout.fillWidth: true
+                        text: root.widgetIris ? root.hostname : root.hostname.toUpperCase()
+                        color: root.widgetInkMuted
+                        elide: Text.ElideRight
+                        font.family: Appearance.font.family.monospace
+                        font.pixelSize: Math.max(9, Math.round(10 * root.scaleFactor))
+                        font.letterSpacing: Math.round(0.8 * root.scaleFactor)
+                    }
+                    Item { Layout.fillHeight: true }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Math.round(10 * root.scaleFactor)
+                        InstrumentField {
+                            Layout.alignment: Qt.AlignTop
+                            scaleFactor: root.scaleFactor
+                            label: Translation.tr("Session")
+                            // small reads the two largest units, as the uptime widget does
+                            value: root.materialSmall ? String(DateTime.uptime).split(", ").slice(0, 2).join(" ") : DateTime.uptime
+                            ink: root.widgetInk
+                            muted: root.widgetInkMuted
+                            family: root.widgetNumbersFamily
+                        }
+                        InstrumentField {
+                            visible: root.showWeather && root.weatherLine.text !== "" && !root.materialSmall
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignTop
+                            scaleFactor: root.scaleFactor
+                            label: Translation.tr("Condition")
+                            value: root.weatherLine.text
+                            ink: root.widgetInk
+                            muted: root.widgetInkMuted
+                            family: root.widgetBodyFamily
+                            valueSize: 12
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    visible: !root.materialSmall
+                    Layout.alignment: Qt.AlignVCenter
+                    spacing: Math.round(5 * root.scaleFactor)
+                    Repeater {
+                        model: [
+                            { icon: "lock", action: () => root.lockScreen() },
+                            { icon: "settings", action: () => GlobalStates.openSettings() },
+                            { icon: "power_settings_new", action: () => GlobalStates.sessionOpen = true }
+                        ]
+                        RippleButton {
+                            required property var modelData
+                            implicitWidth: Math.round(30 * root.scaleFactor)
+                            implicitHeight: implicitWidth
+                            buttonRadius: Math.round(6 * root.scaleFactor)
+                            colBackground: "transparent"
+                            colBackgroundHover: ColorUtils.applyAlpha(root.widgetAccent, 0.14)
+                            colRipple: ColorUtils.applyAlpha(root.widgetAccent, 0.22)
+                            downAction: modelData.action
+                            contentItem: MaterialSymbol { anchors.centerIn: parent; text: modelData.icon; iconSize: Math.round(16 * root.scaleFactor); color: root.widgetInk }
+                        }
+                    }
                 }
             }
         }

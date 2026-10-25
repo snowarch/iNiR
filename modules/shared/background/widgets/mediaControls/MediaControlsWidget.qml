@@ -487,180 +487,186 @@ AbstractBackgroundWidget {
         ExpandingLyricsPlayer {}
     }
 
-    ColumnLayout {
-        id: playerColumnLayout
+    Loader {
         anchors.fill: parent
-        visible: !root.irisFaced
-        spacing: -Appearance.sizes.elevationMargin
+        active: !root.irisFaced
+        sourceComponent: Item {
+            ColumnLayout {
+                id: playerColumnLayout
+                anchors.fill: parent
+                visible: !root.irisFaced
+                spacing: -Appearance.sizes.elevationMargin
 
-        Repeater {
-            model: ScriptModel {
-                values: root.irisFaced ? [] : root.meaningfulPlayers
-            }
-            delegate: Item {
-                id: delegateRoot
-                required property MprisPlayer modelData
-                Layout.preferredWidth: root.widgetWidth
-                Layout.preferredHeight: root.widgetHeight
+                Repeater {
+                    model: ScriptModel {
+                        values: root.irisFaced ? [] : root.meaningfulPlayers
+                    }
+                    delegate: Item {
+                        id: delegateRoot
+                        required property MprisPlayer modelData
+                        Layout.preferredWidth: root.widgetWidth
+                        Layout.preferredHeight: root.widgetHeight
 
-                MediaOrganicEdgeAura {
-                    anchors.fill: parent
-                    // Organic lives outside the card as a sibling field. The
-                    // player occludes its interior while the field remains visible
-                    // beyond the rounded perimeter.
-                    z: -1
-                    visible: !root.instrument && root.vizType === "organic" && root.vizPosition !== "none"
-                    visualizerPoints: root.visualizerPoints
-                    audioActive: root.visualizerActive
-                    // Organic has its own idle motion. Keep the edge field alive
-                    // whenever a player exists; audio activity modulates it through
-                    // visualizerPoints instead of deciding whether it exists at all.
-                    active: root.hasPlayer && root.visible && root.powerActive
-                    animate: root.motionActive
-                    playerColor: root.widgetAccentVisible
-                    albumPalette: root.organicArtworkPalette
-                    accentPalette: [root.widgetAccentVisible,
-                        root.widgetAccent2Visible, root.widgetAccent3Visible]
-                    cardRadius: root.popupRounding
-                }
-
-                StyledRectangularShadow {
-                    z: -2
-                    target: playerLoader
-                    radius: root.popupRounding
-                    visible: !root.widgetIris && !root.instrument && (root.vizType !== "organic" || root.vizPosition === "none")
-                }
-
-                Loader {
-                    id: playerLoader
-                    z: 0
-                    anchors.fill: parent
-                    active: root.presetLoaderActive
-                    sourceComponent: root.instrument ? instrumentPlayerComponent
-                        : root.nativeIrisPlayer ? irisPlayerComponent : root.presetComponent
-
-                    onLoaded: {
-                        item.player = delegateRoot.modelData
-                        if (root.instrument)
-                            return
-                        if (!root.nativeIrisPlayer) {
-                            item.blendedColors = root._desktopInkOverride
-                            item.themeSourceColor = Qt.binding(() => root.widgetAccentVisible)
-                            item.visualizerPoints = Qt.binding(() => root.visualizerPoints)
-                            item.radius = root.popupRounding
-                            item.screenX = Qt.binding(() => root.widgetScreenPos.x)
-                            item.screenY = Qt.binding(() => root.widgetScreenPos.y)
-                            item.motion = Qt.binding(() => root.motionActive)
+                        MediaOrganicEdgeAura {
+                            anchors.fill: parent
+                            // Organic lives outside the card as a sibling field. The
+                            // player occludes its interior while the field remains visible
+                            // beyond the rounded perimeter.
+                            z: -1
+                            visible: !root.instrument && root.vizType === "organic" && root.vizPosition !== "none"
+                            visualizerPoints: root.visualizerPoints
+                            audioActive: root.visualizerActive
+                            // Organic has its own idle motion. Keep the edge field alive
+                            // whenever a player exists; audio activity modulates it through
+                            // visualizerPoints instead of deciding whether it exists at all.
+                            active: root.hasPlayer && root.visible && root.powerActive
+                            animate: root.motionActive
+                            playerColor: root.widgetAccentVisible
+                            albumPalette: root.organicArtworkPalette
+                            accentPalette: [root.widgetAccentVisible,
+                                root.widgetAccent2Visible, root.widgetAccent3Visible]
+                            cardRadius: root.popupRounding
                         }
-                        const loadedPreset = root.effectiveRenderedPreset;
-                        Qt.callLater(() => {
-                            if (root.presetLoaderActive
-                                    && root.effectiveRenderedPreset === loadedPreset
-                                    && root.selectedPreset === loadedPreset)
-                                root.sizedPreset = loadedPreset;
-                        });
+
+                        StyledRectangularShadow {
+                            z: -2
+                            target: playerLoader
+                            radius: root.popupRounding
+                            visible: !root.widgetIris && !root.instrument && (root.vizType !== "organic" || root.vizPosition === "none")
+                        }
+
+                        Loader {
+                            id: playerLoader
+                            z: 0
+                            anchors.fill: parent
+                            active: root.presetLoaderActive
+                            sourceComponent: root.instrument ? instrumentPlayerComponent
+                                : root.nativeIrisPlayer ? irisPlayerComponent : root.presetComponent
+
+                            onLoaded: {
+                                item.player = delegateRoot.modelData
+                                if (root.instrument)
+                                    return
+                                if (!root.nativeIrisPlayer) {
+                                    item.blendedColors = root._desktopInkOverride
+                                    item.themeSourceColor = Qt.binding(() => root.widgetAccentVisible)
+                                    item.visualizerPoints = Qt.binding(() => root.visualizerPoints)
+                                    item.radius = root.popupRounding
+                                    item.screenX = Qt.binding(() => root.widgetScreenPos.x)
+                                    item.screenY = Qt.binding(() => root.widgetScreenPos.y)
+                                    item.motion = Qt.binding(() => root.motionActive)
+                                }
+                                const loadedPreset = root.effectiveRenderedPreset;
+                                Qt.callLater(() => {
+                                    if (root.presetLoaderActive
+                                            && root.effectiveRenderedPreset === loadedPreset
+                                            && root.selectedPreset === loadedPreset)
+                                        root.sizedPreset = loadedPreset;
+                                });
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            visible: !root.hasPlayer
-
-            RowLayout {
-                visible: root.instrument
-                anchors.fill: parent
-                anchors.margins: Math.round(8 * root.scaleFactor)
-                spacing: Math.round(10 * root.scaleFactor)
-                InstrumentBrackets {
-                    Layout.preferredWidth: Math.round(34 * root.scaleFactor)
-                    Layout.preferredHeight: Layout.preferredWidth
-                    color: root.widgetAccentVisible
-                    length: Math.round(9 * root.scaleFactor)
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "music_note"
-                        iconSize: Math.round(18 * root.scaleFactor)
-                        color: root.widgetInkMuted
-                    }
-                }
-                ColumnLayout {
+                Item {
                     Layout.fillWidth: true
-                    spacing: 0
-                    InstrumentLabel { Layout.fillWidth: true; text: Translation.tr("Transport / Idle"); color: root.widgetAccentVisible; scaleFactor: root.scaleFactor; strong: true }
-                    StyledText { Layout.fillWidth: true; text: Translation.tr("Nothing playing"); color: root.widgetInk; elide: Text.ElideRight; font.family: root.widgetTitleFamily; font.pixelSize: Math.round(15 * root.scaleFactor); font.weight: Font.DemiBold }
-                }
-            }
-            IrisArtwork {
-                anchors.centerIn: parent
-                visible: root.widgetIris
-                width: Math.min(parent.width, parent.height) * 0.6
-                height: width
-            }
-            // At rest there is no player to draw the card: the rest wears the widget's own plate, so its words
-            // aren't left on the wallpaper and Background and Outline have something to change.
-            WidgetSurface {
-                irisPresentation: root.widgetIris
-                anchors.fill: parent
-                shown: root.materialSized && !root.instrument && !root.irisFaced
-                regionBrightness: root.regionBrightness
-                surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
-                surfaceOpacity: root.backgroundOpacity
-                surfaceBorderWidth: root.borderWidth
-                surfaceBorderOpacity: root.borderOpacity
-                surfaceColor: root.widgetInk
-                colorMode: root.colorMode
-                surfaceAccent: root.widgetAccent
-                surfaceFill: root.widgetPlateColor
-                surfaceUseBlur: root.effectiveBlur
-                screenX: root.x; screenY: root.y
-                screenWidth: root.scaledScreenWidth; screenHeight: root.scaledScreenHeight
-            }
-            MediaRest {
-                id: materialRest
-                anchors.fill: parent
-                visible: root.materialSized && !root.instrument && materialRest.known
-                widget: root
-            }
-            WidgetBlank {
-                anchors.fill: parent
-                visible: root.materialSized && !root.instrument && !materialRest.known
-                widget: root
-                icon: "music_note"
-                title: Translation.tr("Nothing playing")
-            }
-            MaterialShape {
-                id: idleOrnament
-                visible: !root.widgetIris && !root.instrument && !root.materialSized
-                anchors.centerIn: parent
-                implicitSize: Math.max(24, Math.min(parent.width, parent.height)
-                    - Appearance.sizes.elevationMargin)
-                shape: root._idleShapes[root._idleShapeIndex]
-                color: ColorUtils.applyAlpha(root.widgetAccentVisible, 0.20)
+                    Layout.fillHeight: true
+                    visible: !root.hasPlayer
 
-                animation: NumberAnimation {
-                    duration: Appearance.animation.elementMoveEnter.duration
-                    easing.type: Appearance.animation.elementMoveEnter.type
-                    easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
-                }
+                    RowLayout {
+                        visible: root.instrument
+                        anchors.fill: parent
+                        anchors.margins: Math.round(8 * root.scaleFactor)
+                        spacing: Math.round(10 * root.scaleFactor)
+                        InstrumentBrackets {
+                            Layout.preferredWidth: Math.round(34 * root.scaleFactor)
+                            Layout.preferredHeight: Layout.preferredWidth
+                            color: root.widgetAccentVisible
+                            length: Math.round(9 * root.scaleFactor)
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "music_note"
+                                iconSize: Math.round(18 * root.scaleFactor)
+                                color: root.widgetInkMuted
+                            }
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+                            InstrumentLabel { Layout.fillWidth: true; text: Translation.tr("Transport / Idle"); color: root.widgetAccentVisible; scaleFactor: root.scaleFactor; strong: true }
+                            StyledText { Layout.fillWidth: true; text: Translation.tr("Nothing playing"); color: root.widgetInk; elide: Text.ElideRight; font.family: root.widgetTitleFamily; font.pixelSize: Math.round(15 * root.scaleFactor); font.weight: Font.DemiBold }
+                        }
+                    }
+                    IrisArtwork {
+                        anchors.centerIn: parent
+                        visible: root.widgetIris
+                        width: Math.min(parent.width, parent.height) * 0.6
+                        height: width
+                    }
+                    // At rest there is no player to draw the card: the rest wears the widget's own plate, so its words
+                    // aren't left on the wallpaper and Background and Outline have something to change.
+                    WidgetSurface {
+                        irisPresentation: root.widgetIris
+                        anchors.fill: parent
+                        shown: root.materialSized && !root.instrument && !root.irisFaced
+                        regionBrightness: root.regionBrightness
+                        surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
+                        surfaceOpacity: root.backgroundOpacity
+                        surfaceBorderWidth: root.borderWidth
+                        surfaceBorderOpacity: root.borderOpacity
+                        surfaceColor: root.widgetInk
+                        colorMode: root.colorMode
+                        surfaceAccent: root.widgetAccent
+                        surfaceFill: root.widgetPlateColor
+                        surfaceUseBlur: root.effectiveBlur
+                        screenX: root.x; screenY: root.y
+                        screenWidth: root.scaledScreenWidth; screenHeight: root.scaledScreenHeight
+                    }
+                    MediaRest {
+                        id: materialRest
+                        anchors.fill: parent
+                        visible: root.materialSized && !root.instrument && materialRest.known
+                        widget: root
+                    }
+                    WidgetBlank {
+                        anchors.fill: parent
+                        visible: root.materialSized && !root.instrument && !materialRest.known
+                        widget: root
+                        icon: "music_note"
+                        title: Translation.tr("Nothing playing")
+                    }
+                    MaterialShape {
+                        id: idleOrnament
+                        visible: !root.widgetIris && !root.instrument && !root.materialSized
+                        anchors.centerIn: parent
+                        implicitSize: Math.max(24, Math.min(parent.width, parent.height)
+                            - Appearance.sizes.elevationMargin)
+                        shape: root._idleShapes[root._idleShapeIndex]
+                        color: ColorUtils.applyAlpha(root.widgetAccentVisible, 0.20)
 
-                MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: "music_note"
-                    fill: 1
-                    iconSize: Math.round(idleOrnament.implicitSize * 0.34)
-                    color: root.widgetAccentVisible
-                }
+                        animation: NumberAnimation {
+                            duration: Appearance.animation.elementMoveEnter.duration
+                            easing.type: Appearance.animation.elementMoveEnter.type
+                            easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                        }
 
-                StyledToolTip {
-                    text: Translation.tr("No active player")
-                    visible: idleHover.hovered
-                }
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: "music_note"
+                            fill: 1
+                            iconSize: Math.round(idleOrnament.implicitSize * 0.34)
+                            color: root.widgetAccentVisible
+                        }
 
-                HoverHandler {
-                    id: idleHover
+                        StyledToolTip {
+                            text: Translation.tr("No active player")
+                            visible: idleHover.hovered
+                        }
+
+                        HoverHandler {
+                            id: idleHover
+                        }
+                    }
                 }
             }
         }

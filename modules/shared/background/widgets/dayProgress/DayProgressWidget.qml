@@ -86,81 +86,87 @@ AbstractBackgroundWidget {
         animated: root.animationsActive
     }
 
-    RowLayout {
-        visible: !root.irisFaced && root.wide
+    Loader {
         anchors.fill: parent
-        anchors.margins: Math.round(16 * root.scaleFactor)
-        spacing: Math.round(18 * root.scaleFactor)
-
-        Item {
-            Layout.fillHeight: true
-            Layout.preferredWidth: height
-            DayRing {
-                anchors.fill: parent
-                scaleFactor: root.scaleFactor * 0.8
-                showLabels: false
-            }
-            ColumnLayout {
-                anchors.centerIn: parent
-                spacing: 0
-                MaterialSymbol {
-                    Layout.alignment: Qt.AlignHCenter
-                    visible: root.showIcon
-                    text: root.isDaytime ? "light_mode" : "bedtime"
-                    iconSize: Math.round(18 * root.scaleFactor * root.textScale)
-                    color: root.accentSoft
-                }
-                StyledText {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: Math.round(root.dayFraction * 100) + "%"
-                    color: root.ink
-                    font.family: root.widgetNumbersFamily
-                    font.pixelSize: Math.round(20 * root.scaleFactor * root.textScale)
-                    font.weight: Font.DemiBold
-                    font.features: ({ "tnum": 1 })
-                }
-            }
-        }
-
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-            spacing: Math.round(2 * root.scaleFactor)
-            StyledText {
-                Layout.fillWidth: true
-                text: DateTime.time
-                elide: Text.ElideRight
-                color: root.ink
-                font.family: root.widgetNumbersFamily
-                font.pixelSize: Math.round(40 * root.scaleFactor * root.textScale)
-                font.weight: Font.DemiBold
-                font.features: ({ "tnum": 1 })
-            }
-            StyledText {
-                Layout.fillWidth: true
-                visible: root.showDate
-                text: DateTime.date
-                elide: Text.ElideRight
-                color: root.inkMuted
-                font.family: root.widgetNumbersFamily
-                font.pixelSize: Math.round(13 * root.scaleFactor * root.textScale)
-                font.weight: Font.Medium
-            }
+        active: !root.irisFaced
+        sourceComponent: Item {
             RowLayout {
-                Layout.topMargin: Math.round(8 * root.scaleFactor)
-                visible: root.sunNext.length > 0
-                spacing: Math.round(6 * root.scaleFactor)
-                MaterialSymbol {
-                    text: root.sunUp ? "wb_twilight" : "wb_sunny"
-                    fill: 1
-                    iconSize: Math.round(16 * root.scaleFactor)
-                    color: root.accentSoft
+                visible: !root.irisFaced && root.wide
+                anchors.fill: parent
+                anchors.margins: Math.round(16 * root.scaleFactor)
+                spacing: Math.round(18 * root.scaleFactor)
+
+                Item {
+                    Layout.fillHeight: true
+                    Layout.preferredWidth: height
+                    DayRing {
+                        anchors.fill: parent
+                        scaleFactor: root.scaleFactor * 0.8
+                        showLabels: false
+                    }
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 0
+                        MaterialSymbol {
+                            Layout.alignment: Qt.AlignHCenter
+                            visible: root.showIcon
+                            text: root.isDaytime ? "light_mode" : "bedtime"
+                            iconSize: Math.round(18 * root.scaleFactor * root.textScale)
+                            color: root.accentSoft
+                        }
+                        StyledText {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: Math.round(root.dayFraction * 100) + "%"
+                            color: root.ink
+                            font.family: root.widgetNumbersFamily
+                            font.pixelSize: Math.round(20 * root.scaleFactor * root.textScale)
+                            font.weight: Font.DemiBold
+                            font.features: ({ "tnum": 1 })
+                        }
+                    }
                 }
-                StyledText {
-                    text: (root.sunUp ? Translation.tr("Sunset") : Translation.tr("Sunrise")) + " " + root.sunNext
-                    color: root.inkMuted
-                    font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
-                    font.weight: Font.Medium
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    spacing: Math.round(2 * root.scaleFactor)
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: DateTime.time
+                        elide: Text.ElideRight
+                        color: root.ink
+                        font.family: root.widgetNumbersFamily
+                        font.pixelSize: Math.round(40 * root.scaleFactor * root.textScale)
+                        font.weight: Font.DemiBold
+                        font.features: ({ "tnum": 1 })
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        visible: root.showDate
+                        text: DateTime.date
+                        elide: Text.ElideRight
+                        color: root.inkMuted
+                        font.family: root.widgetNumbersFamily
+                        font.pixelSize: Math.round(13 * root.scaleFactor * root.textScale)
+                        font.weight: Font.Medium
+                    }
+                    RowLayout {
+                        Layout.topMargin: Math.round(8 * root.scaleFactor)
+                        visible: root.sunNext.length > 0
+                        spacing: Math.round(6 * root.scaleFactor)
+                        MaterialSymbol {
+                            text: root.sunUp ? "wb_twilight" : "wb_sunny"
+                            fill: 1
+                            iconSize: Math.round(16 * root.scaleFactor)
+                            color: root.accentSoft
+                        }
+                        StyledText {
+                            text: (root.sunUp ? Translation.tr("Sunset") : Translation.tr("Sunrise")) + " " + root.sunNext
+                            color: root.inkMuted
+                            font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                            font.weight: Font.Medium
+                        }
+                    }
                 }
             }
         }
