@@ -2687,6 +2687,14 @@ AbstractWidget {
             root._setOutputValues(root._sizeValues(size))
         _materialSizeSettle.restart()
     }
+    // a size chosen elsewhere (Settings) makes room like one chosen here; the first size it shows is no change
+    property string _shownMaterialSize: ""
+    onMaterialSizeChanged: {
+        const was = root._shownMaterialSize
+        root._shownMaterialSize = root.materialSize
+        if (was.length > 0 && root.materialSized && root._sizeSettled && !root._materialSizing)
+            _materialSizeSettle.restart()
+    }
     Timer {
         id: _materialSizeSettle
         interval: Appearance.animation.elementMove.duration + 40
@@ -2696,7 +2704,9 @@ AbstractWidget {
             else if (root.placementStrategy === "free"
                     && (Math.round(root._clampX(root.x)) !== Math.round(root.x) || Math.round(root._clampY(root.y)) !== Math.round(root.y)))
                 root._setOutputValues({ x: Math.round(root._clampX(root.x)), y: Math.round(root._clampY(root.y)) })
-            root._makeRoom()
+            // a size someone chose makes room in or out of edit mode
+            if (root._canvas && typeof root._canvas.makeRoom === "function")
+                root._canvas.makeRoom(root.editInstanceKey)
         }
     }
 
