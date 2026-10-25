@@ -297,10 +297,13 @@ AbstractBackgroundWidget {
                 model: root.weekdayLabels()
                 StyledText {
                     required property string modelData
+                    required property int index
+                    // Saturday and Sunday take the accent (Lucid): the week's shape reads before its numbers.
+                    readonly property bool weekend: !root.instrument && [0, 6].includes((index + root.weekStart) % 7)
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     text: modelData
-                    color: root.inkMuted
+                    color: weekend ? root.widgetAccentVisible : root.inkMuted
                     font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.smallest : Appearance.font.pixelSize.smaller) * root.scaleFactor)
                     font.weight: Font.DemiBold
                     font.capitalization: root.instrument && !root.widgetIris ? Font.AllUppercase : Font.MixedCase
@@ -327,6 +330,14 @@ AbstractBackgroundWidget {
                     // hidden, not gone: a layout closes the gap of an invisible cell and the 1st slid to Monday
                     opacity: dayCell.modelData.currentMonth || root.showAdjacentDays ? 1 : 0
 
+                    // Today wears one of M3 Expressive's shapes, filled in the accent.
+                    MaterialShape {
+                        anchors.centerIn: parent
+                        visible: !root.instrument && dayCell.modelData.isToday
+                        implicitSize: Math.round(Math.min(parent.width, parent.height, Math.round(36 * root.scaleFactor)) * 1.1)
+                        shape: MaterialShape.Shape.Pentagon
+                        color: root.accentFace
+                    }
                     Rectangle {
                         anchors.centerIn: parent
                         width: Math.min(parent.width, parent.height, Math.round(36 * root.scaleFactor))
@@ -334,8 +345,7 @@ AbstractBackgroundWidget {
                         radius: Appearance.rounding.full
                         // Instrument: today is a signal mark — hairline accent
                         // ring with accent ink, not a filled pill.
-                        color: !root.instrument && dayCell.modelData.isToday
-                            ? root.accentFace : "transparent"
+                        color: "transparent"
                         border.width: root.instrument && dayCell.modelData.isToday
                             ? Math.max(1.5, Math.round(1.5 * root.scaleFactor)) : 0
                         border.color: root.accentMark
