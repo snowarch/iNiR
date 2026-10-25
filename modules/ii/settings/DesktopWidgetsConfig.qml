@@ -760,6 +760,7 @@ ContentPage {
             from: 0; to: 100; stepSize: 2
             value: everyStrength.shared === "mixed" ? 16 : Math.round(Number(everyStrength.shared) * 100)
             onPressedChanged: if (!pressed) DesktopWidgetOptions.setEvery("backgroundOpacity", Math.round(everySlider.value) / 100)
+            onMoved: if (!pressed) DesktopWidgetOptions.setEvery("backgroundOpacity", Math.round(everySlider.value) / 100)
         }
         StyledText {
             Layout.preferredWidth: 52

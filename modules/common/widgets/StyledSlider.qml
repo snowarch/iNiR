@@ -82,7 +82,15 @@ Slider {
     property real handleMargins: 4
     property real trackDotSize: 3
     property string tooltipContent: `${Math.round(value * 100)}%`
-    property bool scrollable: false
+    // The wheel turns a slider the pointer rests on while the page is still (WheelIntent); a page in motion keeps the
+    // wheel. Off everywhere before, Settings had no wheel on any slider (10-25).
+    property bool scrollable: true
+    readonly property real wheelStep: {
+        const span = Math.abs(root.to - root.from)
+        if (root.stepSize <= 0) return span / 20
+        return Math.max(1, Math.round(span / 20 / root.stepSize)) * root.stepSize
+    }
+    property real _wheelAccumulator: 0
     property bool _userInteracting: false
     property bool wavy: !Appearance.regaliaEverywhere && configuration === StyledSlider.Configuration.Wavy
     property bool animateWave: true
@@ -210,12 +218,16 @@ Slider {
     }
 
     MouseArea {
+        id: wheelArea
         anchors.fill: parent
         onPressed: (mouse) => mouse.accepted = false
+        hoverEnabled: root.scrollable
         cursorShape: root.pressed ? Qt.ClosedHandCursor : Qt.PointingHandCursor 
+        onPositionChanged: mouse => wheelIntent.track(mouse.x, mouse.y)
+        WheelIntent { id: wheelIntent; hovered: wheelArea.containsMouse }
 
         onWheel: (event) => {
-            if (!root.scrollable) {
+            if (!root.scrollable || !wheelIntent.take(event)) {
                 event.accepted = false
                 return
             }
@@ -223,14 +235,15 @@ Slider {
             root._userInteracting = true
             _userInteractingReset.restart()
 
-            const step = root.stepSize > 0 ? root.stepSize : 0.02
-            if (event.angleDelta.y > 0) {
-                root.value = Math.min(root.value + step, root.to)
-                root.moved()
-            } else {
-                root.value = Math.max(root.value - step, root.from)
-                root.moved()
-            }
+            const delta = (event.angleDelta.y || -event.angleDelta.x) || (event.pixelDelta.y || -event.pixelDelta.x) * 4
+            root._wheelAccumulator += delta
+            const steps = Math.trunc(root._wheelAccumulator / 120)
+            if (steps === 0) return
+            root._wheelAccumulator -= steps * 120
+            const next = Math.max(Math.min(root.from, root.to), Math.min(Math.max(root.from, root.to), root.value + steps * root.wheelStep))
+            if (next === root.value) return
+            root.value = next
+            root.moved()
         }
     }
 

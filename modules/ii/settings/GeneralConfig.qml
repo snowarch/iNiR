@@ -462,6 +462,7 @@ ContentPage {
                 onPressedChanged: {
                     if (!pressed) Config.setNestedValue("sounds.volume", value)
                 }
+                onMoved: if (!pressed) Config.setNestedValue("sounds.volume", value)
             }
         }
 
