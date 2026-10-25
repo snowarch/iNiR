@@ -302,6 +302,12 @@ Item {
                         canGoPrevious: playerBase.effectiveCanGoPrevious
                         canGoNext: playerBase.effectiveCanGoNext
                         isPlaying: playerBase.effectiveIsPlaying
+                        // Material: the play key is the one filled pill (Lucid); the styles with their own grammar keep theirs.
+                        readonly property bool pillPlay: !Appearance.zzzEverywhere && !Appearance.inirEverywhere
+                            && !Appearance.angelEverywhere && !Appearance.regaliaEverywhere && !Appearance.auroraEverywhere
+                        playButtonWidth: pillPlay ? 56 : playButtonSize
+                        playButtonColor: pillPlay ? (effectiveColors?.colPrimary ?? Appearance.colors.colPrimary) : buttonColor
+                        playButtonRadius: pillPlay ? Appearance.rounding.full : buttonRadius
                         buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
                             : Appearance.inirEverywhere
                             ? Appearance.inir.roundingSmall
@@ -331,6 +337,7 @@ Item {
                             ? playerBase.inirPrimary
                             : Appearance.auroraEverywhere
                                 ? Appearance.colors.colOnLayer0
+                                : pillPlay ? (effectiveColors?.colOnPrimary ?? Appearance.colors.colOnPrimary)
                                 : Appearance.colors.colOnLayer1
                         onPreviousClicked: playerBase.previous()
                         onPlayPauseClicked: playerBase.togglePlaying()
