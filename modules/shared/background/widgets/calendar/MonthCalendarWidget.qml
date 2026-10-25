@@ -62,6 +62,13 @@ AbstractBackgroundWidget {
     readonly property color accentMark: root.instrument ? root.widgetAccentVisible : root.accentFace
     readonly property color accentMarkInk: root.instrument ? root.widgetAccentVisible : root.accentInk
 
+    // A day with something on it keeps a dot under its number (Lucid's month view).
+    function hasEvents(year: int, month: int, day: int): bool {
+        const date = new Date(year, month, day)
+        if (typeof Events !== "undefined" && (Events.getAllEventsForDate(date) ?? []).length > 0) return true
+        return typeof CalendarSync !== "undefined" && (CalendarSync.getEventsForDate(date) ?? []).length > 0
+    }
+
     function getMonthMatrix(date): var {
         const year = date.getFullYear()
         const month = date.getMonth()
@@ -82,6 +89,7 @@ AbstractBackgroundWidget {
             cells.push({
                 day: day,
                 currentMonth: true,
+                marked: root.hasEvents(year, month, day),
                 isToday: year === root.today.getFullYear()
                     && month === root.today.getMonth()
                     && day === root.today.getDate()
@@ -121,6 +129,7 @@ AbstractBackgroundWidget {
                 const day = new Date(start)
                 day.setDate(start.getDate() + i)
                 cells.push({ day: day.getDate(), currentMonth: day.getMonth() === root.today.getMonth(),
+                    marked: root.hasEvents(day.getFullYear(), day.getMonth(), day.getDate()),
                     isToday: i === (root.today.getDay() - root.weekStart + 7) % 7 })
             }
             return cells
@@ -360,6 +369,17 @@ AbstractBackgroundWidget {
                                 : root.strip ? Appearance.font.pixelSize.large : Appearance.font.pixelSize.small) * root.scaleFactor)
                             font.weight: dayCell.modelData.isToday ? Font.Bold : Font.Normal
                             font.family: root.widgetNumbersFamily
+                        }
+                        Rectangle {
+                            visible: dayCell.modelData.marked === true
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: Math.max(1, Math.round(parent.height * 0.12))
+                            width: Math.max(3, Math.round(4 * root.scaleFactor))
+                            height: width
+                            radius: width / 2
+                            color: dayCell.modelData.isToday ? root.accentMarkInk : root.widgetAccentVisible
+                            opacity: dayCell.modelData.currentMonth ? 1 : 0.32
                         }
                     }
                 }
