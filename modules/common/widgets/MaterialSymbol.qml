@@ -41,7 +41,10 @@ Item {
     implicitWidth: effectiveSize
     implicitHeight: effectiveSize
     
-    readonly property real clampedFill: Math.max(0, Math.min(1, fill))
+    // These glyphs' filled form is broken in the variable font (the sun comes out striped at any size and renderer),
+    // so they always draw as outlines.
+    readonly property bool fillBreaks: root.text === "partly_cloudy_day" || root.text === "routine"
+    readonly property real clampedFill: root.fillBreaks ? 0 : Math.max(0, Math.min(1, fill))
     readonly property real effectiveFill: animateFill && !Appearance.regaliaEverywhere
         ? (clampedFill < 0.01 ? 0 : (clampedFill > 0.99 ? 1 : clampedFill))
         : Math.round(clampedFill)
