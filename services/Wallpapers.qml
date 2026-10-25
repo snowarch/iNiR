@@ -1481,4 +1481,56 @@ Singleton {
         }
     }
     // ── End auto wallpaper cycling ──────────────────────────────────────
+
+    // Favourites: wallpapers someone hearted, from their folders or from the web. A web one keeps what it takes to
+    // show and fetch it again (preview, file, page) and its local copy once downloaded. State dir, newest first.
+    property var favorites: []
+    readonly property var favoriteKeys: root.favorites.reduce((set, entry) => { set[entry.key] = true; return set }, ({}))
+    function isFavorite(key: string): bool { return root.favoriteKeys[key] === true }
+    function toggleFavorite(entry: var): bool {
+        const key = String(entry?.key ?? "")
+        if (key.length === 0) return false
+        if (root.isFavorite(key)) { root.removeFavorite(key); return false }
+        root._saveFavorites([{
+            key: key,
+            web: entry.web === true,
+            path: String(entry.path ?? ""),
+            provider: String(entry.provider ?? ""),
+            id: String(entry.id ?? ""),
+            title: String(entry.title ?? ""),
+            preview: String(entry.preview ?? ""),
+            file: String(entry.file ?? ""),
+            file4k: String(entry.file4k ?? ""),
+            motion: String(entry.motion ?? ""),
+            page: String(entry.page ?? ""),
+            width: Number(entry.width ?? 0),
+            height: Number(entry.height ?? 0),
+            video: entry.video === true,
+            added: Date.now()
+        }].concat(root.favorites))
+        return true
+    }
+    function removeFavorite(key: string): void {
+        root._saveFavorites(root.favorites.filter(entry => entry.key !== key))
+    }
+    // A web favourite that was downloaded remembers where, so it applies at once next time.
+    function favoriteLanded(key: string, path: string): void {
+        if (root.isFavorite(key))
+            root._saveFavorites(root.favorites.map(entry => entry.key === key ? Object.assign({}, entry, { path: path }) : entry))
+    }
+    function _saveFavorites(next: var): void {
+        root.favorites = next
+        favoritesFile.setText(JSON.stringify(next))
+    }
+    FileView {
+        id: favoritesFile
+        path: Directories.statePath + "/user/wallpaper-favorites.json"
+        printErrors: false
+        onLoaded: {
+            try {
+                const list = JSON.parse(favoritesFile.text())
+                if (Array.isArray(list)) root.favorites = list.filter(entry => entry && typeof entry.key === "string")
+            } catch (e) {}
+        }
+    }
 }

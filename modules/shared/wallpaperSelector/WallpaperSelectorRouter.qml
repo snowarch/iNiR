@@ -6,6 +6,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import qs
 import qs.modules.common
+import qs.modules.common.functions
 import qs.services
 
 Scope {
@@ -213,12 +214,20 @@ Scope {
         function preview(path: string): void { Wallpapers.previewWallpaper(path, "") }
         function cancelPreview(): void { Wallpapers.cancelWallpaperPreview() }
         function browse(source: string, query: string): void {
-            GlobalStates.wallpaperSelectorSource = ["library", "wallhaven", "konachan", "yandere", "live"].includes(source) ? source : "library"
+            GlobalStates.wallpaperSelectorSource = ["library", "favorites", "wallhaven", "konachan", "yandere", "live"].includes(source) ? source : "library"
             GlobalStates.wallpaperSelectorQuery = query === "-" ? "" : query
             if (GlobalStates.wallpaperSelectorOpen) return
             if (!GlobalStates.wallpaperLauncherOpen && !GlobalStates.coverflowSelectorOpen)
                 root.toggle()
         }
+        function favorite(path: string): string {
+            const file = FileUtils.trimFileProtocol(path === "-" || path === "" ? Wallpapers.desktopWallpaperPath(root.focusedMonitorName) : path)
+            if (file.length === 0) return "No wallpaper to favourite"
+            const name = file.split("/").pop()
+            return Wallpapers.toggleFavorite({ key: file, path: file, title: name.replace(/\.[^.]+$/, ""), video: Wallpapers.isVideoFile(file) })
+                ? "added " + file : "removed " + file
+        }
+        function favorites(): string { return JSON.stringify(Wallpapers.favorites.map(entry => entry.web && !entry.path ? entry.page || entry.file : entry.path)) }
         function kind(name: string): string {
             if (!["all", "still", "live", "gif"].includes(name))
                 return "Unknown kind: all, still, live or gif"

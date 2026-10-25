@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 dev/tools/generate-ipc-registry.py
-# IPC.md hash: 41722d3a71ae09f2
+# IPC.md hash: a98b862b748e75a3
 # Targets: 77
 
 declare -gA IPC_TARGET_DESC=(
@@ -234,7 +234,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [wactionCenter]="toggle close open"
   [waffleAltSwitcher]="open close toggle next previous"
   [wallpaperLauncher]="next previous applyCurrent status"
-  [wallpaperSelector]="toggle open close openLauncher toggleOnMonitor random next shuffle set preview cancelPreview browse kind move status"
+  [wallpaperSelector]="toggle open close openLauncher toggleOnMonitor random next shuffle set preview cancelPreview browse favorite favorites kind move status"
   [wbar]="toggle close open"
   [widgetStacks]="status create add remove dissolve page move rotate interval"
   [widgetpower]="status"
@@ -682,9 +682,11 @@ declare -gA IPC_FUNCTION_DESC=(
   ["wallpaperSelector:set"]="Apply a wallpaper (picture, GIF or video) by path, the same way the picker does"
   ["wallpaperSelector:preview"]="Show a wallpaper on the desktop without applying it: no config write, no recoloring"
   ["wallpaperSelector:cancelPreview"]="Drop the preview and go back to the applied wallpaper"
-  ["wallpaperSelector:browse"]="Open the picker on a source — \`library\`, \`wallhaven\` or \`live\` (anime live wallpapers) — with a search, a folder to open (\`~/Videos\`), or \`-\` for none. Sources are an iRiS feature; other families just open the picker"
+  ["wallpaperSelector:browse"]="Open the picker on a source — \`library\`, \`favorites\`, \`wallhaven\`, \`konachan\`, \`yandere\` or \`live\` (anime live wallpapers) — with a search, a folder to open (\`~/Videos\`), or \`-\` for none. Sources are an iRiS feature; other families just open the picker"
+  ["wallpaperSelector:favorite"]="Heart a wallpaper or take the heart back: a file, or \`-\` for the one on the focused screen. Prints \`added\` or \`removed\` and the path; favourites are a source of the iRiS picker"
+  ["wallpaperSelector:favorites"]="JSON list of the hearted wallpapers: files, or the page of a web one not downloaded yet"
   ["wallpaperSelector:kind"]="Show only one kind of wallpaper in the library: \`all\`, \`still\`, \`live\` (videos) or \`gif\`. iRiS only; the filter also sits beside the search field whenever the folder holds more than one kind"
-  ["wallpaperSelector:move"]="Move the gallery's selection by that many tiles, as the arrow keys do (negative goes back); the ring and the row glide and the desktop preview follows. iRiS only, while the picker is open"
+  ["wallpaperSelector:move"]="Move the picker's selection by that many wallpapers, as the arrow keys do (negative goes back); the desktop preview follows. iRiS only, while the picker is open"
   ["wallpaperSelector:status"]="Return picker style, open surface, target monitor and selection target as JSON"
   ["wbar:toggle"]="Show/hide taskbar"
   ["wbar:close"]="Hide taskbar"
@@ -888,6 +890,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["wallpaperSelector:set"]="<path>"
   ["wallpaperSelector:preview"]="<path>"
   ["wallpaperSelector:browse"]="<source> <query>"
+  ["wallpaperSelector:favorite"]="<path>"
   ["wallpaperSelector:kind"]="<name>"
   ["wallpaperSelector:move"]="<step>"
   ["widgetStacks:create"]="<widgets>"
@@ -979,7 +982,8 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["vpn:add"]="wireguard vpn nmtui"
   ["wallpaperSelector:openLauncher"]="static animated"
   ["wallpaperSelector:shuffle"]="on off status"
-  ["wallpaperSelector:browse"]="library wallhaven live"
+  ["wallpaperSelector:browse"]="library favorites wallhaven konachan yandere live"
+  ["wallpaperSelector:favorite"]="added removed"
   ["wallpaperSelector:kind"]="all still live gif"
   ["widgetStacks:create"]="weather+monthCalendar"
   ["widgetStacks:page"]="next previous"

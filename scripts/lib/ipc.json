@@ -4061,12 +4061,32 @@
       "source",
       "query"
      ],
-     "description": "Open the picker on a source — `library`, `wallhaven` or `live` (anime live wallpapers) — with a search, a folder to open (`~/Videos`), or `-` for none. Sources are an iRiS feature; other families just open the picker",
+     "description": "Open the picker on a source — `library`, `favorites`, `wallhaven`, `konachan`, `yandere` or `live` (anime live wallpapers) — with a search, a folder to open (`~/Videos`), or `-` for none. Sources are an iRiS feature; other families just open the picker",
      "values": [
       "library",
+      "favorites",
       "wallhaven",
+      "konachan",
+      "yandere",
       "live"
      ]
+    },
+    {
+     "name": "favorite",
+     "args": [
+      "path"
+     ],
+     "description": "Heart a wallpaper or take the heart back: a file, or `-` for the one on the focused screen. Prints `added` or `removed` and the path; favourites are a source of the iRiS picker",
+     "values": [
+      "added",
+      "removed"
+     ]
+    },
+    {
+     "name": "favorites",
+     "args": [],
+     "description": "JSON list of the hearted wallpapers: files, or the page of a web one not downloaded yet",
+     "values": []
     },
     {
      "name": "kind",
@@ -4086,7 +4106,7 @@
      "args": [
       "step"
      ],
-     "description": "Move the gallery's selection by that many tiles, as the arrow keys do (negative goes back); the ring and the row glide and the desktop preview follows. iRiS only, while the picker is open",
+     "description": "Move the picker's selection by that many wallpapers, as the arrow keys do (negative goes back); the desktop preview follows. iRiS only, while the picker is open",
      "values": []
     },
     {

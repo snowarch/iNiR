@@ -578,8 +578,10 @@ Wallpaper picker with grid, coverflow and compact launcher styles.
 | `preview <path>` | Show a wallpaper on the desktop without applying it: no config write, no recoloring |
 | `cancelPreview` | Drop the preview and go back to the applied wallpaper |
 | `kind <name>` | Show only one kind of wallpaper in the library: `all`, `still`, `live` (videos) or `gif`. iRiS only; the filter also sits beside the search field whenever the folder holds more than one kind |
-| `move <step>` | Move the gallery's selection by that many tiles, as the arrow keys do (negative goes back); the ring and the row glide and the desktop preview follows. iRiS only, while the picker is open |
-| `browse <source> <query>` | Open the picker on a source — `library`, `wallhaven` or `live` (anime live wallpapers) — with a search, a folder to open (`~/Videos`), or `-` for none. Sources are an iRiS feature; other families just open the picker |
+| `move <step>` | Move the picker's selection by that many wallpapers, as the arrow keys do (negative goes back); the desktop preview follows. iRiS only, while the picker is open |
+| `browse <source> <query>` | Open the picker on a source — `library`, `favorites`, `wallhaven`, `konachan`, `yandere` or `live` (anime live wallpapers) — with a search, a folder to open (`~/Videos`), or `-` for none. Sources are an iRiS feature; other families just open the picker |
+| `favorite <path>` | Heart a wallpaper or take the heart back: a file, or `-` for the one on the focused screen. Prints `added` or `removed` and the path; favourites are a source of the iRiS picker |
+| `favorites` | JSON list of the hearted wallpapers: files, or the page of a web one not downloaded yet |
 | `status` | Return picker style, open surface, target monitor and selection target as JSON |
 
 ```kdl
