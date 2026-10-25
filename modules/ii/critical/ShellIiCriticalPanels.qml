@@ -27,7 +27,7 @@ Item {
             && extraCondition
     }
 
-    CriticalPanelLoader { identifier: "iiBackground"; component: Background {} }
+    CriticalPanelLoader { identifier: "iiBackground"; component: Background { family: "ii" } }
     CriticalPanelLoader { identifier: "iiBar"; extraCondition: !root.barVertical && root.barStock; component: Bar {} }
     CriticalPanelLoader { identifier: "iiBar"; extraCondition: !root.barVertical && root.barPill && !GlobalStates.widgetEditMode; component: PillBar {} }
     CriticalPanelLoader { identifier: "iiBar"; extraCondition: !root.barVertical && root.barM3 && !GlobalStates.widgetEditMode; component: BarM3.M3Bar {} }

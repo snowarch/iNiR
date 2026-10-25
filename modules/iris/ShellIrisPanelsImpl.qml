@@ -169,7 +169,7 @@ Item {
         activeAsync: Config.ready && IrisGate.official && GlobalStates.deferredPanelsReady
             && (Config.options?.enabledPanels ?? []).includes("irisBackground")
             && (Config.options?.iris?.modules?.desktopWidgets ?? true)
-        component: Background {}
+        component: Background { family: "iris" }
     }
 
     PanelLoader {

@@ -245,14 +245,14 @@ AbstractBackgroundWidget {
     // Soft contact shadow detaches the pill from the wallpaper (shell shadow
     // vocabulary, same edge as every surface). The fill itself goes through
     // ensureVisible so the generated colour stays readable on any wallpaper.
+    // a loaded item is never the pill's sibling, so the Loader takes the pill's place and the shadow fills it
     Loader {
-        anchors.fill: parent
+        anchors.fill: pillBackground
         active: !root.irisFaced
-        sourceComponent: Item {
-            StyledDropShadow {
-                target: pillBackground
-                visible: !root.irisFaced && pillBackground.visible && !Appearance.zzzEverywhere
-            }
+        sourceComponent: StyledDropShadow {
+            anchors.fill: undefined
+            target: pillBackground
+            visible: !root.irisFaced && pillBackground.visible && !Appearance.zzzEverywhere
         }
     }
 

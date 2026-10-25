@@ -52,6 +52,8 @@ import "root:modules/common/functions/ArrangeMath.js" as ArrangeMath
 
 Scope {
     id: backgroundScope
+    // ii and iRiS each load one; while the family switches both stand a moment, and only the family's answers IPC
+    property string family: ""
     property var organicEdgeHosts: ({})
     property var widgetCanvases: ({})
 
@@ -102,6 +104,7 @@ Scope {
 
     IpcHandler {
         target: "background"
+        enabled: backgroundScope.family.length === 0 || (Config.options?.panelFamily ?? "ii") === backgroundScope.family
         function widgetDesign(name: string): string {
             if (name === "status")
                 return DesktopWidgetDesign.current + " · " + DesktopWidgetDesign.exceptionCount + " own looks"
