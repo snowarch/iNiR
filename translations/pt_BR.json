@@ -9822,5 +9822,15 @@
   "FPS": "FPS",
   "MangoHud": "MangoHud",
   "PID %1 | %2 | %3": "PID %1 | %2 | %3",
-  "Wine / Proton": "Wine / Proton"
+  "Wine / Proton": "Wine / Proton",
+  "Background strength": "Intensidade do fundo",
+  "Hide every background": "Ocultar todos os fundos",
+  "Hide every outline": "Ocultar todas as bordas",
+  "How much of the wallpaper's color the glass lets through. Lower is calmer on vivid wallpapers.": "Quanto da cor do papel de parede o vidro deixa passar. Menos fica mais calmo com papéis de parede vivos.",
+  "Lock every widget": "Bloquear todos os widgets",
+  "One change for every widget on the desktop. Each widget's own section still changes just that one.": "Uma mudança para todos os widgets da área de trabalho. A seção de cada widget continua mudando só ele.",
+  "Show every background": "Mostrar todos os fundos",
+  "Show every outline": "Mostrar todas as bordas",
+  "Unlock every widget": "Desbloquear todos os widgets",
+  "Wallpaper color": "Cor do papel de parede"
 }

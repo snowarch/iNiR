@@ -7859,5 +7859,15 @@
   "FPS": "FPS",
   "MangoHud": "MangoHud",
   "PID %1 | %2 | %3": "PID %1 | %2 | %3",
-  "Wine / Proton": "Wine / Proton"
+  "Wine / Proton": "Wine / Proton",
+  "Background strength": "Background strength",
+  "Hide every background": "Hide every background",
+  "Hide every outline": "Hide every outline",
+  "How much of the wallpaper's color the glass lets through. Lower is calmer on vivid wallpapers.": "How much of the wallpaper's color the glass lets through. Lower is calmer on vivid wallpapers.",
+  "Lock every widget": "Lock every widget",
+  "One change for every widget on the desktop. Each widget's own section still changes just that one.": "One change for every widget on the desktop. Each widget's own section still changes just that one.",
+  "Show every background": "Show every background",
+  "Show every outline": "Show every outline",
+  "Unlock every widget": "Unlock every widget",
+  "Wallpaper color": "Wallpaper color"
 }

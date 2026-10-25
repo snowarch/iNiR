@@ -98,6 +98,8 @@ Scope {
         return "Organic edge " + label + ": " + preset.name
     }
 
+    readonly property var _everyKeys: ({ plate: "showBackground", outline: "showBorder", strength: "backgroundOpacity", ink: "colorMode", lock: "locked" })
+
     IpcHandler {
         target: "background"
         function widgetDesign(name: string): string {
@@ -120,6 +122,30 @@ Scope {
                 return String(Config.options?.iris?.widgets?.material ?? "glass") + " · "
                     + DesktopWidgetDesign.ownSurfaceCount + " widgets with their own material or opacity"
             return "Use status, match, toggle, clear or glass"
+        }
+
+        // Every widget's plate, outline, ink or lock at once (Material, iNstrument, Readout; a face's surface is widgetMaterial).
+        function everyWidget(part: string, value: string): string {
+            const key = backgroundScope._everyKeys[part]
+            if (!key)
+                return "Use plate, outline, strength, ink or lock"
+            let next
+            if (key === "colorMode") {
+                if (!["auto", "light", "dark"].includes(value)) return "ink takes auto, light or dark"
+                next = value
+            } else if (key === "backgroundOpacity") {
+                next = Number(value)
+                if (!isFinite(next) || next < 0 || next > 100) return "strength takes 0 to 100"
+                next = next / 100
+            } else {
+                if (!["on", "off"].includes(value)) return part + " takes on or off"
+                next = value === "on"
+            }
+            return part + " " + value + " on " + DesktopWidgetOptions.setEvery(key, next) + " widgets"
+        }
+
+        function everyWidgetStatus(): string {
+            return Object.keys(backgroundScope._everyKeys).map(name => name + " " + (DesktopWidgetOptions.everyState(backgroundScope._everyKeys[name]) || "none")).join(" · ")
         }
 
         function widgetSearch(query: string): string {

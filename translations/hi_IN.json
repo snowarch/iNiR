@@ -9822,5 +9822,15 @@
   "FPS": "FPS",
   "MangoHud": "MangoHud",
   "PID %1 | %2 | %3": "PID %1 | %2 | %3",
-  "Wine / Proton": "Wine / Proton"
+  "Wine / Proton": "Wine / Proton",
+  "Background strength": "पृष्ठभूमि की तीव्रता",
+  "Hide every background": "सभी पृष्ठभूमि छिपाएँ",
+  "Hide every outline": "सभी आउटलाइन छिपाएँ",
+  "How much of the wallpaper's color the glass lets through. Lower is calmer on vivid wallpapers.": "कांच वॉलपेपर का कितना रंग आने देता है। चटकीले वॉलपेपर पर कम मान ज़्यादा शांत दिखता है।",
+  "Lock every widget": "सभी विजेट लॉक करें",
+  "One change for every widget on the desktop. Each widget's own section still changes just that one.": "डेस्कटॉप के सभी विजेट के लिए एक बदलाव। हर विजेट का अपना अनुभाग अब भी सिर्फ़ उसी को बदलता है।",
+  "Show every background": "सभी पृष्ठभूमि दिखाएँ",
+  "Show every outline": "सभी आउटलाइन दिखाएँ",
+  "Unlock every widget": "सभी विजेट अनलॉक करें",
+  "Wallpaper color": "वॉलपेपर का रंग"
 }

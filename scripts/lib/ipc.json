@@ -267,6 +267,21 @@
      ]
     },
     {
+     "name": "everyWidget",
+     "args": [
+      "part",
+      "value"
+     ],
+     "description": "Every Material, iNstrument and Readout widget at once: `plate on\\",
+     "values": []
+    },
+    {
+     "name": "everyWidgetStatus",
+     "args": [],
+     "description": "Each of those as the value every widget on the desktop shares, or `mixed`.",
+     "values": []
+    },
+    {
      "name": "widgetSearch",
      "args": [
       "query"

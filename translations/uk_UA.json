@@ -9822,5 +9822,15 @@
   "FPS": "FPS",
   "MangoHud": "MangoHud",
   "PID %1 | %2 | %3": "PID %1 | %2 | %3",
-  "Wine / Proton": "Wine / Proton"
+  "Wine / Proton": "Wine / Proton",
+  "Background strength": "Щільність фону",
+  "Hide every background": "Сховати всі фони",
+  "Hide every outline": "Сховати всі контури",
+  "How much of the wallpaper's color the glass lets through. Lower is calmer on vivid wallpapers.": "Скільки кольору шпалер пропускає скло. Менше спокійніше на яскравих шпалерах.",
+  "Lock every widget": "Закріпити всі віджети",
+  "One change for every widget on the desktop. Each widget's own section still changes just that one.": "Одна зміна для всіх віджетів на робочому столі. Розділ кожного віджета, як і раніше, змінює лише його.",
+  "Show every background": "Показати всі фони",
+  "Show every outline": "Показати всі контури",
+  "Unlock every widget": "Відкріпити всі віджети",
+  "Wallpaper color": "Колір шпалер"
 }

@@ -376,60 +376,73 @@ Singleton {
     // Settings' truth for a widget option: the base value, with those keys cleared from every screen's own record, so
     // a value once set from the widget's quick controls cannot silently beat the Settings row. `values` maps key → value.
     function setEverywhere(widgetKey, values): bool {
-        const path = root._basePath(widgetKey)
-        const widget = root._widgetKey(widgetKey)
-        const keys = values && typeof values === "object" ? Object.keys(values) : []
-        if (!path || keys.length === 0)
-            return false
-        // A key the schema doesn't declare (iris.face, iris.tile.wifi...) has no base to live in: the write was dropped
-        // and its switch did nothing. Those go to every screen's record, where the widget reads them first.
-        const declared = key => {
-            let node = Config.options?.background?.widgets?.[widget]
-            const parts = String(key).split(".")
-            for (let i = 0; i < parts.length; ++i) {
-                if (node === null || node === undefined || typeof node !== "object" || !(parts[i] in node))
-                    return false
-                node = node[parts[i]]
-            }
-            return true
-        }
-        const free = keys.filter(key => !declared(key))
+        return root.setEverywhereMany([[widgetKey, values]])
+    }
+
+    // [[widget, values], ...] in one write: every widget's plate off at once was a config write per widget.
+    function setEverywhereMany(entries): bool {
         const updates = ({})
-        for (const key of keys)
-            if (!free.includes(key))
-                updates[path + "." + key] = values[key]
         const list = root._normalizedRecords()
         let cleared = false
-        for (const record of list) {
-            if (root.isLockScope(record.output) || !record.widgets[widget])
+        let wrote = false
+        for (const entry of entries ?? []) {
+            const widgetKey = entry[0]
+            const values = entry[1]
+            const path = root._basePath(widgetKey)
+            const widget = root._widgetKey(widgetKey)
+            const keys = values && typeof values === "object" ? Object.keys(values) : []
+            if (!path || keys.length === 0)
                 continue
-            for (const key of keys) {
-                if (!free.includes(key) && Object.prototype.hasOwnProperty.call(record.widgets[widget], key)) {
-                    delete record.widgets[widget][key]
-                    cleared = true
+            wrote = true
+            // A key the schema doesn't declare (iris.face, iris.tile.wifi...) has no base to live in: the write was dropped
+            // and its switch did nothing. Those go to every screen's record, where the widget reads them first.
+            const declared = key => {
+                let node = Config.options?.background?.widgets?.[widget]
+                const parts = String(key).split(".")
+                for (let i = 0; i < parts.length; ++i) {
+                    if (node === null || node === undefined || typeof node !== "object" || !(parts[i] in node))
+                        return false
+                    node = node[parts[i]]
                 }
+                return true
             }
-            if (Object.keys(record.widgets[widget]).length === 0)
-                delete record.widgets[widget]
-        }
-        if (free.length > 0) {
-            const outputs = Quickshell.screens.map(screen => root._outputName(screen?.name)).filter(name => name && !root.isLockScope(name))
-            for (const record of list)
-                if (!root.isLockScope(record.output) && !outputs.includes(record.output))
-                    outputs.push(record.output)
-            for (const output of outputs) {
-                let record = list.find(item => item.output === output)
-                if (!record) {
-                    record = { output: output, widgets: ({}) }
-                    list.push(record)
+            const free = keys.filter(key => !declared(key))
+            for (const key of keys)
+                if (!free.includes(key))
+                    updates[path + "." + key] = values[key]
+            for (const record of list) {
+                if (root.isLockScope(record.output) || !record.widgets[widget])
+                    continue
+                for (const key of keys) {
+                    if (!free.includes(key) && Object.prototype.hasOwnProperty.call(record.widgets[widget], key)) {
+                        delete record.widgets[widget][key]
+                        cleared = true
+                    }
                 }
-                for (const key of free) {
-                    const holder = root._holder(output, widget, key)
-                    record.widgets[holder] = Object.assign({}, record.widgets[holder] ?? {}, { [key]: values[key] })
-                }
+                if (Object.keys(record.widgets[widget]).length === 0)
+                    delete record.widgets[widget]
             }
-            cleared = true
+            if (free.length > 0) {
+                const outputs = Quickshell.screens.map(screen => root._outputName(screen?.name)).filter(name => name && !root.isLockScope(name))
+                for (const record of list)
+                    if (!root.isLockScope(record.output) && !outputs.includes(record.output))
+                        outputs.push(record.output)
+                for (const output of outputs) {
+                    let record = list.find(item => item.output === output)
+                    if (!record) {
+                        record = { output: output, widgets: ({}) }
+                        list.push(record)
+                    }
+                    for (const key of free) {
+                        const holder = root._holder(output, widget, key)
+                        record.widgets[holder] = Object.assign({}, record.widgets[holder] ?? {}, { [key]: values[key] })
+                    }
+                }
+                cleared = true
+            }
         }
+        if (!wrote)
+            return false
         if (cleared)
             updates["background.widgets.outputOverrides"] = list.filter(record => Object.keys(record.widgets).length > 0
                 || Number(record.layoutVersion ?? 0) > 0)

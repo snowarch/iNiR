@@ -191,6 +191,40 @@ Scope {
                         Accessible.name: headBody.gridOn ? Translation.tr("Snap to grid: on") : Translation.tr("Snap to grid: off")
                         onClicked: Config.setNestedValue("background.widgets.editGrid.snap", !headBody.gridOn)
                     }
+                    // Every widget at once: lit while any widget still shows it, one click takes it off all of them.
+                    ToolKey {
+                        id: plateKey
+                        readonly property string shared: DesktopWidgetOptions.everyState("showBackground")
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: shared !== ""
+                        glyph: "crop_square"
+                        selected: shared !== "false"
+                        Accessible.name: selected ? Translation.tr("Hide every background") : Translation.tr("Show every background")
+                        onClicked: DesktopWidgetOptions.setEvery("showBackground", !selected)
+                        StyledToolTip { text: plateKey.Accessible.name }
+                    }
+                    ToolKey {
+                        id: outlineKey
+                        readonly property string shared: DesktopWidgetOptions.everyState("showBorder")
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: shared !== ""
+                        glyph: "border_style"
+                        selected: shared !== "false"
+                        Accessible.name: selected ? Translation.tr("Hide every outline") : Translation.tr("Show every outline")
+                        onClicked: DesktopWidgetOptions.setEvery("showBorder", !selected)
+                        StyledToolTip { text: outlineKey.Accessible.name }
+                    }
+                    ToolKey {
+                        id: lockKey
+                        readonly property string shared: DesktopWidgetOptions.everyState("locked")
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: shared !== ""
+                        glyph: shared === "true" ? "lock" : "lock_open"
+                        selected: shared === "true"
+                        Accessible.name: selected ? Translation.tr("Unlock every widget") : Translation.tr("Lock every widget")
+                        onClicked: DesktopWidgetOptions.setEvery("locked", !selected)
+                        StyledToolTip { text: lockKey.Accessible.name }
+                    }
                     RippleButton {
                         id: doneKey
                         anchors.verticalCenter: parent.verticalCenter

@@ -9822,5 +9822,15 @@
   "FPS": "FPS",
   "MangoHud": "MangoHud",
   "PID %1 | %2 | %3": "PID %1 | %2 | %3",
-  "Wine / Proton": "Wine / Proton"
+  "Wine / Proton": "Wine / Proton",
+  "Background strength": "Độ đậm nền",
+  "Hide every background": "Ẩn mọi nền",
+  "Hide every outline": "Ẩn mọi viền",
+  "How much of the wallpaper's color the glass lets through. Lower is calmer on vivid wallpapers.": "Lượng màu hình nền mà lớp kính cho xuyên qua. Thấp hơn sẽ dịu hơn với hình nền rực rỡ.",
+  "Lock every widget": "Khóa mọi widget",
+  "One change for every widget on the desktop. Each widget's own section still changes just that one.": "Một thay đổi cho mọi widget trên màn hình. Mục riêng của từng widget vẫn chỉ đổi widget đó.",
+  "Show every background": "Hiện mọi nền",
+  "Show every outline": "Hiện mọi viền",
+  "Unlock every widget": "Mở khóa mọi widget",
+  "Wallpaper color": "Màu hình nền"
 }

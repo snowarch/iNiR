@@ -9822,5 +9822,15 @@
   "FPS": "FPS",
   "MangoHud": "MangoHud",
   "PID %1 | %2 | %3": "PID %1 | %2 | %3",
-  "Wine / Proton": "Wine / Proton"
+  "Wine / Proton": "Wine / Proton",
+  "Background strength": "배경 진하기",
+  "Hide every background": "모든 배경 숨기기",
+  "Hide every outline": "모든 테두리 숨기기",
+  "How much of the wallpaper's color the glass lets through. Lower is calmer on vivid wallpapers.": "유리가 배경화면 색을 얼마나 통과시킬지 정합니다. 선명한 배경화면에서는 낮을수록 차분합니다.",
+  "Lock every widget": "모든 위젯 잠그기",
+  "One change for every widget on the desktop. Each widget's own section still changes just that one.": "바탕화면의 모든 위젯을 한 번에 바꿉니다. 각 위젯의 섹션은 여전히 그 위젯만 바꿉니다.",
+  "Show every background": "모든 배경 표시",
+  "Show every outline": "모든 테두리 표시",
+  "Unlock every widget": "모든 위젯 잠금 해제",
+  "Wallpaper color": "배경화면 색상"
 }

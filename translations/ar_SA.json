@@ -9822,5 +9822,15 @@
   "FPS": "FPS",
   "MangoHud": "MangoHud",
   "PID %1 | %2 | %3": "PID %1 | %2 | %3",
-  "Wine / Proton": "Wine / Proton"
+  "Wine / Proton": "Wine / Proton",
+  "Background strength": "قوة الخلفية",
+  "Hide every background": "إخفاء كل الخلفيات",
+  "Hide every outline": "إخفاء كل الحدود",
+  "How much of the wallpaper's color the glass lets through. Lower is calmer on vivid wallpapers.": "مقدار لون الخلفية الذي يمرره الزجاج. القيمة الأقل أهدأ مع الخلفيات الزاهية.",
+  "Lock every widget": "قفل كل الأدوات",
+  "One change for every widget on the desktop. Each widget's own section still changes just that one.": "تغيير واحد لكل الأدوات على سطح المكتب. يبقى قسم كل أداة يغيّرها وحدها.",
+  "Show every background": "إظهار كل الخلفيات",
+  "Show every outline": "إظهار كل الحدود",
+  "Unlock every widget": "إلغاء قفل كل الأدوات",
+  "Wallpaper color": "لون الخلفية"
 }

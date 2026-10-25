@@ -9822,5 +9822,15 @@
   "FPS": "FPS",
   "MangoHud": "MangoHud",
   "PID %1 | %2 | %3": "PID %1 | %2 | %3",
-  "Wine / Proton": "Wine / Proton"
+  "Wine / Proton": "Wine / Proton",
+  "Background strength": "背景浓度",
+  "Hide every background": "隐藏所有背景",
+  "Hide every outline": "隐藏所有描边",
+  "How much of the wallpaper's color the glass lets through. Lower is calmer on vivid wallpapers.": "玻璃透出多少壁纸颜色。壁纸鲜艳时，数值越低越柔和。",
+  "Lock every widget": "锁定所有小组件",
+  "One change for every widget on the desktop. Each widget's own section still changes just that one.": "一次更改桌面上的所有小组件。每个小组件自己的部分仍只更改它自己。",
+  "Show every background": "显示所有背景",
+  "Show every outline": "显示所有描边",
+  "Unlock every widget": "解锁所有小组件",
+  "Wallpaper color": "壁纸颜色"
 }

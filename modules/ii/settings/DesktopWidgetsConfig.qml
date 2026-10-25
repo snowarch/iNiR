@@ -717,6 +717,60 @@ ContentPage {
     // Widget enable toggles must agree with the desktop editor, which stores
     // per-output overrides. Show the effective state and clear overrides on change
     // so the base enable value is the single source of truth for settings.
+    // A choice for every widget at once: none lit while they disagree, and it says so.
+    component EveryWidgetRow: WidgetSettingRow {
+        id: everyRow
+        property string optionKey: ""
+        property var options: []
+        readonly property string shared: DesktopWidgetOptions.everyState(everyRow.optionKey)
+        trailing: false
+        visible: everyRow.shared !== ""
+
+        ConfigSelectionArray {
+            Layout.fillWidth: false
+            enableSettingsSearch: false
+            currentValue: everyRow.shared
+            options: everyRow.options
+            onSelected: newValue => DesktopWidgetOptions.setEvery(everyRow.optionKey,
+                newValue === "true" ? true : newValue === "false" ? false : newValue)
+        }
+        StyledText {
+            visible: everyRow.shared === "mixed"
+            text: Translation.tr("Mixed")
+            font.pixelSize: Appearance.font.pixelSize.smaller
+            color: Appearance.colors.colSubtext
+        }
+    }
+
+    // The plates' strength, written once on release (each step rewrote every widget).
+    component EveryWidgetStrength: WidgetSettingRow {
+        id: everyStrength
+        readonly property string shared: DesktopWidgetOptions.everyState("backgroundOpacity")
+        readonly property string plates: DesktopWidgetOptions.everyState("showBackground")
+        label: Translation.tr("Background strength")
+        icon: "opacity"
+        trailing: false
+        visible: everyStrength.shared !== "" && everyStrength.plates !== "false"
+
+        StyledSlider {
+            id: everySlider
+            Layout.fillWidth: true
+            configuration: StyledSlider.Configuration.S
+            stopIndicatorValues: []
+            from: 0; to: 100; stepSize: 2
+            value: everyStrength.shared === "mixed" ? 16 : Math.round(Number(everyStrength.shared) * 100)
+            onPressedChanged: if (!pressed) DesktopWidgetOptions.setEvery("backgroundOpacity", Math.round(everySlider.value) / 100)
+        }
+        StyledText {
+            Layout.preferredWidth: 52
+            horizontalAlignment: Text.AlignRight
+            text: everyStrength.shared === "mixed" && !everySlider.pressed ? Translation.tr("Mixed") : Math.round(everySlider.value) + "%"
+            color: Appearance.colors.colSubtext
+            font.pixelSize: Appearance.font.pixelSize.smaller
+            font.family: Appearance.font.family.numbers
+        }
+    }
+
     component WidgetEnableChip: SelectionGroupButton {
         id: wec
         required property string widgetKey
@@ -1661,39 +1715,77 @@ ContentPage {
                 Layout.fillWidth: true
                 spacing: 6
                 Repeater {
-                    model: [
-                        { key: "clock", icon: "schedule", label: Translation.tr("Clock"), def: true },
-                        { key: "weather", icon: "cloud", label: Translation.tr("Weather"), def: false },
-                        { key: "customImage", icon: "add_photo_alternate", label: Translation.tr("Custom image"), def: false },
-                        { key: "imageConverter", icon: "transform", label: Translation.tr("Image converter"), def: false },
-                        { key: "mediaControls", icon: "album", label: Translation.tr("Media"), def: false },
-                        { key: "visualizer", icon: "graphic_eq", label: Translation.tr("Visualizer"), def: false },
-                        { key: "systemMonitor", icon: "monitor_heart", label: Translation.tr("System"), def: false },
-                        { key: "battery", icon: "battery_full", label: Translation.tr("Battery"), def: false },
-                        { key: "notes", icon: "sticky_note_2", label: Translation.tr("Notes"), def: false },
-                        { key: "calendarUpcoming", icon: "event", label: Translation.tr("Events"), def: false },
-                        { key: "monthCalendar", icon: "calendar_month", label: Translation.tr("Calendar"), def: false },
-                        { key: "todo", icon: "checklist", label: Translation.tr("Todo"), def: false },
-                        { key: "timers", icon: "timer", label: Translation.tr("Timers"), def: false },
-                        { key: "dayProgress", icon: "av_timer", label: Translation.tr("Day progress"), def: false },
-                        { key: "uptime", icon: "avg_pace", label: Translation.tr("Uptime"), def: false },
-                        { key: "shape", icon: "category", label: Translation.tr("Decorative shape"), def: false },
-                        { key: "dateBadge", icon: "today", label: Translation.tr("Date badge"), def: false },
-                        { key: "editorial", icon: "text_fields", label: Translation.tr("Editorial"), def: false },
-                        { key: "newsTicker", icon: "newspaper", label: Translation.tr("News"), def: false },
-                        { key: "mascot", icon: "pets", label: Translation.tr("Mascot"), def: false },
-                        { key: "japaneseTypography", icon: "translate", label: Translation.tr("Japanese Typography"), def: false },
-                        { key: "worldClock", icon: "public", label: Translation.tr("World Clock"), def: false },
-                        { key: "userCard", icon: "account_circle", label: Translation.tr("User Card"), def: false }
-                    ]
+                    // every widget the registry knows (the hand list here had lost Controls, Screen Time, Palette, Lyrics)
+                    model: DesktopWidgetRegistry.entries
                     delegate: WidgetEnableChip {
                         required property var modelData
                         widgetKey: modelData.key
-                        defaultValue: modelData.def
-                        buttonIcon: modelData.icon
-                        buttonText: modelData.label
+                        defaultValue: modelData.defaultOn
+                        buttonIcon: modelData.glyph
+                        buttonText: Translation.tr(modelData.name)
                     }
                 }
+            }
+        }
+    }
+        }
+    }
+
+    // ── Every widget at once ────────────────────────────────
+    SettingsTaskLoader {
+        requested: root.isIiActive && root.activeSection === "manage"
+        sourceComponent: Component {
+    SettingsCardSection {
+        settingsTaskSection: "manage"
+        expanded: true
+        icon: "select_all"
+        title: Translation.tr("Every widget")
+
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("One change for every widget on the desktop. Each widget's own section still changes just that one.")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.Wrap
+            }
+            EveryWidgetRow {
+                label: Translation.tr("Background")
+                icon: "crop_square"
+                optionKey: "showBackground"
+                options: [
+                    { displayName: Translation.tr("Show"), icon: "visibility", value: "true" },
+                    { displayName: Translation.tr("Hide"), icon: "visibility_off", value: "false" }
+                ]
+            }
+            EveryWidgetStrength {}
+            EveryWidgetRow {
+                label: Translation.tr("Outline")
+                icon: "border_style"
+                optionKey: "showBorder"
+                options: [
+                    { displayName: Translation.tr("Show"), icon: "visibility", value: "true" },
+                    { displayName: Translation.tr("Hide"), icon: "visibility_off", value: "false" }
+                ]
+            }
+            EveryWidgetRow {
+                label: Translation.tr("Ink")
+                icon: "format_color_text"
+                optionKey: "colorMode"
+                options: [
+                    { displayName: Translation.tr("Auto"), icon: "contrast", value: "auto" },
+                    { displayName: Translation.tr("Light ink"), icon: "light_mode", value: "light" },
+                    { displayName: Translation.tr("Dark ink"), icon: "dark_mode", value: "dark" }
+                ]
+            }
+            EveryWidgetRow {
+                label: Translation.tr("Position")
+                icon: "lock"
+                optionKey: "locked"
+                options: [
+                    { displayName: Translation.tr("Free"), icon: "lock_open", value: "false" },
+                    { displayName: Translation.tr("Locked"), icon: "lock", value: "true" }
+                ]
             }
         }
     }

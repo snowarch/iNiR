@@ -143,6 +143,32 @@ QtObject {
     function plateDefault(widget: string): bool {
         return !["clock", "visualizer", "japaneseTypography", "shape", "editorial", "dayProgress", "mascot"].includes(widget)
     }
+    // Every widget at once, from its own row (so the plate still comes on with a visible strength): a face's surface
+    // stays iRiS's. The state reads the widgets on the desktop: one shared value, or "mixed".
+    function _everyRows(key: string): var {
+        return root.widgetRows.filter(spec => spec.key === key && spec.widget && !root.resolved(spec.widget).face
+            && !root._bare(spec.widget, key))
+    }
+    // A widget drawn bare by default (the clock, the art) counts for its plate only while it shows one: showing every
+    // background put a card behind the mascot, and the factory desktop read as mixed.
+    function _bare(widget: string, key: string): bool {
+        const plate = key === "showBorder" ? "showBorder" : ["showBackground", "backgroundOpacity"].includes(key) ? "showBackground" : ""
+        return plate !== "" && !root.plateDefault(widget) && !Boolean(root.value(widget, plate, false))
+    }
+    function everyState(key: string): string {
+        Config.revision
+        const seen = root._everyRows(key).filter(spec => root.on(spec.widget))
+            .map(spec => String(root.value(spec.widget, key, spec.fallback)))
+        if (seen.length === 0)
+            return ""
+        return seen.every(v => v === seen[0]) ? seen[0] : "mixed"
+    }
+    function setEvery(key: string, next: var): int {
+        const entries = root._everyRows(key).map(spec => [spec.widget, spec.apply ? spec.apply(next) : ({ [key]: next })])
+        if (entries.length > 0)
+            DesktopWidgetLayout.setEverywhereMany(entries)
+        return entries.length
+    }
     // Every iRiS face has the three sizes; the one chosen is Material's too where it has it (one size per family).
     function size(widget: string): var {
         const material = DesktopWidgetRegistry.entry(widget)?.sizes ?? []

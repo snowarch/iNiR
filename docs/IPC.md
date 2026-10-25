@@ -1286,6 +1286,8 @@ Desktop background and widget controls.
 |----------|-------------|
 | `widgetDesign name` | Put every desktop widget on `iris`, `material`, `individual`, `instrument` or `readout`; `undo` brings back the design and each widget's own look from before; `status` reports the design, how many widgets keep their own look and whether an undo is available. |
 | `widgetMaterial action` | iRiS: `status` reports the shared widget material and how many widgets chose their own material or surface opacity in Look; `match` puts them back on the shared ones; `toggle`, `clear` and `glass` take every widget's plate away or bring it back (returns the material now). |
+| `everyWidget part value` | Every Material, iNstrument and Readout widget at once: `plate on\|off` (the background), `outline on\|off`, `strength 0-100` (the background's strength), `ink auto\|light\|dark`, `lock on\|off`. |
+| `everyWidgetStatus` | Each of those as the value every widget on the desktop shares, or `mixed`. |
 | `widgetSearch text` | While arranging (iRiS), find a widget from the bar: the words to look for, `open` for an empty field, `next`/`previous` to move the selection, `take` to add or show the selected widget, `close`. Ctrl+F opens it |
 | `toggleEditMode` | Toggle widget edit mode (drag, resize, configure desktop widgets) |
 | `toggleWidgetManager` | Enter edit mode if needed and toggle the widget manager on the focused output |
