@@ -24,6 +24,9 @@ Item {
     function u(n: real): int { return Math.round(n * root.d) }
     readonly property string section: root.area
     readonly property bool live: root.visible && root.area === String(root.host?.section ?? "")
+    // Tiles still building in the background: the pool turns to the board once there are none.
+    property int building: 0
+    readonly property bool whole: root.building <= 0
     readonly property real gap: root.u(10)
     readonly property color signal: IrisStyle["signal"] ?? IrisStyle.danger
     readonly property color plate: IrisStyle.glassy ? IrisStyle.readingCard : IrisStyle.fillQuiet
@@ -240,7 +243,10 @@ Item {
                                     // The first group comes with the page, the rest in the frames after it (Classic's way).
                                     asynchronous: group.index > 0
                                     sourceComponent: cell.kind === "switch" ? switchTile : cell.kind === "range" ? rangeTile : cell.kind === "choice" ? choiceTile : rowTile
-                                    onLoaded: item.spec = cell.modelData
+                                    property bool counted: false
+                                    Component.onCompleted: if (cell.asynchronous && cell.status !== Loader.Ready) { cell.counted = true; root.building++ }
+                                    Component.onDestruction: if (cell.counted) root.building--
+                                    onLoaded: { item.spec = cell.modelData; if (cell.counted) { cell.counted = false; root.building-- } }
                                 }
                             }
                             Tile {

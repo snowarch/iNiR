@@ -2503,6 +2503,7 @@
             "themeColoursOnly": false,
             "settingsHost": "overlay",
             "settingsLayout": "classic",
+            "settingsHome": ["iris.appearance.scheme", "iris.appearance.accent", "iris.appearance.look", "iris.appearance.glass.mode", "notifications.silent", "nightLight", "gameMode"],
             "saved": [],
             "themeId": "iris",
             "design": "iris",

@@ -153,6 +153,10 @@ QtObject {
     // A leading "!" negates either form, so a row can hide on one value of a choice.
     function choicesOf(spec: var): var {
         if (spec.niri === "display") return IrisNiri.displayChoices(spec.key)
+        // Any row Home can hold: the live switches, then every area's rows by name.
+        if (spec.choicesFrom === "homeRows") return root.dailySwitches.map(entry => ({ label: entry.label, value: entry.id }))
+            .concat(root.settings.filter(entry => entry.path && !entry.mirror && entry.section !== "home" && ["switch", "choice", "range"].includes(String(entry.kind)))
+                .map(entry => ({ label: Translation.tr(String(root.sectionById(entry.section)?.title ?? "")) + " · " + Translation.tr(String(entry.label ?? "")), value: entry.path })))
         if (spec.choicesFrom === "cursors") return IrisNiri.cursorThemes.map(name => ({ label: name.replace(/[_-]/g, " "), value: name }))
         if (spec.choicesFrom === "irisModules") return (CustomWidgets.widgets ?? [])
             .filter(widget => String(widget.irisQmlPath ?? "").length > 0)
@@ -1064,6 +1068,9 @@ QtObject {
         { section: "sources", group: "New iNiR", label: "Update in a terminal", description: "Opens a terminal for the update, so you can watch it run.", path: "shellUpdates.openTerminalOnUpdate", visibleWhen: "shellUpdates.enabled", kind: "switch", fallback: true, keywords: ["update", "terminal"] },
         { section: "sources", group: "System readings", label: "Read every", description: "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.", path: "resources.updateInterval", kind: "range", fallback: 3000, min: 500, max: 10000, step: 250, unit: " ms", keywords: ["cpu", "memory", "ram", "vitals", "resources", "polling"] },
         { section: "sources", group: "System readings", label: "Read the GPU", description: "Adds the graphics card to what Vitals shows.", path: "resources.monitorGpu", kind: "switch", fallback: true, keywords: ["gpu", "graphics", "vitals"] },
+        { section: "home", group: "Shortcuts", label: "Change wallpaper", kind: "action", button: "Open", run: () => { GlobalStates.settingsOverlayOpen = false; GlobalStates.wallpaperSelectorOpen = true }, keywords: ["wallpaper", "picker", "background", "fondo"] },
+        { section: "home", group: "Shortcuts", label: "Edit desktop widgets", kind: "action", button: "Edit", run: () => { GlobalStates.settingsOverlayOpen = false; GlobalStates.setWidgetEditMode(true) }, keywords: ["widgets", "desktop", "edit", "arrange"] },
+        { section: "home", group: "Customize", label: "On Home", path: "iris.appearance.settingsHome", kind: "pieces", choicesFrom: "homeRows", get fallback() { return root.homeDefault }, keywords: ["home", "pin", "favourites", "shortcuts", "inicio"] },
         { section: "general", group: "Date & time", label: "Clock", description: "The Island, the lock screen and every clock in iRiS.", path: "time.format", kind: "choice", fallback: "hh:mm", choices: [{label:"24-hour",value:"hh:mm"},{label:"12-hour",value:"h:mm ap"},{label:"12-hour AM/PM",value:"h:mm AP"}], keywords: ["time", "hour", "24", "12", "am", "pm", "hora"] },
         { section: "general", group: "Date & time", label: "Exact seconds", description: "Clocks that show seconds tick on the second.", path: "time.secondPrecision", kind: "switch", tune: true, fallback: false },
         { section: "general", group: "Language", label: "Language", description: "Every label in the shell.", path: "language.ui", kind: "choice", fallback: "auto",
@@ -1340,6 +1347,7 @@ QtObject {
         spotlight: "Search", orbit: "Orbit", capture: "Capture", player: "Music", anime: "Anime", general: "General", notifications: "Alerts",
         sound: "Sound", display: "Display", keyboard: "Keys", battery: "Power", gaming: "Gaming", lock: "Lock", login: "Login", sources: "Sources", system: "Hub" })
     readonly property var sections: [
+        { id: "home", cluster: -1, title: "Home", subtitle: "What you change every day", icon: "home", get tint() { return IrisStyle.identity.gray } },
         { id: "appearance", cluster: 0, title: "Style", subtitle: "Look, material, shape and type", icon: "style", get tint() { return IrisStyle.identity.purple }, tip: "Customize edits the same values live, on top of your desktop." },
         { id: "colour", cluster: 0, title: "Colour", subtitle: "Light or dark, accent, highlight and your apps", icon: "palette", get tint() { return IrisStyle.identity.pink }, tip: "Colour can come from your wallpaper, from a theme, or be one you pick." },
         { id: "wallpaper", cluster: 0, title: "Wallpaper", subtitle: "Shuffle, live wallpapers, the gallery and the overview", icon: "wallpaper", get tint() { return IrisStyle.identity.teal }, tip: "Next wallpaper in the desktop menu changes it once; Shuffle keeps changing it." },
@@ -1675,7 +1683,8 @@ QtObject {
     }
     // The order a section's groups are listed in: what someone came to change first, the rest as they were declared.
     readonly property var groupOrder: ({
-        general: ["Every day", "Date & time", "Language", "At login", "Apps", "Performance", "Settings window", "Shell family"],
+        home: ["Every day", "Shortcuts", "Customize"],
+        general: ["Date & time", "Language", "At login", "Apps", "Performance", "Settings window", "Shell family"],
         appearance: ["Look", "Themes", "Material", "Glass", "Texture", "Edges", "Light", "Shape", "Corners per surface",
             "Frame", "Text", "Faces", "Icons", "Material per surface", "Menus", "Settings", "Badges", "Customize", "Previews"],
         colour: ["Scheme", "Signal", "Accent", "Highlight", "Colour theme", "Day and night", "App colours", "Dark look", "Ink look", "Light look", "Wallpaper tint"],
@@ -1742,12 +1751,12 @@ QtObject {
     })
     // Topics big enough to be looked for by name have a section of their own; their rows are declared where their
     // surface's other rows are (Customize reads them there) and are shown here.
-    // Every day: General opens on what people flip daily; the rows are the areas' own, said here once more.
+    // Home's live switches (not config) and what it holds until it is given its own rows.
+    readonly property var homeDefault: ["iris.appearance.scheme", "iris.appearance.accent", "iris.appearance.look", "iris.appearance.glass.mode", "notifications.silent", "nightLight", "gameMode"]
     readonly property var dailySwitches: [
-        { section: "general", group: "Every day", label: "Night Light", kind: "switch", mirror: true, state: () => Hyprsunset.active, set: on => { if (Boolean(on) !== Hyprsunset.active) Hyprsunset.toggle() }, keywords: ["night", "warm", "blue light"] },
-        { section: "general", group: "Every day", label: "Game mode", kind: "switch", mirror: true, state: () => GameMode.active, set: on => { if (Boolean(on) !== GameMode.active) GameMode.toggle() } }
+        { id: "nightLight", label: "Night Light", kind: "switch", state: () => Hyprsunset.active, set: on => { if (Boolean(on) !== Hyprsunset.active) Hyprsunset.toggle() }, keywords: ["night", "warm", "blue light"] },
+        { id: "gameMode", label: "Game mode", kind: "switch", state: () => GameMode.active, set: on => { if (Boolean(on) !== GameMode.active) GameMode.toggle() } }
     ]
-    readonly property var dailyPaths: ["iris.appearance.scheme", "iris.appearance.accent", "iris.appearance.look", "iris.appearance.design", "iris.appearance.glass.mode", "notifications.silent"]
     readonly property var movedGroups: ({
         appearance: { to: "colour", groups: ["Colour theme", "Day and night", "Scheme", "Signal", "Accent", "Highlight", "App colours", "Dark look", "Ink look", "Light look", "Wallpaper tint"] },
         desktop: { to: "wallpaper", groups: ["Wallpaper shuffle", "Scaling", "Live wallpapers", "Wallpaper gallery", "Behind windows", "Parallax", "Overview backdrop"] }
@@ -1760,8 +1769,11 @@ QtObject {
         const rows = root.behaviour.concat(root.shared).concat(root.niriRows).concat(DesktopWidgetOptions.rows).concat(root.edgeRows).map(spec => root.placed(spec))
         const known = new Set(rows.filter(spec => !spec.mirror).map(spec => spec.path))
         const own = path => rows.find(spec => spec.path === path && !spec.mirror) ?? root.studio.find(spec => spec.path === path && !spec.mirror)
-        root.dailyPaths.map(own).filter(spec => spec).forEach(spec => rows.push(Object.assign({}, spec, { section: "general", group: "Every day", mirror: true, tune: false, description: undefined, cards: undefined, tiles: undefined, visibleWhen: undefined, target: undefined })))
-        root.dailySwitches.forEach(spec => rows.push(spec))
+        // Home: the rows it was given (Customize › On Home), each the area's own row said once more.
+        for (const id of Array.from(Config.options?.iris?.appearance?.settingsHome ?? root.homeDefault)) {
+            const spec = root.dailySwitches.find(entry => entry.id === id) ?? own(id)
+            if (spec) rows.push(Object.assign({}, spec, { section: "home", group: "Every day", mirror: true, tune: false, description: undefined, cards: undefined, tiles: undefined, visibleWhen: undefined, target: undefined }))
+        }
         const look = []
         for (const spec of root.studio) {
             if (spec.mirror) { look.push(root.placed(Object.assign({ section: root.sectionOf(spec) }, spec))); continue }

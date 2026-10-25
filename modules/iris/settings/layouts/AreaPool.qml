@@ -55,7 +55,14 @@ Item {
         const loader = pool.slot(id)
         return loader && loader.status === Loader.Ready ? loader.item : null
     }
-    function ready(id: string): bool { return pool.itemFor(id) !== null }
+    // A page is ready once it is whole (every group built), or after a beat at most: a turn to a page still filling in
+    // showed it streaming its groups in on screen.
+    function ready(id: string): bool {
+        const item = pool.itemFor(id)
+        return item !== null && (item.whole !== false || pool.forced === id)
+    }
+    property string forced: ""
+    Timer { id: wholeLimit; interval: 450; onTriggered: { pool.forced = pool.current; pool.settle() } }
     function hold(id: string): void {
         if (id.length === 0 || String(pool.urlFor(id)).length === 0) return
         const next = Object.assign({}, pool.used)
@@ -104,6 +111,8 @@ Item {
         if (!pool.turning) Qt.callLater(pool.trim)
     }
     onCurrentChanged: {
+        pool.forced = ""
+        wholeLimit.restart()
         pool.hold(pool.current)
         pool.settle()
     }
@@ -150,6 +159,11 @@ Item {
             layer.smooth: true
             Component.onCompleted: page.setSource(pool.urlFor(page.area), Object.assign({ area: page.area }, pool.propsFor(page.area)))
             onStatusChanged: if (page.status === Loader.Ready && page.area === pool.current) pool.settle()
+            Connections {
+                target: page.item
+                ignoreUnknownSignals: true
+                function onWholeChanged(): void { if (page.area === pool.current) pool.settle() }
+            }
         }
     }
 }

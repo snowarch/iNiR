@@ -104,8 +104,18 @@ ColumnLayout {
     // The first group comes with the page; the rest build in the frames after it, as Classic's blocks do: a turn
     // waited on the whole area before (up to 0.9 s for Deck's widgets in a nest).
     readonly property bool streams: String(rows.host?.landingPath ?? "").length === 0
+    // Every block built: the pool turns to the page only then, so it arrives whole instead of filling in on screen.
+    // Weighed a beat later, never inside a binding: a block that finishes as the page turns visible fed the binding back.
+    property bool whole: false
+    function weigh(): void {
+        let built = blockRepeater.count >= rows.blocks.length
+        for (let i = 0; built && i < blockRepeater.count; i++) built = blockRepeater.itemAt(i)?.status === Loader.Ready
+        rows.whole = built
+    }
+    onBlocksChanged: Qt.callLater(rows.weigh)
     Repeater {
         id: blockRepeater
+        onCountChanged: Qt.callLater(rows.weigh)
         model: ScriptModel { objectProp: "title"; values: rows.blocks }
         Loader {
             id: slot
@@ -113,6 +123,7 @@ ColumnLayout {
             required property int index
             Layout.fillWidth: true
             asynchronous: slot.index > 0 && rows.streams
+            onStatusChanged: Qt.callLater(rows.weigh)
             sourceComponent: ColumnLayout {
                 id: block
                 readonly property var modelData: slot.modelData

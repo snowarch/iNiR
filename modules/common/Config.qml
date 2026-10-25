@@ -4254,6 +4254,8 @@ Singleton {
                     property string settingsHost: "overlay"
                     // How iRiS Settings lays its page: "folio", "deck" or "console" (a Design with its own page keeps it).
                     property string settingsLayout: "classic"
+                    // What iRiS Settings' Home holds, in order: rows by path, nightLight and gameMode for the live switches.
+                    property list<string> settingsHome: ["iris.appearance.scheme", "iris.appearance.accent", "iris.appearance.look", "iris.appearance.glass.mode", "notifications.silent", "nightLight", "gameMode"]
                     // Looks saved from iRiS Studio: [{ name, values: { "iris.…": value } }].
                     property list<var> saved: []
                     property string themeId: "iris" // the iRiS theme last applied (curated id or a file in ~/.config/inir/iris/themes)

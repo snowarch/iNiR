@@ -29,6 +29,7 @@ Item {
     readonly property var entry: IrisOptions.sectionById(page.area) ?? ({})
     // The page in front: only then do writes reach its rows and its stage plays.
     readonly property bool live: page.visible && page.area === String(page.host?.section ?? "")
+    readonly property bool whole: rows.whole
 
     Column {
         id: title

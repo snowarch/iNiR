@@ -47,20 +47,16 @@ Item {
         return screen ? screen.height / Math.max(1, screen.width) : 0.5625
     }
     // A section about hardware this machine lacks is not offered (Battery on a desktop); `inir battery simulate` brings it back.
-    // General leads every layout: the daily things first, then how the shell behaves.
-    readonly property var sections: {
-        const all = IrisOptions.sections.filter(section => section.id !== "battery" || Battery.available)
-        return all.filter(section => section.id === "general").map(section => Object.assign({}, section, { cluster: -1 }))
-            .concat(all.filter(section => section.id !== "general"))
-    }
+    // Home leads every layout: the rows it was given and a few shortcuts (Customize › On Home picks them).
+    readonly property var sections: IrisOptions.sections.filter(section => section.id !== "battery" || Battery.available)
     // Sources and the Community Hub sit in a footer under the list, always in view.
     readonly property int footerCluster: 4
     readonly property var specifications: IrisOptions.settings
     readonly property var currentSection: IrisOptions.sectionById(root.section)
     // Every area is a row of the sidebar (DI49g); clusters part by air, no captions.
     readonly property var sideSections: {
-        const out = root.sections.filter(section => section.id === "general")
-        IrisOptions.categories.filter(category => !category.foot && category.id !== "general").forEach((category, at) => {
+        const out = root.sections.filter(section => section.id === "home")
+        IrisOptions.categories.filter(category => !category.foot).forEach((category, at) => {
             category.sections.map(id => root.sections.find(section => section.id === id)).filter(section => !!section)
                 .forEach(section => out.push(Object.assign({}, section, { cluster: at })))
         })
@@ -259,8 +255,7 @@ Item {
     }
     // A short area reads whole; a long one is a list of its groups, each saying its value and opening in place or
     // on its own page (main's way: one long scroll was the most-complained-about change).
-    // General leads with its daily rows, so it reads as one page however many it has.
-    readonly property bool readsWhole: (root.scene?.readsWhole ?? false) || root.essentialCount <= 10 || root.section === "general"
+    readonly property bool readsWhole: (root.scene?.readsWhole ?? false) || root.essentialCount <= 10
     // Rows folded behind a group's Fine-tune take no room (a modified one never folds).
     readonly property int essentialCount: {
         let count = 0
@@ -327,8 +322,11 @@ Item {
         const shown = root.fedPage === key ? root.blocksShown : 1
         return shown >= root.shownGroups.length ? root.shownGroups : root.shownGroups.slice(0, shown)
     }
-    // The page is still building (blocks fed a frame apart, each built in slices): its ghost rows hold the place.
+    // The page is still building (blocks fed a frame apart, each built in slices): it waits unseen, then rises whole.
     property int blockTick: 0
+    property real rowsReveal: 1
+    onRowsPendingChanged: if (!root.rowsPending && frame.settled && IrisStyle.motionEnabled) rowsIn.restart()
+    NumberAnimation { id: rowsIn; target: root; property: "rowsReveal"; from: 0; to: 1; duration: IrisStyle.duration(200); easing.type: Easing.OutCubic }
     readonly property bool rowsPending: {
         root.blockTick
         if (root.searching || !root.browsing || root.shownGroups.length === 0) return false
@@ -345,7 +343,7 @@ Item {
     }
     // Four sets of blocks, one per recent page: an area seen before is shown again as it stood, nothing rebuilt (every
     // turn used to tear down the page and build the next one, ~2400 rows' objects). A new page builds in the set used
-    // longest ago, its first block in the background, while its ghosts hold the place.
+    // longest ago, its first block in the background, unseen until it stands.
     readonly property int slots: 4
     property int building: 0
     property bool holding: false
@@ -873,7 +871,7 @@ Item {
         // setting "general" on the way to the asked section built General's page on each request.
         const own = root.pageIndexOf(key)
         let section = own >= 0 ? String(root.ownPages.concat(root.morePages).find(entry => entry.key === key)?.home ?? "system")
-            : "general"
+            : "home"
         // An area asked for by the name it shows ("style" is Style, "screenshots" Screenshots & Recording).
         const asked0 = root.requestedSection.toLowerCase()
         const titled = asked0.length > 0 && !root.sections.some(s => s.id === root.requestedSection)
@@ -1578,7 +1576,9 @@ Item {
 
                                 ColumnLayout {
                                     id: settingsRows
-                                    y: 6 * root.d
+                                    // a page still building waits unseen and rises whole once its last group stands
+                                    y: 6 * root.d + Math.round((1 - root.rowsReveal) * 10 * root.d)
+                                    opacity: root.rowsPending ? 0 : root.rowsReveal
                                     // In the pane the rows run its width (their own inset keeps the text off its edge).
                                     width: root.split ? settingsFlick.width - Math.round(16 * root.d) : Math.min(settingsFlick.width - 56 * root.d, root.rowsMost)
                                     x: Math.round((settingsFlick.width - width) / 2)
@@ -1616,46 +1616,6 @@ Item {
                                     BlockBuffer { id: blocks1; slot: 1 }
                                     BlockBuffer { id: blocks2; slot: 2 }
                                     BlockBuffer { id: blocks3; slot: 3 }
-
-                                    // Ghost rows: where the rest of the page is coming, breathing until it does.
-                                    Item {
-                                        id: ghostRows
-                                        visible: root.rowsPending
-                                        Layout.fillWidth: true
-                                        // Counted, not measured: a Column hidden until now reports 0 and the ghosts drew nothing.
-                                        readonly property int count: Math.max(3, Math.min(7, 2 * (root.shownGroups.length - root.fedGroups.length) + 2))
-                                        Layout.preferredHeight: ghostRows.count * Math.round(56 * root.d)
-                                        property real breath: 1
-                                        SequentialAnimation on breath {
-                                            running: ghostRows.visible && IrisStyle.motionEnabled
-                                            loops: Animation.Infinite
-                                            NumberAnimation { to: 0.55; duration: 700; easing.type: Easing.InOutSine }
-                                            NumberAnimation { to: 1; duration: 700; easing.type: Easing.InOutSine }
-                                        }
-                                        Column {
-                                            id: ghostColumn
-                                            width: parent.width
-                                            opacity: ghostRows.breath
-                                            Repeater {
-                                                model: ghostRows.count
-                                                Item {
-                                                    id: ghostRow
-                                                    required property int index
-                                                    width: ghostColumn.width
-                                                    height: Math.round(56 * root.d)
-                                                    readonly property real reach: [0.32, 0.24, 0.38, 0.28, 0.2, 0.34, 0.26][ghostRow.index % 7]
-                                                    Rectangle { x: Math.round(16 * root.d); y: Math.round(17 * root.d); width: Math.round(ghostColumn.width * ghostRow.reach); height: Math.round(9 * root.d); radius: height / 2; color: IrisStyle.dotEmpty }
-                                                    Rectangle { x: Math.round(16 * root.d); y: Math.round(33 * root.d); width: Math.round(ghostColumn.width * ghostRow.reach * 0.6); height: Math.round(6 * root.d); radius: height / 2; color: IrisStyle.paperDot }
-                                                    Rectangle {
-                                                        anchors.right: parent.right; anchors.rightMargin: Math.round(16 * root.d); anchors.verticalCenter: parent.verticalCenter
-                                                        width: Math.round((ghostRow.index % 3 === 1 ? 96 : 36) * root.d); height: Math.round(20 * root.d); radius: height / 2
-                                                        color: "transparent"; border.width: 1; border.color: IrisStyle.dotEmpty
-                                                    }
-                                                    Rectangle { anchors.bottom: parent.bottom; x: Math.round(16 * root.d); width: parent.width - 2 * x; height: 1; color: IrisStyle.hairline }
-                                                }
-                                            }
-                                        }
-                                    }
 
                                     IrisText {
                                         visible: root.searching && root.matches.length > root.entries.length

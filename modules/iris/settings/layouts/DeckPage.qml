@@ -28,6 +28,7 @@ Item {
     readonly property bool windowed: Boolean(page.host?.windowed ?? true)
     readonly property var entry: IrisOptions.sectionById(page.area) ?? ({})
     readonly property bool live: page.visible && page.area === String(page.host?.section ?? "")
+    readonly property bool whole: rows.whole
     readonly property alias flick: flick
     readonly property alias rowsRoot: rows
 
