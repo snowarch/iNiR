@@ -106,7 +106,7 @@ StyledImage {
 
     onStatusChanged: {
         if (status === Image.Ready) {
-            Wallpapers.rememberThumbnail(root.thumbnailPath)
+            Wallpapers.rememberThumbnail(root.resolvedThumbnailSource)
         } else if (status === Image.Error && root.resolvedThumbnailSource.length > 0) {
             if (root._repairTried) {
                 Wallpapers.forgetThumbnail(root.thumbnailPath)
@@ -117,14 +117,11 @@ StyledImage {
         }
     }
 
-    onSourcePathChanged: {
-        root._repairTried = false
-        root.reloadThumbnail()
-    }
+    onSourcePathChanged: root._repairTried = false
 
-    onThumbnailSizeNameChanged: {
-        root.reloadThumbnail()
-    }
+    // Resolved off thumbnailPath itself: a handler on sourcePath runs before that binding follows, and a reused tile
+    // showed the thumbnail of the picture it held before.
+    onThumbnailPathChanged: root.reloadThumbnail()
 
     onSourceSizeChanged: {
         if (root.status === Image.Ready) return
