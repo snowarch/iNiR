@@ -4,10 +4,12 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.SystemTray
+import qs
 import qs.services
 import qs.services.deferred
 import qs.modules.common
 import qs.modules.iris.frame
+import qs.modules.iris.style
 
 QtObject {
     id: root
@@ -42,6 +44,12 @@ QtObject {
         { id: "clock", label: "Clock", description: "An analog face; opens the Desktop page.", card: false },
         { id: "battery", label: "Battery", description: "Charge as a ring that turns orange and red as it runs low; a bolt while charging.", card: false },
         { id: "focus", label: "Do Not Disturb", description: "A moon that silences notifications with a tap.", card: false },
+        { id: "awake", label: "Stay awake", description: "A cup that keeps the screen on and the machine up while it is full.", card: false, keywords: ["caffeine", "coffee", "idle", "inhibit", "awake", "despierto", "cafe"] },
+        { id: "nightLight", label: "Night light", description: "Warms the screen for the evening with a tap.", card: false, keywords: ["night", "light", "warm", "blue light", "sunset", "noche", "luz nocturna"] },
+        { id: "capture", label: "Screenshot", description: "Grab a part of the screen with a tap.", card: false, keywords: ["screenshot", "capture", "snip", "region", "captura"] },
+        { id: "keyboard", label: "Keyboard layout", description: "The layout you type with; a tap moves to the next one.", card: false, keywords: ["keyboard", "layout", "language", "teclado", "idioma"] },
+        { id: "wallpaper", label: "Wallpaper", description: "Your wallpaper in a drop; a tap opens the picker.", card: false, keywords: ["wallpaper", "background", "fondo", "picker"] },
+        { id: "power", label: "Power", description: "Lock, sleep, restart or shut down.", card: false, keywords: ["power", "shutdown", "restart", "logout", "session", "apagar"] },
         { id: "network", label: "Network", description: "The link you are on as a signal arc; its card holds the networks.", card: true },
         { id: "bluetooth", label: "Bluetooth", description: "What is connected; its card holds the devices.", card: true },
         { id: "vitals", label: "Vitals", description: "The load as a ring; its card holds processor, memory, heat and disk.", card: true },
@@ -202,11 +210,40 @@ QtObject {
         if (id === "shellUpdate") return ShellUpdates.showUpdate || ShellUpdates.isUpdating
         if (id === "vpn") return Vpn.available
         if (id === "watching") return AnimeWatch.available
+        if (id === "keyboard") return CompositorService.isNiri && NiriService.keyboardLayoutNames.length > 0
         return root.extraIds.includes(id)
     }
     // What a piece needs from outside iNiR, as one line for the moment its
     // backend is missing: the capability stays visible without its tool.
     readonly property var dependencyHints: ({ watching: "Install ani-cli to search and watch anime from here." })
+    // A tap on a bubble that only does one thing: true when it did it.
+    function act(kind: string, screenName: string): bool {
+        if (kind === "awake") Idle.toggleInhibit()
+        else if (kind === "nightLight") Hyprsunset.toggle()
+        else if (kind === "capture") Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "screenshot"])
+        else if (kind === "keyboard") NiriService.switchLayout()
+        else if (kind === "wallpaper") GlobalStates.wallpaperSelectorOpen = true
+        else if (kind === "power") GlobalStates.sessionOpen = true
+        else return false
+        return true
+    }
+    // Each kind's own colour: a Tinted bubble wears it, an Outline one draws its ring in it.
+    function tintOf(kind: string): color {
+        const id = IrisStyle.identity
+        switch (kind) {
+        case "weather": case "network": return id.blue
+        case "bluetooth": return id.sky
+        case "sound": case "keyboard": return id.indigo
+        case "mic": case "awake": return id.orange
+        case "calendar": case "power": return id.red
+        case "vitals": case "tray": return id.teal
+        case "workspaces": case "focus": return id.purple
+        case "anime": case "watching": case "wallpaper": return id.pink
+        case "vpn": case "battery": return id.green
+        case "nightLight": case "tools": return id.yellow
+        default: return IrisStyle.accent
+        }
+    }
     function dependencyHint(id: string): string {
         if (id === "watching" && !(AnimeWatch.enabled && AnimeWatch.detected)) return ""
         return root.available(id) ? "" : String(root.dependencyHints[id] ?? "")
@@ -215,7 +252,8 @@ QtObject {
     // Pieces whose resting face is a glyph, so it can be chosen. Pieces that draw a
     // figure, a ring or a count (clock, battery, sound, network strength…) are left
     // out: their face carries state, not an affordance.
-    readonly property var iconKinds: ["controls", "tools", "focus", "notifications", "bluetooth", "updates", "anime", "watching"]
+    readonly property var iconKinds: ["controls", "tools", "focus", "notifications", "bluetooth", "updates", "anime", "watching",
+        "awake", "nightLight", "capture", "power"]
     readonly property var icons: Config.options?.iris?.pieces?.icons ?? []
     function defaultGlyph(kind: string): string {
         if (kind === "controls") return Network.wifiEnabled ? "wifi" : "tune"
@@ -226,6 +264,10 @@ QtObject {
         if (kind === "updates") return "task_alt"
         if (kind === "anime") return "live_tv"
         if (kind === "watching") return "resume"
+        if (kind === "awake") return "coffee"
+        if (kind === "nightLight") return "nightlight"
+        if (kind === "capture") return "screenshot_region"
+        if (kind === "power") return "power_settings_new"
         return ""
     }
     // stateGlyph is the piece's own variant for the state it is in; a chosen glyph

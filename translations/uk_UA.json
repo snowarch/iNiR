@@ -9871,5 +9871,19 @@
   "Smaller": "Менший",
   "Every day": "Щодня",
   "On Home": "На головній",
-  "Your shortcuts are on Home, Keyboard shortcuts.": "Ваші комбінації — у розділі «Домашня сторінка», «Комбінації клавіш»."
+  "Your shortcuts are on Home, Keyboard shortcuts.": "Ваші комбінації — у розділі «Домашня сторінка», «Комбінації клавіш».",
+  "Island design": "Дизайн Island",
+  "Bubble design": "Дизайн бульбашок",
+  "Halo is the clock alone in the body; Ledger stacks the day over the time and opens on a page of words and figures; Tiles sets the time in a plate beside your status and opens on tiles.": "Halo — лише годинник у корпусі; Ledger ставить день над часом і відкриває сторінку слів і цифр; Tiles кладе час на плашку поруч зі станом і відкривається плитками.",
+  "Glass is the body alone; Tinted wears each bubble's own colour with white marks; Outline draws that colour as a ring inside the edge.": "Glass — лише корпус; Кольоровий має власний колір кожної бульбашки з білими знаками; Outline малює цей колір кільцем усередині краю.",
+  "A cup that keeps the screen on and the machine up while it is full.": "Чашка, що тримає екран увімкненим, а комп'ютер бадьорим, доки вона повна.",
+  "Warms the screen for the evening with a tap.": "Зігріває екран на вечір одним дотиком.",
+  "Grab a part of the screen with a tap.": "Зніміть частину екрана одним дотиком.",
+  "The layout you type with; a tap moves to the next one.": "Розкладка, якою ви друкуєте; дотик перемикає на наступну.",
+  "Your wallpaper in a drop; a tap opens the picker.": "Ваші шпалери в краплі; дотик відкриває вибір.",
+  "Lock, sleep, restart or shut down.": "Заблокувати, сон, перезапустити або вимкнути.",
+  "Nothing on the calendar": "У календарі порожньо",
+  "%1 tasks waiting": "Завдань в очікуванні: %1",
+  "Halo": "Halo",
+  "Ledger": "Ledger"
 }

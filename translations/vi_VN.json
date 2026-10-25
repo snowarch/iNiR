@@ -9871,5 +9871,19 @@
   "Smaller": "Nhỏ hơn",
   "Every day": "Hằng ngày",
   "On Home": "Trên Trang chủ",
-  "Your shortcuts are on Home, Keyboard shortcuts.": "Phím tắt của bạn nằm ở Trang chủ, Phím tắt."
+  "Your shortcuts are on Home, Keyboard shortcuts.": "Phím tắt của bạn nằm ở Trang chủ, Phím tắt.",
+  "Island design": "Thiết kế Island",
+  "Bubble design": "Thiết kế bong bóng",
+  "Halo is the clock alone in the body; Ledger stacks the day over the time and opens on a page of words and figures; Tiles sets the time in a plate beside your status and opens on tiles.": "Halo chỉ có đồng hồ trong thân; Ledger xếp ngày trên giờ và mở ra một trang chữ và số; Tiles đặt giờ trên một tấm cạnh trạng thái của bạn và mở ra dạng ô.",
+  "Glass is the body alone; Tinted wears each bubble's own colour with white marks; Outline draws that colour as a ring inside the edge.": "Glass chỉ có thân; Tô màu khoác màu riêng của từng bong bóng với dấu trắng; Outline vẽ màu đó thành vòng bên trong mép.",
+  "A cup that keeps the screen on and the machine up while it is full.": "Một tách giữ màn hình sáng và máy thức khi còn đầy.",
+  "Warms the screen for the evening with a tap.": "Làm ấm màn hình cho buổi tối chỉ với một chạm.",
+  "Grab a part of the screen with a tap.": "Chụp một phần màn hình chỉ với một chạm.",
+  "The layout you type with; a tap moves to the next one.": "Bố cục bàn phím bạn đang gõ; chạm để chuyển sang bố cục tiếp theo.",
+  "Your wallpaper in a drop; a tap opens the picker.": "Hình nền của bạn trong một giọt; chạm để mở bộ chọn.",
+  "Lock, sleep, restart or shut down.": "Khóa, ngủ, khởi động lại hoặc tắt máy.",
+  "Nothing on the calendar": "Lịch trống",
+  "%1 tasks waiting": "%1 việc đang chờ",
+  "Halo": "Halo",
+  "Ledger": "Ledger"
 }

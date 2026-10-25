@@ -9871,5 +9871,19 @@
   "Smaller": "더 작게",
   "Every day": "매일",
   "On Home": "홈에 표시",
-  "Your shortcuts are on Home, Keyboard shortcuts.": "단축키는 홈의 키보드 단축키에 있습니다."
+  "Your shortcuts are on Home, Keyboard shortcuts.": "단축키는 홈의 키보드 단축키에 있습니다.",
+  "Island design": "Island 디자인",
+  "Bubble design": "버블 디자인",
+  "Halo is the clock alone in the body; Ledger stacks the day over the time and opens on a page of words and figures; Tiles sets the time in a plate beside your status and opens on tiles.": "Halo는 본체에 시계만 둡니다. Ledger는 날짜를 시간 위에 쌓고 글과 숫자로 된 페이지를 엽니다. Tiles는 상태 옆 판에 시간을 두고 타일로 엽니다.",
+  "Glass is the body alone; Tinted wears each bubble's own colour with white marks; Outline draws that colour as a ring inside the edge.": "Glass는 본체만 있습니다. 색칠은 각 버블 고유의 색에 흰 표시를 입힙니다. Outline은 그 색을 가장자리 안쪽 링으로 그립니다.",
+  "A cup that keeps the screen on and the machine up while it is full.": "가득 차 있는 동안 화면을 켜 두고 컴퓨터를 깨워 두는 컵.",
+  "Warms the screen for the evening with a tap.": "탭 한 번으로 저녁을 위해 화면을 따뜻하게.",
+  "Grab a part of the screen with a tap.": "탭 한 번으로 화면 일부를 캡처.",
+  "The layout you type with; a tap moves to the next one.": "입력 중인 자판 배열. 탭하면 다음 배열로.",
+  "Your wallpaper in a drop; a tap opens the picker.": "물방울 속 배경화면. 탭하면 선택기가 열립니다.",
+  "Lock, sleep, restart or shut down.": "잠금, 절전, 다시 시작 또는 종료.",
+  "Nothing on the calendar": "캘린더에 일정 없음",
+  "%1 tasks waiting": "대기 중인 작업 %1개",
+  "Halo": "Halo",
+  "Ledger": "Ledger"
 }

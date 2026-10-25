@@ -9871,5 +9871,19 @@
   "Smaller": "小さめ",
   "Every day": "毎日",
   "On Home": "ホームに表示",
-  "Your shortcuts are on Home, Keyboard shortcuts.": "ショートカットは「ホーム」の「キーボードショートカット」にあります。"
+  "Your shortcuts are on Home, Keyboard shortcuts.": "ショートカットは「ホーム」の「キーボードショートカット」にあります。",
+  "Island design": "Island のデザイン",
+  "Bubble design": "バブルのデザイン",
+  "Halo is the clock alone in the body; Ledger stacks the day over the time and opens on a page of words and figures; Tiles sets the time in a plate beside your status and opens on tiles.": "Halo は本体に時計だけ。Ledger は日付を時刻の上に重ね、言葉と数字のページを開きます。Tiles は状態の横のプレートに時刻を置き、タイルで開きます。",
+  "Glass is the body alone; Tinted wears each bubble's own colour with white marks; Outline draws that colour as a ring inside the edge.": "Glass は本体だけ。ティントは各バブル固有の色に白いマーク。Outline はその色を縁の内側にリングで描きます。",
+  "A cup that keeps the screen on and the machine up while it is full.": "満たされている間、画面をつけたままマシンを起こしておくカップ。",
+  "Warms the screen for the evening with a tap.": "タップで夜に向けて画面を暖色に。",
+  "Grab a part of the screen with a tap.": "タップで画面の一部をキャプチャ。",
+  "The layout you type with; a tap moves to the next one.": "入力中のレイアウト。タップで次へ切り替え。",
+  "Your wallpaper in a drop; a tap opens the picker.": "しずくの中の壁紙。タップでピッカーを開きます。",
+  "Lock, sleep, restart or shut down.": "ロック、スリープ、再起動、シャットダウン。",
+  "Nothing on the calendar": "予定はありません",
+  "%1 tasks waiting": "%1 件のタスクが待機中",
+  "Halo": "Halo",
+  "Ledger": "Ledger"
 }

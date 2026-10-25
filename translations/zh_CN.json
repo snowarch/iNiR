@@ -9871,5 +9871,19 @@
   "Smaller": "更小",
   "Every day": "每天",
   "On Home": "主页显示",
-  "Your shortcuts are on Home, Keyboard shortcuts.": "你的快捷键在“首页”>“键盘快捷键”中。"
+  "Your shortcuts are on Home, Keyboard shortcuts.": "你的快捷键在“首页”>“键盘快捷键”中。",
+  "Island design": "Island 设计",
+  "Bubble design": "气泡设计",
+  "Halo is the clock alone in the body; Ledger stacks the day over the time and opens on a page of words and figures; Tiles sets the time in a plate beside your status and opens on tiles.": "Halo 只在主体中显示时钟；Ledger 把日期叠在时间上方，展开为文字与数字的页面；Tiles 把时间放在状态旁的底板上，展开为磁贴。",
+  "Glass is the body alone; Tinted wears each bubble's own colour with white marks; Outline draws that colour as a ring inside the edge.": "Glass 只有主体；着色为每个气泡披上自己的颜色并配白色标记；Outline 在边缘内侧以该颜色画一圈。",
+  "A cup that keeps the screen on and the machine up while it is full.": "杯子满着时保持屏幕常亮、机器不休眠。",
+  "Warms the screen for the evening with a tap.": "轻点一下，让屏幕为夜晚变暖。",
+  "Grab a part of the screen with a tap.": "轻点一下，截取屏幕的一部分。",
+  "The layout you type with; a tap moves to the next one.": "你正在使用的键盘布局；轻点切换到下一个。",
+  "Your wallpaper in a drop; a tap opens the picker.": "水滴里的壁纸；轻点打开选择器。",
+  "Lock, sleep, restart or shut down.": "锁定、睡眠、重启或关机。",
+  "Nothing on the calendar": "日历上没有安排",
+  "%1 tasks waiting": "%1 个待办任务",
+  "Halo": "Halo",
+  "Ledger": "Ledger"
 }

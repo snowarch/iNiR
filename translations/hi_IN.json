@@ -9871,5 +9871,19 @@
   "Smaller": "छोटा",
   "Every day": "हर दिन",
   "On Home": "होम पर",
-  "Your shortcuts are on Home, Keyboard shortcuts.": "आपके शॉर्टकट होम, कीबोर्ड शॉर्टकट में हैं।"
+  "Your shortcuts are on Home, Keyboard shortcuts.": "आपके शॉर्टकट होम, कीबोर्ड शॉर्टकट में हैं।",
+  "Island design": "Island डिज़ाइन",
+  "Bubble design": "बबल डिज़ाइन",
+  "Halo is the clock alone in the body; Ledger stacks the day over the time and opens on a page of words and figures; Tiles sets the time in a plate beside your status and opens on tiles.": "Halo में बॉडी में सिर्फ़ घड़ी है; Ledger दिन को समय के ऊपर रखता है और शब्दों और अंकों का पेज खोलता है; Tiles समय को आपकी स्थिति के पास एक प्लेट पर रखता है और टाइलों में खुलता है।",
+  "Glass is the body alone; Tinted wears each bubble's own colour with white marks; Outline draws that colour as a ring inside the edge.": "Glass सिर्फ़ बॉडी है; रंगीन हर बबल को उसका अपना रंग और सफ़ेद निशान देता है; Outline उस रंग को किनारे के अंदर छल्ले की तरह खींचता है।",
+  "A cup that keeps the screen on and the machine up while it is full.": "एक कप जो भरा रहने तक स्क्रीन चालू और मशीन जागी रखता है।",
+  "Warms the screen for the evening with a tap.": "एक टैप से शाम के लिए स्क्रीन को गर्म करें।",
+  "Grab a part of the screen with a tap.": "एक टैप से स्क्रीन का हिस्सा कैप्चर करें।",
+  "The layout you type with; a tap moves to the next one.": "जिस लेआउट में आप टाइप करते हैं; टैप करने पर अगला।",
+  "Your wallpaper in a drop; a tap opens the picker.": "एक बूंद में आपका वॉलपेपर; टैप करने पर पिकर खुलता है।",
+  "Lock, sleep, restart or shut down.": "लॉक, स्लीप, रीस्टार्ट या बंद करें।",
+  "Nothing on the calendar": "कैलेंडर में कुछ नहीं",
+  "%1 tasks waiting": "%1 काम बाकी",
+  "Halo": "Halo",
+  "Ledger": "Ledger"
 }

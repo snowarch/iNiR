@@ -36,14 +36,28 @@ Item {
     readonly property bool bare: root.backdrop !== null
     // Dots are Nothing's way to count; Apple (and AIRISU's edge rings) draw the ring.
     readonly property bool dotted: IrisStyle.wearsNothing(root)
-    readonly property color ink: root.lightBackdrop ? IrisStyle.inkOnLight : IrisStyle.text
-    readonly property color inkMuted: root.lightBackdrop ? IrisStyle.inkOnLightMuted : IrisStyle.muted
-    readonly property color inkFaint: root.lightBackdrop ? IrisStyle.inkOnLightFaint : IrisStyle.textTertiary
-    readonly property color inkSoft: root.lightBackdrop ? IrisStyle.inkOnLightSoft : IrisStyle.subtext
+    // Three designs of a bubble (10-25): Glass (the body alone), Tinted (its kind's colour as a disc, its marks white)
+    // and Outline (a ring of that colour inside the edge). Pictures (covers, apps, the wallpaper) stay as they are.
+    readonly property string design: root.bare || ["", "app", "trayApp", "media", "visualizer", "anime", "watching", "wallpaper"].includes(root.kind)
+        ? "glass" : String(Config.options?.iris?.bubbles?.design ?? "glass")
+    readonly property bool tinted: root.design === "tint"
+    readonly property color kindTint: IrisPieces.tintOf(root.kind)
+    readonly property color ink: root.tinted ? IrisStyle.onTint : root.lightBackdrop ? IrisStyle.inkOnLight : IrisStyle.text
+    readonly property color inkMuted: root.tinted ? ColorUtils.applyAlpha(IrisStyle.onTint, 0.78) : root.lightBackdrop ? IrisStyle.inkOnLightMuted : IrisStyle.muted // iris-literal: white tones on a tinted disc
+    readonly property color inkFaint: root.tinted ? ColorUtils.applyAlpha(IrisStyle.onTint, 0.55) : root.lightBackdrop ? IrisStyle.inkOnLightFaint : IrisStyle.textTertiary // iris-literal: white tones on a tinted disc
+    readonly property color inkSoft: root.tinted ? ColorUtils.applyAlpha(IrisStyle.onTint, 0.88) : root.lightBackdrop ? IrisStyle.inkOnLightSoft : IrisStyle.subtext // iris-literal: white tones on a tinted disc
     function legible(seed: color, contrast: real): color {
+        if (root.tinted) return root.ink
         return root.bare ? IrisStyle.markOn(seed, root.backdrop, root.lightBackdrop, contrast) : seed
     }
-    function identityInk(seed: color): color { return root.bare ? root.ink : seed }
+    function identityInk(seed: color): color { return root.bare || root.tinted ? root.ink : seed }
+    // "English (US)" reads US, "Spanish" SP.
+    function layoutCode(name: string): string {
+        const inside = /\(([^)]+)\)/.exec(name)
+        const words = String(inside ? inside[1] : name).split(/[\s,]+/).filter(w => w.length > 0)
+        if (words.length === 0) return "--"
+        return (words.length > 1 ? words.map(w => w[0]).join("") : words[0].slice(0, 2)).slice(0, 3).toUpperCase()
+    }
     readonly property color faceAccent: root.legible(IrisStyle.accent, 3)
     readonly property color highlight: root.legible(IrisStyle.secondaryAccent, 3)
     readonly property color alertInk: root.legible(IrisStyle.badgeInk, 4.5)
@@ -229,6 +243,16 @@ Item {
         Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
     }
 
+    Rectangle {
+        visible: root.design !== "glass"
+        anchors.fill: parent
+        anchors.margins: 3 * root.d + root.platedInset
+        radius: Math.min(width / 2, Math.max(0, IrisStyle.pieceRadius(root.width) - anchors.margins))
+        color: root.tinted ? root.kindTint : "transparent"
+        border.width: root.design === "outline" ? Math.max(1.5, Math.round(1.5 * root.d)) : 0
+        border.color: ColorUtils.applyAlpha(root.kindTint, 0.9) // iris-literal: the kind's ring, a touch under full
+    }
+
     Item {
         anchors.fill: parent
         anchors.margins: root.contentInset
@@ -246,8 +270,57 @@ Item {
                 weather: weatherBody, calendar: calendarBody, clock: clockBody, battery: batteryBody, focus: focusBody,
                 network: networkBody, bluetooth: bluetoothBody, vitals: vitalsBody, workspaces: workspacesBody,
                 updates: updatesBody, visualizer: visualizerBody, vpn: vpnBody, shellUpdate: shellUpdateBody,
-                anime: animeBody, watching: watchingBody, notifications: notificationsBody
+                anime: animeBody, watching: watchingBody, notifications: notificationsBody,
+                awake: switchBody, nightLight: switchBody, capture: switchBody, power: switchBody,
+                keyboard: keyboardBody, wallpaper: wallpaperBody
             })[root.kind] ?? null
+        }
+        // Stay awake and Night light fill with their colour while on; Screenshot and Power are a glyph.
+        Component {
+            id: switchBody
+            Item {
+                readonly property bool on: root.kind === "awake" ? Idle.inhibit : root.kind === "nightLight" ? Hyprsunset.active : false
+                Rectangle {
+                    visible: !root.tinted
+                    anchors.fill: parent
+                    anchors.margins: 3 * root.d + root.platedInset
+                    radius: Math.min(width / 2, Math.max(0, IrisStyle.pieceRadius(root.width) - anchors.margins))
+                    color: parent.on ? root.kindTint : "transparent"
+                    Behavior on color { ColorAnimation { duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing } }
+                }
+                Glyph {
+                    anchors.centerIn: parent
+                    text: IrisPieces.glyphOf(root.kind, "")
+                    fill: parent.on ? 1 : 0
+                    iconSize: 18 * root.d
+                    color: parent.on || root.tinted ? IrisStyle.onTint : root.design === "outline" ? root.kindTint : root.ink
+                }
+            }
+        }
+        Component {
+            id: keyboardBody
+            Item {
+                FaceText {
+                    anchors.centerIn: parent
+                    text: root.layoutCode(String(NiriService.keyboardLayoutNames[NiriService.currentKeyboardLayoutIndex] ?? ""))
+                    font.pixelSize: Math.round(12 * root.d)
+                    font.weight: IrisStyle.weight(Font.DemiBold)
+                    font.letterSpacing: 0.4
+                }
+            }
+        }
+        Component {
+            id: wallpaperBody
+            Item {
+                IrisArtwork {
+                    anchors.fill: parent
+                    anchors.margins: 3 * root.d + root.platedInset
+                    circular: !root.edgeRings
+                    radius: root.edgeRings ? 0 : width / 2
+                    decodeSize: Math.round(64 * root.d)
+                    source: WallpaperListener.wallpaperUrlForScreen(Quickshell.screens.find(screen => screen.name === root.screenName) ?? null)
+                }
+            }
         }
         Component {
             id: mediaBody

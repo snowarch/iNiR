@@ -9871,5 +9871,19 @@
   "Smaller": "Мельче",
   "Every day": "Каждый день",
   "On Home": "На главной",
-  "Your shortcuts are on Home, Keyboard shortcuts.": "Ваши сочетания — в разделе «Главная», «Сочетания клавиш»."
+  "Your shortcuts are on Home, Keyboard shortcuts.": "Ваши сочетания — в разделе «Главная», «Сочетания клавиш».",
+  "Island design": "Дизайн Island",
+  "Bubble design": "Дизайн пузырей",
+  "Halo is the clock alone in the body; Ledger stacks the day over the time and opens on a page of words and figures; Tiles sets the time in a plate beside your status and opens on tiles.": "Halo — только часы в корпусе; Ledger ставит день над временем и открывает страницу слов и цифр; Tiles помещает время на плашку рядом со статусом и открывается плитками.",
+  "Glass is the body alone; Tinted wears each bubble's own colour with white marks; Outline draws that colour as a ring inside the edge.": "Glass — только корпус; Цветной носит собственный цвет каждого пузыря с белыми знаками; Outline рисует этот цвет кольцом внутри края.",
+  "A cup that keeps the screen on and the machine up while it is full.": "Чашка, которая держит экран включённым, а компьютер бодрым, пока она полна.",
+  "Warms the screen for the evening with a tap.": "Согревает экран к вечеру одним касанием.",
+  "Grab a part of the screen with a tap.": "Снимите часть экрана одним касанием.",
+  "The layout you type with; a tap moves to the next one.": "Раскладка, на которой вы печатаете; касание переключает на следующую.",
+  "Your wallpaper in a drop; a tap opens the picker.": "Ваши обои в капле; касание открывает выбор.",
+  "Lock, sleep, restart or shut down.": "Заблокировать, сон, перезагрузить или выключить.",
+  "Nothing on the calendar": "В календаре пусто",
+  "%1 tasks waiting": "Задач в ожидании: %1",
+  "Halo": "Halo",
+  "Ledger": "Ledger"
 }

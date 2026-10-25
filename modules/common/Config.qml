@@ -4316,7 +4316,8 @@ Singleton {
                     // Expanded Island: page width (px) and its navigation, in order (media, activity, desktop,
                     // tray, tools, focus, today, controls, settings).
                     property int pageWidth: 440
-                    property list<string> navItems: ["media", "activity", "desktop", "tray", "tools", "focus", "today", "controls", "settings"]
+                    property list<string> navItems: ["media", "activity", "desktop", "weather", "calendar", "vitals", "tray", "tools", "focus", "today", "controls", "settings"]
+                    property string design: "halo" // the Island's design: "halo", "ledger" or "tiles"
                     property string blockStyle: "plain" // desktop page blocks: "plain" on the Island's black or "grouped" on quiet plates
                     property string scrollAction: "volume" // "volume", "brightness" or "none"
                     property string desktopBanner: "wallpaper" // Island Desktop page header: "wallpaper" or "none"
@@ -4509,6 +4510,42 @@ Singleton {
                             property real fx: 0.5
                             property real fy: 0.5
                         }
+                        property JsonObject awake: JsonObject {
+                            property bool enable: false
+                            property string place: "right"
+                            property real fx: 0.5
+                            property real fy: 0.5
+                        }
+                        property JsonObject nightLight: JsonObject {
+                            property bool enable: false
+                            property string place: "right"
+                            property real fx: 0.5
+                            property real fy: 0.5
+                        }
+                        property JsonObject capture: JsonObject {
+                            property bool enable: false
+                            property string place: "right"
+                            property real fx: 0.5
+                            property real fy: 0.5
+                        }
+                        property JsonObject keyboard: JsonObject {
+                            property bool enable: false
+                            property string place: "right"
+                            property real fx: 0.5
+                            property real fy: 0.5
+                        }
+                        property JsonObject wallpaper: JsonObject {
+                            property bool enable: false
+                            property string place: "right"
+                            property real fx: 0.5
+                            property real fy: 0.5
+                        }
+                        property JsonObject power: JsonObject {
+                            property bool enable: false
+                            property string place: "right"
+                            property real fx: 0.5
+                            property real fy: 0.5
+                        }
                         property JsonObject network: JsonObject {
                             property bool enable: false
                             property string place: "right"
@@ -4577,6 +4614,7 @@ Singleton {
                     // microphone, notifications, timers, tray); "island": it opens the
                     // Island page or panel it stands for, and level bubbles mute.
                     property string opens: "card"
+                    property string design: "glass" // bubbles: "glass", "tint" or "outline"
                     // Dropped near a zone, a bubble snaps to it; off, it stays where it is let go.
                     property bool snap: true
                     // Bubbles sharing a zone rest on one plate and read as a small

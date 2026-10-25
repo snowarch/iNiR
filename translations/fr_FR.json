@@ -9871,5 +9871,19 @@
   "Smaller": "Plus petit",
   "Every day": "Au quotidien",
   "On Home": "Sur l’accueil",
-  "Your shortcuts are on Home, Keyboard shortcuts.": "Vos raccourcis sont dans Accueil, Raccourcis clavier."
+  "Your shortcuts are on Home, Keyboard shortcuts.": "Vos raccourcis sont dans Accueil, Raccourcis clavier.",
+  "Island design": "Design de l'Island",
+  "Bubble design": "Design des bulles",
+  "Halo is the clock alone in the body; Ledger stacks the day over the time and opens on a page of words and figures; Tiles sets the time in a plate beside your status and opens on tiles.": "Halo, c'est l'horloge seule dans le corps ; Ledger empile le jour sur l'heure et ouvre une page de mots et de chiffres ; Tiles pose l'heure sur une plaque à côté de votre état et ouvre sur des tuiles.",
+  "Glass is the body alone; Tinted wears each bubble's own colour with white marks; Outline draws that colour as a ring inside the edge.": "Glass, c'est le corps seul ; Teinté porte la couleur de chaque bulle avec des marques blanches ; Outline trace cette couleur en anneau au bord.",
+  "A cup that keeps the screen on and the machine up while it is full.": "Une tasse qui garde l'écran allumé et la machine éveillée tant qu'elle est pleine.",
+  "Warms the screen for the evening with a tap.": "Réchauffe l'écran pour le soir d'un toucher.",
+  "Grab a part of the screen with a tap.": "Capturez une partie de l'écran d'un toucher.",
+  "The layout you type with; a tap moves to the next one.": "La disposition avec laquelle vous tapez ; un toucher passe à la suivante.",
+  "Your wallpaper in a drop; a tap opens the picker.": "Votre fond d'écran dans une goutte ; un toucher ouvre le sélecteur.",
+  "Lock, sleep, restart or shut down.": "Verrouiller, mettre en veille, redémarrer ou éteindre.",
+  "Nothing on the calendar": "Rien au calendrier",
+  "%1 tasks waiting": "%1 tâches en attente",
+  "Halo": "Halo",
+  "Ledger": "Ledger"
 }

@@ -9871,5 +9871,19 @@
   "Smaller": "Daha küçük",
   "Every day": "Her gün",
   "On Home": "Ana sayfada",
-  "Your shortcuts are on Home, Keyboard shortcuts.": "Kısayollarınız Ana Sayfa, Klavye kısayolları altındadır."
+  "Your shortcuts are on Home, Keyboard shortcuts.": "Kısayollarınız Ana Sayfa, Klavye kısayolları altındadır.",
+  "Island design": "Island tasarımı",
+  "Bubble design": "Baloncuk tasarımı",
+  "Halo is the clock alone in the body; Ledger stacks the day over the time and opens on a page of words and figures; Tiles sets the time in a plate beside your status and opens on tiles.": "Halo gövdede yalnızca saattir; Ledger günü saatin üstüne dizer ve kelime ve rakamlardan bir sayfa açar; Tiles saati durumunun yanındaki bir plakaya koyar ve kutucuklarla açılır.",
+  "Glass is the body alone; Tinted wears each bubble's own colour with white marks; Outline draws that colour as a ring inside the edge.": "Glass yalnızca gövdedir; Renkli her baloncuğun kendi rengini beyaz işaretlerle giyer; Outline bu rengi kenarın içinde halka olarak çizer.",
+  "A cup that keeps the screen on and the machine up while it is full.": "Doluyken ekranı açık, makineyi uyanık tutan bir fincan.",
+  "Warms the screen for the evening with a tap.": "Tek dokunuşla ekranı akşam için ısıtır.",
+  "Grab a part of the screen with a tap.": "Tek dokunuşla ekranın bir bölümünü yakala.",
+  "The layout you type with; a tap moves to the next one.": "Yazdığın düzen; bir dokunuş sonrakine geçer.",
+  "Your wallpaper in a drop; a tap opens the picker.": "Bir damla içinde duvar kâğıdın; dokununca seçici açılır.",
+  "Lock, sleep, restart or shut down.": "Kilitle, uyut, yeniden başlat veya kapat.",
+  "Nothing on the calendar": "Takvimde bir şey yok",
+  "%1 tasks waiting": "%1 görev bekliyor",
+  "Halo": "Halo",
+  "Ledger": "Ledger"
 }

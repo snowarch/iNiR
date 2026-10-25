@@ -9871,5 +9871,19 @@
   "Smaller": "Più piccolo",
   "Every day": "Ogni giorno",
   "On Home": "Nella Home",
-  "Your shortcuts are on Home, Keyboard shortcuts.": "Le tue scorciatoie sono in Home, Scorciatoie da tastiera."
+  "Your shortcuts are on Home, Keyboard shortcuts.": "Le tue scorciatoie sono in Home, Scorciatoie da tastiera.",
+  "Island design": "Design della Island",
+  "Bubble design": "Design delle bolle",
+  "Halo is the clock alone in the body; Ledger stacks the day over the time and opens on a page of words and figures; Tiles sets the time in a plate beside your status and opens on tiles.": "Halo è l'orologio da solo nel corpo; Ledger impila il giorno sopra l'ora e apre una pagina di parole e cifre; Tiles mette l'ora su una placca accanto al tuo stato e apre a riquadri.",
+  "Glass is the body alone; Tinted wears each bubble's own colour with white marks; Outline draws that colour as a ring inside the edge.": "Glass è solo il corpo; Tinto veste ogni bolla del suo colore con segni bianchi; Outline disegna quel colore come un anello dentro il bordo.",
+  "A cup that keeps the screen on and the machine up while it is full.": "Una tazza che tiene lo schermo acceso e la macchina sveglia finché è piena.",
+  "Warms the screen for the evening with a tap.": "Scalda lo schermo per la sera con un tocco.",
+  "Grab a part of the screen with a tap.": "Cattura una parte dello schermo con un tocco.",
+  "The layout you type with; a tap moves to the next one.": "Il layout con cui scrivi; un tocco passa al successivo.",
+  "Your wallpaper in a drop; a tap opens the picker.": "Il tuo sfondo in una goccia; un tocco apre il selettore.",
+  "Lock, sleep, restart or shut down.": "Blocca, sospendi, riavvia o spegni.",
+  "Nothing on the calendar": "Niente in calendario",
+  "%1 tasks waiting": "%1 attività in attesa",
+  "Halo": "Halo",
+  "Ledger": "Ledger"
 }

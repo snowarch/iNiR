@@ -9871,5 +9871,19 @@
   "Smaller": "أصغر",
   "Every day": "كل يوم",
   "On Home": "في الرئيسية",
-  "Your shortcuts are on Home, Keyboard shortcuts.": "اختصاراتك في الرئيسية، اختصارات لوحة المفاتيح."
+  "Your shortcuts are on Home, Keyboard shortcuts.": "اختصاراتك في الرئيسية، اختصارات لوحة المفاتيح.",
+  "Island design": "تصميم Island",
+  "Bubble design": "تصميم الفقاعات",
+  "Halo is the clock alone in the body; Ledger stacks the day over the time and opens on a page of words and figures; Tiles sets the time in a plate beside your status and opens on tiles.": "Halo هي الساعة وحدها في الجسم؛ Ledger يضع اليوم فوق الوقت ويفتح صفحة من الكلمات والأرقام؛ Tiles يضع الوقت على لوحة بجانب حالتك ويفتح على مربعات.",
+  "Glass is the body alone; Tinted wears each bubble's own colour with white marks; Outline draws that colour as a ring inside the edge.": "Glass هو الجسم وحده؛ الملوّن يلبس كل فقاعة لونها الخاص بعلامات بيضاء؛ Outline يرسم ذلك اللون حلقةً داخل الحافة.",
+  "A cup that keeps the screen on and the machine up while it is full.": "فنجان يبقي الشاشة مضاءة والجهاز مستيقظًا ما دام ممتلئًا.",
+  "Warms the screen for the evening with a tap.": "يدفئ الشاشة للمساء بلمسة.",
+  "Grab a part of the screen with a tap.": "التقط جزءًا من الشاشة بلمسة.",
+  "The layout you type with; a tap moves to the next one.": "التخطيط الذي تكتب به؛ لمسة تنتقل إلى التالي.",
+  "Your wallpaper in a drop; a tap opens the picker.": "خلفيتك في قطرة؛ لمسة تفتح المنتقي.",
+  "Lock, sleep, restart or shut down.": "قفل أو سكون أو إعادة تشغيل أو إيقاف.",
+  "Nothing on the calendar": "لا شيء في التقويم",
+  "%1 tasks waiting": "%1 مهام بانتظارك",
+  "Halo": "Halo",
+  "Ledger": "Ledger"
 }
