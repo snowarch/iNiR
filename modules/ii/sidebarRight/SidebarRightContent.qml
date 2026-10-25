@@ -595,7 +595,7 @@ Item {
                 saturation: sidebarRightBackground.angelEverywhere
                     ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
                     : sidebarRightBackground.editorialGlassActive ? 0.04
-                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                    : (Appearance.effectsEnabled ? Appearance.aurora.backdropSaturation : 0)
                 blurEnabled: Appearance.effectsEnabled
                 blurMax: 64
                 blur: Appearance.effectsEnabled

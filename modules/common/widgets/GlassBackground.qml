@@ -38,7 +38,7 @@ Rectangle {
     // caller inherits; lower values are for surfaces that expose it to the user.
     property real blurStrength: Appearance.editorialEverywhere && Appearance.editorial.glassActive
         ? Appearance.editorial.glassBlur : 1
-    property real saturationStrength: Appearance.editorialEverywhere && Appearance.editorial.glassActive ? 0.04 : 0.2
+    property real saturationStrength: Appearance.editorialEverywhere && Appearance.editorial.glassActive ? 0.04 : Appearance.aurora.backdropSaturation
     readonly property bool useWallpaperBackdrop: root.forceBackdrop
         ? Appearance.effectsEnabled
         : (Appearance.blurBackendFor("panels", Appearance.blurTopology.unsupported) === "wallpaper"

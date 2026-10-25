@@ -954,6 +954,8 @@ Singleton {
                         property real tooltip: 0.35       // Tooltips
                         property real layer: 0.40         // General layer glass (colLayer1/2/3)
                     }
+                    // How much of the wallpaper's colour the glass lets through (0 grey, 1 as it is).
+                    property real wallpaperColor: 0.55
                     property string customPreset: ""
                 }
                 property string angelSubStyle: "frost" // "frost" | "neon" | "void"

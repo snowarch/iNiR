@@ -126,7 +126,7 @@ Rectangle {
             saturation: root.angelEverywhere
                 ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
                 : root.editorialGlassActive ? 0.04
-                : (Appearance.effectsEnabled ? 0.35 : 0)
+                : (Appearance.effectsEnabled ? (Appearance.auroraEverywhere ? Appearance.aurora.backdropSaturation : 0.35) : 0)
             blurEnabled: Appearance.effectsEnabled
             blurMax: 64
             blur: Appearance.effectsEnabled

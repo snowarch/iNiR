@@ -89,6 +89,7 @@
                 "tooltip": 0.35,
                 "layer": 0.4
             },
+            "wallpaperColor": 0.55,
             "customPreset": ""
         },
         "angelSubStyle": "frost",

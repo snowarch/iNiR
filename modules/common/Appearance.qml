@@ -1026,6 +1026,9 @@ Singleton {
         readonly property real popupTransparentize: (_cfg?.popup ?? 0.32) * _lightFactor
         readonly property real tooltipTransparentize: (_cfg?.tooltip ?? 0.28) * _lightFactor
         readonly property real layerTransparentize: (_cfg?.layer ?? 0.32) * _lightFactor
+        // The blurred wallpaper under the glass, toned toward grey: a vivid wallpaper boosted 20 % turned every panel
+        // into its colour (a hot pink sidebar on a pink wallpaper, 10-25).
+        readonly property real backdropSaturation: { Config.revision; return Math.max(0, Math.min(1, Config.options?.appearance?.aurora?.wallpaperColor ?? 0.55)) - 1 }
 
         readonly property color colInactiveControlSurface: ColorUtils.transparentize(
             root.colors.colLayer0Base, Math.max(0.12, subSurfaceTransparentize - 0.14))

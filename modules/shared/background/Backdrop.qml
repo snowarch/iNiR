@@ -353,7 +353,7 @@ Variants {
                     anchors.fill: source
                     saturation: Appearance.angelEverywhere
                         ? Appearance.angel.blurSaturation
-                        : (Appearance.effectsEnabled ? 0.2 : 0)
+                        : (Appearance.effectsEnabled ? Appearance.aurora.backdropSaturation : 0)
                     blurEnabled: Appearance.effectsEnabled
                     blurMax: 32
                     blur: Appearance.effectsEnabled ? 1 : 0
@@ -382,7 +382,7 @@ Variants {
                     anchors.fill: source
                     saturation: Appearance.angelEverywhere
                         ? Appearance.angel.blurSaturation
-                        : (Appearance.effectsEnabled ? 0.2 : 0)
+                        : (Appearance.effectsEnabled ? Appearance.aurora.backdropSaturation : 0)
                     blurEnabled: Appearance.effectsEnabled
                     blurMax: 64
                     blur: Appearance.effectsEnabled ? 1 : 0
@@ -410,7 +410,7 @@ Variants {
                     anchors.fill: source
                     saturation: Appearance.angelEverywhere
                         ? Appearance.angel.blurSaturation
-                        : (Appearance.effectsEnabled ? 0.2 : 0)
+                        : (Appearance.effectsEnabled ? Appearance.aurora.backdropSaturation : 0)
                     blurEnabled: Appearance.effectsEnabled
                     blurMax: 64
                     blur: Appearance.effectsEnabled ? 1 : 0
@@ -475,7 +475,7 @@ Variants {
                     anchors.fill: source
                     saturation: Appearance.angelEverywhere
                         ? Appearance.angel.blurSaturation
-                        : (Appearance.effectsEnabled ? 0.2 : 0)
+                        : (Appearance.effectsEnabled ? Appearance.aurora.backdropSaturation : 0)
                     blurEnabled: Appearance.effectsEnabled
                     blurMax: 64
                     blur: Appearance.effectsEnabled ? 1 : 0

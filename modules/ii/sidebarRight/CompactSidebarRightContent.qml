@@ -914,7 +914,7 @@ Item {
                 anchors.fill: source
                 saturation: bg.angelEverywhere
                     ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
-                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                    : (Appearance.effectsEnabled ? Appearance.aurora.backdropSaturation : 0)
                 blurEnabled: Appearance.effectsEnabled
                 blurMax: 64
                 blur: Appearance.effectsEnabled

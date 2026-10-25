@@ -181,7 +181,7 @@ Item {
         fallbackColor: root._editorial ? Appearance.editorial.paper : root._solidFill
         overlayColor: root._editorial ? Appearance.editorial.paper : Appearance.colors.colLayer0Base
         blurStrength: root._editorial ? Appearance.editorial.glassBlur : 1
-        saturationStrength: root._editorial ? 0.04 : 0.2
+        saturationStrength: root._editorial ? 0.04 : Appearance.aurora.backdropSaturation
         auroraTransparency: root._editorial
             ? (root._editorialStackActive ? 1 : 1 - Appearance.editorial.glassOpacity)
             : Appearance.aurora.popupTransparentize
