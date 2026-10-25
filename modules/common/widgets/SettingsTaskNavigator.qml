@@ -12,9 +12,9 @@ ColumnLayout {
     property string description: ""
     property string summary: ""
     property bool showSummary: root.options.length === 0
-    // The page header already shows name/description; the intro card is only
-    // worth drawing on pages that need the extra onboarding copy.
-    property bool showIntro: true
+    // The page header already shows name/description; a card under it saying the page's name again was the first
+    // thing every page repeated. Only a page that needs extra onboarding copy asks for it.
+    property bool showIntro: false
     property string currentValue: ""
     property var options: []
     property var searchAliases: ({})

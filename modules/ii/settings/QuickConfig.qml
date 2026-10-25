@@ -139,7 +139,6 @@ ContentPage {
         title: ""
         description: ""
         summary: ""
-        showIntro: false
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         searchAliases: ({

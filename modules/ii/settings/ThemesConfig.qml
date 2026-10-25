@@ -1657,26 +1657,11 @@ ContentPage {
                 ? Config.options?.appearance?.globalStyle ?? "material"
                 : derivedStyle
 
-            ContentSubsection {
-                title: Translation.tr("Style")
-
-                ConfigSelectionArray {
-                    currentValue: globalStyleGroup.currentStyle
-                    onSelected: (newValue) => {
-                        _log("[GlobalStyle] selected", newValue)
-                        ThemeService.setGlobalStyle(newValue)
-                    }
-                    options: [
-                        { displayName: Translation.tr("Material"), icon: "tune", value: "material" },
-                        { displayName: Translation.tr("Cards"), icon: "branding_watermark", value: "cards" },
-                        { displayName: Translation.tr("Aurora"), icon: "blur_on", value: "aurora" },
-                        { displayName: Translation.tr("Inir"), icon: "terminal", value: "inir" },
-                        { displayName: Translation.tr("Angel"), icon: "raven", value: "angel" },
-                        { displayName: Translation.tr("Regalia"), icon: "event_seat", value: "regalia" },
-                        { displayName: Translation.tr("ZZZ"), icon: "bolt", value: "zzz" },
-                        { displayName: Translation.tr("Cookie Shapes"), icon: "cookie", value: "cookie" },
-                        { displayName: Translation.tr("Editorial"), icon: "auto_stories", value: "editorial" }
-                    ]
+            GlobalStylePicker {
+                currentValue: globalStyleGroup.currentStyle
+                onSelected: value => {
+                    _log("[GlobalStyle] selected", value)
+                    ThemeService.setGlobalStyle(value)
                 }
             }
 
