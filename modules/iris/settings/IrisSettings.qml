@@ -234,7 +234,7 @@ Item {
     readonly property int essentialCount: {
         let count = 0
         for (const group of root.groups) {
-            const tuned = group.rows.filter(spec => IrisOptions.fineTune(spec) && !IrisOptions.changed(spec)).length
+            const tuned = group.rows.filter(spec => IrisOptions.foldsAway(spec)).length
             count += tuned >= 2 ? group.rows.length - tuned + 1 : group.rows.length
         }
         return count
@@ -854,6 +854,7 @@ Item {
     }
     Component.onCompleted: {
         IrisNiri.ensure()
+        IrisOptions.settle()
         if (GlobalStates.settingsOverlayOpen) root.applyRequest()
         // The window host is built on open: the page takes the keys then, or ↑ ↓ and typing reached nothing (DI49a).
         if (root.windowed) root.forceActiveFocus()
@@ -865,6 +866,7 @@ Item {
         function onSettingsOverlayOpenChanged(): void {
             if (!GlobalStates.settingsOverlayOpen) return
             IrisNiri.ensure()
+            IrisOptions.settle()
             root.applyRequest()
             if (!searchField.activeFocus) root.forceActiveFocus()
             takeKeys.restart()
@@ -1976,7 +1978,7 @@ Item {
         // fine-tuning waits behind its own row inside the fold (as on the group's page). Wallpaper › Transition was a
         // whole page for a switch, a style and a duration. A group with a scene folds too: the scene still shows on
         // hover. A gallery or an editable list keeps its page, it needs the width.
-        readonly property var tuned: groupRow.rows.filter(spec => IrisOptions.fineTune(spec) && !IrisOptions.changed(spec))
+        readonly property var tuned: groupRow.rows.filter(spec => IrisOptions.foldsAway(spec))
         readonly property bool tuneFolds: groupRow.tuned.length >= 2
         readonly property var essentials: groupRow.tuneFolds ? groupRow.rows.filter(spec => !groupRow.tuned.includes(spec)) : groupRow.rows
         readonly property bool folds: !groupRow.lone && groupRow.essentials.length <= 3
@@ -2388,11 +2390,7 @@ Item {
         // what it holds. Only worth it with two or more such rows; a group that is all fine-tuning (Spotlight's prefixes)
         // is its caption over that one row. A search shows everything, and a row you changed stays out where you left it.
         readonly property string tuneKey: "tune:" + root.section + "/" + String(group.modelData.key ?? group.modelData.title)
-        readonly property var tuned: {
-            Config.revision
-            if (root.searching) return []
-            return group.modelData.rows.filter(spec => IrisOptions.fineTune(spec) && !IrisOptions.changed(spec))
-        }
+        readonly property var tuned: root.searching ? [] : group.modelData.rows.filter(spec => IrisOptions.foldsAway(spec))
         readonly property bool folds: group.tuned.length >= 2
         readonly property bool tuneOpen: group.folds && (root.tuneAll || (root.unfolded[group.tuneKey] ?? false))
         readonly property var shownRows: group.folds && !group.tuneOpen ? group.modelData.rows.filter(spec => !group.tuned.includes(spec)) : group.modelData.rows

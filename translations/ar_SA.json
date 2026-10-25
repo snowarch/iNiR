@@ -6738,7 +6738,7 @@
   "Widget library": "مكتبة الأدوات",
   "Widgets panel": "لوحة الأدوات",
   "Lume on every widget": "Lume على كل الأدوات",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "تُقرأ كل أداة كأن الخلفية تحتها ساطعة ومزدحمة: حجاب أعمق على الزجاج ولوحة دعم تحت «شفاف»، حتى حيث لا حاجة لها.",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "تُقرأ كل أداة كأن الخلفية تحتها ساطعة ومزدحمة: حجاب أعمق على الزجاج وظل أقوى للنص في الأدوات بلا خلفية.",
   "Widget design": "تصميم الأدوات",
   "Widget accents": "ألوان الأدوات",
   "Theme: %1": "السمة: %1",
@@ -9832,5 +9832,6 @@
   "Show every background": "إظهار كل الخلفيات",
   "Show every outline": "إظهار كل الحدود",
   "Unlock every widget": "إلغاء قفل كل الأدوات",
-  "Wallpaper color": "لون الخلفية"
+  "Wallpaper color": "لون الخلفية",
+  "Search to add": "ابحث للإضافة"
 }

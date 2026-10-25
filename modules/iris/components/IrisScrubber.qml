@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import qs.modules.common.functions
+import qs.modules.common.widgets as Kit
 import qs.modules.iris.style
 
 Item {
@@ -20,6 +21,8 @@ Item {
     // Whether what it scrubs is running now (a playing track): a Design may mark the head with it.
     property bool live: true
     property real stepSize: 0.05
+    // A notch of the wheel moves about a twentieth of the range, in whole steps: one step of 0-100 took a hundred notches.
+    readonly property real wheelStep: root.stepSize >= 0.05 ? root.stepSize : Math.max(1, Math.round(0.05 / Math.max(0.0001, root.stepSize))) * root.stepSize
     property string voice: ""
     // What a voiced skin prints the value from (Folio's ruler, Console's dots): the row's own numbers.
     property var range: null
@@ -181,7 +184,7 @@ Item {
         }
         preventStealing: true
         property real wheelAccumulator: 0
-        IrisWheelIntent { id: wheelIntent; hovered: pointer.containsMouse }
+        Kit.WheelIntent { id: wheelIntent; hovered: pointer.containsMouse }
         onWheel: wheel => {
             if (!wheelIntent.take(wheel)) return
             const delta = (wheel.angleDelta.y || wheel.angleDelta.x) || (wheel.pixelDelta.y || wheel.pixelDelta.x) * 4
@@ -189,7 +192,7 @@ Item {
             const steps = Math.trunc(pointer.wheelAccumulator / 120)
             if (steps === 0) return
             pointer.wheelAccumulator -= steps * 120
-            const next = Math.max(0, Math.min(1, root.shownValue + steps * root.stepSize))
+            const next = Math.max(0, Math.min(1, root.shownValue + steps * root.wheelStep))
             root.moved(next)
             root.seekRequested(next)
         }

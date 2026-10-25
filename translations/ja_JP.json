@@ -6738,7 +6738,7 @@
   "Widget library": "ウィジェットライブラリ",
   "Widgets panel": "ウィジェットパネル",
   "Lume on every widget": "すべてのウィジェットに Lume",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "下の壁紙が明るく複雑な場合と同じように表示します。ガラスにはより濃いベール、透明には下地のプレートを、必要のない場所でも付けます。",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "下の壁紙が明るく複雑な場合と同じように表示します。ガラスにはより濃いベール、背景のないウィジェットには強めの文字の影を付けます。",
   "Widget design": "ウィジェットのデザイン",
   "Widget accents": "ウィジェットのアクセント",
   "Theme: %1": "テーマ: %1",
@@ -9832,5 +9832,6 @@
   "Show every background": "すべての背景を表示",
   "Show every outline": "すべての枠線を表示",
   "Unlock every widget": "すべてのウィジェットの固定を解除",
-  "Wallpaper color": "壁紙の色"
+  "Wallpaper color": "壁紙の色",
+  "Search to add": "検索して追加"
 }

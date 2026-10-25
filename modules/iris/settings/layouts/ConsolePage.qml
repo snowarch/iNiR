@@ -54,7 +54,7 @@ Item {
     }
     Component.onCompleted: root.refresh()
     property var opened: ({})
-    function folded(group: var): var { return group.rows.filter(spec => IrisOptions.fineTune(spec) && !IrisOptions.changed(spec)) }
+    function folded(group: var): var { return group.rows.filter(spec => IrisOptions.foldsAway(spec)) }
     function unitsOf(kind: string): int { return kind === "switch" ? 1 : kind === "row" ? 4 : 2 }
     function shape(spec: var): string {
         if (spec.kind === "switch") return "switch"

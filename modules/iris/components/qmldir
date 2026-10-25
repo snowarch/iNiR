@@ -29,7 +29,6 @@ IrisWallpaperView 1.0 IrisWallpaperView.qml
 IrisConfigDrag 1.0 IrisConfigDrag.qml
 IrisWheelPicker 1.0 IrisWheelPicker.qml
 IrisSpring 1.0 IrisSpring.qml
-IrisWheelIntent 1.0 IrisWheelIntent.qml
 IrisNetworkList 1.0 IrisNetworkList.qml
 IrisBluetoothList 1.0 IrisBluetoothList.qml
 IrisGlassPane 1.0 IrisGlassPane.qml

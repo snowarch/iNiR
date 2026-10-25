@@ -14,7 +14,8 @@ import qs.modules.iris.settings
 
 // One area as Folio prints it, built once and kept by Folio's AreaPool: its title and sentence across, its live stage
 // held still on the left with what it shows and the area at a glance under it, its groups on a sheet to the right.
-// The wheel over the groups glides head to head; the stage follows the group being read.
+// The rows scroll as Classic's do (a wheel over them that glided head to head stuttered and kept the wheel from
+// their sliders, 10-25); the stage follows the group being read.
 Item {
     id: page
     required property string area
@@ -222,13 +223,6 @@ Item {
                     onReveal: row => page.reveal(row)
                 }
             }
-            // A notch glides head to head: a group whose head is in view is landed on, a long one is read through in
-            // steps; a touchpad scrolls by pixels as it always does. Clicks pass through to the rows.
-            MouseArea {
-                anchors.fill: parent
-                acceptedButtons: Qt.NoButton
-                onWheel: wheel => page.glide(wheel)
-            }
         }
     }
 
@@ -268,25 +262,4 @@ Item {
         glider.restart()
     }
     NumberAnimation { id: glider; target: flick; property: "contentY"; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
-
-    property real wheelAcc: 0
-    Timer { id: wheelRest; interval: 200; onTriggered: page.wheelAcc = 0 }
-    function glide(event: var): void {
-        if (event.pixelDelta.y !== 0) {
-            glider.stop()
-            flick.contentY = Math.max(0, Math.min(flick.contentHeight - flick.height, flick.contentY - event.pixelDelta.y))
-            return
-        }
-        // A burst of notches chains from where the last glide is going, never waits out a pause.
-        if (Math.sign(event.angleDelta.y) !== Math.sign(page.wheelAcc)) page.wheelAcc = 0
-        page.wheelAcc += event.angleDelta.y
-        wheelRest.restart()
-        if (Math.abs(page.wheelAcc) < 120) return
-        const down = page.wheelAcc < 0
-        page.wheelAcc -= 120 * Math.sign(page.wheelAcc)
-        const now = glider.running ? glider.to : flick.contentY
-        const heads = rows.targets().map(target => target.item.mapToItem(flick.contentItem, 0, 0).y - page.u(8)).sort((a, b) => a - b)
-        const next = down ? heads.find(y => y > now + 4) : heads.slice().reverse().find(y => y < now - 4)
-        page.glideTo(next !== undefined && Math.abs(next - now) <= flick.height * 0.85 ? next : now + (down ? 1 : -1) * flick.height * 0.6)
-    }
 }

@@ -6738,7 +6738,7 @@
   "Widget library": "Библиотека виджетов",
   "Widgets panel": "Панель виджетов",
   "Lume on every widget": "Lume на всех виджетах",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "Каждый виджет читается так, будто обои под ним светлые и пёстрые: плотнее вуаль на стекле и подложка под «Прозрачной», даже там, где это не нужно.",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "Каждый виджет читается так, будто обои под ним светлые и пёстрые: плотнее вуаль на стекле и сильнее тень текста у виджетов без фона.",
   "Widget design": "Дизайн виджетов",
   "Widget accents": "Акценты виджетов",
   "Theme: %1": "Тема: %1",
@@ -9832,5 +9832,6 @@
   "Show every background": "Показать все фоны",
   "Show every outline": "Показать все контуры",
   "Unlock every widget": "Открепить все виджеты",
-  "Wallpaper color": "Цвет обоев"
+  "Wallpaper color": "Цвет обоев",
+  "Search to add": "Найдите, чтобы добавить"
 }

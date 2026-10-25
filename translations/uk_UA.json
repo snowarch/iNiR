@@ -6738,7 +6738,7 @@
   "Widget library": "Бібліотека віджетів",
   "Widgets panel": "Панель віджетів",
   "Lume on every widget": "Lume на всіх віджетах",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "Кожен віджет читається так, ніби шпалери під ним світлі й строкаті: щільніша вуаль на склі та підкладка під «Прозорою», навіть там, де це не потрібно.",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "Кожен віджет читається так, ніби шпалери під ним світлі й строкаті: щільніша вуаль на склі й сильніша тінь тексту у віджетів без фону.",
   "Widget design": "Дизайн віджетів",
   "Widget accents": "Акценти віджетів",
   "Theme: %1": "Тема: %1",
@@ -9832,5 +9832,6 @@
   "Show every background": "Показати всі фони",
   "Show every outline": "Показати всі контури",
   "Unlock every widget": "Відкріпити всі віджети",
-  "Wallpaper color": "Колір шпалер"
+  "Wallpaper color": "Колір шпалер",
+  "Search to add": "Знайдіть, щоб додати"
 }

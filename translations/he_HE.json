@@ -6738,7 +6738,7 @@
   "Widget library": "ספריית וידג׳טים",
   "Widgets panel": "לוח וידג׳טים",
   "Lume on every widget": "Lume בכל הווידג'טים",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "כל ווידג'ט נקרא כאילו הטפט מתחתיו בהיר ועמוס: מסך עמוק יותר על הזכוכית ולוחית רקע מתחת ל„שקוף”, גם כשאין בכך צורך.",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "כל ווידג'ט נקרא כאילו הטפט מתחתיו בהיר ועמוס: מסך עמוק יותר על הזכוכית וצל טקסט חזק יותר בווידג'טים בלי רקע.",
   "Widget design": "עיצוב ווידג'טים",
   "Widget accents": "צבעי הדגשה לווידג'טים",
   "Theme: %1": "ערכת נושא: %1",
@@ -9832,5 +9832,6 @@
   "Show every background": "הצג את כל הרקעים",
   "Show every outline": "הצג את כל קווי המתאר",
   "Unlock every widget": "בטל נעילה של כל הווידג'טים",
-  "Wallpaper color": "צבע הטפט"
+  "Wallpaper color": "צבע הטפט",
+  "Search to add": "חיפוש להוספה"
 }

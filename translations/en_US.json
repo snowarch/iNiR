@@ -8402,7 +8402,7 @@
   "New WireGuard…": "New WireGuard…",
   "Other VPN…": "Other VPN…",
   "Lume on every widget": "Lume on every widget",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.",
   "Widget design": "Widget design",
   "Widget accents": "Widget accents",
   "Theme: %1": "Theme: %1",
@@ -9832,5 +9832,6 @@
   "Show every background": "Show every background",
   "Show every outline": "Show every outline",
   "Unlock every widget": "Unlock every widget",
-  "Wallpaper color": "Wallpaper color"
+  "Wallpaper color": "Wallpaper color",
+  "Search to add": "Search to add"
 }

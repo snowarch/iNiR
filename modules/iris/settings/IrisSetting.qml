@@ -675,13 +675,37 @@ Item {
     Component {
         id: piecesComponent
 
+        Column {
+            id: pieces
+            readonly property var picked: Array.from(root.value ?? [])
+            // Forty cities as chips filled the sheet (10-25): a long list shows what's picked and finds the rest.
+            readonly property bool searchable: root.choices.length > 12
+            readonly property string query: finder.text.trim().toLowerCase()
+            readonly property var shown: !pieces.searchable ? root.choices
+                : pieces.picked.map(value => root.choices.find(choice => String(choice.value) === value)).filter(Boolean)
+                    .concat(pieces.query.length === 0 ? [] : root.choices.filter(choice => !pieces.picked.includes(String(choice.value))
+                        && Translation.tr(String(choice.label)).toLowerCase().includes(pieces.query)).slice(0, 8))
+            spacing: Math.round(8 * root.d)
+
+            IrisField {
+                id: finder
+                visible: pieces.searchable
+                width: parent.width
+                implicitHeight: Math.round(34 * root.d)
+                font.pixelSize: IrisStyle.typeLabel
+                placeholderText: Translation.tr("Search to add")
+                Accessible.name: Translation.tr(root.spec.label)
+                Keys.onEscapePressed: event => { if (text.length > 0) { text = ""; event.accepted = true } else event.accepted = false }
+            }
+
         Flow {
             id: picker
-            readonly property var picked: Array.from(root.value ?? [])
+            width: parent.width
+            readonly property var picked: pieces.picked
             spacing: Math.round(8 * root.d)
 
             Repeater {
-                model: root.choices
+                model: pieces.shown
                 delegate: IrisChip {
                     id: chip
                     required property var modelData
@@ -696,9 +720,11 @@ Item {
                         const next = picker.picked.filter(entry => entry !== value)
                         if (!chip.selected) next.push(value)
                         root.commit(next)
+                        if (!chip.selected) finder.text = ""
                     }
                 }
             }
+        }
         }
     }
 

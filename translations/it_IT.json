@@ -6738,7 +6738,7 @@
   "Widget library": "Libreria widget",
   "Widgets panel": "Pannello widget",
   "Lume on every widget": "Lume su tutti i widget",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "Ogni widget si legge come se lo sfondo sotto fosse chiaro e fitto: un velo più denso sul vetro e una piastra di supporto sotto Trasparente, anche dove non serve.",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "Ogni widget si legge come se lo sfondo sotto fosse chiaro e fitto: un velo più denso sul vetro e un'ombra del testo più forte sui widget senza sfondo.",
   "Widget design": "Design dei widget",
   "Widget accents": "Accenti dei widget",
   "Theme: %1": "Tema: %1",
@@ -9832,5 +9832,6 @@
   "Show every background": "Mostra tutti gli sfondi",
   "Show every outline": "Mostra tutti i contorni",
   "Unlock every widget": "Sblocca tutti i widget",
-  "Wallpaper color": "Colore dello sfondo"
+  "Wallpaper color": "Colore dello sfondo",
+  "Search to add": "Cerca per aggiungere"
 }

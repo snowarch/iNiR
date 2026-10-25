@@ -6738,7 +6738,7 @@
   "Widget library": "Widget kitaplığı",
   "Widgets panel": "Widget paneli",
   "Lume on every widget": "Tüm widget'larda Lume",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "Her widget, altındaki duvar kâğıdı parlak ve karışıkmış gibi okunur: camda daha koyu bir örtü, Saydam'ın altında ise destek plakası, gerekmediği yerde bile.",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "Her widget, altındaki duvar kâğıdı parlak ve karışıkmış gibi okunur: camda daha koyu bir örtü ve arka planı olmayan widget'larda daha güçlü bir yazı gölgesi.",
   "Widget design": "Widget tasarımı",
   "Widget accents": "Widget vurgu renkleri",
   "Theme: %1": "Tema: %1",
@@ -9832,5 +9832,6 @@
   "Show every background": "Tüm arka planları göster",
   "Show every outline": "Tüm kenarlıkları göster",
   "Unlock every widget": "Tüm widget'ların kilidini aç",
-  "Wallpaper color": "Duvar kağıdı rengi"
+  "Wallpaper color": "Duvar kağıdı rengi",
+  "Search to add": "Eklemek için ara"
 }

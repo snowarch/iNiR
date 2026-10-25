@@ -6738,7 +6738,7 @@
   "Widget library": "Thư viện tiện ích",
   "Widgets panel": "Bảng tiện ích",
   "Lume on every widget": "Lume trên mọi widget",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "Mọi widget hiển thị như thể hình nền bên dưới sáng và rối: lớp phủ đậm hơn trên kính và tấm nền đỡ dưới Trong suốt, kể cả khi không cần.",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "Mọi widget hiển thị như thể hình nền bên dưới sáng và rối: lớp phủ đậm hơn trên kính và bóng chữ rõ hơn ở widget không có nền.",
   "Widget design": "Thiết kế widget",
   "Widget accents": "Màu nhấn widget",
   "Theme: %1": "Chủ đề: %1",
@@ -9832,5 +9832,6 @@
   "Show every background": "Hiện mọi nền",
   "Show every outline": "Hiện mọi viền",
   "Unlock every widget": "Mở khóa mọi widget",
-  "Wallpaper color": "Màu hình nền"
+  "Wallpaper color": "Màu hình nền",
+  "Search to add": "Tìm để thêm"
 }

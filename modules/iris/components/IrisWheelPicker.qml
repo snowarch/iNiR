@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
+import qs.modules.common.widgets as Kit
 import qs.modules.iris.style
 
 Item {
@@ -66,7 +67,7 @@ Item {
                         if (wheel.currentIndex !== wanted) wheel.currentIndex = wanted
                     }
                     Component.onCompleted: wheel.follow()
-                    IrisWheelIntent { id: wheelIntent; target: wheel; hovered: wheelHover.hovered }
+                    Kit.WheelIntent { id: wheelIntent; target: wheel; hovered: wheelHover.hovered }
                     HoverHandler { id: wheelHover; onPointChanged: wheelIntent.track(point.position.x, point.position.y) }
                     Connections {
                         target: root

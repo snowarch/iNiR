@@ -192,3 +192,4 @@ SettingsNativeDialogGuard 1.0 SettingsNativeDialogGuard.qml
 LiveWindowCapture 1.0 LiveWindowCapture.qml
 LiveWindowCaptureView 1.0 LiveWindowCaptureView.qml
 LiveWindowCrop 1.0 LiveWindowCrop.qml
+WheelIntent 1.0 WheelIntent.qml

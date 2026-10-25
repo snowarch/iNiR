@@ -17,8 +17,7 @@ import qs.modules.iris.settings.layouts.folio as Skins // so Quickshell mirrors 
 
 // Folio: Apple's System Settings read as a sheet. An index of ink glyphs down the left (Home first, then the clusters
 // under their Label heads; the open one an inverted capsule, a signal dot where something needs you). The page is Home,
-// or an area: its title and one sentence, its live stage held still, its groups beside it; the wheel over the groups
-// glides from one group's head to the next.
+// or an area: its title and one sentence, its live stage held still, its groups beside it, scrolled as Classic's.
 Item {
     id: root
     property Item host

@@ -6738,7 +6738,7 @@
   "Widget library": "위젯 라이브러리",
   "Widgets panel": "위젯 패널",
   "Lume on every widget": "모든 위젯에 Lume",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "아래 배경화면이 밝고 복잡한 것처럼 모든 위젯을 표시합니다. 유리에는 더 짙은 베일, 투명에는 받침 판을 필요 없는 곳에도 적용합니다.",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "아래 배경화면이 밝고 복잡한 것처럼 모든 위젯을 표시합니다. 유리에는 더 짙은 베일, 배경이 없는 위젯에는 더 진한 글자 그림자를 적용합니다.",
   "Widget design": "위젯 디자인",
   "Widget accents": "위젯 강조색",
   "Theme: %1": "테마: %1",
@@ -9832,5 +9832,6 @@
   "Show every background": "모든 배경 표시",
   "Show every outline": "모든 테두리 표시",
   "Unlock every widget": "모든 위젯 잠금 해제",
-  "Wallpaper color": "배경화면 색상"
+  "Wallpaper color": "배경화면 색상",
+  "Search to add": "검색해서 추가"
 }

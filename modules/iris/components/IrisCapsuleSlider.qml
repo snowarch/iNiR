@@ -136,7 +136,7 @@ Item {
         }
         onCanceled: root.dragValue = -1
         property real wheelAccumulator: 0
-        IrisWheelIntent { id: wheelIntent; hovered: pointer.containsMouse }
+        WheelIntent { id: wheelIntent; hovered: pointer.containsMouse }
         onWheel: wheel => {
             if (!wheelIntent.take(wheel)) return
             const delta = (wheel.angleDelta.y || wheel.angleDelta.x) || (wheel.pixelDelta.y || wheel.pixelDelta.x) * 4

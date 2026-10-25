@@ -8398,7 +8398,7 @@
   "New WireGuard…": "WireGuard baru…",
   "Other VPN…": "VPN lain…",
   "Lume on every widget": "Lume di setiap widget",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "Setiap widget terbaca seolah wallpaper di bawahnya terang dan ramai: selubung lebih dalam di kaca dan pelat penopang di bawah Transparan, bahkan saat tidak diperlukan.",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "Setiap widget terbaca seolah wallpaper di bawahnya terang dan ramai: selubung lebih dalam pada kaca dan bayangan teks lebih kuat pada widget tanpa latar.",
   "Widget design": "Desain widget",
   "Widget accents": "Aksen widget",
   "Theme: %1": "Tema: %1",
@@ -9832,5 +9832,6 @@
   "Show every background": "Tampilkan semua latar",
   "Show every outline": "Tampilkan semua garis tepi",
   "Unlock every widget": "Buka kunci semua widget",
-  "Wallpaper color": "Warna wallpaper"
+  "Wallpaper color": "Warna wallpaper",
+  "Search to add": "Cari untuk menambah"
 }

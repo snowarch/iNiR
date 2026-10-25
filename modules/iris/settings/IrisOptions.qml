@@ -141,6 +141,7 @@ QtObject {
     // Home's "Most visited": how often each area was opened, kept beside the recent rows.
     property var visits: ({})
     function visit(id: string): void {
+        root.settle()
         if (!id || id === "home") return
         const next = Object.assign({}, root.visits)
         next[id] = Number(next[id] ?? 0) + 1
@@ -263,6 +264,21 @@ QtObject {
     function fineTune(spec: var): bool {
         return spec.tune !== undefined ? Boolean(spec.tune) : spec.kind === "range"
     }
+    // What differed from its default when its area opened: a value set while the page is up never refolds it under the
+    // pointer (a group closed on every change, 10-25). The next area settles it again.
+    property var _seen: ({})
+    property int seenEpoch: 0
+    function changedWhenSeen(spec: var): bool {
+        void root.seenEpoch
+        const key = String(spec.path ?? spec.label ?? "")
+        if (!(key in root._seen)) root._seen[key] = root.changed(spec)
+        return root._seen[key]
+    }
+    function settle(): void {
+        root._seen = ({})
+        root.seenEpoch++
+    }
+    function foldsAway(spec: var): bool { return root.fineTune(spec) && !root.changedWhenSeen(spec) }
     function changed(spec: var): bool {
         return spec.fallback !== undefined && !root.same(root.currentValue(spec), spec.fallback)
     }
@@ -730,7 +746,7 @@ QtObject {
         { target: "desktop", group: "Widgets", label: "Accents", quickName: "Widget accents", description: "The three colours every widget draws its rings, bars and figures with.", path: "iris.widgets.tint", kind: "choice", fallback: "wallpaper", choices: [{label:"Wallpaper",value:"wallpaper",glyph:"wallpaper"},{label:"iRiS",value:"system",glyph:"auto_awesome"},{label:"Spectrum",value:"spectrum",glyph:"palette"},{label:"Mono",value:"mono",glyph:"contrast"}], keywords: ["colour", "color", "accent", "palette", "tint", "hue", "widgets"] },
         { target: "desktop", group: "Widgets", label: "Accent strength", description: "Low keeps soft pastels; high makes accents saturated and bright.", path: "iris.widgets.vibrance", kind: "range", fallback: 85, min: 0, max: 100, step: 5, unit: " %", keywords: ["vibrance", "saturation", "strong", "vivid", "accent", "colour", "color"] },
         { target: "desktop", group: "Widgets", label: "Material", description: "Glass frosts the wallpaper behind each widget; Transparent leaves it bare, with nothing drawn behind the widget itself.", path: "iris.widgets.material", showIf: () => DesktopWidgetDesign.current === "iris", kind: "choice", fallback: "glass", choices: [{label:"Glass",value:"glass",glyph:"blur_on"},{label:"Transparent",value:"clear",glyph:"select"},{label:"Solid",value:"solid",glyph:"square"},{label:"Tinted",value:"tinted",glyph:"format_color_fill"}] },
-        { target: "desktop", group: "Widgets", label: "Lume on every widget", description: "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.", path: "iris.widgets.legibleAlways", kind: "switch", fallback: false, keywords: ["lume", "legibility", "readable", "contrast", "veil", "shadow", "always", "force", "text"] },
+        { target: "desktop", group: "Widgets", label: "Lume on every widget", description: "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.", path: "iris.widgets.legibleAlways", kind: "switch", fallback: false, keywords: ["lume", "legibility", "readable", "contrast", "veil", "shadow", "always", "force", "text"] },
         { target: "desktop", group: "Widgets", label: "On bright wallpapers", description: "Where the wallpaper under a widget is light, it turns to frost with dark ink and deeper accents.", path: "iris.widgets.brightWallpapers", kind: "switch", fallback: false, keywords: ["bright", "white", "light", "legible", "readable", "contrast", "ink", "black", "dark text", "frost", "adaptive"] },
         { target: "desktop", group: "Widgets", label: "Titles and figures", path: "iris.widgets.weight", showIf: () => DesktopWidgetDesign.current === "iris", kind: "choice", fallback: "regular", choices: [{label:"Light",value:"light"},{label:"Regular",value:"regular"},{label:"Bold",value:"bold"}] },
         { target: "desktop", group: "Widgets", label: "Surface opacity", path: "iris.widgets.opacity", showIf: () => DesktopWidgetDesign.current === "iris", description: "How much material a widget carries.", kind: "range", fallback:100,min:20,max:100,step:5,unit:" %" },

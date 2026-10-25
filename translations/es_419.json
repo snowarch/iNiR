@@ -8419,7 +8419,7 @@
   "Theme: %1": "Tema: %1",
   "Switch": "Cambiar",
   "Lume on every widget": "Lume en todos los widgets",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "Cada widget se lee como si el fondo debajo fuera claro y cargado: un velo más denso en el vidrio y una placa de respaldo bajo Transparente, aunque no haga falta.",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "Cada widget se lee como si el fondo debajo fuera claro y cargado: un velo más denso en el vidrio y una sombra de texto más fuerte en los widgets sin fondo.",
   "Your desktop widgets, as they look there. Tap one on the lock to give it a shape and material of its own.": "Tus widgets de escritorio, tal como se ven ahí. Toca uno en la pantalla de bloqueo para darle una forma y un material propios.",
   "Day progress": "Progreso del día",
   "Day progress widget": "Widget de progreso del día",
@@ -9832,5 +9832,6 @@
   "Show every background": "Mostrar todos los fondos",
   "Show every outline": "Mostrar todos los bordes",
   "Unlock every widget": "Desbloquear todos los widgets",
-  "Wallpaper color": "Color del fondo de pantalla"
+  "Wallpaper color": "Color del fondo de pantalla",
+  "Search to add": "Busca para agregar"
 }

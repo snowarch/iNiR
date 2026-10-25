@@ -149,7 +149,7 @@ ColumnLayout {
             }
             onCanceled: { if (dragging) dial.adjustFinished(); dragging = false }
             property real wheelAccumulator: 0
-            IrisWheelIntent { id: wheelIntent; hovered: presetPointer.containsMouse }
+            WheelIntent { id: wheelIntent; hovered: presetPointer.containsMouse }
             onWheel: wheel => {
                 if (!wheelIntent.take(wheel)) return
                 wheelAccumulator += wheel.angleDelta.y || wheel.pixelDelta.y * 4

@@ -122,10 +122,7 @@ ColumnLayout {
                 readonly property string key: String(block.modelData.key ?? "")
                 readonly property string caption: String(block.modelData.caption ?? "")
                 readonly property string tuneKey: rows.section + "/" + block.key
-                readonly property var tuned: {
-                    Config.revision
-                    return block.modelData.rows.filter(spec => IrisOptions.fineTune(spec) && !IrisOptions.changed(spec))
-                }
+                readonly property var tuned: block.modelData.rows.filter(spec => IrisOptions.foldsAway(spec))
                 readonly property bool tunes: block.tuned.length >= 2
                 readonly property bool tuneOpen: block.tunes && ((rows.host?.tuneAll ?? false) || (rows.unfolded[block.tuneKey] ?? false))
                 readonly property var shownRows: block.tunes && !block.tuneOpen ? block.modelData.rows.filter(spec => !block.tuned.includes(spec)) : block.modelData.rows

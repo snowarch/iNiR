@@ -6738,7 +6738,7 @@
   "Widget library": "小组件库",
   "Widgets panel": "小组件面板",
   "Lume on every widget": "所有小组件启用 Lume",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "每个小组件都按下方壁纸明亮且繁杂的情况显示：玻璃上更深的遮罩，透明下方加一层衬底，即使并不需要。",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "每个小组件都按下方壁纸明亮且繁杂的情况显示：玻璃上更深的遮罩，无背景的小组件文字阴影更强。",
   "Widget design": "小组件设计",
   "Widget accents": "小组件强调色",
   "Theme: %1": "主题：%1",
@@ -9832,5 +9832,6 @@
   "Show every background": "显示所有背景",
   "Show every outline": "显示所有描边",
   "Unlock every widget": "解锁所有小组件",
-  "Wallpaper color": "壁纸颜色"
+  "Wallpaper color": "壁纸颜色",
+  "Search to add": "搜索以添加"
 }

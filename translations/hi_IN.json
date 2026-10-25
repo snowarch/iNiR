@@ -6738,7 +6738,7 @@
   "Widget library": "विजेट लाइब्रेरी",
   "Widgets panel": "विजेट पैनल",
   "Lume on every widget": "हर विजेट पर Lume",
-  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a backing plate under Transparent, even where it is not needed.": "हर विजेट ऐसे पढ़ा जाता है जैसे नीचे का वॉलपेपर चमकीला और भरा हुआ हो: कांच पर गहरा परदा और पारदर्शी के नीचे सहारा देने वाली परत, ज़रूरत न होने पर भी।",
+  "Every widget reads as if the wallpaper under it were bright and busy: a deeper veil on glass and a stronger text shadow on widgets without a background.": "हर विजेट ऐसे पढ़ा जाता है जैसे नीचे का वॉलपेपर चमकीला और भरा हुआ हो: कांच पर गहरा परदा और बिना पृष्ठभूमि वाले विजेट पर टेक्स्ट की गहरी छाया।",
   "Widget design": "विजेट डिज़ाइन",
   "Widget accents": "विजेट एक्सेंट",
   "Theme: %1": "थीम: %1",
@@ -9832,5 +9832,6 @@
   "Show every background": "सभी पृष्ठभूमि दिखाएँ",
   "Show every outline": "सभी आउटलाइन दिखाएँ",
   "Unlock every widget": "सभी विजेट अनलॉक करें",
-  "Wallpaper color": "वॉलपेपर का रंग"
+  "Wallpaper color": "वॉलपेपर का रंग",
+  "Search to add": "जोड़ने के लिए खोजें"
 }
