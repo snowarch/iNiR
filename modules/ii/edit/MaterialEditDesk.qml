@@ -38,6 +38,10 @@ Scope {
             WlrLayershell.keyboardFocus: !desk.present ? WlrKeyboardFocus.None
                 : desk.seeding ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
             anchors { top: true; bottom: true; left: true; right: true }
+            BackgroundEffect.blurRegion: Region {
+                item: sheet.glassy && sheet.shown && Appearance.compositorBlurActive ? sheet.bodyItem : null
+                radius: Appearance.rounding.large
+            }
             mask: Region {
                 item: headBody
                 Region { item: shelfBody }

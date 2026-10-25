@@ -99,7 +99,7 @@ Item {
         opacity: chip.show
         width: chipRow.implicitWidth + 24
         height: 30
-        radius: height / 2
+        radius: Math.min(height / 2, Appearance.rounding.full)
         scale: root.hair * (0.92 + 0.08 * chip.show)
         transformOrigin: root.chipBelow ? Item.Top : Item.Bottom
         x: root.inside(root.leftNow + (root.width - chip.width * root.hair) / 2, chip.width * root.hair) - root.leftNow
@@ -159,7 +159,7 @@ Item {
         opacity: Math.min(1, root.rise * 1.6)
         width: barRow.implicitWidth + 16
         height: 56
-        radius: height / 2
+        radius: Math.min(height / 2, Appearance.rounding.full)
         color: Appearance.colors.colLayer2
         scale: root.hair * (0.86 + 0.14 * root.rise)
         transformOrigin: root.barAt === "below" ? Item.Top : Item.Bottom
@@ -178,7 +178,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: nameRow.implicitWidth + 28
                 height: 40
-                radius: height / 2
+                radius: Math.min(height / 2, Appearance.rounding.full)
                 color: root.locked ? Appearance.colors.colErrorContainer : Appearance.colors.colSecondaryContainer
                 Row {
                     id: nameRow
@@ -215,7 +215,7 @@ Item {
                         readonly property bool chosen: root.size === sizeKey.modelData
                         implicitWidth: sizeKey.chosen ? 44 : 36
                         implicitHeight: 40
-                        buttonRadius: sizeKey.chosen ? height / 2 : Appearance.rounding.verysmall
+                        buttonRadius: sizeKey.chosen ? Math.min(height / 2, Appearance.rounding.full) : Appearance.rounding.verysmall
                         colBackground: sizeKey.chosen ? Appearance.colors.colPrimary : Appearance.colors.colLayer3
                         colBackgroundHover: sizeKey.chosen ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer3Hover
                         colRipple: sizeKey.chosen ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer3Active

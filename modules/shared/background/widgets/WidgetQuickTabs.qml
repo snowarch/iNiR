@@ -22,7 +22,7 @@ Rectangle {
 
     Layout.fillWidth: true
     implicitHeight: 44
-    radius: height / 2
+    radius: Math.min(height / 2, Appearance.rounding.full)
     color: Appearance.colors.colLayer2
 
     Rectangle {
@@ -30,7 +30,7 @@ Rectangle {
         y: root.inset
         width: root.cell
         height: root.height - 2 * root.inset
-        radius: height / 2
+        radius: Math.min(height / 2, Appearance.rounding.full)
         color: Appearance.colors.colPrimary
         visible: root.entries.length > 0
         Behavior on x { NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.expressiveFastSpatial } }
@@ -47,7 +47,7 @@ Rectangle {
                 readonly property bool chosen: tab.index === root.chosenIndex
                 width: root.cell
                 height: root.height - 2 * root.inset
-                buttonRadius: height / 2
+                buttonRadius: Math.min(height / 2, Appearance.rounding.full)
                 colBackground: "transparent"
                 colBackgroundHover: tab.chosen ? "transparent" : Appearance.colors.colLayer2Hover
                 colRipple: tab.chosen ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer2Active

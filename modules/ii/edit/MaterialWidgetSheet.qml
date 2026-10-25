@@ -4,6 +4,7 @@ import QtQuick
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 
 // A chosen widget's quick controls while arranging under Material, at their true size beside it on the card (the card
@@ -80,6 +81,10 @@ Item {
     readonly property real bodyY: Math.round(root.restY + (root.fullHeight - root.bodyHeight) / 2)
 
     readonly property rect hitRect: root.shown ? Qt.rect(root.bodyX, root.bodyY, root.bodyWidth, root.bodyHeight) : Qt.rect(0, 0, 0, 0)
+    // Glass styles see through their layers; over the card that read the widgets' text under the rows, so the sheet
+    // keeps a floor and asks the compositor to frost what's behind it.
+    readonly property bool glassy: Appearance.colors.colLayer1.a < 0.9
+    readonly property Item bodyItem: body
 
     Rectangle {
         id: body
@@ -89,7 +94,7 @@ Item {
         height: Math.max(0, root.bodyHeight)
         visible: root.shown
         radius: Appearance.rounding.large
-        color: Appearance.colors.colLayer1
+        color: root.glassy ? ColorUtils.applyAlpha(Appearance.colors.colLayer1Base, 0.9) : Appearance.colors.colLayer1
         border.width: Appearance.angelEverywhere || Appearance.inirEverywhere ? 1 : 0
         border.color: Appearance.colors.colOutlineVariant
         clip: true
