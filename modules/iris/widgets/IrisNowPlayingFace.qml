@@ -251,10 +251,13 @@ IrisWidgetFace {
                 y: parent.height - height
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text: rest.title
+                text: IrisFaceData.unwidowed(rest.title)
                 color: rest.paused ? root.ink : root.inkSecondary
                 size: 12.5
                 weight: Font.DemiBold
+                // a long title takes a second line instead of being cut
+                wrapMode: Text.Wrap
+                maximumLineCount: 2
             }
         }
 
@@ -287,9 +290,12 @@ IrisWidgetFace {
                 FaceText {
                     face: root
                     width: parent.width
-                    text: rest.title
+                    text: IrisFaceData.unwidowed(rest.title)
                     size: 15
                     weight: Font.DemiBold
+                    // a long title takes a second line instead of being cut
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 2
                 }
                 FaceText {
                     face: root
@@ -343,9 +349,12 @@ IrisWidgetFace {
                     face: root
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    text: rest.title
+                    text: IrisFaceData.unwidowed(rest.title)
                     size: 15
                     weight: Font.DemiBold
+                    // a long title takes a second line instead of being cut
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 2
                 }
                 FaceText {
                     face: root

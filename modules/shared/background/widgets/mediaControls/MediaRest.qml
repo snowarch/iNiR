@@ -73,6 +73,8 @@ Item {
             horizontalAlignment: parent.centred ? Text.AlignHCenter : Text.AlignLeft
             color: root.ink
             elide: Text.ElideRight
+            wrapMode: Text.Wrap
+            maximumLineCount: 2
             font.family: root.widget.widgetTitleFamily
             font.pixelSize: root.px(Appearance.font.pixelSize.normal)
             font.weight: Font.DemiBold
@@ -115,6 +117,8 @@ Item {
             text: String(root.last.title ?? "")
             color: root.ink
             elide: Text.ElideRight
+            wrapMode: Text.Wrap
+            maximumLineCount: 2
             font.pixelSize: root.px(Appearance.font.pixelSize.small)
             font.weight: Font.DemiBold
         }
