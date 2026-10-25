@@ -752,14 +752,9 @@ Item {
             if (side.far >= 3.2) side.staged = false
             if (!root.moving) side.stand = side.standFor()
         }
-        Connections {
-            target: root
-            function onMovingChanged(): void {
-                if (root.moving) return
-                if (side.far < 1.75) side.reads = true
-                side.stand = side.standFor()
-            }
-        }
+        // read again whenever the deck stands near it, however it got there (a key, the wheel, a jump)
+        readonly property bool standsNear: !root.moving && side.far < 1.75
+        onStandsNearChanged: if (side.standsNear) { side.reads = true; side.stand = side.standFor() }
         Component.onCompleted: { side.reads = side.far < 1.75; side.stand = side.standFor() }
         // where its title is fitted: open, beside, two out; held while the deck moves (each fit is a search over sizes,
         // and a new one mid-turn popped the name's size)
@@ -778,7 +773,10 @@ Item {
         height: side.box.height
         clip: true
         // a card reads clearer the nearer it stands: 1 open, 0.78 beside, 0.5 two out
-        opacity: side.far <= 1 ? 1 - 0.22 * side.far : side.far <= 2 ? 0.78 - 0.28 * (side.far - 1) : 0.5 - 0.4 * (side.far - 2)
+        // while a search reads in the hero the neighbours step back: their areas are not what was asked for
+        opacity: (root.searching && side.index !== root.current ? 0.3 : 1)
+            * (side.far <= 1 ? 1 - 0.22 * side.far : side.far <= 2 ? 0.78 - 0.28 * (side.far - 1) : 0.5 - 0.4 * (side.far - 2))
+        Behavior on opacity { enabled: !root.moving; NumberAnimation { duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing } }
         enabled: side.index !== root.aim
         onWheel: wheel => root.wheel(wheel)
         cursorShape: Qt.PointingHandCursor

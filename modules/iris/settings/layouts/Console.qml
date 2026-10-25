@@ -66,7 +66,7 @@ Item {
         id: nav
         x: root.pad
         y: root.pad
-        width: root.u(4 * 66 + 3 * 6)
+        width: root.u(2 * 104 + 6)
         height: root.height - 2 * root.pad
         contentHeight: navColumn.implicitHeight
         boundsBehavior: Flickable.StopAtBounds
@@ -97,9 +97,12 @@ Item {
                         text: root.clusterName(cluster.modelData.index)
                         color: IrisStyle.textTertiary
                     }
+                    // Nothing's settings list: names in the mono face, two a line, no plates at rest; the open one is
+                    // the white key, the pointer a quiet one. A grid of grey squares read as nothing in particular.
                     Grid {
-                        columns: 4
-                        spacing: root.u(6)
+                        columns: 2
+                        columnSpacing: root.u(6)
+                        rowSpacing: root.u(2)
                         Repeater {
                             model: cluster.modelData.areas
                             MouseArea {
@@ -108,8 +111,8 @@ Item {
                                 readonly property bool on: key.modelData.id === root.section && !root.searching
                                 readonly property bool noted: Number(root.noteCounts[key.modelData.id] ?? 0) > 0
                                 readonly property bool found: !root.searching || (root.host?.matchedSections?.has(key.modelData.id) ?? false)
-                                width: root.u(66)
-                                height: root.u(62)
+                                width: root.u(104)
+                                height: root.u(32)
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 opacity: key.found ? 1 : 0.35
@@ -119,36 +122,35 @@ Item {
                                 onClicked: root.host.selectSection(key.modelData.id)
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: IrisStyle.fieldChamfer ? 0 : root.u(16)
-                                    color: key.on ? IrisStyle.text : key.containsMouse ? IrisStyle.fillHover : root.plate
+                                    radius: IrisStyle.fieldChamfer ? 0 : IrisStyle.capsule(height)
+                                    color: key.on ? IrisStyle.text : key.containsMouse ? IrisStyle.fillQuiet : "transparent"
                                     Behavior on color { ColorAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
                                 }
                                 MaterialSymbol {
-                                    x: root.u(9)
-                                    y: root.u(9)
+                                    x: root.u(10)
+                                    anchors.verticalCenter: parent.verticalCenter
                                     text: String(key.modelData.icon ?? "settings")
-                                    iconSize: root.u(18)
+                                    iconSize: root.u(15)
                                     fill: key.on ? 1 : 0
+                                    color: key.on ? IrisStyle.surfaceOpaque : IrisStyle.subtext
+                                }
+                                Mono {
+                                    x: root.u(32)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width - x - root.u(key.noted ? 16 : 8)
+                                    elide: Text.ElideRight
+                                    text: Translation.tr(String(IrisOptions.shortTitles[key.modelData.id] ?? key.modelData.title ?? ""))
                                     color: key.on ? IrisStyle.surfaceOpaque : IrisStyle.text
                                 }
                                 Rectangle {
                                     visible: key.noted
                                     anchors.right: parent.right
-                                    anchors.top: parent.top
-                                    anchors.margins: root.u(9)
+                                    anchors.rightMargin: root.u(9)
+                                    anchors.verticalCenter: parent.verticalCenter
                                     width: root.u(6)
                                     height: width
                                     radius: width / 2
                                     color: root.signal
-                                }
-                                Mono {
-                                    x: root.u(9)
-                                    anchors.bottom: parent.bottom
-                                    anchors.bottomMargin: root.u(8)
-                                    width: parent.width - root.u(12)
-                                    elide: Text.ElideRight
-                                    text: Translation.tr(String(IrisOptions.shortTitles[key.modelData.id] ?? key.modelData.title ?? ""))
-                                    color: key.on ? IrisStyle.surfaceOpaque : IrisStyle.subtext
                                 }
                             }
                         }
