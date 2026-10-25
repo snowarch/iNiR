@@ -33,9 +33,9 @@ Singleton {
         const ap = fmt.indexOf(" AP");
         return Qt.locale().toString(clock.date, ap >= 0 ? fmt.slice(0, ap) + ":ss" + fmt.slice(ap) : fmt + ":ss");
     }
-    property string shortDate: Qt.locale().toString(clock.date, Config.options?.time.shortDateFormat ?? "dd/MM")
-    property string date: Qt.locale().toString(clock.date, Config.options?.time.dateFormat ?? "dddd, dd/MM")
-    property string collapsedCalendarFormat: Qt.locale().toString(clock.date, "dd MMMM yyyy")
+    property string shortDate: Translation.locale.toString(clock.date, Config.options?.time.shortDateFormat ?? "dd/MM")
+    property string date: Translation.locale.toString(clock.date, Config.options?.time.dateFormat ?? "dddd, dd/MM")
+    property string collapsedCalendarFormat: Translation.locale.toString(clock.date, "dd MMMM yyyy")
     property string uptime: "0h, 0m"
 
     Timer {

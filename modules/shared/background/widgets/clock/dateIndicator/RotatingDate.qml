@@ -11,7 +11,7 @@ Item {
     property string style: Config.getNestedValue("background.widgets.clock.cookie.dateStyle", "bubble")
     property color color: Appearance.colors.colOnSecondaryContainer
     property real angleStep: 12 * Math.PI / 180
-    property string dateText: Qt.locale().toString(DateTime.clock.date, "ddd dd")
+    property string dateText: Translation.locale.toString(DateTime.clock.date, "ddd dd")
     
     readonly property int clockSecond: DateTime.clock.seconds
     readonly property string dialStyle: Config.getNestedValue("background.widgets.clock.cookie.dialNumberStyle", "full")

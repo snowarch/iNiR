@@ -263,7 +263,7 @@ AbstractBackgroundWidget {
     }
 
     property string timeText: Qt.locale().toString(displayClock.date, root._timePattern)
-    property string dateText: Qt.locale().toString(displayClock.date, root._datePattern)
+    property string dateText: Translation.locale.toString(displayClock.date, root._datePattern)
 
     Binding {
         target: root
@@ -644,7 +644,7 @@ AbstractBackgroundWidget {
                         Layout.topMargin: Math.round(6 * root.scaleFactor)
                         visible: root.showDate
                         Layout.maximumWidth: dialClock.side * 0.64
-                        text: root.widgetCase(Qt.locale().toString(displayClock.date, "ddd d MMM"))
+                        text: root.widgetCase(Translation.locale.toString(displayClock.date, "ddd d MMM"))
                         elide: Text.ElideRight
                         color: root.widgetInkMuted
                         font {

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 
@@ -52,7 +53,7 @@ ColumnLayout {
         visible: root.showDate
         Layout.alignment: root.layoutAlignment
         horizontalAlignment: root.horizontalAlignment
-        text: Qt.locale().toString(root.currentDate, "dddd").toUpperCase()
+        text: Translation.locale.toString(root.currentDate, "dddd").toUpperCase()
         color: root.dateColor
         style: root.showShadow ? Text.Raised : Text.Normal
         styleColor: root.haloColor
@@ -70,7 +71,7 @@ ColumnLayout {
         Layout.alignment: root.layoutAlignment
         Layout.topMargin: -Appearance.sizes.spacingSmall
         horizontalAlignment: root.horizontalAlignment
-        text: Qt.locale().toString(root.currentDate, "d MMM")
+        text: Translation.locale.toString(root.currentDate, "d MMM")
         color: root.dateColor
         style: root.showShadow ? Text.Raised : Text.Normal
         styleColor: root.haloColor

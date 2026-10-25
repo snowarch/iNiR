@@ -100,12 +100,15 @@ AbstractBackgroundWidget {
     // Small: the month in initials; Medium: this week and the next under the header.
     readonly property bool compact: root.materialSmall
     readonly property bool strip: root.materialSized && root.materialSize === "medium"
+    // in the shell's language: hardcoded English initials sat under a month named in the system's
     function weekdayLabels(): var {
-        const sundayFirst = root.compact ? ["S", "M", "T", "W", "T", "F", "S"] : ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
         const start = root.weekStart === 0 ? 0 : 1
         const labels = []
-        for (let i = 0; i < 7; ++i)
-            labels.push(sundayFirst[(start + i) % 7])
+        for (let i = 0; i < 7; ++i) {
+            const day = (start + i) % 7
+            labels.push(root.compact ? Translation.locale.standaloneDayName(day, Locale.NarrowFormat).toUpperCase()
+                : Translation.locale.standaloneDayName(day, Locale.ShortFormat).replace(/\.$/, "").slice(0, 2).replace(/^./, c => c.toUpperCase()))
+        }
         return labels
     }
 
@@ -211,10 +214,12 @@ AbstractBackgroundWidget {
             Layout.fillWidth: true
             spacing: Math.round(5 * root.scaleFactor)
 
+            // its texts fill too: a nested layout is never wider than its children allow, which left the keys mid-card
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 0
                 InstrumentLabel {
+                    Layout.fillWidth: true
                     visible: root.instrument
                     text: Translation.tr("Calendar / %1").arg(root.viewingDate.getFullYear())
                     color: root.widgetAccentVisible
@@ -222,7 +227,8 @@ AbstractBackgroundWidget {
                     strong: true
                 }
                 StyledText {
-                    text: root.viewingDate.toLocaleDateString(Qt.locale(), "MMMM")
+                    Layout.fillWidth: true
+                    text: root.viewingDate.toLocaleDateString(Translation.locale, "MMMM")
                     font.capitalization: Font.Capitalize
                     color: root.ink
                     font.family: root.widgetTitleFamily
@@ -232,8 +238,9 @@ AbstractBackgroundWidget {
                     font.letterSpacing: root.widgetTitleTracking
                 }
                 StyledText {
+                    Layout.fillWidth: true
                     visible: !root.instrument && !root.compact
-                    text: root.strip ? root.today.toLocaleDateString(Qt.locale(), "dddd d") : String(root.viewingDate.getFullYear())
+                    text: root.strip ? root.today.toLocaleDateString(Translation.locale, "dddd d") : String(root.viewingDate.getFullYear())
                     font.capitalization: Font.Capitalize
                     color: root.inkMuted
                     font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
