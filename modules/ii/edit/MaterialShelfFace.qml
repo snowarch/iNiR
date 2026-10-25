@@ -74,52 +74,75 @@ QtObject {
             function focusSearch(): void { searchInput.forceActiveFocus() }
             function dropSearch(): void { searchInput.focus = false }
 
+            // M3 filter chips: the chosen one tonal with a check, the rest outlined.
+            component Chip: RippleButton {
+                id: chip
+                property string label
+                property bool chosen: false
+                implicitHeight: 32
+                implicitWidth: chipLabel.implicitWidth + (chip.chosen ? 44 : 28)
+                buttonRadius: Appearance.rounding.small
+                colBackground: chip.chosen ? Appearance.colors.colSecondaryContainer : "transparent"
+                colBackgroundHover: chip.chosen ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colLayer2Hover
+                colRipple: chip.chosen ? Appearance.colors.colSecondaryContainerActive : Appearance.colors.colLayer2Active
+                Behavior on implicitWidth { NumberAnimation { duration: face.duration(200); easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.expressiveFastSpatial } }
+                Accessible.name: chip.label
+                contentItem: Item {
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Appearance.rounding.small
+                        color: "transparent"
+                        border.width: chip.chosen ? 0 : 1
+                        border.color: Appearance.colors.colOutlineVariant
+                    }
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 6
+                        MaterialSymbol {
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: chip.chosen
+                            text: "check"
+                            iconSize: 18
+                            color: Appearance.colors.colOnSecondaryContainer
+                        }
+                        StyledText {
+                            id: chipLabel
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: chip.label
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: Font.Medium
+                            color: chip.chosen ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
+                        }
+                    }
+                }
+            }
             Row {
                 id: chips
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 6
+                spacing: 8
                 Repeater {
                     model: head.shelf?.pages ?? []
-                    delegate: RippleButton {
-                        id: chip
+                    delegate: Chip {
                         required property var modelData
-                        readonly property bool chosen: head.shelf?.page === chip.modelData.value
-                        implicitHeight: 30
-                        implicitWidth: chipLabel.implicitWidth + (chip.chosen ? 40 : 24)
-                        buttonRadius: Appearance.rounding.small
-                        colBackground: chip.chosen ? Appearance.colors.colSecondaryContainer : "transparent"
-                        colBackgroundHover: chip.chosen ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colLayer2Hover
-                        Behavior on implicitWidth { NumberAnimation { duration: face.duration(160); easing.type: Easing.OutCubic } }
-                        onClicked: head.shelf.goTo(chip.modelData.value)
-                        Accessible.name: chip.modelData.label
-                        contentItem: Item {
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: Appearance.rounding.small
-                                color: "transparent"
-                                border.width: chip.chosen ? 0 : 1
-                                border.color: Appearance.colors.colOutlineVariant
-                            }
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 4
-                                MaterialSymbol {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    visible: chip.chosen
-                                    text: "check"
-                                    iconSize: 16
-                                    color: Appearance.colors.colOnSecondaryContainer
-                                }
-                                StyledText {
-                                    id: chipLabel
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: chip.modelData.label
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    font.weight: Font.Medium
-                                    color: chip.chosen ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
-                                }
-                            }
-                        }
+                        label: modelData.label
+                        chosen: head.shelf?.page === modelData.value
+                        onClicked: head.shelf.goTo(modelData.value)
+                    }
+                }
+                Rectangle {
+                    visible: (head.shelf?.onWidgets ?? false) && (head.shelf?.categories?.length ?? 0) > 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 1
+                    height: 20
+                    color: Appearance.colors.colOutlineVariant
+                }
+                Repeater {
+                    model: (head.shelf?.onWidgets ?? false) && (head.shelf?.categories?.length ?? 0) > 2 ? head.shelf.categories : []
+                    delegate: Chip {
+                        required property var modelData
+                        label: modelData.label
+                        chosen: head.shelf?.category === modelData.value
+                        onClicked: head.shelf.pick(modelData.value)
                     }
                 }
             }

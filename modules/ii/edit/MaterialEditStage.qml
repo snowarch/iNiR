@@ -117,18 +117,30 @@ Item {
             y: body.modelData.y
             width: body.modelData.w
             height: body.modelData.h
-            radius: body.modelData.radius ?? 0
-            color: Appearance.colors.colLayer0
+            // Where the bar or the Dock rests: a quiet glass zone and its name, never a slab over the wallpaper.
+            radius: Math.max(body.modelData.radius ?? 0, Math.min(body.width, body.height) / 2)
+            color: ColorUtils.applyAlpha(Appearance.colors.colLayer0, body.hot ? 0.62 : 0.38)
             border.width: (body.hot ? 2 : 1) * root.hair
-            border.color: body.hot ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
+            border.color: body.hot ? Appearance.colors.colPrimary : ColorUtils.applyAlpha(Appearance.colors.colOutline, 0.55)
             Behavior on border.color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
-            StyledText {
+            Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+            Row {
                 anchors.centerIn: parent
-                text: body.modelData.name ?? ""
+                spacing: 6 * root.hair
                 visible: implicitWidth + 16 * root.hair <= body.width && implicitHeight + 4 * root.hair <= body.height
-                color: body.hot ? Appearance.colors.colOnLayer0 : Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.smaller * root.hair
-                font.weight: Font.Medium
+                MaterialSymbol {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: body.modelData.id === "dock" ? "dock_to_bottom" : "toolbar"
+                    iconSize: 16 * root.hair
+                    color: body.hot ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                }
+                StyledText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: body.modelData.name ?? ""
+                    color: body.hot ? Appearance.colors.colOnLayer0 : Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller * root.hair
+                    font.weight: Font.Medium
+                }
             }
         }
     }
