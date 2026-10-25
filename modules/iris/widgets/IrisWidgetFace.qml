@@ -152,9 +152,13 @@ Item {
         color: root.glass ? IrisStyle.glassShadow : IrisStyle.plateShadow
     }
 
+    // Under a Design's own plate the blur is lent to it (`frost`), cut by its die: AIRISU's clear lacquer read as a film
+    // over the raw wall, no glass at all.
+    readonly property Item frost: glassLoader.item?.frost ?? null
     Loader {
+        id: glassLoader
         anchors.fill: parent
-        active: root.glass && !root.ownPlate
+        active: root.glass
         visible: root.plated
         sourceComponent: ClippingRectangle {
             id: glassPane
@@ -179,6 +183,38 @@ Item {
             visible: glassPane.desktopLayer !== null || wallpaper.status === Image.Ready
             radius: root.radius
             color: "transparent"
+            readonly property Item frost: frostLoader.item?.texture ?? null
+            // the blur as an item of its own: a layered item hands out its source, never its effect
+            Loader {
+                id: frostLoader
+                active: root.ownPlate
+                x: crop.x
+                y: crop.y
+                width: crop.width
+                height: crop.height
+                sourceComponent: Item {
+                    readonly property Item texture: frostSource
+                    MultiEffect {
+                        id: frostBlur
+                        anchors.fill: parent
+                        source: crop
+                        blurEnabled: true
+                        blur: IrisStyle.glassBlurAmount
+                        blurMax: IrisStyle.glassBlurMax
+                        saturation: IrisStyle.widgetGlassSaturation
+                    }
+                    ShaderEffectSource {
+                        id: frostSource
+                        visible: false
+                        width: root.width
+                        height: root.height
+                        sourceItem: frostBlur
+                        hideSource: true
+                        sourceRect: Qt.rect(glassPane.margin, glassPane.margin, root.width, root.height)
+                        live: true
+                    }
+                }
+            }
             // Wide enough for the blur to find picture all round: a narrower margin blurred the edge into transparent
             // and the face darkened toward its rim.
             readonly property real margin: Math.ceil(2 * IrisStyle.glassBlurMax * IrisStyle.glassBlurAmount) + root.dp(8)
@@ -208,9 +244,10 @@ Item {
                 sourceRect: Qt.rect(glassPane.at.x - glassPane.margin, glassPane.at.y - glassPane.margin, crop.width, crop.height)
                 textureSize: Qt.size(Math.max(1, Math.round(crop.width / 2)), Math.max(1, Math.round(crop.height / 2)))
                 smooth: true
+                visible: !root.ownPlate
                 // The field's recipe: blurred at half resolution, so blurMax reaches as far on screen as the field's
                 // glass does (at full size it reached half as far and the face read as clear, not frosted).
-                layer.enabled: true
+                layer.enabled: !root.ownPlate
                 layer.textureSize: crop.textureSize
                 layer.effect: MultiEffect {
                     blurEnabled: true

@@ -48,10 +48,19 @@ IrisWidgetFace {
 
         // The tile behind a wide control: the whole of it is the key.
         Rectangle {
+            id: tilePlate
             visible: root.tiles
             anchors.fill: parent
             radius: Math.min(root.innerRadius, height / 2)
-            color: tap.pressed ? root.fillActive : hover.hovered ? root.fillHover : root.fillQuiet
+            // a chamfered Design cuts the tile with its die, as every plate on its bodies
+            readonly property color fill: tap.pressed ? root.fillActive : hover.hovered ? root.fillHover : root.fillQuiet
+            color: IrisStyle.fieldChamfer ? "transparent" : tilePlate.fill
+            IrisCutPlate {
+                anchors.fill: parent
+                visible: IrisStyle.fieldChamfer
+                color: tilePlate.fill
+                cutLength: Math.round(parent.height * 0.28)
+            }
             scale: tap.pressed ? IrisStyle.pressScale(0.97) : 1
             Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
             Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }

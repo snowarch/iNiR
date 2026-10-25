@@ -22,7 +22,9 @@ Item {
     readonly property color lacquer: Airisu.stockOf(root.pigment)
     // Glass is suki-urushi, the clear lacquer: the colour still carries and the wall only shows through it, never a grey
     // film over the picture.
-    readonly property real alpha: (root.face?.opaque ?? true) ? (root.face?.strength ?? 1) : Math.max(0.86, root.face?.veil ?? 1)
+    // Over the face's blurred wall the lacquer is laid whole and glazed, as the Island's head is over its picture.
+    readonly property Item frost: (root.face?.glass ?? false) ? (root.face?.frost ?? null) : null
+    readonly property real alpha: (root.face?.opaque ?? true) ? (root.face?.strength ?? 1) : root.frost ? 1 : Math.max(0.86, root.face?.veil ?? 1)
     // The inks of whatever is set on the widget: cut from the lacquer, or Lume's on the bare wall.
     readonly property color ink: root.bare ? (root.face?.ink ?? Airisu.ink) : Airisu.inkOn(root.lacquer)
     readonly property color inkSecond: root.bare ? (root.face?.inkSecondary ?? Airisu.inkSecond) : Airisu.inkSecondOn(root.lacquer)
@@ -37,6 +39,8 @@ Item {
         anchors.fill: parent
         visible: !root.bare && (root.face?.plated ?? true)
         moving: root.face?.moving ?? false
+        texture: root.frost
+        glaze: IrisStyle.light ? 0.8 : 0.72 // iris-literal: how much of the blurred wall the clear lacquer lets through
         lacquer: ColorUtils.applyAlpha(root.lacquer, root.alpha)
         coat: ColorUtils.applyAlpha(root.coat, root.alpha)
         share: root.share
