@@ -60,6 +60,7 @@ Item {
         function onIrisEditChanged(): void { if (!GlobalStates.irisEdit) root.tool = "" }
     }
     Component.onCompleted: {
+        root.shapesSeen = root.shapes
         root.route(GlobalStates.irisEditTarget)
         enterTimer.start()
     }
@@ -109,8 +110,12 @@ Item {
     }
     // A piece has two shapes under one id: its body in the field (melted into the edge, it reaches the edge) and
     // its face. The ring goes around the face, the last one listed, as the hover does.
+    // `selected` reads the shapes a tick behind: they hold this capsule, whose width follows the selection
+    property var shapesSeen: []
+    onShapesChanged: shapesLatch.restart()
+    Timer { id: shapesLatch; interval: 0; onTriggered: root.shapesSeen = root.shapes }
     function shapeOf(id: string): var {
-        const list = root.shapes ?? []
+        const list = root.shapesSeen ?? []
         for (let i = list.length - 1; i >= 0; i--) if (list[i].id === id) return list[i]
         return null
     }
