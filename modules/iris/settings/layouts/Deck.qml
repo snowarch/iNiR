@@ -92,7 +92,7 @@ Item {
         }
         root.engaged = false
         root.cursor = -1
-        ring.shown = false
+        root.place()
         root.land()
     }
     // Stands the deck at a place before aiming there, so the cards held never span the way between.
@@ -118,8 +118,6 @@ Item {
     }
     function land(): void {
         if (root.wantedGroup.length > 0 && root.openPage) { root.openPage.showGroup?.(root.wantedGroup); root.wantedGroup = "" }
-        if (!root.driving || !root.live || root.cursor >= 0) return
-        Qt.callLater(() => { if (root.cursor < 0) { root.cursor = root.stops().length > 0 ? 0 : -1; root.place() } })
     }
 
     // ── Driven like a console menu: ◀ ▶ turn the deck, ▲ ▼ walk the head and the rows, ⏎ or Space change the focused
@@ -158,22 +156,12 @@ Item {
         return out.map(item => ({ item: item, y: item.mapToItem(card, 0, 0).y })).sort((a, b) => a.y - b.y).map(entry => entry.item)
     }
     function focused(): Item { return root.cursor >= 0 ? (root.stops()[root.cursor] ?? null) : null }
-    Connections {
-        target: root.flick
-        ignoreUnknownSignals: true
-        function onContentYChanged(): void { if (ring.shown) root.place() }
-        function onContentHeightChanged(): void { if (ring.shown) Qt.callLater(root.place) }
-    }
+    // The ring rides inside the row it marks: placed by hand it chased every scroll and late layout of the page and
+    // ran past the card (10-25, "las líneas de focus se corren").
     function place(): void {
         const item = root.focused()
-        if (!item) { ring.shown = false; return }
-        const at = item.mapToItem(card, 0, 0)
-        const out = item.deckStop === true ? root.u(10) : -root.u(2)
-        ring.x = at.x - out
-        ring.y = at.y + (item.deckStop === true ? 0 : root.u(3))
-        ring.width = item.width + 2 * out
-        ring.height = item.height - (item.deckStop === true ? 0 : root.u(6))
-        ring.shown = true
+        ring.parent = item ?? card
+        ring.shown = item !== null
     }
     function reveal(item: Item): void {
         if (!root.flick || !item) return
@@ -229,7 +217,6 @@ Item {
         if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.KeypadModifier) return false
         const key = event.key
         if (key === Qt.Key_Left || key === Qt.Key_Right) {
-            root.driving = true
             const delta = key === Qt.Key_Left ? -1 : 1
             if (root.engaged) root.adjust(delta)
             else root.turn(delta)
@@ -249,7 +236,7 @@ Item {
     // Esc lets go of the innermost thing first: a held value, then the focused row, then Settings.
     function release(): bool {
         if (root.engaged) { root.engaged = false; return true }
-        if (root.cursor >= 0) { root.cursor = -1; ring.shown = false; return true }
+        if (root.cursor >= 0) { root.cursor = -1; root.place(); return true }
         return false
     }
     // The wheel over the deck's sides turns it, a notch a card (bursts just retarget the spring). Two fingers sideways
@@ -413,18 +400,20 @@ Item {
     // ── The cards over the desktop: one per area near where the deck stands, each its area's own page.
     // Pages are let in one a beat, nearest first, once the deck stands: while the body opens only the open one, then
     // out to two either side, so a turn of one or two finds every card it brings in already built.
-    readonly property real reach: Boolean(root.host?.bodySettled ?? true) ? 2.2 : 0.5
+    readonly property real reach: Boolean(root.host?.bodySettled ?? true) ? 3.2 : 0.5
     onReachChanged: admit.start()
     Timer {
         id: admit
         interval: 16
         repeat: true
         onTriggered: {
-            if (root.moving) { admit.stop(); return }
+            // While a run goes on, only a card about to show is let in (in slices): an empty one crossing read as a page
+            // that loads late (10-25).
+            const reach = root.moving ? Math.min(root.reach, 2.2) : root.reach
             let best = null
             for (let i = 0; i < cards.count; i++) {
                 const card = cards.itemAt(i)
-                if (card && !card.admitted && card.far < root.reach && (!best || card.far < best.far)) best = card
+                if (card && !card.admitted && card.far < reach && (!best || card.far < best.far)) best = card
             }
             if (best) best.admitted = true
             else admit.stop()
@@ -434,8 +423,8 @@ Item {
     // and forth between two areas keeps both, and a card made at the edge on the way and broken on the way back was
     // the bulk of a turn's work.
     readonly property int stood: root.trail >= 0 && Math.abs(root.trail - root.aim) <= 2 ? root.trail : root.aim
-    readonly property int windowFrom: Math.max(0, Math.floor(Math.min(root.pos, root.aim, root.stood)) - 2)
-    readonly property int windowTo: Math.min(root.sections.length - 1, Math.ceil(Math.max(root.pos, root.aim, root.stood)) + 2)
+    readonly property int windowFrom: Math.max(0, Math.floor(Math.min(root.pos, root.aim, root.stood)) - 3)
+    readonly property int windowTo: Math.min(root.sections.length - 1, Math.ceil(Math.max(root.pos, root.aim, root.stood)) + 3)
     Repeater {
         id: cards
         model: ScriptModel { values: root.sided ? root.sections.slice(root.windowFrom, root.windowTo + 1) : []; objectProp: "id" }
@@ -515,14 +504,25 @@ Item {
         Rectangle {
             id: ring
             property bool shown: false
+            readonly property bool head: ring.parent?.deckStop === true
             z: 10
+            anchors.fill: parent
+            anchors.topMargin: ring.head ? 0 : root.u(3)
+            anchors.bottomMargin: ring.head ? 0 : root.u(3)
             visible: ring.shown && root.driving
-            radius: IrisStyle.fieldChamfer ? 0 : root.u(16)
+            radius: IrisStyle.fieldChamfer ? 0 : ring.head ? Math.min(height / 2, root.u(16)) : root.u(12)
             color: Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, 0.05)
             border.width: Math.max(2, root.u(2))
             border.color: root.engaged ? root.signal : IrisStyle.text
-            Behavior on y { NumberAnimation { duration: IrisStyle.duration(160); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-            Behavior on height { NumberAnimation { duration: IrisStyle.duration(160); easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        }
+        // The pointer takes over from the keys: a real move (not the hover a scroll sends) drops the ring.
+        HoverHandler {
+            property point last: Qt.point(-1, -1)
+            onPointChanged: {
+                const p = point.scenePosition
+                if (root.driving && (Math.abs(p.x - last.x) > 3 || Math.abs(p.y - last.y) > 3) && last.x >= 0) root.driving = false
+                last = p
+            }
         }
         // What the keys do now, like a console's button bar under the rows.
         Rectangle {
@@ -739,6 +739,19 @@ Item {
             height: root.cardRect.height - root.cardInset - root.u(34)
             scale: deck.s
             transformOrigin: Item.TopLeft
+            // Shrunk glyphs drawn straight aliased ("Squirclo", "Lcft"): a card off the front is its full-size picture
+            // brought down by the edit card's tent of taps (memory: edit card sharpness).
+            layer.enabled: deck.s < 0.995 && deck.visible
+            layer.smooth: true
+            layer.effect: ShaderEffect {
+                readonly property vector2d size: Qt.vector2d(plane.width, plane.height)
+                readonly property real corner: 0
+                readonly property real chamfer: 0
+                readonly property real edge: 1
+                readonly property vector2d reach: Qt.vector2d(0.2 / Math.max(0.2, deck.s) * IrisStyle.devicePx / Math.max(1, plane.width),
+                    0.2 / Math.max(0.2, deck.s) * IrisStyle.devicePx / Math.max(1, plane.height))
+                fragmentShader: Qt.resolvedUrl("../../../shared/background/edit/CardPicture.frag.qsb")
+            }
             // DeckPage's head, line for line: its plate, its Dot title, its line.
             Item {
                 anchors.fill: parent
