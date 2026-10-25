@@ -2,6 +2,7 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
 import qs.modules.common
@@ -134,13 +135,16 @@ Singleton {
             checkProcess.running = true
     }
 
-    // Idle poll: infrequent check for externally-started recordings
-    Timer {
-        id: idlePollTimer
-        interval: 5000
-        running: Config.ready && !root.isRecording
-        repeat: true
-        onTriggered: root.refreshStatus()
+    // record.sh writes recorder-status.json once wf-recorder runs and removes it when it ends: the folder says so,
+    // instead of a script every 5 s. The folder is made first, or a fresh install would watch nothing.
+    readonly property string statusDir: root.recorderStatusPath.slice(0, root.recorderStatusPath.lastIndexOf("/"))
+    property bool statusDirReady: false
+    Process { running: true; command: ["mkdir", "-p", root.statusDir]; onExited: root.statusDirReady = true }
+    FolderListModel {
+        folder: root.statusDirReady ? "file://" + root.statusDir : ""
+        nameFilters: ["recorder-status.json"]
+        showDirs: false
+        onCountChanged: root.refreshStatus()
     }
 
     // Active poll: 1s tick while recording (elapsed counter + stop detection)

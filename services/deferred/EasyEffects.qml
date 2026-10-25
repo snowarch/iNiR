@@ -171,6 +171,7 @@ Singleton {
         root.active = false
         if (pkillProc.running || flatpakKillProc.running) return
         pkillProc.running = true
+        refreshStateTimer.restart()
     }
 
     function enable() {
@@ -209,13 +210,10 @@ Singleton {
         onTriggered: root.fetchActiveState()
     }
 
-    Timer {
-        id: statePollTimer
-        interval: 5000
-        repeat: true
-        running: Config.ready && root.available
-        onTriggered: root.fetchActiveState()
-    }
+    // Running, EasyEffects is its sink in the PipeWire graph: started or quit outside the shell, the graph says so,
+    // with no process every 5 s to ask.
+    readonly property bool sinkPresent: Pipewire.nodes.values.some(node => node?.name === "easyeffects_sink")
+    onSinkPresentChanged: if (root.available) root.active = root.sinkPresent
 
     Component.onCompleted: {
         if (Config.ready) {
