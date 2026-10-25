@@ -884,7 +884,14 @@ Scope {
                     anchors.fill: parent
                     enabled: barWindow.pinned
                     acceptedButtons: Qt.AllButtons
-                    onPressed: islandLoader.item.expanded = false
+                    // Only a press off the Island closes it: one on its text or air fell through to here (10-25).
+                    function inside(item: Item, x: real, y: real): bool {
+                        return item.width > 0 && x >= item.x && x < item.x + item.width && y >= item.y && y < item.y + item.height
+                    }
+                    onPressed: mouse => {
+                        if ([islandInput, extensionInput, menuStartInput, menuEndInput].some(item => inside(item, mouse.x, mouse.y))) return
+                        islandLoader.item.expanded = false
+                    }
                 }
                 Region {
                     id: chassisRegion
