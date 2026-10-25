@@ -48,6 +48,9 @@ Item {
         Math.max(340, Number(root.options?.width ?? 380) * root.d) + 16)
     readonly property var island: GlobalStates.irisIslandGeometry?.[root.screenName] ?? null
     readonly property real bubbleSize: Math.round(44 * root.d)
+    // Over a place in front (Settings, the picker) the field's body sits behind that place's window: the banner paints its
+    // own plate there, or its words float over the page (10-25).
+    readonly property bool overPlace: GlobalStates.settingsOverlayOpen || GlobalStates.wallpaperSelectorOpen
 
     // Each banner is a body of the chassis field, so its material (solid, glass, compositor blur) and
     // its edge are the family's, and it grows out of the Island as one shape before letting go.
@@ -219,9 +222,9 @@ Item {
                 y: root.designed ? 0 : Math.round(plate.islandLift * (1 - banner.bloom))
                 opacity: Math.min(1, banner.bloom * 3) * banner.fade
                 radius: Math.min(height / 2, root.bubbleSize / 2 + (Math.round(22 * root.d) - root.bubbleSize / 2) * banner.bloom)
-                color: "transparent"
-                border.width: banner.critical && !root.designed ? 1 : 0
-                border.color: IrisStyle.tintBorder(IrisStyle.danger)
+                color: root.overPlace && !root.designed ? IrisStyle.surfaceOpaque : "transparent"
+                border.width: banner.critical && !root.designed ? 1 : root.overPlace && !root.designed ? 1 : 0
+                border.color: banner.critical ? IrisStyle.tintBorder(IrisStyle.danger) : IrisStyle.hairline
 
                 Timer {
                     id: dismissLater
