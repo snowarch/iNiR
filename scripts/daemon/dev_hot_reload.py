@@ -84,6 +84,9 @@ def scanner_reach() -> set:
 
 RELOAD_LINE = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)(\.\d+)\s+INFO:\s+Reloading configuration")
 QS_GRACE = 1.2  # Quickshell's own reload starts ~0.1 s after a save it sees
+# Old engines leave leftovers in the process: a nest past ~20 reloads drew stale frames and spent 40 % more per
+# Settings turn (10-25), and his shell took 28-40 between restarts. Past this, the next change restarts instead.
+RELOAD_LIMIT = 15
 
 
 def reloaded_since(since: float) -> bool:
@@ -99,6 +102,25 @@ def reloaded_since(since: float) -> bool:
         if m:
             return time.mktime(time.strptime(m.group(1), "%Y-%m-%d %H:%M:%S")) + float(m.group(2)) >= since - 0.05
     return False
+
+
+def worn() -> bool:
+    """This shell took RELOAD_LIMIT reloads and is the inir service itself (a nest's shell never restarts it)."""
+    log = f"/run/user/{os.getuid()}/quickshell/by-pid/{SHELL_PID}/log.log"
+    try:
+        with open(log, errors="replace") as handle:
+            if sum(1 for line in handle if RELOAD_LINE.match(line)) < RELOAD_LIMIT:
+                return False
+        main = subprocess.run(["systemctl", "--user", "show", "inir", "-p", "MainPID", "--value"],
+                              capture_output=True, text=True, timeout=5).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return main == str(SHELL_PID)
+
+
+def restart_shell():
+    subprocess.run(["systemctl", "--user", "--no-block", "restart", "inir"],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
 
 
 def reload_shell():
@@ -181,7 +203,11 @@ def main():
                 watched_since = watched_since or time.time()  # Quickshell should reload it; checked below
             else:
                 pending_since = time.monotonic()
-        if pending_since and time.monotonic() - pending_since >= DEBOUNCE:
+        due = pending_since and time.monotonic() - pending_since >= DEBOUNCE
+        if (due or watched_since and time.time() - watched_since >= QS_GRACE) and worn():
+            restart_shell()
+            return
+        if due:
             pending_since = watched_since = 0.0
             reload_shell()
             reach = scanner_reach()
