@@ -93,7 +93,7 @@ AbstractBackgroundWidget {
 
     function cityDateText(index: int): string {
         const cityDate = WorldClock.cityDisplayDate(index)
-        return cityDate ? root.widgetCase(Qt.locale().toString(cityDate, "ddd d MMM")) : ""
+        return cityDate ? root.widgetCase(Translation.locale.toString(cityDate, "ddd d MMM")) : ""
     }
 
     editPopoverContent: Component {
@@ -567,9 +567,10 @@ AbstractBackgroundWidget {
         anchors.margins: Math.round(14 * root.scaleFactor)
         spacing: Math.round(8 * root.scaleFactor)
 
+        // small is only the cities: a row each, its name over its time
         Rectangle {
             Layout.alignment: Qt.AlignLeft
-            visible: Weather.showVisibleCity
+            visible: Weather.showVisibleCity && !root.materialSmall
             implicitWidth: localChip.implicitWidth + Math.round(18 * root.scaleFactor)
             implicitHeight: localChip.implicitHeight + Math.round(8 * root.scaleFactor)
             radius: root.widgetEditorial ? root.widgetControlRadius : height / 2
@@ -599,12 +600,14 @@ AbstractBackgroundWidget {
 
         StyledText {
             Layout.fillWidth: true
+            visible: !root.materialSmall
             text: DateTime.time || "--:--"
             color: root.surfaceInk
             elide: Text.ElideRight
             font {
                 family: root.widgetNumbersFamily
-                pixelSize: Math.round(Appearance.font.pixelSize.huge * root.scaleFactor)
+                // here leads: never smaller than the cities' times under it
+                pixelSize: Math.round((root.materialLarge ? 40 : Appearance.font.pixelSize.huge) * root.scaleFactor)
                 weight: Font.DemiBold
             }
         }
@@ -612,8 +615,8 @@ AbstractBackgroundWidget {
         StyledText {
             Layout.fillWidth: true
             // a short card spends its height on the cities; the date put the last of them past the edge
-            visible: root.height >= Math.round(200 * root.scaleFactor)
-            text: Qt.locale().toString(WorldClock.now, "dddd, MMMM d yyyy")
+            visible: root.height >= Math.round(200 * root.scaleFactor) && !root.materialSmall
+            text: Translation.locale.toString(WorldClock.now, "dddd, MMMM d yyyy")
             color: ColorUtils.applyAlpha(root.surfaceInk, 0.6)
             elide: Text.ElideRight
             font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
@@ -622,8 +625,10 @@ AbstractBackgroundWidget {
         GridLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            // a wide card lays its cities in one row; two rows of tiles ran past a medium card
-            columns: root.width > root.height * 1.5 ? Math.min(4, Math.max(1, root.cities.length)) : 2
+            // a wide card lays its cities in one row; two rows of tiles ran past a medium card, and an odd count
+            // in two columns left a hole
+            columns: root.width > root.height * 1.5 ? Math.min(4, Math.max(1, root.cities.length))
+                : root.materialSmall || root.cities.length % 2 === 1 ? 1 : 2
             columnSpacing: Math.round(6 * root.scaleFactor)
             rowSpacing: Math.round(6 * root.scaleFactor)
 
@@ -640,6 +645,8 @@ AbstractBackgroundWidget {
                     readonly property color cellColor: root.widgetSemanticContainer(cityCell.cellRole)
                     readonly property color cellInk: root.widgetSemanticOnContainer(cityCell.cellRole)
                     readonly property color cellAccent: root.widgetSemanticColor(cityCell.cellRole)
+                    // a tall tile (large, a city a row) sets its city and time a size up
+                    readonly property bool roomy: cityCell.height >= Math.round(72 * root.scaleFactor)
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -674,7 +681,7 @@ AbstractBackgroundWidget {
                                     text: cityCell.modelData.name
                                     elide: Text.ElideRight
                                     color: ColorUtils.applyAlpha(cityCell.cellInk, 0.7)
-                                    font.pixelSize: Math.round(Appearance.font.pixelSize.smallest * root.scaleFactor)
+                                    font.pixelSize: Math.round((cityCell.roomy ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smallest) * root.scaleFactor)
                                 }
 
                                 StyledText {
@@ -693,7 +700,7 @@ AbstractBackgroundWidget {
                                 color: cityCell.cellInk
                                 font {
                                     family: root.widgetNumbersFamily
-                                    pixelSize: Math.round(Appearance.font.pixelSize.large * root.scaleFactor)
+                                    pixelSize: Math.round((cityCell.roomy ? 30 : Appearance.font.pixelSize.large) * root.scaleFactor)
                                     weight: Font.Bold
                                 }
                             }
@@ -701,8 +708,8 @@ AbstractBackgroundWidget {
 
                         MaterialShape {
                             Layout.alignment: Qt.AlignVCenter
-                            visible: cityCell.height >= Math.round(46 * root.scaleFactor)
-                            implicitSize: Math.round(24 * root.scaleFactor)
+                            visible: cityCell.height >= Math.round(40 * root.scaleFactor)
+                            implicitSize: Math.round((cityCell.roomy ? 34 : 24) * root.scaleFactor)
                             shape: cityCell.modelData.isDay
                                 ? MaterialShape.Shape.Sunny
                                 : MaterialShape.Shape.ClamShell
@@ -712,7 +719,7 @@ AbstractBackgroundWidget {
                                 anchors.centerIn: parent
                                 text: cityCell.modelData.isDay ? "light_mode" : "dark_mode"
                                 fill: 1
-                                iconSize: Math.round(13 * root.scaleFactor)
+                                iconSize: Math.round((cityCell.roomy ? 18 : 13) * root.scaleFactor)
                                 color: root.widgetSemanticOnColor(cityCell.cellRole)
                             }
                         }

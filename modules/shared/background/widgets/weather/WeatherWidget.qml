@@ -699,6 +699,9 @@ AbstractBackgroundWidget {
                         }
                     }
 
+                    // the columns can't grow past their texts: this pushes sunset to the edge
+                    Item { Layout.fillWidth: true }
+
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 0

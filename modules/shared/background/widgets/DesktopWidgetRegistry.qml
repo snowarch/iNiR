@@ -25,7 +25,7 @@ QtObject {
             keywords: "forecast temperature rain sun wind climate" },
         { key: "clock", name: "Clock", group: "Clock", component: "ClockWidget", glyph: "schedule", tint: "#ff9f0a", category: "today", defaultOn: true, lock: true, palette: true, sizes: ["medium", "small", "large"],
             keywords: "time hour watch" },
-        { key: "worldClock", name: "World clock", group: "World clock", component: "WorldClockWidget", glyph: "public", tint: "#ff9f0a", category: "today", defaultOn: false, lock: true, palette: true, sizes: ["medium", "large"], box: true,
+        { key: "worldClock", name: "World clock", group: "World clock", component: "WorldClockWidget", glyph: "public", tint: "#ff9f0a", category: "today", defaultOn: false, lock: true, palette: true, sizes: ["medium", "small", "large"], box: true,
             keywords: "time zones cities timezone" },
         { key: "dayProgress", name: "Day", group: "Day progress", component: "DayProgressWidget", glyph: "timelapse", tint: "#ff9f0a", category: "today", defaultOn: false, lock: true, palette: true, sizes: ["small", "large"], box: true,
             keywords: "day sun hours" },

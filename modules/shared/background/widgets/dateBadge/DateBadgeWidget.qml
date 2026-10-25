@@ -103,9 +103,9 @@ AbstractBackgroundWidget {
         id: dayNumber
         visible: !root.irisFaced && !root.instrument
         x: root.horizontal ? 10 * root.scaleFactor : 0
-        y: root.horizontal ? (root.height - height) / 2 : root.height * 0.14
+        y: root.horizontal ? (root.height - height) / 2 : root.height * (root.materialLarge ? 0.08 : 0.14)
         width: root.horizontal ? root.width * 0.36 : root.width
-        height: root.height * 0.45
+        height: root.height * (root.materialLarge ? 0.4 : 0.45)
         text: Qt.locale().toString(root.today, "d")
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
@@ -121,13 +121,14 @@ AbstractBackgroundWidget {
     ColumnLayout {
         visible: !root.irisFaced && !root.instrument
         x: root.horizontal ? root.width * 0.36 + 24 * root.scaleFactor : root.width * 0.14
-        y: root.horizontal ? (root.height - implicitHeight) / 2 : root.height * 0.59
+        y: root.horizontal ? (root.height - implicitHeight) / 2 : root.height * (root.materialLarge ? 0.49 : 0.59)
         width: root.horizontal ? root.width - x - 14 * root.scaleFactor : root.width * 0.72
         spacing: 2 * root.scaleFactor
 
         StyledText {
             Layout.fillWidth: true
-            text: Qt.locale().toString(root.today, "dddd")
+            visible: root.showWeekday
+            text: Translation.locale.toString(root.today, "dddd")
             horizontalAlignment: root.horizontal ? Text.AlignLeft : Text.AlignHCenter
             color: root.widgetInk
             font.pixelSize: Appearance.font.pixelSize.small * root.scaleFactor
@@ -136,11 +137,75 @@ AbstractBackgroundWidget {
         }
         StyledText {
             Layout.fillWidth: true
-            text: Qt.locale().toString(root.today, root.showYear ? "MMM yyyy" : "MMMM")
+            text: Translation.locale.toString(root.today, root.showYear ? "MMM yyyy" : "MMMM")
             horizontalAlignment: root.horizontal ? Text.AlignLeft : Text.AlignHCenter
             color: root.widgetInkMuted
             font.pixelSize: Appearance.font.pixelSize.smallest * root.scaleFactor
             elide: Text.ElideRight
+        }
+    }
+
+    // Large adds the week the day sits in (the region's first weekday), today in the accent's fill, and where the
+    // day falls in the year.
+    ColumnLayout {
+        visible: !root.irisFaced && !root.instrument && root.materialLarge
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: Math.round(16 * root.scaleFactor)
+        spacing: Math.round(10 * root.scaleFactor)
+
+        StyledText {
+            Layout.alignment: Qt.AlignHCenter
+            visible: root.showOrdinal
+            text: Translation.tr("Day") + " " + root.dayOfYear + " / " + root.daysInYear
+            color: root.widgetInkMuted
+            font.family: root.widgetNumbersFamily
+            font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+            font.features: ({ "tnum": 1 })
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Math.round(4 * root.scaleFactor)
+            Repeater {
+                model: root.materialLarge ? 7 : 0
+                Rectangle {
+                    id: weekDay
+                    required property int index
+                    readonly property int lead: (root.today.getDay() - Qt.locale().firstDayOfWeek + 7) % 7
+                    readonly property date day: new Date(root.today.getFullYear(), root.today.getMonth(),
+                        root.today.getDate() - weekDay.lead + weekDay.index)
+                    readonly property bool isToday: weekDay.index === weekDay.lead
+                    readonly property color dayInk: weekDay.isToday ? root.widgetSemanticOnColor(root.widgetPrimaryRole) : root.widgetInk
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    implicitHeight: dayColumn.implicitHeight + Math.round(14 * root.scaleFactor)
+                    radius: Math.min(root.widgetControlRadius, width / 2)
+                    color: weekDay.isToday ? root.widgetSemanticColor(root.widgetPrimaryRole) : "transparent"
+                    ColumnLayout {
+                        id: dayColumn
+                        anchors.centerIn: parent
+                        spacing: Math.round(2 * root.scaleFactor)
+                        StyledText {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: Translation.locale.standaloneDayName(weekDay.day.getDay(), Locale.NarrowFormat).toUpperCase()
+                            color: weekDay.isToday ? weekDay.dayInk : root.widgetInkMuted
+                            font.pixelSize: Math.round(Appearance.font.pixelSize.smallest * root.scaleFactor)
+                            font.weight: Font.Medium
+                        }
+                        StyledText {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: String(weekDay.day.getDate())
+                            color: weekDay.dayInk
+                            font.family: root.widgetNumbersFamily
+                            font.pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
+                            font.weight: weekDay.isToday ? Font.Bold : Font.Medium
+                            font.features: ({ "tnum": 1 })
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -227,7 +292,7 @@ AbstractBackgroundWidget {
                 StyledText {
                     Layout.fillWidth: true
                     visible: root.showWeekday
-                    text: root.widgetCase(Qt.locale().toString(root.today, "dddd"))
+                    text: root.widgetCase(Translation.locale.toString(root.today, "dddd"))
                     elide: Text.ElideRight
                     color: root.widgetAccentVisible
                     font {
@@ -243,7 +308,7 @@ AbstractBackgroundWidget {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     verticalAlignment: Text.AlignVCenter
-                    text: root.widgetCase(Qt.locale().toString(root.today, "MMMM"))
+                    text: root.widgetCase(Translation.locale.toString(root.today, "MMMM"))
                     elide: Text.ElideRight
                     color: root.widgetInk
                     fontSizeMode: Text.Fit
@@ -314,11 +379,10 @@ AbstractBackgroundWidget {
                     onToggled: root._setOutputValue("showYear", !root.showYear)
                 }
                 Repeater {
-                    model: root.instrument ? [
+                    model: [
                         { label: Translation.tr("Weekday"), icon: "calendar_view_week", key: "showWeekday", fallback: true },
-                        { label: Translation.tr("Day of the year"), icon: "tag", key: "showOrdinal", fallback: true },
-                        { label: Translation.tr("Marks"), icon: "crop_free", key: "instrumentMarks", fallback: true }
-                    ] : []
+                        { label: Translation.tr("Day of the year"), icon: "tag", key: "showOrdinal", fallback: true }
+                    ].concat(root.instrument ? [{ label: Translation.tr("Marks"), icon: "crop_free", key: "instrumentMarks", fallback: true }] : [])
                     WidgetQuickToggle {
                         required property var modelData
                         Layout.fillWidth: true

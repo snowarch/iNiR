@@ -230,11 +230,13 @@ AbstractBackgroundWidget {
                 Layout.fillWidth: true
                 spacing: Math.round(6 * root.scaleFactor)
 
+                // its texts fill too: a nested layout is never wider than its children allow, which left the keys mid-card
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 0
 
                     InstrumentLabel {
+                        Layout.fillWidth: true
                         visible: root.instrument
                         text: Translation.tr("Tasks / Ledger")
                         color: root.widgetAccentVisible
@@ -242,6 +244,7 @@ AbstractBackgroundWidget {
                         strong: true
                     }
                     StyledText {
+                        Layout.fillWidth: true
                         visible: root.instrument
                         text: root.pendingCount === 0 ? Translation.tr("All clear") : Translation.tr("%1 open").arg(root.pendingCount)
                         color: root.ink
@@ -251,6 +254,7 @@ AbstractBackgroundWidget {
                         font.features: ({ "tnum": 1 })
                     }
                     StyledText {
+                        Layout.fillWidth: true
                         visible: !root.instrument
                         text: Translation.tr("Todo")
                         color: root.ink
@@ -261,6 +265,7 @@ AbstractBackgroundWidget {
                         font.letterSpacing: root.widgetTitleTracking
                     }
                     StyledText {
+                        Layout.fillWidth: true
                         visible: !root.instrument && (root.pendingCount > 0 || root.completedCount > 0)
                         text: root.pendingCount === 0 && root.completedCount > 0
                             ? Translation.tr("All done · %1 completed").arg(root.completedCount)
@@ -320,12 +325,8 @@ AbstractBackgroundWidget {
 
             StyledListView {
                 id: todoList
-                // Whole rows only: a half row under the plate's edge read as cut.
-                readonly property real step: root.itemHeight + todoList.spacing
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.maximumHeight: Math.max(root.itemHeight,
-                    Math.floor((listPage.height - listHead.height - listPage.spacing + todoList.spacing) / todoList.step) * todoList.step - todoList.spacing)
                 clip: true
                 spacing: Math.round(6 * root.scaleFactor)
                 model: root.visibleTaskEntries
@@ -341,8 +342,10 @@ AbstractBackgroundWidget {
                         ? root.ink : root.taskInk(taskRow.index)
 
                     width: todoList.width
-                    implicitHeight: root.itemHeight
-                    // a row the list has no room for is not drawn under the plate's edge
+                    // small wraps a task to two lines instead of cutting its words
+                    implicitHeight: root.materialSmall
+                        ? Math.max(root.itemHeight, taskText.implicitHeight + Math.round(14 * root.scaleFactor)) : root.itemHeight
+                    // whole rows only: a half row under the plate's edge read as cut
                     visible: taskRow.y + taskRow.height <= todoList.contentY + todoList.height + 1
                     padding: 0
                     background: null
@@ -380,8 +383,8 @@ AbstractBackgroundWidget {
                                 scaleFactor: root.scaleFactor
                             }
                             RippleButton {
-                                Layout.preferredWidth: Math.round(26 * root.scaleFactor)
-                                Layout.preferredHeight: Math.round(26 * root.scaleFactor)
+                                Layout.preferredWidth: Math.round((root.materialSmall ? 22 : 26) * root.scaleFactor)
+                                Layout.preferredHeight: Math.round((root.materialSmall ? 22 : 26) * root.scaleFactor)
                                 Layout.alignment: Qt.AlignVCenter
                                 buttonRadius: root.instrument ? Math.round(4 * root.scaleFactor) : Appearance.rounding.full
                                 colBackground: taskRow.modelData.done
@@ -427,12 +430,14 @@ AbstractBackgroundWidget {
                             }
 
                             StyledText {
+                                id: taskText
                                 Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignVCenter
                                 text: taskRow.modelData.content
                                 color: rowInk
                                 elide: Text.ElideRight
-                                maximumLineCount: 1
+                                wrapMode: root.materialSmall ? Text.Wrap : Text.NoWrap
+                                maximumLineCount: root.materialSmall ? 2 : 1
                                 font.pixelSize: root.taskFontSize
                                 font.strikeout: taskRow.modelData.done
                             }
