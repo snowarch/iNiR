@@ -2736,15 +2736,14 @@
             "face": "apps"
         },
         "wallpaper": {
-            "thumbnailSize": 228,
-            "width": 960,
             "livePreview": true,
-            "layout": "showcase",
+            "layout": "reel",
             "motion": true,
             "liveQuality": "best",
             "sort": "newest",
             "onlineSort": "top",
             "topRange": "1w",
+            "ratio": "screen",
             "sources": ["wallhaven", "live"],
             "suggestive": false,
             "pinned": []

@@ -4385,16 +4385,15 @@ Singleton {
                     property string face: "apps" // "apps" or "count": what the tray bubble shows
                 }
                 property JsonObject wallpaper: JsonObject {
-                    property int thumbnailSize: 228
-                    property int width: 960
                     // The highlighted wallpaper shows on the desktop while browsing.
                     property bool livePreview: true
-                    property string layout: "showcase" // strip | showcase | wall
+                    property string layout: "reel" // reel | mosaic | browser (strip/showcase read as reel, wall as browser)
                     property bool motion: true // live wallpapers play their preview while chosen
                     property string liveQuality: "best" // "best": the 4K file when offered; "light": HD
                     property string sort: "newest" // library order: newest | oldest | name
-                    property string onlineSort: "top" // online sources: top | newest | random
+                    property string onlineSort: "top" // online sources: top | hot | newest | views | favorites | random
                     property string topRange: "1w" // what "top" covers online: 1d | 1w | 1M | 1y
+                    property string ratio: "screen" // shape asked of the web: screen | wide | portrait | any
                     property list<string> sources: ["wallhaven", "live"] // online sources shown, in order
                     property bool suggestive: false // swimsuits, lingerie, fan service in online results
                     property list<string> pinned: []

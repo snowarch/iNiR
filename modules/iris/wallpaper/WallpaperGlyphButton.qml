@@ -8,6 +8,7 @@ import qs.modules.iris.components
 IrisButton {
     id: root
     property string glyph: ""
+    property bool filled: true
     readonly property real d: IrisStyle.density
     quiet: true
     implicitWidth: Math.round(34 * root.d)
@@ -19,7 +20,7 @@ IrisButton {
     MaterialSymbol {
         anchors.centerIn: parent
         text: root.glyph
-        fill: 1
+        fill: root.filled ? 1 : 0
         iconSize: Math.round(17 * root.d)
         color: !root.enabled ? IrisStyle.muted : root.selected ? IrisStyle.accent : IrisStyle.text
     }
