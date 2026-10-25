@@ -17,11 +17,11 @@ Rectangle {
 
     readonly property var entries: Array.from(root.model ?? []).filter(entry => entry && entry.visible !== false)
     readonly property int chosenIndex: Math.max(0, root.entries.findIndex(entry => entry.value === root.current))
-    readonly property real inset: 4
+    readonly property real inset: 3
     readonly property real cell: root.entries.length > 0 ? (root.width - 2 * root.inset) / root.entries.length : 0
 
     Layout.fillWidth: true
-    implicitHeight: 44
+    implicitHeight: 36
     radius: Math.min(height / 2, Appearance.rounding.full)
     color: Appearance.colors.colLayer2
 

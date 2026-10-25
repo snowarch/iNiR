@@ -97,8 +97,8 @@ Item {
         Behavior on show { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
         visible: chip.show > 0.01
         opacity: chip.show
-        width: chipRow.implicitWidth + 24
-        height: 30
+        width: chipRow.implicitWidth + 20
+        height: 26
         radius: Math.min(height / 2, Appearance.rounding.full)
         scale: root.hair * (0.92 + 0.08 * chip.show)
         transformOrigin: root.chipBelow ? Item.Top : Item.Bottom
@@ -113,7 +113,7 @@ Item {
             MaterialSymbol {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.locked ? "lock" : (root.widget?.identityGlyph ?? "widgets")
-                iconSize: 16
+                iconSize: 14
                 fill: 1
                 color: Appearance.colors.colOnSecondaryContainer
             }
@@ -133,9 +133,9 @@ Item {
         property string glyph
         property bool selected: false
         property bool danger: false
-        implicitWidth: 40
-        implicitHeight: 40
-        buttonRadius: key.selected ? Appearance.rounding.normal : Appearance.rounding.full
+        implicitWidth: 32
+        implicitHeight: 32
+        buttonRadius: key.selected ? Appearance.rounding.small : Appearance.rounding.full
         colBackground: key.selected ? Appearance.colors.colSecondaryContainer : "transparent"
         colBackgroundHover: key.selected ? Appearance.colors.colSecondaryContainerHover
             : key.danger ? ColorUtils.transparentize(Appearance.colors.colError, 0.84) : Appearance.colors.colLayer3Hover
@@ -144,7 +144,7 @@ Item {
         contentItem: MaterialSymbol {
             anchors.centerIn: parent
             text: key.glyph
-            iconSize: 20
+            iconSize: 18
             fill: key.selected ? 1 : 0
             color: key.selected ? Appearance.colors.colOnSecondaryContainer
                 : key.danger && key.hovered ? Appearance.colors.colError : Appearance.colors.colOnLayer2
@@ -157,8 +157,8 @@ Item {
         visible: root.rise > 0.01
         enabled: root.selected
         opacity: Math.min(1, root.rise * 1.6)
-        width: barRow.implicitWidth + 16
-        height: 56
+        width: barRow.implicitWidth + 8
+        height: 40
         radius: Math.min(height / 2, Appearance.rounding.full)
         color: Appearance.colors.colLayer2
         scale: root.hair * (0.86 + 0.14 * root.rise)
@@ -173,68 +173,85 @@ Item {
         Row {
             id: barRow
             anchors.centerIn: parent
-            spacing: 4
+            spacing: 2
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
-                width: nameRow.implicitWidth + 28
-                height: 40
+                width: nameRow.implicitWidth + 20
+                height: 32
                 radius: Math.min(height / 2, Appearance.rounding.full)
                 color: root.locked ? Appearance.colors.colErrorContainer : Appearance.colors.colSecondaryContainer
                 Row {
                     id: nameRow
                     anchors.centerIn: parent
-                    spacing: 8
+                    spacing: 6
                     MaterialSymbol {
                         anchors.verticalCenter: parent.verticalCenter
                         text: root.locked ? "lock" : (root.widget?.identityGlyph ?? "widgets")
-                        iconSize: 18
+                        iconSize: 16
                         fill: 1
                         color: root.locked ? Appearance.colors.colOnErrorContainer : Appearance.colors.colOnSecondaryContainer
                     }
                     StyledText {
                         anchors.verticalCenter: parent.verticalCenter
                         text: root.name
-                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.pixelSize: Appearance.font.pixelSize.smaller
                         font.weight: Font.DemiBold
                         color: root.locked ? Appearance.colors.colOnErrorContainer : Appearance.colors.colOnSecondaryContainer
                     }
                 }
             }
-            // S M L as one connected group: the chosen size fills and rounds out.
-            Row {
+            // S M L as one segmented track; the chosen size is a pill sliding inside it, every key the same size.
+            Rectangle {
+                id: sizeTrack
+                readonly property var shown: ["small", "medium", "large"].filter(size => root.sizes.includes(size))
+                readonly property int chosenIndex: Math.max(0, sizeTrack.shown.indexOf(root.size))
+                readonly property real cell: 26
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.sizes.length > 1 && !root.locked
-                leftPadding: 4
-                spacing: 2
-                Repeater {
-                    model: ["small", "medium", "large"].filter(size => root.sizes.includes(size))
-                    delegate: RippleButton {
-                        id: sizeKey
-                        required property string modelData
-                        required property int index
-                        readonly property bool chosen: root.size === sizeKey.modelData
-                        implicitWidth: sizeKey.chosen ? 44 : 36
-                        implicitHeight: 40
-                        buttonRadius: sizeKey.chosen ? Math.min(height / 2, Appearance.rounding.full) : Appearance.rounding.verysmall
-                        colBackground: sizeKey.chosen ? Appearance.colors.colPrimary : Appearance.colors.colLayer3
-                        colBackgroundHover: sizeKey.chosen ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer3Hover
-                        colRipple: sizeKey.chosen ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer3Active
-                        Behavior on implicitWidth { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
-                        Behavior on buttonRadius { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
-                        Accessible.name: root.widget?.materialSizeLabels?.[sizeKey.modelData] ?? sizeKey.modelData
-                        onClicked: if (!sizeKey.chosen) root.widget.commitMaterialSize(sizeKey.modelData)
-                        contentItem: StyledText {
-                            anchors.centerIn: parent
-                            horizontalAlignment: Text.AlignHCenter
-                            text: sizeKey.modelData.charAt(0).toUpperCase()
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            font.weight: sizeKey.chosen ? Font.Bold : Font.Medium
-                            color: sizeKey.chosen ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer3
+                width: sizeTrack.shown.length * sizeTrack.cell + 6
+                height: 32
+                radius: Math.min(height / 2, Appearance.rounding.full)
+                color: Appearance.colors.colLayer3
+                Rectangle {
+                    x: 3 + sizeTrack.chosenIndex * sizeTrack.cell
+                    y: 3
+                    width: sizeTrack.cell
+                    height: sizeTrack.height - 6
+                    radius: Math.min(height / 2, Appearance.rounding.full)
+                    color: Appearance.colors.colPrimary
+                    Behavior on x { NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.expressiveFastSpatial } }
+                }
+                Row {
+                    x: 3
+                    y: 3
+                    Repeater {
+                        model: sizeTrack.shown
+                        delegate: RippleButton {
+                            id: sizeKey
+                            required property string modelData
+                            readonly property bool chosen: root.size === sizeKey.modelData
+                            implicitWidth: sizeTrack.cell
+                            implicitHeight: sizeTrack.height - 6
+                            buttonRadius: Math.min(height / 2, Appearance.rounding.full)
+                            colBackground: "transparent"
+                            colBackgroundHover: sizeKey.chosen ? "transparent" : Appearance.colors.colLayer3Hover
+                            colRipple: sizeKey.chosen ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer3Active
+                            Accessible.name: root.widget?.materialSizeLabels?.[sizeKey.modelData] ?? sizeKey.modelData
+                            onClicked: if (!sizeKey.chosen) root.widget.commitMaterialSize(sizeKey.modelData)
+                            contentItem: StyledText {
+                                anchors.centerIn: parent
+                                horizontalAlignment: Text.AlignHCenter
+                                text: sizeKey.modelData.charAt(0).toUpperCase()
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                font.weight: sizeKey.chosen ? Font.Bold : Font.Medium
+                                color: sizeKey.chosen ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer3
+                                Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+                            }
                         }
                     }
                 }
             }
-            Item { width: 4; height: 1 }
+            Item { width: 2; height: 1 }
             Key {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: !root.locked

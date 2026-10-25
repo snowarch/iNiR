@@ -79,8 +79,8 @@ QtObject {
                 id: chip
                 property string label
                 property bool chosen: false
-                implicitHeight: 32
-                implicitWidth: chipLabel.implicitWidth + (chip.chosen ? 44 : 28)
+                implicitHeight: 28
+                implicitWidth: chipLabel.implicitWidth + (chip.chosen ? 38 : 24)
                 buttonRadius: Appearance.rounding.small
                 colBackground: chip.chosen ? Appearance.colors.colSecondaryContainer : "transparent"
                 colBackgroundHover: chip.chosen ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colLayer2Hover
@@ -97,12 +97,12 @@ QtObject {
                     }
                     Row {
                         anchors.centerIn: parent
-                        spacing: 6
+                        spacing: 4
                         MaterialSymbol {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: chip.chosen
                             text: "check"
-                            iconSize: 18
+                            iconSize: 15
                             color: Appearance.colors.colOnSecondaryContainer
                         }
                         StyledText {

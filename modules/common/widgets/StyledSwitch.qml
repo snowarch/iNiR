@@ -12,7 +12,7 @@ import Qt5Compat.GraphicalEffects
  */
 Switch {
     id: root
-    property real scale: 0.8 // m3 spec is 52x32; Lucid's 48x28 reads better than the old 0.6
+    property real scale: 0.7 // m3 spec is 52x32; 0.8 read too big beside our rows, 0.6 too small for the check
     // M3 Expressive's thumb carries a check and a hover halo; the styles with their own control faces keep them.
     readonly property bool expressive: !Appearance.regaliaEverywhere && !Appearance.editorialEverywhere
         && !Appearance.zzzEverywhere && !Appearance.inirEverywhere && !Appearance.angelEverywhere

@@ -122,8 +122,8 @@ Scope {
                 id: key
                 property string glyph
                 property bool selected: false
-                implicitWidth: 40
-                implicitHeight: 40
+                implicitWidth: 32
+                implicitHeight: 32
                 buttonRadius: Appearance.rounding.full
                 colBackground: key.selected ? Appearance.colors.colSecondaryContainer : "transparent"
                 colBackgroundHover: key.selected ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colLayer2Hover
@@ -131,7 +131,7 @@ Scope {
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: key.glyph
-                    iconSize: 20
+                    iconSize: 18
                     fill: key.selected ? 1 : 0
                     color: key.selected ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer2
                 }
@@ -141,8 +141,8 @@ Scope {
                 readonly property bool gridOn: Config.options?.background?.widgets?.editGrid?.snap ?? true
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: desk.margin - (headBody.height + desk.margin + 12) * (1 - desk.p)
-                width: headRow.implicitWidth + 16
-                height: 56
+                width: headRow.implicitWidth + 12
+                height: 44
                 radius: Appearance.rounding.full
                 color: Appearance.colors.colLayer2
                 opacity: Math.min(1, desk.p * 1.4)
@@ -150,7 +150,7 @@ Scope {
                 Row {
                     id: headRow
                     anchors.centerIn: parent
-                    spacing: 4
+                    spacing: 2
                     ToolKey {
                         anchors.verticalCenter: parent.verticalCenter
                         glyph: "undo"
@@ -167,12 +167,12 @@ Scope {
                     }
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: Math.max(titleText.implicitWidth, hintText.implicitWidth) + 28
+                        width: Math.max(titleText.implicitWidth, hintText.implicitWidth) + 24
                         StyledText {
                             id: titleText
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: DesktopEditHistory.notice.length > 0 ? DesktopEditHistory.notice : Translation.tr("Edit Desktop")
-                            font.pixelSize: Appearance.font.pixelSize.small
+                            font.pixelSize: Appearance.font.pixelSize.smallie
                             font.weight: Font.DemiBold
                             color: Appearance.colors.colOnLayer2
                         }
@@ -194,8 +194,8 @@ Scope {
                     RippleButton {
                         id: doneKey
                         anchors.verticalCenter: parent.verticalCenter
-                        implicitHeight: 40
-                        implicitWidth: doneRow.implicitWidth + 32
+                        implicitHeight: 32
+                        implicitWidth: doneRow.implicitWidth + 24
                         buttonRadius: Appearance.rounding.full
                         colBackground: Appearance.colors.colPrimary
                         colBackgroundHover: Appearance.colors.colPrimaryHover
@@ -208,13 +208,13 @@ Scope {
                             MaterialSymbol {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "check"
-                                iconSize: 18
+                                iconSize: 16
                                 color: Appearance.colors.colOnPrimary
                             }
                             StyledText {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: Translation.tr("Done")
-                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.pixelSize: Appearance.font.pixelSize.smaller
                                 font.weight: Font.DemiBold
                                 color: Appearance.colors.colOnPrimary
                             }
