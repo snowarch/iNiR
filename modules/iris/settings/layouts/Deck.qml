@@ -56,7 +56,7 @@ Item {
     property int lastAim: -1
     onAimChanged: { root.trail = root.lastAim; root.lastAim = root.aim }
     readonly property real pos: travel.value
-    readonly property real pitch: root.windowed ? Math.round(root.cardRect.width * 0.22) : Math.round((root.cardRect.width + root.sideWidth) / 2 + root.gap)
+    readonly property real pitch: root.windowed ? Math.round(root.cardRect.width * 0.22) : Math.round(root.cardRect.width * (1 + root.nearScale) / 2 + root.gap)
     readonly property real shift: (root.current - root.pos) * root.pitch
     IrisSpring { id: travel; surface: "settings"; intent: "move"; animate: IrisStyle.motionEnabled }
     function goTo(index: int): void {
@@ -102,20 +102,10 @@ Item {
         root.lastAim = index
     }
     Component.onCompleted: { root.standAt(root.current); root.aim = root.current; admit.start() }
-    // The open area's own rows stand in its card once they are built; until then the card shows what a neighbour shows.
-    readonly property bool live: root.searching || pool.shown === root.section
-    readonly property bool heroArriving: pool.turning
-    // Over the desktop the open page comes in over the last quarter of its card's travel, over the card's own face.
-    // The hero page is the open card's face only while the deck stands on it: on the move the card shows its own face
-    // (built beforehand), so nothing half-faded rides the move and no second title shows through.
-    property real heroShown: 1
-    readonly property bool heroStands: !root.sided || (!root.moving && Math.abs(root.current - root.pos) < 0.01)
-    onHeroStandsChanged: {
-        heroFade.stop()
-        if (root.heroStands) heroFade.start()
-        else root.heroShown = 0
-    }
-    NumberAnimation { id: heroFade; target: root; property: "heroShown"; to: 1; duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing }
+    // The open area's page: over the desktop the open card's own (each card holds its page), in a window the pool's.
+    property Item heroPage: null
+    readonly property Item openPage: root.sided ? root.heroPage : (pool.shown === root.section ? pool.shownItem : null)
+    readonly property bool live: root.searching || root.openPage !== null
     // What the hero's pages leave free: the keys at the card's corner, the key bar under the rows while driving.
     readonly property real heroReserve: keys.width + root.u(30)
     readonly property real heroFoot: root.driving ? hintBar.height + root.u(6) : 0
@@ -123,11 +113,11 @@ Item {
     // A group asked for by name lands once its area's page stands.
     property string wantedGroup: ""
     function showGroup(key: string): void {
-        if (pool.shown === root.section && pool.shownItem?.showGroup) pool.shownItem.showGroup(key)
+        if (root.openPage?.showGroup) root.openPage.showGroup(key)
         else root.wantedGroup = key
     }
     function land(): void {
-        if (root.wantedGroup.length > 0 && pool.shown === root.section) { pool.shownItem?.showGroup?.(root.wantedGroup); root.wantedGroup = "" }
+        if (root.wantedGroup.length > 0 && root.openPage) { root.openPage.showGroup?.(root.wantedGroup); root.wantedGroup = "" }
         if (!root.driving || !root.live || root.cursor >= 0) return
         Qt.callLater(() => { if (root.cursor < 0) { root.cursor = root.stops().length > 0 ? 0 : -1; root.place() } })
     }
@@ -140,10 +130,10 @@ Item {
     readonly property bool paged: Number(root.host?.advancedPage ?? -1) >= 0
     readonly property bool drawsRows: true
     // Where the keys walk: the page in front, or the engine's rows during a search or a shared page.
-    readonly property Item stopsRoot: root.searching || root.paged ? rowsSlot : (pool.shown === root.section ? (pool.shownItem?.rowsRoot ?? null) : null)
+    readonly property Item stopsRoot: root.searching || root.paged ? rowsSlot : (root.openPage?.rowsRoot ?? null)
     readonly property Item flick: {
         root.section
-        return root.searching || root.paged ? root.findFlick(rowsSlot) : (pool.shownItem?.flick ?? null)
+        return root.searching || root.paged ? root.findFlick(rowsSlot) : (root.openPage?.flick ?? null)
     }
     function findFlick(item: Item): Item {
         for (const child of item?.children ?? []) {
@@ -329,15 +319,21 @@ Item {
     }
     readonly property real sideWidth: Math.min(root.u(420), Math.floor((root.width - root.cardRect.width) / 2) - 2 * root.gap - root.u(40))
     readonly property bool sided: !root.windowed && root.sideWidth >= root.u(240)
-    // The neighbours stand back: 92 % of the card, centred on its middle.
+    // The neighbours are the card itself, smaller (the picker's reel): the same page at 84 % beside it, 72 % two out,
+    // centred on its middle. Uniform, so a page laid out once at the card's size scales into every place.
+    readonly property real nearScale: 0.84
+    readonly property real farScale: 0.72
+    readonly property real cardInset: root.u(root.windowed ? 8 : 12)
     function sideRect(step: int): rect {
         const c = root.cardRect
-        const near = Math.abs(step) === 1
-        const w = near ? root.sideWidth : root.u(260)
-        const h = Math.round(c.height * (near ? 0.92 : 0.84))
-        const inner = c.x - root.gap - root.sideWidth
-        const x = step === -1 ? inner : step === 1 ? c.x + c.width + root.gap
-            : step < 0 ? inner - root.gap - w : c.x + c.width + 2 * root.gap + root.sideWidth
+        const s = Math.abs(step) === 1 ? root.nearScale : root.farScale
+        const w = Math.round(c.width * s)
+        const h = Math.round(c.height * s)
+        const near = Math.round(c.width * root.nearScale)
+        const x = step === 1 ? c.x + c.width + root.gap
+            : step === -1 ? c.x - root.gap - w
+            : step > 0 ? c.x + c.width + 2 * root.gap + near
+            : c.x - 2 * root.gap - near - w
         return Qt.rect(Math.round(x), Math.round(c.y + (c.height - h) / 2), w, h)
     }
     // Where a card stands `o` areas off the open one: between the slots it slides and resizes on the one spring.
@@ -356,7 +352,6 @@ Item {
         return Qt.rect(Math.round(a.x + (b.x - a.x) * t), Math.round(a.y + (b.y - a.y) * t),
             Math.round(a.width + (b.width - a.width) * t), Math.round(a.height + (b.height - a.height) * t))
     }
-    readonly property rect liveRect: root.sided ? root.rectAt(root.current - root.pos) : root.cardRect
 
     // The bodies IrisSettings draws and blurs: the head, the card and each neighbour.
     readonly property var panes: {
@@ -375,7 +370,7 @@ Item {
             if (Math.abs(o) >= 2.5) continue
             const r = root.rectAt(o)
             out.push({ id: "deckArea" + root.sections[i].id, x: r.x, y: r.y, width: r.width, height: r.height,
-                radius: IrisStyle.fieldChamfer ? 0 : root.u(30 - 2 * Math.min(1, Math.abs(o))) })
+                radius: IrisStyle.fieldChamfer ? 0 : Math.round(root.u(30) * r.width / Math.max(1, root.cardRect.width)) })
         }
         return out
     }
@@ -415,62 +410,46 @@ Item {
         Spine { step: 2 }
     }
 
-    // ── The neighbours over the desktop.
-    // One card per area for as long as Settings is open: a turn only moves them, it never makes or breaks one.
-    // What a card shows is let in one card a frame, nearest first: while the body opens only the open one and its two
-    // neighbours, so the opening frames carry nothing else; a jump across the deck fills in around where it landed.
-    readonly property real reach: Boolean(root.host?.bodySettled ?? true) ? 3.2 : 1.5
+    // ── The cards over the desktop: one per area near where the deck stands, each its area's own page.
+    // Pages are let in one a beat, nearest first, once the deck stands: while the body opens only the open one, then
+    // out to two either side, so a turn of one or two finds every card it brings in already built.
+    readonly property real reach: Boolean(root.host?.bodySettled ?? true) ? 2.2 : 0.5
     onReachChanged: admit.start()
     Timer {
         id: admit
         interval: 16
         repeat: true
         onTriggered: {
+            if (root.moving) { admit.stop(); return }
             let best = null
             for (let i = 0; i < cards.count; i++) {
                 const card = cards.itemAt(i)
                 if (card && !card.admitted && card.far < root.reach && (!best || card.far < best.far)) best = card
             }
-            if (best) { best.admitted = true; return }
-            if (root.moving) { admit.stop(); return }
-            // then their rows, out to the edge of reach: a card a turn brings in arrives already written, never filled
-            // in once it lands
-            for (let i = 0; i < cards.count; i++) {
-                const card = cards.itemAt(i)
-                if (card && card.admitted && !card.reads && card.far < root.reach && (!best || card.far < best.far)) best = card
-            }
-            if (best) { best.reads = true; return }
-            // then the stages of the two cards beside it, the heavy part, once the body and the open area's page stand:
-            // they took the frames the page was building in, and a stage two cards out is past the screen's edge
-            if (!Boolean(root.host?.bodySettled ?? true) || pool.current !== pool.shown) { admit.stop(); return }
-            for (let i = 0; i < cards.count; i++) {
-                const card = cards.itemAt(i)
-                if (card && card.admitted && !card.staged && card.far < 1.5 && (!best || card.far < best.far)) best = card
-            }
-            if (best) best.staged = true
+            if (best) best.admitted = true
             else admit.stop()
         }
     }
-    // The deck holds the cards within three of where it stands (and where it is going): seven at the open instead of
-    // every area, one more for each card a turn brings near.
-    // A card made at the edge on the way and broken on the way back was the bulk of a turn's work.
+    // The deck holds the cards within two of where it stands (and where it is going, and where it just was): going back
+    // and forth between two areas keeps both, and a card made at the edge on the way and broken on the way back was
+    // the bulk of a turn's work.
     readonly property int stood: root.trail >= 0 && Math.abs(root.trail - root.aim) <= 2 ? root.trail : root.aim
-    readonly property int windowFrom: Math.max(0, Math.floor(Math.min(root.pos, root.aim, root.stood)) - 3)
-    readonly property int windowTo: Math.min(root.sections.length - 1, Math.ceil(Math.max(root.pos, root.aim, root.stood)) + 3)
+    readonly property int windowFrom: Math.max(0, Math.floor(Math.min(root.pos, root.aim, root.stood)) - 2)
+    readonly property int windowTo: Math.min(root.sections.length - 1, Math.ceil(Math.max(root.pos, root.aim, root.stood)) + 2)
     Repeater {
         id: cards
         model: ScriptModel { values: root.sided ? root.sections.slice(root.windowFrom, root.windowTo + 1) : []; objectProp: "id" }
-        AreaCard {}
+        DeckCard {}
     }
 
     // ── The hero: the area's Dot title over its stage, then its rows.
     Item {
         id: card
-        x: root.sided ? root.liveRect.x : root.cardRect.x + (root.windowed ? 0 : root.shift)
-        y: root.liveRect.y
-        width: root.liveRect.width
-        height: root.liveRect.height
-        readonly property real inset: root.u(root.windowed ? 8 : 12)
+        x: root.cardRect.x + (root.windowed || root.sided ? 0 : root.shift)
+        y: root.cardRect.y
+        width: root.cardRect.width
+        height: root.cardRect.height
+        readonly property real inset: root.cardInset
         clip: true
         transform: Translate { x: root.windowed ? root.shift : 0 }
         Rectangle {
@@ -489,8 +468,6 @@ Item {
             anchors.rightMargin: card.inset + root.u(10)
             y: card.inset + root.u(10)
             spacing: root.u(6)
-            // they stay at the open card's corner while the cards travel under them
-            transform: Translate { x: root.cardRect.x + root.cardRect.width - card.x - card.width; y: root.cardRect.y - card.y }
             LayoutSwitch { host: root.host; voice: "deck"; compact: true }
             RoundKey {
                 glyph: root.windowed ? "layers" : "web_asset"
@@ -499,9 +476,10 @@ Item {
             }
             RoundKey { glyph: "close"; name: Translation.tr("Close settings"); onClicked: root.host.close() }
         }
-        // The hero: the area, a page of the pool; a turn moves the cards while the next page builds.
+        // In a window (no room for neighbours) the hero is a page of the pool; over the desktop the cards hold theirs.
         AreaPool {
             id: pool
+            visible: !root.sided
             x: card.inset
             y: card.inset
             // laid out once at the open card's size and scaled with the card while it travels: sized by the card, the
@@ -510,19 +488,18 @@ Item {
             height: root.cardRect.height - y - (root.windowed ? root.u(4) : root.u(34))
             scale: root.sided ? card.width / Math.max(1, root.cardRect.width) : 1
             transformOrigin: Item.TopLeft
-            opacity: root.heroShown
-            current: root.searching ? pool.shown : root.section
+            current: root.sided ? "" : root.searching ? pool.shown : root.section
             hidden: root.searching || root.paged
             // a page asked for mid-travel incubates while the cards move and is finished when they land: built in the
             // frame it was asked for, it stalled the turn halfway (the move then skipped ahead)
-            settled: Boolean(root.host?.bodySettled ?? true) && root.heroShown >= 1
+            settled: Boolean(root.host?.bodySettled ?? true)
             urlFor: id => Qt.resolvedUrl("DeckPage.qml")
             propsFor: id => ({ host: root.host })
             order: root.sections.map(entry => entry.id)
             distance: 0
             crossing: false
             keepsShown: false
-            onArrived: { root.land(); admit.start() }
+            onArrived: root.land()
         }
         // A search's results or a shared page (the Hub), under the keys.
         Item {
@@ -722,201 +699,111 @@ Item {
 
     // A neighbour over the desktop: its Dot name, what it is and its stage, standing back.
     // A value as a neighbour card shows it: its name, and the answer read through the distance.
-    component SideRow: Item {
-        id: sideRow
+    // A card over the desktop: its area's own page, laid out once at the open card's size and scaled to where the card
+    // stands (the wallpaper picker's reel). A turn only moves and scales finished pages: nothing is read, built or
+    // swapped on the way, and the card that lands is already the page you get. Until its page is built the card shows
+    // the page's own head at the page's own place, so the page comes in over it without a line moving.
+    component DeckCard: Item {
+        id: deck
         required property var modelData
-        required property int index
-        height: root.u(44)
-        Rectangle { visible: sideRow.index > 0; width: parent.width; height: 1; color: IrisStyle.hairline }
-        // The answer takes what it needs (a face's name runs long) up to three fifths, the name the rest.
-        IrisText {
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - sideAnswer.width - root.u(12)
-            elide: Text.ElideRight
-            text: root.host?.glanceName(sideRow.modelData) ?? Translation.tr(String(sideRow.modelData.label ?? ""))
-            color: IrisStyle.subtext
-            font.pixelSize: IrisStyle.typeMeta
-        }
-        IrisText {
-            id: sideAnswer
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            width: Math.min(implicitWidth, parent.width * 0.6)
-            elide: Text.ElideRight
-            text: { Config.revision; return root.host?.answerOf(sideRow.modelData) ?? "" }
-            color: IrisStyle.text
-            font.pixelSize: IrisStyle.typeMeta
-            font.weight: IrisStyle.weight(Font.DemiBold)
-        }
-    }
-    component AreaCard: MouseArea {
-        id: side
-        required property var modelData
-        readonly property int index: root.sections.findIndex(entry => entry.id === side.modelData.id)
-        readonly property var entry: side.modelData
-        readonly property real o: side.index - root.pos
-        readonly property real far: Math.abs(side.o)
-        readonly property bool inView: side.far < 2.5
-        // Its values read only near where they are seen (`detail` is 0 past 1.75): every config write re-told the values
-        // of seven cards, each a scan of every option, and rebuilt their rows. What a card built stays until it is well
-        // past where it shows: dropped as soon as it hid, a turn and its way back broke and rebuilt the same rows and
-        // stage on every press.
-        property bool reads: false
+        readonly property var entry: deck.modelData
+        readonly property int at: root.sections.findIndex(entry => entry.id === deck.modelData.id)
+        readonly property real o: deck.at - root.pos
+        readonly property real far: Math.abs(deck.o)
+        readonly property bool hero: deck.at === root.current
+        readonly property rect box: root.rectAt(deck.o)
+        readonly property real s: deck.box.width / Math.max(1, root.cardRect.width)
         property bool admitted: false
-        property bool staged: false
-        onFarChanged: {
-            if (side.far < 1.75 && !root.moving) side.reads = true
-            else if (side.far >= 3.6) side.reads = false
-            if (side.far >= 3.2) side.staged = false
-            if (!root.moving) side.stand = side.standFor()
-        }
-        // read again whenever the deck stands near it, however it got there (a key, the wheel, a jump)
-        readonly property bool standsNear: !root.moving && side.far < 1.75
-        onStandsNearChanged: if (side.standsNear) { side.reads = true; side.stand = side.standFor() }
-        Component.onCompleted: { side.reads = side.far < 1.75; side.stand = side.standFor() }
-        // where its title is fitted: open, beside, two out; held while the deck moves (each fit is a search over sizes,
-        // and a new one mid-turn popped the name's size)
-        function standFor(): int { return side.far < 0.5 ? 0 : side.far < 1.5 ? 1 : 2 }
-        property int stand: 1
-        // what a card says past its name fades out between one and two cards off (built once, never dropped on the way)
-        readonly property real detail: Math.max(0, Math.min(1, (1.75 - side.far) / 0.5))
-        // the open card's own rows stand on it once built: the live card covers this one, once it has come in over it
-        readonly property bool covered: side.index === root.current && root.live && !root.heroArriving && root.heroShown >= 1
-        readonly property rect box: side.inView ? root.rectAt(side.o) : Qt.rect(0, 0, 0, 0)
-        readonly property int notes: Number(root.noteCounts[side.entry?.id] ?? 0)
-        visible: side.inView && !side.covered
-        x: side.box.x
-        y: side.box.y
-        width: side.box.width
-        height: side.box.height
+        readonly property bool ready: page.status === Loader.Ready && page.item !== null && page.item.whole !== false
+        readonly property int notes: Number(root.noteCounts[deck.entry?.id] ?? 0)
+        x: deck.box.x
+        y: deck.box.y
+        width: deck.box.width
+        height: deck.box.height
+        visible: deck.box.x + deck.box.width > 0 && deck.box.x < root.width
         clip: true
-        // a card reads clearer the nearer it stands: 1 open, 0.78 beside, 0.5 two out
-        // while a search reads in the hero the neighbours step back: their areas are not what was asked for
-        opacity: (root.searching && side.index !== root.current ? 0.3 : 1)
-            * (side.far <= 1 ? 1 - 0.22 * side.far : side.far <= 2 ? 0.78 - 0.28 * (side.far - 1) : 0.5 - 0.4 * (side.far - 2))
-        Behavior on opacity { enabled: !root.moving; NumberAnimation { duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing } }
-        enabled: side.index !== root.aim
-        onWheel: wheel => root.wheel(wheel)
-        cursorShape: Qt.PointingHandCursor
-        Accessible.role: Accessible.Button
-        Accessible.name: Translation.tr(String(side.entry?.title ?? ""))
-        onClicked: root.goTo(side.index)
-        // Built in the background a card before it slides into view, let go two cards past it.
-        Loader {
-            active: side.admitted
-            asynchronous: true
-            // Title and line stand where the hero's page puts them (its inset + 22, 20), so the page comes in over them
-            // without a second title.
-            sourceComponent: Column {
-                x: (side.box.x < 0 ? -side.box.x : 0) + root.u(34)
-                y: root.u(32)
-                // the open card's face gives way as its page comes in: a true crossfade, never one text over the other
-                opacity: side.index === root.current && root.live ? 1 - root.heroShown : 1
-                // a fixed width: following the card's own made every text and the stage re-lay on each frame of a turn
-                width: Math.max(0, root.sideWidth - root.u(68))
-                spacing: root.u(8)
-                Row {
-                    spacing: root.u(8)
-                    height: sideTitle.height * sideTitle.grow
-                    // Two cards out a card is its edge at the screen's: a name cut there read as a typo (CON, NO, SID).
-                    opacity: Math.max(0, Math.min(1, (2 - side.far) / 0.5))
-                    DotTitle {
-                        id: sideTitle
-                        // 28 beside, 22 two out, the hero's 40 as it arrives
-                        readonly property real grow: side.far < 1 ? 1 + (40 / 28 - 1) * (1 - side.far) : side.far < 2 ? 1 - (1 - 22 / 28) * (side.far - 1) : 22 / 28
-                        text: Translation.tr(String(side.entry?.title ?? ""))
-                        size: root.u(28)
-                        least: root.u(14)
-                        // fitted to where the card stands, not to each frame of its way (a fit is a search over sizes);
-                        // the open card's title leaves room for the keys at its corner
-                        readonly property int stand: side.stand
-                        fit: sideTitle.stand === 0 ? (root.cardRect.width - root.u(76) - keys.width) * 28 / 40
-                            : sideTitle.stand === 1 ? root.sideWidth - root.u(68) : (root.u(260) - root.u(68)) * 28 / 22
-                        color: side.far < 0.5 ? IrisStyle.text : IrisStyle.subtext
-                        transformOrigin: Item.TopLeft
-                        scale: sideTitle.grow
-                    }
-                    Rectangle { visible: side.notes > 0; anchors.top: parent.top; width: root.u(6); height: width; radius: width / 2; color: root.signal }
+        // quieter the further it stands; in a search the neighbours step back, their areas are not what was asked for
+        opacity: Math.min(1, (root.searching && !deck.hero ? 0.3 : 1)
+            * (deck.far <= 1 ? 1 - 0.3 * deck.far : Math.max(0.3, 0.7 - 0.3 * (deck.far - 1)))
+            * (catcher.containsMouse && !root.moving ? 1.2 : 1))
+        Behavior on opacity { enabled: !root.moving; NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
+        function claim(): void { if (deck.hero) root.heroPage = deck.ready ? page.item : null }
+        onHeroChanged: deck.claim()
+        onReadyChanged: deck.claim()
+        Component.onDestruction: if (root.heroPage !== null && root.heroPage === page.item) root.heroPage = null
+        Item {
+            id: plane
+            x: Math.round(root.cardInset * deck.s)
+            y: Math.round(root.cardInset * deck.s)
+            width: root.cardRect.width - 2 * root.cardInset
+            height: root.cardRect.height - root.cardInset - root.u(34)
+            scale: deck.s
+            transformOrigin: Item.TopLeft
+            // DeckPage's head, line for line: its plate, its Dot title, its line.
+            Item {
+                anchors.fill: parent
+                visible: page.opacity < 1
+                Rectangle {
+                    width: parent.width
+                    height: Math.round(Math.min(root.u(300), plane.height * 0.36))
+                    radius: IrisStyle.fieldChamfer ? 0 : root.u(18)
+                    color: IrisStyle.readingCard
+                }
+                DotTitle {
+                    id: standTitle
+                    x: root.u(22)
+                    y: root.u(20)
+                    text: Translation.tr(String(deck.entry?.title ?? ""))
+                    size: root.u(40)
+                    fit: plane.width - x - root.heroReserve
                 }
                 IrisText {
-                    opacity: side.detail
-                    width: parent.width
-                    wrapMode: Text.WordWrap
-                    maximumLineCount: 2
+                    x: standTitle.x
+                    anchors.top: standTitle.bottom
+                    anchors.topMargin: root.u(8)
+                    width: plane.width - 2 * x
                     elide: Text.ElideRight
-                    text: Translation.tr(String(side.entry?.subtitle ?? ""))
+                    text: Translation.tr(String(deck.entry?.subtitle ?? ""))
                     color: IrisStyle.muted
                     font.pixelSize: IrisStyle.typeMeta
                 }
-                // the stage is the heavy part: it comes a beat later, on its own, into a place kept for it (every area but
-                // Home has a scene): rows that sat up and dropped 200 px when it came read as the card rebuilding
-                Loader {
-                    active: side.staged
-                    asynchronous: true
-                    visible: (Config.options?.iris?.appearance?.previews ?? true) && String(side.entry?.id ?? "") !== "home"
-                    property real lit: (item?.available ?? false) ? 1 : 0
-                    Behavior on lit { enabled: !root.moving; NumberAnimation { duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing } }
-                    opacity: side.detail * lit
-                    width: parent.width
-                    height: root.u(200)
-                    sourceComponent: IrisGroupPreview {
-                        radius: IrisStyle.fieldChamfer ? 0 : root.u(18)
-                        standIn: true
-                        captionOutside: true
-                        section: String(side.entry?.id ?? "")
-                        playing: false
-                    }
-                }
-                // Its first values, as the card would show them, read through the distance.
-                Column {
-                    id: sideRows
-                    readonly property int fit: Math.max(0, Math.min(12, Math.floor((root.sideRect(1).height - root.u(370)) / root.u(44))))
-                    readonly property var rows: side.reads && sideRows.fit > 0 ? (root.host?.tellingRows(sideRows.fit, String(side.entry?.id ?? ""), true) ?? []) : []
-                    visible: sideRows.rows.length > 0
-                    width: parent.width
-                    topPadding: root.u(6)
-                    opacity: 0.72 * side.detail * sideRows.shown
-                    property real shown: 1
-                    // fades in when it first gets rows, never on a value's change
-                    property bool had: false
-                    onRowsChanged: { const has = sideRows.rows.length > 0; if (has && !sideRows.had) rowsIn.restart(); sideRows.had = has }
-                    NumberAnimation { id: rowsIn; target: sideRows; property: "shown"; from: 0; to: 1; duration: IrisStyle.duration(240); easing.type: IrisStyle.feedbackEasing }
-                    Repeater {
-                        model: ScriptModel { values: sideRows.rows; objectProp: "modelKey" }
-                        SideRow { width: sideRows.width }
-                    }
-                }
-                // An area with few values leaves the card's foot to the next one out, dimmed further, under its name.
-                Column {
-                    id: beyond
-                    readonly property var entry: root.sections[side.index + (side.o < 0 ? -1 : 1)] ?? null
-                    readonly property int fit: sideRows.fit - sideRows.rows.length - 1
-                    readonly property var rows: side.reads && beyond.fit > 0 && beyond.entry ? (root.host?.tellingRows(beyond.fit, beyond.entry.id, true) ?? []) : []
-                    visible: sideRows.visible && beyond.rows.length > 0
-                    width: parent.width
-                    opacity: 0.42 * side.detail * Math.min(1, side.far * 2)
-                    IrisText {
-                        height: root.u(44)
-                        verticalAlignment: Text.AlignBottom
-                        bottomPadding: root.u(8)
-                        text: Translation.tr(String(beyond.entry?.title ?? ""))
-                        color: IrisStyle.subtext
-                        font.family: IrisStyle.fontMono
-                        font.pixelSize: Math.max(10, IrisStyle.typeCaption)
-                        font.weight: Font.Medium
-                        font.capitalization: Font.AllUppercase
-                        font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
-                    }
-                    Repeater {
-                        model: ScriptModel { values: beyond.rows; objectProp: "modelKey" }
-                        SideRow { width: beyond.width }
-                    }
-                }
+            }
+            Loader {
+                id: page
+                anchors.fill: parent
+                active: deck.admitted
+                // the open card's page, asked for while the deck stands, builds in that frame (a jump lands on it whole);
+                // every other one in slices between frames
+                asynchronous: !(deck.hero && !root.moving && Boolean(root.host?.bodySettled ?? true))
+                opacity: deck.ready && !(deck.hero && (root.searching || root.paged)) ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing } }
+                visible: opacity > 0
+                enabled: deck.hero && !root.moving
+                sourceComponent: DeckPage { area: String(deck.entry?.id ?? ""); host: root.host }
             }
         }
+        Rectangle {
+            visible: deck.notes > 0 && !deck.hero
+            x: Math.round((root.cardInset + root.u(12)) * deck.s)
+            y: Math.round((root.cardInset + root.u(12)) * deck.s)
+            width: root.u(7)
+            height: width
+            radius: width / 2
+            color: root.signal
+        }
+        // A card beside the open one is a way there, not a page to use: a click turns to it.
+        MouseArea {
+            id: catcher
+            anchors.fill: parent
+            visible: !deck.hero
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            Accessible.role: Accessible.Button
+            Accessible.name: Translation.tr(String(deck.entry?.title ?? ""))
+            onClicked: root.goTo(deck.at)
+            onWheel: wheel => root.wheel(wheel)
+        }
     }
-
-    // A neighbour in a window: a spine with its glyph, a signal dot for notes, its name read upwards.
     component Spine: MouseArea {
         id: spine
         property int step
