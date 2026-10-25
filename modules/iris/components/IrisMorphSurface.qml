@@ -114,7 +114,8 @@ Item {
         running: root.open && root.launched
         onTriggered: {
             const name = root.motionSurface || root.objectName || "surface"
-            if (!root.settled)
+            // a spring still creeping its last thousandth is done to the eye (it warned at "1.00")
+            if (root.presentation < 0.99)
                 console.warn("UI: " + name + " is open but its morph never finished (presentation " + root.presentation.toFixed(2) + ")")
             else if (contentHost.opacity < 0.5 || !contentHost.visible)
                 console.warn("UI: " + name + " is open but its content is invisible")
