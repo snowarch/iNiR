@@ -29,6 +29,8 @@ Item {
     }
     property real screenX: 0
     property real screenY: 0
+    // A small square (a widget's Small): the keys without the times, a step smaller.
+    readonly property bool compact: root.width < 240
     
     readonly property string vizType: Config.getNestedValue("background.widgets.mediaControls.visualizerType", "wave")
     readonly property string vizPosition: Config.getNestedValue("background.widgets.mediaControls.visualizerPosition", "bottom")
@@ -157,8 +159,8 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.margins: 16
-            spacing: 8
+            anchors.margins: root.compact ? 12 : 16
+            spacing: root.compact ? 4 : 8
             
             // Title & Artist
             PlayerInfo {
@@ -167,8 +169,8 @@ Item {
                 artist: playerBase.effectiveArtist
                 titleColor: Appearance.zzzEverywhere ? Appearance.zzz.ink : "white"
                 artistColor: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : ColorUtils.transparentize("white", 0.3)
-                titleSize: Appearance.font.pixelSize.larger
-                artistSize: Appearance.font.pixelSize.normal
+                titleSize: root.compact ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.larger
+                artistSize: root.compact ? Appearance.font.pixelSize.smaller : Appearance.font.pixelSize.normal
                 slideDirection: playerBase.slideDirection
             }
             
@@ -193,6 +195,7 @@ Item {
                 
                 StyledText {
                     id: timeStartLabel
+                    visible: !root.compact
                     Layout.preferredWidth: Math.max(timeStartLabel.implicitWidth, timeEndLabel.implicitWidth)
                     text: StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)
                     font.pixelSize: Appearance.font.pixelSize.smallest
@@ -210,10 +213,10 @@ Item {
                     canGoPrevious: playerBase.effectiveCanGoPrevious
                     canGoNext: playerBase.effectiveCanGoNext
                     isPlaying: playerBase.effectiveIsPlaying
-                    buttonSize: 36
-                    playButtonSize: 48
-                    iconSize: 24
-                    playIconSize: 28
+                    buttonSize: root.compact ? 32 : 36
+                    playButtonSize: root.compact ? 40 : 48
+                    iconSize: root.compact ? 20 : 24
+                    playIconSize: root.compact ? 24 : 28
                     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                     buttonColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt : ColorUtils.transparentize("black", 0.5)
                     buttonHoverColor: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.paperAlt, Appearance.zzz.signal, 0.92) : ColorUtils.transparentize("black", 0.3)
@@ -230,6 +233,7 @@ Item {
                 StyledText {
                     // Both times as wide as the wider: the keys between them sit on the row's centre.
                     id: timeEndLabel
+                    visible: !root.compact
                     Layout.preferredWidth: Math.max(timeStartLabel.implicitWidth, timeEndLabel.implicitWidth)
                     horizontalAlignment: Text.AlignRight
                     text: StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)

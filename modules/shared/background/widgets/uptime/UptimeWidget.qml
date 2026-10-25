@@ -84,7 +84,16 @@ AbstractBackgroundWidget {
     }
 
     // ── Row style (default) ──
-    // Sized: the figure is the widget, the label and mark frame it.
+    // Sized: the two largest units are the figure, each number in the figure face with its unit a step down; when
+    // the session began under it.
+    readonly property var materialParts: {
+        const days = Math.floor(root.sessionSeconds / 86400)
+        const hours = Math.floor(root.sessionSeconds % 86400 / 3600)
+        const minutes = Math.floor(root.sessionSeconds % 3600 / 60)
+        return days > 0 ? [{ value: days, unit: Translation.tr("d") }, { value: hours, unit: Translation.tr("h") }]
+            : hours > 0 ? [{ value: hours, unit: Translation.tr("h") }, { value: minutes, unit: Translation.tr("min") }]
+            : [{ value: minutes, unit: Translation.tr("min") }]
+    }
     ColumnLayout {
         visible: !root.irisFaced && !root.instrument && root.materialSized
         anchors.fill: parent
@@ -105,18 +114,44 @@ AbstractBackgroundWidget {
         }
         Item { Layout.fillHeight: true }
         StyledText {
-            text: Translation.tr("System uptime")
+            text: Translation.tr("Uptime")
             color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
             font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
         }
+        Row {
+            spacing: Math.round(6 * root.scaleFactor)
+            Repeater {
+                model: root.materialParts
+                Row {
+                    id: part
+                    required property var modelData
+                    spacing: Math.round(1 * root.scaleFactor)
+                    StyledText {
+                        id: partValue
+                        text: String(part.modelData.value)
+                        color: root.surfaceInk
+                        font.family: root.widgetNumbersFamily
+                        font.pixelSize: Math.round((root.materialSmall ? 34 : 42) * root.scaleFactor)
+                        font.weight: Font.DemiBold
+                        font.features: ({ "tnum": 1 })
+                    }
+                    StyledText {
+                        anchors.baseline: partValue.baseline
+                        text: part.modelData.unit
+                        color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
+                        font.pixelSize: Math.round((root.materialSmall ? 16 : 19) * root.scaleFactor)
+                        font.weight: Font.DemiBold
+                    }
+                }
+            }
+        }
         StyledText {
             Layout.fillWidth: true
-            text: DateTime.uptime || "--"
-            color: root.surfaceInk
+            visible: root.showSince
+            text: Translation.tr("Since %1").arg(root.bootLabel)
+            color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
             elide: Text.ElideRight
-            font.family: root.widgetNumbersFamily
-            font.pixelSize: Math.round((root.materialSmall ? 30 : 40) * root.scaleFactor)
-            font.weight: Font.DemiBold
+            font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
         }
     }
 

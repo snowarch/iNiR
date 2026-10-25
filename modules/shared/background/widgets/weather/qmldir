@@ -1,2 +1,3 @@
 module qs.modules.shared.background.widgets.weather
 WeatherWidget 1.0 WeatherWidget.qml
+WeatherForecast 1.0 WeatherForecast.qml

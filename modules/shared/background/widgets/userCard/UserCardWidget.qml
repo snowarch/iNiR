@@ -174,9 +174,12 @@ AbstractBackgroundWidget {
         anchors.margins: Math.round(14 * root.scaleFactor)
         spacing: Math.round(10 * root.scaleFactor)
 
-        RowLayout {
+        // Small stacks the picture over the name, which then has the whole width.
+        GridLayout {
             Layout.fillWidth: true
-            spacing: Math.round(12 * root.scaleFactor)
+            columns: root.materialSmall ? 1 : 2
+            columnSpacing: Math.round(12 * root.scaleFactor)
+            rowSpacing: Math.round(8 * root.scaleFactor)
 
             Item {
                 id: avatarContainer
@@ -250,7 +253,7 @@ AbstractBackgroundWidget {
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: root.userDisplay
+                    text: root.materialSmall ? root.username : root.userDisplay
                     elide: Text.ElideRight
                     color: root.surfaceInk
                     font.family: root.widgetTitleFamily
@@ -273,7 +276,7 @@ AbstractBackgroundWidget {
         Rectangle {
             Layout.alignment: Qt.AlignLeft
             Layout.maximumWidth: parent.width
-            visible: root.showWeather && root.weatherLine.text !== ""
+            visible: root.showWeather && root.weatherLine.text !== "" && !root.materialSmall
                 && root.height >= Math.round(170 * root.scaleFactor)
             implicitWidth: Math.min(parent.width,
                 weatherChip.implicitWidth + Math.round(18 * root.scaleFactor))
@@ -336,6 +339,7 @@ AbstractBackgroundWidget {
                         color: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
                     }
                     StyledText {
+                        visible: !root.materialSmall
                         text: Translation.tr("Lock")
                         color: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
                         font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)

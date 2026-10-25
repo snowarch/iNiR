@@ -1,3 +1,4 @@
 module qs.modules.shared.background.widgets.mediaControls
 MediaControlsWidget 1.0 MediaControlsWidget.qml
 InstrumentPlayer 1.0 InstrumentPlayer.qml
+MediaRest 1.0 MediaRest.qml

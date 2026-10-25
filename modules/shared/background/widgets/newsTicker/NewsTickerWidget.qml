@@ -226,11 +226,12 @@ AbstractBackgroundWidget {
     RowLayout {
         visible: !root.irisFaced
         anchors.fill: parent
-        anchors.margins: Math.round(10 * root.scaleFactor)
+        anchors.margins: Math.round((root.materialSized ? 14 : 10) * root.scaleFactor)
         spacing: Math.round(9 * root.scaleFactor)
 
+        // Small gives the headline the whole width: the mark and the open key took half of it.
         MaterialShape {
-            visible: !root.instrument
+            visible: !root.instrument && !root.materialSmall
             Layout.alignment: Qt.AlignVCenter
             implicitSize: Math.round(32 * root.scaleFactor)
             shape: MaterialShape.Shape.Cookie4Sided
@@ -311,7 +312,7 @@ AbstractBackgroundWidget {
                         : NewsService.loading ? Translation.tr("Loading…") : Translation.tr("No news"))
                 color: root.widgetInk
                 wrapMode: Text.WordWrap
-                maximumLineCount: root.materialSized && !root.materialSmall ? 3 : 2
+                maximumLineCount: root.materialSmall ? 5 : root.materialSized ? 3 : 2
                 elide: Text.ElideRight
                 font.family: root.widgetTitleFamily
                 font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.normal
@@ -368,6 +369,7 @@ AbstractBackgroundWidget {
         }
 
         RippleButton {
+            visible: !root.materialSmall
             Layout.alignment: Qt.AlignVCenter
             width: Math.round(32 * root.scaleFactor)
             height: width

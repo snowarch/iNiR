@@ -342,6 +342,26 @@ AbstractBackgroundWidget {
         }
     }
 
+    // What plays is kept so the widget at rest shows the song that played last (the iRiS face keeps it itself).
+    PlayerBase {
+        id: rememberBase
+        player: root.irisFaced ? null : root.meaningfulPlayer
+        positionUpdatesActive: false
+        readonly property string key: root.irisFaced || !rememberBase.effectiveIsPlaying ? ""
+            : [rememberBase.effectiveTitle, rememberBase.effectiveArtist, rememberBase.displayedArtFilePath].join("\u0001")
+        onKeyChanged: {
+            if (rememberBase.key.length === 0 || rememberBase.effectiveTitle.length === 0) return
+            const last = Persistent.states.lastPlayed
+            const identity = String(root.meaningfulPlayer?.identity || String(root.meaningfulPlayer?.desktopEntry ?? "").split(".").pop() || "")
+            last.title = rememberBase.effectiveTitle
+            last.artist = rememberBase.effectiveArtist
+            last.source = identity.length > 0 ? identity.charAt(0).toUpperCase() + identity.slice(1) : ""
+            last.art = rememberBase.displayedArtFilePath
+            last.at = Date.now()
+        }
+        onEffectiveIsPlayingChanged: if (!root.irisFaced && !rememberBase.effectiveIsPlaying
+                && Persistent.states.lastPlayed.title === rememberBase.effectiveTitle) Persistent.states.lastPlayed.at = Date.now()
+    }
     readonly property MprisPlayer meaningfulPlayer: MprisController.activePlayer
     readonly property var meaningfulPlayers: root.meaningfulPlayer
         ? [root.meaningfulPlayer] : []
@@ -579,9 +599,15 @@ AbstractBackgroundWidget {
                 width: Math.min(parent.width, parent.height) * 0.6
                 height: width
             }
+            MediaRest {
+                id: materialRest
+                anchors.fill: parent
+                visible: root.materialSized && !root.instrument && materialRest.known
+                widget: root
+            }
             WidgetBlank {
                 anchors.fill: parent
-                visible: root.materialSized && !root.instrument
+                visible: root.materialSized && !root.instrument && !materialRest.known
                 widget: root
                 icon: "music_note"
                 title: Translation.tr("Nothing playing")

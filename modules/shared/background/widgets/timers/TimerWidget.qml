@@ -224,6 +224,9 @@ AbstractBackgroundWidget {
                     font.weight: root.widgetLabelWeight
                     font.letterSpacing: timerCard.instrumentMode ? root.widgetMetadataTracking : 0
                     font.capitalization: timerCard.instrumentMode ? root.widgetCapitalization : Font.MixedCase
+                    // Three to a row: a long name ("Countdown") steps down a size instead of losing its end.
+                    fontSizeMode: Text.HorizontalFit
+                    minimumPixelSize: Math.round(9 * root.scaleFactor)
                     elide: Text.ElideRight
                 }
 

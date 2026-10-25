@@ -26,6 +26,8 @@ AbstractBackgroundWidget {
     })
 
     readonly property string weatherStyle: root._readConfigKey("style") ?? "pill"
+    // Material's Medium and Large add the hours (and the days) to what the chosen style shows; the dial keeps its own.
+    readonly property bool forecastFace: root.materialSized && root.materialSize !== "small" && root.weatherStyle !== "dial"
     widgetSurfaceEnabled: root.weatherStyle !== "dial"
     readonly property string weatherShape: root._readConfigKey("shape") ?? "pill"
     readonly property real logicalShapeSize: Math.max(1,
@@ -82,12 +84,12 @@ AbstractBackgroundWidget {
 
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
         : root.weatherStyle === "dial" ? Math.round(shapeSize * 1.4) : shapeSize
-    materialFitted: true
+    materialFitted: !root.forecastFace
     materialFitPadding: 0
-    materialNaturalWidth: root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
+    materialNaturalWidth: root.forecastFace ? 0 : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
         : root.weatherStyle === "dial" ? Math.round(shapeSize * 1.4) : shapeSize
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
-    materialNaturalHeight: root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
+    materialNaturalHeight: root.forecastFace ? 0 : root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
     irisFacePart: "weather"
     irisSizes: ["small", "medium", "large"]
     irisOptions: [
@@ -253,7 +255,7 @@ AbstractBackgroundWidget {
     // treatment at all. Fake a hairline stroke with a second, slightly larger
     // shape behind the fill in the hairline colour.
     MaterialShape {
-        visible: !root.irisFaced && root.weatherStyle === "pill" && Appearance.zzzEverywhere
+        visible: !root.irisFaced && !root.forecastFace && root.weatherStyle === "pill" && Appearance.zzzEverywhere
         anchors.centerIn: parent
         shape: root.pillShapeEnum
         color: Appearance.zzz.hairlineStrong
@@ -261,7 +263,7 @@ AbstractBackgroundWidget {
     }
 
     MaterialShape {
-        visible: !root.irisFaced && root.weatherStyle === "pill" && (Appearance.inirEverywhere || Appearance.angelEverywhere)
+        visible: !root.irisFaced && !root.forecastFace && root.weatherStyle === "pill" && (Appearance.inirEverywhere || Appearance.angelEverywhere)
         anchors.centerIn: parent
         shape: root.pillShapeEnum
         color: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.angel.colCardBorder
@@ -270,7 +272,7 @@ AbstractBackgroundWidget {
 
     MaterialShape {
         id: pillBackground
-        visible: !root.irisFaced && root.weatherStyle === "pill"
+        visible: !root.irisFaced && !root.forecastFace && root.weatherStyle === "pill"
         anchors.centerIn: parent
         width: root.materialFits ? root.materialNaturalWidth : parent.width
         height: root.materialFits ? root.materialNaturalHeight : parent.height
@@ -284,7 +286,7 @@ AbstractBackgroundWidget {
         irisPresentation: root.widgetIris
         regionBrightness: root.regionBrightness
         id: cardBackground
-        shown: !root.irisFaced && (root.weatherStyle === "card" || root.weatherStyle === "detail")
+        shown: !root.irisFaced && (root.forecastFace || root.weatherStyle === "card" || root.weatherStyle === "detail")
             && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
         anchors.centerIn: parent
         width: root.materialFits ? root.materialNaturalWidth : parent.width
@@ -306,7 +308,7 @@ AbstractBackgroundWidget {
 
     ColumnLayout {
         id: detailLayout
-        visible: !root.irisFaced && root.weatherStyle === "detail"
+        visible: !root.irisFaced && !root.forecastFace && root.weatherStyle === "detail"
         anchors.centerIn: parent
         width: (root.materialFits ? root.materialNaturalWidth : parent.width) - Math.round(32 * root.scaleFactor)
         height: (root.materialFits ? root.materialNaturalHeight : parent.height) - Math.round(32 * root.scaleFactor)
@@ -422,7 +424,7 @@ AbstractBackgroundWidget {
         anchors.centerIn: parent
         width: root.materialFits ? root.materialNaturalWidth : parent.width
         height: root.materialFits ? root.materialNaturalHeight : parent.height
-        visible: !root.irisFaced && root.weatherStyle !== "detail" && root.weatherStyle !== "dial"
+        visible: !root.irisFaced && !root.forecastFace && root.weatherStyle !== "detail" && root.weatherStyle !== "dial"
 
         MaterialSymbol {
             visible: root.visibleContentCount === 0
@@ -504,6 +506,16 @@ AbstractBackgroundWidget {
                 bottom: root.showIcon ? undefined : parent.bottom
                 bottomMargin: root.showIcon ? 0 : root.contentInset
             }
+        }
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: !root.irisFaced && root.forecastFace
+        visible: active
+        sourceComponent: WeatherForecast {
+            widget: root
+            large: root.materialLarge
         }
     }
 

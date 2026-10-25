@@ -221,9 +221,9 @@ AbstractBackgroundWidget {
 
     RowLayout {
         id: noteHeading
-        x: 14 * root.scaleFactor
-        y: 10 * root.scaleFactor
-        width: root.width - 28 * root.scaleFactor
+        x: 16 * root.scaleFactor
+        y: 14 * root.scaleFactor
+        width: root.width - 32 * root.scaleFactor
         visible: !root.irisFaced && root.height >= 120 * root.scaleFactor
         spacing: 6 * root.scaleFactor
         MaterialSymbol {

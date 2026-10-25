@@ -76,7 +76,8 @@ AbstractBackgroundWidget {
     readonly property color tertiaryFace: root.widgetSemanticContainer(root.widgetTertiaryRole)
     readonly property color tertiaryInk: root.widgetSemanticOnContainer(root.widgetTertiaryRole)
     readonly property real inset: Math.round(12 * root.scaleFactor)
-    readonly property real itemHeight: Math.round(48 * root.scaleFactor)
+    readonly property real itemHeight: Math.round((root.materialSmall ? 36 : 48) * root.scaleFactor)
+    readonly property real taskFontSize: Math.round((root.materialSmall ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.normal) * root.scaleFactor)
 
     function openNewTask(): void {
         root.editingText = ""
@@ -225,6 +226,7 @@ AbstractBackgroundWidget {
             spacing: Math.round(9 * root.scaleFactor)
 
             RowLayout {
+                id: listHead
                 Layout.fillWidth: true
                 spacing: Math.round(6 * root.scaleFactor)
 
@@ -253,7 +255,7 @@ AbstractBackgroundWidget {
                         text: Translation.tr("Todo")
                         color: root.ink
                         font.family: root.widgetTitleFamily
-                        font.pixelSize: Math.round(Appearance.font.pixelSize.huge
+                        font.pixelSize: Math.round((root.materialSmall ? Appearance.font.pixelSize.larger : Appearance.font.pixelSize.huge)
                             * root.widgetTitleScale * root.scaleFactor)
                         font.weight: root.widgetTitleWeight
                         font.letterSpacing: root.widgetTitleTracking
@@ -274,7 +276,7 @@ AbstractBackgroundWidget {
                 }
 
                 RippleButton {
-                    visible: root.completedCount > 0
+                    visible: root.completedCount > 0 && !root.materialSmall
                     Layout.preferredWidth: Math.round((root.instrument ? 30 : 34) * root.scaleFactor)
                     Layout.preferredHeight: Math.round((root.instrument ? 30 : 34) * root.scaleFactor)
                     buttonRadius: root.instrument ? root.widgetControlRadius : Appearance.rounding.full
@@ -318,8 +320,12 @@ AbstractBackgroundWidget {
 
             StyledListView {
                 id: todoList
+                // Whole rows only: a half row under the plate's edge read as cut.
+                readonly property real step: root.itemHeight + todoList.spacing
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.maximumHeight: Math.max(root.itemHeight,
+                    Math.floor((listPage.height - listHead.height - listPage.spacing + todoList.spacing) / todoList.step) * todoList.step - todoList.spacing)
                 clip: true
                 spacing: Math.round(6 * root.scaleFactor)
                 model: root.visibleTaskEntries
@@ -336,6 +342,8 @@ AbstractBackgroundWidget {
 
                     width: todoList.width
                     implicitHeight: root.itemHeight
+                    // a row the list has no room for is not drawn under the plate's edge
+                    visible: taskRow.y + taskRow.height <= todoList.contentY + todoList.height + 1
                     padding: 0
                     background: null
                     clip: true
@@ -360,9 +368,9 @@ AbstractBackgroundWidget {
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: Math.round(10 * root.scaleFactor)
-                            anchors.rightMargin: Math.round(12 * root.scaleFactor)
-                            spacing: Math.round(9 * root.scaleFactor)
+                            anchors.leftMargin: Math.round((root.materialSmall ? 6 : 10) * root.scaleFactor)
+                            anchors.rightMargin: Math.round((root.materialSmall ? 8 : 12) * root.scaleFactor)
+                            spacing: Math.round((root.materialSmall ? 5 : 9) * root.scaleFactor)
 
                             InstrumentLabel {
                                 visible: root.instrument
@@ -425,7 +433,7 @@ AbstractBackgroundWidget {
                                 color: rowInk
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
-                                font.pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
+                                font.pixelSize: root.taskFontSize
                                 font.strikeout: taskRow.modelData.done
                             }
 
@@ -433,9 +441,9 @@ AbstractBackgroundWidget {
                                 Layout.preferredWidth: Math.round(28 * root.scaleFactor)
                                 Layout.preferredHeight: Math.round(28 * root.scaleFactor)
                                 Layout.alignment: Qt.AlignVCenter
-                                enabled: taskRow.modelData.done || taskHover.hovered
-                                opacity: taskRow.modelData.done ? 0.78
-                                    : taskHover.hovered ? 0.58 : 0
+                                // It takes room only while it shows: a hidden key kept the task's words short.
+                                visible: taskRow.modelData.done || taskHover.hovered
+                                opacity: taskRow.modelData.done ? 0.78 : 0.58
                                 buttonRadius: root.widgetControlRadius
                                 colBackground: "transparent"
                                 colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colError, 0.12)
