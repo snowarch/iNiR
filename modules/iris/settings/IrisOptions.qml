@@ -40,9 +40,49 @@ QtObject {
         return { label: label, value: name, glyph: glyph, values: root.waveKeys.map(key => scene?.values[key] !== undefined ? scene.values[key] : null) }
     }
     function waveShown(): bool { return Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) }
+    // ── The Edge wave (Organic edge), whole, in Now Playing, after the group's own rows (`trail`) ──
+    function edge(key: string, label: string, kind: string, extra: var): var {
+        return Object.assign({ section: "player", group: "Edge wave", path: EdgeConfig.path + "." + key, label: label, kind: kind,
+            fallback: EdgeConfig.defaults[key], visibleWhen: "iris.surround.music=widget", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable), tune: true, trail: true }, extra ?? {})
+    }
+    function edgeChoices(list: var): var { return list.map(entry => ({ label: entry[1], value: entry[0] })) }
+    readonly property var edgeRows: [
+        root.edge("edges", "Sides", "pieces", { part: "Where", choices: root.edgeChoices([["top", "Top"], ["right", "Right"], ["bottom", "Bottom"], ["left", "Left"]]), tune: false }),
+        root.edge("respectPanels", "Respect bars and dock", "switch", { part: "Where" }),
+        root.edge("joinMode", "Corner relationship", "choice", { part: "Where", choices: root.edgeChoices([["auto", "Join connected edges"], ["separate", "Keep edges separate"]]) }),
+        ...[["span", "Edge length", 10, 100, 5, " %"], ["position", "Position along edge", 0, 100, 1, " %"], ["depth", "Field depth", 24, 600, 4, " px"],
+            ["inset", "Screen inset", 0, 160, 2, " px"], ["cornerRadius", "Screen corner radius", 0, 160, 2, " px"], ["cornerBlend", "Corner handoff", 0, 100, 5, " %"],
+            ["taper", "Endpoint softness", 0, 50, 1, " %"], ["topScale", "Top reach", 10, 200, 5, " %"], ["rightScale", "Right reach", 10, 200, 5, " %"],
+            ["bottomScale", "Bottom reach", 10, 200, 5, " %"], ["leftScale", "Left reach", 10, 200, 5, " %"]]
+            .map(entry => root.edge(entry[0], entry[1], "range", { part: "Where", min: entry[2], max: entry[3], step: entry[4], unit: entry[5] })),
+        root.edge("style", "Material", "choice", { part: "Material", choices: root.edgeChoices([["silk", "Silk"], ["aurora", "Aurora"], ["contour", "Contour"], ["liquid", "Liquid"]]) }),
+        root.edge("shape", "Contour language", "choice", { part: "Material", choices: root.edgeChoices([["flow", "Flow"], ["ribbon", "Ribbon"], ["cells", "Pulse cells"], ["filament", "Filament"]]) }),
+        root.edge("colorMode", "Color movement", "choice", { part: "Material", choices: root.edgeChoices([["flow", "Flow"], ["spectrum", "Spectrum"], ["pulse", "Beat"], ["static", "Static"]]) }),
+        root.edge("effectMode", "Light behavior", "choice", { part: "Material", choices: root.edgeChoices([["clean", "Clean"], ["shimmer", "Harmonic shimmer"], ["echo", "Pulse echo"], ["prism", "Spectral prism"],
+            ["bloom", "Bass bloom"], ["caustic", "Liquid caustics"], ["afterglow", "Peak afterglow"]]) }),
+        ...[["primaryColor", "Primary"], ["secondaryColor", "Secondary"], ["tertiaryColor", "Tertiary"]]
+            .map(entry => root.edge(entry[0], entry[1], "text", { part: "Material", placeholder: String(EdgeConfig.defaults[entry[0]]), showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable)
+                && String(Config.getNestedValue(EdgeConfig.path + ".palette", "theme")) === "custom" })),
+        ...[["thickness", "Body weight", 5, 70, 1], ["bodyOpacity", "Body opacity", 0, 100, 5], ["crestStrength", "Crest brightness", 0, 150, 5], ["detail", "Contour detail", 0, 100, 5],
+            ["glow", "Glow intensity", 0, 100, 5], ["glowSpread", "Glow spread", 0, 100, 5], ["effectStrength", "Effect strength", 0, 100, 5],
+            ["colorSpeed", "Color travel", 0, 100, 5], ["colorIntensity", "Color intensity", 0, 150, 5]]
+            .map(entry => root.edge(entry[0], entry[1], "range", { part: "Material", min: entry[2], max: entry[3], step: entry[4], unit: " %" })),
+        root.edge("hueShift", "Hue shift", "range", { part: "Material", min: -180, max: 180, step: 5, unit: "°" }),
+        root.edge("restPresence", "Rest presence", "range", { part: "Music", min: 0, max: 100, step: 5, unit: " %" }),
+        root.edge("frequencyProfile", "Frequency focus", "choice", { part: "Music", choices: root.edgeChoices([["flat", "Balanced"], ["bass", "Bass"], ["warm", "Warm"], ["vocal", "Vocals"], ["treble", "Treble"], ["smile", "Bass + treble"]]) }),
+        root.edge("flowDirection", "Travel direction", "choice", { part: "Music", choices: root.edgeChoices([["clockwise", "Clockwise"], ["counterclockwise", "Counter-clockwise"]]) }),
+        ...[["motionSpeed", "Motion speed", 0, 250, 5, " %"], ["idleMotion", "Ambient motion", 0, 100, 5, " %"], ["sensitivity", "Audio sensitivity", 0, 200, 5, " %"],
+            ["audioRange", "Audio range", 0, 150, 5, " %"], ["pulse", "Beat pulse", 0, 150, 5, " %"], ["beatGlow", "Beat glow", 0, 150, 5, " %"],
+            ["transientStrength", "Transient punch", 0, 150, 5, " %"], ["attack", "Attack speed", 20, 250, 5, " %"], ["release", "Release speed", 20, 250, 5, " %"],
+            ["smoothing", "Audio smoothing", 0, 8, 1, ""], ["bassDrive", "Bass drive", 0, 150, 5, " %"], ["trebleDrive", "Treble shimmer", 0, 150, 5, " %"],
+            ["compression", "Frequency separation", 0, 100, 5, " %"], ["accentStrength", "Frequency emphasis", 0, 100, 5, " %"]]
+            .map(entry => root.edge(entry[0], entry[1], "range", { part: "Music", min: entry[2], max: entry[3], step: entry[4], unit: entry[5] })),
+        root.edge("screenList", "Screens", "pieces", { part: "Where", choicesFrom: "screens", description: "None chosen shows it on every screen.", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) && Quickshell.screens.length > 1 })
+    ]
+
     // An icon row is keyed by its piece inside one shared list, not by its own path.
     function currentValue(spec: var): var {
-        if (spec.widget) return IrisWidgetRows.read(spec)
+        if (spec.widget) return DesktopWidgetOptions.read(spec)
         if (spec.widgetDesign) return DesktopWidgetDesign.current
         if (spec.niri) return IrisNiri.value(spec)
         if (spec.kind === "niriMotion") return NiriAnimationPresets.activeId
@@ -120,7 +160,7 @@ QtObject {
     function write(spec: var, next: var): void {
         // A family switch goes through the shell's transition, never a bare config write.
         if (spec.path === "panelFamily") Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "panelFamily", "set", String(next)])
-        else if (spec.widget) IrisWidgetRows.write(spec, next)
+        else if (spec.widget) DesktopWidgetOptions.write(spec, next)
         else if (spec.widgetDesign) DesktopWidgetDesign.apply(String(next))
         else if (spec.niri) IrisNiri.set(spec, next)
         else if (spec.kind === "icon") IrisPieces.setGlyph(String(spec.piece ?? ""), String(next ?? ""))
@@ -178,7 +218,7 @@ QtObject {
         if (spec.choicesFrom === "microphones") return [{ label: "Default microphone", value: "" }].concat(Audio.inputDevices.map(node => ({ label: Audio.friendlyDeviceName(node), value: String(node.name) })))
         if (spec.choicesFrom === "iconThemes") { IconThemeService.ensureInitialized(); return IconThemeService.availableThemes.map(name => ({ label: String(name).replace(/[_-]/g, " "), value: String(name) })) }
         if (spec.choicesFrom === "colourThemes") return root.colourThemeIds.map(id => ({ label: id === "auto" ? "Wallpaper" : String(ThemePresets.getPreset(id).name), value: id }))
-        if (spec.choicesFrom) return IrisWidgetRows.choicesFor(String(spec.choicesFrom))
+        if (spec.choicesFrom) return DesktopWidgetOptions.choicesFor(String(spec.choicesFrom))
         return spec.choices ?? []
     }
     // A scheme's tuning is listed only when that scheme can be the one in use: the one chosen, or dark and light under Auto.
@@ -1676,14 +1716,14 @@ QtObject {
         bubbles: ["Size", "Behaviour", "On the contour", "Floating", "Opening bodies", "Cards", "Card contents", "Joining", "Tray"],
         dock: ["Notch", "Look", "Icons", "Visibility"],
         desktop: ["Widgets", "Desktop menu"],
-        widgets: IrisWidgetRows.order,
+        widgets: DesktopWidgetOptions.order,
         wallpaper: ["Wallpaper shuffle", "Transition", "Live wallpapers", "Wallpaper gallery", "Library", "Scaling", "Behind windows", "Parallax", "Overview backdrop"],
         lock: ["When idle", "Security", "Scene", "Clock", "At a glance", "Now playing", "Activity", "Status", "Sign in", "Type"],
         player: ["Bubble", "Visualizer", "Player", "Frame music", "Edge wave", "Frame response", "Frame finish"]
     })
     // How a section's page reads: named blocks of groups, by what someone came to change.
     readonly property var groupClusters: ({
-        widgets: IrisWidgetRows.clusters,
+        widgets: DesktopWidgetOptions.clusters,
         sources: [
             { caption: "Internet", groups: ["Weather", "Calendar", "Network"] },
             { caption: "Connections", groups: ["Hotspot", "VPN"] },
@@ -1744,7 +1784,7 @@ QtObject {
         return move && move.groups.indexOf(String(spec.group ?? "")) >= 0 ? Object.assign({}, spec, { section: move.to }) : spec
     }
     readonly property var settings: {
-        const rows = root.behaviour.concat(root.shared).concat(root.niriRows).concat(IrisWidgetRows.rows).concat(IrisWidgetRows.edgeRows).map(spec => root.placed(spec))
+        const rows = root.behaviour.concat(root.shared).concat(root.niriRows).concat(DesktopWidgetOptions.rows).concat(root.edgeRows).map(spec => root.placed(spec))
         const known = new Set(rows.map(spec => spec.path))
         const look = []
         for (const spec of root.studio) {

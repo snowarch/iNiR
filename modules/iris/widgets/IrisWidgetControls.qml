@@ -28,6 +28,8 @@ ColumnLayout {
     property real plateRadius: IrisStyle.radiusRow
     // Under a chamfered Design the plates take the cut instead, nested in the sheet's (`IrisStyle.nestedCut`).
     property real plateCut: IrisStyle.chamferCut
+    // The widget's own Settings rows, given by a host that can draw them (the edit sheet); else its short list.
+    property Component optionRows: null
     readonly property var pages: [
         { value: "widget", label: Translation.tr("Widget") },
         { value: "look", label: Translation.tr("Look") },
@@ -466,7 +468,7 @@ ColumnLayout {
                         readonly property real cell: Math.round(14 * root.d)
                         chosen: root.widget.irisSize === sizeTile.modelData
                         label: root.widget.irisSizeLabels[sizeTile.modelData] ?? sizeTile.modelData
-                        onPicked: root.widget.setIrisOption("size", sizeTile.modelData)
+                        onPicked: root.widget.commitIrisSize(sizeTile.modelData)
                         Rectangle {
                             anchors.centerIn: parent
                             width: sizeTile.modelData === "small" ? sizeTile.cell : sizeTile.cell * 2 + 2
@@ -479,8 +481,15 @@ ColumnLayout {
             }
         }
 
+        Loader {
+            active: root.optionRows !== null
+            visible: active
+            Layout.fillWidth: true
+            sourceComponent: root.optionRows
+        }
+
         Repeater {
-            model: root.widget.irisOptions
+            model: root.optionRows === null ? root.widget.irisOptions : []
 
             ColumnLayout {
                 id: option

@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 dev/tools/generate-ipc-registry.py
-# IPC.md hash: aab2cc5a11bf2011
+# IPC.md hash: 0e10f89c3ef630a9
 # Targets: 77
 
 declare -gA IPC_TARGET_DESC=(
@@ -282,7 +282,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["background:presets"]="The desktops you can wear (factory first, then saved) as JSON, and which one is worn"
   ["background:wearPreset"]="Wear a desktop by id (\`factory:glance\`, \`factory:dashboard\`, \`factory:focus\`, \`factory:listening\`, \`factory:bare\`, or a saved one)"
   ["background:savePreset"]="Save this desktop under a name (empty = \"Desktop N\") and print its id"
-  ["background:sizeWidget"]="Set an iRiS widget's size class (\`small\`, \`medium\`, \`large\`) as its size key does; neighbours it now covers move aside while arranging"
+  ["background:sizeWidget"]="Set a widget's size class (\`small\`, \`medium\`, \`large\`) in the family drawing it; every family keeps that size, and neighbours it now covers move aside while arranging"
   ["background:widgetRects"]="Where every desktop widget sits on each screen, as JSON"
   ["background:widgetFit"]=""
   ["background:editState"]="Report the active selection, physical panel insets, full desktop work area and panel-aware zone work area for each output"
@@ -292,7 +292,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["background:applyOrganicEdgeResponse"]="Apply only an Organic Edge music-response preset"
   ["background:organicEdgeState"]="Report each Organic Edge output, selected edges, frame, audio subscription and shader status"
   ["background:setOrganicEdgeEnabled"]="Enable or disable the independent Organic Edge screen field"
-  ["background:quickControlsPage"]="Show a page of the selected widget's quick controls: widget, look or arrange (and stack, for a widget in a stack)"
+  ["background:quickControlsPage"]="Show a page of the selected widget's quick controls: widget, look or arrange (and stack, for a widget in a stack; options, every option Settings has, where the widget draws its Material face)"
   ["background:quickControlsGeometry"]="Report where the selected widget's toolbar and quick-controls sheet sit, as JSON"
   ["background:widgetSnapshot"]="Save one desktop widget, as it renders now, to a PNG (offscreen: works while windows cover the desktop)."
   ["background:legibilityState"]="Report what each desktop widget reads under itself (brightness, spread, light or dark backdrop) and the ink and accent it chose"

@@ -7,6 +7,7 @@ import qs.modules.common
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.widgets
+import qs.modules.shared.background.widgets
 
 // A chosen widget's controls while arranging, at their true size beside the widget on the card (the card is shrunk,
 // they are not). A body of the edit window's field that grows out of the side of the widget it belongs to.
@@ -19,6 +20,17 @@ Item {
     property rect avoid: Qt.rect(0, 0, 0, 0)
 
     readonly property real d: IrisStyle.density
+    // Everything Settings offers for this widget, minus what the sheet already draws (size, Look, Arrange).
+    readonly property var rows: {
+        const key = String(root.held?.configEntryName ?? "")
+        const drawn = ["iris.size", "iris.design", "iris.material", "widgetScale", "placementStrategy", "locked"]
+        return DesktopWidgetOptions.widgetRows.filter(spec => spec.widget === key && !spec.widgetEnable && !drawn.includes(spec.key))
+            .map(spec => Object.assign({}, spec, { group: "" }))
+    }
+    Component {
+        id: rowsComponent
+        IrisEditRows { specs: root.rows }
+    }
     Component.onCompleted: DesktopEditStage.setSheetHost(root.outputName, true)
     Component.onDestruction: DesktopEditStage.setSheetHost(root.outputName, false)
 
@@ -106,6 +118,7 @@ Item {
                     widget: root.held
                     plateRadius: IrisStyle.concentric(IrisStyle.radiusPlate, root.pad, IrisStyle.radiusChip)
                     plateCut: IrisStyle.nestedCut(IrisStyle.chamferCut, root.pad)
+                    optionRows: root.rows.length > 0 ? rowsComponent : null
                 }
             }
         }

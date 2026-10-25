@@ -171,17 +171,19 @@ Scope {
         function savePreset(name: string): string {
             return DesktopPresets.save(name)
         }
-        // An iRiS widget's size class (small, medium, large) on every screen it is out on, as the size key sets it.
+        // A widget's size class (small, medium, large) on every screen it is out on, in the family drawing it.
         function sizeWidget(widgetName: string, size: string): string {
             const out = []
             for (const output of Object.keys(backgroundScope.widgetCanvases)) {
                 const canvas = backgroundScope.widgetCanvases[output]
                 if (!canvas || typeof canvas._loadedDesktopWidgets !== "function") continue
-                for (const widget of canvas._loadedDesktopWidgets())
-                    if (widget.configEntryName === widgetName && widget.irisSizeChoices.includes(size)) {
-                        widget.commitIrisSize(size)
-                        out.push(output)
-                    }
+                for (const widget of canvas._loadedDesktopWidgets()) {
+                    if (widget.configEntryName !== widgetName) continue
+                    if (widget.materialSized && widget.materialSizes.includes(size)) widget.commitMaterialSize(size)
+                    else if (!widget.materialSized && widget.irisSizeChoices.includes(size)) widget.commitIrisSize(size)
+                    else continue
+                    out.push(output)
+                }
             }
             return out.length > 0 ? widgetName + " " + size + " on " + out.join(", ") : "no " + widgetName + " that takes " + size
         }
@@ -306,12 +308,13 @@ Scope {
                 .find(item => item.configEntryName === name) ?? null
             if (!widget)
                 return "select a widget first: focusWidget <name> true"
-            const pages = widget.irisFaced ? ["widget", "look", "arrange"].concat(widget.stacked ? ["stack"] : []) : ["widget", "colors", "layout"]
+            const pages = widget.irisFaced ? ["widget", "look", "arrange"].concat(widget.stacked ? ["stack"] : [])
+                : ["widget", "colors", "layout"].concat(widget.hasOptionRows ? ["options"] : [])
             const aliases = ({ look: widget.irisFaced ? "look" : "colors", colors: widget.irisFaced ? "look" : "colors",
-                arrange: widget._arrangeTab, layout: widget._arrangeTab, widget: "widget", stack: "stack" })
+                arrange: widget._arrangeTab, layout: widget._arrangeTab, widget: "widget", stack: "stack", options: "options" })
             const target = aliases[String(page ?? "").trim()] ?? ""
             if (!pages.includes(target))
-                return "pages: widget, look, arrange" + (widget.stacked ? ", stack" : "")
+                return "pages: widget, look, arrange" + (widget.stacked ? ", stack" : "") + (!widget.irisFaced && widget.hasOptionRows ? ", options" : "")
             widget.openQuickControls(target)
             return JSON.stringify({ widget: key, page: target })
         }

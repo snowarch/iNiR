@@ -1863,7 +1863,7 @@ AbstractWidget {
         root._resizePreviewValues = ({})
         root._irisSizing = false
         if (size !== String(root._readConfigKey("iris.size") ?? ""))
-            root.setIrisOption("size", size)
+            root._setOutputValues(root.stacked ? { "iris.size": size } : root._sizeValues(size))
         _irisSizeSettle.restart()
     }
     Timer {
@@ -2055,6 +2055,7 @@ AbstractWidget {
     }
     property Component _autoPopoverComponent: _manifestKeyList.length > 0 ? _autoPopoverRef : null
     readonly property Component _widgetSpecificPopover: root.editPopoverContent
+    readonly property bool hasOptionRows: DesktopWidgetOptions.widgetRows.some(spec => spec.widget === root.configEntryName && !spec.widgetEnable)
         ?? (root._manifestKeyList.length > 0 ? root._autoPopoverComponent : null)
     property string _quickTab: "widget"
     readonly property string identityGlyph: DesktopWidgetRegistry.glyph(root.configEntryName)
@@ -2114,6 +2115,7 @@ AbstractWidget {
 
             readonly property var pages: [
                 { value: "widget", label: Translation.tr("Widget"), visible: root._widgetSpecificPopover !== null && !root.locked },
+                { value: "options", label: Translation.tr("Options"), visible: root.hasOptionRows && !root.locked },
                 { value: "colors", label: Translation.tr("Look"), visible: (root.semanticPaletteQuickControls
                     || (root.widgetIrisFamily && root.hasIrisFace)) && !root.locked },
                 { value: "layout", label: Translation.tr("Arrange") }
@@ -2146,6 +2148,27 @@ AbstractWidget {
                 sourceComponent: root._widgetSpecificPopover
                 Layout.fillWidth: true
                 Layout.preferredHeight: item?.implicitHeight ?? 0
+            }
+
+            // Everything Settings has for this widget, scrolled when the screen has less room than the list.
+            Flickable {
+                visible: semanticQuickRoot.page === "options"
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.min(contentHeight, Math.max(Math.round(200 * semanticQuickRoot.d),
+                    semanticQuickRoot.availableHeight - Math.round(140 * semanticQuickRoot.d)))
+                contentHeight: optionsLoader.item?.implicitHeight ?? 0
+                interactive: contentHeight > height
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
+                Loader {
+                    id: optionsLoader
+                    width: parent.width
+                    active: semanticQuickRoot.page === "options"
+                    sourceComponent: WidgetOptionList {
+                        widget: root.configEntryName
+                        exclude: ["iris.size", "iris.design", "iris.material", "placementStrategy", "locked"]
+                    }
+                }
             }
 
             ColumnLayout {
@@ -2299,6 +2322,7 @@ AbstractWidget {
         _seedDefaultsIfNeeded();
         root._syncPlacementStrategy();
         _placementLater.restart();
+        Qt.callLater(root._keepSize)
         if (!root.outputName.startsWith("lock:"))
             DesktopWidgetStacks.report(root.configEntryName, root.irisSizes, root.irisDefaultSize, root.hasIrisFace)
         root._stackMemo = root._stackKey()
@@ -2316,8 +2340,10 @@ AbstractWidget {
         updates["palette.tertiary"] = "tertiary"
         updates["palette.signal"] = "signal"
         updates["palette.surface"] = "surface"
+        if (root.materialSized)
+            Object.assign(updates, root._sizeValues(root.materialSizes[0] ?? ""))
         if (root.widgetIrisFamily && root.hasIrisFace) {
-            updates["iris.size"] = root.irisDefaultSize
+            Object.assign(updates, root._sizeValues(root.irisDefaultSize))
             updates["iris.material"] = "auto"
             updates["iris.design"] = "auto"
             updates["iris.opacity"] = -1
@@ -2570,8 +2596,10 @@ AbstractWidget {
     readonly property var irisSizeChoices: root.stacked ? root.stack.sizes : root.irisSizes
     readonly property string irisSize: {
         const chosen = String(root._readConfigKey("iris.size") ?? "")
-        if (!root.stacked)
-            return root.irisSizes.includes(chosen) ? chosen : root.irisDefaultSize
+        if (!root.stacked) {
+            const other = String(root._storedConfigKey("materialSize") ?? "")
+            return root.irisSizes.includes(chosen) ? chosen : root.irisSizes.includes(other) ? other : root.irisDefaultSize
+        }
         const choices = root.stack.sizes
         return choices.includes(chosen) ? chosen : choices.includes(root.stack.size) ? root.stack.size : choices[0]
     }
@@ -2581,8 +2609,31 @@ AbstractWidget {
         && !root.outputName.startsWith("lock:")
     readonly property string materialSize: {
         const chosen = String(root._storedConfigKey("materialSize") ?? "")
-        return root.materialSizes.includes(chosen) ? chosen : (root.materialSizes[0] ?? "")
+        const other = String(root._storedConfigKey("iris.size") ?? "")
+        return root.materialSizes.includes(chosen) ? chosen : root.materialSizes.includes(other) ? other : (root.materialSizes[0] ?? "")
     }
+    // One size for every family: a size is written to both keys and the one shown is kept once, so changing family
+    // leaves the desktop as it was arranged (each family has its own default size).
+    function _sizeValues(size: string): var {
+        const values = ({})
+        if (root.irisSizes.includes(size) && root.hasIrisFace) values["iris.size"] = size
+        if (root.materialSizes.includes(size)) values.materialSize = size
+        return values
+    }
+    function _keepSize(): void {
+        if (!Config.ready || root.stacked || root.outputName.length === 0 || root.outputName.startsWith("lock:"))
+            return
+        const shown = root.irisFaced ? root.irisSize : root.materialSized ? root.materialSize : ""
+        if (!shown)
+            return
+        const values = root._sizeValues(shown)
+        for (const key of Object.keys(values))
+            if (root._storedConfigKey(key) !== undefined)
+                delete values[key]
+        if (Object.keys(values).length > 0)
+            DesktopWidgetLayout.setValues(root.outputName, root.configEntryName, values)
+    }
+    onIrisFacedChanged: Qt.callLater(root._keepSize)
     readonly property size materialFootprint: DesktopWidgetDesign.materialFootprint(root.materialSize)
     readonly property real materialWidth: Math.round(root.materialFootprint.width * root._baseScale)
     readonly property real materialHeight: Math.round(root.materialFootprint.height * root._baseScale)
@@ -2613,7 +2664,10 @@ AbstractWidget {
     onMaterialNaturalHeightChanged: _materialRefitLater.restart()
     onMaterialWidthChanged: _materialRefitLater.restart()
     onMaterialHeightChanged: _materialRefitLater.restart()
-    onMaterialSizedChanged: _materialRefitLater.restart()
+    onMaterialSizedChanged: {
+        _materialRefitLater.restart()
+        Qt.callLater(root._keepSize)
+    }
     Timer {
         id: _materialRefitLater
         interval: 0
@@ -2627,7 +2681,7 @@ AbstractWidget {
         root._resizePreviewValues = ({})
         root._materialSizing = false
         if (root.materialSizes.includes(size) && size !== String(root._storedConfigKey("materialSize") ?? ""))
-            root._setOutputValue("materialSize", size)
+            root._setOutputValues(root._sizeValues(size))
         _materialSizeSettle.restart()
     }
     Timer {

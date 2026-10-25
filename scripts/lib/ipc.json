@@ -328,7 +328,7 @@
       "widgetName",
       "size"
      ],
-     "description": "Set an iRiS widget's size class (`small`, `medium`, `large`) as its size key does; neighbours it now covers move aside while arranging",
+     "description": "Set a widget's size class (`small`, `medium`, `large`) in the family drawing it; every family keeps that size, and neighbours it now covers move aside while arranging",
      "values": [
       "small",
       "medium",
@@ -404,7 +404,7 @@
      "args": [
       "page"
      ],
-     "description": "Show a page of the selected widget's quick controls: widget, look or arrange (and stack, for a widget in a stack)",
+     "description": "Show a page of the selected widget's quick controls: widget, look or arrange (and stack, for a widget in a stack; options, every option Settings has, where the widget draws its Material face)",
      "values": []
     },
     {

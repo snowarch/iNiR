@@ -6,11 +6,10 @@ import Quickshell
 import qs
 import qs.modules.common
 import qs.services
-import qs.modules.shared.background.widgets
-import "../../shared/background/widgets/OrganicEdgeConfig.js" as EdgeConfig
-import "../../shared/background/widgets/japaneseTypography/JapaneseTypographyPresets.js" as JapanesePresets
+import "japaneseTypography/JapaneseTypographyPresets.js" as JapanesePresets
 
-// Settings › Widgets: every desktop widget's own options as iRiS rows, one group per widget. A row names its widget and
+// Every desktop widget's own options, one group per widget: iRiS Settings › Widgets and the iRiS edit sheet draw them as
+// rows, Material's quick controls as its own controls. A row names its widget and
 // key (`widget`, `key`) instead of a path: it reads what the screen in front shows and writes the base value with every
 // screen's own copy cleared (`DesktopWidgetLayout.setEverywhere`), so a value once set from the quick controls never
 // silently beats the row. Rows for what only the Material drawing reads show only while that widget draws Material;
@@ -36,7 +35,8 @@ QtObject {
     }
     function resolved(widget: string): var {
         Config.revision
-        return DesktopWidgetDesign.resolve(widget, String(root.value(widget, "iris.design", "auto")), "", root.faced.includes(widget))
+        return DesktopWidgetDesign.resolve(widget, String(root.value(widget, "iris.design", "auto")), String(root.value(widget, "design", "auto")),
+            root.faced.includes(widget))
     }
     // The iRiS face draws it.
     function face(widget: string): bool { return root.on(widget) && root.resolved(widget).face }
@@ -127,10 +127,13 @@ QtObject {
     function plateDefault(widget: string): bool {
         return !["clock", "visualizer", "japaneseTypography", "shape", "editorial", "dayProgress", "mascot"].includes(widget)
     }
-    function size(widget: string, sizes: var): var {
-        const labels = { small: "Small", medium: "Medium", large: "Large" }
-        return root.row(widget, "iris.size", "Size", "choice", sizes.includes("medium") && sizes.length === 3 || widget === "userCard" || widget === "timers" ? "medium" : sizes[0], {
-            when: () => root.face(widget), choices: sizes.map(size => ({ label: labels[size], value: size })), keywords: ["size", "small", "medium", "large", "tamaño"] })
+    // Every iRiS face has the three sizes; the one chosen is Material's too where it has it (one size per family).
+    function size(widget: string): var {
+        const material = DesktopWidgetRegistry.entry(widget)?.sizes ?? []
+        return root.row(widget, "iris.size", "Size", "choice", "medium", { when: () => root.face(widget),
+            choices: root.choices([["small", "Small"], ["medium", "Medium"], ["large", "Large"]]),
+            apply: next => Object.assign({ "iris.size": next }, material.includes(next) ? { materialSize: next } : {}),
+            keywords: ["size", "small", "medium", "large", "tamaño"] })
     }
     // A preset that writes several keys at once reads as its name until one of them is changed by hand.
     function preset(widget: string, label: string, fallback: string, list: var, when: var): var {
@@ -142,7 +145,7 @@ QtObject {
     readonly property var widgetRows: [
         // ── Clock ──
         ...root.opening("clock"),
-        root.size("clock", ["small", "medium"]),
+        root.size("clock"),
         root.row("clock", "iris.face", "Face", "choice", "analog", { when: () => root.face("clock"), choices: root.choices([["analog", "Analog", "schedule"], ["digital", "Digital", "timer_10"]]) }),
         root.row("clock", "iris.seconds", "Second hand", "switch", true, { when: () => root.face("clock") && root.is("clock", "iris.face", "analog", "analog") }),
         root.row("clock", "style", "Clock style", "choice", "digital", { when: () => root.material("clock"),
@@ -198,7 +201,7 @@ QtObject {
 
         // ── World clock ──
         ...root.opening("worldClock"),
-        root.size("worldClock", ["small", "medium", "large"]),
+        root.size("worldClock"),
         root.row("worldClock", "timezones", "Cities", "pieces", ["Asia/Tokyo", "Europe/London", "America/New_York"], { choicesFrom: "timezones",
             description: "Up to four, in the order you switch them on.", keywords: ["city", "cities", "timezone", "time zone", "zona horaria", "ciudad"] }),
         root.row("worldClock", "showNames", "City names", "switch", true, { when: () => root.face("worldClock") }),
@@ -213,7 +216,7 @@ QtObject {
 
         // ── Month calendar ──
         ...root.opening("monthCalendar"),
-        root.size("monthCalendar", ["small", "medium", "large"]),
+        root.size("monthCalendar"),
         root.row("monthCalendar", "weekStart", "Week starts on", "choice", 1, { choices: root.choices([[1, "Monday"], [0, "Sunday"]]) }),
         root.row("monthCalendar", "showAdjacentDays", "Show adjacent month days", "switch", true, { when: () => root.plain("monthCalendar") }),
         root.row("monthCalendar", "style", "Style", "choice", "card", { when: () => root.material("monthCalendar"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
@@ -224,7 +227,7 @@ QtObject {
 
         // ── Upcoming events ──
         ...root.opening("calendarUpcoming"),
-        root.size("calendarUpcoming", ["small", "medium", "large"]),
+        root.size("calendarUpcoming"),
         root.row("calendarUpcoming", "groupByDay", "Group by day", "switch", true, {}),
         root.row("calendarUpcoming", "showLocation", "Location", "switch", false, {}),
         root.row("calendarUpcoming", "showDate", "Show date", "switch", true, { when: () => root.plain("calendarUpcoming") }),
@@ -237,6 +240,7 @@ QtObject {
 
         // ── Date badge ──
         ...root.opening("dateBadge"),
+        root.size("dateBadge"),
         root.row("dateBadge", "showWeekday", "Weekday", "switch", true, {}),
         root.row("dateBadge", "showYear", "Year", "switch", true, {}),
         root.row("dateBadge", "showOrdinal", "Day of the year", "switch", true, {}),
@@ -249,7 +253,7 @@ QtObject {
 
         // ── Day progress ──
         ...root.opening("dayProgress"),
-        root.size("dayProgress", ["small", "medium"]),
+        root.size("dayProgress"),
         root.row("dayProgress", "style", "Style", "choice", "ring", { when: () => root.material("dayProgress"), choices: root.choices([["ring", "Ring"], ["arc", "Arc"], ["ticks", "Ticks"]]) }),
         root.row("dayProgress", "comet", "Comet tail", "switch", true, { when: () => root.plain("dayProgress") }),
         root.row("dayProgress", "showIcon", "Sun icon", "switch", true, { when: () => root.plain("dayProgress") }),
@@ -262,7 +266,7 @@ QtObject {
 
         // ── Timers ──
         ...root.opening("timers"),
-        root.size("timers", ["small", "medium"]),
+        root.size("timers"),
         root.row("timers", "style", "Style", "choice", "cards", { when: () => root.material("timers"), choices: root.choices([["cards", "Cards"], ["instrument", "Instrument"]]) }),
         root.row("timers", "vertical", "Orientation", "choice", false, { when: () => root.plain("timers"), choices: root.choices([[false, "Horizontal"], [true, "Vertical"]]) }),
         root.row("timers", "glow", "Active pulse", "switch", true, { tune: true, when: () => root.plain("timers") && root.is("timers", "style", "cards", "instrument") }),
@@ -273,6 +277,7 @@ QtObject {
 
         // ── Uptime ──
         ...root.opening("uptime"),
+        root.size("uptime"),
         root.row("uptime", "showSince", "Start time", "switch", true, {}),
         root.row("uptime", "style", "Style", "choice", "row", { when: () => root.material("uptime"), choices: root.choices([["row", "Row"], ["instrument", "Instrument"]]) }),
         root.row("uptime", "showBreakdown", "Breakdown", "switch", true, { tune: true, when: () => root.plain("uptime") && root.is("uptime", "style", "row", "instrument") }),
@@ -282,7 +287,7 @@ QtObject {
 
         // ── Media controls ──
         ...root.opening("mediaControls"),
-        root.size("mediaControls", ["small", "medium", "large"]),
+        root.size("mediaControls"),
         root.row("mediaControls", "iris.lyrics", "Synced lyrics", "switch", true, { when: () => root.face("mediaControls") }),
         root.row("mediaControls", "iris.rest", "Rest when paused", "switch", true, { when: () => root.face("mediaControls") }),
         root.row("mediaControls", "playerPreset", "Player style", "choice", "full", { when: () => root.material("mediaControls"),
@@ -308,7 +313,7 @@ QtObject {
                 when: () => root.material("mediaControls") && root.is("mediaControls", "visualizerType", "wave", "organic") })),
         ...root.closing("mediaControls", true),
         ...root.opening("lyrics"),
-        root.size("lyrics", ["small", "medium", "large"]),
+        root.size("lyrics"),
         ...root.closing("lyrics", false),
 
         // ── Visualizer ──
@@ -347,7 +352,7 @@ QtObject {
 
         // ── System monitor ──
         ...root.opening("systemMonitor"),
-        root.size("systemMonitor", ["small", "medium", "large"]),
+        root.size("systemMonitor"),
         ...[["showCpu", "CPU", true], ["showMemory", "Memory", true], ["showGpu", "GPU", true], ["showTemp", "CPU heat", false], ["showGpuTemp", "GPU heat", false], ["showDisk", "Disk", false]]
             .map(entry => root.row("systemMonitor", entry[0], entry[1], "switch", entry[2], { keywords: ["monitor", "usage", "temperature", "temp"] })),
         root.row("systemMonitor", "showLabels", "Labels and percentages", "switch", true, { when: () => root.plain("systemMonitor") }),
@@ -364,7 +369,7 @@ QtObject {
 
         // ── Battery ──
         ...root.opening("battery"),
-        root.size("battery", ["small", "medium"]),
+        root.size("battery"),
         root.row("battery", "showTime", "Time remaining", "switch", true, {}),
         root.row("battery", "displayMode", "Display", "choice", "ring", { when: () => root.material("battery"), choices: root.choices([["ring", "Ring"], ["bars", "Bars"], ["pill", "Pill"], ["instrument", "Instrument"]]) }),
         root.preset("battery", "Preset", "default", [["default", "Default", { ringLineWidth: 6, barCount: 20, pillHeight: 12 }], ["thin", "Thin", { ringLineWidth: 3, barCount: 20, pillHeight: 8 }],
@@ -380,19 +385,19 @@ QtObject {
 
         // ── Controls and Screen time (iRiS widgets) ──
         ...root.opening("controls"),
-        root.size("controls", ["small", "medium", "large"]),
+        root.size("controls"),
         ...root.closing("controls", false),
         ...root.opening("screenTime"),
-        root.size("screenTime", ["small", "medium", "large"]),
+        root.size("screenTime"),
         ...root.closing("screenTime", false),
         ...root.opening("palette"),
-        root.size("palette", ["small", "medium", "large"]),
+        root.size("palette"),
         root.row("palette", "iris.source", "Colours from", "choice", "wallpaper", { choices: root.choices([["wallpaper", "Wallpaper"], ["music", "Music"], ["random", "Random"]]) }),
         ...root.closing("palette", false),
 
         // ── Weather ──
         ...root.opening("weather"),
-        root.size("weather", ["small", "medium", "large"]),
+        root.size("weather"),
         root.row("weather", "showLocation", "Location", "switch", true, {}),
         root.row("weather", "style", "Style", "choice", "pill", { when: () => root.material("weather"),
             choices: root.choices([["pill", "Shape"], ["card", "Card"], ["detail", "Detail"], ["dial", "Instrument"]]) }),
@@ -419,7 +424,7 @@ QtObject {
 
         // ── News ──
         ...root.opening("newsTicker"),
-        root.size("newsTicker", ["small", "medium", "large"]),
+        root.size("newsTicker"),
         root.row("newsTicker", "showMeta", "Source and time", "switch", true, {}),
         root.row("newsTicker", "rotateSeconds", "Change every", "choice", 45, { when: () => root.face("newsTicker"),
             choices: root.choices([[15, "15 s"], [45, "45 s"], [120, "2 min"], [300, "5 min"]]) }),
@@ -430,7 +435,7 @@ QtObject {
 
         // ── Notes ──
         ...root.opening("notes"),
-        root.size("notes", ["small", "medium", "large"]),
+        root.size("notes"),
         root.row("notes", "style", "Presentation", "choice", "card", { when: () => root.material("notes"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
         root.row("notes", "showRules", "Writing guides", "switch", true, { when: () => root.plain("notes") && root.is("notes", "style", "card", "instrument") }),
         root.row("notes", "fontFamily", "Font", "choice", "sans", { when: () => root.plain("notes"), choices: root.choices([["sans", "Sans"], ["mono", "Mono"]]) }),
@@ -443,7 +448,7 @@ QtObject {
 
         // ── Todo ──
         ...root.opening("todo"),
-        root.size("todo", ["small", "medium", "large"]),
+        root.size("todo"),
         root.row("todo", "showCompleted", "Show completed tasks", "switch", true, {}),
         root.row("todo", "style", "Presentation", "choice", "card", { when: () => root.material("todo"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
         root.row("todo", "instrumentRules", "Row rules", "switch", true, { tune: true, when: () => root.plain("todo") && root.is("todo", "style", "card", "instrument") }),
@@ -453,7 +458,7 @@ QtObject {
 
         // ── User card ──
         ...root.opening("userCard"),
-        root.size("userCard", ["small", "medium"]),
+        root.size("userCard"),
         root.row("userCard", "showAvatar", "Picture", "switch", true, {}),
         root.row("userCard", "showWeather", "Weather", "switch", true, {}),
         root.row("userCard", "showHostname", "Computer name", "switch", true, {}),
@@ -566,6 +571,9 @@ QtObject {
     // What a row shows and what it writes (IrisOptions.currentValue / commit route `spec.widget` rows here).
     function read(spec: var): var {
         if (spec.widgetEnable) return root.on(spec.widget)
+        if (spec.key === "iris.size")
+            return root.value(spec.widget, "iris.size", undefined) ?? root.value(spec.widget, "materialSize", undefined)
+                ?? DesktopWidgetStacks.reported[spec.widget]?.size ?? spec.fallback
         return root.value(spec.widget, spec.key, spec.fallback)
     }
     function write(spec: var, next: var): void {
@@ -610,43 +618,4 @@ QtObject {
     ]
     readonly property var rows: root.sharedRows.concat(root.widgetRows)
 
-    // ── The Edge wave (Organic edge), whole, in Now Playing, after the group's own rows (`trail`) ──
-    function edge(key: string, label: string, kind: string, extra: var): var {
-        return Object.assign({ section: "player", group: "Edge wave", path: EdgeConfig.path + "." + key, label: label, kind: kind,
-            fallback: EdgeConfig.defaults[key], visibleWhen: "iris.surround.music=widget", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable), tune: true, trail: true }, extra ?? {})
-    }
-    function edgeChoices(list: var): var { return list.map(entry => ({ label: entry[1], value: entry[0] })) }
-    readonly property var edgeRows: [
-        root.edge("edges", "Sides", "pieces", { part: "Where", choices: root.edgeChoices([["top", "Top"], ["right", "Right"], ["bottom", "Bottom"], ["left", "Left"]]), tune: false }),
-        root.edge("respectPanels", "Respect bars and dock", "switch", { part: "Where" }),
-        root.edge("joinMode", "Corner relationship", "choice", { part: "Where", choices: root.edgeChoices([["auto", "Join connected edges"], ["separate", "Keep edges separate"]]) }),
-        ...[["span", "Edge length", 10, 100, 5, " %"], ["position", "Position along edge", 0, 100, 1, " %"], ["depth", "Field depth", 24, 600, 4, " px"],
-            ["inset", "Screen inset", 0, 160, 2, " px"], ["cornerRadius", "Screen corner radius", 0, 160, 2, " px"], ["cornerBlend", "Corner handoff", 0, 100, 5, " %"],
-            ["taper", "Endpoint softness", 0, 50, 1, " %"], ["topScale", "Top reach", 10, 200, 5, " %"], ["rightScale", "Right reach", 10, 200, 5, " %"],
-            ["bottomScale", "Bottom reach", 10, 200, 5, " %"], ["leftScale", "Left reach", 10, 200, 5, " %"]]
-            .map(entry => root.edge(entry[0], entry[1], "range", { part: "Where", min: entry[2], max: entry[3], step: entry[4], unit: entry[5] })),
-        root.edge("style", "Material", "choice", { part: "Material", choices: root.edgeChoices([["silk", "Silk"], ["aurora", "Aurora"], ["contour", "Contour"], ["liquid", "Liquid"]]) }),
-        root.edge("shape", "Contour language", "choice", { part: "Material", choices: root.edgeChoices([["flow", "Flow"], ["ribbon", "Ribbon"], ["cells", "Pulse cells"], ["filament", "Filament"]]) }),
-        root.edge("colorMode", "Color movement", "choice", { part: "Material", choices: root.edgeChoices([["flow", "Flow"], ["spectrum", "Spectrum"], ["pulse", "Beat"], ["static", "Static"]]) }),
-        root.edge("effectMode", "Light behavior", "choice", { part: "Material", choices: root.edgeChoices([["clean", "Clean"], ["shimmer", "Harmonic shimmer"], ["echo", "Pulse echo"], ["prism", "Spectral prism"],
-            ["bloom", "Bass bloom"], ["caustic", "Liquid caustics"], ["afterglow", "Peak afterglow"]]) }),
-        ...[["primaryColor", "Primary"], ["secondaryColor", "Secondary"], ["tertiaryColor", "Tertiary"]]
-            .map(entry => root.edge(entry[0], entry[1], "text", { part: "Material", placeholder: String(EdgeConfig.defaults[entry[0]]), showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable)
-                && String(Config.getNestedValue(EdgeConfig.path + ".palette", "theme")) === "custom" })),
-        ...[["thickness", "Body weight", 5, 70, 1], ["bodyOpacity", "Body opacity", 0, 100, 5], ["crestStrength", "Crest brightness", 0, 150, 5], ["detail", "Contour detail", 0, 100, 5],
-            ["glow", "Glow intensity", 0, 100, 5], ["glowSpread", "Glow spread", 0, 100, 5], ["effectStrength", "Effect strength", 0, 100, 5],
-            ["colorSpeed", "Color travel", 0, 100, 5], ["colorIntensity", "Color intensity", 0, 150, 5]]
-            .map(entry => root.edge(entry[0], entry[1], "range", { part: "Material", min: entry[2], max: entry[3], step: entry[4], unit: " %" })),
-        root.edge("hueShift", "Hue shift", "range", { part: "Material", min: -180, max: 180, step: 5, unit: "°" }),
-        root.edge("restPresence", "Rest presence", "range", { part: "Music", min: 0, max: 100, step: 5, unit: " %" }),
-        root.edge("frequencyProfile", "Frequency focus", "choice", { part: "Music", choices: root.edgeChoices([["flat", "Balanced"], ["bass", "Bass"], ["warm", "Warm"], ["vocal", "Vocals"], ["treble", "Treble"], ["smile", "Bass + treble"]]) }),
-        root.edge("flowDirection", "Travel direction", "choice", { part: "Music", choices: root.edgeChoices([["clockwise", "Clockwise"], ["counterclockwise", "Counter-clockwise"]]) }),
-        ...[["motionSpeed", "Motion speed", 0, 250, 5, " %"], ["idleMotion", "Ambient motion", 0, 100, 5, " %"], ["sensitivity", "Audio sensitivity", 0, 200, 5, " %"],
-            ["audioRange", "Audio range", 0, 150, 5, " %"], ["pulse", "Beat pulse", 0, 150, 5, " %"], ["beatGlow", "Beat glow", 0, 150, 5, " %"],
-            ["transientStrength", "Transient punch", 0, 150, 5, " %"], ["attack", "Attack speed", 20, 250, 5, " %"], ["release", "Release speed", 20, 250, 5, " %"],
-            ["smoothing", "Audio smoothing", 0, 8, 1, ""], ["bassDrive", "Bass drive", 0, 150, 5, " %"], ["trebleDrive", "Treble shimmer", 0, 150, 5, " %"],
-            ["compression", "Frequency separation", 0, 100, 5, " %"], ["accentStrength", "Frequency emphasis", 0, 100, 5, " %"]]
-            .map(entry => root.edge(entry[0], entry[1], "range", { part: "Music", min: entry[2], max: entry[3], step: entry[4], unit: entry[5] })),
-        root.edge("screenList", "Screens", "pieces", { part: "Where", choicesFrom: "screens", description: "None chosen shows it on every screen.", showIf: () => Boolean(Config.options?.background?.edgeWidgets?.organic?.enable) && Quickshell.screens.length > 1 })
-    ]
 }

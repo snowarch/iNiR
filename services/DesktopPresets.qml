@@ -74,7 +74,7 @@ Singleton {
             for (const entry of preset.widgets) {
                 const spot = root.factorySpot(entry, screen.width, screen.height)
                 widgets[entry.key] = Object.assign({}, old.widgets?.[entry.key] ?? {}, { x: spot.x, y: spot.y,
-                    placementStrategy: "free", "iris.size": entry.size, enable: true })
+                    placementStrategy: "free", "iris.size": entry.size, materialSize: entry.size, enable: true })
             }
             // This size's remembered places would win over the new ones; other sizes keep theirs.
             const layouts = Object.assign({}, old.layouts ?? {})
@@ -158,7 +158,7 @@ Singleton {
             const place = widgets[key] ?? {}
             const on = place.enable ?? values["background.widgets." + key + ".enable"] ?? false
             if (on && Number.isFinite(Number(place.x)) && Number.isFinite(Number(place.y)))
-                out.push({ key: key, x: Number(place.x) / w, y: Number(place.y) / h, size: String(place["iris.size"] ?? "medium") })
+                out.push({ key: key, x: Number(place.x) / w, y: Number(place.y) / h, size: String(place["iris.size"] ?? place.materialSize ?? "medium") })
         }
         return out
     }

@@ -145,7 +145,7 @@ complete -c inir -n '__inir_at_function background' -a setEditMode -d 'Set widge
 complete -c inir -n '__inir_at_function background' -a presets -d 'The desktops you can wear (factory first, then saved) as JS…'
 complete -c inir -n '__inir_at_function background' -a wearPreset -d 'Wear a desktop by id (factory:glance, factory:dashboard, fa…'
 complete -c inir -n '__inir_at_function background' -a savePreset -d 'Save this desktop under a name (empty = "Desktop N") and pr…'
-complete -c inir -n '__inir_at_function background' -a sizeWidget -d 'Set an iRiS widget\'s size class (small, medium, large) as i…'
+complete -c inir -n '__inir_at_function background' -a sizeWidget -d 'Set a widget\'s size class (small, medium, large) in the fam…'
 complete -c inir -n '__inir_at_value 2 sizeWidget background' -a 'small medium large'
 complete -c inir -n '__inir_at_function background' -a widgetRects -d 'Where every desktop widget sits on each screen, as JSON'
 complete -c inir -n '__inir_at_function background' -a widgetFit -d 'widgetFit'
