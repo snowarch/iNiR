@@ -60,6 +60,58 @@ Item {
         antialiasing: true
     }
 
+    // Free size (10-25): the right and bottom edges take any size, S, M or L puts the class back. Drawn in the edit
+    // window, where the card's neighbours and the deselect area can't take the press.
+    readonly property bool grips: root.overlay && root.selected && !root.locked && !root.carried && (root.widget?.materialSized ?? false)
+    readonly property Item rightGripItem: rightGrip
+    readonly property Item bottomGripItem: bottomGrip
+    // The grip's whole box takes the press (it is the edit window's input region); the pill is what shows.
+    component EdgeGrip: Item {
+        id: grip
+        property bool horizontal: true
+        visible: root.grips
+        width: grip.horizontal ? 20 : 48
+        height: grip.horizontal ? 48 : 20
+        x: grip.horizontal ? root.width + root.gap - width / 2 : (root.width - width) / 2
+        y: grip.horizontal ? (root.height - height) / 2 : root.height + root.gap - height / 2
+        Rectangle {
+            anchors.centerIn: parent
+            width: grip.horizontal ? 6 : 32
+            height: grip.horizontal ? 32 : 6
+            radius: 3
+            color: gripArea.containsMouse || gripArea.pressed ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer0
+            border.width: 1
+            border.color: Appearance.colors.colLayer0
+        }
+        MouseArea {
+            id: gripArea
+            anchors.fill: parent
+            hoverEnabled: true
+            preventStealing: true
+            cursorShape: grip.horizontal ? Qt.SizeHorCursor : Qt.SizeVerCursor
+            property point at
+            property real startWidth: 0
+            property real startHeight: 0
+            onPressed: mouse => {
+                gripArea.at = gripArea.mapToItem(null, mouse.x, mouse.y)
+                gripArea.startWidth = root.widget.width
+                gripArea.startHeight = root.widget.height
+                root.widget.beginFreeSize()
+            }
+            onPositionChanged: mouse => {
+                if (!gripArea.pressed) return
+                const p = gripArea.mapToItem(null, mouse.x, mouse.y)
+                const k = Math.max(0.2, root.card.s)
+                root.widget.previewFreeSize(grip.horizontal ? gripArea.startWidth + (p.x - gripArea.at.x) / k : gripArea.startWidth,
+                    grip.horizontal ? gripArea.startHeight : gripArea.startHeight + (p.y - gripArea.at.y) / k)
+            }
+            onReleased: root.widget.commitFreeSize()
+            onCanceled: root.widget.cancelFreeSize()
+        }
+    }
+    EdgeGrip { id: rightGrip; horizontal: true }
+    EdgeGrip { id: bottomGrip; horizontal: false }
+
     RectangularShadow {
         z: -1
         visible: root.carried && !root.overlay
@@ -237,7 +289,8 @@ Item {
                             colBackgroundHover: sizeKey.chosen ? "transparent" : Appearance.colors.colLayer3Hover
                             colRipple: sizeKey.chosen ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer3Active
                             Accessible.name: root.widget?.materialSizeLabels?.[sizeKey.modelData] ?? sizeKey.modelData
-                            onClicked: if (!sizeKey.chosen) root.widget.commitMaterialSize(sizeKey.modelData)
+                            // A free size (from the handles) goes back to the class even when it is the same one.
+                            onClicked: if (!sizeKey.chosen || root.widget.materialFree) root.widget.commitMaterialSize(sizeKey.modelData)
                             contentItem: StyledText {
                                 anchors.centerIn: parent
                                 horizontalAlignment: Text.AlignHCenter

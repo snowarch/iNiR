@@ -47,6 +47,8 @@ Scope {
                 Region { item: shelfBody }
                 Region { item: sheetHit }
                 Region { item: chosen.item?.keysItem ?? null }
+                Region { item: chosen.item?.grips ? chosen.item.rightGripItem : null }
+                Region { item: chosen.item?.grips ? chosen.item.bottomGripItem : null }
             }
 
             property bool seeding: false

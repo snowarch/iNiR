@@ -1464,44 +1464,51 @@ AbstractWidget {
                 propagateComposedEvents: false
             }
 
-            Rectangle {
+            // Its plate exists only while it shows: one per widget sat built all day (10-25).
+            Loader {
                 anchors.fill: parent
-                visible: root.widgetIrisFamily && !IrisStyle.fieldChamfer
-                radius: IrisStyle.radiusCard
-                color: IrisStyle.surface
-                border.width: 1
-                border.color: IrisStyle.hairlineStrong
-            }
-            // Under a chamfered Design the sheet takes the cut like every other body.
-            IrisCutPlate {
-                anchors.fill: parent
-                visible: root.widgetIrisFamily && IrisStyle.fieldChamfer
-                color: IrisStyle.surface
-                stroke: IrisStyle.hairlineStrong
-                strokeWidth: 1
-            }
-            PanelSurface {
-                id: editPopoverSurface
-                anchors.fill: parent
-                visible: !root.widgetIrisFamily
-                elevation: 2
-                // Floats straight on the wallpaper like the widget manager panel:
-                // without a backdrop the aurora/angel fill is a hole, not glass.
-                wallpaperBackdrop: true
-                readonly property point _screenPos: {
-                    void root.x; void root.y;
-                    void editPopoverPanel.x; void editPopoverPanel.y;
-                    void editPopoverPanel.width; void editPopoverPanel.height;
-                    return editPopoverSurface.mapToItem(null, 0, 0)
+                active: editPopoverPanel.visible
+                sourceComponent: Item {
+                    Rectangle {
+                        anchors.fill: parent
+                        visible: root.widgetIrisFamily && !IrisStyle.fieldChamfer
+                        radius: IrisStyle.radiusCard
+                        color: IrisStyle.surface
+                        border.width: 1
+                        border.color: IrisStyle.hairlineStrong
+                    }
+                    // Under a chamfered Design the sheet takes the cut like every other body.
+                    IrisCutPlate {
+                        anchors.fill: parent
+                        visible: root.widgetIrisFamily && IrisStyle.fieldChamfer
+                        color: IrisStyle.surface
+                        stroke: IrisStyle.hairlineStrong
+                        strokeWidth: 1
+                    }
+                    PanelSurface {
+                        id: editPopoverSurface
+                        anchors.fill: parent
+                        visible: !root.widgetIrisFamily
+                        elevation: 2
+                        // Floats straight on the wallpaper like the widget manager panel:
+                        // without a backdrop the aurora/angel fill is a hole, not glass.
+                        wallpaperBackdrop: true
+                        readonly property point _screenPos: {
+                            void root.x; void root.y;
+                            void editPopoverPanel.x; void editPopoverPanel.y;
+                            void editPopoverPanel.width; void editPopoverPanel.height;
+                            return editPopoverSurface.mapToItem(null, 0, 0)
+                        }
+                        backdropScreenX: _screenPos.x
+                        backdropScreenY: _screenPos.y
+                        backdropScreenWidth: root.screenWidth
+                        backdropScreenHeight: root.screenHeight
+                        radiusOverride: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                            : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+                            : Appearance.rounding.small
+                    }
                 }
-                backdropScreenX: _screenPos.x
-                backdropScreenY: _screenPos.y
-                backdropScreenWidth: root.screenWidth
-                backdropScreenHeight: root.screenHeight
-                radiusOverride: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-                    : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                    : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
-                    : Appearance.rounding.small
             }
 
             Loader {
@@ -1522,70 +1529,73 @@ AbstractWidget {
     // ── Edit mode widget name label ─────────────────────────
     // The name sits on the side the toolbar leaves free; where that side runs into a screen edge or
     // the bar, it takes the other one unless the toolbar is there, and otherwise stays hidden.
-    Row {
-        id: editNameLabel
-        readonly property bool toolbarAbove: root._editControlsShown && !root._editControlsBelow
-        readonly property bool toolbarBelow: root._editControlsShown && root._editControlsBelow
-        readonly property bool roomBelow: root.y + root.height + 6 + height <= root._zoneSafeBottom
-        readonly property bool roomAbove: root.y - 6 - height >= root._zoneSafeTop
-        readonly property string side: !editNameLabel.toolbarBelow && editNameLabel.roomBelow ? "below"
-            : !editNameLabel.toolbarAbove && editNameLabel.roomAbove ? "above" : ""
+    Loader {
         z: 200
-        visible: GlobalStates.widgetEditMode && !root._outfitted && (root.editSelected || widgetEditHover.hovered) && side.length > 0
-        opacity: root.editSelected ? 1 : 0.78
-        x: Math.round((root.width - width) / 2)
-        y: editNameLabel.side === "above" ? -height - 6 : root.height + 6
-        spacing: 4
+        active: GlobalStates.widgetEditMode
+        sourceComponent: Row {
+            id: editNameLabel
+            readonly property bool toolbarAbove: root._editControlsShown && !root._editControlsBelow
+            readonly property bool toolbarBelow: root._editControlsShown && root._editControlsBelow
+            readonly property bool roomBelow: root.y + root.height + 6 + height <= root._zoneSafeBottom
+            readonly property bool roomAbove: root.y - 6 - height >= root._zoneSafeTop
+            readonly property string side: !editNameLabel.toolbarBelow && editNameLabel.roomBelow ? "below"
+                : !editNameLabel.toolbarAbove && editNameLabel.roomAbove ? "above" : ""
+            visible: GlobalStates.widgetEditMode && !root._outfitted && (root.editSelected || widgetEditHover.hovered) && side.length > 0
+            opacity: root.editSelected ? 1 : 0.78
+            x: Math.round((root.width - width) / 2)
+            y: editNameLabel.side === "above" ? -height - 6 : root.height + 6
+            spacing: 4
 
-        Behavior on opacity {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-        }
-
-        Behavior on y {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation {
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Appearance.animation.elementMoveFast.type
-                easing.bezierCurve: Appearance.animationCurves.standardDecel
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
             }
-        }
 
-        // Placement strategy badge
-        Rectangle {
-            visible: root.placementStrategy !== "free"
-            anchors.verticalCenter: parent.verticalCenter
-            width: strategyIcon.implicitWidth + 6
-            height: strategyIcon.implicitHeight + 4
-            radius: Appearance.rounding.small
-            color: ColorUtils.applyAlpha(
-                root.locked ? Appearance.colors.colError
-                    : root._isZonePlacement ? Appearance.colors.colPrimary
-                    : Appearance.colors.colTertiary, 0.18)
-            MaterialSymbol {
-                id: strategyIcon
-                anchors.centerIn: parent
-                iconSize: 10
-                text: root.locked ? "lock"
-                    : root._isZonePlacement ? "grid_on"
-                    : root._isAutoPlacement ? "auto_awesome" : ""
-                color: root.locked ? Appearance.colors.colError
-                    : root._isZonePlacement ? Appearance.colors.colPrimary
-                    : Appearance.colors.colTertiary
+            Behavior on y {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Appearance.animationCurves.standardDecel
+                }
             }
-        }
 
-        StyledText {
-            anchors.verticalCenter: parent.verticalCenter
-            readonly property string name: root.configEntryName.split(".").pop().replace(/([A-Z])/g, " $1").toLowerCase().trim()
-            text: root.widgetIrisFamily ? name.charAt(0).toUpperCase() + name.slice(1) : name
-            font.family: root.widgetIrisFamily ? IrisStyle.fontMain : Appearance.font.family.main
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            font.weight: root.widgetIrisFamily ? Font.DemiBold : Font.Normal
-            font.capitalization: root.widgetIrisFamily ? Font.MixedCase : Font.Capitalize
-            color: root.widgetIrisFamily ? IrisStyle.text : Appearance.colors.colOnLayer0
-            style: root.widgetIrisFamily ? Text.Raised : Text.Normal
-            styleColor: root.widgetIrisFamily ? IrisStyle.plateShadow : "transparent"
+            // Placement strategy badge
+            Rectangle {
+                visible: root.placementStrategy !== "free"
+                anchors.verticalCenter: parent.verticalCenter
+                width: strategyIcon.implicitWidth + 6
+                height: strategyIcon.implicitHeight + 4
+                radius: Appearance.rounding.small
+                color: ColorUtils.applyAlpha(
+                    root.locked ? Appearance.colors.colError
+                        : root._isZonePlacement ? Appearance.colors.colPrimary
+                        : Appearance.colors.colTertiary, 0.18)
+                MaterialSymbol {
+                    id: strategyIcon
+                    anchors.centerIn: parent
+                    iconSize: 10
+                    text: root.locked ? "lock"
+                        : root._isZonePlacement ? "grid_on"
+                        : root._isAutoPlacement ? "auto_awesome" : ""
+                    color: root.locked ? Appearance.colors.colError
+                        : root._isZonePlacement ? Appearance.colors.colPrimary
+                        : Appearance.colors.colTertiary
+                }
+            }
+
+            StyledText {
+                anchors.verticalCenter: parent.verticalCenter
+                readonly property string name: root.configEntryName.split(".").pop().replace(/([A-Z])/g, " $1").toLowerCase().trim()
+                text: root.widgetIrisFamily ? name.charAt(0).toUpperCase() + name.slice(1) : name
+                font.family: root.widgetIrisFamily ? IrisStyle.fontMain : Appearance.font.family.main
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                font.weight: root.widgetIrisFamily ? Font.DemiBold : Font.Normal
+                font.capitalization: root.widgetIrisFamily ? Font.MixedCase : Font.Capitalize
+                color: root.widgetIrisFamily ? IrisStyle.text : Appearance.colors.colOnLayer0
+                style: root.widgetIrisFamily ? Text.Raised : Text.Normal
+                styleColor: root.widgetIrisFamily ? IrisStyle.plateShadow : "transparent"
+            }
         }
     }
 
@@ -1614,7 +1624,10 @@ AbstractWidget {
     // ── Edit mode resize handles ─────────────────────────────
     readonly property bool _hasResize: !root.irisFaced && Object.keys(root.resizableAxes).length > 0
     readonly property bool _resizeVisible: GlobalStates.widgetEditMode
-        && root._hasResize && !root.locked && root._editControlsShown && !root.materialSized
+        && root._hasResize && !root.locked && root._editControlsShown && !root._outfitted
+    // A sized Material widget still takes any size (a visualizer as wide as the screen, 10-25): its handles set a free
+    // footprint over the size class, and the class follows to the nearest one so the layout fits what it got.
+    readonly property var _dragAxes: root.materialSized ? ({ width: "materialWidth", height: "materialHeight" }) : root.resizableAxes
 
     // Resize handle component — small draggable square at edges/corners
     component ResizeHandle: Rectangle {
@@ -1628,7 +1641,7 @@ AbstractWidget {
         readonly property bool _corner: (resizeLeft || resizeRight)
             && (resizeTop || resizeBottom)
         readonly property bool _axisSupported: {
-            const axes = root.resizableAxes
+            const axes = root._dragAxes
             if (axes.uniform)
                 return rh._corner
             const horizontal = (resizeLeft || resizeRight) && Boolean(axes.width)
@@ -1678,16 +1691,17 @@ AbstractWidget {
                 rh._canvasStartX = mapped.x;
                 rh._canvasStartY = mapped.y;
                 // Capture config values at drag start for ratio calculation
-                const axes = root.resizableAxes;
+                const axes = root._dragAxes;
                 let vals = {};
                 if (axes.uniform) vals.uniform = Number(root._readConfigKey(axes.uniform) ?? 100);
                 // Axis dimensions are logical pixels. Start from the rendered
                 // frame, including a presentation's minimum, not a smaller saved
                 // card size. Merely switching style must not rewrite that size.
+                const unit = root.materialSized ? root._baseScale : root.scaleFactor
                 if (axes.width)
-                    vals.width = root.width / root.scaleFactor;
+                    vals.width = root.width / unit;
                 if (axes.height)
-                    vals.height = root.height / root.scaleFactor;
+                    vals.height = root.height / unit;
                 rh._startConfigVals = vals
                 root._resizePreviewValues = ({})
                 root._isResizing = true
@@ -1698,7 +1712,7 @@ AbstractWidget {
                 const mapped = rhArea.mapToItem(root.parent, mouse.x, mouse.y);
                 const dx = mapped.x - rh._canvasStartX;
                 const dy = mapped.y - rh._canvasStartY;
-                const axes = root.resizableAxes
+                const axes = root._dragAxes
                 const isUniform = !!axes.uniform
 
                 let newW = rh._startWidth;
@@ -1778,6 +1792,13 @@ AbstractWidget {
                 const preview = root._resizePreviewValues
                 for (const key in preview)
                     updates[key] = preview[key]
+                if (root.materialSized && Object.keys(preview).length > 0) {
+                    const w = Number(preview.materialWidth ?? root.width / root._baseScale)
+                    const h = Number(preview.materialHeight ?? root.height / root._baseScale)
+                    updates.materialWidth = Math.round(w)
+                    updates.materialHeight = Math.round(h)
+                    updates.materialSize = root.nearestMaterialSize(w, h)
+                }
                 if (rh.resizeLeft)
                     updates.x = Math.round(root.x)
                 if (rh.resizeTop)
@@ -1802,52 +1823,63 @@ AbstractWidget {
         }
     }
 
-    // Corner handles (4 corners)
-    ResizeHandle {
-        anchors { right: parent.left; bottom: parent.top; margins: -1 }
-        resizeLeft: true; resizeTop: true
-    }
-    ResizeHandle {
-        anchors { left: parent.right; bottom: parent.top; margins: -1 }
-        resizeRight: true; resizeTop: true
-    }
-    ResizeHandle {
-        anchors { right: parent.left; top: parent.bottom; margins: -1 }
-        resizeLeft: true; resizeBottom: true
-    }
-    ResizeHandle {
-        anchors { left: parent.right; top: parent.bottom; margins: -1 }
-        resizeRight: true; resizeBottom: true
-    }
-    // Edge handles (4 midpoints)
-    ResizeHandle {
-        anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.top; bottomMargin: -1 }
-        resizeTop: true
-    }
-    ResizeHandle {
-        anchors { horizontalCenter: parent.horizontalCenter; top: parent.bottom; topMargin: -1 }
-        resizeBottom: true
-    }
-    ResizeHandle {
-        anchors { right: parent.left; verticalCenter: parent.verticalCenter; rightMargin: -1 }
-        resizeLeft: true
-    }
-    ResizeHandle {
-        anchors { left: parent.right; verticalCenter: parent.verticalCenter; leftMargin: -1 }
-        resizeRight: true
+    // Edit chrome exists only while arranging: twelve widgets kept eight handles and two grips each all day (10-25).
+    Loader {
+        z: 201
+        anchors.fill: parent
+        active: root._resizeVisible
+        sourceComponent: Item {
+            ResizeHandle {
+                anchors { right: parent.left; bottom: parent.top; margins: -1 }
+                resizeLeft: true; resizeTop: true
+            }
+            ResizeHandle {
+                anchors { left: parent.right; bottom: parent.top; margins: -1 }
+                resizeRight: true; resizeTop: true
+            }
+            ResizeHandle {
+                anchors { right: parent.left; top: parent.bottom; margins: -1 }
+                resizeLeft: true; resizeBottom: true
+            }
+            ResizeHandle {
+                anchors { left: parent.right; top: parent.bottom; margins: -1 }
+                resizeRight: true; resizeBottom: true
+            }
+            // Edge handles (4 midpoints)
+            ResizeHandle {
+                anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.top; bottomMargin: -1 }
+                resizeTop: true
+            }
+            ResizeHandle {
+                anchors { horizontalCenter: parent.horizontalCenter; top: parent.bottom; topMargin: -1 }
+                resizeBottom: true
+            }
+            ResizeHandle {
+                anchors { right: parent.left; verticalCenter: parent.verticalCenter; rightMargin: -1 }
+                resizeLeft: true
+            }
+            ResizeHandle {
+                anchors { left: parent.right; verticalCenter: parent.verticalCenter; leftMargin: -1 }
+                resizeRight: true
+            }
+        }
     }
 
-    IrisSizeGrip {
+    Loader {
         z: 202
-        widget: root
-        visible: GlobalStates.widgetEditMode && root.irisFaced && root.irisSizeChoices.length > 1 && !root.locked
-            && (root.editSelected || root._gripHover || root._irisSizing)
+        active: GlobalStates.widgetEditMode && root.irisFaced && root.irisSizeChoices.length > 1 && !root.locked
+        sourceComponent: IrisSizeGrip {
+            widget: root
+            visible: root.editSelected || root._gripHover || root._irisSizing
+        }
     }
-    WidgetSizeGrip {
+    Loader {
         z: 202
-        widget: root
-        visible: GlobalStates.widgetEditMode && root.materialSized && root.materialSizes.length > 1 && !root.locked
-            && (root.editSelected || root._gripHover || root._materialSizing)
+        active: GlobalStates.widgetEditMode && root.materialSized && root.materialSizes.length > 1 && !root.locked
+        sourceComponent: WidgetSizeGrip {
+            widget: root
+            visible: root.editSelected || root._gripHover || root._materialSizing
+        }
     }
     // The grip reads the hover a tick late: hiding it under the pointer re-delivers hover at once and
     // re-entered its own visibility (a binding loop while editing).
@@ -2643,8 +2675,45 @@ AbstractWidget {
     }
     onIrisFacedChanged: Qt.callLater(() => root._keepSize(false))
     readonly property size materialFootprint: DesktopWidgetDesign.materialFootprint(root.materialSize)
-    readonly property real materialWidth: Math.round(root.materialFootprint.width * root._baseScale)
-    readonly property real materialHeight: Math.round(root.materialFootprint.height * root._baseScale)
+    // A free footprint (set with the handles) wins over the class's; S, M or L clears it.
+    readonly property real _freeWidth: Number(root._readConfigKey("materialWidth") ?? 0) || 0
+    readonly property real _freeHeight: Number(root._readConfigKey("materialHeight") ?? 0) || 0
+    readonly property bool materialFree: root.materialSized && (root._freeWidth > 0 || root._freeHeight > 0)
+    readonly property real materialWidth: Math.round((root._freeWidth > 0 ? root._freeWidth : root.materialFootprint.width) * root._baseScale)
+    readonly property real materialHeight: Math.round((root._freeHeight > 0 ? root._freeHeight : root.materialFootprint.height) * root._baseScale)
+    // The edit window's edge grips (MaterialWidgetOutfit) drive a free size in screen pixels at true size.
+    function beginFreeSize(): void {
+        root._resizePreviewValues = ({})
+        root._isResizing = true
+    }
+    function previewFreeSize(width: real, height: real): void {
+        const w = Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth, width))
+        const h = Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight, height))
+        root._resizePreviewValues = { materialWidth: Math.round(w / root._baseScale), materialHeight: Math.round(h / root._baseScale) }
+    }
+    function commitFreeSize(): void {
+        const preview = root._resizePreviewValues
+        root._isResizing = false
+        root._resizePreviewValues = ({})
+        if (preview.materialWidth === undefined) return
+        root._setOutputValues({ materialWidth: preview.materialWidth, materialHeight: preview.materialHeight,
+            materialSize: root.nearestMaterialSize(preview.materialWidth, preview.materialHeight) })
+        _makeRoomLater.restart()
+    }
+    function cancelFreeSize(): void {
+        root._resizePreviewValues = ({})
+        root._isResizing = false
+    }
+    function nearestMaterialSize(width: real, height: real): string {
+        let best = root.materialSize
+        let gap = Number.POSITIVE_INFINITY
+        for (const size of root.materialSizes) {
+            const foot = DesktopWidgetDesign.materialFootprint(size)
+            const d = Math.abs(foot.width - width) + Math.abs(foot.height - height)
+            if (d < gap) { gap = d; best = size }
+        }
+        return best
+    }
     // Widgets with their own proportions report the size their drawing takes (at the current scaleFactor);
     // the fit keeps it inside the footprint with `materialFitPadding` around it.
     property real materialNaturalWidth: 0
@@ -2688,8 +2757,8 @@ AbstractWidget {
     function commitMaterialSize(size: string): void {
         root._resizePreviewValues = ({})
         root._materialSizing = false
-        if (root.materialSizes.includes(size) && size !== String(root._storedConfigKey("materialSize") ?? ""))
-            root._setOutputValues(root._sizeValues(size))
+        if (root.materialSizes.includes(size) && (root.materialFree || size !== String(root._storedConfigKey("materialSize") ?? "")))
+            root._setOutputValues(Object.assign(root._sizeValues(size), root.materialFree ? { materialWidth: 0, materialHeight: 0 } : {}))
         _materialSizeSettle.restart()
     }
     // a size chosen elsewhere (Settings) makes room like one chosen here; the first size it shows is no change
