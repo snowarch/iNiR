@@ -38,7 +38,7 @@ Item {
     property string shown: ""
     property string leaving: ""
     readonly property Item shownItem: pool.itemFor(pool.shown)
-    readonly property bool turning: turn.running
+    readonly property bool turning: turn.running || prep.running
     property var resident: []
     property var used: ({})
     property int clock: 0
@@ -72,6 +72,7 @@ Item {
     }
     // Ends a turn where it would have landed (a click mid-move): nothing stays faded or shifted.
     function endTurn(): void {
+        prep.stop()
         turn.stop()
         const left = pool.itemFor(pool.leaving)
         if (left) left.opacity = 1
@@ -94,17 +95,30 @@ Item {
             inFade.target = arriving
             inMove.target = arriving
             outFade.target = pool.crossing ? pool.itemFor(from) : null
-            turn.start()
+            prep.arm()
         }
         pool.arrived(pool.shown)
         // The page left goes once the turn ends, so the turn's frame destroys nothing.
-        if (!turn.running) pool.trim()
+        if (!pool.turning) pool.trim()
     }
     onCurrentChanged: {
         pool.hold(pool.current)
         pool.settle()
     }
 
+    // The turn starts once the new page has been drawn (SekaiPop's phone does the same before each move): started in
+    // its build frame, the move's clock ran through the build and the first draw, and it showed up part-way done.
+    FrameAnimation {
+        id: prep
+        property int drawn: 0
+        property real since: 0
+        function arm(): void { prep.drawn = 0; prep.since = Date.now(); prep.start() }
+        onTriggered: {
+            if (++prep.drawn < 2 && Date.now() - prep.since < 80) return
+            prep.stop()
+            turn.start()
+        }
+    }
     ParallelAnimation {
         id: turn
         NumberAnimation { id: inFade; property: "opacity"; to: 1; duration: pool.duration * 0.6; easing.type: Easing.OutCubic }
@@ -127,10 +141,10 @@ Item {
             anchors.fill: parent
             asynchronous: !pool.settled
             visible: page.onScreen && page.status === Loader.Ready
-            enabled: page.area === pool.shown && !turn.running
+            enabled: page.area === pool.shown && !pool.turning
             z: page.area === pool.shown ? 1 : 0
             // Only the pages moving are drawn as one texture each, and only while they move.
-            layer.enabled: turn.running && page.visible
+            layer.enabled: pool.turning && page.visible
             layer.smooth: true
             Component.onCompleted: page.setSource(pool.urlFor(page.area), Object.assign({ area: page.area }, pool.propsFor(page.area)))
             onStatusChanged: if (page.status === Loader.Ready && page.area === pool.current) pool.settle()
