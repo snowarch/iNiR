@@ -1225,7 +1225,7 @@ Singleton {
                     property string harmony: "accent" // accent = secondary and tertiary stay beside the accent's hue; scheme = as generated
                 }
                 property JsonObject typography: JsonObject {
-                    property string mainFont: "Roboto Flex"
+                    property string mainFont: "Google Sans Flex"
                     property string titleFont: "Gabarito"
                     property string monospaceFont: "JetBrainsMono Nerd Font"
                     property real sizeScale: 1.0

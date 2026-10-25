@@ -32,7 +32,7 @@ Text {
         hintingPreference: Font.PreferDefaultHinting
         family: defaultFont
         pixelSize: Appearance?.font.pixelSize.small ?? 15
-        variableAxes: shouldUseNumberFont ? ({}) : Appearance.font.variableAxes.main
+        variableAxes: shouldUseNumberFont ? root._numberAxes : Appearance.font.variableAxes.main
         features: shouldUseNumberFont ? ({ "tnum": 1 }) : ({})
         // ZZZ poster crispness: a small global letter-spacing under the zzz style
         // (token-driven, absolute px). Numbers stay untracked so digit columns
@@ -41,6 +41,20 @@ Text {
             ? (Appearance?.zzz.tracking ?? 0)
             : (Appearance?.regaliaEverywhere && !root.shouldUseNumberFont) ? 0.12 : 0
     }
+    // Figures round out by size; set from a handler, since a binding on the font's own size loops through the font.
+    property var _numberAxes: ({})
+    property string _numberStep: ""
+    function _syncNumberAxes(): void {
+        if (!root.shouldUseNumberFont) return
+        const axes = Appearance.font.variableAxes.numbersAt(root.font.pixelSize)
+        const step = axes.ROND + ":" + axes.opsz
+        if (step === root._numberStep) return
+        root._numberStep = step
+        root._numberAxes = axes
+    }
+    onFontChanged: root._syncNumberAxes()
+    onShouldUseNumberFontChanged: root._syncNumberAxes()
+    Component.onCompleted: root._syncNumberAxes()
     color: Appearance?.colors.colOnLayer0 ?? "black"
     linkColor: Appearance?.colors.colPrimary
 

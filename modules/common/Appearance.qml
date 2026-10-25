@@ -774,7 +774,7 @@ Singleton {
                                 : (Config.options?.appearance?.typography?.mainFont ?? "Roboto Flex")
             property string numbers: root._useZzzFont ? root._zzzFont
                                 : root._useAngelFont ? root._angelFont
-                                : root._useRegaliaFont ? root._regaliaTechFont : "Rubik"
+                                : root._useRegaliaFont ? root._regaliaTechFont : "Google Sans Flex"
             property string title: root.editorialEverywhere ? root.editorial.displayFamily : root._useZzzFont ? root._zzzFont
                                  : root._useAngelFont ? root._angelFont
                                  : root._useRegaliaFont ? root._regaliaFont
@@ -790,7 +790,7 @@ Singleton {
             // Roboto Flex is customized to feel geometric, unserious yet not overly kiddy
             property var main: root.editorialEverywhere ? ({}) : root.regaliaEverywhere ? ({
                 "wght": 430,
-            }) : ({
+            }) : root.font.family.main === "Google Sans Flex" ? ({}) : ({
                 "YTUC": 716,
                 "YTFI": 716,
                 "YTAS": 716,
@@ -801,8 +801,17 @@ Singleton {
                 "wght": Math.max(100, Math.min(1000, Config.options?.appearance?.typography?.variableAxes?.wght ?? 300)),
             })
             property var numbers: ({
-                "wght": 400,
+                "ROND": 100,
             })
+            // Figures in Google Sans Flex round out as they grow (Lucid's display roles): a big reading is soft, a small
+            // one stays plain, and the optical size snaps to a few stops so each size doesn't build its own glyphs.
+            function numbersAt(px: real): var {
+                const stops = [9, 13, 18, 28, 48, 96]
+                let opsz = stops[0]
+                for (const stop of stops)
+                    if (Math.abs(stop - px) < Math.abs(opsz - px)) opsz = stop
+                return ({ "ROND": px >= 28 ? 100 : px >= 20 ? 40 : 0, "opsz": opsz })
+            }
             property var title: ({
                 "wght": root.editorialEverywhere ? root.editorial.titleWeight : root.regaliaEverywhere ? 650 : 900,
             })

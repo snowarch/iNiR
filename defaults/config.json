@@ -307,7 +307,7 @@
             }
         },
         "typography": {
-            "mainFont": "Roboto Flex",
+            "mainFont": "Google Sans Flex",
             "titleFont": "Gabarito",
             "monospaceFont": "JetBrainsMono Nerd Font",
             "sizeScale": 1.0,

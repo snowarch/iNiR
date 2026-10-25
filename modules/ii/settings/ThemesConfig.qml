@@ -1905,7 +1905,7 @@ ContentPage {
                         id: mainFontSelector
                         label: Translation.tr("Main")
                         icon: "font_download"
-                        selectedFont: Config.options?.appearance?.typography?.mainFont ?? "Roboto Flex"
+                        selectedFont: Config.options?.appearance?.typography?.mainFont ?? "Google Sans Flex"
                         onSelectedFontChanged: {
                             if (Config.options?.appearance?.typography)
                                 Config.setNestedValue("appearance.typography.mainFont", selectedFont)
