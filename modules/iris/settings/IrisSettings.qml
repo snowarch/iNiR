@@ -962,10 +962,10 @@ Item {
         ownField: !root.windowed || root.windowField
         overlay: !root.windowed
         chassisKey: "settings"
-        // Over the desktop it is a solid sheet with its own field (10-25, he: no blur behind it): drawn by the band's
-        // field from another window, the body and the page landed a frame apart and it flickered on every open.
+        // Over the desktop it draws its own field, never the band's: from another window the body and the page landed
+        // a frame apart and it flickered on every open.
         // A window cannot know where it sits on screen, so it never samples the wallpaper: Blur asks Niri, else solid.
-        glass: root.windowed && IrisStyle.glassCompositor
+        glass: !root.windowed || IrisStyle.glassCompositor
         id: frame
         compositorBlurred: true
         energy: root.windowed && GlobalStates.settingsWindowBehind ? 0 : 1
