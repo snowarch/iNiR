@@ -1,2 +1,3 @@
 module qs.modules.shared.background.widgets.uptime
 UptimeWidget 1.0 UptimeWidget.qml
+UptimeDay 1.0 UptimeDay.qml

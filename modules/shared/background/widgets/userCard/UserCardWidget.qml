@@ -68,6 +68,12 @@ AbstractBackgroundWidget {
     readonly property string userDisplay: root.showHostname && root.hostname.length > 0
         ? `${root.username}@${root.hostname}` : root.username
 
+    readonly property var machineFacts: [
+        { glyph: "terminal", label: Translation.tr("Shell"), value: String(Quickshell.env("SHELL") ?? "").split("/").pop() || "sh" },
+        { glyph: "desktop_windows", label: Translation.tr("Desktop"),
+            value: String(SystemInfo.desktopEnvironment || "Wayland").split(":")[0].replace(/^./, first => first.toUpperCase()) },
+        { glyph: "computer", label: Translation.tr("Machine"), value: root.hostname || SystemInfo.distroName }
+    ].concat(root.showWeather && root.weatherLine.text !== "" ? [{ glyph: root.weatherLine.icon, label: Translation.tr("Weather"), value: root.weatherLine.text }] : [])
     readonly property var weatherLine: {
         const desc = (Weather.data?.description ?? "").toLowerCase();
         if (desc.includes("rain"))
@@ -184,7 +190,7 @@ AbstractBackgroundWidget {
             Item {
                 id: avatarContainer
                 visible: root.showAvatar
-                readonly property int size: Math.round(48 * root.scaleFactor)
+                readonly property int size: Math.round((root.materialLarge ? 84 : 48) * root.scaleFactor)
                 Layout.preferredWidth: size
                 Layout.preferredHeight: size
                 Layout.alignment: Qt.AlignVCenter
@@ -253,11 +259,11 @@ AbstractBackgroundWidget {
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: root.materialSmall ? root.username : root.userDisplay
+                    text: root.materialSmall || root.materialLarge ? root.username : root.userDisplay
                     elide: Text.ElideRight
                     color: root.surfaceInk
                     font.family: root.widgetTitleFamily
-                    font.pixelSize: Math.round(Appearance.font.pixelSize.normal
+                    font.pixelSize: Math.round((root.materialLarge ? Appearance.font.pixelSize.huge : Appearance.font.pixelSize.normal)
                         * root.widgetTitleScale * root.scaleFactor)
                     font.weight: root.widgetTitleWeight
                     font.letterSpacing: root.widgetTitleTracking
@@ -276,7 +282,7 @@ AbstractBackgroundWidget {
         Rectangle {
             Layout.alignment: Qt.AlignLeft
             Layout.maximumWidth: parent.width
-            visible: root.showWeather && root.weatherLine.text !== "" && !root.materialSmall
+            visible: root.showWeather && root.weatherLine.text !== "" && !root.materialSmall && !root.materialLarge
                 && root.height >= Math.round(170 * root.scaleFactor)
             implicitWidth: Math.min(parent.width,
                 weatherChip.implicitWidth + Math.round(18 * root.scaleFactor))
@@ -313,8 +319,56 @@ AbstractBackgroundWidget {
             Layout.fillHeight: true
         }
 
+        // Large: the machine the person is on, a row each, in the tonal discs the rest of Material uses.
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: false
+            visible: root.materialLarge
+            spacing: Math.round(6 * root.scaleFactor)
+            Repeater {
+                model: root.materialLarge ? root.machineFacts : []
+                RowLayout {
+                    id: fact
+                    required property var modelData
+                    required property int index
+                    readonly property string role: fact.index % 2 === 0 ? root.widgetSecondaryRole : root.widgetTertiaryRole
+                    Layout.fillWidth: true
+                    spacing: Math.round(10 * root.scaleFactor)
+                    Rectangle {
+                        implicitWidth: Math.round(28 * root.scaleFactor)
+                        implicitHeight: implicitWidth
+                        radius: width / 2
+                        color: root.widgetSemanticContainer(fact.role)
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: fact.modelData.glyph
+                            fill: 1
+                            iconSize: Math.round(16 * root.scaleFactor)
+                            color: root.widgetSemanticOnContainer(fact.role)
+                        }
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: fact.modelData.label
+                        color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
+                        elide: Text.ElideRight
+                        font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                    }
+                    StyledText {
+                        Layout.maximumWidth: Math.round(180 * root.scaleFactor)
+                        text: fact.modelData.value
+                        color: root.surfaceInk
+                        elide: Text.ElideRight
+                        font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                        font.weight: Font.DemiBold
+                    }
+                }
+            }
+        }
+
         RowLayout {
             Layout.fillWidth: true
+            Layout.topMargin: root.materialLarge ? Math.round(6 * root.scaleFactor) : 0
             spacing: Math.round(6 * root.scaleFactor)
 
             RippleButton {
@@ -413,9 +467,9 @@ AbstractBackgroundWidget {
         // small is the person and the session: the label, condition and keys left the name 40 px
         Item {
             visible: root.showAvatar
-            Layout.preferredWidth: Math.round((root.materialSmall ? 44 : 58) * root.scaleFactor)
+            Layout.preferredWidth: Math.round((root.materialSmall ? 44 : root.materialLarge ? 96 : 58) * root.scaleFactor)
             Layout.preferredHeight: Layout.preferredWidth
-            Layout.alignment: root.materialSmall ? Qt.AlignTop : Qt.AlignVCenter
+            Layout.alignment: root.materialSmall || root.materialLarge ? Qt.AlignTop : Qt.AlignVCenter
 
             Rectangle {
                 id: instrumentAvatarMask

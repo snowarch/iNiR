@@ -61,6 +61,29 @@ AbstractBackgroundWidget {
         return d
     }
     readonly property string bootLabel: Qt.locale().toString(root.bootDate, "HH:mm")
+    // The session laid on the day, 0..1: from waking to now. Early in a day a session from yesterday would be a sliver,
+    // so it reads the last 24 hours instead.
+    readonly property real nowAt: (DateTime.clock.date.getHours() * 60 + DateTime.clock.date.getMinutes()) / 1440
+    readonly property bool sinceYesterday: root.sessionSeconds / 86400 >= root.nowAt
+    readonly property real bootAt: root.sinceYesterday ? 0 : root.nowAt - root.sessionSeconds / 86400
+    readonly property bool rolling: root.sinceYesterday && root.nowAt < 0.25
+    readonly property real sessionFrom: root.rolling ? Math.max(0, 1 - root.sessionSeconds / 86400) : root.bootAt
+    readonly property real sessionTo: root.rolling ? 1 : root.nowAt
+    readonly property var sessionMarks: {
+        if (!root.rolling)
+            return ["0", "6", "12", "18", "24"]
+        const now = DateTime.clock.date
+        const hour = now.getHours() + (now.getMinutes() >= 30 ? 1 : 0)
+        return [-24, -18, -12, -6].map(back => String(((hour + back) % 24 + 24) % 24)).concat([Translation.tr("Now")])
+    }
+    readonly property string bootDay: Translation.locale.toString(root.bootDate, "dddd").replace(/^./, first => first.toUpperCase())
+    readonly property string startedText: (root.sinceYesterday ? root.bootDay + " " : "") + root.bootLabel
+    function spanText(seconds: int): string {
+        const h = Math.floor(seconds / 3600)
+        const m = Math.floor(seconds % 3600 / 60)
+        return h > 0 ? Translation.tr("%1 h %2 min").arg(h).arg(m) : Translation.tr("%1 min").arg(m)
+    }
+    readonly property string onTodayText: root.spanText(Math.round((root.nowAt - root.bootAt) * 86400))
 
     WidgetSurface {
         irisPresentation: root.widgetIris
@@ -94,8 +117,14 @@ AbstractBackgroundWidget {
             : hours > 0 ? [{ value: hours, unit: Translation.tr("h") }, { value: minutes, unit: Translation.tr("min") }]
             : [{ value: minutes, unit: Translation.tr("min") }]
     }
+    UptimeDay {
+        anchors.fill: parent
+        visible: !root.irisFaced && !root.instrument && root.materialSized && !root.materialSmall
+        widget: root
+        large: root.materialLarge
+    }
     ColumnLayout {
-        visible: !root.irisFaced && !root.instrument && root.materialSized
+        visible: !root.irisFaced && !root.instrument && root.materialSmall
         anchors.fill: parent
         anchors.margins: Math.round(16 * root.scaleFactor)
         spacing: Math.round(2 * root.scaleFactor)
@@ -131,7 +160,7 @@ AbstractBackgroundWidget {
                         text: String(part.modelData.value)
                         color: root.surfaceInk
                         font.family: root.widgetNumbersFamily
-                        font.pixelSize: Math.round((root.materialSmall ? 34 : 42) * root.scaleFactor)
+                        font.pixelSize: Math.round(34 * root.scaleFactor)
                         font.weight: Font.DemiBold
                         font.features: ({ "tnum": 1 })
                     }
@@ -139,7 +168,7 @@ AbstractBackgroundWidget {
                         anchors.baseline: partValue.baseline
                         text: part.modelData.unit
                         color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
-                        font.pixelSize: Math.round((root.materialSmall ? 16 : 19) * root.scaleFactor)
+                        font.pixelSize: Math.round(16 * root.scaleFactor)
                         font.weight: Font.DemiBold
                     }
                 }
@@ -215,7 +244,11 @@ AbstractBackgroundWidget {
 
         // small stacks the reading over its notes; beside it they left the figure 40 px
         GridLayout {
-            anchors.fill: parent
+            id: instrumentReading
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: root.materialLarge ? implicitHeight : parent.height
             columns: root.materialSmall ? 1 : 3
             columnSpacing: Math.round(12 * root.scaleFactor)
             rowSpacing: Math.round(8 * root.scaleFactor)
@@ -290,6 +323,75 @@ AbstractBackgroundWidget {
                 }
 
                 Item { Layout.fillHeight: true; visible: !root.materialSmall }
+            }
+        }
+
+        // Large: the day in 24 ticks, the hours it has been on lit, and the session's facts under them.
+        ColumnLayout {
+            visible: root.materialLarge
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            spacing: Math.round(8 * root.scaleFactor)
+            Row {
+                id: dayTicks
+                Layout.fillWidth: true
+                spacing: Math.round(3 * root.scaleFactor)
+                readonly property real tick: (width - spacing * 23) / 24
+                Repeater {
+                    model: 24
+                    Rectangle {
+                        required property int index
+                        readonly property bool on: (index + 1) / 24 > root.sessionFrom && index / 24 < root.sessionTo
+                        width: dayTicks.tick
+                        height: Math.round(22 * root.scaleFactor)
+                        color: on ? root.widgetAccentVisible : ColorUtils.applyAlpha(root.widgetInk, 0.14)
+                    }
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: -Math.round(4 * root.scaleFactor)
+                Repeater {
+                    model: root.sessionMarks
+                    InstrumentLabel {
+                        required property var modelData
+                        required property int index
+                        Layout.fillWidth: true
+                        horizontalAlignment: index === 0 ? Text.AlignLeft : index === root.sessionMarks.length - 1 ? Text.AlignRight : Text.AlignHCenter
+                        text: String(modelData)
+                        color: root.widgetInkMuted
+                        scaleFactor: root.scaleFactor
+                        size: 9
+                    }
+                }
+            }
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.topMargin: Math.round(6 * root.scaleFactor)
+                implicitHeight: Math.max(1, Math.round(root.scaleFactor))
+                color: ColorUtils.applyAlpha(root.widgetInk, 0.16)
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Math.round(12 * root.scaleFactor)
+                Repeater {
+                    model: [
+                        { label: Translation.tr("Started"), value: root.startedText },
+                        { label: Translation.tr("On today"), value: root.onTodayText }
+                    ]
+                    InstrumentField {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        scaleFactor: root.scaleFactor
+                        label: modelData.label
+                        value: modelData.value
+                        ink: root.widgetInk
+                        muted: root.widgetInkMuted
+                        family: root.widgetNumbersFamily
+                        valueSize: 13
+                    }
+                }
             }
         }
     }

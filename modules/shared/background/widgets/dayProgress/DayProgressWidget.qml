@@ -66,10 +66,110 @@ AbstractBackgroundWidget {
         return h >= 6 && h < 19
     }
 
+    // Medium is wide: the ring keeps the day's share, the time and what the sun does next sit beside it.
+    readonly property bool wide: root.materialSized && root.materialSize === "medium"
+    readonly property bool sunUp: Weather.sunState === "day"
+    readonly property string sunNext: String((root.sunUp ? Weather.data?.sunset : Weather.data?.sunrise) ?? "")
+
+    component DayRing: InstrumentRing {
+        fraction: root.dayFraction
+        showTicks: root.showTicks
+        showArc: root.showArc
+        showComet: root.showComet
+        labels: [
+            { text: "00", hour: 0 }, { text: "06", hour: 6 },
+            { text: "12", hour: 12 }, { text: "18", hour: 18 }
+        ]
+        ink: root.ink
+        accent: root.accent
+        accentSoft: root.accentSoft
+        animated: root.animationsActive
+    }
+
+    RowLayout {
+        visible: !root.irisFaced && root.wide
+        anchors.fill: parent
+        anchors.margins: Math.round(16 * root.scaleFactor)
+        spacing: Math.round(18 * root.scaleFactor)
+
+        Item {
+            Layout.fillHeight: true
+            Layout.preferredWidth: height
+            DayRing {
+                anchors.fill: parent
+                scaleFactor: root.scaleFactor * 0.8
+                showLabels: false
+            }
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: 0
+                MaterialSymbol {
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: root.showIcon
+                    text: root.isDaytime ? "light_mode" : "bedtime"
+                    iconSize: Math.round(18 * root.scaleFactor * root.textScale)
+                    color: root.accentSoft
+                }
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: Math.round(root.dayFraction * 100) + "%"
+                    color: root.ink
+                    font.family: root.widgetNumbersFamily
+                    font.pixelSize: Math.round(20 * root.scaleFactor * root.textScale)
+                    font.weight: Font.DemiBold
+                    font.features: ({ "tnum": 1 })
+                }
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
+            spacing: Math.round(2 * root.scaleFactor)
+            StyledText {
+                Layout.fillWidth: true
+                text: DateTime.time
+                elide: Text.ElideRight
+                color: root.ink
+                font.family: root.widgetNumbersFamily
+                font.pixelSize: Math.round(40 * root.scaleFactor * root.textScale)
+                font.weight: Font.DemiBold
+                font.features: ({ "tnum": 1 })
+            }
+            StyledText {
+                Layout.fillWidth: true
+                visible: root.showDate
+                text: DateTime.date
+                elide: Text.ElideRight
+                color: root.inkMuted
+                font.family: root.widgetNumbersFamily
+                font.pixelSize: Math.round(13 * root.scaleFactor * root.textScale)
+                font.weight: Font.Medium
+            }
+            RowLayout {
+                Layout.topMargin: Math.round(8 * root.scaleFactor)
+                visible: root.sunNext.length > 0
+                spacing: Math.round(6 * root.scaleFactor)
+                MaterialSymbol {
+                    text: root.sunUp ? "wb_twilight" : "wb_sunny"
+                    fill: 1
+                    iconSize: Math.round(16 * root.scaleFactor)
+                    color: root.accentSoft
+                }
+                StyledText {
+                    text: (root.sunUp ? Translation.tr("Sunset") : Translation.tr("Sunrise")) + " " + root.sunNext
+                    color: root.inkMuted
+                    font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                    font.weight: Font.Medium
+                }
+            }
+        }
+    }
+
     // Borderless composition: no card, no border. The wallpaper-sampled ink
     // (needsColText) is the only thing keeping ring and type legible.
     ColumnLayout {
-        visible: !root.irisFaced
+        visible: !root.irisFaced && !root.wide
         anchors.fill: parent
         anchors.margins: Math.round(14 * root.scaleFactor)
         spacing: Math.round(10 * root.scaleFactor)
@@ -83,23 +183,11 @@ AbstractBackgroundWidget {
             readonly property real size: Math.min(width, height)
             readonly property real dialScale: root.scaleFactor
 
-            InstrumentRing {
+            DayRing {
                 id: ring
                 anchors.fill: parent
                 scaleFactor: ringArea.dialScale
-                fraction: root.dayFraction
-                showTicks: root.showTicks
-                showArc: root.showArc
-                showComet: root.showComet
-                labels: [
-                    { text: "00", hour: 0 }, { text: "06", hour: 6 },
-                    { text: "12", hour: 12 }, { text: "18", hour: 18 }
-                ]
                 showLabels: root.showHourLabels
-                ink: root.ink
-                accent: root.accent
-                accentSoft: root.accentSoft
-                animated: root.animationsActive
             }
 
             // ── Center readout ───────────────────────────────
