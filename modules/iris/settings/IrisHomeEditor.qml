@@ -191,7 +191,7 @@ Item {
                         model: root.matches
                         Line {
                             required property var modelData
-                            width: parent.width
+                            width: parent ? parent.width : 0
                             entry: modelData
                             value: String(modelData.value)
                         }
@@ -215,36 +215,37 @@ Item {
     // done to it (moved, taken off) or the way to add it.
     component Line: MouseArea {
         id: line
+        function u(n: real): int { return Math.round(n * IrisStyle.settingsDensity) }
         property var entry: null
         property string value: ""
         property bool pinnedLine: false
         property bool first: false
         property bool last: false
-        height: root.u(50)
+        height: line.u(50)
         hoverEnabled: true
         cursorShape: line.pinnedLine ? Qt.ArrowCursor : Qt.PointingHandCursor
         onClicked: if (!line.pinnedLine) root.write(root.pinned.concat([line.value]))
         Rectangle {
             anchors.fill: parent
-            anchors.margins: root.u(3)
-            radius: IrisStyle.fieldChamfer ? 0 : root.u(12)
+            anchors.margins: line.u(3)
+            radius: IrisStyle.fieldChamfer ? 0 : line.u(12)
             color: line.containsMouse ? IrisStyle.fillHover : "transparent"
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
         }
         Rectangle {
             visible: line.pinnedLine && !line.first
             x: tile.x
-            width: parent.width - x - root.u(12)
+            width: parent.width - x - line.u(12)
             height: 1
             color: IrisStyle.hairline
         }
         Rectangle {
             id: tile
-            x: root.u(12)
+            x: line.u(12)
             anchors.verticalCenter: parent.verticalCenter
-            width: root.u(28)
+            width: line.u(28)
             height: width
-            radius: IrisStyle.fieldChamfer ? 0 : root.u(8)
+            radius: IrisStyle.fieldChamfer ? 0 : line.u(8)
             gradient: Gradient {
                 GradientStop { position: 0; color: IrisStyle.tileTop(line.entry?.tint ?? IrisStyle.identity.gray) }
                 GradientStop { position: 1; color: line.entry?.tint ?? IrisStyle.identity.gray }
@@ -253,15 +254,15 @@ Item {
                 anchors.centerIn: parent
                 text: String(line.entry?.icon ?? "settings")
                 fill: 1
-                iconSize: root.u(16)
+                iconSize: line.u(16)
                 color: IrisStyle.onTintFor(line.entry?.tint ?? IrisStyle.identity.gray)
             }
         }
         Column {
             anchors.left: tile.right
-            anchors.leftMargin: root.u(12)
+            anchors.leftMargin: line.u(12)
             anchors.right: actions.left
-            anchors.rightMargin: root.u(8)
+            anchors.rightMargin: line.u(8)
             anchors.verticalCenter: parent.verticalCenter
             IrisText {
                 width: parent.width
@@ -282,9 +283,9 @@ Item {
         Row {
             id: actions
             anchors.right: parent.right
-            anchors.rightMargin: root.u(8)
+            anchors.rightMargin: line.u(8)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: root.u(2)
+            spacing: line.u(2)
             Key { visible: line.pinnedLine; glyph: "keyboard_arrow_up"; name: Translation.tr("Move up"); usable: !line.first; onActed: root.move(line.value, -1) }
             Key { visible: line.pinnedLine; glyph: "keyboard_arrow_down"; name: Translation.tr("Move down"); usable: !line.last; onActed: root.move(line.value, 1) }
             Key {

@@ -1794,6 +1794,7 @@ Item {
 
     component SectionRow: MouseArea {
         id: sectionRow
+        readonly property real d: IrisStyle.settingsDensity
         required property var modelData
         required property int index
         property var list: root.sections
@@ -1811,8 +1812,8 @@ Item {
         Component.onCompleted: if (sectionRow.selected && sectionRow.travels) root.travelRow = sectionRow
         Component.onDestruction: if (root.travelRow === sectionRow) root.travelRow = null
         readonly property bool dimmed: root.searching && !root.matchedSections.has(sectionRow.modelData.id)
-        readonly property real rowHeight: Math.round(26 * root.d * Math.max(1, IrisStyle.typeScale))
-        readonly property real washY: sectionRow.clusterStart ? Math.round(8 * root.d) : 0
+        readonly property real rowHeight: Math.round(26 * sectionRow.d * Math.max(1, IrisStyle.typeScale))
+        readonly property real washY: sectionRow.clusterStart ? Math.round(8 * sectionRow.d) : 0
         width: parent ? parent.width : 0
         height: sectionRow.washY + sectionRow.rowHeight
         hoverEnabled: true
@@ -1840,9 +1841,9 @@ Item {
                 id: sectionMark
                 // An indexed Design numbers the areas instead (a parts catalogue).
                 readonly property bool numbered: IrisStyle.indexed
-                x: Math.round(5 * root.d)
+                x: Math.round(5 * sectionRow.d)
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.round(22 * root.d)
+                width: Math.round(22 * sectionRow.d)
                 height: width
                 IrisSquircle {
                     visible: !sectionMark.numbered
@@ -1863,8 +1864,8 @@ Item {
                 font.weight: Font.Medium
             }
             IrisText {
-                x: sectionMark.x + sectionMark.width + Math.round(10 * root.d)
-                width: sectionRow.width - x - Math.round(8 * root.d)
+                x: sectionMark.x + sectionMark.width + Math.round(10 * sectionRow.d)
+                width: sectionRow.width - x - Math.round(8 * sectionRow.d)
                 anchors.verticalCenter: parent.verticalCenter
                 role: IrisText.Name
                 text: Translation.tr(sectionRow.modelData.title)
@@ -2004,6 +2005,7 @@ Item {
 
     component GroupRow: Item {
         id: groupRow
+        readonly property real d: IrisStyle.settingsDensity
         required property var modelData
         required property int index
         property bool last: false
@@ -2044,7 +2046,7 @@ Item {
         MouseArea {
             id: header
             width: parent.width
-            height: Math.round(50 * root.d)
+            height: Math.round(50 * groupRow.d)
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             // Tab or the arrows move, Enter or Space opens.
@@ -2083,20 +2085,20 @@ Item {
             Rectangle {
                 id: headerPlate
                 anchors.fill: parent
-                anchors.margins: 3 * root.d
+                anchors.margins: 3 * groupRow.d
                 visible: !IrisStyle.fieldChamfer
                 radius: IrisStyle.concentric(IrisStyle.radiusTile, headerPlate.anchors.margins, IrisStyle.radiusRow)
                 color: header.pressed ? IrisStyle.fillActive : header.containsMouse || header.activeFocus ? IrisStyle.fillQuiet : "transparent"
-                border.width: header.activeFocus ? Math.max(1, Math.round(1.5 * root.d)) : 0
+                border.width: header.activeFocus ? Math.max(1, Math.round(1.5 * groupRow.d)) : 0
                 border.color: IrisStyle.tintBorder(IrisStyle.accent)
                 Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
             }
             IrisSquircle {
                 id: groupMark
                 anchors.left: parent.left
-                anchors.leftMargin: 12 * root.d
+                anchors.leftMargin: 12 * groupRow.d
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.round(26 * root.d)
+                width: Math.round(26 * groupRow.d)
                 height: width
                 tint: IrisOptions.groupTints[groupRow.modelData.key] ?? root.currentSection.tint
                 glyph: IrisOptions.groupGlyphs[groupRow.modelData.key] ?? root.currentSection.icon
@@ -2104,11 +2106,11 @@ Item {
             IrisText {
                 id: groupTitle
                 anchors.left: groupMark.right
-                anchors.leftMargin: 12 * root.d
+                anchors.leftMargin: 12 * groupRow.d
                 anchors.verticalCenter: parent.verticalCenter
                 // The summary gets the rest of the row; with nothing to summarise (a lone switch) the name takes it all.
                 width: Math.ceil(Math.min(implicitWidth, groupRow.lone || groupRow.summary.length === 0
-                    ? parent.width - x - trailing.width - Math.round(28 * root.d) : parent.width * 0.42))
+                    ? parent.width - x - trailing.width - Math.round(28 * groupRow.d) : parent.width * 0.42))
                 text: groupRow.lone && !root.sharedLoneLabels[groupRow.rows[0].label] ? Translation.tr(groupRow.rows[0].label) : groupRow.modelData.title
                 font.pixelSize: IrisStyle.typeBody
                 font.weight: IrisStyle.weight(groupRow.unfolded ? Font.DemiBold : Font.Normal)
@@ -2116,9 +2118,9 @@ Item {
             }
             IrisText {
                 anchors.left: groupTitle.right
-                anchors.leftMargin: 16 * root.d
+                anchors.leftMargin: 16 * groupRow.d
                 anchors.right: changedDot.left
-                anchors.rightMargin: 8 * root.d
+                anchors.rightMargin: 8 * groupRow.d
                 anchors.verticalCenter: parent.verticalCenter
                 horizontalAlignment: Text.AlignRight
                 visible: !groupRow.lone && !groupRow.unfolded
@@ -2130,9 +2132,9 @@ Item {
             Rectangle {
                 id: changedDot
                 anchors.right: trailing.left
-                anchors.rightMargin: groupRow.modified ? 8 * root.d : 0
+                anchors.rightMargin: groupRow.modified ? 8 * groupRow.d : 0
                 anchors.verticalCenter: parent.verticalCenter
-                width: groupRow.modified ? Math.round(6 * root.d) : 0
+                width: groupRow.modified ? Math.round(6 * groupRow.d) : 0
                 height: width
                 radius: IrisStyle.capsule(width)
                 color: IrisStyle.accent
@@ -2141,7 +2143,7 @@ Item {
             Item {
                 id: trailing
                 anchors.right: parent.right
-                anchors.rightMargin: 12 * root.d
+                anchors.rightMargin: 12 * groupRow.d
                 anchors.verticalCenter: parent.verticalCenter
                 width: groupRow.lone ? loneSwitch.width : chevron.width
                 height: parent.height
@@ -2159,7 +2161,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     // Down for a group that opens in place, right for one that opens its page.
                     text: groupRow.folds ? "expand_more" : "chevron_right"
-                    iconSize: Math.round(18 * root.d)
+                    iconSize: Math.round(18 * groupRow.d)
                     color: header.containsMouse ? IrisStyle.text : IrisStyle.textTertiary
                     rotation: groupRow.unfolded ? 180 : 0
                     Behavior on rotation { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
@@ -2169,7 +2171,7 @@ Item {
         Column {
             id: foldColumn
             y: header.height
-            x: Math.round(36 * root.d)
+            x: Math.round(36 * groupRow.d)
             width: parent.width - x
             visible: groupRow.unfolded
             Repeater {
@@ -2183,7 +2185,7 @@ Item {
                     last: true
                     Rectangle {
                         anchors.left: parent.left
-                        anchors.leftMargin: 16 * root.d
+                        anchors.leftMargin: 16 * groupRow.d
                         anchors.right: parent.right
                         anchors.top: parent.top
                         height: 1
@@ -2199,7 +2201,7 @@ Item {
                 onClicked: root.fold(groupRow.tuneKey)
                 Rectangle {
                     anchors.left: parent.left
-                    anchors.leftMargin: 16 * root.d
+                    anchors.leftMargin: 16 * groupRow.d
                     anchors.right: parent.right
                     anchors.top: parent.top
                     height: 1
