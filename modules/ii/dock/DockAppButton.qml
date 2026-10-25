@@ -143,26 +143,13 @@ DockButton {
 
     // Subtle highlight for active app (disabled in macOS and pill modes —
     // macOS uses magnify, pill uses its own background highlight)
-    scale: root.m3Style && root.buttonHovered && !root.isSeparator ? 1.08
-        : (!macosStyle && !pillStyle && appIsActive)
+    scale: (!macosStyle && !pillStyle && appIsActive)
         ? (Appearance.editorialEverywhere || root.regaliaStyle ? 1.0 : root.zzzStyle ? 1.02 : 1.05) : 1.0
     Behavior on scale {
         enabled: Appearance.animationsEnabled
         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
 
-    transform: Translate {
-        y: (root.zzzStyle || root.islandStyle || root.m3Style) && !root.macosStyle && !root.pillStyle && root.buttonHovered && !root.vertical ? -(root.m3Style ? 4 : 3) : 0
-        x: (root.zzzStyle || root.islandStyle || root.m3Style) && !root.macosStyle && !root.pillStyle && root.buttonHovered && root.vertical ? -(root.m3Style ? 4 : 3) : 0
-        Behavior on y {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
-        }
-        Behavior on x {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
-        }
-    }
 
     property bool isSeparator: appToplevel.appId === "SEPARATOR"
     // Use originalAppId (preserves case) for desktop entry lookup, fallback to appId for backwards compat
@@ -616,8 +603,28 @@ DockButton {
               // macOS magnify: scale around the bottom centre so icons grow upward.
               // Animation is driven by DockMacItem's own Behavior on _magnifyScale —
               // no extra Behavior needed here.
-              scale:           root.macosStyle ? macItem.iconScale : 1.0
+              scale:           root.macosStyle ? macItem.iconScale : root.m3Style && root.buttonHovered ? 1.08 : 1.0
               transformOrigin: root.vertical ? Item.Right : Item.Bottom
+              Behavior on scale {
+                  enabled: Appearance.animationsEnabled && !root.macosStyle
+                  NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.expressiveFastSpatial }
+              }
+              // The hover lift moves the icon, never the button: a tooltip anchored to a moving button re-placed its
+              // popup every frame (a binding loop on the popup's placement).
+              readonly property real lift: (root.zzzStyle || root.islandStyle || root.m3Style) && !root.macosStyle && !root.pillStyle
+                  && root.buttonHovered ? (root.m3Style ? 4 : 3) : 0
+              transform: Translate {
+                  y: root.vertical ? 0 : -contentRoot.lift
+                  x: root.vertical ? -contentRoot.lift : 0
+                  Behavior on y {
+                      enabled: Appearance.animationsEnabled
+                      NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+                  }
+                  Behavior on x {
+                      enabled: Appearance.animationsEnabled
+                      NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+                  }
+              }
 
             Loader {
                 id: iconImageLoader
