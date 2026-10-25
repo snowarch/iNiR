@@ -2927,7 +2927,7 @@ AbstractWidget {
         : Appearance.cookieEverywhere ? Appearance.cookie.roundLarge
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
-        : Appearance.rounding.normal
+        : Appearance.rounding.extralarge
 
     property color accentBackdrop: root.widgetHasSurface ? root.widgetPlateColor
         : root.positionColorAdaptationEnabled && root._hasBrightness ? root._regionBg

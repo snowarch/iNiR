@@ -737,6 +737,8 @@ Singleton {
         property int normal: root.editorialEverywhere ? Math.max(5, Math.round(10 * root.editorial.radiusScale)) : root.regaliaEverywhere ? root.regalia.roundNormal : root.cookieEverywhere ? root.cookie.roundNormal : root.zzzEverywhere ? root.zzz.roundNormal : Math.max(0, Math.round(17 * scale))
         property int large: root.editorialEverywhere ? Math.max(7, Math.round(14 * root.editorial.radiusScale)) : root.regaliaEverywhere ? root.regalia.roundLarge : root.cookieEverywhere ? root.cookie.roundLarge : root.zzzEverywhere ? root.zzz.roundLarge : Math.max(0, Math.round(23 * scale))
         property int verylarge: root.editorialEverywhere ? Math.max(9, Math.round(18 * root.editorial.radiusScale)) : root.regaliaEverywhere ? root.regalia.panelRadius : root.cookieEverywhere ? root.cookie.panelRadius : root.zzzEverywhere ? root.zzz.panelRadius : Math.max(0, Math.round(30 * scale))
+        // M3's extra-large (28): cards and desktop widgets, the plate Lucid gives every widget.
+        property int extralarge: root.editorialEverywhere ? Math.max(9, Math.round(18 * root.editorial.radiusScale)) : root.regaliaEverywhere ? root.regalia.roundLarge : root.cookieEverywhere ? root.cookie.roundLarge : root.zzzEverywhere ? root.zzz.roundLarge : Math.max(0, Math.round(28 * scale))
         property int full: root.zzzEverywhere ? (root.zzz.round ? 9999 : root.zzz.controlRadius) : 9999
         property int screenRounding: large
         property int windowRounding: root.editorialEverywhere ? Math.max(7, Math.round(14 * root.editorial.radiusScale)) : root.regaliaEverywhere ? root.regalia.panelRadius : root.zzzEverywhere ? root.zzz.panelRadius : Math.max(0, Math.round(18 * scale))
