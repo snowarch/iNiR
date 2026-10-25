@@ -975,9 +975,13 @@ AbstractWidget {
         const h = Math.round(root.height)
         root.grabToImage(result => {
             root._picture = result
-            DesktopEditStage.setPicture(root.configEntryName, result.url, w, h)
+            // On disk at once: the shelf reads a file at the size it shows it, sharp; a grab's own url can't be.
+            const path = DesktopEditStage.savedPicture(root.configEntryName)
+            DesktopEditStage.setPicture(root.configEntryName, result.saveToFile(path)
+                ? "file://" + path + "?" + (++root._pictureTakes) : result.url, w, h)
         }, Qt.size(w, h))
     }
+    property int _pictureTakes: 0
     Timer {
         id: pictureTimer
         interval: 600
@@ -1163,7 +1167,9 @@ AbstractWidget {
     readonly property bool editHovered: widgetEditHover.hovered
     readonly property bool quickControlsOpen: editPopoverPanel.open
     // The family draws this widget's controls beside the card at true size (DesktopEditStage.inspected).
-    readonly property bool _sheetHosted: root.irisFaced && GlobalStates.widgetEditMode && DesktopEditStage.hostsSheet(root.outputName)
+    // iRiS's host draws only its own faces' controls; Material's draws any widget's.
+    readonly property bool _sheetHosted: (root.irisFaced || !root.widgetIrisFamily) && GlobalStates.widgetEditMode
+        && DesktopEditStage.hostsSheet(root.outputName)
     readonly property bool _handsSheet: root._sheetHosted && editPopoverPanel.open
     on_HandsSheetChanged: DesktopEditStage.inspect(root.outputName, root, root._handsSheet)
     // Its outfit too: chosen or under the pointer, the host draws it over the card where the card cannot clip it.
@@ -2118,9 +2124,8 @@ AbstractWidget {
                 return open.includes(root._quickTab) ? root._quickTab : open[0]
             }
 
-            WidgetQuickChoices {
+            WidgetQuickTabs {
                 visible: !root.widgetIrisFamily && semanticQuickRoot.pages.filter(entry => entry.visible !== false).length > 1
-                maxColumns: 3
                 current: semanticQuickRoot.page
                 model: semanticQuickRoot.pages
                 onPicked: value => root._quickTab = value

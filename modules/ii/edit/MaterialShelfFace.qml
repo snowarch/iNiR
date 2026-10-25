@@ -8,8 +8,8 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.shared.background.widgets
 
-// Material's face on the shared widget shelf: its surfaces and type, filter chips for the pages (the widgets, the bar,
-// the Dock, saved desktops), a search field and the widget settings key; widgets are found by the start of a word in
+// Material's face on the shared widget shelf: its surfaces and type, filter chips for the pages (the widgets, saved
+// desktops), a search field and the widget settings key; widgets are found by the start of a word in
 // their name, keywords or kind.
 QtObject {
     id: face
@@ -59,40 +59,13 @@ QtObject {
         return sum / words.length
     }
 
+    // Widgets and saved desktops only: the bar and the Dock are set in Settings, not on the desktop.
     readonly property var pages: [
         { value: "widgets", label: Translation.tr("Widgets") },
-        { value: "bar", label: Translation.tr("Bar") },
-        { value: "dock", label: Translation.tr("Dock") },
         { value: "presets", label: Translation.tr("Presets") }
     ]
-    readonly property var options: ({
-        bar: [
-            { path: "bar.bottom", label: "Position", kind: "choice", options: [{ label: "Top", value: false }, { label: "Bottom", value: true }] },
-            { path: "bar.appearanceStyle", label: "Style", kind: "choice", options: [{ label: "M3", value: "m3" }, { label: "Classic", value: "classic" },
-                { label: "Islands", value: "islands" }, { label: "Scenic", value: "scenic" }, { label: "Frame", value: "frame" }, { label: "Pill", value: "pill" }] },
-            { path: "bar.autoHide.enable", label: "Hide automatically", kind: "switch" },
-            { path: "bar.showBackground", label: "Background", kind: "switch" },
-            { path: "bar.vertical", label: "Vertical", kind: "switch" },
-            { path: "bar.height", label: "Height", kind: "range", min: 30, max: 60, step: 1, unit: "px" }
-        ],
-        dock: [
-            { path: "dock.enable", label: "Dock", kind: "switch" },
-            { path: "dock.style", label: "Style", kind: "choice", options: [{ label: "M3", value: "m3" }, { label: "Panel", value: "panel" },
-                { label: "Pill", value: "pill" }, { label: "macOS", value: "macos" }, { label: "Island", value: "island" }] },
-            { path: "dock.hoverToReveal", label: "Show on hover", kind: "switch" },
-            { path: "dock.monochromeIcons", label: "Monochrome icons", kind: "switch" },
-            { path: "dock.showBackground", label: "Background", kind: "switch" },
-            { path: "dock.iconSize", label: "Icon size", kind: "range", min: 24, max: 64, step: 1, unit: "px" }
-        ]
-    })
     property var shelf: null
-    function pageOf(page: string): Component { return face.options[page] ? optionsPage : null }
-    readonly property Component optionsPage: Component {
-        MaterialShelfOptions {
-            specs: face.options[face.shelf?.page ?? ""] ?? []
-            settingsPage: face.shelf?.page ?? "bar"
-        }
-    }
+    function pageOf(page: string): Component { return null }
 
     readonly property Component head: Component {
         Item {
@@ -228,7 +201,7 @@ QtObject {
                 colBackground: "transparent"
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 Accessible.name: Translation.tr("Widget settings")
-                onClicked: GlobalStates.openSettingsAt(head.shelf && face.options[head.shelf.page] ? head.shelf.page : "widgets")
+                onClicked: GlobalStates.openSettingsAt("widgets")
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: "tune"

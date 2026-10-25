@@ -376,16 +376,20 @@ Item {
                         Behavior on scale { NumberAnimation { duration: root.face.duration(tilePress.pressed ? 80 : 200); easing.type: root.face.feedbackEasing } }
                         Behavior on color { ColorAnimation { duration: root.face.duration(110); easing.type: root.face.feedbackEasing } }
 
+                        // Read straight at the size it shows: a smooth downscale keeps the widget's type sharp, where a
+                        // full-size picture through mipmaps came out blurred.
                         Image {
+                            id: tilePicture
+                            readonly property real dpr: tilePicture.Window.window?.devicePixelRatio ?? 1
                             anchors.fill: parent
                             anchors.margins: Math.round(8 * root.d)
                             visible: tile.pictured
                             source: tile.pictureUrl
+                            sourceSize: Qt.size(Math.ceil(tilePicture.width * tilePicture.dpr), Math.ceil(tilePicture.height * tilePicture.dpr))
                             fillMode: Image.PreserveAspectFit
                             asynchronous: tile.live === null
                             cache: false
                             smooth: true
-                            mipmap: true
                             opacity: tile.on ? 0.45 : 1
                             Behavior on opacity { NumberAnimation { duration: root.face.duration(160); easing.type: root.face.feedbackEasing } }
                         }
@@ -564,7 +568,6 @@ Item {
             source: ghost.url
             fillMode: Image.PreserveAspectFit
             smooth: true
-            mipmap: true
         }
         Rectangle {
             anchors.fill: parent

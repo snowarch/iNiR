@@ -41,6 +41,8 @@ Scope {
             mask: Region {
                 item: headBody
                 Region { item: shelfBody }
+                Region { item: sheetHit }
+                Region { item: chosen.item?.keysItem ?? null }
             }
 
             property bool seeding: false
@@ -249,6 +251,49 @@ Scope {
                     }
                 }
             }
+            // ── The chosen widget's toolbar and the name of the one under the pointer, over the card at true size ──
+            readonly property var card: DesktopEditStage.cardFor(desk.outputName, desk.width, desk.height)
+            component Outfit: Loader {
+                id: outfit
+                property var entry: null
+                readonly property Item widget: outfit.entry?.output === desk.outputName ? outfit.entry.widget : null
+                active: outfit.widget !== null
+                x: desk.card.x + (outfit.widget?.x ?? 0) * desk.card.s
+                y: desk.card.y + (outfit.widget?.y ?? 0) * desk.card.s
+                width: (outfit.widget?.width ?? 0) * desk.card.s
+                height: (outfit.widget?.height ?? 0) * desk.card.s
+                sourceComponent: MaterialWidgetOutfit {
+                    overlay: true
+                    widget: outfit.widget
+                    width: outfit.width
+                    height: outfit.height
+                    room: Qt.rect(0, headBody.y + headBody.height, desk.width, shelfBody.y - headBody.y - headBody.height)
+                }
+            }
+            Outfit {
+                entry: DesktopEditStage.pointed?.widget !== DesktopEditStage.chosen?.widget ? DesktopEditStage.pointed : null
+            }
+            Outfit {
+                id: chosen
+                entry: DesktopEditStage.chosen
+            }
+
+            MaterialWidgetSheet {
+                id: sheet
+                anchors.fill: parent
+                outputName: desk.outputName
+                card: desk.card
+                avoidTop: Qt.rect(headBody.x, headBody.y, headBody.width, headBody.height)
+                avoidBottom: Qt.rect(shelfBody.x, shelfBody.y, shelfBody.width, shelfBody.height)
+            }
+            Item {
+                id: sheetHit
+                x: sheet.hitRect.x
+                y: sheet.hitRect.y
+                width: sheet.hitRect.width
+                height: sheet.hitRect.height
+            }
+
             Item { id: ghostLayer; anchors.fill: parent; z: 50 }
 
             MaterialShelfFace { id: materialFace }

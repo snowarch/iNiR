@@ -11,6 +11,7 @@ OrganicEdgeWidget 1.0 OrganicEdgeWidget.qml
 WidgetQuickControlsLayout 1.0 WidgetQuickControlsLayout.qml
 WidgetQuickChoice 1.0 WidgetQuickChoice.qml
 WidgetQuickChoices 1.0 WidgetQuickChoices.qml
+WidgetQuickTabs 1.0 WidgetQuickTabs.qml
 WidgetQuickToggle 1.0 WidgetQuickToggle.qml
 WidgetQuickSection 1.0 WidgetQuickSection.qml
 WidgetQuickSlider 1.0 WidgetQuickSlider.qml
