@@ -72,13 +72,17 @@ Item {
             const units = cells.reduce((sum, size) => sum + size, 0)
             const brief = units <= 3 && !shown.some(spec => root.shape(spec) === "row")
             // Inside a full-width group the last tile of a line short of the edge takes the rest of it.
+            // More and a verb keep their one unit: grown to close a line they were wide plates of nothing.
             if (!brief) {
-                let fill = 0
+                const rigid = shown.map(spec => root.shape(spec) === "action").concat(folds ? [true] : [])
+                const grow = (from, to, by) => { for (let at = to; at >= from; at--) if (!rigid[at]) { cells[at] += by; return } }
+                let fill = 0, start = 0
                 cells.forEach((size, at) => {
-                    if (fill + size > 4) { cells[at - 1] += 4 - fill; fill = 0 }
+                    if (fill + size > 4) { grow(start, at - 1, 4 - fill); fill = 0; start = at }
                     fill = (fill + size) % 4
+                    if (fill === 0) start = at + 1
                 })
-                if (fill > 0) cells[cells.length - 1] += 4 - fill
+                if (fill > 0) grow(start, cells.length - 1, 4 - fill)
             }
             // A switch left alone on its line reads as its row, what it does said beside it, not an empty plate.
             const whole = shown.map((spec, at) => cells[at] === 4 && root.shape(spec) === "switch")
@@ -106,14 +110,18 @@ Item {
         close()
         return out
     }
-    function unitsOf(kind: string): int { return kind === "switch" ? 1 : kind === "row" ? 4 : 2 }
+    function unitsOf(kind: string): int { return kind === "switch" || kind === "action" ? 1 : kind === "row" ? 4 : 2 }
     function shape(spec: var): string {
         if (spec.kind === "switch") return "switch"
         if (spec.kind === "range" && Number.isFinite(Number(spec.min)) && Number.isFinite(Number(spec.max))) return "range"
-        if (spec.kind === "choice" && !spec.cards) {
-            const choices = IrisOptions.choicesOf(spec)
-            if (choices.length >= 2 && choices.length <= 4 && choices.every(entry => Translation.tr(String(entry.label ?? "")).length <= 9)) return "choice"
+        // A choice is a tile, never a full-width row for one value (10-25: "Look … Apple" held a whole line): a few
+        // short names side by side, more of them one name stepped through.
+        if (spec.kind === "choice" && !spec.cards && !spec.niri) {
+            const names = IrisOptions.choicesOf(spec).map(entry => Translation.tr(String(entry.label ?? "")))
+            if (names.length >= 2 && names.length <= 4 && names.every(name => name.length <= 12) && names.join("").length <= 26) return "choice"
+            if (names.length >= 2 && names.length <= 12) return "pick"
         }
+        if (spec.kind === "action" && typeof spec.run === "function") return "action"
         return "row"
     }
 
@@ -127,7 +135,11 @@ Item {
         walk(boardColumn)
         return out
     }
-    function focused(): Item { return root.cursor >= 0 ? (root.stops()[root.cursor] ?? null) : null }
+    // The tile the keys stand on, set when the cursor moves: a binding that walked the board from every tile re-ran on
+    // each tile built, and opening a More froze the page (10-25).
+    property Item focusedTile: null
+    onCursorChanged: root.focusedTile = root.cursor >= 0 ? (root.stops()[root.cursor] ?? null) : null
+    function focused(): Item { return root.focusedTile }
     function moveBy(dx: int, dy: int): void {
         const list = root.stops()
         if (list.length === 0) return
@@ -197,9 +209,9 @@ Item {
         Column {
             id: board
             width: boardFlick.width
-            spacing: root.section === "home" ? root.gap : 0
+            spacing: root.section === "general" ? root.gap : 0
             Loader {
-                active: root.section === "home"
+                active: root.section === "general"
                 visible: active
                 width: board.width
                 sourceComponent: IrisWallpaperCard { screen: root.QsWindow.window?.screen ?? GlobalStates.focusedScreen }
@@ -268,7 +280,7 @@ Item {
                                     width: cell.kind === "row" ? flow.width : group.span(group.modelData.cells[cell.index] ?? root.unitsOf(cell.kind))
                                     // The first group comes with the page, the rest in the frames after it (Classic's way).
                                     asynchronous: group.index > 0
-                                    sourceComponent: cell.kind === "switch" ? switchTile : cell.kind === "range" ? rangeTile : cell.kind === "choice" ? choiceTile : rowTile
+                                    sourceComponent: ({ switch: switchTile, range: rangeTile, choice: choiceTile, pick: pickTile, action: actionTile })[cell.kind] ?? rowTile
                                     property bool counted: false
                                     Component.onCompleted: if (cell.asynchronous && cell.status !== Loader.Ready) { cell.counted = true; root.building++ }
                                     Component.onDestruction: if (cell.counted) root.building--
@@ -302,8 +314,10 @@ Item {
         property bool dashed: false
         property string caption: ""
         property string text: ""
+        // Room kept at the right of the name for what a tile carries there (steppers, an arrow).
+        property real trail: 0
         readonly property bool consoleStop: true
-        readonly property bool focusedHere: root.focused() === tile
+        readonly property bool focusedHere: root.focusedTile === tile
         readonly property bool noted: { Config.revision; return tile.spec?.note && (tile.spec?.locked?.() || tile.spec?.warns === true) ? String(tile.spec.note() ?? "").length > 0 : false }
         function act(): void {}
         height: root.u(88)
@@ -311,7 +325,8 @@ Item {
         cursorShape: Qt.PointingHandCursor
         Accessible.role: Accessible.Button
         Accessible.name: tile.text
-        onClicked: { root.cursor = root.stops().indexOf(tile); tile.act() }
+        // The pointer leaves the keys' place: a click never rings a tile or keeps Esc and ◀ ▶ for it.
+        onClicked: { root.cursor = -1; root.engaged = false; tile.act() }
         // On is said by an ink ring and the switch's own knob, not a white plate: a page of ons stays a page.
         Rectangle {
             anchors.fill: parent
@@ -354,7 +369,7 @@ Item {
             x: root.u(16)
             anchors.bottom: parent.bottom
             anchors.bottomMargin: root.u(14)
-            width: parent.width - root.u(32)
+            width: parent.width - root.u(32) - tile.trail
             elide: Text.ElideRight
             maximumLineCount: 2
             wrapMode: Text.WordWrap
@@ -436,7 +451,7 @@ Item {
                 cursorShape: Qt.PointingHandCursor
                 preventStealing: true
                 function at(x: real): real { return range.snap(range.lo + Math.max(0, Math.min(1, x / width)) * (range.hi - range.lo)) }
-                onPressed: mouse => { root.cursor = root.stops().indexOf(range); range.dragged = scrub.at(mouse.x) }
+                onPressed: mouse => { root.cursor = -1; range.dragged = scrub.at(mouse.x) }
                 onPositionChanged: mouse => { if (pressed) range.dragged = scrub.at(mouse.x) }
                 onReleased: { IrisOptions.commit(range.spec, range.dragged); range.dragged = NaN }
                 onCanceled: range.dragged = NaN
@@ -492,6 +507,85 @@ Item {
             }
         }
     }
+    // A choice of many: the chosen name, stepped either way (Enter or a click goes on, ◀ ▶ while held).
+    Component {
+        id: pickTile
+        Tile {
+            id: pick
+            readonly property bool holds: true
+            readonly property var options: IrisOptions.choicesOf(pick.spec ?? {})
+            readonly property int at: { Config.revision; IrisNiri.revision; const now = IrisOptions.currentValue(pick.spec ?? {}); return pick.options.findIndex(entry => IrisOptions.same(entry.value, now)) }
+            caption: Translation.tr(String(pick.spec?.label ?? ""))
+            text: pick.at >= 0 ? Translation.tr(String(pick.options[pick.at].label ?? "")) : ""
+            trail: root.u(64)
+            Accessible.role: Accessible.ComboBox
+            function adjust(delta: int): void {
+                const next = pick.options[Math.max(0, Math.min(pick.options.length - 1, pick.at + delta))]
+                if (next) IrisOptions.commit(pick.spec, next.value)
+            }
+            function act(): void { const next = pick.options[(pick.at + 1) % pick.options.length]; if (next) IrisOptions.commit(pick.spec, next.value) }
+            Row {
+                anchors.right: parent.right
+                anchors.rightMargin: root.u(10)
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: root.u(8)
+                Step { glyph: "chevron_left"; usable: pick.at > 0; onActed: pick.adjust(-1) }
+                Step { glyph: "chevron_right"; usable: pick.at < pick.options.length - 1; onActed: pick.adjust(1) }
+            }
+            // Its place among the others, as dots under the caption.
+            Row {
+                anchors.right: parent.right
+                anchors.rightMargin: root.u(16)
+                y: root.u(18)
+                spacing: root.u(4)
+                Repeater {
+                    model: pick.options.length
+                    Rectangle {
+                        required property int index
+                        width: root.u(index === pick.at ? 12 : 4)
+                        height: root.u(4)
+                        radius: height / 2
+                        color: index === pick.at ? IrisStyle.text : Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, 0.22)
+                        Behavior on width { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+                    }
+                }
+            }
+        }
+    }
+    // A verb: its name and where it leads.
+    Component {
+        id: actionTile
+        Tile {
+            id: verb
+            caption: Translation.tr(String(verb.spec?.label ?? ""))
+            text: Translation.tr(String(verb.spec?.button ?? ""))
+            trail: root.u(28)
+            function act(): void { verb.spec.run() }
+            MaterialSymbol {
+                anchors.right: parent.right
+                anchors.rightMargin: root.u(16)
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: root.u(14)
+                text: "arrow_forward"
+                iconSize: root.u(18)
+                color: IrisStyle.subtext
+            }
+        }
+    }
+    component Step: MouseArea {
+        id: step
+        property string glyph: ""
+        property bool usable: true
+        signal acted()
+        width: root.u(30)
+        height: width
+        enabled: step.usable
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: step.acted()
+        Rectangle { anchors.fill: parent; radius: width / 2; color: step.containsMouse ? IrisStyle.fillHover : "transparent" }
+        MaterialSymbol { anchors.centerIn: parent; text: step.glyph; iconSize: root.u(20); color: IrisStyle.text; opacity: step.usable ? 1 : 0.25 }
+    }
     // Anything that is not one value: its row, whole, on a full-width tile.
     Component {
         id: rowTile
@@ -501,7 +595,7 @@ Item {
             // A keyboard stop like any tile: Enter switches or runs it; a choice or a range is held and ◀ ▶ step it.
             readonly property bool consoleStop: rowPlate.spec !== null
             readonly property bool holds: ["choice", "range"].includes(String(rowPlate.spec?.kind))
-            readonly property bool focusedHere: root.focused() === rowPlate
+            readonly property bool focusedHere: root.focusedTile === rowPlate
             function act(): void {
                 const spec = rowPlate.spec
                 if (!spec) return
