@@ -44,7 +44,7 @@ PreviewScene {
     readonly property real plateX: Math.round((widgetsRoot.width - widgetsRoot.wide - widgetsRoot.gap - widgetsRoot.unit) / 2)
     readonly property real plateY: Math.round((widgetsRoot.height - widgetsRoot.unit) / 2)
     readonly property color plateColor: widgetsRoot.bare ? "transparent" : !widgetsRoot.iris ? Appearance.colors.colLayer2 : widgetsRoot.glass || widgetsRoot.clear
-        ? ColorUtils.applyAlpha(IrisStyle.surface, widgetsRoot.clear && !Boolean(widgetsRoot.opt("iris.widgets.legibleAlways", false)) ? 0
+        ? ColorUtils.applyAlpha(IrisStyle.surface, widgetsRoot.clear ? 0
             : IrisStyle.legibleVeil(widgetsRoot.material, 0, 0, 1)
                 * (Boolean(widgetsRoot.opt("iris.widgets.legibleAlways", false)) ? 1 : widgetsRoot.strength))
         : ColorUtils.applyAlpha(widgetsRoot.material === "tinted"

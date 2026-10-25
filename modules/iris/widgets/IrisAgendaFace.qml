@@ -20,17 +20,26 @@ IrisWidgetFace {
     readonly property color todayInk: root.nothing ? IrisStyle.onTintFor(root.signal) : IrisStyle.inkOnAccentFill
     readonly property var next: root.shown[0] ?? null
     readonly property var nextTime: root.next && !root.next.allDay ? IrisFaceData.timeParts(IrisFaceData.clockText(IrisFaceData.eventDate(root.next))) : null
+    // An all-day event has no hour to lead with: its date does, the head keeps only the day's name (10-25: small sat
+    // half empty under "Saturday 31").
+    readonly property var nextFigure: root.nextTime ?? (root.next ? {
+        main: String(IrisFaceData.eventDate(root.next).getDate()),
+        suffix: Translation.locale.toString(IrisFaceData.eventDate(root.next), "MMM").replace(/\.$/, "")
+    } : null)
 
-    function dayLabel(event: var): string {
-        const when = IrisFaceData.eventDate(event)
+    function daysTo(event: var): int {
         const start = new Date(root.today)
         start.setHours(0, 0, 0, 0)
-        const day = new Date(when)
+        const day = new Date(IrisFaceData.eventDate(event))
         day.setHours(0, 0, 0, 0)
-        const days = Math.round((day.getTime() - start.getTime()) / 86400000)
+        return Math.round((day.getTime() - start.getTime()) / 86400000)
+    }
+
+    function dayLabel(event: var, bare: bool): string {
+        const days = root.daysTo(event)
         if (days === 0) return Translation.tr("Today")
         if (days === 1) return Translation.tr("Tomorrow")
-        return IrisFaceData.capitalized(Translation.locale.toString(when, "dddd d"))
+        return IrisFaceData.capitalized(Translation.locale.toString(IrisFaceData.eventDate(event), bare ? "dddd" : "dddd d"))
     }
 
     component DateHero: ColumnLayout {
@@ -169,22 +178,22 @@ IrisWidgetFace {
             face: root
             Layout.fillWidth: true
             glyph: "event_upcoming"
-            text: root.next ? root.dayLabel(root.next) : ""
+            text: root.next ? root.dayLabel(root.next, root.nextTime === null) : ""
         }
         Row {
-            visible: root.nextTime !== null
+            visible: root.nextFigure !== null
             spacing: root.dp(5)
             FaceFigure {
                 id: nextFigure
                 face: root
-                text: root.nextTime?.main ?? ""
+                text: root.nextFigure?.main ?? ""
                 size: 34
             }
             FaceText {
                 face: root
-                visible: (root.nextTime?.suffix ?? "").length > 0
+                visible: (root.nextFigure?.suffix ?? "").length > 0
                 anchors.baseline: nextFigure.baseline
-                text: root.nextTime?.suffix ?? ""
+                text: root.nextFigure?.suffix ?? ""
                 color: root.inkSecondary
                 size: 15
                 weight: Font.DemiBold
@@ -195,7 +204,7 @@ IrisWidgetFace {
             Layout.fillHeight: false
             Layout.fillWidth: true
             event: root.next
-            when: root.nextTime !== null ? "none" : "full"
+            when: root.nextTime !== null ? "none" : "time"
         }
     }
     ColumnLayout {
@@ -252,8 +261,8 @@ IrisWidgetFace {
                 id: entry
                 required property var modelData
                 required property int index
-                readonly property string day: root.dayLabel(entry.modelData)
-                readonly property bool heading: entry.index === 0 || root.dayLabel(root.shown[entry.index - 1]) !== entry.day
+                readonly property string day: root.dayLabel(entry.modelData, false)
+                readonly property bool heading: entry.index === 0 || root.dayLabel(root.shown[entry.index - 1], false) !== entry.day
                 Layout.fillWidth: true
                 Layout.fillHeight: false
                 spacing: root.dp(4)

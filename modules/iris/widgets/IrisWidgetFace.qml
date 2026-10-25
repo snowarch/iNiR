@@ -68,8 +68,9 @@ Item {
     readonly property bool paper: IrisStyle.light && !root.clear
     readonly property real textShadow: root.clear ? 1
         : root.glass && !root.widget.legibleAlways ? Math.min(1, (1 - root.strength) * 1.4) : 0
+    // Background off means no plate, Lume on every widget or not: there it only deepens the text's shadow (10-25).
     readonly property real veil: root.opaque ? root.strength
-        : root.clear && !root.widget.legibleAlways ? 0
+        : root.clear ? 0
         : (root.paper ? IrisStyle.legibleVeil(root.readMaterial, root.frostLevel, root.readSpread, 1)
             : root.lightBackdrop ? IrisStyle.legibleFrost(root.readMaterial, root.frostLevel, root.readSpread, 1)
             : IrisStyle.legibleVeil(root.readMaterial, root.readLevel, root.readSpread, 1))
