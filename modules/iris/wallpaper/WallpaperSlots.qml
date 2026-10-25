@@ -167,8 +167,11 @@ Item {
             y: slot.at.y - height / 2
             z: slot.at.z
             opacity: slot.at.o
-            scale: slot.at.s * (press.pressed ? IrisStyle.pressScale(0.97) : slot.hot && !slot.front ? 1.025 : 1)
-            Behavior on scale { enabled: !root.dragging; NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
+            // The run sets the size frame by frame; only touch eases (eased together, a fast run never caught up
+            // and the cards crossed the front small).
+            property real touch: press.pressed ? IrisStyle.pressScale(0.97) : slot.hot && !slot.front ? 1.025 : 1
+            Behavior on touch { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
+            scale: slot.at.s * slot.touch
 
             RectangularShadow {
                 anchors.fill: card
@@ -196,8 +199,9 @@ Item {
                 anchors.fill: card
                 radius: card.radius
                 color: IrisStyle.surface
-                opacity: Math.min(root.recedeMost, slot.near * root.recede) * (slot.hot ? 0.4 : 1)
-                Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+                property real lit: slot.hot ? 0.4 : 1
+                Behavior on lit { NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+                opacity: Math.min(root.recedeMost, slot.near * root.recede) * lit
             }
             HoverHandler {
                 id: tap
