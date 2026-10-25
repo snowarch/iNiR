@@ -50,7 +50,8 @@ Item {
     readonly property var sections: (root.homed ? [root.homeEntry] : []).concat(IrisOptions.sections.filter(section => section.id !== "battery" || Battery.available))
     // Home leads every layout: what people change every day, what needs them, what they changed last. The engine's own
     // page (a Design's, or a window too narrow for a layout) has no Home and opens on General.
-    readonly property bool homed: root.layout.length > 0
+    // Home leads every page but a Design's own catalogue: Classic too, where the daily things were an area deep.
+    readonly property bool homed: IrisDesign.skin("settingsPage").length === 0
     readonly property var homeEntry: ({ id: "home", cluster: -1, title: "Home", subtitle: "What you change every day", icon: "home", get tint() { return IrisStyle.identity.gray } })
     onHomedChanged: if (!root.homed && root.section === "home") root.section = "general"
     onSceneFitsChanged: if (!root.sceneFits && root.section === "home") root.section = "general"
@@ -60,7 +61,7 @@ Item {
     readonly property var currentSection: root.section === "home" ? root.homeEntry : IrisOptions.sectionById(root.section)
     // Every area is a row of the sidebar (DI49g); clusters part by air, no captions.
     readonly property var sideSections: {
-        const out = []
+        const out = root.homed ? [root.homeEntry] : []
         IrisOptions.categories.filter(category => !category.foot).forEach((category, at) => {
             category.sections.map(id => root.sections.find(section => section.id === id)).filter(section => !!section)
                 .forEach(section => out.push(Object.assign({}, section, { cluster: at })))
@@ -170,33 +171,40 @@ Item {
     function shown(spec: var): bool { return IrisOptions.shown(spec) }
 
     readonly property int searchLimit: 24
+    // Every row's words by where they sit (translated and English), read once per language.
     readonly property var searchIndex: root.specifications.filter(spec => !spec.mirror).map(spec => {
-        const label = Translation.tr(spec.label).toLowerCase()
-        const sectionTitle = Translation.tr(IrisOptions.sectionById(spec.section).title)
-        return { spec: spec, label: label, section: sectionTitle.toLowerCase(), rest: [Translation.tr(spec.group ?? ""), sectionTitle, Translation.tr(spec.description ?? ""), ...(spec.keywords ?? [])].join(" ").toLowerCase(),
+        const section = IrisOptions.sectionById(spec.section)
+        const sectionTitle = Translation.tr(section.title)
+        const words = text => IrisSearch.tokens(text)
+        return { spec: spec,
+            fields: { label: words(Translation.tr(spec.label) + " " + spec.label), keys: words((spec.keywords ?? []).join(" ")),
+                group: words(Translation.tr(spec.group ?? "") + " " + (spec.group ?? "")), section: words(sectionTitle + " " + section.title),
+                desc: words(Translation.tr(spec.description ?? "") + " " + (spec.description ?? "")) },
             loose: IrisSearch.prepare({ name: Translation.tr(spec.label), english: spec.label, detail: Translation.tr(spec.group ?? ""), areaName: sectionTitle,
                 words: [spec.group ?? ""].concat(spec.keywords ?? []).join(" ") }) }
     })
-    // Exact words first; then what the forgiving match reads through a typo, initials or letters in order.
-    function searchScore(entry: var, terms: var): int {
-        if (!terms.every(term => entry.label.includes(term) || entry.rest.includes(term)))
-            return IrisSearch.score(terms.join(" "), entry.loose) >= 0.6 ? 4 : 99
-        const first = terms[0]
-        if (terms.length === 1 && entry.section.startsWith(first)) return -1
-        if (entry.label.startsWith(first)) return 0
-        if (entry.label.includes(" " + first)) return 1
-        if (entry.label.includes(first)) return 2
-        return 3
+    // What people mean first (IrisSearch.intent: filler words out, the words Settings uses for theirs, the area they
+    // name); only when that finds nothing, what the forgiving match reads through a typo, initials or letters in order.
+    // Every word an area's title is made of: a query that names an area keeps the rows of other areas behind its own.
+    readonly property var areaWords: {
+        const out = new Set()
+        for (const entry of root.searchIndex) for (const word of entry.fields.section) out.add(word)
+        return out
     }
     readonly property var matches: {
         Config.revision
-        const terms = root.query.toLowerCase().split(/\s+/).filter(term => term.length > 0)
-        if (terms.length === 0) return []
-        return root.searchIndex
-            .map((entry, order) => ({ spec: entry.spec, order: order, score: root.searchScore(entry, terms) }))
-            .filter(hit => hit.score < 99 && root.shown(hit.spec) && root.sections.some(section => section.id === hit.spec.section))
-            .sort((a, b) => a.score - b.score || a.order - b.order)
-            .map(hit => hit.spec)
+        const q = IrisSearch.intent(root.query)
+        q.asksArea = q.hard.some(term => root.areaWords.has(term.word))
+        if (q.hard.length === 0 && q.soft.length === 0) return []
+        const shown = hit => root.shown(hit.spec) && root.sections.some(section => section.id === hit.spec.section)
+        let hits = root.searchIndex
+            .map((entry, order) => ({ spec: entry.spec, order: order, score: IrisSearch.settingScore(q, entry.fields, entry.spec) }))
+            .filter(hit => hit.score > 0 && shown(hit))
+        if (hits.length === 0)
+            hits = root.searchIndex
+                .map((entry, order) => ({ spec: entry.spec, order: order, score: IrisSearch.score(root.query, entry.loose) }))
+                .filter(hit => hit.score >= 0.6 && shown(hit))
+        return hits.sort((a, b) => b.score - a.score || a.order - b.order).map(hit => hit.spec)
     }
     readonly property var matchedSections: {
         const ids = new Set(root.matches.map(spec => spec.section))
@@ -338,9 +346,10 @@ Item {
             pages[slot] = key
             bufs[slot] = []
         } else if (slot !== root.building) root.holding = false
-        // Fed again from its first group: a page already standing keeps the blocks it has.
+        // Fed again from its first group: a page already standing keeps the blocks it has. Never a search: every query
+        // shares one key, and a narrower one (or none at all) kept the last query's results under it.
         const have = bufs[slot], fed = root.fedGroups
-        const prefix = fed.length < have.length && fed.every((g, i) => g?.title === have[i]?.title)
+        const prefix = !root.searching && fed.length > 0 && fed.length < have.length && fed.every((g, i) => g?.title === have[i]?.title)
         if (!prefix) bufs[slot] = fed
         used[slot] = ++root.bufClock
         root.bufPages = pages
@@ -1480,10 +1489,26 @@ Item {
                                 }
                             }
 
+                            // Home on the engine's own page (Classic, a narrow window): the same page the layouts show.
+                            Loader {
+                                id: classicHome
+                                readonly property bool wanted: root.section === "home" && !root.searching && root.advancedPage < 0 && !root.layoutRows
+                                anchors.fill: parent
+                                anchors.leftMargin: root.split ? Math.round(14 * root.d) : Math.round(20 * root.d)
+                                anchors.rightMargin: anchors.leftMargin
+                                anchors.topMargin: Math.round(6 * root.d)
+                                anchors.bottomMargin: Math.round(14 * root.d)
+                                active: classicHome.wanted
+                                visible: classicHome.wanted && classicHome.status === Loader.Ready
+                                asynchronous: !frame.settled
+                                source: Qt.resolvedUrl("layouts/Home.qml")
+                                onLoaded: classicHome.item.host = root
+                            }
+
                             StageHero {
                                 id: pageHero
                                 readonly property bool groupPage: !root.searching && root.openGroup.length > 0 && root.advancedPage < 0
-                                readonly property bool sectionPage: root.browsing && root.section !== "system" && root.section !== "general"
+                                readonly property bool sectionPage: root.browsing && root.section !== "system" && root.section !== "general" && root.section !== "home"
                                 readonly property bool spying: !pageHero.groupPage && root.leadGroup.length > 0
                                 readonly property string key: pageHero.spying ? root.leadGroup : String(root.shownGroups[0]?.key ?? "")
                                 readonly property bool shown: pageHero.sectionPage || (pageHero.groupPage && (pageHero.stageAvailable || pageHero.titled))
@@ -1521,7 +1546,7 @@ Item {
                                     maskThresholdMin: 0.5
                                     maskSpreadAtMin: 1
                                 }
-                                visible: root.advancedPage < 0
+                                visible: root.advancedPage < 0 && !classicHome.wanted
                                 onContentYChanged: if (root.flatSection) spyPace.start()
                                 // Rows laid after the section changed (a Place opening, a fold) move every head: the reading is taken again.
                                 onContentHeightChanged: if (root.flatSection) spyPace.restart()
@@ -2113,10 +2138,11 @@ Item {
                     id: chevron
                     visible: !groupRow.lone
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "chevron_right"
+                    // Down for a group that opens in place, right for one that opens its page.
+                    text: groupRow.folds ? "expand_more" : "chevron_right"
                     iconSize: Math.round(18 * root.d)
                     color: header.containsMouse ? IrisStyle.text : IrisStyle.textTertiary
-                    rotation: groupRow.unfolded ? 90 : 0
+                    rotation: groupRow.unfolded ? 180 : 0
                     Behavior on rotation { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
                 }
             }
@@ -2134,6 +2160,7 @@ Item {
                     required property int index
                     width: foldColumn.width
                     spec: modelData
+                    heading: index === 0 ? groupRow.modelData.title : ""
                     last: true
                     Rectangle {
                         anchors.left: parent.left
@@ -2145,7 +2172,7 @@ Item {
                     }
                 }
             }
-            FineTuneRow {
+            Layouts.FineTune {
                 visible: groupRow.unfolded && groupRow.tuneFolds
                 width: foldColumn.width
                 open: groupRow.tuneOpen
@@ -2187,69 +2214,6 @@ Item {
             font.weight: IrisStyle.weight(Font.DemiBold)
         }
         IrisLinkCard { tinted: true; links: moreGroup.links }
-    }
-
-    // The foot of a group that folds its fine-tuning: what it holds, by name, and a chevron that turns as it opens.
-    component FineTuneRow: MouseArea {
-        id: tune
-        property bool open: false
-        property var names: []
-        implicitHeight: Math.round((tune.open ? 44 : 54) * root.d)
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        Accessible.role: Accessible.Button
-        Accessible.name: tune.open ? Translation.tr("Fewer settings") : Translation.tr("Fine-tune")
-        Accessible.description: tune.names.join(", ")
-        IrisCutPlate {
-            anchors.fill: tunePlate
-            visible: IrisStyle.fieldChamfer
-            cutLength: IrisStyle.nestedCut(IrisStyle.chamferCut, tunePlate.anchors.margins)
-            color: tunePlate.color
-        }
-        Rectangle {
-            id: tunePlate
-            anchors.fill: parent
-            anchors.margins: Math.round(4 * root.d)
-            visible: !IrisStyle.fieldChamfer
-            radius: IrisStyle.concentric(IrisStyle.radiusTile, tunePlate.anchors.margins, IrisStyle.radiusRow)
-            color: tune.pressed ? IrisStyle.fillActive : tune.containsMouse ? IrisStyle.fillQuiet : "transparent"
-            Behavior on color { ColorAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
-        }
-        ColumnLayout {
-            anchors.left: parent.left
-            anchors.leftMargin: Math.round(16 * root.d)
-            anchors.right: chevron.left
-            anchors.rightMargin: Math.round(12 * root.d)
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Math.round(2 * root.d)
-            IrisText {
-                Layout.fillWidth: true
-                text: tune.open ? Translation.tr("Fewer settings") : Translation.tr("Fine-tune")
-                color: tune.containsMouse ? IrisStyle.text : IrisStyle.textSecondary
-                font.pixelSize: IrisStyle.typeLabel
-                font.weight: IrisStyle.weight(Font.Medium)
-                elide: Text.ElideRight
-            }
-            IrisText {
-                Layout.fillWidth: true
-                visible: !tune.open
-                text: tune.names.join(", ")
-                color: IrisStyle.textTertiary
-                font.pixelSize: IrisStyle.typeFootnote
-                elide: Text.ElideRight
-            }
-        }
-        MaterialSymbol {
-            id: chevron
-            anchors.right: parent.right
-            anchors.rightMargin: Math.round(16 * root.d)
-            anchors.verticalCenter: parent.verticalCenter
-            text: "expand_more"
-            iconSize: Math.round(18 * root.d)
-            color: tune.containsMouse ? IrisStyle.text : IrisStyle.textTertiary
-            rotation: tune.open ? 180 : 0
-            Behavior on rotation { NumberAnimation { duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve } }
-        }
     }
 
     // One set of a page's blocks (see `building`). A block is built by the incubator in slices of a frame: one block of a
@@ -2465,7 +2429,7 @@ Item {
                                 Timer { id: landingReveal; interval: 120; onTriggered: root.reveal(settingRow) }
                             }
                         }
-                        FineTuneRow {
+                        Layouts.FineTune {
                             visible: part.lastPart && group.folds
                             Layout.fillWidth: true
                             open: group.tuneOpen

@@ -229,6 +229,7 @@ ColumnLayout {
                                         Layout.fillWidth: true
                                         spec: row.modelData
                                         voice: rows.voice
+                                        heading: head.visible && part.index === 0 && row.index === 0 ? head.title : ""
                                         last: row.index === part.specs.length - 1 && !(part.lastPart && block.tunes)
                                         landing: block.landing.length > 0 && String(row.modelData.path ?? "") === block.landing
                                         onLandingChanged: if (row.landing) { rows.revealing = row; revealSoon.restart() }

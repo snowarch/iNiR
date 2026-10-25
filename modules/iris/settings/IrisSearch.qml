@@ -28,6 +28,121 @@ Singleton {
         anim: ["motion", "animations"], perf: ["performance", "low power"]
     })
 
+    // ── How people ask for a setting ("make the text bigger", "turn off animations", "más transparencia"): the filler
+    // words go, each word that names a thing also finds the words Settings uses for it, and a word that only says
+    // more or less ("bigger", "slower") ranks what sizes or speeds something without being required.
+    readonly property var fillerWords: new Set(["a", "an", "the", "to", "of", "my", "on", "off", "in", "for", "and", "or", "make",
+        "set", "turn", "get", "change", "put", "how", "i", "want", "is", "it", "be", "do", "can", "please", "with", "when", "use",
+        "enable", "disable", "de", "la", "el", "los", "las", "lo", "un", "una", "y", "o", "que", "mi", "mis", "para", "con", "en",
+        "poner", "cambiar", "quiero", "hacer", "activar", "desactivar", "del", "al", "se", "como", "usar", "sacar", "quitar"])
+    readonly property var degreeWords: new Set(["bigger", "smaller", "larger", "big", "small", "large", "more", "less", "increase",
+        "decrease", "reduce", "higher", "lower", "faster", "slower", "quicker", "thinner", "thicker", "grande", "chico", "pequeno",
+        "mas", "menos", "aumentar", "reducir", "achicar", "agrandar", "rapido", "lento"])
+    readonly property var degreeAlts: ["size", "scale", "width", "height", "strength", "speed", "duration", "amount", "radius", "density", "zoom", "thickness"]
+    readonly property var concepts: ({
+        text: ["font", "type", "typeface", "letters"], font: ["faces", "typeface", "text", "type"], letra: ["text", "font"],
+        fuente: ["font", "text"], texto: ["text", "font"], letters: ["text", "font"],
+        animation: ["motion", "animate", "morph"], animations: ["motion", "animate", "morph"], animate: ["motion", "animation"],
+        anim: ["motion", "animations"], animacion: ["motion", "animations"], animaciones: ["motion", "animations"], movement: ["motion"],
+        transparency: ["glass", "blur", "material", "opacity", "tint"], transparent: ["glass", "blur", "material", "opacity"],
+        translucent: ["glass", "blur", "frost"], opacity: ["glass", "material", "tint"], opaque: ["solid", "material", "glass"],
+        transparencia: ["glass", "blur", "material", "opacity"], transparente: ["glass", "blur", "material"],
+        blur: ["glass", "frost", "blurred"], borroso: ["blur", "glass"], desenfoque: ["blur", "glass"],
+        dark: ["scheme", "night", "black"], oscuro: ["dark", "scheme"], light: ["scheme", "bright", "white"], claro: ["light", "scheme"],
+        colour: ["color", "accent", "palette", "tint", "hue"], color: ["colour", "accent", "palette", "tint", "hue"],
+        colours: ["colors", "accent", "palette"], colors: ["colours", "accent", "palette"], accent: ["highlight", "signal", "colour"],
+        acento: ["accent", "highlight"], clock: ["time", "hour", "seconds"], reloj: ["clock", "time"], hora: ["clock", "time", "hour"],
+        time: ["clock", "hour", "date"], fondo: ["wallpaper", "background"], background: ["wallpaper"], wallpapers: ["wallpaper"],
+        hourly: ["shuffle", "interval", "every"], hour: ["shuffle", "interval", "every", "clock"], every: ["shuffle", "interval"],
+        rotate: ["shuffle", "interval"], slideshow: ["shuffle", "interval"], automatically: ["shuffle", "auto", "interval"],
+        notch: ["island", "bar"], isla: ["island"], topbar: ["island", "bar"], panel: ["bar", "island", "sidebars"],
+        bar: ["island", "notch"], barra: ["island", "bar"],
+        taskbar: ["dock"], hide: ["hidden", "autohide", "reveal"], hidden: ["hide", "autohide"], ocultar: ["hide", "hidden"],
+        esconder: ["hide", "hidden"], volume: ["sound", "audio", "output"], sound: ["volume", "audio"], audio: ["sound", "volume"],
+        sonido: ["sound", "volume"], volumen: ["volume", "sound"], notificaciones: ["notifications", "banners"],
+        quiet: ["disturb", "silent", "silence"], silence: ["disturb", "silent", "quiet"], silencio: ["disturb", "silent"],
+        molestar: ["disturb"], bloqueo: ["lock"], lockscreen: ["lock"], idioma: ["language"], teclado: ["keyboard", "layout"],
+        layouts: ["layout", "keyboard", "xkb"], raton: ["mouse", "pointer"], cursor: ["pointer", "mouse"], pointer: ["mouse", "cursor"],
+        rounded: ["corners", "radius", "round", "shape"], corners: ["radius", "round", "shape", "corner"], esquinas: ["corners", "radius"],
+        size: ["scale", "width", "height"], tamano: ["size", "scale"], iconos: ["icons", "icon"], icons: ["icon"], captura: ["screenshot", "capture"],
+        screenshot: ["capture", "snip"], grabar: ["record", "recording"], bateria: ["battery", "power"], sombra: ["shadow", "shadows"],
+        borde: ["border", "outline", "edge"], border: ["outline", "edge"], clima: ["weather"], idle: ["sleep", "lock", "timeout"],
+        sleep: ["idle", "suspend"], brightness: ["dim", "tone", "brighter"], brillo: ["brightness", "dim", "tone"],
+        game: ["gaming", "fullscreen"], juegos: ["gaming", "game"], spacing: ["gap", "gaps", "padding"], gaps: ["gap", "spacing"],
+        cada: ["every", "interval", "shuffle"], hora: ["hour", "every", "interval", "clock", "time"], minutos: ["minutes", "interval"]
+    })
+    // Areas whose rows change the whole shell lead an ambiguous query; areas that only matter in one moment (a game, the
+    // lock or login screen, a widget) step back unless the query names them.
+    readonly property var wholeShell: new Set(["appearance", "colour", "motion", "general", "display", "notifications", "sound", "keyboard"])
+    readonly property var momentary: new Set(["gaming", "lock", "login", "anime", "player"])
+    // The words of a query as people mean them: required words with what else each may read as, and degree words that
+    // only lift. Asked for a widget, its own options stop stepping back.
+    function intent(query: string): var {
+        const words = root.tokens(query)
+        const hard = [], soft = []
+        for (const word of words) {
+            if (root.degreeWords.has(word)) { soft.push({ word: word, alts: root.degreeAlts }); continue }
+            if (root.fillerWords.has(word) && words.length > 1) continue
+            hard.push({ word: word, alts: (root.concepts[word] ?? []).concat(root.aliases[word] ?? []) })
+        }
+        return { hard: hard, soft: soft, widgets: words.some(word => word.startsWith("widget")) }
+    }
+    // One word against a row's fields, best place wins: its name, its keywords, its group, its area, its description.
+    function fieldWord(word: string, fields: var, skipArea: bool): real {
+        const weights = [4, 3, 2.4, skipArea ? 0 : 1.8, 1]
+        const lists = [fields.label, fields.keys, fields.group, fields.section, fields.desc]
+        let best = 0
+        for (let f = 0; f < lists.length; f++) {
+            for (const token of lists[f]) {
+                const s = token === word ? 1 : word.length >= 3 && token.startsWith(word) ? 0.8
+                    : word.length >= 5 && token.includes(word) ? 0.5 : 0
+                if (s > 0) best = Math.max(best, s * weights[f])
+            }
+            if (best >= weights[f]) break
+        }
+        return best
+    }
+    // A concept's words are listed closest first: the first reads almost as the word itself.
+    function termScore(term: var, fields: var, skipArea: bool): real {
+        let best = root.fieldWord(term.word, fields, skipArea)
+        term.alts.forEach((alt, at) => { best = Math.max(best, (at === 0 ? 0.9 : 0.8) * root.fieldWord(alt, fields, skipArea)) })
+        return best
+    }
+    // A row against a query: 0 when a required word finds nothing. A word that names the row's area picks the area
+    // and the other words rank inside it ("clock on lock screen": the lock screen's clock, not every lock row that
+    // says "screen"); a row named by nothing but the query's words beats one that only starts with them; a widget's
+    // own options, moments' areas and fine-tune rows step back behind the essentials.
+    function settingScore(q: var, fields: var, spec: var): real {
+        let total = 0, named = false
+        for (const term of q.hard) {
+            const area = fields.section.includes(term.word)
+            // Naming an area weighs like naming a row: "volume sound" is the Sound area's volume, not a row called Sound.
+            const s = area ? 4 + 0.5 * root.termScore(term, fields, true)
+                : Math.max(root.termScore(term, fields, false), term.alts.some(alt => fields.section.includes(alt)) ? 2.2 : 0)
+            if (s <= 0) return 0
+            named = named || area
+            total += s
+        }
+        for (const term of q.soft) total += 0.75 * root.termScore(term, fields, false)
+        if (q.hard.length === 0 && total <= 0) return 0
+        if (fields.label.length > 0) {
+            const covered = token => q.hard.some(term => token.startsWith(term.word)) ? 1
+                : q.hard.some(term => term.alts.includes(token)) || q.soft.some(term => term.alts.includes(token)) ? 0.8 : 0
+            total += 1.5 * fields.label.reduce((sum, token) => sum + covered(token), 0) / fields.label.length
+        }
+        // A query that names an area ("smaller island") wants that area: a row elsewhere only sharing a word steps back.
+        if (q.asksArea && !named) total *= 0.75
+        else if (!named) {
+            if (root.wholeShell.has(spec.section)) total *= 1.2
+            else if (root.momentary.has(spec.section)) total *= 0.8
+        }
+        // "Bigger text", "slower animations": a degree asks for something that goes up and down.
+        if (q.soft.length > 0 && spec.kind === "range") total *= 1.25
+        if (spec.section === "widgets" && !q.widgets) total *= 0.55
+        if (spec.tune) total *= 0.85
+        return total
+    }
+
     function fold(text: string): string {
         let out = String(text ?? "").toLowerCase()
         if (typeof out.normalize === "function") out = out.normalize("NFD").replace(/[̀-ͯ]/g, "")

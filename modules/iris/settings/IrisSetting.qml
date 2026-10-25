@@ -17,6 +17,10 @@ Item {
     required property var spec
     property bool last: false
     property string highlight: ""
+    // The name printed over this row (its group's head): a row called like its group only says what it does.
+    property string heading: ""
+    readonly property bool headed: root.heading.length > 0 && root.highlight.length === 0
+        && String(root.spec.description ?? "").length > 0 && Translation.tr(String(root.spec.label ?? "")) === root.heading
     // Arrived at from a search: the row glows once in the accent, then settles.
     property bool landing: false
     onLandingChanged: if (root.landing) { glowLoader.active = false; glowLoader.active = true }
@@ -199,9 +203,11 @@ Item {
                     IrisText {
                         id: label
                         width: Math.min(implicitWidth, parent.width - resetMark.width - Math.round(6 * root.d))
-                        text: root.highlight.length > 0 ? root.marked(Translation.tr(root.spec.label)) : Translation.tr(root.spec.label)
+                        text: root.headed ? Translation.tr(root.spec.description)
+                            : root.highlight.length > 0 ? root.marked(Translation.tr(root.spec.label)) : Translation.tr(root.spec.label)
                         textFormat: root.highlight.length > 0 ? Text.StyledText : Text.PlainText
-                        font.pixelSize: IrisStyle.typeBody
+                        color: root.headed ? (IrisStyle.fieldChamfer ? IrisStyle.muted : IrisStyle.subtext) : IrisStyle.text
+                        font.pixelSize: root.headed ? IrisStyle.typeMeta : IrisStyle.typeBody
                         font.weight: IrisStyle.weight(Font.Normal)
                         wrapMode: Text.WordWrap
                     }
@@ -254,13 +260,14 @@ Item {
                     property bool full: false
                     Layout.fillWidth: true
                     visible: text.length > 0
-                    text: root.spec.description ? Translation.tr(root.spec.description) : ""
+                    text: root.spec.description && !root.headed ? Translation.tr(root.spec.description) : ""
                     // A chamfered Design prints its row in two inks, the name in the ink and what it does a tone down: at
                     // the shared subtext (nine tenths of the ink) both read as one black block.
                     color: IrisStyle.fieldChamfer ? IrisStyle.muted : IrisStyle.subtext
                     font.pixelSize: IrisStyle.typeMeta
                     wrapMode: Text.WordWrap
-                    maximumLineCount: description.full ? 12 : 2
+                    // Folio is read like a page: what a row does is never cut there.
+                    maximumLineCount: description.full || root.voice === "folio" ? 12 : 3
                     elide: Text.ElideRight
                     MouseArea {
                         anchors.fill: parent
@@ -293,8 +300,9 @@ Item {
             }
 
             // A trailing value reads on the title's line, in the interface face: the title leads, the value answers.
+            // Cards and tiles name the picked one themselves.
             Loader {
-                active: root.swatched
+                active: root.swatched && !root.carded && !root.tiled
                 visible: active
                 Layout.alignment: root.inlineSwatch ? Qt.AlignVCenter : Qt.AlignTop
                 Layout.preferredHeight: root.inlineSwatch ? -1 : label.implicitHeight

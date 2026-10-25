@@ -17,6 +17,18 @@ MouseArea {
     Accessible.role: Accessible.Button
     Accessible.name: tune.open ? Translation.tr("Fewer settings") : Translation.tr("Fine-tune")
     Accessible.description: tune.names.join(", ")
+    // As many names as fit, then how many more: a list cut off mid-word named nothing.
+    FontMetrics { id: summaryType; font: summary.font }
+    function say(room: real): string {
+        const all = tune.names
+        const whole = all.join(", ")
+        if (all.length < 2 || summaryType.advanceWidth(whole) <= room) return whole
+        for (let n = all.length - 1; n >= 1; n--) {
+            const text = Translation.tr("%1 and %2").arg(all.slice(0, n).join(", ")).arg(Translation.tr("%1 more").arg(all.length - n))
+            if (summaryType.advanceWidth(text) <= room) return text
+        }
+        return Translation.tr("%1 and %2").arg(all[0]).arg(Translation.tr("%1 more").arg(all.length - 1))
+    }
     IrisCutPlate {
         anchors.fill: plate
         visible: IrisStyle.fieldChamfer
@@ -48,9 +60,10 @@ MouseArea {
             elide: Text.ElideRight
         }
         IrisText {
+            id: summary
             width: parent.width
             visible: !tune.open
-            text: tune.names.join(", ")
+            text: tune.say(summary.width)
             color: IrisStyle.textTertiary
             font.pixelSize: IrisStyle.typeFootnote
             elide: Text.ElideRight

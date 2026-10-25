@@ -42,6 +42,8 @@ Item {
     readonly property var silentSpec: root.specAt("notifications.silent")
     readonly property var glassSpec: root.specAt("iris.appearance.glass.mode")
     readonly property var layoutSpec: root.specAt("iris.bar.layout")
+    readonly property var accentSpec: root.specAt("iris.appearance.accent")
+    readonly property var textSpec: root.specAt("iris.appearance.theme.text")
 
     // Every area's notes, newest config first; each carries the area it lives in.
     readonly property var needs: {
@@ -98,9 +100,36 @@ Item {
         Wallpapers.select(path)
     }
 
+    // Deck's card carries its keys at its top corner: there Home is named like every other card, the keys beside its
+    // name instead of over the wallpaper's own.
+    Item {
+        id: deckHead
+        visible: root.voice === "deck"
+        width: parent.width
+        height: deckHead.visible ? deckLine.y + deckLine.height + root.u(18) : 0
+        DotTitle {
+            id: deckTitle
+            x: root.u(22)
+            y: root.u(20)
+            text: Translation.tr(String(root.host?.homeEntry?.title ?? "Home"))
+            size: root.u(Boolean(root.host?.windowed) ? 34 : 40)
+        }
+        IrisText {
+            id: deckLine
+            x: deckTitle.x
+            anchors.top: deckTitle.bottom
+            anchors.topMargin: root.u(8)
+            width: parent.width - 2 * x
+            elide: Text.ElideRight
+            text: Translation.tr(String(root.host?.homeEntry?.subtitle ?? ""))
+            color: IrisStyle.muted
+            font.pixelSize: IrisStyle.typeMeta
+        }
+    }
     Flickable {
         id: flick
         anchors.fill: parent
+        anchors.topMargin: deckHead.height
         contentHeight: column.implicitHeight + root.u(6)
         boundsBehavior: Flickable.StopAtBounds
         clip: true
@@ -287,13 +316,15 @@ Item {
                         }
                     }
 
-                    // ── The look at once: dark or light, the signal, the Design. It takes the column's rest.
+                    // ── The look at once: dark or light, the colour that marks what you pick (your accent under Apple, the
+                    // one signal under Nothing), the look, the Design and the text size. It takes the column's rest.
                     Card {
                         id: lookCard
+                        readonly property int lines: [schemeLine, colourLine, lookLine, designLine, textLine].filter(item => item.shown).length
                         width: parent.width
-                        height: Math.max(3 * root.u(48) + lookCard.headroom + lookCard.pad - root.u(8),
+                        height: Math.max(lookCard.lines * root.u(48) + lookCard.headroom + lookCard.pad - root.u(8),
                             root.wide ? wall.height - needsCard.height - root.gap : 0)
-                        caption: Translation.tr("Look")
+                        caption: Translation.tr("Appearance")
                         Column {
                             id: lookBody
                             x: lookCard.pad
@@ -302,7 +333,7 @@ Item {
                             spacing: 0
                             Line {
                                 id: schemeLine
-                                visible: root.schemeSpec !== null
+                                shown: root.schemeSpec !== null
                                 name: Translation.tr("Scheme")
                                 IrisSegmented {
                                     id: scheme
@@ -320,29 +351,31 @@ Item {
                                 }
                             }
                             Line {
-                                visible: root.lookSpec !== null
+                                id: colourLine
+                                shown: IrisStyle.mono ? root.signalSpec !== null : root.accentSpec !== null
+                                name: IrisStyle.mono ? Translation.tr("Signal") : Translation.tr("Accent")
+                                Swatches { visible: IrisStyle.mono; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter }
+                                AccentSwatches { visible: !IrisStyle.mono; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; room: colourLine.room }
+                            }
+                            Line {
+                                id: lookLine
+                                shown: root.lookSpec !== null
                                 name: Translation.tr("Look")
                                 IrisSegmented {
                                     anchors.right: parent.right
                                     anchors.verticalCenter: parent.verticalCenter
+                                    width: Math.min(implicitWidth > 0 ? implicitWidth : options.length * root.u(84), lookLine.room)
                                     voice: root.voice
                                     accessibleName: Translation.tr("Look")
-                                    options: ["apple", "nothing"].map(value => ({ label: Translation.tr(value === "apple" ? "Apple" : "Nothing OS"), value: value }))
+                                    options: ["apple", "nothing"].map(value => ({ label: value === "apple" ? "Apple" : "Nothing", value: value }))
                                     current: { Config.revision; return root.lookSpec ? IrisOptions.currentValue(root.lookSpec) : "apple" }
                                     onPicked: value => IrisOptions.commit(root.lookSpec, value)
                                 }
                             }
                             Line {
-                                id: signalLine
-                                visible: root.signalSpec !== null
-                                name: Translation.tr("Signal")
-                                Swatches { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter }
-                            }
-                            Line {
                                 id: designLine
-                                visible: root.designSpec !== null && IrisOptions.shown(root.designSpec)
+                                shown: root.designSpec !== null && IrisOptions.shown(root.designSpec)
                                 name: Translation.tr("Design")
-                                last: true
                                 IrisSegmented {
                                     anchors.right: parent.right
                                     anchors.verticalCenter: parent.verticalCenter
@@ -353,6 +386,14 @@ Item {
                                     current: { Config.revision; return root.designSpec ? IrisOptions.currentValue(root.designSpec) : "" }
                                     onPicked: value => IrisOptions.commit(root.designSpec, value)
                                 }
+                            }
+                            // Text across iRiS, a step at a time: the number is the size it is now.
+                            Line {
+                                id: textLine
+                                shown: root.textSpec !== null
+                                name: Translation.tr("Text")
+                                last: true
+                                Stepper { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; spec: root.textSpec }
                             }
                         }
                     }
@@ -727,16 +768,105 @@ Item {
         }
     }
     // A line of the Look card: its name in the Label voice, its control at the right, a hairline under it.
+    // Shares the card's height with the other lines shown, never less than a row's.
     component Line: Item {
         id: line
         property string name
         property bool last: false
+        property bool shown: true
         readonly property real room: line.width - nameText.implicitWidth - root.u(16)
-        readonly property int lines: [schemeLine, signalLine, designLine].filter(item => item.visible).length
+        visible: line.shown
         width: parent.width
-        height: visible ? Math.max(root.u(48), Math.floor((lookCard.height - lookCard.headroom - lookCard.pad + root.u(8)) / Math.max(1, line.lines))) : 0
+        height: line.shown ? Math.max(root.u(48), Math.floor((lookCard.height - lookCard.headroom - lookCard.pad + root.u(8)) / Math.max(1, lookCard.lines))) : 0
         Mono { id: nameText; anchors.verticalCenter: parent.verticalCenter; text: line.name; color: IrisStyle.muted }
         Rectangle { visible: !line.last; anchors.bottom: parent.bottom; width: parent.width; height: 1; color: IrisStyle.hairline }
+    }
+    // Your accent among the ones iRiS offers, the wallpaper's and the theme's included; a custom one lives in Colour.
+    // Following a colour theme, the theme's name says where it comes from instead.
+    component AccentSwatches: Row {
+        id: accents
+        property real room: 0
+        readonly property bool locked: { Config.revision; return typeof root.accentSpec?.locked === "function" && root.accentSpec.locked() }
+        readonly property var choices: root.accentSpec ? IrisOptions.choicesOf(root.accentSpec).filter(choice => choice.swatch !== undefined) : []
+        readonly property var current: { Config.revision; return root.accentSpec ? IrisOptions.currentValue(root.accentSpec) : null }
+        spacing: root.u(6)
+        IrisText {
+            visible: accents.locked
+            anchors.verticalCenter: parent.verticalCenter
+            text: Translation.tr("The colour theme's own")
+            color: IrisStyle.muted
+            font.pixelSize: IrisStyle.typeMeta
+        }
+        Repeater {
+            model: accents.locked ? [] : accents.choices.slice(0, Math.max(1, Math.floor((accents.room + root.u(6)) / root.u(32))))
+            MouseArea {
+                id: dot
+                required property var modelData
+                readonly property bool on: IrisOptions.same(dot.modelData.value, accents.current)
+                width: root.u(26)
+                height: width
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                Accessible.role: Accessible.RadioButton
+                Accessible.name: Translation.tr(String(dot.modelData.label ?? ""))
+                Accessible.checked: dot.on
+                onClicked: IrisOptions.commit(root.accentSpec, dot.modelData.value)
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: dot.on ? parent.width : root.u(18)
+                    height: width
+                    radius: width / 2
+                    color: "transparent"
+                    border.width: dot.on ? Math.max(1, root.u(1.5)) : 0
+                    border.color: IrisStyle.text
+                    Behavior on width { NumberAnimation { duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing } }
+                }
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: dot.containsMouse && !dot.on ? root.u(20) : root.u(18)
+                    height: width
+                    radius: width / 2
+                    color: dot.modelData.swatch
+                    Behavior on width { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
+                }
+            }
+        }
+    }
+    // A range a step at a time: − the figure +, the figure in the number voice.
+    component Stepper: Row {
+        id: stepper
+        property var spec
+        readonly property real value: { Config.revision; return Number(stepper.spec ? IrisOptions.currentValue(stepper.spec) : 0) }
+        readonly property real step: Number(stepper.spec?.step ?? 1)
+        function nudge(by: real): void {
+            const next = Math.max(Number(stepper.spec.min), Math.min(Number(stepper.spec.max), stepper.value + by))
+            if (next !== stepper.value) IrisOptions.commit(stepper.spec, next)
+        }
+        spacing: root.u(2)
+        StepKey { glyph: "remove"; enabled: stepper.value > Number(stepper.spec?.min ?? 0); onClicked: stepper.nudge(-stepper.step); Accessible.name: Translation.tr("Smaller") }
+        IrisText {
+            anchors.verticalCenter: parent.verticalCenter
+            width: root.u(52)
+            horizontalAlignment: Text.AlignHCenter
+            text: Math.round(stepper.value) + String(stepper.spec?.unit ?? "").replace(" ", " ")
+            color: IrisStyle.text
+            font.family: IrisStyle.fontNumbers
+            font.pixelSize: IrisStyle.typeBody
+            font.weight: IrisStyle.weight(Font.DemiBold)
+            font.features: { "tnum": 1 }
+        }
+        StepKey { glyph: "add"; enabled: stepper.value < Number(stepper.spec?.max ?? 0); onClicked: stepper.nudge(stepper.step); Accessible.name: Translation.tr("Larger") }
+    }
+    component StepKey: MouseArea {
+        id: stepKey
+        property string glyph
+        width: root.u(30)
+        height: width
+        hoverEnabled: true
+        cursorShape: stepKey.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+        Accessible.role: Accessible.Button
+        Rectangle { anchors.fill: parent; radius: IrisStyle.capsule(width); color: stepKey.containsMouse && stepKey.enabled ? IrisStyle.fillHover : IrisStyle.fillQuiet }
+        MaterialSymbol { anchors.centerIn: parent; text: stepKey.glyph; iconSize: root.u(16); color: stepKey.enabled ? IrisStyle.text : IrisStyle.textTertiary }
     }
     // The signal: Nothing red, ink, the wallpaper's own (its picture in the dot), or a colour of your own that opens
     // the presets beside it.
@@ -852,12 +982,15 @@ Item {
             Behavior on width { NumberAnimation { duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing } }
         }
     }
+    // Captions in the layout's voice: Folio and Console (and anything under Nothing) set them in mono caps; Classic and
+    // Deck read them as Apple does, a word in sentence case.
+    readonly property bool capsVoice: root.voice === "folio" || root.voice === "console" || IrisStyle.monoCaptions
     component Mono: IrisText {
-        font.family: IrisStyle.fontMono
-        font.pixelSize: Math.max(10, IrisStyle.typeCaption)
-        font.weight: Font.Medium
-        font.capitalization: Font.AllUppercase
-        font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
+        font.family: root.capsVoice ? IrisStyle.fontMono : IrisStyle.fontMain
+        font.pixelSize: root.capsVoice ? Math.max(10, IrisStyle.typeCaption) : IrisStyle.typeMeta
+        font.weight: root.capsVoice ? Font.Medium : IrisStyle.weight(Font.DemiBold)
+        font.capitalization: root.capsVoice ? Font.AllUppercase : Font.MixedCase
+        font.letterSpacing: root.capsVoice ? Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08) : 0
     }
     // A word that does something: Label voice, a capsule under the pointer.
     component TextKey: MouseArea {
