@@ -213,9 +213,12 @@ AbstractBackgroundWidget {
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
         }
 
-        RowLayout {
+        // small stacks the reading over its notes; beside it they left the figure 40 px
+        GridLayout {
             anchors.fill: parent
-            spacing: Math.round(12 * root.scaleFactor)
+            columns: root.materialSmall ? 1 : 3
+            columnSpacing: Math.round(12 * root.scaleFactor)
+            rowSpacing: Math.round(8 * root.scaleFactor)
 
             ColumnLayout {
                 Layout.fillWidth: true
@@ -228,7 +231,7 @@ AbstractBackgroundWidget {
 
                     InstrumentLabel {
                         Layout.fillWidth: true
-                        text: Translation.tr("System / Uptime")
+                        text: root.materialSmall ? Translation.tr("Uptime") : Translation.tr("System / Uptime")
                         color: root.widgetAccentVisible
                         scaleFactor: root.scaleFactor
                         strong: true
@@ -238,7 +241,7 @@ AbstractBackgroundWidget {
                 StyledText {
                     Layout.fillWidth: true
                     verticalAlignment: Text.AlignVCenter
-                    text: DateTime.uptime || "--"
+                    text: root.materialSmall ? root.materialParts.map(part => part.value + part.unit).join(" ") : DateTime.uptime || "--"
                     color: root.widgetInk
                     elide: Text.ElideRight
                     fontSizeMode: Text.Fit
@@ -252,7 +255,7 @@ AbstractBackgroundWidget {
             }
 
             Rectangle {
-                visible: root.showInstrumentDetails
+                visible: root.showInstrumentDetails && !root.materialSmall
                 Layout.alignment: Qt.AlignVCenter
                 Layout.preferredHeight: Math.round(58 * root.scaleFactor)
                 Layout.preferredWidth: Math.max(1, Math.round(root.scaleFactor))
@@ -262,10 +265,11 @@ AbstractBackgroundWidget {
             ColumnLayout {
                 visible: root.showInstrumentDetails
                 Layout.preferredWidth: Math.max(84, Math.round(96 * root.scaleFactor))
+                Layout.fillWidth: root.materialSmall
                 Layout.alignment: Qt.AlignVCenter
                 spacing: Math.round(5 * root.scaleFactor)
 
-                Item { Layout.fillHeight: true }
+                Item { Layout.fillHeight: true; visible: !root.materialSmall }
 
                 StyledText {
                     visible: root.showBreakdown
@@ -285,7 +289,7 @@ AbstractBackgroundWidget {
                     scaleFactor: root.scaleFactor
                 }
 
-                Item { Layout.fillHeight: true }
+                Item { Layout.fillHeight: true; visible: !root.materialSmall }
             }
         }
     }

@@ -410,11 +410,12 @@ AbstractBackgroundWidget {
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
         }
 
+        // small is the person and the session: the label, condition and keys left the name 40 px
         Item {
             visible: root.showAvatar
-            Layout.preferredWidth: Math.round(58 * root.scaleFactor)
+            Layout.preferredWidth: Math.round((root.materialSmall ? 44 : 58) * root.scaleFactor)
             Layout.preferredHeight: Layout.preferredWidth
-            Layout.alignment: Qt.AlignVCenter
+            Layout.alignment: root.materialSmall ? Qt.AlignTop : Qt.AlignVCenter
 
             Rectangle {
                 id: instrumentAvatarMask
@@ -442,6 +443,7 @@ AbstractBackgroundWidget {
             spacing: Math.round(3 * root.scaleFactor)
 
             InstrumentLabel {
+                visible: !root.materialSmall
                 text: Translation.tr("Identity / Session")
                 color: root.widgetAccentVisible
                 scaleFactor: root.scaleFactor
@@ -453,7 +455,7 @@ AbstractBackgroundWidget {
                 color: root.widgetInk
                 elide: Text.ElideRight
                 font.family: root.widgetTitleFamily
-                font.pixelSize: Math.max(20, Math.round(26 * root.scaleFactor))
+                font.pixelSize: Math.round((root.materialSmall ? 20 : 26) * root.scaleFactor)
                 font.weight: Font.Bold
             }
             StyledText {
@@ -474,13 +476,14 @@ AbstractBackgroundWidget {
                     Layout.alignment: Qt.AlignTop
                     scaleFactor: root.scaleFactor
                     label: Translation.tr("Session")
-                    value: DateTime.uptime
+                    // small reads the two largest units, as the uptime widget does
+                    value: root.materialSmall ? String(DateTime.uptime).split(", ").slice(0, 2).join(" ") : DateTime.uptime
                     ink: root.widgetInk
                     muted: root.widgetInkMuted
                     family: root.widgetNumbersFamily
                 }
                 InstrumentField {
-                    visible: root.showWeather && root.weatherLine.text !== ""
+                    visible: root.showWeather && root.weatherLine.text !== "" && !root.materialSmall
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignTop
                     scaleFactor: root.scaleFactor
@@ -495,6 +498,7 @@ AbstractBackgroundWidget {
         }
 
         ColumnLayout {
+            visible: !root.materialSmall
             Layout.alignment: Qt.AlignVCenter
             spacing: Math.round(5 * root.scaleFactor)
             Repeater {

@@ -84,7 +84,8 @@ AbstractBackgroundWidget {
 
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
         : root.weatherStyle === "dial" ? Math.round(shapeSize * 1.4) : shapeSize
-    materialFitted: !root.forecastFace
+    // the dial (iNstrument) lays itself out per size instead of shrinking its medium drawing into small
+    materialFitted: !root.forecastFace && root.weatherStyle !== "dial"
     materialFitPadding: 0
     materialNaturalWidth: root.forecastFace ? 0 : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
         : root.weatherStyle === "dial" ? Math.round(shapeSize * 1.4) : shapeSize
@@ -536,11 +537,17 @@ AbstractBackgroundWidget {
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
         }
 
-        readonly property real side: Math.min(width, height)
+        // large keeps medium's stage on top and lists the days under it
+        readonly property real stageHeight: root.materialLarge ? Math.round(176 * root.scaleFactor) : height
+        readonly property real side: Math.min(width, instrumentArea.stageHeight)
 
         RowLayout {
-            anchors.fill: parent
+            id: instrumentStage
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
             anchors.margins: Math.round(12 * root.scaleFactor)
+            height: instrumentArea.stageHeight - Math.round(24 * root.scaleFactor)
             spacing: Math.round(12 * root.scaleFactor)
 
             ColumnLayout {
@@ -550,8 +557,11 @@ AbstractBackgroundWidget {
 
                 InstrumentLabel {
                     Layout.fillWidth: true
+                    // the town alone: its province cut the label short
                     text: root.showLocation && Weather.showVisibleCity && String(Weather.visibleCity || "").length > 0
-                        ? Translation.tr("Atmosphere / %1").arg(Weather.visibleCity) : Translation.tr("Atmosphere / Local")
+                        ? (root.materialSmall ? String(Weather.visibleCity).split(",")[0].trim()
+                            : Translation.tr("Atmosphere / %1").arg(String(Weather.visibleCity).split(",")[0].trim()))
+                        : Translation.tr("Atmosphere / Local")
                     color: root.widgetAccentVisible
                     scaleFactor: root.scaleFactor
                     strong: true
@@ -604,7 +614,7 @@ AbstractBackgroundWidget {
                             { label: Translation.tr("Feels"), value: String(Weather.data?.tempFeelsLike ?? "").replace(/[CF]$/, "") },
                             { label: Translation.tr("Humidity"), value: String(Weather.data?.humidity ?? "") },
                             { label: Translation.tr("Wind"), value: String(Weather.data?.wind ?? "").split(" ")[0] + " " + String(Weather.data?.windDir ?? "") }
-                        ]
+                        ].slice(0, root.materialSmall ? 2 : 3)
                         InstrumentField {
                             required property var modelData
                             Layout.alignment: Qt.AlignTop
@@ -622,10 +632,12 @@ AbstractBackgroundWidget {
 
             Item {
                 id: skyStage
+                // never narrower than its rise and set: they ran past the plate's edge
                 Layout.preferredWidth: visible
-                    ? Math.max(Math.round(102 * root.scaleFactor), Math.round(instrumentArea.side * 0.52)) : 0
+                    ? Math.max(Math.round(102 * root.scaleFactor), Math.round(instrumentArea.side * 0.52),
+                        sunTimes.visible ? sunTimes.implicitWidth : 0) : 0
                 Layout.fillHeight: true
-                visible: root.showSunPath
+                visible: root.showSunPath && !root.materialSmall
                     && Boolean(Weather.data?.sunrise) && Boolean(Weather.data?.sunset)
                 readonly property real rx: Math.max(1, width * 0.43)
                 readonly property real ry: Math.max(1, height * 0.28)
@@ -674,6 +686,7 @@ AbstractBackgroundWidget {
                 }
 
                 RowLayout {
+                    id: sunTimes
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
@@ -720,6 +733,71 @@ AbstractBackgroundWidget {
                             font.family: root.widgetNumbersFamily
                             font.pixelSize: Math.round(10 * root.scaleFactor)
                             font.weight: Font.DemiBold
+                        }
+                    }
+                }
+            }
+        }
+
+        // Large: the days as a log, a rule between each, the range in the figure face.
+        ColumnLayout {
+            visible: root.materialLarge
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: instrumentStage.bottom
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: Math.round(12 * root.scaleFactor)
+            anchors.rightMargin: Math.round(12 * root.scaleFactor)
+            anchors.topMargin: Math.round(6 * root.scaleFactor)
+            anchors.bottomMargin: Math.round(12 * root.scaleFactor)
+            spacing: 0
+            Repeater {
+                model: root.materialLarge ? Array.from(Weather.data?.forecast ?? []).slice(0, 5) : []
+                Item {
+                    id: logDay
+                    required property var modelData
+                    required property int index
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        height: Math.max(1, Math.round(root.scaleFactor))
+                        color: ColorUtils.applyAlpha(root.widgetInk, 0.14)
+                    }
+                    RowLayout {
+                        anchors.fill: parent
+                        spacing: Math.round(10 * root.scaleFactor)
+                        InstrumentLabel {
+                            Layout.preferredWidth: Math.round(64 * root.scaleFactor)
+                            text: logDay.index === 0 ? Translation.tr("Today") : String(logDay.modelData.dayName ?? "")
+                            color: logDay.index === 0 ? root.widgetAccentVisible : root.widgetInkMuted
+                            scaleFactor: root.scaleFactor
+                            strong: logDay.index === 0
+                        }
+                        MaterialSymbol {
+                            text: Icons.getWeatherIcon(logDay.modelData.code, false) ?? "cloud"
+                            iconSize: Math.round(16 * root.scaleFactor)
+                            color: root.widgetAccentVisible
+                        }
+                        Item { Layout.fillWidth: true }
+                        StyledText {
+                            text: String(logDay.modelData.lo ?? "").replace(/[CF]$/, "")
+                            color: root.widgetInkMuted
+                            font.family: root.widgetNumbersFamily
+                            font.pixelSize: Math.round(13 * root.scaleFactor)
+                            font.features: ({ "tnum": 1 })
+                        }
+                        StyledText {
+                            Layout.preferredWidth: Math.round(38 * root.scaleFactor)
+                            horizontalAlignment: Text.AlignRight
+                            text: String(logDay.modelData.hi ?? "").replace(/[CF]$/, "")
+                            color: root.widgetInk
+                            font.family: root.widgetNumbersFamily
+                            font.pixelSize: Math.round(13 * root.scaleFactor)
+                            font.weight: Font.Bold
+                            font.features: ({ "tnum": 1 })
                         }
                     }
                 }

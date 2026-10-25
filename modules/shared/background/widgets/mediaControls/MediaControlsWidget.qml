@@ -599,6 +599,25 @@ AbstractBackgroundWidget {
                 width: Math.min(parent.width, parent.height) * 0.6
                 height: width
             }
+            // At rest there is no player to draw the card: the rest wears the widget's own plate, so its words
+            // aren't left on the wallpaper and Background and Outline have something to change.
+            WidgetSurface {
+                irisPresentation: root.widgetIris
+                anchors.fill: parent
+                shown: root.materialSized && !root.instrument && !root.irisFaced
+                regionBrightness: root.regionBrightness
+                surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
+                surfaceOpacity: root.backgroundOpacity
+                surfaceBorderWidth: root.borderWidth
+                surfaceBorderOpacity: root.borderOpacity
+                surfaceColor: root.widgetInk
+                colorMode: root.colorMode
+                surfaceAccent: root.widgetAccent
+                surfaceFill: root.widgetPlateColor
+                surfaceUseBlur: root.effectiveBlur
+                screenX: root.x; screenY: root.y
+                screenWidth: root.scaledScreenWidth; screenHeight: root.scaledScreenHeight
+            }
             MediaRest {
                 id: materialRest
                 anchors.fill: parent

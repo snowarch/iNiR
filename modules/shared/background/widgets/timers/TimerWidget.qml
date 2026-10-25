@@ -443,11 +443,13 @@ AbstractBackgroundWidget {
             progress: 1 - TimerService.countdownSecondsLeft / Math.max(1, TimerService.countdownDuration)
 
             RowLayout {
+                id: minuteKeys
                 anchors.fill: parent
                 spacing: Math.round(4 * root.scaleFactor)
 
                 Repeater {
-                    model: [1, 5]
+                    // a narrow slot keeps one key: two ran past the card
+                    model: minuteKeys.width < Math.round(72 * root.scaleFactor) ? [5] : [1, 5]
                     RippleButton {
                         id: minuteButton
                         required property int modelData

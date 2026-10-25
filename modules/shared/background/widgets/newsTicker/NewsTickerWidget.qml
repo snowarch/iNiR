@@ -293,7 +293,8 @@ AbstractBackgroundWidget {
                 }
 
                 StyledText {
-                    visible: root.articleCount > 1
+                    // small gives the source its room
+                    visible: root.articleCount > 1 && !root.materialSmall
                     text: ((root.headlineIndex % Math.max(1, root.articleCount)) + 1)
                         + "/" + root.articleCount
                     color: root.instrument ? root.widgetInkMuted : root.widgetInkSubtle

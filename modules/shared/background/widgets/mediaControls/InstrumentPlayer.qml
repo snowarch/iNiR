@@ -33,165 +33,192 @@ Item {
         return StringUtils.friendlyTimeForSeconds(Math.max(0, seconds || 0))
     }
 
-    RowLayout {
+    // Small stacks the cover beside its words and the transport under both; large gives the cover the room.
+    readonly property string size: root.widget.materialSized ? root.widget.materialSize : "medium"
+    readonly property bool small: root.size === "small"
+    readonly property bool large: root.size === "large"
+    readonly property real coverSize: Math.round((root.small ? 52 : root.large ? 148 : 84) * root.s)
+
+    ColumnLayout {
         anchors.fill: parent
         anchors.margins: Math.round(12 * root.s)
-        spacing: Math.round(14 * root.s)
+        spacing: Math.round(root.large ? 10 : 6) * root.s
 
-        Item {
-            Layout.preferredWidth: Math.round(84 * root.s)
-            Layout.preferredHeight: Layout.preferredWidth
-            Layout.alignment: Qt.AlignVCenter
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: false
+            spacing: Math.round((root.small ? 10 : 14) * root.s)
 
-            Rectangle {
-                id: coverMask
-                anchors.fill: parent
-                radius: Math.round(6 * root.s)
-                visible: false
-            }
-            Rectangle {
-                anchors.fill: parent
-                radius: coverMask.radius
-                color: ColorUtils.applyAlpha(root.ink, 0.08)
-                visible: cover.status !== Image.Ready
-                MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: "music_note"
-                    iconSize: Math.round(26 * root.s)
-                    color: root.muted
+            Item {
+                Layout.preferredWidth: root.coverSize
+                Layout.preferredHeight: Layout.preferredWidth
+                Layout.alignment: Qt.AlignTop
+
+                Rectangle {
+                    id: coverMask
+                    anchors.fill: parent
+                    radius: Math.round(6 * root.s)
+                    visible: false
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    radius: coverMask.radius
+                    color: ColorUtils.applyAlpha(root.ink, 0.08)
+                    visible: cover.status !== Image.Ready
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "music_note"
+                        iconSize: Math.round(26 * root.s)
+                        color: root.muted
+                    }
+                }
+                Image {
+                    id: cover
+                    anchors.fill: parent
+                    source: playerBase.displayedArtFilePath
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    cache: true
+                    smooth: true
+                    mipmap: true
+                    sourceSize.width: Math.round(parent.width * 2)
+                    sourceSize.height: Math.round(parent.height * 2)
+                    layer.enabled: status === Image.Ready
+                    layer.effect: GE.OpacityMask { maskSource: coverMask }
+                }
+                InstrumentBrackets {
+                    anchors.fill: parent
+                    anchors.margins: -Math.round(3 * root.s)
+                    color: root.accent
+                    length: Math.round(12 * root.s)
                 }
             }
-            Image {
-                id: cover
-                anchors.fill: parent
-                source: playerBase.displayedArtFilePath
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                cache: true
-                smooth: true
-                mipmap: true
-                sourceSize.width: Math.round(parent.width * 2)
-                sourceSize.height: Math.round(parent.height * 2)
-                layer.enabled: status === Image.Ready
-                layer.effect: GE.OpacityMask { maskSource: coverMask }
-            }
-            InstrumentBrackets {
-                anchors.fill: parent
-                anchors.margins: -Math.round(3 * root.s)
-                color: root.accent
-                length: Math.round(12 * root.s)
-            }
-        }
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            spacing: Math.round(2 * root.s)
-
-            RowLayout {
+            ColumnLayout {
                 Layout.fillWidth: true
-                spacing: Math.round(6 * root.s)
-                Rectangle {
-                    implicitWidth: Math.round(6 * root.s)
-                    implicitHeight: implicitWidth
-                    color: playerBase.effectiveIsPlaying ? root.accent : "transparent"
-                    border.width: playerBase.effectiveIsPlaying ? 0 : 1
-                    border.color: root.muted
+                Layout.alignment: Qt.AlignTop
+                spacing: Math.round(2 * root.s)
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Math.round(6 * root.s)
+                    Rectangle {
+                        implicitWidth: Math.round(6 * root.s)
+                        implicitHeight: implicitWidth
+                        color: playerBase.effectiveIsPlaying ? root.accent : "transparent"
+                        border.width: playerBase.effectiveIsPlaying ? 0 : 1
+                        border.color: root.muted
+                    }
+                    InstrumentLabel {
+                        Layout.fillWidth: true
+                        text: root.small ? (playerBase.effectiveIsPlaying ? Translation.tr("Playing") : Translation.tr("Paused"))
+                            : playerBase.effectiveIsPlaying ? Translation.tr("Transport / Playing") : Translation.tr("Transport / Paused")
+                        color: root.accent
+                        scaleFactor: root.s
+                        strong: true
+                    }
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    text: StringUtils.cleanMusicTitle(playerBase.effectiveTitle) || Translation.tr("Untitled")
+                    color: root.ink
+                    elide: Text.ElideRight
+                    wrapMode: Text.Wrap
+                    maximumLineCount: root.large ? 3 : 2
+                    font.family: root.widget.widgetTitleFamily
+                    font.pixelSize: Math.round((root.small ? 14 : root.large ? 24 : 19) * root.s)
+                    font.weight: Font.Bold
                 }
                 InstrumentLabel {
                     Layout.fillWidth: true
-                    text: playerBase.effectiveIsPlaying ? Translation.tr("Transport / Playing") : Translation.tr("Transport / Paused")
-                    color: root.accent
+                    visible: text.length > 0
+                    text: playerBase.effectiveArtist
+                    color: root.muted
                     scaleFactor: root.s
-                    strong: true
+                    size: 10
                 }
             }
-            StyledText {
-                Layout.fillWidth: true
-                text: StringUtils.cleanMusicTitle(playerBase.effectiveTitle) || Translation.tr("Untitled")
-                color: root.ink
-                elide: Text.ElideRight
-                font.family: root.widget.widgetTitleFamily
-                font.pixelSize: Math.max(15, Math.round(19 * root.s))
-                font.weight: Font.Bold
+        }
+
+        Item { Layout.fillHeight: true }
+
+        InstrumentScale {
+            id: scale
+            Layout.fillWidth: true
+            Layout.preferredHeight: Math.round(9 * root.s)
+            divisions: root.small ? 24 : 40
+            fraction: playerBase.effectiveLength > 0 ? playerBase.effectivePosition / playerBase.effectiveLength : 0
+            ink: root.ink
+            accent: root.accent
+            animated: root.widget.animationsActive
+            MouseArea {
+                anchors.fill: parent
+                anchors.margins: -Math.round(4 * root.s)
+                enabled: playerBase.effectiveCanSeek && playerBase.effectiveLength > 0
+                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onClicked: mouse => playerBase.seek(Math.max(0, Math.min(1, (mouse.x - Math.round(4 * root.s)) / scale.width)) * playerBase.effectiveLength)
             }
-            InstrumentLabel {
-                Layout.fillWidth: true
-                visible: text.length > 0
-                text: playerBase.effectiveArtist
-                color: root.muted
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: false
+            spacing: Math.round((root.small ? 2 : 12) * root.s)
+            InstrumentField {
+                visible: !root.small
                 scaleFactor: root.s
-                size: 10
-            }
-            Item { Layout.fillHeight: true }
-
-            InstrumentScale {
-                id: scale
-                Layout.fillWidth: true
-                Layout.preferredHeight: Math.round(9 * root.s)
-                divisions: 40
-                fraction: playerBase.effectiveLength > 0 ? playerBase.effectivePosition / playerBase.effectiveLength : 0
+                label: Translation.tr("Elapsed")
+                value: root.clock(playerBase.effectivePosition)
                 ink: root.ink
-                accent: root.accent
-                animated: root.widget.animationsActive
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -Math.round(4 * root.s)
-                    enabled: playerBase.effectiveCanSeek && playerBase.effectiveLength > 0
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: mouse => playerBase.seek(Math.max(0, Math.min(1, (mouse.x - Math.round(4 * root.s)) / scale.width)) * playerBase.effectiveLength)
-                }
+                muted: root.muted
+                family: root.widget.widgetNumbersFamily
+                valueSize: 13
             }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.topMargin: Math.round(4 * root.s)
-                spacing: Math.round(12 * root.s)
-                InstrumentField {
-                    scaleFactor: root.s
-                    label: Translation.tr("Elapsed")
-                    value: root.clock(playerBase.effectivePosition)
-                    ink: root.ink
-                    muted: root.muted
-                    family: root.widget.widgetNumbersFamily
-                    valueSize: 13
-                }
-                InstrumentField {
-                    scaleFactor: root.s
-                    label: Translation.tr("Length")
-                    value: playerBase.effectiveLength > 0 ? root.clock(playerBase.effectiveLength) : ""
-                    ink: root.ink
-                    muted: root.muted
-                    family: root.widget.widgetNumbersFamily
-                    valueSize: 13
-                }
-                Item { Layout.fillWidth: true }
-                Repeater {
-                    model: [
-                        { icon: "skip_previous", enabled: playerBase.effectiveCanGoPrevious, action: () => playerBase.previous(), name: Translation.tr("Previous") },
-                        { icon: playerBase.effectiveIsPlaying ? "pause" : "play_arrow", enabled: true, action: () => playerBase.togglePlaying(), name: Translation.tr("Play or pause") },
-                        { icon: "skip_next", enabled: playerBase.effectiveCanGoNext, action: () => playerBase.next(), name: Translation.tr("Next") }
-                    ]
-                    RippleButton {
-                        required property var modelData
-                        Layout.alignment: Qt.AlignBottom
-                        implicitWidth: Math.round(28 * root.s)
-                        implicitHeight: implicitWidth
-                        buttonRadius: Math.round(6 * root.s)
-                        enabled: modelData.enabled
-                        opacity: enabled ? 1 : 0.4
-                        colBackground: "transparent"
-                        colBackgroundHover: ColorUtils.applyAlpha(root.accent, 0.14)
-                        colRipple: ColorUtils.applyAlpha(root.accent, 0.22)
-                        downAction: modelData.action
-                        Accessible.name: modelData.name
-                        contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: modelData.icon
-                            fill: 1
-                            iconSize: Math.round(18 * root.s)
-                            color: root.ink
-                        }
+            InstrumentField {
+                visible: !root.small
+                scaleFactor: root.s
+                label: Translation.tr("Length")
+                value: playerBase.effectiveLength > 0 ? root.clock(playerBase.effectiveLength) : ""
+                ink: root.ink
+                muted: root.muted
+                family: root.widget.widgetNumbersFamily
+                valueSize: 13
+            }
+            // small keeps the time as one reading beside the keys
+            StyledText {
+                visible: root.small
+                text: root.clock(playerBase.effectivePosition)
+                color: root.muted
+                font.family: root.widget.widgetNumbersFamily
+                font.pixelSize: Math.round(11 * root.s)
+                font.features: ({ "tnum": 1 })
+            }
+            Item { Layout.fillWidth: true }
+            Repeater {
+                model: [
+                    { icon: "skip_previous", enabled: playerBase.effectiveCanGoPrevious, action: () => playerBase.previous(), name: Translation.tr("Previous") },
+                    { icon: playerBase.effectiveIsPlaying ? "pause" : "play_arrow", enabled: true, action: () => playerBase.togglePlaying(), name: Translation.tr("Play or pause") },
+                    { icon: "skip_next", enabled: playerBase.effectiveCanGoNext, action: () => playerBase.next(), name: Translation.tr("Next") }
+                ]
+                RippleButton {
+                    required property var modelData
+                    Layout.alignment: Qt.AlignBottom
+                    implicitWidth: Math.round(28 * root.s)
+                    implicitHeight: implicitWidth
+                    buttonRadius: Math.round(6 * root.s)
+                    enabled: modelData.enabled
+                    opacity: enabled ? 1 : 0.4
+                    colBackground: "transparent"
+                    colBackgroundHover: ColorUtils.applyAlpha(root.accent, 0.14)
+                    colRipple: ColorUtils.applyAlpha(root.accent, 0.22)
+                    downAction: modelData.action
+                    Accessible.name: modelData.name
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: modelData.icon
+                        fill: 1
+                        iconSize: Math.round(18 * root.s)
+                        color: root.ink
                     }
                 }
             }

@@ -221,15 +221,20 @@ AbstractBackgroundWidget {
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
         }
 
-        RowLayout {
+        // small sets the day over its month: side by side the month ran past the card
+        GridLayout {
             anchors.fill: parent
             anchors.margins: Math.round(12 * root.scaleFactor)
-            spacing: Math.round(12 * root.scaleFactor)
+            columns: root.materialSmall ? 1 : 2
+            columnSpacing: Math.round(12 * root.scaleFactor)
+            rowSpacing: Math.round(6 * root.scaleFactor)
 
             Item {
                 id: dateIndexHero
-                Layout.preferredWidth: Math.max(Math.round(74 * root.scaleFactor), parent.width * 0.42)
-                Layout.fillHeight: true
+                Layout.preferredWidth: root.materialSmall ? -1 : Math.max(Math.round(74 * root.scaleFactor), parent.width * 0.42)
+                Layout.fillWidth: root.materialSmall
+                Layout.preferredHeight: root.materialSmall ? parent.height * 0.5 : -1
+                Layout.fillHeight: !root.materialSmall
 
                 // Two registration corners frame the hero without becoming a card.
                 Item {
@@ -312,7 +317,7 @@ AbstractBackgroundWidget {
                     elide: Text.ElideRight
                     color: root.widgetInk
                     fontSizeMode: Text.Fit
-                    minimumPixelSize: Math.round(16 * root.scaleFactor)
+                    minimumPixelSize: Math.round(12 * root.scaleFactor)
                     font {
                         family: root.widgetTitleFamily
                         pixelSize: Math.round(30 * root.scaleFactor)
@@ -338,7 +343,7 @@ AbstractBackgroundWidget {
 
                     StyledText {
                         visible: root.showOrdinal
-                        text: Translation.tr("Day") + " " + root.dayOfYear + " / " + root.daysInYear
+                        text: root.materialSmall ? root.dayOfYear + "/" + root.daysInYear : Translation.tr("Day") + " " + root.dayOfYear + " / " + root.daysInYear
                         color: root.widgetInkMuted
                         font {
                             family: root.widgetBodyFamily

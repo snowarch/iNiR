@@ -30,8 +30,23 @@ AbstractBackgroundWidget {
     })
 
     widgetSurfaceEnabled: root.displayMode !== "instrument" && root.displayMode !== "tiles"
-    readonly property int meterColumns: Math.max(1, Math.min(root._resourceModel.length,
-        Math.floor((root.implicitWidth + 10 * root.scaleFactor) / (110 * root.scaleFactor))))
+    // a sized card takes the column count that gives each meter the most room: three across a large card left
+    // a band of small meters in the middle of it
+    readonly property int meterColumns: {
+        const count = Math.max(1, root._resourceModel.length)
+        if (!root.materialSized)
+            return Math.max(1, Math.min(count, Math.floor((root.implicitWidth + 10 * root.scaleFactor) / (110 * root.scaleFactor))))
+        const gap = 10 * root.scaleFactor, inner = 28 * root.scaleFactor
+        let best = 1, bestSide = 0
+        for (let columns = 1; columns <= count; ++columns) {
+            const rows = Math.ceil(count / columns)
+            const side = Math.min((root.materialHeight - inner - gap * (rows - 1)) / rows, (root.materialWidth - inner - gap * (columns - 1)) / columns)
+            if (side > bestSide + 0.5) { best = columns; bestSide = side }
+        }
+        return best
+    }
+    // too small for a meter each (small with three or more): a ledger, a row per reading
+    readonly property bool meterLedger: root.materialSmall && root._resourceModel.length > 2
     readonly property int meterRows: Math.ceil(root._resourceModel.length / root.meterColumns)
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 320) * scaleFactor)
     implicitHeight: {
@@ -387,10 +402,56 @@ AbstractBackgroundWidget {
     // INSTRUMENT MODE — a bank of comparable vertical measurement rails.
     // Values, units and resource identity stay readable without watch faces.
     // ══════════════════════════════════════════════════════════
+    ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: root._innerMargin
+        visible: !root.irisFaced && root.displayMode === "instrument" && root.meterLedger
+        spacing: Math.round(6 * root.scaleFactor)
+        Repeater {
+            model: root.meterLedger ? root._resourceModel : []
+            ColumnLayout {
+                id: ledgerRow
+                required property var modelData
+                readonly property color liveColor: root.widgetRoleColor(root._getColor(ledgerRow.modelData.key))
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: Math.round(3 * root.scaleFactor)
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Math.round(6 * root.scaleFactor)
+                    InstrumentLabel {
+                        Layout.fillWidth: true
+                        text: ledgerRow.modelData.key === "temp" ? Translation.tr("CPU temp")
+                            : ledgerRow.modelData.key === "gpuTemp" ? Translation.tr("GPU temp") : ledgerRow.modelData.label
+                        color: root.widgetInkMuted
+                        scaleFactor: root.scaleFactor
+                    }
+                    StyledText {
+                        text: root._getDisplayText(ledgerRow.modelData.key)
+                        color: root.widgetInk
+                        font.family: root.widgetNumbersFamily
+                        font.pixelSize: Math.round(15 * root.scaleFactor)
+                        font.weight: Font.Bold
+                        font.features: ({ "tnum": 1 })
+                    }
+                }
+                InstrumentScale {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.round(8 * root.scaleFactor)
+                    divisions: 24
+                    fraction: root._getValue(ledgerRow.modelData.key)
+                    ink: root.widgetInk
+                    accent: ledgerRow.liveColor
+                    animated: root.animationsActive
+                }
+            }
+        }
+    }
+
     Grid {
         id: instrumentBody
         anchors.centerIn: parent
-        opacity: root.displayMode === "instrument" ? 1 : 0
+        opacity: root.displayMode === "instrument" && !root.meterLedger ? 1 : 0
         visible: !root.irisFaced && opacity > 0
         enabled: root.displayMode === "instrument"
         Behavior on opacity {

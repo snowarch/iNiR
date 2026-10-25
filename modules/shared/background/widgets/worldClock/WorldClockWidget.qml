@@ -66,6 +66,7 @@ AbstractBackgroundWidget {
     readonly property var cities: WorldClock.entries
     readonly property bool instrument: String(root._readConfigKey("style") ?? "cards") === "instrument"
     readonly property string instrumentLayout: String(root._readConfigKey("instrumentLayout") ?? "grid")
+    readonly property bool instrumentHero: !root.materialSized || root.materialLarge
     readonly property bool showNames: Boolean(root._readConfigKey("showNames") ?? true)
     readonly property bool showOffsets: Boolean(root._readConfigKey("showOffsets") ?? true)
     readonly property bool showDate: Boolean(root._readConfigKey("showDate") ?? true)
@@ -225,6 +226,8 @@ AbstractBackgroundWidget {
     // not cloned cards: hierarchy communicates what the user is comparing.
     ColumnLayout {
         anchors.fill: parent
+        // a sized card keeps its readings off the edge as the plated faces do
+        anchors.margins: root.materialSized ? Math.round(12 * root.scaleFactor) : 0
         opacity: root.instrument ? 1 : 0
         visible: !root.irisFaced && opacity > 0
         enabled: root.instrument
@@ -258,6 +261,8 @@ AbstractBackgroundWidget {
 
             Item {
                 id: referenceZone
+                // a short card (small, medium) lists every city alike: the lead city squeezed under the rest
+                visible: root.instrumentHero
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredHeight: root.cities.length > 1
@@ -351,16 +356,16 @@ AbstractBackgroundWidget {
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                visible: root.cities.length > 1
+                visible: root.cities.length > (root.instrumentHero ? 1 : 0)
                 spacing: 0
 
                 Repeater {
-                    model: Math.max(0, root.cities.length - 1)
+                    model: Math.max(0, root.cities.length - (root.instrumentHero ? 1 : 0))
 
                     Item {
                         id: comparisonZone
                         required property int index
-                        readonly property int cityIndex: index + 1
+                        readonly property int cityIndex: index + (root.instrumentHero ? 1 : 0)
                         readonly property var modelData: root.cities[cityIndex]
                         readonly property int dayDelta: root.cityDayDelta(cityIndex)
                         readonly property string role: cityIndex % 2 === 0
@@ -406,7 +411,8 @@ AbstractBackgroundWidget {
                                     }
                                     StyledText {
                                         Layout.fillWidth: true
-                                        visible: root.showDate
+                                        // small has room for the offset only
+                                        visible: root.showDate && !root.materialSmall
                                         text: root.cityDateText(comparisonZone.cityIndex)
                                         color: root.widgetInkMuted
                                         elide: Text.ElideRight
@@ -436,7 +442,8 @@ AbstractBackgroundWidget {
                                 text: comparisonZone.modelData.time
                                 color: root.widgetInk
                                 font.family: root.widgetNumbersFamily
-                                font.pixelSize: Math.max(20, Math.round(24 * root.scaleFactor))
+                                // small leaves the city's name its room
+                                font.pixelSize: Math.round((root.materialSmall ? 19 : 24) * root.scaleFactor)
                                 font.weight: root.widgetEditorial ? Appearance.editorial.titleWeight : Font.DemiBold
                                 font.features: ({ "tnum": 1 })
                                 font.letterSpacing: -1
@@ -475,7 +482,9 @@ AbstractBackgroundWidget {
                         anchors.rightMargin: anchors.leftMargin
                         spacing: Math.round(7 * root.scaleFactor)
 
+                        // small gives the rule's room to the city's name
                         Rectangle {
+                            visible: !root.materialSmall
                             Layout.preferredWidth: index === 0
                                 ? Math.max(18, Math.round(24 * root.scaleFactor))
                                 : Math.max(10, Math.round(14 * root.scaleFactor))
@@ -512,7 +521,8 @@ AbstractBackgroundWidget {
                                 }
                                 StyledText {
                                     Layout.fillWidth: true
-                                    visible: root.showDate
+                                    // small keeps the day's step (+1D) and drops the date it can't fit
+                                    visible: root.showDate && !root.materialSmall
                                     text: root.cityDateText(index)
                                     color: root.widgetInkMuted
                                     elide: Text.ElideRight
@@ -542,8 +552,8 @@ AbstractBackgroundWidget {
                             text: ledgerZone.modelData.time
                             color: root.widgetInk
                             font.family: root.widgetNumbersFamily
-                            font.pixelSize: index === 0
-                                ? Math.max(22, Math.round(27 * root.scaleFactor))
+                            font.pixelSize: root.materialSmall ? Math.round((index === 0 ? 22 : 19) * root.scaleFactor)
+                                : index === 0 ? Math.max(22, Math.round(27 * root.scaleFactor))
                                 : Math.max(20, Math.round(24 * root.scaleFactor))
                             font.weight: index === 0 && root.widgetEditorial
                                 ? Appearance.editorial.titleWeight : Font.DemiBold
@@ -645,8 +655,10 @@ AbstractBackgroundWidget {
                     readonly property color cellColor: root.widgetSemanticContainer(cityCell.cellRole)
                     readonly property color cellInk: root.widgetSemanticOnContainer(cityCell.cellRole)
                     readonly property color cellAccent: root.widgetSemanticColor(cityCell.cellRole)
-                    // a tall tile (large, a city a row) sets its city and time a size up
+                    // a tall, wide tile (large, a city a row) sets its city and time a size up; three in a row
+                    // on a medium card are tall but cut the time
                     readonly property bool roomy: cityCell.height >= Math.round(72 * root.scaleFactor)
+                        && cityCell.width >= Math.round(140 * root.scaleFactor)
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
