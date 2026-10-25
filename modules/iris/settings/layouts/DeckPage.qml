@@ -28,9 +28,12 @@ Item {
     readonly property bool windowed: Boolean(page.host?.windowed ?? true)
     readonly property var entry: IrisOptions.sectionById(page.area) ?? ({})
     readonly property bool live: page.visible && page.area === String(page.host?.section ?? "")
-    readonly property bool whole: rows.whole
-    readonly property alias flick: flick
-    readonly property alias rowsRoot: rows
+    // An area that lands on one of iRiS's own pages (System on the Hub, when there is room) holds that page under its
+    // head: its card is the page you get. A card of rows swapped for the Hub on landing read as the page jumping.
+    readonly property int heldPage: Number(page.host?.landingPage?.(page.area, -1) ?? -1)
+    readonly property bool whole: page.heldPage >= 0 ? held.status === Loader.Ready : rows.whole
+    readonly property Item flick: page.heldPage >= 0 ? held.item : rowsFlick
+    readonly property Item rowsRoot: page.heldPage >= 0 ? held.item : rows
 
     ClippingRectangle {
         id: hero
@@ -104,8 +107,18 @@ Item {
         }
     }
 
+    Loader {
+        id: held
+        y: hero.height + page.u(10)
+        width: page.width
+        height: page.height - y - page.footRoom
+        active: page.heldPage >= 0
+        source: page.heldPage >= 0 ? String(page.host?.pages?.[page.heldPage]?.component ?? "") : ""
+    }
+
     Flickable {
-        id: flick
+        id: rowsFlick
+        visible: page.heldPage < 0
         x: -page.u(4)
         y: hero.height + page.u(10)
         width: page.width + page.u(8)
@@ -116,7 +129,7 @@ Item {
         ScrollBar.vertical: IrisScrollBar {}
         AreaRows {
             id: rows
-            width: flick.width
+            width: rowsFlick.width
             section: page.area
             host: page.host
             voice: "deck"
@@ -131,12 +144,12 @@ Item {
         const target = rows.targets().find(entry => entry.key === wanted || entry.key.toLowerCase() === lower)
         if (!target) return
         if (!(rows.opened[target.key] ?? false) && target.item.shut) rows.toggleGroup(target.key)
-        page.glideTo(target.item.mapToItem(flick.contentItem, 0, 0).y - page.u(8))
+        page.glideTo(target.item.mapToItem(rowsFlick.contentItem, 0, 0).y - page.u(8))
     }
-    function reveal(row: Item): void { page.glideTo(row.mapToItem(flick.contentItem, 0, 0).y - flick.height * 0.3) }
+    function reveal(row: Item): void { page.glideTo(row.mapToItem(rowsFlick.contentItem, 0, 0).y - rowsFlick.height * 0.3) }
     function glideTo(y: real): void {
-        glider.to = Math.max(0, Math.min(Math.max(0, flick.contentHeight - flick.height), y))
+        glider.to = Math.max(0, Math.min(Math.max(0, rowsFlick.contentHeight - rowsFlick.height), y))
         glider.restart()
     }
-    NumberAnimation { id: glider; target: flick; property: "contentY"; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
+    NumberAnimation { id: glider; target: rowsFlick; property: "contentY"; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
 }

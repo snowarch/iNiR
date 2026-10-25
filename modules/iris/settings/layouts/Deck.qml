@@ -126,12 +126,16 @@ Item {
     property int cursor: -1
     property bool engaged: false
     readonly property bool paged: Number(root.host?.advancedPage ?? -1) >= 0
+    // The page asked for is the one the open card already holds (the Hub on System's card): the card stays the page.
+    readonly property bool held: root.paged && Number(root.openPage?.heldPage ?? -1) === Number(root.host?.advancedPage ?? -1)
+    // A search's results, or a shared page no card holds, take the card's place under the keys.
+    readonly property bool slotted: root.searching || (root.paged && !root.held)
     readonly property bool drawsRows: true
     // Where the keys walk: the page in front, or the engine's rows during a search or a shared page.
-    readonly property Item stopsRoot: root.searching || root.paged ? rowsSlot : (root.openPage?.rowsRoot ?? null)
+    readonly property Item stopsRoot: root.slotted ? rowsSlot : (root.openPage?.rowsRoot ?? null)
     readonly property Item flick: {
         root.section
-        return root.searching || root.paged ? root.findFlick(rowsSlot) : (root.openPage?.flick ?? null)
+        return root.slotted ? root.findFlick(rowsSlot) : (root.openPage?.flick ?? null)
     }
     function findFlick(item: Item): Item {
         for (const child of item?.children ?? []) {
@@ -478,7 +482,7 @@ Item {
             scale: root.sided ? card.width / Math.max(1, root.cardRect.width) : 1
             transformOrigin: Item.TopLeft
             current: root.sided ? "" : root.searching ? pool.shown : root.section
-            hidden: root.searching || root.paged
+            hidden: root.slotted
             // a page asked for mid-travel incubates while the cards move and is finished when they land: built in the
             // frame it was asked for, it stalled the turn halfway (the move then skipped ahead)
             settled: Boolean(root.host?.bodySettled ?? true)
@@ -493,7 +497,7 @@ Item {
         // A search's results or a shared page (the Hub), under the keys.
         Item {
             id: rowsSlot
-            visible: root.searching || root.paged
+            visible: root.slotted
             x: card.inset - root.u(4)
             y: keys.y + keys.height + root.u(10)
             width: card.width - 2 * card.inset + root.u(8)
@@ -752,10 +756,11 @@ Item {
                     0.2 / Math.max(0.2, deck.s) * IrisStyle.devicePx / Math.max(1, plane.height))
                 fragmentShader: Qt.resolvedUrl("../../../shared/background/edit/CardPicture.frag.qsb")
             }
-            // DeckPage's head, line for line: its plate, its Dot title, its line.
+            // DeckPage's head, line for line: its plate, its Dot title, its line. Only while the page is not there yet:
+            // the open card hides its page for a search or a shared page (the Hub), and the head stood over those.
             Item {
                 anchors.fill: parent
-                visible: page.opacity < 1
+                visible: page.opacity < 1 && !page.givenUp
                 Rectangle {
                     width: parent.width
                     height: Math.round(Math.min(root.u(300), plane.height * 0.36))
@@ -788,8 +793,10 @@ Item {
                 // the open card's page, asked for while the deck stands, builds in that frame (a jump lands on it whole);
                 // every other one in slices between frames
                 asynchronous: !(deck.hero && !root.moving && Boolean(root.host?.bodySettled ?? true))
-                opacity: deck.ready && !(deck.hero && (root.searching || root.paged)) ? 1 : 0
-                Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing } }
+                readonly property bool givenUp: deck.hero && root.slotted
+                opacity: deck.ready && !page.givenUp ? 1 : 0
+                // given up for a search or the Hub it goes at once: fading, it stood under the results for its 180 ms
+                Behavior on opacity { enabled: !page.givenUp; NumberAnimation { duration: IrisStyle.duration(180); easing.type: IrisStyle.feedbackEasing } }
                 visible: opacity > 0
                 enabled: deck.hero && !root.moving
                 sourceComponent: DeckPage { area: String(deck.entry?.id ?? ""); host: root.host }

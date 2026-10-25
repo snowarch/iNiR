@@ -1706,7 +1706,8 @@ Item {
                         width: root.sceneDrawn ? parent.width : root.pageInPane ? detailPane.width - Math.round(8 * root.d) : pageArea.width - Math.round(24 * root.d)
                         height: root.sceneDrawn ? parent.height : root.pageInPane ? detailPane.height - Math.round(2 * detailPane.radius / 3) : pageArea.height
                         visible: root.advancedPage >= 0
-                        active: visible
+                        // a layout whose open page already holds it (Deck's System card holds the Hub) needs no second one
+                        active: visible && !(root.scene?.held ?? false)
                         source: String(root.pages[root.advancedPage]?.component ?? "")
                     }
                 }
