@@ -55,7 +55,7 @@ Item {
     readonly property var currentSection: IrisOptions.sectionById(root.section)
     // Every area is a row of the sidebar (DI49g); clusters part by air, no captions.
     readonly property var sideSections: {
-        const out = root.sections.filter(section => section.id === "home")
+        const out = root.sections.filter(section => section.id === "general")
         IrisOptions.categories.filter(category => !category.foot).forEach((category, at) => {
             category.sections.map(id => root.sections.find(section => section.id === id)).filter(section => !!section)
                 .forEach(section => out.push(Object.assign({}, section, { cluster: at })))
@@ -790,7 +790,7 @@ Item {
     // still lands: a group asked for where it no longer is opens in the section that holds it now.
     readonly property var renamedGroups: ({ "appearance/wallpaper": "Wallpaper tint", "player/on the edges": "Frame music", "player/finish": "Frame finish" })
     // A section folded into a sister keeps its old links: Frame Music lives in Now Playing.
-    readonly property var renamedSections: ({ frameMusic: "player" })
+    readonly property var renamedSections: ({ frameMusic: "player", home: "general" })
     function followMovedGroup(): void {
         let wanted = root.requestedGroup.toLowerCase()
         if (wanted.length === 0) return
@@ -871,7 +871,7 @@ Item {
         // setting "general" on the way to the asked section built General's page on each request.
         const own = root.pageIndexOf(key)
         let section = own >= 0 ? String(root.ownPages.concat(root.morePages).find(entry => entry.key === key)?.home ?? "system")
-            : "home"
+            : "general"
         // An area asked for by the name it shows ("style" is Style, "screenshots" Screenshots & Recording).
         const asked0 = root.requestedSection.toLowerCase()
         const titled = asked0.length > 0 && !root.sections.some(s => s.id === root.requestedSection)
@@ -938,7 +938,8 @@ Item {
         onActivated: {
             // An open list of choices closes first, as a menu would (DI49a: Esc left it open).
             if (root.scene?.release && root.scene.release()) return
-            if (IrisOptions.openList.length > 0) IrisOptions.openList = ""
+            if (IrisOptions.homeEditing) IrisOptions.homeEditing = false
+            else if (IrisOptions.openList.length > 0) IrisOptions.openList = ""
             else if (root.searching) searchField.text = ""
             else if (root.group.length > 0 && !root.split) root.leaveGroup()
             else if (root.advancedPage >= 0 && !root.pageInPane) root.go({ section: root.section, group: "", advancedPage: -1 })
@@ -1592,7 +1593,7 @@ Item {
 
                                     IrisWallpaperCard {
                                         screen: root.screen
-                                        visible: root.section === "home" && root.browsing
+                                        visible: root.section === "general" && root.browsing
                                     }
 
                                     IrisText {
@@ -1723,6 +1724,16 @@ Item {
         opacity: 0
         visible: layoutShot.opacity > 0
         NumberAnimation on opacity { id: shotFade; running: false; to: 0; duration: IrisStyle.morphDuration; easing.type: IrisStyle.feedbackEasing }
+    }
+
+    // What Home holds, edited over the body (Home › Customize › Edit).
+    IrisHomeEditor {
+        x: frame.x
+        y: frame.y
+        width: frame.width
+        height: frame.height
+        d: root.d
+        bodyRadius: frame.radius
     }
 
     // The toolbar's actions: one anatomy, a quiet capsule with its glyph. None of them is the page's answer, so none
@@ -2007,12 +2018,14 @@ Item {
         readonly property var tuned: groupRow.rows.filter(spec => IrisOptions.foldsAway(spec))
         readonly property bool tuneFolds: groupRow.tuned.length >= 2
         readonly property var essentials: groupRow.tuneFolds ? groupRow.rows.filter(spec => !groupRow.tuned.includes(spec)) : groupRow.rows
-        readonly property bool folds: !groupRow.lone && groupRow.essentials.length <= 3
+        // Home's own rows are why it opens: they stand open at the top, however many he pinned.
+        readonly property bool leads: root.section === "general" && groupRow.modelData.key === "Every day"
+        readonly property bool folds: groupRow.leads || !groupRow.lone && groupRow.essentials.length <= 3
             && !groupRow.rows.some(spec => ["widgets", "pieces", "niriMotion", "list"].includes(spec.kind))
         readonly property string tuneKey: "tune:" + root.section + "/" + String(groupRow.modelData.key ?? groupRow.modelData.title)
         readonly property bool tuneOpen: groupRow.tuneFolds && (root.tuneAll || (root.unfolded[groupRow.tuneKey] ?? false))
         readonly property string foldKey: root.section + "/" + groupRow.modelData.title
-        readonly property bool unfolded: groupRow.folds && (root.unfolded[groupRow.foldKey] ?? false)
+        readonly property bool unfolded: groupRow.folds && (root.unfolded[groupRow.foldKey] ?? groupRow.leads)
         readonly property bool loneOn: {
             if (!groupRow.lone) return false
             const spec = groupRow.rows[0]

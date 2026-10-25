@@ -153,10 +153,6 @@ QtObject {
     // A leading "!" negates either form, so a row can hide on one value of a choice.
     function choicesOf(spec: var): var {
         if (spec.niri === "display") return IrisNiri.displayChoices(spec.key)
-        // Any row Home can hold: the live switches, then every area's rows by name.
-        if (spec.choicesFrom === "homeRows") return root.dailySwitches.map(entry => ({ label: entry.label, value: entry.id }))
-            .concat(root.settings.filter(entry => entry.path && !entry.mirror && entry.section !== "home" && ["switch", "choice", "range"].includes(String(entry.kind)))
-                .map(entry => ({ label: Translation.tr(String(root.sectionById(entry.section)?.title ?? "")) + " · " + Translation.tr(String(entry.label ?? "")), value: entry.path })))
         if (spec.choicesFrom === "cursors") return IrisNiri.cursorThemes.map(name => ({ label: name.replace(/[_-]/g, " "), value: name }))
         if (spec.choicesFrom === "irisModules") return (CustomWidgets.widgets ?? [])
             .filter(widget => String(widget.irisQmlPath ?? "").length > 0)
@@ -1068,7 +1064,6 @@ QtObject {
         { section: "sources", group: "New iNiR", label: "Update in a terminal", description: "Opens a terminal for the update, so you can watch it run.", path: "shellUpdates.openTerminalOnUpdate", visibleWhen: "shellUpdates.enabled", kind: "switch", fallback: true, keywords: ["update", "terminal"] },
         { section: "sources", group: "System readings", label: "Read every", description: "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.", path: "resources.updateInterval", kind: "range", fallback: 3000, min: 500, max: 10000, step: 250, unit: " ms", keywords: ["cpu", "memory", "ram", "vitals", "resources", "polling"] },
         { section: "sources", group: "System readings", label: "Read the GPU", description: "Adds the graphics card to what Vitals shows.", path: "resources.monitorGpu", kind: "switch", fallback: true, keywords: ["gpu", "graphics", "vitals"] },
-        { section: "home", group: "Customize", label: "On Home", path: "iris.appearance.settingsHome", kind: "pieces", choicesFrom: "homeRows", get fallback() { return root.homeDefault }, keywords: ["home", "pin", "favourites", "shortcuts", "inicio"] },
         { section: "general", group: "Date & time", label: "Clock", description: "The Island, the lock screen and every clock in iRiS.", path: "time.format", kind: "choice", fallback: "hh:mm", choices: [{label:"24-hour",value:"hh:mm"},{label:"12-hour",value:"h:mm ap"},{label:"12-hour AM/PM",value:"h:mm AP"}], keywords: ["time", "hour", "24", "12", "am", "pm", "hora"] },
         { section: "general", group: "Date & time", label: "Exact seconds", description: "Clocks that show seconds tick on the second.", path: "time.secondPrecision", kind: "switch", tune: true, fallback: false },
         { section: "general", group: "Language", label: "Language", description: "Every label in the shell.", path: "language.ui", kind: "choice", fallback: "auto",
@@ -1340,12 +1335,13 @@ QtObject {
     // Every area, in the order people reach for them: Look, Desktop, Tools, System, More (the clusters). `tip` is the one line a section opens on.
     // An area in one short word, where its title does not fit (Console's keys, Deck's way back and on): the full title
     // stays its accessible name.
-    readonly property var shortTitles: ({ home: "Home", appearance: "Style", colour: "Colour", wallpaper: "Wall", motion: "Motion", bar: "Island",
+    readonly property var shortTitles: ({ general: "Home", appearance: "Style", colour: "Colour", wallpaper: "Wall", motion: "Motion", bar: "Island",
         dock: "Dock", bubbles: "Bubbles", desktop: "Desktop", widgets: "Widgets", windows: "Windows", sidebars: "Panels", controlCenter: "Control",
-        spotlight: "Search", orbit: "Orbit", capture: "Capture", player: "Music", anime: "Anime", general: "General", notifications: "Alerts",
+        spotlight: "Search", orbit: "Orbit", capture: "Capture", player: "Music", anime: "Anime", notifications: "Alerts",
         sound: "Sound", display: "Display", keyboard: "Keys", battery: "Power", gaming: "Gaming", lock: "Lock", login: "Login", sources: "Sources", system: "Hub" })
     readonly property var sections: [
-        { id: "home", cluster: -1, title: "Home", subtitle: "What you change every day", icon: "home", get tint() { return IrisStyle.identity.gray } },
+        // Home is General (10-25, he: two pages, the useful one not where Settings opens): what he pinned over the shell's own.
+        { id: "general", cluster: -1, title: "Home", subtitle: "What you change every day", icon: "home", get tint() { return IrisStyle.identity.gray }, tip: "Settings that shape the whole shell, whichever surface shows them." },
         { id: "appearance", cluster: 0, title: "Style", subtitle: "Look, material, shape and type", icon: "style", get tint() { return IrisStyle.identity.purple }, tip: "Customize edits the same values live, on top of your desktop." },
         { id: "colour", cluster: 0, title: "Colour", subtitle: "Light or dark, accent, highlight and your apps", icon: "palette", get tint() { return IrisStyle.identity.pink }, tip: "Colour can come from your wallpaper, from a theme, or be one you pick." },
         { id: "wallpaper", cluster: 0, title: "Wallpaper", subtitle: "Shuffle, live wallpapers, the gallery and the overview", icon: "wallpaper", get tint() { return IrisStyle.identity.teal }, tip: "Next wallpaper in the desktop menu changes it once; Shuffle keeps changing it." },
@@ -1363,11 +1359,10 @@ QtObject {
         { id: "capture", cluster: 2, title: "Screenshots & Recording", subtitle: "Snip, annotate, read Japanese and record", icon: "screenshot_region", get tint() { return IrisStyle.identity.orange }, tip: "Super+Shift+S snips; the toolbar switches to text, search or recording." },
         { id: "player", cluster: 2, title: "Now Playing", subtitle: "Music in the Island, on the lock screen and on the frame", icon: "music_note", get tint() { return IrisStyle.identity.pink }, tip: "Middle-click the Island to play or pause." },
         { id: "anime", cluster: 2, title: "Anime", subtitle: "Airing, Continue and the anime colour layer", icon: "live_tv", get tint() { return IrisStyle.identity.purple }, tip: "Airing tracks what is coming; Continue resumes what you were watching." },
-        { id: "general", cluster: 3, title: "General", subtitle: "Time, language and how iRiS behaves", icon: "settings", get tint() { return IrisStyle.identity.gray }, tip: "Settings that shape the whole shell, whichever surface shows them." },
         { id: "notifications", cluster: 3, title: "Notifications", subtitle: "Banners, quiet hours and Do Not Disturb", icon: "notifications", get tint() { return IrisStyle.identity.red }, tip: "Hover a banner to keep it; swipe it away to dismiss." },
         { id: "sound", cluster: 3, title: "Sound & Feedback", subtitle: "Volume, alert sounds and what the OSD shows", icon: "volume_up", get tint() { return IrisStyle.identity.pink }, tip: "Scroll on the Island for volume; Ctrl for the microphone." },
         { id: "display", cluster: 3, title: "Display", subtitle: "Resolution, scale, night light and bright flashes", icon: "brightness_6", get tint() { return IrisStyle.identity.blue }, tip: "Shift and scroll on the Island for brightness." },
-        { id: "keyboard", cluster: 3, title: "Keyboard & Mouse", subtitle: "Layouts, repeat, pointer speed and cursor", icon: "keyboard", get tint() { return IrisStyle.identity.gray }, tip: "Your shortcuts are in General, Keyboard shortcuts." },
+        { id: "keyboard", cluster: 3, title: "Keyboard & Mouse", subtitle: "Layouts, repeat, pointer speed and cursor", icon: "keyboard", get tint() { return IrisStyle.identity.gray }, tip: "Your shortcuts are on Home, Keyboard shortcuts." },
         { id: "battery", cluster: 3, title: "Battery", subtitle: "Warnings, suspend and charge limit", icon: "battery_full", get tint() { return IrisStyle.identity.green }, tip: "Only matters on a machine with a battery." },
         { id: "gaming", cluster: 3, title: "Gaming & Fullscreen", subtitle: "What iRiS steps back from while you play", icon: "sports_esports", get tint() { return IrisStyle.identity.purple }, tip: "Game mode turns on by itself for fullscreen games." },
         { id: "lock", cluster: 3, title: "Lock Screen", subtitle: "What it shows, when it locks and how it reads", icon: "lock", get tint() { return IrisStyle.identity.gray }, tip: "Rehearse it: the real surface, editable, with nothing to unlock." },
@@ -1384,7 +1379,6 @@ QtObject {
         { id: "panels", cluster: 1, title: "Windows & Panels", icon: "select_window", get tint() { return IrisStyle.identity.orange }, sections: ["windows", "sidebars", "controlCenter"] },
         { id: "tools", cluster: 2, title: "Spotlight & Tools", icon: "search", get tint() { return IrisStyle.identity.indigo }, sections: ["spotlight", "orbit", "capture"] },
         { id: "media", cluster: 2, title: "Music & Anime", icon: "music_note", get tint() { return IrisStyle.identity.pink }, sections: ["player", "anime"] },
-        { id: "general", cluster: 3, title: "General", icon: "settings", get tint() { return IrisStyle.identity.gray }, sections: ["general"] },
         { id: "notifications", cluster: 3, title: "Notifications & Sound", icon: "notifications", get tint() { return IrisStyle.identity.red }, sections: ["notifications", "sound"] },
         { id: "devices", cluster: 3, title: "Display & Input", icon: "monitor", get tint() { return IrisStyle.identity.teal }, sections: ["display", "keyboard", "battery", "gaming"] },
         { id: "lockLogin", cluster: 3, title: "Lock & Login", icon: "lock", get tint() { return IrisStyle.identity.gray }, sections: ["lock", "login"] },
@@ -1681,8 +1675,7 @@ QtObject {
     }
     // The order a section's groups are listed in: what someone came to change first, the rest as they were declared.
     readonly property var groupOrder: ({
-        home: ["Every day", "Customize"],
-        general: ["Date & time", "Language", "At login", "Apps", "Performance", "Settings window", "Shell family"],
+        general: ["Every day", "Date & time", "Language", "At login", "Apps", "Performance", "Settings window", "Shell family"],
         appearance: ["Look", "Themes", "Material", "Glass", "Texture", "Edges", "Light", "Shape", "Corners per surface",
             "Frame", "Text", "Faces", "Icons", "Material per surface", "Menus", "Settings", "Badges", "Customize", "Previews"],
         colour: ["Scheme", "Signal", "Accent", "Highlight", "Colour theme", "Day and night", "App colours", "Dark look", "Ink look", "Light look", "Wallpaper tint"],
@@ -1752,9 +1745,34 @@ QtObject {
     // Home's live switches (not config) and what it holds until it is given its own rows.
     readonly property var homeDefault: ["iris.appearance.scheme", "iris.appearance.accent", "iris.appearance.look", "iris.appearance.glass.mode", "notifications.silent", "nightLight", "gameMode"]
     readonly property var dailySwitches: [
-        { id: "nightLight", label: "Night Light", kind: "switch", state: () => Hyprsunset.active, set: on => { if (Boolean(on) !== Hyprsunset.active) Hyprsunset.toggle() }, keywords: ["night", "warm", "blue light"] },
-        { id: "gameMode", label: "Game mode", kind: "switch", state: () => GameMode.active, set: on => { if (Boolean(on) !== GameMode.active) GameMode.toggle() } }
+        { id: "nightLight", section: "display", label: "Night Light", kind: "switch", state: () => Hyprsunset.active, set: on => { if (Boolean(on) !== Hyprsunset.active) Hyprsunset.toggle() }, keywords: ["night", "warm", "blue light"] },
+        { id: "gameMode", section: "gaming", label: "Game mode", kind: "switch", state: () => GameMode.active, set: on => { if (Boolean(on) !== GameMode.active) GameMode.toggle() } }
     ]
+    // The way into the sheet that edits them, last under them.
+    property bool homeEditing: false
+    readonly property var homeEdit: ({ section: "general", group: "Every day", label: "Customize", kind: "action", button: "Edit", run: () => root.homeEditing = true, keywords: ["home", "pin", "favourites", "shortcuts", "inicio"] })
+    // Every row Home can hold, for the sheet: the live switches, then every other area's rows that set a value in
+    // place; `daily` ones are offered before anything is typed.
+    readonly property var homeSuggested: root.homeDefault.concat(["background.autoWallpaper.enable", "iris.dock.autoHide", "iris.appearance.motion", "light.night.colorTemperature", "audio.protection.enable"])
+    readonly property var homeCandidates: {
+        const out = []
+        const add = (spec, value) => {
+            const area = root.sectionById(String(spec.section ?? ""))
+            const label = String(spec.label ?? "")
+            const group = String(spec.group ?? "")
+            out.push({ value: value, label: label, area: String(area?.title ?? ""), group: group !== label ? group : "", icon: String(area?.icon ?? "settings"),
+                tint: area?.tint ?? IrisStyle.identity.gray, daily: root.homeSuggested.includes(value),
+                search: [label, Translation.tr(label), group, Translation.tr(group), String(area?.title ?? ""), Translation.tr(String(area?.title ?? ""))].concat(spec.keywords ?? []).join(" ").toLowerCase() })
+        }
+        root.dailySwitches.forEach(spec => add(spec, spec.id))
+        const seen = new Set()
+        for (const spec of root.settings) {
+            if (!spec.path || spec.mirror || spec.section === "general" || seen.has(spec.path) || !["switch", "choice", "range"].includes(String(spec.kind))) continue
+            seen.add(spec.path)
+            add(spec, spec.path)
+        }
+        return out
+    }
     readonly property var movedGroups: ({
         appearance: { to: "colour", groups: ["Colour theme", "Day and night", "Scheme", "Signal", "Accent", "Highlight", "App colours", "Dark look", "Ink look", "Light look", "Wallpaper tint"] },
         desktop: { to: "wallpaper", groups: ["Wallpaper shuffle", "Scaling", "Live wallpapers", "Wallpaper gallery", "Behind windows", "Parallax", "Overview backdrop"] }
@@ -1770,8 +1788,9 @@ QtObject {
         // Home: the rows it was given (Customize › On Home), each the area's own row said once more.
         for (const id of Array.from(Config.options?.iris?.appearance?.settingsHome ?? root.homeDefault)) {
             const spec = root.dailySwitches.find(entry => entry.id === id) ?? own(id)
-            if (spec) rows.push(Object.assign({}, spec, { section: "home", group: "Every day", mirror: true, tune: false, description: undefined, cards: undefined, tiles: undefined, visibleWhen: undefined, target: undefined }))
+            if (spec) rows.push(Object.assign({}, spec, { section: "general", group: "Every day", mirror: true, tune: false, description: undefined, cards: undefined, tiles: undefined, visibleWhen: undefined, target: undefined }))
         }
+        rows.push(root.homeEdit)
         const look = []
         for (const spec of root.studio) {
             if (spec.mirror) { look.push(root.placed(Object.assign({ section: root.sectionOf(spec) }, spec))); continue }

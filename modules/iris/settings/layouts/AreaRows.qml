@@ -115,7 +115,7 @@ ColumnLayout {
     onBlocksChanged: Qt.callLater(rows.weigh)
     // Home opens on the welcome, as Classic's does (Deck's hero holds it in its stage).
     Loader {
-        active: rows.section === "home" && rows.voice !== "deck"
+        active: rows.section === "general" && rows.voice !== "deck"
         visible: active
         Layout.fillWidth: true
         Layout.leftMargin: Math.round(8 * rows.d)

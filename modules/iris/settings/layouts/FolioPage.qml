@@ -79,7 +79,8 @@ Item {
                 standIn: true
                 captionOutside: true
                 playing: page.live
-                section: page.area
+                // Home leads with the welcome over its rows, so its rows get the width.
+                section: page.area === "general" ? "" : page.area
                 niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
                 niriRevision: IrisNiri.revision
                 group: page.stageGroup

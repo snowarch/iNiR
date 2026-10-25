@@ -71,13 +71,13 @@ Item {
             standIn: true
             captionOutside: true
             playing: page.live
-            section: page.area
+            section: page.area === "general" ? "" : page.area
             niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
             niriRevision: IrisNiri.revision
         }
-        // Home has no scene: its stage is the welcome.
+        // Home's stage is the welcome, not General's scene.
         Loader {
-            active: page.area === "home"
+            active: page.area === "general"
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom

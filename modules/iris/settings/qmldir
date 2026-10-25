@@ -9,6 +9,7 @@ singleton IrisSearch 1.0 IrisSearch.qml
 IrisLinkRow 1.0 IrisLinkRow.qml
 IrisLinkCard 1.0 IrisLinkCard.qml
 IrisWallpaperCard 1.0 IrisWallpaperCard.qml
+IrisHomeEditor 1.0 IrisHomeEditor.qml
 IrisAboutPage 1.0 IrisAboutPage.qml
 IrisShortcutsPage 1.0 IrisShortcutsPage.qml
 singleton IrisNiri 1.0 IrisNiri.qml
