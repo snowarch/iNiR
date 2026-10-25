@@ -463,6 +463,8 @@ Singleton {
     // the resting Island's screen-local geometry, published by each Island.
     property var irisBubbleKinds: ({})
     property var irisIslandGeometry: ({})
+    // The open Island's width per output (0 at rest): the geometry above is only written at rest.
+    property var irisIslandOpenWidth: ({})
     // Per output: pieces an edge owner carries instead of floating over it ({ island: [...], dock: [...] }).
     property var irisAbsorbed: ({})
     property bool irisSettingsWarm: false

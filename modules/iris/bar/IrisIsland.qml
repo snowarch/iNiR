@@ -21,6 +21,7 @@ import qs.modules.iris.pieces
 import qs.modules.iris.bar.island
 import qs.modules.iris.control
 import qs.modules.iris.edit
+import qs.modules.iris.stage
 
 Item {
     id: root
@@ -88,8 +89,16 @@ Item {
     // A Design draws the Island's faces and its page nav itself (DESIGNS.md › Island); the engine keeps the modes,
     // events, pages, pieces and geometry. A Design whose pages "hang" opens them as a second body under the strip,
     // apart from it by a seam, instead of growing the strip into the page.
-    readonly property string faceUrl: root.vertical ? "" : IrisDesign.skin("islandFace")
-    readonly property string navUrl: IrisDesign.skin("islandNav")
+    // Three designs of the Island (10-25): the engine's own (Halo), Ledger and Tiles, which skin its face, its page
+    // buttons and its desktop page. A shell Design (AIRISU) that skins a part keeps it.
+    readonly property string design: ["ledger", "tiles"].includes(String(root.options?.design ?? "halo")) ? String(root.options.design) : "halo"
+    function skinOf(own: string, file: string): string {
+        return own.length > 0 || root.design === "halo" ? own : Qt.resolvedUrl("island/designs/" + root.design + "/" + file)
+    }
+    readonly property string faceUrl: root.vertical ? "" : root.skinOf(IrisDesign.skin("islandFace"), "Face.qml")
+    readonly property string navUrl: root.skinOf(IrisDesign.skin("islandNav"), "Nav.qml")
+    // A face may take only some modes (`modes`); the engine draws the others.
+    readonly property bool faceTakes: root.faceUrl.length > 0 && (!designFace.item?.modes || designFace.item.modes.includes(root.compactMode))
     readonly property bool pagesHang: IrisDesign.trait("pages") === "hang" && !root.fullWidth && !root.vertical
     readonly property real seam: root.pagesHang ? Math.round(3 * root.d) : 0
     readonly property string pagePlate: {
@@ -189,9 +198,13 @@ Item {
         return requested
     }
 
-    readonly property var navKinds: ["media", "activity", "desktop", "tray", "tools", "focus", "today", "controls", "settings"]
+    readonly property var navKinds: ["media", "activity", "desktop", "weather", "calendar", "vitals", "tray", "tools", "focus", "today", "controls", "settings"]
+    // Cards that are pages of the Island too (10-25: more to open than the desktop and the tray).
+    readonly property var cardPages: ["weather", "calendar", "vitals"]
     readonly property var navItems: {
-        const chosen = Array.from(IrisStyle.structuralValue("bar.navItems", root.navKinds))
+        const saved = Array.from(IrisStyle.structuralValue("bar.navItems", root.navKinds))
+        // The factory list from before the card pages counts as the factory list.
+        const chosen = (saved.join() === "media,activity,desktop,tray,tools,focus,today,controls,settings" ? root.navKinds : saved)
             .filter(kind => root.navKinds.includes(kind))
         return chosen.length > 0 ? chosen : root.navKinds
     }
@@ -200,19 +213,22 @@ Item {
         if (kind === "activity") return root.hasSystemActivity
         if (kind === "focus") return Config.options?.iris?.sidebars?.left?.enable ?? true
         if (kind === "today") return Config.options?.iris?.sidebars?.right?.enable ?? true
+        if (kind === "weather") return Weather.enabled
         return true
     }
     function navPageOf(kind: string): string {
         if (kind === "controls") return root.controlsInIsland ? "controls" : ""
-        return ["media", "activity", "desktop", "tray", "tools"].includes(kind) ? kind : ""
+        return ["media", "activity", "desktop", "tray", "tools"].concat(root.cardPages).includes(kind) ? kind : ""
     }
     readonly property var navEntries: {
         const glyphs = { media: "music_note", activity: root.recording ? "radio_button_checked"
                 : root.timerKind.length > 0 ? root.timerGlyph : root.task ? String(root.task.glyph ?? "bolt")
                 : Privacy.micActive ? "mic" : Privacy.cameraActive ? "videocam" : Privacy.screenSharing ? "screen_share" : "bolt",
-            desktop: "space_dashboard", tray: "apps", tools: "timer", focus: "left_panel_open",
+            desktop: "space_dashboard", weather: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "partly_cloudy_day",
+            calendar: "calendar_month", vitals: "monitor_heart", tray: "apps", tools: "timer", focus: "left_panel_open",
             today: "right_panel_open", controls: "tune", settings: "settings" }
-        const labels = { media: "Now playing", activity: "Live activities", desktop: "Desktop", tray: "Tray",
+        const labels = { media: "Now playing", activity: "Live activities", desktop: "Desktop", weather: "Weather",
+            calendar: "Calendar", vitals: "Vitals", tray: "Tray",
             tools: "Timers", focus: "Focus panel", today: "Today panel", controls: "Quick controls", settings: "Settings" }
         const visible = root.navItems.filter(kind => root.navAvailable(kind))
         const out = []
@@ -610,6 +626,15 @@ Item {
     readonly property real navSlot: Math.max(Math.round(30 * root.d), Math.min(Math.round(36 * root.d),
         Math.floor((Math.min(root.expandedRoom, root.pageBodyWidth) - 2 * root.padding - root.navFixed) / Math.max(1, root.navButtons))))
     readonly property real navWidth: root.navFixed + root.navButtons * root.navSlot
+    // Once per open, so the bubbles on its row can step aside (IrisStage.stepAside).
+    readonly property real openWidth: root.expanded && !root.vertical && !root.spanning ? root.expandedWidth : 0
+    onOpenWidthChanged: {
+        const name = root.targetScreen?.name ?? ""
+        if (name.length === 0) return
+        const widths = Object.assign({}, GlobalStates.irisIslandOpenWidth ?? {})
+        widths[name] = root.openWidth
+        GlobalStates.irisIslandOpenWidth = widths
+    }
     readonly property real expandedWidth: Math.min(root.expandedRoom, Math.max(root.pageBodyWidth, root.navWidth + 2 * root.padding))
     readonly property real pageWidth: Math.max(360, Math.min(600, Number(root.options?.pageWidth ?? 440)))
     readonly property real padding: Math.round(20 * root.d)
@@ -672,7 +697,7 @@ Item {
     readonly property var compactRows: ({ idle: idleRow, media: mediaRow, record: recordRow,
         timer: timerRow, task: taskRow, clock: clockRow, event: eventRow, feedback: feedbackRow })
     readonly property real compactContentWidth: root.vertical ? compactColumn.implicitHeight
-        : root.faceUrl.length > 0 ? (designFace.item?.contentWidth ?? 0)
+        : root.faceTakes ? (designFace.item?.contentWidth ?? 0)
         : root.compactRows[root.compactMode]?.implicitWidth ?? 0
     readonly property real compactFloor: root.compactHeight * 2.1
     readonly property real compactCeiling: Math.min(root.availableWidth,
@@ -693,12 +718,12 @@ Item {
     readonly property string trailing: String(IrisStyle.structuralValue("bar.trailing", "controls"))
     readonly property string trailingKind: root.trailing === "notifications" && (Notifications.list?.length ?? 0) === 0 ? "none" : root.trailing
     readonly property bool leftSatelliteShown: root.leftSatelliteRest && !root.inlineExpanded
-    readonly property bool leftSatelliteRest: IrisStyle.cluster && !root.zoned && !root.feedback && !root.eventShown
+    readonly property bool leftSatelliteRest: IrisStyle.cluster && !root.zoned
         && !root.floatingSlots.includes("left")
         && root.leftKind.length > 0
     readonly property bool rightSatelliteShown: root.rightSatelliteRest && !root.inlineExpanded
     function floatsAlone(kind: string): bool { return IrisPieces.floats(Config.options?.iris?.bubbles, kind) }
-    readonly property bool rightSatelliteRest: !root.zoned && !root.feedback && !root.eventShown
+    readonly property bool rightSatelliteRest: !root.zoned
         && !root.floatingSlots.includes("right") && !(IrisStyle.cluster && root.floatsAlone(root.trailingKind))
         && (IrisStyle.cluster ? root.trailingKind !== "none" : root.secondary.length > 0)
 
@@ -708,7 +733,7 @@ Item {
     readonly property int auxiliarySlot: (IrisStyle.cluster ? root.trailingKind !== "none" && !root.floatsAlone(root.trailingKind) : root.secondary.length > 0)
         && !root.floatingSlots.includes("right") ? 2 : 1
     readonly property bool auxiliaryShown: root.auxiliaryRest && !root.inlineExpanded
-    readonly property bool auxiliaryRest: !root.zoned && !root.feedback && !root.eventShown && root.auxiliary !== "none"
+    readonly property bool auxiliaryRest: !root.zoned && root.auxiliary !== "none"
         && !root.floatsAlone(root.auxiliary)
         && !root.floatingSlots.includes("utility")
         && (root.auxiliary !== "tray" || (root.trayItems.length > 0 && !root.trayAppsFace))
@@ -1024,6 +1049,7 @@ Item {
         return kind === "controls" && root.focusedOutput && GlobalStates.controlPanelOpen && !root.expanded
     }
     function activatePiece(kind: string, part): void {
+        if (IrisPieces.act(kind, root.targetScreen?.name ?? "")) return
         if (root.opensCards && root.cardKinds.includes(kind) && part) {
             root.toggleBubbleCard(kind, part, "island-piece-" + kind)
             return
@@ -1033,6 +1059,7 @@ Item {
             size: Math.min(r.width, r.height), source: "island-piece-" + kind })
     }
     function activateBubble(kind: string, part): void {
+        if (IrisPieces.act(kind, root.targetScreen?.name ?? "")) return
         if (root.opensCards && root.cardKinds.includes(kind) && part) root.toggleBubbleCard(kind, part, "island-" + part.slot)
         else if (kind === "sound") Audio.toggleMute()
         else if (kind === "mic") Audio.toggleMicMute()
@@ -1293,7 +1320,8 @@ Item {
         }
         Timer { id: levelLinger; interval: 1400; onTriggered: satellite.levelKind = "" }
 
-        readonly property real emerge: emergeSpring.value * Math.max(0, 1 - chassis.presentation / 0.5) * (1 - root.spotlightYield)
+        // Open, the Island carries its bubbles on its sides (10-25, he: folded into it they were gone behind every page).
+        readonly property real emerge: emergeSpring.value * (1 - root.spotlightYield)
         IrisSpring {
             id: emergeSpring
             surface: "island"
@@ -1496,8 +1524,9 @@ Item {
             if (!satellite.visible || satellite.emerge <= 0.01) continue
             const size = satellite.width * satellite.scale
             const centre = satellite.mapToItem(null, satellite.width / 2, satellite.height / 2)
-            // Leaving, a satellite passes behind the Island: it melts into it only once it is out.
-            const joined = IrisStyle.fuse * IrisStyle.ramp(satellite.emerge, 0.85, 0.15)
+            // A drop that pinches off the Island on its way out and stands apart at rest: melted in for good it read
+            // as a belly on the Island (10-25).
+            const joined = IrisStyle.fuse * (1 - IrisStyle.ramp(satellite.emerge, 0.45, 0.5))
             out.push({ x: centre.x - size / 2, y: centre.y - size / 2, width: size, height: size,
                 radius: IrisStyle.pieceRadius(size), paints: true, fuse: joined, satellite: true, id: "satellite:" + satellite.slot,
                 joins: "island" })
@@ -1797,7 +1826,7 @@ Item {
                     + (root.piecesAtStart ? root.barPieceReserve : 0)
                 width: Math.max(0, compactRow.laidWidth - compactRow.leadMargin - 15 * root.d - root.barPieceReserve)
                 spacing: 9 * root.d
-                opacity: (root.compactMode === compactRow.mode && root.heartShown && !root.vertical && root.faceUrl.length === 0 ? 1 : 0) * root.heartUncovered
+                opacity: (root.compactMode === compactRow.mode && root.heartShown && !root.vertical && !root.faceTakes ? 1 : 0) * root.heartUncovered
                 scale: root.zoned && compactPress.pressed ? IrisStyle.pressScale(0.93) : 1
                 Behavior on scale { NumberAnimation { duration: IrisStyle.duration(compactPress.pressed ? 80 : 200); easing.type: IrisStyle.feedbackEasing } }
                 visible: opacity > 0
@@ -2215,7 +2244,7 @@ Item {
                 y: designFace.swellShift
                 width: Math.max(0, designFace.laidWidth - root.barPieceReserve)
                 height: parent.height
-                opacity: root.heartShown ? root.heartUncovered : 0
+                opacity: root.heartShown && root.faceTakes ? root.heartUncovered : 0
                 visible: opacity > 0
                 onLoaded: item.island = root
             }
@@ -2592,6 +2621,7 @@ Item {
                         : root.effectivePage === "activity" ? activityPage.implicitHeight
                         : root.effectivePage === "tray" ? trayPage.implicitHeight
                         : root.effectivePage === "tools" ? toolsPage.implicitHeight
+                        : root.cardPages.includes(root.effectivePage) ? cardPage.implicitHeight
                         : desktopPage.implicitHeight
 
                     Page {
@@ -2611,6 +2641,35 @@ Item {
                                 clip: true
                                 boundsBehavior: Flickable.StopAtBounds
                                 IrisTray { id: trayContent; width: parent.width; bottomEdge: root.bottomEdge; items: root.trayItems }
+                            }
+                        }
+                    }
+                    // Weather, Calendar and Vitals: the bubble's card, grown inside the Island.
+                    Page {
+                        id: cardPage
+                        name: root.cardPages.includes(root.effectivePage) ? root.effectivePage : root.cardPages[0]
+                        Loader {
+                            id: cardLoader
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: item?.implicitHeight ?? 0
+                            active: cardPage.resident
+                            asynchronous: !cardPage.current
+                            sourceComponent: Flickable {
+                                width: cardLoader.width
+                                implicitHeight: Math.min(Math.round(520 * root.d), cardContent.implicitHeight)
+                                contentHeight: cardContent.implicitHeight
+                                clip: true
+                                boundsBehavior: Flickable.StopAtBounds
+                                IrisCardContent {
+                                    id: cardContent
+                                    width: parent.width
+                                    kind: cardPage.name
+                                    screenName: root.targetScreen?.name ?? ""
+                                    contentActive: cardPage.current && root.visualExpanded
+                                    bodyRadius: chassis.openRadius
+                                    bodyInset: root.padding
+                                    onNavigate: root.expanded = false
+                                }
                             }
                         }
                     }
@@ -2700,7 +2759,7 @@ Item {
                             asynchronous: !desktopPage.current
                             // A Design may print the page its own way (`islandDesktop`, on the same blocks in the same
                             // order); while the blocks are being arranged the engine's page stands in to be arranged.
-                            readonly property string designUrl: root.studio ? "" : IrisDesign.skin("islandDesktop")
+                            readonly property string designUrl: root.studio ? "" : root.skinOf(IrisDesign.skin("islandDesktop"), "Desktop.qml")
                             source: desktopLoader.designUrl
                             sourceComponent: desktopLoader.designUrl.length > 0 ? null : engineDesktopPage
                             onLoaded: if (desktopLoader.designUrl.length > 0) item.island = root

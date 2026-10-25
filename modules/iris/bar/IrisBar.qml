@@ -64,7 +64,7 @@ Scope {
         target: "iris"
         function open(): void { GlobalStates.barOpen = true; root.islandRequested(true, "") }
         function page(name: string): void {
-            if (!["media", "activity", "desktop", "tray", "tools", "next", "prev"].includes(name)) return
+            if (!["media", "activity", "desktop", "weather", "calendar", "vitals", "tray", "tools", "next", "prev"].includes(name)) return
             GlobalStates.barOpen = true
             root.islandRequested(true, name)
         }
@@ -1122,7 +1122,7 @@ Scope {
                         const reach = IrisStyle.fuse
                         const body = bodies.find(b => shape.x < b.x + b.width + reach && shape.x + shape.width > b.x - reach
                             && shape.y < b.y + b.height + reach && shape.y + shape.height > b.y - reach)
-                        return body ? Object.assign({}, shape, { joins: [body.id].concat(Array.isArray(shape.joins) ? shape.joins.slice(1) : []), fuse: IrisStyle.fuse }) : shape
+                        return body ? Object.assign({}, shape, { joins: [body.id].concat(Array.isArray(shape.joins) ? shape.joins.slice(1) : []) }) : shape
                     })
                     // Two bodies that meet the frame within reach of each other melt into one another too: joined to
                     // the frame alone, their fillets met in a cusp along the band (a side panel under a corner plate).

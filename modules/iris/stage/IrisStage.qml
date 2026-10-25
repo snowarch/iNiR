@@ -405,13 +405,30 @@ Item {
         return root.linePoint(slot, zone, zone.startsWith("edge:") ? [slot] : root.lineOf(zone))
     }
     readonly property var rects: {
-        const out = []
-        for (const slot of root.allSlots) {
-            const floating = root.placeName(slot) !== "island" && root.kindOf(slot).length > 0
-            if (!floating) { out.push(null); continue }
-            const centre = root.placeOf(slot)
-            out.push({ x: Math.round(centre.x - root.size / 2), y: Math.round(centre.y - root.size / 2), size: root.size })
-        }
+        const centres = root.allSlots.map(slot => root.placeName(slot) !== "island" && root.kindOf(slot).length > 0 ? root.placeOf(slot) : null)
+        return root.stepAside(centres).map(centre => centre
+            ? { x: Math.round(centre.x - root.size / 2), y: Math.round(centre.y - root.size / 2), size: root.size } : null)
+    }
+    // Open, the Island steps the bubbles on its row aside, past its own satellites, instead of growing over them (10-25).
+    function stepAside(centres: var): var {
+        const g = root.island
+        const open = Number(GlobalStates.irisIslandOpenWidth?.[root.screenName] ?? 0)
+        if (!g || open <= 0 || g.fullWidth || g.vertical) return centres
+        const bubble = Number(g.bubble ?? root.size) + Number(g.gap ?? 0)
+        const sats = Array.from(g.satellites ?? [])
+        const air = Math.round(10 * root.d) + root.size / 2
+        const mid = g.x + g.width / 2
+        const lo = mid - open / 2 - (sats.includes(-1) ? bubble : 0) - air
+        const hi = mid + open / 2 + Math.max(0, ...sats) * bubble + air
+        const reach = Number(g.bubble ?? root.size) * 1.5
+        const row = c => g.bottomEdge ? Math.abs(c.y - (g.y + g.height)) < reach + root.size : Math.abs(c.y - g.y) < reach + root.size
+        const out = centres.slice()
+        const inside = centres.map((c, i) => ({ c: c, i: i })).filter(e => e.c && row(e.c) && e.c.x > lo - root.size / 2 && e.c.x < hi + root.size / 2)
+        const step = root.size + Math.round(8 * root.d)
+        const left = inside.filter(e => e.c.x < mid).sort((a, b) => b.c.x - a.c.x)
+        const right = inside.filter(e => e.c.x >= mid).sort((a, b) => a.c.x - b.c.x)
+        left.forEach((e, k) => out[e.i] = Qt.point(lo - k * step, e.c.y))
+        right.forEach((e, k) => out[e.i] = Qt.point(hi + k * step, e.c.y))
         return out
     }
     // What of iRiS rests on this output, for arranging widgets beside it (DesktopArrange.bodies): the Island with the
@@ -419,7 +436,9 @@ Item {
     // when the Dock steps aside and the Island turns into the edit head.
     readonly property var dockBody: (GlobalStates.irisDockBody?.[root.screenName] ?? []).find?.(b => b?.id === "dock") ?? null
     readonly property bool arranging: GlobalStates.widgetEditMode
-    onIslandChanged: bodiesSettle.restart()
+    onIslandChanged: {
+        bodiesSettle.restart()
+    }
     onRectsChanged: bodiesSettle.restart()
     onPlatesChanged: bodiesSettle.restart()
     onDockBodyChanged: bodiesSettle.restart()
@@ -1109,6 +1128,7 @@ Item {
             nestFuse: root.edgeFuseOn(plate ? (plate.side ?? IrisFrame.edgeOf(plate.zone)) : IrisFrame.edgeOf(root.placeName(slot))) }
     }
     function activate(slot: string, kind: string, rect: var): void {
+        if (IrisPieces.act(kind, root.screenName)) return
         const workspaceCard = kind === "workspaces"
             && String(root.optionsFor(slot)?.opens ?? "card") === "card"
         if ((workspaceCard || (kind !== "workspaces" && root.opensCards && IrisPieces.cardIds.includes(kind)))
