@@ -489,4 +489,44 @@ Singleton {
         // Ensure it's still readable (WCAG AA for large text is 3:1)
         return ensureReadable(dimmed, bg, 3.0);
     }
+
+    // ── Tone (CIELAB L*, 0..100): what Material's roles are built on ──
+    // Moving a colour along tone keeps its hue and chroma feel, which HSL lightness never does (a yellow and a blue at
+    // the same lightness are nowhere near the same brightness).
+    function _lin(v) { return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4) }
+    function _gam(v) { return v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055 }
+    function _y(c) { return 0.2126 * root._lin(c.r) + 0.7152 * root._lin(c.g) + 0.0722 * root._lin(c.b) }
+    function _yAt(t) { return t <= 8 ? t / 903.2963 : Math.pow((t + 16) / 116, 3) }
+    function toneOf(color) {
+        const y = root._y(Qt.color(color))
+        return y <= 0.008856 ? y * 903.2963 : 116 * Math.pow(y, 1 / 3) - 16
+    }
+    function atTone(color, tone) {
+        const c = Qt.color(color)
+        const target = root._yAt(Math.max(0, Math.min(100, tone)))
+        const y = root._y(c)
+        if (y <= 0) {
+            const g = root._gam(target)
+            return Qt.rgba(g, g, g, c.a)
+        }
+        const k = target / y
+        let lr = root._lin(c.r) * k, lg = root._lin(c.g) * k, lb = root._lin(c.b) * k
+        // Past white on one channel: scale back and lift toward white so the tone still lands.
+        const peak = Math.max(lr, lg, lb)
+        if (peak > 1) {
+            lr /= peak; lg /= peak; lb /= peak
+            const yb = 0.2126 * lr + 0.7152 * lg + 0.0722 * lb
+            const w = yb >= 1 ? 0 : Math.max(0, Math.min(1, (target - yb) / (1 - yb)))
+            lr += (1 - lr) * w; lg += (1 - lg) * w; lb += (1 - lb) * w
+        }
+        return Qt.rgba(root._gam(lr), root._gam(lg), root._gam(lb), c.a)
+    }
+    // The colour on another hue (0..1), its saturation and tone kept.
+    function atHue(color, hue) {
+        const c = Qt.color(color)
+        if (c.hslHue < 0)
+            return c
+        const h = ((hue % 1) + 1) % 1
+        return root.atTone(Qt.hsla(h, c.hslSaturation, c.hslLightness, c.a), root.toneOf(c))
+    }
 }

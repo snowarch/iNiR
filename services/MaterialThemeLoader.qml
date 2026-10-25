@@ -161,6 +161,8 @@ Singleton {
             }
         }
         
+        root.harmonize()
+
         if (typeof json.darkmode === "boolean") {
             Appearance.m3colors.darkmode = json.darkmode
         } else if (typeof json.darkmode === "string") {
@@ -169,6 +171,32 @@ Singleton {
             Appearance.m3colors.darkmode = (Appearance.m3colors.m3background.hslLightness < 0.5)
         }
         _log("[MaterialThemeLoader] Colors applied successfully, darkmode:", Appearance.m3colors.darkmode)
+    }
+
+    // One family of colour (appearance.palette.harmony "accent"): the secondary and tertiary roles keep their tone and
+    // saturation but move next to the accent's hue, a step cool and a step warm. A wallpaper scheme often puts tertiary
+    // a quadrant away, and a blue card beside a red one made the widgets, chips and buttons look unrelated.
+    readonly property string harmony: Config.options?.appearance?.palette?.harmony ?? "accent"
+    onHarmonyChanged: {
+        const content = themeFileView.text()
+        if (!root.isAutoTheme || !content) return
+        root._forceApply = true
+        root.applyColors(content)
+    }
+    function harmonize(): void {
+        const primary = Appearance.m3colors.m3primary
+        if (root.harmony !== "accent" || primary.hslHue < 0 || primary.hslSaturation < 0.08)
+            return
+        const hue = primary.hslHue
+        for (const key in Appearance.m3colors) {
+            const low = key.toLowerCase()
+            if (!low.startsWith("m3") || low.startsWith("m3term")) continue
+            const shift = low.includes("tertiary") ? 14 / 360 : low.includes("secondary") ? -20 / 360 : null
+            if (shift === null) continue
+            const c = Appearance.m3colors[key]
+            if (c === null || typeof c !== "object") continue
+            Appearance.m3colors[key] = ColorUtils.atHue(c, hue + shift)
+        }
     }
 
     function resetFilePathNextTime() {

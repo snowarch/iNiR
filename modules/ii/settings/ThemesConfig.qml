@@ -729,6 +729,25 @@ ContentPage {
                 ]
             }
 
+            ContentSubsectionLabel {
+                text: Translation.tr("Colour family")
+            }
+            StyledText {
+                text: Translation.tr("Keep the second and third colours beside the accent, so cards, chips and buttons read as one family. As generated keeps the scheme's own hues.")
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+            }
+            ConfigSelectionArray {
+                currentValue: Config.options?.appearance?.palette?.harmony ?? "accent"
+                onSelected: newValue => Config.setNestedValue("appearance.palette.harmony", newValue)
+                options: [
+                    { "value": "accent", "displayName": Translation.tr("Around the accent"), "icon": "palette" },
+                    { "value": "scheme", "displayName": Translation.tr("As generated"), "icon": "auto_awesome" }
+                ]
+            }
+
             ConfigSwitch {
                 buttonIcon: "contrast"
                 text: Translation.tr("Auto light/dark from wallpaper")

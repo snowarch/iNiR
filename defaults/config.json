@@ -168,7 +168,8 @@
         },
         "palette": {
             "type": "auto",
-            "accentColor": ""
+            "accentColor": "",
+            "harmony": "accent"
         },
         "angel": {
             "blur": {
