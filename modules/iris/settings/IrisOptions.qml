@@ -1068,8 +1068,6 @@ QtObject {
         { section: "sources", group: "New iNiR", label: "Update in a terminal", description: "Opens a terminal for the update, so you can watch it run.", path: "shellUpdates.openTerminalOnUpdate", visibleWhen: "shellUpdates.enabled", kind: "switch", fallback: true, keywords: ["update", "terminal"] },
         { section: "sources", group: "System readings", label: "Read every", description: "How often CPU, memory, disk and temperatures refresh wherever iRiS shows them.", path: "resources.updateInterval", kind: "range", fallback: 3000, min: 500, max: 10000, step: 250, unit: " ms", keywords: ["cpu", "memory", "ram", "vitals", "resources", "polling"] },
         { section: "sources", group: "System readings", label: "Read the GPU", description: "Adds the graphics card to what Vitals shows.", path: "resources.monitorGpu", kind: "switch", fallback: true, keywords: ["gpu", "graphics", "vitals"] },
-        { section: "home", group: "Shortcuts", label: "Change wallpaper", kind: "action", button: "Open", run: () => { GlobalStates.settingsOverlayOpen = false; GlobalStates.wallpaperSelectorOpen = true }, keywords: ["wallpaper", "picker", "background", "fondo"] },
-        { section: "home", group: "Shortcuts", label: "Edit desktop widgets", kind: "action", button: "Edit", run: () => { GlobalStates.settingsOverlayOpen = false; GlobalStates.setWidgetEditMode(true) }, keywords: ["widgets", "desktop", "edit", "arrange"] },
         { section: "home", group: "Customize", label: "On Home", path: "iris.appearance.settingsHome", kind: "pieces", choicesFrom: "homeRows", get fallback() { return root.homeDefault }, keywords: ["home", "pin", "favourites", "shortcuts", "inicio"] },
         { section: "general", group: "Date & time", label: "Clock", description: "The Island, the lock screen and every clock in iRiS.", path: "time.format", kind: "choice", fallback: "hh:mm", choices: [{label:"24-hour",value:"hh:mm"},{label:"12-hour",value:"h:mm ap"},{label:"12-hour AM/PM",value:"h:mm AP"}], keywords: ["time", "hour", "24", "12", "am", "pm", "hora"] },
         { section: "general", group: "Date & time", label: "Exact seconds", description: "Clocks that show seconds tick on the second.", path: "time.secondPrecision", kind: "switch", tune: true, fallback: false },
@@ -1683,7 +1681,7 @@ QtObject {
     }
     // The order a section's groups are listed in: what someone came to change first, the rest as they were declared.
     readonly property var groupOrder: ({
-        home: ["Every day", "Shortcuts", "Customize"],
+        home: ["Every day", "Customize"],
         general: ["Date & time", "Language", "At login", "Apps", "Performance", "Settings window", "Shell family"],
         appearance: ["Look", "Themes", "Material", "Glass", "Texture", "Edges", "Light", "Shape", "Corners per surface",
             "Frame", "Text", "Faces", "Icons", "Material per surface", "Menus", "Settings", "Badges", "Customize", "Previews"],

@@ -190,13 +190,20 @@ Item {
     Flickable {
         id: boardFlick
         anchors.fill: parent
-        contentHeight: boardColumn.implicitHeight + root.gap
+        contentHeight: board.implicitHeight + root.gap
         boundsBehavior: Flickable.StopAtBounds
         clip: true
         ScrollBar.vertical: IrisScrollBar {}
         Column {
             id: board
             width: boardFlick.width
+            spacing: root.section === "home" ? root.gap : 0
+            Loader {
+                active: root.section === "home"
+                visible: active
+                width: board.width
+                sourceComponent: IrisWallpaperCard { screen: root.QsWindow.window?.screen ?? GlobalStates.focusedScreen }
+            }
             Flow {
                 id: boardColumn
                 width: parent.width
@@ -220,12 +227,31 @@ Item {
                         width: group.modelData.brief ? boardColumn.span(group.modelData.span) : boardColumn.width
                         spacing: root.gap
                         bottomPadding: root.u(8)
-                        Mono {
+                        // The head as the index reads: its number, its name, then a rule to the end of the line.
+                        Row {
                             visible: group.modelData.key.length > 0
                             width: parent.width
-                            elide: Text.ElideRight
-                            text: Translation.tr(group.modelData.key)
-                            color: IrisStyle.textTertiary
+                            spacing: root.u(10)
+                            Mono {
+                                id: groupNumber
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: String(group.index + 1).padStart(2, "0")
+                                color: IrisStyle.textTertiary
+                            }
+                            Mono {
+                                id: groupName
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.min(implicitWidth, parent.width - groupNumber.width - root.u(40))
+                                elide: Text.ElideRight
+                                text: Translation.tr(group.modelData.key)
+                                color: IrisStyle.subtext
+                            }
+                            Rectangle {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.max(0, parent.width - groupNumber.width - groupName.width - 2 * parent.spacing)
+                                height: 1
+                                color: IrisStyle.hairline
+                            }
                         }
                         Flow {
                             id: flow
@@ -289,17 +315,18 @@ Item {
         // On is said by an ink ring and the switch's own knob, not a white plate: a page of ons stays a page.
         Rectangle {
             anchors.fill: parent
-            radius: IrisStyle.fieldChamfer ? 0 : root.u(20)
+            radius: IrisStyle.fieldChamfer ? 0 : root.u(16)
             color: tile.dashed ? "transparent" : tile.containsMouse ? IrisStyle.fillHover : root.plate
-            border.width: tile.dashed ? 1 : tile.on ? Math.max(1, root.u(1.5)) : 0
-            border.color: tile.dashed ? IrisStyle.hairlineStrong : IrisStyle.text
+            // a hairline at rest, as the index's keys: a plate on glass keeps its edge over any wallpaper
+            border.width: tile.dashed || !tile.on ? 1 : Math.max(1, root.u(1.5))
+            border.color: tile.dashed ? IrisStyle.hairlineStrong : tile.on ? IrisStyle.text : IrisStyle.hairline
             Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
         }
         // The key focus: a ring of ink, of signal while a value is held.
         Rectangle {
             anchors.fill: parent
             anchors.margins: -root.u(3)
-            radius: IrisStyle.fieldChamfer ? 0 : root.u(23)
+            radius: IrisStyle.fieldChamfer ? 0 : root.u(19)
             visible: tile.focusedHere
             color: "transparent"
             border.width: Math.max(2, root.u(2))
@@ -495,13 +522,15 @@ Item {
                     IrisOptions.commit(spec, Number(next.toFixed(4)))
                 }
             }
-            radius: IrisStyle.fieldChamfer ? 0 : root.u(20)
+            radius: IrisStyle.fieldChamfer ? 0 : root.u(16)
             color: root.plate
+            border.width: 1
+            border.color: IrisStyle.hairline
             height: Math.max(root.u(64), rowItem.implicitHeight + root.u(8))
             Rectangle {
                 anchors.fill: parent
                 anchors.margins: -root.u(3)
-                radius: IrisStyle.fieldChamfer ? 0 : root.u(23)
+                radius: IrisStyle.fieldChamfer ? 0 : root.u(19)
                 visible: rowPlate.focusedHere
                 color: "transparent"
                 border.width: Math.max(2, root.u(2))

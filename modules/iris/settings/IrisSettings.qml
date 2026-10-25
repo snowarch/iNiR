@@ -1590,7 +1590,7 @@ Item {
 
                                     IrisWallpaperCard {
                                         screen: root.screen
-                                        visible: root.section === "general" && root.browsing
+                                        visible: root.section === "home" && root.browsing
                                     }
 
                                     IrisText {

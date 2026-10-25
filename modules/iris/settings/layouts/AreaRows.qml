@@ -113,6 +113,16 @@ ColumnLayout {
         rows.whole = built
     }
     onBlocksChanged: Qt.callLater(rows.weigh)
+    // Home opens on the welcome, as Classic's does (Deck's hero holds it in its stage).
+    Loader {
+        active: rows.section === "home" && rows.voice !== "deck"
+        visible: active
+        Layout.fillWidth: true
+        Layout.leftMargin: Math.round(8 * rows.d)
+        Layout.rightMargin: Math.round(8 * rows.d)
+        Layout.bottomMargin: Math.round(6 * rows.d)
+        sourceComponent: IrisWallpaperCard { screen: rows.QsWindow.window?.screen ?? GlobalStates.focusedScreen }
+    }
     Repeater {
         id: blockRepeater
         onCountChanged: Qt.callLater(rows.weigh)
@@ -123,31 +133,31 @@ ColumnLayout {
             required property int index
             Layout.fillWidth: true
             asynchronous: slot.index > 0 && rows.streams
-            onStatusChanged: Qt.callLater(rows.weigh)
+            onStatusChanged: if (rows) Qt.callLater(rows.weigh)
             sourceComponent: ColumnLayout {
                 id: block
                 readonly property var modelData: slot.modelData
                 readonly property int index: slot.index
-                spacing: Math.round(6 * rows.d)
+                spacing: Math.round(6 * rows?.d)
 
                 readonly property string key: String(block.modelData.key ?? "")
                 readonly property string caption: String(block.modelData.caption ?? "")
-                readonly property string tuneKey: rows.section + "/" + block.key
-                readonly property var tuned: block.modelData.rows.filter(spec => IrisOptions.foldsAway(spec))
+                readonly property string tuneKey: rows?.section + "/" + block.key
+                readonly property var tuned: block.modelData.rows?.filter(spec => IrisOptions.foldsAway(spec))
                 readonly property bool tunes: block.tuned.length >= 2
-                readonly property bool tuneOpen: block.tunes && ((rows.host?.tuneAll ?? false) || (rows.unfolded[block.tuneKey] ?? false))
-                readonly property var shownRows: block.tunes && !block.tuneOpen ? block.modelData.rows.filter(spec => !block.tuned.includes(spec)) : block.modelData.rows
-                readonly property string landing: String(rows.host?.landingPath ?? "")
+                readonly property bool tuneOpen: block.tunes && ((rows?.host?.tuneAll ?? false) || (rows?.unfolded[block.tuneKey] ?? false))
+                readonly property var shownRows: block.tunes && !block.tuneOpen ? block.modelData.rows?.filter(spec => !block.tuned.includes(spec)) : block.modelData.rows
+                readonly property string landing: String(rows?.host?.landingPath ?? "")
                 readonly property bool landsInFold: block.landing.length > 0 && block.tuned.some(spec => String(spec.path ?? "") === block.landing)
-                onLandsInFoldChanged: if (block.landsInFold && !block.tuneOpen) rows.fold(block.tuneKey)
+                onLandsInFoldChanged: if (block.landsInFold && !block.tuneOpen) rows?.fold(block.tuneKey)
                 // A group that is only a switch is its head: the name and its switch, no card.
                 readonly property bool loneSwitch: {
                     Config.revision
                     return block.modelData.flat && block.caption.length > 0 && !block.tunes
                         && block.shownRows.length === 1 && block.shownRows[0].kind === "switch"
                 }
-                readonly property bool shut: rows.folds && block.index >= 2 && block.caption.length > 0 && !block.loneSwitch
-                    && !(rows.opened[block.key] ?? false) && !block.landsInFold && !block.modelData.rows.some(spec => String(spec.path ?? "") === block.landing)
+                readonly property bool shut: rows?.folds && block.index >= 2 && block.caption.length > 0 && !block.loneSwitch
+                    && !(rows?.opened[block.key] ?? false) && !block.landsInFold && !block.modelData.rows?.some(spec => String(spec.path ?? "") === block.landing)
                 function partOf(spec: var): string { return String(spec.part ?? "") }
                 readonly property var parts: block.shownRows.length === 0 ? [""] : [...new Set(block.shownRows.map(spec => block.partOf(spec)))]
 
@@ -155,30 +165,30 @@ ColumnLayout {
                 Item {
                     id: head
                     readonly property string title: block.caption
-                    readonly property int count: block.modelData.rows.length
+                    readonly property int count: block.modelData.rows?.length
                     readonly property bool lone: block.loneSwitch
                     readonly property real switchHeight: headSwitch.implicitHeight
-                    readonly property bool reading: rows.reading === block.key
+                    readonly property bool reading: rows?.reading === block.key
                     readonly property int folio: block.index
-                    readonly property string glyph: IrisOptions.groupGlyphs[block.key] ?? IrisOptions.sectionById(rows.section)?.icon ?? "settings"
+                    readonly property string glyph: IrisOptions.groupGlyphs[block.key] ?? IrisOptions.sectionById(rows?.section)?.icon ?? "settings"
                     readonly property bool deckStop: true
-                    readonly property bool folds: rows.folds && block.index >= 2
+                    readonly property bool folds: rows?.folds && block.index >= 2
                     readonly property bool open: !block.shut
-                    readonly property string summary: { Config.revision; return block.shut ? (rows.host?.sayGroup(block.modelData.rows) ?? "") : "" }
-                    readonly property var notes: (rows.host?.notes?.[rows.section] ?? []).filter(note => String(note.group ?? "") === block.key)
-                    function toggle(): void { rows.toggleGroup(block.key) }
+                    readonly property string summary: { Config.revision; return block.shut ? (rows?.host?.sayGroup(block.modelData.rows) ?? "") : "" }
+                    readonly property var notes: (rows?.host?.notes?.[rows?.section] ?? []).filter(note => String(note.group ?? "") === block.key)
+                    function toggle(): void { rows?.toggleGroup(block.key) }
                     visible: block.modelData.flat && head.title.length > 0
                     Layout.fillWidth: true
-                    Layout.leftMargin: Math.round(16 * rows.d)
-                    Layout.rightMargin: Math.round(16 * rows.d)
-                    Layout.topMargin: Math.round((block.index > 0 ? 18 : 6) * rows.d)
-                    Layout.bottomMargin: Math.round(4 * rows.d)
+                    Layout.leftMargin: Math.round(16 * rows?.d)
+                    Layout.rightMargin: Math.round(16 * rows?.d)
+                    Layout.topMargin: Math.round((block.index > 0 ? 18 : 6) * rows?.d)
+                    Layout.bottomMargin: Math.round(4 * rows?.d)
                     implicitHeight: headSkin.active ? (headSkin.item?.implicitHeight ?? 0) : plainHead.implicitHeight
-                    IrisSkin { id: headSkin; part: "groupHeader"; host: head; voice: rows.voice }
+                    IrisSkin { id: headSkin; part: "groupHeader"; host: head; voice: rows?.voice }
                     IrisText {
                         id: plainHead
                         visible: !headSkin.active
-                        width: parent.width - (head.lone ? headSwitch.width + Math.round(12 * rows.d) : 0)
+                        width: parent.width - (head.lone ? headSwitch.width + Math.round(12 * rows?.d) : 0)
                         text: head.title
                         color: IrisStyle.text
                         font.family: IrisStyle.fontTitle
@@ -207,11 +217,11 @@ ColumnLayout {
                         readonly property var specs: block.shownRows.filter(spec => block.partOf(spec) === part.modelData)
                         readonly property bool lastPart: part.index === block.parts.length - 1
                         Layout.fillWidth: true
-                        Layout.topMargin: part.index > 0 ? Math.round(12 * rows.d) : 0
-                        spacing: Math.round(6 * rows.d)
+                        Layout.topMargin: part.index > 0 ? Math.round(12 * rows?.d) : 0
+                        spacing: Math.round(6 * rows?.d)
                         IrisText {
                             visible: text.length > 0
-                            Layout.leftMargin: Math.round(16 * rows.d)
+                            Layout.leftMargin: Math.round(16 * rows?.d)
                             text: part.modelData.length > 0 ? Translation.tr(part.modelData) : ""
                             color: IrisStyle.textTertiary
                             font.family: IrisStyle.fontMono
@@ -224,8 +234,8 @@ ColumnLayout {
                             Layout.fillWidth: true
                             implicitHeight: partRows.implicitHeight
                             radius: IrisStyle.radiusTile
-                            color: IrisStyle.fieldChamfer ? "transparent" : rows.groupFill
-                            IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer && rows.groupFill.a > 0; color: rows.groupFill }
+                            color: IrisStyle.fieldChamfer ? "transparent" : rows?.groupFill
+                            IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer && rows?.groupFill.a > 0; color: rows?.groupFill }
                             ColumnLayout {
                                 id: partRows
                                 anchors.left: parent.left
@@ -239,7 +249,7 @@ ColumnLayout {
                                         required property int index
                                         Layout.fillWidth: true
                                         spec: row.modelData
-                                        voice: rows.voice
+                                        voice: rows?.voice
                                         heading: head.visible && part.index === 0 && row.index === 0 ? head.title : ""
                                         last: row.index === part.specs.length - 1 && !(part.lastPart && block.tunes)
                                         landing: block.landing.length > 0 && String(row.modelData.path ?? "") === block.landing
@@ -252,7 +262,7 @@ ColumnLayout {
                                     Layout.fillWidth: true
                                     open: block.tuneOpen
                                     names: block.tuned.map(spec => Translation.tr(String(spec.label ?? "")))
-                                    onClicked: rows.fold(block.tuneKey)
+                                    onClicked: rows?.fold(block.tuneKey)
                                 }
                             }
                         }

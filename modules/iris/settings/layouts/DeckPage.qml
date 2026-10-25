@@ -75,6 +75,20 @@ Item {
             niriValue: (section, key) => IrisNiri.value(IrisOptions.settings.find(spec => spec.niri === section && spec.key === key) ?? { niri: section, key: key })
             niriRevision: IrisNiri.revision
         }
+        // Home has no scene: its stage is the welcome.
+        Loader {
+            active: page.area === "home"
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.top: heroLine.bottom
+            anchors.margins: page.u(12)
+            sourceComponent: IrisWallpaperCard {
+                stageHeight: parent?.height ?? 0
+                stripShown: false
+                screen: page.QsWindow.window?.screen ?? GlobalStates.focusedScreen
+            }
+        }
         // What the stage shows now, under it instead of on it.
         IrisText {
             id: stageLine

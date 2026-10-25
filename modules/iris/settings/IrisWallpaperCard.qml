@@ -23,7 +23,7 @@ ClippingRectangle {
     readonly property real d: IrisStyle.settingsDensity
     readonly property int pad: Math.round(14 * card.d)
     // A page with room to spare gives the desk more of it (General's welcome, DI38).
-    property int stageHeight: Math.round(196 * card.d)
+    property int stageHeight: Math.round(212 * card.d)
     // The desk takes at most a third of a narrow card and leaves when the card cannot hold it beside a readable
     // column (a Settings window, a large text scale): the strip under it still shows the wallpapers.
     readonly property bool deskShown: card.width >= 520 * card.d
@@ -47,6 +47,19 @@ ClippingRectangle {
             : folder.split(/[-_\s]+/).filter(word => word.length > 0).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
     }
     readonly property string name: SystemInfo.displayName || SystemInfo.username
+    // The welcome: a greeting in time with the day, who and where you are, and how far into the day it is.
+    readonly property date now: DateTime.clock.date
+    readonly property int hour: card.now.getHours()
+    readonly property real dayFrac: (card.hour * 60 + card.now.getMinutes()) / 1440
+    readonly property string greeting: card.hour >= 5 && card.hour < 12 ? Translation.tr("Good morning")
+        : card.hour >= 12 && card.hour < 19 ? Translation.tr("Good afternoon")
+        : card.hour >= 19 && card.hour < 24 ? Translation.tr("Good evening") : Translation.tr("Good night")
+    readonly property string whereabouts: {
+        const who = SystemInfo.hostname.length > 0 ? SystemInfo.username + "@" + SystemInfo.hostname : SystemInfo.username
+        return who + "  ·  " + Translation.tr("Up %1").arg(DateTime.uptime)
+    }
+    readonly property string weather: Weather.enabled && Weather.hasData
+        ? String(Weather.data?.temp ?? "") + (String(Weather.data?.description ?? "").length > 0 ? "  " + Weather.data.description : "") : ""
     readonly property var nearby: {
         const all = (Wallpapers.wallpapers ?? []).filter(path => Wallpapers.extensions.includes(String(path).split(".").pop().toLowerCase()))
         if (all.length === 0) return []
@@ -94,6 +107,7 @@ ClippingRectangle {
 
     // What the strip of nearby wallpapers adds under the stage, for a page that sizes the stage to its room.
     readonly property real stripRoom: strip.visible ? strip.height + 2 * card.pad : 0
+    property bool stripShown: true
     Layout.fillWidth: true
     implicitHeight: welcome.active ? Number(welcome.item?.implicitHeight ?? 0) : card.stageHeight + (strip.visible ? strip.height + 2 * card.pad : 0)
     radius: IrisStyle.radiusTile
@@ -117,8 +131,10 @@ ClippingRectangle {
             decodeHeight: 90
             source: Wallpapers.effectiveWallpaperUrl
             visible: false
-            // An effect samples this texture without mipmaps; a mipmapped one makes Qt rebuild its filtering.
+            // An effect samples this texture without mipmaps; a mipmapped one makes Qt rebuild its filtering. Its own
+            // copy (160 x 90): shared from the cache with a mipmapped one, Qt warned and fell back.
             mipmap: false
+            cache: false
         }
         MultiEffect {
             anchors.fill: parent
@@ -133,6 +149,16 @@ ClippingRectangle {
         Rectangle {
             anchors.fill: parent
             color: IrisStyle.veilStrong
+        }
+
+        // The day so far, along the stage's foot.
+        Rectangle {
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            width: Math.round(parent.width * card.dayFrac)
+            height: Math.max(2, Math.round(2 * card.d))
+            color: IrisStyle.accentOnMedia
+            opacity: 0.75
         }
 
         RectangularShadow {
@@ -169,6 +195,28 @@ ClippingRectangle {
             width: column.measure
             anchors.verticalCenter: parent.verticalCenter
             spacing: 0
+            // the greeting, then the day it is (and its weather) in a quieter voice, on one line that gives way at the end
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.bottomMargin: Math.round(8 * card.d)
+                spacing: Math.round(10 * card.d)
+                IrisText {
+                    text: card.greeting
+                    color: IrisStyle.onMediaSecondary
+                    font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontMain
+                    font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
+                    font.pixelSize: IrisStyle.typeLabel
+                    font.weight: IrisStyle.weight(Font.Medium)
+                }
+                IrisText {
+                    Layout.fillWidth: true
+                    text: card.weather.length > 0 ? DateTime.date + "  ·  " + card.weather : DateTime.date
+                    color: IrisStyle.onMediaSecondary
+                    opacity: 0.7
+                    font.pixelSize: IrisStyle.typeMeta
+                    elide: Text.ElideRight
+                }
+            }
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Math.round(16 * card.d)
@@ -233,6 +281,15 @@ ClippingRectangle {
                         color: IrisStyle.accentOnMedia
                         elide: Text.ElideRight
                     }
+                    IrisText {
+                        Layout.fillWidth: true
+                        Layout.topMargin: Math.round(2 * card.d)
+                        text: card.whereabouts
+                        color: IrisStyle.onMediaSecondary
+                        font.family: IrisStyle.fontMono
+                        font.pixelSize: IrisStyle.typeMeta
+                        elide: Text.ElideRight
+                    }
                 }
             }
             // What the desk wears, by name: the picture beside it says which, this says what it is.
@@ -259,6 +316,12 @@ ClippingRectangle {
                     onClicked: card.openGallery()
                 }
                 GlassButton { glyph: "shuffle"; label: ""; onClicked: Wallpapers.nextWallpaper() }
+                GlassButton {
+                    glyph: "dashboard_customize"
+                    label: ""
+                    hint: Translation.tr("Edit desktop widgets")
+                    onClicked: { GlobalStates.settingsOverlayOpen = false; GlobalStates.setWidgetEditMode(true) }
+                }
                 Item { Layout.fillWidth: true }
             }
         }
@@ -266,7 +329,7 @@ ClippingRectangle {
 
     Row {
         id: strip
-        visible: card.nearby.length > 1 && !welcome.active
+        visible: card.stripShown && card.nearby.length > 1 && !welcome.active
         x: card.pad
         y: card.stageHeight + card.pad
         width: parent.width - 2 * card.pad
