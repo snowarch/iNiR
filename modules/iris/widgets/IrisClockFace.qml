@@ -13,6 +13,7 @@ IrisWidgetFace {
 
     readonly property bool analog: String(root.widget.irisOption("face", "analog")) === "analog"
     readonly property bool seconds: Boolean(root.widget.irisOption("seconds", true))
+    readonly property bool week: Boolean(root.widget.irisOption("week", true))
     readonly property var now: clock.date
     readonly property string timePattern: {
         const format = String(root.widget.timeFormat ?? "system")
@@ -111,7 +112,7 @@ IrisWidgetFace {
         }
         Week {
             Layout.fillHeight: false
-            visible: !root.small && !root.large
+            visible: !root.small && !root.large && root.week
             Layout.fillWidth: true
             Layout.topMargin: root.dp(6)
         }
@@ -120,7 +121,7 @@ IrisWidgetFace {
     // Large: the week as the foot, under the dial or the big digits.
     ColumnLayout {
         id: footer
-        visible: root.large && !root.designed
+        visible: root.large && !root.designed && root.week
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom

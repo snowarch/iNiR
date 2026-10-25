@@ -148,11 +148,13 @@ QtObject {
         root.size("clock"),
         root.row("clock", "iris.face", "Face", "choice", "analog", { when: () => root.face("clock"), choices: root.choices([["analog", "Analog", "schedule"], ["digital", "Digital", "timer_10"]]) }),
         root.row("clock", "iris.seconds", "Second hand", "switch", true, { when: () => root.face("clock") && root.is("clock", "iris.face", "analog", "analog") }),
+        root.row("clock", "iris.week", "Week strip", "switch", true, { when: () => root.face("clock") && !root.is("clock", "iris.size", "medium", "small") }),
         root.row("clock", "style", "Clock style", "choice", "digital", { when: () => root.material("clock"),
             choices: root.choices([["digital", "Digital"], ["androidStacked", "Android stacked"], ["cookie", "Cookie"], ["pixel", "Pixel"], ["instrument", "Instrument"]]) }),
         root.row("clock", "pixel.orientation", "Orientation", "choice", "horizontal", { when: () => root.material("clock") && root.is("clock", "style", "digital", "pixel"),
             choices: root.choices([["horizontal", "Horizontal"], ["vertical", "Vertical"]]) }),
-        root.row("clock", "timeFormat", "Time format", "choice", "system", { when: () => root.material("clock") && ["digital", "androidStacked"].includes(String(root.effective("clock", "style", "digital"))),
+        root.row("clock", "timeFormat", "Time format", "choice", "system", { when: () => (root.material("clock") && ["digital", "androidStacked"].includes(String(root.effective("clock", "style", "digital"))))
+                || (root.face("clock") && root.is("clock", "iris.face", "analog", "digital")),
             choices: root.choices([["system", "System"], ["24h", "24h"], ["12h", "12h"]]) }),
         root.row("clock", "dateStyle", "Date style", "choice", "long", { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "digital"),
             choices: root.choices([["long", "Long"], ["minimal", "Minimal"], ["weekday", "Weekday"], ["numeric", "Numeric"]]) }),
@@ -218,7 +220,7 @@ QtObject {
         ...root.opening("monthCalendar"),
         root.size("monthCalendar"),
         root.row("monthCalendar", "weekStart", "Week starts on", "choice", 1, { choices: root.choices([[1, "Monday"], [0, "Sunday"]]) }),
-        root.row("monthCalendar", "showAdjacentDays", "Show adjacent month days", "switch", true, { when: () => root.plain("monthCalendar") }),
+        root.row("monthCalendar", "showAdjacentDays", "Show adjacent month days", "switch", true, {}),
         root.row("monthCalendar", "style", "Style", "choice", "card", { when: () => root.material("monthCalendar"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
         root.row("monthCalendar", "instrumentRule", "Header rule", "switch", true, { tune: true, when: () => root.plain("monthCalendar") && root.is("monthCalendar", "style", "card", "instrument") }),
         root.row("monthCalendar", "contentWidth", "Width", "range", 300, { min: 252, max: 520, step: 4, unit: " px", when: () => root.plain("monthCalendar") }),
@@ -353,6 +355,9 @@ QtObject {
         // ── System monitor ──
         ...root.opening("systemMonitor"),
         root.size("systemMonitor"),
+        root.row("systemMonitor", "iris.lead", "Main", "choice", "auto", { when: () => root.face("systemMonitor"),
+            choices: root.choices([["auto", "Auto"], ["cpu", "Processor", "memory"], ["mem", "Memory", "memory_alt"], ["gpu", "Graphics", "developer_board"],
+                ["temp", "CPU heat", "thermostat"], ["gpuTemp", "GPU heat", "thermostat"]]), keywords: ["lead", "main", "first", "big"] }),
         ...[["showCpu", "CPU", true], ["showMemory", "Memory", true], ["showGpu", "GPU", true], ["showTemp", "CPU heat", false], ["showGpuTemp", "GPU heat", false], ["showDisk", "Disk", false]]
             .map(entry => root.row("systemMonitor", entry[0], entry[1], "switch", entry[2], { keywords: ["monitor", "usage", "temperature", "temp"] })),
         root.row("systemMonitor", "showLabels", "Labels and percentages", "switch", true, { when: () => root.plain("systemMonitor") }),
@@ -386,6 +391,11 @@ QtObject {
         // ── Controls and Screen time (iRiS widgets) ──
         ...root.opening("controls"),
         root.size("controls"),
+        // the keys it keeps, in this order: small and medium show the first four, large eight
+        ...[["wifi", "Wi-Fi"], ["bluetooth", "Bluetooth"], ["focus", "Focus"], ["nightLight", "Night light"], ["awake", "Keep awake"],
+            ["gameMode", "Game mode"], ["mic", "Microphone"], ["darkMode", "Dark mode"]]
+            .map(entry => root.row("controls", "iris.tile." + entry[0], entry[1], "switch", true, { tune: false, keywords: ["keys", "tiles", "toggle"] })),
+        root.row("controls", "iris.sliders", "Volume and brightness", "switch", true, { tune: false, when: () => !root.is("controls", "iris.size", "medium", "small") }),
         ...root.closing("controls", false),
         ...root.opening("screenTime"),
         root.size("screenTime"),
@@ -399,6 +409,8 @@ QtObject {
         ...root.opening("weather"),
         root.size("weather"),
         root.row("weather", "showLocation", "Location", "switch", true, {}),
+        root.row("weather", "iris.details", "Details", "switch", true, { when: () => root.face("weather") && root.is("weather", "iris.size", "medium", "large"),
+            keywords: ["humidity", "wind", "uv", "air"] }),
         root.row("weather", "style", "Style", "choice", "pill", { when: () => root.material("weather"),
             choices: root.choices([["pill", "Shape"], ["card", "Card"], ["detail", "Detail"], ["dial", "Instrument"]]) }),
         root.row("weather", "shape", "Shape", "choice", "pill", { when: () => root.material("weather") && root.is("weather", "style", "pill", "pill"),

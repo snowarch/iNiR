@@ -16,7 +16,10 @@ IrisWidgetFace {
     readonly property var loads: root.resources.filter(entry => ["cpu", "mem", "gpu"].includes(entry.key))
     readonly property var heats: root.resources.filter(entry => ["temp", "gpuTemp"].includes(entry.key))
     readonly property bool hasDisk: root.resources.some(entry => entry.key === "disk")
-    readonly property var leadEntry: root.loads[0] ?? root.heats[0] ?? root.resources[0] ?? null
+    // the one picked in the widget's options, else the first load
+    readonly property string leadKey: String(root.widget.irisOption("lead", "auto"))
+    readonly property var leadEntry: root.resources.find(entry => entry.key === root.leadKey)
+        ?? root.loads[0] ?? root.heats[0] ?? root.resources[0] ?? null
     readonly property var rest: root.resources.filter(entry => entry !== root.leadEntry)
     readonly property bool leadTrends: root.leadEntry !== null && root.leadEntry.key !== "disk"
 

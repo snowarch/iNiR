@@ -285,6 +285,7 @@ IrisWidgetFace {
         Hours { Layout.fillWidth: true }
         // The air as three facts: humidity, the wind with an arrow to where it goes, the UV index in a word.
         RowLayout {
+            visible: Boolean(root.widget.irisOption("details", true))
             Layout.fillHeight: false
             Layout.fillWidth: true
             spacing: root.dp(12)

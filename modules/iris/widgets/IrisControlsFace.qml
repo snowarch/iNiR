@@ -21,6 +21,14 @@ IrisWidgetFace {
     readonly property real cell: (root.contentWidth - root.spacing * (root.columns - 1)) / root.columns
     readonly property real disc: Math.min(root.cell, root.dp(root.small ? 60 : root.medium ? 48 : 56))
     readonly property var monitor: Brightness.getMonitorForScreen(root.QsWindow?.window?.screen ?? null)
+    // The keys the person kept, in their order: small and medium show the first four, large eight.
+    readonly property var kept: ["wifi", "bluetooth", "focus", "nightLight", "awake", "gameMode", "mic", "darkMode"]
+        .filter(key => Boolean(root.widget.irisOption("tile." + key, true)))
+    function shows(key: string): bool {
+        const at = root.kept.indexOf(key)
+        return at >= 0 && at < (root.large ? 8 : 4)
+    }
+    readonly property bool sliders: Boolean(root.widget.irisOption("sliders", true))
 
     component Toggle: Item {
         id: toggle
@@ -122,6 +130,7 @@ IrisWidgetFace {
             rowSpacing: root.dp(root.small ? 14 : 8)
 
             Toggle {
+                visible: root.shows("wifi")
                 glyph: Network.ethernet ? "lan" : Network.wifiEnabled ? "wifi" : "wifi_off"
                 label: Network.ethernet ? Translation.tr("Ethernet") : (Network.networkName || Translation.tr("Wi-Fi"))
                 on: Network.ethernet || Network.wifiEnabled
@@ -131,6 +140,7 @@ IrisWidgetFace {
                 onToggled: Network.toggleWifi()
             }
             Toggle {
+                visible: root.shows("bluetooth")
                 glyph: BluetoothStatus.enabled ? "bluetooth" : "bluetooth_disabled"
                 label: root.tiles ? Translation.tr("Bluetooth") : (BluetoothStatus.activeDeviceSummary() || Translation.tr("Bluetooth"))
                 status: !BluetoothStatus.enabled ? Translation.tr("Off") : (BluetoothStatus.activeDeviceSummary() || Translation.tr("On"))
@@ -140,6 +150,7 @@ IrisWidgetFace {
                 onToggled: { if (Bluetooth.defaultAdapter) Bluetooth.defaultAdapter.enabled = !Bluetooth.defaultAdapter.enabled }
             }
             Toggle {
+                visible: root.shows("focus")
                 glyph: Notifications.manualDndActive ? "do_not_disturb_on" : "do_not_disturb_off"
                 label: Translation.tr("Focus")
                 on: Notifications.manualDndActive
@@ -147,6 +158,7 @@ IrisWidgetFace {
                 onToggled: Notifications.toggleSilent()
             }
             Toggle {
+                visible: root.shows("nightLight")
                 glyph: "nightlight"
                 label: Translation.tr("Night light")
                 on: Hyprsunset.active
@@ -154,7 +166,7 @@ IrisWidgetFace {
                 onToggled: Hyprsunset.toggle()
             }
             Toggle {
-                visible: root.large
+                visible: root.shows("awake")
                 glyph: "coffee"
                 label: Translation.tr("Keep awake")
                 on: Idle.inhibit
@@ -162,7 +174,7 @@ IrisWidgetFace {
                 onToggled: Idle.toggleInhibit()
             }
             Toggle {
-                visible: root.large
+                visible: root.shows("gameMode")
                 glyph: "sports_esports"
                 label: Translation.tr("Game mode")
                 on: GameMode.active
@@ -170,7 +182,7 @@ IrisWidgetFace {
                 onToggled: GameMode.toggle()
             }
             Toggle {
-                visible: root.large
+                visible: root.shows("mic")
                 glyph: Audio.micMuted ? "mic_off" : "mic"
                 label: Translation.tr("Microphone")
                 on: Audio.source !== null && !Audio.micMuted
@@ -179,7 +191,7 @@ IrisWidgetFace {
                 onToggled: Audio.toggleMicMute()
             }
             Toggle {
-                visible: root.large
+                visible: root.shows("darkMode")
                 glyph: Appearance.m3colors.darkmode ? "dark_mode" : "light_mode"
                 label: Translation.tr("Dark mode")
                 on: Appearance.m3colors.darkmode
@@ -189,7 +201,7 @@ IrisWidgetFace {
         }
 
         IrisCapsuleSlider {
-            visible: !root.small
+            visible: !root.small && root.sliders
             Layout.fillWidth: true
             Layout.preferredHeight: root.dp(34)
             muted: Audio.sink?.audio?.muted ?? false
@@ -203,7 +215,7 @@ IrisWidgetFace {
             onIconClicked: Audio.toggleMute()
         }
         IrisCapsuleSlider {
-            visible: root.large && root.monitor !== null
+            visible: root.large && root.monitor !== null && root.sliders
             Layout.fillWidth: true
             Layout.preferredHeight: root.dp(34)
             icon: "light_mode"
