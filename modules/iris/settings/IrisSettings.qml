@@ -477,18 +477,25 @@ Item {
             if (!seen.has(group)) { seen.add(group); leads.push(spec) }
         }
         const out = []
-        // Room left after one value a group: the rest of the area's values, the everyday ones first.
-        for (const spec of usable.filter(spec => IrisOptions.modified(spec)).concat(leads, essentials, usable))
-            if (!out.includes(spec) && out.length < count) out.push(spec)
+        const taken = {}
+        // Room left after one value a group: the rest of the area's values, the everyday ones first, two a group at
+        // most (Motion's card read Style per surface: Family six times).
+        for (const spec of usable.filter(spec => IrisOptions.modified(spec)).concat(leads, essentials, usable)) {
+            const group = String(spec.group ?? "")
+            if (out.includes(spec) || out.length >= count || (taken[group] ?? 0) >= 2) continue
+            taken[group] = (taken[group] ?? 0) + 1
+            out.push(spec)
+        }
         return out
     }
-    // A glance row's name: its label, or its group's where the area gives several groups that label ("Size" under
-    // every widget read "Size, Size, Size").
+    // A glance row's name: its label, with its group where the area gives that label to several groups ("Size" under
+    // every widget read "Size, Size, Size"; the group alone lost which surface Motion's Island was).
     function glanceName(spec: var): string {
         const label = String(spec?.label ?? "")
+        const group = String(spec?.group ?? "")
         const groups = new Set(root.specifications.filter(other => other.section === spec?.section && other.label === label)
             .map(other => String(other.group ?? "")))
-        return Translation.tr(groups.size > 1 && String(spec?.group ?? "").length > 0 ? String(spec.group) : label)
+        return groups.size > 1 && group.length > 0 && group !== label ? Translation.tr(group) + " · " + Translation.tr(label) : Translation.tr(label)
     }
     // A folded group said in a line people would say: what is on, what was picked, and what is left to itself
     // ("Dock notch, round dock shape, screen edge automatic"); never "Auto · off · Auto".
