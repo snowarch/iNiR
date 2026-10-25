@@ -150,26 +150,29 @@ Singleton {
         root._forceApply = false
 
         _log("[MaterialThemeLoader] Applying", Object.keys(json).length, "color keys, bg:", json.background, "primary:", json.primary)
+        // Every role is worked out first and written once, only if it moved: secondary and tertiary used to be set raw
+        // and then harmonized, so even a re-read of the same file restyled the whole shell twice.
+        const next = {}
         for (const key in json) {
-            if (json.hasOwnProperty(key)) {
-                const camelCaseKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase())
-                const noPrefix = camelCaseKey.startsWith("term") || camelCaseKey === "darkmode" || camelCaseKey === "transparent"
-                const m3Key = noPrefix ? camelCaseKey : `m3${camelCaseKey}`
-                if (Appearance.m3colors[m3Key] === undefined)
-                    continue
-                Appearance.m3colors[m3Key] = json[key]
-            }
+            if (!json.hasOwnProperty(key)) continue
+            const camelCaseKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase())
+            if (camelCaseKey === "darkmode") continue
+            const noPrefix = camelCaseKey.startsWith("term") || camelCaseKey === "transparent"
+            const m3Key = noPrefix ? camelCaseKey : `m3${camelCaseKey}`
+            if (Appearance.m3colors[m3Key] !== undefined)
+                next[m3Key] = json[key]
         }
-        
-        root.harmonize()
+        root.harmonize(next)
+        for (const key in next) {
+            const now = Appearance.m3colors[key]
+            const same = typeof now === "boolean" ? now === Boolean(next[key]) : Qt.colorEqual(now, next[key])
+            if (!same) Appearance.m3colors[key] = next[key]
+        }
 
-        if (typeof json.darkmode === "boolean") {
-            Appearance.m3colors.darkmode = json.darkmode
-        } else if (typeof json.darkmode === "string") {
-            Appearance.m3colors.darkmode = json.darkmode === "true"
-        } else {
-            Appearance.m3colors.darkmode = (Appearance.m3colors.m3background.hslLightness < 0.5)
-        }
+        const dark = typeof json.darkmode === "boolean" ? json.darkmode
+            : typeof json.darkmode === "string" ? json.darkmode === "true"
+            : Appearance.m3colors.m3background.hslLightness < 0.5
+        if (Appearance.m3colors.darkmode !== dark) Appearance.m3colors.darkmode = dark
         _log("[MaterialThemeLoader] Colors applied successfully, darkmode:", Appearance.m3colors.darkmode)
     }
 
@@ -183,19 +186,16 @@ Singleton {
         root._forceApply = true
         root.applyColors(content)
     }
-    function harmonize(): void {
-        const primary = Appearance.m3colors.m3primary
+    function harmonize(next: var): void {
+        const primary = Qt.color(next.m3primary ?? Appearance.m3colors.m3primary)
         if (root.harmony !== "accent" || primary.hslHue < 0 || primary.hslSaturation < 0.08)
             return
         const hue = primary.hslHue
-        for (const key in Appearance.m3colors) {
+        for (const key in next) {
             const low = key.toLowerCase()
             if (!low.startsWith("m3") || low.startsWith("m3term")) continue
             const shift = low.includes("tertiary") ? 14 / 360 : low.includes("secondary") ? -20 / 360 : null
-            if (shift === null) continue
-            const c = Appearance.m3colors[key]
-            if (c === null || typeof c !== "object") continue
-            Appearance.m3colors[key] = ColorUtils.atHue(c, hue + shift)
+            if (shift !== null) next[key] = ColorUtils.atHue(next[key], hue + shift)
         }
     }
 
