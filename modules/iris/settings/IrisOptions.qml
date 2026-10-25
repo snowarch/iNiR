@@ -1806,6 +1806,14 @@ QtObject {
             const lookRank = spec => spec.trail ? 2 : String(spec.path ?? "").startsWith("iris.appearance.surfaces.") ? 1 : 0
             own.map((spec, at) => ({ spec: spec, at: at })).sort((a, b) => rank(a.spec) - rank(b.spec) || lookRank(a.spec) - lookRank(b.spec) || a.at - b.at).forEach(item => out.push(item.spec))
         }
-        return out.map((spec, index) => Object.assign({}, spec, { modelKey: "settings:" + index }))
+        // A row's key is what it is, not where it falls: keyed by index, one row more or less above shifted every key
+        // and every page rebuilt all its rows on a write (Console's tiles went blank while they came back, 10-25).
+        const seen = {}
+        return out.map(spec => {
+            const what = String(spec.path ?? (spec.niri !== undefined ? spec.niri + ":" + spec.key : spec.label ?? spec.kind))
+            const key = "settings:" + spec.section + "/" + String(spec.group ?? "") + "/" + what + (spec.mirror ? ":mirror" : "")
+            seen[key] = (seen[key] ?? 0) + 1
+            return Object.assign({}, spec, { modelKey: seen[key] > 1 ? key + "#" + seen[key] : key })
+        })
     }
 }

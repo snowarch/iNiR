@@ -68,7 +68,7 @@ Item {
             const open = opened[root.section + "/" + group.key] === true
             const folds = tuned.length >= 2 && tuned.length < group.rows.length
             const shown = folds && !open ? group.rows.filter(spec => !tuned.includes(spec)) : group.rows
-            const cells = shown.map(spec => root.unitsOf(root.shape(spec))).concat(folds ? [1] : [])
+            const cells = shown.map(spec => root.unitsFor(spec)).concat(folds ? [1] : [])
             const units = cells.reduce((sum, size) => sum + size, 0)
             const brief = units <= 3 && !shown.some(spec => root.shape(spec) === "row")
             // Inside a full-width group the last tile of a line short of the edge takes the rest of it.
@@ -111,6 +111,9 @@ Item {
         return out
     }
     function unitsOf(kind: string): int { return kind === "switch" || kind === "action" ? 1 : kind === "row" ? 4 : 2 }
+    // A switch that says what it does gets the room to say it.
+    function unitsFor(spec: var): int { const kind = root.shape(spec); return kind === "switch" && root.told(spec).length > 0 ? 2 : root.unitsOf(kind) }
+    function told(spec: var): string { return typeof spec?.description === "string" ? Translation.tr(spec.description) : "" }
     function shape(spec: var): string {
         if (spec.kind === "switch") return "switch"
         if (spec.kind === "range" && Number.isFinite(Number(spec.min)) && Number.isFinite(Number(spec.max))) return "range"
@@ -285,6 +288,7 @@ Item {
                                     Component.onCompleted: if (cell.asynchronous && cell.status !== Loader.Ready) { cell.counted = true; root.building++ }
                                     Component.onDestruction: if (cell.counted) root.building--
                                     onLoaded: { item.spec = cell.modelData; if (cell.counted) { cell.counted = false; root.building-- } }
+                                    onModelDataChanged: if (cell.item) cell.item.spec = cell.modelData
                                 }
                             }
                             Tile {
@@ -381,38 +385,52 @@ Item {
     }
     Component {
         id: switchTile
+        // Read like its row: the name, what it does under it when there is room, the look's own switch at the right
+        // (a faint hollow ring said nothing at a glance, 10-25).
         Tile {
             id: sw
             readonly property bool lit: { Config.revision; IrisNiri.revision; const v = !!IrisOptions.currentValue(sw.spec ?? {}); return sw.spec?.invert ? !v : v }
+            readonly property string told: root.told(sw.spec)
             on: sw.lit
-            // The switch says on or off, so the corner is the switch's: an ON caption beside it said it twice.
-            text: Translation.tr(String(sw.spec?.label ?? ""))
             Accessible.role: Accessible.CheckBox
+            Accessible.name: Translation.tr(String(sw.spec?.label ?? ""))
             Accessible.checked: sw.lit
             function act(): void { IrisOptions.commit(sw.spec, sw.spec.invert ? sw.lit : !sw.lit) }
-            // S4's switch in small: hairline ring and hollow knob off, ink track and paper knob on, the knob springs over.
-            Rectangle {
-                id: mini
+            Column {
                 x: root.u(16)
                 y: root.u(14)
-                width: root.u(34)
-                height: root.u(20)
-                radius: IrisStyle.capsule(height)
-                color: sw.lit ? IrisStyle.text : "transparent"
-                border.width: sw.lit ? 0 : 1
-                border.color: IrisStyle.ringInk
-                Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
-                Rectangle {
-                    width: root.u(14)
-                    height: width
-                    radius: IrisStyle.capsule(width)
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: sw.lit ? parent.width - width - root.u(3) : root.u(3)
-                    color: sw.lit ? IrisStyle.surfaceOpaque : "transparent"
-                    border.width: sw.lit ? 0 : 1
-                    border.color: IrisStyle.ringInk
-                    Behavior on x { SpringAnimation { spring: 4; damping: 0.32; epsilon: 0.25 } }
+                width: parent.width - x - toggle.width - root.u(28)
+                spacing: root.u(3)
+                IrisText {
+                    width: parent.width
+                    elide: Text.ElideRight
+                    wrapMode: sw.told.length > 0 ? Text.NoWrap : Text.WordWrap
+                    maximumLineCount: 2
+                    text: Translation.tr(String(sw.spec?.label ?? ""))
+                    color: IrisStyle.text
+                    font.pixelSize: IrisStyle.typeBody
+                    font.weight: Font.DemiBold
                 }
+                IrisText {
+                    width: parent.width
+                    visible: sw.told.length > 0
+                    text: sw.told
+                    color: IrisStyle.textSecondary
+                    font.pixelSize: IrisStyle.typeMeta
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 3
+                    elide: Text.ElideRight
+                }
+            }
+            IrisSwitch {
+                id: toggle
+                anchors.right: parent.right
+                anchors.rightMargin: root.u(16)
+                y: root.u(14)
+                voice: "console"
+                on: sw.lit
+                name: sw.Accessible.name
+                onToggled: sw.act()
             }
         }
     }
@@ -442,6 +460,18 @@ Item {
             }
             function adjust(delta: int): void { IrisOptions.commit(range.spec, range.snap(range.value + delta * range.step)) }
             function act(): void {}
+            property real wheelRest: 0
+            WheelIntent { id: rangeWheel; hovered: range.containsMouse }
+            onPositionChanged: mouse => rangeWheel.track(mouse.x, mouse.y)
+            onWheel: wheel => {
+                if (!rangeWheel.take(wheel)) { wheel.accepted = false; return }
+                range.wheelRest += (wheel.angleDelta.y || wheel.angleDelta.x) || (wheel.pixelDelta.y || wheel.pixelDelta.x) * 4
+                const steps = Math.trunc(range.wheelRest / 120)
+                if (steps === 0) return
+                range.wheelRest -= steps * 120
+                const by = Math.max(range.step, (range.hi - range.lo) / 20)
+                IrisOptions.commit(range.spec, range.snap(range.value + steps * by))
+            }
             MouseArea {
                 id: scrub
                 x: root.u(16)
