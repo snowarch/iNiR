@@ -40,7 +40,6 @@ Item {
     readonly property var sections: root.host?.sections ?? []
     readonly property string section: String(root.host?.section ?? "")
     readonly property bool searching: root.host?.searching ?? false
-    readonly property bool home: root.section === "home" && !root.searching
     readonly property int current: Math.max(0, root.sections.findIndex(entry => entry.id === root.section))
     readonly property var area: root.host?.currentSection ?? ({})
     readonly property var room: root.host?.room ?? ({ x: 0, y: 0, width: root.width, height: root.height })
@@ -77,6 +76,13 @@ Item {
         if (entry) root.host.selectSection(entry.id)
     }
     onPosChanged: { root.arrive(); if (!admit.running) admit.start() }
+    // While the deck travels its cards carry only what they already hold, as pictures: stages hide, rows and fitted
+    // titles wait for the landing. A stage riding the move crossfaded with the hero's own at another place, and rows
+    // read on the way were built in the frames of the turn.
+    readonly property bool moving: root.dragging || Math.abs(root.pos - root.aim) > 0.02
+    property real stagesShown: root.moving ? 0 : 1
+    Behavior on stagesShown { NumberAnimation { duration: IrisStyle.duration(root.moving ? 90 : 260); easing.type: IrisStyle.feedbackEasing } }
+    onMovingChanged: if (!root.moving) admit.start()
     onCurrentChanged: {
         // Opened from elsewhere (the pager of a shortcut, IPC, search): the deck follows.
         if (root.aim !== root.current) {
@@ -98,7 +104,7 @@ Item {
     }
     Component.onCompleted: { root.standAt(root.current); root.aim = root.current; admit.start() }
     // The open area's own rows stand in its card once they are built; until then the card shows what a neighbour shows.
-    readonly property bool live: root.home || root.searching || pool.shown === root.section
+    readonly property bool live: root.searching || pool.shown === root.section
     readonly property bool heroArriving: pool.turning
     // Over the desktop the open page comes in over the last quarter of its card's travel, over the card's own face.
     readonly property real heroShown: {
@@ -415,6 +421,7 @@ Item {
                 if (card && !card.admitted && card.far < root.reach && (!best || card.far < best.far)) best = card
             }
             if (best) { best.admitted = true; return }
+            if (root.moving) { admit.stop(); return }
             // then the stages of the two cards beside it, the heavy part, once the body and the open area's page stand:
             // they took the frames the page was building in, and a stage two cards out is past the screen's edge
             if (!Boolean(root.host?.bodySettled ?? true) || pool.current !== pool.shown) { admit.stop(); return }
@@ -438,7 +445,7 @@ Item {
         AreaCard {}
     }
 
-    // ── The hero: the area's Dot title over its stage, then its rows; or Home.
+    // ── The hero: the area's Dot title over its stage, then its rows.
     Item {
         id: card
         x: root.sided ? root.liveRect.x : root.cardRect.x + (root.windowed ? 0 : root.shift)
@@ -474,7 +481,7 @@ Item {
             }
             RoundKey { glyph: "close"; name: Translation.tr("Close settings"); onClicked: root.host.close() }
         }
-        // The hero: Home or the area, a page of the pool; a turn moves the cards while the next page builds.
+        // The hero: the area, a page of the pool; a turn moves the cards while the next page builds.
         AreaPool {
             id: pool
             x: card.inset
@@ -491,8 +498,8 @@ Item {
             // a page asked for mid-travel incubates while the cards move and is finished when they land: built in the
             // frame it was asked for, it stalled the turn halfway (the move then skipped ahead)
             settled: Boolean(root.host?.bodySettled ?? true) && root.heroShown >= 1
-            urlFor: id => Qt.resolvedUrl(id === "home" ? "Home.qml" : "DeckPage.qml")
-            propsFor: id => id === "home" ? { host: root.host, voice: "deck" } : { host: root.host }
+            urlFor: id => Qt.resolvedUrl("DeckPage.qml")
+            propsFor: id => ({ host: root.host })
             order: root.sections.map(entry => entry.id)
             distance: 0
             crossing: false
@@ -729,7 +736,6 @@ Item {
         required property var modelData
         readonly property int index: root.sections.findIndex(entry => entry.id === side.modelData.id)
         readonly property var entry: side.modelData
-        readonly property bool home: String(side.entry?.id ?? "") === "home"
         readonly property real o: side.index - root.pos
         readonly property real far: Math.abs(side.o)
         readonly property bool inView: side.far < 2.5
@@ -741,11 +747,24 @@ Item {
         property bool admitted: false
         property bool staged: false
         onFarChanged: {
-            if (side.far < 1.75) side.reads = true
+            if (side.far < 1.75 && !root.moving) side.reads = true
             else if (side.far >= 2.5) side.reads = false
             if (side.far >= 3.2) side.staged = false
+            if (!root.moving) side.stand = side.standFor()
         }
-        Component.onCompleted: side.reads = side.far < 1.75
+        Connections {
+            target: root
+            function onMovingChanged(): void {
+                if (root.moving) return
+                if (side.far < 1.75) side.reads = true
+                side.stand = side.standFor()
+            }
+        }
+        Component.onCompleted: { side.reads = side.far < 1.75; side.stand = side.standFor() }
+        // where its title is fitted: open, beside, two out; held while the deck moves (each fit is a search over sizes,
+        // and a new one mid-turn popped the name's size)
+        function standFor(): int { return side.far < 0.5 ? 0 : side.far < 1.5 ? 1 : 2 }
+        property int stand: 1
         // what a card says past its name fades out between one and two cards off (built once, never dropped on the way)
         readonly property real detail: Math.max(0, Math.min(1, (1.75 - side.far) / 0.5))
         // the open card's own rows stand on it once built: the live card covers this one, once it has come in over it
@@ -792,7 +811,7 @@ Item {
                         least: root.u(14)
                         // fitted to where the card stands, not to each frame of its way (a fit is a search over sizes);
                         // the open card's title leaves room for the keys at its corner
-                        readonly property int stand: side.far < 0.5 ? 0 : side.far < 1.5 ? 1 : 2
+                        readonly property int stand: side.stand
                         fit: sideTitle.stand === 0 ? (root.cardRect.width - root.u(76) - keys.width) * 28 / 40
                             : sideTitle.stand === 1 ? root.sideWidth - root.u(68) : (root.u(260) - root.u(68)) * 28 / 22
                         color: side.far < 0.5 ? IrisStyle.text : IrisStyle.subtext
@@ -813,10 +832,10 @@ Item {
                 }
                 // the stage is the heavy part: it comes a beat later, on its own
                 Loader {
-                    active: !side.home && side.staged
+                    active: side.staged
                     asynchronous: true
-                    visible: (item?.available ?? false)
-                    opacity: side.detail
+                    visible: (item?.available ?? false) && opacity > 0
+                    opacity: side.detail * root.stagesShown
                     width: parent.width
                     height: root.u(200)
                     sourceComponent: IrisGroupPreview {
@@ -831,11 +850,16 @@ Item {
                 Column {
                     id: sideRows
                     readonly property int fit: Math.max(0, Math.min(12, Math.floor((root.sideRect(1).height - root.u(370)) / root.u(44))))
-                    readonly property var rows: side.reads && !side.home && sideRows.fit > 0 ? (root.host?.tellingRows(sideRows.fit, String(side.entry?.id ?? ""), true) ?? []) : []
+                    readonly property var rows: side.reads && sideRows.fit > 0 ? (root.host?.tellingRows(sideRows.fit, String(side.entry?.id ?? ""), true) ?? []) : []
                     visible: sideRows.rows.length > 0
                     width: parent.width
                     topPadding: root.u(6)
-                    opacity: 0.72 * side.detail
+                    opacity: 0.72 * side.detail * sideRows.shown
+                    property real shown: 1
+                    // fades in when it first gets rows, never on a value's change
+                    property bool had: false
+                    onRowsChanged: { const has = sideRows.rows.length > 0; if (has && !sideRows.had) rowsIn.restart(); sideRows.had = has }
+                    NumberAnimation { id: rowsIn; target: sideRows; property: "shown"; from: 0; to: 1; duration: IrisStyle.duration(240); easing.type: IrisStyle.feedbackEasing }
                     Repeater {
                         model: ScriptModel { values: sideRows.rows; objectProp: "modelKey" }
                         SideRow { width: sideRows.width }
@@ -846,7 +870,7 @@ Item {
                     id: beyond
                     readonly property var entry: root.sections[side.index + (side.o < 0 ? -1 : 1)] ?? null
                     readonly property int fit: sideRows.fit - sideRows.rows.length - 1
-                    readonly property var rows: side.reads && beyond.fit > 0 && beyond.entry && beyond.entry.id !== "home" ? (root.host?.tellingRows(beyond.fit, beyond.entry.id, true) ?? []) : []
+                    readonly property var rows: side.reads && beyond.fit > 0 && beyond.entry ? (root.host?.tellingRows(beyond.fit, beyond.entry.id, true) ?? []) : []
                     visible: sideRows.visible && beyond.rows.length > 0
                     width: parent.width
                     opacity: 0.42 * side.detail * Math.min(1, side.far * 2)

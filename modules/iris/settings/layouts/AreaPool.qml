@@ -10,7 +10,7 @@ import qs.modules.iris.style
 Item {
     id: pool
 
-    // The area asked for, and the page file for an id (the layout's own page, Home for "home").
+    // The area asked for, and the page file for an id (the layout's own page).
     property string current: ""
     property var urlFor: id => ""
     // What a page gets at creation, besides its `area`.

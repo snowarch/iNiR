@@ -86,6 +86,8 @@ QtObject {
         if (spec.widgetDesign) return DesktopWidgetDesign.current
         if (spec.niri) return IrisNiri.value(spec)
         if (spec.kind === "niriMotion") return NiriAnimationPresets.activeId
+        // A row over something that is not config (Night Light, game mode) reads it live.
+        if (spec.state) return spec.state()
         if (spec.kind === "icon") return IrisPieces.chosenGlyph(String(spec.piece ?? ""))
         if (/^iris\.bubbles\.extras\.\w+\.enable$/.test(String(spec.path ?? "")) && IrisPieces.listedOnIsland(String(spec.path).split(".")[3]))
             return false
@@ -99,65 +101,7 @@ QtObject {
         }
         return Config.getNestedValue(spec.path, spec.fallback)
     }
-    function commit(spec: var, next: var): void {
-        const before = root.currentValue(spec)
-        root.write(spec, next)
-        root.remember(spec, before, next)
-    }
-    // Home's "Recently changed": the last rows touched with the value each had before, so touching it again undoes.
-    // A row brought back to where it was leaves the list. Kept in the state dir, never in config.json.
-    property var recent: []
-    readonly property int recentMost: 12
-    function recentKey(spec: var): string { return String(spec.section ?? spec.target ?? "") + "|" + String(spec.path ?? "") + "|" + String(spec.label ?? "") }
-    function remember(spec: var, before: var, next: var): void {
-        if (!spec.path || spec.mirror || ["action", "list", "widgets", "pieces"].includes(String(spec.kind))) return
-        const key = root.recentKey(spec)
-        const plain = value => value === undefined ? null : JSON.parse(JSON.stringify(value))
-        const kept = root.recent.find(entry => entry.key === key)
-        const was = kept ? kept.before : plain(before)
-        const rest = root.recent.filter(entry => entry.key !== key)
-        root.recent = root.same(was, next) ? rest
-            : [{ key: key, before: was, at: Date.now() }].concat(rest).slice(0, root.recentMost)
-        recentFile.setText(JSON.stringify(root.recent))
-    }
-    function forget(key: string): void {
-        root.recent = root.recent.filter(entry => entry.key !== key)
-        recentFile.setText(JSON.stringify(root.recent))
-    }
-    // The rows behind the list, newest first; a row gone from this version or hidden now drops out.
-    function recentRows(): var {
-        const out = []
-        for (const entry of root.recent) {
-            const spec = root.settings.find(candidate => root.recentKey(candidate) === entry.key)
-            if (spec && root.shown(spec)) out.push({ spec: spec, before: entry.before, at: Number(entry.at ?? 0), key: entry.key })
-        }
-        return out
-    }
-    readonly property FileView recentFile: FileView {
-        path: Directories.statePath + "/user/iris-settings-recent.json"
-        printErrors: false
-        onLoaded: { try { const list = JSON.parse(text()); if (Array.isArray(list)) root.recent = list } catch (e) {} }
-    }
-    // Home's "Most visited": how often each area was opened, kept beside the recent rows.
-    property var visits: ({})
-    function visit(id: string): void {
-        root.settle()
-        if (!id || id === "home") return
-        const next = Object.assign({}, root.visits)
-        next[id] = Number(next[id] ?? 0) + 1
-        root.visits = next
-        visitsFile.setText(JSON.stringify(next))
-    }
-    function mostVisited(count: int, fallback: var): var {
-        const known = id => root.sections.some(entry => entry.id === id)
-        const ranked = Object.keys(root.visits).filter(known).sort((a, b) => root.visits[b] - root.visits[a])
-        return ranked.concat(fallback.filter(id => known(id) && !ranked.includes(id))).slice(0, count)
-    }
-    readonly property FileView visitsFile: FileView {
-        path: Directories.statePath + "/user/iris-settings-visits.json"
-        printErrors: false
-        onLoaded: { try { const read = JSON.parse(text()); if (read && typeof read === "object" && !Array.isArray(read)) root.visits = read } catch (e) {} }
-    }
+    function commit(spec: var, next: var): void { root.write(spec, next) }
     function write(spec: var, next: var): void {
         // A family switch goes through the shell's transition, never a bare config write.
         if (spec.path === "panelFamily") Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "panelFamily", "set", String(next)])
@@ -1128,8 +1072,8 @@ QtObject {
         { section: "general", group: "At login", label: "Starts with you", description: "Apps and commands Niri opens when you sign in.", kind: "list", view: Qt.resolvedUrl("IrisAutostartList.qml"), summary: false, keywords: ["autostart", "startup", "login", "boot", "launch", "spawn", "discord", "steam", "telegram", "inicio", "arranque"] },
         { section: "general", group: "At login", label: "Startup file", description: "The Niri file these lines live in, for the ones written by hand.", kind: "action", button: "Open", run: () => Quickshell.execDetached(["xdg-open", Autostart.startupFilePath]), showIf: () => Autostart.isNiri && Autostart.startupFilePath.length > 0, tune: true, keywords: ["startup", "niri", "config", "kdl", "file"] },
         { section: "general", group: "Apps", label: "Terminal", description: "Where Spotlight's commands, package installs and anime playback open.", path: "apps.terminal", kind: "text", placeholder: "kitty", fallback: "kitty", keywords: ["terminal", "kitty", "foot", "alacritty", "ghostty", "wezterm", "default apps"] },
-        { section: "general", group: "Settings window", label: "Opens as", description: "Over the desktop previews every change on the screen behind it.", path: "iris.appearance.settingsHost", kind: "choice", fallback: "overlay", choices: [{ label: "Over the desktop", value: "overlay", glyph: "layers" }, { label: "Window", value: "window", glyph: "web_asset" }], keywords: ["settings", "window", "overlay", "floating", "tile", "maximize"] },
-        { section: "general", group: "Settings window", label: "Layout", description: "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.", path: "iris.appearance.settingsLayout", kind: "choice", fallback: "classic", showIf: () => IrisDesign.skin("settingsPage").length === 0, choices: [{ label: "Classic", value: "classic", glyph: "view_sidebar" }, { label: "Folio", value: "folio", glyph: "article" }, { label: "Deck", value: "deck", glyph: "view_carousel" }, { label: "Console", value: "console", glyph: "grid_view" }], keywords: ["settings", "layout", "classic", "sidebar", "folio", "deck", "console", "pliego", "baraja", "consola", "cards", "tiles"] },
+        { section: "general", group: "Settings window", label: "Opens as", description: "Over the desktop previews every change on the screen behind it.", path: "iris.appearance.settingsHost", kind: "choice", tune: true, fallback: "overlay", choices: [{ label: "Over the desktop", value: "overlay", glyph: "layers" }, { label: "Window", value: "window", glyph: "web_asset" }], keywords: ["settings", "window", "overlay", "floating", "tile", "maximize"] },
+        { section: "general", group: "Settings window", label: "Layout", description: "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.", path: "iris.appearance.settingsLayout", kind: "choice", tune: true, fallback: "classic", showIf: () => IrisDesign.skin("settingsPage").length === 0, choices: [{ label: "Classic", value: "classic", glyph: "view_sidebar" }, { label: "Folio", value: "folio", glyph: "article" }, { label: "Deck", value: "deck", glyph: "view_carousel" }, { label: "Console", value: "console", glyph: "grid_view" }], keywords: ["settings", "layout", "classic", "sidebar", "folio", "deck", "console", "pliego", "baraja", "consola", "cards", "tiles"] },
         { section: "general", group: "Performance", label: "Low power", description: "Turns glass, blur and heavy wallpaper effects off everywhere.", path: "performance.lowPower", kind: "switch", fallback: false, keywords: ["performance", "battery", "effects", "glass", "blur", "rendimiento"] },
         { section: "general", group: "Shell family", label: "Family", description: "The whole shell's look.", path: "panelFamily", kind: "choice", fallback: "iris", choices: [{label:"iRiS",value:"iris",glyph:"visibility"},{label:"Material",value:"ii",glyph:"dashboard"},{label:"Windows 11",value:"waffle",glyph:"window"}], keywords: ["family", "material", "waffle", "windows", "ii", "switch", "familia"] },
         { section: "general", group: "Shell family", label: "Switch shortcut goes through", description: "The families the switch keybind steps through, in the order you turn them on.", path: "familyCycle", kind: "pieces", tune: true, fallback: ["ii", "waffle", "iris"], choices: [{label:"iRiS",value:"iris"},{label:"Material",value:"ii"},{label:"Windows 11",value:"waffle"}], keywords: ["family", "cycle", "shortcut", "keybind", "switch"] },
@@ -1509,13 +1453,14 @@ QtObject {
         "Touch": "touch_app", "Tray": "inventory_2", "Type": "text_fields", "Updates": "system_update_alt", "Visibility": "visibility",
         "Volume": "volume_up", "VPN": "vpn_lock", "Wallpaper": "wallpaper", "Wallpaper gallery": "photo_library",
         "Warnings": "battery_alert", "Weather": "partly_cloudy_day", "When idle": "hourglass_empty", "Widgets": "widgets",
-        "Windows": "select_window", "Workspaces": "view_column", "Apps": "apps", "At login": "rocket_launch", "Performance": "speed", "Web search": "travel_explore",
+        "Windows": "select_window", "Workspaces": "view_column", "Apps": "apps", "At login": "rocket_launch", "Every day": "bolt", "Performance": "speed", "Web search": "travel_explore",
         "Read text": "document_scanner", "Texture": "texture", "Borders": "border_style", "Edges": "border_style", "Movement": "animation", "Closing": "close",
         "Room for iRiS": "fit_screen", "Keyboard": "keyboard", "Mouse": "mouse", "Trackpad": "touch_app", "Pointer": "arrow_selector_tool", "Screen": "monitor",
         "Arranging": "drag_pan", "Power saving": "energy_savings_leaf", "World clock": "public", "Month Calendar": "calendar_month", "Upcoming Events": "event_upcoming", "Date badge": "today", "Day progress": "wb_twilight", "Timers": "timer", "System uptime": "history", "Media Controls": "album", "System Monitor": "monitoring", "Battery": "battery_full", "Controls": "toggle_on", "Screen time": "hourglass_top", "News": "newspaper", "Notes": "sticky_note_2", "Todo": "checklist", "User card": "account_circle", "Custom image": "image", "Image converter": "transform", "Decorative shape": "interests", "Japanese Typography": "translate", "Editorial": "article", "Mascot": "pets", "Hotspot": "wifi_tethering", "Network": "language", "Screens": "desktop_windows"
     })
     readonly property var groupTints: ({
         get "At login"() { return IrisStyle.identity.orange },
+        get "Every day"() { return IrisStyle.identity.yellow },
         get "Day and night"() { return IrisStyle.identity.indigo },
         get "Shell family"() { return IrisStyle.identity.purple },
         get "Notch"() { return IrisStyle.identity.blue },
@@ -1730,6 +1675,7 @@ QtObject {
     }
     // The order a section's groups are listed in: what someone came to change first, the rest as they were declared.
     readonly property var groupOrder: ({
+        general: ["Every day", "Date & time", "Language", "At login", "Apps", "Performance", "Settings window", "Shell family"],
         appearance: ["Look", "Themes", "Material", "Glass", "Texture", "Edges", "Light", "Shape", "Corners per surface",
             "Frame", "Text", "Faces", "Icons", "Material per surface", "Menus", "Settings", "Badges", "Customize", "Previews"],
         colour: ["Scheme", "Signal", "Accent", "Highlight", "Colour theme", "Day and night", "App colours", "Dark look", "Ink look", "Light look", "Wallpaper tint"],
@@ -1796,6 +1742,12 @@ QtObject {
     })
     // Topics big enough to be looked for by name have a section of their own; their rows are declared where their
     // surface's other rows are (Customize reads them there) and are shown here.
+    // Every day: General opens on what people flip daily; the rows are the areas' own, said here once more.
+    readonly property var dailySwitches: [
+        { section: "general", group: "Every day", label: "Night Light", kind: "switch", mirror: true, state: () => Hyprsunset.active, set: on => { if (Boolean(on) !== Hyprsunset.active) Hyprsunset.toggle() }, keywords: ["night", "warm", "blue light"] },
+        { section: "general", group: "Every day", label: "Game mode", kind: "switch", mirror: true, state: () => GameMode.active, set: on => { if (Boolean(on) !== GameMode.active) GameMode.toggle() } }
+    ]
+    readonly property var dailyPaths: ["iris.appearance.scheme", "iris.appearance.accent", "iris.appearance.look", "iris.appearance.design", "iris.appearance.glass.mode", "notifications.silent"]
     readonly property var movedGroups: ({
         appearance: { to: "colour", groups: ["Colour theme", "Day and night", "Scheme", "Signal", "Accent", "Highlight", "App colours", "Dark look", "Ink look", "Light look", "Wallpaper tint"] },
         desktop: { to: "wallpaper", groups: ["Wallpaper shuffle", "Scaling", "Live wallpapers", "Wallpaper gallery", "Behind windows", "Parallax", "Overview backdrop"] }
@@ -1806,7 +1758,10 @@ QtObject {
     }
     readonly property var settings: {
         const rows = root.behaviour.concat(root.shared).concat(root.niriRows).concat(DesktopWidgetOptions.rows).concat(root.edgeRows).map(spec => root.placed(spec))
-        const known = new Set(rows.map(spec => spec.path))
+        const known = new Set(rows.filter(spec => !spec.mirror).map(spec => spec.path))
+        const own = path => rows.find(spec => spec.path === path && !spec.mirror) ?? root.studio.find(spec => spec.path === path && !spec.mirror)
+        root.dailyPaths.map(own).filter(spec => spec).forEach(spec => rows.push(Object.assign({}, spec, { section: "general", group: "Every day", mirror: true, tune: false, description: undefined, cards: undefined, tiles: undefined, visibleWhen: undefined, target: undefined })))
+        root.dailySwitches.forEach(spec => rows.push(spec))
         const look = []
         for (const spec of root.studio) {
             if (spec.mirror) { look.push(root.placed(Object.assign({ section: root.sectionOf(spec) }, spec))); continue }

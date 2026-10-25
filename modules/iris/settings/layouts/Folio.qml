@@ -15,9 +15,9 @@ import qs.modules.iris.preview
 import qs.modules.iris.settings
 import qs.modules.iris.settings.layouts.folio as Skins // so Quickshell mirrors the skins IrisSkin loads by url
 
-// Folio: Apple's System Settings read as a sheet. An index of ink glyphs down the left (Home first, then the clusters
-// under their Label heads; the open one an inverted capsule, a signal dot where something needs you). The page is Home,
-// or an area: its title and one sentence, its live stage held still, its groups beside it, scrolled as Classic's.
+// Folio: Apple's System Settings read as a sheet. An index of ink glyphs down the left (General first, then the clusters
+// under their Label heads; the open one an inverted capsule, a signal dot where something needs you). The page is an
+// area: its title and one sentence, its live stage held still, its groups beside it, scrolled as Classic's.
 Item {
     id: root
     property Item host
@@ -37,7 +37,6 @@ Item {
     readonly property bool compact: root.width < root.u(1200)
     readonly property var sections: root.host?.sections ?? []
     readonly property string section: String(root.host?.section ?? "")
-    readonly property bool home: root.section === "home" && !root.searching
     readonly property bool searching: root.host?.searching ?? false
     readonly property bool paged: Number(root.host?.advancedPage ?? -1) >= 0
     readonly property var area: root.host?.currentSection ?? ({})
@@ -187,7 +186,7 @@ Item {
         }
     }
 
-    // ── The page: Home or an area, each a page of the pool, built once in the background and kept.
+    // ── The page: the area, a page of the pool.
     Item {
         id: page
         x: index.x + index.width + root.u(root.compact ? 20 : 28)
@@ -225,8 +224,8 @@ Item {
                 current: root.searching ? pool.shown : root.section
                 hidden: root.searching || root.paged
                 settled: Boolean(root.host?.bodySettled ?? true)
-                urlFor: id => Qt.resolvedUrl(id === "home" ? "Home.qml" : "FolioPage.qml")
-                propsFor: id => id === "home" ? { host: root.host, voice: "folio" } : { host: root.host }
+                urlFor: id => Qt.resolvedUrl("FolioPage.qml")
+                propsFor: id => ({ host: root.host })
                 order: root.sections.map(entry => entry.id)
                 distance: root.u(26)
                 onArrived: id => {

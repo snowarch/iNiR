@@ -47,22 +47,20 @@ Item {
         return screen ? screen.height / Math.max(1, screen.width) : 0.5625
     }
     // A section about hardware this machine lacks is not offered (Battery on a desktop); `inir battery simulate` brings it back.
-    readonly property var sections: (root.homed ? [root.homeEntry] : []).concat(IrisOptions.sections.filter(section => section.id !== "battery" || Battery.available))
-    // Home leads every layout: what people change every day, what needs them, what they changed last. The engine's own
-    // page (a Design's, or a window too narrow for a layout) has no Home and opens on General.
-    // Home leads every page but a Design's own catalogue: Classic too, where the daily things were an area deep.
-    readonly property bool homed: IrisDesign.skin("settingsPage").length === 0
-    readonly property var homeEntry: ({ id: "home", cluster: -1, title: "Home", subtitle: "What you change every day", icon: "home", get tint() { return IrisStyle.identity.gray } })
-    onHomedChanged: if (!root.homed && root.section === "home") root.section = "general"
-    onSceneFitsChanged: if (!root.sceneFits && root.section === "home") root.section = "general"
+    // General leads every layout: the daily things first, then how the shell behaves.
+    readonly property var sections: {
+        const all = IrisOptions.sections.filter(section => section.id !== "battery" || Battery.available)
+        return all.filter(section => section.id === "general").map(section => Object.assign({}, section, { cluster: -1 }))
+            .concat(all.filter(section => section.id !== "general"))
+    }
     // Sources and the Community Hub sit in a footer under the list, always in view.
     readonly property int footerCluster: 4
     readonly property var specifications: IrisOptions.settings
-    readonly property var currentSection: root.section === "home" ? root.homeEntry : IrisOptions.sectionById(root.section)
+    readonly property var currentSection: IrisOptions.sectionById(root.section)
     // Every area is a row of the sidebar (DI49g); clusters part by air, no captions.
     readonly property var sideSections: {
-        const out = root.homed ? [root.homeEntry] : []
-        IrisOptions.categories.filter(category => !category.foot).forEach((category, at) => {
+        const out = root.sections.filter(section => section.id === "general")
+        IrisOptions.categories.filter(category => !category.foot && category.id !== "general").forEach((category, at) => {
             category.sections.map(id => root.sections.find(section => section.id === id)).filter(section => !!section)
                 .forEach(section => out.push(Object.assign({}, section, { cluster: at })))
         })
@@ -80,19 +78,43 @@ Item {
     // iRiS lays the page in the layout chosen in Settings (Folio, Deck, Console); a Design with its own page keeps it.
     // Only layouts whose page exists: a missing one would leave the body waiting for its scene forever.
     readonly property var layouts: ({ folio: "Folio", deck: "Deck", console: "Console" })
-    // Classic is the engine's own page (the sidebar and its pages, as before the layouts): no layout file, no Home.
+    // Classic is the engine's own page (the sidebar and its pages, as before the layouts): no layout file.
     readonly property string chosenLayout: {
         const wanted = String(Config.options?.iris?.appearance?.settingsLayout ?? "classic")
         return wanted === "classic" || root.layouts[wanted] ? wanted : "classic"
     }
     readonly property string layout: IrisDesign.skin("settingsPage").length > 0 || root.chosenLayout === "classic" ? "" : root.chosenLayout
+    // A layout gives way to another as a picture (SekaiPop's phone moves): the page is shot, the body glides to its new box
+    // with the shot riding it, the new layout builds off screen at its final size and rises once it stands. Re-laying
+    // the whole page on every frame of the glide froze the shell for the length of it.
+    property string pendingLayout: ""
+    property bool switching: false
+    readonly property bool layoutStands: !root.sceneDesigned || root.sceneDrawn || pageScene.status === Loader.Error
     function setLayout(name: string): void {
-        if ((name !== "classic" && !root.layouts[name]) || name === root.chosenLayout) return
-        reshape.restart()
-        Config.setNestedValue("iris.appearance.settingsLayout", name)
+        if ((name !== "classic" && !root.layouts[name]) || name === root.chosenLayout || shotTaken.running) return
+        root.pendingLayout = name
+        layoutShot.from = Qt.size(frame.width, frame.height)
+        layoutShot.opacity = 1
+        layoutShot.scheduleUpdate()
+        shotTaken.restart()
     }
-    // While a layout gives way to another the body glides to its new box instead of jumping.
-    Timer { id: reshape; interval: IrisStyle.morphDuration + 120 }
+    function endSwitch(): void {
+        if (!root.switching || reshape.running || shotTaken.running || !root.layoutStands) return
+        root.switching = false
+    }
+    onLayoutStandsChanged: Qt.callLater(root.endSwitch)
+    // Two frames for the shot to hold the page before the write rebuilds it.
+    Timer {
+        id: shotTaken
+        interval: 34
+        onTriggered: {
+            root.switching = true
+            reshape.restart()
+            shotFade.restart()
+            Config.setNestedValue("iris.appearance.settingsLayout", root.pendingLayout)
+        }
+    }
+    Timer { id: reshape; interval: IrisStyle.morphDuration + 60; onTriggered: root.endSwitch() }
     // The voice the layout gives its rows' controls and group heads.
     readonly property string voice: root.sceneDrawn ? String(root.scene.voice ?? "") : ""
     // An auto-hidden Island or Dock that stays up on an empty workspace keeps its edge out of the room.
@@ -237,7 +259,8 @@ Item {
     }
     // A short area reads whole; a long one is a list of its groups, each saying its value and opening in place or
     // on its own page (main's way: one long scroll was the most-complained-about change).
-    readonly property bool readsWhole: (root.scene?.readsWhole ?? false) || root.essentialCount <= 10
+    // General leads with its daily rows, so it reads as one page however many it has.
+    readonly property bool readsWhole: (root.scene?.readsWhole ?? false) || root.essentialCount <= 10 || root.section === "general"
     // Rows folded behind a group's Fine-tune take no room (a modified one never folds).
     readonly property int essentialCount: {
         let count = 0
@@ -850,7 +873,7 @@ Item {
         // setting "general" on the way to the asked section built General's page on each request.
         const own = root.pageIndexOf(key)
         let section = own >= 0 ? String(root.ownPages.concat(root.morePages).find(entry => entry.key === key)?.home ?? "system")
-            : root.homed ? "home" : "general"
+            : "general"
         // An area asked for by the name it shows ("style" is Style, "screenshots" Screenshots & Recording).
         const asked0 = root.requestedSection.toLowerCase()
         const titled = asked0.length > 0 && !root.sections.some(s => s.id === root.requestedSection)
@@ -906,7 +929,7 @@ Item {
     Timer { id: takeKeys; interval: 160; onTriggered: if (!searchField.activeFocus && GlobalStates.settingsOverlayOpen) root.forceActiveFocus() }
     // A Design's scene sets its own page; the engine's slide would only move chrome nobody sees.
     function enterPage(): void { if (!root.sceneDesigned) pageEnter.restart() }
-    onSectionChanged: { IrisOptions.visit(root.section); settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
+    onSectionChanged: { IrisOptions.settle(); settingsFlick.contentY = 0; root.heldGroup = ""; root.tuneAll = false; IrisOptions.openList = ""; root.enterPage(); spyPace.restart() }
     onPageKeyChanged: Qt.callLater(root.feedPage)
     onOpenGroupChanged: { settingsFlick.contentY = 0; root.enterPage() }
     onAdvancedPageChanged: root.enterPage()
@@ -983,23 +1006,27 @@ Item {
         readonly property bool laid: root.layout.length > 0 && !root.windowed
         readonly property bool spread: frame.laid && root.layout === "deck"
         panes: root.sceneDrawn && frame.spread ? (root.scene.panes ?? []) : []
-        Behavior on x { enabled: reshape.running; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-        Behavior on y { enabled: reshape.running; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-        Behavior on width { enabled: reshape.running; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-        Behavior on height { enabled: reshape.running; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-        x: root.windowed || frame.spread ? 0 : frame.laid ? Math.round(root.room.x + (root.room.width - width) / 2) : Math.round((parent.width - width) / 2)
-        y: root.windowed || frame.spread ? 0 : frame.laid ? Math.round(root.room.y + (root.room.height - height) / 2) : Math.round((parent.height - height) / 2)
-        width: root.windowed ? parent.width
+        Behavior on x { enabled: root.switching; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        Behavior on y { enabled: root.switching; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        Behavior on width { enabled: root.switching; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        Behavior on height { enabled: root.switching; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        readonly property real goalX: root.windowed || frame.spread ? 0 : frame.laid ? Math.round(root.room.x + (root.room.width - width) / 2) : Math.round((parent.width - width) / 2)
+        readonly property real goalY: root.windowed || frame.spread ? 0 : frame.laid ? Math.round(root.room.y + (root.room.height - height) / 2) : Math.round((parent.height - height) / 2)
+        readonly property real goalW: root.windowed ? parent.width
             : frame.spread ? parent.width
             : frame.laid ? Math.round(Math.min(root.room.width, 1480 * root.d))
             // The sidebar and the rows at their measure; Settings sits on the desktop, it does not replace it.
             : Math.round(Math.min(parent.width - 32 - IrisFrame.musicReach("left") - IrisFrame.musicReach("right"), 1240 * root.d))
-        height: root.windowed || frame.spread ? parent.height
+        readonly property real goalH: root.windowed || frame.spread ? parent.height
             : frame.laid ? Math.round(Math.min(root.room.height, 900 * root.d))
             // Most of the screen's height, and never shorter than the sidebar's list: measured by the list alone, ten
             // categories left a 640 px strip that cut every page at its second row.
             : Math.round(Math.min(parent.height - 48 - IrisFrame.musicReach("top") - IrisFrame.musicReach("bottom"),
                 Math.max(640 * root.d, parent.height * 0.86, root.sidebarNeed)))
+        x: frame.goalX
+        y: frame.goalY
+        width: frame.goalW
+        height: frame.goalH
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.BackButton | Qt.ForwardButton
@@ -1021,17 +1048,21 @@ Item {
             wanted: root.sceneFits
             host: root
             fallback: root.layout.length > 0 ? Qt.resolvedUrl("layouts/" + root.layouts[root.layout] + ".qml") : ""
-            // A new layout settles in from the old one's place: it rises out of a slightly smaller page, never pops.
-            onLoaded: if (root.layout.length > 0 && frame.settled) layoutArrive.restart()
-            ParallelAnimation {
-                id: layoutArrive
-                NumberAnimation { target: pageScene.item; property: "opacity"; from: 0; to: 1; duration: IrisStyle.duration(260); easing.type: IrisStyle.feedbackEasing }
-                NumberAnimation { target: pageScene.item; property: "scale"; from: 0.97; to: 1; duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve }
-            }
+            asynchronous: root.switching
+            anchors.fill: undefined
+            width: frame.goalW
+            height: frame.goalH
+            opacity: root.switching ? 0 : 1
+            scale: root.switching ? 0.97 : 1
+            Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing } }
+            Behavior on scale { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
         }
         RowLayout {
-            anchors.fill: parent
+            width: frame.goalW
+            height: frame.goalH
             visible: !root.sceneDesigned
+            opacity: root.switching ? 0 : 1
+            Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing } }
             spacing: 0
 
             Item {
@@ -1496,26 +1527,10 @@ Item {
                                 }
                             }
 
-                            // Home on the engine's own page (Classic, a narrow window): the same page the layouts show.
-                            Loader {
-                                id: classicHome
-                                readonly property bool wanted: root.section === "home" && !root.searching && root.advancedPage < 0 && !root.layoutRows
-                                anchors.fill: parent
-                                anchors.leftMargin: root.split ? Math.round(14 * root.d) : Math.round(20 * root.d)
-                                anchors.rightMargin: anchors.leftMargin
-                                anchors.topMargin: Math.round(6 * root.d)
-                                anchors.bottomMargin: Math.round(14 * root.d)
-                                active: classicHome.wanted
-                                visible: classicHome.wanted && classicHome.status === Loader.Ready
-                                asynchronous: !frame.settled
-                                source: Qt.resolvedUrl("layouts/Home.qml")
-                                onLoaded: classicHome.item.host = root
-                            }
-
                             StageHero {
                                 id: pageHero
                                 readonly property bool groupPage: !root.searching && root.openGroup.length > 0 && root.advancedPage < 0
-                                readonly property bool sectionPage: root.browsing && root.section !== "system" && root.section !== "general" && root.section !== "home"
+                                readonly property bool sectionPage: root.browsing && root.section !== "system" && root.section !== "general"
                                 readonly property bool spying: !pageHero.groupPage && root.leadGroup.length > 0
                                 readonly property string key: pageHero.spying ? root.leadGroup : String(root.shownGroups[0]?.key ?? "")
                                 readonly property bool shown: pageHero.sectionPage || (pageHero.groupPage && (pageHero.stageAvailable || pageHero.titled))
@@ -1553,7 +1568,7 @@ Item {
                                     maskThresholdMin: 0.5
                                     maskSpreadAtMin: 1
                                 }
-                                visible: root.advancedPage < 0 && !classicHome.wanted
+                                visible: root.advancedPage < 0
                                 onContentYChanged: if (root.flatSection) spyPace.start()
                                 // Rows laid after the section changed (a Place opening, a fold) move every head: the reading is taken again.
                                 onContentHeightChanged: if (root.flatSection) spyPace.restart()
@@ -1729,6 +1744,23 @@ Item {
                 }
             }
         }
+    }
+    // The page as it stood when a layout was picked: it rides the body's glide and fades as the new layout builds.
+    ShaderEffectSource {
+        id: layoutShot
+        property size from: Qt.size(1, 1)
+        readonly property real fit: Math.min(frame.width / Math.max(1, layoutShot.from.width), frame.height / Math.max(1, layoutShot.from.height))
+        width: layoutShot.from.width
+        height: layoutShot.from.height
+        x: frame.x + (frame.width - width) / 2
+        y: frame.y + (frame.height - height) / 2
+        scale: layoutShot.fit
+        sourceItem: layoutShot.opacity > 0 ? frame : null
+        live: false
+        smooth: true
+        opacity: 0
+        visible: layoutShot.opacity > 0
+        NumberAnimation on opacity { id: shotFade; running: false; to: 0; duration: IrisStyle.morphDuration; easing.type: IrisStyle.feedbackEasing }
     }
 
     // The toolbar's actions: one anatomy, a quiet capsule with its glyph. None of them is the page's answer, so none

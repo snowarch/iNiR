@@ -41,10 +41,9 @@ Item {
     readonly property string section: String(root.host?.section ?? "")
     readonly property bool searching: root.host?.searching ?? false
     readonly property bool paged: Number(root.host?.advancedPage ?? -1) >= 0
-    readonly property bool home: root.section === "home" && !root.searching
     readonly property int current: Math.max(0, root.sections.findIndex(entry => entry.id === root.section))
     readonly property var area: root.host?.currentSection ?? ({})
-    readonly property var shownArea: pool.shown === "home" ? (root.host?.homeEntry ?? {}) : (IrisOptions.sectionById(pool.shown) ?? root.area)
+    readonly property var shownArea: IrisOptions.sectionById(pool.shown) ?? root.area
     readonly property var noteCounts: root.host?.noteCounts ?? ({})
     readonly property color signal: IrisStyle["signal"] ?? IrisStyle.danger
     readonly property color plate: IrisStyle.glassy ? IrisStyle.readingCard : IrisStyle.fillQuiet
@@ -202,7 +201,7 @@ Item {
         }
     }
 
-    // ── The board: Home or an area, each a page of the pool, built once in the background and kept.
+    // ── The board: the area, a page of the pool.
     Item {
         id: boardBox
         x: head.x
@@ -215,8 +214,8 @@ Item {
             current: root.searching ? pool.shown : root.section
             hidden: root.searching || root.paged
             settled: Boolean(root.host?.bodySettled ?? true)
-            urlFor: id => Qt.resolvedUrl(id === "home" ? "Home.qml" : "ConsolePage.qml")
-            propsFor: id => id === "home" ? { host: root.host, voice: "console" } : { host: root.host }
+            urlFor: id => Qt.resolvedUrl("ConsolePage.qml")
+            propsFor: id => ({ host: root.host })
             order: root.sections.map(entry => entry.id)
             distance: root.u(22)
                     }

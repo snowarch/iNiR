@@ -35,7 +35,7 @@ Item {
     function refresh(): void {
         const out = []
         for (const spec of IrisOptions.settings) {
-            if (spec.section !== root.section || spec.mirror || !IrisOptions.shown(spec)) continue
+            if (spec.section !== root.section || !IrisOptions.shown(spec)) continue
             const key = String(spec.group ?? "")
             let group = out.find(entry => entry.key === key)
             if (!group) { group = { key: key, rows: [] }; out.push(group) }
