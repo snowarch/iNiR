@@ -12,6 +12,8 @@ ColumnLayout {
 
     Layout.fillWidth: true
     Layout.topMargin: 4
+    // side by side in a ConfigRow, a short column sat centred beside a tall one: titles line up at the top
+    Layout.alignment: Qt.AlignTop
     spacing: 2
 
     RowLayout {
