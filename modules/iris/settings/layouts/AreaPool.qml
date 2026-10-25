@@ -98,8 +98,9 @@ Item {
             prep.arm()
         }
         pool.arrived(pool.shown)
-        // The page left goes once the turn ends, so the turn's frame destroys nothing.
-        if (!pool.turning) pool.trim()
+        // The page left goes once the turn ends, so the turn's frame destroys nothing; without a turn, after this event:
+        // settle runs inside the delegate's creation, and trimming there rewrote the model it was building (binding loop)
+        if (!pool.turning) Qt.callLater(pool.trim)
     }
     onCurrentChanged: {
         pool.hold(pool.current)
