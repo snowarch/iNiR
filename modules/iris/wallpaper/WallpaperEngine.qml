@@ -410,7 +410,12 @@ Item {
     readonly property bool sortable: root.online ? root.orderChoices.length > 0 : true
     readonly property string order: root.online ? root.onlineOrder : root.sortOrder
     readonly property var orders: root.online ? root.orderChoices : root.libraryOrderChoices
-    readonly property bool ranged: root.online && root.onlineOrder === "top" && root.provider !== "motionbgs"
+    // Wallhaven's top list narrowed by a tag or a colour is a handful (3 for "bleach" over a week, measured): there "top"
+    // is the most liked of all time and the range steps aside. Konachan and yande.re rank a tag by date fine.
+    readonly property bool narrowed: root.series !== null || root.pivotLabel.length > 0 || root.query.length > 0 || root.colour.length > 0
+        || ((root.discoveries[root.discovery] ?? root.discoveries[0])?.tags ?? []).length > 0
+    readonly property bool topNarrowed: root.provider === "wallhaven" && root.narrowed
+    readonly property bool ranged: root.online && root.onlineOrder === "top" && root.provider !== "motionbgs" && !root.topNarrowed
     readonly property bool filtersShaped: root.provider === "wallhaven" || root.provider === "konachan" || root.provider === "yandere"
     readonly property int filtersOn: (root.ratio !== "screen" ? 1 : 0) + (root.colour.length > 0 ? 1 : 0)
     function setOrder(value: string): void {
@@ -429,13 +434,16 @@ Item {
         if (root.ratio !== "screen") root.setRatio("screen")
         else root.searchOnline(1, true)
     }
-    readonly property string onlineSorting: root.onlineOrder === "top" ? "toplist:" + root.topRange
+    readonly property string onlineSorting: root.onlineOrder === "top" ? (root.topNarrowed ? "favorites" : "toplist:" + root.topRange)
         : root.onlineOrder === "hot" ? "hot" : root.onlineOrder === "views" ? "views" : root.onlineOrder === "favorites" ? "favorites"
         : root.onlineOrder === "random" ? "random" : "date_added"
     onOnlineSortingChanged: if (root.open && root.online) root.searchOnline(1, true)
     onRatioChanged: if (root.open && root.online) root.searchOnline(1, true)
 
+    // Every web source opens on its own top list, in the order and range chosen (top of the week unless changed); the
+    // rest narrow it.
     readonly property var wallhavenDiscoveries: [
+        { label: Translation.tr("Top"), tags: [], category: "111" },
         { label: Translation.tr("Anime"), tags: [], category: "010" },
         { label: Translation.tr("Anime scenery"), tags: ["landscape"], category: "010" },
         { label: Translation.tr("Ricing"), tags: ["linux"], category: "111" },
@@ -448,15 +456,15 @@ Item {
         { label: Translation.tr("Abstract"), tags: ["abstract"], category: "111" }
     ]
     readonly property var konachanDiscoveries: [
-        { label: Translation.tr("Anime"), tags: [] },
+        { label: Translation.tr("Top"), tags: [] },
         { label: Translation.tr("Landscape"), tags: ["landscape"] },
         { label: Translation.tr("Sky"), tags: ["sky"] },
         { label: Translation.tr("City"), tags: ["city"] },
         { label: Translation.tr("Night"), tags: ["night"] }
     ]
     readonly property var yandereDiscoveries: [
-        { label: Translation.tr("Landscape"), tags: ["landscape"] },
-        { label: Translation.tr("Anime"), tags: [] }
+        { label: Translation.tr("Top"), tags: [] },
+        { label: Translation.tr("Landscape"), tags: ["landscape"] }
     ]
     readonly property var liveDiscoveries: [
         { label: Translation.tr("Anime"), tags: ["tag:anime"] },
