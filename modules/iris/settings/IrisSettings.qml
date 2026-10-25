@@ -106,11 +106,14 @@ Item {
         onTriggered: {
             root.switching = true
             reshape.restart()
+            switchGuard.restart()
             shotFade.restart()
             Config.setNestedValue("iris.appearance.settingsLayout", root.pendingLayout)
         }
     }
     Timer { id: reshape; interval: IrisStyle.morphDuration + 60; onTriggered: root.endSwitch() }
+    // However the new layout's build went, it shows: a switch left waiting kept the body at opacity 0 (10-25, Folio blank).
+    Timer { id: switchGuard; interval: 1200; onTriggered: { root.switching = false; layoutShot.opacity = 0 } }
     // The voice the layout gives its rows' controls and group heads.
     readonly property string voice: root.sceneDrawn ? String(root.scene.voice ?? "") : ""
     // An auto-hidden Island or Dock that stays up on an empty workspace keeps its edge out of the room.
@@ -1102,14 +1105,14 @@ Item {
                     anchors.leftMargin: sidebar.pad
                     anchors.topMargin: sidebar.pad
                     anchors.bottomMargin: sidebar.pad
-                    width: root.sidebarFull - 2 * sidebar.pad + 4 * root.d
+                    // Even on both sides of the pane: sized from the slot it ran pad - inset short of the right edge (10-25).
+                    width: sidebar.width - 2 * sidebar.pad
                     spacing: 0
 
                     Item {
                         id: sideSearchSlot
                         visible: !root.sceneDrawn
                         Layout.fillWidth: true
-                        Layout.rightMargin: 4 * root.d
                         Layout.bottomMargin: 6 * root.d
                         implicitHeight: Math.round(32 * root.d)
                     }
