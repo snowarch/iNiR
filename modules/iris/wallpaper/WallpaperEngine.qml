@@ -373,6 +373,40 @@ Item {
     readonly property var palette: ["660000", "990000", "cc0000", "cc3333", "ea4c88", "993399", "663399", "333399", "0066cc",
         "0099cc", "66cccc", "77cc33", "669900", "336600", "666600", "999900", "cccc33", "ffff00", "ffcc33", "ff9900", "ff6600",
         "cc6633", "996633", "663300", "000000", "999999", "cccccc", "ffffff", "424153"]
+    // The same 29 laid out as paint: the bright ones round the colour wheel, the earthy ones, the greys.
+    readonly property var colourRuns: [
+        { id: "spectrum", label: Translation.tr("Colours"), stops: ["cc0000", "ff6600", "ff9900", "ffcc33", "ffff00", "77cc33",
+            "669900", "66cccc", "0099cc", "0066cc", "333399", "663399", "993399", "ea4c88"] },
+        { id: "earth", label: Translation.tr("Earth tones"), stops: ["660000", "990000", "cc3333", "cc6633", "996633", "663300",
+            "666600", "999900", "cccc33", "336600"] },
+        { id: "greys", label: Translation.tr("Greys"), stops: ["000000", "424153", "999999", "cccccc", "ffffff"] }]
+    // Wallhaven only knows its own 29: any other colour (the shell's accent) asks for the one nearest it in OKLCH. A
+    // colour with any hue matches by hue first: a pastel pink accent is pink to the eye, not the light grey nearest it.
+    function nearestColour(colour: color): string {
+        const lch = c => {
+            const lin = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+            const r = lin(c.r), g = lin(c.g), b = lin(c.b)
+            const l = Math.pow(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b, 1 / 3)
+            const m = Math.pow(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b, 1 / 3)
+            const s = Math.pow(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b, 1 / 3)
+            const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s
+            const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s
+            return { L: 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, C: Math.sqrt(A * A + B * B), h: Math.atan2(B, A) }
+        }
+        const want = lch(colour)
+        const tinted = want.C >= 0.035
+        let best = "", bestDistance = Infinity
+        for (const hex of root.palette) {
+            const have = lch(Qt.color("#" + hex))
+            if (tinted !== (have.C >= 0.05)) continue
+            let dh = Math.abs(want.h - have.h)
+            if (dh > Math.PI) dh = 2 * Math.PI - dh
+            const dl = want.L - have.L, dc = want.C - have.C
+            const distance = tinted ? dh * dh + 0.5 * dl * dl + 0.2 * dc * dc : dl * dl
+            if (distance < bestDistance) { bestDistance = distance; best = hex }
+        }
+        return best
+    }
     readonly property bool sortable: root.online ? root.orderChoices.length > 0 : true
     readonly property string order: root.online ? root.onlineOrder : root.sortOrder
     readonly property var orders: root.online ? root.orderChoices : root.libraryOrderChoices
@@ -385,7 +419,8 @@ Item {
     function setRange(value: string): void { Config.setNestedValue("iris.wallpaper.topRange", value) }
     function setRatio(value: string): void { Config.setNestedValue("iris.wallpaper.ratio", value) }
     function setColour(hex: string): void {
-        root.colour = root.colour === hex ? "" : String(hex ?? "").replace(/^#/, "").toLowerCase()
+        const wanted = String(hex ?? "").replace(/^#/, "").toLowerCase()
+        root.colour = root.colour === wanted ? "" : wanted
         if (root.provider !== "wallhaven" && root.colour.length > 0 && root.offered("wallhaven")) { root.setSource("wallhaven", ""); return }
         root.searchOnline(1, true)
     }

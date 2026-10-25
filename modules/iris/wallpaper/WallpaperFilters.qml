@@ -8,7 +8,7 @@ import qs.modules.common.widgets
 import qs.modules.iris.style
 import qs.modules.iris.components
 
-// What the web is asked for besides the words: the shape, how far back Top looks, and (Wallhaven) one colour.
+// What the web is asked for besides the words: the shape, how far back Top rated looks, and (Wallhaven) one colour.
 Flow {
     id: root
 
@@ -35,35 +35,66 @@ Flow {
         current: root.engine.topRange
         onPicked: value => root.engine.setRange(value)
     }
+    // Wallhaven's colours: first the shell's own accents (asked for as the nearest of its 29), then the 29 as paint.
     Row {
+        id: colours
         visible: root.engine.provider === "wallhaven" || root.engine.colour.length > 0
         height: Math.round(32 * root.d)
-        spacing: Math.round(4 * root.d)
-        Repeater {
-            model: root.engine.palette
-            MouseArea {
-                id: swatch
-                required property string modelData
-                readonly property bool chosen: root.engine.colour === swatch.modelData
-                anchors.verticalCenter: parent.verticalCenter
-                width: Math.round(18 * root.d)
-                height: Math.round(26 * root.d)
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                Accessible.role: Accessible.Button
-                Accessible.name: "#" + swatch.modelData
-                onClicked: root.engine.setColour(swatch.modelData)
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: swatch.chosen ? parent.width : Math.round(14 * root.d)
-                    height: swatch.chosen ? parent.height : swatch.containsMouse ? Math.round(22 * root.d) : Math.round(18 * root.d)
-                    radius: IrisStyle.capsule(width)
-                    color: "#" + swatch.modelData
-                    border.width: 1
-                    border.color: swatch.chosen ? IrisStyle.text : IrisStyle.hairlineStrong
-                    Behavior on height { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
-                    Behavior on width { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+        spacing: Math.round(10 * root.d)
+        Rectangle {
+            anchors.verticalCenter: colours.verticalCenter
+            width: yours.implicitWidth + Math.round(20 * root.d)
+            height: Math.round(32 * root.d)
+            radius: IrisStyle.capsule(height)
+            color: IrisStyle.fillQuiet
+            Row {
+                id: yours
+                anchors.centerIn: parent
+                spacing: Math.round(6 * root.d)
+                MaterialSymbol {
+                    anchors.verticalCenter: yours.verticalCenter
+                    text: "palette"
+                    iconSize: Math.round(16 * root.d)
+                    color: IrisStyle.subtext
                 }
+                Repeater {
+                    model: [{ colour: IrisStyle.accent, label: Translation.tr("Accent") },
+                        { colour: IrisStyle.secondaryAccent, label: Translation.tr("Secondary accent") }]
+                    MouseArea {
+                        id: accentKey
+                        required property var modelData
+                        readonly property string hex: root.engine.nearestColour(accentKey.modelData.colour)
+                        readonly property bool chosen: root.engine.colour === accentKey.hex
+                        anchors.verticalCenter: yours.verticalCenter
+                        width: Math.round(22 * root.d)
+                        height: width
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        Accessible.role: Accessible.Button
+                        Accessible.name: accentKey.modelData.label
+                        onClicked: root.engine.setColour(accentKey.hex)
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: accentKey.chosen || accentKey.containsMouse ? parent.width : Math.round(18 * root.d)
+                            height: width
+                            radius: width / 2
+                            color: accentKey.modelData.colour
+                            border.width: accentKey.chosen ? Math.round(2 * root.d) : 0
+                            border.color: IrisStyle.onMedia
+                            Behavior on width { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+                        }
+                    }
+                }
+            }
+        }
+        Repeater {
+            model: root.engine.colourRuns
+            WallpaperSpectrum {
+                required property var modelData
+                anchors.verticalCenter: colours.verticalCenter
+                engine: root.engine
+                stops: modelData.stops
+                name: modelData.label
             }
         }
     }

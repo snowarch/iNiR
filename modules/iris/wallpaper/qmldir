@@ -16,3 +16,4 @@ WallpaperMosaic 1.0 WallpaperMosaic.qml
 WallpaperBrowser 1.0 WallpaperBrowser.qml
 WallpaperEmpty 1.0 WallpaperEmpty.qml
 WallpaperGlyphButton 1.0 WallpaperGlyphButton.qml
+WallpaperSpectrum 1.0 WallpaperSpectrum.qml

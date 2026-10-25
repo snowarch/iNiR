@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Widgets
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
@@ -41,29 +42,50 @@ ColumnLayout {
         visible: (root.entry?.colors ?? []).length > 0
         spacing: Math.round(8 * root.d)
         Head { text: Translation.tr("Colours") }
-        Row {
-            spacing: Math.round(6 * root.d)
-            Repeater {
-                model: root.entry?.colors ?? []
-                MouseArea {
-                    id: colourKey
-                    required property string modelData
-                    width: Math.round(26 * root.d)
-                    height: width
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    Accessible.role: Accessible.Button
-                    Accessible.name: Translation.tr("More in %1").arg(colourKey.modelData)
-                    onClicked: root.engine.setColour(colourKey.modelData)
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: colourKey.containsMouse ? parent.width : Math.round(22 * root.d)
-                        height: width
-                        radius: IrisStyle.capsule(width)
-                        color: colourKey.modelData
-                        border.width: 1
-                        border.color: IrisStyle.hairlineStrong
-                        Behavior on width { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+        // Its palette as one card of paint: the colour under the pointer opens up, a press looks for more in it.
+        ClippingRectangle {
+            id: palette
+            readonly property var colours: Array.from(root.entry?.colors ?? []).map(colour => String(colour).replace(/^#/, "").toLowerCase())
+            property int hovered: -1
+            // The open ones (hovered, chosen) take twice the room of the rest.
+            readonly property int opened: palette.colours.filter((colour, i) => palette.hovered === i || root.engine.colour === colour).length
+            Layout.preferredWidth: Math.round(200 * root.d)
+            Layout.preferredHeight: Math.round(28 * root.d)
+            radius: IrisStyle.capsule(height)
+            color: "transparent"
+            Row {
+                anchors.fill: parent
+                Repeater {
+                    model: palette.colours
+                    MouseArea {
+                        id: colourKey
+                        required property string modelData
+                        required property int index
+                        readonly property bool chosen: root.engine.colour === colourKey.modelData
+                        readonly property bool open: palette.hovered === colourKey.index || colourKey.chosen
+                        width: palette.width * (colourKey.open ? 2 : 1) / Math.max(1, palette.colours.length + palette.opened)
+                        height: palette.height
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        Accessible.role: Accessible.Button
+                        Accessible.name: Translation.tr("More in %1").arg("#" + colourKey.modelData)
+                        onContainsMouseChanged: {
+                            if (colourKey.containsMouse) palette.hovered = colourKey.index
+                            else if (palette.hovered === colourKey.index) palette.hovered = -1
+                        }
+                        onClicked: root.engine.setColour(colourKey.modelData)
+                        Behavior on width { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "#" + colourKey.modelData
+                        }
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            visible: colourKey.open
+                            text: colourKey.chosen ? "check" : "search"
+                            iconSize: Math.round(15 * root.d)
+                            color: ColorUtils.contrastColor(Qt.color("#" + colourKey.modelData))
+                        }
                     }
                 }
             }
