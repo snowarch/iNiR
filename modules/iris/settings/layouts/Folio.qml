@@ -50,7 +50,13 @@ Item {
         id: index
         x: root.u(8)
         y: root.u(8)
-        width: root.u(root.compact ? 216 : 244)
+        // As wide as the longest area name in its open weight (a translation runs longer), within a third more.
+        readonly property real widest: {
+            Translation.activeTranslations
+            return Math.max(0, ...root.sections.map(entry => indexType.advanceWidth(Translation.tr(String(entry.title ?? "")))))
+        }
+        FontMetrics { id: indexType; font.family: IrisStyle.fontRead; font.pixelSize: IrisStyle.typeBody; font.weight: Font.DemiBold }
+        width: Math.min(root.u(root.compact ? 280 : 320), Math.max(root.u(root.compact ? 216 : 244), Math.ceil(index.widest) + root.u(92)))
         height: root.height - 2 * root.u(8)
         radius: IrisStyle.fieldChamfer ? 0 : Math.max(root.u(12), IrisStyle.radiusPanel - root.u(8))
         color: IrisStyle.glassy ? IrisStyle.readingSidebar : Qt.rgba(IrisStyle.text.r, IrisStyle.text.g, IrisStyle.text.b, IrisStyle.light ? 0.03 : 0.035) // iris-literal: the index sits a step off the sheet

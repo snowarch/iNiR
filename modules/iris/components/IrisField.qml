@@ -10,7 +10,6 @@ MaterialTextField {
     id: root
 
     enableSettingsSearch: false
-    color: IrisStyle.text
     placeholderTextColor: "transparent"
     selectionColor: IrisStyle.accentContainer
     selectedTextColor: IrisStyle.inkOnAccentContainer
@@ -27,17 +26,21 @@ MaterialTextField {
     onActiveFocusChanged: if (!root.activeFocus) root.cursorPosition = 0
     onTextChanged: if (!root.activeFocus) root.cursorPosition = 0
 
+    // At rest a value too long for the box ends in an ellipsis, as a label would; editing shows the whole line.
+    readonly property bool clipped: !root.activeFocus && root.text.length > 0 && root.contentWidth > root.width - root.leftPadding - root.rightPadding + 1
+    color: root.clipped ? "transparent" : IrisStyle.text
+
     IrisText {
         anchors.left: parent.left
         anchors.leftMargin: root.leftPadding
         anchors.right: parent.right
         anchors.rightMargin: root.rightPadding
         anchors.verticalCenter: parent.verticalCenter
-        visible: root.text.length === 0 && root.placeholderText.length > 0
-        text: root.placeholderText
+        visible: root.clipped || (root.text.length === 0 && root.placeholderText.length > 0)
+        text: root.clipped ? root.text : root.placeholderText
         font.family: root.font.family
         font.pixelSize: root.font.pixelSize
-        color: IrisStyle.subtext
+        color: root.clipped ? IrisStyle.text : IrisStyle.subtext
         elide: Text.ElideRight
     }
 

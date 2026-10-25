@@ -13,7 +13,7 @@ import qs.modules.iris.preview
 import qs.modules.iris.settings
 
 // One area as Folio prints it, built once and kept by Folio's AreaPool: its title and sentence across, its live stage
-// held still on the left with what it shows and the area at a glance under it, its groups on a sheet to the right.
+// held still on the left with what it shows and the area's contents under it, its groups on a sheet to the right.
 // The rows scroll as Classic's do (a wheel over them that glided head to head stuttered and kept the wheel from
 // their sliders, 10-25); the stage follows the group being read.
 Item {
@@ -129,22 +129,21 @@ Item {
                     }
                 }
             }
-            // The area at a glance: its telling values, each a link to its row. Off screen it keeps what it said.
+            // The area's groups as a book's contents, the one being read marked: a click glides the sheet to it
+            // (SekaiPop's jump chips). An "at a glance" of values stood here and said again what the sheet beside it says.
             Column {
-                id: facts
-                readonly property int fit: Math.max(0, Math.min(6, Math.floor((areaBox.height - plate.height - page.u(150)) / page.u(40))))
-                property var rows: []
-                function refresh(): void { facts.rows = facts.fit > 0 ? (page.host?.tellingRows(facts.fit, page.area, true) ?? []) : [] }
-                Connections { target: Config; enabled: page.live; function onRevisionChanged(): void { factsSoon.restart() } }
-                Timer { id: factsSoon; interval: 120; onTriggered: facts.refresh() }
-                onFitChanged: factsSoon.restart()
-                Component.onCompleted: facts.refresh()
-                visible: facts.rows.length > 0
+                id: contents
+                readonly property var heads: rows.blocks.filter(block => String(block.caption ?? "").length > 0)
+                readonly property int at: Math.max(0, contents.heads.findIndex(block => String(block.key) === page.reading))
+                readonly property int fit: Math.max(0, Math.floor((areaBox.height - plate.height - page.u(150)) / page.u(32)))
+                // More groups than room: the list keeps the one being read inside it.
+                readonly property int from: Math.max(0, Math.min(contents.heads.length - contents.fit, contents.at - Math.floor(contents.fit / 2)))
+                visible: contents.heads.length > 1 && contents.fit >= 2
                 width: plate.width
                 IrisText {
                     x: page.u(4)
                     bottomPadding: page.u(6)
-                    text: Translation.tr("At a glance")
+                    text: Translation.tr("On this page")
                     color: IrisStyle.textTertiary
                     font.family: IrisStyle.fontMono
                     font.pixelSize: Math.max(10, IrisStyle.typeCaption)
@@ -153,39 +152,37 @@ Item {
                     font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
                 }
                 Repeater {
-                    model: ScriptModel { objectProp: "modelKey"; values: facts.rows }
+                    model: contents.heads.slice(contents.from, contents.from + contents.fit)
                     MouseArea {
-                        id: fact
+                        id: head
                         required property var modelData
-                        required property int index
-                        width: facts.width
-                        height: page.u(40)
+                        readonly property bool on: String(head.modelData.key) === page.reading
+                        width: contents.width
+                        height: page.u(32)
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         Accessible.role: Accessible.Link
-                        Accessible.name: page.host?.glanceName(fact.modelData) ?? Translation.tr(String(fact.modelData.label ?? ""))
-                        onClicked: page.host.landOn(String(fact.modelData.path ?? ""))
-                        Rectangle { anchors.fill: parent; radius: IrisStyle.fieldChamfer ? 0 : page.u(10); color: fact.containsMouse ? IrisStyle.fillHover : "transparent" }
-                        Rectangle { visible: fact.index > 0; x: page.u(4); width: parent.width - 2 * x; height: 1; color: IrisStyle.hairline }
-                        IrisText {
-                            x: page.u(4)
+                        Accessible.name: String(head.modelData.caption)
+                        onClicked: page.showGroup(String(head.modelData.key))
+                        Rectangle { anchors.fill: parent; radius: IrisStyle.fieldChamfer ? 0 : page.u(10); color: head.containsMouse ? IrisStyle.fillHover : "transparent" }
+                        Rectangle {
+                            x: page.u(6)
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width * 0.6 - x
-                            elide: Text.ElideRight
-                            text: page.host?.glanceName(fact.modelData) ?? Translation.tr(String(fact.modelData.label ?? ""))
-                            color: IrisStyle.subtext
-                            font.pixelSize: IrisStyle.typeMeta
+                            width: page.u(3)
+                            height: head.on ? page.u(16) : page.u(6)
+                            radius: width / 2
+                            color: head.on ? IrisStyle.accent : IrisStyle.hairlineStrong
+                            Behavior on height { NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
                         }
                         IrisText {
-                            anchors.right: parent.right
-                            anchors.rightMargin: page.u(4)
+                            x: page.u(18)
                             anchors.verticalCenter: parent.verticalCenter
-                            width: Math.min(implicitWidth, parent.width * 0.4)
+                            width: parent.width - x - page.u(6)
                             elide: Text.ElideRight
-                            text: { Config.revision; return page.host?.answerOf(fact.modelData) ?? "" }
-                            color: IrisStyle.text
+                            text: String(head.modelData.caption)
+                            color: head.on ? IrisStyle.text : IrisStyle.subtext
                             font.pixelSize: IrisStyle.typeMeta
-                            font.weight: IrisStyle.weight(Font.DemiBold)
+                            font.weight: IrisStyle.weight(head.on ? Font.DemiBold : Font.Normal)
                         }
                     }
                 }

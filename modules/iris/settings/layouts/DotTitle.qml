@@ -8,6 +8,8 @@ Item {
     property string text: ""
     property real size: 40
     property real fit: 0
+    // How small a fitted name may get before it is cut.
+    property real least: 22
     property color color: IrisStyle.text
     implicitWidth: typed.implicitWidth
     implicitHeight: typed.implicitHeight
@@ -20,7 +22,7 @@ Item {
         color: root.color
         elide: Text.ElideRight
         fontSizeMode: root.fit > 0 ? Text.HorizontalFit : Text.FixedSize
-        minimumPixelSize: 22
+        minimumPixelSize: root.least
         font.family: IrisStyle.fontDot
         font.pixelSize: root.size
         font.weight: Font.Bold

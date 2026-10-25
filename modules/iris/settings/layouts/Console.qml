@@ -50,11 +50,6 @@ Item {
     readonly property color plate: IrisStyle.glassy ? IrisStyle.readingCard : IrisStyle.fillQuiet
     readonly property real label: Math.max(10, IrisStyle.typeCaption)
     function clusterName(index: int): string { return Translation.tr(String(root.host?.clusterNames?.[index] ?? "")) }
-    // A key says its area in one short word: the full title is its accessible name.
-    readonly property var shortNames: ({ home: "Home", appearance: "Style", colour: "Colour", wallpaper: "Wall", motion: "Motion", bar: "Island",
-        dock: "Dock", bubbles: "Bubbles", desktop: "Desktop", widgets: "Widgets", windows: "Windows", sidebars: "Panels", controlCenter: "Control",
-        spotlight: "Search", orbit: "Orbit", capture: "Capture", player: "Music", anime: "Anime", general: "General", notifications: "Alerts",
-        sound: "Sound", display: "Display", keyboard: "Keys", battery: "Power", gaming: "Gaming", lock: "Lock", login: "Login", sources: "Sources", system: "Hub" })
 
     // Keys reach the page in front: its tiles, its cursor.
     readonly property int cursor: Number(pool.shownItem?.cursor ?? -1)
@@ -153,7 +148,7 @@ Item {
                                     anchors.bottomMargin: root.u(8)
                                     width: parent.width - root.u(12)
                                     elide: Text.ElideRight
-                                    text: Translation.tr(String(root.shortNames[key.modelData.id] ?? key.modelData.title ?? ""))
+                                    text: Translation.tr(String(IrisOptions.shortTitles[key.modelData.id] ?? key.modelData.title ?? ""))
                                     color: key.on ? IrisStyle.surfaceOpaque : IrisStyle.subtext
                                 }
                             }
@@ -170,22 +165,23 @@ Item {
         x: nav.x + nav.width + root.u(26)
         y: root.pad
         width: root.width - x - root.pad
-        height: root.u(58)
+        height: root.u(root.windowed ? 60 : 70)
+        // The name over what the area is, both the width up to the controls: side by side they split it, and an area
+        // like Screenshots & Recording lost both ends.
         DotTitle {
             id: title
-            anchors.bottom: parent.bottom
+            y: Math.round((parent.height - title.height - (blurb.visible ? blurb.implicitHeight : 0)) / 2)
             text: root.searching ? Translation.tr("Search") : Translation.tr(String(root.shownArea.title ?? ""))
             size: root.u(root.windowed ? 34 : 44)
-            fit: Math.max(root.u(120), controls.x - root.u(240))
+            fit: Math.max(root.u(120), controls.x - root.u(24))
         }
         IrisText {
-            anchors.left: title.right
-            anchors.leftMargin: root.u(16)
-            anchors.baseline: title.bottom
-            anchors.baselineOffset: -root.u(4)
-            width: Math.max(0, Math.min(implicitWidth, controls.x - x - root.u(16)))
+            id: blurb
+            anchors.top: title.bottom
+            anchors.topMargin: -root.u(4)
+            width: Math.max(0, Math.min(implicitWidth, controls.x - root.u(24)))
             elide: Text.ElideRight
-            visible: !root.searching
+            visible: !root.searching && text.length > 0
             text: Translation.tr(String(root.shownArea.subtitle ?? ""))
             color: IrisStyle.muted
             font.pixelSize: IrisStyle.typeMeta
@@ -210,7 +206,7 @@ Item {
     Item {
         id: boardBox
         x: head.x
-        y: head.y + head.height + root.u(18)
+        y: head.y + head.height + root.u(12)
         width: head.width
         height: root.height - y - root.pad
         AreaPool {

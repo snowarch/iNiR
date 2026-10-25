@@ -55,6 +55,54 @@ Item {
     Component.onCompleted: root.refresh()
     property var opened: ({})
     function folded(group: var): var { return group.rows.filter(spec => IrisOptions.foldsAway(spec)) }
+    // How the groups lie on the board: a short group (up to three units, no full-width row) stands beside the next one,
+    // a later short one moves up to fill a line, and what no group can fill goes to the line's last group, its tiles
+    // wider. A lone switch followed by a full-width group left three units of air.
+    readonly property var plan: {
+        const opened = root.opened
+        const items = root.groups.map(group => {
+            const tuned = root.folded(group)
+            const open = opened[root.section + "/" + group.key] === true
+            const folds = tuned.length >= 2 && tuned.length < group.rows.length
+            const shown = folds && !open ? group.rows.filter(spec => !tuned.includes(spec)) : group.rows
+            const cells = shown.map(spec => root.unitsOf(root.shape(spec))).concat(folds ? [1] : [])
+            const units = cells.reduce((sum, size) => sum + size, 0)
+            const brief = units <= 3 && !shown.some(spec => root.shape(spec) === "row")
+            // Inside a full-width group the last tile of a line short of the edge takes the rest of it.
+            if (!brief) {
+                let fill = 0
+                cells.forEach((size, at) => {
+                    if (fill + size > 4) { cells[at - 1] += 4 - fill; fill = 0 }
+                    fill = (fill + size) % 4
+                })
+                if (fill > 0) cells[cells.length - 1] += 4 - fill
+            }
+            // A switch left alone on its line reads as its row, what it does said beside it, not an empty plate.
+            const whole = shown.map((spec, at) => cells[at] === 4 && root.shape(spec) === "switch")
+            return { key: group.key, group: group, tuned: tuned, open: open, folds: folds, shown: shown, units: units,
+                cells: cells, whole: whole, brief: brief, span: 4 }
+        })
+        const out = []
+        let line = []
+        const close = () => {
+            const fill = line.reduce((sum, item) => sum + item.span, 0)
+            if (line.length > 0 && fill < 4) line[line.length - 1].span += 4 - fill
+            line = []
+        }
+        while (items.length > 0) {
+            const fill = line.reduce((sum, item) => sum + item.span, 0)
+            let at = fill === 0 ? 0 : items.findIndex(item => item.brief && item.units <= 4 - fill)
+            if (at < 0) { close(); at = 0 }
+            const item = items.splice(at, 1)[0]
+            if (!item.brief) { close(); out.push(item); continue }
+            item.span = item.units
+            line.push(item)
+            out.push(item)
+            if (fill + item.units >= 4) line = []
+        }
+        close()
+        return out
+    }
     function unitsOf(kind: string): int { return kind === "switch" ? 1 : kind === "row" ? 4 : 2 }
     function shape(spec: var): string {
         if (spec.kind === "switch") return "switch"
@@ -146,8 +194,6 @@ Item {
         Column {
             id: board
             width: boardFlick.width
-            // Groups pack like tiles: a short group (up to three units, no full-width row) stands beside the next one
-            // instead of leaving the rest of its line as air.
             Flow {
                 id: boardColumn
                 width: parent.width
@@ -155,18 +201,20 @@ Item {
                 readonly property real unit: Math.floor((width - 3 * root.gap) / 4)
                 function span(units: int): real { return units * boardColumn.unit + (units - 1) * root.gap }
                 Repeater {
-                    model: ScriptModel { objectProp: "key"; values: root.groups }
+                    model: ScriptModel { objectProp: "key"; values: root.plan }
                     Column {
                         id: group
                         required property var modelData
                         required property int index
-                        readonly property var tuned: root.folded(group.modelData)
-                        readonly property bool open: root.opened[root.section + "/" + group.modelData.key] === true
-                        readonly property bool folds: group.tuned.length >= 2 && group.tuned.length < group.modelData.rows.length
-                        readonly property var shown: group.folds && !group.open ? group.modelData.rows.filter(spec => !group.tuned.includes(spec)) : group.modelData.rows
-                        readonly property int units: group.shown.reduce((sum, spec) => sum + root.unitsOf(root.shape(spec)), group.folds ? 1 : 0)
-                        readonly property bool brief: group.units <= 3 && !group.shown.some(spec => root.shape(spec) === "row")
-                        width: group.brief ? boardColumn.span(group.units) : boardColumn.width
+                        readonly property var tuned: group.modelData.tuned
+                        readonly property bool open: group.modelData.open
+                        readonly property bool folds: group.modelData.folds
+                        readonly property var shown: group.modelData.shown
+                        // A group widened to close its line spreads its tiles over the width it got.
+                        readonly property real unit: group.modelData.brief
+                            ? (boardColumn.span(group.modelData.span) - (group.modelData.units - 1) * root.gap) / group.modelData.units : boardColumn.unit
+                        function span(units: int): real { return Math.floor(units * group.unit + (units - 1) * root.gap) }
+                        width: group.modelData.brief ? boardColumn.span(group.modelData.span) : boardColumn.width
                         spacing: root.gap
                         bottomPadding: root.u(8)
                         Mono {
@@ -180,14 +228,15 @@ Item {
                             id: flow
                             width: parent.width
                             spacing: root.gap
-                            readonly property real unit: boardColumn.unit
+                            readonly property real unit: group.unit
                             Repeater {
                                 model: ScriptModel { values: group.shown; objectProp: "modelKey" }
                                 Loader {
                                     id: cell
                                     required property var modelData
-                                    readonly property string kind: root.shape(cell.modelData)
-                                    width: cell.kind === "row" ? flow.width : boardColumn.span(root.unitsOf(cell.kind))
+                                    required property int index
+                                    readonly property string kind: group.modelData.whole[cell.index] ? "row" : root.shape(cell.modelData)
+                                    width: cell.kind === "row" ? flow.width : group.span(group.modelData.cells[cell.index] ?? root.unitsOf(cell.kind))
                                     // The first group comes with the page, the rest in the frames after it (Classic's way).
                                     asynchronous: group.index > 0
                                     sourceComponent: cell.kind === "switch" ? switchTile : cell.kind === "range" ? rangeTile : cell.kind === "choice" ? choiceTile : rowTile
@@ -196,7 +245,7 @@ Item {
                             }
                             Tile {
                                 visible: group.folds
-                                width: flow.unit
+                                width: group.span(group.modelData.cells[group.modelData.cells.length - 1] ?? 1)
                                 caption: group.open ? Translation.tr("Less") : Translation.tr("More")
                                 text: group.open ? Translation.tr("Fold") : Translation.tr("%1 more").arg(group.tuned.length)
                                 dashed: true
@@ -288,7 +337,7 @@ Item {
             id: sw
             readonly property bool lit: { Config.revision; IrisNiri.revision; const v = !!IrisOptions.currentValue(sw.spec ?? {}); return sw.spec?.invert ? !v : v }
             on: sw.lit
-            caption: sw.lit ? Translation.tr("On") : Translation.tr("Off")
+            // The switch says on or off, so the corner is the switch's: an ON caption beside it said it twice.
             text: Translation.tr(String(sw.spec?.label ?? ""))
             Accessible.role: Accessible.CheckBox
             Accessible.checked: sw.lit
@@ -296,9 +345,8 @@ Item {
             // S4's switch in small: hairline ring and hollow knob off, ink track and paper knob on, the knob springs over.
             Rectangle {
                 id: mini
-                anchors.right: parent.right
-                anchors.rightMargin: root.u(14)
-                y: root.u(12)
+                x: root.u(16)
+                y: root.u(14)
                 width: root.u(34)
                 height: root.u(20)
                 radius: IrisStyle.capsule(height)

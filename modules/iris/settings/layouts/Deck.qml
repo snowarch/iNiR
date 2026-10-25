@@ -556,17 +556,55 @@ Item {
     }
 
     // ── The dot pager under the card: a dot per area, the open one a bar, a signal dot where an area needs you.
+    // Under the pointer a dot says its area; pressed and dragged along, the deck follows (iOS's page dots).
     MouseArea {
         id: pager
         anchors.horizontalCenter: parent.horizontalCenter
         y: root.windowed ? root.height - root.u(24) : root.cardRect.y + root.cardRect.height - root.u(26)
         width: pagerRow.implicitWidth
         height: root.u(14)
+        hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
+        property Item pointed: null
+        function dotAt(x: real): Item {
+            const item = pagerRow.childAt(Math.max(0, Math.min(pagerRow.width - 1, x)), pagerRow.height / 2)
+            return item && item.entryId ? item : null
+        }
+        function go(item: Item): void { if (item) root.goTo(item.index) }
         onWheel: wheel => root.wheel(wheel)
-        onClicked: mouse => {
-            const item = pagerRow.childAt(mouse.x, pagerRow.height / 2)
-            if (item && item.entryId) root.goTo(root.sections.findIndex(entry => entry.id === item.entryId))
+        onPositionChanged: mouse => {
+            const item = pager.dotAt(mouse.x)
+            if (item) pager.pointed = item
+            if (pager.pressed && item && item.index !== root.aim) pager.go(item)
+        }
+        onExited: pager.pointed = null
+        onPressed: mouse => pager.go(pager.dotAt(mouse.x))
+        // On its own plate: it stands over the card's last rows.
+        Rectangle {
+            id: pagerName
+            readonly property Item at: pager.pointed
+            visible: opacity > 0
+            opacity: pager.containsMouse && pagerName.at ? 1 : 0
+            x: pagerName.at ? Math.round(pagerName.at.x + pagerName.at.width - root.u(3) - width / 2) : 0
+            y: -height - root.u(6)
+            width: pagerWord.implicitWidth + root.u(20)
+            height: root.u(24)
+            radius: height / 2
+            color: IrisStyle.surfaceOpaque
+            border.width: 1
+            border.color: IrisStyle.hairline
+            Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
+            IrisText {
+                id: pagerWord
+                anchors.centerIn: parent
+                text: pagerName.at ? Translation.tr(String(pagerName.at.modelData.title ?? "")) : ""
+                color: IrisStyle.text
+                font.family: IrisStyle.fontMono
+                font.pixelSize: Math.max(10, IrisStyle.typeCaption)
+                font.weight: Font.Medium
+                font.capitalization: Font.AllUppercase
+                font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
+            }
         }
         Row {
             id: pagerRow
@@ -627,6 +665,11 @@ Item {
         Accessible.name: Translation.tr(String(stepKey.entry?.title ?? ""))
         onClicked: root.turn(stepKey.step)
         Rectangle { anchors.fill: parent; radius: IrisStyle.capsule(height); color: stepKey.containsMouse ? IrisStyle.fillHover : "transparent" }
+        // The full title when it fits beside the arrow, its short word when not (Screenshots & Recording, cut in half).
+        readonly property string title: Translation.tr(String(stepKey.entry?.title ?? ""))
+        readonly property real room: stepKey.width - root.u(48)
+        readonly property bool fits: stepType.advanceWidth(stepKey.title.toUpperCase()) + stepKey.title.length * stepName.font.letterSpacing <= stepKey.room
+        FontMetrics { id: stepType; font: stepName.font }
         Row {
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: stepKey.step < 0 ? parent.left : undefined
@@ -637,10 +680,11 @@ Item {
             spacing: root.u(8)
             MaterialSymbol { anchors.verticalCenter: parent.verticalCenter; text: stepKey.step < 0 ? "arrow_back" : "arrow_forward"; iconSize: root.u(15); color: IrisStyle.text }
             IrisText {
+                id: stepName
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, stepKey.width - root.u(48))
+                width: Math.min(implicitWidth, stepKey.room)
                 elide: Text.ElideRight
-                text: Translation.tr(String(stepKey.entry?.title ?? ""))
+                text: stepKey.fits ? stepKey.title : Translation.tr(String(IrisOptions.shortTitles[stepKey.entry?.id] ?? stepKey.title))
                 color: IrisStyle.text
                 font.family: IrisStyle.fontMono
                 font.pixelSize: Math.max(10, IrisStyle.typeCaption)
@@ -659,18 +703,20 @@ Item {
         required property int index
         height: root.u(44)
         Rectangle { visible: sideRow.index > 0; width: parent.width; height: 1; color: IrisStyle.hairline }
+        // The answer takes what it needs (a face's name runs long) up to three fifths, the name the rest.
         IrisText {
             anchors.verticalCenter: parent.verticalCenter
-            width: parent.width * 0.6
+            width: parent.width - sideAnswer.width - root.u(12)
             elide: Text.ElideRight
             text: root.host?.glanceName(sideRow.modelData) ?? Translation.tr(String(sideRow.modelData.label ?? ""))
             color: IrisStyle.subtext
             font.pixelSize: IrisStyle.typeMeta
         }
         IrisText {
+            id: sideAnswer
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.min(implicitWidth, parent.width * 0.38)
+            width: Math.min(implicitWidth, parent.width * 0.6)
             elide: Text.ElideRight
             text: { Config.revision; return root.host?.answerOf(sideRow.modelData) ?? "" }
             color: IrisStyle.text
@@ -735,12 +781,15 @@ Item {
                 Row {
                     spacing: root.u(8)
                     height: sideTitle.height * sideTitle.grow
+                    // Two cards out a card is its edge at the screen's: a name cut there read as a typo (CON, NO, SID).
+                    opacity: Math.max(0, Math.min(1, (2 - side.far) / 0.5))
                     DotTitle {
                         id: sideTitle
                         // 28 beside, 22 two out, the hero's 40 as it arrives
                         readonly property real grow: side.far < 1 ? 1 + (40 / 28 - 1) * (1 - side.far) : side.far < 2 ? 1 - (1 - 22 / 28) * (side.far - 1) : 22 / 28
                         text: Translation.tr(String(side.entry?.title ?? ""))
                         size: root.u(28)
+                        least: root.u(14)
                         // fitted to where the card stands, not to each frame of its way (a fit is a search over sizes);
                         // the open card's title leaves room for the keys at its corner
                         readonly property int stand: side.far < 0.5 ? 0 : side.far < 1.5 ? 1 : 2
