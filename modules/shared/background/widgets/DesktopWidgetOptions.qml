@@ -79,7 +79,10 @@ QtObject {
         // Fine-tune unless a row says `tune: false` (the plate, which people come to turn off).
         if (spec.tune === undefined && kind === "switch") spec.tune = true
         const when = spec.when
+        // a sized card (Material, S/M/L) takes its size from the size, never from these
+        const free = key === "contentWidth" || key === "contentHeight"
         spec.showIf = () => root.on(widget) && root.overlay(widget)[key] === undefined && (when === undefined || when())
+            && !(free && root.sized(widget))
         delete spec.when
         return spec
     }
@@ -106,9 +109,14 @@ QtObject {
                 keywords: ["glass", "transparent", "background", "plate", "fondo", "vidrio"] })
         ]
         if (plate) out.push(
+            // switched on over a strength of 0 (a plateless widget's default) the plate stayed invisible: it comes with one
             root.row(widget, "showBackground", "Background", "switch", root.plateDefault(widget), { tune: false, when: () => root.plain(widget),
+                apply: next => next && Number(root.value(widget, "backgroundOpacity", 0.16)) <= 0
+                    ? { showBackground: true, backgroundOpacity: 0.16 } : { showBackground: next },
                 description: "The plate behind the widget.", keywords: ["background", "plate", "card", "surface", "fondo", "superficie"] }),
             root.row(widget, "showBorder", "Outline", "switch", root.plateDefault(widget), { when: () => root.plain(widget),
+                apply: next => Object.assign({ showBorder: next }, next && Number(root.value(widget, "borderOpacity", 0.08)) <= 0 ? { borderOpacity: 0.2 } : {},
+                    next && Number(root.value(widget, "borderWidth", 1)) <= 0 ? { borderWidth: 1 } : {}),
                 keywords: ["outline", "border", "line", "borde"] }),
             root.row(widget, "backgroundOpacity", "Background strength", "range", root.plateDefault(widget) ? 0.16 : 0, { min: 0, max: 1, step: 0.02, scale: 100, unit: " %",
                 when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget))) }))
@@ -123,6 +131,14 @@ QtObject {
                 keywords: ["position", "place", "auto", "quiet", "busy", "posición"] }),
             root.row(widget, "locked", "Lock position", "switch", false, { tune: true, keywords: ["lock", "pin", "fixed", "bloquear"] }))
         return out
+    }
+    function sized(widget: string): bool {
+        return (Config.options?.panelFamily ?? "ii") !== "iris" && (DesktopWidgetRegistry.entry(widget)?.sizes ?? []).length > 0
+    }
+    // Material's medium and large weather is the forecast face: the pill's own sizes and parts mean nothing there.
+    function weatherForecast(): bool {
+        return root.sized("weather") && ["medium", "large"].includes(String(root.value("weather", "materialSize", "small")))
+            && !root.is("weather", "style", "pill", "dial")
     }
     function plateDefault(widget: string): bool {
         return !["clock", "visualizer", "japaneseTypography", "shape", "editorial", "dayProgress", "mascot"].includes(widget)
@@ -413,25 +429,25 @@ QtObject {
             keywords: ["humidity", "wind", "uv", "air"] }),
         root.row("weather", "style", "Style", "choice", "pill", { when: () => root.material("weather"),
             choices: root.choices([["pill", "Shape"], ["card", "Card"], ["detail", "Detail"], ["dial", "Instrument"]]) }),
-        root.row("weather", "shape", "Shape", "choice", "pill", { when: () => root.material("weather") && root.is("weather", "style", "pill", "pill"),
+        root.row("weather", "shape", "Shape", "choice", "pill", { when: () => !root.weatherForecast() && root.material("weather") && root.is("weather", "style", "pill", "pill"),
             choices: root.choices([["pill", "Pill"], ["circle", "Circle"], ["oval", "Oval"], ["diamond", "Diamond"], ["heart", "Heart"], ["flower", "Flower"], ["cookie4", "Cookie"],
                 ["sunny", "Sunny"], ["clover", "Clover"], ["softBurst", "Burst"], ["gem", "Gem"], ["puffy", "Puffy"]]) }),
         root.preset("weather", "Preset", "default", [["default", "Default", { size: 200, tempSize: 80, iconSize: 80, showTemp: true, showIcon: true, showCondition: false }],
             ["compact", "Compact", { size: 140, tempSize: 50, iconSize: 50, showTemp: true, showIcon: true, showCondition: false }],
             ["iconOnly", "Icon only", { size: 120, showTemp: false, showIcon: true, showCondition: false }],
-            ["textOnly", "Text only", { size: 160, showTemp: true, showIcon: false, showCondition: true }]], () => root.material("weather")),
-        root.row("weather", "showTemp", "Temperature", "switch", true, { when: () => root.plain("weather") }),
-        root.row("weather", "showIcon", "Icon", "switch", true, { when: () => root.plain("weather") }),
-        root.row("weather", "showCondition", "Condition text", "switch", false, { when: () => root.plain("weather") && !root.is("weather", "style", "pill", "detail") }),
+            ["textOnly", "Text only", { size: 160, showTemp: true, showIcon: false, showCondition: true }]], () => root.material("weather") && !root.weatherForecast()),
+        root.row("weather", "showTemp", "Temperature", "switch", true, { when: () => !root.weatherForecast() && root.plain("weather") }),
+        root.row("weather", "showIcon", "Icon", "switch", true, { when: () => !root.weatherForecast() && root.plain("weather") }),
+        root.row("weather", "showCondition", "Condition text", "switch", false, { when: () => !root.weatherForecast() && root.plain("weather") && !root.is("weather", "style", "pill", "detail") }),
         root.row("weather", "showMetrics", "Metric chips", "switch", true, { when: () => root.plain("weather") && root.is("weather", "style", "pill", "detail") }),
         root.row("weather", "showSunPath", "Sun path", "switch", true, { when: () => root.plain("weather") && root.is("weather", "style", "pill", "dial") }),
         root.row("weather", "showSunTimes", "Sun times", "switch", true, { when: () => root.plain("weather") && root.is("weather", "style", "pill", "dial") && Boolean(root.value("weather", "showSunPath", true)) }),
-        root.row("weather", "size", "Widget size", "range", 200, { min: 80, max: 400, step: 10, unit: " px", when: () => root.material("weather") }),
-        root.row("weather", "tempSize", "Temp size", "range", 80, { min: 20, max: 200, step: 5, unit: " px", when: () => root.material("weather") }),
-        root.row("weather", "iconSize", "Icon size", "range", 80, { min: 20, max: 200, step: 5, unit: " px", when: () => root.material("weather") }),
-        root.row("weather", "padding", "Padding", "range", 20, { min: 0, max: 60, step: 2, unit: " px", when: () => root.material("weather") }),
-        root.row("weather", "tempFontWeight", "Temp font weight", "range", 500, { min: 100, max: 900, step: 100, when: () => root.material("weather") }),
-        root.row("weather", "conditionOpacity", "Condition opacity", "range", 0.7, { min: 0, max: 1, step: 0.05, scale: 100, unit: " %", when: () => root.material("weather") && Boolean(root.value("weather", "showCondition", false)) }),
+        root.row("weather", "size", "Widget size", "range", 200, { min: 80, max: 400, step: 10, unit: " px", when: () => !root.weatherForecast() && root.material("weather") }),
+        root.row("weather", "tempSize", "Temp size", "range", 80, { min: 20, max: 200, step: 5, unit: " px", when: () => !root.weatherForecast() && root.material("weather") }),
+        root.row("weather", "iconSize", "Icon size", "range", 80, { min: 20, max: 200, step: 5, unit: " px", when: () => !root.weatherForecast() && root.material("weather") }),
+        root.row("weather", "padding", "Padding", "range", 20, { min: 0, max: 60, step: 2, unit: " px", when: () => !root.weatherForecast() && root.material("weather") }),
+        root.row("weather", "tempFontWeight", "Temp font weight", "range", 500, { min: 100, max: 900, step: 100, when: () => !root.weatherForecast() && root.material("weather") }),
+        root.row("weather", "conditionOpacity", "Condition opacity", "range", 0.7, { min: 0, max: 1, step: 0.05, scale: 100, unit: " %", when: () => !root.weatherForecast() && root.material("weather") && Boolean(root.value("weather", "showCondition", false)) }),
         ...root.closing("weather", true),
 
         // ── News ──
@@ -472,8 +488,10 @@ QtObject {
         ...root.opening("userCard"),
         root.size("userCard"),
         root.row("userCard", "showAvatar", "Picture", "switch", true, {}),
-        root.row("userCard", "showWeather", "Weather", "switch", true, {}),
-        root.row("userCard", "showHostname", "Computer name", "switch", true, {}),
+        // the weather shows on iRiS's large face and Material's medium one
+        root.row("userCard", "showWeather", "Weather", "switch", true, { when: () => root.face("userCard")
+            ? root.is("userCard", "iris.size", "medium", "large") : !root.is("userCard", "materialSize", "medium", "small") }),
+        root.row("userCard", "showHostname", "Computer name", "switch", true, { when: () => root.face("userCard") || !root.is("userCard", "materialSize", "medium", "small") }),
         root.row("userCard", "style", "Presentation", "choice", "card", { when: () => root.material("userCard"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
         root.row("userCard", "contentWidth", "Width", "range", 280, { min: 240, max: 600, step: 10, unit: " px", when: () => root.plain("userCard") }),
         root.row("userCard", "contentHeight", "Height", "range", 176, { min: 176, max: 320, step: 2, unit: " px", when: () => root.plain("userCard") }),

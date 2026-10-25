@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 dev/tools/generate-ipc-registry.py
-# IPC.md hash: 0e10f89c3ef630a9
+# IPC.md hash: 119e40c07b04cc06
 # Targets: 77
 
 declare -gA IPC_TARGET_DESC=(
@@ -171,7 +171,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [appCatalog]="refresh search install list"
   [audio]="volumeUp volumeDown mute playEvent micMute"
   [autostart]="status addCommand addApp removeLast reload"
-  [background]="widgetDesign widgetMaterial widgetSearch toggleEditMode toggleWidgetManager setEditMode presets wearPreset savePreset sizeWidget widgetRects widgetFit editState applyOrganicEdgePreset applyOrganicEdgeComposition applyOrganicEdgeMaterial applyOrganicEdgeResponse organicEdgeState setOrganicEdgeEnabled quickControlsPage quickControlsGeometry widgetSnapshot legibilityState desktopItemsState focusWidget arrangeWidget promoteWidget resetLayerOrder setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
+  [background]="widgetDesign widgetMaterial widgetSearch toggleEditMode toggleWidgetManager setEditMode presets wearPreset savePreset sizeWidget widgetRects widgetOptions widgetOptionSet widgetFit editState applyOrganicEdgePreset applyOrganicEdgeComposition applyOrganicEdgeMaterial applyOrganicEdgeResponse organicEdgeState setOrganicEdgeEnabled quickControlsPage quickControlsGeometry widgetSnapshot legibilityState desktopItemsState focusWidget arrangeWidget promoteWidget resetLayerOrder setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
   [bar]="mediaWidth toggle close open"
   [battery]="status simulate"
   [bluetooth]="status simulate"
@@ -284,6 +284,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["background:savePreset"]="Save this desktop under a name (empty = \"Desktop N\") and print its id"
   ["background:sizeWidget"]="Set a widget's size class (\`small\`, \`medium\`, \`large\`) in the family drawing it; every family keeps that size, and neighbours it now covers move aside while arranging"
   ["background:widgetRects"]="Where every desktop widget sits on each screen, as JSON"
+  ["background:widgetOptions"]="The options a widget's Options page shows now, with their values, as JSON"
+  ["background:widgetOptionSet"]="Write one of a widget's options the way its row does (value as JSON: \`true\`, \`12\`, \`\"pill\"\`) and print what it reads back"
   ["background:widgetFit"]=""
   ["background:editState"]="Report the active selection, physical panel insets, full desktop work area and panel-aware zone work area for each output"
   ["background:applyOrganicEdgePreset"]="Apply an Organic Edge scene by name without changing enabled displays"
@@ -730,6 +732,8 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["background:wearPreset"]="<id>"
   ["background:savePreset"]="<name>"
   ["background:sizeWidget"]="<widgetName> <size>"
+  ["background:widgetOptions"]="<widgetName>"
+  ["background:widgetOptionSet"]="<widgetName> <key> <value>"
   ["background:applyOrganicEdgePreset"]="<name>"
   ["background:applyOrganicEdgeComposition"]="<name>"
   ["background:applyOrganicEdgeMaterial"]="<name>"
@@ -901,6 +905,7 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["background:widgetMaterial"]="status match toggle clear glass"
   ["background:widgetSearch"]="open next previous take close"
   ["background:sizeWidget"]="small medium large"
+  ["background:widgetOptionSet"]="true"
   ["background:arrangeWidget"]="probe"
   ["battery:simulate"]="full off"
   ["bluetooth:simulate"]="off on none clear"

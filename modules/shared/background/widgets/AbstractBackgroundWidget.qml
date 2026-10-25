@@ -1379,11 +1379,8 @@ AbstractWidget {
             id: editPopoverPanel
             property bool open: false
             readonly property real targetHeight: popoverLoader.item ? popoverLoader.item.implicitHeight + 24 : 0
-            // The sheet keeps the tallest page it has shown while open: switching pages or
-            // toggling a row never resizes it back and forth.
-            property real heldHeight: 0
-            // iRiS fits each page: the tallest each has shown (so a toggle never shrinks its own page), and the
-            // sheet grows or shrinks to the page in view on the move curve, away from the toolbar.
+            // Every family fits each page: the tallest each has shown (so a toggle never shrinks its own page), and
+            // the sheet grows or shrinks to the page in view on the move curve, away from the toolbar.
             property var pageHeights: ({})
             readonly property real pageHeight: Math.max(editPopoverPanel.targetHeight,
                 editPopoverPanel.pageHeights[root._quickTab] ?? 0)
@@ -1391,14 +1388,12 @@ AbstractWidget {
             Timer { id: sheetSettle; interval: 240; onTriggered: editPopoverPanel.settled = true }
             onOpenChanged: {
                 if (open) {
-                    editPopoverPanel.heldHeight = editPopoverPanel.targetHeight
                     editPopoverPanel.pageHeights = ({})
                     editPopoverPanel.settled = false
                     sheetSettle.restart()
                     root._latchEditPlacement()
                 } else {
                     editPopoverPanel.settled = false
-                    editPopoverPanel.heldHeight = 0
                     root._editPlacementSide = ""
                     root._popoverReserve = 0
                     root._popoverReserveWidth = 0
@@ -1407,7 +1402,6 @@ AbstractWidget {
                     GlobalStates.desktopWidgetQuickControls = ""
             }
             onTargetHeightChanged: if (open) {
-                editPopoverPanel.heldHeight = Math.max(editPopoverPanel.heldHeight, editPopoverPanel.targetHeight)
                 const seen = Object.assign({}, editPopoverPanel.pageHeights)
                 seen[root._quickTab] = Math.max(seen[root._quickTab] ?? 0, editPopoverPanel.targetHeight)
                 editPopoverPanel.pageHeights = seen
@@ -1421,16 +1415,15 @@ AbstractWidget {
             y: root._editControlsGeometry.popoverY - root._editControlsGeometry.toolbarY
             width: Math.min(root.quickControlsAvailableWidth,
                 popoverLoader.item ? (popoverLoader.item.resolvedWidth ?? popoverLoader.item.implicitWidth) + 24 : 344)
-            height: root.irisFaced ? editPopoverPanel.pageHeight
-                : Math.max(editPopoverPanel.targetHeight, editPopoverPanel.heldHeight)
-            clip: root.irisFaced
+            height: editPopoverPanel.pageHeight
+            clip: true
 
             Behavior on height {
-                enabled: root.irisFaced && editPopoverPanel.settled && IrisStyle.motionEnabled
+                enabled: editPopoverPanel.settled && (root.irisFaced ? IrisStyle.motionEnabled : Appearance.animationsEnabled)
                 NumberAnimation {
-                    duration: IrisStyle.moveDuration
+                    duration: root.irisFaced ? IrisStyle.moveDuration : Appearance.animation.elementMove.duration
                     easing.type: Easing.BezierSpline
-                    easing.bezierCurve: IrisStyle.moveCurve
+                    easing.bezierCurve: root.irisFaced ? IrisStyle.moveCurve : Appearance.animation.elementMove.bezierCurve
                 }
             }
 

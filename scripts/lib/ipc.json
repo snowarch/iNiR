@@ -342,6 +342,26 @@
      "values": []
     },
     {
+     "name": "widgetOptions",
+     "args": [
+      "widgetName"
+     ],
+     "description": "The options a widget's Options page shows now, with their values, as JSON",
+     "values": []
+    },
+    {
+     "name": "widgetOptionSet",
+     "args": [
+      "widgetName",
+      "key",
+      "value"
+     ],
+     "description": "Write one of a widget's options the way its row does (value as JSON: `true`, `12`, `\"pill\"`) and print what it reads back",
+     "values": [
+      "true"
+     ]
+    },
+    {
      "name": "widgetFit",
      "args": [],
      "description": "",

@@ -199,6 +199,25 @@ Scope {
             }
             return JSON.stringify(out)
         }
+        // The options the widget's Options page shows now (what Settings has for it), with their values:
+        // [{ key, kind, label, value, choices?, min?, max? }].
+        function widgetOptions(widgetName: string): string {
+            return JSON.stringify(DesktopWidgetOptions.widgetRows
+                .filter(spec => spec.widget === widgetName && !spec.widgetEnable && (!spec.showIf || spec.showIf()))
+                .map(spec => ({ key: spec.key, kind: spec.kind, label: spec.label, value: DesktopWidgetOptions.read(spec),
+                    choices: spec.kind === "choice" ? (spec.choicesFrom ? DesktopWidgetOptions.choicesFor(String(spec.choicesFrom))
+                        : spec.choices ?? []).map(pick => pick.value) : undefined, min: spec.min, max: spec.max })))
+        }
+        // Writes one option the way its row does; the value is JSON (true, 12, "pill"). Returns what it reads back.
+        function widgetOptionSet(widgetName: string, key: string, value: string): string {
+            const spec = DesktopWidgetOptions.widgetRows.find(row => row.widget === widgetName && row.key === key)
+            if (!spec)
+                return "no option " + key + " on " + widgetName
+            let next = value
+            try { next = JSON.parse(value) } catch (error) {}
+            DesktopWidgetOptions.write(spec, next)
+            return JSON.stringify(DesktopWidgetOptions.read(spec))
+        }
         // How every face fits its size: text over other text, past the plate, hugging its edge or cut short.
         // [{ output, widget, size, issues: [...] }], only widgets with something wrong.
         function widgetFit(): string {
@@ -233,7 +252,8 @@ Scope {
                         if (t.x < -1 || t.y < -1 || t.x + t.w > widget.width + 1 || t.y + t.h > widget.height + 1)
                             issues.push("past the plate '" + t.text + "'")
                         else if (t.x < edge || t.y < edge || t.x + t.w > widget.width - edge || t.y + t.h > widget.height - edge)
-                            issues.push("hugs the edge '" + t.text + "'")
+                            issues.push("hugs the edge '" + t.text + "' at " + Math.round(t.x) + "," + Math.round(t.y)
+                                + " of " + Math.round(widget.width) + "x" + Math.round(widget.height))
                     }
                     for (let i = 0; i < texts.length; ++i)
                         for (let j = i + 1; j < texts.length; ++j) {

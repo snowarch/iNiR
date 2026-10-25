@@ -1301,6 +1301,8 @@ Desktop background and widget controls.
 | `quickControlsGeometry` | Report where the selected widget's toolbar and quick-controls sheet sit, as JSON |
 | `arrangeWidget widgetName x y probe` | Move a widget on the focused screen to x, y as a drop would place it: lined up with the widgets around and off any it would cover. With `probe` true it only reports where it would land, as JSON |
 | `widgetSnapshot widgetName path` | Save one desktop widget, as it renders now, to a PNG (offscreen: works while windows cover the desktop). |
+| `widgetOptions widgetName` | The options a widget's Options page shows now, with their values, as JSON |
+| `widgetOptionSet widgetName key value` | Write one of a widget's options the way its row does (value as JSON: `true`, `12`, `"pill"`) and print what it reads back |
 | `legibilityState` | Report what each desktop widget reads under itself (brightness, spread, light or dark backdrop) and the ink and accent it chose |
 | `focusWidget widgetName openControls` | Select a desktop widget and optionally open its quick controls |
 | `promoteWidget widgetName` | Move a desktop widget to the top of the persistent layer order |
