@@ -97,6 +97,8 @@ DockButton {
     property bool pillStyle: Config.options?.dock?.style === "pill" && !root.zzzStyle
     property bool islandStyle: root.surfaceDialect === "island"
     property bool macosStyle: Config.options?.dock?.style === "macos" && !root.zzzStyle
+    // Lucid's dock: an icon swells and lifts under the pointer.
+    property bool m3Style: Config.options?.dock?.style === "m3" && !root.zzzStyle
 
     readonly property int notificationCount: {
         if (root.isSeparator || (Config.options?.dock?.notificationBadge ?? true) === false)
@@ -141,7 +143,8 @@ DockButton {
 
     // Subtle highlight for active app (disabled in macOS and pill modes —
     // macOS uses magnify, pill uses its own background highlight)
-    scale: (!macosStyle && !pillStyle && appIsActive)
+    scale: root.m3Style && root.buttonHovered && !root.isSeparator ? 1.08
+        : (!macosStyle && !pillStyle && appIsActive)
         ? (Appearance.editorialEverywhere || root.regaliaStyle ? 1.0 : root.zzzStyle ? 1.02 : 1.05) : 1.0
     Behavior on scale {
         enabled: Appearance.animationsEnabled
@@ -149,8 +152,8 @@ DockButton {
     }
 
     transform: Translate {
-        y: (root.zzzStyle || root.islandStyle) && !root.macosStyle && !root.pillStyle && root.buttonHovered && !root.vertical ? -3 : 0
-        x: (root.zzzStyle || root.islandStyle) && !root.macosStyle && !root.pillStyle && root.buttonHovered && root.vertical ? -3 : 0
+        y: (root.zzzStyle || root.islandStyle || root.m3Style) && !root.macosStyle && !root.pillStyle && root.buttonHovered && !root.vertical ? -(root.m3Style ? 4 : 3) : 0
+        x: (root.zzzStyle || root.islandStyle || root.m3Style) && !root.macosStyle && !root.pillStyle && root.buttonHovered && root.vertical ? -(root.m3Style ? 4 : 3) : 0
         Behavior on y {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
