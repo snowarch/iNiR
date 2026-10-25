@@ -18,8 +18,6 @@ RowLayout {
     // Optional properties
     property int buttonSize: 32
     property int playButtonSize: 40
-    // Wider than tall makes it the M3E pill play key (Lucid's), filled in the accent.
-    property int playButtonWidth: root.playButtonSize
     property int iconSize: 22
     property int playIconSize: 24
     property real buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
@@ -93,7 +91,7 @@ RowLayout {
     // Play/Pause button
     RippleButton {
         cookieMorphing: true
-        implicitWidth: root.playButtonWidth
+        implicitWidth: root.playButtonSize
         implicitHeight: root.playButtonSize
         buttonRadius: root.playButtonRadius
         colBackground: root.playButtonColor
