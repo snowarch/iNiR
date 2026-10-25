@@ -65,8 +65,7 @@ ClippingRectangle {
             : root.full && !root.video ? String(root.entry.file ?? "")
             : String(root.entry.sample ?? "")
         opacity: status === Image.Ready ? 1 : 0
-        // The same picture over its thumbnail: a short blend, never a slow focus pull.
-        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
+        Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(240); easing.type: IrisStyle.feedbackEasing } }
     }
     Loader {
         anchors.fill: parent

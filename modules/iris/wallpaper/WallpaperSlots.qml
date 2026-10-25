@@ -148,13 +148,11 @@ Item {
             readonly property bool front: slot.near < 0.5
             readonly property bool hot: tap.hovered && root.rested
 
-            // Sharp from the moment a step aims at it (decoded off the GUI thread while the run travels), and two
-            // either side once it rests, so the next step lands already sharp.
+            // Sharp once the run rests on it, kept while it stays close, so a small turn doesn't drop it back.
             property bool sharp: false
-            readonly property int aim: Math.abs(slot.logical - root.engine.selectedIndex)
-            readonly property bool wantsSharp: slot.valid && (slot.aim <= 1 || (root.rested && slot.near < 2.2))
+            readonly property bool wantsSharp: root.rested && slot.near < 1.2 && slot.valid
             onWantsSharpChanged: if (slot.wantsSharp) slot.sharp = true
-            onNearChanged: if (slot.near > 3.2 && !slot.wantsSharp) slot.sharp = false
+            onNearChanged: if (slot.near > 2.2) slot.sharp = false
             readonly property string key: String(slot.entry?.key ?? "")
             onKeyChanged: { slot.sharp = slot.wantsSharp; slot.full = false }
             // The original file of a web still waits for a longer look.
@@ -198,10 +196,8 @@ Item {
                 anchors.fill: card
                 radius: card.radius
                 color: IrisStyle.surface
-                // Follows the run with no lag; only hover eases.
-                property real lit: slot.hot ? 0.4 : 1
-                Behavior on lit { NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
-                opacity: Math.min(root.recedeMost, slot.near * root.recede) * lit
+                opacity: Math.min(root.recedeMost, slot.near * root.recede) * (slot.hot ? 0.4 : 1)
+                Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(110); easing.type: IrisStyle.feedbackEasing } }
             }
             HoverHandler {
                 id: tap
