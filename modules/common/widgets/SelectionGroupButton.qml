@@ -41,6 +41,8 @@ GroupButton {
         enabled: Appearance.animationsEnabled
         animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
     }
+    // Unselected keys are the neutral highest container, the chosen one the accent (Lucid's button group); the
+    // secondary container made a whole row of heavy tinted keys.
     // ZZZ: idle segments are NEUTRAL plate, not bright secondary. Under zzz
     // colSecondaryContainer resolves to zzz.secondary (a signal) — using it for
     // the unselected base/hover made every segment glow and the hover glare.
@@ -51,21 +53,21 @@ GroupButton {
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.editorialEverywhere ? "transparent"
-        : Appearance.colors.colSecondaryContainer
+        : Appearance.colors.colSurfaceContainerHighest
     colBackgroundHover: SettingsMaterialPreset.unified ? Appearance.colors.colLayer1Hover
         : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
         : Appearance.zzzEverywhere ? Appearance.colors.colLayer1Hover
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
         : Appearance.editorialEverywhere ? Appearance.editorial.controlHover
-        : Appearance.colors.colSecondaryContainerHover
+        : Appearance.colors.colSurfaceContainerHighestHover
     colBackgroundActive: SettingsMaterialPreset.unified ? Appearance.colors.colLayer1Active
         : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateActive
         : Appearance.zzzEverywhere ? Appearance.colors.colLayer1Active
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.editorialEverywhere ? Appearance.editorial.controlPressed
-        : Appearance.colors.colSecondaryContainerActive
+        : Appearance.colors.colSurfaceContainerHighestActive
 
     /**
      * Mini screen-top mockup: the tile is a screen, the shape is the bar. Every
@@ -159,7 +161,7 @@ GroupButton {
                         ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
                         : Appearance.editorialEverywhere
                             ? (root.toggled ? Appearance.editorial.accentInk : Appearance.editorial.accent)
-                        : (root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer)
+                        : (root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurfaceVariant)
             }
         }
 
@@ -200,7 +202,7 @@ GroupButton {
                         ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
                         : Appearance.editorialEverywhere
                             ? (root.toggled ? Appearance.editorial.accentInk : Appearance.editorial.ink)
-                        : (root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer)
+                        : (root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurfaceVariant)
                 text: root.buttonText
             }
         }

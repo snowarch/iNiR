@@ -12,7 +12,10 @@ import Qt5Compat.GraphicalEffects
  */
 Switch {
     id: root
-    property real scale: 0.6 // Default in m3 spec is huge af
+    property real scale: 0.8 // m3 spec is 52x32; Lucid's 48x28 reads better than the old 0.6
+    // M3 Expressive's thumb carries a check and a hover halo; the styles with their own control faces keep them.
+    readonly property bool expressive: !Appearance.regaliaEverywhere && !Appearance.editorialEverywhere
+        && !Appearance.zzzEverywhere && !Appearance.inirEverywhere && !Appearance.angelEverywhere
     implicitHeight: Appearance.regaliaEverywhere ? 22 : 32 * root.scale
     implicitWidth: Appearance.regaliaEverywhere ? 40 : 52 * root.scale
     property color activeColor: Appearance.editorialEverywhere ? Appearance.editorial.accent
@@ -116,6 +119,27 @@ Switch {
                     : thumb.color
             }
         }
+        Rectangle {
+            z: -1
+            anchors.centerIn: parent
+            width: 40 * root.scale
+            height: width
+            radius: width / 2
+            visible: root.expressive && root.enabled
+            color: root.checked ? Appearance.colors.colPrimary : Appearance.colors.colOnSurface
+            opacity: root.down ? 0.12 : root.hovered ? 0.08 : 0
+            Behavior on opacity { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+        }
+        MaterialSymbol {
+            anchors.centerIn: parent
+            visible: root.expressive
+            text: "check"
+            iconSize: Math.round(thumb.width * 0.72)
+            color: Appearance.colors.colPrimary
+            opacity: root.checked ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+        }
+
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: Appearance.regaliaEverywhere
