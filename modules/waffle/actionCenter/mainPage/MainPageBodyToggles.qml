@@ -101,7 +101,7 @@ Item {
                 required property int index
                 hoverEnabled: true
                 onClicked: root.currentPage = index
-                anchors.horizontalCenter: parent.horizontalCenter
+                x: ((parent?.width ?? width) - width) / 2
                 implicitWidth: 6
                 implicitHeight: 6
 

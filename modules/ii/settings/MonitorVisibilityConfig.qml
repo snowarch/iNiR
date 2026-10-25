@@ -824,7 +824,7 @@ ContentPage {
                     id: positionLabel
                     anchors.centerIn: parent
                     text: monitorRect.validPosition
-                        ? Math.round(monitorRect.snappedLogical.x) + ", " + Math.round(monitorRect.snappedLogical.y)
+                        ? monitorRect.snappedLogical.x.toFixed(0) + ", " + monitorRect.snappedLogical.y.toFixed(0)
                         : Translation.tr("Invalid placement")
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.weight: Font.Medium
