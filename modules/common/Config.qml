@@ -166,7 +166,21 @@ Singleton {
         }
     }
 
+    // Rows bound to an option re-send it as they load (a switch's onCheckedChanged); writing those back pinned
+    // defaults into the file and made every row re-read. A value the option already has is not a write, unless a
+    // drag previewed it first.
+    property var _previewedKeys: ({})
+    function _alreadyHolds(nestedKey, value): bool {
+        if (value !== null && typeof value === "object") return false;
+        const path = Array.isArray(nestedKey) ? nestedKey.join(".") : String(nestedKey ?? "");
+        if (!path || root._previewedKeys[path]) return false;
+        const now = root.getNestedValue(nestedKey, undefined);
+        return now !== undefined && (typeof now !== "object" || now === null) && now === value;
+    }
+
     function setNestedValue(nestedKey, value) {
+        if (root._alreadyHolds(nestedKey, value)) return;
+        delete root._previewedKeys[Array.isArray(nestedKey) ? nestedKey.join(".") : String(nestedKey ?? "")];
         _applyNestedKey(nestedKey, value);
         _applyToMirror(nestedKey, value);
         _recordPendingMutation(nestedKey, value);
@@ -178,6 +192,7 @@ Singleton {
     // A value shown while a control is being dragged: its consumers follow it, but nothing is written and the
     // revision stays (every Settings row re-reads on a revision). The drag ends with setNestedValue.
     function previewNestedValue(nestedKey, value) {
+        root._previewedKeys[Array.isArray(nestedKey) ? nestedKey.join(".") : String(nestedKey ?? "")] = true;
         _applyNestedKey(nestedKey, value);
     }
 
@@ -186,8 +201,9 @@ Singleton {
     function setNestedValues(updates) {
         if (!updates || typeof updates !== "object")
             return;
-        const paths = Object.keys(updates);
+        const paths = Object.keys(updates).filter(path => !root._alreadyHolds(path, updates[path]));
         for (let i = 0; i < paths.length; ++i) {
+            delete root._previewedKeys[paths[i]];
             _applyNestedKey(paths[i], updates[paths[i]]);
             _applyToMirror(paths[i], updates[paths[i]]);
             _recordPendingMutation(paths[i], updates[paths[i]]);
