@@ -2322,7 +2322,7 @@ AbstractWidget {
         _seedDefaultsIfNeeded();
         root._syncPlacementStrategy();
         _placementLater.restart();
-        Qt.callLater(root._keepSize)
+        Qt.callLater(() => root._keepSize(true))
         if (!root.outputName.startsWith("lock:"))
             DesktopWidgetStacks.report(root.configEntryName, root.irisSizes, root.irisDefaultSize, root.hasIrisFace)
         root._stackMemo = root._stackKey()
@@ -2620,20 +2620,30 @@ AbstractWidget {
         if (root.materialSizes.includes(size)) values.materialSize = size
         return values
     }
-    function _keepSize(): void {
+    // `settle` (at load) also brings the other family's key to the shown size when they disagree on a size this family
+    // could show: configs from before one size per family kept L here and S there. Only at load, in the family the
+    // person is in; on a switch the shown key is the stale one.
+    property bool _sizeSettled: false
+    function _keepSize(settle: bool): void {
         if (!Config.ready || root.stacked || root.outputName.length === 0 || root.outputName.startsWith("lock:"))
             return
         const shown = root.irisFaced ? root.irisSize : root.materialSized ? root.materialSize : ""
         if (!shown)
             return
+        // a face that arrives after load still gets its settle, once
+        settle = settle || !root._sizeSettled
+        root._sizeSettled = true
         const values = root._sizeValues(shown)
-        for (const key of Object.keys(values))
-            if (root._storedConfigKey(key) !== undefined)
+        const ownSizes = root.irisFaced ? root.irisSizes : root.materialSizes
+        for (const key of Object.keys(values)) {
+            const stored = root._storedConfigKey(key)
+            if (stored !== undefined && !(settle && stored !== shown && ownSizes.includes(String(stored))))
                 delete values[key]
+        }
         if (Object.keys(values).length > 0)
             DesktopWidgetLayout.setValues(root.outputName, root.configEntryName, values)
     }
-    onIrisFacedChanged: Qt.callLater(root._keepSize)
+    onIrisFacedChanged: Qt.callLater(() => root._keepSize(false))
     readonly property size materialFootprint: DesktopWidgetDesign.materialFootprint(root.materialSize)
     readonly property real materialWidth: Math.round(root.materialFootprint.width * root._baseScale)
     readonly property real materialHeight: Math.round(root.materialFootprint.height * root._baseScale)
@@ -2666,7 +2676,7 @@ AbstractWidget {
     onMaterialHeightChanged: _materialRefitLater.restart()
     onMaterialSizedChanged: {
         _materialRefitLater.restart()
-        Qt.callLater(root._keepSize)
+        Qt.callLater(() => root._keepSize(false))
     }
     Timer {
         id: _materialRefitLater
