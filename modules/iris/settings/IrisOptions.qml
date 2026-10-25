@@ -758,6 +758,14 @@ QtObject {
     // Alternatives offered for a piece whose resting face is a glyph. The description
     // names what is drawn on screen, so searching for the glyph finds the control.
     readonly property var pieceIcons: ({
+        awake: { description: "The face of the Stay awake bubble; it fills while the screen is kept on.",
+            glyphs: ["coffee", "local_cafe", "emoji_food_beverage", "visibility", "light_mode", "bolt"] },
+        nightLight: { description: "The face of the Night light bubble; it fills while the screen is warmed.",
+            glyphs: ["nightlight", "bedtime", "dark_mode", "wb_twilight", "brightness_4", "local_fire_department"] },
+        capture: { description: "The face of the Screenshot bubble.",
+            glyphs: ["screenshot_region", "screenshot_monitor", "crop", "photo_camera", "center_focus_strong", "select"] },
+        power: { description: "The face of the Power bubble.",
+            glyphs: ["power_settings_new", "logout", "lock", "restart_alt", "mode_off_on", "settings_power"] },
         controls: { description: "The face of the bubble that opens the Control Center. It shows a wifi arc while Wi-Fi is on and a slider otherwise; pick a glyph here to keep one of your own instead.",
             glyphs: ["tune", "settings", "wifi", "toggle_on", "dashboard", "apps", "equalizer", "more_horiz"] },
         tools: { description: "The face of the Timers bubble while nothing is counting; a running timer always shows its ring and the minutes left.",
