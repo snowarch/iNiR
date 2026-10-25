@@ -417,10 +417,27 @@ Item {
             let best = null
             for (let i = 0; i < cards.count; i++) {
                 const card = cards.itemAt(i)
-                if (card && !card.admitted && card.far < reach && (!best || card.far < best.far)) best = card
+                if (card && !card.admitted && card.wanted && card.far < reach && (!best || card.far < best.far)) best = card
             }
             if (best) best.admitted = true
             else admit.stop()
+        }
+    }
+    // Pictures of the cards two or more out are taken again once a look change settles, a card at a time, never in
+    // the change's own frame (DeckCard.held).
+    readonly property string look: [IrisStyle.surfaceOpaque, IrisStyle.readingCard, IrisStyle.accent, IrisStyle.text,
+        IrisStyle.muted, IrisStyle.fill, IrisStyle.hairline, IrisStyle.settingsDensity].join("|")
+    property int lookRevision: 0
+    onLookChanged: { root.lookRevision++; restale.restart() }
+    Timer {
+        id: restale
+        interval: 1500
+        onTriggered: {
+            for (let i = 0; i < cards.count; i++) {
+                const card = cards.itemAt(i)
+                if (card && card.picture.toString() !== "") card.pictureStale = true
+            }
+            admit.start()
         }
     }
     // The deck holds the cards within two of where it stands (and where it is going, and where it just was): going back
@@ -718,6 +735,34 @@ Item {
         readonly property rect box: root.rectAt(deck.o)
         readonly property real s: deck.box.width / Math.max(1, root.cardRect.width)
         property bool admitted: false
+        // Two or more out a card is a picture of its page and the page is let go: seven live pages all restyled on a
+        // colour change (a palette change held the GUI ~280 ms with Deck open, ~60 in Classic, 10-25). ±1 stay pages,
+        // so a turn of one lands on a page; a jump lands on a picture of the very page the hero then builds.
+        readonly property bool held: deck.hero || deck.far < 1.5
+        property url picture: ""
+        property var shot: null
+        property bool pictureStale: false
+        readonly property bool wanted: deck.held || deck.picture.toString() === "" || deck.pictureStale
+        property bool shooting: false
+        readonly property bool standing: !root.moving
+        onStandingChanged: deck.shoot()
+        // a closed Settings keeps its window hidden: nothing can be shot there, so the shot waits for it to show
+        readonly property bool shown: deck.QsWindow.window?.visible ?? false
+        onShownChanged: deck.shoot()
+        onHeldChanged: if (deck.held) admit.start(); else deck.shoot()
+        function shoot(): void {
+            if (deck.held || deck.shooting || !deck.ready || root.moving || !deck.shown) return
+            const item = page.item
+            const revision = root.lookRevision
+            deck.shooting = item.grabToImage(result => {
+                deck.shooting = false
+                if (deck.held || root.moving || page.item !== item) return
+                deck.shot = result  // the url lives only as long as its result
+                deck.picture = result.url
+                deck.pictureStale = revision !== root.lookRevision  // shot across a look change: taken again
+                deck.admitted = false
+            }, Qt.size(Math.ceil(plane.width * IrisStyle.deviceRatio), Math.ceil(plane.height * IrisStyle.deviceRatio)))
+        }
         readonly property bool ready: page.status === Loader.Ready && page.item !== null && page.item.whole !== false
         readonly property int notes: Number(root.noteCounts[deck.entry?.id] ?? 0)
         x: deck.box.x
@@ -733,7 +778,7 @@ Item {
         Behavior on opacity { enabled: !root.moving; NumberAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
         function claim(): void { if (deck.hero) root.heroPage = deck.ready ? page.item : null }
         onHeroChanged: deck.claim()
-        onReadyChanged: deck.claim()
+        onReadyChanged: { deck.claim(); deck.shoot() }
         Component.onDestruction: if (root.heroPage !== null && root.heroPage === page.item) root.heroPage = null
         Item {
             id: plane
@@ -760,7 +805,7 @@ Item {
             // the open card hides its page for a search or a shared page (the Hub), and the head stood over those.
             Item {
                 anchors.fill: parent
-                visible: page.opacity < 1 && !page.givenUp
+                visible: page.opacity < 1 && !page.givenUp && deck.picture.toString() === ""
                 Rectangle {
                     width: parent.width
                     height: Math.round(Math.min(root.u(300), plane.height * 0.36))
@@ -785,6 +830,13 @@ Item {
                     color: IrisStyle.muted
                     font.pixelSize: IrisStyle.typeMeta
                 }
+            }
+            Image {
+                anchors.fill: parent
+                visible: deck.picture.toString() !== "" && page.opacity < 1 && !page.givenUp
+                source: deck.picture
+                cache: false
+                smooth: false
             }
             Loader {
                 id: page
