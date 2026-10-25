@@ -47,6 +47,7 @@ Item {
     // ── The grip: a click raises or lowers the drawer, a pull up or down says which.
     MouseArea {
         id: grip
+        objectName: "drawerGrip"
         visible: !root.windowed
         anchors.horizontalCenter: parent.horizontalCenter
         width: root.u(120)

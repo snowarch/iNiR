@@ -150,7 +150,8 @@ Item {
     // Whole once every column is: the pool turns to the page only then.
     property bool whole: false
     function weigh(): void {
-        let built = columnRepeater.count === page.split.length && page.split.length > 0
+        // An area with nothing shown is whole as it stands.
+        let built = columnRepeater.count === page.split.length
         for (let i = 0; built && i < columnRepeater.count; i++) built = columnRepeater.itemAt(i)?.whole === true
         page.whole = built
     }
