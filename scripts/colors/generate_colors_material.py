@@ -734,31 +734,33 @@ scheme = Scheme(hct, darkmode, 0.0)
 material_colors = {}
 term_colors = {}
 
+
+def _tamed(generated_hct):
+    # Apply softening if requested and scheme allows it
+    if args.soften and args.scheme not in [
+        "scheme-tonal-spot",
+        "scheme-neutral",
+        "scheme-monochrome",
+    ]:
+        generated_hct = Hct.from_hct(
+            generated_hct.hue, generated_hct.chroma * 0.60, generated_hct.tone
+        )
+
+    # Scale output chroma for color strength — skip near-achromatic tokens
+    # (chroma < 2 means effectively gray/black/white, leave untouched)
+    if abs(args.color_strength - 1.0) > 1e-6 and generated_hct.chroma > 2.0:
+        generated_hct = Hct.from_hct(
+            generated_hct.hue,
+            generated_hct.chroma * args.color_strength,
+            generated_hct.tone,
+        )
+    return generated_hct
+
+
 for color in vars(MaterialDynamicColors).keys():
     color_name = getattr(MaterialDynamicColors, color)
     if hasattr(color_name, "get_hct"):
-        generated_hct = color_name.get_hct(scheme)
-
-        # Apply softening if requested and scheme allows it
-        if args.soften and args.scheme not in [
-            "scheme-tonal-spot",
-            "scheme-neutral",
-            "scheme-monochrome",
-        ]:
-            generated_hct = Hct.from_hct(
-                generated_hct.hue, generated_hct.chroma * 0.60, generated_hct.tone
-            )
-
-        # Scale output chroma for color strength — skip near-achromatic tokens
-        # (chroma < 2 means effectively gray/black/white, leave untouched)
-        if abs(args.color_strength - 1.0) > 1e-6 and generated_hct.chroma > 2.0:
-            generated_hct = Hct.from_hct(
-                generated_hct.hue,
-                generated_hct.chroma * args.color_strength,
-                generated_hct.tone,
-            )
-
-        rgba = generated_hct.to_rgba()
+        rgba = _tamed(color_name.get_hct(scheme)).to_rgba()
         material_colors[color] = rgba_to_hex(rgba)
 
 # Accents live in Material's band (tone 80 on dark, 40 on light). Fidelity and content schemes copy the seed's
@@ -770,19 +772,21 @@ if args.scheme != "scheme-monochrome":
         if palette is None or key not in material_colors:
             continue
         tone = Hct.from_int(hex_to_argb(material_colors[key])).tone
+        # Re-read tones are tamed like every other role: the raw palette gave a vivid red wallpaper a #930008
+        # container whatever the soften and strength said.
         if darkmode and not 70.0 <= tone <= 85.0:
-            material_colors[key] = argb_to_hex(palette.get_hct(80).to_int())
+            material_colors[key] = argb_to_hex(_tamed(palette.get_hct(80)).to_int())
         elif not darkmode and not 25.0 <= tone <= 50.0:
-            material_colors[key] = argb_to_hex(palette.get_hct(40).to_int())
+            material_colors[key] = argb_to_hex(_tamed(palette.get_hct(40)).to_int())
         container, on_container = key + "Container", "on" + key[0].upper() + key[1:] + "Container"
         if container in material_colors:
             ctone = Hct.from_int(hex_to_argb(material_colors[container])).tone
             if darkmode and not 20.0 <= ctone <= 40.0:
-                material_colors[container] = argb_to_hex(palette.get_hct(30).to_int())
-                material_colors[on_container] = argb_to_hex(palette.get_hct(90).to_int())
+                material_colors[container] = argb_to_hex(_tamed(palette.get_hct(30)).to_int())
+                material_colors[on_container] = argb_to_hex(_tamed(palette.get_hct(90)).to_int())
             elif not darkmode and not 80.0 <= ctone <= 95.0:
-                material_colors[container] = argb_to_hex(palette.get_hct(90).to_int())
-                material_colors[on_container] = argb_to_hex(palette.get_hct(10).to_int())
+                material_colors[container] = argb_to_hex(_tamed(palette.get_hct(90)).to_int())
+                material_colors[on_container] = argb_to_hex(_tamed(palette.get_hct(10)).to_int())
         # A near-grey wallpaper still has a hue: the accent carries it at a chroma people read as colour, so no
         # wallpaper leaves the shell and its apps without one (a night wallpaper gave a grey #C2C7CE).
         # And a ceiling: a vivid green wallpaper gave #05E600 (chroma 102), a neon no text or fill sits well on.
