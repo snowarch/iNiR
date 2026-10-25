@@ -52,6 +52,10 @@ Item {
     // keeps its speed, so three quick ones glide three cards in one move. Over the desktop the area opens once its card
     // has nearly arrived: the cards it only passed never build their rows.
     property int aim: 0
+    // Where the deck stood before: going back and forth between two areas keeps the cards of both.
+    property int trail: -1
+    property int lastAim: -1
+    onAimChanged: { root.trail = root.lastAim; root.lastAim = root.aim }
     readonly property real pos: travel.value
     readonly property real pitch: root.windowed ? Math.round(root.cardRect.width * 0.22) : Math.round((root.cardRect.width + root.sideWidth) / 2 + root.gap)
     readonly property real shift: (root.current - root.pos) * root.pitch
@@ -59,6 +63,8 @@ Item {
     function goTo(index: int): void {
         const next = Math.max(0, Math.min(root.sections.length - 1, index))
         if (next === root.aim && next === root.current) return
+        // a place several cards off (the pager) is stood at, not glided to: the way there made and broke every card on it
+        if (Math.abs(next - root.aim) > 2) root.standAt(next)
         root.aim = next
         travel.to = next
         if (!root.sided) root.host.selectSection(root.sections[next].id)
@@ -74,21 +80,31 @@ Item {
     onCurrentChanged: {
         // Opened from elsewhere (the pager of a shortcut, IPC, search): the deck follows.
         if (root.aim !== root.current) {
-            const far = Math.abs(root.current - root.pos) > 2
+            // a place, not a turn: an area several cards off just stands there
+            if (Math.abs(root.current - root.pos) > 2) root.standAt(root.current)
             root.aim = root.current
             travel.to = root.current
-            // a place, not a turn: an area several cards off just stands there
-            if (far) travel.jump()
         }
         root.engaged = false
         root.cursor = -1
         ring.shown = false
         root.land()
     }
-    Component.onCompleted: { root.aim = root.current; travel.to = root.current; travel.jump(); admit.start() }
+    // Stands the deck at a place before aiming there, so the cards held never span the way between.
+    function standAt(index: int): void {
+        travel.to = index
+        travel.jump()
+        root.lastAim = index
+    }
+    Component.onCompleted: { root.standAt(root.current); root.aim = root.current; admit.start() }
     // The open area's own rows stand in its card once they are built; until then the card shows what a neighbour shows.
     readonly property bool live: root.home || root.searching || pool.shown === root.section
     readonly property bool heroArriving: pool.turning
+    // Over the desktop the open page comes in over the last quarter of its card's travel, over the card's own face.
+    readonly property real heroShown: {
+        const off = Math.abs(root.current - root.pos)
+        return !root.sided || off < 0.01 ? 1 : Math.max(0, Math.min(1, 1 - 4 * off))
+    }
     // What the hero's pages leave free: the keys at the card's corner, the key bar under the rows while driving.
     readonly property real heroReserve: keys.width + root.u(30)
     readonly property real heroFoot: root.driving ? hintBar.height + root.u(6) : 0
@@ -412,8 +428,10 @@ Item {
     }
     // The deck holds the cards within three of where it stands (and where it is going): seven at the open instead of
     // every area, one more for each card a turn brings near.
-    readonly property int windowFrom: Math.max(0, Math.floor(Math.min(root.pos, root.aim)) - 3)
-    readonly property int windowTo: Math.min(root.sections.length - 1, Math.ceil(Math.max(root.pos, root.aim)) + 3)
+    // A card made at the edge on the way and broken on the way back was the bulk of a turn's work.
+    readonly property int stood: root.trail >= 0 && Math.abs(root.trail - root.aim) <= 2 ? root.trail : root.aim
+    readonly property int windowFrom: Math.max(0, Math.floor(Math.min(root.pos, root.aim, root.stood)) - 3)
+    readonly property int windowTo: Math.min(root.sections.length - 1, Math.ceil(Math.max(root.pos, root.aim, root.stood)) + 3)
     Repeater {
         id: cards
         model: ScriptModel { values: root.sided ? root.sections.slice(root.windowFrom, root.windowTo + 1) : []; objectProp: "id" }
@@ -461,11 +479,18 @@ Item {
             id: pool
             x: card.inset
             y: card.inset
-            width: card.width - 2 * card.inset
-            height: card.height - y - (root.windowed ? root.u(4) : root.u(34))
+            // laid out once at the open card's size and scaled with the card while it travels: sized by the card, the
+            // page re-laid every row, its stage and its fitted title on each frame of a turn
+            width: root.cardRect.width - 2 * card.inset
+            height: root.cardRect.height - y - (root.windowed ? root.u(4) : root.u(34))
+            scale: root.sided ? card.width / Math.max(1, root.cardRect.width) : 1
+            transformOrigin: Item.TopLeft
+            opacity: root.heroShown
             current: root.searching ? pool.shown : root.section
             hidden: root.searching || root.paged
-            settled: Boolean(root.host?.bodySettled ?? true)
+            // a page asked for mid-travel incubates while the cards move and is finished when they land: built in the
+            // frame it was asked for, it stalled the turn halfway (the move then skipped ahead)
+            settled: Boolean(root.host?.bodySettled ?? true) && root.heroShown >= 1
             urlFor: id => Qt.resolvedUrl(id === "home" ? "Home.qml" : "DeckPage.qml")
             propsFor: id => id === "home" ? { host: root.host, voice: "deck" } : { host: root.host }
             order: root.sections.map(entry => entry.id)
@@ -662,18 +687,24 @@ Item {
         readonly property real o: side.index - root.pos
         readonly property real far: Math.abs(side.o)
         readonly property bool inView: side.far < 2.5
-        // Its values read only where they are seen (`detail` is 0 past 1.75): every config write re-told the values of
-        // seven cards, each a scan of every option, and rebuilt their rows.
-        readonly property bool reads: side.far < 1.75
+        // Its values read only near where they are seen (`detail` is 0 past 1.75): every config write re-told the values
+        // of seven cards, each a scan of every option, and rebuilt their rows. What a card built stays until it is well
+        // past where it shows: dropped as soon as it hid, a turn and its way back broke and rebuilt the same rows and
+        // stage on every press.
+        property bool reads: false
         property bool admitted: false
         property bool staged: false
-        onFarChanged: { if (side.far >= 3.2) side.admitted = false; if (side.far >= 2.5) side.staged = false }
+        onFarChanged: {
+            if (side.far < 1.75) side.reads = true
+            else if (side.far >= 2.5) side.reads = false
+            if (side.far >= 3.2) side.staged = false
+        }
+        Component.onCompleted: side.reads = side.far < 1.75
         // what a card says past its name fades out between one and two cards off (built once, never dropped on the way)
         readonly property real detail: Math.max(0, Math.min(1, (1.75 - side.far) / 0.5))
         // the open card's own rows stand on it once built: the live card covers this one, once it has come in over it
-        readonly property bool covered: side.index === root.current && root.live && !root.heroArriving
+        readonly property bool covered: side.index === root.current && root.live && !root.heroArriving && root.heroShown >= 1
         readonly property rect box: side.inView ? root.rectAt(side.o) : Qt.rect(0, 0, 0, 0)
-        readonly property real shown: Math.min(side.box.x + side.box.width, root.width) - Math.max(side.box.x, 0)
         readonly property int notes: Number(root.noteCounts[side.entry?.id] ?? 0)
         visible: side.inView && !side.covered
         x: side.box.x
@@ -698,7 +729,8 @@ Item {
             sourceComponent: Column {
                 x: (side.box.x < 0 ? -side.box.x : 0) + root.u(34)
                 y: root.u(32)
-                width: Math.max(0, side.shown - root.u(68))
+                // a fixed width: following the card's own made every text and the stage re-lay on each frame of a turn
+                width: Math.max(0, root.sideWidth - root.u(68))
                 spacing: root.u(8)
                 Row {
                     spacing: root.u(8)
@@ -709,8 +741,11 @@ Item {
                         readonly property real grow: side.far < 1 ? 1 + (40 / 28 - 1) * (1 - side.far) : side.far < 2 ? 1 - (1 - 22 / 28) * (side.far - 1) : 22 / 28
                         text: Translation.tr(String(side.entry?.title ?? ""))
                         size: root.u(28)
-                        // the hero's title leaves room for the keys at its corner; arriving, this one does too
-                        fit: (side.shown - root.u(68) - Math.max(0, 1 - side.far) * (keys.width + root.u(8))) / sideTitle.grow
+                        // fitted to where the card stands, not to each frame of its way (a fit is a search over sizes);
+                        // the open card's title leaves room for the keys at its corner
+                        readonly property int stand: side.far < 0.5 ? 0 : side.far < 1.5 ? 1 : 2
+                        fit: sideTitle.stand === 0 ? (root.cardRect.width - root.u(76) - keys.width) * 28 / 40
+                            : sideTitle.stand === 1 ? root.sideWidth - root.u(68) : (root.u(260) - root.u(68)) * 28 / 22
                         color: side.far < 0.5 ? IrisStyle.text : IrisStyle.subtext
                         transformOrigin: Item.TopLeft
                         scale: sideTitle.grow
