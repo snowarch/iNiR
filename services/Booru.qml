@@ -71,6 +71,12 @@ Singleton {
                         "file_url": item.file_url,
                         "file_ext": item.file_ext,
                         "source": getWorkingImageSource(item.source) ?? item.file_url,
+                        "page_url": "https://yande.re/post/show/" + item.id,
+                        "origin_url": getWorkingImageSource(item.source) ?? "",
+                        "score": Number(item.score ?? 0),
+                        "author": item.author ?? "",
+                        "file_size": Number(item.file_size ?? 0),
+                        "created_at": item.created_at ? new Date(item.created_at * 1000).toISOString() : "",
                     }
                 })
             },
@@ -105,6 +111,12 @@ Singleton {
                         "file_url": item.file_url,
                         "file_ext": item.file_ext,
                         "source": getWorkingImageSource(item.source) ?? item.file_url,
+                        "page_url": "https://konachan.net/post/show/" + item.id,
+                        "origin_url": getWorkingImageSource(item.source) ?? "",
+                        "score": Number(item.score ?? 0),
+                        "author": item.author ?? "",
+                        "file_size": Number(item.file_size ?? 0),
+                        "created_at": item.created_at ? new Date(item.created_at * 1000).toISOString() : "",
                     }
                 })
             },

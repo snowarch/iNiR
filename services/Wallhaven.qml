@@ -122,6 +122,8 @@ QtObject {
     // Tag fetch queue
     property var tagQueue: ([])
     property var wallpaperTagCache: ({})
+    // What a wallpaper's own page adds to a search result: tags with their category and the uploader.
+    property var wallpaperDetails: ({})
     property var _wallpaperTagCacheKeys: []
     readonly property int wallpaperTagCacheLimit: 256
     property var wallpaperTagRequests: ({})
@@ -567,6 +569,13 @@ QtObject {
             }
             root._storeWallpaperTags(id, joined)
             _applyTagsToResponses(id, joined)
+            const details = Object.assign({}, root.wallpaperDetails)
+            details[id] = {
+                tags: tags.map(t => ({ name: String(t.name ?? ""), category: String(t.category ?? "") })),
+                uploader: String(data.uploader?.username ?? ""),
+                origin: String(data.source ?? "")
+            }
+            root.wallpaperDetails = details
         } catch (e) {
             console.log("[Wallhaven] Failed to parse detail response:", e)
             root._storeWallpaperTags(id, "")
@@ -634,6 +643,10 @@ QtObject {
         params.push("categories=" + requestedCategory)
 
         const fit = fitProfile ?? root.activeFitProfile
+        if (fit?.colors)
+            params.push("colors=" + encodeURIComponent(String(fit.colors).replace(/^#/, "")))
+        if (fit?.mode === "any" && fit?.ratios)
+            params.push("ratios=" + encodeURIComponent(fit.ratios))
         if (fit?.mode !== "any") {
             if (fit?.ratioCode)
                 params.push("ratios=" + encodeURIComponent(fit.ratioCode))
@@ -973,6 +986,8 @@ QtObject {
                     return
                 }
                 var list = payload.data || []
+                newResponse.lastPage = Number(payload.meta?.last_page ?? 0)
+                newResponse.total = Number(payload.meta?.total ?? 0)
                 images = list.map(function(item) {
                     var path = item.path || ""
                     var thumbs = item.thumbs || {}
@@ -1000,7 +1015,16 @@ QtObject {
                         "sample_url": sample,
                         "file_url": path,
                         "file_ext": fileExt,
-                        "source": item.url
+                        "source": item.url,
+                        "page_url": item.url ?? "",
+                        "origin_url": item.source ?? "",
+                        "views": Number(item.views ?? 0),
+                        "favorites": Number(item.favorites ?? 0),
+                        "colors": Array.isArray(item.colors) ? item.colors : [],
+                        "category": item.category ?? "",
+                        "file_size": Number(item.file_size ?? 0),
+                        "file_type": item.file_type ?? "",
+                        "created_at": item.created_at ?? ""
                     }
                 })
             } else if (root._currentSearchProvider === "commons") {
@@ -1128,7 +1152,7 @@ QtObject {
                 return
             root.pendingSearch = null
             Qt.callLater(() => root.makeRequest(next.tags, next.nsfw, next.limit,
-                next.page, next.category, next.generation, next.provider, next.fitProfile))
+                next.page, next.category, next.generation, next.provider, next.fitProfile, next.sorting))
         }
     }
 }
