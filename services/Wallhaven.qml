@@ -748,7 +748,7 @@ QtObject {
                 "is_nsfw": false,
                 "md5": Qt.md5("motionbgs:" + id),
                 "preview_url": root.motionBgsBase + "/i/c/546x308/media/" + id + "/" + file,
-                "sample_url": motion,
+                "sample_url": root.motionBgsBase + "/i/c/960x540/media/" + id + "/" + file,
                 "motion_url": motion,
                 "file_url": root.motionBgsBase + "/dl/hd/" + id + "/",
                 "file_url_4k": is4k ? root.motionBgsBase + "/dl/4k/" + id + "/" : "",
