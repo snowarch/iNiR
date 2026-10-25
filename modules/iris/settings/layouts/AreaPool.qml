@@ -79,7 +79,9 @@ Item {
         const here = pool.itemFor(pool.shown)
         if (here) { here.opacity = 1; here.shift = 0 }
         pool.leaving = ""
-        pool.trim()
+        // Never in this frame: settle runs inside a delegate's creation, and trimming there rewrote the model the
+        // Repeater was building (a binding loop on `values`).
+        Qt.callLater(pool.trim)
     }
     function settle(): void {
         if (pool.current.length === 0 || pool.current === pool.shown || !pool.ready(pool.current)) return
@@ -98,8 +100,7 @@ Item {
             prep.arm()
         }
         pool.arrived(pool.shown)
-        // The page left goes once the turn ends, so the turn's frame destroys nothing; without a turn, after this event:
-        // settle runs inside the delegate's creation, and trimming there rewrote the model it was building (binding loop)
+        // The page left goes once the turn ends, so the turn's frame destroys nothing.
         if (!pool.turning) Qt.callLater(pool.trim)
     }
     onCurrentChanged: {
