@@ -70,19 +70,18 @@ Item {
         else root.arrive()
     }
     function turn(delta: int): void { root.goTo(root.aim + delta) }
+    // The area is chosen once the deck stands: chosen halfway, the engine re-read the area and built its page in the
+    // frames of the move, and the turn froze and skipped to its end.
     function arrive(): void {
-        if (root.dragging || root.aim === root.current || Math.abs(root.aim - root.pos) >= 0.5) return
+        if (root.dragging || root.aim === root.current || root.moving) return
         const entry = root.sections[root.aim]
         if (entry) root.host.selectSection(entry.id)
     }
-    onPosChanged: { root.arrive(); if (!admit.running) admit.start() }
-    // While the deck travels its cards carry only what they already hold, as pictures: stages hide, rows and fitted
-    // titles wait for the landing. A stage riding the move crossfaded with the hero's own at another place, and rows
-    // read on the way were built in the frames of the turn.
+    onPosChanged: if (!admit.running) admit.start()
+    // While the deck travels nothing is built, read or refitted: the cards carry what they hold, as pictures.
     readonly property bool moving: root.dragging || Math.abs(root.pos - root.aim) > 0.02
-    property real stagesShown: root.moving ? 0 : 1
-    Behavior on stagesShown { NumberAnimation { duration: IrisStyle.duration(root.moving ? 90 : 260); easing.type: IrisStyle.feedbackEasing } }
-    onMovingChanged: if (!root.moving) admit.start()
+    // a beat later: the move can end inside the engine's own section change (a jump), and choosing there looped it
+    onMovingChanged: if (!root.moving) { Qt.callLater(root.arrive); admit.start() }
     onCurrentChanged: {
         // Opened from elsewhere (the pager of a shortcut, IPC, search): the deck follows.
         if (root.aim !== root.current) {
@@ -107,10 +106,16 @@ Item {
     readonly property bool live: root.searching || pool.shown === root.section
     readonly property bool heroArriving: pool.turning
     // Over the desktop the open page comes in over the last quarter of its card's travel, over the card's own face.
-    readonly property real heroShown: {
-        const off = Math.abs(root.current - root.pos)
-        return !root.sided || off < 0.01 ? 1 : Math.max(0, Math.min(1, 1 - 4 * off))
+    // The hero page is the open card's face only while the deck stands on it: on the move the card shows its own face
+    // (built beforehand), so nothing half-faded rides the move and no second title shows through.
+    property real heroShown: 1
+    readonly property bool heroStands: !root.sided || (!root.moving && Math.abs(root.current - root.pos) < 0.01)
+    onHeroStandsChanged: {
+        heroFade.stop()
+        if (root.heroStands) heroFade.start()
+        else root.heroShown = 0
     }
+    NumberAnimation { id: heroFade; target: root; property: "heroShown"; to: 1; duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing }
     // What the hero's pages leave free: the keys at the card's corner, the key bar under the rows while driving.
     readonly property real heroReserve: keys.width + root.u(30)
     readonly property real heroFoot: root.driving ? hintBar.height + root.u(6) : 0
@@ -163,6 +168,12 @@ Item {
         return out.map(item => ({ item: item, y: item.mapToItem(card, 0, 0).y })).sort((a, b) => a.y - b.y).map(entry => entry.item)
     }
     function focused(): Item { return root.cursor >= 0 ? (root.stops()[root.cursor] ?? null) : null }
+    Connections {
+        target: root.flick
+        ignoreUnknownSignals: true
+        function onContentYChanged(): void { if (ring.shown) root.place() }
+        function onContentHeightChanged(): void { if (ring.shown) Qt.callLater(root.place) }
+    }
     function place(): void {
         const item = root.focused()
         if (!item) { ring.shown = false; return }
@@ -422,6 +433,13 @@ Item {
             }
             if (best) { best.admitted = true; return }
             if (root.moving) { admit.stop(); return }
+            // then their rows, out to the edge of reach: a card a turn brings in arrives already written, never filled
+            // in once it lands
+            for (let i = 0; i < cards.count; i++) {
+                const card = cards.itemAt(i)
+                if (card && card.admitted && !card.reads && card.far < root.reach && (!best || card.far < best.far)) best = card
+            }
+            if (best) { best.reads = true; return }
             // then the stages of the two cards beside it, the heavy part, once the body and the open area's page stand:
             // they took the frames the page was building in, and a stage two cards out is past the screen's edge
             if (!Boolean(root.host?.bodySettled ?? true) || pool.current !== pool.shown) { admit.stop(); return }
@@ -453,7 +471,7 @@ Item {
         width: root.liveRect.width
         height: root.liveRect.height
         readonly property real inset: root.u(root.windowed ? 8 : 12)
-        clip: root.windowed
+        clip: true
         transform: Translate { x: root.windowed ? root.shift : 0 }
         Rectangle {
             visible: root.windowed
@@ -748,7 +766,7 @@ Item {
         property bool staged: false
         onFarChanged: {
             if (side.far < 1.75 && !root.moving) side.reads = true
-            else if (side.far >= 2.5) side.reads = false
+            else if (side.far >= 3.6) side.reads = false
             if (side.far >= 3.2) side.staged = false
             if (!root.moving) side.stand = side.standFor()
         }
@@ -792,6 +810,8 @@ Item {
             sourceComponent: Column {
                 x: (side.box.x < 0 ? -side.box.x : 0) + root.u(34)
                 y: root.u(32)
+                // the open card's face gives way as its page comes in: a true crossfade, never one text over the other
+                opacity: side.index === root.current && root.live ? 1 - root.heroShown : 1
                 // a fixed width: following the card's own made every text and the stage re-lay on each frame of a turn
                 width: Math.max(0, root.sideWidth - root.u(68))
                 spacing: root.u(8)
@@ -828,12 +848,15 @@ Item {
                     color: IrisStyle.muted
                     font.pixelSize: IrisStyle.typeMeta
                 }
-                // the stage is the heavy part: it comes a beat later, on its own
+                // the stage is the heavy part: it comes a beat later, on its own, into a place kept for it (every area but
+                // Home has a scene): rows that sat up and dropped 200 px when it came read as the card rebuilding
                 Loader {
                     active: side.staged
                     asynchronous: true
-                    visible: (item?.available ?? false) && opacity > 0
-                    opacity: side.detail * root.stagesShown
+                    visible: (Config.options?.iris?.appearance?.previews ?? true) && String(side.entry?.id ?? "") !== "home"
+                    property real lit: (item?.available ?? false) ? 1 : 0
+                    Behavior on lit { enabled: !root.moving; NumberAnimation { duration: IrisStyle.duration(220); easing.type: IrisStyle.feedbackEasing } }
+                    opacity: side.detail * lit
                     width: parent.width
                     height: root.u(200)
                     sourceComponent: IrisGroupPreview {
