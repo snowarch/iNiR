@@ -37,7 +37,7 @@ ClippingRectangle {
     property var niriValue: null
     property int niriRevision: 0
     readonly property real d: IrisStyle.density
-    // A layout that always shows a stage (Folio's plate, Deck's hero) asks for a neighbour's scene where its area has none.
+    // A layout that always shows a stage (Folio's plate, Pocket's and Drawer's stage) asks for a neighbour's scene where its area has none.
     property bool standIn: false
     readonly property string scene: root.sceneFor(root.section, root.group)
         || (root.standIn ? root.sceneFor(root.section, "") : "")

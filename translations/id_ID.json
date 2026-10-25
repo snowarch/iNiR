@@ -9539,7 +9539,6 @@
   "Adds the graphics card to what Vitals shows.": "Menambahkan kartu grafis ke Vitals.",
   "Folio": "Lembar",
   "Console": "Konsol",
-  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Lembar dibaca seperti halaman, Tumpukan membagi area sebagai kartu, Konsol menatanya sebagai ubin.",
   "%1 is pinned but no longer installed.": "%1 disematkan tetapi sudah tidak terpasang.",
   "Defaults": "Bawaan",
   "1 note": "1 catatan",
@@ -9889,5 +9888,10 @@
   "The face of the Stay awake bubble; it fills while the screen is kept on.": "Tampilan gelembung Tetap terjaga; terisi selama layar tetap menyala.",
   "The face of the Night light bubble; it fills while the screen is warmed.": "Tampilan gelembung Lampu malam; terisi selama layar dihangatkan.",
   "The face of the Screenshot bubble.": "Tampilan gelembung Tangkapan layar.",
-  "The face of the Power bubble.": "Tampilan gelembung Daya."
+  "The face of the Power bubble.": "Tampilan gelembung Daya.",
+  "Drawer": "Laci",
+  "Raise settings": "Naikkan pengaturan",
+  "Lower settings": "Turunkan pengaturan",
+  "Language, time, startup and the shell itself": "Bahasa, waktu, startup, dan shell itu sendiri",
+  "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "Folio dibaca seperti halaman, Pocket menyimpan area dalam satu kolom di sisi layar, Laci naik dari bawahnya."
 }

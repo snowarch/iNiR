@@ -37,7 +37,7 @@ Item {
     // A picked card: iRiS tints it and sets its name in the accent; a Design that selects with a plate (AIRISU) lays the
     // picked one a step of ink over the others and rules its die in the seal: a card is never a plate of the ink itself
     // (a white card on lacquer), and its name stays in the ink.
-    // The Settings layout that hosts this row (Folio, Console): its controls take that voice.
+    // The Settings layout that hosts this row (Folio, Pocket, Drawer): its controls take that voice.
     property string voice: ""
     readonly property bool platePick: IrisStyle.plateSelection
     function pickFill(selected: bool, hovered: bool): color {

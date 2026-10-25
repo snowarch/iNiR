@@ -9539,7 +9539,6 @@
   "Adds the graphics card to what Vitals shows.": "在 Vitals 中加入显卡。",
   "Folio": "版面",
   "Console": "控制台",
-  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "版面像一页纸一样阅读，卡组把各区域发成卡片，控制台把它们排成方块。",
   "%1 is pinned but no longer installed.": "%1 已固定，但已不再安装。",
   "Defaults": "默认",
   "1 note": "1 条提示",
@@ -9889,5 +9888,10 @@
   "The face of the Stay awake bubble; it fills while the screen is kept on.": "保持唤醒气泡的外观；屏幕保持常亮时会填满。",
   "The face of the Night light bubble; it fills while the screen is warmed.": "夜灯气泡的外观；屏幕变暖时会填满。",
   "The face of the Screenshot bubble.": "截图气泡的外观。",
-  "The face of the Power bubble.": "电源气泡的外观。"
+  "The face of the Power bubble.": "电源气泡的外观。",
+  "Drawer": "抽屉",
+  "Raise settings": "升起设置",
+  "Lower settings": "降下设置",
+  "Language, time, startup and the shell itself": "语言、时间、启动以及外壳本身",
+  "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "对开页像一页纸那样阅读，口袋把各区域放在屏幕侧边的一列里，抽屉从底部升起。"
 }

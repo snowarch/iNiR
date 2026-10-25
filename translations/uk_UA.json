@@ -9539,7 +9539,6 @@
   "Adds the graphics card to what Vitals shows.": "Додає відеокарту до Vitals.",
   "Folio": "Аркуш",
   "Console": "Пульт",
-  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Аркуш читається як сторінка, Колода роздає розділи картками, Пульт розкладає їх плитками.",
   "%1 is pinned but no longer installed.": "%1 закріплено, але більше не встановлено.",
   "Defaults": "Типові",
   "1 note": "1 примітка",
@@ -9889,5 +9888,10 @@
   "The face of the Stay awake bubble; it fills while the screen is kept on.": "Вигляд бульбашки «Не засинати»; вона заповнюється, поки екран лишається увімкненим.",
   "The face of the Night light bubble; it fills while the screen is warmed.": "Вигляд бульбашки «Нічне світло»; вона заповнюється, поки екран утеплено.",
   "The face of the Screenshot bubble.": "Вигляд бульбашки «Знімок екрана».",
-  "The face of the Power bubble.": "Вигляд бульбашки «Живлення»."
+  "The face of the Power bubble.": "Вигляд бульбашки «Живлення».",
+  "Drawer": "Шухляда",
+  "Raise settings": "Підняти налаштування",
+  "Lower settings": "Опустити налаштування",
+  "Language, time, startup and the shell itself": "Мова, час, запуск і сама оболонка",
+  "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "Фоліо читається як сторінка, Pocket тримає розділи в одній колонці збоку екрана, Шухляда виїжджає знизу."
 }

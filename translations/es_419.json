@@ -9539,7 +9539,6 @@
   "Adds the graphics card to what Vitals shows.": "Suma la tarjeta gráfica a lo que muestra Vitals.",
   "Folio": "Pliego",
   "Console": "Consola",
-  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Pliego se lee como una página, Baraja reparte las áreas como cartas, Consola las pone en mosaicos.",
   "%1 is pinned but no longer installed.": "%1 está fijada pero ya no está instalada.",
   "Defaults": "Predeterminado",
   "1 note": "1 nota",
@@ -9889,5 +9888,10 @@
   "The face of the Stay awake bubble; it fills while the screen is kept on.": "La cara de la burbuja de Mantener despierto; se llena mientras la pantalla sigue encendida.",
   "The face of the Night light bubble; it fills while the screen is warmed.": "La cara de la burbuja de Luz nocturna; se llena mientras la pantalla está cálida.",
   "The face of the Screenshot bubble.": "La cara de la burbuja de Captura de pantalla.",
-  "The face of the Power bubble.": "La cara de la burbuja de Energía."
+  "The face of the Power bubble.": "La cara de la burbuja de Energía.",
+  "Drawer": "Cajón",
+  "Raise settings": "Subir la configuración",
+  "Lower settings": "Bajar la configuración",
+  "Language, time, startup and the shell itself": "Idioma, hora, inicio y el propio shell",
+  "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "Pliego se lee como una página, Pocket guarda las áreas en una columna al costado de la pantalla, Cajón sube desde abajo."
 }

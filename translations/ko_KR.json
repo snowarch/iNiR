@@ -9539,7 +9539,6 @@
   "Adds the graphics card to what Vitals shows.": "Vitals에 그래픽 카드를 추가합니다.",
   "Folio": "지면",
   "Console": "콘솔",
-  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "지면은 한 페이지처럼 읽히고, 카드는 영역을 카드로 나누며, 콘솔은 타일로 배치합니다.",
   "%1 is pinned but no longer installed.": "%1이(가) 고정되어 있지만 더 이상 설치되어 있지 않습니다.",
   "Defaults": "기본값",
   "1 note": "알림 1개",
@@ -9889,5 +9888,10 @@
   "The face of the Stay awake bubble; it fills while the screen is kept on.": "깨어 있기 버블의 모양. 화면이 켜진 상태로 유지되는 동안 채워집니다.",
   "The face of the Night light bubble; it fills while the screen is warmed.": "야간 조명 버블의 모양. 화면이 따뜻하게 유지되는 동안 채워집니다.",
   "The face of the Screenshot bubble.": "스크린샷 버블의 모양.",
-  "The face of the Power bubble.": "전원 버블의 모양."
+  "The face of the Power bubble.": "전원 버블의 모양.",
+  "Drawer": "서랍",
+  "Raise settings": "설정 올리기",
+  "Lower settings": "설정 내리기",
+  "Language, time, startup and the shell itself": "언어, 시간, 시작 그리고 셸 자체",
+  "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "폴리오는 한 페이지처럼 읽히고, 포켓은 화면 옆에 영역을 한 열로 담고, 서랍은 아래에서 올라옵니다."
 }

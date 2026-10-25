@@ -54,10 +54,9 @@ ClippingRectangle {
     readonly property string greeting: card.hour >= 5 && card.hour < 12 ? Translation.tr("Good morning")
         : card.hour >= 12 && card.hour < 19 ? Translation.tr("Good afternoon")
         : card.hour >= 19 && card.hour < 24 ? Translation.tr("Good evening") : Translation.tr("Good night")
-    readonly property string whereabouts: {
-        const who = SystemInfo.hostname.length > 0 ? SystemInfo.username + "@" + SystemInfo.hostname : SystemInfo.username
-        return who + "  ·  " + Translation.tr("Up %1").arg(DateTime.uptime)
-    }
+    readonly property string who: SystemInfo.hostname.length > 0 ? SystemInfo.username + "@" + SystemInfo.hostname : SystemInfo.username
+    readonly property string up: Translation.tr("Up %1").arg(DateTime.uptime)
+    readonly property string whereabouts: card.who + "  ·  " + card.up
     readonly property string weather: Weather.enabled && Weather.hasData
         ? String(Weather.data?.temp ?? "") + (String(Weather.data?.description ?? "").length > 0 ? "  " + Weather.data.description : "") : ""
     readonly property var nearby: {
@@ -281,14 +280,17 @@ ClippingRectangle {
                         color: IrisStyle.accentOnMedia
                         elide: Text.ElideRight
                     }
+                    // Narrow (a plate, a column), who and how long up take a line each instead of losing the uptime.
                     IrisText {
+                        id: where
                         Layout.fillWidth: true
                         Layout.topMargin: Math.round(2 * card.d)
-                        text: card.whereabouts
+                        text: whereLine.advanceWidth <= where.width ? card.whereabouts : card.who + "\n" + card.up
                         color: IrisStyle.onMediaSecondary
                         font.family: IrisStyle.fontMono
                         font.pixelSize: IrisStyle.typeMeta
                         elide: Text.ElideRight
+                        TextMetrics { id: whereLine; font: where.font; text: card.whereabouts }
                     }
                 }
             }

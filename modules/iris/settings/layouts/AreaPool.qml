@@ -27,12 +27,6 @@ Item {
     property var order: []
     property real distance: 0
     property int duration: IrisStyle.morphDuration
-    // Whether the page left fades under the one arriving. Deck's hero travels with its card, so the page it leaves
-    // would stand in the wrong card: there it goes at once and the card's own face holds the place.
-    property bool crossing: true
-    // Whether the page on screen stays while the one asked for builds. Deck's hero is already the new card by then,
-    // so it shows nothing of another area: the card's face stands there until its page is ready.
-    property bool keepsShown: true
 
     // On screen: the last area whose page stood ready; `leaving` fades under it during a turn.
     property string shown: ""
@@ -95,7 +89,7 @@ Item {
         pool.endTurn()
         const from = pool.shown
         const moves = from.length > 0 && IrisStyle.motionEnabled && !pool.hidden
-        pool.leaving = moves && pool.crossing ? from : ""
+        pool.leaving = moves ? from : ""
         pool.shown = pool.current
         const arriving = pool.itemFor(pool.shown)
         if (moves) {
@@ -103,7 +97,7 @@ Item {
             arriving.shift = (pool.order.indexOf(pool.shown) < pool.order.indexOf(from) ? -1 : 1) * pool.distance
             inFade.target = arriving
             inMove.target = arriving
-            outFade.target = pool.crossing ? pool.itemFor(from) : null
+            outFade.target = pool.itemFor(from)
             prep.arm()
         }
         pool.arrived(pool.shown)
@@ -148,7 +142,7 @@ Item {
             required property string modelData
             readonly property string area: page.modelData
             readonly property bool onScreen: !pool.hidden && (page.area === pool.leaving
-                || page.area === pool.shown && (pool.keepsShown || pool.shown === pool.current))
+                || page.area === pool.shown)
             anchors.fill: parent
             asynchronous: !pool.settled
             visible: page.onScreen && page.status === Loader.Ready

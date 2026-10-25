@@ -71,9 +71,9 @@ Item {
     // A Design may lay the whole page out its own way (DESIGNS.md › Composiciones): its `settingsPage` draws the areas,
     // the head and the foot, and holds this file's search, scene, rows and shared pages in its slots. The model, the
     // history and every row stay here.
-    // iRiS lays the page in the layout chosen in Settings (Folio, Deck, Console); a Design with its own page keeps it.
+    // iRiS lays the page in the layout chosen in Settings (Folio, Pocket, Drawer); a Design with its own page keeps it.
     // Only layouts whose page exists: a missing one would leave the body waiting for its scene forever.
-    readonly property var layouts: ({ folio: "Folio", deck: "Deck", console: "Console" })
+    readonly property var layouts: ({ folio: "Folio", pocket: "Pocket", drawer: "Drawer" })
     // Classic is the engine's own page (the sidebar and its pages, as before the layouts): no layout file.
     readonly property string chosenLayout: {
         const wanted = String(Config.options?.iris?.appearance?.settingsLayout ?? "classic")
@@ -153,7 +153,8 @@ Item {
     readonly property Item scene: pageScene.item
     readonly property bool sceneDrawn: root.scene !== null
     // Narrower than this a Design's page squeezes its sheet: the engine's page is used. Frame width, never the page's.
-    readonly property bool sceneFits: frame.width >= Math.round(960 * root.d)
+    // Pocket is one column: it holds down to a phone's width.
+    readonly property bool sceneFits: frame.width >= Math.round((root.layout === "pocket" ? 360 : 960) * root.d)
     // A Design that draws the page is known before its scene arrives: the engine's own chrome is then never built, and the
     // body waits for the scene instead of showing that chrome for the frames the scene takes to load.
     readonly property bool sceneDesigned: pageScene.url.length > 0
@@ -238,10 +239,8 @@ Item {
         Config.revision
         if (root.layoutRows) return []
         return root.searching ? root.matches.slice(0, root.searchLimit)
-            : root.specifications.filter(spec => spec.section === root.section && root.shown(spec) && !root.claimed.includes(spec))
+            : root.specifications.filter(spec => spec.section === root.section && root.shown(spec))
     }
-    // What the layout already shows as its own widgets (Console's tiles and dials) stays out of the rows.
-    readonly property var claimed: root.scene?.claims ?? []
     readonly property var groups: {
         const out = []
         for (const spec of root.entries) {
@@ -568,17 +567,6 @@ Item {
         { key: "hub", component: Qt.resolvedUrl("IrisHubPage.qml") }
     ]
     property var unfolded: ({})
-    // A layout that folds its groups (Deck) opens the first two; the rest wait under their heads.
-    readonly property bool groupsFold: root.sceneDrawn && (root.scene.folds ?? false) && !root.searching && root.flatSection
-    function groupOpen(key: string): bool {
-        const kept = root.unfolded["open:" + root.section + "/" + key]
-        return kept !== undefined ? kept : root.groups.findIndex(entry => entry.key === key) < 2
-    }
-    function toggleGroup(key: string): void {
-        const next = Object.assign({}, root.unfolded)
-        next["open:" + root.section + "/" + key] = !root.groupOpen(key)
-        root.unfolded = next
-    }
     // Every Fine-tune fold on the page at once (`inir iris settings tune:open`); a section change folds them again.
     property bool tuneAll: false
     function fold(key: string): void {
@@ -914,19 +902,6 @@ Item {
     }
     // The overlay's surface gets the keyboard a beat after it maps: focus taken on open alone landed nowhere, and the
     // arrows and typing reached nothing until the search was clicked.
-    // A console layout's keys as window shortcuts: on the overlay's layer surface the arrows never reached Keys (letters
-    // did). A field with text keeps its arrows; an empty search hands them over.
-    readonly property bool consoleKeys: (root.windowed || GlobalStates.settingsOverlayOpen) && typeof root.scene?.takeKey === "function"
-        && (root.Window.activeFocusItem?.cursorPosition === undefined || (searchField.activeFocus && searchField.text.length === 0))
-    function consoleKey(key: int): void {
-        if (searchField.activeFocus) root.forceActiveFocus()
-        root.scene.takeKey({ key: key, modifiers: Qt.NoModifier })
-    }
-    Shortcut { sequence: "Up"; enabled: root.consoleKeys; onActivated: root.consoleKey(Qt.Key_Up) }
-    Shortcut { sequence: "Down"; enabled: root.consoleKeys; onActivated: root.consoleKey(Qt.Key_Down) }
-    Shortcut { sequence: "Left"; enabled: root.consoleKeys; onActivated: root.consoleKey(Qt.Key_Left) }
-    Shortcut { sequence: "Right"; enabled: root.consoleKeys; onActivated: root.consoleKey(Qt.Key_Right) }
-    Shortcut { sequences: ["Return", "Enter", "Space"]; enabled: root.consoleKeys && !searchField.activeFocus && Number(root.scene?.cursor ?? -1) >= 0; onActivated: root.consoleKey(Qt.Key_Return) }
     Timer { id: takeKeys; interval: 160; onTriggered: if (!searchField.activeFocus && GlobalStates.settingsOverlayOpen) root.forceActiveFocus() }
     // A Design's scene sets its own page; the engine's slide would only move chrome nobody sees.
     function enterPage(): void { if (!root.sceneDesigned) pageEnter.restart() }
@@ -952,9 +927,6 @@ Item {
     Shortcut { sequence: "Ctrl+F"; enabled: GlobalStates.settingsOverlayOpen; onActivated: searchField.forceActiveFocus() }
     // Typing anywhere on the page searches: a letter no control takes reaches the page and goes to the field.
     // ↑ and ↓ walk the sidebar's areas when nothing on the page holds the keys (DI49a: they did nothing).
-    // Deck lays the areas side by side: left and right turn its cards.
-    Keys.onLeftPressed: event => { if (event.modifiers === Qt.NoModifier && root.layout === "deck") root.stepSection(-1); else event.accepted = false }
-    Keys.onRightPressed: event => { if (event.modifiers === Qt.NoModifier && root.layout === "deck") root.stepSection(1); else event.accepted = false }
     Keys.onUpPressed: event => { if (event.modifiers === Qt.NoModifier) root.stepSection(-1); else event.accepted = false }
     Keys.onDownPressed: event => { if (event.modifiers === Qt.NoModifier) root.stepSection(1); else event.accepted = false }
     Keys.onPressed: event => typeAhead.take(event)
@@ -1003,27 +975,38 @@ Item {
         open: root.windowed || (GlobalStates.settingsOverlayOpen && root.hostHere)
         color: IrisStyle.surface
         light: IrisStyle.surfaceLight("settings", IrisStyle.wallpaperLight)
-        radius: frame.spread ? 0 : root.windowField ? Number(IrisNiri.data["window-rules"]?.corner_radius ?? 16)
+        radius: root.windowField ? Number(IrisNiri.data["window-rules"]?.corner_radius ?? 16)
             : root.windowed ? 0 : IrisStyle.surfaceRadius("settings", IrisStyle.radiusPanel)
         onClosed: GlobalStates.irisMorphOwner = ""
         // Whole pixels: a body centred on a half pixel draws every line of its text soft.
-        // A layout's body sits in the room the Island and the Dock leave: Folio and Console as a sheet in the middle of
-        // it, Deck across the whole screen, its cards laid inside that room by the layout itself.
+        // A layout's body sits in the room the Island and the Dock leave: Folio as a sheet in the middle of it, Pocket
+        // standing at its right edge as tall as it, Drawer risen from the screen's foot across it (over the Dock).
         readonly property bool laid: root.layout.length > 0 && !root.windowed
-        readonly property bool spread: frame.laid && root.layout === "deck"
-        panes: root.sceneDrawn && frame.spread ? (root.scene.panes ?? []) : []
+        readonly property string place: frame.laid && (root.layout === "pocket" || root.layout === "drawer") ? root.layout : ""
+        readonly property int footGap: Math.round(14 * root.d)
+        readonly property real drawerRoom: parent.height - root.room.y - frame.footGap
         Behavior on x { enabled: root.switching; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-        Behavior on y { enabled: root.switching; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        Behavior on y { enabled: root.switching || frame.place === "drawer"; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
         Behavior on width { enabled: root.switching; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-        Behavior on height { enabled: root.switching; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
-        readonly property real goalX: root.windowed || frame.spread ? 0 : frame.laid ? Math.round(root.room.x + (root.room.width - width) / 2) : Math.round((parent.width - width) / 2)
-        readonly property real goalY: root.windowed || frame.spread ? 0 : frame.laid ? Math.round(root.room.y + (root.room.height - height) / 2) : Math.round((parent.height - height) / 2)
+        Behavior on height { enabled: root.switching || frame.place === "drawer"; NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        readonly property real goalX: root.windowed ? 0
+            : frame.place === "pocket" ? Math.round(root.room.x + root.room.width - width)
+            : frame.place === "drawer" ? Math.round(root.room.x)
+            : frame.laid ? Math.round(root.room.x + (root.room.width - width) / 2) : Math.round((parent.width - width) / 2)
+        readonly property real goalY: root.windowed ? 0
+            : frame.place === "pocket" ? Math.round(root.room.y)
+            : frame.place === "drawer" ? Math.round(parent.height - frame.footGap - height)
+            : frame.laid ? Math.round(root.room.y + (root.room.height - height) / 2) : Math.round((parent.height - height) / 2)
         readonly property real goalW: root.windowed ? parent.width
-            : frame.spread ? parent.width
+            : frame.place === "pocket" ? Math.round(Math.min(root.room.width, 500 * root.d))
+            : frame.place === "drawer" ? Math.round(root.room.width)
             : frame.laid ? Math.round(Math.min(root.room.width, 1480 * root.d))
             // The sidebar and the rows at their measure; Settings sits on the desktop, it does not replace it.
             : Math.round(Math.min(parent.width - 32 - IrisFrame.musicReach("left") - IrisFrame.musicReach("right"), 1240 * root.d))
-        readonly property real goalH: root.windowed || frame.spread ? parent.height
+        readonly property real goalH: root.windowed ? parent.height
+            : frame.place === "pocket" ? Math.round(root.room.height)
+            // Drawer stands a little under half the screen; its grip raises it to the room's top.
+            : frame.place === "drawer" ? Math.round(root.scene?.tall ? frame.drawerRoom : Math.min(frame.drawerRoom, Math.max(440 * root.d, frame.drawerRoom * 0.46)))
             : frame.laid ? Math.round(Math.min(root.room.height, 900 * root.d))
             // Most of the screen's height, and never shorter than the sidebar's list: measured by the list alone, ten
             // categories left a 640 px strip that cut every page at its second row.
@@ -1039,11 +1022,6 @@ Item {
             onPressed: mouse => {
                 if (mouse.button === Qt.BackButton) root.goBack()
                 else if (mouse.button === Qt.ForwardButton) root.goForward()
-            }
-            // Between Deck's cards is the desktop: a click there closes, as a click past any other body does.
-            onClicked: mouse => {
-                if (frame.panes.length === 0 || mouse.button !== Qt.LeftButton) return
-                if (!frame.panes.some(p => !p.edge && mouse.x >= p.x && mouse.x <= p.x + p.width && mouse.y >= p.y && mouse.y <= p.y + p.height)) root.close()
             }
         }
 
@@ -1706,8 +1684,7 @@ Item {
                         width: root.sceneDrawn ? parent.width : root.pageInPane ? detailPane.width - Math.round(8 * root.d) : pageArea.width - Math.round(24 * root.d)
                         height: root.sceneDrawn ? parent.height : root.pageInPane ? detailPane.height - Math.round(2 * detailPane.radius / 3) : pageArea.height
                         visible: root.advancedPage >= 0
-                        // a layout whose open page already holds it (Deck's System card holds the Hub) needs no second one
-                        active: visible && !(root.scene?.held ?? false)
+                        active: visible
                         source: String(root.pages[root.advancedPage]?.component ?? "")
                     }
                 }
@@ -2320,13 +2297,6 @@ Item {
             readonly property bool reading: root.readGroup === String(group.modelData.key ?? "")
             readonly property int folio: root.groups.findIndex(entry => entry.key === group.modelData.key)
             readonly property string glyph: IrisOptions.groupGlyphs[String(group.modelData.key ?? "")] ?? root.currentSection.icon ?? "settings"
-            // For a layout that folds: whether the rows show, what they hold in a line, and the group's notes.
-            readonly property bool deckStop: true
-            readonly property bool folds: root.groupsFold
-            readonly property bool open: !group.shut
-            readonly property string summary: { Config.revision; return root.sayGroup(group.modelData.rows) }
-            readonly property var notes: root.notesHere.filter(note => String(note.group ?? "") === String(group.modelData.key ?? ""))
-            function toggle(): void { root.toggleGroup(String(group.modelData.key ?? "")) }
             visible: root.flatSection && groupHead.title.length > 0 && headSkin.active
             Layout.fillWidth: true
             // The rows' own inset, so the head's switch stands in their control column.
@@ -2386,8 +2356,6 @@ Item {
         // A group that is all fine-tuning still has one card: its Fine-tune row.
         readonly property var parts: group.shownRows.length === 0 ? [""] : [...new Set(group.shownRows.map(spec => group.partOf(spec)))]
         // A group that is only a switch (a widget not on the desktop) is its head: the name and its switch, no card.
-        readonly property bool shut: root.groupsFold && String(group.modelData.caption ?? "").length > 0 && !group.loneSwitch
-            && !root.groupOpen(String(group.modelData.key ?? ""))
         readonly property bool loneSwitch: {
             Config.revision
             return root.flatSection && String(group.modelData.caption ?? "").length > 0 && !group.folds
@@ -2401,7 +2369,6 @@ Item {
                 required property int index
                 readonly property var rows: group.shownRows.filter(spec => group.partOf(spec) === part.modelData)
                 readonly property bool lastPart: part.index === group.parts.length - 1
-                visible: !group.shut
                 Layout.fillWidth: true
                 Layout.topMargin: part.index > 0 ? 12 * root.d : 0
                 spacing: 6 * root.d

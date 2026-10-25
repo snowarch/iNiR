@@ -9539,7 +9539,6 @@
   "Adds the graphics card to what Vitals shows.": "Ekran kartını Vitals’a ekler.",
   "Folio": "Sayfa",
   "Console": "Konsol",
-  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Sayfa bir sayfa gibi okunur, Deste alanları kart olarak dağıtır, Konsol onları döşeme olarak dizer.",
   "%1 is pinned but no longer installed.": "%1 sabitlenmiş ama artık yüklü değil.",
   "Defaults": "Varsayılan",
   "1 note": "1 not",
@@ -9889,5 +9888,10 @@
   "The face of the Stay awake bubble; it fills while the screen is kept on.": "Uyanık kal baloncuğunun görünümü; ekran açık tutulduğu sürece dolar.",
   "The face of the Night light bubble; it fills while the screen is warmed.": "Gece ışığı baloncuğunun görünümü; ekran ısıtıldığı sürece dolar.",
   "The face of the Screenshot bubble.": "Ekran görüntüsü baloncuğunun görünümü.",
-  "The face of the Power bubble.": "Güç baloncuğunun görünümü."
+  "The face of the Power bubble.": "Güç baloncuğunun görünümü.",
+  "Drawer": "Çekmece",
+  "Raise settings": "Ayarları yükselt",
+  "Lower settings": "Ayarları alçalt",
+  "Language, time, startup and the shell itself": "Dil, saat, başlangıç ve kabuğun kendisi",
+  "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "Folio bir sayfa gibi okunur, Pocket alanları ekranın yanında tek sütunda tutar, Çekmece alttan yükselir."
 }

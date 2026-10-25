@@ -9539,7 +9539,6 @@
   "Adds the graphics card to what Vitals shows.": "מוסיף את כרטיס המסך ל־Vitals.",
   "Folio": "גיליון",
   "Console": "קונסולה",
-  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "גיליון נקרא כמו עמוד, חפיסה מחלקת את האזורים כקלפים, קונסולה מסדרת אותם כאריחים.",
   "%1 is pinned but no longer installed.": "%1 מוצמד אבל כבר לא מותקן.",
   "Defaults": "ברירת מחדל",
   "1 note": "הערה אחת",
@@ -9889,5 +9888,10 @@
   "The face of the Stay awake bubble; it fills while the screen is kept on.": "המראה של בועת 'הישאר ער'; היא מתמלאת כל עוד המסך נשאר דולק.",
   "The face of the Night light bubble; it fills while the screen is warmed.": "המראה של בועת 'תאורת לילה'; היא מתמלאת כל עוד המסך מחומם.",
   "The face of the Screenshot bubble.": "המראה של בועת 'צילום מסך'.",
-  "The face of the Power bubble.": "המראה של בועת 'הפעלה'."
+  "The face of the Power bubble.": "המראה של בועת 'הפעלה'.",
+  "Drawer": "מגירה",
+  "Raise settings": "הרם את ההגדרות",
+  "Lower settings": "הנמך את ההגדרות",
+  "Language, time, startup and the shell itself": "שפה, שעה, הפעלה והמעטפת עצמה",
+  "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "פוליו נקרא כמו עמוד, פוקט מחזיק את האזורים בעמודה אחת בצד המסך, המגירה עולה מתחתיתו."
 }

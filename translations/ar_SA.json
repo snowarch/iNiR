@@ -9539,7 +9539,6 @@
   "Adds the graphics card to what Vitals shows.": "يضيف بطاقة الرسوميات إلى Vitals.",
   "Folio": "ورقة",
   "Console": "لوحة التحكم",
-  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "الورقة تُقرأ كصفحة، والمجموعة توزّع الأقسام كبطاقات، ولوحة التحكم تضعها كمربعات.",
   "%1 is pinned but no longer installed.": "%1 مثبّت لكنه لم يعد مُثبَّتًا على النظام.",
   "Defaults": "الافتراضي",
   "1 note": "ملاحظة واحدة",
@@ -9889,5 +9888,10 @@
   "The face of the Stay awake bubble; it fills while the screen is kept on.": "مظهر فقاعة البقاء مستيقظًا؛ تمتلئ ما دامت الشاشة قيد التشغيل.",
   "The face of the Night light bubble; it fills while the screen is warmed.": "مظهر فقاعة الإضاءة الليلية؛ تمتلئ ما دامت الشاشة دافئة.",
   "The face of the Screenshot bubble.": "مظهر فقاعة لقطة الشاشة.",
-  "The face of the Power bubble.": "مظهر فقاعة الطاقة."
+  "The face of the Power bubble.": "مظهر فقاعة الطاقة.",
+  "Drawer": "الدرج",
+  "Raise settings": "ارفع الإعدادات",
+  "Lower settings": "اخفض الإعدادات",
+  "Language, time, startup and the shell itself": "اللغة والوقت وبدء التشغيل والواجهة نفسها",
+  "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "فوليو يُقرأ كصفحة، وبوكيت يضع المناطق في عمود واحد على جانب الشاشة، والدرج يرتفع من أسفلها."
 }

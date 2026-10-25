@@ -9539,7 +9539,6 @@
   "Adds the graphics card to what Vitals shows.": "Thêm card đồ họa vào Vitals.",
   "Folio": "Tờ",
   "Console": "Bảng điều khiển",
-  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Tờ đọc như một trang, Bộ bài chia các mục thành thẻ, Bảng điều khiển xếp chúng thành ô.",
   "%1 is pinned but no longer installed.": "%1 được ghim nhưng không còn được cài đặt.",
   "Defaults": "Mặc định",
   "1 note": "1 ghi chú",
@@ -9889,5 +9888,10 @@
   "The face of the Stay awake bubble; it fills while the screen is kept on.": "Hình dạng của bong bóng Giữ màn hình sáng; nó được tô đầy khi màn hình vẫn bật.",
   "The face of the Night light bubble; it fills while the screen is warmed.": "Hình dạng của bong bóng Đèn ngủ; nó được tô đầy khi màn hình được làm ấm.",
   "The face of the Screenshot bubble.": "Hình dạng của bong bóng Chụp màn hình.",
-  "The face of the Power bubble.": "Hình dạng của bong bóng Nguồn."
+  "The face of the Power bubble.": "Hình dạng của bong bóng Nguồn.",
+  "Drawer": "Ngăn kéo",
+  "Raise settings": "Kéo cài đặt lên",
+  "Lower settings": "Hạ cài đặt xuống",
+  "Language, time, startup and the shell itself": "Ngôn ngữ, thời gian, khởi động và chính shell",
+  "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "Folio đọc như một trang, Pocket giữ các mục trong một cột bên cạnh màn hình, Ngăn kéo trồi lên từ dưới."
 }

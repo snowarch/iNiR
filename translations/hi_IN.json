@@ -9539,7 +9539,6 @@
   "Adds the graphics card to what Vitals shows.": "Vitals में ग्राफ़िक्स कार्ड जोड़ता है।",
   "Folio": "पन्ना",
   "Console": "कंसोल",
-  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "पन्ना एक पेज की तरह पढ़ा जाता है, गड्डी क्षेत्रों को कार्ड की तरह बाँटती है, कंसोल उन्हें टाइलों में रखता है।",
   "%1 is pinned but no longer installed.": "%1 पिन है पर अब इंस्टॉल नहीं है।",
   "Defaults": "डिफ़ॉल्ट",
   "1 note": "1 नोट",
@@ -9889,5 +9888,10 @@
   "The face of the Stay awake bubble; it fills while the screen is kept on.": "जागते रहें बबल का रूप; स्क्रीन चालू रहने तक यह भरा रहता है।",
   "The face of the Night light bubble; it fills while the screen is warmed.": "नाइट लाइट बबल का रूप; स्क्रीन के गर्म रहने तक यह भरा रहता है।",
   "The face of the Screenshot bubble.": "स्क्रीनशॉट बबल का रूप।",
-  "The face of the Power bubble.": "पावर बबल का रूप।"
+  "The face of the Power bubble.": "पावर बबल का रूप।",
+  "Drawer": "दराज़",
+  "Raise settings": "सेटिंग्स ऊपर उठाएँ",
+  "Lower settings": "सेटिंग्स नीचे करें",
+  "Language, time, startup and the shell itself": "भाषा, समय, स्टार्टअप और शेल ख़ुद",
+  "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "फ़ोलियो एक पन्ने की तरह पढ़ता है, पॉकेट क्षेत्रों को स्क्रीन के किनारे एक कॉलम में रखता है, दराज़ नीचे से ऊपर आती है।"
 }

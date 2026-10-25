@@ -9539,7 +9539,6 @@
   "Adds the graphics card to what Vitals shows.": "Aggiunge la scheda grafica a ciò che mostra Vitals.",
   "Folio": "Foglio",
   "Console": "Console",
-  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Foglio si legge come una pagina, Mazzo distribuisce le aree come carte, Console le dispone a riquadri.",
   "%1 is pinned but no longer installed.": "%1 è fissata ma non è più installata.",
   "Defaults": "Predefiniti",
   "1 note": "1 nota",
@@ -9889,5 +9888,10 @@
   "The face of the Stay awake bubble; it fills while the screen is kept on.": "L'aspetto della bolla Resta sveglio; si riempie finché lo schermo resta acceso.",
   "The face of the Night light bubble; it fills while the screen is warmed.": "L'aspetto della bolla Luce notturna; si riempie finché lo schermo è più caldo.",
   "The face of the Screenshot bubble.": "L'aspetto della bolla Screenshot.",
-  "The face of the Power bubble.": "L'aspetto della bolla Alimentazione."
+  "The face of the Power bubble.": "L'aspetto della bolla Alimentazione.",
+  "Drawer": "Cassetto",
+  "Raise settings": "Alza le impostazioni",
+  "Lower settings": "Abbassa le impostazioni",
+  "Language, time, startup and the shell itself": "Lingua, ora, avvio e la shell stessa",
+  "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "Folio si legge come una pagina, Pocket tiene le aree in una colonna a lato dello schermo, Cassetto sale dal fondo."
 }

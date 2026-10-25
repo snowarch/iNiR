@@ -9539,7 +9539,6 @@
   "Adds the graphics card to what Vitals shows.": "Adds the graphics card to what Vitals shows.",
   "Folio": "Folio",
   "Console": "Console",
-  "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.": "Folio reads like a page, Deck deals the areas as cards, Console sets them as tiles.",
   "%1 is pinned but no longer installed.": "%1 is pinned but no longer installed.",
   "Defaults": "Defaults",
   "1 note": "1 note",
@@ -9889,5 +9888,10 @@
   "The face of the Stay awake bubble; it fills while the screen is kept on.": "The face of the Stay awake bubble; it fills while the screen is kept on.",
   "The face of the Night light bubble; it fills while the screen is warmed.": "The face of the Night light bubble; it fills while the screen is warmed.",
   "The face of the Screenshot bubble.": "The face of the Screenshot bubble.",
-  "The face of the Power bubble.": "The face of the Power bubble."
+  "The face of the Power bubble.": "The face of the Power bubble.",
+  "Drawer": "Drawer",
+  "Raise settings": "Raise settings",
+  "Lower settings": "Lower settings",
+  "Language, time, startup and the shell itself": "Language, time, startup and the shell itself",
+  "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot."
 }

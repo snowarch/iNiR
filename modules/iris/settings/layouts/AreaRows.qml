@@ -18,8 +18,11 @@ ColumnLayout {
     property string voice: ""
     // The page shows: config writes reach the rows now; off screen they wait.
     property bool live: true
-    // A layout that folds its groups (Deck) opens the first two; the rest wait under their heads, rows unbuilt.
-    property bool folds: false
+    // Only these groups (keys), or every group but these: a layout that splits an area (Drawer's columns, Pocket's Home).
+    property var only: null
+    property var skip: []
+    // Home's welcome over the first group; a layout that sets it elsewhere turns it off.
+    property bool welcome: true
     property color groupFill: IrisStyle.readingCard
     // The group the page reads now, for the head that marks it.
     property string reading: ""
@@ -34,14 +37,18 @@ ColumnLayout {
     property bool stale: true
     function refresh(): void {
         const groups = []
+        // Heads are the area's, not the slice's: a column holding one of Dock's groups still names it.
+        const keys = new Set()
         for (const spec of IrisOptions.settings) {
             if (spec.section !== rows.section || !IrisOptions.shown(spec)) continue
             const key = String(spec.group ?? "")
+            keys.add(key)
+            if ((rows.only && !rows.only.includes(key)) || rows.skip.includes(key)) continue
             let group = groups.find(entry => entry.key === key)
             if (!group) { group = { title: Translation.tr(key), key: key, rows: [] }; groups.push(group) }
             group.rows.push(spec)
         }
-        const flat = groups.length > 1 && rows.section !== "system"
+        const flat = keys.size > 1 && rows.section !== "system"
         // A group of one row reads as that row; where its label repeats across the area (every widget's "On the
         // desktop") it names nothing, so the row takes its group's name.
         const lone = {}
@@ -80,13 +87,6 @@ ColumnLayout {
         next[key] = !(next[key] ?? false)
         rows.unfolded = next
     }
-    // Deck's open groups beyond the first two.
-    property var opened: ({})
-    function toggleGroup(key: string): void {
-        const next = Object.assign({}, rows.opened)
-        next[key] = !(next[key] ?? false)
-        rows.opened = next
-    }
     // A pending reveal waits a beat, so the row has its height before the page scrolls to it.
     property Item revealing: null
     Timer { id: revealSoon; interval: 120; onTriggered: if (rows.revealing) rows.reveal(rows.revealing) }
@@ -102,7 +102,7 @@ ColumnLayout {
     }
 
     // The first group comes with the page; the rest build in the frames after it, as Classic's blocks do: a turn
-    // waited on the whole area before (up to 0.9 s for Deck's widgets in a nest).
+    // waited on the whole area before (up to 0.9 s for widgets in a nest).
     readonly property bool streams: String(rows.host?.landingPath ?? "").length === 0
     // Every block built: the pool turns to the page only then, so it arrives whole instead of filling in on screen.
     // Weighed a beat later, never inside a binding: a block that finishes as the page turns visible fed the binding back.
@@ -113,9 +113,9 @@ ColumnLayout {
         rows.whole = built
     }
     onBlocksChanged: Qt.callLater(rows.weigh)
-    // Home opens on the welcome, as Classic's does (Deck's hero holds it in its stage).
+    // Home opens on the welcome, as Classic's does.
     Loader {
-        active: rows.section === "general" && rows.voice !== "deck"
+        active: rows.section === "general" && rows.welcome
         visible: active
         Layout.fillWidth: true
         Layout.leftMargin: Math.round(8 * rows.d)
@@ -156,8 +156,6 @@ ColumnLayout {
                     return block.modelData.flat && block.caption.length > 0 && !block.tunes
                         && block.shownRows.length === 1 && block.shownRows[0].kind === "switch"
                 }
-                readonly property bool shut: rows?.folds && block.index >= 2 && block.caption.length > 0 && !block.loneSwitch
-                    && !(rows?.opened[block.key] ?? false) && !block.landsInFold && !block.modelData.rows?.some(spec => String(spec.path ?? "") === block.landing)
                 function partOf(spec: var): string { return String(spec.part ?? "") }
                 readonly property var parts: block.shownRows.length === 0 ? [""] : [...new Set(block.shownRows.map(spec => block.partOf(spec)))]
 
@@ -165,18 +163,10 @@ ColumnLayout {
                 Item {
                     id: head
                     readonly property string title: block.caption
-                    readonly property int count: block.modelData.rows?.length
                     readonly property bool lone: block.loneSwitch
                     readonly property real switchHeight: headSwitch.implicitHeight
                     readonly property bool reading: rows?.reading === block.key
-                    readonly property int folio: block.index
                     readonly property string glyph: IrisOptions.groupGlyphs[block.key] ?? IrisOptions.sectionById(rows?.section)?.icon ?? "settings"
-                    readonly property bool deckStop: true
-                    readonly property bool folds: rows?.folds && block.index >= 2
-                    readonly property bool open: !block.shut
-                    readonly property string summary: { Config.revision; return block.shut ? (rows?.host?.sayGroup(block.modelData.rows) ?? "") : "" }
-                    readonly property var notes: (rows?.host?.notes?.[rows?.section] ?? []).filter(note => String(note.group ?? "") === block.key)
-                    function toggle(): void { rows?.toggleGroup(block.key) }
                     visible: block.modelData.flat && head.title.length > 0
                     Layout.fillWidth: true
                     Layout.leftMargin: Math.round(16 * rows?.d)
@@ -207,9 +197,8 @@ ColumnLayout {
                     }
                 }
 
-                // A shut group (Deck) builds nothing under its head until it opens.
                 Repeater {
-                    model: ScriptModel { values: block.loneSwitch || block.shut ? [] : block.parts }
+                    model: ScriptModel { values: block.loneSwitch ? [] : block.parts }
                     ColumnLayout {
                         id: part
                         required property string modelData
@@ -234,8 +223,8 @@ ColumnLayout {
                             Layout.fillWidth: true
                             implicitHeight: partRows.implicitHeight
                             radius: IrisStyle.radiusTile
-                            color: IrisStyle.fieldChamfer ? "transparent" : rows?.groupFill
-                            IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer && rows?.groupFill.a > 0; color: rows?.groupFill }
+                            color: IrisStyle.fieldChamfer ? "transparent" : (rows?.groupFill ?? "transparent")
+                            IrisCutPlate { anchors.fill: parent; visible: IrisStyle.fieldChamfer && (rows?.groupFill.a ?? 0) > 0; color: rows?.groupFill ?? "transparent" }
                             ColumnLayout {
                                 id: partRows
                                 anchors.left: parent.left
@@ -249,7 +238,7 @@ ColumnLayout {
                                         required property int index
                                         Layout.fillWidth: true
                                         spec: row.modelData
-                                        voice: rows?.voice
+                                        voice: rows?.voice ?? ""
                                         heading: head.visible && part.index === 0 && row.index === 0 ? head.title : ""
                                         last: row.index === part.specs.length - 1 && !(part.lastPart && block.tunes)
                                         landing: block.landing.length > 0 && String(row.modelData.path ?? "") === block.landing
