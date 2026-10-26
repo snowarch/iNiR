@@ -563,12 +563,27 @@ Item {
                 Layout.maximumWidth: Number.POSITIVE_INFINITY
                 spacing: 0
                 IrisText {
+                    id: wideName
                     Layout.fillWidth: true
                     text: faceState.label
+                    // A long name takes two lines, as Apple's "Screen Mirroring" does; one word too long steps down.
+                    readonly property real longestWord: nameMetrics.font.pixelSize > 0
+                        ? Math.max(0, ...String(wideName.text).split(/\s+/).map(word => nameMetrics.advanceWidth(word))) : 0
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
+                    lineHeight: 0.9
                     elide: Text.ElideRight
                     color: faceState.ready ? IrisStyle.text : IrisStyle.textTertiary
-                    font.pixelSize: IrisStyle.typeLabel
+                    font.pixelSize: wideName.width > 0 && wideName.longestWord > wideName.width
+                        ? Math.max(IrisStyle.typeFootnote, Math.floor(IrisStyle.typeLabel * wideName.width / wideName.longestWord)) : IrisStyle.typeLabel
                     font.weight: IrisStyle.weight(Font.DemiBold)
+                    FontMetrics {
+                        id: nameMetrics
+                        font.family: wideName.font.family
+                        font.pixelSize: IrisStyle.typeLabel
+                        font.weight: IrisStyle.weight(Font.DemiBold)
+                        font.letterSpacing: IrisStyle.tracking(IrisStyle.typeLabel)
+                    }
                 }
                 IrisText {
                     Layout.fillWidth: true
