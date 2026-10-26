@@ -12,7 +12,12 @@ Singleton {
     readonly property string activeFamily: Config.options?.panelFamily ?? "ii"
     readonly property int desktopWidgetOuterGap: 12
 
-    readonly property var _descriptors: [
+    // The active family's own layout part (plugin.json part `layout`): its persistent surfaces with their state, moves
+    // and resets, and the room its chrome takes on the desktop. Material's surfaces are the base's below.
+    FamilyPartLoader { id: familyLayout; part: "layout" }
+    readonly property var _family: familyLayout.item
+    readonly property var _descriptors: root._baseDescriptors.concat(Array.from(root._family?.surfaces ?? []))
+    readonly property var _baseDescriptors: [
         {
             id: "featureSidebar",
             families: ["ii"],
@@ -59,18 +64,6 @@ Singleton {
             slots: ["top", "right", "bottom", "left"],
             editableProperties: ["thickness"],
             collisionPolicy: "swap-edge",
-            resetScopes: ["surface", "family"]
-        },
-        {
-            id: "waffleBar",
-            families: ["waffle"],
-            kind: "edge",
-            labelKey: "Taskbar",
-            icon: "desktop_windows",
-            layoutScope: "enabledOutputs",
-            slots: ["top", "bottom"],
-            editableProperties: [],
-            collisionPolicy: "validated",
             resetScopes: ["surface", "family"]
         }
     ]
@@ -202,11 +195,11 @@ Singleton {
             .map(item => root._clone(item))
     }
 
-    function _panelEnabled(identifier: string): bool {
+    function panelEnabled(identifier: string): bool {
         return (Config.options?.enabledPanels ?? []).includes(identifier)
     }
 
-    function _outputEnabled(configuredOutputs: var, outputName: string): bool {
+    function outputEnabled(configuredOutputs: var, outputName: string): bool {
         if (!Array.isArray(configuredOutputs) || configuredOutputs.length === 0)
             return true
         if (outputName.length > 0 && configuredOutputs.includes(outputName))
@@ -215,7 +208,7 @@ Singleton {
         return !configuredOutputs.some(name => currentNames.includes(name))
     }
 
-    function _applyInset(insets: var, edge: string, thickness: real): void {
+    function applyInset(insets: var, edge: string, thickness: real): void {
         if (!(edge in insets))
             return
         insets[edge] = Math.max(insets[edge], Math.max(0, Math.round(thickness)))
@@ -234,16 +227,16 @@ Singleton {
             barThickness: 0,
             dockEdge: ""
         }
-        if (root.activeFamily === "iris")
-            return root._irisDesktopInsets(outputName, result)
+        if (root._family?.desktopInsets)
+            return root._family.desktopInsets(outputName, result)
         if (root.activeFamily !== "ii")
             return result
 
         const barVertical = Config.options?.bar?.vertical ?? false
         const barIdentifier = barVertical ? "iiVerticalBar" : "iiBar"
         const barOutputs = Config.options?.bar?.screenList ?? []
-        if (root._panelEnabled(barIdentifier)
-                && root._outputEnabled(barOutputs, outputName)
+        if (root.panelEnabled(barIdentifier)
+                && root.outputEnabled(barOutputs, outputName)
                 && (GlobalStates.barOpen ?? true)) {
             const barState = root.currentState("iiBar", outputName)
             const appearanceStyle = Config.options?.bar?.appearanceStyle ?? "classic"
@@ -285,56 +278,20 @@ Singleton {
             }
             result.barEdge = barState.ok ? barState.slot : ""
             result.barThickness = Math.max(0, Math.round(thickness))
-            root._applyInset(result, result.barEdge, thickness)
+            root.applyInset(result, result.barEdge, thickness)
         }
 
         const dockOutputs = Config.options?.dock?.screenList ?? []
-        if (root._panelEnabled("iiDock")
+        if (root.panelEnabled("iiDock")
                 && (Config.options?.dock?.enable ?? true)
-                && root._outputEnabled(dockOutputs, outputName)) {
+                && root.outputEnabled(dockOutputs, outputName)) {
             const dockState = root.currentState("iiDock", outputName)
             result.dockEdge = dockState.ok ? dockState.slot : ""
-            root._applyInset(result, result.dockEdge,
+            root.applyInset(result, result.dockEdge,
                 (Config.options?.dock?.height ?? 70)
                     + Appearance.sizes.elevationMargin
                     + Appearance.sizes.hyprlandGapsOut)
         }
-        return result
-    }
-
-    // iRiS: the Island owns one horizontal edge and the Dock the opposite one.
-    // Mirrors the geometry in modules/iris/bar/IrisBar.qml and dock/IrisDock.qml.
-    // IrisFrame.band from config, so services keep out of the iris folder.
-    function _irisFrameBand(): real {
-        const iris = Config.options?.iris ?? {}
-        if (!(iris.surround?.enable ?? false))
-            return 0
-        const density = Math.max(0.8, Math.min(1.35, Number(iris.appearance?.density ?? 1)))
-        return Math.max(1, Math.round(Number(iris.surround?.thickness ?? 10) * density))
-    }
-
-    function _irisDesktopInsets(outputName: string, result: var): var {
-        const iris = Config.options?.iris ?? {}
-        const density = Math.max(0.8, Math.min(1.35, Number(iris.appearance?.density ?? 1)))
-        const barEdge = String(iris.bar?.position ?? "top") === "bottom" ? "bottom" : "top"
-        result.barEdge = barEdge
-        if (root._panelEnabled("irisBar")
-                && root._outputEnabled(iris.bar?.screenList ?? [], outputName)
-                && (GlobalStates.barOpen ?? true)) {
-            const height = Math.max(32, Math.round(Number(iris.bar?.height ?? 42) * density))
-            const margin = (iris.bar?.notch ?? false) ? 0 : Math.round(Number(iris.bar?.margin ?? 8) * density)
-            root._applyInset(result, barEdge, height + margin * 2)
-        }
-        if (iris.dock?.enable ?? true) {
-            result.dockEdge = barEdge === "bottom" ? "top" : "bottom"
-            const icon = Math.max(28, Math.min(64, Number(iris.dock?.iconSize ?? 40))) * density
-            const gap = (iris.dock?.notch ?? false) ? 0 : 10 * density
-            root._applyInset(result, result.dockEdge, icon + 18 * density + gap * 2)
-        }
-        // The frame holds every edge: nothing on the desktop goes under its band.
-        const band = root._irisFrameBand()
-        for (const edge of ["left", "top", "right", "bottom"])
-            result[edge] = Math.max(result[edge], band)
         return result
     }
 
@@ -360,9 +317,9 @@ Singleton {
     function desktopWorkArea(outputName: string, screenWidth: real,
             screenHeight: real): var {
         const panelInsets = root.desktopInsets(outputName)
-        // Free placement reaches the screen's edge, in iRiS the frame's inner edge (under its band a widget is cut by
+        // Free placement reaches the screen's edge, or a family frame's inner edge (under iRiS's band a widget is cut by
         // the chassis). The shell's own bodies are kept clear by arranging (DesktopArrange.bodies), not by bands.
-        const band = root.activeFamily === "iris" ? root._irisFrameBand() : 0
+        const band = root._family?.frameBand ? root._family.frameBand() : 0
         return root._workAreaFromInsets({
             left: band,
             top: band,
@@ -432,18 +389,9 @@ Singleton {
                 enabledOutputs: Config.options?.dock?.screenList ?? [],
                 source: "dock.position"
             }
-        case "waffleBar":
-            return {
-                ok: true,
-                id: surfaceId,
-                slot: (Config.options?.waffles?.bar?.bottom ?? true) ? "bottom" : "top",
-                scope: desc.layoutScope,
-                outputName: outputName,
-                enabledOutputs: Config.options?.waffles?.bar?.screenList ?? [],
-                source: "waffles.bar.bottom"
-            }
         default:
-            return root._failure("unsupported-surface", "Surface state adapter is unavailable")
+            return root._family?.surfaceState?.(surfaceId, desc, outputName)
+                ?? root._failure("unsupported-surface", "Surface state adapter is unavailable")
         }
     }
 
@@ -513,7 +461,7 @@ Singleton {
             occupiedBy: occupiedBy,
             swapWith: occupiedBy,
             changed: !(current.ok && current.slot === slot),
-            requiresRebuild: surfaceId === "iiBar" || surfaceId === "iiDock" || surfaceId === "waffleBar"
+            requiresRebuild: surfaceId === "iiBar" || surfaceId === "iiDock" || Array.from(root._family?.rebuilds ?? []).includes(surfaceId)
         }
     }
 
@@ -564,10 +512,9 @@ Singleton {
             }
             break
         }
-        case "waffleBar":
-            Config.setNestedValue("waffles.bar.bottom", slot === "bottom")
-            break
         default:
+            if (root._family?.moveSurface?.(surfaceId, slot) === true)
+                break
             return root._failure("mutation-not-ready",
                 "Placement mutation is not available for this surface yet")
         }
@@ -683,9 +630,9 @@ Singleton {
             result.reset = true
             return result
         }
-        case "waffleBar":
-            return root.moveSurface(surfaceId, "bottom", outputName)
         default:
+            if (root._family?.resetSlot?.(surfaceId))
+                return root.moveSurface(surfaceId, root._family.resetSlot(surfaceId), outputName)
             return root._failure("reset-not-ready",
                 "Reset is not available for this surface yet")
         }

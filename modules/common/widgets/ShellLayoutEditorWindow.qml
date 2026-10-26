@@ -47,8 +47,7 @@ Scope {
         case "systemSidebar": return Translation.tr("System sidebar")
         case "iiBar": return Translation.tr("Bar")
         case "iiDock": return Translation.tr("Dock")
-        case "waffleBar": return Translation.tr("Taskbar")
-        default: return surfaceId
+        default: return Translation.tr(String(ShellLayoutController.descriptor(surfaceId)?.labelKey ?? surfaceId))
         }
     }
 

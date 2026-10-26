@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.services
 import qs.services.deferred
+import qs.modules.iris.state
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.shared.mediaControls.components

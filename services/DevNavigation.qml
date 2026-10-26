@@ -44,22 +44,13 @@ Singleton {
         { id: "wallpaper/grid", family: "ii", surface: "wallpaper-grid", view: "", safe: true, settleMs: 500 },
         { id: "wallpaper/coverflow", family: "ii", surface: "wallpaper-coverflow", view: "", safe: true, settleMs: 500 },
         { id: "tiling/picker", family: "shared", surface: "tiling", view: "picker", safe: true, settleMs: 350 },
-        { id: "tiling/osd", family: "shared", surface: "tiling", view: "osd", safe: true, settleMs: 350 },
-        { id: "iris/palette", family: "iris", surface: "iris-palette", view: "", safe: true, settleMs: 300 },
-        { id: "iris/controls", family: "iris", surface: "iris-controls", view: "", safe: true, settleMs: 300 },
-        { id: "iris/session", family: "iris", surface: "iris-session", view: "", safe: true, settleMs: 300 },
-        { id: "waffle/start", family: "waffle", surface: "waffle-search", view: "start", safe: true, settleMs: 350 },
-        { id: "waffle/all-apps", family: "waffle", surface: "waffle-search", view: "all-apps", safe: true, settleMs: 350 },
-        { id: "waffle/search", family: "waffle", surface: "waffle-search", view: "search", safe: true, settleMs: 450 },
-        { id: "waffle/action-center", family: "waffle", surface: "waffle-action-center", view: "", safe: true, settleMs: 350 },
-        { id: "waffle/notification-center", family: "waffle", surface: "waffle-notification-center", view: "", safe: true, settleMs: 350 },
-        { id: "waffle/widgets", family: "waffle", surface: "waffle-widgets", view: "", safe: true, settleMs: 350 },
-        { id: "waffle/taskview", family: "waffle", surface: "waffle-taskview", view: "", safe: true, settleMs: 450 }
+        { id: "tiling/osd", family: "shared", surface: "tiling", view: "osd", safe: true, settleMs: 350 }
     ]
     property var settingsDestinations: []
-    readonly property var destinations: baseDestinations.concat(settingsDestinations)
+    readonly property var destinations: baseDestinations.concat(Plugins.devDestinations, settingsDestinations)
     property string currentDestination: ""
-    property string requestedWaffleStartView: "start"
+    // The view a family's own surface opens on, read by that surface (`view` of its dev destination).
+    property string requestedView: ""
 
     function registerSettingsPages(pages): void {
         const out = []
@@ -96,7 +87,7 @@ Singleton {
         const familyClose = GlobalStates.familyVerb("dev", "close")
         if (familyClose) familyClose()
         GlobalStates.sidebarRightRequestedWidget = ""
-        requestedWaffleStartView = "start"
+        requestedView = ""
         LauncherSearch.query = ""
         currentDestination = ""
     }
@@ -133,24 +124,17 @@ Singleton {
             GlobalStates.tilingOverlayPickerOpen = entry.view === "picker"
             GlobalStates.tilingOverlayOsdOpen = entry.view === "osd"
             break
-        case "iris-palette": GlobalStates.searchOpen = true; break
-        case "iris-controls": GlobalStates.controlPanelOpen = true; break
-        case "iris-session": GlobalStates.sessionOpen = true; break
         case "settings":
-            if ((Config.options?.panelFamily ?? "ii") === "waffle"
-                    && Config.options?.waffles?.settings?.useMaterialStyle !== true) {
+            // The pages are the settings host's: a family wearing no such Settings has none to open.
+            if (Plugins.part(Plugins.settingsFamily, "settingsHost").length === 0) {
                 currentDestination = ""
-                return "error:material-settings-page-unavailable-in-waffle"
+                return "error:settings-page-unavailable"
             }
             GlobalStates.openSettingsPage(entry.pageIndex ?? -1)
             break
-        case "waffle-search":
-            requestedWaffleStartView = entry.view
-            LauncherSearch.query = entry.view === "search" ? "a" : ""
-            GlobalStates.searchOpen = true
-            break
         default: {
             // A family's own surface: its verb `dev.open` opens it and says so.
+            requestedView = entry.view ?? ""
             const familyOpen = GlobalStates.familyVerb("dev", "open")
             if (!familyOpen || familyOpen(entry.surface) !== true) { currentDestination = ""; return "error:unsupported-surface" }
         }

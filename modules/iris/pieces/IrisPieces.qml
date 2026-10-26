@@ -7,6 +7,7 @@ import Quickshell.Services.SystemTray
 import qs
 import qs.services
 import qs.services.deferred
+import qs.modules.iris.state
 import qs.modules.common
 import qs.modules.iris.frame
 import qs.modules.iris.style

@@ -10,7 +10,6 @@ import Quickshell.Services.Pipewire
 import qs
 import qs.modules.common
 import qs.modules.common.functions
-import qs.services.deferred
 
 Singleton {
 	id: root;
@@ -1556,7 +1555,9 @@ Singleton {
 	function effectiveArtUrl(player): string {
 		const direct = root.artUrlOf(player);
 		if (direct.length > 0) return direct;
-		if (AnimeWatch.ownsPlayer(player) && AnimeWatch.playingCover.length > 0) return AnimeWatch.playingCover;
+		// A player the family itself runs can know its cover better (iRiS's anime: verb `media.cover`).
+		const familyCover = GlobalStates.familyVerb("media", "cover")?.(player) ?? "";
+		if (familyCover.length > 0) return familyCover;
 		const videoId = root._extractYoutubeVideoId(
 			player?.metadata?.["xesam:url"] ?? "");
 		if (videoId.length > 0)

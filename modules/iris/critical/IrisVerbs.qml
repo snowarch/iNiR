@@ -17,10 +17,62 @@ QtObject {
     }
     readonly property string _clipboardPrefix: Config.options?.search?.prefix?.clipboard ?? ";"
 
+    function _musicOn(mode: string): bool {
+        const edge = Config.options?.background?.edgeWidgets?.organic ?? ({})
+        return Boolean(edge.enable) && String(Config.options?.iris?.surround?.music ?? "widget") === mode
+    }
+    function _toggleMusic(mode: string): void {
+        if (root._musicOn(mode)) {
+            Config.setNestedValue("background.edgeWidgets.organic.enable", false)
+            return
+        }
+        const updates = { "iris.surround.music": mode, "background.edgeWidgets.organic.enable": true }
+        if (mode === "frame") updates["iris.surround.enable"] = true
+        Config.setNestedValues(updates)
+    }
+    readonly property var _actions: [
+        {
+            id: "frame-music",
+            name: Translation.tr("Frame Music"),
+            description: Translation.tr("Toggle music on the iRiS frame"),
+            icon: "graphic_eq",
+            category: "appearance",
+            keywords: ["iris", "frame", "chassis", "music", "visualizer"],
+            isOn: () => root._musicOn("frame"),
+            execute: () => root._toggleMusic("frame")
+        },
+        {
+            id: "edge-music",
+            name: Translation.tr("Edge Music"),
+            description: Translation.tr("Toggle the Organic Edge music wave"),
+            icon: "waves",
+            category: "appearance",
+            keywords: ["iris", "edge", "music", "wave", "visualizer"],
+            isOn: () => root._musicOn("widget"),
+            execute: () => root._toggleMusic("widget")
+        }
+    ]
+
     readonly property var verbs: ({
         owner: "iris",
+        actions: {
+            list: () => root._actions
+        },
+        media: {
+            cover: player => AnimeWatch.ownsPlayer(player) ? AnimeWatch.playingCover : ""
+        },
         family: {
             leave: () => IrisState.endEditing()
+        },
+        dev: {
+            open: surface => {
+                switch (surface) {
+                case "iris-palette": GlobalStates.searchOpen = true; return true
+                case "iris-controls": GlobalStates.controlPanelOpen = true; return true
+                case "iris-session": GlobalStates.sessionOpen = true; return true
+                }
+                return false
+            }
         },
         sidebar: {
             opens: side => Config.options?.iris?.sidebars?.[side]?.enable ?? true

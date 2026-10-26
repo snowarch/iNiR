@@ -11,6 +11,7 @@ import Quickshell.Services.SystemTray
 import qs
 import qs.services
 import qs.services.deferred
+import qs.modules.iris.state
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets

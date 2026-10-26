@@ -21,7 +21,10 @@ Scope {
 
     Component.onCompleted: DevNavigation.registerSettingsPages(SettingsPageRegistry.pages)
     // Another family's Settings has its own names, or none.
-    Component.onDestruction: GlobalStates.settingsPageKeys = []
+    Component.onDestruction: {
+        GlobalStates.settingsPageKeys = []
+        DevNavigation.registerSettingsPages([])
+    }
 
     LazyLoader {
         active: root.overlay && root.overlayStyle !== "focus" && root.overlayStyle !== "editorial"

@@ -18,7 +18,7 @@ WBarAttachedPanelContent {
     property bool showAllApps: false
 
     function applyDevDestination(): void {
-        const view = DevNavigation.requestedWaffleStartView
+        const view = DevNavigation.requestedView || "start"
         showAllApps = view === "all-apps"
         if (view === "search" && LauncherSearch.query.length === 0)
             LauncherSearch.query = "a"
@@ -30,7 +30,7 @@ WBarAttachedPanelContent {
 
     Connections {
         target: DevNavigation
-        function onRequestedWaffleStartViewChanged() { root.applyDevDestination() }
+        function onRequestedViewChanged() { root.applyDevDestination() }
     }
 
     StartMenuContext { id: context }

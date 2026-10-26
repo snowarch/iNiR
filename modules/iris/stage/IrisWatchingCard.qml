@@ -6,6 +6,7 @@ import Quickshell.Widgets
 import qs
 import qs.services
 import qs.services.deferred
+import qs.modules.iris.state
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.iris.style

@@ -1,6 +1,5 @@
 module qs.services.deferred
 singleton AnimeService 1.0 AnimeService.qml
-singleton AnimeWatch 1.0 AnimeWatch.qml
 singleton CavaService 1.0 CavaService.qml
 singleton Cliphist 1.0 Cliphist.qml
 singleton EasyEffects 1.0 EasyEffects.qml

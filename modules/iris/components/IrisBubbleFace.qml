@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Services.SystemTray
 import qs.services
 import qs.services.deferred
+import qs.modules.iris.state
 import Quickshell.Widgets
 import qs.modules.common
 import qs.modules.common.functions

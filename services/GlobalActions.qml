@@ -31,6 +31,19 @@ Singleton {
 
     // ── Public API ──────────────────────────────────────────────────────
     readonly property var allActions: _rebuildActions()
+    // One switch per installed family, worded by its plugin.json `switch`.
+    readonly property var _familySwitches: Plugins.families.filter(id => Plugins.manifests[id]?.switch).map(id => {
+        const offer = Plugins.manifests[id].switch
+        return {
+            id: "switch-family-" + id,
+            name: Translation.tr(String(offer.name)),
+            description: Translation.tr(String(offer.description ?? "")),
+            icon: String(offer.icon ?? "dashboard"),
+            category: "settings",
+            keywords: Array.from(offer.keywords ?? []),
+            execute: () => root.runLauncher(["panelFamily", "set", id])
+        }
+    })
 
     function runLauncher(args): void {
         Quickshell.execDetached([Quickshell.shellPath("scripts/inir")].concat(args ?? []))
@@ -38,25 +51,6 @@ Singleton {
 
     function applyGlobalStyle(styleId: string): void {
         ThemeService.setGlobalStyle(styleId)
-    }
-
-    function irisMusicOn(mode: string): bool {
-        const edge = Config.options?.background?.edgeWidgets?.organic ?? ({})
-        const surround = Config.options?.iris?.surround ?? ({})
-        return Boolean(edge.enable) && String(surround.music ?? "widget") === mode
-    }
-
-    function toggleIrisMusic(mode: string): void {
-        if (root.irisMusicOn(mode)) {
-            Config.setNestedValue("background.edgeWidgets.organic.enable", false)
-            return
-        }
-        const updates = {
-            "iris.surround.music": mode,
-            "background.edgeWidgets.organic.enable": true
-        }
-        if (mode === "frame") updates["iris.surround.enable"] = true
-        Config.setNestedValues(updates)
     }
 
     function fuzzyQuery(query: string): list<var> {
@@ -413,29 +407,6 @@ Singleton {
             keywords: ["style", "cookie", "shapes", "theme", "expressive", "morph"],
             execute: () => { root.applyGlobalStyle("cookie") }
         },
-    ]
-
-    readonly property var _irisActions: [
-        {
-            id: "frame-music",
-            name: Translation.tr("Frame Music"),
-            description: Translation.tr("Toggle music on the iRiS frame"),
-            icon: "graphic_eq",
-            category: "appearance",
-            keywords: ["iris", "frame", "chassis", "music", "visualizer"],
-            isOn: () => root.irisMusicOn("frame"),
-            execute: () => root.toggleIrisMusic("frame")
-        },
-        {
-            id: "edge-music",
-            name: Translation.tr("Edge Music"),
-            description: Translation.tr("Toggle the Organic Edge music wave"),
-            icon: "waves",
-            category: "appearance",
-            keywords: ["iris", "edge", "music", "wave", "visualizer"],
-            isOn: () => root.irisMusicOn("widget"),
-            execute: () => root.toggleIrisMusic("widget")
-        }
     ]
 
     // TOOLS: Screenshot, Screen Record, Color Picker, Clipboard
@@ -807,39 +778,6 @@ Singleton {
             execute: () => { GlobalStates.screenZoom = 1.0 }
         },
         {
-            id: "switch-family-ii",
-            name: Translation.tr("Switch to ii Panel Family"),
-            description: Translation.tr("Use the Material ii panel layout"),
-            icon: "dashboard",
-            category: "settings",
-            keywords: ["family", "panel", "ii", "material", "layout"],
-            execute: () => {
-                root.runLauncher(["panelFamily", "set", "ii"])
-            }
-        },
-        {
-            id: "switch-family-waffle",
-            name: Translation.tr("Switch to Waffle Panel Family"),
-            description: Translation.tr("Use the Windows 11 / Waffle panel layout"),
-            icon: "grid_view",
-            category: "settings",
-            keywords: ["family", "panel", "waffle", "win11", "windows", "layout"],
-            execute: () => {
-                root.runLauncher(["panelFamily", "set", "waffle"])
-            }
-        },
-        {
-            id: "switch-family-iris",
-            name: Translation.tr("Switch to iRiS Panel Family"),
-            description: Translation.tr("Use the minimal iRiS shell layout"),
-            icon: "visibility",
-            category: "settings",
-            keywords: ["family", "panel", "iris", "minimal", "lightweight", "layout"],
-            execute: () => {
-                root.runLauncher(["panelFamily", "set", "iris"])
-            }
-        },
-        {
             id: "toggle-control-panel",
             name: Translation.tr("Toggle Quick Settings"),
             description: Translation.tr("Open or close the quick settings panel"),
@@ -1023,10 +961,12 @@ Singleton {
         let result = []
         if (cfg?.enableSystem ?? true)     result = result.concat(_systemActions)
         if (cfg?.enableAppearance ?? true) result = result.concat(_appearanceActions)
-        if ((cfg?.enableAppearance ?? true) && Config.options?.panelFamily === "iris") result = result.concat(_irisActions)
+        // The active family's own actions (verb `actions.list`), with its appearance ones.
+        const familyActions = GlobalStates.familyVerb("actions", "list")
+        if ((cfg?.enableAppearance ?? true) && familyActions) result = result.concat(familyActions() || [])
         if (cfg?.enableTools ?? true)      result = result.concat(_toolActions)
         if (cfg?.enableMedia ?? true)      result = result.concat(_mediaActions)
-        if (cfg?.enableSettings ?? true)   result = result.concat(_settingsActions)
+        if (cfg?.enableSettings ?? true)   result = result.concat(_settingsActions, _familySwitches)
         if (cfg?.enablePackages ?? true)   result = result.concat(_packageActions)
         if (cfg?.enableSetup ?? true)      result = result.concat(_setupActions)
         if (cfg?.enableCustom ?? true)     result = result.concat(_userScriptActions)

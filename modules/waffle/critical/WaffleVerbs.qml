@@ -43,6 +43,10 @@ QtObject {
         dev: {
             open: surface => {
                 switch (surface) {
+                case "waffle-search":
+                    LauncherSearch.query = DevNavigation.requestedView === "search" ? "a" : ""
+                    GlobalStates.searchOpen = true
+                    return true
                 case "waffle-action-center": WaffleState.actionCenterOpen = true; return true
                 case "waffle-notification-center": WaffleState.notificationCenterOpen = true; return true
                 case "waffle-widgets": WaffleState.widgetsOpen = true; return true
