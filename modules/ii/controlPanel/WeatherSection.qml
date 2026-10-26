@@ -21,7 +21,7 @@ PanelSurface {
     
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
-    readonly property bool hideLocation: Config.options?.waffles?.widgetsPanel?.weatherHideLocation ?? false
+    readonly property bool hideLocation: Config.options?.bar?.weather?.hideLocation ?? false
     readonly property string weatherDescription: Weather.describeWeather(Weather.data?.wCode ?? "113")
     readonly property string locationText: Weather.visibleCity
     readonly property string secondaryText: locationText || root.weatherDescription
@@ -80,7 +80,7 @@ PanelSurface {
                     : root.inirEverywhere ? Appearance.inir.colLayer2Hover
                     : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                     : Appearance.colors.colLayer2Hover
-                onClicked: Config.setNestedValue("waffles.widgetsPanel.weatherHideLocation", !root.hideLocation)
+                onClicked: Config.setNestedValue("bar.weather.hideLocation", !root.hideLocation)
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: root.hideLocation ? "visibility_off" : "visibility"

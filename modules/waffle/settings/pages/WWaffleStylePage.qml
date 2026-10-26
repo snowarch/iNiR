@@ -333,8 +333,8 @@ WSettingsPage {
             label: Translation.tr("Hide weather location")
             icon: "eye-off"
             description: Translation.tr("Hide the city/location name in the weather widget and taskbar button")
-            checked: Config.options?.waffles?.widgetsPanel?.weatherHideLocation ?? false
-            onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.weatherHideLocation", checked)
+            checked: Config.options?.bar?.weather?.hideLocation ?? false
+            onCheckedChanged: Config.setNestedValue("bar.weather.hideLocation", checked)
         }
         
         WSettingsSwitch {

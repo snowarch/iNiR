@@ -845,7 +845,7 @@ Singleton {
             // Panel system
             property list<string> enabledPanels: ["iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard", "iiMascotCompanion"]
             property list<string> knownPanels: [] // Tracks panels the user has seen; used to distinguish "user disabled" from "new in update"
-            property string panelFamily: "ii" // "ii", "waffle", or "iris"
+            property string panelFamily: "ii" // an installed family's id (Plugins.families)
             property bool familyTransitionAnimation: true // Show animated overlay when switching families
             property list<string> familyCycle: ["ii", "waffle", "iris"] // Families the switch shortcut (panelFamily cycle) walks through
 
@@ -2968,6 +2968,7 @@ Singleton {
                     property bool enableGPS: false // Use geoclue GPS if available
                     property real manualLat: 0 // Manual latitude (e.g. -34.6037)
                     property real manualLon: 0 // Manual longitude (e.g. -58.3816)
+                    property bool hideLocation: false // Privacy: no city name on any family's weather
                 }
                 property JsonObject indicators: JsonObject {
                     property JsonObject notifications: JsonObject {
@@ -3144,7 +3145,7 @@ Singleton {
                     property bool requirePasswordToPower: false
                 }
                 property bool materialShapeChars: true
-                property string loginScreen: "auto" // SDDM look: "auto" (iris under the iRiS family, else classic), "classic" or "iris"
+                property string loginScreen: "auto" // SDDM look: "auto" (the family's own, plugin.json `loginScreen`, else classic), "classic" or a family's look
                 property string loginStyle: "lens" // the iRiS login's composition: "cover", "frame" or "lens"
                 property bool enableAnimation: false // Play video/GIF wallpapers on lock screen (default: show first frame)
                 property JsonObject dim: JsonObject {

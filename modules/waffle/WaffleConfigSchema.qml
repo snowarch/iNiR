@@ -168,7 +168,6 @@ JsonObject {
         property bool showCustom: true // cards of custom widgets with a waffle face
         property bool showQuickActions: true
         property list<string> quickActions: ["files", "terminal", "settings", "wallpaper", "screenshot", "screenRecord", "session"]
-        property bool weatherHideLocation: false // Privacy: hide city name
         // Individual quick action toggles (used by settings switches)
         property bool showFiles: true
         property bool showTerminal: true

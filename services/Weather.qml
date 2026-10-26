@@ -14,7 +14,7 @@ Singleton {
     readonly property bool enabled: Config.options?.bar?.weather?.enable ?? false
     readonly property int fetchInterval: (Config.options?.bar?.weather?.fetchInterval ?? 10) * 60 * 1000
     readonly property bool useUSCS: Config.options?.bar?.weather?.useUSCS ?? false
-    readonly property bool hideLocation: Config.options?.waffles?.widgetsPanel?.weatherHideLocation ?? false
+    readonly property bool hideLocation: Config.options?.bar?.weather?.hideLocation ?? false
 
     // Manual location config
     readonly property string configCity: Config.options?.bar?.weather?.city ?? ""

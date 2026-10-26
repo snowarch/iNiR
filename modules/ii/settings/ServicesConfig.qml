@@ -1016,8 +1016,8 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "visibility_off"
                 text: Translation.tr("Hide weather location")
-                checked: Config.options?.waffles?.widgetsPanel?.weatherHideLocation ?? false
-                onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.weatherHideLocation", checked)
+                checked: Config.options?.bar?.weather?.hideLocation ?? false
+                onCheckedChanged: Config.setNestedValue("bar.weather.hideLocation", checked)
                 enabled: Config.options?.bar?.weather?.enable ?? false
             }
 

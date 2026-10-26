@@ -1323,6 +1323,7 @@
             "enable": true,
             "enableGPS": false,
             "fetchInterval": 10,
+            "hideLocation": false,
             "manualLat": 0,
             "manualLon": 0,
             "useUSCS": false
@@ -3111,7 +3112,6 @@
                 "screenRecord",
                 "session"
             ],
-            "weatherHideLocation": false,
             "showFiles": true,
             "showTerminal": true,
             "showSettings": true,
