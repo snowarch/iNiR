@@ -20,6 +20,8 @@ Item {
     function dp(v: real): real { return root.face ? root.face.dp(v) : Math.round(v) }
     function px(v: real): real { return root.face ? root.face.px(v) : Math.round(v) }
     readonly property int pad: root.dp(14)
+    // A tall print stacks: the day and what comes next across the top, the month the whole width under them.
+    readonly property bool stacked: !root.small && root.height > root.width * 0.8
     readonly property var viewing: root.widget ? root.widget.viewingDate : DateTime.clock.date
     readonly property var cells: root.widget ? root.widget.monthCells() : []
     readonly property int weekStart: Number(root.widget?.weekStart ?? 1)
@@ -42,7 +44,7 @@ Item {
         visible: !root.small
         x: root.pad
         y: root.pad
-        width: Math.round(root.width * 0.38) - root.pad
+        width: Math.round(root.width * (root.stacked ? 0.5 : 0.38)) - root.pad
         spacing: root.dp(2)
         AText {
             width: parent.width
@@ -60,11 +62,11 @@ Item {
         }
     }
     Column {
+        id: next
         visible: !root.small && root.face?.nextEvent
-        x: root.pad
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: root.pad
-        width: hero.width
+        x: root.stacked ? Math.round(root.width * 0.5) : root.pad
+        y: root.stacked ? hero.y + hero.height - next.height - root.dp(6) : root.height - root.pad - next.height
+        width: root.stacked ? root.width - next.x - root.pad : hero.width
         spacing: root.dp(2)
         Rectangle {
             width: root.dp(16)
@@ -91,10 +93,10 @@ Item {
     // The month.
     Item {
         id: month
-        x: root.small ? root.pad : Math.round(root.width * 0.38) + root.dp(6)
-        y: root.pad
+        x: root.small || root.stacked ? root.pad : Math.round(root.width * 0.38) + root.dp(6)
+        y: root.stacked ? hero.y + hero.height + root.dp(14) : root.pad
         width: root.width - x - root.pad
-        height: root.height - 2 * root.pad
+        height: root.height - y - root.pad
         Item {
             id: head
             width: parent.width

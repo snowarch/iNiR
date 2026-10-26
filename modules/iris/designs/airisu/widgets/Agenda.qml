@@ -59,17 +59,36 @@ Item {
         color: stock.inkThird
         text: Translation.tr("Nothing scheduled")
     }
+    // Small: what comes next stands at the foot, the day at the head; large: the timetable runs down from the head.
     Column {
+        id: lines
         x: root.pad
-        y: head.y + head.height + root.dp(8)
+        y: root.small ? Math.max(head.y + head.height + root.dp(8), root.height - root.pad - lines.implicitHeight)
+            : head.y + head.height + root.dp(8)
         width: root.width - 2 * root.pad
         spacing: root.dp(4)
+        // The timetable keeps the lines that end above the foot's pad; the rest wait for a bigger print.
+        readonly property int fits: {
+            if (root.small) return root.shown.length
+            const room = root.height - lines.y - root.pad
+            let used = 0, n = 0
+            for (let i = 0; i < timetable.count; i++) {
+                const line = timetable.itemAt(i)
+                if (!line) break
+                used += line.implicitHeight + (n > 0 ? lines.spacing : 0)
+                if (used > room) break
+                n++
+            }
+            return n
+        }
         Repeater {
+            id: timetable
             model: root.shown
             Column {
                 id: entry
                 required property var modelData
                 required property int index
+                visible: entry.index < lines.fits
                 readonly property string day: root.face ? root.face.dayLabel(entry.modelData) : ""
                 readonly property bool heading: !root.small && (entry.index === 0
                     ? entry.day !== Translation.tr("Today") : entry.day !== root.face.dayLabel(root.shown[entry.index - 1]))
@@ -83,20 +102,18 @@ Item {
                     color: stock.inkThird
                     text: entry.day
                 }
+                // A small print has no day heads, so its one line says the day too, over the title.
+                AText {
+                    visible: root.small
+                    width: parent.width
+                    voice: "data"
+                    size: IrisStyle.typeCaption
+                    color: stock.inkSecond
+                    text: IrisFaceData.eventWhen(entry.modelData, root.today)
+                }
                 Item {
                     width: parent.width
                     height: Math.max(title.implicitHeight + (place.visible ? place.implicitHeight : 0), root.dp(18))
-                    y: root.small ? root.dp(16) : 0
-                    // A small print has no day heads, so its one line says the day too, over the title.
-                    AText {
-                        visible: root.small
-                        width: parent.width
-                        y: -height
-                        voice: "data"
-                        size: IrisStyle.typeCaption
-                        color: stock.inkSecond
-                        text: IrisFaceData.eventWhen(entry.modelData, root.today)
-                    }
                     AText {
                         id: when
                         visible: !root.small

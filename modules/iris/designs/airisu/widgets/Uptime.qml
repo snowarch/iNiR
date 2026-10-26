@@ -19,6 +19,23 @@ Item {
         (root.widget?.showSince ?? true) ? Translation.tr("Since %1").arg(root.widget?.bootLabel ?? "") : "",
         (root.widget?.showBreakdown ?? true) && (root.widget?.sessionDay ?? 0) > 1 ? Translation.tr("Day %1 of this session").arg(root.widget.sessionDay) : ""
     ].filter(row => row.length > 0)
+    // Large: the session day by day (the last week of it at most), each day's share of 24 h it ran: the first from boot,
+    // the last up to now.
+    readonly property var days: {
+        const boot = root.widget?.bootDate
+        if (root.small || !boot) return []
+        const now = DateTime.clock.date
+        const out = []
+        const day = new Date(boot.getFullYear(), boot.getMonth(), boot.getDate())
+        while (day <= now) {
+            const next = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1)
+            const from = Math.max(day.getTime(), boot.getTime())
+            const to = Math.min(next.getTime(), now.getTime())
+            out.push({ name: Translation.locale.toString(day, "ddd"), share: Math.max(0, to - from) / 86400000, today: next > now })
+            day.setDate(day.getDate() + 1)
+        }
+        return out.slice(-7)
+    }
 
     AStock {
         id: stock
@@ -36,6 +53,7 @@ Item {
         text: Translation.tr("Uptime")
     }
     Row {
+        id: figures
         x: root.pad
         y: root.pad + root.dp(18)
         spacing: root.dp(6)
@@ -48,7 +66,7 @@ Item {
                     id: value
                     voice: "figure"
                     lean: Airisu.lean
-                    size: root.px(root.small ? 44 : 52)
+                    size: root.px(root.small ? 44 : 64)
                     color: stock.ink
                     text: modelData.value
                 }
@@ -62,7 +80,56 @@ Item {
             }
         }
     }
+    // Each day a ruled column filled from the foot for the hours it ran; today's in the vivid ink, its weekday under it.
+    Row {
+        id: strip
+        visible: root.days.length > 0 && strip.height >= root.dp(56)
+        x: root.pad
+        y: figures.y + figures.height + root.dp(20)
+        width: root.width - 2 * root.pad
+        height: Math.max(0, facts.y - y - root.dp(16))
+        spacing: root.dp(6)
+        Repeater {
+            model: root.days
+            Item {
+                id: dayColumn
+                required property var modelData
+                width: (strip.width - (root.days.length - 1) * strip.spacing) / root.days.length
+                height: strip.height
+                Item {
+                    id: well
+                    width: parent.width
+                    height: parent.height - dayName.height - root.dp(6)
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "transparent"
+                        border.width: Airisu.hair
+                        border.color: stock.inkThird
+                        antialiasing: false
+                    }
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: Math.round(parent.height * dayColumn.modelData.share)
+                        color: dayColumn.modelData.today ? stock.vivid : Qt.alpha(stock.inkThird, 0.4)
+                        antialiasing: false
+                    }
+                }
+                AText {
+                    id: dayName
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    voice: "mono"
+                    size: IrisStyle.typeCaption
+                    color: dayColumn.modelData.today ? stock.ink : stock.inkSecond
+                    text: dayColumn.modelData.name
+                }
+            }
+        }
+    }
     Column {
+        id: facts
         x: root.pad
         anchors.bottom: parent.bottom
         anchors.bottomMargin: root.pad
