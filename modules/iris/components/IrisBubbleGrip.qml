@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs
+import qs.modules.iris.state
 
 MouseArea {
     id: root
@@ -37,7 +38,7 @@ MouseArea {
         return Qt.point(p.x, p.y + root.screenOffsetY)
     }
     function publish(released: bool): void {
-        GlobalStates.irisBubbleDrag = {
+        IrisState.bubbleDrag = {
             slot: root.slot,
             kind: root.kind,
             screen: root.screenName,

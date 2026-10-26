@@ -13,6 +13,7 @@ import qs.modules.shared.lock as LockUi
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.widgets
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -26,7 +27,7 @@ Item {
     required property var context
     property Item frost: null
     property bool editing: false
-    readonly property string selected: GlobalStates.irisLockSelection
+    readonly property string selected: IrisState.lockSelection
     property Item input: null
     property bool oskVisible: false
     property bool dragging: false
@@ -350,7 +351,7 @@ Item {
             property point origin: Qt.point(0, 0)
             property bool moved: false
             onPressed: mouse => {
-                GlobalStates.irisLockSelection = body.blockId
+                IrisState.lockSelection = body.blockId
                 grip.origin = Qt.point(mouse.x, mouse.y)
                 grip.moved = false
             }

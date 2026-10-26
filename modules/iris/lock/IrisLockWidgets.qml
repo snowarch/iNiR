@@ -26,6 +26,7 @@ import qs.modules.shared.background.widgets.userCard
 import qs.modules.shared.background.widgets.newsTicker
 import qs.modules.iris.widgets
 import qs.modules.iris.style
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -41,16 +42,16 @@ Item {
 
     // While the lock is being designed, a tapped widget becomes the selection ("widget:<key>") and the
     // inspector opens its own Look on this scope, so the lock keeps shapes and materials of its own.
-    readonly property string selectedKey: GlobalStates.irisLockEdit && GlobalStates.irisLockSelection.startsWith("widget:")
-        ? GlobalStates.irisLockSelection.slice(7) : ""
+    readonly property string selectedKey: IrisState.lockEdit && IrisState.lockSelection.startsWith("widget:")
+        ? IrisState.lockSelection.slice(7) : ""
     readonly property var selectedItem: root.selectedKey.length > 0 ? root.item(root.selectedKey) : null
     function showTab(): void {
-        if (root.selectedItem && GlobalStates.irisLockWidgetTab.length > 0) root.selectedItem._quickTab = GlobalStates.irisLockWidgetTab
+        if (root.selectedItem && IrisState.lockWidgetTab.length > 0) root.selectedItem._quickTab = IrisState.lockWidgetTab
     }
     onSelectedItemChanged: root.showTab()
     Connections {
-        target: GlobalStates
-        function onIrisLockWidgetTabChanged(): void { root.showTab() }
+        target: IrisState
+        function onLockWidgetTabChanged(): void { root.showTab() }
     }
     function item(key: string): var {
         for (let i = 0; i < slots.count; i++) {
@@ -87,8 +88,8 @@ Item {
             active: root.shown.includes(slot.modelData)
             Connections {
                 target: slot.item
-                enabled: GlobalStates.irisLockEdit
-                function onPressed(): void { GlobalStates.irisLockSelection = "widget:" + slot.modelData }
+                enabled: IrisState.lockEdit
+                function onPressed(): void { IrisState.lockSelection = "widget:" + slot.modelData }
             }
             sourceComponent: ({
                 clock: clockWidget, weather: weatherWidget, mediaControls: mediaWidget, controls: controlsWidget,

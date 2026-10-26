@@ -2135,7 +2135,7 @@ Scope {
             // something under iRiS (shell layout editing is ii/Waffle-only).
             Connections {
                 target: GlobalStates
-                function onIrisDesktopMenuRequested(outputName: string, x: real, y: real): void {
+                function onFamilyDesktopMenuRequested(outputName: string, x: real, y: real): void {
                     if (outputName !== bgRoot.screenName || !familyDesktopMenu.item) return
                     desktopMenuAnchor.x = x
                     desktopMenuAnchor.y = y

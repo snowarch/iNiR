@@ -21,6 +21,7 @@ import qs.modules.iris.sidebar
 import qs.modules.iris.preview
 import qs.modules.iris.settings.layouts as Layouts // in Quickshell's import graph: the page loads them by url
 import qs.modules.iris.widgets
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -851,7 +852,7 @@ Item {
         let key = String(GlobalStates.settingsOverlayRequestedKey ?? "")
         let asked = String(GlobalStates.settingsOverlayRequestedSection ?? "")
         // The instance going away on close can take a request meant for the one opening: this one then stood on General.
-        const last = GlobalStates.irisSettingsLastRequest
+        const last = IrisState.settingsLastRequest
         if (key.length === 0) {
             if (root.placed || !last) return
             key = last.key
@@ -864,7 +865,7 @@ Item {
         GlobalStates.settingsOverlayRequestedPage = -1
         GlobalStates.settingsOverlayRequestedKey = ""
         if (key === "iris" && root.runCommand(asked)) return
-        GlobalStates.irisSettingsLastRequest = { key: key, asked: asked }
+        IrisState.settingsLastRequest = { key: key, asked: asked }
         root.placed = true
         root.group = ""
         const request = asked.split("/")
@@ -1000,7 +1001,7 @@ Item {
         light: IrisStyle.surfaceLight("settings", IrisStyle.wallpaperLight)
         radius: root.windowField ? Number(IrisNiri.data["window-rules"]?.corner_radius ?? 16)
             : root.windowed ? 0 : IrisStyle.surfaceRadius("settings", IrisStyle.radiusPanel)
-        onClosed: GlobalStates.irisMorphOwner = ""
+        onClosed: IrisState.morphOwner = ""
         // Whole pixels: a body centred on a half pixel draws every line of its text soft.
         // A layout's body sits in the room the Island and the Dock leave: Folio as a sheet in the middle of it, Pocket
         // standing at its right edge as tall as it, Drawer risen from the screen's foot across it (over the Dock).
@@ -1407,10 +1408,10 @@ Item {
                         label: rehearses ? Translation.tr("Rehearse it") : Translation.tr("Arrange it")
                         onClicked: {
                             GlobalStates.settingsOverlayOpen = false
-                            if (rehearses) { GlobalStates.irisLockEdit = true; return }
-                            GlobalStates.irisMorphOwner = ""
+                            if (rehearses) { IrisState.lockEdit = true; return }
+                            IrisState.morphOwner = ""
                             GlobalStates.controlPanelOpen = true
-                            GlobalStates.irisControlEdit = true
+                            IrisState.controlEdit = true
                         }
                     }
                     ToolbarAction {
@@ -1422,7 +1423,7 @@ Item {
                         label: Translation.tr("Customize")
                         onClicked: {
                             GlobalStates.settingsOverlayOpen = false
-                            GlobalStates.openIrisCustomize(target)
+                            IrisState.openCustomize(target)
                         }
                     }
                     ToolbarAction {

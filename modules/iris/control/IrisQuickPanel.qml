@@ -10,6 +10,7 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.iris.components
 import qs.modules.iris.style
+import qs.modules.iris.state
 
 ColumnLayout {
     id: root
@@ -33,10 +34,10 @@ ColumnLayout {
         else hintRelease.restart()
     }
     Timer { id: hintRelease; interval: 180; onTriggered: root.shownHint = "" }
-    readonly property bool editing: GlobalStates.irisControlEdit
+    readonly property bool editing: IrisState.controlEdit
     readonly property real libraryWidth: Math.round(IrisControlOptions.libraryWidth * root.d)
     readonly property real paneGap: Math.round(20 * root.d)
-    readonly property string libraryTab: GlobalStates.irisControlTab
+    readonly property string libraryTab: IrisState.controlTab
     spacing: Math.round(10 * root.d)
     opacity: IrisStyle.recompose
 
@@ -190,7 +191,7 @@ ColumnLayout {
             emphasized: true
             text: Translation.tr("Done")
             buttonRadius: IrisStyle.capsule(height)
-            onClicked: GlobalStates.irisControlEdit = false
+            onClicked: IrisState.controlEdit = false
         }
         IrisControlPlate {
             id: headerTools
@@ -204,7 +205,7 @@ ColumnLayout {
                     buttonRadiusPressed: headerTools.framed ? headerTools.controlRadius : Math.max(3, IrisStyle.radiusSmall - 2)
                     materialIcon: "dashboard_customize"
                     Accessible.name: Translation.tr("Arrange the controls")
-                    onClicked: GlobalStates.irisControlEdit = true
+                    onClicked: IrisState.controlEdit = true
                 }
                 IrisIconButton {
                     buttonRadius: headerTools.framed ? headerTools.controlRadius : IrisStyle.radiusSmall
@@ -225,9 +226,9 @@ ColumnLayout {
                     onClicked: {
                         GlobalStates.controlPanelOpen = false
                         const p = settingsButton.mapToItem(null, 0, 0)
-                        GlobalStates.irisMorphOrigin = { x: p.x, y: p.y, width: settingsButton.width, height: settingsButton.height,
+                        IrisState.morphOrigin = { x: p.x, y: p.y, width: settingsButton.width, height: settingsButton.height,
                             radius: headerTools.framed ? headerTools.controlRadius : settingsButton.height / 2, screen: GlobalStates.focusedScreen?.name ?? "" }
-                        GlobalStates.irisMorphOwner = "control"
+                        IrisState.morphOwner = "control"
                         GlobalStates.openSettings()
                     }
                 }
@@ -554,7 +555,7 @@ ColumnLayout {
                     { value: "panel", label: Translation.tr("Panel") }
                 ]
                 current: root.libraryTab
-                onPicked: value => GlobalStates.irisControlTab = value
+                onPicked: value => IrisState.controlTab = value
             }
 
             Flickable {

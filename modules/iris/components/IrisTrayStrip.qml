@@ -6,6 +6,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.iris.style
+import qs.modules.iris.state
 
 Grid {
     id: root
@@ -61,10 +62,10 @@ Grid {
                 kind: "tray"
                 screenName: root.screenName
                 screenOffsetY: root.screenOffsetY
-                holdLifts: !GlobalStates.irisEdit
-                pullDistance: GlobalStates.irisEdit ? 6 * IrisStyle.density : 0
+                holdLifts: !IrisState.edit
+                pullDistance: IrisState.edit ? 6 * IrisStyle.density : 0
                 onTapped: {
-                    if (GlobalStates.irisEdit) return
+                    if (IrisState.edit) return
                     cell.primary()
                 }
             }

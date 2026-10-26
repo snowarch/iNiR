@@ -15,6 +15,7 @@ import qs.modules.iris.frame
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.field as Field
+import qs.modules.iris.state
 
 PanelWindow {
     id: root
@@ -55,7 +56,7 @@ PanelWindow {
     implicitWidth: root.screen?.width ?? root.popupWidth
     implicitHeight: Math.min((root.screen?.height ?? 1080) * 0.8, root.topOffset + 3 * 250 * root.d)
     mask: Region { item: popupColumn }
-    readonly property var island: GlobalStates.irisIslandGeometry?.[root.screen?.name ?? ""] ?? null
+    readonly property var island: IrisState.islandGeometry?.[root.screen?.name ?? ""] ?? null
     readonly property real bubbleSize: Math.round(44 * root.d)
 
     property var blurBodies: ({})

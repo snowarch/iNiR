@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Generated from the IPC registry, edit that instead.
-# IPC.md hash: a98b862b748e75a3
-# Targets: 77
+# IPC.md hash: 84c2661fecef36ab
+# Targets: 78
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -33,6 +33,7 @@ declare -gA IPC_TARGET_DESC=(
   [globalStyle]="The Global Style every Material surface and desktop widget follows: material, cards, aurora, inir, angel, regalia, zzz, cookie or editorial."
   [hub]="The community hub (widgets, colour themes, iRiS themes, web apps from [inir-hub](https://github.com/snowarch/inir-hub)) as the running shell sees it. \`inir hub list|search|info|install|update|remove|sync\` works with or without the shell running and tells it afterwards; these functions queue the same actions inside the shell, so its Hub page shows them happening. All families."
   [iris]="iRiS bar and Island design. Available while the iRiS bar is enabled."
+  [irisDev]="Simulated hands for measuring iRiS (present while iRiS is the family)."
   [keyboard]="Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info."
   [livePins]="Live snips: a part of a window kept on screen, streamed, even when the window is on another workspace (qs-rs on niri)."
   [lock]="Lock screen. For when you need to pretend you're working."
@@ -113,6 +114,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [globalStyle]="shared"
   [hub]="shared"
   [iris]="shared"
+  [irisDev]="shared"
   [keyboard]="shared"
   [livePins]="shared"
   [lock]="shared"
@@ -186,13 +188,14 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [coverflowSelector]="toggle open close"
   [customWidgets]="reload list create remove"
   [dashboard]="toggle close open"
-  [dev]="list open close reload current meter metered dragSim dropBubble dockSlide"
+  [dev]="list open close reload current meter metered"
   [equalizer]="toggle close open refresh ensure status setBand preset configure"
   [gamemode]="toggle activate deactivate status"
   [globalActions]="run runWithArgs list search open"
   [globalStyle]="set get list"
   [hub]="refresh install remove update use openItem status changed"
   [iris]="open page close shelf toggle card theme settings settingsClose bubble dock dockApp dockMove appBubble focus today controlCenter pin layout strip edge dockEdge zone barPiece arrange edit studio notch surround accent spotlight gallerySource orbit orbitCorner orbitClose spotlightClose bubbleCard tap bubbleMenu morph activity activities set adaptive tokens options preview proof palette preset icon control lock utility watch watchPick desktopAction desktopMenu menuClose watchSubs watchSeek watchSkip motion motioned status"
+  [irisDev]="dragSim dropBubble dockSlide"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
   [livePins]="list supported frame pin remove clear place onTop move resize activate"
   [lock]="activate prepareSleep deactivate status focus"
@@ -363,9 +366,6 @@ declare -gA IPC_FUNCTION_DESC=(
   ["dev:current"]="Return the current destination or \`closed\`"
   ["dev:meter"]="Measure frame gaps for the given milliseconds (250–20000, default 2500)"
   ["dev:metered"]="Return the last measurement as JSON: frames, mean, p95, worst, frames over 20 and 50 ms"
-  ["dev:dragSim"]="Simulate carrying an iRiS bubble (slot id, default \`extra-clock\`) around the focused output for 2.5 s, publishing the given number of moves per frame (1–16); never writes the config"
-  ["dev:dropBubble"]=""
-  ["dev:dockSlide"]=""
   ["equalizer:toggle"]="Open/close equalizer"
   ["equalizer:close"]="Hide equalizer"
   ["equalizer:open"]="Show equalizer"
@@ -460,6 +460,9 @@ declare -gA IPC_FUNCTION_DESC=(
   ["iris:motion"]="Measure how a Place opens, closes and reverses halfway, from the expanded Island: \`spotlight\`, \`orbit\`, \`gallery\`, \`settings\`, \`focus\`, \`today\` or \`card\` (the music card). Read the result with \`motioned\`"
   ["iris:motioned"]="The last \`motion\` measurement as JSON: frame pace, continuity, material, one surface, origin and a clean end, each passed or not, with the numbers behind them"
   ["iris:status"]="JSON with the Island, Dock, Control Center, Spotlight and side panel state, which edit modes, Settings or the wallpaper gallery hold the screen (\`editing\`, \`settings\`, \`gallery\`), plus the player the Island follows (title, position, length)"
+  ["irisDev:dragSim"]="Simulate carrying an iRiS bubble (slot id, default \`extra-clock\`) around the focused output for 2.5 s, publishing the given number of moves per frame (1–16); never writes the config"
+  ["irisDev:dropBubble"]="Drop an iRiS bubble (slot id, or \`app:<id>\`) at a point of the focused output, released after 200 ms"
+  ["irisDev:dockSlide"]="Slide a Dock icon (app id) along the Dock by the given pixels over 1 s"
   ["keyboard:switchLayout"]="Switch to next keyboard layout"
   ["keyboard:switchLayoutPrevious"]="Switch to previous keyboard layout"
   ["keyboard:getCurrentLayout"]="Get the current layout name"
@@ -765,9 +768,6 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["customWidgets:remove"]="<widgetId>"
   ["dev:open"]="<destination>"
   ["dev:meter"]="<ms>"
-  ["dev:dragSim"]="<slot> <perFrame>"
-  ["dev:dropBubble"]="<slot> <x> <y>"
-  ["dev:dockSlide"]="<appId> <pixels>"
   ["equalizer:setBand"]="<index> <gain>"
   ["equalizer:preset"]="<name>"
   ["globalActions:run"]="<actionId>"
@@ -834,6 +834,9 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["iris:watchSeek"]="<seconds>"
   ["iris:watchSkip"]="<direction>"
   ["iris:motion"]="<target>"
+  ["irisDev:dragSim"]="<slot> <perFrame>"
+  ["irisDev:dropBubble"]="<slot> <x> <y>"
+  ["irisDev:dockSlide"]="<appId> <pixels>"
   ["livePins:pin"]="<windowId> <x> <y> <w> <h>"
   ["livePins:remove"]="<id>"
   ["livePins:place"]="<id> <place>"
@@ -919,7 +922,6 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["bluetooth:simulate"]="off on none clear"
   ["colorMode:set"]="dark light toggle"
   ["connections:sample"]="network internet bluetooth usb power audio displays drives"
-  ["dev:dragSim"]="extra-clock"
   ["iris:page"]="media activity desktop tray tools next prev"
   ["iris:card"]="open close toggle pin"
   ["iris:theme"]="list apply: save: import: export export: folder"
@@ -962,6 +964,8 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["iris:watchSubs"]="size+ size- delay+ delay- delay0 off track: file:"
   ["iris:watchSkip"]="next previous"
   ["iris:motion"]="spotlight orbit gallery settings focus today card motioned"
+  ["irisDev:dragSim"]="extra-clock"
+  ["irisDev:dropBubble"]="app:"
   ["loginScreen:set"]="auto classic iris"
   ["loginScreen:style"]="cover frame lens"
   ["mascot:setVoice"]="adaptive casual dry composed chaotic"
@@ -1032,8 +1036,8 @@ Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }'
   [ytmusic]='Mod+M+Space { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector dashboard dev gamemode globalActions globalStyle hub iris keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily privacy region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer voiceSearch vpn wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris irisDev keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector dashboard dev gamemode globalActions globalStyle hub iris irisDev keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily privacy region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer voiceSearch vpn wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=(equalizer pill)
 IPC_WAFFLE_TARGETS=(autostart customWidgets recordingOsd search wactionCenter waffleAltSwitcher wbar widgetStacks widgetpower wnotificationCenter wwidgets)
 
@@ -1048,6 +1052,7 @@ declare -gA IPC_KEBAB_ALIASES=(
   [custom-widgets]=customWidgets
   [global-actions]=globalActions
   [global-style]=globalStyle
+  [iris-dev]=irisDev
   [live-pins]=livePins
   [login-screen]=loginScreen
   [mascot-mood]=mascotMood

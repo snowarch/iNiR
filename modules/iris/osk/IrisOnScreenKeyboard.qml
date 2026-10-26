@@ -14,6 +14,7 @@ import qs.modules.iris.frame
 import qs.modules.iris.style
 import qs.modules.iris.field as Field
 import qs.modules.iris.components
+import qs.modules.iris.state
 
 // Material's on-screen keyboard (`onScreenKeyboard/OnScreenKeyboard.qml`) with the same behaviour and iRiS's look:
 // the keys and layouts are the shared ones, the body is a floating iRiS surface.
@@ -46,7 +47,7 @@ Scope {
         + (GlobalStates.regionSelectorOpen    ? (1 << 12) : 0)
         + (GlobalStates.sessionOpen           ? (1 << 13) : 0)
         + (GlobalStates.searchOpen            ? (1 << 14) : 0)
-        + (GlobalStates.irisOrbitOpen         ? (1 << 15) : 0)
+        + (IrisState.orbitOpen         ? (1 << 15) : 0)
 
     PanelWindow {
         id: oskWindow

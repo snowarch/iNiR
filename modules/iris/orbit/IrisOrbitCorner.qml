@@ -7,6 +7,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.iris.frame
+import qs.modules.iris.state
 
 // The way into Orbit without a key: rest the pointer in a screen corner. It picks the corner itself unless told (Auto):
 // one Niri's own overview does not already use, and where none of your pieces sits. A game, a locked screen and widget
@@ -57,7 +58,7 @@ Scope {
             property bool armed: true
 
             visible: win.corner.length > 0 && !GameMode.active && !GlobalStates.screenLocked && !GlobalStates.widgetEditMode
-                && !GlobalStates.irisOrbitOpen && !NiriService.inOverview
+                && !IrisState.orbitOpen && !NiriService.inOverview
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:iris-orbit-corner"
@@ -75,14 +76,14 @@ Scope {
             Component.onCompleted: win.publish()
             onCornerChanged: win.publish()
             Component.onDestruction: {
-                const next = Object.assign({}, GlobalStates.irisOrbitCorners)
+                const next = Object.assign({}, IrisState.orbitCorners)
                 delete next[win.outputName]
-                GlobalStates.irisOrbitCorners = next
+                IrisState.orbitCorners = next
             }
             function publish(): void {
-                const next = Object.assign({}, GlobalStates.irisOrbitCorners)
+                const next = Object.assign({}, IrisState.orbitCorners)
                 next[win.outputName] = win.corner
-                GlobalStates.irisOrbitCorners = next
+                IrisState.orbitCorners = next
             }
 
             HoverHandler {
@@ -103,7 +104,7 @@ Scope {
             function fire(): void {
                 if (!win.armed || !win.visible) return
                 win.armed = false
-                GlobalStates.openIrisOrbit(win.outputName)
+                IrisState.openOrbit(win.outputName)
             }
         }
     }

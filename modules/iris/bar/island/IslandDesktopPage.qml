@@ -20,6 +20,7 @@ import qs.modules.iris.components
 import qs.modules.iris.frame
 import qs.modules.iris.pieces
 import qs.modules.iris.bar
+import qs.modules.iris.state
 
 ColumnLayout {
     id: page
@@ -363,7 +364,7 @@ ColumnLayout {
                     Accessible.name: page.island.studio ? Translation.tr("Done") : Translation.tr("Arrange this page")
                     onClicked: {
                         page.island.pinned = true
-                        GlobalStates.irisArrange = !page.island.studio
+                        IrisState.arrange = !page.island.studio
                     }
                 }
                 GlyphButton {
@@ -970,7 +971,7 @@ ColumnLayout {
                 glyph: "check"
                 label: Translation.tr("Done")
                 emphasized: true
-                onClicked: GlobalStates.irisArrange = false
+                onClicked: IrisState.arrange = false
             }
         }
     }

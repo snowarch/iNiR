@@ -15,6 +15,7 @@ import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.frame
 import qs.modules.iris.pieces
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -81,10 +82,10 @@ Item {
         return IrisPieces.available(kind) ? kind : ""
     }
     readonly property bool anyFloating: root.allSlots.some(slot => root.placeName(slot) !== "island")
-    readonly property var kinds: GlobalStates.irisBubbleKinds?.[root.screenName] ?? ({})
-    readonly property var island: GlobalStates.irisIslandGeometry?.[root.screenName] ?? null
-    readonly property var drag: GlobalStates.irisBubbleDrag && GlobalStates.irisBubbleDrag.screen === root.screenName
-        ? GlobalStates.irisBubbleDrag : null
+    readonly property var kinds: IrisState.bubbleKinds?.[root.screenName] ?? ({})
+    readonly property var island: IrisState.islandGeometry?.[root.screenName] ?? null
+    readonly property var drag: IrisState.bubbleDrag && IrisState.bubbleDrag.screen === root.screenName
+        ? IrisState.bubbleDrag : null
     readonly property bool carryingIsland: root.drag?.slot === "island"
     readonly property real size: Math.round((root.island?.bubble ?? Math.round(40 * root.d)) * Math.max(0.6, Math.min(1.4, Number(root.options?.scale ?? 100) / 100)))
     readonly property real margin: Math.round(Math.max(0, Number(root.options?.edgeGap ?? 20)) * root.d) + IrisFrame.band
@@ -230,7 +231,7 @@ Item {
     }
 
     readonly property var dockBodyNow: {
-        const shapes = GlobalStates.irisDockBody?.[root.screenName] ?? []
+        const shapes = IrisState.dockBody?.[root.screenName] ?? []
         return (Array.isArray(shapes) ? shapes : []).find(shape => shape?.id === "dock") ?? null
     }
     property var dockHeld: null
@@ -328,19 +329,19 @@ Item {
     Component.onDestruction: {
         if (root.screenName.length === 0) return
         DesktopArrange.setBodies(root.screenName, "iris", [])
-        const next = Object.assign({}, GlobalStates.irisAbsorbed ?? {})
+        const next = Object.assign({}, IrisState.absorbed ?? {})
         delete next[root.screenName]
-        GlobalStates.irisAbsorbed = next
+        IrisState.absorbed = next
     }
     function publishAbsorbed(): void {
         if (root.screenName.length === 0) return
         const value = { island: root.absorption.island, islandStart: root.absorption.islandStart,
             islandSlots: root.absorption.islandSlots, dock: root.absorption.dock }
-        const current = GlobalStates.irisAbsorbed?.[root.screenName]
+        const current = IrisState.absorbed?.[root.screenName]
         if (JSON.stringify(current ?? null) === JSON.stringify(value)) return
-        const next = Object.assign({}, GlobalStates.irisAbsorbed ?? {})
+        const next = Object.assign({}, IrisState.absorbed ?? {})
         next[root.screenName] = value
-        GlobalStates.irisAbsorbed = next
+        IrisState.absorbed = next
     }
     readonly property var restPoints: {
         const out = {}
@@ -412,7 +413,7 @@ Item {
     // Open, the Island steps the bubbles on its row aside, past its own satellites, instead of growing over them (10-25).
     function stepAside(centres: var): var {
         const g = root.island
-        const open = Number(GlobalStates.irisIslandOpenWidth?.[root.screenName] ?? 0)
+        const open = Number(IrisState.islandOpenWidth?.[root.screenName] ?? 0)
         if (!g || open <= 0 || g.fullWidth || g.vertical) return centres
         const bubble = Number(g.bubble ?? root.size) + Number(g.gap ?? 0)
         const sats = Array.from(g.satellites ?? [])
@@ -434,7 +435,7 @@ Item {
     // What of iRiS rests on this output, for arranging widgets beside it (DesktopArrange.bodies): the Island with the
     // bubbles at its sides, the floating bubbles and their bars, the Dock. Written at rest and never while arranging,
     // when the Dock steps aside and the Island turns into the edit head.
-    readonly property var dockBody: (GlobalStates.irisDockBody?.[root.screenName] ?? []).find?.(b => b?.id === "dock") ?? null
+    readonly property var dockBody: (IrisState.dockBody?.[root.screenName] ?? []).find?.(b => b?.id === "dock") ?? null
     readonly property bool arranging: GlobalStates.widgetEditMode
     onIslandChanged: {
         bodiesSettle.restart()
@@ -661,7 +662,7 @@ Item {
     }
     // Every floating piece on its own, grouped or not, for the edit layer to outline.
     readonly property var pieceShapes: {
-        if (!GlobalStates.irisEdit) return []
+        if (!IrisState.edit) return []
         const out = []
         for (let i = 0; i < root.allSlots.length; i++) {
             const rect = root.rects[i]
@@ -694,7 +695,7 @@ Item {
         return along + clear > span.lo && along - clear < span.hi
     }
     function dockTarget(x: real, y: real): var {
-        const home = GlobalStates.irisDockHome
+        const home = IrisState.dockHome
         if (home && home.screen === root.screenName && root.drag && home.appId === IrisPieces.appIdOf(root.drag.slot))
             return { zone: "dock", x: home.x, y: home.y }
         const b = root.dockBodyNow
@@ -793,15 +794,15 @@ Item {
 
     Component.onCompleted: { root.land(); root.publishAbsorbed(); bodiesSettle.restart() }
     Connections {
-        target: GlobalStates
-        function onIrisBubbleDragChanged(): void { root.land() }
+        target: IrisState
+        function onBubbleDragChanged(): void { root.land() }
     }
     function land(): void {
         const drag = root.drag
         if (!drag || !drag.released || landing.running) return
         const place = root.resolve(drag.x, drag.y)
         if (root.carryingIsland) {
-            GlobalStates.irisBubbleDrag = null
+            IrisState.bubbleDrag = null
             if (place.zone !== IrisFrame.islandEdge) Config.setNestedValue("iris.bar.position", place.zone)
             return
         }
@@ -837,7 +838,7 @@ Item {
             easing.type: Easing.BezierSpline
             easing.bezierCurve: IrisStyle.moveCurve
         }
-        ScriptAction { script: GlobalStates.irisBubbleDrag = null }
+        ScriptAction { script: IrisState.bubbleDrag = null }
     }
 
     component ZonePlate: Item {
@@ -948,7 +949,7 @@ Item {
                 const steps = Math.trunc(bubble.wheelAccumulator / 120)
                 if (steps === 0) return
                 bubble.wheelAccumulator -= steps * 120
-                GlobalStates.quietIrisLevels()
+                IrisState.quietLevels()
                 if (bubble.kind === "mic") Audio.setSourceVolume(Math.max(0, Math.min(1, (Audio.micVolume ?? 0) + steps * 0.05)))
                 else Audio.setSinkVolume(Math.max(0, Math.min(Math.max(1, Audio.ceiling), (Audio.value ?? 0) + steps * 0.05)))
             }
@@ -959,11 +960,11 @@ Item {
             slot: bubble.owner
             kind: bubble.kind === "trayApp" ? "tray" : bubble.kind
             screenName: root.screenName
-            holdLifts: !GlobalStates.irisEdit
-            pullDistance: GlobalStates.irisEdit ? 6 * root.d : 0
+            holdLifts: !IrisState.edit
+            pullDistance: IrisState.edit ? 6 * root.d : 0
             onTapped: {
-                if (GlobalStates.irisEdit) {
-                    GlobalStates.irisEditSelection = GlobalStates.irisEditSelection === bubble.owner ? "" : bubble.owner
+                if (IrisState.edit) {
+                    IrisState.editSelection = IrisState.editSelection === bubble.owner ? "" : bubble.owner
                     return
                 }
                 if (bubble.trayItem?.onlyMenu && bubble.trayItem?.hasMenu) { trayMenu.open(); return }
@@ -971,18 +972,18 @@ Item {
             }
         }
         Rectangle {
-            visible: GlobalStates.irisEdit && bubble.floating
+            visible: IrisState.edit && bubble.floating
             anchors.fill: parent
             anchors.margins: -Math.round(3 * root.d)
             radius: IrisStyle.pieceRadius(width)
             color: "transparent"
             border.width: Math.max(1, Math.round(2 * root.d))
-            border.color: GlobalStates.irisEditSelection === bubble.owner ? IrisStyle.accent : IrisStyle.border
+            border.color: IrisState.editSelection === bubble.owner ? IrisStyle.accent : IrisStyle.border
             Behavior on border.color { ColorAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
         }
         Rectangle {
             id: editBadge
-            visible: GlobalStates.irisEdit && bubble.floating && !bubble.carried
+            visible: IrisState.edit && bubble.floating && !bubble.carried
             anchors.horizontalCenter: parent.left
             anchors.verticalCenter: parent.top
             width: Math.round(16 * root.d)
@@ -991,7 +992,7 @@ Item {
             color: IrisStyle.danger
             border.width: Math.max(1, Math.round(root.d))
             border.color: IrisStyle.bodySurface
-            scale: GlobalStates.irisEdit ? 1 : 0
+            scale: IrisState.edit ? 1 : 0
             Behavior on scale { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
             MaterialSymbol {
                 anchors.centerIn: parent
@@ -1044,13 +1045,13 @@ Item {
             } }]
         }
         Connections {
-            target: GlobalStates
+            target: IrisState
             enabled: bubble.floating
-            function onIrisBubbleMenuRequestChanged(): void {
-                const want = GlobalStates.irisBubbleMenuRequest
+            function onBubbleMenuRequestChanged(): void {
+                const want = IrisState.bubbleMenuRequest
                 if (want.length === 0 || root.screenName !== (GlobalStates.focusedScreen?.name ?? "")) return
                 if (want !== bubble.kind && want !== bubble.slot) return
-                GlobalStates.irisBubbleMenuRequest = ""
+                IrisState.bubbleMenuRequest = ""
                 if (bubble.kind === "trayApp" && bubble.trayItem?.hasMenu) { trayMenu.open(); return }
                 pieceMenu.model = root.pieceMenu(bubble.slot, bubble.kind, bubble.rect)
                 pieceMenu.requestOpen()
@@ -1075,19 +1076,19 @@ Item {
     readonly property bool opensCards: String(root.options?.opens ?? "card") === "card"
     function toggleCard(slot: string, kind: string, rect: var): void {
         const source = rect?.source ?? "float-" + slot
-        if (GlobalStates.irisBubbleCard?.source === source) { GlobalStates.irisBubbleCard = null; return }
+        if (IrisState.bubbleCard?.source === source) { IrisState.bubbleCard = null; return }
         if (!rect) return
-        GlobalStates.irisBubbleCard = { kind: kind, source: source, screen: root.screenName,
+        IrisState.bubbleCard = { kind: kind, source: source, screen: root.screenName,
             x: rect.x, y: rect.y, width: rect.size, height: rect.size, radius: IrisStyle.pieceRadius(rect.size) }
     }
     Connections {
-        target: GlobalStates
-        function onIrisBubbleCardRequestChanged(): void {
-            const kind = GlobalStates.irisBubbleCardRequest
+        target: IrisState
+        function onBubbleCardRequestChanged(): void {
+            const kind = IrisState.bubbleCardRequest
             if (kind.length === 0 || root.screenName !== (GlobalStates.focusedScreen?.name ?? "")) return
             const index = root.allSlots.findIndex((slot, i) => root.rects[i] !== null && root.kindOf(slot) === kind)
             if (index < 0) return
-            GlobalStates.irisBubbleCardRequest = ""
+            IrisState.bubbleCardRequest = ""
             root.toggleCard(root.allSlots[index], kind, root.rects[index])
         }
     }
@@ -1096,23 +1097,26 @@ Item {
     property string controlIntentSlot: ""
     readonly property bool controlIntent: root.controlIntentSlot.length > 0
     function toggleControls(slot: string, rect: var): void {
-        if (GlobalStates.controlPanelOpen && GlobalStates.irisMorphOwner === "stage" && root.controlSlot === slot) {
+        if (GlobalStates.controlPanelOpen && IrisState.morphOwner === "stage" && root.controlSlot === slot) {
             GlobalStates.controlPanelOpen = false
             return
         }
         if (GlobalStates.controlPanelOpen) GlobalStates.controlPanelOpen = false
-        GlobalStates.irisBubbleCard = null
+        IrisState.bubbleCard = null
         root.controlSlot = slot
         root.publishOrigin(slot, rect)
         Qt.callLater(() => GlobalStates.controlPanelOpen = true)
     }
     Connections {
-        target: GlobalStates
-        function onIrisBubbleCardChanged(): void {
-            if (GlobalStates.irisBubbleCard && GlobalStates.controlPanelOpen) GlobalStates.controlPanelOpen = false
+        target: IrisState
+        function onBubbleCardChanged(): void {
+            if (IrisState.bubbleCard && GlobalStates.controlPanelOpen) GlobalStates.controlPanelOpen = false
         }
+    }
+    Connections {
+        target: GlobalStates
         function onControlPanelOpenChanged(): void {
-            if (GlobalStates.controlPanelOpen && GlobalStates.irisBubbleCard) GlobalStates.irisBubbleCard = null
+            if (GlobalStates.controlPanelOpen && IrisState.bubbleCard) IrisState.bubbleCard = null
             if (!GlobalStates.controlPanelOpen) root.controlSlot = ""
         }
     }
@@ -1120,8 +1124,8 @@ Item {
         const zone = root.plateKey(slot)
         const plate = root.absorption.bySlot[slot] ? null : root.plateAt(zone)
         const inDock = String(rect?.source ?? "").startsWith("dock-")
-        GlobalStates.irisMorphOwner = "stage"
-        GlobalStates.irisMorphOrigin = { x: rect.x, y: rect.y, width: rect.size, height: rect.size,
+        IrisState.morphOwner = "stage"
+        IrisState.morphOrigin = { x: rect.x, y: rect.y, width: rect.size, height: rect.size,
             radius: IrisStyle.pieceRadius(rect.size), screen: root.screenName, owner: "stage",
             fieldId: inDock ? "dock" : plate ? "plate:" + zone : "piece:" + slot,
             obstacle: plate ? { x: plate.x, y: plate.y, width: plate.width, height: plate.height } : null,
@@ -1135,9 +1139,9 @@ Item {
                 && (kind !== "media" || String(Config.options?.iris?.player?.bubbleOpens ?? "card") === "card")) {
             root.toggleCard(slot, kind, rect)
         } else if (kind === "media") {
-            GlobalStates.irisIslandPageRequest = "media"
+            IrisState.islandPageRequest = "media"
         } else if (kind === "timer" || kind === "record") {
-            GlobalStates.irisIslandPageRequest = "activity"
+            IrisState.islandPageRequest = "activity"
         } else if (kind === "controls") {
             root.toggleControls(slot, rect)
         } else if (kind === "notifications" || kind === "calendar") {
@@ -1147,9 +1151,9 @@ Item {
         } else if (kind === "battery") {
             root.toggleControls(slot, rect)
         } else if (kind === "weather" || kind === "clock") {
-            GlobalStates.irisIslandPageRequest = "desktop"
+            IrisState.islandPageRequest = "desktop"
         } else if (kind === "tray" || kind === "tools") {
-            GlobalStates.irisIslandPageRequest = kind
+            IrisState.islandPageRequest = kind
         } else if (kind === "trayApp") {
             const item = root.trayItemOf(slot)
             if (item && !TrayService.smartToggle(item)) item.activate()
@@ -1347,9 +1351,9 @@ Item {
         opacity: 0.9
         scale: 1.04
     }
-    readonly property var cardRequest: GlobalStates.irisBubbleCard
-        && (GlobalStates.irisBubbleCard.screen ?? root.screenName) === root.screenName
-        ? GlobalStates.irisBubbleCard : null
+    readonly property var cardRequest: IrisState.bubbleCard
+        && (IrisState.bubbleCard.screen ?? root.screenName) === root.screenName
+        ? IrisState.bubbleCard : null
     property var cardAnchor: null
     onCardRequestChanged: if (root.cardRequest) root.cardAnchor = root.cardRequest
     readonly property string cardKind: String(root.cardAnchor?.kind ?? "")
@@ -1359,7 +1363,7 @@ Item {
     readonly property bool cardKept: root.cardKind === "media"
         && (Config.options?.iris?.player?.cardPinned ?? false)
     readonly property bool cardArmed: root.cardOpen && card.armed && !root.cardKept
-    function closeCard(): void { GlobalStates.irisBubbleCard = null }
+    function closeCard(): void { IrisState.bubbleCard = null }
 
     readonly property bool mediaKept: (Config.options?.iris?.player?.cardPinned ?? false)
         && MprisController.activePlayer !== null
@@ -1367,10 +1371,10 @@ Item {
     function syncKeptCard(): void {
         const index = root.allSlots.findIndex((slot, i) => root.rects[i] !== null && root.kindOf(slot) === "media")
         if (root.mediaKept) {
-            if (index >= 0 && GlobalStates.irisBubbleCard?.kind !== "media")
+            if (index >= 0 && IrisState.bubbleCard?.kind !== "media")
                 root.toggleCard(root.allSlots[index], "media", root.rects[index])
-        } else if (GlobalStates.irisBubbleCard?.kind === "media") {
-            GlobalStates.irisBubbleCard = null
+        } else if (IrisState.bubbleCard?.kind === "media") {
+            IrisState.bubbleCard = null
         }
     }
     onMediaKeptChanged: Qt.callLater(root.syncKeptCard)
@@ -1427,7 +1431,7 @@ Item {
         const island = root.island
         if (island && island.width > 0 && island.height > 0)
             out.push({ x: island.x, y: island.y, width: island.width, height: island.height })
-        const dock = GlobalStates.irisDockBody?.[root.screenName] ?? []
+        const dock = IrisState.dockBody?.[root.screenName] ?? []
         for (const shape of (Array.isArray(dock) ? dock : []))
             if (shape?.id === "dock") out.push({ x: shape.x, y: shape.y, width: shape.width, height: shape.height })
         const sidebars = Config.options?.iris?.sidebars ?? ({})
@@ -1531,7 +1535,7 @@ Item {
         Rectangle {
             id: cardGrabber
             readonly property bool sideways: root.cardPlacement?.sideways ?? root.islandSide
-            visible: IrisStyle.cardGrabber && !GlobalStates.irisEdit && card.progress > 0.6
+            visible: IrisStyle.cardGrabber && !IrisState.edit && card.progress > 0.6
             opacity: grabberHover.hovered ? 1 : 0.55
             Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(140); easing.type: IrisStyle.feedbackEasing } }
             width: cardGrabber.sideways ? Math.max(2, Math.round(3 * root.d)) : Math.round(34 * root.d)
@@ -1545,13 +1549,13 @@ Item {
                 ? Math.round((card.height - height) / 2)
                 : (root.barBottom ? card.height - height - Math.round(7 * root.d) : Math.round(7 * root.d))
             HoverHandler { id: grabberHover; cursorShape: Qt.PointingHandCursor }
-            TapHandler { onTapped: GlobalStates.irisBubbleCard = null }
+            TapHandler { onTapped: IrisState.bubbleCard = null }
         }
 
         Item {
             id: cardResize
             z: 30
-            visible: GlobalStates.irisEdit && root.cardOpen
+            visible: IrisState.edit && root.cardOpen
             readonly property bool fromLeft: card.x + card.width / 2 > root.width / 2
             width: Math.round(14 * root.d)
             height: Math.round(48 * root.d)

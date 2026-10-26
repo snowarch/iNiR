@@ -7,6 +7,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
+import qs.modules.iris.state
 
 // The desktop menu, one model for the widget canvas and the bare background: the wallpaper as its
 // head, then the actions chosen in Settings (`iris.desktopMenu.items`), grouped by what they touch,
@@ -32,7 +33,7 @@ Singleton {
                 GlobalStates.widgetSearchOpen = true
             } },
         { id: "customize", group: 0, label: Translation.tr("Customize iRiS"), glyph: "palette", tint: "purple",
-            run: screen => GlobalStates.openIrisCustomize("") },
+            run: screen => IrisState.openCustomize("") },
         { id: "nextWallpaper", group: 0, label: Translation.tr("Next wallpaper"), glyph: "shuffle", tint: "pink",
             run: screen => Wallpapers.nextWallpaper(Appearance.m3colors.darkmode, screen) },
         { id: "screenshot", group: 1, label: Translation.tr("Screenshot"), glyph: "screenshot_region", tint: "blue",

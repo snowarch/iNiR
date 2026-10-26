@@ -17,6 +17,7 @@ import qs.modules.iris.components
 import qs.modules.iris.dock
 import qs.modules.iris.pieces
 import qs.modules.iris.settings
+import qs.modules.iris.state
 
 // Spotlight lives in the chassis window of its output, so its body, its content and the Island it grows
 // from are one surface: drawn and moved in the same frame.
@@ -135,7 +136,7 @@ Item {
             .concat(root.byArea(doable.filter(entry => entry.priority >= 50 && !(GlobalStates.widgetEditMode && entry.kind === "widget"))).map(entry => root.rowOf(entry)))
     }
 
-    readonly property var island: GlobalStates.irisIslandGeometry?.[root.screen?.name ?? ""] ?? null
+    readonly property var island: IrisState.islandGeometry?.[root.screen?.name ?? ""] ?? null
     readonly property bool fromIsland: String(root.options?.opens ?? "floating") === "island"
         && root.island !== null && root.island.width > 0
     readonly property bool islandBottom: root.island?.bottomEdge ?? false
@@ -213,9 +214,9 @@ Item {
     }
 
     function takeRequestedQuery(): void {
-        if (GlobalStates.irisSpotlightQuery.length === 0) return
-        LauncherSearch.query = GlobalStates.irisSpotlightQuery
-        GlobalStates.irisSpotlightQuery = ""
+        if (IrisState.spotlightQuery.length === 0) return
+        LauncherSearch.query = IrisState.spotlightQuery
+        IrisState.spotlightQuery = ""
     }
     Component.onCompleted: if (root.here && GlobalStates.searchOpen) { root.takeRequestedQuery(); root.focusInput() }
 
@@ -228,7 +229,11 @@ Item {
             root.takeRequestedQuery()
             root.focusInput()
         }
-        function onIrisSpotlightQueryChanged(): void {
+    }
+
+    Connections {
+        target: IrisState
+        function onSpotlightQueryChanged(): void {
             if (GlobalStates.searchOpen && root.here) root.takeRequestedQuery()
         }
     }

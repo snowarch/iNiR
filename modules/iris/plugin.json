@@ -55,7 +55,9 @@
   "flags": {
     "lockSurfaceSync": true,
     "lazyServices": true,
-    "verbs": true
+    "verbs": true,
+    "mediaFeedback": true,
+    "sidebarsAnyScreen": true
   },
   "customWidget": {
     "face": "widgets/templates/IrisCompact.qml",

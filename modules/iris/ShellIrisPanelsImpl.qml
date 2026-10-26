@@ -19,6 +19,7 @@ import qs.modules.iris.orbit
 import qs.modules.iris.osk
 import qs.modules.shared.background
 import qs.modules.shared.lock
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -146,7 +147,7 @@ Item {
     OnDemandPanelLoader {
         identifier: "irisStudio"
         requireEnabledPanel: false
-        open: GlobalStates.irisStudioOpen
+        open: IrisState.studioOpen
         closeGraceMs: IrisStyle.settleDuration + 120
         component: IrisStudio {}
     }
@@ -253,7 +254,7 @@ Item {
 
     OnDemandPanelLoader {
         identifier: "irisLockRehearsal"
-        open: GlobalStates.irisLockEdit
+        open: IrisState.lockEdit
         requireEnabledPanel: false
         component: IrisLockRehearsal {}
     }

@@ -15,11 +15,8 @@ Singleton {
     property var clock: SystemClock {
         id: clock
         precision: {
-            if ((Config.options?.time?.secondPrecision ?? false) || GlobalStates.screenLocked)
-                return SystemClock.Seconds;
-            // The lock screen may show seconds, and it is rehearsed while unlocked.
-            if ((Config.options?.iris?.lock?.type?.seconds ?? false)
-                    && (GlobalStates.irisLockEdit || GlobalStates.screenLocked))
+            if ((Config.options?.time?.secondPrecision ?? false) || GlobalStates.screenLocked
+                    || GlobalStates.clockShowsSeconds)
                 return SystemClock.Seconds;
             return SystemClock.Minutes;
         }

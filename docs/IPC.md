@@ -54,7 +54,6 @@ returned as JSON by `list`.
 | `reload` | Reload the shell's QML the way an edit does (soft: windows are kept). In a git checkout `scripts/daemon/dev_hot_reload.py` calls it for the files Quickshell does not watch itself |
 | `meter` | Measure frame gaps for the given milliseconds (250–20000, default 2500) |
 | `metered` | Return the last measurement as JSON: frames, mean, p95, worst, frames over 20 and 50 ms |
-| `dragSim` | Simulate carrying an iRiS bubble (slot id, default `extra-clock`) around the focused output for 2.5 s, publishing the given number of moves per frame (1–16); never writes the config |
 
 ```bash
 inir dev list | jq -r '.[].id'
@@ -64,7 +63,6 @@ inir dev audit
 inir dev audit sidebar-left/ai settings/ai
 inir dev audit --all --all-families
 inir dev meter 2500; sleep 3; inir dev metered
-inir dev dragSim extra-clock 8; inir dev meter 2400; sleep 3; inir dev metered
 ```
 
 `inir dev audit` selects destinations related to changed area-specific files in
@@ -76,6 +74,20 @@ actions such as locking, recording, power commands, and wallpaper mutation are
 excluded.
 
 ---
+
+### irisDev
+
+Simulated hands for measuring iRiS (present while iRiS is the family).
+
+| Function | Description |
+|----------|-------------|
+| `dragSim` | Simulate carrying an iRiS bubble (slot id, default `extra-clock`) around the focused output for 2.5 s, publishing the given number of moves per frame (1–16); never writes the config |
+| `dropBubble` | Drop an iRiS bubble (slot id, or `app:<id>`) at a point of the focused output, released after 200 ms |
+| `dockSlide` | Slide a Dock icon (app id) along the Dock by the given pixels over 1 s |
+
+```bash
+inir irisDev dragSim extra-clock 8; inir dev meter 2400; sleep 3; inir dev metered
+```
 
 ### overview
 

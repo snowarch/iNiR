@@ -12,6 +12,7 @@ import qs.modules.iris.frame
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.pieces
+import qs.modules.iris.state
 
 // Orbit: your session as Niri holds it, one strip per workspace with its windows where they are, and everything you need to
 // get somewhere else in it. The Island grows into it (or a sheet does, under it): a Place in the chassis window of its
@@ -24,10 +25,10 @@ Item {
 
     property var screen: null
     readonly property string outputName: root.screen?.name ?? ""
-    readonly property bool here: root.outputName === (GlobalStates.irisOrbitOutput.length > 0 ? GlobalStates.irisOrbitOutput
+    readonly property bool here: root.outputName === (IrisState.orbitOutput.length > 0 ? IrisState.orbitOutput
         : (GlobalStates.focusedScreen?.name ?? ""))
-    readonly property bool wanted: root.here && GlobalStates.irisOrbitOpen
-    readonly property bool present: root.here && (GlobalStates.irisOrbitOpen || (content.item?.progress ?? 0) > 0)
+    readonly property bool wanted: root.here && IrisState.orbitOpen
+    readonly property bool present: root.here && (IrisState.orbitOpen || (content.item?.progress ?? 0) > 0)
     readonly property bool armed: root.wanted && (content.item?.armed ?? false)
     // The focused output keeps its model built, so opening is showing it, not making it.
     readonly property bool live: root.here
@@ -38,7 +39,7 @@ Item {
     readonly property real outputHeight: Math.max(1, Number(NiriService.outputs?.[root.outputName]?.logical?.height ?? root.screen?.height ?? 1080))
 
     // ---- Where it grows from -------------------------------------------------------------------------------------------
-    readonly property var island: GlobalStates.irisIslandGeometry?.[root.outputName] ?? null
+    readonly property var island: IrisState.islandGeometry?.[root.outputName] ?? null
     readonly property bool fromIsland: String(root.options?.opens ?? "island") === "island" && root.island !== null && root.island.width > 0
     readonly property bool islandBottom: root.island?.bottomEdge ?? false
     readonly property string islandSide: root.island?.vertical ? String(root.island.edge) : ""
@@ -172,7 +173,7 @@ Item {
     }
 
     // ---- Doing --------------------------------------------------------------------------------------------------------
-    function close(): void { GlobalStates.irisOrbitOpen = false }
+    function close(): void { IrisState.orbitOpen = false }
     function leave(): void { if (root.options?.closeOnGo ?? true) root.close() }
     function isStashed(id: int): bool { return root.stashedIds.includes(id) }
     function restore(id: int): void {
@@ -193,7 +194,7 @@ Item {
         if (root.searching && root.cursorId < 0) {
             if (!(root.options?.askSpotlight ?? true)) return
             root.close()
-            GlobalStates.irisSpotlightQuery = root.query.trim()
+            IrisState.spotlightQuery = root.query.trim()
             GlobalStates.searchOpen = true
             return
         }
@@ -281,8 +282,8 @@ Item {
     onCardsChanged: if (root.wanted) previewTimer.restart()
 
     function opened(): void {
-        root.query = GlobalStates.irisOrbitQuery
-        GlobalStates.irisOrbitQuery = ""
+        root.query = IrisState.orbitQuery
+        IrisState.orbitQuery = ""
         const active = root.cards.findIndex(card => card.ws.is_active)
         root.select(active >= 0 ? active : 0, -1)
         if (root.searching) root.focusMatch(root.bestMatch())
@@ -292,8 +293,8 @@ Item {
     function focusInput(): void { Qt.callLater(() => content.item?.focusInput()) }
 
     Connections {
-        target: GlobalStates
-        function onIrisOrbitOpenChanged(): void { if (GlobalStates.irisOrbitOpen && root.here) root.opened() }
+        target: IrisState
+        function onOrbitOpenChanged(): void { if (IrisState.orbitOpen && root.here) root.opened() }
     }
     onVisibleChanged: if (!visible) root.query = ""
     Component.onCompleted: if (root.wanted) root.opened()

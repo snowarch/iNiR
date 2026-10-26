@@ -11,6 +11,7 @@ import qs.modules.common.widgets
 import qs.modules.iris.frame
 import qs.modules.iris.style
 import qs.modules.iris.components
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -24,7 +25,7 @@ Item {
     readonly property bool islandSide: root.islandEdge === "left" || root.islandEdge === "right"
     readonly property bool morphOpen: GlobalStates.controlPanelOpen
         && root.screenName === (GlobalStates.focusedScreen?.name ?? "")
-        && (IrisDesign.has("controlCenter") || String(Config.options?.iris?.controlCenter?.opens ?? "island") !== "island" || GlobalStates.irisMorphOwner === "stage")
+        && (IrisDesign.has("controlCenter") || String(Config.options?.iris?.controlCenter?.opens ?? "island") !== "island" || IrisState.morphOwner === "stage")
     readonly property bool armed: root.morphOpen && panel.armed
     readonly property bool present: root.morphOpen || panel.progress > 0
     readonly property alias body: panel
@@ -44,12 +45,12 @@ Item {
                 : root.islandBody && root.scene.length === 0 ? "island" : "" }]
         return shapes
     }
-    readonly property var islandBody: GlobalStates.irisIslandGeometry?.[root.screenName] ?? null
+    readonly property var islandBody: IrisState.islandGeometry?.[root.screenName] ?? null
 
     visible: root.present
     readonly property real edgeGap: IrisFrame.islandVisualDepth + 8 * IrisStyle.density
-    property var origin: GlobalStates.irisMorphOrigin
-    onMorphOpenChanged: if (root.morphOpen) root.origin = Qt.binding(() => GlobalStates.irisMorphOrigin)
+    property var origin: IrisState.morphOrigin
+    onMorphOpenChanged: if (root.morphOpen) root.origin = Qt.binding(() => IrisState.morphOrigin)
         else root.origin = root.origin
     readonly property bool fromPiece: root.origin?.owner === "stage" && String(root.origin?.fieldId ?? "").length > 0
     readonly property var placementOrigin: root.fromPiece && root.origin
@@ -58,7 +59,7 @@ Item {
         const out = []
         if (root.islandBody && root.islandBody.width > 0 && root.islandBody.height > 0)
             out.push({ x: root.islandBody.x, y: root.islandBody.y, width: root.islandBody.width, height: root.islandBody.height })
-        const dock = GlobalStates.irisDockBody?.[root.screenName] ?? []
+        const dock = IrisState.dockBody?.[root.screenName] ?? []
         for (const shape of (Array.isArray(dock) ? dock : []))
             if (shape?.id === "dock") out.push({ x: shape.x, y: shape.y, width: shape.width, height: shape.height })
         const sidebars = Config.options?.iris?.sidebars ?? ({})
@@ -83,7 +84,7 @@ Item {
     readonly property string scene: IrisDesign.skin("controlCenter")
     readonly property real panelWidth: root.scene.length > 0 ? Math.min(root.width - 16, Number(IrisDesign.surface("controlCenter", "width", 360)) * IrisStyle.density)
         : Math.min(root.width - 16, (Math.max(320, Number(root.options?.width ?? 360))
-        + (GlobalStates.irisControlEdit ? IrisControlOptions.editorExtra : 0)) * IrisStyle.density)
+        + (IrisState.controlEdit ? IrisControlOptions.editorExtra : 0)) * IrisStyle.density)
     readonly property real contentPadding: root.scene.length > 0 ? Number(IrisDesign.surface("controlCenter", "padding", 16)) * IrisStyle.density : IrisStyle.concentricPad(IrisStyle.surfaceRadius("controlCenter", IrisStyle.radiusPanel), 16 * IrisStyle.density)
     // How far the body hangs from the Island: welded into it in iRiS, apart from it when a Design says so.
     readonly property real hang: root.scene.length > 0 ? Number(IrisDesign.surface("controlCenter", "gap", -IrisStyle.weld / IrisStyle.density)) * IrisStyle.density : -IrisStyle.weld
@@ -122,7 +123,7 @@ Item {
                 root.baseRadius, root.origin?.obstacle ?? root.origin, Number(root.origin?.nestFuse ?? IrisStyle.fuse), root.width, root.height)
             : root.baseRadius
         origin: root.fromPiece ? root.origin : null
-        onClosed: if (GlobalStates.irisMorphOwner === "stage" && !GlobalStates.settingsOverlayOpen) GlobalStates.irisMorphOwner = ""
+        onClosed: if (IrisState.morphOwner === "stage" && !GlobalStates.settingsOverlayOpen) IrisState.morphOwner = ""
         light: IrisStyle.surfaceLight("controlCenter", IrisStyle.wallpaperLight)
         lightFrom: root.placement ? (root.placement.sideways ? (root.placement.towardsLeft ? "right" : "left") : (root.placement.towardsUp ? "bottom" : "top"))
             : root.islandSide ? root.islandEdge : root.barBottom ? "bottom" : "top"

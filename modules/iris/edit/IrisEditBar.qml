@@ -14,6 +14,7 @@ import qs.modules.iris.settings
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.field as Field
+import qs.modules.iris.state
 
 // Customize iRiS on the shell itself. The Island grows an edit capsule (Themes, Look, Pieces, undo, redo,
 // Done); each tool is a sheet grown from the capsule; touching anything on screen grows its inspector out
@@ -25,7 +26,7 @@ Item {
     // The chassis field's bodies: what the pointer is over, and what is selected, is outlined from them.
     property var shapes: []
     readonly property real d: IrisStyle.density
-    readonly property bool present: GlobalStates.irisEdit
+    readonly property bool present: IrisState.edit
     // The capsule and its sheets appear and leave in place, with no morph: sliding under the Island and
     // folding back into the capsule read as being swallowed.
     readonly property bool shown: root.entered && root.present
@@ -44,8 +45,8 @@ Item {
         { id: "transients", label: "Feedback" }, { id: "desktop", label: "Desktop" }
     ]
     function openTool(name: string): void {
-        GlobalStates.irisEditSelection = ""
-        if (GlobalStates.irisEditTarget === "island" || GlobalStates.irisEditTarget === "dock") GlobalStates.irisEditTarget = ""
+        IrisState.editSelection = ""
+        if (IrisState.editTarget === "island" || IrisState.editTarget === "dock") IrisState.editTarget = ""
         root.tool = root.tool === name ? "" : name
     }
     function route(target: string): void {
@@ -55,18 +56,18 @@ Item {
         else if (root.lookTabs.some(tab => tab.id === target)) { root.lookTab = target; root.tool = "look" }
     }
     Connections {
-        target: GlobalStates
-        function onIrisEditTargetChanged(): void { root.route(GlobalStates.irisEditTarget) }
-        function onIrisEditChanged(): void { if (!GlobalStates.irisEdit) root.tool = "" }
+        target: IrisState
+        function onEditTargetChanged(): void { root.route(IrisState.editTarget) }
+        function onEditChanged(): void { if (!IrisState.edit) root.tool = "" }
     }
     Component.onCompleted: {
         root.shapesSeen = root.shapes
-        root.route(GlobalStates.irisEditTarget)
+        root.route(IrisState.editTarget)
         enterTimer.start()
     }
     // Escape folds the innermost thing open; false when there was nothing left but the mode itself.
     function fold(): bool {
-        if (root.inspecting) { GlobalStates.irisEditSelection = ""; GlobalStates.irisEditTarget = ""; return true }
+        if (root.inspecting) { IrisState.editSelection = ""; IrisState.editTarget = ""; return true }
         if (root.tool.length > 0) { root.tool = ""; return true }
         return false
     }
@@ -83,9 +84,9 @@ Item {
         return ""
     }
     readonly property string selectedId: {
-        const target = GlobalStates.irisEditTarget
+        const target = IrisState.editTarget
         if (target === "island" || target === "dock") return target
-        const selection = GlobalStates.irisEditSelection
+        const selection = IrisState.editSelection
         if (selection.length === 0) return ""
         if (["left", "right", "utility"].includes(selection)) return "satellite:" + selection
         return "piece:" + selection.replace(/^extra:/, "extra-")
@@ -129,7 +130,7 @@ Item {
     }
     readonly property bool inspecting: root.selected !== null
     onInspectingChanged: if (root.inspecting) root.tool = ""
-    readonly property string selectionKind: GlobalStates.irisEditSelection.replace(/^extra[:-]/, "")
+    readonly property string selectionKind: IrisState.editSelection.replace(/^extra[:-]/, "")
     readonly property var inspectorSpecs: {
         Config.revision
         const id = root.selectedId
@@ -137,7 +138,7 @@ Item {
         if (id === "dock" || root.selected?.inDock) return IrisOptions.studio.filter(spec => spec.target === "dock")
         if (id === "island") return IrisOptions.studio.filter(spec => spec.target === "island")
         if (id.length === 0) return []
-        const own = IrisPieces.isApp(GlobalStates.irisEditSelection) ? []
+        const own = IrisPieces.isApp(IrisState.editSelection) ? []
             : IrisOptions.behaviour.filter(spec => spec.piece === root.selectionKind)
                 .map(spec => Object.assign({}, spec, { group: spec.group ?? root.labelFor(id) }))
         return own.length > 0 ? own : IrisOptions.studio.filter(spec => spec.target === "pieces")
@@ -147,7 +148,7 @@ Item {
     Outline { shape: root.hovered && root.hovered.id !== root.selectedId ? root.hovered : null; strong: false }
 
     // ── Geometry ─────────────────────────────────────────────────────────
-    readonly property var island: GlobalStates.irisIslandGeometry?.[root.screenData?.name ?? ""] ?? null
+    readonly property var island: IrisState.islandGeometry?.[root.screenData?.name ?? ""] ?? null
     readonly property string edge: root.island ? String(root.island.edge ?? (root.island.bottomEdge ? "bottom" : "top")) : "top"
     readonly property bool vertical: root.edge === "left" || root.edge === "right"
     readonly property real gap: Math.round(8 * root.d)
@@ -298,8 +299,8 @@ Item {
                 materialIcon: "view_sidebar"
                 Accessible.name: Translation.tr("Open in Studio")
                 onClicked: {
-                    GlobalStates.irisStudioTarget = root.tool === "look" ? root.lookTab : root.tool
-                    GlobalStates.irisStudioOpen = true
+                    IrisState.studioTarget = root.tool === "look" ? root.lookTab : root.tool
+                    IrisState.studioOpen = true
                 }
             }
             IrisText {
@@ -315,7 +316,7 @@ Item {
                 text: Translation.tr("Done")
                 implicitHeight: Math.round(32 * root.d)
                 buttonRadius: IrisStyle.capsule(height)
-                onClicked: GlobalStates.irisEdit = false
+                onClicked: IrisState.edit = false
             }
         }
     }
@@ -410,7 +411,7 @@ Item {
                     IrisIconButton {
                         materialIcon: "close"
                         Accessible.name: Translation.tr("Close")
-                        onClicked: { GlobalStates.irisEditSelection = ""; GlobalStates.irisEditTarget = "" }
+                        onClicked: { IrisState.editSelection = ""; IrisState.editTarget = "" }
                     }
                 }
                 IrisEditRows {

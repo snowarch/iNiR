@@ -8,6 +8,7 @@ import qs
 import qs.services
 import qs.modules.iris.style
 import qs.modules.iris.frame
+import qs.modules.iris.state
 
 // Measures a Place's open, close and mid-way reversal from the frames the Place itself samples (`IrisMorphSurface` feeds `sample`).
 // Driven by `inir iris motion <target>` and read back with `inir iris motioned`.
@@ -16,13 +17,13 @@ Singleton {
 
     readonly property var targets: ({
         spotlight: { surface: "spotlight", open: () => GlobalStates.searchOpen = true, close: () => GlobalStates.searchOpen = false },
-        orbit: { surface: "orbit", open: () => GlobalStates.irisOrbitOpen = true, close: () => GlobalStates.irisOrbitOpen = false },
+        orbit: { surface: "orbit", open: () => IrisState.orbitOpen = true, close: () => IrisState.orbitOpen = false },
         gallery: { surface: "gallery", open: () => GlobalStates.wallpaperSelectorOpen = true, close: () => GlobalStates.wallpaperSelectorOpen = false },
         settings: { surface: "settings", open: () => GlobalStates.openSettings(), close: () => GlobalStates.settingsOverlayOpen = false },
         focus: { surface: "panels", open: () => GlobalStates.openSidebarLeft(GlobalStates.focusedScreen?.name ?? ""), close: () => GlobalStates.closeSidebarLeft() },
         today: { surface: "panels", open: () => GlobalStates.openSidebarRight(GlobalStates.focusedScreen?.name ?? ""), close: () => GlobalStates.closeSidebarRight() },
-        island: { surface: "island", open: () => GlobalStates.irisIslandPageRequest = "desktop", close: () => GlobalStates.irisIslandPageRequest = "collapse" },
-        card: { surface: "cards", open: () => { GlobalStates.irisBubbleCardRequest = ""; GlobalStates.irisBubbleCardRequest = "media" }, close: () => GlobalStates.irisBubbleCard = null }
+        island: { surface: "island", open: () => IrisState.islandPageRequest = "desktop", close: () => IrisState.islandPageRequest = "collapse" },
+        card: { surface: "cards", open: () => { IrisState.bubbleCardRequest = ""; IrisState.bubbleCardRequest = "media" }, close: () => IrisState.bubbleCard = null }
     })
 
     property string target: ""
@@ -84,9 +85,9 @@ Singleton {
         root.result = { state: "running", target: name }
         refresh.running = true
         root.targets[name].close()
-        root.islandWasExpanded = GlobalStates.irisIslandExpanded
+        root.islandWasExpanded = IrisState.islandExpanded
         // The Places open from the expanded Island; the Island itself starts collapsed.
-        if (name !== "island") GlobalStates.irisIslandPageRequest = "desktop"
+        if (name !== "island") IrisState.islandPageRequest = "desktop"
         root.phase = "prepare"
         step.interval = 900
         step.restart()
@@ -150,7 +151,7 @@ Singleton {
             case "clean":
                 root.phase = ""
                 root.result = root.report(t)
-                if (!root.islandWasExpanded && root.target !== "island") GlobalStates.irisIslandPageRequest = "collapse"
+                if (!root.islandWasExpanded && root.target !== "island") IrisState.islandPageRequest = "collapse"
                 break
             }
         }

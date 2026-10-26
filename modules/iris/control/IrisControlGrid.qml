@@ -15,22 +15,23 @@ import qs.modules.shared.mediaControls.components
 import qs.modules.iris.components
 import qs.modules.iris.pieces
 import qs.modules.iris.style
+import qs.modules.iris.state
 
 Item {
     id: root
 
-    readonly property bool editing: GlobalStates.irisControlEdit
+    readonly property bool editing: IrisState.controlEdit
     property var targetScreen: null
     property string picker: ""
     function takePickerRequest(): void {
-        const wanted = GlobalStates.irisControlPickerRequest
+        const wanted = IrisState.controlPickerRequest
         if (wanted.length === 0) return
         root.picker = wanted === "none" ? "" : wanted
-        GlobalStates.irisControlPickerRequest = ""
+        IrisState.controlPickerRequest = ""
     }
     Connections {
-        target: GlobalStates
-        function onIrisControlPickerRequestChanged(): void { root.takePickerRequest() }
+        target: IrisState
+        function onControlPickerRequestChanged(): void { root.takePickerRequest() }
     }
     Component.onCompleted: root.takePickerRequest()
     // Right click on any tile that has a list (Wi-Fi, Bluetooth) opens it, whatever the tile's shape:

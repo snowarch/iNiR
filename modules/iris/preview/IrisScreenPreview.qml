@@ -14,6 +14,7 @@ import qs.modules.iris.components
 import qs.modules.iris.pieces
 import qs.modules.iris.bar.island
 import qs.modules.iris.field as Field
+import qs.modules.iris.state
 
 ClippingRectangle {
     id: root
@@ -78,7 +79,7 @@ ClippingRectangle {
 
     readonly property string layout: String(root.bar?.layout ?? "island")
     readonly property var island: {
-        const g = GlobalStates.irisIslandGeometry?.[root.screenName] ?? null
+        const g = IrisState.islandGeometry?.[root.screenName] ?? null
         if (g && g.width > 0 && g.height > 0) {
             const edge = String(g.edge ?? (g.bottomEdge ? "bottom" : "top"))
             return Object.assign({}, g, { edge: edge, vertical: edge === "left" || edge === "right" })
@@ -100,7 +101,7 @@ ClippingRectangle {
             bottomEdge: edge === "bottom", auxiliarySlot: 2, fullWidth: full }
     }
     readonly property string islandEdge: String(root.island.edge ?? "top")
-    readonly property var kinds: GlobalStates.irisBubbleKinds?.[root.screenName] ?? ({})
+    readonly property var kinds: IrisState.bubbleKinds?.[root.screenName] ?? ({})
 
     function satelliteRect(slot: string): var {
         const g = root.island
@@ -124,7 +125,7 @@ ClippingRectangle {
 
     readonly property var dock: {
         if (!(root.dockOptions?.enable ?? true)) return null
-        const published = GlobalStates.irisDockBody?.[root.screenName]
+        const published = IrisState.dockBody?.[root.screenName]
         const body = Array.isArray(published) ? published.find(shape => shape.id === "dock") : null
         if (body && body.width > 0)
             return { x: body.x, y: body.y, width: body.width, height: body.height, radius: body.radius }

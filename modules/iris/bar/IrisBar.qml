@@ -26,6 +26,7 @@ import qs.modules.iris.style
 import qs.modules.iris.components as IrisParts
 import qs.modules.iris.pieces
 import qs.modules.iris.settings
+import qs.modules.iris.state
 
 Scope {
     id: root
@@ -49,14 +50,14 @@ Scope {
                 GlobalStates.openSettingsAt("about", "")
                 return
             }
-            GlobalStates.irisBubbleCardRequest = ""
-            GlobalStates.irisBubbleCardRequest = "shellUpdate"
+            IrisState.bubbleCardRequest = ""
+            IrisState.bubbleCardRequest = "shellUpdate"
         }
     }
     Connections {
-        target: GlobalStates
-        function onIrisEditChanged(): void {
-            if (GlobalStates.irisEdit) root.editScreen = GlobalStates.focusedScreen?.name ?? ""
+        target: IrisState
+        function onEditChanged(): void {
+            if (IrisState.edit) root.editScreen = GlobalStates.focusedScreen?.name ?? ""
         }
     }
 
@@ -78,7 +79,7 @@ Scope {
             return action
         }
         function toggle(): void {
-            if (GlobalStates.irisIslandExpanded) root.islandRequested(false, "")
+            if (IrisState.islandExpanded) root.islandRequested(false, "")
             else { GlobalStates.barOpen = true; root.islandRequested(true, "") }
         }
         function card(action: string): void {
@@ -86,11 +87,11 @@ Scope {
                 Config.setNestedValue("iris.player.cardPinned", !(Config.options?.iris?.player?.cardPinned ?? false))
                 return
             }
-            const open = GlobalStates.irisBubbleCard?.kind === "media"
-            if (action === "close" || (open && action !== "open")) { GlobalStates.irisBubbleCard = null; return }
+            const open = IrisState.bubbleCard?.kind === "media"
+            if (action === "close" || (open && action !== "open")) { IrisState.bubbleCard = null; return }
             if (open) return
-            GlobalStates.irisBubbleCardRequest = ""
-            GlobalStates.irisBubbleCardRequest = "media"
+            IrisState.bubbleCardRequest = ""
+            IrisState.bubbleCardRequest = "media"
         }
         function theme(action: string): string {
             const verb = String(action).split(":")[0]
@@ -169,17 +170,17 @@ Scope {
             return place
         }
         function dock(action: string): void {
-            GlobalStates.irisDockShown = action === "reveal" ? true : action === "hide" ? false : !GlobalStates.irisDockShown
+            IrisState.dockShown = action === "reveal" ? true : action === "hide" ? false : !IrisState.dockShown
         }
         function dockApp(appId: string, mode: string): string {
-            if (mode === "close") { GlobalStates.irisDockMenuRequest = { appId: "", mode: "close" }; GlobalStates.irisDockShown = false; return "closed" }
+            if (mode === "close") { IrisState.dockMenuRequest = { appId: "", mode: "close" }; IrisState.dockShown = false; return "closed" }
             if (mode === "pin") {
                 TaskbarApps.togglePin(appId)
                 const lower = appId.toLowerCase()
                 return (Config.options?.dock?.pinnedApps ?? []).some(p => String(p).toLowerCase() === lower) ? "pinned" : "unpinned"
             }
             if (mode !== "windows" && mode !== "menu") return "Unknown mode: windows, menu, pin or close"
-            GlobalStates.irisDockMenuRequest = { appId: appId, mode: mode }
+            IrisState.dockMenuRequest = { appId: appId, mode: mode }
             return appId
         }
         // `position` counts the Dock's icons from 1, the separator included: landing before it pins, after it unpins.
@@ -269,9 +270,9 @@ Scope {
             return wanted ? "on" : "off"
         }
         function arrange(action: string): string {
-            const wanted = action === "on" ? true : action === "off" ? false : !GlobalStates.irisArrange
-            if (wanted) GlobalStates.irisIslandPageRequest = "desktop"
-            GlobalStates.irisArrange = wanted
+            const wanted = action === "on" ? true : action === "off" ? false : !IrisState.arrange
+            if (wanted) IrisState.islandPageRequest = "desktop"
+            IrisState.arrange = wanted
             return wanted ? "on" : "off"
         }
         function edit(action: string): string {
@@ -279,30 +280,30 @@ Scope {
                 const targets = { pieces: "pieces", look: "material", motion: "motion", layout: "island" }
                 const target = targets[action.slice(4)]
                 if (!target) return "Unknown tab"
-                GlobalStates.irisEdit = true
-                GlobalStates.irisEditTarget = target
+                IrisState.edit = true
+                IrisState.editTarget = target
                 return action
             }
             if (!["on", "off", "toggle", ""].includes(action)) {
-                GlobalStates.irisEdit = true
-                if (IrisPieces.extraIds.includes(action)) GlobalStates.irisEditSelection = "extra:" + action
-                else if (IrisPieces.slotIds.includes(action) || IrisPieces.isApp(action)) GlobalStates.irisEditSelection = action
-                else GlobalStates.irisEditTarget = action
+                IrisState.edit = true
+                if (IrisPieces.extraIds.includes(action)) IrisState.editSelection = "extra:" + action
+                else if (IrisPieces.slotIds.includes(action) || IrisPieces.isApp(action)) IrisState.editSelection = action
+                else IrisState.editTarget = action
                 return action
             }
-            const wanted = action === "on" ? true : action === "off" ? false : !GlobalStates.irisEdit
-            GlobalStates.irisEdit = wanted
+            const wanted = action === "on" ? true : action === "off" ? false : !IrisState.edit
+            IrisState.edit = wanted
             return wanted ? "on" : "off"
         }
         // `studio <area>` opens Studio on an area, `studio search:<words>` with a search typed.
         function studio(action: string): string {
             if (!["on", "off", "toggle"].includes(action)) {
-                GlobalStates.irisStudioTarget = action
-                GlobalStates.irisStudioOpen = true
+                IrisState.studioTarget = action
+                IrisState.studioOpen = true
                 return action
             }
-            const wanted = action === "on" ? true : action === "off" ? false : !GlobalStates.irisStudioOpen
-            GlobalStates.irisStudioOpen = wanted
+            const wanted = action === "on" ? true : action === "off" ? false : !IrisState.studioOpen
+            IrisState.studioOpen = wanted
             return wanted ? "on" : "off"
         }
         function notch(action: string): string {
@@ -323,7 +324,7 @@ Scope {
             return String(Config.options.iris.appearance.accent)
         }
         function spotlight(query: string): void {
-            GlobalStates.irisSpotlightQuery = query
+            IrisState.spotlightQuery = query
             GlobalStates.searchOpen = true
         }
         function gallerySource(source: string, state: string): string {
@@ -338,13 +339,13 @@ Scope {
         }
         function orbit(query: string): string {
             if (!(Config.options?.iris?.orbit?.enable ?? false)) return "Orbit is off: turn it on in Settings › Orbit or with inir iris set iris.orbit.enable true"
-            GlobalStates.irisOrbitQuery = query
-            GlobalStates.irisOrbitOpen = true
+            IrisState.orbitQuery = query
+            IrisState.orbitOpen = true
             return "open"
         }
-        function orbitCorner(): string { return JSON.stringify(GlobalStates.irisOrbitCorners) }
+        function orbitCorner(): string { return JSON.stringify(IrisState.orbitCorners) }
         function orbitClose(): string {
-            GlobalStates.irisOrbitOpen = false
+            IrisState.orbitOpen = false
             return "closed"
         }
         function spotlightClose(): string {
@@ -352,11 +353,11 @@ Scope {
             return "closed"
         }
         function bubbleCard(kind: string): string {
-            if (kind === "close") { GlobalStates.irisBubbleCard = null; return "closed" }
+            if (kind === "close") { IrisState.bubbleCard = null; return "closed" }
             if (!IrisPieces.cardIds.includes(kind)) return "Unknown card"
-            if (GlobalStates.irisBubbleCard?.kind === kind) return kind
-            GlobalStates.irisBubbleCardRequest = ""
-            GlobalStates.irisBubbleCardRequest = kind
+            if (IrisState.bubbleCard?.kind === kind) return kind
+            IrisState.bubbleCardRequest = ""
+            IrisState.bubbleCardRequest = kind
             return kind
         }
         function tap(kind: string): string {
@@ -367,8 +368,8 @@ Scope {
         }
         function bubbleMenu(kind: string): string {
             if (kind.length === 0) return "Which bubble?"
-            GlobalStates.irisBubbleMenuRequest = ""
-            GlobalStates.irisBubbleMenuRequest = kind
+            IrisState.bubbleMenuRequest = ""
+            IrisState.bubbleMenuRequest = kind
             return kind
         }
         function morph(name: string): string {
@@ -487,28 +488,28 @@ Scope {
                 if (!["display", "system", "devices", "network", "bluetooth", "none"].includes(list))
                     return "Unknown expansion. One of: display, system, devices, network, bluetooth, none"
                 if (!GlobalStates.controlPanelOpen) {
-                    GlobalStates.irisMorphOwner = ""
+                    IrisState.morphOwner = ""
                     GlobalStates.controlPanelOpen = true
                 }
-                GlobalStates.irisControlPickerRequest = ""
-                GlobalStates.irisControlPickerRequest = list
+                IrisState.controlPickerRequest = ""
+                IrisState.controlPickerRequest = list
                 return list
             }
             const tab = action.startsWith("tab:") ? action.slice(4) : ""
             if (tab.length > 0 && !["controls", "layouts", "panel"].includes(tab))
                 return "Unknown tab. One of: controls, layouts, panel"
             const wanted = tab.length > 0 || action === "edit" || action === "on" ? true
-                : action === "off" || action === "done" ? false : !GlobalStates.irisControlEdit
+                : action === "off" || action === "done" ? false : !IrisState.controlEdit
             if (!wanted) {
-                GlobalStates.irisControlEdit = false
+                IrisState.controlEdit = false
                 return "closed"
             }
             if (!GlobalStates.controlPanelOpen) {
-                GlobalStates.irisMorphOwner = ""
+                IrisState.morphOwner = ""
                 GlobalStates.controlPanelOpen = true
             }
-            GlobalStates.irisControlEdit = true
-            if (tab.length > 0) GlobalStates.irisControlTab = tab
+            IrisState.controlEdit = true
+            if (tab.length > 0) IrisState.controlTab = tab
             return tab.length > 0 ? tab : "arranging"
         }
         function lock(action: string): string {
@@ -525,12 +526,12 @@ Scope {
                 return IrisLockOptions.widgetShown(screen, key) ? key + " on the lock" : key + " off the lock"
             }
             if (action === "peek" || action === "unpeek") {
-                GlobalStates.irisLockPeek = action === "peek"
+                IrisState.lockPeek = action === "peek"
                 return action === "peek" ? "without handles" : "with handles"
             }
             if (action.startsWith("select:") && IrisLockOptions.blockIds.includes(action.slice(7))) {
-                GlobalStates.irisLockEdit = true
-                GlobalStates.irisLockSelection = action.slice(7)
+                IrisState.lockEdit = true
+                IrisState.lockSelection = action.slice(7)
                 return action.slice(7) + " selected"
             }
             if (action.startsWith("select:")) {
@@ -538,23 +539,23 @@ Scope {
                 const screen = GlobalStates.focusedScreen?.name ?? ""
                 if (!IrisLockOptions.widgetShown(screen, key)) return key + " is not on the lock; add it with widget:" + key
                 if (tab && !["widget", "look", "arrange"].includes(tab)) return "Unknown tab. One of: widget, look, arrange"
-                GlobalStates.irisLockEdit = true
-                GlobalStates.irisLockSelection = "widget:" + key
-                GlobalStates.irisLockWidgetTab = ""
-                GlobalStates.irisLockWidgetTab = tab ?? ""
+                IrisState.lockEdit = true
+                IrisState.lockSelection = "widget:" + key
+                IrisState.lockWidgetTab = ""
+                IrisState.lockWidgetTab = tab ?? ""
                 return key + " selected" + (tab ? " on " + tab : "")
             }
             if (action.startsWith("page:")) {
                 const page = IrisLockOptions.groups.find(group => group.toLowerCase() === action.slice(5).toLowerCase())
                 if (!page) return "Unknown page. One of: " + IrisLockOptions.groups.join(", ")
-                GlobalStates.irisLockPage = page
-                GlobalStates.irisLockEdit = true
+                IrisState.lockPage = page
+                IrisState.lockEdit = true
                 return page
             }
             const wanted = action === "edit" || action === "on" ? true
-                : action === "off" || action === "done" ? false : !GlobalStates.irisLockEdit
-            GlobalStates.irisLockEdit = wanted
-            if (!wanted) GlobalStates.irisLockPeek = false
+                : action === "off" || action === "done" ? false : !IrisState.lockEdit
+            IrisState.lockEdit = wanted
+            if (!wanted) IrisState.lockPeek = false
             return wanted ? "editing" : "closed"
         }
         function utility(name: string): string {
@@ -616,7 +617,7 @@ Scope {
             const px = x.length > 0 ? Number(x) : (screen?.width ?? 0) / 2
             const py = y.length > 0 ? Number(y) : (screen?.height ?? 0) / 2
             if (!isFinite(px) || !isFinite(py)) return "Give x and y in pixels of the focused output"
-            GlobalStates.irisDesktopMenuRequested(screen?.name ?? "", px, py)
+            GlobalStates.familyDesktopMenuRequested(screen?.name ?? "", px, py)
             return `${screen?.name ?? ""} ${Math.round(px)} ${Math.round(py)}`
         }
         function menuClose(): string {
@@ -656,23 +657,23 @@ Scope {
         function motioned(): string { return JSON.stringify(IrisParts.IrisMotionMeter.result) }
         function status(): string {
             return JSON.stringify({
-                islandExpanded: GlobalStates.irisIslandExpanded,
-                islandShape: GlobalStates.irisIslandShape,
-                islandPage: GlobalStates.irisIslandPage,
+                islandExpanded: IrisState.islandExpanded,
+                islandShape: IrisState.islandShape,
+                islandPage: IrisState.islandPage,
                 accent: Config.options?.iris?.appearance?.accent ?? "blue",
                 preset: IrisStyle.presetName,
-                bubbleCard: GlobalStates.irisBubbleCard?.kind ?? "",
+                bubbleCard: IrisState.bubbleCard?.kind ?? "",
                 utility: Config.options?.iris?.bar?.auxiliary ?? "tray",
                 trayItems: SystemTray.items.values.length,
-                dockShown: GlobalStates.irisDockShown,
+                dockShown: IrisState.dockShown,
                 controlCenter: GlobalStates.controlPanelOpen,
                 spotlight: GlobalStates.searchOpen,
-                orbit: GlobalStates.irisOrbitOpen,
+                orbit: IrisState.orbitOpen,
                 focus: { open: GlobalStates.sidebarLeftOpen, pinned: Config.options?.iris?.sidebars?.left?.pinned ?? false },
                 today: { open: GlobalStates.sidebarRightOpen, pinned: Config.options?.iris?.sidebars?.right?.pinned ?? false },
                 // Modes that take the screen over until someone closes them.
-                editing: { lock: GlobalStates.irisLockEdit, customize: GlobalStates.irisEdit, widgets: GlobalStates.widgetEditMode,
-                    controlCenter: GlobalStates.irisControlEdit, island: GlobalStates.irisArrange },
+                editing: { lock: IrisState.lockEdit, customize: IrisState.edit, widgets: GlobalStates.widgetEditMode,
+                    controlCenter: IrisState.controlEdit, island: IrisState.arrange },
                 settings: GlobalStates.settingsOverlayOpen,
                 gallery: GlobalStates.wallpaperLauncherOpen,
                 media: MprisController.activePlayer ? {
@@ -798,7 +799,7 @@ Scope {
                     IrisParts.IrisMotionMeter.registerChassis(barWindow.hostedOutput, null)
                     DesktopEditStage.setHost(barWindow.hostedOutput, false)
                 }
-                readonly property bool editHere: GlobalStates.irisEdit
+                readonly property bool editHere: IrisState.edit
                     && (root.editScreen.length === 0 || barWindow.screen?.name === root.editScreen)
                 // Arranging the desktop, the whole chassis (frame, Island, bubbles, Dock) recedes into the card with the
                 // desktop under it: the screen as it will be, live, while the shelf's pages change it.
@@ -820,11 +821,11 @@ Scope {
                     && !barWindow.canvasSuppressed && !IrisStyle.arriving && !(islandLoader.item?.morphing ?? false)
                     && (banners.fieldShapes ?? []).length === 0
                 readonly property int liveLayer: WlrLayer.Top
-                readonly property int liveEpoch: GlobalStates.irisChassisEpoch
+                readonly property int liveEpoch: IrisState.chassisEpoch
                 readonly property bool overlaid: ((islandLoader.item?.fullscreenCovered ?? false) && !barWindow.canvasSuppressed)
                     || barWindow.overviewOverFullscreen
                 // Switching layers recreates the surface above the Dock's window, whose icons it would cover.
-                onOverlaidChanged: if (!barWindow.overlaid) GlobalStates.irisChassisEpoch++
+                onOverlaidChanged: if (!barWindow.overlaid) IrisState.chassisEpoch++
                 WlrLayershell.layer: barWindow.overlaid ? WlrLayer.Overlay : WlrLayer.Top
                 WlrLayershell.keyboardFocus: barWindow.pinned || stage.cardOpen || (controlCentreLoader.item?.morphOpen ?? false)
                     || (dockLoader.item?.menuOpen ?? false) || (spotlightLoader.item?.here && GlobalStates.searchOpen)
@@ -1109,7 +1110,7 @@ Scope {
                 Shortcut {
                     sequence: "Escape"
                     enabled: barWindow.editHere
-                    onActivated: if (!(editLoader.item?.fold() ?? false)) GlobalStates.irisEdit = false
+                    onActivated: if (!(editLoader.item?.fold() ?? false)) IrisState.edit = false
                 }
 
                 // Never coalesced: the field is the outline of what the items paint,
@@ -1342,7 +1343,7 @@ Scope {
                     anchors.fill: parent
                     readonly property bool panelMode: IrisDesign.has("controlCenter") || String(Config.options?.iris?.controlCenter?.opens ?? "island") !== "island"
                     readonly property bool externalOpen: GlobalStates.controlPanelOpen
-                        && (controlCentreLoader.panelMode || GlobalStates.irisMorphOwner === "stage")
+                        && (controlCentreLoader.panelMode || IrisState.morphOwner === "stage")
                     readonly property bool wanted: controlCentreLoader.externalOpen || stage.controlIntent
                     // Built once at idle in panel mode (or on first use) and kept, like the island's.
                     property bool resident: false

@@ -1030,36 +1030,6 @@
      "args": [],
      "description": "Return the last measurement as JSON: frames, mean, p95, worst, frames over 20 and 50 ms",
      "values": []
-    },
-    {
-     "name": "dragSim",
-     "args": [
-      "slot",
-      "perFrame"
-     ],
-     "description": "Simulate carrying an iRiS bubble (slot id, default `extra-clock`) around the focused output for 2.5 s, publishing the given number of moves per frame (1–16); never writes the config",
-     "values": [
-      "extra-clock"
-     ]
-    },
-    {
-     "name": "dropBubble",
-     "args": [
-      "slot",
-      "x",
-      "y"
-     ],
-     "description": "",
-     "values": []
-    },
-    {
-     "name": "dockSlide",
-     "args": [
-      "appId",
-      "pixels"
-     ],
-     "description": "",
-     "values": []
     }
    ]
   },
@@ -2149,6 +2119,46 @@
      "name": "status",
      "args": [],
      "description": "JSON with the Island, Dock, Control Center, Spotlight and side panel state, which edit modes, Settings or the wallpaper gallery hold the screen (`editing`, `settings`, `gallery`), plus the player the Island follows (title, position, length)",
+     "values": []
+    }
+   ]
+  },
+  {
+   "name": "irisDev",
+   "family": "shared",
+   "description": "Simulated hands for measuring iRiS (present while iRiS is the family).",
+   "example": "",
+   "functions": [
+    {
+     "name": "dragSim",
+     "args": [
+      "slot",
+      "perFrame"
+     ],
+     "description": "Simulate carrying an iRiS bubble (slot id, default `extra-clock`) around the focused output for 2.5 s, publishing the given number of moves per frame (1–16); never writes the config",
+     "values": [
+      "extra-clock"
+     ]
+    },
+    {
+     "name": "dropBubble",
+     "args": [
+      "slot",
+      "x",
+      "y"
+     ],
+     "description": "Drop an iRiS bubble (slot id, or `app:<id>`) at a point of the focused output, released after 200 ms",
+     "values": [
+      "app:"
+     ]
+    },
+    {
+     "name": "dockSlide",
+     "args": [
+      "appId",
+      "pixels"
+     ],
+     "description": "Slide a Dock icon (app id) along the Dock by the given pixels over 1 s",
      "values": []
     }
    ]
@@ -4405,6 +4415,7 @@
   "custom-widgets": "customWidgets",
   "global-actions": "globalActions",
   "global-style": "globalStyle",
+  "iris-dev": "irisDev",
   "live-pins": "livePins",
   "login-screen": "loginScreen",
   "mascot-mood": "mascotMood",

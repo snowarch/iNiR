@@ -18,6 +18,7 @@ import qs.modules.iris.pieces
 import qs.modules.iris.bar
 import qs.modules.iris.bar.island
 import qs.modules.iris.sidebar
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -317,7 +318,7 @@ Item {
             }
             IrisTools {
                 Layout.fillWidth: true
-                onActivityRequested: { root.close(); GlobalStates.irisIslandPageRequest = "activity" }
+                onActivityRequested: { root.close(); IrisState.islandPageRequest = "activity" }
             }
         }
     }
@@ -575,7 +576,7 @@ Item {
             // A window the card hands off to (a file chooser, NetworkManager's editor, a terminal) opens with the card gone.
             Connections {
                 target: Vpn
-                function onHandOff(): void { GlobalStates.irisBubbleCard = null }
+                function onHandOff(): void { IrisState.bubbleCard = null }
             }
             Timer { id: copiedTimer; interval: 1400; onTriggered: vpn.copied = false }
             function copy(value: string): void {

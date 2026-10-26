@@ -197,26 +197,6 @@ Singleton {
         }
     }
 
-    property string dragSlot: ""
-    property int dragPerFrame: 1
-    property real dragStart: 0
-    property real dragUntil: 0
-    FrameAnimation {
-        id: dragSim
-        running: false
-        onTriggered: {
-            const t = Date.now() - root.dragStart
-            if (Date.now() >= root.dragUntil) { dragSim.stop(); GlobalStates.irisBubbleDrag = null; return }
-            const screen = GlobalStates.focusedScreen
-            const cx = (screen?.width ?? 1920) / 2, cy = (screen?.height ?? 1080) / 2
-            for (let k = 0; k < root.dragPerFrame; k++) {
-                const a = (t + k * 13 / root.dragPerFrame) / 400
-                GlobalStates.irisBubbleDrag = { slot: root.dragSlot, kind: root.dragSlot.replace(/^extra-/, ""), screen: screen?.name ?? "",
-                    x: cx + cx * 0.3 * Math.cos(a), y: cy + cy * 0.37 * Math.sin(a), size: 40, released: false }
-            }
-        }
-    }
-
     // Installs restart on update and carry no Makefile: the watcher is for checkouts only, not a python all day.
     property bool checkout: false
     FileView {
@@ -246,48 +226,5 @@ Singleton {
             return "measuring:" + span
         }
         function metered(): string { return JSON.stringify(root.meterResult) }
-        function dragSim(slot: string, perFrame: string): string {
-            if (!GlobalStates.focusedScreen) return "error:no-screen"
-            root.dragSlot = slot.length > 0 ? slot : "extra-clock"
-            root.dragPerFrame = Math.max(1, Math.min(16, Number(perFrame) || 1))
-            root.dragStart = Date.now()
-            root.dragUntil = root.dragStart + 2500
-            dragSim.restart()
-            return "dragging:" + root.dragSlot + "x" + root.dragPerFrame
-        }
-        function dropBubble(slot: string, x: string, y: string): string {
-            const screen = GlobalStates.focusedScreen
-            if (!screen) return "error:no-screen"
-            GlobalStates.irisBubbleDrag = { slot: slot, kind: slot.startsWith("app:") ? "app" : slot.replace(/^extra-/, ""),
-                screen: screen.name, x: Number(x), y: Number(y), size: 40, released: false }
-            dropRelease.restart()
-            return "dropped:" + slot + "@" + x + "," + y
-        }
-        function dockSlide(appId: string, pixels: string): string {
-            if (!GlobalStates.focusedScreen) return "error:no-screen"
-            root.slideApp = appId.toLowerCase()
-            root.slideDistance = Number(pixels) || 0
-            root.slideStart = Date.now()
-            slideSim.restart()
-            return "sliding:" + root.slideApp + ":" + root.slideDistance
-        }
-    }
-    Timer {
-        id: dropRelease
-        interval: 200
-        onTriggered: if (GlobalStates.irisBubbleDrag) GlobalStates.irisBubbleDrag = Object.assign({}, GlobalStates.irisBubbleDrag, { released: true })
-    }
-    property string slideApp: ""
-    property real slideDistance: 0
-    property real slideStart: 0
-    FrameAnimation {
-        id: slideSim
-        running: false
-        onTriggered: {
-            const t = Math.min(1, (Date.now() - root.slideStart) / 1000)
-            const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
-            GlobalStates.irisDockSlide = { appId: root.slideApp, along: root.slideDistance * eased, done: t >= 1 }
-            if (t >= 1) { slideSim.stop(); GlobalStates.irisDockSlide = null }
-        }
     }
 }

@@ -12,6 +12,7 @@ import qs.modules.iris.components
 import qs.modules.iris.settings
 import qs.modules.iris.style
 import qs.modules.iris.widgets
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -19,7 +20,7 @@ Item {
     // The lock widget tapped on the stage: its Look opens here, written to the lock's own scope.
     property var widget: null
     property rect avoid: Qt.rect(0, 0, 0, 0)
-    readonly property bool peeking: peekButton.pressed || GlobalStates.irisLockPeek
+    readonly property bool peeking: peekButton.pressed || IrisState.lockPeek
     // The inspector steps aside rather than sitting on the block you are editing.
     readonly property bool onRight: root.avoid.width > 0
         && root.avoid.x < panel.width + Math.round(56 * root.d)
@@ -40,7 +41,7 @@ Item {
         return String(scene?.source ?? "desktop") === "colour" ? "" : Wallpapers.stillUrlFor(path)
     }
     readonly property string group: {
-        const wanted = GlobalStates.irisLockPage
+        const wanted = IrisState.lockPage
         return IrisLockOptions.groups.includes(wanted) ? wanted : "Scene"
     }
     readonly property var rows: {
@@ -50,10 +51,10 @@ Item {
     }
 
     Connections {
-        target: GlobalStates
-        function onIrisLockSelectionChanged(): void {
-            const id = GlobalStates.irisLockSelection
-            if (id.length > 0) GlobalStates.irisLockPage = IrisLockOptions.groupOf(id)
+        target: IrisState
+        function onLockSelectionChanged(): void {
+            const id = IrisState.lockSelection
+            if (id.length > 0) IrisState.lockPage = IrisLockOptions.groupOf(id)
         }
     }
 
@@ -102,7 +103,7 @@ Item {
                     }
                     IrisText {
                         Layout.fillWidth: true
-                        text: GlobalStates.irisLockSelection.length > 0
+                        text: IrisState.lockSelection.length > 0
                             ? Translation.tr("Arrows nudge it, Shift ignores the edges")
                             : Translation.tr("Drag a block, or pick one below")
                         color: IrisStyle.muted
@@ -122,7 +123,7 @@ Item {
                     text: Translation.tr("Done")
                     emphasized: true
                     buttonRadius: IrisStyle.capsule(height)
-                    onClicked: GlobalStates.irisLockEdit = false
+                    onClicked: IrisState.lockEdit = false
                 }
             }
 
@@ -150,8 +151,8 @@ Item {
                         buttonRadius: IrisStyle.capsule(height)
                         opacity: chip.off && !chip.current ? 0.55 : 1
                         onClicked: {
-                            GlobalStates.irisLockPage = chip.modelData
-                            GlobalStates.irisLockSelection = chip.blockId
+                            IrisState.lockPage = chip.modelData
+                            IrisState.lockSelection = chip.blockId
                         }
                     }
                 }
@@ -187,7 +188,7 @@ Item {
                             widget: root.widget
                             plateRadius: panel.plateRadius
                             onLock: true
-                            onCloseRequested: GlobalStates.irisLockSelection = ""
+                            onCloseRequested: IrisState.lockSelection = ""
                         }
                     }
                     IrisText {

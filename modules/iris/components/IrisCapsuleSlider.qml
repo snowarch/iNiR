@@ -5,6 +5,7 @@ import qs
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.iris.style
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -192,8 +193,8 @@ Item {
         }
     }
 
-    onMoved: GlobalStates.quietIrisLevels()
-    onIconClicked: GlobalStates.quietIrisLevels()
+    onMoved: IrisState.quietLevels()
+    onIconClicked: IrisState.quietLevels()
 
     MouseArea {
         id: pointer

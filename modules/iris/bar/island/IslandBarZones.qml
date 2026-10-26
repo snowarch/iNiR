@@ -9,6 +9,7 @@ import qs.modules.common.widgets
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.pieces
+import qs.modules.iris.state
 
 Item {
     id: zones
@@ -227,9 +228,9 @@ Item {
             TapHandler {
                 id: pieceTap
                 onTapped: {
-                    if (GlobalStates.irisEdit) {
-                        GlobalStates.irisEditSelection = ""
-                        GlobalStates.irisEditTarget = "island"
+                    if (IrisState.edit) {
+                        IrisState.editSelection = ""
+                        IrisState.editTarget = "island"
                         return
                     }
                     zones.island.activatePiece(piece.kind, piece)
@@ -241,7 +242,7 @@ Item {
                 onWheel: event => {
                     const steps = zones.island.wheelSteps(event)
                     if (steps === 0) return
-                    GlobalStates.quietIrisLevels()
+                    IrisState.quietLevels()
                     zones.island.stepLevel(piece.kind === "mic" ? "mic" : "volume", steps)
                 }
             }

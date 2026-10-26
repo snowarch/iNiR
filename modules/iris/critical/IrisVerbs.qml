@@ -3,6 +3,7 @@ import qs
 import qs.modules.common
 import qs.services
 import qs.services.deferred
+import qs.modules.iris.state
 
 // How iRiS answers the shell's shared verbs: its own Orbit, a Place in the chassis with one layout and no Studio,
 // and Spotlight for task view, the overview and the clipboard. Cleared when iRiS goes, so Material's come back.
@@ -19,26 +20,29 @@ QtObject {
     readonly property var verbs: ({
         owner: "iris",
         family: {
-            leave: () => GlobalStates.endIrisEditing()
+            leave: () => IrisState.endEditing()
+        },
+        sidebar: {
+            opens: side => Config.options?.iris?.sidebars?.[side]?.enable ?? true
         },
         taskview: {
-            toggle: () => { if (root._orbitOn()) GlobalStates.irisOrbitOpen = !GlobalStates.irisOrbitOpen; else GlobalStates.searchOpen = !GlobalStates.searchOpen },
-            open: () => { if (root._orbitOn()) GlobalStates.irisOrbitOpen = true; else GlobalStates.searchOpen = true },
-            close: () => { GlobalStates.irisOrbitOpen = false; GlobalStates.searchOpen = false }
+            toggle: () => { if (root._orbitOn()) IrisState.orbitOpen = !IrisState.orbitOpen; else GlobalStates.searchOpen = !GlobalStates.searchOpen },
+            open: () => { if (root._orbitOn()) IrisState.orbitOpen = true; else GlobalStates.searchOpen = true },
+            close: () => { IrisState.orbitOpen = false; GlobalStates.searchOpen = false }
         },
         orbit: {
-            toggle: () => { GlobalStates.irisOrbitOpen = !GlobalStates.irisOrbitOpen },
-            open: () => { GlobalStates.irisOrbitOpen = true },
-            close: () => { GlobalStates.irisOrbitOpen = false },
-            pocket: () => { GlobalStates.irisOrbitOpen = true },
+            toggle: () => { IrisState.orbitOpen = !IrisState.orbitOpen },
+            open: () => { IrisState.orbitOpen = true },
+            close: () => { IrisState.orbitOpen = false },
+            pocket: () => { IrisState.orbitOpen = true },
             studio: () => {},
             stage: () => {},
             orbital: () => {},
             toggleView: () => {},
-            find: query => { GlobalStates.irisOrbitQuery = query; GlobalStates.irisOrbitOpen = true },
+            find: query => { IrisState.orbitQuery = query; IrisState.orbitOpen = true },
             next: () => NiriService.focusWorkspaceDown(),
             previous: () => NiriService.focusWorkspaceUp(),
-            status: () => JSON.stringify({ family: "iris", open: GlobalStates.irisOrbitOpen, enabled: root._orbitOn(),
+            status: () => JSON.stringify({ family: "iris", open: IrisState.orbitOpen, enabled: root._orbitOn(),
                 output: GlobalStates.focusedScreen?.name ?? "" })
         },
         overview: {

@@ -14,6 +14,7 @@ import qs.modules.iris.frame
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.pieces
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -123,9 +124,9 @@ Item {
         settleDelay.restart()
     }
     Connections {
-        target: GlobalStates
-        function onIrisDockSlideChanged(): void {
-            const request = GlobalStates.irisDockSlide
+        target: IrisState
+        function onDockSlideChanged(): void {
+            const request = IrisState.dockSlide
             if (!request || root.screen?.name !== GlobalStates.focusedScreen?.name) return
             if (!root.sliding) {
                 if (!root.ordered.some(e => e.appId === request.appId)) return
@@ -232,7 +233,7 @@ Item {
         return false
     }
 
-    readonly property var pieces: GlobalStates.irisAbsorbed?.[root.screen?.name ?? ""]?.dock ?? []
+    readonly property var pieces: IrisState.absorbed?.[root.screen?.name ?? ""]?.dock ?? []
     signal pieceActivated(string slot, string kind, var rect)
     signal pieceMenuRequested(string slot, string kind, var rect, Item menu)
     readonly property alias menuOpen: window.menuOpen
@@ -247,14 +248,14 @@ Item {
         .map(entry => IrisPieces.appPieceId(entry.appId))
         .concat(root.pieces.map(piece => String(piece.slot).startsWith("extra-") ? "extra:" + String(piece.slot).slice(6) : String(piece.slot)))
     function editSelect(member: string): void {
-        const inside = GlobalStates.irisEditTarget === "dock" || root.editMembers.includes(GlobalStates.irisEditSelection)
+        const inside = IrisState.editTarget === "dock" || root.editMembers.includes(IrisState.editSelection)
         if (!inside) {
-            GlobalStates.irisEditSelection = ""
-            GlobalStates.irisEditTarget = "dock"
+            IrisState.editSelection = ""
+            IrisState.editTarget = "dock"
             return
         }
-        GlobalStates.irisEditTarget = ""
-        GlobalStates.irisEditSelection = member
+        IrisState.editTarget = ""
+        IrisState.editSelection = member
     }
     function closeMenu(): void { window.menuApp = null }
 
@@ -326,9 +327,9 @@ Item {
                 const active = (NiriService.allWorkspaces ?? []).find(ws => ws.output === root.screen?.name && ws.is_active)
                 return active !== undefined && !(NiriService.windows ?? []).some(w => w.workspace_id === active.id)
             }
-            readonly property bool editingDock: GlobalStates.irisEdit && GlobalStates.irisEditTarget === "dock"
+            readonly property bool editingDock: IrisState.edit && IrisState.editTarget === "dock"
             readonly property bool focusedOutput: (root.screen?.name ?? "") === (GlobalStates.focusedScreen?.name ?? "")
-            readonly property bool askedShown: GlobalStates.irisDockShown && window.focusedOutput
+            readonly property bool askedShown: IrisState.dockShown && window.focusedOutput
             readonly property bool spotlightHere: GlobalStates.searchOpen && window.focusedOutput
             readonly property bool fullscreenCovered: CompositorService.isNiri
                 && GameMode.hasFullscreenOnOutput(root.screen?.name ?? "")
@@ -340,7 +341,7 @@ Item {
             readonly property bool fullscreenIdle: window.fullscreenCovered && !window.overFullscreen
             // Arranging the desktop the Dock recedes into the card with the chassis and shows as it rests there.
             readonly property bool revealed: !window.fullscreenIdle && (!root.autoHide || GlobalStates.widgetEditMode || window.edgeIntent || window.menuOpen
-                || window.askedShown || window.spotlightHere || window.workspaceEmpty || GlobalStates.irisEdit)
+                || window.askedShown || window.spotlightHere || window.workspaceEmpty || IrisState.edit)
             onPointerOnDockChanged: {
                 if (window.pointerOnDock) {
                     hideDelay.stop()
@@ -376,10 +377,10 @@ Item {
 
             Shortcut { sequence: "Escape"; enabled: window.menuOpen; onActivated: window.menuApp = null }
             Connections {
-                target: GlobalStates
-                function onIrisDockMenuRequestChanged(): void {
-                    if (GlobalStates.irisDockMenuRequest?.mode !== "close") return
-                    GlobalStates.irisDockMenuRequest = null
+                target: IrisState
+                function onDockMenuRequestChanged(): void {
+                    if (IrisState.dockMenuRequest?.mode !== "close") return
+                    IrisState.dockMenuRequest = null
                     window.menuApp = null
                 }
             }
@@ -431,7 +432,7 @@ Item {
             // Customize outlines an app or a piece of the Dock by its own mark (the hover plate's square), under the
             // id its click selects, so pointing at kitty names kitty and not the whole Dock.
             readonly property var editShapes: {
-                if (!GlobalStates.irisEdit || dock.opacity <= 0.01) return []
+                if (!IrisState.edit || dock.opacity <= 0.01) return []
                 void (dock.x + dock.y + dock.width + dock.height + appRow.width + appRow.height + window.edgeOffset + window.screenOffsetY)
                 const out = []
                 const size = root.plateSize
@@ -489,18 +490,18 @@ Item {
             function publishBody(): void {
                 const name = root.screen?.name ?? ""
                 if (name.length === 0) return
-                const bodies = Object.assign({}, GlobalStates.irisDockBody ?? {})
+                const bodies = Object.assign({}, IrisState.dockBody ?? {})
                 bodies[name] = window.bodyShape
-                GlobalStates.irisDockBody = bodies
+                IrisState.dockBody = bodies
             }
             onBodyShapeChanged: window.publishBody()
             Component.onCompleted: window.publishBody()
             Component.onDestruction: {
                 const name = root.screen?.name ?? ""
                 if (name.length === 0) return
-                const bodies = Object.assign({}, GlobalStates.irisDockBody ?? {})
+                const bodies = Object.assign({}, IrisState.dockBody ?? {})
                 bodies[name] = null
-                GlobalStates.irisDockBody = bodies
+                IrisState.dockBody = bodies
             }
 
             readonly property real notchReveal: Math.max(0, Math.min(1, (window.edgeOffset + window.dockHeight) / window.dockHeight))
@@ -606,9 +607,9 @@ Item {
                             Accessible.role: Accessible.Button
                             Accessible.name: Translation.tr("Applications")
                             onClicked: {
-                                if (GlobalStates.irisEdit) {
-                                    GlobalStates.irisEditSelection = ""
-                                    GlobalStates.irisEditTarget = "dock"
+                                if (IrisState.edit) {
+                                    IrisState.editSelection = ""
+                                    IrisState.editTarget = "dock"
                                     return
                                 }
                                 GlobalStates.searchOpen = !GlobalStates.searchOpen
@@ -687,14 +688,14 @@ Item {
                             }
 
                             Connections {
-                                target: GlobalStates
+                                target: IrisState
                                 enabled: !entry.separator
-                                function onIrisDockMenuRequestChanged(): void {
-                                    const request = GlobalStates.irisDockMenuRequest
+                                function onDockMenuRequestChanged(): void {
+                                    const request = IrisState.dockMenuRequest
                                     if (!request || request.appId !== entry.modelData.appId
                                         || root.screen?.name !== GlobalStates.focusedScreen?.name) return
-                                    GlobalStates.irisDockMenuRequest = null
-                                    GlobalStates.irisDockShown = true
+                                    IrisState.dockMenuRequest = null
+                                    IrisState.dockShown = true
                                     window.captureMenuAnchor(appIcon)
                                     window.menuMode = request.mode === "menu" ? "menu" : "windows"
                                     window.menuApp = entry.app
@@ -722,10 +723,10 @@ Item {
                                     : t.activated)
                                 property real lift: 0
                                 readonly property string pieceId: IrisPieces.appPieceId(entry.modelData.appId)
-                                readonly property bool carried: GlobalStates.irisBubbleDrag?.slot === appSlot.pieceId
+                                readonly property bool carried: IrisState.bubbleDrag?.slot === appSlot.pieceId
                                 Binding {
-                                    target: GlobalStates
-                                    property: "irisDockHome"
+                                    target: IrisState
+                                    property: "dockHome"
                                     when: appSlot.carried
                                     restoreMode: Binding.RestoreNone
                                     value: {
@@ -736,7 +737,7 @@ Item {
                                     }
                                 }
                                 function primary(): void {
-                                    if (GlobalStates.irisEdit) {
+                                    if (IrisState.edit) {
                                         root.editSelect(appSlot.pieceId)
                                         return
                                     }
@@ -754,7 +755,7 @@ Item {
                                         return
                                     }
                                     if (window.menuOpen) window.menuApp = null
-                                    GlobalStates.irisDockShown = false
+                                    IrisState.dockShown = false
                                     if (root.activate(entry.app)) appSlot.launched()
                                 }
                                 // A launch: iRiS hops; a Design that draws the slot answers it its own way (AIRISU prints it twice).
@@ -889,12 +890,12 @@ Item {
                                         screenName: root.screen?.name ?? ""
                                         screenOffsetY: 0
                                         holdLifts: false
-                                        pullDirection: GlobalStates.irisEdit ? 0 : (root.atTop || root.atLeft ? 1 : -1)
+                                        pullDirection: IrisState.edit ? 0 : (root.atTop || root.atLeft ? 1 : -1)
                                         pullAcross: root.vertical
-                                        pullDistance: GlobalStates.irisEdit ? 6 * root.d : root.iconSize * 0.7
+                                        pullDistance: IrisState.edit ? 6 * root.d : root.iconSize * 0.7
                                         enabled: !entry.separator && !window.menuOpen
                                             && !IrisPieces.appFloating(entry.modelData.appId)
-                                    slideEnabled: root.reorder && !GlobalStates.irisEdit
+                                    slideEnabled: root.reorder && !IrisState.edit
                                     onTapped: appSlot.primary()
                                     onSlidingChanged: if (sliding) root.slideBegin(entry.modelData.appId)
                                     onSlid: along => root.slideTo(along)
@@ -1038,7 +1039,7 @@ Item {
                                         root.pieceMenuRequested(pieceSlot.modelData.slot, pieceSlot.modelData.kind, pieceSlot.rect(), pieceMenu)
                                         return
                                     }
-                                    if (GlobalStates.irisEdit) {
+                                    if (IrisState.edit) {
                                         root.editSelect(pieceSlot.modelData.slot.startsWith("extra-")
                                             ? "extra:" + pieceSlot.modelData.slot.slice(6) : pieceSlot.modelData.slot)
                                         return
@@ -1055,7 +1056,7 @@ Item {
                                     const steps = Math.trunc(accumulated / 120)
                                     if (steps === 0) return
                                     accumulated -= steps * 120
-                                    GlobalStates.quietIrisLevels()
+                                    IrisState.quietLevels()
                                     if (pieceSlot.modelData.kind === "mic") Audio.setSourceVolume(Math.max(0, Math.min(1, (Audio.micVolume ?? 0) + steps * 0.05)))
                                     else Audio.setSinkVolume(Math.max(0, Math.min(Math.max(1, Audio.ceiling), (Audio.value ?? 0) + steps * 0.05)))
                                 }
@@ -1289,7 +1290,7 @@ Item {
                                         if (MinimizedWindows.isMinimized(id)) MinimizedWindows.restore(id)
                                         else NiriService.focusWindow(id)
                                     } else card.win?.activate()
-                                    GlobalStates.irisDockShown = false
+                                    IrisState.dockShown = false
                                     window.menuApp = null
                                 }
 

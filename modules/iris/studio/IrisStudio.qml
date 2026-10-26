@@ -14,6 +14,7 @@ import qs.modules.iris.settings
 import qs.modules.iris.style
 import qs.modules.iris.preview
 import qs.modules.iris.edit
+import qs.modules.iris.state
 
 // Studio: Customize as a panel beside the screen (iris.appearance.customize "studio"). Every area in one
 // column, one forgiving search across all of them, the same rows and history as Customize on the shell.
@@ -85,19 +86,19 @@ PanelWindow {
         flick.contentY = 0
     }
     function takeRequest(): void {
-        const wanted = GlobalStates.irisStudioTarget
+        const wanted = IrisState.studioTarget
         if (wanted.length === 0) return
-        GlobalStates.irisStudioTarget = ""
+        IrisState.studioTarget = ""
         if (wanted.startsWith("search:")) searchField.text = wanted.slice(7)
         else if (root.areas.some(area => area.id === wanted)) { searchField.text = ""; root.select(wanted) }
     }
     Component.onCompleted: root.takeRequest()
     Connections {
-        target: GlobalStates
-        function onIrisStudioTargetChanged(): void { root.takeRequest() }
+        target: IrisState
+        function onStudioTargetChanged(): void { root.takeRequest() }
     }
 
-    visible: GlobalStates.irisStudioOpen || frame.progress > 0
+    visible: IrisState.studioOpen || frame.progress > 0
     IrisOutputHold {
         id: outputHold
         wanted: GlobalStates.focusedScreen
@@ -110,24 +111,24 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "quickshell:iris-studio"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: GlobalStates.irisStudioOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: IrisState.studioOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     mask: Region { item: frame }
 
     Shortcut {
         sequence: "Escape"
-        enabled: GlobalStates.irisStudioOpen
+        enabled: IrisState.studioOpen
         onActivated: {
             if (root.query.length > 0) searchField.text = ""
-            else GlobalStates.irisStudioOpen = false
+            else IrisState.studioOpen = false
         }
     }
-    Shortcut { sequences: [StandardKey.Undo]; enabled: GlobalStates.irisStudioOpen; onActivated: IrisEditHistory.undo() }
-    Shortcut { sequences: [StandardKey.Redo, "Ctrl+Shift+Z"]; enabled: GlobalStates.irisStudioOpen; onActivated: IrisEditHistory.redo() }
-    Shortcut { sequence: "Ctrl+F"; enabled: GlobalStates.irisStudioOpen; onActivated: searchField.forceActiveFocus() }
+    Shortcut { sequences: [StandardKey.Undo]; enabled: IrisState.studioOpen; onActivated: IrisEditHistory.undo() }
+    Shortcut { sequences: [StandardKey.Redo, "Ctrl+Shift+Z"]; enabled: IrisState.studioOpen; onActivated: IrisEditHistory.redo() }
+    Shortcut { sequence: "Ctrl+F"; enabled: IrisState.studioOpen; onActivated: searchField.forceActiveFocus() }
 
     IrisMorphSurface {
         id: frame
-        open: GlobalStates.irisStudioOpen
+        open: IrisState.studioOpen
         motionSurface: "settings"
         radius: IrisStyle.surfaceRadius("settings", IrisStyle.radiusPanel)
         light: IrisStyle.surfaceLight("settings", IrisStyle.wallpaperLight)
@@ -182,19 +183,19 @@ PanelWindow {
                     materialIcon: "touch_app"
                     Accessible.name: Translation.tr("Customize on the shell")
                     onClicked: {
-                        GlobalStates.irisEditTarget = root.target
-                        GlobalStates.irisEdit = true
+                        IrisState.editTarget = root.target
+                        IrisState.edit = true
                     }
                 }
                 IrisIconButton {
                     materialIcon: "tune"
                     Accessible.name: Translation.tr("All settings")
-                    onClicked: { GlobalStates.irisStudioOpen = false; GlobalStates.openSettings() }
+                    onClicked: { IrisState.studioOpen = false; GlobalStates.openSettings() }
                 }
                 IrisIconButton {
                     materialIcon: "close"
                     Accessible.name: Translation.tr("Close Studio")
-                    onClicked: GlobalStates.irisStudioOpen = false
+                    onClicked: IrisState.studioOpen = false
                 }
             }
 
@@ -381,7 +382,7 @@ PanelWindow {
                         id: scenePreview
                         IrisTargetPreview {
                             target: root.target
-                            playing: GlobalStates.irisStudioOpen
+                            playing: IrisState.studioOpen
                         }
                     }
 

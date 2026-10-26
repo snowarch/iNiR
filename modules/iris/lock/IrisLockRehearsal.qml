@@ -7,6 +7,7 @@ import qs
 import qs.modules.common
 import qs.modules.iris.field
 import qs.modules.iris.style
+import qs.modules.iris.state
 
 Scope {
     id: root
@@ -37,7 +38,7 @@ Scope {
             required property var modelData
             screen: window.modelData
             // Only while editing: a rehearsal that outlives its editor must never cover the screen or hold the keys.
-            visible: GlobalStates.irisLockEdit
+            visible: IrisState.lockEdit
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             exclusiveZone: 0
@@ -49,8 +50,8 @@ Scope {
             Shortcut {
                 sequence: "Escape"
                 onActivated: {
-                    if (GlobalStates.irisLockSelection.length > 0) GlobalStates.irisLockSelection = ""
-                    else GlobalStates.irisLockEdit = false
+                    if (IrisState.lockSelection.length > 0) IrisState.lockSelection = ""
+                    else IrisState.lockEdit = false
                 }
             }
 

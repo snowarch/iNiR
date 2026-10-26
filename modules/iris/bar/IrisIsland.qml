@@ -23,6 +23,7 @@ import qs.modules.iris.bar.island
 import qs.modules.iris.control
 import qs.modules.iris.edit
 import qs.modules.iris.stage
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -80,11 +81,11 @@ Item {
     property real arrangeTravel: 0
     property int arrangeSteps: 0
     property real arrangeSpan: 0
-    readonly property bool studio: GlobalStates.irisArrange && root.focusedOutput && root.visualExpanded
+    readonly property bool studio: IrisState.arrange && root.focusedOutput && root.visualExpanded
         && root.effectivePage === "desktop"
     Connections {
         target: root
-        function onVisualExpandedChanged(): void { if (!root.visualExpanded && root.focusedOutput) GlobalStates.irisArrange = false }
+        function onVisualExpandedChanged(): void { if (!root.visualExpanded && root.focusedOutput) IrisState.arrange = false }
     }
     readonly property bool notch: root.options?.notch ?? false
     // A Design draws the Island's faces and its page nav itself (DESIGNS.md › Island); the engine keeps the modes,
@@ -314,10 +315,10 @@ Item {
     }
     function publishOrigin(part): void {
         if (root.targetScreen?.name !== GlobalStates.focusedScreen?.name) return
-        if (root.suppressed || !part?.visible) { GlobalStates.irisMorphOrigin = null; return }
+        if (root.suppressed || !part?.visible) { IrisState.morphOrigin = null; return }
         const isChassis = part === chassis
         const r = root.partRect(part)
-        GlobalStates.irisMorphOrigin = {
+        IrisState.morphOrigin = {
             x: r.x, y: r.y + root.screenOffsetY,
             width: r.width, height: r.height,
             radius: isChassis ? chassis.radius : IrisStyle.pieceRadius(Math.min(r.width, r.height)),
@@ -329,9 +330,9 @@ Item {
     // comes to rest, not out of the page it is leaving: the page is gone by the time the Place starts.
     function publishRestOrigin(): void {
         if (root.targetScreen?.name !== GlobalStates.focusedScreen?.name) return
-        const rest = GlobalStates.irisIslandGeometry?.[root.targetScreen?.name ?? ""] ?? null
+        const rest = IrisState.islandGeometry?.[root.targetScreen?.name ?? ""] ?? null
         if (!root.expanded || !rest || !(rest.width > 0) || root.suppressed) { root.publishOrigin(chassis); return }
-        GlobalStates.irisMorphOrigin = { x: rest.x, y: rest.y, width: rest.width, height: rest.height,
+        IrisState.morphOrigin = { x: rest.x, y: rest.y, width: rest.width, height: rest.height,
             radius: Math.min(rest.width, rest.height) / 2, screen: root.targetScreen?.name ?? "" }
     }
     property Item controlMorphPart: null
@@ -423,7 +424,7 @@ Item {
     readonly property bool levelFigure: root.osdPrefs?.figure ?? true
     readonly property bool osdKeyboard: (root.osdPrefs?.keyboard ?? true) && root.osdGameRule === "show"
     function showFeedback(kind: string, requested = false): void {
-        if (Date.now() < GlobalStates.irisLevelQuietUntil) return
+        if (Date.now() < IrisState.levelQuietUntil) return
         if (!(Config.options?.iris?.modules?.osd ?? true) || root.expanded || root.fullscreenCovered
             || root.osdGameRule === "hide" || root.targetScreen?.name !== GlobalStates.focusedScreen?.name) return
         const mode = String(root.osdPrefs?.levels ?? "yours")
@@ -619,7 +620,7 @@ Item {
     readonly property real fillet: Math.round(chassis.radius * 0.62 * root.notchness)
     readonly property real expandedRoom: root.vertical ? root.availableAcross : root.availableWidth - 2 * (root.bubble + root.satelliteGap)
     readonly property real pageBodyWidth: root.effectivePage === "controls" ? (Math.max(340, Number(Config.options?.iris?.controlCenter?.width ?? 360))
-            + (GlobalStates.irisControlEdit ? IrisControlOptions.editorExtra : 0)) * root.d + 2 * root.padding
+            + (IrisState.controlEdit ? IrisControlOptions.editorExtra : 0)) * root.d + 2 * root.padding
             : (root.effectivePage === "activity" ? root.pageWidth * 384 / 440 : root.pageWidth) * root.d
     readonly property int navButtons: root.navEntries.filter(entry => entry.kind !== "|").length
     readonly property int navDividers: root.navEntries.length - root.navButtons
@@ -633,9 +634,9 @@ Item {
     onOpenWidthChanged: {
         const name = root.targetScreen?.name ?? ""
         if (name.length === 0) return
-        const widths = Object.assign({}, GlobalStates.irisIslandOpenWidth ?? {})
+        const widths = Object.assign({}, IrisState.islandOpenWidth ?? {})
         widths[name] = root.openWidth
-        GlobalStates.irisIslandOpenWidth = widths
+        IrisState.islandOpenWidth = widths
     }
     readonly property real expandedWidth: Math.min(root.expandedRoom, Math.max(root.pageBodyWidth, root.navWidth + 2 * root.padding))
     readonly property real pageWidth: Math.max(360, Math.min(600, Number(root.options?.pageWidth ?? 440)))
@@ -742,7 +743,7 @@ Item {
     readonly property bool trayAppsFace: String(Config.options?.iris?.tray?.face ?? "apps") === "apps"
     readonly property string trayMenuToward: root.edge === "bottom" ? "up" : root.edge === "left" ? "right"
         : root.edge === "right" ? "left" : "down"
-    readonly property var absorbed: GlobalStates.irisAbsorbed?.[root.targetScreen?.name ?? ""] ?? ({})
+    readonly property var absorbed: IrisState.absorbed?.[root.targetScreen?.name ?? ""] ?? ({})
     readonly property var absorbedPieces: Array.from(root.absorbed?.island ?? [])
     readonly property var absorbedStart: Array.from(root.absorbed?.islandStart ?? [])
     function pieceTaken(kind: string): bool {
@@ -965,17 +966,17 @@ Item {
         if (steps === 0) return
         const level = satellite.kind === "mic" || (satellite.kind !== "sound" && (event.modifiers & Qt.ControlModifier)) ? "mic" : "sound"
         satellite.showLevel(level)
-        GlobalStates.quietIrisLevels()
+        IrisState.quietLevels()
         root.stepLevel(level === "mic" ? "mic" : "volume", steps)
     }
     readonly property var cardKinds: IrisPieces.cardIds
     readonly property bool opensCards: String(Config.options?.iris?.bubbles?.opens ?? "card") === "card"
     function toggleBubbleCard(kind: string, part, source: string): void {
-        if (GlobalStates.irisBubbleCard?.source === source) { GlobalStates.irisBubbleCard = null; return }
+        if (IrisState.bubbleCard?.source === source) { IrisState.bubbleCard = null; return }
         const isChassis = part === chassis
         const r = root.partRect(part)
         const band = root.chassisBody()
-        GlobalStates.irisBubbleCard = {
+        IrisState.bubbleCard = {
             kind: kind, source: source, screen: root.targetScreen?.name ?? "", edge: root.edge,
             x: r.x, y: r.y + root.screenOffsetY,
             width: r.width, height: r.height,
@@ -985,13 +986,13 @@ Item {
         }
     }
     Connections {
-        target: GlobalStates
-        function onIrisBubbleCardRequestChanged(): void {
-            if (GlobalStates.irisBubbleCardRequest.length === 0 || !root.focusedOutput) return
+        target: IrisState
+        function onBubbleCardRequestChanged(): void {
+            if (IrisState.bubbleCardRequest.length === 0 || !root.focusedOutput) return
             Qt.callLater(() => {
-                const kind = GlobalStates.irisBubbleCardRequest
+                const kind = IrisState.bubbleCardRequest
                 if (kind.length === 0) return
-                GlobalStates.irisBubbleCardRequest = ""
+                IrisState.bubbleCardRequest = ""
                 if (!root.cardKinds.includes(kind)) return
                 root.expanded = false
                 const piece = root.pieceItem(kind)
@@ -1012,7 +1013,7 @@ Item {
     }
     // Customize selects a carried piece by its mark inside the Island, under the same id as a floating one.
     readonly property var carriedShapes: {
-        if (!GlobalStates.irisEdit) return []
+        if (!IrisState.edit) return []
         void (root.x + root.y + chassis.x + chassis.width + (root.parent?.x ?? 0) + (root.parent?.y ?? 0) + root.heartLength)
         const out = []
         const kinds = root.zoned ? [].concat(...barZones.entries) : root.barPieces
@@ -1031,7 +1032,7 @@ Item {
     // that body grows from, is the same as when it floats.
     signal pieceActivated(string slot, string kind, var rect)
     function pieceOpen(kind: string, part): bool {
-        const card = GlobalStates.irisBubbleCard
+        const card = IrisState.bubbleCard
         if (card && card.source === "island-piece-" + kind && card.screen === (root.targetScreen?.name ?? "")) return true
         if (part && root.expanded && root.pageOrigin === part) return true
         return kind === "controls" && root.focusedOutput && GlobalStates.controlPanelOpen && !root.expanded
@@ -1059,9 +1060,9 @@ Item {
     }
 
     onPageChanged: if (root.controlsInIsland && root.page !== "controls" && root.focusedOutput
-        && GlobalStates.controlPanelOpen && GlobalStates.irisMorphOwner !== "stage") GlobalStates.controlPanelOpen = false
+        && GlobalStates.controlPanelOpen && IrisState.morphOwner !== "stage") GlobalStates.controlPanelOpen = false
     onExpandedChanged: {
-        if (!root.expanded && root.page === "controls" && root.focusedOutput && GlobalStates.irisMorphOwner !== "stage")
+        if (!root.expanded && root.page === "controls" && root.focusedOutput && IrisState.morphOwner !== "stage")
             GlobalStates.controlPanelOpen = false
         if (!root.expanded) {
             root.pinned = false
@@ -1070,7 +1071,7 @@ Item {
             if (root.pointerOnIsland) root.hoverArmed = false
         }
         else root.wheelHold = false
-        if (root.expanded && root.focusedOutput) GlobalStates.irisBubbleCard = null
+        if (root.expanded && root.focusedOutput) IrisState.bubbleCard = null
     }
     onVisualExpandedChanged: root.flyParts()
     readonly property real heroDecodeWidth: Math.round(Math.min(root.availableWidth - 2 * (root.bubble + root.satelliteGap), root.pageWidth * root.d) * 1.5)
@@ -1108,22 +1109,22 @@ Item {
     }
     onEffectivePageChanged: if (root.visualExpanded) { coverFlight.stop(); clockFlight.stop() }
     Binding {
-        target: GlobalStates
-        property: "irisIslandShape"
+        target: IrisState
+        property: "islandShape"
         value: root.expanded ? "expanded" : root.compactMode
         when: root.targetScreen?.name === GlobalStates.focusedScreen?.name
         restoreMode: Binding.RestoreNone
     }
     Binding {
-        target: GlobalStates
-        property: "irisIslandExpanded"
+        target: IrisState
+        property: "islandExpanded"
         value: root.expanded
         when: root.targetScreen?.name === GlobalStates.focusedScreen?.name
         restoreMode: Binding.RestoreNone
     }
     Binding {
-        target: GlobalStates
-        property: "irisIslandPage"
+        target: IrisState
+        property: "islandPage"
         value: root.expanded ? root.effectivePage : ""
         when: root.targetScreen?.name === GlobalStates.focusedScreen?.name
         restoreMode: Binding.RestoreNone
@@ -1178,12 +1179,8 @@ Item {
             root.publishRestOrigin()
             if (GlobalStates.searchOpen) root.expanded = false
         }
-        function onIrisOrbitOpenChanged(): void {
-            root.publishRestOrigin()
-            if (GlobalStates.irisOrbitOpen) root.expanded = false
-        }
         function onControlPanelOpenChanged(): void {
-            if (GlobalStates.irisMorphOwner === "stage") return
+            if (IrisState.morphOwner === "stage") return
             if (root.controlsInIsland) {
                 if (!root.focusedOutput) return
                 if (GlobalStates.controlPanelOpen && !(root.expanded && root.page === "controls")) root.openPage("controls", true, null)
@@ -1203,10 +1200,10 @@ Item {
             root.publishOrigin(part)
         }
         function onSettingsOverlayOpenChanged(): void {
-            if (GlobalStates.irisMorphOwner === "control" && !GlobalStates.settingsOverlayOpen) {
-                GlobalStates.irisMorphOwner = ""
+            if (IrisState.morphOwner === "control" && !GlobalStates.settingsOverlayOpen) {
+                IrisState.morphOwner = ""
                 root.settingsMorphPart = chassis
-            } else if (GlobalStates.irisMorphOwner !== "") { root.settingsOriginPrepared = false; return }
+            } else if (IrisState.morphOwner !== "") { root.settingsOriginPrepared = false; return }
             if (GlobalStates.settingsOverlayOpen) {
                 if (!root.settingsOriginPrepared) {
                     root.settingsMorphPart = chassis
@@ -1218,6 +1215,13 @@ Item {
             }
             const part = root.settingsMorphPart && root.settingsMorphPart.visible ? root.settingsMorphPart : chassis
             root.publishOrigin(part)
+        }
+    }
+    Connections {
+        target: IrisState
+        function onOrbitOpenChanged(): void {
+            root.publishRestOrigin()
+            if (IrisState.orbitOpen) root.expanded = false
         }
     }
 
@@ -1371,12 +1375,12 @@ Item {
             kind: satellite.kind
             screenName: root.targetScreen?.name ?? ""
             screenOffsetY: root.screenOffsetY
-            holdLifts: !GlobalStates.irisEdit
-            pullDistance: GlobalStates.irisEdit ? 6 * root.d : 0
+            holdLifts: !IrisState.edit
+            pullDistance: IrisState.edit ? 6 * root.d : 0
             onTapped: {
-                if (GlobalStates.irisEdit) {
-                    GlobalStates.irisEditTarget = ""
-                    GlobalStates.irisEditSelection = GlobalStates.irisEditSelection === satellite.slot ? "" : satellite.slot
+                if (IrisState.edit) {
+                    IrisState.editTarget = ""
+                    IrisState.editSelection = IrisState.editSelection === satellite.slot ? "" : satellite.slot
                     return
                 }
                 satellite.activated()
@@ -1403,11 +1407,11 @@ Item {
         && String(Config.options?.iris?.player?.bubbleOpens ?? "card") === "card"
     readonly property bool focusedOutput: root.targetScreen?.name === GlobalStates.focusedScreen?.name
     Connections {
-        target: GlobalStates
-        function onIrisIslandPageRequestChanged(): void {
-            const page = GlobalStates.irisIslandPageRequest
+        target: IrisState
+        function onIslandPageRequestChanged(): void {
+            const page = IrisState.islandPageRequest
             if (page.length === 0 || !root.focusedOutput) return
-            GlobalStates.irisIslandPageRequest = ""
+            IrisState.islandPageRequest = ""
             if (page === "collapse") { root.expanded = false; return }
             root.openPage(page, true, null)
         }
@@ -1541,9 +1545,9 @@ Item {
     function publishBubbleKinds(): void {
         const name = root.targetScreen?.name ?? ""
         if (name.length === 0) return
-        const kinds = Object.assign({}, GlobalStates.irisBubbleKinds ?? {})
+        const kinds = Object.assign({}, IrisState.bubbleKinds ?? {})
         kinds[name] = root.bubbleKinds
-        GlobalStates.irisBubbleKinds = kinds
+        IrisState.bubbleKinds = kinds
     }
     property string publishedGeometry: ""
     function publishIslandGeometry(): void {
@@ -1558,9 +1562,9 @@ Item {
         const key = JSON.stringify(next)
         if (key === root.publishedGeometry) return
         root.publishedGeometry = key
-        const geometry = Object.assign({}, GlobalStates.irisIslandGeometry ?? {})
+        const geometry = Object.assign({}, IrisState.islandGeometry ?? {})
         geometry[name] = next
-        GlobalStates.irisIslandGeometry = geometry
+        IrisState.islandGeometry = geometry
     }
     onBubbleKindsChanged: root.publishBubbleKinds()
     onIslandGeometryChanged: geometrySettle.restart()
@@ -1570,8 +1574,8 @@ Item {
     readonly property var floatingSlots: ["left", "right", "utility"]
         .filter(slot => String(Config.options?.iris?.bubbles?.[slot]?.place ?? "island") !== "island"
             && !(root.absorbed?.islandSlots ?? []).includes(slot))
-    readonly property string draggedSlot: GlobalStates.irisBubbleDrag && GlobalStates.irisBubbleDrag.screen === (root.targetScreen?.name ?? "")
-        ? String(GlobalStates.irisBubbleDrag.slot) : ""
+    readonly property string draggedSlot: IrisState.bubbleDrag && IrisState.bubbleDrag.screen === (root.targetScreen?.name ?? "")
+        ? String(IrisState.bubbleDrag.slot) : ""
     Satellite {
         id: rightSatellite
         slot: "right"
@@ -1752,7 +1756,7 @@ Item {
         Item {
             id: islandResize
             z: 20
-            visible: GlobalStates.irisEdit && !root.expanded
+            visible: IrisState.edit && !root.expanded
             width: Math.round((root.vertical ? 14 : 44) * root.d)
             height: Math.round((root.vertical ? 44 : 14) * root.d)
             x: !root.vertical ? Math.round((chassis.width - width) / 2) : root.rightEdge ? 0 : chassis.width - width
@@ -2310,12 +2314,12 @@ Item {
                             kind: barPiece.modelData
                             screenName: root.targetScreen?.name ?? ""
                             screenOffsetY: root.screenOffsetY
-                            holdLifts: !GlobalStates.irisEdit
-                            pullDistance: GlobalStates.irisEdit ? 6 * root.d : 0
+                            holdLifts: !IrisState.edit
+                            pullDistance: IrisState.edit ? 6 * root.d : 0
                             onTapped: {
-                                if (GlobalStates.irisEdit) {
-                                    GlobalStates.irisEditSelection = ""
-                                    GlobalStates.irisEditTarget = "pieces"
+                                if (IrisState.edit) {
+                                    IrisState.editSelection = ""
+                                    IrisState.editTarget = "pieces"
                                     return
                                 }
                                 root.activatePiece(barPiece.modelData, barPiece)
@@ -2327,7 +2331,7 @@ Item {
                             onWheel: event => {
                                 const steps = root.wheelSteps(event)
                                 if (steps === 0) return
-                                GlobalStates.quietIrisLevels()
+                                IrisState.quietLevels()
                                 root.stepLevel(barPiece.modelData === "mic" ? "mic" : "volume", steps)
                             }
                         }
@@ -2387,10 +2391,10 @@ Item {
                 enabled: !root.inlineExpanded && (!root.zoned || root.heartShown)
                 acceptedButtons: Qt.LeftButton | Qt.MiddleButton
                 cursorShape: islandGrip.carrying ? Qt.ClosedHandCursor
-                    : GlobalStates.irisEdit ? Qt.OpenHandCursor : Qt.PointingHandCursor
+                    : IrisState.edit ? Qt.OpenHandCursor : Qt.PointingHandCursor
                 preventStealing: true
                 Accessible.role: Accessible.Button
-                Accessible.name: GlobalStates.irisEdit ? Translation.tr("Edit Dynamic Island")
+                Accessible.name: IrisState.edit ? Translation.tr("Edit Dynamic Island")
                     : root.expanded ? Translation.tr("Collapse island") : Translation.tr("Expand island")
                 pressAndHoldInterval: 380
                 QtObject {
@@ -2399,7 +2403,7 @@ Item {
                     property point pressAt: Qt.point(0, 0)
                     function publish(mouse, released: bool): void {
                         const p = compactPress.mapToItem(null, mouse.x, mouse.y)
-                        GlobalStates.irisBubbleDrag = {
+                        IrisState.bubbleDrag = {
                             slot: "island", kind: "island", screen: root.targetScreen?.name ?? "",
                             x: p.x, y: p.y + root.screenOffsetY,
                             size: root.compactHeight, width: chassis.width, released: released
@@ -2413,7 +2417,7 @@ Item {
                     islandGrip.publish(mouse, false)
                 }
                 onPositionChanged: mouse => {
-                    if (!islandGrip.carrying && GlobalStates.irisEdit && (mouse.buttons & Qt.LeftButton)
+                    if (!islandGrip.carrying && IrisState.edit && (mouse.buttons & Qt.LeftButton)
                             && Math.hypot(mouse.x - islandGrip.pressAt.x, mouse.y - islandGrip.pressAt.y) > 6 * root.d) {
                         islandGrip.carrying = true
                     }
@@ -2425,8 +2429,8 @@ Item {
                     Qt.callLater(() => islandGrip.carrying = false)
                 }
                 onCanceled: {
-                    if (islandGrip.carrying && GlobalStates.irisBubbleDrag) {
-                        GlobalStates.irisBubbleDrag = Object.assign({}, GlobalStates.irisBubbleDrag, { released: true })
+                    if (islandGrip.carrying && IrisState.bubbleDrag) {
+                        IrisState.bubbleDrag = Object.assign({}, IrisState.bubbleDrag, { released: true })
                     }
                     islandGrip.carrying = false
                 }
@@ -2436,9 +2440,9 @@ Item {
                         if (root.hasMedia) MprisController.togglePlaying()
                         return
                     }
-                    if (GlobalStates.irisEdit) {
-                        GlobalStates.irisEditSelection = ""
-                        GlobalStates.irisEditTarget = "island"
+                    if (IrisState.edit) {
+                        IrisState.editSelection = ""
+                        IrisState.editTarget = "island"
                         return
                     }
                     if (root.pinned) root.expanded = false

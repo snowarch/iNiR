@@ -15,6 +15,7 @@ import qs.modules.iris.components
 import qs.modules.iris.frame
 import qs.modules.iris.style
 import qs.modules.iris.field as Field
+import qs.modules.iris.state
 
 PanelWindow {
     id: root
@@ -27,7 +28,7 @@ PanelWindow {
     readonly property string outputName: root.left ? GlobalStates.sidebarLeftTargetOutput : GlobalStates.sidebarRightTargetOutput
     readonly property real edgeHeld: IrisFrame.clear(root.left ? "left" : "right") - IrisFrame.band
     readonly property bool notch: (root.options.notch ?? false) && root.edgeHeld <= 0
-    readonly property bool peek: root.open && !root.pinned && GlobalStates.irisSidebarPeek === root.side
+    readonly property bool peek: root.open && !root.pinned && IrisState.sidebarPeek === root.side
     property bool editing: false
     property bool contentSettled: false
     Timer { id: settle; interval: 80; onTriggered: root.contentSettled = true }
@@ -35,11 +36,11 @@ PanelWindow {
     property Item settingsOrigin: null
     function publishSettingsOrigin(): void {
         const item = root.settingsOrigin
-        if (!item || !item.visible || !root.open) { GlobalStates.irisMorphOwner = ""; return }
+        if (!item || !item.visible || !root.open) { IrisState.morphOwner = ""; return }
         const p = item.mapToItem(null, 0, 0)
-        GlobalStates.irisMorphOrigin = { x: p.x, y: p.y, width: item.width, height: item.height,
+        IrisState.morphOrigin = { x: p.x, y: p.y, width: item.width, height: item.height,
             radius: item.height / 2, screen: root.screen?.name ?? "" }
-        GlobalStates.irisMorphOwner = root.side
+        IrisState.morphOwner = root.side
     }
     readonly property var expandedSections: root.options.expanded ?? []
     function toggleSection(kind: string): void {
@@ -65,14 +66,14 @@ PanelWindow {
     onOpenChanged: {
         if (root.open) { root.engaged = false; root.opened(); return }
         root.editing = false
-        if (GlobalStates.irisSidebarPeek === root.side) GlobalStates.irisSidebarPeek = ""
+        if (IrisState.sidebarPeek === root.side) IrisState.sidebarPeek = ""
     }
     Component.onCompleted: root.opened()
     Connections {
         target: GlobalStates
         function onSettingsOverlayOpenChanged(): void {
-            if (GlobalStates.settingsOverlayOpen && root.peek) GlobalStates.irisSidebarPeek = ""
-            if (!GlobalStates.settingsOverlayOpen && GlobalStates.irisMorphOwner === root.side) root.publishSettingsOrigin()
+            if (GlobalStates.settingsOverlayOpen && root.peek) IrisState.sidebarPeek = ""
+            if (!GlobalStates.settingsOverlayOpen && IrisState.morphOwner === root.side) root.publishSettingsOrigin()
         }
         function onControlPanelOpenChanged(): void { if (GlobalStates.controlPanelOpen && !root.pinned) root.close() }
         function onSearchOpenChanged(): void { if (GlobalStates.searchOpen && !root.pinned) root.close() }
@@ -211,7 +212,7 @@ PanelWindow {
             width: Math.max(2, IrisFrame.band), height: frame.height, radius: Math.max(1, IrisFrame.band / 2) })
         MouseArea { anchors.fill: parent }
         HoverHandler { id: frameHover; onHoveredChanged: if (hovered) root.engaged = true }
-        PointHandler { onActiveChanged: if (active && root.peek) GlobalStates.irisSidebarPeek = "" }
+        PointHandler { onActiveChanged: if (active && root.peek) IrisState.sidebarPeek = "" }
 
         ColumnLayout {
             id: panelLayout

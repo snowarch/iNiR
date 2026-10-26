@@ -7,6 +7,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.iris.settings
+import qs.modules.iris.state
 
 // Undo and redo for everything Customize can change, and the one line it says back. Arranging the desktop has its own,
 // shared by every family (DesktopEditHistory).
@@ -87,12 +88,12 @@ Singleton {
     Timer { id: recordTimer; interval: 320; onTriggered: root.record() }
     Connections {
         target: Config
-        enabled: GlobalStates.irisEdit || GlobalStates.irisStudioOpen
+        enabled: IrisState.edit || IrisState.studioOpen
         function onRevisionChanged(): void { recordTimer.restart() }
     }
     Connections {
-        target: GlobalStates
-        function onIrisEditChanged(): void { if (GlobalStates.irisEdit) root.reset() }
-        function onIrisStudioOpenChanged(): void { if (GlobalStates.irisStudioOpen) root.reset() }
+        target: IrisState
+        function onEditChanged(): void { if (IrisState.edit) root.reset() }
+        function onStudioOpenChanged(): void { if (IrisState.studioOpen) root.reset() }
     }
 }

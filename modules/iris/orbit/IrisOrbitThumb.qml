@@ -10,6 +10,7 @@ import qs.modules.common.widgets
 import qs.modules.iris.style
 import qs.modules.iris.components
 import qs.modules.iris.pieces
+import qs.modules.iris.state
 
 // A window as Orbit shows it: the picture Niri took of it, or its app's icon on a quiet fill until there is one.
 // Used by the workspace cards, the recent row and the pocket, so a window looks the same wherever it is.
@@ -79,7 +80,7 @@ Item {
             id: liveShot
             anchors.fill: parent
             windowId: root.windowId
-            active: GlobalStates.irisOrbitOpen && root.previews
+            active: IrisState.orbitOpen && root.previews
             opacity: root.minimised ? 0.55 : 1
         }
         SmartAppIcon {

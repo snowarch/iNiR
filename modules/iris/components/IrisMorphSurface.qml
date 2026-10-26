@@ -9,6 +9,7 @@ import qs.modules.common.functions
 import qs.modules.iris.frame
 import qs.modules.iris.style
 import qs.modules.iris.field as Field
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -231,7 +232,7 @@ Item {
                 published: root.chassisBodies.length > 0,
                 sameWindow: bodyWindow === own,
                 above: !root.fieldBacked && own !== chassisWindow,
-                island: GlobalStates.irisIslandGeometry?.[screen] ?? null
+                island: IrisState.islandGeometry?.[screen] ?? null
             })
         }
     }
@@ -242,15 +243,15 @@ Item {
         if (root.settles) { root.originOwner = ""; root.originScene = null; root.fromRadius = root.radius; return }
         if (root.originItem) { root.originOwner = ""; root.fromRadius = root.originItemRadius; return }
         if (root.origin) { root.originOwner = ""; root.fromRadius = root.origin.radius ?? root.radius; return }
-        const origin = root.origin ?? GlobalStates.irisMorphOrigin
+        const origin = root.origin ?? IrisState.morphOrigin
         const screenName = root.origin ? "" : (GlobalStates.focusedScreen?.name ?? "")
         if (origin && origin.width > 0 && (!origin.screen || origin.screen === screenName)) {
-            root.originOwner = GlobalStates.irisMorphOwner
+            root.originOwner = IrisState.morphOwner
             root.originScene = Qt.rect(origin.x, origin.y, origin.width, origin.height)
             root.fromRadius = origin.radius ?? origin.height / 2
         } else {
             root.originOwner = ""
-            const island = GlobalStates.irisIslandGeometry?.[screenName] ?? null
+            const island = IrisState.islandGeometry?.[screenName] ?? null
             root.originScene = island && island.width > 0 ? Qt.rect(island.x, island.y, island.width, island.height) : null
             root.fromRadius = island ? island.height / 2 : root.radius
         }

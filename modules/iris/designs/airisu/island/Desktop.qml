@@ -14,6 +14,7 @@ import qs.modules.iris.components
 import qs.modules.iris.pieces
 import qs.modules.iris.bar
 import "../components"
+import qs.modules.iris.state
 
 // AIRISU's desktop page, on the engine's blocks, in the order and with the blocks Settings keeps. The head is a panel of
 // time's lacquer whose second coat is the part of the hour gone, as on the desk clock, with the day's time set
@@ -248,7 +249,7 @@ GridLayout {
                 Accessible.name: Translation.tr("Arrange this page")
                 onClicked: {
                     if (page.island) page.island.pinned = true
-                    GlobalStates.irisArrange = true
+                    IrisState.arrange = true
                 }
             }
             Key {

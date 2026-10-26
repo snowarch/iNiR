@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs
 import qs.modules.common
+import qs.modules.iris.state
 
 Scope {
     id: root
@@ -34,7 +35,7 @@ Scope {
                 interval: 140
                 running: edgeHover.hovered
                 onTriggered: {
-                    GlobalStates.irisSidebarPeek = root.side
+                    IrisState.sidebarPeek = root.side
                     if (root.left) GlobalStates.openSidebarLeft(strip.modelData?.name ?? "")
                     else GlobalStates.openSidebarRight(strip.modelData?.name ?? "")
                 }

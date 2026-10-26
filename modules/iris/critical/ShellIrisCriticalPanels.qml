@@ -12,6 +12,7 @@ Item {
     id: root
 
     IrisVerbs {}
+    IrisDevSims {}
 
     component CriticalPanelLoader: LazyLoader {
         required property string identifier

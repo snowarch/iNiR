@@ -13,6 +13,7 @@ import qs.modules.common.widgets
 import qs.modules.iris.frame
 import qs.modules.iris.style
 import qs.modules.iris.components
+import qs.modules.iris.state
 
 Item {
     id: root
@@ -24,7 +25,7 @@ Item {
     // Customize owns the Island's surroundings while it is open, the wallpaper picker its whole screen and the toolbar
     // a banner landed on: banners wait, and still land in Today.
     readonly property bool present: root.screenName === (GlobalStates.focusedScreen?.name ?? "") && !root.fullscreenHere
-        && !GlobalStates.irisEdit && !GlobalStates.wallpaperSelectorOpen
+        && !IrisState.edit && !GlobalStates.wallpaperSelectorOpen
         && (root.popups.length > 0 || exitLinger.running)
     readonly property var hitRect: root.present && popupColumn.contentHeight > 0
         ? { x: popupColumn.x, y: popupColumn.y, width: popupColumn.width, height: popupColumn.height } : null
@@ -48,7 +49,7 @@ Item {
     readonly property real designMargin: Number(IrisDesign.surface("banners", "margin", 24)) * root.d
     readonly property real popupWidth: root.designed ? Number(IrisDesign.surface("banners", "width", 400)) * root.d + 16 : Math.min(Math.max(260, root.width - 2 * IrisFrame.band - 16),
         Math.max(340, Number(root.options?.width ?? 380) * root.d) + 16)
-    readonly property var island: GlobalStates.irisIslandGeometry?.[root.screenName] ?? null
+    readonly property var island: IrisState.islandGeometry?.[root.screenName] ?? null
     readonly property real bubbleSize: Math.round(44 * root.d)
     // Over a place in front (Settings, the picker) the field's body sits behind that place's window: the banner paints its
     // own plate there, or its words float over the page (10-25).
