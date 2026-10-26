@@ -48,7 +48,7 @@ PreviewScene {
             anchors.margins: Math.round(12 * gameRoot.d)
             spacing: Math.round(10 * gameRoot.d)
             IrisMark { implicitSize: Math.round(30 * gameRoot.d) }
-            IrisText { Layout.fillWidth: true; elide: Text.ElideRight; text: Translation.tr("A message for you"); font.weight: Font.DemiBold }
+            IrisText { Layout.fillWidth: true; elide: Text.ElideRight; text: Translation.tr("A message for you"); font.weight: IrisStyle.weight(Font.DemiBold) }
         }
     }
     Rectangle {

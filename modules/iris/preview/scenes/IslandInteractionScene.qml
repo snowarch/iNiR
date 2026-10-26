@@ -98,7 +98,7 @@ PreviewScene {
             opacity: actRoot.expanded ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: IrisStyle.duration(200); easing.type: IrisStyle.feedbackEasing } }
             IrisText { text: Translation.locale.toString(DateTime.clock.date, "dddd d MMMM"); color: IrisStyle.secondaryAccent; font.weight: IrisStyle.weight(Font.DemiBold) }
-            IrisText { text: Translation.locale.toString(DateTime.clock.date, "hh:mm"); font.family: IrisStyle.fontDot; font.weight: Font.Normal; font.pixelSize: IrisStyle.typeDotL }
+            IrisText { text: Translation.locale.toString(DateTime.clock.date, "hh:mm"); font.family: IrisStyle.fontDot; font.weight: IrisStyle.figureWeight; font.pixelSize: IrisStyle.typeDotL }
             Item { Layout.fillHeight: true }
             Level { value: 0.6 }
         }

@@ -178,7 +178,7 @@ ColumnLayout {
                 color: mark.on ? IrisStyle.text : IrisStyle.textSecondary
                 font.family: IrisStyle.fontTitle
                 font.pixelSize: Math.round(17 * root.d)
-                font.weight: Font.Bold
+                font.weight: IrisStyle.weight(Font.Bold)
             }
         }
 

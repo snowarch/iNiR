@@ -69,7 +69,7 @@ Rectangle {
                         text: key.modelData.name
                         color: key.on ? IrisStyle.text : IrisStyle.muted
                         font.pixelSize: IrisStyle.typeMeta
-                        font.weight: Font.Medium
+                        font.weight: IrisStyle.weight(Font.Medium)
                     }
                 }
             }

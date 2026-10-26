@@ -64,7 +64,7 @@ IrisWidgetFace {
         id: metrics
         font.family: root.fontMain
         font.pixelSize: 100
-        font.weight: Font.DemiBold
+        font.weight: IrisStyle.weight(Font.DemiBold)
     }
     // The sung line's size: as big as the face sings, stepped down until its words wrap into the rows it has at the
     // face's full width (greedy, as the text lays out); only below the smallest size does it take another row.
@@ -138,7 +138,7 @@ IrisWidgetFace {
         renderType: TextEdit.NativeRendering
         font.family: root.fontMain
         font.pixelSize: line.pixel
-        font.weight: Font.DemiBold
+        font.weight: IrisStyle.weight(Font.DemiBold)
         font.hintingPreference: Font.PreferDefaultHinting
     }
 

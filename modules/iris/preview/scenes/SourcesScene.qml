@@ -56,7 +56,7 @@ PreviewScene {
                     width: parent.width - 2 * x
                     spacing: Math.round(8 * sourcesRoot.d)
                     MaterialSymbol { text: source.modelData.glyph; fill: 1; iconSize: Math.round(17 * sourcesRoot.d); color: source.modelData.tint }
-                    IrisText { Layout.fillWidth: true; text: source.modelData.name; font.weight: Font.DemiBold; font.pixelSize: IrisStyle.typeMeta }
+                    IrisText { Layout.fillWidth: true; text: source.modelData.name; font.weight: IrisStyle.weight(Font.DemiBold); font.pixelSize: IrisStyle.typeMeta }
                     MaterialSymbol {
                         text: "sync"
                         iconSize: Math.round(15 * sourcesRoot.d)
@@ -110,7 +110,7 @@ PreviewScene {
                         height: Math.round(24 * sourcesRoot.d)
                         radius: height / 2
                         color: Qt.rgba(IrisStyle.identity.yellow.r, IrisStyle.identity.yellow.g, IrisStyle.identity.yellow.b, 0.2)
-                        IrisText { id: updateText; anchors.centerIn: parent; text: Translation.tr("Ready to update"); font.pixelSize: IrisStyle.typeCaption; font.weight: Font.DemiBold }
+                        IrisText { id: updateText; anchors.centerIn: parent; text: Translation.tr("Ready to update"); font.pixelSize: IrisStyle.typeCaption; font.weight: IrisStyle.weight(Font.DemiBold) }
                     }
                 }
             }

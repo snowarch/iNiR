@@ -55,7 +55,7 @@ Item {
                     color: IrisStyle.text
                     font.family: IrisStyle.fontTitle
                     font.pixelSize: page.u(30)
-                    font.weight: Font.Bold
+                    font.weight: IrisStyle.weight(Font.Bold)
                     font.letterSpacing: -Math.round(page.u(30) * 0.01)
                 }
                 IrisText {

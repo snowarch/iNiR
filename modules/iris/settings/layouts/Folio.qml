@@ -54,7 +54,7 @@ Item {
             Translation.activeTranslations
             return Math.max(0, ...root.sections.map(entry => indexType.advanceWidth(Translation.tr(String(entry.title ?? "")))))
         }
-        FontMetrics { id: indexType; font.family: IrisStyle.fontRead; font.pixelSize: IrisStyle.typeBody; font.weight: Font.DemiBold }
+        FontMetrics { id: indexType; font.family: IrisStyle.fontRead; font.pixelSize: IrisStyle.typeBody; font.weight: IrisStyle.weight(Font.DemiBold) }
         width: Math.min(root.u(root.compact ? 280 : 320), Math.max(root.u(root.compact ? 216 : 244), Math.ceil(index.widest) + root.u(92)))
         height: root.height - 2 * root.u(8)
         radius: IrisStyle.fieldChamfer ? 0 : Math.max(root.u(12), IrisStyle.radiusPanel - root.u(8))
@@ -123,7 +123,7 @@ Item {
                                 color: IrisStyle.textTertiary
                                 font.family: IrisStyle.fontMono
                                 font.pixelSize: Math.max(10, IrisStyle.typeCaption)
-                                font.weight: Font.Medium
+                                font.weight: IrisStyle.weight(Font.Medium)
                                 font.capitalization: Font.AllUppercase
                                 font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
                             }

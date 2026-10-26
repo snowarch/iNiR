@@ -123,7 +123,7 @@ PreviewScene {
                     NumberAnimation { to: 1; duration: IrisStyle.duration(600) }
                 }
             }
-            IrisText { text: Translation.tr("Recording"); color: IrisStyle.onMedia; font.pixelSize: IrisStyle.typeMeta; font.weight: Font.DemiBold }
+            IrisText { text: Translation.tr("Recording"); color: IrisStyle.onMedia; font.pixelSize: IrisStyle.typeMeta; font.weight: IrisStyle.weight(Font.DemiBold) }
             MaterialSymbol {
                 visible: captureRoot.sound !== "none"
                 text: captureRoot.sound === "microphone" ? "mic" : "volume_up"

@@ -133,7 +133,7 @@ Item {
                             color: IrisStyle.text
                             font.family: IrisStyle.fontTitle
                             font.pixelSize: root.u(30)
-                            font.weight: Font.Bold
+                            font.weight: IrisStyle.weight(Font.Bold)
                             font.letterSpacing: -Math.round(root.u(30) * 0.01)
                         }
                         LayoutSwitch { host: root.host; voice: "pocket"; compact: true }
@@ -355,7 +355,7 @@ Item {
             text: key.label
             color: IrisStyle.text
             font.pixelSize: IrisStyle.typeMeta
-            font.weight: Font.DemiBold
+            font.weight: IrisStyle.weight(Font.DemiBold)
         }
     }
 }

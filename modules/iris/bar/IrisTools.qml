@@ -109,7 +109,7 @@ ColumnLayout {
                 color: dial.running ? IrisStyle.secondaryAccent : IrisStyle.text
                 font.family: IrisStyle.fontDot
                 font.pixelSize: IrisStyle.typeTitleLarge
-                font.weight: Font.Normal
+                font.weight: IrisStyle.figureWeight
                 font.features: ({ "tnum": 1 })
             }
             MaterialSymbol {

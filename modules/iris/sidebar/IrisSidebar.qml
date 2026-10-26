@@ -234,7 +234,7 @@ PanelWindow {
                     color: IrisStyle.clockAccent
                     font.family: IrisStyle.fontDot
                     font.pixelSize: IrisStyle.typeDisplay
-                    font.weight: Font.Normal
+                    font.weight: IrisStyle.figureWeight
                     font.features: ({ "tnum": 1 })
                     Layout.alignment: Qt.AlignVCenter
                     Layout.rightMargin: 6 * root.d

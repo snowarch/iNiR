@@ -1030,7 +1030,7 @@ Item {
                                                         id: codeWidth
                                                         font.family: IrisStyle.fontNumbers
                                                         font.pixelSize: IrisStyle.typeMeta
-                                                        font.weight: Font.Bold
+                                                        font.weight: IrisStyle.weight(Font.Bold)
                                                         text: "00"
                                                     }
                                                 }

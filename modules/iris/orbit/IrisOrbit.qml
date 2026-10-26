@@ -718,7 +718,7 @@ Item {
                                         font.family: IrisStyle.fontDot
                                         font.features: ({ "tnum": 1 })
                                         font.pixelSize: IrisStyle.typeHero
-                                        font.weight: Font.Normal
+                                        font.weight: IrisStyle.figureWeight
                                         font.letterSpacing: IrisStyle.tracking(IrisStyle.typeHero)
                                         color: IrisStyle.text
                                     }

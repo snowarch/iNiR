@@ -30,7 +30,7 @@ PreviewScene {
             spacing: Math.round(10 * panelRoot.d)
             RowLayout {
                 spacing: Math.round(10 * panelRoot.d)
-                IrisText { text: Translation.locale.toString(DateTime.clock.date, "d"); color: IrisStyle.identity.red; font.family: IrisStyle.fontDot; font.weight: Font.Normal; font.pixelSize: IrisStyle.typeDotM }
+                IrisText { text: Translation.locale.toString(DateTime.clock.date, "d"); color: IrisStyle.identity.red; font.family: IrisStyle.fontDot; font.weight: IrisStyle.figureWeight; font.pixelSize: IrisStyle.typeDotM }
                 ColumnLayout {
                     spacing: 0
                     IrisText { text: Translation.tr("Today"); font.family: IrisStyle.fontTitle; font.weight: IrisStyle.weight(Font.Bold); font.pixelSize: IrisStyle.typeTitle }

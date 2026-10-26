@@ -233,7 +233,7 @@ Item {
             text: Translation.tr(String(key.entry.title ?? ""))
             color: key.on ? IrisStyle.surfaceOpaque : IrisStyle.text
             font.pixelSize: IrisStyle.typeMeta
-            font.weight: Font.DemiBold
+            font.weight: IrisStyle.weight(Font.DemiBold)
         }
         Rectangle {
             visible: key.noted > 0

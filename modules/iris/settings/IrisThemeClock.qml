@@ -167,7 +167,7 @@ RowLayout {
                 horizontalAlignment: Text.AlignHCenter
                 text: (root.nightNow ? root.night : root.day).name
                 font.pixelSize: IrisStyle.typeHeadline
-                font.weight: Font.DemiBold
+                font.weight: IrisStyle.weight(Font.DemiBold)
                 elide: Text.ElideRight
             }
             IrisText {

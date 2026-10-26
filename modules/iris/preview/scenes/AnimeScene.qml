@@ -59,7 +59,7 @@ PreviewScene {
             RowLayout {
                 width: parent.width
                 MaterialSymbol { text: "live_tv"; fill: 1; iconSize: Math.round(16 * animeRoot.d); color: IrisStyle.identity.purple }
-                IrisText { Layout.fillWidth: true; text: Translation.tr("Airing"); font.weight: Font.DemiBold }
+                IrisText { Layout.fillWidth: true; text: Translation.tr("Airing"); font.weight: IrisStyle.weight(Font.DemiBold) }
             }
             Repeater {
                 model: animeRoot.shows
@@ -106,7 +106,7 @@ PreviewScene {
             anchors.bottomMargin: Math.round(12 * animeRoot.d)
             width: parent.width - 2 * x
             spacing: Math.round(8 * animeRoot.d)
-            IrisText { text: Translation.tr("Continue"); font.weight: Font.DemiBold; font.pixelSize: IrisStyle.typeMeta }
+            IrisText { text: Translation.tr("Continue"); font.weight: IrisStyle.weight(Font.DemiBold); font.pixelSize: IrisStyle.typeMeta }
             Rectangle {
                 width: parent.width
                 height: Math.round(4 * animeRoot.d)

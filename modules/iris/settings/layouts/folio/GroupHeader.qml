@@ -21,7 +21,7 @@ Item {
         Behavior on color { ColorAnimation { duration: IrisStyle.duration(160); easing.type: IrisStyle.feedbackEasing } }
         font.family: IrisStyle.fontMono
         font.pixelSize: Math.max(10, IrisStyle.typeCaption)
-        font.weight: Font.Medium
+        font.weight: IrisStyle.weight(Font.Medium)
         font.capitalization: Font.AllUppercase
         font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
     }

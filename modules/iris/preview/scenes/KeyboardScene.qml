@@ -97,7 +97,7 @@ PreviewScene {
                                 text: cap.modelData
                                 color: cap.down ? IrisStyle.inkOnAccent : IrisStyle.textSecondary
                                 font.pixelSize: IrisStyle.typeMeta
-                                font.weight: Font.Medium
+                                font.weight: IrisStyle.weight(Font.Medium)
                             }
                         }
                     }

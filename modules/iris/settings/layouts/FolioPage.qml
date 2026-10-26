@@ -42,7 +42,7 @@ Item {
             color: IrisStyle.text
             font.family: IrisStyle.fontTitle
             font.pixelSize: page.u(26)
-            font.weight: Font.DemiBold
+            font.weight: IrisStyle.weight(Font.DemiBold)
             font.letterSpacing: -Math.round(page.u(26) * 0.01)
         }
         IrisText {
@@ -149,7 +149,7 @@ Item {
                     color: IrisStyle.textTertiary
                     font.family: IrisStyle.fontMono
                     font.pixelSize: Math.max(10, IrisStyle.typeCaption)
-                    font.weight: Font.Medium
+                    font.weight: IrisStyle.weight(Font.Medium)
                     font.capitalization: Font.AllUppercase
                     font.letterSpacing: Math.round(Math.max(10, IrisStyle.typeCaption) * 0.08)
                 }

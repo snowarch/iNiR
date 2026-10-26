@@ -54,7 +54,7 @@ PreviewScene {
                     x: Math.round(14 * hubRoot.d)
                     y: parent.height * 0.5 + Math.round(16 * hubRoot.d)
                     text: card.modelData.name
-                    font.weight: Font.DemiBold
+                    font.weight: IrisStyle.weight(Font.DemiBold)
                 }
                 Rectangle {
                     id: take
@@ -72,7 +72,7 @@ PreviewScene {
                         anchors.centerIn: parent
                         spacing: Math.round(6 * hubRoot.d)
                         MaterialSymbol { text: take.done > 0.98 ? "check" : "add"; iconSize: Math.round(15 * hubRoot.d); color: take.done > 0.5 ? IrisStyle.inkOnAccent : IrisStyle.text }
-                        IrisText { text: take.done > 0.98 ? Translation.tr("Added") : Translation.tr("Get"); font.pixelSize: IrisStyle.typeMeta; font.weight: Font.DemiBold; color: take.done > 0.5 ? IrisStyle.inkOnAccent : IrisStyle.text }
+                        IrisText { text: take.done > 0.98 ? Translation.tr("Added") : Translation.tr("Get"); font.pixelSize: IrisStyle.typeMeta; font.weight: IrisStyle.weight(Font.DemiBold); color: take.done > 0.5 ? IrisStyle.inkOnAccent : IrisStyle.text }
                     }
                 }
             }

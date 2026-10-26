@@ -196,7 +196,7 @@ Item {
                 color: root.cut && root.selected ? IrisStyle.inkOnAccent : IrisStyle.textSecondary
                 font.family: root.ink || root.cut ? IrisStyle.fontLabel : IrisStyle.fontMain
                 font.pixelSize: root.ink || root.cut ? Math.round(10 * root.d) : IrisStyle.typeFootnote
-                font.weight: Font.Medium
+                font.weight: IrisStyle.weight(Font.Medium)
                 font.capitalization: root.ink || root.cut ? Font.AllUppercase : Font.MixedCase
                 font.letterSpacing: root.ink || root.cut ? 0.8 * root.d : 0
             }
@@ -252,7 +252,7 @@ Item {
                     color: IrisStyle.text
                     font.family: root.ink ? IrisStyle.fontLabel : IrisStyle.fontMain
                     font.pixelSize: root.ink ? Math.round(10 * root.d) : IrisStyle.typeFootnote
-                    font.weight: Font.DemiBold
+                    font.weight: IrisStyle.weight(Font.DemiBold)
                     font.capitalization: root.ink ? Font.AllUppercase : Font.MixedCase
                     font.letterSpacing: root.ink ? 0.8 * root.d : 0
                 }
@@ -293,7 +293,7 @@ Item {
                     color: IrisStyle.text
                     font.family: root.ink ? IrisStyle.fontLabel : IrisStyle.fontMain
                     font.pixelSize: root.ink ? Math.round(10 * root.d) : IrisStyle.typeFootnote
-                    font.weight: Font.DemiBold
+                    font.weight: IrisStyle.weight(Font.DemiBold)
                     font.capitalization: root.ink ? Font.AllUppercase : Font.MixedCase
                 }
             }

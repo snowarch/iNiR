@@ -1863,7 +1863,7 @@ Item {
                 color: sectionRow.selected && IrisStyle.plateSelection ? IrisStyle.selectionDetail : IrisStyle.textTertiary
                 font.family: IrisStyle.fontMono
                 font.pixelSize: IrisStyle.typeFootnote
-                font.weight: Font.Medium
+                font.weight: IrisStyle.weight(Font.Medium)
             }
             IrisText {
                 x: sectionMark.x + sectionMark.width + Math.round(10 * sectionRow.d)

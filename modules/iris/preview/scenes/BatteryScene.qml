@@ -115,7 +115,7 @@ PreviewScene {
             IrisText {
                 text: batteryRoot.alarm === "sleep" ? Translation.tr("Going to sleep") : batteryRoot.alarm === "critical" ? Translation.tr("Battery critical") : Translation.tr("Battery low")
                 color: IrisStyle.onMedia
-                font.weight: Font.DemiBold
+                font.weight: IrisStyle.weight(Font.DemiBold)
             }
         }
     }

@@ -100,7 +100,7 @@ Item {
                     }
                     ColumnLayout {
                         spacing: 0
-                        IrisText { text: Translation.tr("Studio"); font.family: IrisStyle.fontTitle; font.weight: Font.Bold; font.pixelSize: IrisStyle.typeTitle }
+                        IrisText { text: Translation.tr("Studio"); font.family: IrisStyle.fontTitle; font.weight: IrisStyle.weight(Font.Bold); font.pixelSize: IrisStyle.typeTitle }
                         IrisText { text: Translation.tr("How every surface looks"); color: IrisStyle.textSecondary; font.pixelSize: IrisStyle.typeMeta }
                     }
                     Item { Layout.fillWidth: true }
@@ -136,14 +136,14 @@ Item {
                         implicitHeight: Math.round(32 * root.d)
                         radius: IrisStyle.capsule(height)
                         color: IrisStyle.accent
-                        IrisText { id: accentLabel; anchors.centerIn: parent; text: Translation.tr("Accent"); color: IrisStyle.inkOnAccent; font.weight: Font.DemiBold }
+                        IrisText { id: accentLabel; anchors.centerIn: parent; text: Translation.tr("Accent"); color: IrisStyle.inkOnAccent; font.weight: IrisStyle.weight(Font.DemiBold) }
                     }
                     Rectangle {
                         implicitWidth: highlightLabel.implicitWidth + Math.round(26 * root.d)
                         implicitHeight: Math.round(32 * root.d)
                         radius: IrisStyle.capsule(height)
                         color: IrisStyle.tintFill(IrisStyle.secondaryAccent)
-                        IrisText { id: highlightLabel; anchors.centerIn: parent; text: Translation.tr("Highlight"); color: IrisStyle.secondaryAccent; font.weight: Font.DemiBold }
+                        IrisText { id: highlightLabel; anchors.centerIn: parent; text: Translation.tr("Highlight"); color: IrisStyle.secondaryAccent; font.weight: IrisStyle.weight(Font.DemiBold) }
                     }
                     Item { Layout.fillWidth: true }
                     Rectangle {
@@ -151,7 +151,7 @@ Item {
                         implicitHeight: implicitWidth
                         radius: IrisStyle.capsule(width)
                         color: IrisStyle.badge
-                        IrisText { anchors.centerIn: parent; text: "3"; color: IrisStyle.inkOnBadge; font.family: IrisStyle.fontNumbers; font.weight: Font.Bold; font.pixelSize: IrisStyle.typeMeta }
+                        IrisText { anchors.centerIn: parent; text: "3"; color: IrisStyle.inkOnBadge; font.family: IrisStyle.fontNumbers; font.weight: IrisStyle.weight(Font.Bold); font.pixelSize: IrisStyle.typeMeta }
                     }
                 }
 
@@ -202,7 +202,7 @@ Item {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: Math.round(2 * root.d)
-                    IrisText { text: Translation.tr("A notification"); font.weight: Font.DemiBold }
+                    IrisText { text: Translation.tr("A notification"); font.weight: IrisStyle.weight(Font.DemiBold) }
                     IrisText { Layout.fillWidth: true; text: Translation.tr("Banners grow out of the Island and fold back into it."); color: IrisStyle.textSecondary; elide: Text.ElideRight }
                 }
             }
@@ -228,7 +228,7 @@ Item {
                     color: IrisStyle.fill
                     Rectangle { width: parent.width * 0.7; height: parent.height; radius: height / 2; color: IrisStyle.fillStrong }
                 }
-                IrisText { text: "70"; font.family: IrisStyle.fontNumbers; font.weight: Font.DemiBold }
+                IrisText { text: "70"; font.family: IrisStyle.fontNumbers; font.weight: IrisStyle.weight(Font.DemiBold) }
             }
         }
     }
@@ -276,7 +276,7 @@ Item {
                 anchors.fill: parent
                 anchors.margins: Math.round(16 * root.d)
                 spacing: Math.round(10 * root.d)
-                IrisText { text: root.scene === "widget" ? Translation.tr("Widget") : Translation.tr("Today"); font.family: IrisStyle.fontTitle; font.weight: Font.Bold; font.pixelSize: IrisStyle.typeTitle }
+                IrisText { text: root.scene === "widget" ? Translation.tr("Widget") : Translation.tr("Today"); font.family: IrisStyle.fontTitle; font.weight: IrisStyle.weight(Font.Bold); font.pixelSize: IrisStyle.typeTitle }
                 Repeater {
                     model: root.scene === "widget" ? 1 : 3
                     Rectangle {

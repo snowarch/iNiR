@@ -52,7 +52,7 @@ PreviewScene {
                     id: timeText
                     text: generalRoot.time
                     font.family: IrisStyle.fontDot
-                    font.weight: Font.Normal
+                    font.weight: IrisStyle.figureWeight
                     font.pixelSize: Math.round(IrisStyle.typeDisplay * 1.3)
                     font.features: { "tnum": 1 }
                 }
@@ -62,7 +62,7 @@ PreviewScene {
                     text: generalRoot.half
                     color: IrisStyle.textSecondary
                     font.pixelSize: IrisStyle.typeTitle
-                    font.weight: Font.DemiBold
+                    font.weight: IrisStyle.weight(Font.DemiBold)
                 }
             }
             IrisText {
