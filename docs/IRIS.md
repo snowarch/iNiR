@@ -177,6 +177,10 @@ iRiS Settings is laid out like a phone or Mac settings app: sections in the side
 
 Besides everything iRiS draws, it carries the shared settings iRiS acts on: time format and language, notifications and quiet hours, alert sounds, night light, battery, game mode, screen timeouts, screenshots and recording (Japanese lookup and Anki included). They are the same settings Material and Waffle use; Niri (windows, keyboard and mouse, screen resolution and scale) has native iRiS pages; More Settings has the shared pages that still apply to iRiS (wallpaper engine, desktop widgets, monitors, autostart, services, tools).
 
+It comes in four layouts, switched from the head of any of them: Classic (the sidebar one above), Folio (an index and one area per page, like a book), Pocket (one column at the side of the screen, so the desktop beside it is the preview) and Drawer (rises from the bottom like a desk drawer, area keys along its top). Open Settings over the desktop or as a window; either way the wallpaper behind it stays sharp.
+
+Style, Look picks how the controls dress: Apple (the default: your accent on what you choose), Nothing (ink and one signal colour), Synth (an instrument panel: keys that sink and light an LED, faders, orange for what's on) or Gel (glossy capsules filled with your colour). Each place (Island, Dock, Settings, Spotlight, Orbit, lock, widgets, notifications, OSD) can stay on Apple while the rest wears the look.
+
 General opens on you: your picture (tap it to pick a new one), a greeting and the desktop you're looking at. Modules you write with the iRiS SDK (`defaults/widgets/IRIS-SDK.md`) are turned on under Island, Desktop page, Your modules.
 
 ```bash
