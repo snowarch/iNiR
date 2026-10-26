@@ -53,7 +53,8 @@
     "config": "IrisConfigSchema.qml"
   },
   "flags": {
-    "lockSurfaceSync": true
+    "lockSurfaceSync": true,
+    "lazyServices": true
   },
   "customWidget": {
     "face": "widgets/templates/IrisCompact.qml",
@@ -61,5 +62,16 @@
       "island.desktop"
     ]
   },
-  "configKey": "iris"
+  "configKey": "iris",
+  "enabledPanels": [
+    "irisBar",
+    "irisBackground",
+    "irisPalette",
+    "irisControlCenter",
+    "irisNotificationPopup",
+    "irisOnScreenDisplay",
+    "irisSessionScreen",
+    "irisLock",
+    "irisPolkit"
+  ]
 }

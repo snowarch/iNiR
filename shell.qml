@@ -67,10 +67,9 @@ ShellRoot {
     property var _notepadService
 
     function _ensureDeferredFamilyServices(): void {
-        const family = Config.options?.panelFamily ?? "ii"
         root._gameModeService = GameMode
         root._fontSyncService = FontSyncService
-        if (family !== "iris") {
+        if (!Plugins.flag(Plugins.active, "lazyServices")) {
             root._windowPreviewService = WindowPreviewService
             root._weatherService = Weather
             root._voiceSearchService = VoiceSearch
@@ -79,12 +78,11 @@ ShellRoot {
     }
 
     function _ensureLateFamilyServices(): void {
-        const family = Config.options?.panelFamily ?? "ii"
         root._shellUpdatesService = ShellUpdates
         root._autostartService = Autostart
         root._hubService = Hub
         root._niriAnimationPresetsService = NiriAnimationPresets
-        if (family !== "iris") {
+        if (!Plugins.flag(Plugins.active, "lazyServices")) {
             root._calendarSyncService = CalendarSync
             root._todoService = Todo
             root._notepadService = Notepad
@@ -262,17 +260,26 @@ ShellRoot {
                 // Tier 3 is scheduled by shellEntryTimer so its 500 ms delay is
                 // measured from the first frame, not concurrently with it.
                 shellEntryTimer.start();
-                // Only reset enabledPanels if it's empty or undefined (first run / corrupted config)
-                if (!Config.options?.enabledPanels || Config.options.enabledPanels.length === 0) {
-                    const family = Config.options?.panelFamily ?? "ii"
-                    if (root.families.includes(family)) {
-                        Config.setNestedValue("enabledPanels", root.panelFamilies[family])
-                    }
-                }
-                // Migration: Ensure waffle family has wBackdrop instead of iiBackdrop
-                root.migrateEnabledPanels();
+                root._settlePanels();
             }
         }
+    }
+
+    Connections {
+        target: Plugins
+        function onReadyChanged() { root._settlePanels() }
+    }
+
+    // The panel lists come from each family's plugin.json: they settle once both the config and the plugins are read.
+    function _settlePanels(): void {
+        if (!Config.ready || !Plugins.ready || root._migrationDone) return
+        // Only reset enabledPanels if it's empty or undefined (first run / corrupted config)
+        if (!Config.options?.enabledPanels || Config.options.enabledPanels.length === 0) {
+            const panels = Plugins.panels(Config.options?.panelFamily ?? "ii")
+            if (panels.length > 0)
+                Config.setNestedValue("enabledPanels", panels)
+        }
+        root.migrateEnabledPanels();
     }
 
     // Migrate enabledPanels for users upgrading from older versions
@@ -288,7 +295,7 @@ ShellRoot {
         // Only add genuinely NEW panels (from updates), not panels the user deliberately disabled.
         // knownPanels tracks what the user has seen. If a panel is in knownPanels but not in
         // enabledPanels, the user removed it — don't re-add.
-        const basePanels = root.panelFamilies[family] ?? [];
+        const basePanels = Plugins.panels(family);
         let known = [...(Config.options?.knownPanels ?? [])];
         const isFirstRun = known.length === 0;
 
@@ -297,8 +304,8 @@ ShellRoot {
             // This prevents re-adding panels that existing users already disabled,
             // including across family switches.
             const allPanels = [];
-            for (const fam of root.families) {
-                for (const p of (root.panelFamilies[fam] ?? [])) {
+            for (const fam of Plugins.families) {
+                for (const p of Plugins.panels(fam)) {
                     if (!allPanels.includes(p)) allPanels.push(p);
                 }
             }
@@ -329,19 +336,6 @@ ShellRoot {
             root._log("[Shell] First start of " + family + ": enabling its panels");
             panels.push(...basePanels.filter(p => !panels.includes(p)));
             changed = true;
-        }
-
-        if (family === "waffle") {
-            // If waffle family has iiBackdrop but not wBackdrop, migrate
-            const hasIiBackdrop = panels.includes("iiBackdrop");
-            const hasWBackdrop = panels.includes("wBackdrop");
-
-            if (hasIiBackdrop && !hasWBackdrop) {
-                root._log("[Shell] Migrating enabledPanels: replacing iiBackdrop with wBackdrop for waffle family");
-                panels = panels.filter(p => p !== "iiBackdrop");
-                panels.push("wBackdrop");
-                changed = true;
-            }
         }
 
         const legacyPinnedApps = ["org.gnome.Nautilus", "firefox", "foot"];
@@ -826,35 +820,13 @@ ShellRoot {
     // Shared (always loaded via ToastManager)
     ToastManager {}
 
-    // === Panel Families ===
-    // AltSwitcher controller selection lives above the family loaders. Waffle
-    // receives the lightweight shared router; ii receives either that controller
-    // or the full visual tree according to its no-visual setting.
-    property list<string> families: ["ii", "waffle", "iris"]
-    property var panelFamilies: ({
-        "ii": [
-            "iiBar", "iiBackground", "iiBackdrop", "iiBootGreeting", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock",
-            "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard",
-            "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners",
-            "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar",
-            "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiRecordingOsd", "iiDashboard",
-            "iiMascotCompanion"
-        ],
-        "waffle": [
-            "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wTaskView", "wLock", "wPolkit", "wSessionScreen",
-            // Shared modules that work with waffle
-            // WaffleAltSwitcher is family-local and loaded by ShellWafflePanels;
-            // the shared `altSwitcher` target reaches it through the lightweight router.
-            "iiBootGreeting", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
-            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard",
-            "iiShellUpdate", "iiMascotCompanion"
-        ],
-        "iris": [
-            "irisBar", "irisBackground", "irisPalette", "irisControlCenter",
-            "irisNotificationPopup", "irisOnScreenDisplay", "irisSessionScreen",
-            "irisLock", "irisPolkit"
-        ]
-    })
+    // Installed families in the order the switch walks them (familyCycle), the rest after; each lists its panels in
+    // its plugin.json (`enabledPanels`).
+    readonly property list<string> families: {
+        const installed = Plugins.families
+        const cycle = Array.from(Config.options?.familyCycle ?? []).filter(family => installed.includes(family))
+        return [...new Set(cycle), ...installed.filter(family => !cycle.includes(family))]
+    }
 
     // === Panel Family Transition ===
     property string _pendingFamily: ""
@@ -865,7 +837,7 @@ ShellRoot {
     property bool _familyRestartPending: false
 
     function _ensureFamilyPanels(family: string): void {
-        const basePanels = root.panelFamilies[family] ?? []
+        const basePanels = Plugins.panels(family)
         const currentPanels = Config.options?.enabledPanels ?? []
 
         if (basePanels.length === 0) return
@@ -929,9 +901,8 @@ ShellRoot {
             _transitionUsesOverlay = false
         }
         if (_transitionInProgress) return
-        const currentFamily = Config.options?.panelFamily ?? "ii"
-        if (currentFamily === "iris")
-            GlobalStates.endIrisEditing()
+        const leave = GlobalStates.familyVerb("family", "leave")
+        if (leave) leave()
 
         // Qt 6.11 can segfault during layer-shell teardown; restart the supervised shell.
         const qt611LayerShellRisk = Quickshell.hasQtVersion(6, 11)
@@ -961,7 +932,7 @@ ShellRoot {
 
     function _restartIntoFamily(targetFamily: string): void {
         if (root._familyRestartPending) return
-        const basePanels = Array.from(root.panelFamilies[targetFamily] ?? [])
+        const basePanels = Plugins.panels(targetFamily)
         if (basePanels.length === 0) {
             root._transitionInProgress = false
             return

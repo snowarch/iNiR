@@ -19,7 +19,7 @@ Loading has two stages. `shell.qml` loads one family's critical host first (`mod
 A panel loads only when:
 
 1. `Config.ready` is true.
-2. Its ID is in `Config.options.enabledPanels`. The default list is in `defaults/config.json`. Users switch panels off in Settings › Modules.
+2. Its ID is in `Config.options.enabledPanels`. A fresh install starts from `defaults/config.json`; a family running for the first time adds the list in its `plugin.json` (`enabledPanels`). Users switch panels off in Settings › Modules.
 3. Any `extraCondition` holds.
 4. Its open state or the deferred phase allows it.
 

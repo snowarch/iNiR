@@ -17,6 +17,9 @@ QtObject {
     readonly property string _clipboardPrefix: Config.options?.search?.prefix?.clipboard ?? ";"
 
     readonly property var verbs: ({
+        family: {
+            leave: () => GlobalStates.endIrisEditing()
+        },
         taskview: {
             toggle: () => { if (root._orbitOn()) GlobalStates.irisOrbitOpen = !GlobalStates.irisOrbitOpen; else GlobalStates.searchOpen = !GlobalStates.searchOpen },
             open: () => { if (root._orbitOn()) GlobalStates.irisOrbitOpen = true; else GlobalStates.searchOpen = true },

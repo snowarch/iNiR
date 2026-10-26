@@ -36,6 +36,8 @@ Singleton {
         return file.length > 0 ? Qt.resolvedUrl(`../${manifest.provides}/${file}`).toString() : ""
     }
     function flag(id: string, name: string): bool { return Boolean(root.manifests[id]?.flags?.[name]) }
+    // The panels a family turns on when it first runs (`enabledPanels`).
+    function panels(id: string): var { return Array.from(root.manifests[id]?.enabledPanels ?? []) }
     // A file of a plugin on disk, for what is copied rather than loaded (a template).
     function path(id: string, file: string): string {
         const manifest = root.manifests[id]

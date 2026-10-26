@@ -24,5 +24,33 @@
   "customWidget": {
     "face": "widgets/templates/WaffleCard.qml"
   },
-  "configKey": "waffles"
+  "configKey": "waffles",
+  "enabledPanels": [
+    "wBar",
+    "wBackground",
+    "wBackdrop",
+    "wStartMenu",
+    "wActionCenter",
+    "wNotificationCenter",
+    "wNotificationPopup",
+    "wOnScreenDisplay",
+    "wWidgets",
+    "wTaskView",
+    "wLock",
+    "wPolkit",
+    "wSessionScreen",
+    "iiBootGreeting",
+    "iiCheatsheet",
+    "iiOnScreenKeyboard",
+    "iiOverlay",
+    "iiOverview",
+    "iiRegionSelector",
+    "iiScreenCorners",
+    "iiWallpaperSelector",
+    "iiWallpaperLauncher",
+    "iiCoverflowSelector",
+    "iiClipboard",
+    "iiShellUpdate",
+    "iiMascotCompanion"
+  ]
 }
