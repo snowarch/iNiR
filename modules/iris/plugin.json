@@ -48,7 +48,8 @@
     "desktopMenu": "background/IrisDesktopMenuPart.qml",
     "wallpaper.afterglow": "background/IrisAfterglowWallpaper.qml",
     "wallpaper.leak": "background/IrisLeakWallpaper.qml",
-    "regionToolbar": "regionSelector/IrisOptionsToolbar.qml"
+    "regionToolbar": "regionSelector/IrisOptionsToolbar.qml",
+    "familyTransition": "IrisFamilyTransition.qml"
   },
   "flags": {
     "lockSurfaceSync": true

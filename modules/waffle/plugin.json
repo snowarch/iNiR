@@ -12,6 +12,7 @@
     "lockSurface": "lock/WaffleLockSurfaceSafe.qml",
     "lockSurface.hyprland": "lock/WaffleLockSurface.qml",
     "style": "WaffleFamilyStyle.qml",
-    "regionToolbar": "regionSelector/WOptionsToolbar.qml"
+    "regionToolbar": "regionSelector/WOptionsToolbar.qml",
+    "familyTransition": "WaffleFamilyTransition.qml"
   }
 }

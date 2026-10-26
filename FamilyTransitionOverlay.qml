@@ -4,9 +4,8 @@ import Quickshell
 import Quickshell.Wayland
 import qs.modules.common
 import qs.modules.common.functions
-import qs.modules.waffle.looks
+import qs.modules.common.widgets
 import qs.services
-import qs.modules.iris.components
 // Elegant family transition overlay
 //
 // Choreography:
@@ -33,8 +32,9 @@ Scope {
     readonly property int _exitDuration: _animated ? 380 : 5
 
     // ── State ───────────────────────────────────────────────────────────
-    property bool _isWaffle: false
-    property bool _isIris: false
+    // The target family's own transition (its part `familyTransition`), Material's ink ripple otherwise. It may say
+    // how much the wallpaper blurs (`blur`) and is tinted (`tint`), the plate behind it (`plate`) and its own wallpaper.
+    property Item _familyPart: null
     property string _targetFamily: "ii"
     property bool _phase: false   // false = enter/hold, true = exit
     property bool _active: false
@@ -53,12 +53,6 @@ Scope {
     property color _snapBackground: "transparent"
     property color _snapOnSurface: "transparent"
     property bool _snapDarkmode: true
-    // Waffle transition colors
-    property color _snapWaffleBg0: "transparent"
-    property color _snapWaffleBg1: "transparent"
-    property color _snapWaffleFg: "transparent"
-    property color _snapWaffleSubfg: "transparent"
-    property color _snapWaffleAccent: "transparent"
 
     // ════════════════════════════════════════════════════════════════════
     // TRIGGER
@@ -121,8 +115,6 @@ Scope {
             bgScaleOut.stop()
 
             root._targetFamily = GlobalStates.familyTransitionTarget || "ii"
-            root._isWaffle = root._targetFamily === "waffle"
-            root._isIris = root._targetFamily === "iris"
             root._phase = false
             root._active = true
 
@@ -134,11 +126,6 @@ Scope {
             root._snapBackground = Appearance.m3colors.m3background
             root._snapOnSurface = Appearance.m3colors.m3onSurface
             root._snapDarkmode = Appearance.m3colors.darkmode
-            root._snapWaffleBg0 = Looks.colors.bg0
-            root._snapWaffleBg1 = Looks.colors.bg1
-            root._snapWaffleFg = Looks.colors.fg
-            root._snapWaffleSubfg = Looks.colors.subfg
-            root._snapWaffleAccent = Looks.colors.accent
 
             // Reset to pre-entry state
             root._overlayOpacity = 0
@@ -174,7 +161,7 @@ Scope {
     NumberAnimation {
         id: blurIn
         target: root; property: "_blurAmount"
-        from: 0; to: root._isIris ? 0.22 : 0.8
+        from: 0; to: 1
         duration: _animated ? 360 : 5
         easing.type: Easing.OutQuad
     }
@@ -266,7 +253,7 @@ Scope {
                 // Solid fallback behind the blur (visible while image loads)
                 Rectangle {
                     anchors.fill: parent
-                    color: root._isWaffle ? root._snapWaffleBg0 : root._snapBackground
+                    color: root._familyPart?.plate ?? root._snapBackground
                 }
 
                 // ── Blurred wallpaper with cinematic zoom ──
@@ -280,16 +267,7 @@ Scope {
                         id: wallpaperImg
                         anchors.fill: parent
                         source: {
-                            let path = ""
-                            if (root._isWaffle) {
-                                const wBg = Config.options?.waffles?.background ?? {}
-                                const useMain = wBg.useMainWallpaper ?? true
-                                path = useMain
-                                    ? (Config.options?.background?.wallpaperPath ?? "")
-                                    : (wBg.wallpaperPath ?? Config.options?.background?.wallpaperPath ?? "")
-                            } else {
-                                path = Config.options?.background?.wallpaperPath ?? ""
-                            }
+                            const path = root._familyPart?.wallpaperPath ?? (Config.options?.background?.wallpaperPath ?? "")
                             if (!path) return ""
                             // Image cannot decode a video, so a video wallpaper
                             // used to log "Formato de imagen no soportado" and
@@ -318,7 +296,8 @@ Scope {
                         source: wallpaperImg
                         visible: wallpaperImg.status === Image.Ready
                         blurEnabled: Appearance.effectsEnabled
-                        blur: root._blurAmount
+                        // The family's own depth, read live: its part may arrive after the blur started.
+                        blur: root._blurAmount * (root._familyPart?.blur ?? 0.8)
                         blurMax: 64
                         saturation: 0.25
                     }
@@ -327,7 +306,7 @@ Scope {
                     Rectangle {
                         anchors.fill: parent
                         color: root._snapBackground
-                        opacity: root._isWaffle ? 0.08 : root._isIris ? 0.16 : 0.28
+                        opacity: root._familyPart?.tint ?? 0.28
                     }
                 }
 
@@ -342,218 +321,23 @@ Scope {
                 }
 
                 // ── Family-specific transition effect ──
+                FamilyPart {
+                    id: familyTransition
+                    anchors.fill: parent
+                    family: root._targetFamily
+                    part: "familyTransition"
+                    props: ({ overlay: root })
+                    onItemChanged: root._familyPart = item
+                }
                 Loader {
                     anchors.fill: parent
-                    sourceComponent: root._isWaffle ? waffleTransition
-                        : root._isIris ? irisTransition : materialTransition
+                    active: familyTransition.url.length === 0
+                    sourceComponent: materialTransition
                 }
             }
         }
     }
 
-    Component {
-        id: irisTransition
-
-        // iRiS arrives as its own mark: the real IrisMark, orbiting, over the veiled wallpaper, its name
-        // under it in the family's title face. It emerges on the family's curve and leaves the way it
-        // came, never bouncing; the shell then grows inward on its own arrival.
-        Item {
-            id: irisRoot
-            anchors.fill: parent
-            property bool entered: false
-            Component.onCompleted: Qt.callLater(() => entered = true)
-            readonly property real shown: root._phase ? 0 : (irisRoot.entered ? 1 : 0)
-
-            Column {
-                anchors.centerIn: parent
-                spacing: Math.round(16 * FamilyStyle.density)
-                opacity: irisRoot.shown
-                scale: root._phase ? 0.94 : (irisRoot.entered ? 1 : 0.86)
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: root._phase ? FamilyStyle.recedeDuration : FamilyStyle.emergeDuration
-                        easing.type: Easing.BezierSpline
-                        easing.bezierCurve: root._phase ? FamilyStyle.recedeCurve : FamilyStyle.emergeCurve
-                    }
-                }
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: root._phase ? FamilyStyle.recedeDuration : FamilyStyle.emergeDuration
-                        easing.type: Easing.BezierSpline
-                        easing.bezierCurve: root._phase ? FamilyStyle.recedeCurve : FamilyStyle.emergeCurve
-                    }
-                }
-
-                IrisMark {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    implicitSize: Math.round(72 * FamilyStyle.density)
-                    orbiting: true
-                }
-                IrisText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    role: IrisText.Display
-                    text: "iRiS"
-                    color: FamilyStyle.onMedia
-                }
-            }
-        }
-    }
-
-    // ════════════════════════════════════════════════════════════════════
-    // WAFFLE — Fluent acrylic card reveal
-    //
-    // A translucent card scales up from center with the Fluent Design
-    // decelerate curve, content staggers in, accent shimmer at bottom.
-    // ════════════════════════════════════════════════════════════════════
-    Component {
-        id: waffleTransition
-
-        Item {
-            id: waffleRoot
-            anchors.fill: parent
-
-            property bool expanded: false
-            property bool showIcon: false
-            property bool showText: false
-            property bool showAccent: false
-
-            Component.onCompleted: Qt.callLater(() => expanded = true)
-
-            // Staggered content reveal
-            Timer { interval: 160; running: waffleRoot.expanded; onTriggered: waffleRoot.showIcon = true }
-            Timer { interval: 240; running: waffleRoot.expanded; onTriggered: waffleRoot.showText = true }
-            Timer { interval: 320; running: waffleRoot.expanded; onTriggered: waffleRoot.showAccent = true }
-
-            // ── Acrylic card ──
-            Rectangle {
-                id: acrylicCard
-                anchors.centerIn: parent
-                width: 260
-                height: 180
-                radius: Looks.radius.xLarge
-                color: ColorUtils.transparentize(root._snapWaffleBg1, 0.15)
-                border.width: 1
-                border.color: ColorUtils.transparentize(root._snapWaffleFg, 0.9)
-
-                opacity: root._phase ? 0 : (waffleRoot.expanded ? 1 : 0)
-                scale: root._phase ? 0.92 : (waffleRoot.expanded ? 1 : 0.82)
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: root._phase ? 200 : 280
-                        easing.type: Easing.BezierSpline
-                        easing.bezierCurve: root._phase
-                            ? Looks.transition.easing.bezierCurve.accelerate
-                            : Looks.transition.easing.bezierCurve.decelerate
-                    }
-                }
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: root._phase ? 220 : 340
-                        easing.type: Easing.BezierSpline
-                        easing.bezierCurve: root._phase
-                            ? Looks.transition.easing.bezierCurve.accelerate
-                            : Looks.transition.easing.bezierCurve.decelerate
-                    }
-                }
-
-                // Accent shimmer line
-                Rectangle {
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 12
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: waffleRoot.showAccent && !root._phase ? 48 : 0
-                    height: 2.5
-                    radius: 1.25
-                    color: root._snapWaffleAccent
-                    opacity: root._phase ? 0 : 1
-
-                    Behavior on width {
-                        NumberAnimation {
-                            duration: root._phase ? 120 : 300
-                            easing.type: Easing.BezierSpline
-                            easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
-                        }
-                    }
-                    Behavior on opacity { NumberAnimation { duration: 120 } }
-                }
-            }
-
-            // ── Icon ──
-            Image {
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: -22
-                width: 48
-                height: 48
-                source: `${Looks.iconsPath}/start-here.svg`
-                sourceSize: Qt.size(48, 48)
-                opacity: root._phase ? 0 : (waffleRoot.showIcon ? 1 : 0)
-                scale: root._phase ? 0.9 : (waffleRoot.showIcon ? 1 : 0.7)
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: root._phase ? 120 : 240
-                        easing.type: Easing.BezierSpline
-                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
-                    }
-                }
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: root._phase ? 140 : 300
-                        easing.type: Easing.BezierSpline
-                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
-                    }
-                }
-
-                layer.enabled: Appearance.effectsEnabled
-                layer.effect: MultiEffect {
-                    colorization: 1.0
-                    colorizationColor: root._snapWaffleFg
-                }
-            }
-
-            // ── Text group ──
-            Column {
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: 32
-                spacing: 3
-                opacity: root._phase ? 0 : (waffleRoot.showText ? 1 : 0)
-                scale: root._phase ? 0.95 : (waffleRoot.showText ? 1 : 0.92)
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: root._phase ? 100 : 220
-                        easing.type: Easing.BezierSpline
-                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
-                    }
-                }
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: root._phase ? 120 : 260
-                        easing.type: Easing.BezierSpline
-                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
-                    }
-                }
-
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Waffle"
-                    font.pixelSize: 19
-                    font.family: Looks.font.family.ui
-                    font.weight: Font.DemiBold
-                    color: root._snapWaffleFg
-                }
-
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Windows 11 Style"
-                    font.pixelSize: Looks.font.pixelSize.small
-                    font.family: Looks.font.family.ui
-                    color: root._snapWaffleSubfg
-                }
-            }
-        }
-    }
 
     // ════════════════════════════════════════════════════════════════════
     // MATERIAL II — Ink ripple expansion
