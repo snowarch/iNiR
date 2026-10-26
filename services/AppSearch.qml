@@ -677,8 +677,8 @@ Singleton {
         }
 
 
-        // Give up
-        return str;
+        // Give up: an unknown id is not an icon name, the provider would only warn and paint its checkerboard
+        return "";
     }
 
     // Returns a ready-to-use icon source (handles both icon names and absolute paths)

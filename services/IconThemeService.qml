@@ -31,7 +31,7 @@ Singleton {
     function smartIconName(icon, appId) {
         if (!icon) {
             const guessed = AppSearch.lookupDesktopEntry(appId)?.icon ?? AppSearch.guessIcon(appId);
-            return guessed || appId || "application-x-executable";
+            return guessed || "application-x-executable";
         }
         
         if (icon.startsWith("/") || icon.startsWith("file://")) {

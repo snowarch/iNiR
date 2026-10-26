@@ -27,10 +27,10 @@ Item {
         anchors.fill: parent
         animated: true
         roundToIconSize: true
-        fallback: root.iconName
+        fallback: root.iconName || "application-x-executable"
         source: root.hasBundledOverride
             ? `${Looks.iconsPath}/${root.iconName}${Looks.dark ? "-dark" : "-light"}.svg`
-            : root.iconName
+            : (root.iconName || "application-x-executable")
     }
 
     Loader {
