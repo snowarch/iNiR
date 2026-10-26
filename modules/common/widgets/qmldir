@@ -9,7 +9,6 @@ CalendarView 1.0 CalendarView.qml
 CavaProcess 1.0 CavaProcess.qml
 CavaSpectrum 1.0 CavaSpectrum.qml
 CavaVisualizer 1.0 CavaVisualizer.qml
-CavaWavyLine 1.0 CavaWavyLine.qml
 AudioVisualizerLayer 1.0 AudioVisualizerLayer.qml
 Circle 1.0 Circle.qml
 CircularProgress 1.0 CircularProgress.qml

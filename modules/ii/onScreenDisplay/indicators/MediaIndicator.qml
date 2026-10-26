@@ -326,7 +326,7 @@ Item {
             }
             spacing: Appearance.sizes.spacingSmall
 
-            // Album art — fills height, stays square (BarMediaPlayerItem pattern)
+            // Album art — fills height, stays square
             Rectangle {
                 id: artworkFrame
                 Layout.preferredWidth: root.artworkSize

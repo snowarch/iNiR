@@ -112,7 +112,7 @@ QtObject {
         }
     }
     
-    // Art download logic — mirrors BarMediaPlayerItem (the known-good impl)
+    // Art download logic
     function checkAndDownloadArt(): void {
         artworkResolver.refresh()
     }

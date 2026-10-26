@@ -162,8 +162,6 @@ Singleton {
     property int currentIndex: -1
     property string activePlaylistSource: ""
     
-    // currentArtistInfo removed — was declared but never populated.
-    // Artist header UI in YtMusicView was dead code.
     
     property string userName: ""
     property string userAvatar: ""
@@ -607,7 +605,6 @@ Singleton {
         function onRadioTracksChanged() { root._onRadioTracks() }
     }
     
-    // clearArtistInfo() removed — currentArtistInfo was dead code
 
     property var _pendingItem: null
     property var _pendingAvailabilityItem: null

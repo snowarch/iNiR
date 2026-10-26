@@ -13,5 +13,3 @@ QuickWallpaper 1.0 QuickWallpaper.qml
 WorldClockWidget 1.0 WorldClockWidget.qml
 DraggableWidgetContainer 1.0 DraggableWidgetContainer.qml
 
-YtMusicPlayerCard 1.0 YtMusicPlayerCard.qml
-YtMusicTrackItem 1.0 YtMusicTrackItem.qml
