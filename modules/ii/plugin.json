@@ -1,0 +1,12 @@
+{
+  "id": "ii",
+  "kind": "family",
+  "name": "Material",
+  "summary": "Material 3 Expressive panels, bars, docks and widgets in nine global styles.",
+  "version": "2.33.0",
+  "provides": "modules/ii",
+  "entries": {
+    "critical": "critical/ShellIiCriticalPanels.qml",
+    "panels": "ShellIiPanelsImpl.qml"
+  }
+}

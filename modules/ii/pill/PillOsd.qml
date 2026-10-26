@@ -124,7 +124,7 @@ Item {
 
     function flash(which, intentionalTrack = false) {
         // OSD face switched off: the standalone OnScreenDisplay panel owns the
-        // flashes instead (ShellIiPanels hands it back when this key is false).
+        // flashes instead (ShellIiPanelsImpl hands it back when this key is false).
         if (!(Config.options?.bar?.pill?.osd ?? true))
             return false;
         if (which === "track" && !(Config.options?.osd?.mediaEnabled ?? true))

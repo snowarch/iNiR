@@ -14,7 +14,7 @@ Modules are the UI. They render and orchestrate, and they read state from `servi
 
 ## How panels load
 
-Loading has two stages. `shell.qml` loads one family's critical host first (`modules/{ii,waffle,iris}/critical/Shell*CriticalPanels.qml`). It holds only first-frame surfaces. When `GlobalStates.deferredPanelsReady` is set, the thin root (`ShellIiPanels.qml`, `ShellWafflePanels.qml` or `ShellIrisPanels.qml`) loads the family's `Shell*PanelsImpl.qml`. That impl declares `DeferredPanelLoader` and `OnDemandPanelLoader`.
+Loading has two stages. `shell.qml` loads one family's critical host first (`modules/{ii,waffle,iris}/critical/Shell*CriticalPanels.qml`). It holds only first-frame surfaces. When `GlobalStates.deferredPanelsReady` is set, it loads the family's `Shell*PanelsImpl.qml`. Both paths come from the family's `plugin.json` (`entries`), read by `services/Plugins.qml`: `shell.qml` never names a family. That impl declares `DeferredPanelLoader` and `OnDemandPanelLoader`.
 
 A panel loads only when:
 

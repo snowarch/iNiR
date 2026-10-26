@@ -1,0 +1,12 @@
+{
+  "id": "iris",
+  "kind": "family",
+  "name": "iRiS",
+  "summary": "One living body: the Island, the chassis and Apple-grade motion.",
+  "version": "2.33.0",
+  "provides": "modules/iris",
+  "entries": {
+    "critical": "critical/ShellIrisCriticalPanels.qml",
+    "panels": "ShellIrisPanelsImpl.qml"
+  }
+}

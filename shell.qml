@@ -883,52 +883,29 @@ ShellRoot {
         }
     }
 
-    LazyLoader {
-        loading: Config.ready && !root._familyPanelsSuspended && (Config.options?.panelFamily ?? "ii") === "ii"
-        activeAsync: Config.ready && !root._familyPanelsSuspended && (Config.options?.panelFamily ?? "ii") === "ii"
-        source: "modules/ii/critical/ShellIiCriticalPanels.qml"
-    }
+    // Each installed family's panels, found through its plugin.json: the critical ones with the config, the rest
+    // once the first frame is out. Only the chosen family loads.
+    Variants {
+        model: Plugins.families
+        Scope {
+            id: family
+            required property string modelData
+            readonly property bool chosen: Config.ready && Plugins.ready && !root._familyPanelsSuspended
+                && (Config.options?.panelFamily ?? "ii") === family.modelData
 
-    LazyLoader {
-        readonly property bool enabled: Config.ready
-            && GlobalStates.deferredPanelsReady
-            && !root._familyPanelsSuspended
-            && (Config.options?.panelFamily ?? "ii") === "ii"
-        loading: enabled
-        activeAsync: enabled
-        source: "ShellIiPanels.qml"
-    }
+            LazyLoader {
+                loading: family.chosen
+                activeAsync: family.chosen
+                source: Plugins.entry(family.modelData, "critical")
+            }
 
-    LazyLoader {
-        loading: Config.ready && !root._familyPanelsSuspended && (Config.options?.panelFamily ?? "ii") === "waffle"
-        activeAsync: Config.ready && !root._familyPanelsSuspended && (Config.options?.panelFamily ?? "ii") === "waffle"
-        source: "modules/waffle/critical/ShellWaffleCriticalPanels.qml"
-    }
-
-    LazyLoader {
-        readonly property bool enabled: Config.ready
-            && GlobalStates.deferredPanelsReady
-            && !root._familyPanelsSuspended
-            && (Config.options?.panelFamily ?? "ii") === "waffle"
-        loading: enabled
-        activeAsync: enabled
-        source: "ShellWafflePanels.qml"
-    }
-
-    LazyLoader {
-        loading: Config.ready && !root._familyPanelsSuspended && (Config.options?.panelFamily ?? "ii") === "iris"
-        activeAsync: Config.ready && !root._familyPanelsSuspended && (Config.options?.panelFamily ?? "ii") === "iris"
-        source: "modules/iris/critical/ShellIrisCriticalPanels.qml"
-    }
-
-    LazyLoader {
-        readonly property bool enabled: Config.ready
-            && GlobalStates.deferredPanelsReady
-            && !root._familyPanelsSuspended
-            && (Config.options?.panelFamily ?? "ii") === "iris"
-        loading: enabled
-        activeAsync: enabled
-        source: "ShellIrisPanels.qml"
+            LazyLoader {
+                readonly property bool enabled: family.chosen && GlobalStates.deferredPanelsReady
+                loading: enabled
+                activeAsync: enabled
+                source: Plugins.entry(family.modelData, "panels")
+            }
+        }
     }
 
     // Close confirmation dialog (always loaded, handles IPC)

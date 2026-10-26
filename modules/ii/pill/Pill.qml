@@ -123,7 +123,7 @@ Item {
     readonly property real iconPx: Math.round(Math.max(17, Config.options?.bar?.pill?.iconSize ?? 19) * s)
 
     // Toasts off hands notifications back to the standalone popup panel
-    // (ShellIiPanels re-enables it), so nothing goes silent.
+    // (ShellIiPanelsImpl re-enables it), so nothing goes silent.
     function outputEnabled(list: var): bool {
         if (!list || list.length === 0)
             return true

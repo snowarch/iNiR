@@ -10,7 +10,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 
 // Separate Material 3 bar selected by `bar.appearanceStyle === "m3"`.
-// It replaces modules/ii/bar/Bar.qml entirely while active (see ShellIiPanels),
+// It replaces modules/ii/bar/Bar.qml entirely while active (see ShellIiPanelsImpl),
 // so it deliberately registers no IPC target and no GlobalShortcut: "bar" is
 // owned by shell.qml and the shortcuts by modules/ii/bar/Bar.qml. Toggling
 // GlobalStates.barOpen through either still drives this bar.

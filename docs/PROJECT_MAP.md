@@ -7,7 +7,7 @@ How iNiR is laid out, what each part owns, and what a change there reaches. Read
 | Path | Owns | Risk |
 |---|---|---|
 | `shell.qml` | Startup order, family loading, shell-wide IPC, family transitions | High |
-| `ShellIiPanels.qml`, `ShellWafflePanels.qml`, `ShellIrisPanels.qml` | Thin deferred wrappers around each family's `Shell*PanelsImpl.qml` | High |
+| `services/Plugins.qml`, `modules/*/plugin.json` | Which families are installed and their entry files (shell.qml loads them through it) | High |
 | `GlobalStates.qml`, `FamilyTransitionOverlay.qml` | Transient UI state and the family transition | High |
 | `settings.qml`, `waffleSettings.qml`, `welcome.qml` | Settings entry points and the first-run wizard | Normal |
 | `modules/common/` | Config, Appearance, Directories, shared widgets | High |

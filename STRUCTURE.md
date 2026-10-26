@@ -5,8 +5,6 @@
 ```
 inir/
 ├── shell.qml                     # Root entry — loads services, selects panel family
-├── ShellIiPanels.qml             # Thin deferred wrapper -> modules/ii/ShellIiPanelsImpl.qml
-├── ShellWafflePanels.qml         # Thin deferred wrapper -> modules/waffle/ShellWafflePanelsImpl.qml
 ├── GlobalStates.qml              # Runtime UI state (panel open/closed booleans)
 ├── FamilyTransitionOverlay.qml   # Animated family switch
 ├── settings.qml                  # Standalone shared Settings entrypoint
@@ -154,9 +152,9 @@ inir/
 **Entry Points:**
 - `shell.qml`: Root entry — loads services, selects panel family, triggers panel loading
 - `modules/ii/critical/ShellIiCriticalPanels.qml`: ii first-frame composition
-- `ShellIiPanels.qml` -> `modules/ii/ShellIiPanelsImpl.qml`: deferred/on-demand ii composition
+- `modules/ii/ShellIiPanelsImpl.qml`: deferred/on-demand ii composition (entries in `modules/ii/plugin.json`)
 - `modules/waffle/critical/ShellWaffleCriticalPanels.qml`: Waffle first-frame composition
-- `ShellWafflePanels.qml` -> `modules/waffle/ShellWafflePanelsImpl.qml`: deferred/on-demand Waffle composition
+- `modules/waffle/ShellWafflePanelsImpl.qml`: deferred/on-demand Waffle composition (entries in its `plugin.json`)
 - `settings.qml`: Standalone shared Settings entrypoint (same page registry as the shell overlay)
 - `welcome.qml`: First-run wizard
 

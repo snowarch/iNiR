@@ -34,20 +34,13 @@ Three mutually exclusive UI families, switchable at runtime (`Super+Shift+W`):
 | Right panel | SidebarRight | ActionCenter + NotificationCenter | IrisControlCenter |
 | Panels | ii (iiBar, iiDock, iiSidebarLeft, ...) | w (wBar, wStartMenu, wActionCenter, ... + shared ii panels) | iris (irisBar, irisBackground, irisPalette, irisControlCenter, ...) |
 
-Panel composition is intentionally split. `shell.qml` loads a small critical family host first and only loads the heavier family implementation after `deferredPanelsReady`:
+Families are plugins: each folder under `modules/` with a `plugin.json` is one, and `services/Plugins.qml` lists
+them. `shell.qml` never names a family; for the chosen one it loads the `critical` entry first and the heavier
+`panels` entry after `deferredPanelsReady`:
 
 ```text
-shell.qml
-  -> modules/ii/critical/ShellIiCriticalPanels.qml
-  -> ShellIiPanels.qml -> modules/ii/ShellIiPanelsImpl.qml
-
-shell.qml
-  -> modules/waffle/critical/ShellWaffleCriticalPanels.qml
-  -> ShellWafflePanels.qml -> modules/waffle/ShellWafflePanelsImpl.qml
-
-shell.qml
-  -> modules/iris/critical/ShellIrisCriticalPanels.qml
-  -> ShellIrisPanels.qml -> modules/iris/ShellIrisPanelsImpl.qml
+shell.qml -> Plugins.entry(family, "critical")   e.g. modules/iris/critical/ShellIrisCriticalPanels.qml
+shell.qml -> Plugins.entry(family, "panels")     e.g. modules/iris/ShellIrisPanelsImpl.qml
 ```
 
 Inside the implementation roots, `PanelLoader`, `DeferredPanelLoader`, and `OnDemandPanelLoader` choose whether a surface should be resident. For example:
@@ -66,9 +59,6 @@ Global-style detection is centralized in `Appearance.qml`. Use its semantic styl
 
 ```
 shell.qml                     # Root entry — startup, IPC routers, critical/deferred family gates
-ShellIiPanels.qml             # Thin deferred ii wrapper
-ShellWafflePanels.qml         # Thin deferred Waffle wrapper
-ShellIrisPanels.qml           # Thin deferred iRiS wrapper
 GlobalStates.qml              # Runtime UI state (panel open/closed booleans)
 FamilyTransitionOverlay.qml   # Animated family switch
 settings.qml                  # Standalone shared Settings entrypoint

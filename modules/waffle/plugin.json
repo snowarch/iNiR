@@ -1,0 +1,12 @@
+{
+  "id": "waffle",
+  "kind": "family",
+  "name": "Waffle",
+  "summary": "Windows 11 for people who want it: taskbar, Start, Action Center.",
+  "version": "2.33.0",
+  "provides": "modules/waffle",
+  "entries": {
+    "critical": "critical/ShellWaffleCriticalPanels.qml",
+    "panels": "ShellWafflePanelsImpl.qml"
+  }
+}

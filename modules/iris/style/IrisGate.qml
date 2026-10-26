@@ -5,12 +5,12 @@ import Quickshell
 import Quickshell.Io
 
 // iRiS surfaces open only when the host shell is iNiR: its own shell.qml loads
-// ShellIrisPanels.qml. A host that embeds the module under a different
-// shell.qml keeps them closed.
+// families as plugins (Plugins.entry). A host that embeds the module under a
+// different shell.qml keeps them closed.
 QtObject {
     id: root
 
-    readonly property bool official: hostFile.text().includes("ShellIrisPanels.qml")
+    readonly property bool official: hostFile.text().includes("Plugins.entry(family.modelData")
 
     property FileView hostFile: FileView {
         path: Quickshell.shellPath("shell.qml")

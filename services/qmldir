@@ -1,5 +1,6 @@
 module qs.services
 singleton AwwwBackend 1.0 AwwwBackend.qml
+singleton Plugins 1.0 Plugins.qml
 singleton Ai 1.0 Ai.qml
 singleton AppCatalog 1.0 AppCatalog.qml
 singleton AppLauncher 1.0 AppLauncher.qml
