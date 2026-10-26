@@ -4193,9 +4193,9 @@ Singleton {
                     property string numbersFontFamily: "" // Empty = Archivo SemiExpanded (bundled; the figure voice)
                     // The one colour of Signal (live, needs you, errors): "nothing" (#D71921), "wallpaper" or a #rrggbb.
                     property string signal: "nothing"
-                    // apple: the accent marks what is chosen; nothing: ink body, one signal colour
+                    // apple: the accent marks what is chosen; nothing: ink body, one signal colour; synth: keys and faders; gel: glossy accent
                     property string look: "apple"
-                    // Where the Nothing look is worn; a place turned off keeps Apple's controls and type.
+                    // Where a look other than Apple is worn; a place turned off keeps Apple's controls and type.
                     property JsonObject nothingOn: JsonObject {
                         property bool island: true
                         property bool dock: true

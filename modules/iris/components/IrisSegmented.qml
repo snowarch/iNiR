@@ -22,8 +22,12 @@ Rectangle {
     property var fontFor: null
     property string voice: ""
     readonly property real d: IrisStyle.density
-    // Apple lifts the chosen segment as a raised thumb with the accent on its word; Nothing inverts it (S4).
-    readonly property bool nothing: IrisStyle.wearsNothing(root)
+    // Apple lifts the chosen segment as a raised thumb with the accent on its word; Nothing inverts it (S4). Synth sets
+    // each choice on a key of its own, the chosen one pressed and capped; Gel's thumb is a glossy accent bead.
+    readonly property string look: IrisStyle.lookOf(root)
+    readonly property bool nothing: root.look === "nothing"
+    readonly property bool synth: root.look === "synth" && !root.skinned
+    readonly property bool gel: root.look === "gel" && !root.skinned
     readonly property int inset: 2
     readonly property int count: Math.max(1, root.options.length)
     readonly property int selectedIndex: root.options.findIndex(option => option.value === root.current)
@@ -62,7 +66,7 @@ Rectangle {
     readonly property real thumbRadius: root.pictured ? IrisStyle.radiusTile - root.inset
         : IrisStyle.controlPlated ? IrisStyle.pieceRadius(root.height - 2 * root.inset) : (root.height - 2 * root.inset) / 2
     radius: root.pictured ? IrisStyle.radiusTile : IrisStyle.controlPlated ? root.thumbRadius + root.inset : height / 2
-    color: root.skinned ? "transparent" : IrisStyle.controlPlated ? IrisStyle.plateFillFor(IrisStyle.controlPlate) : IrisStyle.fillQuiet
+    color: root.skinned || root.synth ? "transparent" : IrisStyle.controlPlated ? IrisStyle.plateFillFor(IrisStyle.controlPlate) : IrisStyle.fillQuiet
 
     IrisSkin { id: skin; part: "segmented"; voice: root.voice }
     IrisGlassEdge {
@@ -97,10 +101,11 @@ Rectangle {
     // How chosen a segment reads (0..1) while the thumb travels: its word inverts as the capsule passes under it.
     function chosenness(index: int): real { return root.selectedIndex < 0 ? 0 : Math.max(0, 1 - Math.abs(root.thumbAt - index)) }
     function inkFor(index: int): color {
-        return ColorUtils.mix(root.nothing ? IrisStyle.selectionLabel : IrisStyle.appleAccent, IrisStyle.subtext, root.chosenness(index))
+        return ColorUtils.mix(root.nothing ? IrisStyle.selectionLabel : root.synth ? IrisStyle.synthInkOnCap
+            : root.gel ? IrisStyle.inkOnGel : IrisStyle.appleAccent, IrisStyle.subtext, root.chosenness(index))
     }
     RectangularShadow {
-        visible: thumb.visible && !root.nothing
+        visible: thumb.visible && !root.nothing && !root.gel
         anchors.fill: thumb
         radius: thumb.radius
         offset.y: root.d
@@ -109,13 +114,36 @@ Rectangle {
     }
     Rectangle {
         id: thumb
-        visible: root.selectedIndex >= 0 && !root.skinned
+        visible: root.selectedIndex >= 0 && !root.skinned && !root.synth
         y: root.inset
         height: root.height - 2 * root.inset
         x: Math.round(root.edgeAt(root.thumbAt))
         width: Math.round(root.edgeAt(root.thumbAt + 1)) - x
         radius: root.thumbRadius
         color: root.nothing ? IrisStyle.selectionFill : IrisStyle.raised
+        Loader {
+            active: root.gel
+            anchors.fill: parent
+            sourceComponent: Rectangle {
+                radius: thumb.radius
+                gradient: Gradient {
+                    GradientStop { position: 0; color: IrisStyle.gelTop }
+                    GradientStop { position: 0.55; color: IrisStyle.gelBody }
+                    GradientStop { position: 1; color: IrisStyle.gelBottom }
+                }
+                Rectangle {
+                    x: Math.round(parent.height * 0.3)
+                    y: Math.round(2 * root.d)
+                    width: parent.width - 2 * x
+                    height: Math.round(parent.height * 0.42)
+                    radius: height / 2
+                    gradient: Gradient {
+                        GradientStop { position: 0; color: IrisStyle.gelShineTop }
+                        GradientStop { position: 1; color: IrisStyle.gelShineBottom }
+                    }
+                }
+            }
+        }
     }
 
     Repeater {
@@ -147,7 +175,32 @@ Rectangle {
             onActiveFocusChanged: if (segment.activeFocus) root.focusedIndex = segment.index
                 else if (root.focusedIndex === segment.index) root.focusedIndex = -1
 
+            // Synth: the segment's key, its edge under the face; chosen, pressed down and capped.
+            Loader {
+                active: root.synth
+                anchors.fill: parent
+                anchors.leftMargin: segment.index > 0 ? Math.round(3 * root.d) : 0
+                anchors.rightMargin: segment.index < root.count - 1 ? Math.round(3 * root.d) : 0
+                sourceComponent: Item {
+                    readonly property real edge: Math.round(3 * root.d)
+                    Rectangle {
+                        y: parent.edge
+                        width: parent.width
+                        height: parent.height - parent.edge
+                        radius: IrisStyle.synthKeyRadius
+                        color: IrisStyle.synthKeyEdge
+                    }
+                    Rectangle {
+                        y: Math.round(parent.edge * (2 / 3) * root.chosenness(segment.index) + (segment.pressed ? root.d : 0))
+                        width: parent.width
+                        height: parent.height - parent.edge
+                        radius: IrisStyle.synthKeyRadius
+                        color: ColorUtils.mix(IrisStyle.synthCap, segment.containsMouse ? ColorUtils.mix(IrisStyle.text, IrisStyle.synthKey, 0.08) : IrisStyle.synthKey, root.chosenness(segment.index))
+                    }
+                }
+            }
             Rectangle {
+                visible: !root.synth
                 anchors.fill: parent
                 radius: thumb.radius
                 // Under a skin the hover and the focus are the skin's to draw.
@@ -206,8 +259,10 @@ Rectangle {
                     width: Math.min(implicitWidth, Math.max(0, segment.width - Math.round(16 * root.d)))
                     elide: Text.ElideRight
                     text: Translation.tr(String(segment.modelData.label ?? ""))
-                    font.family: root.fontFor ? root.fontFor(segment.modelData) : IrisStyle.fontMain
-                    font.pixelSize: IrisStyle.typeMeta
+                    font.family: (root.fontFor ? root.fontFor(segment.modelData) : "") || (root.synth ? IrisStyle.fontSynthLabel : IrisStyle.fontMain)
+                    font.capitalization: root.synth ? Font.AllLowercase : Font.MixedCase
+                    // Mono runs wider: Synth's keys print a step smaller so a word still fits its key.
+                    font.pixelSize: root.synth ? IrisStyle.typeFootnote : IrisStyle.typeMeta
                     font.weight: IrisStyle.weight(segment.selected ? Font.DemiBold : Font.Normal)
                     color: root.inkFor(segment.index)
                 }

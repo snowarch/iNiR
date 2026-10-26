@@ -435,6 +435,7 @@ Item {
             : discButton.control.lit ? ColorUtils.mix(discButton.control.tint, IrisStyle.text, 0.85) : IrisStyle.fillHover
         skinPart: root.designed ? "controlTile" : "button"
         skinData: ({ control: discButton.control, shape: "disc" })
+        gloss: discButton.control.lit
         Accessible.name: discButton.control.label
         Accessible.checkable: true
         Accessible.checked: discButton.control.lit
@@ -494,6 +495,7 @@ Item {
             anchors.fill: parent
             buttonRadius: IrisControlOptions.roundControls ? Math.min(width, height) / 2 : root.tileRadius
             buttonRadiusPressed: button.buttonRadius
+            gloss: faceState.lit && !face.wide
             colBackground: button.skinned ? "transparent" : faceState.lit && !face.wide ? faceState.tint
                 : faceState.lit ? IrisStyle.tintFill(faceState.tint) : IrisStyle.fillQuiet
             colBackgroundHover: button.skinned || !faceState.ready ? button.colBackground

@@ -121,13 +121,15 @@ QtObject {
     function tintFor(id: string): color {
         if (id === "record") return IrisStyle.danger
         if (root.accentMode === "mono") return IrisStyle.text
-        if (root.accentMode === "accent") return IrisStyle.accent
+        if (root.accentMode === "accent") return root.lookTint
         if (root.accentMode === "colourful") {
             const hue = root.identities[id] ?? ""
             return hue === "gray" ? IrisStyle.textSecondary : IrisStyle.identityColor(hue)
         }
-        return IrisStyle.accent
+        return root.lookTint
     }
+    // What is on wears the look's colour unless the person gave each control its own: Synth lights orange, Gel its gel.
+    readonly property color lookTint: IrisStyle.look === "synth" ? IrisStyle.synthOn : IrisStyle.look === "gel" ? IrisStyle.gelBody : IrisStyle.accent
     readonly property real libraryWidth: 312
     readonly property real editorExtra: root.libraryWidth + 21
 

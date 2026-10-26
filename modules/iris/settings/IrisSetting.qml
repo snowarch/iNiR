@@ -1807,7 +1807,7 @@ Item {
             // Segmented controls speak in words only, in every layout (a glyph over each name was a second language).
             pictured: false
             accessibleName: Translation.tr(root.spec.label)
-            fontFor: choice => root.previewFace(choice)
+            fontFor: root.spec.previewFont ? (choice => root.previewFace(choice)) : null
             onPicked: value => root.commit(value)
         }
     }

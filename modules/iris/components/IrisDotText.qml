@@ -11,7 +11,9 @@ Item {
     property color color: IrisStyle.text
     // Apple sets the figure in the numbers face, bold; the Dot face is Nothing's. Both roll per digit.
     readonly property bool nothing: IrisStyle.wearsNothing(root)
-    property string family: root.nothing ? IrisStyle.fontDot : IrisStyle.fontNumbers
+    property string family: root.nothing ? IrisStyle.fontDot : IrisStyle.figureFaceOf(root, root.pixelSize)
+    // Synth's display face reads thin; Gel and Apple keep the figure weight.
+    readonly property int figureWeight: root.nothing ? Font.Bold : root.family === IrisStyle.fontSynthFigure ? Font.Light : IrisStyle.figureWeight
     property int horizontalAlignment: Text.AlignLeft
     property bool roll: IrisStyle.motionEnabled && root.visible
     // -1 rolls down, 1 up, 0 decides from the value (a bigger number rolls up).
@@ -81,7 +83,7 @@ Item {
                     font.family: root.family
                     font.pixelSize: probe.font.pixelSize
                     font.letterSpacing: root.nothing ? IrisStyle.dotTracking(probe.font.pixelSize) : 0
-                    font.weight: root.nothing ? Font.Bold : IrisStyle.figureWeight
+                    font.weight: root.figureWeight
                     font.features: ({ "tnum": 1 })
                     renderType: Text.NativeRendering
                 }
@@ -96,7 +98,7 @@ Item {
                     font.family: root.family
                     font.pixelSize: probe.font.pixelSize
                     font.letterSpacing: root.nothing ? IrisStyle.dotTracking(probe.font.pixelSize) : 0
-                    font.weight: root.nothing ? Font.Bold : IrisStyle.figureWeight
+                    font.weight: root.figureWeight
                     font.features: ({ "tnum": 1 })
                 }
             }

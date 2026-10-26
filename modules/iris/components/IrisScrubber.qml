@@ -11,8 +11,12 @@ Item {
 
     property real value: 0
     property bool seekable: true
-    // Apple: a capsule track that thickens under the pointer and a white thumb. Nothing (S4): a row of dots.
-    readonly property bool nothing: IrisStyle.wearsNothing(root)
+    // Apple: a capsule track that thickens under the pointer and a white thumb. Nothing (S4): a row of dots. Synth: a
+    // fader, a thin blue run over ticks with a cap. Gel: a glossy accent run and a pearl knob.
+    readonly property string look: IrisStyle.lookOf(root)
+    readonly property bool nothing: root.look === "nothing"
+    readonly property bool synth: root.look === "synth" && !skin.active
+    readonly property bool gel: root.look === "gel" && !skin.active
     property color fillColor: root.nothing ? IrisStyle.text : IrisStyle.fillStrong
     property color trackColor: IrisStyle.fill
     signal seekRequested(real value)
@@ -67,12 +71,24 @@ Item {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         width: root.width - root.valueRoom
-        height: Math.round((root.engaged ? 9 : 4) * IrisStyle.density)
+        height: Math.round((root.synth ? (root.engaged ? 4 : 3) : root.gel ? (root.engaged ? 10 : 7) : root.engaged ? 9 : 4) * IrisStyle.density)
+        readonly property real corner: root.synth ? Math.round(IrisStyle.density) : IrisStyle.capsule(height)
         Behavior on height { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
+        Repeater {
+            model: root.synth && root.knob ? 11 : 0
+            Rectangle {
+                required property int index
+                x: Math.round((bar.width - width) * index / 10)
+                y: bar.height + Math.round(4 * IrisStyle.density)
+                width: Math.max(1, Math.round(IrisStyle.density))
+                height: Math.round((index % 5 === 0 ? 5 : 3) * IrisStyle.density)
+                color: IrisStyle.synthLedOff
+            }
+        }
         Rectangle {
             anchors.fill: parent
-            radius: IrisStyle.capsule(height)
-            color: root.trackColor
+            radius: bar.corner
+            color: root.synth ? IrisStyle.synthLedOff : root.trackColor
         }
         Item {
             width: bar.width * root.shownValue
@@ -81,8 +97,31 @@ Item {
             Rectangle {
                 width: bar.width
                 height: bar.height
-                radius: IrisStyle.capsule(height)
-                color: root.fillColor
+                radius: bar.corner
+                color: root.synth ? IrisStyle.synthLevel : root.gel ? IrisStyle.gelBody : root.fillColor
+                Loader {
+                    active: root.gel
+                    anchors.fill: parent
+                    sourceComponent: Rectangle {
+                        radius: bar.corner
+                        gradient: Gradient {
+                            GradientStop { position: 0; color: IrisStyle.gelTop }
+                            GradientStop { position: 0.55; color: IrisStyle.gelBody }
+                            GradientStop { position: 1; color: IrisStyle.gelBottom }
+                        }
+                        Rectangle {
+                            x: Math.round(bar.height / 2)
+                            y: Math.max(1, Math.round(IrisStyle.density))
+                            width: parent.width - 2 * x
+                            height: Math.round(bar.height * 0.42)
+                            radius: height / 2
+                            gradient: Gradient {
+                                GradientStop { position: 0; color: IrisStyle.gelShineTop }
+                                GradientStop { position: 1; color: IrisStyle.gelShineBottom }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -97,13 +136,32 @@ Item {
     Rectangle {
         id: knobFace
         visible: root.knob && !skin.active && !root.nothing
-        width: Math.round((root.engaged ? 20 : 18) * IrisStyle.density)
-        height: width
-        radius: IrisStyle.capsule(width)
+        width: Math.round((root.synth ? (root.engaged ? 12 : 10) : root.engaged ? 20 : 18) * IrisStyle.density)
+        height: root.synth ? Math.round(20 * IrisStyle.density) : width
+        radius: root.synth ? IrisStyle.synthCapRadius : IrisStyle.capsule(width)
         x: Math.max(0, Math.min(bar.width - width, bar.width * root.shownValue - width / 2))
         anchors.verticalCenter: parent.verticalCenter
-        color: IrisStyle.onTint
+        color: root.synth ? IrisStyle.synthCap : IrisStyle.onTint
         Behavior on width { NumberAnimation { duration: IrisStyle.duration(120); easing.type: IrisStyle.feedbackEasing } }
+        Loader {
+            active: root.gel
+            anchors.fill: parent
+            sourceComponent: Rectangle {
+                radius: knobFace.radius
+                gradient: Gradient {
+                    GradientStop { position: 0; color: IrisStyle.gelPearlTop }
+                    GradientStop { position: 1; color: IrisStyle.gelPearlBottom }
+                }
+            }
+        }
+        // Synth: the cap's line says where the level stands.
+        Rectangle {
+            visible: root.synth
+            anchors.centerIn: parent
+            width: parent.width - Math.round(4 * IrisStyle.density)
+            height: Math.max(2, Math.round(2 * IrisStyle.density))
+            color: IrisStyle.synthLevel
+        }
     }
     IrisDotStrip {
         id: track

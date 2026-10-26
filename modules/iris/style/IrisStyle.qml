@@ -263,6 +263,11 @@ QtObject {
         || (String(root.appearance?.numbersFontFamily ?? "").length > 0 ? root.fontDot : root.fontMain)
     // The figure face is Nothing's; Apple sets every figure in the numbers face, bold and tabular.
     function figureFace(px: real): string { return px >= 22 && root.mono ? root.fontDot : root.fontNumbers }
+    // A figure in the look a control wears: Synth's thin display face, Gel's round one, else the numbers face.
+    function figureFaceOf(item, px: real): string {
+        const look = root.lookOf(item)
+        return look === "synth" ? root.fontSynthFigure : look === "gel" ? root.fontGel : root.figureFace(px)
+    }
     // The Label voice: data and labels in capitals.
     readonly property string fontMono: IrisDesign.font("mono") || root.faceLabel
     readonly property string fontRead: root.fontMain
@@ -316,6 +321,43 @@ QtObject {
         return ""
     }
     function wearsNothing(item): bool { return root.mono && root.nothingAt(root.placeOf(item)) }
+    // Synth and Gel are worn by place the same way (`nothingOn` holds the places for any look); `lookOf` names the
+    // look a control draws, and Apple returns before any walk.
+    function lookAt(place: string): bool { return root.look !== "apple" && (place.length === 0 || root.nothingOn?.[place] !== false) }
+    function lookOf(item): string {
+        if (root.look === "apple") return "apple"
+        if (root.look === "nothing") return root.wearsNothing(item) ? "nothing" : "apple"
+        return root.lookAt(root.placeOf(item)) ? root.look : "apple"
+    }
+    // Synth: an instrument panel. A switch is a key that sinks and lights its LED, a level a fader over ticks, a choice
+    // a row of keys; each kind keeps its colour: orange is on and the one act, blue a level, green a meter.
+    readonly property color synthOn: "#ff5b00" // iris-literal: Synth's orange
+    readonly property color synthLevel: "#0096ff" // iris-literal: Synth's blue
+    readonly property color synthMeter: "#00c46a" // iris-literal: Synth's green
+    readonly property color synthKey: ColorUtils.mix(root.text, root.surfaceOpaque, root.light ? 0.12 : 0.15)
+    readonly property color synthKeyEdge: ColorUtils.mix("#000000", root.surfaceOpaque, root.light ? 0.2 : 0.5)
+    readonly property color synthCap: root.light ? "#ffffff" : "#ecebe6" // iris-literal: a fader's cap, a chosen key
+    readonly property color synthInkOnCap: "#1d1d1b" // iris-literal: the ink printed on a cap
+    readonly property color synthLedOff: ColorUtils.mix(root.text, root.surfaceOpaque, 0.28)
+    readonly property color inkOnSynthOn: root.onTintFor(root.synthOn)
+    // A key's corner and a fader cap's: machined, never a capsule.
+    readonly property int synthKeyRadius: Math.round(5 * root.density)
+    readonly property int synthCapRadius: Math.round(3 * root.density)
+    readonly property string fontSynthLabel: "Geist Mono"
+    readonly property string fontSynthFigure: "Inter Display"
+    // Gel: glossy capsules filled with the accent, a light cap over their upper half; figures in Rubik.
+    // The person's hue, saturated and held mid-tone so the gel reads as gel over a pastel accent; a grey accent takes blue.
+    readonly property color gelBody: root.appleAccent.hslSaturation < 0.08 ? "#3d7cf0" // iris-literal: Gel over a grey accent
+        : Qt.hsla(root.appleAccent.hslHue, Math.max(0.62, root.appleAccent.hslSaturation), Math.min(0.56, Math.max(0.44, root.appleAccent.hslLightness)), 1)
+    readonly property color gelTop: Qt.lighter(root.gelBody, 1.5)
+    readonly property color gelBottom: Qt.darker(root.gelBody, 1.3)
+    readonly property color inkOnGel: root.onTintFor(root.gelBody)
+    // The light over a gel's upper half, and the pearl of a knob.
+    readonly property color gelShineTop: Qt.rgba(1, 1, 1, 0.6)
+    readonly property color gelShineBottom: Qt.rgba(1, 1, 1, 0.04)
+    readonly property color gelPearlTop: "#ffffff" // iris-literal: Gel's pearl knob
+    readonly property color gelPearlBottom: "#d9e4ee" // iris-literal: the pearl's lower shade
+    readonly property string fontGel: "Rubik"
     readonly property bool neutralBody: root.mono && !["midnight", "wallpaper", "theme"].includes(root.materialName)
     readonly property var neutralRoles: ["surface", "surfaceHigh", "surfaceHighest", "text", "textSecondary", "textTertiary", "fillInk"]
     // The same light, no hue: a warm paper or a wallpaper-tinted black reads as its grey.
