@@ -166,7 +166,7 @@ RippleButton {
             font.family: root.synth ? IrisStyle.fontSynthLabel : label.defaultFont
             font.capitalization: root.synth ? Font.AllLowercase : Font.MixedCase
             font.pixelSize: IrisStyle.typeLabel
-            font.weight: root.emphasized || root.selected ? Font.DemiBold : Font.Medium
+            font.weight: root.emphasized || root.selected ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Medium)
             horizontalAlignment: Text.AlignHCenter
         }
 

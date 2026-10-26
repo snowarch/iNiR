@@ -1364,7 +1364,7 @@ Item {
                                 : Translation.tr(root.currentSection.title)
                             font.family: IrisStyle.fontTitle
                             font.pixelSize: IrisStyle.lowerTitles ? IrisStyle.typeDisplay : IrisStyle.typeTitleLarge
-                            font.weight: IrisStyle.lowerTitles ? Font.ExtraBold : IrisStyle.weight(Font.Bold)
+                            font.weight: IrisStyle.lowerTitles ? IrisStyle.weight(Font.ExtraBold) : IrisStyle.weight(Font.Bold)
                             font.capitalization: IrisStyle.lowerTitles && !root.searching ? Font.AllLowercase : Font.MixedCase
                             font.letterSpacing: IrisStyle.lowerTitles ? -Math.round(IrisStyle.typeDisplay * 0.03) : 0
                             elide: Text.ElideRight
@@ -2405,7 +2405,7 @@ Item {
                     color: IrisStyle.monoCaptions ? IrisStyle.textTertiary : IrisStyle.label
                     font.family: IrisStyle.monoCaptions ? IrisStyle.fontMono : IrisStyle.fontTitle
                     font.pixelSize: IrisStyle.monoCaptions ? IrisStyle.typeCaption : IrisStyle.typeMeta
-                    font.weight: IrisStyle.monoCaptions ? Font.Medium : IrisStyle.weight(Font.DemiBold)
+                    font.weight: IrisStyle.monoCaptions ? IrisStyle.weight(Font.Medium) : IrisStyle.weight(Font.DemiBold)
                     font.capitalization: IrisStyle.monoCaptions ? Font.AllUppercase : Font.MixedCase
                     font.letterSpacing: IrisStyle.monoCaptions ? Math.round(IrisStyle.typeCaption * 0.16) : 0
                 }

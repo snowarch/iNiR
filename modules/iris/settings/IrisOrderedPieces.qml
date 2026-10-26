@@ -244,7 +244,7 @@ ColumnLayout {
                 text: root.full ? Translation.tr("Full. Remove one to add another.") : Translation.tr("Add")
                 color: root.full ? IrisStyle.muted : IrisStyle.accent
                 font.pixelSize: IrisStyle.typeBody
-                font.weight: root.full ? Font.Normal : IrisStyle.weight(Font.DemiBold)
+                font.weight: root.full ? IrisStyle.weight(Font.Normal) : IrisStyle.weight(Font.DemiBold)
             }
             MaterialSymbol {
                 visible: !root.full

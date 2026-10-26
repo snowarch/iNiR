@@ -965,7 +965,7 @@ Item {
                                 text: showRow.modelData.title
                                 elide: Text.ElideRight
                                 font.pixelSize: IrisStyle.typeLabel
-                                font.weight: showRow.followed ? Font.DemiBold : Font.Normal
+                                font.weight: showRow.followed ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Normal)
                             }
                             IrisText {
                                 Layout.fillWidth: true

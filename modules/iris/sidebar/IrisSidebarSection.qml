@@ -691,7 +691,7 @@ Loader {
                                 text: Translation.locale.dayName(stripDay.date.getDay(), Locale.ShortFormat).slice(0, 2)
                                 color: stripDay.today ? IrisStyle.identity.red : IrisStyle.muted
                                 font.pixelSize: IrisStyle.typeFootnote
-                                font.weight: stripDay.today ? Font.DemiBold : Font.Normal
+                                font.weight: stripDay.today ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Normal)
                             }
                             Rectangle {
                                 anchors.horizontalCenter: parent.horizontalCenter
@@ -705,7 +705,7 @@ Loader {
                                     color: stripDay.today ? IrisStyle.onTint : IrisStyle.text
                                     font.family: IrisStyle.fontNumbers
                                     font.pixelSize: IrisStyle.typeLabel
-                                    font.weight: stripDay.today ? Font.Bold : Font.Medium
+                                    font.weight: stripDay.today ? IrisStyle.weight(Font.Bold) : IrisStyle.weight(Font.Medium)
                                 }
                             }
                             Rectangle {
@@ -786,7 +786,7 @@ Loader {
                             opacity: day.inMonth ? 1 : 0.32
                             font.family: IrisStyle.fontNumbers
                             font.pixelSize: IrisStyle.typeLabel
-                            font.weight: day.today || day.chosen ? Font.Bold : Font.Medium
+                            font.weight: day.today || day.chosen ? IrisStyle.weight(Font.Bold) : IrisStyle.weight(Font.Medium)
                         }
                         Rectangle {
                             visible: day.hasEvents && !day.today

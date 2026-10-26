@@ -20,7 +20,7 @@ Row {
         color: metric.color
         font.pixelSize: metric.pixelSize
         font.family: IrisStyle.figureFace(metric.pixelSize)
-        font.weight: IrisStyle.figureFace(metric.pixelSize) === IrisStyle.fontDot ? Font.Normal : metric.weight
+        font.weight: IrisStyle.figureFace(metric.pixelSize) === IrisStyle.fontDot ? IrisStyle.figureWeight : metric.weight
         font.features: ({ "tnum": 1 })
         font.letterSpacing: Math.round(-metric.pixelSize * 0.015)
     }

@@ -184,7 +184,7 @@ Item {
                 color: root.cut && root.selected ? IrisStyle.inkOnAccent : IrisStyle.text
                 font.family: root.ink || root.cut ? IrisStyle.fontLabel : IrisStyle.fontMain
                 font.pixelSize: root.ink || root.cut ? Math.round(10 * root.d) : IrisStyle.typeFootnote
-                font.weight: root.ink || root.cut ? Font.Medium : Font.DemiBold
+                font.weight: root.ink || root.cut ? IrisStyle.weight(Font.Medium) : IrisStyle.weight(Font.DemiBold)
                 font.capitalization: root.ink || root.cut ? Font.AllUppercase : Font.MixedCase
                 font.letterSpacing: root.ink || root.cut ? 0.8 * root.d : 0
             }

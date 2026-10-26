@@ -171,7 +171,7 @@ PreviewScene {
                     text: screen.modelData === "iris" ? "iRiS" : screen.modelData === "ii" ? Translation.tr("Material") : Translation.tr("Windows 11")
                     color: screen.on ? IrisStyle.onMedia : IrisStyle.onMediaSecondary
                     font.pixelSize: IrisStyle.typeMeta
-                    font.weight: screen.on ? Font.DemiBold : Font.Medium
+                    font.weight: screen.on ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Medium)
                 }
             }
         }

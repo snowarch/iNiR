@@ -17,7 +17,7 @@ IrisButton {
         iconSize: root.iconSize
         fill: root.selected ? 1 : 0
         animateFill: true
-        font.weight: root.selected || root.hovered ? Font.DemiBold : Font.Normal
+        font.weight: root.selected || root.hovered ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Normal)
         color: root.foreground
     }
 }

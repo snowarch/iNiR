@@ -135,7 +135,7 @@ ColumnLayout {
             text: tile.label
             color: tile.chosen ? IrisStyle.text : IrisStyle.textSecondary
             font.pixelSize: IrisStyle.typeMeta
-            font.weight: tile.chosen ? Font.DemiBold : Font.Medium
+            font.weight: tile.chosen ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Medium)
             elide: Text.ElideRight
         }
         HoverHandler { id: tileHover; cursorShape: Qt.PointingHandCursor }
@@ -723,7 +723,7 @@ ColumnLayout {
                             text: swatch.modelData.label
                             color: swatch.chosen ? IrisStyle.text : IrisStyle.textSecondary
                             font.pixelSize: IrisStyle.typeMeta
-                            font.weight: swatch.chosen ? Font.DemiBold : Font.Normal
+                            font.weight: swatch.chosen ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Normal)
                             fontSizeMode: Text.HorizontalFit
                             minimumPixelSize: Math.round(9 * IrisStyle.typeScale)
                         }

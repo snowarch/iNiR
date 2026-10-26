@@ -167,7 +167,7 @@ Item {
                                 text: Translation.tr(String(entry.modelData.title ?? ""))
                                 color: key.ink
                                 font.pixelSize: IrisStyle.typeBody
-                                font.weight: key.lit > 0.5 ? Font.DemiBold : Font.Normal
+                                font.weight: key.lit > 0.5 ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Normal)
                             }
                             Rectangle {
                                 visible: key.noted > 0

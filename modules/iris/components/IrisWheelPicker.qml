@@ -91,7 +91,7 @@ Item {
                         font.family: IrisStyle.fontNumbers
                         font.features: ({ "tnum": 1 })
                         font.pixelSize: root.figureSize
-                        font.weight: figure.distance < 0.5 ? Font.Bold : Font.Medium
+                        font.weight: figure.distance < 0.5 ? IrisStyle.weight(Font.Bold) : IrisStyle.weight(Font.Medium)
                     }
                     WheelHandler {
                         enabled: wheelIntent.armed

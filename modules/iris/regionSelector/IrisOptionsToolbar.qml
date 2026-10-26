@@ -124,7 +124,7 @@ IrisSurface {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: actionButton.modelData.name
                                 font.pixelSize: IrisStyle.typeLabel
-                                font.weight: actionButton.current ? Font.DemiBold : Font.Normal
+                                font.weight: actionButton.current ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Normal)
                                 color: actionButton.current ? IrisStyle.selectionLabel
                                     : actionButton.containsMouse ? IrisStyle.textSecondary : IrisStyle.subtext
                             }

@@ -1431,7 +1431,7 @@ Item {
                                         horizontalAlignment: Text.AlignHCenter
                                         color: card.focusedWindow ? IrisStyle.text : IrisStyle.subtext
                                         font.pixelSize: IrisStyle.typeMeta
-                                        font.weight: card.focusedWindow ? Font.DemiBold : Font.Medium
+                                        font.weight: card.focusedWindow ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Medium)
                                     }
                                     IrisText {
                                         width: parent.width

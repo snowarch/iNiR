@@ -301,7 +301,7 @@ Item {
             text: Translation.tr(String(key.entry.title ?? ""))
             color: IrisStyle.text
             font.pixelSize: IrisStyle.typeBody
-            font.weight: key.on ? Font.DemiBold : Font.Medium
+            font.weight: key.on ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Medium)
         }
         Rectangle {
             visible: key.noted > 0

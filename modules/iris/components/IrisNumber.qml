@@ -27,7 +27,7 @@ Item {
         text: "0"
         font.family: root.family
         font.pixelSize: root.pixelSize
-        font.weight: root.family === IrisStyle.fontDot ? Font.Normal : root.family === IrisStyle.fontSynthFigure ? Font.Light : root.weight
+        font.weight: root.family === IrisStyle.fontDot ? IrisStyle.figureWeight : root.family === IrisStyle.fontSynthFigure ? Font.Light : root.weight
         font.features: ({ "tnum": 1 })
     }
 
@@ -35,7 +35,7 @@ Item {
         width: Math.ceil(implicitWidth)
         font.family: root.family
         font.pixelSize: root.pixelSize
-        font.weight: root.family === IrisStyle.fontDot ? Font.Normal : root.family === IrisStyle.fontSynthFigure ? Font.Light : root.weight
+        font.weight: root.family === IrisStyle.fontDot ? IrisStyle.figureWeight : root.family === IrisStyle.fontSynthFigure ? Font.Light : root.weight
         font.letterSpacing: root.letterSpacing
         font.features: ({ "tnum": 1 })
         color: root.color

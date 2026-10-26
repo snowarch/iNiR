@@ -125,7 +125,7 @@ PreviewScene {
                             text: modKey.lit ? Translation.tr("Mod") : modKey.modelData
                             color: modKey.lit ? IrisStyle.accent : IrisStyle.textTertiary
                             font.pixelSize: IrisStyle.typeCaption
-                            font.weight: modKey.lit ? Font.DemiBold : Font.Medium
+                            font.weight: modKey.lit ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Medium)
                         }
                     }
                 }

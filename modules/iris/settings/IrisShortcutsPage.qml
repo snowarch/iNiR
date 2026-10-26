@@ -309,7 +309,7 @@ Flickable {
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.displayCategoryName(category.modelData.name)
                     font.pixelSize: IrisStyle.typeLabel
-                    font.weight: category.expanded ? Font.DemiBold : Font.Normal
+                    font.weight: category.expanded ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Normal)
                 }
                 IrisText {
                     anchors.right: chevron.left

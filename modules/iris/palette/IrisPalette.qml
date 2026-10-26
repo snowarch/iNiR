@@ -555,7 +555,7 @@ Item {
                             selectedTextColor: head.look?.selectedTextColour ?? IrisStyle.inkOnAccentContainer
                             font.family: head.look?.inputFamily ?? IrisStyle.fontMain
                             font.pixelSize: head.look?.inputSize ?? IrisStyle.typeTitleLarge
-                            font.weight: head.look?.inputWeight ?? Font.Normal
+                            font.weight: head.look?.inputWeight ?? IrisStyle.weight(Font.Normal)
                             font.letterSpacing: head.look?.inputSpacing ?? 0
                             clip: true
                             focus: true

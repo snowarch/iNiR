@@ -55,6 +55,6 @@ MouseArea {
         text: Translation.tr(tile.name.charAt(0).toUpperCase() + tile.name.slice(1))
         color: tile.selected ? IrisStyle.text : IrisStyle.subtext
         font.pixelSize: IrisStyle.typeFootnote
-        font.weight: tile.selected ? Font.DemiBold : Font.Normal
+        font.weight: tile.selected ? IrisStyle.weight(Font.DemiBold) : IrisStyle.weight(Font.Normal)
     }
 }
