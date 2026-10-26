@@ -467,7 +467,6 @@ Singleton {
     property var irisIslandOpenWidth: ({})
     // Per output: pieces an edge owner carries instead of floating over it ({ island: [...], dock: [...] }).
     property var irisAbsorbed: ({})
-    property bool irisSettingsWarm: false
     // The last place iRiS Settings was asked for: an instance built after another one took the request lands there too.
     property var irisSettingsLastRequest: null
     // iRiS side panel ("left"/"right") that was revealed by resting at its screen

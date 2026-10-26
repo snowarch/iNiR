@@ -50,10 +50,20 @@ Item {
         property bool extraCondition: true
         property bool requireEnabledPanel: true
         property int closeGraceMs: IrisStyle.revealDuration + 30
+        // What people open all day is built once, while the shell is idle after start, then only shown and hidden
+        // (hidden it unmaps and draws nothing). Built on open, every open waited for its tree (Settings ~450 ms in a
+        // nest) and drew its first frames heavy; torn down on close, the next open built it again.
+        property bool keep: false
+        property int warmMs: 4000
         property bool resident: open
         property Timer closeGrace: Timer {
             interval: loader.closeGraceMs
-            onTriggered: loader.resident = loader.open
+            onTriggered: loader.resident = loader.open || loader.keep
+        }
+        property Timer warm: Timer {
+            running: loader.keep && loader.enabledPanel && GlobalStates.deferredPanelsReady && !loader.resident
+            interval: loader.warmMs
+            onTriggered: loader.resident = true
         }
         readonly property bool enabledPanel: Config.ready && IrisGate.official
             && (!requireEnabledPanel || (Config.options?.enabledPanels ?? []).includes(identifier))
@@ -107,7 +117,8 @@ Item {
         requireEnabledPanel: false
         open: GlobalStates.sidebarLeftOpen
         extraCondition: Config.options?.iris?.sidebars?.left?.enable ?? true
-        closeGraceMs: IrisStyle.settleDuration + 80
+        keep: true
+        warmMs: 3000
         component: IrisSidebar { side: "left" }
     }
 
@@ -116,7 +127,8 @@ Item {
         requireEnabledPanel: false
         open: GlobalStates.sidebarRightOpen
         extraCondition: Config.options?.iris?.sidebars?.right?.enable ?? true
-        closeGraceMs: IrisStyle.settleDuration + 80
+        keep: true
+        warmMs: 3500
         component: IrisSidebar { side: "right" }
     }
 
@@ -142,10 +154,12 @@ Item {
     OnDemandPanelLoader {
         identifier: "irisSettings"
         requireEnabledPanel: false
-        open: !root.settingsWindowed && (GlobalStates.settingsOverlayOpen || GlobalStates.irisSettingsWarm)
-        // Kept built a moment after it closes, so a quick reopen is instant; ten minutes held ~130 MB and every layout
-        // it showed after each close (and a hover toward its key builds it). Gone at once when Settings is a window.
-        closeGraceMs: root.settingsWindowed ? 0 : 20000
+        open: GlobalStates.settingsOverlayOpen
+        // Only the host in use is kept: switching hosts builds the other once.
+        extraCondition: !root.settingsWindowed
+        keep: true
+        warmMs: 6000
+        closeGraceMs: 0
         component: IrisSettingsOverlay {}
     }
 
@@ -153,7 +167,10 @@ Item {
     OnDemandPanelLoader {
         identifier: "irisSettingsWindow"
         requireEnabledPanel: false
-        open: root.settingsWindowed && GlobalStates.settingsOverlayOpen
+        open: GlobalStates.settingsOverlayOpen
+        extraCondition: root.settingsWindowed
+        keep: true
+        warmMs: 6000
         closeGraceMs: 0
         component: IrisSettingsWindow {}
     }
@@ -206,7 +223,8 @@ Item {
         identifier: "irisOverlay"
         open: GlobalStates.overlayOpen
         requireEnabledPanel: false
-        closeGraceMs: IrisStyle.settleDuration + 120
+        keep: true
+        warmMs: 4500
         source: "../shared/overlay/Overlay.qml"
     }
 

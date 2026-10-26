@@ -264,7 +264,6 @@ Item {
             if (on) { pageIntentExpiry.stop(); root.pageIntent = page }
             else if (root.pageIntent === page) pageIntentExpiry.restart()
         }
-        if (kind === "settings" && root.focusedOutput) root.settingsIntent = on
     }
     function stepPage(steps: int): bool {
         const cycle = root.pageCycle
@@ -339,7 +338,6 @@ Item {
     property Item settingsMorphPart: null
     property bool controlOriginPrepared: false
     property bool settingsOriginPrepared: false
-    property bool settingsIntent: false
     property string pageIntent: ""
 
     // A Design that brings its own Control Center opens it as its own body, never as an Island page.
@@ -935,13 +933,6 @@ Item {
         when: root.targetScreen?.name === GlobalStates.focusedScreen?.name
         restoreMode: Binding.RestoreNone
     }
-    Binding {
-        target: GlobalStates
-        property: "irisSettingsWarm"
-        value: root.settingsIntent
-        when: root.targetScreen?.name === GlobalStates.focusedScreen?.name
-        restoreMode: Binding.RestoreNone
-    }
 
     property real wheelAccumulator: 0
     function wheelSteps(event): int {
@@ -1081,7 +1072,6 @@ Item {
             GlobalStates.controlPanelOpen = false
         if (!root.expanded) {
             root.pinned = false
-            root.settingsIntent = false
             root.pageIntent = ""
             pageIntentExpiry.stop()
             if (root.pointerOnIsland) root.hoverArmed = false
