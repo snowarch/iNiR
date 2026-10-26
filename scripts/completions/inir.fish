@@ -57,7 +57,6 @@ complete -c inir -n '__fish_use_subcommand' -a close-window -d 'Close focused wi
 complete -c inir -n '__fish_use_subcommand' -a ipc -d 'Low-level IPC call'
 complete -c inir -n '__fish_use_subcommand' -a settings -d 'Toggle settings'
 complete -c inir -n '__fish_use_subcommand' -a settings-window -d 'Open settings window'
-complete -c inir -n '__fish_use_subcommand' -a waffle-settings-window -d 'Open waffle settings'
 complete -c inir -n '__fish_use_subcommand' -a repair -d 'Repair shell state'
 complete -c inir -n '__fish_use_subcommand' -a path -d 'Show config path'
 complete -c inir -n '__fish_use_subcommand' -a setup -d 'Run setup directly'

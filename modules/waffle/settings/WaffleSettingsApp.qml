@@ -1,10 +1,3 @@
-//@ pragma UseQApplication
-//@ pragma Env QS_NO_RELOAD_POPUP=1
-//@ pragma Env INIR_STANDALONE_WINDOW=1
-//@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
-//@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
-// Launcher keeps QT_SCALE_FACTOR=1; shell scaling lives in appearance.typography.sizeScale
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -26,98 +19,98 @@ ApplicationWindow {
         {
             name: Translation.tr("Quick"),
             icon: "flash-on",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WQuickPage.qml")
+            component: Qt.resolvedUrl("pages/WQuickPage.qml")
         },
         {
             name: Translation.tr("General"),
             icon: "settings",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WGeneralPage.qml")
+            component: Qt.resolvedUrl("pages/WGeneralPage.qml")
         },
         {
             name: Translation.tr("Taskbar"),
             icon: "desktop",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WBarPage.qml")
+            component: Qt.resolvedUrl("pages/WBarPage.qml")
         },
         {
             name: Translation.tr("Background"),
             icon: "image",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WBackgroundPage.qml")
+            component: Qt.resolvedUrl("pages/WBackgroundPage.qml")
         },
         {
             name: Translation.tr("Themes"),
             icon: "dark-theme",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WThemesPage.qml")
+            component: Qt.resolvedUrl("pages/WThemesPage.qml")
         },
         {
             name: Translation.tr("Gowall"),
             icon: "wand",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WGowallPage.qml")
+            component: Qt.resolvedUrl("pages/WGowallPage.qml")
         },
         {
             name: Translation.tr("Interface"),
             icon: "apps",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WInterfacePage.qml")
+            component: Qt.resolvedUrl("pages/WInterfacePage.qml")
         },
         {
             name: Translation.tr("Modules"),
             icon: "settings-cog-multiple",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WModulesPage.qml")
+            component: Qt.resolvedUrl("pages/WModulesPage.qml")
         },
         {
             name: Translation.tr("Waffle Style"),
             icon: "desktop",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WWaffleStylePage.qml")
+            component: Qt.resolvedUrl("pages/WWaffleStylePage.qml")
         },
         {
             name: Translation.tr("Shortcuts"),
             icon: "keyboard",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WShortcutsPage.qml")
+            component: Qt.resolvedUrl("pages/WShortcutsPage.qml")
         },
         {
             name: Translation.tr("About"),
             icon: "info",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WAboutPage.qml")
+            component: Qt.resolvedUrl("pages/WAboutPage.qml")
         },
         {
             name: Translation.tr("Monitors"),
             icon: "desktop",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WMonitorVisibilityPage.qml")
+            component: Qt.resolvedUrl("pages/WMonitorVisibilityPage.qml")
         },
         {
             name: Translation.tr("Autostart"),
             icon: "power",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WAutostartPage.qml")
+            component: Qt.resolvedUrl("pages/WAutostartPage.qml")
         },
         {
             name: Translation.tr("Workspace Strip"),
             icon: "desktop",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WWorkspaceStripPage.qml")
+            component: Qt.resolvedUrl("pages/WWorkspaceStripPage.qml")
         },
         {
             name: Translation.tr("Mascot"),
             icon: "image",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WMascotPage.qml")
+            component: Qt.resolvedUrl("pages/WMascotPage.qml")
         },
         {
             name: Translation.tr("AI"),
             icon: "wand",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WAiPage.qml")
+            component: Qt.resolvedUrl("pages/WAiPage.qml")
         },
         {
             name: Translation.tr("Effects"),
             icon: "eye",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WEffectsPage.qml")
+            component: Qt.resolvedUrl("pages/WEffectsPage.qml")
         },
         {
             name: Translation.tr("Shell Layout"),
             icon: "desktop",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WShellLayoutPage.qml")
+            component: Qt.resolvedUrl("pages/WShellLayoutPage.qml")
         },
         {
             key: "hub",
             name: Translation.tr("Hub"),
             icon: "store-microsoft",
-            component: Qt.resolvedUrl("modules/waffle/settings/pages/WHubPage.qml")
+            component: Qt.resolvedUrl("pages/WHubPage.qml")
         }
     ]
     

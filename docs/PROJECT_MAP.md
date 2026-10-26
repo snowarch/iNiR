@@ -9,7 +9,7 @@ How iNiR is laid out, what each part owns, and what a change there reaches. Read
 | `shell.qml` | Startup order, family loading, shell-wide IPC, family transitions | High |
 | `services/Plugins.qml`, `modules/*/plugin.json` | Which plugins are installed and the parts each hands the base: panels, lock, widget faces (shell.qml loads families through it) | High |
 | `GlobalStates.qml`, `FamilyTransitionOverlay.qml` | Transient UI state and the family transition | High |
-| `settings.qml`, `waffleSettings.qml`, `welcome.qml` | Settings entry points and the first-run wizard | Normal |
+| `settings.qml`, `welcome.qml` | Settings window (draws the family's `settingsApp`) and the first-run wizard | Normal |
 | `modules/common/` | Config, Appearance, Directories, shared widgets | High |
 | `modules/ii/`, `modules/waffle/`, `modules/iris/` | Each family's composition and surfaces | Normal |
 | `modules/shared/` | Surfaces that two or more families load | Normal |

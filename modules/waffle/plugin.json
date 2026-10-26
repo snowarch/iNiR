@@ -13,6 +13,11 @@
     "lockSurface.hyprland": "lock/WaffleLockSurface.qml",
     "style": "WaffleFamilyStyle.qml",
     "regionToolbar": "regionSelector/WOptionsToolbar.qml",
-    "familyTransition": "WaffleFamilyTransition.qml"
+    "familyTransition": "WaffleFamilyTransition.qml",
+    "settingsApp": "settings/WaffleSettingsApp.qml"
+  },
+  "settingsFrom": {
+    "family": "ii",
+    "when": "waffles.settings.useMaterialStyle"
   }
 }

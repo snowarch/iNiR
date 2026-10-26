@@ -52,7 +52,7 @@ Scope {
         onTriggered: _closeAnimRunning = false
     }
 
-    // ── Search system (full, same as settings.qml) ──
+    // ── Search system (full, same as MaterialSettingsApp.qml) ──
     property string overlaySearchText: ""
     property var overlaySearchResults: []
 
@@ -2138,7 +2138,7 @@ Scope {
         }
     }
 
-    // ── Page definitions (same as settings.qml) ──
+    // ── Page definitions (same as MaterialSettingsApp.qml) ──
     property int overlayCurrentPage: 0
     property bool _navigationInitialized: false
     property int _prevPage: 0

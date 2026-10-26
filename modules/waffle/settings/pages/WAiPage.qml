@@ -16,7 +16,7 @@ import qs.modules.waffle.settings
  * AI settings page (waffle family). ii mirror: modules/ii/settings/AiConfig.qml —
  * keep both in sync; every control here writes the same config keys.
  *
- * Registered in waffleSettings.qml pages[] (index 15 — waffle indices are
+ * Registered in WaffleSettingsApp.qml pages[] (index 15 — waffle indices are
  * positional, so new pages are appended at the END) and in
  * WSettingsContent.qml's searchIndex with pageIndex 15.
  *

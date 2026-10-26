@@ -8,7 +8,7 @@ import qs.modules.common
 /**
  * Single source of truth for the Settings UI shared between the overlay
  * (modules/ii/settings/SettingsOverlay.qml) and the standalone window
- * (settings.qml): page list, sidebar categories and the static search index.
+ * (MaterialSettingsApp.qml): page list, sidebar categories and the static search index.
  * Component paths are relative to the shell root — resolve with
  * Quickshell.shellPath(page.component).
  */

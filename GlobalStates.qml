@@ -107,8 +107,8 @@ Singleton {
     property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page
     property string settingsOverlayRequestedKey: "" // The same page by name, for a Settings that keeps its own pages
     property string settingsOverlayRequestedSection: ""
-    // The page names of Material's Settings in their order, given by shell.qml: callers name a page ("widgets",
-    // "orbit"), never its position, which moves whenever a page is added.
+    // The page names of the Settings in use, in order, given by its host (`settingsHost`): callers name a page
+    // ("widgets", "orbit"), never its position, which moves whenever a page is added.
     property var settingsPageKeys: []
     property int settingsOverlayCurrentPage: -1 // Published by whichever overlay chrome is loaded
     // iRiS Settings as a window: open or toggle with it mapped but not focused brings it forward instead.
@@ -127,14 +127,17 @@ Singleton {
         root._openSettings(index, String(root.settingsPageKeys[index] ?? ""), section)
     }
 
+    // Inside the shell when the Settings in use has no window, or brings an overlay (`settingsHost`) and the person
+    // asked for it; its own window otherwise.
+    function _settingsInShell(): bool {
+        const family = Plugins.settingsFamily
+        if (Plugins.part(family, "settingsApp").length === 0) return true
+        return Plugins.part(family, "settingsHost").length > 0 && (Config.options?.settingsUi?.overlayMode ?? false)
+    }
+
     function _openSettings(index: int, key: string, section): void {
         const requestedSection = String(section ?? "")
-        const isWaffle = Config.options?.panelFamily === "waffle"
-            && Config.options?.waffles?.settings?.useMaterialStyle !== true
-        if (isWaffle) {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
-                "waffle-settings-window"])
-        } else if (Config.options?.panelFamily === "iris" || (Config.options?.settingsUi?.overlayMode ?? false)) {
+        if (root._settingsInShell()) {
             // The name goes last: iRiS Settings acts when it changes, with the section already there.
             root.settingsOverlayRequestedSection = requestedSection
             root.settingsOverlayRequestedPage = index
@@ -142,7 +145,8 @@ Singleton {
             if (root.settingsOverlayOpen) root.settingsRaiseRequest++
             root.settingsOverlayOpen = true
         } else {
-            const args = ["/usr/bin/env", `QS_SETTINGS_PAGE=${index}`]
+            // Each window knows its pages by name; the number is for callers that only have one.
+            const args = ["/usr/bin/env", `QS_SETTINGS_PAGE=${key.length > 0 ? key : index}`]
             if (requestedSection.length > 0)
                 args.push(`QS_SETTINGS_SECTION=${requestedSection}`)
             args.push(Quickshell.shellPath("scripts/inir"), "settings-window")
@@ -151,32 +155,20 @@ Singleton {
     }
 
     function openSettings(): void {
-        const isWaffle = Config.options?.panelFamily === "waffle"
-            && Config.options?.waffles?.settings?.useMaterialStyle !== true
-        if (isWaffle) {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
-                "waffle-settings-window"])
-        } else if (Config.options?.panelFamily === "iris" || (Config.options?.settingsUi?.overlayMode ?? false)) {
+        if (root._settingsInShell()) {
             if (root.settingsOverlayOpen) root.settingsRaiseRequest++
             root.settingsOverlayOpen = true
         } else {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
-                "settings-window"])
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window"])
         }
     }
 
     function toggleSettings(): void {
-        const isWaffle = Config.options?.panelFamily === "waffle"
-            && Config.options?.waffles?.settings?.useMaterialStyle !== true
-        if (isWaffle) {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
-                "waffle-settings-window", "--toggle"])
-        } else if (Config.options?.panelFamily === "iris" || (Config.options?.settingsUi?.overlayMode ?? false)) {
+        if (root._settingsInShell()) {
             if (root.settingsOverlayOpen && root.settingsWindowBehind) root.settingsRaiseRequest++
             else root.settingsOverlayOpen = !root.settingsOverlayOpen
         } else {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
-                "settings-window", "--toggle"])
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window", "--toggle"])
         }
     }
 

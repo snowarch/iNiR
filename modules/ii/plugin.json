@@ -9,6 +9,8 @@
     "critical": "critical/ShellIiCriticalPanels.qml",
     "panels": "ShellIiPanelsImpl.qml",
     "editStage": "edit/MaterialEditStage.qml",
-    "widgetOutfit": "edit/MaterialWidgetOutfit.qml"
+    "widgetOutfit": "edit/MaterialWidgetOutfit.qml",
+    "settingsApp": "settings/MaterialSettingsApp.qml",
+    "settingsHost": "settings/SettingsHost.qml"
   }
 }

@@ -12,8 +12,7 @@ import qs.services
 Singleton {
     id: root
 
-    readonly property string _source: Plugins.ready ? Plugins.part(Plugins.active, "style") : ""
-    LazyLoader { id: provider; active: root._source.length > 0; source: root._source }
+    FamilyPartLoader { id: provider; part: "style" }
     readonly property QtObject p: provider.item?.style ?? null
     // Which desktop widgets the family's worn Design prints its own face for.
     readonly property var facePrints: provider.item?.prints ?? ({})

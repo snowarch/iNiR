@@ -19,6 +19,13 @@ Singleton {
     readonly property var families: Object.keys(root.manifests).filter(id => root.manifests[id].kind === "family").sort()
     readonly property string active: String(Config.options?.panelFamily ?? "ii")
 
+    // The family whose Settings opens: the active one, or the one it wears instead while a key of its own says so
+    // (`settingsFrom`: { family, when }).
+    readonly property string settingsFamily: {
+        const from = root.manifests[root.active]?.settingsFrom
+        return from && root.has(from.family) && Config.getNestedValue(String(from.when), false) === true ? from.family : root.active
+    }
+
     function has(id: string): bool { return !!root.manifests[id] }
     // The file a plugin draws a part with, or "" when it has none (the base keeps its own).
     function part(id: string, name: string): string {

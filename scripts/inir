@@ -158,7 +158,7 @@ Other:
   completions <bash|zsh|fish|install>
   bind [--add|--remove|--list|--examples] <keys> <call…>   Niri keybinds for any inir call
   service <install|uninstall|enable|disable|start|stop|restart|status|logs>
-  repair, path, settings-window, waffle-settings-window
+  repair, path, settings-window
 EOF
 }
 
@@ -4096,7 +4096,7 @@ EOF
     elif git -C "$launcher_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         while IFS= read -r -d '' changed_path; do
             case "$changed_path" in
-                GlobalStates.qml|modules/*/plugin.json|shell.qml|settings.qml|waffleSettings.qml|defaults/config.json|modules/common/Config.qml|modules/common/Appearance.qml|modules/common/Looks.qml|modules/common/widgets/*)
+                GlobalStates.qml|modules/*/plugin.json|shell.qml|settings.qml|defaults/config.json|modules/common/Config.qml|modules/common/Appearance.qml|modules/common/Looks.qml|modules/common/widgets/*)
                     : ;; # Broad files do not turn a focused audit into an exhaustive one.
                 modules/iris/*) select_prefix "iris" ;;
                 modules/ii/sidebarLeft/aiChat/*|modules/ii/sidebarLeft/AiChat.qml|modules/ii/sidebarLeft/ApiInputBoxIndicator.qml|services/Ai.qml|services/ai/*)
@@ -4644,7 +4644,8 @@ case "$command_name" in
         resolve_config_dir
         open_settings "$config_dir"
         ;;
-    settings-window)
+    # The family whose Settings is in use draws the window (settings.qml); the old Waffle name still works.
+    settings-window|waffle-settings-window)
         require_qs
         window_mode="open"
         while [[ $# -gt 0 ]]; do
@@ -4669,32 +4670,6 @@ case "$command_name" in
         done
         resolve_config_dir
         open_detached_qml_window "$config_dir" "settings.qml" "$window_mode"
-        ;;
-    waffle-settings-window)
-        require_qs
-        window_mode="open"
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                --toggle)
-                    window_mode="toggle"
-                    shift
-                    ;;
-                -c|--config)
-                    parse_config_flag "$@"
-                    shift 2
-                    ;;
-                -h|--help)
-                    usage
-                    exit 0
-                    ;;
-                *)
-                    echo "Unknown option: $1" >&2
-                    exit 1
-                    ;;
-            esac
-        done
-        resolve_config_dir
-        open_detached_qml_window "$config_dir" "waffleSettings.qml" "$window_mode"
         ;;
     welcome)
         require_qs

@@ -19,7 +19,7 @@ import qs.modules.common.functions as CF
  * Settings UI as a drill-down layer shell overlay.
  *
  * Third presentation of the shared settings tree, alongside the nav-rail
- * window (settings.qml) and the nav-rail overlay (SettingsOverlay.qml). Both
+ * window (MaterialSettingsApp.qml) and the nav-rail overlay (SettingsOverlay.qml). Both
  * of those keep a persistent rail beside a narrowed content pane; this one
  * shows one thing at a time — a home grid of every page, then the selected
  * page full-bleed with a back affordance. Pages, categories and the search

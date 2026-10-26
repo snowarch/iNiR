@@ -11,7 +11,6 @@
 //@ pragma Env QTWEBENGINE_CHROMIUM_FLAGS=--disable-features=ThirdPartyCookieBlocking,StorageAccessAPI
 
 import qs.modules.common
-import qs.modules.ii.settings
 
 import QtQuick
 import Quickshell
@@ -110,11 +109,6 @@ ShellRoot {
         property: "watchFiles"
         value: !root.disableHotReload && !GlobalStates.screenLocked
     }
-    Binding {
-        target: GlobalStates
-        property: "settingsPageKeys"
-        value: SettingsPageRegistry.pages.map(page => page.key)
-    }
     Connections {
         target: Quickshell
         function onWatchFilesChanged(): void { console.info("[Boot] hot reload", Quickshell.watchFiles ? "on" : "off") }
@@ -136,7 +130,6 @@ ShellRoot {
         root._globalActionsService = GlobalActions;
         // Public packageSearch IPC must exist before any package UI is opened.
         root._packageSearchService = PackageSearch;
-        DevNavigation.registerSettingsPages(SettingsPageRegistry.pages);
         
         // Reset shell entry state (hot-reload may preserve singletons)
         GlobalStates.shellEntryReady = false;
@@ -628,8 +621,7 @@ ShellRoot {
         }
     }
 
-    // IPC for settings - overlay mode or separate window based on config
-    // Note: waffle family ALWAYS uses its own window (waffleSettings.qml), never the Material overlay
+    // IPC for settings: inside the shell or its own window, as the Settings in use allows (GlobalStates).
     IpcHandler {
         target: "settings"
         function open(): void {
@@ -682,44 +674,20 @@ ShellRoot {
         function section(index: int, name: string): void {
             GlobalStates.openSettingsPage(index, name)
         }
-        // A page by its registry key ("hub", "themes"…) in the family's own Settings.
+        // A page by its key ("hub", "themes"…) in the family's own Settings.
         function open(key: string): string {
-            const fluent = Config.options?.panelFamily === "waffle" && Config.options?.waffles?.settings?.useMaterialStyle !== true
-            if (fluent) {
-                Quickshell.execDetached(["/usr/bin/env", `QS_SETTINGS_PAGE=${key}`, Quickshell.shellPath("scripts/inir"), "waffle-settings-window"])
-                return key
-            }
-            const index = SettingsPageRegistry.pages.findIndex(page => page.key === key)
-            if (index < 0)
+            const keys = GlobalStates.settingsPageKeys
+            if (keys.length > 0 && keys.indexOf(key) < 0)
                 return `no page ${key}`
-            GlobalStates.openSettingsPage(index, "")
+            GlobalStates.openSettingsAt(key, "")
             return key
         }
-        function count(): int { return SettingsPageRegistry.pages.length }
+        function count(): int { return GlobalStates.settingsPageKeys.length }
         function current(): int { return GlobalStates.settingsOverlayCurrentPage }
     }
 
-    // Settings overlay panel (loaded only when overlay mode is enabled).
-    // overlayStyle picks the chrome; sibling loaders keep only the selected
-    // presentation alive. Any unrecognised style falls back to the nav rail.
-    LazyLoader {
-        active: Config.ready && (Config.options?.panelFamily ?? "ii") !== "iris" && (Config.options?.settingsUi?.overlayMode ?? false)
-            && (Config.options?.settingsUi?.overlayStyle ?? "rail") !== "focus"
-            && (Config.options?.settingsUi?.overlayStyle ?? "rail") !== "editorial"
-        component: SettingsOverlay {}
-    }
-
-    LazyLoader {
-        active: Config.ready && (Config.options?.panelFamily ?? "ii") !== "iris" && (Config.options?.settingsUi?.overlayMode ?? false)
-            && (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
-        component: SettingsFocus {}
-    }
-
-    LazyLoader {
-        active: Config.ready && (Config.options?.panelFamily ?? "ii") !== "iris" && (Config.options?.settingsUi?.overlayMode ?? false)
-            && (Config.options?.settingsUi?.overlayStyle ?? "rail") === "editorial"
-        component: SettingsEditorial {}
-    }
+    // The Settings in use may keep a host in the shell (its plugin.json part `settingsHost`): page names, overlay.
+    FamilyPartLoader { family: Plugins.settingsFamily; part: "settingsHost"; when: Config.ready }
 
     // === Panel Loaders ===
     // Keep one permanent IPC router so mode/family changes never overlap two

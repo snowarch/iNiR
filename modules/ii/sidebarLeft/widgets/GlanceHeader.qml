@@ -223,16 +223,7 @@ Item {
                     colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colLayer1Active
 
-                    onClicked: {
-                        const isWaffle = (Config.options?.panelFamily === "waffle" && Config.options?.waffles?.settings?.useMaterialStyle !== true);
-                        if (isWaffle) {
-                            Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=6",
-                                "QS_SETTINGS_SECTION=" + Translation.tr("Widgets Panel"),
-                                Quickshell.shellPath("scripts/inir"), "waffle-settings-window"]);
-                            return;
-                        }
-                        GlobalStates.openSettingsAt("panels", Translation.tr("Widgets"));
-                    }
+                    onClicked: GlobalStates.openSettingsAt("panels", Translation.tr("Widgets"))
 
                     contentItem: Item {
                         MaterialSymbol {

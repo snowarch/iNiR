@@ -17,7 +17,7 @@ import qs.modules.waffle.settings
  * modules/ii/settings/MascotConfig.qml — keep both in sync.
  *
  * How this page is built:
- * - Registered in waffleSettings.qml pages[] (settingsPageIndex must equal
+ * - Registered in WaffleSettingsApp.qml pages[] (settingsPageIndex must equal
  *   the array position — waffle indices are positional and hardcoded, so
  *   new pages are appended at the END) and in WSettingsContent.qml's
  *   searchIndex with pageIndex 14.

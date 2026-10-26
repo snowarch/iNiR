@@ -861,7 +861,7 @@ ContentPage {
                             // Overlay mode: settings runs inside the main shell process — direct call works
                             ShellUpdates.openOverlay()
                         } else {
-                            // Separate window mode (default): settings.qml is a separate qs process.
+                            // Separate window mode (default): Settings is a separate qs process.
                             // Singletons are isolated per-process, so we must use IPC to reach
                             // the main shell's ShellUpdates.openOverlay() instead.
                             Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "shellUpdate", "open"])

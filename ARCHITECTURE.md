@@ -44,6 +44,11 @@ shell.qml -> Plugins.part(family, "critical")    e.g. modules/iris/critical/Shel
 shell.qml -> Plugins.part(family, "panels")      e.g. modules/iris/ShellIrisPanelsImpl.qml
 ```
 
+Settings belongs to a family too. `settingsApp` is its window (`settings.qml` loads it), `settingsHost` lives in the
+shell while that Settings is in use (Material: page names and the overlay). A family with no window keeps Settings
+inside its panels (iRiS), and `settingsFrom` lets one wear another's while a key of its own says so (Waffle with
+`waffles.settings.useMaterialStyle`). `GlobalStates.openSettingsAt(key)` picks the place.
+
 Inside the implementation roots, `PanelLoader`, `DeferredPanelLoader`, and `OnDemandPanelLoader` choose whether a surface should be resident. For example:
 ```qml
 PanelLoader {
@@ -62,8 +67,7 @@ Global-style detection is centralized in `Appearance.qml`. Use its semantic styl
 shell.qml                     # Root entry — startup, IPC routers, critical/deferred family gates
 GlobalStates.qml              # Runtime UI state (panel open/closed booleans)
 FamilyTransitionOverlay.qml   # Animated family switch
-settings.qml                  # Standalone shared Settings entrypoint
-waffleSettings.qml            # Waffle-specific settings GUI
+settings.qml                  # Settings window: loads the active family's `settingsApp` part
 welcome.qml                   # First-run wizard
 killDialog.qml                # Process kill confirmation
 

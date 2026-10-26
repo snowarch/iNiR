@@ -42,7 +42,6 @@ _inir() {
         'ipc:Low-level IPC call'
         'settings:Toggle settings'
         'settings-window:Open settings window'
-        'waffle-settings-window:Open waffle settings window'
         'repair:Repair shell state'
         'path:Show config path'
         'setup:Run setup directly'
