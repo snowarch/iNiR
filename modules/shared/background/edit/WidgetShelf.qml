@@ -430,14 +430,13 @@ Item {
                         id: nameText
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: root.pictureHeight + root.nameGap
-                        width: Math.min(implicitWidth, Math.max(plate.width, Math.round(96 * root.d)))
+                        // Never capped: the tile is as wide as its name (a 96 px cap cut "Tiempo en pantalla" in room for it).
                         horizontalAlignment: Text.AlignHCenter
                         text: tile.modelData.name
                         color: tile.on ? root.face.muted : root.face.subtext
                         font.family: root.face.fontMain
                         font.pixelSize: root.face.typeMeta
                         font.weight: root.face.weight(Font.Medium)
-                        elide: Text.ElideRight
                     }
 
                     HoverHandler { id: tileHover; cursorShape: root.carrying ? Qt.ClosedHandCursor : Qt.OpenHandCursor }
