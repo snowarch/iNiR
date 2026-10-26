@@ -416,12 +416,34 @@ AbstractBackgroundWidget {
                 anchors.fill: parent
                 anchors.margins: root._innerMargin
                 visible: !root.irisFaced && root.displayMode === "instrument" && root.meterLedger
-                spacing: Math.round(6 * root.scaleFactor)
+                spacing: Math.round((ledger.tight ? 4 : 6) * root.scaleFactor)
+                // past four meters a row is one line (name, scale, figure) or the last ones fall off the box
+                QtObject {
+                    id: ledger
+                    readonly property bool tight: root._resourceModel.length > 4
+                    readonly property var names: root._resourceModel.map(item => item.key === "temp" ? Translation.tr("CPU temp")
+                        : item.key === "gpuTemp" ? Translation.tr("GPU temp") : item.label)
+                }
+                InstrumentLabel {
+                    id: ledgerName
+                    visible: false
+                    scaleFactor: root.scaleFactor
+                    text: ledger.names.reduce((longest, name) => name.length > longest.length ? name : longest, "")
+                }
+                TextMetrics {
+                    id: ledgerFigure
+                    font.family: root.widgetNumbersFamily
+                    font.pixelSize: Math.round(15 * root.scaleFactor)
+                    font.weight: Font.Bold
+                    font.features: ({ "tnum": 1 })
+                    text: "100°C"
+                }
                 Repeater {
                     model: root.meterLedger ? root._resourceModel : []
                     ColumnLayout {
                         id: ledgerRow
                         required property var modelData
+                        required property int index
                         readonly property color liveColor: root.widgetRoleColor(root._getColor(ledgerRow.modelData.key))
                         Layout.fillWidth: true
                         Layout.fillHeight: true
@@ -430,13 +452,25 @@ AbstractBackgroundWidget {
                             Layout.fillWidth: true
                             spacing: Math.round(6 * root.scaleFactor)
                             InstrumentLabel {
-                                Layout.fillWidth: true
-                                text: ledgerRow.modelData.key === "temp" ? Translation.tr("CPU temp")
-                                    : ledgerRow.modelData.key === "gpuTemp" ? Translation.tr("GPU temp") : ledgerRow.modelData.label
+                                Layout.fillWidth: !ledger.tight
+                                Layout.preferredWidth: ledger.tight ? Math.ceil(ledgerName.implicitWidth) : -1
+                                text: ledger.names[ledgerRow.index] ?? ""
                                 color: root.widgetInkMuted
                                 scaleFactor: root.scaleFactor
                             }
+                            InstrumentScale {
+                                visible: ledger.tight
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Math.round(8 * root.scaleFactor)
+                                divisions: 16
+                                fraction: root._getValue(ledgerRow.modelData.key)
+                                ink: root.widgetInk
+                                accent: ledgerRow.liveColor
+                                animated: root.animationsActive
+                            }
                             StyledText {
+                                Layout.preferredWidth: ledger.tight ? Math.ceil(ledgerFigure.advanceWidth) : -1
+                                horizontalAlignment: Text.AlignRight
                                 text: root._getDisplayText(ledgerRow.modelData.key)
                                 color: root.widgetInk
                                 font.family: root.widgetNumbersFamily
@@ -446,6 +480,7 @@ AbstractBackgroundWidget {
                             }
                         }
                         InstrumentScale {
+                            visible: !ledger.tight
                             Layout.fillWidth: true
                             Layout.preferredHeight: Math.round(8 * root.scaleFactor)
                             divisions: 24
@@ -551,9 +586,8 @@ AbstractBackgroundWidget {
                                 Layout.fillWidth: true
                                 visible: root.showLabels
                                 elide: Text.ElideRight
-                                text: resourceMeter.modelData.key === "temp" ? Translation.tr("CPU temp")
-                                    : resourceMeter.modelData.key === "gpuTemp" ? Translation.tr("GPU temp")
-                                    : resourceMeter.modelData.label
+                                // a tile is too narrow for "CPU temp"; its thermometer and the °C already say it
+                                text: resourceMeter.modelData.label
                                 color: root.widgetInkMuted
                                 font {
                                     family: root.widgetBodyFamily
