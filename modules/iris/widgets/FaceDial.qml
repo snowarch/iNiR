@@ -109,55 +109,37 @@ Item {
         renderType: Text.NativeRendering
     }
 
-    Shape {
-        anchors.fill: parent
-        preferredRendererType: Shape.CurveRenderer
-        ShapePath {
-            strokeColor: root.ink
-            strokeWidth: Math.max(1, root.r * 0.03)
-            capStyle: ShapePath.RoundCap
-            fillColor: "transparent"
-            PathMultiline {
-                paths: [root.segment(root.hours * 30, 0, root.r * 0.16),
-                    root.segment(root.minutes * 6, 0, root.r * 0.16)]
-            }
+    // Hands are bars turned about the centre: a tick only rotates them (one frame), where a Shape rebuilt its
+    // geometry and asked for a second frame each time, two full redraws of the desktop a second.
+    component Hand: Item {
+        id: hand
+        property real from
+        property real to
+        property real thickness
+        property color color
+        x: root.cx
+        y: root.cy
+        Rectangle {
+            x: -hand.thickness / 2
+            y: -hand.to - hand.thickness / 2
+            width: hand.thickness
+            height: hand.to - hand.from + hand.thickness
+            radius: width / 2
+            color: hand.color
+            antialiasing: true
         }
-        ShapePath {
-            strokeColor: root.ink
-            strokeWidth: Math.max(2.4, root.r * 0.085)
-            capStyle: ShapePath.RoundCap
-            fillColor: "transparent"
-            startX: root.point(root.hours * 30, root.r * 0.16).x
-            startY: root.point(root.hours * 30, root.r * 0.16).y
-            PathLine {
-                x: root.point(root.hours * 30, root.r * 0.52).x
-                y: root.point(root.hours * 30, root.r * 0.52).y
-            }
-        }
-        ShapePath {
-            strokeColor: root.ink
-            strokeWidth: Math.max(2, root.r * 0.065)
-            capStyle: ShapePath.RoundCap
-            fillColor: "transparent"
-            startX: root.point(root.minutes * 6, root.r * 0.16).x
-            startY: root.point(root.minutes * 6, root.r * 0.16).y
-            PathLine {
-                x: root.point(root.minutes * 6, root.r * 0.8).x
-                y: root.point(root.minutes * 6, root.r * 0.8).y
-            }
-        }
-        ShapePath {
-            strokeColor: root.seconds ? root.hand : "transparent"
-            strokeWidth: Math.max(1, root.r * 0.022)
-            capStyle: ShapePath.RoundCap
-            fillColor: "transparent"
-            startX: root.point(root.secondsValue * 6 + 180, root.r * 0.16).x
-            startY: root.point(root.secondsValue * 6 + 180, root.r * 0.16).y
-            PathLine {
-                x: root.point(root.secondsValue * 6, root.r * 0.86).x
-                y: root.point(root.secondsValue * 6, root.r * 0.86).y
-            }
-        }
+    }
+    Hand { rotation: root.hours * 30; to: root.r * 0.16; thickness: Math.max(1, root.r * 0.03); color: root.ink }
+    Hand { rotation: root.minutes * 6; to: root.r * 0.16; thickness: Math.max(1, root.r * 0.03); color: root.ink }
+    Hand { rotation: root.hours * 30; from: root.r * 0.16; to: root.r * 0.52; thickness: Math.max(2.4, root.r * 0.085); color: root.ink }
+    Hand { rotation: root.minutes * 6; from: root.r * 0.16; to: root.r * 0.8; thickness: Math.max(2, root.r * 0.065); color: root.ink }
+    Hand {
+        visible: root.seconds
+        rotation: root.secondsValue * 6
+        from: -root.r * 0.16
+        to: root.r * 0.86
+        thickness: Math.max(1, root.r * 0.022)
+        color: root.hand
     }
 
     Rectangle {
