@@ -200,7 +200,9 @@ Singleton {
                 colourTheme: root.currentTheme,
                 saved: (Config.options?.appearance?.customTheme?.darkmode ?? true) ? "dark" : "light",
                 fromWallpaper: wallpaperThemingCfg?.autoDarkLightMode ?? false,
-                familyScheme: root.familySchemeChoice
+                familyScheme: root.familySchemeChoice,
+                // v2.33's name for it: scripts written against it keep reading.
+                irisScheme: root.familySchemeChoice
             })
         }
     }

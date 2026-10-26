@@ -487,7 +487,7 @@ Singleton {
             if (!root.loginScreenInstalled) return "not installed"
             const look = String(Config.options?.lock?.loginScreen ?? "auto")
             const worn = look === "auto" ? (Plugins.loginScreen(Plugins.active) || "classic") : look
-            const shown = worn !== "classic" ? worn + ", " + String(Config.options?.lock?.loginStyle ?? "lens") : "classic"
+            const shown = Plugins.loginScreens.includes(worn) ? worn + ", " + String(Config.options?.lock?.loginStyle ?? "lens") : "classic"
             return look === "auto" ? "auto (" + shown + ")" : shown
         }
         function sync(): void { loginScreenSync.restart() }
