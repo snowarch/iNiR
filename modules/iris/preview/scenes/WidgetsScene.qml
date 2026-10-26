@@ -215,7 +215,7 @@ PreviewScene {
         timeText: Translation.locale.toString(DateTime.clock.date, "hh:mm"),
         weekday: Translation.locale.toString(DateTime.clock.date, "dddd"),
         longDate: Translation.locale.toString(DateTime.clock.date, "d MMMM"),
-        ready: true, city: String(Weather.visibleCity ?? ""), condition: String(Weather.data?.description ?? ""),
+        ready: true, city: String(Weather.visibleCity ?? "").split(",")[0], condition: String(Weather.data?.description ?? ""),
         glyph: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud", range: "", hours: [], days: [],
         weekLow: 0, weekHigh: 1, degrees: v => String(v ?? ""),
         widget: ({ temperatureText: String(Weather.data?.temp ?? "18°") }) })
@@ -223,7 +223,7 @@ PreviewScene {
         active: widgetsRoot.on && widgetsRoot.printed
         x: widgetsRoot.plateX
         y: widgetsRoot.plateY
-        width: widgetsRoot.unit
+        width: widgetsRoot.wide
         height: widgetsRoot.unit
         source: IrisDesign.skin("widgetClock")
         onLoaded: item.face = Qt.binding(() => widgetsRoot.standIn)

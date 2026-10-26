@@ -239,7 +239,10 @@ Item {
         property string name: key.label
         property bool sealed: false
         readonly property color stock: key.sealed ? Airisu.seal : Airisu.sheet
-        width: keyRow.implicitWidth + root.u(key.label.length > 0 ? 7 : 4)
+        // A narrow card (Drawer's plate) keeps the key whole as its glyph alone, never a word cut by the card's edge.
+        readonly property bool worded: key.label.length > 0
+            && keyGlyph.implicitWidth + keyRow.spacing + keyLabel.implicitWidth + root.u(7) <= (key.parent?.width ?? Infinity)
+        width: keyRow.implicitWidth + root.u(key.worded ? 7 : 4)
         height: root.u(9)
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
@@ -268,13 +271,15 @@ Item {
             anchors.verticalCenterOffset: keyFace.shift
             spacing: root.u(1.5)
             MaterialSymbol {
+                id: keyGlyph
                 anchors.verticalCenter: parent.verticalCenter
                 text: key.glyph
                 iconSize: Math.round(17 * root.d)
                 color: Airisu.inkOn(key.stock)
             }
             AText {
-                visible: key.label.length > 0
+                id: keyLabel
+                visible: key.worded
                 anchors.verticalCenter: parent.verticalCenter
                 size: IrisStyle.typeLabel
                 font.weight: Font.DemiBold

@@ -894,6 +894,8 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: Translation.tr(tile.modelData.label)
                                     color: root.pickInk(tile.selected)
+                                    wrapMode: Text.WordWrap
+                                    maximumLineCount: 2
                                     elide: Text.ElideRight
                                     font.pixelSize: IrisStyle.typeLabel
                                     font.weight: IrisStyle.weight(tile.selected ? Font.DemiBold : Font.Medium)

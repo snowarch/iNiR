@@ -80,7 +80,7 @@ Rectangle {
         return root.floors.map((w, i) => w + (root.needs[i] - w) * (room - floorTotal) / (root.needTotal - floorTotal))
     }
     // Names that cannot share one line even so take two, and the track grows to hold them.
-    readonly property bool squeezed: !root.pictured && !root.skinned && root.width > 0 && root.needTotal > root.width - 2 * root.inset + 1
+    readonly property bool squeezed: !root.pictured && root.width > 0 && root.needTotal > root.width - 2 * root.inset + 1
     implicitHeight: Math.round((skin.item?.wantHeight ?? (root.pictured ? 52 : root.glyphOnly ? 32 : root.squeezed ? 42 : 28)) * root.d)
     implicitWidth: root.hugWidth > 0 ? root.hugWidth : root.glyphOnly ? root.count * (root.implicitHeight - 2 * root.inset) + 2 * root.inset : 0
     readonly property real thumbRadius: root.pictured ? IrisStyle.radiusTile - root.inset

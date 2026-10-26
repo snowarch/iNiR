@@ -122,6 +122,10 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: Math.min(implicitWidth, box.width - 3 * Airisu.m - (box.swatch.length > 0 ? 4 * Airisu.m : 0))
                         horizontalAlignment: Text.AlignHCenter
+                        // Names the host cannot fit on one line take two (its track grows for them).
+                        wrapMode: root.host?.squeezed ? Text.WordWrap : Text.NoWrap
+                        maximumLineCount: 2
+                        lineHeight: root.host?.squeezed ? 0.9 : 1
                         size: root.pictured ? IrisStyle.typeFootnote : IrisStyle.typeMeta
                         font.family: root.host?.fontFor ? root.host.fontFor(box.modelData) : Airisu.textFace
                         font.weight: box.chosen ? Font.Bold : Font.Medium
