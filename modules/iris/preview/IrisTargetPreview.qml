@@ -251,7 +251,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: Math.round(8 * root.d)
                 Repeater {
-                    model: (TaskbarApps.apps ?? []).slice(0, 6)
+                    model: (TaskbarApps.apps ?? []).filter(app => app && !app.separator && String(app.appId ?? "").length > 0 && app.appId !== "SEPARATOR").slice(0, 6)
                     Item {
                         required property var modelData
                         width: dockPlate.parent.icon
