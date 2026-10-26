@@ -111,6 +111,7 @@ Singleton {
             icon: "window",
             desc: Translation.tr("Win11-style taskbar"),
             essential: false,
+            family: "waffle",
             component: "modules/ii/settings/WaffleConfig.qml"
         },
         {
@@ -247,6 +248,7 @@ Singleton {
             icon: "visibility",
             desc: Translation.tr("Apple-inspired Island shell and modules"),
             essential: true,
+            family: "iris",
             component: "modules/ii/settings/IrisConfig.qml"
         },
         {
@@ -304,7 +306,15 @@ Singleton {
         if (missing.length > 0) out.push({ label: Translation.tr("More"), pages: missing })
         return out.length > 0 ? ({ groups: out, hidden: hidden }) : fallback
     }
-    readonly property var categories: _arrangement.groups
+    // A page about one family (`family`) leaves the nav while that family is not installed, and search finds it only
+    // while that family is the one in use.
+    function familyOf(index: int): string { return index >= 0 && index < pages.length ? String(pages[index].family ?? "") : "" }
+    function installed(index: int): bool { return root.familyOf(index).length === 0 || Plugins.has(root.familyOf(index)) }
+    function searchable(index: int, activeFamily: string): bool {
+        const family = root.familyOf(index)
+        return family.length === 0 || family === activeFamily
+    }
+    readonly property var categories: _arrangement.groups.map(group => ({ label: group.label, pages: group.pages.filter(i => root.installed(i)) }))
     readonly property var hiddenPages: _arrangement.hidden
 
     function iconForPage(idx) {

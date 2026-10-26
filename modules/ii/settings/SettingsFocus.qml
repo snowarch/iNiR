@@ -230,18 +230,12 @@ Scope {
         }
 
         var activeFamily = Config.options?.panelFamily ?? "ii";
-        var wafflePage = SettingsPageRegistry.pages.findIndex(
-            p => String(p.component || "").indexOf("WaffleConfig.qml") >= 0);
-        var irisPage = SettingsPageRegistry.pages.findIndex(
-            p => String(p.component || "").indexOf("IrisConfig.qml") >= 0);
         var results = [];
 
         function allowed(pageIndex) {
             if (pageIndex < 0 || pageIndex >= root.pages.length)
                 return false;
-            if (wafflePage >= 0 && pageIndex === wafflePage && activeFamily !== "waffle")
-                return false;
-            if (irisPage >= 0 && pageIndex === irisPage && activeFamily !== "iris")
+            if (!SettingsPageRegistry.searchable(pageIndex, activeFamily))
                 return false;
             if (root.easyMode && root.pages[pageIndex].essential !== true)
                 return false;

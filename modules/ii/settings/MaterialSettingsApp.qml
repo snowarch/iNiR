@@ -116,17 +116,6 @@ ApplicationWindow {
     property var searchTargetControl: null
 
     // Static section/option index — shared with the overlay via SettingsPageRegistry.
-    function getFamilySettingsPageIndex(family: string) {
-        const componentName = family === "waffle" ? "WaffleConfig.qml"
-            : family === "iris" ? "IrisConfig.qml" : ""
-        if (!componentName.length) return -1
-        for (var i = 0; i < pages.length; i++) {
-            if ((pages[i].component || "").indexOf(componentName) >= 0)
-                return i;
-        }
-        return -1;
-    }
-
     function recomputeSettingsSearchResults() {
         var q = String(settingsSearchText || "").toLowerCase().trim();
         if (!q.length) {
@@ -137,8 +126,6 @@ ApplicationWindow {
         var results = [];
 
         var activeFamily = Config.options?.panelFamily ?? "ii";
-        var wafflePageIndex = getFamilySettingsPageIndex("waffle");
-        var irisPageIndex = getFamilySettingsPageIndex("iris");
         var easyOn = root.easyMode;
 
         var staticResults = SettingsSearchRegistry.buildStaticResults(
@@ -147,9 +134,7 @@ ApplicationWindow {
             const family = String(entry.panelFamily || "")
             if (family.length > 0 && family !== activeFamily)
                 return false;
-            if (wafflePageIndex >= 0 && entry.pageIndex === wafflePageIndex && activeFamily !== "waffle")
-                return false;
-            if (irisPageIndex >= 0 && entry.pageIndex === irisPageIndex && activeFamily !== "iris")
+            if (!SettingsPageRegistry.searchable(entry.pageIndex, activeFamily))
                 return false;
             return !(easyOn && entry.pageIndex >= 0 && entry.pageIndex < pages.length
                 && pages[entry.pageIndex].essential !== true);
@@ -159,11 +144,7 @@ ApplicationWindow {
         // 2. Buscar en el registro dinámico de widgets
         if (typeof SettingsSearchRegistry !== "undefined") {
             var widgetResults = SettingsSearchRegistry.buildResults(settingsSearchText);
-            if (activeFamily !== "waffle") {
-                widgetResults = widgetResults.filter(r => r.pageIndex !== wafflePageIndex);
-            }
-            if (activeFamily !== "iris")
-                widgetResults = widgetResults.filter(r => r.pageIndex !== irisPageIndex);
+            widgetResults = widgetResults.filter(r => SettingsPageRegistry.searchable(r.pageIndex, activeFamily));
             if (easyOn) {
                 widgetResults = widgetResults.filter(r =>
                     r.pageIndex >= 0 && r.pageIndex < pages.length
