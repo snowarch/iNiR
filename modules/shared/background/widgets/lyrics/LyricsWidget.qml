@@ -15,7 +15,6 @@ AbstractBackgroundWidget {
 
     implicitWidth: root.irisFaceWidth
     implicitHeight: root.irisFaceHeight
-    irisOnly: true
     irisFacePart: "lyrics"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"

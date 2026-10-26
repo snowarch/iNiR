@@ -280,7 +280,7 @@ Scope {
                     pages: materialFace.pages
                     Component.onCompleted: materialFace.shelf = shelf
                     entries: {
-                        const list = DesktopWidgetRegistry.keys.map(key => materialFace.prepare({ key: key, glyph: DesktopWidgetRegistry.glyph(key),
+                        const list = DesktopWidgetRegistry.materialKeys.map(key => materialFace.prepare({ key: key, glyph: DesktopWidgetRegistry.glyph(key),
                             name: materialFace.nameOf(key), english: materialFace.nameOf(key), tint: DesktopWidgetRegistry.tint(key),
                             words: [key, DesktopWidgetRegistry.keywordsOf(key), shelf.categoryNames[DesktopWidgetRegistry.categoryOf(key)] ?? "",
                                 DesktopWidgetRegistry.categoryOf(key)].join(" "), category: DesktopWidgetRegistry.categoryOf(key) }))

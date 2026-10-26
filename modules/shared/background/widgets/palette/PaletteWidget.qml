@@ -20,7 +20,6 @@ AbstractBackgroundWidget {
 
     implicitWidth: root.irisFaceWidth
     implicitHeight: root.irisFaceHeight
-    irisOnly: true
     irisFacePart: "palette"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"

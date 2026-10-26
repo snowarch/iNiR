@@ -1716,8 +1716,8 @@ ContentPage {
                 Layout.fillWidth: true
                 spacing: 6
                 Repeater {
-                    // every widget the registry knows (the hand list here had lost Controls, Screen Time, Palette, Lyrics)
-                    model: DesktopWidgetRegistry.entries
+                    // every widget the registry knows that this family draws
+                    model: DesktopWidgetRegistry.entriesFor(Config.options?.panelFamily ?? "ii")
                     delegate: WidgetEnableChip {
                         required property var modelData
                         widgetKey: modelData.key

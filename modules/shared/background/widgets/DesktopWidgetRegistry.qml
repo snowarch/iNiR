@@ -11,7 +11,8 @@ import QtQml
 //   2. One entry below. `name` is what people call it (shelf, gallery), `group` its Settings heading; both go to
 //      every catalogue in translations/. `lock`: offered on the lock screen and in the iRiS gallery. `palette`: it
 //      has the semantic palette roles (`background.widgets.<key>.palette`). `sizes`: Material's size classes,
-//      default first (`box` takes the footprint as content size; a size can carry its own values).
+//      default first (`box` takes the footprint as content size; a size can carry its own values). `irisOnly`: it has
+//      no Material face, so Material's shelf leaves it out.
 //   3. Its config block in modules/common/Config.qml (`background.widgets.<key>`, `enable` at `defaultOn`).
 //   4. Its FadeLoader in Background.qml; with `lock`, its Component in modules/iris/lock/IrisLockWidgets.qml.
 //   5. A family's own face stays that family's: an iRiS face is `widgetFace.<part>` in modules/iris/parts.json and
@@ -67,17 +68,18 @@ QtObject {
             keywords: "decoration decorative" },
         { key: "mascot", name: "Mascot", group: "Mascot", component: "MascotWidget", glyph: "pets", tint: "#ff375f", category: "decor", defaultOn: false, lock: false, palette: true, sizes: ["large", "small"], small: { contentWidth: 176 }, large: { contentWidth: 368 },
             keywords: "pet character companion" },
-        { key: "controls", name: "Controls", group: "Controls", component: "ControlsWidget", glyph: "toggle_on", tint: "#0a84ff", category: "system", defaultOn: false, lock: true, palette: false, sizes: [],
+        { key: "controls", name: "Controls", group: "Controls", component: "ControlsWidget", glyph: "toggle_on", tint: "#0a84ff", category: "system", irisOnly: true, defaultOn: false, lock: true, palette: false, sizes: [],
             keywords: "toggles wifi bluetooth volume brightness quick settings" },
-        { key: "screenTime", name: "Screen Time", group: "Screen time", component: "ScreenTimeWidget", glyph: "hourglass_bottom", tint: "#5e5ce6", category: "system", defaultOn: false, lock: true, palette: false, sizes: [],
+        { key: "screenTime", name: "Screen Time", group: "Screen time", component: "ScreenTimeWidget", glyph: "hourglass_bottom", tint: "#5e5ce6", category: "system", irisOnly: true, defaultOn: false, lock: true, palette: false, sizes: [],
             keywords: "usage apps time tracker" },
-        { key: "palette", name: "Palette", group: "Palette", component: "PaletteWidget", glyph: "palette", tint: "#ff375f", category: "decor", defaultOn: false, lock: true, palette: false, sizes: [],
+        { key: "palette", name: "Palette", group: "Palette", component: "PaletteWidget", glyph: "palette", tint: "#ff375f", category: "decor", irisOnly: true, defaultOn: false, lock: true, palette: false, sizes: [],
             keywords: "colours colors swatches hex wallpaper cover accent theme" },
-        { key: "lyrics", name: "Lyrics", group: "Lyrics", component: "LyricsWidget", glyph: "lyrics", tint: "#ff375f", category: "media", defaultOn: false, lock: true, palette: false, sizes: [],
+        { key: "lyrics", name: "Lyrics", group: "Lyrics", component: "LyricsWidget", glyph: "lyrics", tint: "#ff375f", category: "media", irisOnly: true, defaultOn: false, lock: true, palette: false, sizes: [],
             keywords: "lyrics words song sing karaoke music lines" }
     ]
 
     readonly property var keys: root.entries.map(entry => entry.key)
+    readonly property var materialKeys: root.entries.filter(entry => !entry.irisOnly).map(entry => entry.key)
     readonly property var byKey: root.entries.reduce((all, entry) => { all[entry.key] = entry; return all }, ({}))
     readonly property var groups: root.entries.reduce((all, entry) => { all[entry.key] = entry.group; return all }, ({}))
     readonly property var lockKeys: root.entries.filter(entry => entry.lock).map(entry => entry.key)
@@ -88,6 +90,8 @@ QtObject {
     readonly property string fallbackTint: "#8e8e93"
 
     function has(key: string): bool { return root.byKey[key] !== undefined }
+    function irisOnly(key: string): bool { return root.byKey[key]?.irisOnly ?? false }
+    function entriesFor(family: string): var { return family === "iris" ? root.entries : root.entries.filter(entry => !entry.irisOnly) }
     function entry(key: string): var { return root.byKey[key] ?? null }
     function nameOf(key: string): string { return root.byKey[key]?.name ?? key }
     function groupOf(key: string): string { return root.byKey[key]?.group ?? key }

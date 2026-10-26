@@ -12,7 +12,6 @@ AbstractBackgroundWidget {
 
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : instrumentBody.implicitWidth
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : instrumentBody.implicitHeight
-    irisOnly: true
     irisFacePart: "screenTime"
     irisSizes: ["small", "medium", "large"]
     irisDefaultSize: "medium"

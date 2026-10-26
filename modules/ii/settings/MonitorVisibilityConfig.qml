@@ -68,7 +68,7 @@ ContentPage {
     readonly property var desktopWidgetDescriptors: {
         void Config.revision
         void CustomWidgets.ready
-        const widgets = DesktopWidgetRegistry.entries.map(entry => ({ key: entry.key, title: Translation.tr(entry.group),
+        const widgets = DesktopWidgetRegistry.entriesFor(Config.options?.panelFamily ?? "ii").map(entry => ({ key: entry.key, title: Translation.tr(entry.group),
             icon: entry.glyph, defaultOn: entry.defaultOn }))
         const instances = Config.getNestedValue("background.widgets.mascotInstances", {}) ?? {}
         let mascotIndex = 1

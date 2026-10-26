@@ -2580,7 +2580,7 @@ AbstractWidget {
     property Component irisFace: null
     readonly property string irisFaceUrl: root.irisFacePart.length > 0 ? FamilyParts.url("iris", "widgetFace." + root.irisFacePart) : ""
     readonly property bool hasIrisFace: root.irisFace !== null || root.irisFaceUrl.length > 0
-    property bool irisOnly: false
+    readonly property bool irisOnly: DesktopWidgetRegistry.irisOnly(root.configEntryName)
     readonly property var designChoices: {
         const list = []
         const family = Config.options?.panelFamily ?? "ii"
