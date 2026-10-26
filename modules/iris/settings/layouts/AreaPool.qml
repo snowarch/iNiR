@@ -21,7 +21,7 @@ Item {
     property bool hidden: false
     // Settings stands (its open has finished): a page asked for now builds in the click's frame, as Classic's first
     // block does; built in slices it showed 0.2-0.7 s later in a nest. During the open it builds in slices, and one
-    // still building when the open ends is finished at once (Loader completes an incubation when it turns synchronous).
+    // still building when the open ends keeps building so.
     property bool settled: true
     // Motion of a turn: the areas in their order, and how far a page arriving travels from the side it lies on.
     property var order: []
@@ -144,13 +144,8 @@ Item {
             readonly property bool onScreen: !pool.hidden && (page.area === pool.leaving
                 || page.area === pool.shown)
             anchors.fill: parent
-            // Sync only once the component compiled: going sync mid-compile makes Qt reload it without the props (no `area`).
-            readonly property bool poolSettled: pool.settled
-            onPoolSettledChanged: page.syncOnceCompiled()
-            onProgressChanged: page.syncOnceCompiled()
-            function syncOnceCompiled(): void {
-                if (pool.settled && page.progress >= 1 && page.asynchronous) page.asynchronous = false
-            }
+            // Never switched while it loads: going sync before the component is Ready makes Qt reload it without the props
+            // (no `area`), and Ready lands from the loader thread later than any progress or event-loop turn shows.
             visible: page.onScreen && page.status === Loader.Ready
             enabled: page.area === pool.shown && !pool.turning
             z: page.area === pool.shown ? 1 : 0
