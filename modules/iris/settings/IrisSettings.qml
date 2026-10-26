@@ -770,6 +770,13 @@ Item {
         repeat: true
         onRunningChanged: if (running) tries = 0
         onTriggered: {
+            // A layout that draws its own rows knows its groups; the engine has none to match (the jump never came).
+            if (root.layoutRows) {
+                stop()
+                root.scrollToGroup(root.requestedGroup)
+                root.requestedGroup = ""
+                return
+            }
             const wanted = root.requestedGroup.toLowerCase()
             const match = root.groups.find(group => group.title.toLowerCase() === wanted || group.key.toLowerCase() === wanted)
             if (match || ++tries > 20) {
