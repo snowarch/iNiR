@@ -877,10 +877,13 @@ Item {
         const named = own < 0 && !root.sections.some(s => s.id === root.requestedSection)
             ? IrisOptions.categories.find(category => category.id === root.requestedSection) : null
         if (named) section = named.sections.find(id => root.sections.some(s => s.id === id)) ?? section
+        const known = own >= 0 || !!named || root.sections.some(s => s.id === root.requestedSection)
         root.advancedPage = root.landingPage(section, own)
         root.section = section
         root.backStack = []
         root.forwardStack = []
+        // A name that is no area is searched for: it stood on General without a word.
+        if (!known && asked0.length > 0) { searchField.text = asked.split("/").join(" "); root.query = searchField.text }
     }
     Component.onCompleted: {
         IrisNiri.ensure()
