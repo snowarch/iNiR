@@ -9897,5 +9897,20 @@
   "Apple wears your accent. Nothing is ink and one signal colour, Synth hardware keys and faders, Gel glossy capsules.": "Apple はアクセントカラーをまといます。Nothing はインクとシグナルカラー一色、Synth はハードウェアのキーとフェーダー、Gel はつややかなカプセル。",
   "Synth": "Synth",
   "Gel": "Gel",
-  "Shared": "共通"
+  "Shared": "共通",
+  "Shots": "スクリーンショット",
+  "No screenshots yet": "スクリーンショットはまだありません",
+  "Nothing copied yet": "まだ何もコピーしていません",
+  "No files yet": "ファイルはまだありません",
+  "The shelf is empty": "シェルフは空です",
+  "What you copy, the screenshots you take and the files you drop on the Island land here.": "コピーしたもの、撮ったスクリーンショット、アイランドにドロップしたファイルがここに並びます。",
+  "Copied. Paste it anywhere.": "コピーしました。どこにでも貼り付けられます。",
+  "Tap one to copy it": "タップしてコピー",
+  "A page on the open Island with what you copied, the screenshots you took and the files you dropped on it.": "開いたアイランドのページ。コピーしたもの、撮ったスクリーンショット、ドロップしたファイルが入ります。",
+  "Items kept": "保持する数",
+  "How many it keeps besides the ones you pin.": "ピン留め以外にいくつ保持するか。",
+  "Copied pictures": "コピーした画像",
+  "Pictures you copy go on the shelf too.": "コピーした画像もシェルフに入ります。",
+  "Clear on logout": "ログアウト時に消去",
+  "What isn't pinned leaves when you log in again.": "ピン留めしていないものは次のログイン時に消えます。"
 }

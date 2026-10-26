@@ -9897,5 +9897,20 @@
   "Apple wears your accent. Nothing is ink and one signal colour, Synth hardware keys and faders, Gel glossy capsules.": "Apple 使用你的强调色。Nothing 是墨色加一种信号色，Synth 是硬件按键和推子，Gel 是光泽胶囊。",
   "Synth": "Synth",
   "Gel": "Gel",
-  "Shared": "通用"
+  "Shared": "通用",
+  "Shots": "截图",
+  "No screenshots yet": "还没有截图",
+  "Nothing copied yet": "还没有复制内容",
+  "No files yet": "还没有文件",
+  "The shelf is empty": "搁架是空的",
+  "What you copy, the screenshots you take and the files you drop on the Island land here.": "你复制的内容、截取的屏幕截图和拖到灵动岛上的文件都会放在这里。",
+  "Copied. Paste it anywhere.": "已复制。可粘贴到任意位置。",
+  "Tap one to copy it": "点按一项即可复制",
+  "A page on the open Island with what you copied, the screenshots you took and the files you dropped on it.": "展开的灵动岛中的一页，放着你复制的内容、截图和拖进来的文件。",
+  "Items kept": "保留数量",
+  "How many it keeps besides the ones you pin.": "除已固定的之外保留多少项。",
+  "Copied pictures": "复制的图片",
+  "Pictures you copy go on the shelf too.": "你复制的图片也会放到搁架上。",
+  "Clear on logout": "注销时清空",
+  "What isn't pinned leaves when you log in again.": "未固定的内容会在下次登录时移除。"
 }

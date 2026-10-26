@@ -1340,6 +1340,14 @@
      "values": []
     },
     {
+     "name": "shelf",
+     "args": [
+      "action"
+     ],
+     "description": "",
+     "values": []
+    },
+    {
      "name": "toggle",
      "args": [],
      "description": "Expand or collapse the island on the focused output",

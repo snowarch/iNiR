@@ -64,11 +64,19 @@ Scope {
         target: "iris"
         function open(): void { GlobalStates.barOpen = true; root.islandRequested(true, "") }
         function page(name: string): void {
-            if (!["media", "activity", "desktop", "weather", "calendar", "vitals", "tray", "tools", "next", "prev"].includes(name)) return
+            if (!["media", "activity", "desktop", "shelf", "weather", "calendar", "vitals", "tray", "tools", "next", "prev"].includes(name)) return
             GlobalStates.barOpen = true
             root.islandRequested(true, name)
         }
         function close(): void { root.islandRequested(false, "") }
+        // The Shelf page: open, close or toggle (open on another page counts as closed).
+        function shelf(action: string): string {
+            if (!["open", "close", "toggle"].includes(action)) return "shelf takes open, close or toggle"
+            if (action === "close") { root.islandRequested(false, ""); return "closed" }
+            GlobalStates.barOpen = true
+            root.islandRequested(true, action === "toggle" ? "shelf:toggle" : "shelf")
+            return action
+        }
         function toggle(): void {
             if (GlobalStates.irisIslandExpanded) root.islandRequested(false, "")
             else { GlobalStates.barOpen = true; root.islandRequested(true, "") }
@@ -1222,6 +1230,13 @@ Scope {
                                 if (!open || barWindow.screen?.name === GlobalStates.focusedScreen?.name) {
                                     if (open && (page === "next" || page === "prev")) {
                                         island.stepPage(page === "next" ? 1 : -1)
+                                        return
+                                    }
+                                    if (open && page === "shelf:toggle") {
+                                        const showing = island.expanded && island.effectivePage === "shelf"
+                                        if (!showing) island.page = "shelf"
+                                        island.pinned = !showing
+                                        island.expanded = !showing
                                         return
                                     }
                                     if (open) island.page = page

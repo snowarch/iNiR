@@ -10,6 +10,7 @@ import Quickshell.Widgets
 import Quickshell.Services.SystemTray
 import qs
 import qs.services
+import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
@@ -198,13 +199,15 @@ Item {
         return requested
     }
 
-    readonly property var navKinds: ["media", "activity", "desktop", "weather", "calendar", "vitals", "tray", "tools", "focus", "today", "controls", "settings"]
+    readonly property var navKinds: ["media", "activity", "desktop", "shelf", "weather", "calendar", "vitals", "tray", "tools", "focus", "today", "controls", "settings"]
     // Cards that are pages of the Island too (10-25: more to open than the desktop and the tray).
     readonly property var cardPages: ["weather", "calendar", "vitals"]
     readonly property var navItems: {
         const saved = Array.from(IrisStyle.structuralValue("bar.navItems", root.navKinds))
-        // The factory list from before the card pages counts as the factory list.
-        const chosen = (saved.join() === "media,activity,desktop,tray,tools,focus,today,controls,settings" ? root.navKinds : saved)
+        // The factory lists from before the card pages and the Shelf count as the factory list.
+        const chosen = (["media,activity,desktop,tray,tools,focus,today,controls,settings",
+                "media,activity,desktop,weather,calendar,vitals,tray,tools,focus,today,controls,settings"].includes(saved.join())
+            ? root.navKinds : saved)
             .filter(kind => root.navKinds.includes(kind))
         return chosen.length > 0 ? chosen : root.navKinds
     }
@@ -214,20 +217,21 @@ Item {
         if (kind === "focus") return Config.options?.iris?.sidebars?.left?.enable ?? true
         if (kind === "today") return Config.options?.iris?.sidebars?.right?.enable ?? true
         if (kind === "weather") return Weather.enabled
+        if (kind === "shelf") return Config.options?.iris?.shelf?.enable ?? true
         return true
     }
     function navPageOf(kind: string): string {
         if (kind === "controls") return root.controlsInIsland ? "controls" : ""
-        return ["media", "activity", "desktop", "tray", "tools"].concat(root.cardPages).includes(kind) ? kind : ""
+        return ["media", "activity", "desktop", "shelf", "tray", "tools"].concat(root.cardPages).includes(kind) ? kind : ""
     }
     readonly property var navEntries: {
         const glyphs = { media: "music_note", activity: root.recording ? "radio_button_checked"
                 : root.timerKind.length > 0 ? root.timerGlyph : root.task ? String(root.task.glyph ?? "bolt")
                 : Privacy.micActive ? "mic" : Privacy.cameraActive ? "videocam" : Privacy.screenSharing ? "screen_share" : "bolt",
-            desktop: "space_dashboard", weather: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "partly_cloudy_day",
+            desktop: "space_dashboard", shelf: "inventory_2", weather: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "partly_cloudy_day",
             calendar: "calendar_month", vitals: "monitor_heart", tray: "apps", tools: "timer", focus: "left_panel_open",
             today: "right_panel_open", controls: "tune", settings: "settings" }
-        const labels = { media: "Now playing", activity: "Live activities", desktop: "Desktop", weather: "Weather",
+        const labels = { media: "Now playing", activity: "Live activities", desktop: "Desktop", shelf: "Shelf", weather: "Weather",
             calendar: "Calendar", vitals: "Vitals", tray: "Tray",
             tools: "Timers", focus: "Focus panel", today: "Today panel", controls: "Quick controls", settings: "Settings" }
         const visible = root.navItems.filter(kind => root.navAvailable(kind))
@@ -1743,6 +1747,24 @@ Item {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: event => root.applyWheel(event)
         }
+        // A file or some text dragged over the Island opens the Shelf; let go and it stays there.
+        DropArea {
+            anchors.fill: parent
+            enabled: Config.options?.iris?.shelf?.enable ?? true
+            // Only what the shelf keeps (local files, words): anything else passes on untouched.
+            onEntered: drag => {
+                const files = drag.hasUrls && drag.urls.some(url => String(url).startsWith("file://"))
+                if (!files && !(drag.hasText && drag.text.trim().length > 0)) { drag.accepted = false; return }
+                drag.accept(Qt.CopyAction)
+                root.openPage("shelf", true)
+            }
+            onDropped: drop => {
+                // A link from a browser carries no file: its words are kept instead.
+                const kept = (drop.hasUrls ? Shelf.keepUrls(drop.urls) : 0) || (drop.hasText && Shelf.keepText(drop.text) ? 1 : 0)
+                if (kept > 0) drop.accept(Qt.CopyAction)
+                else drop.accepted = false
+            }
+        }
 
         Item {
             id: islandResize
@@ -2621,8 +2643,22 @@ Item {
                         : root.effectivePage === "activity" ? activityPage.implicitHeight
                         : root.effectivePage === "tray" ? trayPage.implicitHeight
                         : root.effectivePage === "tools" ? toolsPage.implicitHeight
+                        : root.effectivePage === "shelf" ? shelfPage.implicitHeight
                         : root.cardPages.includes(root.effectivePage) ? cardPage.implicitHeight
                         : desktopPage.implicitHeight
+
+                    Page {
+                        id: shelfPage
+                        name: "shelf"
+                        Loader {
+                            id: shelfLoader
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: item?.implicitHeight ?? 0
+                            active: shelfPage.resident
+                            asynchronous: !shelfPage.current
+                            sourceComponent: IslandShelfPage { width: shelfLoader.width; island: root }
+                        }
+                    }
 
                     Page {
                         id: trayPage

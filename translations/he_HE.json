@@ -9897,5 +9897,20 @@
   "Apple wears your accent. Nothing is ink and one signal colour, Synth hardware keys and faders, Gel glossy capsules.": "Apple משתמש בצבע ההדגשה שלך. Nothing הוא דיו עם צבע אות אחד, Synth מקשים ופיידרים של חומרה, Gel קפסולות מבריקות.",
   "Synth": "Synth",
   "Gel": "Gel",
-  "Shared": "משותף"
+  "Shared": "משותף",
+  "Shots": "צילומים",
+  "No screenshots yet": "אין עדיין צילומי מסך",
+  "Nothing copied yet": "עוד לא העתקת כלום",
+  "No files yet": "אין עדיין קבצים",
+  "The shelf is empty": "המדף ריק",
+  "What you copy, the screenshots you take and the files you drop on the Island land here.": "מה שאתה מעתיק, צילומי המסך שאתה מצלם והקבצים שאתה משחרר על האי מגיעים לכאן.",
+  "Copied. Paste it anywhere.": "הועתק. אפשר להדביק בכל מקום.",
+  "Tap one to copy it": "הקש על פריט כדי להעתיק",
+  "A page on the open Island with what you copied, the screenshots you took and the files you dropped on it.": "עמוד באי הפתוח עם מה שהעתקת, צילומי המסך והקבצים ששחררת עליו.",
+  "Items kept": "פריטים שנשמרים",
+  "How many it keeps besides the ones you pin.": "כמה נשמרים מלבד אלה שהצמדת.",
+  "Copied pictures": "תמונות שהועתקו",
+  "Pictures you copy go on the shelf too.": "גם תמונות שאתה מעתיק עולות למדף.",
+  "Clear on logout": "ריקון ביציאה",
+  "What isn't pinned leaves when you log in again.": "מה שלא מוצמד נעלם בכניסה הבאה."
 }

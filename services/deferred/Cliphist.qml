@@ -19,6 +19,8 @@ Singleton {
     property bool sloppySearch: Config.options?.search.sloppy ?? false
     property real scoreThreshold: 0.2
     property list<string> entries: []
+    // Read at least once: an empty list before that says nothing.
+    property bool listed: false
     property int _readAttempts: 0
     property bool _refreshQueued: false
     readonly property var preparedEntries: entries.map(a => ({
@@ -302,6 +304,7 @@ Singleton {
             if (exitCode === 0) {
                 // Cap the number of entries we keep to avoid heavy models
                 root.entries = readProc.buffer.slice(0, root.maxEntries)
+                root.listed = true
                 root._readAttempts = 0
                 if (root._refreshQueued) {
                     root._refreshQueued = false

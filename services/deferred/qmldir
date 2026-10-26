@@ -17,5 +17,6 @@ singleton NewsService 1.0 NewsService.qml
 singleton NiriKeybinds 1.0 NiriKeybinds.qml
 singleton PackageSearch 1.0 PackageSearch.qml
 singleton SessionWarnings 1.0 SessionWarnings.qml
+singleton Shelf 1.0 Shelf.qml
 singleton SongRec 1.0 SongRec.qml
 singleton Ydotool 1.0 Ydotool.qml

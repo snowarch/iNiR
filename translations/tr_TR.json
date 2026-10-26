@@ -9897,5 +9897,20 @@
   "Apple wears your accent. Nothing is ink and one signal colour, Synth hardware keys and faders, Gel glossy capsules.": "Apple vurgu renginizi kullanır. Nothing tek sinyal renkli mürekkep, Synth donanım tuşları ve faderlar, Gel parlak kapsüllerdir.",
   "Synth": "Synth",
   "Gel": "Gel",
-  "Shared": "Ortak"
+  "Shared": "Ortak",
+  "Shots": "Görüntüler",
+  "No screenshots yet": "Henüz ekran görüntüsü yok",
+  "Nothing copied yet": "Henüz bir şey kopyalanmadı",
+  "No files yet": "Henüz dosya yok",
+  "The shelf is empty": "Raf boş",
+  "What you copy, the screenshots you take and the files you drop on the Island land here.": "Kopyaladıkların, aldığın ekran görüntüleri ve adaya bıraktığın dosyalar burada toplanır.",
+  "Copied. Paste it anywhere.": "Kopyalandı. İstediğin yere yapıştır.",
+  "Tap one to copy it": "Kopyalamak için birine dokun",
+  "A page on the open Island with what you copied, the screenshots you took and the files you dropped on it.": "Açık adanın bir sayfası: kopyaladıkların, ekran görüntülerin ve üzerine bıraktığın dosyalar.",
+  "Items kept": "Tutulan öğe",
+  "How many it keeps besides the ones you pin.": "Sabitlediklerinin dışında kaç tane tutacağı.",
+  "Copied pictures": "Kopyalanan resimler",
+  "Pictures you copy go on the shelf too.": "Kopyaladığın resimler de rafa gelir.",
+  "Clear on logout": "Oturum kapanınca temizle",
+  "What isn't pinned leaves when you log in again.": "Sabitlenmemiş olanlar bir sonraki girişte gider."
 }

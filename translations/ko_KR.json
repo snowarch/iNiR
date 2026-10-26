@@ -9897,5 +9897,20 @@
   "Apple wears your accent. Nothing is ink and one signal colour, Synth hardware keys and faders, Gel glossy capsules.": "Apple은 강조 색을 입힙니다. Nothing은 하나의 신호 색이 있는 잉크, Synth는 하드웨어 키와 페이더, Gel은 광택 있는 캡슐입니다.",
   "Synth": "Synth",
   "Gel": "Gel",
-  "Shared": "공통"
+  "Shared": "공통",
+  "Shots": "스크린샷",
+  "No screenshots yet": "아직 스크린샷이 없습니다",
+  "Nothing copied yet": "아직 복사한 항목이 없습니다",
+  "No files yet": "아직 파일이 없습니다",
+  "The shelf is empty": "선반이 비어 있습니다",
+  "What you copy, the screenshots you take and the files you drop on the Island land here.": "복사한 것, 찍은 스크린샷, 아일랜드에 놓은 파일이 여기에 모입니다.",
+  "Copied. Paste it anywhere.": "복사했습니다. 어디에나 붙여 넣으세요.",
+  "Tap one to copy it": "탭하여 복사",
+  "A page on the open Island with what you copied, the screenshots you took and the files you dropped on it.": "열린 아일랜드의 페이지로, 복사한 것과 스크린샷, 놓은 파일이 담깁니다.",
+  "Items kept": "보관할 항목 수",
+  "How many it keeps besides the ones you pin.": "고정한 항목 외에 몇 개를 보관할지.",
+  "Copied pictures": "복사한 이미지",
+  "Pictures you copy go on the shelf too.": "복사한 이미지도 선반에 담깁니다.",
+  "Clear on logout": "로그아웃 시 비우기",
+  "What isn't pinned leaves when you log in again.": "고정하지 않은 항목은 다음 로그인 때 사라집니다."
 }

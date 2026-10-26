@@ -9897,5 +9897,20 @@
   "Apple wears your accent. Nothing is ink and one signal colour, Synth hardware keys and faders, Gel glossy capsules.": "Apple porte votre accent. Nothing, c'est l'encre et une seule couleur de signal ; Synth, des touches et faders matériels ; Gel, des capsules brillantes.",
   "Synth": "Synth",
   "Gel": "Gel",
-  "Shared": "Commun"
+  "Shared": "Commun",
+  "Shots": "Captures",
+  "No screenshots yet": "Aucune capture pour l'instant",
+  "Nothing copied yet": "Rien de copié pour l'instant",
+  "No files yet": "Aucun fichier pour l'instant",
+  "The shelf is empty": "L'étagère est vide",
+  "What you copy, the screenshots you take and the files you drop on the Island land here.": "Ce que vous copiez, les captures que vous prenez et les fichiers que vous déposez sur l'île arrivent ici.",
+  "Copied. Paste it anywhere.": "Copié. Collez-le où vous voulez.",
+  "Tap one to copy it": "Touchez-en un pour le copier",
+  "A page on the open Island with what you copied, the screenshots you took and the files you dropped on it.": "Une page de l'île ouverte avec ce que vous avez copié, vos captures et les fichiers déposés dessus.",
+  "Items kept": "Éléments gardés",
+  "How many it keeps besides the ones you pin.": "Combien elle en garde en plus de ceux que vous épinglez.",
+  "Copied pictures": "Images copiées",
+  "Pictures you copy go on the shelf too.": "Les images que vous copiez vont aussi sur l'étagère.",
+  "Clear on logout": "Vider à la déconnexion",
+  "What isn't pinned leaves when you log in again.": "Ce qui n'est pas épinglé part à la prochaine connexion."
 }

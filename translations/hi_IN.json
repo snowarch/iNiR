@@ -9897,5 +9897,20 @@
   "Apple wears your accent. Nothing is ink and one signal colour, Synth hardware keys and faders, Gel glossy capsules.": "Apple आपका एक्सेंट रंग पहनता है। Nothing एक सिग्नल रंग वाली स्याही है, Synth हार्डवेयर की कुंजियाँ और फ़ेडर, Gel चमकदार कैप्सूल।",
   "Synth": "Synth",
   "Gel": "Gel",
-  "Shared": "साझा"
+  "Shared": "साझा",
+  "Shots": "स्क्रीनशॉट",
+  "No screenshots yet": "अभी कोई स्क्रीनशॉट नहीं",
+  "Nothing copied yet": "अभी कुछ कॉपी नहीं किया",
+  "No files yet": "अभी कोई फ़ाइल नहीं",
+  "The shelf is empty": "शेल्फ़ खाली है",
+  "What you copy, the screenshots you take and the files you drop on the Island land here.": "जो आप कॉपी करते हैं, जो स्क्रीनशॉट लेते हैं और जो फ़ाइलें आइलैंड पर छोड़ते हैं, वे यहाँ आती हैं।",
+  "Copied. Paste it anywhere.": "कॉपी हो गया। कहीं भी पेस्ट करें।",
+  "Tap one to copy it": "कॉपी करने के लिए किसी पर टैप करें",
+  "A page on the open Island with what you copied, the screenshots you took and the files you dropped on it.": "खुले आइलैंड का एक पेज, जिसमें आपकी कॉपी की गई चीज़ें, स्क्रीनशॉट और छोड़ी गई फ़ाइलें हैं।",
+  "Items kept": "रखी जाने वाली चीज़ें",
+  "How many it keeps besides the ones you pin.": "पिन की गई चीज़ों के अलावा कितनी रखी जाएँ।",
+  "Copied pictures": "कॉपी की गई तस्वीरें",
+  "Pictures you copy go on the shelf too.": "आप जो तस्वीरें कॉपी करते हैं, वे भी शेल्फ़ पर आती हैं।",
+  "Clear on logout": "लॉग आउट पर खाली करें",
+  "What isn't pinned leaves when you log in again.": "जो पिन नहीं है, वह अगली बार लॉग इन करने पर हट जाता है।"
 }

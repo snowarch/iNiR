@@ -299,6 +299,7 @@ complete -c inir -n '__inir_at_function iris' -a open -d 'Expand the island on t
 complete -c inir -n '__inir_at_function iris' -a page -d 'Expand the island on a page: media, activity, desktop, tray…'
 complete -c inir -n '__inir_at_value 1 page iris' -a 'media activity desktop tray tools next prev'
 complete -c inir -n '__inir_at_function iris' -a close -d 'Collapse the island'
+complete -c inir -n '__inir_at_function iris' -a shelf -d 'shelf'
 complete -c inir -n '__inir_at_function iris' -a toggle -d 'Expand or collapse the island on the focused output'
 complete -c inir -n '__inir_at_function iris' -a card -d 'open, close or toggle the media bubble\'s floating card, or…'
 complete -c inir -n '__inir_at_value 1 card iris' -a 'open close toggle pin'

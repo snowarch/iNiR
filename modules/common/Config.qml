@@ -4316,7 +4316,7 @@ Singleton {
                     // Expanded Island: page width (px) and its navigation, in order (media, activity, desktop,
                     // tray, tools, focus, today, controls, settings).
                     property int pageWidth: 440
-                    property list<string> navItems: ["media", "activity", "desktop", "weather", "calendar", "vitals", "tray", "tools", "focus", "today", "controls", "settings"]
+                    property list<string> navItems: ["media", "activity", "desktop", "shelf", "weather", "calendar", "vitals", "tray", "tools", "focus", "today", "controls", "settings"]
                     property string design: "halo" // the Island's design: "halo", "ledger" or "tiles"
                     property string blockStyle: "plain" // desktop page blocks: "plain" on the Island's black or "grouped" on quiet plates
                     property string scrollAction: "volume" // "volume", "brightness" or "none"
@@ -4380,6 +4380,12 @@ Singleton {
                     property int maxResults: 8
                     property int clipboardResults: 8
                     property bool showHints: true
+                }
+                property JsonObject shelf: JsonObject {
+                    property bool enable: true // the Island's Shelf page: what you copied, shot and dropped
+                    property int length: 24
+                    property bool images: true
+                    property bool clearOnLogout: false
                 }
                 property JsonObject tray: JsonObject {
                     property bool hidePassive: false

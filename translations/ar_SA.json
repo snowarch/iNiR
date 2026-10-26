@@ -9897,5 +9897,20 @@
   "Apple wears your accent. Nothing is ink and one signal colour, Synth hardware keys and faders, Gel glossy capsules.": "يستخدم Apple لون التمييز الخاص بك. Nothing حبر بلون إشارة واحد، وSynth مفاتيح ومنزلقات كأجهزة حقيقية، وGel كبسولات لامعة.",
   "Synth": "Synth",
   "Gel": "Gel",
-  "Shared": "مشترك"
+  "Shared": "مشترك",
+  "Shots": "لقطات",
+  "No screenshots yet": "لا توجد لقطات بعد",
+  "Nothing copied yet": "لم تنسخ شيئًا بعد",
+  "No files yet": "لا توجد ملفات بعد",
+  "The shelf is empty": "الرف فارغ",
+  "What you copy, the screenshots you take and the files you drop on the Island land here.": "ما تنسخه ولقطات الشاشة التي تلتقطها والملفات التي تُفلتها على الجزيرة تجدها هنا.",
+  "Copied. Paste it anywhere.": "تم النسخ. الصقه أينما شئت.",
+  "Tap one to copy it": "انقر عنصرًا لنسخه",
+  "A page on the open Island with what you copied, the screenshots you took and the files you dropped on it.": "صفحة في الجزيرة المفتوحة تضم ما نسخته ولقطات الشاشة والملفات التي أفلتّها عليها.",
+  "Items kept": "العناصر المحفوظة",
+  "How many it keeps besides the ones you pin.": "كم عنصرًا يحفظ إلى جانب ما تثبّته.",
+  "Copied pictures": "الصور المنسوخة",
+  "Pictures you copy go on the shelf too.": "الصور التي تنسخها تذهب إلى الرف أيضًا.",
+  "Clear on logout": "إفراغ عند تسجيل الخروج",
+  "What isn't pinned leaves when you log in again.": "ما ليس مثبتًا يختفي عند تسجيل الدخول التالي."
 }

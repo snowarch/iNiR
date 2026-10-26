@@ -9897,5 +9897,20 @@
   "Apple wears your accent. Nothing is ink and one signal colour, Synth hardware keys and faders, Gel glossy capsules.": "Apple использует ваш акцент. Nothing: чернила с одним сигнальным цветом, Synth: аппаратные клавиши и фейдеры, Gel: глянцевые капсулы.",
   "Synth": "Synth",
   "Gel": "Gel",
-  "Shared": "Общий"
+  "Shared": "Общий",
+  "Shots": "Снимки",
+  "No screenshots yet": "Снимков пока нет",
+  "Nothing copied yet": "Пока ничего не скопировано",
+  "No files yet": "Файлов пока нет",
+  "The shelf is empty": "Полка пуста",
+  "What you copy, the screenshots you take and the files you drop on the Island land here.": "Сюда попадает то, что вы копируете, ваши снимки экрана и файлы, брошенные на остров.",
+  "Copied. Paste it anywhere.": "Скопировано. Вставьте куда угодно.",
+  "Tap one to copy it": "Нажмите, чтобы скопировать",
+  "A page on the open Island with what you copied, the screenshots you took and the files you dropped on it.": "Страница открытого острова со скопированным, снимками экрана и файлами, брошенными на него.",
+  "Items kept": "Хранить элементов",
+  "How many it keeps besides the ones you pin.": "Сколько хранится помимо закреплённых.",
+  "Copied pictures": "Скопированные картинки",
+  "Pictures you copy go on the shelf too.": "Картинки, которые вы копируете, тоже попадают на полку.",
+  "Clear on logout": "Очищать при выходе",
+  "What isn't pinned leaves when you log in again.": "Незакреплённое исчезает при следующем входе."
 }

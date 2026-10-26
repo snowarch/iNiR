@@ -2656,6 +2656,7 @@
                 "media",
                 "activity",
                 "desktop",
+                "shelf",
                 "weather",
                 "calendar",
                 "vitals",
@@ -2733,6 +2734,12 @@
             "maxResults": 8,
             "clipboardResults": 8,
             "showHints": true
+        },
+        "shelf": {
+            "enable": true,
+            "length": 24,
+            "images": true,
+            "clearOnLogout": false
         },
         "tray": {
             "hidePassive": false,
