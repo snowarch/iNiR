@@ -54,7 +54,9 @@ Item {
             asynchronous: root.asynchronous
             // A copy an effect samples keeps its own texture: shared with a mipmapped view it flipped its filtering.
             cache: !root.provideTexture
-            sourceSize: root.decodeSize
+            // Mipmapped, 2 px over the asked size: a plain copy elsewhere at that size would share its texture (IrisImage).
+            sourceSize: root.provideTexture ? root.decodeSize
+                : Qt.size(root.decodeSize.width > 0 ? root.decodeSize.width + 2 : 0, root.decodeSize.height > 0 ? root.decodeSize.height + 2 : 0)
             // Shown shrunk it needs mipmaps to stay sharp; a texture an effect samples must not have them.
             mipmap: !root.provideTexture
         }

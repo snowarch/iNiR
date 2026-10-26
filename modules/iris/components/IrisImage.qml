@@ -17,9 +17,10 @@ Image {
         return Math.max(32, Math.ceil(value * root.pixelRatio / 32) * 32)
     }
 
-    // A plain twin of a mipmapped picture at the same size shares its texture, and the later one flips its filtering
-    // (QSGPlainTexture "Mipmap settings changed"): one pixel more keeps them apart.
-    readonly property int apart: root.mipmap ? 0 : 1
+    // A twin with the other filtering at the same size shares its texture, and the later one flips it (QSGPlainTexture
+    // "Mipmap settings changed"), across windows too: mipmapped decodes 2 px over the step and plain 1 px, sizes
+    // nothing else asks for.
+    readonly property int apart: root.mipmap ? 2 : 1
     sourceSize: Qt.size(root.step(root.decodeWidth) + root.apart, root.step(root.decodeHeight) + root.apart)
     fillMode: Image.PreserveAspectCrop
     asynchronous: true
