@@ -22,6 +22,8 @@ import qs.modules.iris.settings
 // from are one surface: drawn and moved in the same frame.
 Item {
     id: root
+    // The place a look is worn by (`iris.appearance.nothingOn.spotlight`).
+    readonly property string irisPlace: "spotlight"
 
     property var screen: null
     readonly property bool here: (root.screen?.name ?? "") === (GlobalStates.focusedScreen?.name ?? "")

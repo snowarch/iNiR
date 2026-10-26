@@ -16,6 +16,8 @@ import qs.modules.iris.widgets
 
 Item {
     id: root
+    // The place a look is worn by (`iris.appearance.nothingOn.lock`).
+    readonly property string irisPlace: "lock"
     // A block the person resized is drawn scaled; native glyphs smear under a transform, curves do not.
     function renderFor(block: string): int {
         return Math.abs(IrisLockOptions.scaleOf(block) - 1) < 0.001 ? Text.NativeRendering : Text.CurveRendering

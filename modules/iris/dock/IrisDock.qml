@@ -17,6 +17,8 @@ import qs.modules.iris.pieces
 
 Item {
     id: root
+    // The place a look is worn by (`iris.appearance.nothingOn.dock`).
+    readonly property string irisPlace: "dock"
     property var screen: null
     anchors.fill: parent
     readonly property bool showLauncher: Config.options?.iris?.dock?.launcher ?? true

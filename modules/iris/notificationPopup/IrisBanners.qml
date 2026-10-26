@@ -16,6 +16,8 @@ import qs.modules.iris.components
 
 Item {
     id: root
+    // The place a look is worn by (`iris.appearance.nothingOn.notifications`).
+    readonly property string irisPlace: "notifications"
     property var screenData: null
     readonly property string screenName: root.screenData?.name ?? ""
     readonly property bool fullscreenHere: CompositorService.isNiri && GameMode.hasFullscreenOnOutput(root.screenName) && !NiriService.inOverview

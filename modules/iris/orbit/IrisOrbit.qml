@@ -19,6 +19,8 @@ import qs.modules.iris.pieces
 // on is in the middle, its neighbours show their near edge. Typing lights up the windows that match wherever they are.
 Item {
     id: root
+    // The place a look is worn by (`iris.appearance.nothingOn.orbit`).
+    readonly property string irisPlace: "orbit"
 
     property var screen: null
     readonly property string outputName: root.screen?.name ?? ""

@@ -272,6 +272,7 @@ Scope {
 
         IrisMorphSurface {
             id: body
+            readonly property string irisPlace: "osd"
             compositorBlurred: true
             open: root.open
             motionSurface: "osd"
