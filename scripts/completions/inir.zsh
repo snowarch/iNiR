@@ -45,7 +45,6 @@ _inir() {
         'waffle-settings-window:Open waffle settings window'
         'repair:Repair shell state'
         'path:Show config path'
-        'test-local:Run local tests'
         'setup:Run setup directly'
         'service:Manage systemd service'
         'doctor:Health checks'

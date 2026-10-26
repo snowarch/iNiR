@@ -1,7 +1,7 @@
 .pragma library
 
-// Arranging desktop widgets: pure maths on plain numbers in desktop px, tested with node
-// (dev/tests/test-arrange-math.js). A rect is { id, x, y, w, h }; a room is the canvas
+// Arranging desktop widgets: pure maths on plain numbers in desktop px, free of QML so node can
+// test it. A rect is { id, x, y, w, h }; a room is the canvas
 // { w, h } plus the work area the widgets may rest in { left, top, right, bottom }.
 //
 // `others` may hold the shell's own bodies resting on the screen (`fixed`: the Island, the Dock, a bar): widgets

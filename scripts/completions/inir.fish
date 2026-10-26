@@ -60,7 +60,6 @@ complete -c inir -n '__fish_use_subcommand' -a settings-window -d 'Open settings
 complete -c inir -n '__fish_use_subcommand' -a waffle-settings-window -d 'Open waffle settings'
 complete -c inir -n '__fish_use_subcommand' -a repair -d 'Repair shell state'
 complete -c inir -n '__fish_use_subcommand' -a path -d 'Show config path'
-complete -c inir -n '__fish_use_subcommand' -a test-local -d 'Run local tests'
 complete -c inir -n '__fish_use_subcommand' -a setup -d 'Run setup directly'
 complete -c inir -n '__fish_use_subcommand' -a service -d 'Manage systemd service'
 complete -c inir -n '__fish_use_subcommand' -a doctor -d 'Health checks'
@@ -94,7 +93,7 @@ complete -c inir -n '__fish_seen_subcommand_from completions' -a 'bash zsh fish 
 # Subcommand completions: bind (keys first, then any call)
 complete -c inir -n '__fish_seen_subcommand_from bind; and test (count (commandline -opc)) -eq 2' -a '--add --remove --list --examples' -d 'bind option'
 
-# >>> generated from the IPC registry: python3 dev/tools/generate-ipc-registry.py >>>
+# >>> generated from the IPC registry >>>
 complete -c inir -n '__inir_at_target' -a ai -d 'Shared multi-provider AI service'
 complete -c inir -n '__inir_at_function ai' -a ensureInitialized -d 'Force-load models, provider catalogs and API keys'
 complete -c inir -n '__inir_at_function ai' -a diagnose -d 'Dump current AI, catalog and tool state as JSON'

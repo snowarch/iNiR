@@ -42,7 +42,7 @@ these needs the `snowarch/inir-cli` repo with tagged releases first:
    with the binary in place.
 3. `uninstall` removes the user copy; packages remove their own.
 
-`dev/tests/test-cli-delegation.sh` holds the hand-over to these rules, and
+A test holds the hand-over to these rules, and
 `inir-cli`'s `test/parity.sh` checks that every call gives the same output and
 exit code through the bash launcher alone, through the binary, and through the
 launcher with the binary installed.

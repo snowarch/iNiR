@@ -158,7 +158,7 @@ Other:
   completions <bash|zsh|fish|install>
   bind [--add|--remove|--list|--examples] <keys> <call…>   Niri keybinds for any inir call
   service <install|uninstall|enable|disable|start|stop|restart|status|logs>
-  repair, path, test-local, settings-window, waffle-settings-window
+  repair, path, settings-window, waffle-settings-window
 EOF
 }
 
@@ -2673,19 +2673,6 @@ run_repair() {
     "$qs_bin" -p "$dir" log | grep -iE 'error|ReferenceError|TypeError|binding loop' | tail -80 || true
 }
 
-run_local_test() {
-    local dir="$1"
-    shift
-    local test_script="$dir/dev/tests/test-local-distribution.sh"
-
-    if [[ ! -x "$test_script" ]]; then
-        echo "local test script not found in $dir" >&2
-        exit 1
-    fi
-
-    INIR_RUNTIME_DIR="$dir" INIR_LAUNCHER_PATH="$0" exec "$test_script" "$@"
-}
-
 run_runtime_script() {
     local dir="$1"
     local relative_path="$2"
@@ -4776,28 +4763,6 @@ case "$command_name" in
         done
         resolve_config_dir
         printf '%s\n' "$config_dir"
-        ;;
-    test-local)
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                -c|--config)
-                    parse_config_flag "$@"
-                    shift 2
-                    ;;
-                --with-runtime)
-                    break
-                    ;;
-                -h|--help)
-                    usage
-                    exit 0
-                    ;;
-                *)
-                    break
-                    ;;
-            esac
-        done
-        setup_dir="$(resolve_setup_dir)"
-        run_local_test "$setup_dir" "$@"
         ;;
     setup)
         while [[ $# -gt 0 ]]; do

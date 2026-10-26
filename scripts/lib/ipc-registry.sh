@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
-# Regenerate: python3 dev/tools/generate-ipc-registry.py
+# Generated from the IPC registry, edit that instead.
 # IPC.md hash: a98b862b748e75a3
 # Targets: 77
 

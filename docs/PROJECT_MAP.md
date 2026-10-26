@@ -20,7 +20,6 @@ How iNiR is laid out, what each part owns, and what a change there reaches. Read
 | `translations/` | 18 catalogues, and their tools in `translations/tools/` | Low |
 | `docs/` | User documentation, published on the website | Low |
 | `assets/`, `dots/` | Icons and wallpapers; dotfiles that setup installs | Medium |
-| `dev/` | Tests, the nested test session (`dev/tools/nest.sh`), lifecycle benches | Low |
 | `nix/`, `distro/`, `flake.nix`, `Makefile` | Packaging | Medium |
 
 ## How a start goes

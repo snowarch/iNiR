@@ -87,6 +87,8 @@
     ".bak"
   ],
   "excludedPaths": [
+    "dev",
+    "GNUmakefile",
     "scripts/agents",
     "scripts/release.sh",
     "scripts/wiki-sync.sh",

@@ -1,6 +1,6 @@
 # What iNiR installs, per distro. The bash installers (sdata/dist-*/install-deps.sh)
-# and the inir binary read the same table; dev/tests/test-deps-table.py keeps it
-# equal to what those scripts install.
+# and the inir binary read the same table; a test keeps it equal to what those
+# scripts install.
 #
 # Each [[dep]] is one thing the shell needs. `group` says when it goes in:
 #   core           always

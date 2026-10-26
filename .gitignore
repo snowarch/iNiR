@@ -210,3 +210,7 @@ assets/images/mascot/inir-mascot-*.gif
 # fontconfig marks every scanned font folder; assets/fonts is linked into the user fonts by sync-system-fonts.sh
 assets/fonts/**/.uuid
 assets/fonts/.uuid
+
+# local tooling, never shipped
+/dev
+/GNUmakefile

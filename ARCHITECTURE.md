@@ -139,9 +139,8 @@ docs/                         # User documentation
 ```
 
 A family may use `modules/shared`, `modules/common` and `services`; nothing else may use a family, apart from the
-entry files that compose the shell. `dev/tests/test-family-isolation.py` follows every reference
-(`dev/tools/module-map.py`) and fails on a new crossing; the ones that existed when the folders were drawn are listed in
-`dev/tests/family-crossings.json`, and that list only shrinks.
+entry files that compose the shell. A check follows every reference and fails on a new crossing; the few that existed
+when the folders were drawn only shrink.
 
 ## Config System
 

@@ -3,8 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQml
 
 // Every built-in desktop widget, once. The edit shelf, the iRiS gallery and lock, Settings, the IPC and the Material
-// size classes all read this list; dev/tests/test-desktop-widget-registry.py fails when a widget is missing anywhere
-// it must be.
+// size classes all read this list; a test fails when a widget is missing anywhere it must be.
 //
 // Adding a widget:
 //   1. Its folder here (`<key>/<Name>Widget.qml`, an AbstractBackgroundWidget with `configEntryName: "<key>"`).

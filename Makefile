@@ -7,18 +7,14 @@ SHELL_INSTALL_DIR = $(SHAREDIR)/quickshell/inir
 DOC_DIR = $(SHAREDIR)/doc/inir-shell
 SYSTEMD_USER_DIR ?= $(PREFIX)/lib/systemd/user
 
-.PHONY: all build test-local install install-bin install-shell install-systemd install-icon install-desktop install-docs uninstall uninstall-bin uninstall-shell uninstall-systemd uninstall-icon uninstall-desktop uninstall-docs
+.PHONY: all build install install-bin install-shell install-systemd install-icon install-desktop install-docs uninstall uninstall-bin uninstall-shell uninstall-systemd uninstall-icon uninstall-desktop uninstall-docs
 
 all: build
 
 build:
 	@chmod +x scripts/inir
-	@chmod +x dev/tests/test-local-distribution.sh
 	@chmod +x setup
 	@find scripts -type f \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} +
-
-test-local: build
-	@bash dev/tests/test-local-distribution.sh
 
 install-bin:
 	@install -Dm755 scripts/inir $(BINDIR)/inir

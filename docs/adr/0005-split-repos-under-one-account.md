@@ -17,8 +17,8 @@ The split follows what changes together and who consumes it, not code areas:
 
 The three panel families stay in one repo. They share the engine, the services
 and some panels, so separate repos would turn every engine change into several
-coordinated PRs. `dev/tests/test-family-isolation.py` keeps them from importing
-each other beyond the crossings that exist today.
+coordinated PRs. A check keeps them from importing each other beyond the
+crossings that exist today.
 
 Contracts between repos are files with tests: `scripts/lib/ipc.json` (the IPC
 surface, generated with `ipc-registry.sh`), `VERSION`, `version.json` and the
@@ -28,7 +28,7 @@ Until a release has moved users to the binary, the files an old `setup` needs
 before pulling stay at the repo root: `setup`, `shell.qml`, `sdata/lib/`,
 `sdata/runtime-*.txt`, `scripts/inir` and `VERSION`.
 
-`dev/lifecycle/run.sh` runs install, reinstall, update and uninstall in a clean
-container per distro (Arch, Fedora, Debian, Ubuntu, Void) and is what CI runs.
+Install, reinstall, update and uninstall run in a clean container per distro
+(Arch, Fedora, Debian, Ubuntu, Void) before a release.
 
 Status: accepted. The bench and the contracts exist; the CLI and Hub repos do not yet.
