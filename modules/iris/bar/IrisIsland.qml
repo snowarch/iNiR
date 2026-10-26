@@ -217,7 +217,7 @@ Item {
         if (kind === "focus") return Config.options?.iris?.sidebars?.left?.enable ?? true
         if (kind === "today") return Config.options?.iris?.sidebars?.right?.enable ?? true
         if (kind === "weather") return Weather.enabled
-        if (kind === "shelf") return Config.options?.iris?.shelf?.enable ?? true
+        if (kind === "shelf") return Config.options?.shelf?.enable ?? true
         return true
     }
     function navPageOf(kind: string): string {
@@ -1750,7 +1750,7 @@ Item {
         // A file or some text dragged over the Island opens the Shelf; let go and it stays there.
         DropArea {
             anchors.fill: parent
-            enabled: Config.options?.iris?.shelf?.enable ?? true
+            enabled: Config.options?.shelf?.enable ?? true
             // Only what the shelf keeps (local files, words): anything else passes on untouched.
             onEntered: drag => {
                 const files = drag.hasUrls && drag.urls.some(url => String(url).startsWith("file://"))

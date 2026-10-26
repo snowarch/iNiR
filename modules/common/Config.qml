@@ -3491,6 +3491,13 @@ Singleton {
                 property string openaiModel: "gpt-4o-mini-transcribe"
             }
 
+            property JsonObject shelf: JsonObject {
+                property bool enable: true // what you copied, shot and dropped (iRiS shows it on the Island)
+                property int length: 24
+                property bool images: true
+                property bool clearOnLogout: false
+            }
+
             property JsonObject clipboard: JsonObject {
                 // Decoded text of pinned entries, newest first. Stored decoded so a
                 // pin survives cliphist rotating its store past the original id.
@@ -4380,12 +4387,6 @@ Singleton {
                     property int maxResults: 8
                     property int clipboardResults: 8
                     property bool showHints: true
-                }
-                property JsonObject shelf: JsonObject {
-                    property bool enable: true // the Island's Shelf page: what you copied, shot and dropped
-                    property int length: 24
-                    property bool images: true
-                    property bool clearOnLogout: false
                 }
                 property JsonObject tray: JsonObject {
                     property bool hidePassive: false

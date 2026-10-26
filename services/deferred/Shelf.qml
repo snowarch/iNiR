@@ -15,7 +15,7 @@ import qs.modules.common.functions
 Singleton {
     id: root
 
-    readonly property var prefs: Config.options?.iris?.shelf
+    readonly property var prefs: Config.options?.shelf
     readonly property bool enabled: root.prefs?.enable ?? true
     readonly property int length: Math.max(6, Math.min(96, Number(root.prefs?.length ?? 24)))
     readonly property bool images: root.prefs?.images ?? true
