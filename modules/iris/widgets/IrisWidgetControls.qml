@@ -44,7 +44,8 @@ ColumnLayout {
     readonly property string ownMaterial: String(root.widget._readConfigKey("iris.material") ?? "auto")
     readonly property string sharedMaterial: String(Config.options?.iris?.widgets?.material ?? "glass")
     readonly property var materials: [
-        { value: "auto", label: Translation.tr("Default") },
+        // The material every widget shares (from Settings): a word short enough for its swatch in every language.
+        { value: "auto", label: Translation.tr("Shared") },
         { value: "glass", label: Translation.tr("Glass") },
         { value: "clear", label: Translation.tr("Transparent") },
         { value: "solid", label: Translation.tr("Solid") },

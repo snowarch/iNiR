@@ -349,7 +349,7 @@
   "Backdrop vignette": "Vignette de toile de fond",
   "Backdrop wallpaper": "Fond d'écran",
   "Backend": "Back-end",
-  "Background": "Contexte",
+  "Background": "Arrière-plan",
   "Background & dim": "Fond et faible luminosité",
   "Background Brightness": "Luminosité de l'arrière-plan",
   "Background brightness": "Luminosité de l'arrière-plan",
@@ -9896,5 +9896,6 @@
   "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "Folio se lit comme une page, Pocket range les zones dans une colonne sur le côté de l'écran, Tiroir monte depuis le bas.",
   "Apple wears your accent. Nothing is ink and one signal colour, Synth hardware keys and faders, Gel glossy capsules.": "Apple porte votre accent. Nothing, c'est l'encre et une seule couleur de signal ; Synth, des touches et faders matériels ; Gel, des capsules brillantes.",
   "Synth": "Synth",
-  "Gel": "Gel"
+  "Gel": "Gel",
+  "Shared": "Commun"
 }

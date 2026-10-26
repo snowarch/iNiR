@@ -365,7 +365,7 @@
   "Backdrop vignette": "Viñeta de fondo",
   "Backdrop wallpaper": "Fondo de pantalla de fondo",
   "Backend": "Backend",
-  "Background": "Antecedentes",
+  "Background": "Fondo",
   "Background & dim": "Fondo y oscuro",
   "Background Brightness": "Brillo de fondo",
   "Background brightness": "Brillo de fondo",
@@ -9896,5 +9896,6 @@
   "Folio reads like a page, Pocket holds the areas in one column at the side of the screen, Drawer rises from its foot.": "Pliego se lee como una página, Pocket guarda las áreas en una columna al costado de la pantalla, Cajón sube desde abajo.",
   "Apple wears your accent. Nothing is ink and one signal colour, Synth hardware keys and faders, Gel glossy capsules.": "Apple usa tu acento. Nothing es tinta y un solo color de señal; Synth, teclas y faders de hardware; Gel, cápsulas brillantes.",
   "Synth": "Synth",
-  "Gel": "Gel"
+  "Gel": "Gel",
+  "Shared": "Común"
 }
