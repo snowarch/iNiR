@@ -117,9 +117,10 @@ IrisWidgetFace {
                 iconSize: Math.round(disc.width * 0.46)
                 color: toggle.on ? root.onFill(toggle.tint) : root.ink
             }
-            HoverHandler { id: hover; enabled: toggle.available; cursorShape: Qt.PointingHandCursor }
-            TapHandler { id: tap; enabled: toggle.available; gesturePolicy: TapHandler.WithinBounds; onTapped: toggle.toggled() }
         }
+        // On the whole control, not the disc: a tap on a tile's name did nothing.
+        HoverHandler { id: hover; enabled: toggle.available; cursorShape: Qt.PointingHandCursor }
+        TapHandler { id: tap; enabled: toggle.available; gesturePolicy: TapHandler.WithinBounds; onTapped: toggle.toggled() }
 
         Accessible.role: Accessible.CheckBox
         Accessible.name: toggle.label
