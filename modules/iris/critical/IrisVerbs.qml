@@ -17,6 +17,7 @@ QtObject {
     readonly property string _clipboardPrefix: Config.options?.search?.prefix?.clipboard ?? ";"
 
     readonly property var verbs: ({
+        owner: "iris",
         family: {
             leave: () => GlobalStates.endIrisEditing()
         },

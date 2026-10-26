@@ -54,7 +54,8 @@
   },
   "flags": {
     "lockSurfaceSync": true,
-    "lazyServices": true
+    "lazyServices": true,
+    "verbs": true
   },
   "customWidget": {
     "face": "widgets/templates/IrisCompact.qml",

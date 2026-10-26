@@ -103,11 +103,14 @@ Singleton {
     property bool clipboardOpen: false
     // True only while iNiR asks Niri for internal window-preview frames.
     property bool windowPreviewCaptureActive: false
-    // The active family's own answers to the shared verbs (taskview, orbit, clipboard), set by its `critical` part:
-    // { target: { verb: function } }. A verb it leaves out keeps Material's behaviour.
+    // The active family's own answers to the shared verbs (taskview, orbit, overview, clipboard, family.leave), set by
+    // its `critical` part: { owner: id, target: { verb: function } }. A verb it leaves out keeps Material's behaviour;
+    // a family with verbs (flag `verbs`) that hasn't loaded them yet answers nothing rather than Material's.
     property var familyVerbs: ({})
     function familyVerb(target: string, name: string): var {
-        const verb = root.familyVerbs?.[target]?.[name]
+        const verbs = root.familyVerbs?.owner === Plugins.active ? root.familyVerbs : null
+        if (!verbs) return Plugins.flag(Plugins.active, "verbs") ? () => "" : null
+        const verb = verbs[target]?.[name]
         return typeof verb === "function" ? verb : null
     }
 

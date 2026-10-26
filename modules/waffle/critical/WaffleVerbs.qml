@@ -15,6 +15,7 @@ QtObject {
     }
 
     readonly property var verbs: ({
+        owner: "waffle",
         taskview: {
             toggle: () => { GlobalStates.waffleTaskViewOpen = !GlobalStates.waffleTaskViewOpen },
             open: () => { GlobalStates.waffleTaskViewOpen = true },
