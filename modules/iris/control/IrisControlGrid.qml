@@ -565,6 +565,9 @@ Item {
                 IrisText {
                     id: wideName
                     Layout.fillWidth: true
+                    // Its room is the column's, never its own width: IrisText binds that to its text (a loop on a font change).
+                    Layout.preferredWidth: 0
+                    readonly property real room: parent?.width ?? 0
                     text: faceState.label
                     // A long name takes two lines, as Apple's "Screen Mirroring" does; one word too long steps down.
                     readonly property real longestWord: nameMetrics.font.pixelSize > 0
@@ -574,12 +577,12 @@ Item {
                     lineHeight: 0.9
                     elide: Text.ElideRight
                     color: faceState.ready ? IrisStyle.text : IrisStyle.textTertiary
-                    font.pixelSize: wideName.width > 0 && wideName.longestWord > wideName.width
-                        ? Math.max(IrisStyle.typeFootnote, Math.floor(IrisStyle.typeLabel * wideName.width / wideName.longestWord)) : IrisStyle.typeLabel
+                    font.pixelSize: wideName.room > 0 && wideName.longestWord > wideName.room
+                        ? Math.max(IrisStyle.typeFootnote, Math.floor(IrisStyle.typeLabel * wideName.room / wideName.longestWord)) : IrisStyle.typeLabel
                     font.weight: IrisStyle.weight(Font.DemiBold)
                     FontMetrics {
                         id: nameMetrics
-                        font.family: wideName.font.family
+                        font.family: wideName.defaultFont
                         font.pixelSize: IrisStyle.typeLabel
                         font.weight: IrisStyle.weight(Font.DemiBold)
                         font.letterSpacing: IrisStyle.tracking(IrisStyle.typeLabel)
