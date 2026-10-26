@@ -12,6 +12,10 @@ Rectangle {
     property string name: ""
     property color tint: root.face.ink
     property bool danger: false
+    // Its name beside the glyph whenever the key is wide enough to hold both.
+    property bool worded: false
+    readonly property bool namesItself: root.worded && root.name.length > 0
+        && keyGlyph.implicitWidth + keyRow.spacing + keyName.implicitWidth + root.face.dp(20) <= root.width
     signal activated()
 
     implicitWidth: root.face.dp(32)
@@ -22,12 +26,28 @@ Rectangle {
     Behavior on color { ColorAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
     Behavior on scale { NumberAnimation { duration: IrisStyle.feedbackDuration; easing.type: IrisStyle.feedbackEasing } }
 
-    MaterialSymbol {
+    Row {
+        id: keyRow
         anchors.centerIn: parent
-        text: root.glyph
-        fill: 1
-        iconSize: root.face.px(17)
-        color: hover.hovered && root.danger ? root.face.danger : root.tint
+        spacing: root.face.dp(6)
+        MaterialSymbol {
+            id: keyGlyph
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.glyph
+            fill: 1
+            iconSize: root.face.px(17)
+            color: hover.hovered && root.danger ? root.face.danger : root.tint
+        }
+        FaceText {
+            id: keyName
+            face: root.face
+            visible: root.namesItself
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.name
+            color: hover.hovered && root.danger ? root.face.danger : root.tint
+            size: 12.5
+            weight: Font.DemiBold
+        }
     }
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     TapHandler { id: tap; gesturePolicy: TapHandler.WithinBounds; onTapped: root.activated() }

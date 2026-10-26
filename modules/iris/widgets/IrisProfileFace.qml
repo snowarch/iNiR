@@ -37,6 +37,7 @@ IrisWidgetFace {
             face: root
             Layout.fillWidth: true
             Layout.preferredHeight: root.dp(34)
+            worded: true
             glyph: "lock"
             name: Translation.tr("Lock")
             onActivated: root.widget.lockScreen()
@@ -45,6 +46,7 @@ IrisWidgetFace {
             face: root
             Layout.fillWidth: true
             Layout.preferredHeight: root.dp(34)
+            worded: true
             glyph: "settings"
             name: Translation.tr("Settings")
             onActivated: GlobalStates.openSettings()
@@ -53,6 +55,7 @@ IrisWidgetFace {
             face: root
             Layout.fillWidth: true
             Layout.preferredHeight: root.dp(34)
+            worded: true
             glyph: "power_settings_new"
             name: Translation.tr("Session")
             danger: true
