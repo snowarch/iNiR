@@ -10,7 +10,8 @@ import qs.modules.common.functions
 Image {
     id: root
     required property var fileModelData
-    asynchronous: true
+    // Theme icons on the pixmap thread build KDE's global icon loader there (Qt thread warnings).
+    asynchronous: !String(source).startsWith("image://icon/")
     fillMode: Image.PreserveAspectFit
 
     source: {
