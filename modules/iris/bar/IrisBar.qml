@@ -1343,22 +1343,15 @@ Scope {
                     readonly property bool panelMode: IrisDesign.has("controlCenter") || String(Config.options?.iris?.controlCenter?.opens ?? "island") !== "island"
                     readonly property bool externalOpen: GlobalStates.controlPanelOpen
                         && (controlCentreLoader.panelMode || GlobalStates.irisMorphOwner === "stage")
-                    readonly property bool wanted: controlCentreLoader.externalOpen
-                        || (controlCentreLoader.panelMode && GlobalStates.irisControlsWarm)
-                        || stage.controlIntent
+                    readonly property bool wanted: controlCentreLoader.externalOpen || stage.controlIntent
+                    // Built once at idle in panel mode (or on first use) and kept, like the island's.
                     property bool resident: false
-                    property Timer releaseTimer: Timer {
-                        interval: Math.max(IrisStyle.recedeDuration, IrisStyle.settleDuration) + 120
-                        onTriggered: if (!controlCentreLoader.wanted) controlCentreLoader.resident = false
+                    property Timer warm: Timer {
+                        running: controlCentreLoader.panelMode && GlobalStates.deferredPanelsReady && !controlCentreLoader.resident
+                        interval: 4000
+                        onTriggered: controlCentreLoader.resident = true
                     }
-                    onWantedChanged: {
-                        if (controlCentreLoader.wanted) {
-                            controlCentreLoader.releaseTimer.stop()
-                            controlCentreLoader.resident = true
-                        } else if (controlCentreLoader.resident) {
-                            controlCentreLoader.releaseTimer.restart()
-                        }
-                    }
+                    onWantedChanged: if (controlCentreLoader.wanted) controlCentreLoader.resident = true
                     Component.onCompleted: if (controlCentreLoader.wanted) controlCentreLoader.resident = true
                     active: (Config.options?.iris?.modules?.controlCenter ?? true) && controlCentreLoader.resident
                     asynchronous: true

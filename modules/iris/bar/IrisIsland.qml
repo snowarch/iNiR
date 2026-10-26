@@ -926,13 +926,6 @@ Item {
     Timer { id: leaveDelay; interval: 450; onTriggered: { if (!root.pointerOnIsland && !root.pointerHeld && !root.pinned) root.expanded = false } }
     Timer { id: pageIntentExpiry; interval: 1800; onTriggered: root.pageIntent = "" }
 
-    Binding {
-        target: GlobalStates
-        property: "irisControlsWarm"
-        value: !root.controlsInIsland && (root.pointerOnIsland || root.expanded)
-        when: root.targetScreen?.name === GlobalStates.focusedScreen?.name
-        restoreMode: Binding.RestoreNone
-    }
 
     property real wheelAccumulator: 0
     function wheelSteps(event): int {
@@ -2704,9 +2697,18 @@ Item {
                         name: "controls"
                         Loader {
                             id: controlsLoader
+                            // Built once at idle (or on first use) and kept: building it on every open was the
+                            // Control Center's whole opening cost.
+                            property bool kept: false
+                            property Timer warm: Timer {
+                                running: GlobalStates.deferredPanelsReady && root.focusedOutput && !controlsLoader.kept
+                                interval: 4000
+                                onTriggered: controlsLoader.kept = true
+                            }
+                            onLoaded: controlsLoader.kept = true
                             Layout.fillWidth: true
                             Layout.preferredHeight: item?.implicitHeight ?? 0
-                            active: controlsPage.resident
+                            active: controlsPage.resident || controlsLoader.kept
                             asynchronous: !controlsPage.current
                             visible: active
                             sourceComponent: IrisQuickPanel { width: controlsLoader.width; targetScreen: root.targetScreen; bodyRadius: chassis.openRadius; bodyInset: root.padding }

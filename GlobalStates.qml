@@ -385,7 +385,6 @@ Singleton {
     // iRiS intent preloading: the pointer resting on the Island (controls) or an
     // expanded Island (settings) instantiates those surfaces hidden, so the
     // morph starts on the click frame instead of after an async load.
-    property bool irisControlsWarm: false
     // Asks the focused Island to open a page ("media", "desktop", "activity",
     // "tray", "tools") from a surface that is not the Island (card, floating bubble).
     property string irisIslandPageRequest: ""
